@@ -42,40 +42,16 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   const breadcrumbs = buildBreadcrumbsFromPath();
   const navigate = useNavigate();
 
-  // Fetch current user profile
+  // State management - consolidated for cleaner code
+  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'pssr-settings' | 'activity-log' | 'ora-configuration' | 'handover-management'>('dashboard');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [favoriteTools, setFavoriteTools] = useState<string[]>([]);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<{
     full_name: string;
     position: string;
     avatar_url: string;
   } | null>(null);
-  useEffect(() => {
-    const fetchUserProfile = async () => {
-      const {
-        data: {
-          user
-        }
-      } = await supabase.auth.getUser();
-      if (user) {
-        const {
-          data: profile
-        } = await supabase.from('profiles').select('full_name, position, avatar_url').eq('user_id', user.id).single();
-        if (profile) {
-          setUserProfile(profile);
-        }
-      }
-    };
-    fetchUserProfile();
-  }, []);
-  const handleSidebarNavigate = createSidebarNavigator(navigate, {
-    'admin-tools': () => setActiveView('dashboard'),
-    'user-management': () => setActiveView('users'),
-    'users': () => setActiveView('users'),
-  });
-  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'pssr-settings' | 'activity-log' | 'ora-configuration' | 'handover-management'>('dashboard');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [favoriteTools, setFavoriteTools] = useState<string[]>([]);
-  const [userStatsAnimating, setUserStatsAnimating] = useState(false);
-  const [projectStatsAnimating, setProjectStatsAnimating] = useState(false);
   const [userStats, setUserStats] = useState({
     total: 0,
     pending: 0,
@@ -86,36 +62,72 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     total: 0
   });
 
-  // Fetch user statistics with real-time updates
+  const handleSidebarNavigate = createSidebarNavigator(navigate, {
+    'admin-tools': () => setActiveView('dashboard'),
+    'user-management': () => setActiveView('users'),
+    'users': () => setActiveView('users'),
+  });
+
+  // Fetch all initial data in parallel
   useEffect(() => {
-    const fetchUserStats = async () => {
+    const fetchAllInitialData = async () => {
       try {
-        const {
-          data: users,
-          error
-        } = await supabase.from('profiles').select('status, account_status');
-        if (error) {
-          console.error('Error fetching user stats:', error);
-          return;
+        const [authResult, usersResult, projectsResult] = await Promise.all([
+          supabase.auth.getUser(),
+          supabase.from('profiles').select('status, account_status'),
+          supabase.from('projects').select('id', { count: 'exact' }).eq('is_active', true)
+        ]);
+
+        // Set user profile
+        if (authResult.data.user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('full_name, position, avatar_url')
+            .eq('user_id', authResult.data.user.id)
+            .single();
+          if (profile) setUserProfile(profile);
         }
-        const newStats = {
+
+        // Set user stats
+        const users = usersResult.data;
+        setUserStats({
           total: users?.length || 0,
           pending: users?.filter(u => u.status === 'pending_approval').length || 0,
           active: users?.filter(u => u.status === 'active').length || 0,
           inactive: users?.filter(u => u.status === 'inactive').length || 0
-        };
+        });
 
-        // Trigger animation if stats changed
-        if (userStats.total !== 0 && newStats.total !== userStats.total) {
-          setUserStatsAnimating(true);
-          setTimeout(() => setUserStatsAnimating(false), 1000);
+        // Set project stats
+        setProjectStats({ total: projectsResult.data?.length || 0 });
+      } catch (error) {
+        console.error('Error fetching initial data:', error);
+      } finally {
+        setIsInitialLoading(false);
+      }
+    };
+
+    fetchAllInitialData();
+  }, []);
+
+  // Real-time subscription for user changes
+  useEffect(() => {
+    const fetchUserStats = async () => {
+      try {
+        const { data: users, error } = await supabase.from('profiles').select('status, account_status');
+        if (error) {
+          console.error('Error fetching user stats:', error);
+          return;
         }
-        setUserStats(newStats);
+        setUserStats({
+          total: users?.length || 0,
+          pending: users?.filter(u => u.status === 'pending_approval').length || 0,
+          active: users?.filter(u => u.status === 'active').length || 0,
+          inactive: users?.filter(u => u.status === 'inactive').length || 0
+        });
       } catch (error) {
         console.error('Error fetching user stats:', error);
       }
     };
-    fetchUserStats();
 
     // Set up real-time subscription for user changes
     const userChannel = supabase.channel('user-stats-changes').on('postgres_changes', {
@@ -123,43 +135,28 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
       schema: 'public',
       table: 'profiles'
     }, () => {
-      // Refetch stats when any change occurs
       fetchUserStats();
     }).subscribe();
+    
     return () => {
       supabase.removeChannel(userChannel);
     };
-  }, [userStats.total]);
+  }, []);
 
-  // Fetch project statistics with real-time updates
+  // Real-time subscription for project changes
   useEffect(() => {
     const fetchProjectStats = async () => {
       try {
-        const {
-          data: projects,
-          error
-        } = await supabase.from('projects').select('id', {
-          count: 'exact'
-        }).eq('is_active', true);
+        const { data: projects, error } = await supabase.from('projects').select('id', { count: 'exact' }).eq('is_active', true);
         if (error) {
           console.error('Error fetching project stats:', error);
           return;
         }
-        const newTotal = projects?.length || 0;
-
-        // Trigger animation if stats changed
-        if (projectStats.total !== 0 && newTotal !== projectStats.total) {
-          setProjectStatsAnimating(true);
-          setTimeout(() => setProjectStatsAnimating(false), 1000);
-        }
-        setProjectStats({
-          total: newTotal
-        });
+        setProjectStats({ total: projects?.length || 0 });
       } catch (error) {
         console.error('Error fetching project stats:', error);
       }
     };
-    fetchProjectStats();
 
     // Set up real-time subscription for project changes
     const projectChannel = supabase.channel('project-stats-changes').on('postgres_changes', {
@@ -167,13 +164,13 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
       schema: 'public',
       table: 'projects'
     }, () => {
-      // Refetch stats when any change occurs
       fetchProjectStats();
     }).subscribe();
+    
     return () => {
       supabase.removeChannel(projectChannel);
     };
-  }, [projectStats.total]);
+  }, []);
 
   // Load favorites from localStorage
   useEffect(() => {
@@ -205,8 +202,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     tooltip: t.manageUserDesc,
     stats: {
       total: userStats.total,
-      label: t.users,
-      isAnimating: userStatsAnimating
+      label: t.users
     },
     height: 'md:row-span-2',
     onClick: () => setActiveView('users')
@@ -219,8 +215,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     tooltip: t.manageProjectsDesc,
     stats: {
       total: projectStats.total,
-      label: t.projects,
-      isAnimating: projectStatsAnimating
+      label: t.projects
     },
     height: 'md:row-span-2',
     onClick: () => navigate('/project-management')
@@ -385,6 +380,56 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
         <ManageHandover onBack={() => setActiveView('dashboard')} />
       </div>;
   }
+  
+  // Show skeleton while initial data is loading
+  if (isInitialLoading) {
+    return <div className="h-screen flex w-full overflow-hidden bg-gradient-to-br from-background via-background to-muted/20">
+      <OrshSidebar userName="Daniel" userTitle="ORA Engr." language="en" currentPage="admin-tools" onNavigate={handleSidebarNavigate} />
+      <div className="flex-1 flex flex-col overflow-y-auto">
+        {/* Header Skeleton */}
+        <div className="border-b border-border bg-card/80 backdrop-blur-sm px-6 py-4 sticky top-0 z-10">
+          <div className="h-4 w-48 bg-muted animate-pulse rounded mb-3" />
+          <div className="flex items-center justify-between mt-3">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-muted animate-pulse" />
+              <div className="space-y-2">
+                <div className="h-6 w-40 bg-muted animate-pulse rounded" />
+                <div className="h-4 w-56 bg-muted animate-pulse rounded" />
+              </div>
+            </div>
+          </div>
+        </div>
+        {/* Content Skeleton */}
+        <div className="flex-1 overflow-auto">
+          <div className="container pt-8 pb-8 max-w-7xl mx-auto">
+            <div className="flex items-center justify-end mb-10">
+              <div className="w-96 h-10 bg-muted animate-pulse rounded-lg" />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <Card key={i}>
+                  <CardHeader className="relative space-y-4 p-6">
+                    <div className="flex items-start justify-between">
+                      <div className="w-12 h-12 rounded-xl bg-muted animate-pulse" />
+                      <div className="flex flex-col items-end space-y-1">
+                        <div className="h-8 w-12 bg-muted animate-pulse rounded" />
+                        <div className="h-3 w-16 bg-muted animate-pulse rounded" />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="h-6 w-3/4 bg-muted animate-pulse rounded" />
+                      <div className="h-4 w-full bg-muted animate-pulse rounded" />
+                    </div>
+                  </CardHeader>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>;
+  }
+  
   return <div className="h-screen flex w-full overflow-hidden bg-gradient-to-br from-background via-background to-muted/20">
       <OrshSidebar userName="Daniel" userTitle="ORA Engr." language="en" currentPage="admin-tools" onNavigate={handleSidebarNavigate} />
       <div className="flex-1 flex flex-col overflow-y-auto">
@@ -439,12 +484,10 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
                 {t.favoriteTools}
               </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {favoriteToolsList.map((tool, index) => {
+                {favoriteToolsList.map((tool) => {
                   const IconComponent = tool.icon;
                   const isFavorite = favoriteTools.includes(tool.id);
-                  return <Card key={tool.id} className="group relative cursor-pointer transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 border-2 border-yellow-500/20 bg-gradient-to-br from-card to-card/50 backdrop-blur overflow-hidden animate-fade-in" style={{
-                    animationDelay: `${index * 100}ms`
-                  }} onClick={tool.onClick}>
+                  return <Card key={tool.id} className="group relative cursor-pointer transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 border-2 border-yellow-500/20 bg-gradient-to-br from-card to-card/50 backdrop-blur overflow-hidden" onClick={tool.onClick}>
                       {/* Gradient Background Effect */}
                       <div className={`absolute inset-0 bg-gradient-to-br ${tool.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`} />
                       
@@ -465,7 +508,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
                         <div className="flex items-center gap-2">
                           {/* Stats Badge */}
                           {tool.stats.total !== undefined && <div className="flex flex-col items-end">
-                              <span className={`text-2xl font-bold bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent transition-all duration-300 ${tool.stats.isAnimating ? 'animate-[pulse_0.5s_ease-in-out] scale-110' : ''}`}>
+                              <span className="text-2xl font-bold bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent transition-all duration-300">
                                 {tool.stats.total}
                               </span>
                               <span className="text-xs text-muted-foreground uppercase tracking-wider">
@@ -501,12 +544,10 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
                 {t.allTools}
               </h2>}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {nonFavoriteToolsList.map((tool, index) => {
+              {nonFavoriteToolsList.map((tool) => {
                   const IconComponent = tool.icon;
                   const isFavorite = favoriteTools.includes(tool.id);
-                  return <Card key={tool.id} className="group relative cursor-pointer transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 border-0 bg-gradient-to-br from-card to-card/50 backdrop-blur overflow-hidden animate-fade-in" style={{
-                    animationDelay: `${index * 100}ms`
-                  }} onClick={tool.onClick}>
+                  return <Card key={tool.id} className="group relative cursor-pointer transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 border-0 bg-gradient-to-br from-card to-card/50 backdrop-blur overflow-hidden" onClick={tool.onClick}>
                     {/* Gradient Background Effect */}
                     <div className={`absolute inset-0 bg-gradient-to-br ${tool.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`} />
                     
@@ -527,7 +568,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
                         <div className="flex items-center gap-2">
                           {/* Stats Badge */}
                           {tool.stats.total !== undefined && <div className="flex flex-col items-end">
-                              <span className={`text-2xl font-bold bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent transition-all duration-300 ${tool.stats.isAnimating ? 'animate-[pulse_0.5s_ease-in-out] scale-110' : ''}`}>
+                              <span className="text-2xl font-bold bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent transition-all duration-300">
                                 {tool.stats.total}
                               </span>
                               <span className="text-xs text-muted-foreground uppercase tracking-wider">
