@@ -119,14 +119,14 @@ export const PSSRProgressWidget: React.FC<PSSRProgressWidgetProps> = ({
               {t.progressByCategory || 'Progress by Category'}
             </label>
           </div>
-          <div className="space-y-3">
+          <div className="space-y-3 group/list">
             {categoryProgress.map((category, index) => {
               const Icon = getCategoryIcon(category.name);
               const colors = getCategoryColors(category.name);
               return (
                 <div
                   key={index}
-                  className={`group p-3 rounded-lg border ${colors.border} hover:bg-accent/5 transition-all cursor-pointer`}
+                  className={`group p-3 rounded-lg border ${colors.border} hover:bg-accent/5 transition-all duration-300 cursor-pointer group-has-[:hover]/list:opacity-40 group-has-[:hover]/list:grayscale hover:!opacity-100 hover:!grayscale-0`}
                   onClick={() => onCategoryClick?.(category.name)}
                 >
                   <div className="flex items-center justify-between mb-2">
