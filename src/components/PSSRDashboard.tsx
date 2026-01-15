@@ -159,7 +159,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
   // Mock comprehensive PSSR data
   const pssrData = {
     id: pssrId,
-    title: 'NRNGL Plant Start-up Commissioning',
+    title: 'DP300 HM Additional Compressors',
     asset: 'NRNGL Plant',
     reason: 'Start-up or Commissioning of a new Asset',
     projectId: 'DP300',
