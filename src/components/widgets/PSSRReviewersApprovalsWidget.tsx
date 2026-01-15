@@ -189,9 +189,10 @@ const StageSection: React.FC<{
   isLocked: boolean;
   lockReason?: string;
   defaultCollapsed?: boolean;
+  hideCollapsedPreview?: boolean;
   onSendReminder?: (personId: string) => void;
   onPersonClick?: (personId: string) => void;
-}> = ({ title, icon, people, isCurrentStage, isLocked, lockReason, defaultCollapsed = false, onSendReminder, onPersonClick }) => {
+}> = ({ title, icon, people, isCurrentStage, isLocked, lockReason, defaultCollapsed = false, hideCollapsedPreview = false, onSendReminder, onPersonClick }) => {
   // Find the first person with pending tasks (action needed)
   const currentActionIndex = people.findIndex(p => p.pendingTasks > 0);
   const completedCount = people.filter(p => p.pendingTasks === 0 || p.status === 'completed').length;
@@ -238,8 +239,8 @@ const StageSection: React.FC<{
           )}
         </Tooltip>
         
-        {/* Collapsed preview - show stacked avatars */}
-        {!isExpanded && people.length > 0 && (
+        {/* Collapsed preview - show stacked avatars (unless hideCollapsedPreview is true) */}
+        {!isExpanded && people.length > 0 && !hideCollapsedPreview && (
           <div className="flex items-center gap-2 py-2 pl-5">
             <div className="flex -space-x-2">
               {people.slice(0, 4).map(person => {
@@ -467,6 +468,7 @@ export const PSSRReviewersApprovalsWidget: React.FC<PSSRReviewersApprovalsWidget
             isLocked={pssrApprovalLocked}
             lockReason={pssrApprovalLockReason}
             defaultCollapsed={true}
+            hideCollapsedPreview={true}
             onSendReminder={onSendReminder}
             onPersonClick={handleApproverClick}
           />
@@ -512,6 +514,7 @@ export const PSSRReviewersApprovalsWidget: React.FC<PSSRReviewersApprovalsWidget
             isLocked={sofApprovalLocked}
             lockReason="Complete PSSR approval to unlock SoF approval"
             defaultCollapsed={true}
+            hideCollapsedPreview={true}
             onSendReminder={onSendReminder}
             onPersonClick={handleApproverClick}
           />
