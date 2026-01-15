@@ -206,76 +206,85 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
       }
     ],
 
-    // Reviewers and approvers
+    // Reviewers (TA2s who review checklist items)
     reviewers: [
       {
-        id: '1',
-        name: 'Dr. Sarah Wilson',
-        role: 'Process Engineering TA',
-        avatar: '/lovable-uploads/a115d6ee-9a4b-412e-993e-37839ae158ea.png',
+        id: '5a651906-a022-4084-af11-afe35a03cef1',
+        name: 'Andrew Banford',
+        role: 'TA2 TSE - Asset',
+        avatar: 'https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/5a651906-a022-4084-af11-afe35a03cef1/1757605596327.jpg',
         pendingTasks: 0,
         isOnline: true
       },
       {
-        id: '2',
-        name: 'John Smith',
-        role: 'Technical Safety TA',
-        avatar: '/lovable-uploads/b229716e-e39e-41cb-91d3-2c30dd517fa8.png',
+        id: '0942bfe3-17b5-41a7-920e-c0802b9764b2',
+        name: 'Martyn Turner',
+        role: 'TA2 Process - Asset',
+        avatar: 'https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/0942bfe3-17b5-41a7-920e-c0802b9764b2/1757605550833.jpg',
         pendingTasks: 3,
         isOnline: true
+      },
+      {
+        id: '83f6a3e5-82ea-4ae2-a38b-df3ca589bffa',
+        name: 'Yesr Tamoul',
+        role: 'TA2 Static - Asset',
+        avatar: 'https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/83f6a3e5-82ea-4ae2-a38b-df3ca589bffa/1757605610830.jpg',
+        pendingTasks: 2,
+        isOnline: false
       }
     ],
 
+    // PSSR Approvers (Project Leadership)
     approvers: [
       {
-        id: '3',
-        name: 'Maria Garcia',
-        role: 'Mechanical Static TA',
-        avatar: '/lovable-uploads/c25af318-1854-4091-9988-8579bc708185.png',
+        id: 'fbb630cc-de25-4f9e-9e8e-7c956928bb05',
+        name: 'Wolfgang Probst',
+        role: 'Project Manager',
+        avatar: 'https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/fbb630cc-de25-4f9e-9e8e-7c956928bb05/1767654993368.jpeg',
         pendingTasks: 2,
         isOnline: false
       },
       {
-        id: '4',
-        name: 'Omar Hassan',
-        role: 'Deputy Plant Director',
-        avatar: '/lovable-uploads/cddd513b-3271-4c91-900a-87e4e290c4a9.png',
+        id: '73734adc-61dd-4557-b613-84fe0ed2f49f',
+        name: 'Victor Liew',
+        role: 'Project Hub Lead',
+        avatar: 'https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/73734adc-61dd-4557-b613-84fe0ed2f49f/1757605348385.png',
         pendingTasks: 1,
         isOnline: true
       }
     ],
 
-    // SoF Approvers
+    // SoF Approvers (Directors and Senior Leadership)
     sofApprovers: [
       {
-        id: '5',
-        name: 'Dr. Ahmed Al-Rashid',
+        id: '9ff2d8e8-f2a0-4c29-9b60-5ab225beb0f6',
+        name: 'Wim Moelker',
         role: 'Plant Director',
-        avatar: '/lovable-uploads/5b18a1c1-2b59-4e34-917a-910364fedaf6.png',
+        avatar: 'https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/9ff2d8e8-f2a0-4c29-9b60-5ab225beb0f6/1767656008476.jpeg',
         pendingTasks: 1,
         isOnline: true
       },
       {
-        id: '6',
-        name: 'James Miller',
+        id: '4f911475-2022-4a0c-bfea-1a4263677c03',
+        name: 'Lyle Koch',
         role: 'HSE Director',
-        avatar: '/lovable-uploads/6cb38356-79ac-4435-9d01-220ab79e63cc.png',
+        avatar: 'https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/4f911475-2022-4a0c-bfea-1a4263677c03/1757589686150.png',
         pendingTasks: 0,
         isOnline: true
       },
       {
-        id: '7',
-        name: 'Dr. Sarah Thompson',
+        id: 'bd8dd7af-6bd4-4ca5-99ca-20bd53e38b4e',
+        name: 'Marije Hoedemaker',
         role: 'P&M Director',
-        avatar: '/lovable-uploads/c25af318-1854-4091-9988-8579bc708185.png',
+        avatar: 'https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/bd8dd7af-6bd4-4ca5-99ca-20bd53e38b4e/1757797433321.png',
         pendingTasks: 1,
         isOnline: false
       },
       {
-        id: '8',
-        name: 'Robert Chen',
+        id: '0dae95bb-6cdb-491d-ac4c-4c0cd7b2e8b2',
+        name: 'Paul Van Den Hemel',
         role: 'P&E Director',
-        avatar: '/lovable-uploads/cddd513b-3271-4c91-900a-87e4e290c4a9.png',
+        avatar: 'https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/0dae95bb-6cdb-491d-ac4c-4c0cd7b2e8b2/1757605571147.jpg',
         pendingTasks: 0,
         isOnline: true
       }
