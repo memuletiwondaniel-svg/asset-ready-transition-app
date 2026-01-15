@@ -299,13 +299,29 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
     ]
   };
 
+  // Mock category data for when real data is empty
+  const mockCategoryProgress = [
+    { id: '1', name: 'Technical Integrity', ref_id: 'TI', completed: 18, total: 24, percentage: 75, display_order: 1 },
+    { id: '2', name: 'Process Safety', ref_id: 'PS', completed: 22, total: 28, percentage: 79, display_order: 2 },
+    { id: '3', name: 'Organization', ref_id: 'ORG', completed: 14, total: 18, percentage: 78, display_order: 3 },
+    { id: '4', name: 'Documentation', ref_id: 'DOC', completed: 12, total: 20, percentage: 60, display_order: 4 },
+    { id: '5', name: 'HSE & Environment', ref_id: 'HSE', completed: 9, total: 12, percentage: 75, display_order: 5 },
+    { id: '6', name: 'Maintenance Readiness', ref_id: 'MR', completed: 8, total: 10, percentage: 80, display_order: 6 },
+  ];
+
+  // Use mock data if real data is empty or not available
+  const effectiveCategoryProgress = categoryProgress && categoryProgress.length > 0 
+    ? categoryProgress 
+    : mockCategoryProgress;
+
   // Calculate overall progress from category data
   const overallProgress = useMemo(() => {
-    if (!categoryProgress || categoryProgress.length === 0) return pssrData.progress;
-    const totalItems = categoryProgress.reduce((sum, c) => sum + c.total, 0);
-    const completedItems = categoryProgress.reduce((sum, c) => sum + c.completed, 0);
+    const data = effectiveCategoryProgress;
+    if (!data || data.length === 0) return pssrData.progress;
+    const totalItems = data.reduce((sum, c) => sum + c.total, 0);
+    const completedItems = data.reduce((sum, c) => sum + c.completed, 0);
     return totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
-  }, [categoryProgress, pssrData.progress]);
+  }, [effectiveCategoryProgress, pssrData.progress]);
 
   // Overlay handlers
   const handleStatClick = (filter: string) => {
@@ -318,8 +334,8 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
   };
 
   const handleCategoryClick = (categoryName: string) => {
-    // Find category stats
-    const category = categoryProgress?.find(c => c.name === categoryName);
+    // Find category stats from effective data (includes mock)
+    const category = effectiveCategoryProgress.find(c => c.name === categoryName);
     setCategoryOverlay({
       isOpen: true,
       categoryName,
@@ -428,12 +444,12 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
   };
 
   // Transform category progress data for the widget
-  const widgetCategoryProgress: CategoryProgress[] = categoryProgress?.map(c => ({
+  const widgetCategoryProgress: CategoryProgress[] = effectiveCategoryProgress.map(c => ({
     name: c.name,
     completed: c.completed,
     total: c.total,
     percentage: c.percentage,
-  })) || [];
+  }));
 
   return (
     <div className="min-h-screen flex w-full relative overflow-hidden">
