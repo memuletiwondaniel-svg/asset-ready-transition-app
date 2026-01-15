@@ -75,7 +75,7 @@ const PACPrerequisitesList: React.FC = () => {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>PAC Prerequisites (VCR-01)</CardTitle>
+              <CardTitle>PAC Prerequisites (VCR)</CardTitle>
               <CardDescription>
                 Manage prerequisites for Provisional Handover organized by category
               </CardDescription>
