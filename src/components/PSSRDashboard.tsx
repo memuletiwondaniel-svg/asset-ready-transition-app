@@ -349,8 +349,6 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
         percentage: category.percentage,
       } : null,
     });
-    // Also call original navigation if provided
-    onNavigateToCategory?.(categoryName);
   };
 
   const handleCategoryItemClick = (item: CategoryItem) => {
