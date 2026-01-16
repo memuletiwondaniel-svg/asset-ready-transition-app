@@ -6,13 +6,15 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { P2AHeatmapCell } from './P2AHeatmapCell';
 import { useNavigate } from 'react-router-dom';
+import { useP2AHeatmapData } from '@/hooks/useP2AHeatmapData';
 
 export const P2AHeatmap: React.FC = () => {
   const { handovers, isLoading: loadingHandovers } = useP2AHandovers();
   const { categories, isLoading: loadingCategories } = useP2ADeliverableCategories();
+  const { heatmapData, isLoading: loadingHeatmapData } = useP2AHeatmapData();
   const navigate = useNavigate();
 
-  if (loadingHandovers || loadingCategories) {
+  if (loadingHandovers || loadingCategories || loadingHeatmapData) {
     return (
       <Card>
         <CardHeader className="p-3 sm:p-4">
@@ -95,10 +97,13 @@ export const P2AHeatmap: React.FC = () => {
                     </Badge>
                   </div>
                   {categories?.map((category) => {
-                    // For now, show random status - this will be replaced with actual deliverable data
-                    const randomStatus = ['NOT_STARTED', 'IN_PROGRESS', 'BEHIND_SCHEDULE', 'COMPLETED', 'NOT_APPLICABLE'][
-                      Math.floor(Math.random() * 5)
-                    ];
+                    const cellKey = `${handover.id}-${category.id}`;
+                    const cellData = heatmapData.get(cellKey);
+                    
+                    // Use actual data if available, otherwise show NOT_STARTED
+                    const status = cellData?.status || 'NOT_STARTED';
+                    const percentage = cellData?.completionPercentage || 0;
+                    
                     return (
                       <div
                         key={category.id}
@@ -106,8 +111,13 @@ export const P2AHeatmap: React.FC = () => {
                       >
                         <P2AHeatmapCell 
                           handoverId={handover.id}
-                          status={randomStatus}
-                          percentage={Math.floor(Math.random() * 100)}
+                          status={status}
+                          percentage={percentage}
+                          categoryName={cellData?.categoryName || category.name}
+                          latestComment={cellData?.latestComment}
+                          lastUpdated={cellData?.lastUpdated}
+                          deliverableCount={cellData?.deliverableCount}
+                          completedCount={cellData?.completedCount}
                         />
                       </div>
                     );
