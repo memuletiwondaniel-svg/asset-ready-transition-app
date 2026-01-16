@@ -2,7 +2,7 @@
 // This ensures consistent routing across all pages that use OrshSidebar
 
 export const SIDEBAR_ROUTES: Record<string, string> = {
-  'home': '/',
+  'home': '/home',
   'ask-orsh': '/ask-orsh', // Handled specially by sidebar (opens chat)
   'pssr': '/pssr',
   'my-tasks': '/my-tasks',
