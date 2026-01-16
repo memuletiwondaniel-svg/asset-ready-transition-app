@@ -144,10 +144,12 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                 return (
                   <Card 
                     key={project.id}
-                    className="group cursor-pointer hover:shadow-lg hover:border-primary/50 transition-all duration-200"
+                    className="group relative cursor-pointer transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 border-0 bg-gradient-to-br from-card to-card/50 backdrop-blur overflow-hidden"
                     onClick={() => handleProjectClick(project.id)}
                   >
-                    <CardContent className="p-4 space-y-4">
+                    {/* Gradient Background Effect */}
+                    <div className={`absolute inset-0 bg-gradient-to-br ${projectColor.bg} opacity-0 group-hover:opacity-10 transition-opacity duration-300`} />
+                    <CardContent className="relative p-4 space-y-4">
                       {/* Header */}
                       <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0">
@@ -256,10 +258,12 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                 return (
                   <Card 
                     key={project.id}
-                    className="group cursor-pointer hover:shadow-md hover:border-primary/50 transition-all duration-200"
+                    className="group relative cursor-pointer transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5 border-0 bg-gradient-to-br from-card to-card/50 backdrop-blur overflow-hidden"
                     onClick={() => handleProjectClick(project.id)}
                   >
-                    <CardContent className="p-4 flex items-center gap-4">
+                    {/* Gradient Background Effect */}
+                    <div className={`absolute inset-0 bg-gradient-to-br ${projectColor.bg} opacity-0 group-hover:opacity-10 transition-opacity duration-300`} />
+                    <CardContent className="relative p-4 flex items-center gap-4">
                       <Badge 
                         variant="outline" 
                         className={`bg-gradient-to-r ${projectColor.bg} ${projectColor.text} ${projectColor.border} text-xs font-semibold px-2 py-0.5 shrink-0`}
