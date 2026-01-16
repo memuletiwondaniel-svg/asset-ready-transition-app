@@ -29,8 +29,6 @@ import {
   Wrench
 } from 'lucide-react';
 import { addDays, differenceInDays } from 'date-fns';
-import { OrshSidebar } from '@/components/OrshSidebar';
-import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { NotificationCenter } from '@/components/NotificationCenter';
 import { DraggableTask } from '@/components/DraggableTask';
@@ -403,13 +401,7 @@ const PSSRApproverDashboard: React.FC = () => {
   const hasNoResults = filteredTasks.length === 0 && filteredPSSRs.length === 0 && filteredOWLItems.length === 0;
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background">
-        <OrshSidebar 
-          onNavigate={handleSidebarNavigate}
-          currentPage="my-tasks"
-        />
-        <SidebarInset className="flex-1">
+    <div className="flex-1 flex flex-col overflow-hidden bg-background">
           {/* Header */}
           <div className="border-b border-border/40 bg-card/50 p-4 md:p-6">
             <BreadcrumbNavigation currentPageLabel="My Tasks" />
@@ -590,8 +582,6 @@ const PSSRApproverDashboard: React.FC = () => {
               )}
             </div>
           </div>
-        </SidebarInset>
-      </div>
 
       {/* OWL Item Dialog */}
       <OWLItemDialog
@@ -732,7 +722,7 @@ const PSSRApproverDashboard: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </SidebarProvider>
+    </div>
   );
 };
 

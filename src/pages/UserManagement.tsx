@@ -46,9 +46,7 @@ import AuthenticatorApprovalModal from "@/components/user-management/Authenticat
 import ConfigurationManagement from "@/components/user-management/ConfigurationManagement";
 import LocationManagement from "@/components/user-management/LocationManagement";
 import { useUsers } from "@/hooks/useUsers";
-import { OrshSidebar } from "@/components/OrshSidebar";
 import { useNavigate } from 'react-router-dom';
-import { createSidebarNavigator } from '@/utils/sidebarNavigation';
 
 interface UserManagementProps {
   onBack: () => void;
@@ -170,17 +168,7 @@ const UserManagement = ({ onBack }: UserManagementProps) => {
 
 
   return (
-    <div className="min-h-screen flex w-full">
-      <OrshSidebar 
-        userName="Daniel"
-        userTitle="ORA Engr."
-        language="en"
-        currentPage="user-management"
-        onNavigate={createSidebarNavigator(navigate)}
-        onLogout={() => navigate('/')}
-      />
-      
-      <div className="flex-1 overflow-auto">
+    <div className="flex-1 overflow-auto">
         <AnimatedBackground>
           <div className="max-w-7xl mx-auto p-6">
         {/* Header */}
@@ -534,7 +522,6 @@ const UserManagement = ({ onBack }: UserManagementProps) => {
       )}
         </div>
       </AnimatedBackground>
-      </div>
     </div>
   );
 };

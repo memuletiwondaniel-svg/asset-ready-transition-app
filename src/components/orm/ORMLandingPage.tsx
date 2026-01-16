@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { OrshSidebar } from '@/components/OrshSidebar';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -33,7 +33,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useProjects } from '@/hooks/useProjects';
 import { useProfileUsers } from '@/hooks/useProfileUsers';
 import { supabase } from '@/integrations/supabase/client';
-import { createSidebarNavigator } from '@/utils/sidebarNavigation';
+
 
 export const ORMLandingPage: React.FC = () => {
   const navigate = useNavigate();
@@ -202,32 +202,21 @@ export const ORMLandingPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="h-screen flex w-full overflow-hidden bg-background">
-        <OrshSidebar 
-          userName={userProfile?.full_name || 'User'} 
-          userTitle={userProfile?.position || 'Team Member'} 
-          userAvatar={userProfile?.avatar_url || ''} 
-          currentPage="or-maintenance" 
-          onNavigate={createSidebarNavigator(navigate, {
-            'or-maintenance': () => {} // Already here
-          })}
-          onLogout={() => navigate('/')} />
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="border-b border-border bg-card px-6 py-4">
-            <Skeleton className="h-4 w-48 mb-2" />
-            <Skeleton className="h-8 w-64" />
+      <div className="flex-1 flex flex-col overflow-hidden bg-background">
+        <div className="border-b border-border bg-card px-6 py-4">
+          <Skeleton className="h-4 w-48 mb-2" />
+          <Skeleton className="h-8 w-64" />
+        </div>
+        <div className="p-6 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[1, 2, 3, 4].map(i => (
+              <Skeleton key={i} className="h-32 rounded-xl" />
+            ))}
           </div>
-          <div className="p-6 space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {[1, 2, 3, 4].map(i => (
-                <Skeleton key={i} className="h-32 rounded-xl" />
-              ))}
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[1, 2, 3].map(i => (
-                <Skeleton key={i} className="h-64 rounded-xl" />
-              ))}
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map(i => (
+              <Skeleton key={i} className="h-64 rounded-xl" />
+            ))}
           </div>
         </div>
       </div>
@@ -235,21 +224,9 @@ export const ORMLandingPage: React.FC = () => {
   }
 
   return (
-    <div className="h-screen flex w-full overflow-hidden bg-gradient-to-br from-background via-background to-muted/20">
-      <OrshSidebar
-        userName={userProfile?.full_name || 'User'} 
-        userTitle={userProfile?.position || 'Team Member'} 
-        userAvatar={userProfile?.avatar_url || ''} 
-        currentPage="or-maintenance"
-        onNavigate={createSidebarNavigator(navigate, {
-          'or-maintenance': () => {} // Already here
-        })}
-        onLogout={() => navigate('/')}
-      />
-
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <div className="border-b border-border bg-card/80 backdrop-blur-sm px-6 py-4 sticky top-0 z-10">
+    <div className="flex-1 flex flex-col overflow-hidden bg-gradient-to-br from-background via-background to-muted/20">
+      {/* Header */}
+      <div className="border-b border-border bg-card/80 backdrop-blur-sm px-6 py-4 sticky top-0 z-10">
           <BreadcrumbNavigation currentPageLabel="OR Maintenance" />
           <div className="flex items-center justify-between mt-3">
             <div className="flex items-center gap-4">
@@ -563,7 +540,6 @@ export const ORMLandingPage: React.FC = () => {
             </div>
           </div>
         </div>
-      </div>
 
       <CreateORMModal
         open={showCreateModal}

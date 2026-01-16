@@ -14,7 +14,7 @@ import { DashboardWidgets } from '@/components/widgets/DashboardWidgets';
 import { QuickActionsWidget } from '@/components/widgets/QuickActionsWidget';
 import { WidgetCard } from '@/components/widgets/WidgetCard';
 import { WidgetManagement } from '@/components/WidgetManagement';
-import { OrshSidebar } from '@/components/OrshSidebar';
+
 import { ORSHChatDialog } from '@/components/widgets/ORSHChatDialog';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useVoiceInput } from '@/hooks/useVoiceInput';
@@ -563,32 +563,9 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
   }];
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="min-h-screen flex flex-col md:flex-row overflow-x-hidden">
-        {/* ORSH Sidebar Component */}
-        <OrshSidebar 
-          userName={userProfile?.full_name || 'User'} 
-          userTitle={userProfile?.position || 'Team Member'} 
-          userAvatar={userProfile?.avatar_url || ''} 
-          language={language} 
-          onLanguageChange={setLanguage} 
-          onNavigate={onNavigate} 
-          onShowWidgets={() => setShowWidgetManagement(true)} 
-          onShowOnboarding={() => setShowOnboarding(true)} 
-          onLogout={onBack} 
-          showWidgets={showWidgetManagement} 
-          currentPage="home" 
-          searchHistory={searchHistory} 
-          onSearchHistoryClick={item => {
-            setUserInput(item);
-            setShowHistory(false);
-          }} 
-          showSearchHistory={showHistory} 
-          onToggleSearchHistory={() => setShowHistory(!showHistory)} 
-        />
-
-        {/* Main Content Area */}
-        <div className="flex-1 flex flex-col lg:flex-row gap-4 md:gap-6 p-4 md:p-6 overflow-y-auto relative">
+    <div className="min-h-screen bg-background flex-1 overflow-y-auto">
+      {/* Main Content Area */}
+      <div className="flex flex-col lg:flex-row gap-4 md:gap-6 p-4 md:p-6 relative">
           {/* Subtle Animated Background */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
             <div 
@@ -731,7 +708,6 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
             </div>
           </div>
         </div>
-      </div>
 
       {/* Widget Management Dialog */}
       <WidgetManagement 
