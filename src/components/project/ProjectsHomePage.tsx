@@ -234,7 +234,7 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                         </div>
                           <Badge 
                             variant={project.is_scorecard ? 'default' : 'secondary'} 
-                            className={`text-[10px] ${project.is_scorecard ? 'bg-amber-500 hover:bg-amber-600 text-white' : ''}`}
+                            className={`text-[10px] ${project.is_scorecard ? 'bg-gradient-to-b from-amber-400 via-amber-500 to-amber-600 text-white shadow-md border border-amber-300/50' : ''}`}
                           >
                             {project.is_scorecard ? 'Scorecard' : 'Active'}
                           </Badge>
@@ -293,7 +293,7 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
 
                         <Badge 
                           variant={project.is_scorecard ? 'default' : 'secondary'} 
-                          className={`text-xs ${project.is_scorecard ? 'bg-amber-500 hover:bg-amber-600 text-white' : ''}`}
+                          className={`text-xs ${project.is_scorecard ? 'bg-gradient-to-b from-amber-400 via-amber-500 to-amber-600 text-white shadow-md border border-amber-300/50' : ''}`}
                         >
                           {project.is_scorecard ? 'Scorecard' : 'Active'}
                         </Badge>
