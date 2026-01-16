@@ -207,7 +207,7 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                             <span className="text-muted-foreground">Progress</span>
                             <span className="font-medium text-foreground">{progress}%</span>
                           </div>
-                          <Progress value={progress} className="h-1.5" indicatorClassName="bg-emerald-500" />
+                          <Progress value={progress} className="h-1.5" indicatorClassName={progress === 100 ? "bg-emerald-500" : "bg-muted-foreground/50"} />
                         </div>
                       )}
 
@@ -279,7 +279,7 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                         
                         {project.milestone_count && project.milestone_count > 0 && (
                           <div className="w-24">
-                            <Progress value={progress} className="h-1.5" indicatorClassName="bg-emerald-500" />
+                            <Progress value={progress} className="h-1.5" indicatorClassName={progress === 100 ? "bg-emerald-500" : "bg-muted-foreground/50"} />
                           </div>
                         )}
 
