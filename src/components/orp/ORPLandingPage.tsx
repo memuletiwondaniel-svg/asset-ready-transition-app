@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { OrshSidebar } from '@/components/OrshSidebar';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,6 @@ import { Plus, BarChart3, CalendarCheck, Search, Building2, Calendar } from 'luc
 import { CreateORPModal } from '@/components/orp/CreateORPModal';
 import { useORPRealtime } from '@/hooks/useORPRealtime';
 import { useORPPlans } from '@/hooks/useORPPlans';
-import { useProjects } from '@/hooks/useProjects';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
@@ -23,8 +22,7 @@ export const ORPLandingPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const { setBreadcrumbs } = useBreadcrumb();
   const { translations: t } = useLanguage();
-  const { plans, isLoading: plansLoading } = useORPPlans();
-  const { projects, isLoading: projectsLoading } = useProjects();
+  const { plans, isLoading } = useORPPlans();
   useORPRealtime();
 
   useEffect(() => {
@@ -41,16 +39,39 @@ export const ORPLandingPage: React.FC = () => {
     'EXECUTE': 3
   };
 
-  // Get projects that have ORA plans
-  const projectsWithORAPlans = projects?.filter(project => 
-    plans?.some(plan => plan.project_id === project.id)
-  ) || [];
+  // Derive unique projects directly from plans data (eliminates useProjects dependency)
+  const projectsWithORAPlans = useMemo(() => {
+    if (!plans) return [];
+    
+    const projectMap = new Map<string, {
+      id: string;
+      project_title: string;
+      project_id_prefix: string;
+      project_id_number: string;
+    }>();
+    
+    plans.forEach(plan => {
+      if (plan.project && !projectMap.has(plan.project_id)) {
+        projectMap.set(plan.project_id, {
+          id: plan.project_id,
+          project_title: plan.project.project_title,
+          project_id_prefix: plan.project.project_id_prefix,
+          project_id_number: plan.project.project_id_number,
+        });
+      }
+    });
+    
+    return Array.from(projectMap.values());
+  }, [plans]);
 
   // Filter by search query
   const filteredProjects = projectsWithORAPlans.filter(project =>
     project.project_title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     `${project.project_id_prefix}-${project.project_id_number}`.toLowerCase().includes(searchQuery.toLowerCase())
   );
+  
+  // Dynamic skeleton count based on cached data
+  const skeletonCount = Math.min(Math.max(plans?.length || 3, 2), 6);
 
   // Get the most recent phase ORA plan for a project
   const getMostRecentPlan = (projectId: string) => {
@@ -104,8 +125,6 @@ export const ORPLandingPage: React.FC = () => {
       navigate(`/operation-readiness/${mostRecentPlan.id}`);
     }
   };
-
-  const isLoading = plansLoading || projectsLoading;
 
   return (
     <div className="h-screen flex w-full overflow-hidden">
@@ -170,7 +189,7 @@ export const ORPLandingPage: React.FC = () => {
             {/* Project Cards Grid */}
             {isLoading ? (
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {[1, 2, 3, 4, 5, 6].map((i) => (
+                {Array.from({ length: skeletonCount }).map((_, i) => (
                   <Card key={i}>
                     <CardHeader className="pb-3">
                       <div className="flex items-start justify-between">
