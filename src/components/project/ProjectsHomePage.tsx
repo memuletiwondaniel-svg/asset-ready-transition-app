@@ -68,9 +68,14 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
 
           {/* Header */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">My Projects</h1>
-              <p className="text-muted-foreground">Browse and access your assigned projects</p>
+            <div className="flex items-center gap-3">
+              <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 shadow-lg">
+                <FolderOpen className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-foreground">My Projects</h1>
+                <p className="text-muted-foreground">Browse and access your assigned projects</p>
+              </div>
             </div>
           </div>
 
