@@ -67,6 +67,8 @@ export function useUserOWLItems() {
       }) as UserOWLItem[];
     },
     enabled: !!user?.id,
+    staleTime: 2 * 60 * 1000, // 2 minutes cache
+    refetchOnWindowFocus: false,
   });
 
   // Set up real-time subscription

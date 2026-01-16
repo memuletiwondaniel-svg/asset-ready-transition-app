@@ -209,15 +209,8 @@ export const usePSSRsAwaitingReview = (userId: string | undefined) => {
     queryKey: ['pssrs-awaiting-review', userId],
     queryFn: async () => {
       if (!userId) return [];
-      
-      // Get user's profile to determine their approver roles
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role, position')
-        .eq('user_id', userId)
-        .single();
 
-      // Fetch all item approvals assigned to this user or their role
+      // Fetch all item approvals assigned to this user - removed station column (doesn't exist)
       const { data: approvals, error } = await supabase
         .from('pssr_item_approvals')
         .select(`
@@ -233,7 +226,6 @@ export const usePSSRsAwaitingReview = (userId: string | undefined) => {
             asset,
             scope,
             cs_location,
-            station,
             created_at
           )
         `)
@@ -262,7 +254,6 @@ export const usePSSRsAwaitingReview = (userId: string | undefined) => {
         } else {
           const existing = pssrMap.get(pssrId)!;
           existing.itemCount++;
-          // Use earliest assigned_at
           if (new Date(approval.assigned_at) < new Date(existing.pendingSince)) {
             existing.pendingSince = approval.assigned_at;
           }
@@ -272,6 +263,8 @@ export const usePSSRsAwaitingReview = (userId: string | undefined) => {
       return Array.from(pssrMap.values());
     },
     enabled: !!userId,
+    staleTime: 2 * 60 * 1000, // 2 minutes cache
+    refetchOnWindowFocus: false,
   });
 };
 

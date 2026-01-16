@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useOutstandingWorkItems, OutstandingWorkItem, OWLSource, OWLStatus } from '@/hooks/useOutstandingWorkList';
+import { useOWLMutations } from '@/hooks/useOWLMutations';
+import type { OutstandingWorkItem, OWLSource, OWLStatus } from '@/hooks/useOutstandingWorkList';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Trash2 } from 'lucide-react';
@@ -23,7 +24,8 @@ const OWLItemDialog: React.FC<OWLItemDialogProps> = ({
   item,
   projects,
 }) => {
-  const { createItem, updateItem, deleteItem, isCreating, isUpdating, isDeleting } = useOutstandingWorkItems();
+  // Use lightweight mutations hook instead of full useOutstandingWorkItems
+  const { createItem, updateItem, deleteItem, isCreating, isUpdating, isDeleting } = useOWLMutations();
   
   const [formData, setFormData] = useState({
     project_id: '',
@@ -38,7 +40,7 @@ const OWLItemDialog: React.FC<OWLItemDialogProps> = ({
     comments: '',
   });
 
-  // Fetch roles
+  // Fetch roles with caching
   const { data: roles } = useQuery({
     queryKey: ['roles-for-owl'],
     queryFn: async () => {
@@ -50,6 +52,8 @@ const OWLItemDialog: React.FC<OWLItemDialogProps> = ({
       if (error) throw error;
       return data;
     },
+    staleTime: 5 * 60 * 1000, // 5 minutes cache - roles rarely change
+    refetchOnWindowFocus: false,
   });
 
   useEffect(() => {
