@@ -98,14 +98,18 @@ export const P2ALandingPage: React.FC = () => {
           <BreadcrumbNavigation currentPageLabel={t.p2aTitle} />
           
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
-            <div className="min-w-0">
-              <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                <Key className="h-6 w-6" />
-                {t.p2aTitle}
-              </h1>
-              <p className="text-sm text-muted-foreground mt-1">
-                {t.p2aSubtitle}
-              </p>
+            <div className="min-w-0 flex items-center gap-3">
+              <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500">
+                <Key className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-foreground">
+                  {t.p2aTitle}
+                </h1>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {t.p2aSubtitle}
+                </p>
+              </div>
             </div>
             
             <Button
