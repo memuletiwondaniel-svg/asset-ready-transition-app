@@ -2,13 +2,14 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { useP2AHandovers, useP2ADeliverableCategories } from '@/hooks/useP2AHandovers';
+import { useP2AHandovers } from '@/hooks/useP2AHandovers';
 import { WizardStepProjectSelection } from './wizard/WizardStepProjectSelection';
-import { WizardStepPrerequisites } from './wizard/WizardStepPrerequisites';
-import { WizardStepScopeDeliverables } from './wizard/WizardStepScopeDeliverables';
+import { WizardStepPhaseSelection } from './wizard/WizardStepPhaseSelection';
+import { WizardStepScope } from './wizard/WizardStepScope';
+import { WizardStepTemplateRecommendation } from './wizard/WizardStepTemplateRecommendation';
 import { WizardStepContacts, HandoverContact } from './wizard/WizardStepContacts';
 import { WizardStepReview } from './wizard/WizardStepReview';
-import { ChevronLeft, ChevronRight, Loader2, Check, Key } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2, Check, Key, Save } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -19,10 +20,11 @@ interface CreateP2AHandoverWizardProps {
 
 const STEPS = [
   { id: 1, title: 'Project', description: 'Select project' },
-  { id: 2, title: 'Prerequisites', description: 'Verify readiness' },
+  { id: 2, title: 'Phase', description: 'PAC or FAC' },
   { id: 3, title: 'Scope', description: 'Define scope' },
-  { id: 4, title: 'Contacts', description: 'Key contacts' },
-  { id: 5, title: 'Review', description: 'Confirm & create' },
+  { id: 4, title: 'Template', description: 'Select template' },
+  { id: 5, title: 'Contacts', description: 'Key contacts' },
+  { id: 6, title: 'Review', description: 'Confirm & create' },
 ];
 
 const emptyContact: HandoverContact = { name: '', role: '', email: '' };
@@ -32,16 +34,14 @@ export const CreateP2AHandoverWizard: React.FC<CreateP2AHandoverWizardProps> = (
   onOpenChange,
 }) => {
   const { createHandover, isCreating } = useP2AHandovers();
-  const { categories } = useP2ADeliverableCategories();
   const [currentStep, setCurrentStep] = useState(1);
 
   // Form state
   const [projectId, setProjectId] = useState('');
   const [phase, setPhase] = useState<'PAC' | 'FAC'>('PAC');
-  const [pssrSignedDate, setPssrSignedDate] = useState<Date | undefined>();
-  const [prerequisites, setPrerequisites] = useState<string[]>([]);
   const [handoverScope, setHandoverScope] = useState('');
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
+  const [ignoreTemplates, setIgnoreTemplates] = useState(false);
   const [deliveringParty, setDeliveringParty] = useState<HandoverContact>(emptyContact);
   const [receivingParty, setReceivingParty] = useState<HandoverContact>(emptyContact);
   const [maintenanceParty, setMaintenanceParty] = useState<HandoverContact>(emptyContact);
@@ -50,10 +50,9 @@ export const CreateP2AHandoverWizard: React.FC<CreateP2AHandoverWizardProps> = (
     setCurrentStep(1);
     setProjectId('');
     setPhase('PAC');
-    setPssrSignedDate(undefined);
-    setPrerequisites([]);
     setHandoverScope('');
-    setSelectedCategories([]);
+    setSelectedTemplateId(null);
+    setIgnoreTemplates(false);
     setDeliveringParty(emptyContact);
     setReceivingParty(emptyContact);
     setMaintenanceParty(emptyContact);
@@ -73,12 +72,19 @@ export const CreateP2AHandoverWizard: React.FC<CreateP2AHandoverWizardProps> = (
         }
         return true;
       case 2:
-        // Prerequisites are optional but date validation could be added
+        // Phase is always selected (default PAC)
         return true;
       case 3:
-        // Scope and categories are optional
+        // Scope is required for PAC
+        if (phase === 'PAC' && !handoverScope.trim()) {
+          toast.error('Please enter a scope description');
+          return false;
+        }
         return true;
       case 4:
+        // Template selection is optional
+        return true;
+      case 5:
         // Contacts are optional
         return true;
       default:
@@ -96,15 +102,31 @@ export const CreateP2AHandoverWizard: React.FC<CreateP2AHandoverWizardProps> = (
     setCurrentStep((prev) => Math.max(prev - 1, 1));
   };
 
+  const handleSaveDraft = async () => {
+    try {
+      await createHandover({
+        project_id: projectId,
+        phase,
+        handover_scope: handoverScope,
+        status: 'DRAFT',
+        created_by: '',
+      });
+      
+      toast.success('Handover saved as draft');
+      handleClose();
+    } catch (error) {
+      toast.error('Failed to save draft');
+    }
+  };
+
   const handleSubmit = async () => {
     try {
       await createHandover({
         project_id: projectId,
         phase,
         handover_scope: handoverScope,
-        pssr_signed_date: pssrSignedDate ? format(pssrSignedDate, 'yyyy-MM-dd') : undefined,
         status: 'DRAFT',
-        created_by: '', // Will be set by the mutation
+        created_by: '',
       });
       
       toast.success('Handover created successfully');
@@ -122,31 +144,34 @@ export const CreateP2AHandoverWizard: React.FC<CreateP2AHandoverWizardProps> = (
         return (
           <WizardStepProjectSelection
             projectId={projectId}
-            phase={phase}
             onProjectChange={setProjectId}
-            onPhaseChange={setPhase}
           />
         );
       case 2:
         return (
-          <WizardStepPrerequisites
+          <WizardStepPhaseSelection
             phase={phase}
-            pssrSignedDate={pssrSignedDate}
-            prerequisites={prerequisites}
-            onPssrDateChange={setPssrSignedDate}
-            onPrerequisitesChange={setPrerequisites}
+            onPhaseChange={setPhase}
           />
         );
       case 3:
         return (
-          <WizardStepScopeDeliverables
-            handoverScope={handoverScope}
-            selectedCategories={selectedCategories}
+          <WizardStepScope
+            scope={handoverScope}
             onScopeChange={setHandoverScope}
-            onCategoriesChange={setSelectedCategories}
           />
         );
       case 4:
+        return (
+          <WizardStepTemplateRecommendation
+            scope={handoverScope}
+            selectedTemplateId={selectedTemplateId}
+            ignoreTemplates={ignoreTemplates}
+            onTemplateSelect={setSelectedTemplateId}
+            onIgnoreTemplatesChange={setIgnoreTemplates}
+          />
+        );
+      case 5:
         return (
           <WizardStepContacts
             deliveringParty={deliveringParty}
@@ -157,15 +182,15 @@ export const CreateP2AHandoverWizard: React.FC<CreateP2AHandoverWizardProps> = (
             onMaintenancePartyChange={setMaintenanceParty}
           />
         );
-      case 5:
+      case 6:
         return (
           <WizardStepReview
             projectId={projectId}
             phase={phase}
-            pssrSignedDate={pssrSignedDate}
-            prerequisites={prerequisites}
+            pssrSignedDate={undefined}
+            prerequisites={[]}
             handoverScope={handoverScope}
-            selectedCategories={selectedCategories}
+            selectedCategories={[]}
             deliveringParty={deliveringParty}
             receivingParty={receivingParty}
             maintenanceParty={maintenanceParty}
@@ -244,20 +269,34 @@ export const CreateP2AHandoverWizard: React.FC<CreateP2AHandoverWizardProps> = (
 
         {/* Navigation Buttons */}
         <div className="flex justify-between pt-4 border-t">
-          <Button
-            variant="outline"
-            onClick={currentStep === 1 ? handleClose : handleBack}
-            disabled={isCreating}
-          >
-            {currentStep === 1 ? (
-              'Cancel'
-            ) : (
-              <>
-                <ChevronLeft className="h-4 w-4 mr-1" />
-                Back
-              </>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={currentStep === 1 ? handleClose : handleBack}
+              disabled={isCreating}
+            >
+              {currentStep === 1 ? (
+                'Cancel'
+              ) : (
+                <>
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  Back
+                </>
+              )}
+            </Button>
+            
+            {/* Save Draft Button (visible from step 2 onwards) */}
+            {currentStep > 1 && (
+              <Button 
+                variant="ghost" 
+                onClick={handleSaveDraft}
+                disabled={isCreating || !projectId}
+              >
+                <Save className="h-4 w-4 mr-1" />
+                Save Draft
+              </Button>
             )}
-          </Button>
+          </div>
           
           {currentStep < STEPS.length ? (
             <Button onClick={handleNext}>
