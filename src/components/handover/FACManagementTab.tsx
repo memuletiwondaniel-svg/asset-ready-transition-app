@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileText, List } from 'lucide-react';
+import { FileText, List, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import FACCertificate from './FACCertificate';
 import FACPrerequisitesList from './FACPrerequisitesList';
+import DefaultApproversConfig from './DefaultApproversConfig';
 
 const getTabIconColor = (tabValue: string, isActive: boolean) => {
   if (!isActive) return 'text-muted-foreground/50';
@@ -13,6 +14,8 @@ const getTabIconColor = (tabValue: string, isActive: boolean) => {
       return 'text-teal-500 dark:text-teal-400';
     case 'prerequisites':
       return 'text-amber-500 dark:text-amber-400';
+    case 'approvers':
+      return 'text-green-500 dark:text-green-400';
     default:
       return 'text-foreground';
   }
@@ -45,6 +48,16 @@ const FACManagementTab: React.FC = () => {
             <List className={cn("h-4 w-4 transition-colors duration-200", getTabIconColor('prerequisites', activeSubTab === 'prerequisites'))} />
             Prerequisites
           </TabsTrigger>
+          <TabsTrigger 
+            value="approvers" 
+            className={cn(
+              "flex items-center gap-2 transition-colors duration-200",
+              activeSubTab !== 'approvers' && "text-muted-foreground/60"
+            )}
+          >
+            <Users className={cn("h-4 w-4 transition-colors duration-200", getTabIconColor('approvers', activeSubTab === 'approvers'))} />
+            Approvers
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="certificate" className="mt-6">
@@ -53,6 +66,10 @@ const FACManagementTab: React.FC = () => {
 
         <TabsContent value="prerequisites" className="mt-6">
           <FACPrerequisitesList />
+        </TabsContent>
+
+        <TabsContent value="approvers" className="mt-6">
+          <DefaultApproversConfig certificateType="FAC" />
         </TabsContent>
       </Tabs>
     </div>

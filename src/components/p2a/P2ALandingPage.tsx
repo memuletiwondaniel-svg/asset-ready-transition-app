@@ -3,7 +3,8 @@ import React, { useState } from 'react';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Plus, Key, TrendingUp, AlertCircle, CheckCircle } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Plus, Key, TrendingUp, AlertCircle, CheckCircle, FileText, LayoutGrid } from 'lucide-react';
 import { CreateP2AHandoverWizard } from './CreateP2AHandoverWizard';
 import { P2AHeatmap } from './P2AHeatmap';
 import { P2AHandoverList } from './P2AHandoverList';
@@ -16,6 +17,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 
 export const P2ALandingPage: React.FC = () => {
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [activeView, setActiveView] = useState<'list' | 'heatmap'>('list');
   const { handovers, isLoading } = useP2AHandovers();
   const { updateMetadata } = useBreadcrumb();
   const navigate = useNavigate();
@@ -154,11 +156,27 @@ export const P2ALandingPage: React.FC = () => {
               })}
             </div>
 
-            {/* Handover List */}
-            <P2AHandoverList />
+            {/* Tabbed Content - Handover List and Heatmap */}
+            <Tabs value={activeView} onValueChange={(v) => setActiveView(v as 'list' | 'heatmap')}>
+              <TabsList className="mb-4">
+                <TabsTrigger value="list" className="gap-2">
+                  <FileText className="h-4 w-4" />
+                  Active Handovers
+                </TabsTrigger>
+                <TabsTrigger value="heatmap" className="gap-2">
+                  <LayoutGrid className="h-4 w-4" />
+                  Heatmap View
+                </TabsTrigger>
+              </TabsList>
 
-            {/* Heatmap */}
-            <P2AHeatmap />
+              <TabsContent value="list">
+                <P2AHandoverList />
+              </TabsContent>
+
+              <TabsContent value="heatmap">
+                <P2AHeatmap />
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
 
