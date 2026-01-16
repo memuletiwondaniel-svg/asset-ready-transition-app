@@ -4,8 +4,9 @@ import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Plus, Key, TrendingUp, AlertCircle, CheckCircle } from 'lucide-react';
-import { CreateP2AHandoverModal } from './CreateP2AHandoverModal';
+import { CreateP2AHandoverWizard } from './CreateP2AHandoverWizard';
 import { P2AHeatmap } from './P2AHeatmap';
+import { P2AHandoverList } from './P2AHandoverList';
 import { useP2AHandovers } from '@/hooks/useP2AHandovers';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { useNavigate } from 'react-router-dom';
@@ -153,12 +154,15 @@ export const P2ALandingPage: React.FC = () => {
               })}
             </div>
 
+            {/* Handover List */}
+            <P2AHandoverList />
+
             {/* Heatmap */}
             <P2AHeatmap />
           </div>
         </div>
 
-      <CreateP2AHandoverModal 
+      <CreateP2AHandoverWizard 
         open={createModalOpen}
         onOpenChange={setCreateModalOpen}
       />
