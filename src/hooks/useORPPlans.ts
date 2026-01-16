@@ -100,7 +100,9 @@ export const useORPPlans = () => {
       });
 
       return plansWithDetails as ORPPlan[];
-    }
+    },
+    staleTime: 2 * 60 * 1000, // Cache for 2 minutes
+    refetchOnWindowFocus: false,
   });
 
   const createPlan = useMutation({
