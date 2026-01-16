@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Plus, Key, TrendingUp, AlertCircle, CheckCircle, BarChart3 } from 'lucide-react';
+import { Plus, Key, TrendingUp, AlertCircle, CheckCircle } from 'lucide-react';
 import { CreateP2AHandoverModal } from './CreateP2AHandoverModal';
 import { P2AHeatmap } from './P2AHeatmap';
 import { useP2AHandovers } from '@/hooks/useP2AHandovers';
@@ -99,7 +99,8 @@ export const P2ALandingPage: React.FC = () => {
           
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
             <div className="min-w-0">
-              <h1 className="text-2xl font-bold text-foreground">
+              <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+                <Key className="h-6 w-6" />
                 {t.p2aTitle}
               </h1>
               <p className="text-sm text-muted-foreground mt-1">
@@ -107,25 +108,14 @@ export const P2ALandingPage: React.FC = () => {
               </p>
             </div>
             
-            <div className="flex gap-2 w-full sm:w-auto">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate('/p2a-handover/analytics')}
-                className="flex-1 sm:flex-none text-xs sm:text-sm"
-              >
-                <BarChart3 className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                {t.analytics}
-              </Button>
-              <Button
-                size="sm"
-                onClick={() => setCreateModalOpen(true)}
-                className="flex-1 sm:flex-none bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity text-xs sm:text-sm"
-              >
-                <Plus className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                {t.initiateHandover}
-              </Button>
-            </div>
+            <Button
+              size="sm"
+              onClick={() => setCreateModalOpen(true)}
+              className="flex-1 sm:flex-none gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              {t.initiateHandover}
+            </Button>
           </div>
         </div>
 
