@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -30,6 +30,8 @@ import {
   Info,
   User,
   Trash2,
+  FileText,
+  ExternalLink,
 } from 'lucide-react';
 import { PACPrerequisite } from '@/hooks/useHandoverPrerequisites';
 import { 
@@ -38,6 +40,7 @@ import {
   DeviationData 
 } from '@/hooks/useP2AHandoverPrerequisites';
 import { DeviationQualificationModal } from './DeviationQualificationModal';
+import { toast } from 'sonner';
 
 interface PrerequisiteCardProps {
   pacPrerequisite: PACPrerequisite;
@@ -47,7 +50,9 @@ interface PrerequisiteCardProps {
   onAddEvidenceLink: (link: string) => void;
   onRemoveEvidenceLink: (link: string) => void;
   onReceivingPartyChange: (userId: string | null) => void;
-  onFileUpload?: (file: File) => void;
+  onFileUpload?: (files: File[]) => void;
+  onRemoveFile?: (file: File) => void;
+  uploadedFiles?: File[];
   users?: { id: string; full_name: string; position?: string }[];
   isUpdating?: boolean;
 }
@@ -68,6 +73,8 @@ export const PrerequisiteCard: React.FC<PrerequisiteCardProps> = ({
   onRemoveEvidenceLink,
   onReceivingPartyChange,
   onFileUpload,
+  onRemoveFile,
+  uploadedFiles = [],
   users = [],
   isUpdating,
 }) => {
@@ -75,13 +82,24 @@ export const PrerequisiteCard: React.FC<PrerequisiteCardProps> = ({
   const [showDeviationModal, setShowDeviationModal] = useState(false);
   const [newLink, setNewLink] = useState('');
   const [localComments, setLocalComments] = useState(handoverPrerequisite?.comments || '');
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const currentStatus = handoverPrerequisite?.status || 'NOT_COMPLETED';
   const evidenceLinks = handoverPrerequisite?.evidence_links || [];
 
+  const hasEvidence = evidenceLinks.length > 0 || uploadedFiles.length > 0;
+
   const handleStatusClick = (status: PrerequisiteStatus) => {
     if (status === 'DEVIATION') {
       setShowDeviationModal(true);
+    } else if (status === 'COMPLETED') {
+      // Check if evidence exists (links or files)
+      if (!hasEvidence) {
+        toast.error("Please add supporting evidence before marking as complete");
+        return;
+      }
+      onStatusChange(status);
     } else {
       onStatusChange(status);
     }
@@ -101,6 +119,37 @@ export const PrerequisiteCard: React.FC<PrerequisiteCardProps> = ({
   const handleCommentsBlur = () => {
     if (localComments !== (handoverPrerequisite?.comments || '')) {
       onCommentsChange(localComments);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0 && onFileUpload) {
+      onFileUpload(files);
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0 && onFileUpload) {
+      onFileUpload(files);
+    }
+    // Reset input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
@@ -127,6 +176,8 @@ export const PrerequisiteCard: React.FC<PrerequisiteCardProps> = ({
       </Badge>
     );
   };
+
+  const totalEvidenceCount = evidenceLinks.length + uploadedFiles.length;
 
   return (
     <>
@@ -162,11 +213,11 @@ export const PrerequisiteCard: React.FC<PrerequisiteCardProps> = ({
                   </div>
 
                   {/* Evidence Count */}
-                  {evidenceLinks.length > 0 && (
+                  {totalEvidenceCount > 0 && (
                     <div className="flex items-center gap-1 mt-2">
                       <Paperclip className="h-3 w-3 text-muted-foreground" />
                       <span className="text-xs text-muted-foreground">
-                        {evidenceLinks.length} evidence link(s)
+                        {totalEvidenceCount} evidence item(s)
                       </span>
                     </div>
                   )}
@@ -271,23 +322,102 @@ export const PrerequisiteCard: React.FC<PrerequisiteCardProps> = ({
                 </Select>
               </div>
 
-              {/* Evidence Links */}
-              <div className="space-y-2">
+              {/* Evidence Section - Combined Drag & Drop */}
+              <div className="space-y-3">
                 <Label className="text-xs font-medium flex items-center gap-1.5">
-                  <Link className="h-3.5 w-3.5" />
-                  Evidence Links
+                  <Paperclip className="h-3.5 w-3.5" />
+                  Supporting Evidence <span className="text-destructive">*</span>
                 </Label>
                 
-                {/* Existing Links */}
-                {evidenceLinks.length > 0 && (
-                  <div className="space-y-1">
+                {/* Drag & Drop Zone */}
+                <div 
+                  className={`border-2 border-dashed rounded-lg p-4 text-center transition-colors cursor-pointer ${
+                    isDragging 
+                      ? 'border-primary bg-primary/5' 
+                      : 'border-muted-foreground/30 hover:border-primary/50 hover:bg-muted/30'
+                  }`}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Upload className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
+                  <p className="text-xs text-muted-foreground">
+                    Drag and drop supporting documents
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    or <span className="text-primary font-medium">browse to select files</span>
+                  </p>
+                  <input 
+                    ref={fileInputRef} 
+                    type="file" 
+                    multiple 
+                    className="hidden" 
+                    onChange={handleFileSelect}
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+                  />
+                </div>
+                
+                {/* OR Divider */}
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 border-t border-muted-foreground/20" />
+                  <span className="text-xs text-muted-foreground">or add links</span>
+                  <div className="flex-1 border-t border-muted-foreground/20" />
+                </div>
+                
+                {/* Link Input */}
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Paste link (Assai, SharePoint, etc.)"
+                    value={newLink}
+                    onChange={(e) => setNewLink(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleAddLink()}
+                    className="h-8 text-xs"
+                  />
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleAddLink}
+                    disabled={!newLink.trim()}
+                    className="h-8"
+                  >
+                    Add Link
+                  </Button>
+                </div>
+                
+                {/* Display uploaded files and links */}
+                {(evidenceLinks.length > 0 || uploadedFiles.length > 0) && (
+                  <div className="space-y-1.5 bg-muted/30 rounded-lg p-2">
+                    {/* Files list */}
+                    {uploadedFiles.map((file, index) => (
+                      <div key={`file-${index}`} className="flex items-center gap-2 bg-background rounded px-2 py-1.5">
+                        <FileText className="h-4 w-4 text-blue-500 shrink-0" />
+                        <span className="text-xs flex-1 truncate">{file.name}</span>
+                        <span className="text-[10px] text-muted-foreground">
+                          {(file.size / 1024).toFixed(1)} KB
+                        </span>
+                        {onRemoveFile && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0"
+                            onClick={() => onRemoveFile(file)}
+                          >
+                            <Trash2 className="h-3 w-3 text-destructive" />
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                    {/* Links list */}
                     {evidenceLinks.map((link, index) => (
-                      <div key={index} className="flex items-center gap-2 bg-muted/50 rounded px-2 py-1">
+                      <div key={`link-${index}`} className="flex items-center gap-2 bg-background rounded px-2 py-1.5">
+                        <ExternalLink className="h-4 w-4 text-primary shrink-0" />
                         <a 
                           href={link} 
                           target="_blank" 
                           rel="noopener noreferrer"
                           className="text-xs text-primary hover:underline flex-1 truncate"
+                          onClick={(e) => e.stopPropagation()}
                         >
                           {link}
                         </a>
@@ -303,25 +433,6 @@ export const PrerequisiteCard: React.FC<PrerequisiteCardProps> = ({
                     ))}
                   </div>
                 )}
-
-                {/* Add Link Input */}
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Paste link (Assai, SharePoint, etc.)"
-                    value={newLink}
-                    onChange={(e) => setNewLink(e.target.value)}
-                    className="h-8 text-xs"
-                  />
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={handleAddLink}
-                    disabled={!newLink.trim()}
-                    className="h-8"
-                  >
-                    Add
-                  </Button>
-                </div>
               </div>
 
               {/* Comments */}

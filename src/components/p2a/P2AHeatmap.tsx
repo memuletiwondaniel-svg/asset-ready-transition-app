@@ -7,23 +7,6 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { P2AHeatmapCell } from './P2AHeatmapCell';
 import { useNavigate } from 'react-router-dom';
 
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'NOT_STARTED':
-      return 'bg-slate-300 dark:bg-slate-700';
-    case 'IN_PROGRESS':
-      return 'bg-blue-400';
-    case 'BEHIND_SCHEDULE':
-      return 'bg-red-500';
-    case 'COMPLETED':
-      return 'bg-green-500';
-    case 'NOT_APPLICABLE':
-      return 'bg-gray-300 dark:bg-gray-600';
-    default:
-      return 'bg-slate-300';
-  }
-};
-
 export const P2AHeatmap: React.FC = () => {
   const { handovers, isLoading: loadingHandovers } = useP2AHandovers();
   const { categories, isLoading: loadingCategories } = useP2ADeliverableCategories();
@@ -32,41 +15,41 @@ export const P2AHeatmap: React.FC = () => {
   if (loadingHandovers || loadingCategories) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle>P2A Handover Heatmap</CardTitle>
+        <CardHeader className="p-3 sm:p-4">
+          <CardTitle className="text-sm sm:text-base">P2A Handover Heatmap</CardTitle>
         </CardHeader>
-        <CardContent>
-          <Skeleton className="h-64 w-full" />
+        <CardContent className="p-3 sm:p-4 pt-0">
+          <Skeleton className="h-48 w-full" />
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="border-border/40 shadow-lg">
-      <CardHeader className="bg-gradient-to-br from-primary/5 via-accent/5 to-transparent border-b border-border/40 p-3 sm:p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <CardTitle className="text-base sm:text-xl font-bold">P2A Handover Heatmap</CardTitle>
-          <div className="flex flex-wrap gap-2 text-xs">
+    <Card className="border-border/40 shadow-sm">
+      <CardHeader className="bg-gradient-to-br from-primary/5 via-accent/5 to-transparent border-b border-border/40 p-2 sm:p-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <CardTitle className="text-sm sm:text-base font-bold">P2A Handover Heatmap</CardTitle>
+          <div className="flex flex-wrap gap-1.5 text-[10px]">
             <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded-sm bg-slate-300 dark:bg-slate-700" />
-              <span className="text-[10px] sm:text-xs">Not Started</span>
+              <div className="w-2.5 h-2.5 rounded-sm bg-white border border-muted-foreground/30" />
+              <span>Not Started</span>
             </div>
             <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded-sm bg-blue-400" />
-              <span className="text-[10px] sm:text-xs">In Progress</span>
+              <div className="w-2.5 h-2.5 rounded-sm bg-amber-400" />
+              <span>In Progress</span>
             </div>
             <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded-sm bg-red-500" />
-              <span className="text-[10px] sm:text-xs">Behind</span>
+              <div className="w-2.5 h-2.5 rounded-sm bg-red-500" />
+              <span>Overdue</span>
             </div>
             <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded-sm bg-green-500" />
-              <span className="text-[10px] sm:text-xs">Completed</span>
+              <div className="w-2.5 h-2.5 rounded-sm bg-green-500" />
+              <span>Completed</span>
             </div>
             <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded-sm bg-gray-300 dark:bg-gray-600" />
-              <span className="text-[10px] sm:text-xs">N/A</span>
+              <div className="w-2.5 h-2.5 rounded-sm bg-gray-400 dark:bg-gray-600" />
+              <span>N/A</span>
             </div>
           </div>
         </div>
@@ -76,13 +59,13 @@ export const P2AHeatmap: React.FC = () => {
           <div className="min-w-max">
             {/* Header Row */}
             <div className="flex border-b border-border/40 bg-muted/30">
-              <div className="w-48 sm:w-64 p-2 sm:p-3 font-semibold text-xs sm:text-sm border-r border-border/40 sticky left-0 bg-muted/30 z-10">
+              <div className="w-32 sm:w-44 p-1.5 sm:p-2 font-semibold text-[10px] sm:text-xs border-r border-border/40 sticky left-0 bg-muted/30 z-10">
                 Project
               </div>
               {categories?.map((category) => (
                 <div
                   key={category.id}
-                  className="w-24 sm:w-32 p-2 sm:p-3 text-[10px] sm:text-xs font-semibold text-center border-r border-border/40"
+                  className="w-14 sm:w-16 p-1 sm:p-1.5 text-[8px] sm:text-[10px] font-semibold text-center border-r border-border/40 leading-tight"
                 >
                   {category.name}
                 </div>
@@ -91,20 +74,23 @@ export const P2AHeatmap: React.FC = () => {
 
             {/* Data Rows */}
             {handovers?.length === 0 ? (
-              <div className="p-8 text-center text-muted-foreground">
+              <div className="p-6 text-center text-muted-foreground text-sm">
                 No handovers found. Create your first P2A handover to get started.
               </div>
             ) : (
               handovers?.map((handover) => (
                 <div key={handover.id} className="flex border-b border-border/40 hover:bg-muted/20">
-                  <div className="w-48 sm:w-64 p-2 sm:p-3 border-r border-border/40 sticky left-0 bg-card z-10 cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => navigate(`/p2a-handover/${handover.id}`)}>
-                    <div className="font-medium text-xs sm:text-sm">
+                  <div 
+                    className="w-32 sm:w-44 p-1.5 sm:p-2 border-r border-border/40 sticky left-0 bg-card z-10 cursor-pointer hover:bg-muted/50 transition-colors" 
+                    onClick={() => navigate(`/p2a-handover/${handover.id}`)}
+                  >
+                    <div className="font-medium text-[10px] sm:text-xs">
                       {handover.project?.project_id_prefix}-{handover.project?.project_id_number}
                     </div>
-                    <div className="text-[10px] sm:text-xs text-muted-foreground truncate">
+                    <div className="text-[9px] sm:text-[10px] text-muted-foreground truncate">
                       {handover.project?.project_title}
                     </div>
-                    <Badge variant="outline" className="mt-1 text-[10px] sm:text-xs">
+                    <Badge variant="outline" className="mt-0.5 text-[8px] sm:text-[10px] h-4 px-1">
                       {handover.phase}
                     </Badge>
                   </div>
@@ -116,7 +102,7 @@ export const P2AHeatmap: React.FC = () => {
                     return (
                       <div
                         key={category.id}
-                        className="w-24 sm:w-32 p-2 sm:p-3 border-r border-border/40 flex items-center justify-center"
+                        className="w-14 sm:w-16 p-1 sm:p-1.5 border-r border-border/40 flex items-center justify-center"
                       >
                         <P2AHeatmapCell 
                           handoverId={handover.id}

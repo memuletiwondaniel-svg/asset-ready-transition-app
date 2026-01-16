@@ -129,8 +129,8 @@ export const P2ALandingPage: React.FC = () => {
         {/* Main Content */}
         <div className="flex-1 overflow-auto p-3 sm:p-4 md:p-6">
           <div className="max-w-[1600px] mx-auto space-y-4 sm:space-y-6">
-            {/* Statistics Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            {/* Statistics Cards - Compact Version */}
+            <div className="grid grid-cols-4 gap-2 sm:gap-3">
               {stats.map((stat, index) => {
                 const Icon = stat.icon;
                 return (
@@ -139,18 +139,17 @@ export const P2ALandingPage: React.FC = () => {
                     className={`relative overflow-hidden border-border/40 bg-gradient-to-br ${stat.bgGradient} animate-fade-in`}
                     style={{ animationDelay: `${index * 100}ms` }}
                   >
-                    <div className="p-3 sm:p-4 md:p-6">
-                      <div className="flex items-center justify-between mb-2 sm:mb-4">
-                        <div className={`p-2 sm:p-3 rounded-xl bg-gradient-to-br ${stat.gradient}`}>
-                          <Icon className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+                    <div className="p-2 sm:p-3">
+                      <div className="flex items-center gap-2">
+                        <div className={`p-1.5 sm:p-2 rounded-lg bg-gradient-to-br ${stat.gradient}`}>
+                          <Icon className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[9px] sm:text-xs text-muted-foreground truncate">{stat.title}</p>
+                          <p className="text-lg sm:text-xl font-bold">{stat.value}</p>
                         </div>
                       </div>
-                      <div className="space-y-1">
-                        <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground truncate">{stat.title}</p>
-                        <p className="text-xl sm:text-2xl md:text-3xl font-bold">{stat.value}</p>
-                      </div>
                     </div>
-                    <div className="absolute top-0 right-0 w-20 h-20 sm:w-32 sm:h-32 bg-gradient-to-br from-white/5 to-transparent rounded-full -mr-10 -mt-10 sm:-mr-16 sm:-mt-16" />
                   </Card>
                 );
               })}
@@ -161,7 +160,7 @@ export const P2ALandingPage: React.FC = () => {
               <TabsList className="mb-4">
                 <TabsTrigger value="list" className="gap-2">
                   <FileText className="h-4 w-4" />
-                  Active Handovers
+                  Handovers
                 </TabsTrigger>
                 <TabsTrigger value="heatmap" className="gap-2">
                   <LayoutGrid className="h-4 w-4" />
