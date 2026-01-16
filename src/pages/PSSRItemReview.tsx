@@ -8,8 +8,6 @@ import { Progress } from '@/components/ui/progress';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { OrshSidebar } from '@/components/OrshSidebar';
-import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { usePSSRItemApprovals, ItemApprovalStatus } from '@/hooks/usePSSRItemApprovals';
 import { usePSSRPriorityActions } from '@/hooks/usePSSRPriorityActions';
 import { supabase } from '@/integrations/supabase/client';
@@ -225,30 +223,14 @@ const PSSRItemReview: React.FC = () => {
 
   if (isLoading) {
     return (
-      <SidebarProvider>
-        <OrshSidebar 
-          currentPage="pssr" 
-          onNavigate={createSidebarNavigator(navigate)}
-          onLogout={() => navigate('/')}
-        />
-        <SidebarInset>
-          <div className="flex items-center justify-center h-screen">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-          </div>
-        </SidebarInset>
-      </SidebarProvider>
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
     );
   }
 
   return (
-    <SidebarProvider>
-      <OrshSidebar 
-        currentPage="pssr" 
-        onNavigate={createSidebarNavigator(navigate)}
-        onLogout={() => navigate('/')}
-      />
-      <SidebarInset>
-        <div className="flex flex-col h-screen bg-background">
+    <div className="flex flex-col h-screen bg-background">
           {/* Header */}
           <div className="sticky top-0 z-10 bg-background border-b px-6 py-4">
             <div className="flex items-center gap-4 mb-4">
@@ -485,8 +467,7 @@ const PSSRItemReview: React.FC = () => {
           stats={stats}
           priorityActions={priorityActions || []}
         />
-      </SidebarInset>
-    </SidebarProvider>
+    </div>
   );
 };
 

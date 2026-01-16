@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { OrshSidebar } from '@/components/OrshSidebar';
+
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -37,56 +37,23 @@ export const ORMDetailsPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="h-screen flex w-full overflow-hidden">
-        <OrshSidebar currentPage="or-maintenance" onNavigate={(section) => {
-          if (section === 'home') {
-            navigate('/');
-          } else {
-            navigate(`/${section}`);
-          }
-        }} onLogout={() => navigate('/')} />
-        <div className="flex-1 p-6">
-          <Skeleton className="h-8 w-64 mb-4" />
-          <Skeleton className="h-96 w-full" />
-        </div>
+      <div className="flex-1 p-6">
+        <Skeleton className="h-8 w-64 mb-4" />
+        <Skeleton className="h-96 w-full" />
       </div>
     );
   }
 
   if (!plan) {
     return (
-      <div className="h-screen flex w-full overflow-hidden">
-        <OrshSidebar currentPage="or-maintenance" onNavigate={(section) => {
-          if (section === 'home') {
-            navigate('/');
-          } else {
-            navigate(`/${section}`);
-          }
-        }} onLogout={() => navigate('/')} />
-        <div className="flex-1 flex items-center justify-center">
-          <p className="text-muted-foreground">ORM plan not found</p>
-        </div>
+      <div className="flex-1 flex items-center justify-center">
+        <p className="text-muted-foreground">ORM plan not found</p>
       </div>
     );
   }
 
   return (
-    <div className="h-screen flex w-full overflow-hidden">
-      <OrshSidebar
-        currentPage="or-maintenance"
-        onNavigate={(section) => {
-          if (section === 'home') {
-            navigate('/');
-          } else if (section === 'or-maintenance') {
-            navigate('/or-maintenance');
-          } else {
-            navigate(`/${section}`);
-          }
-        }}
-        onLogout={() => navigate('/')}
-      />
-
-      <div className="flex-1 flex flex-col overflow-hidden">
+    <div className="flex-1 flex flex-col overflow-hidden">
         <div className="border-b border-border bg-card px-6 py-4">
           <BreadcrumbNavigation currentPageLabel="OR Maintenance Details" />
           <div className="flex items-center gap-4 mt-2">
@@ -186,6 +153,5 @@ export const ORMDetailsPage: React.FC = () => {
           </Tabs>
         </div>
       </div>
-    </div>
   );
 };

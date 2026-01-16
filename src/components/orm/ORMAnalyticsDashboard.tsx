@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { OrshSidebar } from '@/components/OrshSidebar';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -119,17 +119,7 @@ export const ORMAnalyticsDashboard: React.FC = () => {
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
   return (
-    <div className="h-screen flex w-full overflow-hidden">
-      <OrshSidebar
-        currentPage="or-maintenance"
-        onNavigate={(section) => {
-          if (section === 'home') navigate('/');
-          else if (section === 'or-maintenance') navigate('/or-maintenance');
-          else navigate(`/${section}`);
-        }}
-      />
-
-      <div className="flex-1 flex flex-col overflow-hidden">
+    <div className="flex-1 flex flex-col overflow-hidden">
         <div className="border-b border-border bg-card px-6 py-4">
           <BreadcrumbNavigation currentPageLabel="Analytics" />
           <div className="flex items-center justify-between mt-2">
@@ -292,6 +282,5 @@ export const ORMAnalyticsDashboard: React.FC = () => {
           </Card>
         </div>
       </div>
-    </div>
   );
 };
