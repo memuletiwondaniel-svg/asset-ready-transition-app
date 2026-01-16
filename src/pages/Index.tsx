@@ -4,7 +4,13 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Shield, FileCheck, Headphones, ClipboardCheck, Key } from "lucide-react";
 import { useAuth } from "@/components/enhanced-auth/AuthProvider";
 import EnhancedAuthModal from "@/components/enhanced-auth/EnhancedAuthModal";
+import PSSRSummaryPage from "@/components/PSSRSummaryPage";
+import LandingPage from "@/components/LandingPage";
 import BackgroundSlideshow from "@/components/BackgroundSlideshow";
+import UserManagement from "@/pages/UserManagement";
+import AdminToolsPage from "@/components/AdminToolsPage";
+import ProjectManagementPage from "@/components/project/ProjectManagementPage";
+import ProjectsHomePage from "@/components/project/ProjectsHomePage";
 import OrshLogo from "@/components/ui/OrshLogo";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -21,8 +27,28 @@ const Index = () => {
   
   const handleAuthenticated = () => {
     setShowAuth(false);
-    // Navigate to home after authentication
-    navigate('/home');
+  };
+  
+  const handleBack = () => {
+    try { signOut(); } catch {}
+    navigate('/');
+  };
+  
+  const handleNavigate = (section: string) => {
+    console.log('Index handleNavigate called with section:', section);
+    if (section === 'home') {
+      navigate('/');
+    } else if (section === 'operation-readiness') {
+      navigate('/operation-readiness');
+    } else if (section === 'p2a-handover') {
+      navigate('/p2a-handover');
+    } else {
+      navigate(`/${section}`);
+    }
+  };
+  
+  const handleBackToLanding = () => {
+    navigate('/');
   };
 
   useEffect(() => {
@@ -31,16 +57,36 @@ const Index = () => {
     }
   }, [session, showAuth]);
 
-  // If authenticated and on root, redirect to /home (which has the sidebar layout)
-  useEffect(() => {
-    if (isAuthenticated && location.pathname === '/') {
-      navigate('/home', { replace: true });
+  // Show specific section based on navigation
+  if (isAuthenticated && currentSection) {
+    switch (currentSection) {
+      case 'pssr':
+        return <PSSRSummaryPage onBack={handleBackToLanding} />;
+      case 'users':
+      case 'user-management':
+        return <UserManagement onBack={handleBackToLanding} />;
+      case 'admin-tools':
+        return <AdminToolsPage onBack={handleBackToLanding} />;
+      case 'projects':
+        return <ProjectsHomePage onBack={handleBackToLanding} />;
+      case 'p2o':
+        return (
+          <div className="min-h-screen flex items-center justify-center bg-gray-100">
+            <div className="text-center">
+              <h1 className="text-3xl font-bold mb-4">Project-to-Operations (P2O)</h1>
+              <p className="text-gray-600 mb-6">PAC and FAC workflows - Coming Soon...</p>
+              <Button onClick={handleBackToLanding}>Back to Dashboard</Button>
+            </div>
+          </div>
+        );
+      default:
+        return <LandingPage onBack={handleBack} onNavigate={handleNavigate} />;
     }
-  }, [isAuthenticated, location.pathname, navigate]);
+  }
 
-  // If authenticated but on root, show nothing while redirecting
-  if (isAuthenticated && location.pathname === '/') {
-    return null;
+  // Show landing page after authentication
+  if (isAuthenticated) {
+    return <LandingPage onBack={handleBack} onNavigate={handleNavigate} />;
   }
 
   // Show welcome screen before authentication

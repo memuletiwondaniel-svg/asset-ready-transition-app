@@ -12,11 +12,6 @@ import AuthenticatedLayout from "@/components/layouts/AuthenticatedLayout";
 import Index from "./pages/Index";
 import AuthPage from "./pages/AuthPage";
 import NotFound from "./pages/NotFound";
-import LandingPage from "@/components/LandingPage";
-import PSSRSummaryPage from "@/components/PSSRSummaryPage";
-import UserManagement from "@/pages/UserManagement";
-import AdminToolsPage from "@/components/AdminToolsPage";
-import ProjectsHomePage from "@/components/project/ProjectsHomePage";
 import { ORPLandingPage } from "@/components/orp/ORPLandingPage";
 import { ORPDetailsPage } from "@/components/orp/ORPDetailsPage";
 import { ORPAnalyticsPage } from "@/components/orp/ORPAnalyticsPage";
@@ -64,12 +59,12 @@ const App = () => (
                     
                     {/* Authenticated routes with persistent sidebar layout */}
                     <Route element={<AuthenticatedLayout />}>
-                      <Route path="/home" element={<LandingPage />} />
-                      <Route path="/pssr" element={<PSSRSummaryPage />} />
-                      <Route path="/users" element={<UserManagement />} />
-                      <Route path="/manage-checklist" element={<AdminToolsPage />} />
-                      <Route path="/admin-tools" element={<AdminToolsPage />} />
-                      <Route path="/projects" element={<ProjectsHomePage />} />
+                      <Route path="/home" element={<Index />} />
+                      <Route path="/pssr" element={<Index />} />
+                      <Route path="/users" element={<Index />} />
+                      <Route path="/manage-checklist" element={<Index />} />
+                      <Route path="/admin-tools" element={<Index />} />
+                      <Route path="/projects" element={<Index />} />
                       <Route path="/project-management" element={<ProjectManagementPage />} />
                       <Route path="/project/:id" element={<ProjectDetailsPage />} />
                       <Route path="/pssr/approver-dashboard" element={<PSSRApproverDashboard />} />

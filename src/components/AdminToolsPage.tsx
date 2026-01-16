@@ -26,7 +26,7 @@ import { NotificationCenter } from './NotificationCenter';
 import { createSidebarNavigator } from '@/utils/sidebarNavigation';
 
 interface AdminToolsPageProps {
-  onBack?: () => void;
+  onBack: () => void;
 }
 const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   onBack
