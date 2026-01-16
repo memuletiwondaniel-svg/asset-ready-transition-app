@@ -1,11 +1,12 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
+import { HeatmapCellClickData } from './P2AHeatmapCellDialog';
 
 interface P2AHeatmapCellProps {
   handoverId: string;
+  categoryId: string;
   status: string;
   percentage: number;
   categoryName?: string;
@@ -13,6 +14,7 @@ interface P2AHeatmapCellProps {
   lastUpdated?: string;
   deliverableCount?: number;
   completedCount?: number;
+  onCellClick?: (data: HeatmapCellClickData) => void;
 }
 
 const getStatusColor = (status: string) => {
@@ -83,20 +85,34 @@ const shouldShowPercentage = (status: string) => {
 };
 
 export const P2AHeatmapCell: React.FC<P2AHeatmapCellProps> = ({ 
-  handoverId, 
+  handoverId,
+  categoryId,
   status, 
   percentage,
   categoryName,
   latestComment,
   lastUpdated,
   deliverableCount = 0,
-  completedCount = 0
+  completedCount = 0,
+  onCellClick
 }) => {
-  const navigate = useNavigate();
-
   const truncateComment = (comment: string, maxLength: number = 80) => {
     if (comment.length <= maxLength) return comment;
     return comment.substring(0, maxLength) + '...';
+  };
+
+  const handleClick = () => {
+    onCellClick?.({
+      handoverId,
+      categoryId,
+      categoryName,
+      status,
+      percentage,
+      deliverableCount,
+      completedCount,
+      latestComment,
+      lastUpdated
+    });
   };
 
   return (
@@ -104,7 +120,7 @@ export const P2AHeatmapCell: React.FC<P2AHeatmapCellProps> = ({
       <Tooltip delayDuration={200}>
         <TooltipTrigger asChild>
           <div
-            onClick={() => navigate(`/p2a-handover/${handoverId}`)}
+            onClick={handleClick}
             className={`w-8 h-5 sm:w-10 sm:h-6 rounded cursor-pointer transition-all hover:scale-110 hover:shadow-md flex items-center justify-center ${getStatusColor(status)}`}
           >
             {shouldShowPercentage(status) && (

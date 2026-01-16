@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Key, TrendingUp, AlertCircle, CheckCircle, FileText, LayoutGrid } from 'lucide-react';
+import { Plus, Key, FileText, LayoutGrid } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { CreateP2AHandoverWizard } from './CreateP2AHandoverWizard';
 import { P2AHeatmap } from './P2AHeatmap';
 import { P2AHandoverList } from './P2AHandoverList';
@@ -63,39 +63,20 @@ export const P2ALandingPage: React.FC = () => {
     fetchUserProfile();
   }, []);
 
-  const stats = [
-    {
-      title: t.totalHandovers,
-      value: handovers?.length || 0,
-      icon: Key,
-      gradient: 'from-blue-500 to-cyan-500',
-      bgGradient: 'from-blue-500/20 to-cyan-500/20'
-    },
-    {
-      title: t.inProgress,
-      value: handovers?.filter(h => h.status === 'IN_PROGRESS').length || 0,
-      icon: TrendingUp,
-      gradient: 'from-amber-500 to-orange-500',
-      bgGradient: 'from-amber-500/20 to-orange-500/20'
-    },
-    {
-      title: t.behindSchedule,
-      value: 0,
-      icon: AlertCircle,
-      gradient: 'from-red-500 to-pink-500',
-      bgGradient: 'from-red-500/20 to-pink-500/20'
-    },
-    {
-      title: t.completed,
-      value: handovers?.filter(h => h.status === 'COMPLETED').length || 0,
-      icon: CheckCircle,
-      gradient: 'from-green-500 to-emerald-500',
-      bgGradient: 'from-green-500/20 to-emerald-500/20'
-    }
-  ];
-
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-gradient-to-br from-background via-background to-muted/20">
+        {/* SVG Gradient Definition for Heatmap Icon */}
+        <svg width="0" height="0" className="absolute">
+          <defs>
+            <linearGradient id="heatmapGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#f59e0b" />
+              <stop offset="33%" stopColor="#22c55e" />
+              <stop offset="66%" stopColor="#3b82f6" />
+              <stop offset="100%" stopColor="#8b5cf6" />
+            </linearGradient>
+          </defs>
+        </svg>
+
         {/* Header */}
         <div className="border-b border-border/40 bg-card/50 backdrop-blur-xl p-4 md:p-6">
           <BreadcrumbNavigation currentPageLabel={t.p2aTitle} />
@@ -129,41 +110,23 @@ export const P2ALandingPage: React.FC = () => {
         {/* Main Content */}
         <div className="flex-1 overflow-auto p-3 sm:p-4 md:p-6">
           <div className="max-w-[1600px] mx-auto space-y-4 sm:space-y-6">
-            {/* Statistics Cards - Compact Version */}
-            <div className="grid grid-cols-4 gap-2 sm:gap-3">
-              {stats.map((stat, index) => {
-                const Icon = stat.icon;
-                return (
-                  <Card
-                    key={stat.title}
-                    className={`relative overflow-hidden border-border/40 bg-gradient-to-br ${stat.bgGradient} animate-fade-in`}
-                    style={{ animationDelay: `${index * 100}ms` }}
-                  >
-                    <div className="p-2 sm:p-3">
-                      <div className="flex items-center gap-2">
-                        <div className={`p-1.5 sm:p-2 rounded-lg bg-gradient-to-br ${stat.gradient}`}>
-                          <Icon className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-[9px] sm:text-xs text-muted-foreground truncate">{stat.title}</p>
-                          <p className="text-lg sm:text-xl font-bold">{stat.value}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </Card>
-                );
-              })}
-            </div>
-
             {/* Tabbed Content - Handover List and Heatmap */}
             <Tabs value={activeView} onValueChange={(v) => setActiveView(v as 'list' | 'heatmap')}>
               <TabsList className="mb-4">
                 <TabsTrigger value="list" className="gap-2">
-                  <FileText className="h-4 w-4" />
+                  <FileText className={cn(
+                    "h-4 w-4 transition-colors",
+                    activeView === 'list' ? "text-blue-600" : ""
+                  )} />
                   Handovers
                 </TabsTrigger>
                 <TabsTrigger value="heatmap" className="gap-2">
-                  <LayoutGrid className="h-4 w-4" />
+                  <LayoutGrid 
+                    className="h-4 w-4 transition-colors"
+                    style={activeView === 'heatmap' ? { 
+                      stroke: 'url(#heatmapGradient)',
+                    } : undefined}
+                  />
                   Heatmap View
                 </TabsTrigger>
               </TabsList>
