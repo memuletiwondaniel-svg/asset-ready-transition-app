@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { OrshSidebar } from '@/components/OrshSidebar';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -171,17 +171,7 @@ export const ORMResourceCapacityDashboard: React.FC = () => {
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
   return (
-    <div className="h-screen flex w-full overflow-hidden">
-      <OrshSidebar
-        currentPage="or-maintenance"
-        onNavigate={(section) => {
-          if (section === 'home') navigate('/');
-          else if (section === 'or-maintenance') navigate('/or-maintenance');
-          else navigate(`/${section}`);
-        }}
-      />
-
-      <div className="flex-1 flex flex-col overflow-hidden">
+    <div className="flex-1 flex flex-col overflow-hidden">
         <div className="border-b border-border bg-card px-6 py-4">
           <BreadcrumbNavigation currentPageLabel="Resource Capacity" />
           <div className="flex items-center gap-4 mt-2">
@@ -347,6 +337,5 @@ export const ORMResourceCapacityDashboard: React.FC = () => {
           </Card>
         </div>
       </div>
-    </div>
   );
 };

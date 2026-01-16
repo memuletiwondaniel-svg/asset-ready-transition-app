@@ -17,7 +17,7 @@ import AdminHeader from "./admin/AdminHeader";
 import AdminActivityLog from "./AdminActivityLog";
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { OrshSidebar } from './OrshSidebar';
+
 import { useNavigate } from 'react-router-dom';
 import { ThemeToggle } from './admin/ThemeToggle';
 import LanguageSelector from './admin/LanguageSelector';
@@ -345,47 +345,34 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
 
   // Handle conditional views AFTER all hooks
   if (activeView === 'users') {
-    return <div className="h-screen flex w-full overflow-hidden animate-fade-in">
-        <OrshSidebar userName="Daniel" userTitle="ORA Engr." language="en" currentPage="admin-tools" onNavigate={handleSidebarNavigate} />
-        <div className="flex-1 flex flex-col overflow-hidden">
+    return <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
           <EnhancedUserManagement onBack={() => setActiveView('dashboard')} selectedLanguage={language} translations={t} />
-        </div>
       </div>;
   }
   if (activeView === 'pssr-settings') {
-    return <div className="h-screen flex w-full overflow-hidden animate-fade-in">
-        <OrshSidebar userName="Daniel" userTitle="ORA Engr." language="en" currentPage="admin-tools" onNavigate={handleSidebarNavigate} />
-        <div className="flex-1 overflow-y-auto">
+    return <div className="flex-1 overflow-y-auto animate-fade-in">
           <PSSRSettingsManagement onBack={() => setActiveView('dashboard')} selectedLanguage={language} translations={t} />
-        </div>
       </div>;
   }
   if (activeView === 'activity-log') {
-    return <div className="h-screen flex w-full overflow-hidden animate-fade-in">
-        <OrshSidebar userName="Daniel" userTitle="ORA Engr." language="en" currentPage="admin-tools" onNavigate={handleSidebarNavigate} />
-        <div className="flex-1 overflow-y-auto">
+    return <div className="flex-1 overflow-y-auto animate-fade-in">
           <AdminActivityLog onBack={() => setActiveView('dashboard')} selectedLanguage={language} />
-        </div>
       </div>;
   }
   if (activeView === 'ora-configuration') {
-    return <div className="h-screen flex w-full overflow-hidden animate-fade-in">
-        <OrshSidebar userName="Daniel" userTitle="ORA Engr." language="en" currentPage="admin-tools" onNavigate={handleSidebarNavigate} />
+    return <div className="flex-1 overflow-hidden animate-fade-in">
         <ORAConfigurationManagement onBack={() => setActiveView('dashboard')} />
       </div>;
   }
   if (activeView === 'handover-management') {
-    return <div className="h-screen flex w-full overflow-hidden animate-fade-in">
-        <OrshSidebar userName="Daniel" userTitle="ORA Engr." language="en" currentPage="admin-tools" onNavigate={handleSidebarNavigate} />
+    return <div className="flex-1 overflow-hidden animate-fade-in">
         <ManageHandover onBack={() => setActiveView('dashboard')} />
       </div>;
   }
   
   // Show skeleton while initial data is loading
   if (isInitialLoading) {
-    return <div className="h-screen flex w-full overflow-hidden bg-gradient-to-br from-background via-background to-muted/20">
-      <OrshSidebar userName="Daniel" userTitle="ORA Engr." language="en" currentPage="admin-tools" onNavigate={handleSidebarNavigate} />
-      <div className="flex-1 flex flex-col overflow-y-auto">
+    return <div className="flex-1 flex flex-col overflow-y-auto bg-gradient-to-br from-background via-background to-muted/20">
         {/* Header Skeleton */}
         <div className="border-b border-border bg-card/80 backdrop-blur-sm px-6 py-4 sticky top-0 z-10">
           <div className="h-4 w-48 bg-muted animate-pulse rounded mb-3" />
@@ -426,13 +413,10 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
             </div>
           </div>
         </div>
-      </div>
     </div>;
   }
   
-  return <div className="h-screen flex w-full overflow-hidden bg-gradient-to-br from-background via-background to-muted/20">
-      <OrshSidebar userName="Daniel" userTitle="ORA Engr." language="en" currentPage="admin-tools" onNavigate={handleSidebarNavigate} />
-      <div className="flex-1 flex flex-col overflow-y-auto">
+  return <div className="flex-1 flex flex-col overflow-y-auto bg-gradient-to-br from-background via-background to-muted/20">
         {/* Header */}
         <div className="border-b border-border bg-card/80 backdrop-blur-sm px-6 py-4 sticky top-0 z-10">
           <BreadcrumbNavigation currentPageLabel="Administration" />
@@ -618,7 +602,6 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
         </TooltipProvider>
         </div>
       </div>
-    </div>
     </div>;
 };
 const AdminToolsPage: React.FC<AdminToolsPageProps> = props => {

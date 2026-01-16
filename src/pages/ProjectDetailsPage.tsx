@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ArrowLeft, FileText, Calendar, Users, MapPin, Building, Target, FileCheck, UserCircle, ExternalLink, Edit, Eye, EyeOff } from 'lucide-react';
-import { OrshSidebar } from '@/components/OrshSidebar';
+
 import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
@@ -165,17 +165,10 @@ export default function ProjectDetailsPage() {
   if (isLoading) {
     return (
       <AnimatedBackground>
-        <div className="flex h-screen">
-          <OrshSidebar 
-            currentPage="projects" 
-            onNavigate={handleSidebarNavigate}
-            onLogout={() => navigate('/')}
-          />
-          <div className="flex-1 overflow-auto">
-            <div className="container mx-auto p-6 space-y-6">
-              <Skeleton className="h-8 w-64" />
-              <Skeleton className="h-96 w-full" />
-            </div>
+        <div className="flex-1 overflow-auto">
+          <div className="container mx-auto p-6 space-y-6">
+            <Skeleton className="h-8 w-64" />
+            <Skeleton className="h-96 w-full" />
           </div>
         </div>
       </AnimatedBackground>
@@ -185,26 +178,19 @@ export default function ProjectDetailsPage() {
   if (!project) {
     return (
       <AnimatedBackground>
-        <div className="flex h-screen">
-          <OrshSidebar 
-            currentPage="projects" 
-            onNavigate={handleSidebarNavigate}
-            onLogout={() => navigate('/')}
-          />
-          <div className="flex-1 overflow-auto">
-            <div className="container mx-auto p-6">
-              <Card>
-                <CardContent className="p-12 text-center">
-                  <FileText className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-                  <h2 className="text-2xl font-bold mb-2">Project Not Found</h2>
-                  <p className="text-muted-foreground mb-6">The project you're looking for doesn't exist.</p>
-                  <Button onClick={() => navigate('/projects')}>
-                    <ArrowLeft className="h-4 w-4 mr-2" />
-                    Back to Projects
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
+        <div className="flex-1 overflow-auto">
+          <div className="container mx-auto p-6">
+            <Card>
+              <CardContent className="p-12 text-center">
+                <FileText className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+                <h2 className="text-2xl font-bold mb-2">Project Not Found</h2>
+                <p className="text-muted-foreground mb-6">The project you're looking for doesn't exist.</p>
+                <Button onClick={() => navigate('/projects')}>
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Projects
+                </Button>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </AnimatedBackground>
@@ -217,15 +203,9 @@ export default function ProjectDetailsPage() {
 
   return (
     <AnimatedBackground>
-      <div className="flex h-screen">
-        <OrshSidebar 
-          currentPage="projects" 
-          onNavigate={handleSidebarNavigate}
-          onLogout={() => navigate('/')}
-        />
-        <div className="flex-1 overflow-auto">
-          <div className="container mx-auto p-6 space-y-6">
-            <BreadcrumbNavigation currentPageLabel={project ? `${getProjectId()}` : 'Project'} />
+      <div className="flex-1 overflow-auto">
+        <div className="container mx-auto p-6 space-y-6">
+          <BreadcrumbNavigation currentPageLabel={project ? `${getProjectId()}` : 'Project'} />
 
             {/* Header */}
             <div className="flex items-center justify-between flex-shrink-0">

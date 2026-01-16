@@ -33,7 +33,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { ProjectFilters } from './ProjectFilters';
-import { OrshSidebar } from '@/components/OrshSidebar';
+
 import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
 import { useProjectPreferences } from '@/hooks/useProjectPreferences';
 import {
@@ -308,19 +308,8 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
   if (isLoading) {
     return (
       <AnimatedBackground>
-        <div className="h-screen flex overflow-hidden">
-          <OrshSidebar 
-            userName={userProfile?.full_name || 'User'}
-            userTitle={userProfile?.position || 'Team Member'}
-            userAvatar={userProfile?.avatar_url || ''}
-            language={selectedLanguage}
-            onNavigate={handleNavigate}
-            onLogout={onBack}
-            currentPage="projects"
-          />
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-muted-foreground">Loading projects...</div>
-          </div>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-muted-foreground">Loading projects...</div>
         </div>
       </AnimatedBackground>
     );
@@ -328,20 +317,7 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
 
   return (
     <AnimatedBackground>
-      <div className="h-screen flex overflow-hidden">
-        {/* ORSH Sidebar */}
-        <OrshSidebar 
-          userName={userProfile?.full_name || 'User'}
-          userTitle={userProfile?.position || 'Team Member'}
-          userAvatar={userProfile?.avatar_url || ''}
-          language={selectedLanguage}
-          onNavigate={handleNavigate}
-          onLogout={onBack}
-          currentPage="projects"
-        />
-
-        {/* Main Content Area */}
-        <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden">
           {/* Header */}
           <div className="border-b border-border/40 bg-card/50 backdrop-blur-xl p-4 md:p-6">
             <BreadcrumbNavigation 
@@ -618,7 +594,6 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
             </div>
           </div>
         </div>
-      </div>
 
       {/* Add Project Wizard */}
       <CreateProjectWizard 

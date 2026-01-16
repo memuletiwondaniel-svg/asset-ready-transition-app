@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { OrshSidebar } from '@/components/OrshSidebar';
+
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,38 +29,20 @@ export const P2ADetailsPage: React.FC = () => {
 
   if (loadingHandover) {
     return (
-      <div className="flex h-screen">
-        <OrshSidebar currentPage="p2a-handover" onNavigate={(section) => {
-          if (section === 'home') {
-            navigate('/');
-          } else {
-            navigate(`/${section}`);
-          }
-        }} onLogout={() => navigate('/')} />
-        <div className="flex-1 p-6">
-          <Skeleton className="h-64 w-full" />
-        </div>
+      <div className="flex-1 p-6">
+        <Skeleton className="h-64 w-full" />
       </div>
     );
   }
 
   if (!handover) {
     return (
-      <div className="flex h-screen">
-        <OrshSidebar currentPage="p2a-handover" onNavigate={(section) => {
-          if (section === 'home') {
-            navigate('/');
-          } else {
-            navigate(`/${section}`);
-          }
-        }} onLogout={() => navigate('/')} />
-        <div className="flex-1 p-6">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold">Handover not found</h2>
-            <Button onClick={() => navigate('/p2a-handover')} className="mt-4">
-              Back to P2A Handover
-            </Button>
-          </div>
+      <div className="flex-1 p-6">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold">Handover not found</h2>
+          <Button onClick={() => navigate('/p2a-handover')} className="mt-4">
+            Back to P2A Handover
+          </Button>
         </div>
       </div>
     );
@@ -94,17 +76,7 @@ export const P2ADetailsPage: React.FC = () => {
   ];
 
   return (
-    <div className="flex flex-col lg:flex-row h-screen overflow-hidden bg-gradient-to-br from-background via-background to-muted/20">
-      <OrshSidebar 
-        currentPage="p2a-handover"
-        onNavigate={(section) => {
-          if (section === 'home') navigate('/');
-          else if (section === 'p2a-handover') navigate('/p2a-handover');
-        }}
-        onLogout={() => navigate('/')}
-      />
-      
-      <div className="flex-1 flex flex-col overflow-hidden">
+    <div className="flex-1 flex flex-col overflow-hidden bg-gradient-to-br from-background via-background to-muted/20">
         {/* Header */}
         <div className="border-b border-border/40 bg-card/50 backdrop-blur-xl p-4 md:p-6">
           <BreadcrumbNavigation currentPageLabel={`${handover.phase} - ${handover.project?.project_title}`} />
@@ -199,6 +171,5 @@ export const P2ADetailsPage: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
   );
 };
