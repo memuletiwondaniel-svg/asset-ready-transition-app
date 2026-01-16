@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { OrshSidebar } from '@/components/OrshSidebar';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -73,55 +72,23 @@ export const ORPDetailsPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="h-screen flex w-full overflow-hidden">
-        <OrshSidebar currentPage="operation-readiness" onNavigate={(section) => {
-          if (section === 'home') {
-            navigate('/');
-          } else {
-            navigate(`/${section}`);
-          }
-        }} onLogout={() => navigate('/')} />
-        <div className="flex-1 p-6">
-          <Skeleton className="h-8 w-64 mb-4" />
-          <Skeleton className="h-96 w-full" />
-        </div>
+      <div className="flex-1 p-6">
+        <Skeleton className="h-8 w-64 mb-4" />
+        <Skeleton className="h-96 w-full" />
       </div>
     );
   }
 
   if (!plan) {
     return (
-      <div className="h-screen flex w-full overflow-hidden">
-        <OrshSidebar currentPage="operation-readiness" onNavigate={(section) => {
-          if (section === 'home') {
-            navigate('/');
-          } else {
-            navigate(`/${section}`);
-          }
-        }} onLogout={() => navigate('/')} />
-        <div className="flex-1 flex items-center justify-center">
-          <p className="text-muted-foreground">{t.oraPlanNotFound}</p>
-        </div>
+      <div className="flex-1 flex items-center justify-center">
+        <p className="text-muted-foreground">{t.oraPlanNotFound}</p>
       </div>
     );
   }
 
   return (
-    <div className="h-screen flex w-full overflow-hidden">
-      <OrshSidebar
-        currentPage="operation-readiness"
-        onNavigate={(section) => {
-          if (section === 'home') {
-            navigate('/');
-          } else if (section === 'operation-readiness') {
-            navigate('/operation-readiness');
-          } else {
-            navigate(`/${section}`);
-          }
-        }}
-        onLogout={() => navigate('/')}
-      />
-
+    <>
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
         <div className="border-b border-border bg-card px-6 py-4">
@@ -351,6 +318,6 @@ export const ORPDetailsPage: React.FC = () => {
         open={showComparison}
         onOpenChange={setShowComparison}
       />
-    </div>
+    </>
   );
 };
