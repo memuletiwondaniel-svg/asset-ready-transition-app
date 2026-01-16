@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, FileCheck2, ClipboardList, Award, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Key, ClipboardList, Award, AlertTriangle, FileCheck2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
@@ -56,8 +56,8 @@ export const ManageHandover: React.FC<ManageHandoverProps> = ({ onBack }) => {
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center shadow-lg">
-              <FileCheck2 className="w-6 h-6 text-white" />
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-lg">
+              <Key className="w-6 h-6 text-white" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-foreground tracking-tight">

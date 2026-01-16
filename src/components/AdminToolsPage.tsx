@@ -1,20 +1,14 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Users, FolderOpen, Settings, ArrowLeft, ClipboardList, CheckCircle, Home, Search, X, Star, Activity, Sliders, Building2, LayoutTemplate, FileCheck2 } from 'lucide-react';
+import { Users, FolderOpen, Settings, ArrowLeft, ClipboardList, CheckCircle, Home, Search, X, Star, Activity, Sliders, Building2, LayoutTemplate, Key, Loader2 } from 'lucide-react';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
-import EnhancedUserManagement from "@/components/user-management/EnhancedUserManagement";
-import PSSRSettingsManagement from "./PSSRSettingsManagement";
-import { ORAConfigurationManagement } from "./ora/ORAConfigurationManagement";
-import { ManageHandover } from "./handover/ManageHandover";
-import AdminHeader from "./admin/AdminHeader";
-import AdminActivityLog from "./AdminActivityLog";
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -24,6 +18,24 @@ import LanguageSelector from './admin/LanguageSelector';
 import UserProfileDropdown from './admin/UserProfileDropdown';
 import { NotificationCenter } from './NotificationCenter';
 import { createSidebarNavigator } from '@/utils/sidebarNavigation';
+
+// Lazy load heavy subview components
+const EnhancedUserManagement = lazy(() => import("@/components/user-management/EnhancedUserManagement"));
+const PSSRSettingsManagement = lazy(() => import("./PSSRSettingsManagement"));
+const ORAConfigurationManagement = lazy(() => import("./ora/ORAConfigurationManagement").then(m => ({ default: m.ORAConfigurationManagement })));
+const ManageHandover = lazy(() => import("./handover/ManageHandover").then(m => ({ default: m.ManageHandover })));
+const AdminHeader = lazy(() => import("./admin/AdminHeader"));
+const AdminActivityLog = lazy(() => import("./AdminActivityLog"));
+
+// Loading fallback component
+const ViewLoadingFallback = () => (
+  <div className="flex-1 flex items-center justify-center py-20">
+    <div className="flex flex-col items-center gap-3">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <p className="text-sm text-muted-foreground">Loading...</p>
+    </div>
+  </div>
+);
 
 interface AdminToolsPageProps {
   onBack: () => void;
@@ -253,8 +265,8 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     id: 'handover-management',
     title: t.p2aHandover || 'P2A Handover',
     description: t.p2aHandoverDesc || 'Configure PAC, FAC, SoF certificates and OWL tracking',
-    icon: FileCheck2,
-    gradient: 'from-teal-500 to-teal-600',
+    icon: Key,
+    gradient: 'from-blue-500 to-cyan-500',
     tooltip: t.manageHandoverDesc || 'Configure PAC, FAC, SoF certificates and OWL tracking',
     stats: {},
     height: 'md:row-span-2',
@@ -335,7 +347,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
         });
         crumbs.push({
           label: 'P2A Handover',
-          icon: FileCheck2,
+          icon: Key,
           onClick: undefined
         });
         break;
@@ -343,30 +355,40 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     return crumbs;
   };
 
-  // Handle conditional views AFTER all hooks
+  // Handle conditional views AFTER all hooks - wrapped in Suspense for lazy loading
   if (activeView === 'users') {
     return <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
+        <Suspense fallback={<ViewLoadingFallback />}>
           <EnhancedUserManagement onBack={() => setActiveView('dashboard')} selectedLanguage={language} translations={t} />
+        </Suspense>
       </div>;
   }
   if (activeView === 'pssr-settings') {
     return <div className="flex-1 overflow-y-auto animate-fade-in">
+        <Suspense fallback={<ViewLoadingFallback />}>
           <PSSRSettingsManagement onBack={() => setActiveView('dashboard')} selectedLanguage={language} translations={t} />
+        </Suspense>
       </div>;
   }
   if (activeView === 'activity-log') {
     return <div className="flex-1 overflow-y-auto animate-fade-in">
+        <Suspense fallback={<ViewLoadingFallback />}>
           <AdminActivityLog onBack={() => setActiveView('dashboard')} selectedLanguage={language} />
+        </Suspense>
       </div>;
   }
   if (activeView === 'ora-configuration') {
     return <div className="flex-1 overflow-hidden animate-fade-in">
-        <ORAConfigurationManagement onBack={() => setActiveView('dashboard')} />
+        <Suspense fallback={<ViewLoadingFallback />}>
+          <ORAConfigurationManagement onBack={() => setActiveView('dashboard')} />
+        </Suspense>
       </div>;
   }
   if (activeView === 'handover-management') {
     return <div className="flex-1 overflow-hidden animate-fade-in">
-        <ManageHandover onBack={() => setActiveView('dashboard')} />
+        <Suspense fallback={<ViewLoadingFallback />}>
+          <ManageHandover onBack={() => setActiveView('dashboard')} />
+        </Suspense>
       </div>;
   }
   
