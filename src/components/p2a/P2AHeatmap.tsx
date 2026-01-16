@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useP2AHandovers, useP2ADeliverableCategories } from '@/hooks/useP2AHandovers';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { P2AHeatmapCell } from './P2AHeatmapCell';
+import { P2AHeatmapCellDialog, HeatmapCellClickData } from './P2AHeatmapCellDialog';
 import { useNavigate } from 'react-router-dom';
 import { useP2AHeatmapData } from '@/hooks/useP2AHeatmapData';
 
@@ -13,6 +14,7 @@ export const P2AHeatmap: React.FC = () => {
   const { categories, isLoading: loadingCategories } = useP2ADeliverableCategories();
   const { heatmapData, isLoading: loadingHeatmapData } = useP2AHeatmapData();
   const navigate = useNavigate();
+  const [selectedCell, setSelectedCell] = useState<HeatmapCellClickData | null>(null);
 
   if (loadingHandovers || loadingCategories || loadingHeatmapData) {
     return (
@@ -84,7 +86,7 @@ export const P2AHeatmap: React.FC = () => {
                 <div key={handover.id} className="flex border-b border-border/40 hover:bg-muted/20">
                   <div 
                     className="w-32 sm:w-44 p-1.5 sm:p-2 border-r border-border/40 sticky left-0 bg-card z-10 cursor-pointer hover:bg-muted/50 transition-colors" 
-                    onClick={() => navigate(`/p2a-handover/${handover.id}`)}
+                    onClick={() => navigate(`/project/${handover.project_id}`)}
                   >
                     <div className="font-medium text-[10px] sm:text-xs">
                       {handover.project?.project_id_prefix}-{handover.project?.project_id_number}
@@ -111,6 +113,7 @@ export const P2AHeatmap: React.FC = () => {
                       >
                         <P2AHeatmapCell 
                           handoverId={handover.id}
+                          categoryId={category.id}
                           status={status}
                           percentage={percentage}
                           categoryName={cellData?.categoryName || category.name}
@@ -118,6 +121,7 @@ export const P2AHeatmap: React.FC = () => {
                           lastUpdated={cellData?.lastUpdated}
                           deliverableCount={cellData?.deliverableCount}
                           completedCount={cellData?.completedCount}
+                          onCellClick={setSelectedCell}
                         />
                       </div>
                     );
@@ -129,6 +133,12 @@ export const P2AHeatmap: React.FC = () => {
           <ScrollBar orientation="horizontal" />
         </ScrollArea>
       </CardContent>
+
+      <P2AHeatmapCellDialog
+        open={!!selectedCell}
+        onOpenChange={(open) => !open && setSelectedCell(null)}
+        cellData={selectedCell}
+      />
     </Card>
   );
 };
