@@ -173,7 +173,7 @@ export const BreadcrumbNavigation: React.FC<BreadcrumbNavigationProps> = ({
       <Breadcrumb>
         <BreadcrumbList className="text-xs">
           {crumbsToShow.map((crumb, index) => (
-            <React.Fragment key={`crumb-${index}`}>
+            <span key={`crumb-${index}`} className="contents">
               <BreadcrumbItem>
                 <BreadcrumbLink asChild>
                   <span 
@@ -185,7 +185,7 @@ export const BreadcrumbNavigation: React.FC<BreadcrumbNavigationProps> = ({
                 </BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator className="text-xs" />
-            </React.Fragment>
+            </span>
           ))}
           <BreadcrumbItem>
             <BreadcrumbPage className="font-semibold text-foreground text-xs">
