@@ -66,8 +66,8 @@ const SortableWidgetWrapper: React.FC<SortableWidgetWrapperProps> = ({
 };
 
 interface LandingPageProps {
-  onBack: () => void;
-  onNavigate: (section: string) => void;
+  onBack?: () => void;
+  onNavigate?: (section: string) => void;
 }
 
 const LandingPageContent: React.FC<LandingPageProps> = ({

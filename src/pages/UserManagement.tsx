@@ -49,7 +49,7 @@ import { useUsers } from "@/hooks/useUsers";
 import { useNavigate } from 'react-router-dom';
 
 interface UserManagementProps {
-  onBack: () => void;
+  onBack?: () => void;
 }
 
 const UserManagement = ({ onBack }: UserManagementProps) => {

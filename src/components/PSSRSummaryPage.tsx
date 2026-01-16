@@ -29,7 +29,7 @@ import { toast } from 'sonner';
 import { parseISO, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 
 interface PSSRSummaryPageProps {
-  onBack: () => void;
+  onBack?: () => void;
 }
 interface PSSR {
   id: string;
