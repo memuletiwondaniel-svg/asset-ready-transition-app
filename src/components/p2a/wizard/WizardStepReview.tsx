@@ -1,52 +1,62 @@
 import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
+import { Progress } from '@/components/ui/progress';
 import { useProjects } from '@/hooks/useProjects';
-import { useP2ADeliverableCategories } from '@/hooks/useP2AHandovers';
-import { format } from 'date-fns';
+import { usePACTemplates } from '@/hooks/useHandoverPrerequisites';
 import { 
   Building2, 
-  Calendar, 
   ClipboardList, 
   Award, 
   FileText, 
   Users, 
   CheckCircle2,
-  Package
+  Shield,
+  Heart,
+  AlertTriangle,
+  UserCheck
 } from 'lucide-react';
-import { HandoverContact } from './WizardStepContacts';
+import { PrerequisiteLocalState } from './WizardStepOperationalControl';
+import { ApproverConfig } from './WizardStepApproversConfig';
 
 interface WizardStepReviewProps {
   projectId: string;
   phase: 'PAC' | 'FAC';
-  pssrSignedDate: Date | undefined;
-  prerequisites: string[];
   handoverScope: string;
-  selectedCategories: string[];
-  deliveringParty: HandoverContact;
-  receivingParty: HandoverContact;
-  maintenanceParty: HandoverContact;
+  selectedTemplateId: string | null;
+  ignoreTemplates: boolean;
+  prerequisiteStates: Map<string, PrerequisiteLocalState>;
+  approvers: ApproverConfig[];
+  operationalControlProgress: { completed: number; total: number };
+  careProgress: { completed: number; total: number };
 }
 
 export const WizardStepReview: React.FC<WizardStepReviewProps> = ({
   projectId,
   phase,
-  pssrSignedDate,
-  prerequisites,
   handoverScope,
-  selectedCategories,
-  deliveringParty,
-  receivingParty,
-  maintenanceParty,
+  selectedTemplateId,
+  ignoreTemplates,
+  prerequisiteStates,
+  approvers,
+  operationalControlProgress,
+  careProgress,
 }) => {
   const { projects } = useProjects();
-  const { categories } = useP2ADeliverableCategories();
+  const { data: templates } = usePACTemplates();
 
   const selectedProject = projects?.find(p => p.id === projectId);
-  const selectedCategoryNames = categories
-    ?.filter(c => selectedCategories.includes(c.id))
-    .map(c => c.name) || [];
+  const selectedTemplate = templates?.find(t => t.id === selectedTemplateId);
+
+  // Count deviations
+  const deviations = Array.from(prerequisiteStates.values()).filter(
+    s => s.status === 'DEVIATION'
+  );
+
+  // Overall progress
+  const totalPrereqs = operationalControlProgress.total + careProgress.total;
+  const totalCompleted = operationalControlProgress.completed + careProgress.completed;
+  const overallPercentage = totalPrereqs > 0 ? Math.round((totalCompleted / totalPrereqs) * 100) : 0;
 
   return (
     <div className="space-y-6">
@@ -77,7 +87,7 @@ export const WizardStepReview: React.FC<WizardStepReviewProps> = ({
           <CardContent className="space-y-3">
             <div>
               <p className="text-xs text-muted-foreground">Project</p>
-              <p className="font-medium">
+              <p className="font-medium text-sm">
                 {selectedProject 
                   ? `${selectedProject.project_id_prefix}-${selectedProject.project_id_number} - ${selectedProject.project_title}`
                   : 'Not selected'}
@@ -93,29 +103,15 @@ export const WizardStepReview: React.FC<WizardStepReviewProps> = ({
                 )}
               </Badge>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Prerequisites */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              Prerequisites & Dates
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
             <div>
-              <p className="text-xs text-muted-foreground">
-                {phase === 'PAC' ? 'PSSR Signed Date' : 'PAC Effective Date'}
+              <p className="text-xs text-muted-foreground">Template</p>
+              <p className="text-sm">
+                {ignoreTemplates 
+                  ? 'No template (all prerequisites)' 
+                  : selectedTemplate 
+                    ? selectedTemplate.name 
+                    : 'No template selected'}
               </p>
-              <p className="font-medium">
-                {pssrSignedDate ? format(pssrSignedDate, 'PPP') : 'Not specified'}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Prerequisites Confirmed</p>
-              <p className="font-medium">{prerequisites.length} items verified</p>
             </div>
           </CardContent>
         </Card>
@@ -134,60 +130,104 @@ export const WizardStepReview: React.FC<WizardStepReviewProps> = ({
             </p>
           </CardContent>
         </Card>
-
-        {/* Deliverable Categories */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Package className="h-4 w-4" />
-              Deliverable Categories ({selectedCategoryNames.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {selectedCategoryNames.length > 0 ? (
-              <div className="flex flex-wrap gap-1.5">
-                {selectedCategoryNames.map((name) => (
-                  <Badge key={name} variant="outline" className="text-xs">
-                    {name}
-                  </Badge>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground italic">No categories selected</p>
-            )}
-          </CardContent>
-        </Card>
       </div>
 
-      {/* Key Contacts */}
+      {/* Prerequisites Progress */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm flex items-center gap-2">
-            <Users className="h-4 w-4" />
-            Key Contacts
+            <ClipboardList className="h-4 w-4" />
+            Prerequisites Progress
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Overall Progress */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium">Overall Completion</span>
+              <Badge variant={overallPercentage === 100 ? 'default' : 'secondary'}>
+                {totalCompleted} / {totalPrereqs}
+              </Badge>
+            </div>
+            <Progress value={overallPercentage} className="h-2" />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+            {/* Operational Control */}
+            <div className="p-3 bg-blue-50/50 dark:bg-blue-950/20 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <Shield className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                <p className="text-sm font-medium">Operational Control</p>
+              </div>
+              <div className="flex items-center justify-between">
+                <Progress 
+                  value={operationalControlProgress.total > 0 
+                    ? (operationalControlProgress.completed / operationalControlProgress.total) * 100 
+                    : 0} 
+                  className="h-1.5 flex-1 mr-3" 
+                />
+                <span className="text-xs text-muted-foreground">
+                  {operationalControlProgress.completed}/{operationalControlProgress.total}
+                </span>
+              </div>
+            </div>
+
+            {/* Care */}
+            <div className="p-3 bg-emerald-50/50 dark:bg-emerald-950/20 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <Heart className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                <p className="text-sm font-medium">Handover of Care</p>
+              </div>
+              <div className="flex items-center justify-between">
+                <Progress 
+                  value={careProgress.total > 0 
+                    ? (careProgress.completed / careProgress.total) * 100 
+                    : 0} 
+                  className="h-1.5 flex-1 mr-3" 
+                />
+                <span className="text-xs text-muted-foreground">
+                  {careProgress.completed}/{careProgress.total}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Deviations Warning */}
+          {deviations.length > 0 && (
+            <div className="flex items-center gap-2 p-3 bg-amber-50 dark:bg-amber-950/30 rounded-lg mt-2">
+              <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+              <p className="text-sm text-amber-700 dark:text-amber-300">
+                <strong>{deviations.length} deviation(s)</strong> require follow-up action
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Approvers */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <UserCheck className="h-4 w-4" />
+            Approval Chain ({approvers.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="p-3 bg-blue-50/50 dark:bg-blue-950/20 rounded-lg">
-              <p className="text-xs text-muted-foreground mb-1">Delivering Party</p>
-              <p className="font-medium text-sm">{deliveringParty.name || '-'}</p>
-              <p className="text-xs text-muted-foreground">{deliveringParty.role || '-'}</p>
-              <p className="text-xs text-primary">{deliveringParty.email || '-'}</p>
+          {approvers.length === 0 ? (
+            <p className="text-sm text-muted-foreground italic">No approvers configured</p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {approvers.map((approver, index) => (
+                <Badge key={approver.id} variant="outline" className="py-1.5">
+                  <span className="font-medium mr-1">{index + 1}.</span>
+                  {approver.roleName}
+                  {approver.userId && (
+                    <span className="text-primary ml-1">✓</span>
+                  )}
+                </Badge>
+              ))}
             </div>
-            <div className="p-3 bg-green-50/50 dark:bg-green-950/20 rounded-lg">
-              <p className="text-xs text-muted-foreground mb-1">Receiving Party</p>
-              <p className="font-medium text-sm">{receivingParty.name || '-'}</p>
-              <p className="text-xs text-muted-foreground">{receivingParty.role || '-'}</p>
-              <p className="text-xs text-primary">{receivingParty.email || '-'}</p>
-            </div>
-            <div className="p-3 bg-purple-50/50 dark:bg-purple-950/20 rounded-lg">
-              <p className="text-xs text-muted-foreground mb-1">Maintenance Party</p>
-              <p className="font-medium text-sm">{maintenanceParty.name || '-'}</p>
-              <p className="text-xs text-muted-foreground">{maintenanceParty.role || '-'}</p>
-              <p className="text-xs text-primary">{maintenanceParty.email || '-'}</p>
-            </div>
-          </div>
+          )}
         </CardContent>
       </Card>
     </div>

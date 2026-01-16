@@ -1,16 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useP2AHandovers } from '@/hooks/useP2AHandovers';
+import { useP2AHandoverPrerequisites } from '@/hooks/useP2AHandoverPrerequisites';
+import { useP2AHandoverApprovers } from '@/hooks/useP2AHandoverApprovers';
+import { usePACPrerequisites, usePACCategories } from '@/hooks/useHandoverPrerequisites';
 import { WizardStepProjectSelection } from './wizard/WizardStepProjectSelection';
 import { WizardStepPhaseSelection } from './wizard/WizardStepPhaseSelection';
 import { WizardStepScope } from './wizard/WizardStepScope';
 import { WizardStepTemplateRecommendation } from './wizard/WizardStepTemplateRecommendation';
-import { WizardStepContacts, HandoverContact } from './wizard/WizardStepContacts';
+import { WizardStepOperationalControl, PrerequisiteLocalState } from './wizard/WizardStepOperationalControl';
+import { WizardStepCare } from './wizard/WizardStepCare';
+import { WizardStepApproversConfig, ApproverConfig } from './wizard/WizardStepApproversConfig';
 import { WizardStepReview } from './wizard/WizardStepReview';
 import { ChevronLeft, ChevronRight, Loader2, Check, Key, Save } from 'lucide-react';
-import { format } from 'date-fns';
 import { toast } from 'sonner';
 
 interface CreateP2AHandoverWizardProps {
@@ -23,18 +27,31 @@ const STEPS = [
   { id: 2, title: 'Phase', description: 'PAC or FAC' },
   { id: 3, title: 'Scope', description: 'Define scope' },
   { id: 4, title: 'Template', description: 'Select template' },
-  { id: 5, title: 'Contacts', description: 'Key contacts' },
-  { id: 6, title: 'Review', description: 'Confirm & create' },
+  { id: 5, title: 'Control', description: 'Operational control' },
+  { id: 6, title: 'Care', description: 'Handover of care' },
+  { id: 7, title: 'Approvers', description: 'Configure approvers' },
+  { id: 8, title: 'Review', description: 'Confirm & create' },
 ];
 
-const emptyContact: HandoverContact = { name: '', role: '', email: '' };
+const DEFAULT_APPROVERS: ApproverConfig[] = [
+  { id: 'temp-1', roleName: 'Project Team Lead', userId: null, displayOrder: 1 },
+  { id: 'temp-2', roleName: 'Asset Team Lead', userId: null, displayOrder: 2 },
+  { id: 'temp-3', roleName: 'Operations Manager', userId: null, displayOrder: 3 },
+  { id: 'temp-4', roleName: 'Plant Director', userId: null, displayOrder: 4 },
+];
 
 export const CreateP2AHandoverWizard: React.FC<CreateP2AHandoverWizardProps> = ({
   open,
   onOpenChange,
 }) => {
   const { createHandover, isCreating } = useP2AHandovers();
+  const { initializePrerequisites, isInitializing } = useP2AHandoverPrerequisites(null);
+  const { initializeApprovers } = useP2AHandoverApprovers(null);
+  const { data: allPrerequisites } = usePACPrerequisites();
+  const { data: categories } = usePACCategories();
+  
   const [currentStep, setCurrentStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form state
   const [projectId, setProjectId] = useState('');
@@ -42,9 +59,12 @@ export const CreateP2AHandoverWizard: React.FC<CreateP2AHandoverWizardProps> = (
   const [handoverScope, setHandoverScope] = useState('');
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [ignoreTemplates, setIgnoreTemplates] = useState(false);
-  const [deliveringParty, setDeliveringParty] = useState<HandoverContact>(emptyContact);
-  const [receivingParty, setReceivingParty] = useState<HandoverContact>(emptyContact);
-  const [maintenanceParty, setMaintenanceParty] = useState<HandoverContact>(emptyContact);
+  
+  // Prerequisites local state (before saving to DB)
+  const [prerequisiteStates, setPrerequisiteStates] = useState<Map<string, PrerequisiteLocalState>>(new Map());
+  
+  // Approvers local state
+  const [approvers, setApprovers] = useState<ApproverConfig[]>(DEFAULT_APPROVERS);
 
   const resetForm = () => {
     setCurrentStep(1);
@@ -53,14 +73,37 @@ export const CreateP2AHandoverWizard: React.FC<CreateP2AHandoverWizardProps> = (
     setHandoverScope('');
     setSelectedTemplateId(null);
     setIgnoreTemplates(false);
-    setDeliveringParty(emptyContact);
-    setReceivingParty(emptyContact);
-    setMaintenanceParty(emptyContact);
+    setPrerequisiteStates(new Map());
+    setApprovers(DEFAULT_APPROVERS);
+    setIsSubmitting(false);
   };
 
   const handleClose = () => {
     resetForm();
     onOpenChange(false);
+  };
+
+  // Handler for prerequisite state changes
+  const handlePrerequisiteChange = useCallback((prereqId: string, state: PrerequisiteLocalState) => {
+    setPrerequisiteStates(prev => {
+      const next = new Map(prev);
+      next.set(prereqId, state);
+      return next;
+    });
+  }, []);
+
+  // Calculate progress for prerequisites
+  const getPrerequisiteProgress = (categoryName: 'OPERATIONAL_CONTROL' | 'CARE') => {
+    const category = categories?.find(c => c.name === categoryName);
+    if (!category || !allPrerequisites) return { completed: 0, total: 0 };
+
+    const categoryPrereqs = allPrerequisites.filter(p => p.category_id === category.id);
+    const completed = categoryPrereqs.filter(p => {
+      const state = prerequisiteStates.get(p.id);
+      return state?.status === 'COMPLETED' || state?.status === 'NOT_APPLICABLE';
+    }).length;
+
+    return { completed, total: categoryPrereqs.length };
   };
 
   const validateStep = (step: number): boolean => {
@@ -85,7 +128,17 @@ export const CreateP2AHandoverWizard: React.FC<CreateP2AHandoverWizardProps> = (
         // Template selection is optional
         return true;
       case 5:
-        // Contacts are optional
+        // Operational Control - allow proceed but could warn
+        return true;
+      case 6:
+        // Care - allow proceed but could warn
+        return true;
+      case 7:
+        // Approvers - at least one required
+        if (approvers.length === 0) {
+          toast.error('Please add at least one approver');
+          return false;
+        }
         return true;
       default:
         return true;
@@ -104,6 +157,9 @@ export const CreateP2AHandoverWizard: React.FC<CreateP2AHandoverWizardProps> = (
 
   const handleSaveDraft = async () => {
     try {
+      setIsSubmitting(true);
+      
+      // Create handover record with DRAFT status
       await createHandover({
         project_id: projectId,
         phase,
@@ -116,16 +172,21 @@ export const CreateP2AHandoverWizard: React.FC<CreateP2AHandoverWizardProps> = (
       handleClose();
     } catch (error) {
       toast.error('Failed to save draft');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleSubmit = async () => {
     try {
+      setIsSubmitting(true);
+      
+      // Create handover record with IN_PROGRESS status
       await createHandover({
         project_id: projectId,
         phase,
         handover_scope: handoverScope,
-        status: 'DRAFT',
+        status: 'IN_PROGRESS',
         created_by: '',
       });
       
@@ -133,6 +194,8 @@ export const CreateP2AHandoverWizard: React.FC<CreateP2AHandoverWizardProps> = (
       handleClose();
     } catch (error) {
       toast.error('Failed to create handover');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -173,27 +236,41 @@ export const CreateP2AHandoverWizard: React.FC<CreateP2AHandoverWizardProps> = (
         );
       case 5:
         return (
-          <WizardStepContacts
-            deliveringParty={deliveringParty}
-            receivingParty={receivingParty}
-            maintenanceParty={maintenanceParty}
-            onDeliveringPartyChange={setDeliveringParty}
-            onReceivingPartyChange={setReceivingParty}
-            onMaintenancePartyChange={setMaintenanceParty}
+          <WizardStepOperationalControl
+            selectedTemplateId={selectedTemplateId}
+            ignoreTemplates={ignoreTemplates}
+            prerequisiteStates={prerequisiteStates}
+            onPrerequisiteChange={handlePrerequisiteChange}
           />
         );
       case 6:
         return (
+          <WizardStepCare
+            selectedTemplateId={selectedTemplateId}
+            ignoreTemplates={ignoreTemplates}
+            prerequisiteStates={prerequisiteStates}
+            onPrerequisiteChange={handlePrerequisiteChange}
+          />
+        );
+      case 7:
+        return (
+          <WizardStepApproversConfig
+            approvers={approvers}
+            onApproversChange={setApprovers}
+          />
+        );
+      case 8:
+        return (
           <WizardStepReview
             projectId={projectId}
             phase={phase}
-            pssrSignedDate={undefined}
-            prerequisites={[]}
             handoverScope={handoverScope}
-            selectedCategories={[]}
-            deliveringParty={deliveringParty}
-            receivingParty={receivingParty}
-            maintenanceParty={maintenanceParty}
+            selectedTemplateId={selectedTemplateId}
+            ignoreTemplates={ignoreTemplates}
+            prerequisiteStates={prerequisiteStates}
+            approvers={approvers}
+            operationalControlProgress={getPrerequisiteProgress('OPERATIONAL_CONTROL')}
+            careProgress={getPrerequisiteProgress('CARE')}
           />
         );
       default:
@@ -203,7 +280,7 @@ export const CreateP2AHandoverWizard: React.FC<CreateP2AHandoverWizardProps> = (
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500">
@@ -241,7 +318,7 @@ export const CreateP2AHandoverWizard: React.FC<CreateP2AHandoverWizardProps> = (
                   }`}
                 >
                   <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium border-2 transition-colors ${
+                    className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium border-2 transition-colors ${
                       step.id === currentStep
                         ? 'border-primary bg-primary text-primary-foreground'
                         : step.id < currentStep
@@ -250,12 +327,12 @@ export const CreateP2AHandoverWizard: React.FC<CreateP2AHandoverWizardProps> = (
                     }`}
                   >
                     {step.id < currentStep ? (
-                      <Check className="h-4 w-4" />
+                      <Check className="h-3.5 w-3.5" />
                     ) : (
                       step.id
                     )}
                   </div>
-                  <span className="text-xs mt-1 hidden sm:block">{step.title}</span>
+                  <span className="text-[10px] mt-1 hidden lg:block text-center">{step.title}</span>
                 </div>
               ))}
             </div>
@@ -263,7 +340,7 @@ export const CreateP2AHandoverWizard: React.FC<CreateP2AHandoverWizardProps> = (
         </DialogHeader>
 
         {/* Step Content */}
-        <div className="flex-1 overflow-y-auto py-4 min-h-[300px]">
+        <div className="flex-1 overflow-y-auto py-4 min-h-[350px] px-1">
           {renderStepContent()}
         </div>
 
@@ -273,7 +350,7 @@ export const CreateP2AHandoverWizard: React.FC<CreateP2AHandoverWizardProps> = (
             <Button
               variant="outline"
               onClick={currentStep === 1 ? handleClose : handleBack}
-              disabled={isCreating}
+              disabled={isSubmitting}
             >
               {currentStep === 1 ? (
                 'Cancel'
@@ -290,7 +367,7 @@ export const CreateP2AHandoverWizard: React.FC<CreateP2AHandoverWizardProps> = (
               <Button 
                 variant="ghost" 
                 onClick={handleSaveDraft}
-                disabled={isCreating || !projectId}
+                disabled={isSubmitting || !projectId}
               >
                 <Save className="h-4 w-4 mr-1" />
                 Save Draft
@@ -299,16 +376,16 @@ export const CreateP2AHandoverWizard: React.FC<CreateP2AHandoverWizardProps> = (
           </div>
           
           {currentStep < STEPS.length ? (
-            <Button onClick={handleNext}>
+            <Button onClick={handleNext} disabled={isSubmitting}>
               Next
               <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
           ) : (
             <Button 
               onClick={handleSubmit} 
-              disabled={isCreating}
+              disabled={isSubmitting}
             >
-              {isCreating ? (
+              {isSubmitting ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   Creating...
