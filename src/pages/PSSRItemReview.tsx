@@ -231,33 +231,33 @@ const PSSRItemReview: React.FC = () => {
 
   return (
     <div className="flex flex-col h-screen bg-background">
-          {/* Header */}
-          <div className="sticky top-0 z-10 bg-background border-b px-6 py-4">
-            <div className="flex items-center gap-4 mb-4">
-              <Button variant="ghost" size="sm" onClick={() => navigate('/pssr/approver-dashboard')}>
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Dashboard
-              </Button>
-            </div>
-            
-            <div className="flex justify-between items-start">
-              <div>
-                <h1 className="text-2xl font-bold text-foreground">PSSR Item Review</h1>
-                <p className="text-muted-foreground mt-1">
-                  Reviewing as: <Badge variant="secondary" className="ml-2">{approverRole}</Badge>
-                </p>
-              </div>
-              
-              {allItemsReviewed && !disciplineReview?.status?.includes('completed') && (
-                <Button onClick={() => setShowCompletionPanel(true)} className="bg-green-600 hover:bg-green-700">
-                  <CheckCircle2 className="h-4 w-4 mr-2" />
-                  Complete Review
-                </Button>
-              )}
-            </div>
+      {/* Header */}
+      <div className="sticky top-0 z-10 bg-background border-b px-6 py-4">
+        <div className="flex items-center gap-4 mb-4">
+          <Button variant="ghost" size="sm" onClick={() => navigate('/pssr/approver-dashboard')}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Dashboard
+          </Button>
+        </div>
+        
+        <div className="flex justify-between items-start">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">PSSR Item Review</h1>
+            <p className="text-muted-foreground mt-1">
+              Reviewing as: <Badge variant="secondary" className="ml-2">{approverRole}</Badge>
+            </p>
           </div>
+          
+          {allItemsReviewed && !disciplineReview?.status?.includes('completed') && (
+            <Button onClick={() => setShowCompletionPanel(true)} className="bg-green-600 hover:bg-green-700">
+              <CheckCircle2 className="h-4 w-4 mr-2" />
+              Complete Review
+            </Button>
+          )}
+        </div>
+      </div>
 
-          <ScrollArea className="flex-1 px-6 py-4">
+      <ScrollArea className="flex-1 px-6 py-4">
             <div className="max-w-6xl mx-auto space-y-6">
               {/* PSSR Summary Card */}
               <Card>
@@ -445,28 +445,27 @@ const PSSRItemReview: React.FC = () => {
                   </Card>
                 )}
               </div>
-            </div>
-          </ScrollArea>
         </div>
+      </ScrollArea>
 
-        {/* Priority Action Modal */}
-        <PriorityActionModal
-          open={priorityModalOpen}
-          onOpenChange={setPriorityModalOpen}
-          priority={priorityLevel}
-          onSubmit={handleCreatePriorityAction}
-          isSubmitting={createAction.isPending}
-        />
+      {/* Priority Action Modal */}
+      <PriorityActionModal
+        open={priorityModalOpen}
+        onOpenChange={setPriorityModalOpen}
+        priority={priorityLevel}
+        onSubmit={handleCreatePriorityAction}
+        isSubmitting={createAction.isPending}
+      />
 
-        {/* Discipline Completion Panel */}
-        <DisciplineCompletionPanel
-          open={showCompletionPanel}
-          onOpenChange={setShowCompletionPanel}
-          pssrId={pssrId || ''}
-          approverRole={approverRole}
-          stats={stats}
-          priorityActions={priorityActions || []}
-        />
+      {/* Discipline Completion Panel */}
+      <DisciplineCompletionPanel
+        open={showCompletionPanel}
+        onOpenChange={setShowCompletionPanel}
+        pssrId={pssrId || ''}
+        approverRole={approverRole}
+        stats={stats}
+        priorityActions={priorityActions || []}
+      />
     </div>
   );
 };

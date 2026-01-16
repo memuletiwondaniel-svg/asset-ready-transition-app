@@ -207,27 +207,27 @@ export default function ProjectDetailsPage() {
         <div className="container mx-auto p-6 space-y-6">
           <BreadcrumbNavigation currentPageLabel={project ? `${getProjectId()}` : 'Project'} />
 
-            {/* Header */}
-            <div className="flex items-center justify-between flex-shrink-0">
-              <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                  {getProjectId()} - {project.project_title}
-                </h1>
-                <p className="text-muted-foreground mt-1">Project Dashboard</p>
-              </div>
-              {hiddenWidgets.length > 0 && (
-                <Button onClick={() => setHiddenWidgets([])} variant="outline" size="sm">
-                  <Eye className="h-4 w-4 mr-2" />
-                  Show All Widgets ({hiddenWidgets.length})
-                </Button>
-              )}
+          {/* Header */}
+          <div className="flex items-center justify-between flex-shrink-0">
+            <div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                {getProjectId()} - {project.project_title}
+              </h1>
+              <p className="text-muted-foreground mt-1">Project Dashboard</p>
             </div>
+            {hiddenWidgets.length > 0 && (
+              <Button onClick={() => setHiddenWidgets([])} variant="outline" size="sm">
+                <Eye className="h-4 w-4 mr-2" />
+                Show All Widgets ({hiddenWidgets.length})
+              </Button>
+            )}
+          </div>
 
-            {/* Project Widgets Dashboard */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Left Column - Large Overview Widget */}
-              <div className="lg:row-span-3 h-[calc(100vh-180px)] sticky top-6">
-                <ProjectReadinessWidget 
+          {/* Project Widgets Dashboard */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left Column - Large Overview Widget */}
+            <div className="lg:row-span-3 h-[calc(100vh-180px)] sticky top-6">
+              <ProjectReadinessWidget
                   projectId={id || ''} 
                   onViewDetails={() => setViewModalOpen(true)}
                 />
@@ -254,9 +254,8 @@ export default function ProjectDetailsPage() {
                     </div>
                   </SortableContext>
                 </DndContext>
-              </div>
-            </div>
           </div>
+        </div>
 
           {/* Edit Project Modal */}
           {editModalOpen && (
