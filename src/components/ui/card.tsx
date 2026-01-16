@@ -21,7 +21,7 @@ const Card = React.forwardRef<
       ref={ref}
       className={cn(
         "rounded-lg border bg-card text-card-foreground shadow-elevation-rest transition-all duration-300",
-        (interactive || onClick) && "relative overflow-hidden cursor-pointer hover:shadow-elevation-hover hover:-translate-y-1 active:shadow-elevation-pressed active:translate-y-0",
+        (interactive || onClick) && "relative overflow-hidden cursor-pointer hover:shadow-elevation-hover hover:scale-[1.01] active:shadow-elevation-pressed active:scale-100",
         className
       )}
       onClick={handleClick}
