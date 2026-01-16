@@ -8,6 +8,7 @@ import { ThemeProvider } from "@/components/ui/theme-provider";
 import { BreadcrumbProvider } from "@/contexts/BreadcrumbContext";
 import { WidgetSizeProvider } from "@/contexts/WidgetSizeContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import AuthenticatedLayout from "@/components/layouts/AuthenticatedLayout";
 import Index from "./pages/Index";
 import AuthPage from "./pages/AuthPage";
 import NotFound from "./pages/NotFound";
@@ -50,33 +51,42 @@ const App = () => (
               <BrowserRouter>
                 <BreadcrumbProvider>
                   <Routes>
-                    <Route path="/" element={<Index />} />
+                    {/* Public routes */}
                     <Route path="/auth" element={<AuthPage />} />
-                    <Route path="/pssr" element={<Index />} />
-                    <Route path="/users" element={<Index />} />
-                    <Route path="/manage-checklist" element={<Index />} />
-                    <Route path="/admin-tools" element={<Index />} />
-                    <Route path="/projects" element={<Index />} />
-                    <Route path="/project-management" element={<ProjectManagementPage />} />
-                    <Route path="/project/:id" element={<ProjectDetailsPage />} />
-                    <Route path="/pssr/approver-dashboard" element={<PSSRApproverDashboard />} />
-                    <Route path="/pssr-reviews" element={<PSSRApproverDashboard />} />
-                    <Route path="/my-tasks" element={<PSSRApproverDashboard />} />
-                    <Route path="/pssr/:id/review" element={<PSSRItemReview />} />
-                    <Route path="/pssr/:id/approve" element={<PSSRApprovalPage />} />
-        <Route path="/operation-readiness" element={<ORPLandingPage />} />
-        <Route path="/operation-readiness/analytics" element={<ORPAnalyticsPage />} />
-        <Route path="/operation-readiness/:id" element={<ORPDetailsPage />} />
-            <Route path="/p2a-handover" element={<P2ALandingPage />} />
-            <Route path="/p2a-handover/analytics" element={<P2AAnalyticsPage />} />
-            <Route path="/p2a-handover/:id" element={<P2ADetailsPage />} />
-            <Route path="/or-maintenance" element={<ORMLandingPage />} />
-            <Route path="/or-maintenance/analytics" element={<ORMAnalyticsDashboard />} />
-          <Route path="/or-maintenance/resources" element={<ORMResourceCapacityDashboard />} />
-          <Route path="/or-maintenance/notifications" element={<ORMNotificationPreferences />} />
-            <Route path="/or-maintenance/:id" element={<ORMDetailsPage />} />
-                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                  <Route path="*" element={<NotFound />} />
+                    
+                    {/* Root handles both welcome (unauthenticated) and home (authenticated) */}
+                    <Route path="/" element={<Index />} />
+                    
+                    {/* Authenticated routes with persistent sidebar layout */}
+                    <Route element={<AuthenticatedLayout />}>
+                      <Route path="/home" element={<Index />} />
+                      <Route path="/pssr" element={<Index />} />
+                      <Route path="/users" element={<Index />} />
+                      <Route path="/manage-checklist" element={<Index />} />
+                      <Route path="/admin-tools" element={<Index />} />
+                      <Route path="/projects" element={<Index />} />
+                      <Route path="/project-management" element={<ProjectManagementPage />} />
+                      <Route path="/project/:id" element={<ProjectDetailsPage />} />
+                      <Route path="/pssr/approver-dashboard" element={<PSSRApproverDashboard />} />
+                      <Route path="/pssr-reviews" element={<PSSRApproverDashboard />} />
+                      <Route path="/my-tasks" element={<PSSRApproverDashboard />} />
+                      <Route path="/pssr/:id/review" element={<PSSRItemReview />} />
+                      <Route path="/pssr/:id/approve" element={<PSSRApprovalPage />} />
+                      <Route path="/operation-readiness" element={<ORPLandingPage />} />
+                      <Route path="/operation-readiness/analytics" element={<ORPAnalyticsPage />} />
+                      <Route path="/operation-readiness/:id" element={<ORPDetailsPage />} />
+                      <Route path="/p2a-handover" element={<P2ALandingPage />} />
+                      <Route path="/p2a-handover/analytics" element={<P2AAnalyticsPage />} />
+                      <Route path="/p2a-handover/:id" element={<P2ADetailsPage />} />
+                      <Route path="/or-maintenance" element={<ORMLandingPage />} />
+                      <Route path="/or-maintenance/analytics" element={<ORMAnalyticsDashboard />} />
+                      <Route path="/or-maintenance/resources" element={<ORMResourceCapacityDashboard />} />
+                      <Route path="/or-maintenance/notifications" element={<ORMNotificationPreferences />} />
+                      <Route path="/or-maintenance/:id" element={<ORMDetailsPage />} />
+                    </Route>
+                    
+                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                    <Route path="*" element={<NotFound />} />
                   </Routes>
                 </BreadcrumbProvider>
               </BrowserRouter>

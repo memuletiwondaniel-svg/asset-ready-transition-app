@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { OrshSidebar } from '@/components/OrshSidebar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -14,7 +13,6 @@ import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { format } from 'date-fns';
-import { createSidebarNavigator } from '@/utils/sidebarNavigation';
 
 export const ORPLandingPage: React.FC = () => {
   const navigate = useNavigate();
@@ -127,15 +125,7 @@ export const ORPLandingPage: React.FC = () => {
   };
 
   return (
-    <div className="h-screen flex w-full overflow-hidden">
-      <OrshSidebar
-        currentPage="operation-readiness"
-        onNavigate={createSidebarNavigator(navigate, {
-          'operation-readiness': () => {}
-        })}
-        onLogout={() => navigate('/')}
-      />
-
+    <>
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
         <div className="border-b border-border bg-card px-6 py-4">
@@ -303,6 +293,6 @@ export const ORPLandingPage: React.FC = () => {
           navigate(`/operation-readiness/${planId}`);
         }}
       />
-    </div>
+    </>
   );
 };
