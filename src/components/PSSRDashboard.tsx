@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { OrshSidebar } from '@/components/OrshSidebar';
+
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { AlertTriangle, GripVertical } from 'lucide-react';
@@ -440,7 +440,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
   }));
 
   return (
-    <div className="min-h-screen flex w-full relative overflow-hidden">
+    <div className="min-h-screen flex-1 relative overflow-hidden">
       {/* Background matching home page */}
       <div className="absolute inset-0 bg-background overflow-hidden">
         <div className="absolute inset-0 opacity-30 dark:opacity-20">
@@ -459,24 +459,8 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
           }}
         />
       </div>
-
-      {/* ORSH Sidebar */}
-      <OrshSidebar 
-        currentPage="pssr"
-        onNavigate={(section) => {
-          console.log('Dashboard navigation:', section);
-          if (section === 'home') {
-            onBack();
-          } else if (section === 'pssr') {
-            // Already on pssr, do nothing or refresh
-          } else {
-            // Navigate to other sections
-            navigate(`/${section}`);
-          }
-        }}
-      />
       
-      <div className="flex-1 relative z-10 w-full lg:w-auto">
+      <div className="flex-1 relative z-10 w-full">
         {/* Modern Header */}
         <header className="sticky top-0 z-20 bg-card/80 backdrop-blur-xl border-b border-border/50 shadow-sm">
           <div className="px-4 sm:px-6 lg:px-8 py-3 sm:py-4">

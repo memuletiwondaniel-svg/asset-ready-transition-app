@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { OrshSidebar } from '@/components/OrshSidebar';
+
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -92,17 +92,7 @@ export const P2ALandingPage: React.FC = () => {
   ];
 
   return (
-    <div className="flex flex-col lg:flex-row h-screen overflow-hidden bg-gradient-to-br from-background via-background to-muted/20">
-      <OrshSidebar 
-        userName={userProfile?.full_name || 'User'} 
-        userTitle={userProfile?.position || 'Team Member'} 
-        userAvatar={userProfile?.avatar_url || ''} 
-        currentPage="p2a-handover"
-        onNavigate={createSidebarNavigator(navigate)}
-        onLogout={() => navigate('/')}
-      />
-      
-      <div className="flex-1 flex flex-col overflow-hidden">
+    <div className="flex-1 flex flex-col overflow-hidden bg-gradient-to-br from-background via-background to-muted/20">
         {/* Header */}
         <div className="border-b border-border/40 bg-card/50 backdrop-blur-xl p-4 md:p-6">
           <BreadcrumbNavigation currentPageLabel={t.p2aTitle} />
@@ -173,7 +163,6 @@ export const P2ALandingPage: React.FC = () => {
             <P2AHeatmap />
           </div>
         </div>
-      </div>
 
       <CreateP2AHandoverModal 
         open={createModalOpen}

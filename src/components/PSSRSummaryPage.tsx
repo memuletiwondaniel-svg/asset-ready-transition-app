@@ -23,11 +23,11 @@ import PSSRAdvancedSearch from './PSSRAdvancedSearch';
 import CreatePSSRIntroModal from './CreatePSSRIntroModal';
 import CreatePSSRWizard from './pssr/CreatePSSRWizard';
 import PSSRDashboard from './PSSRDashboard';
-import { OrshSidebar } from './OrshSidebar';
+
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbEllipsis } from '@/components/ui/breadcrumb';
 import { toast } from 'sonner';
 import { parseISO, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
-import { createSidebarNavigator } from '@/utils/sidebarNavigation';
+
 interface PSSRSummaryPageProps {
   onBack: () => void;
 }
@@ -652,24 +652,7 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
   if (activeView === 'details' && selectedPSSR) {
     return <PSSRDashboard pssrId={selectedPSSR} onBack={() => setActiveView('list')} onNavigateToCategory={handleNavigateToCategory} />;
   }
-  return <div className="h-screen flex w-full overflow-hidden">
-      {/* ORSH Sidebar - Fixed */}
-      <OrshSidebar 
-        userName={userProfile?.full_name || 'User'} 
-        userTitle={userProfile?.position || 'Team Member'} 
-        userAvatar={userProfile?.avatar_url || ''} 
-        language="en" 
-        currentPage="pssr" 
-        onNavigate={createSidebarNavigator(navigate, {
-          'pssr': () => setActiveView('list'),
-        })} 
-        onLogout={() => navigate('/')} 
-        onShowWidgets={() => setShowWidgetManagement(true)} 
-        onShowOnboarding={() => setShowOnboarding(true)} 
-        showWidgets={showWidgetManagement} 
-      />
-      
-      <div className="flex-1 flex flex-col overflow-hidden">
+  return <div className="flex-1 flex flex-col overflow-hidden">
 
         {/* Modern Minimalist Header */}
         <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/40 shadow-sm">
@@ -844,7 +827,6 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
           />
         )}
       </main>
-      </div>
       
       {/* Create PSSR Intro Modal */}
       <CreatePSSRIntroModal 
