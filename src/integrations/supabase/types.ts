@@ -1474,6 +1474,13 @@ export type Database = {
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "orm_plans_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_enriched"
+            referencedColumns: ["id"]
+          },
         ]
       }
       orm_tasks: {
@@ -2194,6 +2201,13 @@ export type Database = {
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "orp_plans_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_enriched"
+            referencedColumns: ["id"]
+          },
         ]
       }
       orp_resources: {
@@ -2486,6 +2500,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outstanding_work_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_enriched"
             referencedColumns: ["id"]
           },
         ]
@@ -2886,6 +2907,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_handovers_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_enriched"
             referencedColumns: ["id"]
           },
           {
@@ -3558,6 +3586,13 @@ export type Database = {
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "project_documents_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_enriched"
+            referencedColumns: ["id"]
+          },
         ]
       }
       project_hub_region: {
@@ -3624,6 +3659,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_locations_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_enriched"
             referencedColumns: ["id"]
           },
           {
@@ -3711,6 +3753,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_milestones_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_enriched"
             referencedColumns: ["id"]
           },
         ]
@@ -3851,6 +3900,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_team_members_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_enriched"
             referencedColumns: ["id"]
           },
         ]
@@ -5570,6 +5626,67 @@ export type Database = {
       }
     }
     Views: {
+      projects_enriched: {
+        Row: {
+          completed_milestone_count: number | null
+          created_at: string | null
+          created_by: string | null
+          document_count: number | null
+          hub_id: string | null
+          hub_name: string | null
+          id: string | null
+          is_active: boolean | null
+          is_scorecard: boolean | null
+          milestone_count: number | null
+          next_milestone_date: string | null
+          next_milestone_name: string | null
+          plant_id: string | null
+          plant_name: string | null
+          project_id_number: string | null
+          project_id_prefix: string | null
+          project_scope: string | null
+          project_scope_image_url: string | null
+          project_title: string | null
+          region_id: string | null
+          station_id: string | null
+          station_name: string | null
+          team_count: number | null
+          team_lead_avatar: string | null
+          team_lead_name: string | null
+          team_lead_user_id: string | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_hub_id_fkey"
+            columns: ["hub_id"]
+            isOneToOne: false
+            referencedRelation: "hubs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_plant_id_fkey"
+            columns: ["plant_id"]
+            isOneToOne: false
+            referencedRelation: "plant"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_region_id_fkey"
+            columns: ["region_id"]
+            isOneToOne: false
+            referencedRelation: "project_region"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_station_id_fkey"
+            columns: ["station_id"]
+            isOneToOne: false
+            referencedRelation: "station"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pssr_checklist_items_ordered: {
         Row: {
           approvers: string | null
