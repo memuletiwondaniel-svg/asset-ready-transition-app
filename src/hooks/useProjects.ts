@@ -82,13 +82,14 @@ export const useProjects = () => {
   } = useQuery({
     queryKey: ['projects'],
     queryFn: async () => {
-      console.log('🔍 Fetching projects from Supabase...');
+      console.log('🔍 Fetching projects from projects_enriched view...');
       
-      const { data, error } = await supabase
-        .from('projects')
+      // Use the optimized view that joins all data server-side in a single query
+      // Cast to 'any' since this is a custom view not in generated types
+      const { data, error } = await (supabase
+        .from('projects_enriched' as any)
         .select('*')
-        .eq('is_active', true)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false }) as any);
 
       if (error) {
         console.error('❌ Error fetching projects:', error);
@@ -101,119 +102,13 @@ export const useProjects = () => {
       }
 
       console.log('✅ Projects fetched successfully:', data?.length || 0, 'projects');
-      console.log('Projects data:', data);
 
       if (!data || data.length === 0) {
         console.warn('⚠️ No projects found in database');
         return [];
       }
 
-      // Batch fetch all related data in parallel (optimized from N+1 queries)
-      const projectIds = data.map(p => p.id);
-      const plantIds = data.filter(p => p.plant_id).map(p => p.plant_id);
-      const stationIds = data.filter(p => p.station_id).map(p => p.station_id);
-      const hubIds = data.filter(p => p.hub_id).map(p => p.hub_id);
-
-      // Execute all queries in parallel
-      const [
-        plantsResult,
-        stationsResult,
-        hubsResult,
-        teamMembersResult,
-        milestonesResult,
-        documentsResult
-      ] = await Promise.all([
-        // Fetch all plants in one query
-        plantIds.length > 0 
-          ? supabase.from('plant').select('id, name').in('id', plantIds)
-          : { data: [] },
-        // Fetch all stations in one query
-        stationIds.length > 0
-          ? supabase.from('station').select('id, name').in('id', stationIds)
-          : { data: [] },
-        // Fetch all hubs in one query
-        hubIds.length > 0
-          ? supabase.from('hubs').select('id, name').in('id', hubIds)
-          : { data: [] },
-        // Fetch all team members in one query
-        supabase.from('project_team_members').select('id, project_id, is_lead, user_id').in('project_id', projectIds),
-        // Fetch all milestones in one query
-        supabase.from('project_milestones').select('id, project_id, milestone_name, milestone_date, is_scorecard_project').in('project_id', projectIds).order('milestone_date', { ascending: true }),
-        // Fetch all documents count in one query
-        supabase.from('project_documents').select('id, project_id').in('project_id', projectIds)
-      ]);
-
-      // Create lookup maps for O(1) access
-      const plantMap = new Map((plantsResult.data || []).map(p => [p.id, p.name]));
-      const stationMap = new Map((stationsResult.data || []).map(s => [s.id, s.name]));
-      const hubMap = new Map((hubsResult.data || []).map(h => [h.id, h.name]));
-
-      // Group team members by project
-      const teamMembersByProject = new Map<string, typeof teamMembersResult.data>();
-      (teamMembersResult.data || []).forEach(tm => {
-        const existing = teamMembersByProject.get(tm.project_id) || [];
-        existing.push(tm);
-        teamMembersByProject.set(tm.project_id, existing);
-      });
-
-      // Group milestones by project
-      const milestonesByProject = new Map<string, typeof milestonesResult.data>();
-      (milestonesResult.data || []).forEach(m => {
-        const existing = milestonesByProject.get(m.project_id) || [];
-        existing.push(m);
-        milestonesByProject.set(m.project_id, existing);
-      });
-
-      // Group documents by project
-      const documentsByProject = new Map<string, number>();
-      (documentsResult.data || []).forEach(d => {
-        documentsByProject.set(d.project_id, (documentsByProject.get(d.project_id) || 0) + 1);
-      });
-
-      // Get all team lead user IDs for batch profile fetch
-      const teamLeadUserIds: string[] = [];
-      teamMembersByProject.forEach((members) => {
-        const lead = members.find(m => m.is_lead);
-        if (lead) teamLeadUserIds.push(lead.user_id);
-      });
-
-      // Batch fetch all team lead profiles in one query
-      const profilesResult = teamLeadUserIds.length > 0
-        ? await supabase.from('profiles').select('id, full_name, avatar_url').in('id', teamLeadUserIds)
-        : { data: [] };
-      
-      const profileMap = new Map((profilesResult.data || []).map(p => [p.id, p]));
-
-      // Enrich projects using lookup maps (no additional queries)
-      const now = new Date();
-      const enrichedProjects = data.map((project) => {
-        const teamMembers = teamMembersByProject.get(project.id) || [];
-        const milestones = milestonesByProject.get(project.id) || [];
-        const teamLead = teamMembers.find(m => m.is_lead);
-        const leadProfile = teamLead ? profileMap.get(teamLead.user_id) : null;
-        
-        const completed_milestone_count = milestones.filter(m => new Date(m.milestone_date) < now).length;
-        const nextMilestone = milestones.find(m => new Date(m.milestone_date) >= now);
-
-        return {
-          ...project,
-          plant_name: project.plant_id ? plantMap.get(project.plant_id) : undefined,
-          station_name: project.station_id ? stationMap.get(project.station_id) : undefined,
-          hub_name: project.hub_id ? hubMap.get(project.hub_id) : undefined,
-          team_count: teamMembers.length,
-          team_lead_name: leadProfile?.full_name,
-          team_lead_avatar: leadProfile?.avatar_url,
-          milestone_count: milestones.length,
-          completed_milestone_count,
-          next_milestone_name: nextMilestone?.milestone_name,
-          next_milestone_date: nextMilestone?.milestone_date,
-          is_scorecard: milestones.some(m => m.is_scorecard_project),
-          document_count: documentsByProject.get(project.id) || 0,
-        };
-      });
-
-      console.log('✅ Enriched projects:', enrichedProjects);
-      return enrichedProjects as Project[];
+      return data as Project[];
     },
     retry: 1,
     staleTime: 30000, // 30 seconds
