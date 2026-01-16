@@ -127,7 +127,7 @@ export const P2ALandingPage: React.FC = () => {
                       stroke: 'url(#heatmapGradient)',
                     } : undefined}
                   />
-                  Heatmap View
+                  Heatmap
                 </TabsTrigger>
               </TabsList>
 
