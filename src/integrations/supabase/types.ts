@@ -2652,6 +2652,50 @@ export type Database = {
         }
         Relationships: []
       }
+      p2a_handover_approvers: {
+        Row: {
+          approved_at: string | null
+          comments: string | null
+          created_at: string | null
+          display_order: number
+          handover_id: string
+          id: string
+          role_name: string
+          status: string | null
+          user_id: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          comments?: string | null
+          created_at?: string | null
+          display_order: number
+          handover_id: string
+          id?: string
+          role_name: string
+          status?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          comments?: string | null
+          created_at?: string | null
+          display_order?: number
+          handover_id?: string
+          id?: string
+          role_name?: string
+          status?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_handover_approvers_handover_id_fkey"
+            columns: ["handover_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_handovers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       p2a_handover_deliverables: {
         Row: {
           category_id: string
@@ -2709,6 +2753,75 @@ export type Database = {
           },
         ]
       }
+      p2a_handover_prerequisites: {
+        Row: {
+          comments: string | null
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string | null
+          deviation_reason: string | null
+          evidence_links: string[] | null
+          follow_up_action: string | null
+          handover_id: string
+          id: string
+          mitigation: string | null
+          pac_prerequisite_id: string
+          receiving_party_user_id: string | null
+          status: string
+          target_date: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          comments?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string | null
+          deviation_reason?: string | null
+          evidence_links?: string[] | null
+          follow_up_action?: string | null
+          handover_id: string
+          id?: string
+          mitigation?: string | null
+          pac_prerequisite_id: string
+          receiving_party_user_id?: string | null
+          status?: string
+          target_date?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          comments?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string | null
+          deviation_reason?: string | null
+          evidence_links?: string[] | null
+          follow_up_action?: string | null
+          handover_id?: string
+          id?: string
+          mitigation?: string | null
+          pac_prerequisite_id?: string
+          receiving_party_user_id?: string | null
+          status?: string
+          target_date?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_handover_prerequisites_handover_id_fkey"
+            columns: ["handover_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_handovers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_handover_prerequisites_pac_prerequisite_id_fkey"
+            columns: ["pac_prerequisite_id"]
+            isOneToOne: false
+            referencedRelation: "pac_prerequisites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       p2a_handovers: {
         Row: {
           created_at: string
@@ -2722,6 +2835,10 @@ export type Database = {
           project_id: string
           pssr_signed_date: string | null
           status: Database["public"]["Enums"]["p2a_status"]
+          submitted_at: string | null
+          submitted_by: string | null
+          template_id: string | null
+          template_ignored: boolean | null
           updated_at: string
         }
         Insert: {
@@ -2736,6 +2853,10 @@ export type Database = {
           project_id: string
           pssr_signed_date?: string | null
           status?: Database["public"]["Enums"]["p2a_status"]
+          submitted_at?: string | null
+          submitted_by?: string | null
+          template_id?: string | null
+          template_ignored?: boolean | null
           updated_at?: string
         }
         Update: {
@@ -2750,6 +2871,10 @@ export type Database = {
           project_id?: string
           pssr_signed_date?: string | null
           status?: Database["public"]["Enums"]["p2a_status"]
+          submitted_at?: string | null
+          submitted_by?: string | null
+          template_id?: string | null
+          template_ignored?: boolean | null
           updated_at?: string
         }
         Relationships: [
@@ -2758,6 +2883,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_handovers_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "pac_templates"
             referencedColumns: ["id"]
           },
         ]
@@ -2802,6 +2934,47 @@ export type Database = {
             columns: ["handover_id"]
             isOneToOne: false
             referencedRelation: "p2a_handovers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      p2a_prerequisite_attachments: {
+        Row: {
+          created_at: string | null
+          file_name: string
+          file_path: string
+          file_size: number | null
+          file_type: string | null
+          handover_prerequisite_id: string
+          id: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          file_type?: string | null
+          handover_prerequisite_id: string
+          id?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          file_type?: string | null
+          handover_prerequisite_id?: string
+          id?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_prerequisite_attachments_handover_prerequisite_id_fkey"
+            columns: ["handover_prerequisite_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_handover_prerequisites"
             referencedColumns: ["id"]
           },
         ]
