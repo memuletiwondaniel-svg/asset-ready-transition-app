@@ -13,6 +13,7 @@ export interface PrerequisiteLocalState {
   status: PrerequisiteStatus;
   comments: string;
   evidenceLinks: string[];
+  uploadedFiles: File[];
   receivingPartyUserId: string | null;
   deviationData?: DeviationData;
 }
@@ -81,6 +82,7 @@ export const WizardStepOperationalControl: React.FC<WizardStepOperationalControl
       status: 'NOT_COMPLETED',
       comments: '',
       evidenceLinks: [],
+      uploadedFiles: [],
       receivingPartyUserId: null,
     };
   };
@@ -141,6 +143,22 @@ export const WizardStepOperationalControl: React.FC<WizardStepOperationalControl
   const handleReceivingPartyChange = (prereqId: string, userId: string | null) => {
     const currentState = getState(prereqId);
     onPrerequisiteChange(prereqId, { ...currentState, receivingPartyUserId: userId });
+  };
+
+  const handleFileUpload = (prereqId: string, files: File[]) => {
+    const currentState = getState(prereqId);
+    onPrerequisiteChange(prereqId, {
+      ...currentState,
+      uploadedFiles: [...currentState.uploadedFiles, ...files],
+    });
+  };
+
+  const handleRemoveFile = (prereqId: string, file: File) => {
+    const currentState = getState(prereqId);
+    onPrerequisiteChange(prereqId, {
+      ...currentState,
+      uploadedFiles: currentState.uploadedFiles.filter(f => f !== file),
+    });
   };
 
   const isLoading = prereqsLoading || categoriesLoading;
@@ -224,6 +242,9 @@ export const WizardStepOperationalControl: React.FC<WizardStepOperationalControl
                 onAddEvidenceLink={(link) => handleAddEvidenceLink(prereq.id, link)}
                 onRemoveEvidenceLink={(link) => handleRemoveEvidenceLink(prereq.id, link)}
                 onReceivingPartyChange={(userId) => handleReceivingPartyChange(prereq.id, userId)}
+                onFileUpload={(files) => handleFileUpload(prereq.id, files)}
+                onRemoveFile={(file) => handleRemoveFile(prereq.id, file)}
+                uploadedFiles={getState(prereq.id).uploadedFiles}
                 users={users?.map(u => ({ id: u.user_id, full_name: u.full_name, position: u.position || undefined })) || []}
               />
             </div>
