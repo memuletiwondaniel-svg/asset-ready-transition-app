@@ -10,7 +10,7 @@ import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useProjects } from '@/hooks/useProjects';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { OrshSidebar } from '@/components/OrshSidebar';
+
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { format } from 'date-fns';
 import { Users, Calendar, FileText } from 'lucide-react';
@@ -56,10 +56,7 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
   };
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <OrshSidebar currentPage="projects" />
-      
-      <main className="flex-1 p-6 overflow-y-auto">
+    <main className="flex-1 p-6 overflow-y-auto bg-background">
         <div className="max-w-7xl mx-auto space-y-6">
           {/* Breadcrumb */}
           <BreadcrumbNavigation 
@@ -297,8 +294,7 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
             </div>
           )}
         </div>
-      </main>
-    </div>
+    </main>
   );
 };
 
