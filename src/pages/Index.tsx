@@ -57,6 +57,13 @@ const Index = () => {
     }
   }, [session, showAuth]);
 
+  // Redirect authenticated users from '/' to '/home' to ensure sidebar is visible
+  useEffect(() => {
+    if (isAuthenticated && location.pathname === '/') {
+      navigate('/home', { replace: true });
+    }
+  }, [isAuthenticated, location.pathname, navigate]);
+
   // Show specific section based on navigation
   if (isAuthenticated && currentSection) {
     switch (currentSection) {
