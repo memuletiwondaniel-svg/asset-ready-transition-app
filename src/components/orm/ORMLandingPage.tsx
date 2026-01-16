@@ -30,9 +30,8 @@ import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 import { useToast } from '@/hooks/use-toast';
-import { useProjects } from '@/hooks/useProjects';
+import { useProjectsSimple } from '@/hooks/useProjectsSimple';
 import { useProfileUsers } from '@/hooks/useProfileUsers';
-import { supabase } from '@/integrations/supabase/client';
 
 
 export const ORMLandingPage: React.FC = () => {
@@ -43,48 +42,11 @@ export const ORMLandingPage: React.FC = () => {
   const [projectFilter, setProjectFilter] = useState<string>('all');
   const [leadFilter, setLeadFilter] = useState<string>('all');
   
-  const { session } = useAuth();
   const { toast } = useToast();
   const { plans, isLoading } = useORMPlans();
-  const { projects } = useProjects();
+  const { data: projects } = useProjectsSimple();
   const { data: users } = useProfileUsers();
   const { setBreadcrumbs } = useBreadcrumb();
-
-  // Fetch current user profile
-  const [userProfile, setUserProfile] = useState<{
-    full_name: string;
-    position: string;
-    avatar_url: string;
-  } | null>(null);
-
-  React.useEffect(() => {
-    const fetchUserProfile = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('full_name, position, avatar_url')
-          .eq('user_id', user.id)
-          .single();
-        
-        if (profile) {
-          let avatarUrl = profile.avatar_url;
-          if (avatarUrl && !avatarUrl.startsWith('http')) {
-            const { data: { publicUrl } } = supabase.storage
-              .from('user-avatars')
-              .getPublicUrl(avatarUrl);
-            avatarUrl = publicUrl;
-          }
-          setUserProfile({
-            full_name: profile.full_name || 'User',
-            position: profile.position || 'Team Member',
-            avatar_url: avatarUrl || ''
-          });
-        }
-      }
-    };
-    fetchUserProfile();
-  }, []);
 
   React.useEffect(() => {
     setBreadcrumbs([

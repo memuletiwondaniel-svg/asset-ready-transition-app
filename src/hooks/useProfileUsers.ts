@@ -23,6 +23,7 @@ const getFullAvatarUrl = (avatarUrl: string | null) => {
 export const useProfileUsers = () => {
   return useQuery({
     queryKey: ['profile-users'],
+    staleTime: 120000, // Cache for 2 minutes
     queryFn: async () => {
       // Fetch profiles with role UUIDs
       const { data: profiles, error: profilesError } = await supabase
