@@ -1,31 +1,42 @@
 import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Card, CardContent } from '@/components/ui/card';
 import { useProjects } from '@/hooks/useProjects';
-import { Loader2, ClipboardList, Award } from 'lucide-react';
+import { Loader2, FolderOpen } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 
 interface WizardStepProjectSelectionProps {
   projectId: string;
-  phase: 'PAC' | 'FAC';
   onProjectChange: (projectId: string) => void;
-  onPhaseChange: (phase: 'PAC' | 'FAC') => void;
 }
 
 export const WizardStepProjectSelection: React.FC<WizardStepProjectSelectionProps> = ({
   projectId,
-  phase,
   onProjectChange,
-  onPhaseChange,
 }) => {
   const { projects, isLoading } = useProjects();
+  const selectedProject = projects?.find(p => p.id === projectId);
 
   return (
     <div className="space-y-6">
+      {/* Info Banner */}
+      <Card className="bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-900">
+        <CardContent className="p-4">
+          <div className="flex gap-3">
+            <FolderOpen className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-medium text-blue-900 dark:text-blue-100">Select a Project</p>
+              <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                Choose the project that will be handed over from Project team to Asset Operations.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Project Selection */}
       <div className="space-y-3">
-        <Label className="text-base font-medium">Select Project *</Label>
+        <Label className="text-base font-medium">Project *</Label>
         <Select value={projectId} onValueChange={onProjectChange}>
           <SelectTrigger className="h-12">
             <SelectValue placeholder="Choose a project for handover..." />
@@ -57,67 +68,23 @@ export const WizardStepProjectSelection: React.FC<WizardStepProjectSelectionProp
         </Select>
       </div>
 
-      {/* Handover Phase Selection */}
-      <div className="space-y-3">
-        <Label className="text-base font-medium">Handover Phase *</Label>
-        <RadioGroup
-          value={phase}
-          onValueChange={(value) => onPhaseChange(value as 'PAC' | 'FAC')}
-          className="grid grid-cols-1 sm:grid-cols-2 gap-4"
-        >
-          <Card 
-            className={`cursor-pointer transition-all ${
-              phase === 'PAC' 
-                ? 'border-primary ring-2 ring-primary/20' 
-                : 'hover:border-primary/50'
-            }`}
-            onClick={() => onPhaseChange('PAC')}
-          >
-            <CardContent className="p-4">
-              <div className="flex items-start gap-3">
-                <RadioGroupItem value="PAC" id="pac" className="mt-1" />
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <ClipboardList className="h-4 w-4 text-blue-500" />
-                    <Label htmlFor="pac" className="font-semibold cursor-pointer">
-                      PAC - Provisional Acceptance
-                    </Label>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Initial handover from Project to Operations team with provisional acceptance criteria
-                  </p>
-                </div>
+      {/* Selected Project Details */}
+      {selectedProject && (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardContent className="p-4">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Project ID</span>
+                <span className="font-medium">{selectedProject.project_id_prefix}-{selectedProject.project_id_number}</span>
               </div>
-            </CardContent>
-          </Card>
-
-          <Card 
-            className={`cursor-pointer transition-all ${
-              phase === 'FAC' 
-                ? 'border-primary ring-2 ring-primary/20' 
-                : 'hover:border-primary/50'
-            }`}
-            onClick={() => onPhaseChange('FAC')}
-          >
-            <CardContent className="p-4">
-              <div className="flex items-start gap-3">
-                <RadioGroupItem value="FAC" id="fac" className="mt-1" />
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Award className="h-4 w-4 text-green-500" />
-                    <Label htmlFor="fac" className="font-semibold cursor-pointer">
-                      FAC - Final Acceptance
-                    </Label>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Complete handover with final acceptance certificate and warranty transfer
-                  </p>
-                </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Title</span>
+                <span className="font-medium">{selectedProject.project_title}</span>
               </div>
-            </CardContent>
-          </Card>
-        </RadioGroup>
-      </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
