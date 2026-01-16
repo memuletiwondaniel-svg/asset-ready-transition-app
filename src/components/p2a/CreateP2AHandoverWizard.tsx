@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -6,6 +6,7 @@ import { useP2AHandovers } from '@/hooks/useP2AHandovers';
 import { useP2AHandoverPrerequisites } from '@/hooks/useP2AHandoverPrerequisites';
 import { useP2AHandoverApprovers } from '@/hooks/useP2AHandoverApprovers';
 import { usePACPrerequisites, usePACCategories } from '@/hooks/useHandoverPrerequisites';
+import { useDefaultHandoverApprovers } from '@/hooks/useDefaultHandoverApprovers';
 import { WizardStepProjectSelection } from './wizard/WizardStepProjectSelection';
 import { WizardStepPhaseSelection } from './wizard/WizardStepPhaseSelection';
 import { WizardStepScope } from './wizard/WizardStepScope';
@@ -33,7 +34,8 @@ const STEPS = [
   { id: 8, title: 'Review', description: 'Confirm & create' },
 ];
 
-const DEFAULT_APPROVERS: ApproverConfig[] = [
+// Fallback default approvers in case admin hasn't configured any
+const FALLBACK_APPROVERS: ApproverConfig[] = [
   { id: 'temp-1', roleName: 'Project Team Lead', userId: null, displayOrder: 1 },
   { id: 'temp-2', roleName: 'Asset Team Lead', userId: null, displayOrder: 2 },
   { id: 'temp-3', roleName: 'Operations Manager', userId: null, displayOrder: 3 },
@@ -64,7 +66,30 @@ export const CreateP2AHandoverWizard: React.FC<CreateP2AHandoverWizardProps> = (
   const [prerequisiteStates, setPrerequisiteStates] = useState<Map<string, PrerequisiteLocalState>>(new Map());
   
   // Approvers local state
-  const [approvers, setApprovers] = useState<ApproverConfig[]>(DEFAULT_APPROVERS);
+  const [approvers, setApprovers] = useState<ApproverConfig[]>(FALLBACK_APPROVERS);
+  const [approversInitialized, setApproversInitialized] = useState(false);
+  
+  // Fetch default approvers from admin settings based on selected phase
+  const { approvers: adminApprovers, isLoading: isLoadingApprovers } = useDefaultHandoverApprovers(phase);
+
+  // Update approvers when phase changes or admin approvers load
+  useEffect(() => {
+    if (adminApprovers && adminApprovers.length > 0 && !approversInitialized) {
+      const mappedApprovers: ApproverConfig[] = adminApprovers.map((a, index) => ({
+        id: `temp-${index + 1}`,
+        roleName: a.role_name,
+        userId: null,
+        displayOrder: a.display_order,
+      }));
+      setApprovers(mappedApprovers);
+      setApproversInitialized(true);
+    }
+  }, [adminApprovers, approversInitialized]);
+
+  // Reset approvers initialization when phase changes
+  useEffect(() => {
+    setApproversInitialized(false);
+  }, [phase]);
 
   const resetForm = () => {
     setCurrentStep(1);
@@ -74,7 +99,8 @@ export const CreateP2AHandoverWizard: React.FC<CreateP2AHandoverWizardProps> = (
     setSelectedTemplateId(null);
     setIgnoreTemplates(false);
     setPrerequisiteStates(new Map());
-    setApprovers(DEFAULT_APPROVERS);
+    setApprovers(FALLBACK_APPROVERS);
+    setApproversInitialized(false);
     setIsSubmitting(false);
   };
 

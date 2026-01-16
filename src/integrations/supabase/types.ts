@@ -228,6 +228,7 @@ export type Database = {
           content: string
           created_at: string | null
           created_by: string | null
+          default_signatories: Json | null
           id: string
           is_active: boolean | null
           is_default: boolean | null
@@ -239,6 +240,7 @@ export type Database = {
           content: string
           created_at?: string | null
           created_by?: string | null
+          default_signatories?: Json | null
           id?: string
           is_active?: boolean | null
           is_default?: boolean | null
@@ -250,6 +252,7 @@ export type Database = {
           content?: string
           created_at?: string | null
           created_by?: string | null
+          default_signatories?: Json | null
           id?: string
           is_active?: boolean | null
           is_default?: boolean | null
