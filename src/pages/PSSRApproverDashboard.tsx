@@ -158,36 +158,14 @@ const PSSRApproverDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
-  const { data: pendingPSSRs, isLoading: isLoadingPSSRs } = usePSSRsAwaitingReview(user?.id);
-  const { 
-    tasks: dbTasks, 
-    loading: isLoadingTasks,
-    updateTaskStatus,
-    deleteTask,
-    reorderTasks,
-    bulkUpdateStatus,
-    bulkDelete
-  } = useUserTasks();
-  const {
-    items: dbOwlItems,
-    isLoading: isLoadingOWL,
-    stats: owlStats,
-    updateStatus: updateOWLStatus,
-    isUpdatingStatus: isUpdatingOWLStatus,
-  } = useUserOWLItems();
-  const { data: projects } = useProjectsForOWL();
-  
-  // Combine real data with mock data for demonstration
-  const tasks = dbTasks.length > 0 ? dbTasks : MOCK_CUSTOM_TASKS;
-  const owlItems = dbOwlItems.length > 0 ? dbOwlItems : MOCK_OWL_ITEMS;
-  const pssrReviews = pendingPSSRs?.length ? pendingPSSRs : MOCK_PSSR_REVIEWS;
-  
+
+  // Local UI state (defined early so hooks can use it)
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
   const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set());
   const [selectedOWLItem, setSelectedOWLItem] = useState<UserOWLItem | null>(null);
   const [owlDialogOpen, setOWLDialogOpen] = useState(false);
-  
+
   // Create Task Dialog State
   const [showCreateTaskDialog, setShowCreateTaskDialog] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState('');
@@ -197,6 +175,30 @@ const PSSRApproverDashboard: React.FC = () => {
   const [newTaskDueDate, setNewTaskDueDate] = useState('');
   const [isCreatingTask, setIsCreatingTask] = useState(false);
 
+  const { data: pendingPSSRs, isLoading: isLoadingPSSRs } = usePSSRsAwaitingReview(user?.id);
+  const {
+    tasks: dbTasks,
+    loading: isLoadingTasks,
+    updateTaskStatus,
+    deleteTask,
+    reorderTasks,
+    bulkUpdateStatus,
+    bulkDelete,
+  } = useUserTasks();
+  const {
+    items: dbOwlItems,
+    isLoading: isLoadingOWL,
+    stats: owlStats,
+    updateStatus: updateOWLStatus,
+    isUpdatingStatus: isUpdatingOWLStatus,
+  } = useUserOWLItems();
+
+  // Project list for OWL dialogs
+  const { data: projects } = useProjectsForOWL();
+  // Combine real data with mock data for demonstration
+  const tasks = dbTasks.length > 0 ? dbTasks : MOCK_CUSTOM_TASKS;
+  const owlItems = dbOwlItems.length > 0 ? dbOwlItems : MOCK_OWL_ITEMS;
+  const pssrReviews = pendingPSSRs?.length ? pendingPSSRs : MOCK_PSSR_REVIEWS;
   const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor));
 
   // Calculate task counts by category

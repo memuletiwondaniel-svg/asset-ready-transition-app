@@ -217,7 +217,7 @@ export function useOWLStats() {
   });
 }
 
-export function useProjectsForOWL() {
+export function useProjectsForOWL(enabled: boolean = true) {
   return useQuery({
     queryKey: ['projects-for-owl'],
     queryFn: async () => {
@@ -228,11 +228,14 @@ export function useProjectsForOWL() {
         .order('project_title');
 
       if (error) throw error;
-      return (data || []).map(p => ({ 
-        id: p.id, 
-        name: p.project_title, 
-        code: `${p.project_id_prefix}-${p.project_id_number}` 
+      return (data || []).map(p => ({
+        id: p.id,
+        name: p.project_title,
+        code: `${p.project_id_prefix}-${p.project_id_number}`,
       }));
     },
+    enabled,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 }
