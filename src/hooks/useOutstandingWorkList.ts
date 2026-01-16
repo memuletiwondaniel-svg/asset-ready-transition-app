@@ -47,7 +47,7 @@ export function useOutstandingWorkItems(filters?: OWLFilters) {
   const query = useQuery({
     queryKey: ['owl-items', filters],
     queryFn: async () => {
-      let query = supabase
+      let q = supabase
         .from('outstanding_work_items')
         .select(`
           *,
@@ -57,31 +57,31 @@ export function useOutstandingWorkItems(filters?: OWLFilters) {
         .order('created_at', { ascending: false });
 
       if (filters?.projectId) {
-        query = query.eq('project_id', filters.projectId);
+        q = q.eq('project_id', filters.projectId);
       }
       if (filters?.source) {
-        query = query.eq('source', filters.source);
+        q = q.eq('source', filters.source);
       }
       if (filters?.status) {
-        query = query.eq('status', filters.status);
+        q = q.eq('status', filters.status);
       }
       if (filters?.priority) {
-        query = query.eq('priority', filters.priority);
+        q = q.eq('priority', filters.priority);
       }
       if (filters?.actionPartyRoleId) {
-        query = query.eq('action_party_role_id', filters.actionPartyRoleId);
+        q = q.eq('action_party_role_id', filters.actionPartyRoleId);
       }
       if (filters?.dueDateFrom) {
-        query = query.gte('due_date', filters.dueDateFrom);
+        q = q.gte('due_date', filters.dueDateFrom);
       }
       if (filters?.dueDateTo) {
-        query = query.lte('due_date', filters.dueDateTo);
+        q = q.lte('due_date', filters.dueDateTo);
       }
       if (filters?.search) {
-        query = query.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%,item_number.ilike.%${filters.search}%`);
+        q = q.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%,item_number.ilike.%${filters.search}%`);
       }
 
-      const { data, error } = await query;
+      const { data, error } = await q;
       if (error) throw error;
       
       // Transform the data to match our interface
@@ -92,10 +92,12 @@ export function useOutstandingWorkItems(filters?: OWLFilters) {
           ...item,
           project: projectData ? { id: projectData.id, name: projectData.project_title, code: projectCode } : undefined,
           action_role: item.action_role as { id: string; name: string } | undefined,
-          assigned_user: undefined // We'll fetch this separately if needed
+          assigned_user: undefined
         };
       }) as OutstandingWorkItem[];
     },
+    staleTime: 2 * 60 * 1000, // 2 minutes cache
+    refetchOnWindowFocus: false,
   });
 
   const createMutation = useMutation({
