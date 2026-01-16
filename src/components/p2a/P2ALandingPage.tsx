@@ -65,18 +65,6 @@ export const P2ALandingPage: React.FC = () => {
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-gradient-to-br from-background via-background to-muted/20">
-        {/* SVG Gradient Definition for Heatmap Icon */}
-        <svg width="0" height="0" className="absolute">
-          <defs>
-            <linearGradient id="heatmapGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#f59e0b" />
-              <stop offset="33%" stopColor="#22c55e" />
-              <stop offset="66%" stopColor="#3b82f6" />
-              <stop offset="100%" stopColor="#8b5cf6" />
-            </linearGradient>
-          </defs>
-        </svg>
-
         {/* Header */}
         <div className="border-b border-border/40 bg-card/50 backdrop-blur-xl p-4 md:p-6">
           <BreadcrumbNavigation currentPageLabel={t.p2aTitle} />
@@ -121,12 +109,16 @@ export const P2ALandingPage: React.FC = () => {
                   Handovers
                 </TabsTrigger>
                 <TabsTrigger value="heatmap" className="gap-2">
-                  <LayoutGrid 
-                    className="h-4 w-4 transition-colors"
-                    style={activeView === 'heatmap' ? { 
-                      stroke: 'url(#heatmapGradient)',
-                    } : undefined}
-                  />
+                  {activeView === 'heatmap' ? (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="3" width="7" height="7" rx="1" stroke="#f59e0b" />
+                      <rect x="14" y="3" width="7" height="7" rx="1" stroke="#22c55e" />
+                      <rect x="3" y="14" width="7" height="7" rx="1" stroke="#3b82f6" />
+                      <rect x="14" y="14" width="7" height="7" rx="1" stroke="#ef4444" />
+                    </svg>
+                  ) : (
+                    <LayoutGrid className="h-4 w-4" />
+                  )}
                   Heatmap
                 </TabsTrigger>
               </TabsList>
