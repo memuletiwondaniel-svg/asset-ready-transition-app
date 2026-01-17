@@ -582,13 +582,13 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
             />
           </div>
 
-          <div className="flex-1 flex flex-col gap-6 transition-all duration-500 relative z-10">
+          <div className="flex-1 flex flex-col items-center justify-center gap-6 transition-all duration-500 relative z-10">
             {/* Spacer for vertical centering */}
-            <div className="h-8 md:h-16" />
+            <div className="flex-1 min-h-[10vh] md:min-h-[15vh]" />
             
             {/* Bob AI Hero Section - Centered */}
-            <Card className="glass-card overflow-hidden animate-fade-in border border-border/40 shadow-xl">
-              <div className="p-8 md:p-12">
+            <Card className="w-full max-w-xl glass-card overflow-hidden animate-fade-in border border-border/40 shadow-xl">
+              <div className="p-10 md:p-16 min-h-[200px] md:min-h-[280px]">
                 <div className="flex flex-col items-center text-center max-w-2xl mx-auto">
                   {/* Greeting */}
                   <h1 className="text-2xl md:text-3xl font-bold mb-1 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
@@ -706,6 +706,9 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                 </Button>
               </div>
             </div>
+
+            {/* Bottom spacer for vertical centering */}
+            <div className="flex-1 min-h-[5vh]" />
           </div>
         </div>
 
