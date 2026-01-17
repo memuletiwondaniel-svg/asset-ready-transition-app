@@ -37,7 +37,7 @@ export const AuthenticatedLayout: React.FC = () => {
     } catch (error) {
       console.error('Logout error:', error);
     }
-    navigate('/auth');
+    navigate('/');
   };
 
   const handleNavigate = createSidebarNavigator(navigate);
