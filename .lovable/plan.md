@@ -1,83 +1,179 @@
-# Plan: Move Key Activities from Progress Widget to Overview Widget
+# Plan: Connect Reviewer Pending Items Overlay with Real Data
 
 ## Objective
-Move the "Key Activities" section from `PSSRChecklistProgressWidget` to `OverviewStatsWidget` to consolidate activity-related information in the Overview widget.
+When clicking on a reviewer with outstanding actions (e.g., Christian Johnsen with 3 pending tasks), open an overlay showing:
+1. The reviewer's name and role
+2. A list of all PSSR checklist items pending their approval
+3. Each item should be clickable to see full details in a modal
+
+## Current State
+- `ApproverPendingItemsOverlay` component already exists and is rendered
+- Click handling to open the overlay already exists in `handleApproverClick`
+- However, `pendingItemsByApprover` prop is not being passed (defaults to `{}`)
+- `onPendingItemClick` is not connected to open the detail modal
 
 ## Files to Modify
 
-### 1. `src/components/widgets/OverviewStatsWidget.tsx`
+### 1. `src/components/PSSRDashboard.tsx`
 
-**Add KeyActivity interface and props:**
+**Add state for item detail modal:**
 ```tsx
-// Add after LinkedPSSR interface (around line 13)
-interface KeyActivity {
-  name: string;
-  status: 'Completed' | 'Scheduled' | 'Not Scheduled';
-  date?: string;
-  attendees?: number;
-  type?: string;
-}
-
-// Update OverviewStatsWidgetProps interface:
-interface OverviewStatsWidgetProps {
-  linkedPSSRs?: LinkedPSSR[];
-  onPSSRClick?: (pssrId: string) => void;
-  keyActivities?: KeyActivity[];           // NEW
-  onActivityClick?: (type: string) => void; // NEW
-}
+const [selectedPendingItem, setSelectedPendingItem] = useState<CategoryItem | null>(null);
+const [isPendingItemModalOpen, setIsPendingItemModalOpen] = useState(false);
 ```
 
-**Add KeyActivityItem component** (copy from PSSRChecklistProgressWidget):
-- Copy the `KeyActivityItem` component (lines 165-219)
-- Copy the required icons: `CheckCircle2`, `Clock`, `AlertCircle`, `Calendar` (already has most)
-
-**Add Key Activities section to the render:**
-- Add a new collapsible section similar to "Linked PSSRs" for Key Activities
-- Place it after the stats cards, before or alongside the Linked PSSRs section
-
-### 2. `src/components/widgets/PSSRChecklistProgressWidget.tsx`
-
-**Remove Key Activities section:**
-- Remove the `KeyActivity` interface (lines 27-33) - or keep if used elsewhere
-- Remove `keyActivities` and `onActivityClick` from props interface (lines 48, 54)
-- Remove `keyActivities` and `onActivityClick` from destructured props (lines 230, 234)
-- Remove the `KeyActivityItem` component (lines 165-219)
-- Remove the Key Activities render section (lines 357-378)
-- Adjust widget height since content is reduced
-
-### 3. `src/components/PSSRDashboard.tsx`
-
-**Update widget props:**
-- Remove `keyActivities` and `onActivityClick` from `PSSRChecklistProgressWidget` (line 546, 550)
-- Add `keyActivities` and `onActivityClick` to `OverviewStatsWidget` (around line 568-571)
+**Create pending items data structure:**
+Build a `pendingItemsByApprover` mapping based on which reviewer is responsible for which items. For now, we'll use mock data that maps to the reviewers defined in `pssrData.reviewers`.
 
 ```tsx
-// Change from:
-<OverviewStatsWidget
-  linkedPSSRs={pssrData.linkedPSSRs}
-  onPSSRClick={(id) => console.log('PSSR clicked:', id)}
-/>
+// Create pending items mapping for each reviewer/approver
+const pendingItemsByApprover: Record<string, PendingItem[]> = {
+  // Christian Johnsen (adf6a6f1-...) has 3 pending items
+  'adf6a6f1-fdf2-4aaf-b8ec-ab8b1fd0503c': [
+    {
+      id: 'item-1',
+      uniqueId: 'PS-001',
+      category: 'Process Safety',
+      description: 'Verify pressure relief valves are correctly sized and tested',
+      status: 'pending',
+      topic: 'Relief Systems'
+    },
+    {
+      id: 'item-2',
+      uniqueId: 'PS-003',
+      category: 'Process Safety',
+      description: 'Confirm process alarms are configured per P&IDs',
+      status: 'in_progress',
+      topic: 'Alarm Management'
+    },
+    {
+      id: 'item-3',
+      uniqueId: 'TI-012',
+      category: 'Technical Integrity',
+      description: 'Review corrosion monitoring program implementation',
+      status: 'pending',
+      topic: 'Corrosion'
+    }
+  ],
+  // Lyle Koch has 2 pending items
+  '7d5a90f1-2771-4754-93eb-4499592bf638': [
+    {
+      id: 'item-4',
+      uniqueId: 'DOC-005',
+      category: 'Documentation',
+      description: 'Approve operational procedures for startup sequence',
+      status: 'pending'
+    },
+    {
+      id: 'item-5',
+      uniqueId: 'ORG-002',
+      category: 'Organization',
+      description: 'Confirm training records are complete for all operators',
+      status: 'pending'
+    }
+  ],
+  // ... other approvers
+};
+```
 
-// Change to:
-<OverviewStatsWidget
-  linkedPSSRs={pssrData.linkedPSSRs}
-  onPSSRClick={(id) => console.log('PSSR clicked:', id)}
-  keyActivities={pssrData.keyActivities}
-  onActivityClick={handleActivityClick}
+**Add handler for pending item click:**
+```tsx
+const handlePendingItemClick = (itemId: string) => {
+  // Find the item across all pending items
+  const allItems = Object.values(pendingItemsByApprover).flat();
+  const item = allItems.find(i => i.id === itemId);
+  if (item) {
+    // Convert PendingItem to CategoryItem for the detail modal
+    setSelectedPendingItem({
+      id: item.id,
+      unique_id: item.uniqueId || '',
+      question: item.description,
+      response: null,
+      status: item.status,
+      // ... other fields
+    });
+    setIsPendingItemModalOpen(true);
+  }
+};
+```
+
+**Update PSSRReviewersApprovalsWidget props:**
+```tsx
+<PSSRReviewersApprovalsWidget
+  reviewers={pssrData.reviewers}
+  approvers={pssrData.approvers}
+  sofApprovers={pssrData.sofApprovers}
+  onSendReminder={(personId) => console.log('Send reminder to:', personId)}
+  onPersonClick={(personId) => console.log('Person clicked:', personId)}
+  pssrId={pssrId}
+  pssrReason={pssrData.reason}
+  plantName={pssrData.asset}
+  facilityName={pssrData.asset}
+  projectName={pssrData.projectName}
+  pendingItemsByApprover={pendingItemsByApprover}  // NEW
+  onPendingItemClick={handlePendingItemClick}       // NEW
 />
 ```
 
-## UI Design for Key Activities in Overview Widget
+**Add PSSRItemDetailModal for viewing item details:**
+```tsx
+<PSSRItemDetailModal
+  open={isPendingItemModalOpen}
+  onOpenChange={setIsPendingItemModalOpen}
+  item={selectedPendingItem}
+  pssrId={pssrId || ''}
+/>
+```
 
-The Key Activities section will be displayed as a collapsible section with:
-- A header with an icon (Calendar), label "Key Activities", badge with count, and chevron
-- When expanded, shows activity items with:
-  - Status icon (checkmark for Completed, clock for Scheduled, alert for Not Scheduled)
-  - Activity name
-  - Date (if available)
-  - Status badge
+### 2. Add Imports to PSSRDashboard.tsx
+
+```tsx
+import { PSSRItemDetailModal } from '@/components/pssr/PSSRItemDetailModal';
+import { PendingItem } from '@/components/widgets/ApproverPendingItemsOverlay';
+import { CategoryItem } from '@/hooks/usePSSRCategoryProgress';
+```
+
+## Implementation Flow
+
+```
+User clicks on Christian Johnsen (3 pending)
+    |
+    v
+handleApproverClick() is called
+    |
+    v
+setSelectedApprover(person) + setIsApproverOverlayOpen(true)
+    |
+    v
+ApproverPendingItemsOverlay opens with:
+  - Christian Johnsen's name and role
+  - 3 pending items from pendingItemsByApprover[personId]
+    |
+    v
+User clicks on a specific item (e.g., PS-001)
+    |
+    v
+onPendingItemClick(itemId) is called
+    |
+    v
+handlePendingItemClick finds the item and opens PSSRItemDetailModal
+    |
+    v
+User sees full item details (question, status, attachments, etc.)
+```
 
 ## Expected Result
-- Key Activities will appear in the Overview widget alongside Linked PSSRs
-- The Progress widget will be smaller/cleaner, focusing only on progress metrics
-- All activity-related functionality (click handlers, modals) will continue to work as before
+1. Clicking on Christian Johnsen (or any reviewer with pending tasks) opens the overlay
+2. Overlay shows:
+   - Avatar, name ("Christian Johnsen"), role ("TA2 Process - P&E")
+   - Badge showing "3 pending items"
+   - List of items grouped by category (Process Safety, Technical Integrity, etc.)
+3. Each item shows unique ID, description, status badge
+4. Clicking an item opens the full detail modal with complete information
+5. "Send Reminder" button available to notify the reviewer
+
+## Future Enhancement (Optional)
+Instead of mock data, we could:
+1. Create a database table `pssr_item_assignments` linking items to reviewers
+2. Query real pending items for each reviewer from the database
+3. Filter based on the reviewer's technical authority role (e.g., Process items for Process TA2)
