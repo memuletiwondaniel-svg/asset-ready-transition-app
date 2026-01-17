@@ -74,8 +74,32 @@ export const BulkUserUpload: React.FC<BulkUserUploadProps> = ({ onBack }) => {
         const workbook = XLSX.read(data, { type: 'array' });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
-        const jsonData = XLSX.utils.sheet_to_json<Record<string, any>>(worksheet);
-
+        
+        // Get all data as array of arrays to find header row
+        const allRows = XLSX.utils.sheet_to_json<any[]>(worksheet, { header: 1 });
+        console.log('Total rows:', allRows.length);
+        console.log('First 5 rows:', allRows.slice(0, 5));
+        
+        // Find the header row by looking for a row containing expected column names
+        const expectedHeaders = ['firstname', 'lastname', 'email', 'password', 'company'];
+        let headerRowIndex = 0;
+        
+        for (let i = 0; i < Math.min(10, allRows.length); i++) {
+          const row = allRows[i];
+          if (Array.isArray(row)) {
+            const rowLower = row.map(cell => (cell?.toString() || '').toLowerCase().trim().replace(/[\s_-]/g, ''));
+            const matchCount = expectedHeaders.filter(h => rowLower.some(cell => cell.includes(h))).length;
+            if (matchCount >= 3) {
+              headerRowIndex = i;
+              console.log('Found header row at index:', i, 'with values:', row);
+              break;
+            }
+          }
+        }
+        
+        // Parse with the correct header row
+        const jsonData = XLSX.utils.sheet_to_json<Record<string, any>>(worksheet, { range: headerRowIndex });
+        
         console.log('Sheet names:', workbook.SheetNames);
         console.log('Raw JSON data sample:', jsonData.slice(0, 3));
         console.log('First row keys:', jsonData[0] ? Object.keys(jsonData[0]) : 'No data');
