@@ -129,14 +129,14 @@ export const PriorityActionsOverlay: React.FC<PriorityActionsOverlayProps> = ({
       <div
         key={action.id}
         onClick={() => onActionClick?.(action)}
-        className="p-4 bg-card border border-border/50 rounded-lg hover:bg-accent/10 hover:border-primary/30 cursor-pointer transition-all group"
+        className="p-4 bg-card/50 backdrop-blur-sm border border-border/30 rounded-xl hover:bg-accent/20 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5 cursor-pointer transition-all duration-300 group"
       >
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-start gap-3 flex-1 min-w-0">
-            <div className={`w-7 h-7 rounded flex items-center justify-center flex-shrink-0 ${
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 shadow-md ${
               action.priority === 'A' 
-                ? 'bg-red-500 text-white' 
-                : 'bg-orange-500 text-white'
+                ? 'bg-gradient-to-br from-red-500 to-red-600 text-white shadow-red-500/25' 
+                : 'bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-amber-500/25'
             }`}>
               <span className="text-xs font-bold">{action.priority}</span>
             </div>
@@ -203,12 +203,12 @@ export const PriorityActionsOverlay: React.FC<PriorityActionsOverlayProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col p-0 gap-0">
-        <DialogHeader className="px-6 pt-6 pb-4 border-b border-border flex-shrink-0">
+      <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col p-0 gap-0 overflow-hidden rounded-2xl shadow-2xl border-0 bg-gradient-to-b from-background to-background/95">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b border-border/50 flex-shrink-0 bg-gradient-to-b from-muted/30 to-transparent">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
-                <AlertTriangle className="h-5 w-5 text-white" />
+              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-500 via-orange-500 to-red-500 flex items-center justify-center shadow-lg shadow-orange-500/25">
+                <AlertTriangle className="h-5 w-5 text-white drop-shadow-sm" />
               </div>
               <div>
                 <DialogTitle className="text-lg font-semibold">Priority Actions</DialogTitle>
@@ -218,11 +218,11 @@ export const PriorityActionsOverlay: React.FC<PriorityActionsOverlayProps> = ({
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className="text-xs bg-background/50 backdrop-blur-sm">
                 {completionPercentage}% Complete
               </Badge>
               {onAddAction && (
-                <Button size="sm" onClick={onAddAction} className="gap-1.5">
+                <Button size="sm" onClick={onAddAction} className="gap-1.5 shadow-md">
                   <Plus className="h-4 w-4" />
                   Add Action
                 </Button>
@@ -230,36 +230,32 @@ export const PriorityActionsOverlay: React.FC<PriorityActionsOverlayProps> = ({
             </div>
           </div>
           
-          {/* Summary Stats */}
-          <div className="grid grid-cols-2 gap-3 mt-4">
-            <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800/50">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-red-700 dark:text-red-400">Priority A (Before Startup)</span>
-                <Badge className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300 text-xs border-0">
-                  {stats.priorityA.open} open
-                </Badge>
+          {/* Summary Stats - Glass morphism style */}
+          <div className="grid grid-cols-2 gap-4 mt-4">
+            <div className="p-4 bg-gradient-to-br from-red-500/10 to-red-600/5 rounded-xl border border-red-500/20 backdrop-blur-sm">
+              <div className="flex items-center justify-between mb-2.5">
+                <span className="text-sm font-semibold text-red-600 dark:text-red-400">Priority 1</span>
+                <span className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.priorityA.open}</span>
               </div>
               <Progress 
                 value={stats.priorityA.total > 0 ? (stats.priorityA.closed / stats.priorityA.total) * 100 : 0} 
-                className="h-1.5"
+                className="h-2 bg-red-500/20"
               />
-              <p className="text-xs text-red-600/80 dark:text-red-400/80 mt-1.5">
+              <p className="text-xs text-red-500/70 dark:text-red-400/70 mt-2">
                 {stats.priorityA.closed} of {stats.priorityA.total} closed
               </p>
             </div>
             
-            <div className="p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800/50">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-orange-700 dark:text-orange-400">Priority B (After Startup)</span>
-                <Badge className="bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300 text-xs border-0">
-                  {stats.priorityB.open} open
-                </Badge>
+            <div className="p-4 bg-gradient-to-br from-amber-500/10 to-orange-600/5 rounded-xl border border-amber-500/20 backdrop-blur-sm">
+              <div className="flex items-center justify-between mb-2.5">
+                <span className="text-sm font-semibold text-amber-600 dark:text-amber-400">Priority 2</span>
+                <span className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.priorityB.open}</span>
               </div>
               <Progress 
                 value={stats.priorityB.total > 0 ? (stats.priorityB.closed / stats.priorityB.total) * 100 : 0} 
-                className="h-1.5"
+                className="h-2 bg-amber-500/20"
               />
-              <p className="text-xs text-orange-600/80 dark:text-orange-400/80 mt-1.5">
+              <p className="text-xs text-amber-500/70 dark:text-amber-400/70 mt-2">
                 {stats.priorityB.closed} of {stats.priorityB.total} closed
               </p>
             </div>
@@ -267,7 +263,7 @@ export const PriorityActionsOverlay: React.FC<PriorityActionsOverlayProps> = ({
         </DialogHeader>
 
         {/* Filter Bar */}
-        <div className="px-6 py-3 border-b border-border flex items-center gap-3 flex-shrink-0">
+        <div className="px-6 py-3 bg-muted/30 border-b border-border/50 flex items-center gap-4 flex-shrink-0">
           {/* Priority Tabs */}
           <Tabs value={priorityFilter} onValueChange={(v) => setPriorityFilter(v as typeof priorityFilter)} className="flex-shrink-0">
             <TabsList className="h-8">
@@ -318,12 +314,14 @@ export const PriorityActionsOverlay: React.FC<PriorityActionsOverlayProps> = ({
               ))}
             </div>
           ) : filteredActions.length === 0 ? (
-            <div className="text-center py-12">
-              <CheckCircle2 className="h-12 w-12 mx-auto mb-3 text-green-500" />
-              <p className="text-sm font-medium text-foreground">
+            <div className="text-center py-16">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-green-500/10 flex items-center justify-center">
+                <CheckCircle2 className="h-8 w-8 text-green-500" />
+              </div>
+              <p className="text-base font-medium text-foreground">
                 {stats.total === 0 ? 'No priority actions recorded' : 'No actions match your filters'}
               </p>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-sm text-muted-foreground mt-2 max-w-xs mx-auto">
                 {stats.total === 0 
                   ? 'Priority actions will appear here when created during reviews or walkdowns.'
                   : 'Try adjusting your search or filter criteria.'}
@@ -335,10 +333,10 @@ export const PriorityActionsOverlay: React.FC<PriorityActionsOverlayProps> = ({
               {priorityAActions.length > 0 && (priorityFilter === 'all' || priorityFilter === 'A') && (
                 <div>
                   <div className="flex items-center gap-2 mb-3">
-                    <span className="w-6 h-6 rounded bg-red-500 text-white text-xs font-bold flex items-center justify-center">A</span>
-                    <h3 className="text-sm font-medium text-foreground">Priority A - Before Startup ({priorityAActions.length})</h3>
+                    <span className="w-7 h-7 rounded-lg bg-gradient-to-br from-red-500 to-red-600 text-white text-xs font-bold flex items-center justify-center shadow-md shadow-red-500/25">A</span>
+                    <h3 className="text-sm font-medium text-foreground">Priority 1 - Before Startup ({priorityAActions.length})</h3>
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {priorityAActions.map(renderActionCard)}
                   </div>
                 </div>
@@ -348,10 +346,10 @@ export const PriorityActionsOverlay: React.FC<PriorityActionsOverlayProps> = ({
               {priorityBActions.length > 0 && (priorityFilter === 'all' || priorityFilter === 'B') && (
                 <div>
                   <div className="flex items-center gap-2 mb-3">
-                    <span className="w-6 h-6 rounded bg-orange-500 text-white text-xs font-bold flex items-center justify-center">B</span>
-                    <h3 className="text-sm font-medium text-foreground">Priority B - After Startup ({priorityBActions.length})</h3>
+                    <span className="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 text-white text-xs font-bold flex items-center justify-center shadow-md shadow-amber-500/25">B</span>
+                    <h3 className="text-sm font-medium text-foreground">Priority 2 - After Startup ({priorityBActions.length})</h3>
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {priorityBActions.map(renderActionCard)}
                   </div>
                 </div>
