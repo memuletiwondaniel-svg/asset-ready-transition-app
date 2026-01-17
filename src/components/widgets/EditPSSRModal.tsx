@@ -111,10 +111,6 @@ export const EditPSSRModal: React.FC<EditPSSRModalProps> = ({
       fieldId,
       stationId,
     });
-    toast({
-      title: 'PSSR Updated',
-      description: 'Changes have been saved successfully.',
-    });
     onClose();
   };
 

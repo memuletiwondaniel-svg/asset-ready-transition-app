@@ -161,9 +161,8 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
     if (size === 'large') return 'lg:col-span-2';
     return 'lg:col-span-1';
   };
-
-  // Mock comprehensive PSSR data
-  const pssrData = {
+  // PSSR data state - can be updated via edit modal
+  const [pssrData, setPssrData] = useState({
     id: pssrId,
     title: 'DP300 HM Additional Compressors',
     asset: 'NRNGL Plant',
@@ -289,7 +288,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
         relationship: 'Dependent'
       }
     ]
-  };
+  });
 
   // Create pending items mapping for each reviewer/approver
   const pendingItemsByApprover: Record<string, PendingItem[]> = {
@@ -857,7 +856,18 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
         onClose={() => setEditModalOpen(false)}
         pssrData={pssrData}
         onSave={(updatedData) => {
-          console.log('PSSR data updated:', updatedData);
+          setPssrData(prev => ({
+            ...prev,
+            title: updatedData.title || prev.title,
+            asset: updatedData.asset || prev.asset,
+            reason: updatedData.reason || prev.reason,
+            initiator: updatedData.pssrLead || prev.initiator,
+            scope: updatedData.scope || prev.scope,
+          }));
+          toast({
+            title: 'PSSR Updated',
+            description: 'Changes have been saved successfully.',
+          });
           setEditModalOpen(false);
         }}
       />
