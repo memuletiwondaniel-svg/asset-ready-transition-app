@@ -69,7 +69,7 @@ export const AuthenticatedLayout: React.FC = () => {
         onNavigate={handleNavigate}
         onLogout={handleLogout}
       />
-      <AnimatedBackground className="flex-1 flex flex-col overflow-hidden">
+      <AnimatedBackground className="flex-1 flex flex-col overflow-auto">
         <Outlet />
       </AnimatedBackground>
     </div>
