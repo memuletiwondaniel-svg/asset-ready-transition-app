@@ -22,6 +22,8 @@ import { SortableContext, arrayMove, rectSortingStrategy } from '@dnd-kit/sortab
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { usePSSRCategoryProgress, CategoryItem } from '@/hooks/usePSSRCategoryProgress';
+import { PSSRItemDetailModal } from '@/components/pssr/PSSRItemDetailModal';
+import { PendingItem } from '@/components/widgets/ApproverPendingItemsOverlay';
 
 interface PSSRDashboardProps {
   pssrId: string;
@@ -81,6 +83,10 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
     filterValue?: string;
     isOpen: boolean;
   }>({ type: 'full', isOpen: false });
+
+  // Pending item detail modal state
+  const [selectedPendingItem, setSelectedPendingItem] = useState<CategoryItem | null>(null);
+  const [isPendingItemModalOpen, setIsPendingItemModalOpen] = useState(false);
 
   // Widget order state - persisted in localStorage
   const [widgetOrder, setWidgetOrder] = useState<string[]>(() => {
@@ -283,6 +289,107 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
         relationship: 'Dependent'
       }
     ]
+  };
+
+  // Create pending items mapping for each reviewer/approver
+  const pendingItemsByApprover: Record<string, PendingItem[]> = {
+    // Christian Johnsen (adf6a6f1-...) has 3 pending items
+    'adf6a6f1-fdf2-4aaf-b8ec-ab8b1fd0503c': [
+      {
+        id: 'item-1',
+        uniqueId: 'PS-001',
+        category: 'Process Safety',
+        description: 'Verify pressure relief valves are correctly sized and tested',
+        status: 'pending',
+        topic: 'Relief Systems'
+      },
+      {
+        id: 'item-2',
+        uniqueId: 'PS-003',
+        category: 'Process Safety',
+        description: 'Confirm process alarms are configured per P&IDs',
+        status: 'in_progress',
+        topic: 'Alarm Management'
+      },
+      {
+        id: 'item-3',
+        uniqueId: 'TI-012',
+        category: 'Technical Integrity',
+        description: 'Review corrosion monitoring program implementation',
+        status: 'pending',
+        topic: 'Corrosion'
+      }
+    ],
+    // Lyle Koch has 2 pending items
+    '7d5a90f1-2771-4754-93eb-4499592bf638': [
+      {
+        id: 'item-4',
+        uniqueId: 'DOC-005',
+        category: 'Documentation',
+        description: 'Approve operational procedures for startup sequence',
+        status: 'pending'
+      },
+      {
+        id: 'item-5',
+        uniqueId: 'ORG-002',
+        category: 'Organization',
+        description: 'Confirm training records are complete for all operators',
+        status: 'pending'
+      }
+    ],
+    // Wim Moelker has 1 pending item
+    '80a438d0-c363-4efc-bb73-98c4dfa80bdb': [
+      {
+        id: 'item-6',
+        uniqueId: 'HSE-007',
+        category: 'HSE & Environment',
+        description: 'Verify emergency response procedures are documented',
+        status: 'pending'
+      }
+    ],
+    // Marije Hoedemaker has 1 pending item
+    '9701c5ba-9d9e-46e7-9431-0613cd9c7260': [
+      {
+        id: 'item-7',
+        uniqueId: 'MR-004',
+        category: 'Maintenance Readiness',
+        description: 'Confirm maintenance schedule is finalized for new equipment',
+        status: 'pending'
+      }
+    ]
+  };
+
+  // Handler for clicking on a pending item in the overlay
+  const handlePendingItemClick = (itemId: string) => {
+    // Find the item across all pending items
+    const allItems = Object.values(pendingItemsByApprover).flat();
+    const item = allItems.find(i => i.id === itemId);
+    if (item) {
+      // Convert PendingItem to CategoryItem for the detail modal
+      setSelectedPendingItem({
+        id: item.id,
+        unique_id: item.uniqueId || '',
+        question: item.description,
+        response_id: null,
+        response: null,
+        status: item.status,
+        category: item.category,
+        narrative: item.topic ? `Topic: ${item.topic}` : null,
+        justification: null,
+        deviation_reason: null,
+        potential_risk: null,
+        mitigations: null,
+        follow_up_action: null,
+        action_owner: null,
+        submitted_at: null,
+        approved_at: null,
+        approver_name: null,
+        approval_comments: null,
+        attachments: null,
+        approval_status: null,
+      });
+      setIsPendingItemModalOpen(true);
+    }
   };
 
   // Mock category data for when real data is empty
@@ -560,6 +667,8 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
                         plantName={pssrData.asset}
                         facilityName={pssrData.asset}
                         projectName={pssrData.projectName}
+                        pendingItemsByApprover={pendingItemsByApprover}
+                        onPendingItemClick={handlePendingItemClick}
                       />
                     ),
                     'widget-6': (
@@ -656,6 +765,14 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
           type: checklistOverlay.filterType,
           value: checklistOverlay.filterValue
         } : undefined}
+      />
+
+      {/* Pending Item Detail Modal */}
+      <PSSRItemDetailModal
+        open={isPendingItemModalOpen}
+        onOpenChange={setIsPendingItemModalOpen}
+        item={selectedPendingItem}
+        pssrId={pssrId || ''}
       />
     </div>
   );
