@@ -5,7 +5,9 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { CheckCircle2, Clock, FileText, AlertCircle, Bell, Send, X } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { CheckCircle2, Clock, FileText, AlertCircle, Bell, Send, X, Search, Filter } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 export interface PendingItem {
@@ -44,6 +46,8 @@ export const ApproverPendingItemsOverlay: React.FC<ApproverPendingItemsOverlayPr
   const [showReminderForm, setShowReminderForm] = useState(false);
   const [reminderMessage, setReminderMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'in_progress' | 'completed' | 'na'>('all');
 
   if (!approver) return null;
 
@@ -89,19 +93,6 @@ export const ApproverPendingItemsOverlay: React.FC<ApproverPendingItemsOverlayPr
     }
   };
 
-  const getStatusIcon = (status: PendingItem['status']) => {
-    switch (status) {
-      case 'completed':
-        return <CheckCircle2 className="h-4 w-4 text-green-500" />;
-      case 'in_progress':
-        return <Clock className="h-4 w-4 text-amber-500" />;
-      case 'na':
-        return <AlertCircle className="h-4 w-4 text-muted-foreground" />;
-      default:
-        return <Clock className="h-4 w-4 text-muted-foreground" />;
-    }
-  };
-
   const getStatusBadge = (status: PendingItem['status']) => {
     switch (status) {
       case 'completed':
@@ -115,8 +106,21 @@ export const ApproverPendingItemsOverlay: React.FC<ApproverPendingItemsOverlayPr
     }
   };
 
-  // Group items by category
-  const groupedItems = pendingItems.reduce((acc, item) => {
+  // Filter items based on search and status
+  const filteredItems = pendingItems.filter(item => {
+    const matchesSearch = searchQuery === '' || 
+      item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.uniqueId?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.topic?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.category.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
+
+  // Group filtered items by category
+  const groupedItems = filteredItems.reduce((acc, item) => {
     if (!acc[item.category]) {
       acc[item.category] = [];
     }
@@ -125,6 +129,12 @@ export const ApproverPendingItemsOverlay: React.FC<ApproverPendingItemsOverlayPr
   }, {} as Record<string, PendingItem[]>);
 
   const hasPendingItems = pendingItems.length > 0;
+  const isFiltering = searchQuery !== '' || statusFilter !== 'all';
+
+  const handleClearFilters = () => {
+    setSearchQuery('');
+    setStatusFilter('all');
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -143,7 +153,10 @@ export const ApproverPendingItemsOverlay: React.FC<ApproverPendingItemsOverlayPr
             </div>
             <div className="flex items-center gap-2">
               <Badge variant="secondary">
-                {pendingItems.length} pending items
+                {isFiltering && filteredItems.length !== pendingItems.length
+                  ? `${filteredItems.length} of ${pendingItems.length} items`
+                  : `${pendingItems.length} pending items`
+                }
               </Badge>
               {hasPendingItems && onSendReminder && !showReminderForm && (
                 <Button
@@ -211,6 +224,37 @@ export const ApproverPendingItemsOverlay: React.FC<ApproverPendingItemsOverlayPr
           </div>
         )}
 
+        {/* Search and Filter Bar */}
+        {hasPendingItems && (
+          <div className="flex items-center gap-3 pb-2 border-b border-border">
+            {/* Search Input */}
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by ID, description, topic..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            
+            {/* Status Filter Dropdown */}
+            <Select value={statusFilter} onValueChange={(val: typeof statusFilter) => setStatusFilter(val)}>
+              <SelectTrigger className="w-[140px]">
+                <Filter className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="in_progress">In Progress</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="na">N/A</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
         <ScrollArea className="max-h-[60vh] pr-4">
           {pendingItems.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -219,6 +263,22 @@ export const ApproverPendingItemsOverlay: React.FC<ApproverPendingItemsOverlayPr
               <p className="text-muted-foreground">
                 No pending items for this approver.
               </p>
+            </div>
+          ) : filteredItems.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <Search className="h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-medium mb-2">No Matching Items</h3>
+              <p className="text-muted-foreground">
+                No items match your search criteria.
+              </p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="mt-4"
+                onClick={handleClearFilters}
+              >
+                Clear Filters
+              </Button>
             </div>
           ) : (
             <div className="space-y-6">
@@ -241,9 +301,6 @@ export const ApproverPendingItemsOverlay: React.FC<ApproverPendingItemsOverlayPr
                         onClick={() => onItemClick?.(item.id)}
                         className="flex items-start gap-3 p-3 rounded-lg border border-border/50 bg-card/50 hover:bg-accent/10 hover:border-primary/30 cursor-pointer transition-all group"
                       >
-                        <div className="flex-shrink-0 mt-0.5">
-                          {getStatusIcon(item.status)}
-                        </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex-1 min-w-0">
