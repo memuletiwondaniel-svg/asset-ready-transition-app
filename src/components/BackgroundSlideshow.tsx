@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 interface BackgroundSlideshowProps {
   showFunFacts?: boolean;
@@ -106,7 +106,28 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = ({ showFunFacts 
   ];
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [loadedImages, setLoadedImages] = useState<Set<number>>(new Set());
 
+  // Preload all images on mount
+  useEffect(() => {
+    images.forEach((src, index) => {
+      const img = new Image();
+      img.onload = () => {
+        setLoadedImages(prev => new Set([...prev, index]));
+      };
+      img.onerror = () => {
+        // Still mark as "loaded" to not block the slideshow
+        setLoadedImages(prev => new Set([...prev, index]));
+      };
+      // Set high priority for first image
+      if (index === 0) {
+        img.fetchPriority = 'high';
+      }
+      img.src = src;
+    });
+  }, []);
+
+  // Slideshow interval
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentImageIndex((prevIndex) => (prevIndex + 1) % images.length);
@@ -115,17 +136,28 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = ({ showFunFacts 
     return () => clearInterval(interval);
   }, [images.length]);
 
+  const isFirstImageLoaded = loadedImages.has(0);
+
   const currentFacts = bgcFactsSets[currentImageIndex] || bgcFactsSets[0];
 
   return (
     <div className="fixed inset-0 -z-10 overflow-hidden">
+      {/* Fallback gradient background while images load */}
+      <div 
+        className={`absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 transition-opacity duration-700 ${
+          isFirstImageLoaded ? 'opacity-0' : 'opacity-100'
+        }`}
+      />
+      
+      {/* Slideshow images */}
       {images.map((image, index) => (
         <img
           key={index}
           src={image}
           alt=""
+          loading={index === 0 ? "eager" : "lazy"}
           className={`absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-[3000ms] ease-in-out ${
-            index === currentImageIndex ? 'opacity-100' : 'opacity-0'
+            index === currentImageIndex && loadedImages.has(index) ? 'opacity-100' : 'opacity-0'
           }`}
         />
       ))}
