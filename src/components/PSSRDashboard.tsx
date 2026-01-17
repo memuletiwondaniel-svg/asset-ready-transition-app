@@ -272,18 +272,34 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
       {
         id: '7d5a90f1-2771-4754-93eb-4499592bf638',
         name: 'Lyle Koch',
-        role: 'CS Deputy Director',
-        avatar: 'https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/4f911475-2022-4a0c-bfea-1a4263677c03/1757589686150.png',
+        role: 'Dep. Plant Director - CS',
+        avatar: 'https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/4f911475-2022-4a0c-bfea-1a4263677c03/1768675787147.jpg',
         pendingTasks: 2,
         isOnline: true
       },
       {
         id: '80a438d0-c363-4efc-bb73-98c4dfa80bdb',
         name: 'Wim Moelker',
-        role: 'Project Manager',
+        role: 'Project Manager – Central',
         avatar: 'https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/9ff2d8e8-f2a0-4c29-9b60-5ab225beb0f6/1767656008476.jpeg',
         pendingTasks: 1,
         isOnline: false
+      },
+      {
+        id: '5ae49149-e586-4385-8569-6df7117dc2c3',
+        name: 'Martyn Turner',
+        role: 'Engr. Manager - Projects',
+        avatar: 'https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/0942bfe3-17b5-41a7-920e-c0802b9764b2/1757605550833.jpg',
+        pendingTasks: 0,
+        isOnline: true
+      },
+      {
+        id: '5708b6f0-9e1b-4d17-a67f-b9023447263f',
+        name: 'Mohamed Ehab',
+        role: 'Engr. Manager - Asset',
+        avatar: 'https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/b028fda3-fe3f-482c-b14d-e0d31c7ebeb9/1768676724785.jpg',
+        pendingTasks: 0,
+        isOnline: true
       }
     ],
 
@@ -303,6 +319,14 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
         role: 'P&M Director',
         avatar: 'https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/0dae95bb-6cdb-491d-ac4c-4c0cd7b2e8b2/1757605571147.jpg',
         pendingTasks: 1,
+        isOnline: true
+      },
+      {
+        id: '6a7933b4-b16c-4f7c-b4c8-898a9bb7ab6a',
+        name: 'Ali Danbous',
+        role: 'HSE Director',
+        avatar: undefined,
+        pendingTasks: 0,
         isOnline: true
       }
     ],
