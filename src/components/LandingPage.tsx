@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -563,25 +564,9 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
   }];
 
   return (
-    <div className="min-h-screen bg-background flex-1 overflow-y-auto">
+    <AnimatedBackground className="flex-1 overflow-y-auto">
       {/* Main Content Area */}
       <div className="flex flex-col lg:flex-row gap-4 md:gap-6 p-4 md:p-6 relative">
-          {/* Subtle Animated Background */}
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div 
-              className="absolute top-1/4 -left-20 w-72 h-72 bg-gradient-to-r from-primary/5 to-blue-500/5 rounded-full filter blur-3xl animate-pulse"
-              style={{ animationDuration: '8s' }}
-            />
-            <div 
-              className="absolute top-1/2 -right-20 w-80 h-80 bg-gradient-to-l from-purple-500/5 to-pink-500/5 rounded-full filter blur-3xl animate-pulse"
-              style={{ animationDuration: '10s', animationDelay: '2s' }}
-            />
-            <div 
-              className="absolute -bottom-10 left-1/3 w-64 h-64 bg-gradient-to-t from-amber-500/5 to-orange-500/5 rounded-full filter blur-3xl animate-pulse"
-              style={{ animationDuration: '12s', animationDelay: '4s' }}
-            />
-          </div>
-
           <div className="flex-1 flex flex-col items-center justify-center gap-6 transition-all duration-500 relative z-10">
             {/* Spacer for vertical centering */}
             <div className="flex-1 min-h-[10vh] md:min-h-[15vh]" />
@@ -738,7 +723,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
 
       {/* ORSH Chat Dialog */}
       <ORSHChatDialog open={chatOpen} onOpenChange={setChatOpen} initialMessage={initialPrompt} />
-    </div>
+    </AnimatedBackground>
   );
 };
 
