@@ -257,7 +257,7 @@ export const ApproverPendingItemsOverlay: React.FC<ApproverPendingItemsOverlayPr
                               </p>
                               {item.topic && (
                                 <p className="text-xs text-muted-foreground mt-1">
-                                  Topic: {item.topic}
+                                  {item.topic}
                                 </p>
                               )}
                             </div>

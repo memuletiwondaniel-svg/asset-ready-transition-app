@@ -301,7 +301,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
         category: 'Process Safety',
         description: 'Verify pressure relief valves are correctly sized and tested',
         status: 'pending',
-        topic: 'Relief Systems'
+        topic: 'Alarms'
       },
       {
         id: 'item-2',
@@ -309,7 +309,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
         category: 'Process Safety',
         description: 'Confirm process alarms are configured per P&IDs',
         status: 'in_progress',
-        topic: 'Alarm Management'
+        topic: 'Cause & Effect'
       },
       {
         id: 'item-3',
@@ -317,7 +317,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
         category: 'Technical Integrity',
         description: 'Review corrosion monitoring program implementation',
         status: 'pending',
-        topic: 'Corrosion'
+        topic: 'Cathodic Protection'
       }
     ],
     // Lyle Koch has 2 pending items
@@ -327,14 +327,16 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
         uniqueId: 'DOC-005',
         category: 'Documentation',
         description: 'Approve operational procedures for startup sequence',
-        status: 'pending'
+        status: 'pending',
+        topic: 'Communication'
       },
       {
         id: 'item-5',
         uniqueId: 'ORG-002',
         category: 'Organization',
         description: 'Confirm training records are complete for all operators',
-        status: 'pending'
+        status: 'pending',
+        topic: 'CMMS'
       }
     ],
     // Wim Moelker has 1 pending item
@@ -344,7 +346,8 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
         uniqueId: 'HSE-007',
         category: 'HSE & Environment',
         description: 'Verify emergency response procedures are documented',
-        status: 'pending'
+        status: 'pending',
+        topic: 'Environmental Monitoring'
       }
     ],
     // Marije Hoedemaker has 1 pending item
@@ -354,7 +357,8 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
         uniqueId: 'MR-004',
         category: 'Maintenance Readiness',
         description: 'Confirm maintenance schedule is finalized for new equipment',
-        status: 'pending'
+        status: 'pending',
+        topic: 'Flange Management'
       }
     ]
   };
