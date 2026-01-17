@@ -1,62 +1,83 @@
-# Plan: Resize and Reposition Bob AI Hero Panel
+# Plan: Move Key Activities from Progress Widget to Overview Widget
 
 ## Objective
-Make the "Good Morning, Daniel" panel with the Bob Chat interface bigger, more centralized, slightly narrower, and taller - positioned more mid-screen rather than top of screen.
+Move the "Key Activities" section from `PSSRChecklistProgressWidget` to `OverviewStatsWidget` to consolidate activity-related information in the Overview widget.
 
-## File to Modify
-`src/components/LandingPage.tsx`
+## Files to Modify
 
-## Changes
+### 1. `src/components/widgets/OverviewStatsWidget.tsx`
 
-### 1. Update Parent Container (around line 585)
-Add vertical centering to the flex container:
+**Add KeyActivity interface and props:**
+```tsx
+// Add after LinkedPSSR interface (around line 13)
+interface KeyActivity {
+  name: string;
+  status: 'Completed' | 'Scheduled' | 'Not Scheduled';
+  date?: string;
+  attendees?: number;
+  type?: string;
+}
+
+// Update OverviewStatsWidgetProps interface:
+interface OverviewStatsWidgetProps {
+  linkedPSSRs?: LinkedPSSR[];
+  onPSSRClick?: (pssrId: string) => void;
+  keyActivities?: KeyActivity[];           // NEW
+  onActivityClick?: (type: string) => void; // NEW
+}
+```
+
+**Add KeyActivityItem component** (copy from PSSRChecklistProgressWidget):
+- Copy the `KeyActivityItem` component (lines 165-219)
+- Copy the required icons: `CheckCircle2`, `Clock`, `AlertCircle`, `Calendar` (already has most)
+
+**Add Key Activities section to the render:**
+- Add a new collapsible section similar to "Linked PSSRs" for Key Activities
+- Place it after the stats cards, before or alongside the Linked PSSRs section
+
+### 2. `src/components/widgets/PSSRChecklistProgressWidget.tsx`
+
+**Remove Key Activities section:**
+- Remove the `KeyActivity` interface (lines 27-33) - or keep if used elsewhere
+- Remove `keyActivities` and `onActivityClick` from props interface (lines 48, 54)
+- Remove `keyActivities` and `onActivityClick` from destructured props (lines 230, 234)
+- Remove the `KeyActivityItem` component (lines 165-219)
+- Remove the Key Activities render section (lines 357-378)
+- Adjust widget height since content is reduced
+
+### 3. `src/components/PSSRDashboard.tsx`
+
+**Update widget props:**
+- Remove `keyActivities` and `onActivityClick` from `PSSRChecklistProgressWidget` (line 546, 550)
+- Add `keyActivities` and `onActivityClick` to `OverviewStatsWidget` (around line 568-571)
+
 ```tsx
 // Change from:
-<div className="flex-1 flex flex-col overflow-hidden bg-gradient-to-br from-background via-background to-muted/20">
+<OverviewStatsWidget
+  linkedPSSRs={pssrData.linkedPSSRs}
+  onPSSRClick={(id) => console.log('PSSR clicked:', id)}
+/>
 
-// To:
-<div className="flex-1 flex flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-background via-background to-muted/20">
+// Change to:
+<OverviewStatsWidget
+  linkedPSSRs={pssrData.linkedPSSRs}
+  onPSSRClick={(id) => console.log('PSSR clicked:', id)}
+  keyActivities={pssrData.keyActivities}
+  onActivityClick={handleActivityClick}
+/>
 ```
 
-### 2. Update Initial Spacer
-Change the fixed height spacer to a flexible one:
-```tsx
-// Change from:
-<div className="min-h-[4vh] md:min-h-[8vh]" />
+## UI Design for Key Activities in Overview Widget
 
-// To:
-<div className="flex-1 min-h-[10vh] md:min-h-[15vh]" />
-```
-
-### 3. Reduce Card Width (around line 590)
-Add max-width constraint to the Card:
-```tsx
-// Change from:
-<Card className="...existing classes...">
-
-// To:
-<Card className="w-full max-w-xl ...existing classes...">
-```
-
-### 4. Increase Card Height (around line 591)
-Update padding and add minimum height to the inner div:
-```tsx
-// Change from:
-<div className="p-8 md:p-12 space-y-6 md:space-y-8">
-
-// To:
-<div className="p-10 md:p-16 space-y-6 md:space-y-8 min-h-[200px] md:min-h-[280px]">
-```
-
-### 5. Add Bottom Spacer After Quick Actions Section
-Add a flexible spacer after the Quick Actions section to help center the content:
-```tsx
-// After the Quick Actions section, add:
-<div className="flex-1 min-h-[5vh]" />
-```
+The Key Activities section will be displayed as a collapsible section with:
+- A header with an icon (Calendar), label "Key Activities", badge with count, and chevron
+- When expanded, shows activity items with:
+  - Status icon (checkmark for Completed, clock for Scheduled, alert for Not Scheduled)
+  - Activity name
+  - Date (if available)
+  - Status badge
 
 ## Expected Result
-- Panel will be vertically centered on the screen (mid-screen position)
-- Width reduced from ~672px to ~576px (max-w-xl instead of max-w-2xl)
-- Height increased with more padding and minimum height constraints
-- Content will be more prominent and visually centered in the viewport
+- Key Activities will appear in the Overview widget alongside Linked PSSRs
+- The Progress widget will be smaller/cleaner, focusing only on progress metrics
+- All activity-related functionality (click handlers, modals) will continue to work as before
