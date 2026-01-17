@@ -116,7 +116,7 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
 
       {/* Mobile Sidebar */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetContent side="left" className="w-72 p-0">
+        <SheetContent side="left" className="w-72 p-0 bg-white/70 dark:bg-zinc-900/80 backdrop-blur-xl border-r border-white/20 dark:border-white/10">
           <SidebarContent
             isMobile={true}
             isCollapsed={false}
@@ -147,7 +147,7 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
 
       {/* Desktop Sidebar */}
       <aside 
-        className={`hidden md:flex flex-col border-r border-border/40 bg-background/95 backdrop-blur-sm transition-[width] duration-300 ease-in-out ${
+        className={`hidden md:flex flex-col border-r border-white/20 dark:border-white/10 bg-white/70 dark:bg-zinc-900/80 backdrop-blur-xl transition-[width] duration-300 ease-in-out ${
           isSidebarCollapsed ? 'w-16' : 'w-64 lg:w-72'
         } h-screen flex-shrink-0 relative`}
       >
