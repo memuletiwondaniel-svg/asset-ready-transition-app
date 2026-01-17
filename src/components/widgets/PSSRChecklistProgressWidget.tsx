@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { WidgetCard } from './WidgetCard';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
 import { useWidgetSize } from '@/contexts/WidgetSizeContext';
 import { 
   Wrench, 
@@ -10,7 +11,12 @@ import {
   FileText, 
   Users, 
   HeartPulse,
-  Maximize2
+  Maximize2,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  AlertCircle,
+  ChevronDown
 } from 'lucide-react';
 
 export interface CategoryProgress {
@@ -18,6 +24,14 @@ export interface CategoryProgress {
   completed: number;
   total: number;
   percentage: number;
+}
+
+export interface KeyActivity {
+  name: string;
+  status: 'Completed' | 'Scheduled' | 'Not Scheduled';
+  date?: string;
+  attendees?: number;
+  type?: string;
 }
 
 interface PSSRChecklistProgressWidgetProps {
@@ -31,6 +45,10 @@ interface PSSRChecklistProgressWidgetProps {
   // Progress
   overallProgress: number;
   categoryProgress: CategoryProgress[];
+  
+  // Key Activities
+  keyActivities?: KeyActivity[];
+  onActivityClick?: (type: string) => void;
   
   // Interactions
   onStatClick?: (filter: string) => void;
@@ -154,6 +172,8 @@ export const PSSRChecklistProgressWidget: React.FC<PSSRChecklistProgressWidgetPr
   openActions = 0,
   overallProgress,
   categoryProgress,
+  keyActivities = [],
+  onActivityClick,
   onStatClick,
   onCategoryClick,
   onViewAll,
@@ -162,6 +182,7 @@ export const PSSRChecklistProgressWidget: React.FC<PSSRChecklistProgressWidgetPr
 }) => {
   const { widgetSize } = useWidgetSize();
   const widgetId = 'pssr-checklist-progress';
+  const [activitiesExpanded, setActivitiesExpanded] = useState(false);
 
   const getCategoryIcon = (categoryName: string) => {
     const name = categoryName.toLowerCase();
@@ -278,6 +299,81 @@ export const PSSRChecklistProgressWidget: React.FC<PSSRChecklistProgressWidgetPr
               })}
             </div>
           </div>
+
+          {/* Key Activities Section */}
+          {keyActivities.length > 0 && (
+            <div className="mt-4 pt-3 border-t border-border/40">
+              <div 
+                className="flex items-center gap-2 py-2 cursor-pointer hover:bg-accent/5 transition-colors rounded-sm"
+                onClick={() => setActivitiesExpanded(!activitiesExpanded)}
+              >
+                <Calendar className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium flex-1">Key Activities</span>
+                <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5">
+                  {keyActivities.length}
+                </Badge>
+                <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform duration-200 ${
+                  activitiesExpanded ? '' : '-rotate-90'
+                }`} />
+              </div>
+
+              {/* Expanded list */}
+              {activitiesExpanded && (
+                <div className="space-y-1 mt-2">
+                  {keyActivities.map((activity) => {
+                    const getStatusConfig = () => {
+                      switch (activity.status) {
+                        case 'Completed':
+                          return {
+                            icon: CheckCircle2,
+                            bgClass: 'bg-muted text-green-600',
+                            badgeClass: 'bg-muted text-green-600 border-border'
+                          };
+                        case 'Scheduled':
+                          return {
+                            icon: Clock,
+                            bgClass: 'bg-muted text-muted-foreground',
+                            badgeClass: 'bg-muted text-muted-foreground border-border'
+                          };
+                        default:
+                          return {
+                            icon: AlertCircle,
+                            bgClass: 'bg-muted text-muted-foreground/60',
+                            badgeClass: 'bg-muted text-muted-foreground/60 border-border'
+                          };
+                      }
+                    };
+                    const config = getStatusConfig();
+                    const Icon = config.icon;
+                    
+                    return (
+                      <button
+                        key={activity.name}
+                        onClick={() => onActivityClick?.(activity.type || activity.name)}
+                        className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-muted/30 transition-colors cursor-pointer"
+                      >
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${config.bgClass}`}>
+                          <Icon className="h-4 w-4" />
+                        </div>
+                        <div className="flex-1 min-w-0 text-left">
+                          <span className="text-xs font-medium text-foreground truncate block">{activity.name}</span>
+                          {activity.date && (
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <Calendar className="h-3 w-3" />
+                              {new Date(activity.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </div>
+                          )}
+                        </div>
+                        <span className={`text-[10px] font-medium px-2 py-1 rounded-full border ${config.badgeClass}`}>
+                          {activity.status}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
 
         </div>
       </div>
