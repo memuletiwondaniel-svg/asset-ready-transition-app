@@ -1,5 +1,4 @@
 import React from 'react';
-import { FileCheck, Clock, FileEdit, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface PSSRQuickStatsBarProps {
@@ -14,10 +13,10 @@ interface PSSRQuickStatsBarProps {
 }
 
 const statConfigs = [
-  { key: 'all' as const, label: 'Total', icon: FileCheck, activeClass: 'bg-primary text-primary-foreground border-primary', inactiveClass: 'text-primary border-primary/30 hover:border-primary/60' },
-  { key: 'draft' as const, label: 'Draft', icon: FileEdit, activeClass: 'bg-muted-foreground text-white border-muted-foreground', inactiveClass: 'text-muted-foreground border-muted-foreground/30 hover:border-muted-foreground/60' },
-  { key: 'under-review' as const, label: 'Under Review', icon: Clock, activeClass: 'bg-amber-500 text-white border-amber-500', inactiveClass: 'text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-700 hover:border-amber-500' },
-  { key: 'completed' as const, label: 'Completed', icon: CheckCircle2, activeClass: 'bg-emerald-600 text-white border-emerald-600', inactiveClass: 'text-emerald-600 dark:text-emerald-400 border-emerald-300 dark:border-emerald-700 hover:border-emerald-600' },
+  { key: 'all' as const, label: 'Total', activeClass: 'bg-primary text-primary-foreground border-primary', inactiveClass: 'text-primary border-primary/30 hover:border-primary/60' },
+  { key: 'draft' as const, label: 'Draft', activeClass: 'bg-muted-foreground text-white border-muted-foreground', inactiveClass: 'text-muted-foreground border-muted-foreground/30 hover:border-muted-foreground/60' },
+  { key: 'under-review' as const, label: 'Under Review', activeClass: 'bg-amber-500 text-white border-amber-500', inactiveClass: 'text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-700 hover:border-amber-500' },
+  { key: 'completed' as const, label: 'Completed', activeClass: 'bg-emerald-600 text-white border-emerald-600', inactiveClass: 'text-emerald-600 dark:text-emerald-400 border-emerald-300 dark:border-emerald-700 hover:border-emerald-600' },
 ];
 
 export const PSSRQuickStatsBar: React.FC<PSSRQuickStatsBarProps> = ({
@@ -38,7 +37,6 @@ export const PSSRQuickStatsBar: React.FC<PSSRQuickStatsBarProps> = ({
   return (
     <div className="flex flex-wrap gap-2 items-center">
       {statConfigs.map((stat) => {
-        const Icon = stat.icon;
         const isActive = activeFilter === stat.key;
         const value = getStatValue(stat.key);
 
@@ -53,7 +51,6 @@ export const PSSRQuickStatsBar: React.FC<PSSRQuickStatsBarProps> = ({
               isActive && "shadow-md"
             )}
           >
-            <Icon className="h-3 w-3" />
             <span className="font-semibold tabular-nums">{value}</span>
             <span className="hidden sm:inline">{stat.label}</span>
           </button>
