@@ -210,7 +210,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
         type: 'walkdown'
       },
       {
-        name: 'Sign-off Meeting',
+        name: 'SoF Signoff',
         status: 'Not Scheduled' as const,
         type: 'signoff'
       }

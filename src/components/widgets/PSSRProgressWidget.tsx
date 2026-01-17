@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { WidgetCard } from './WidgetCard';
 import { Progress } from '@/components/ui/progress';
-import { Settings, Shield, FileText, Users, AlertTriangle, BarChart3 } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Settings, Shield, FileText, Users, AlertTriangle, BarChart3, ChevronDown } from 'lucide-react';
 import { useWidgetSize } from '@/contexts/WidgetSizeContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -29,6 +30,7 @@ export const PSSRProgressWidget: React.FC<PSSRProgressWidgetProps> = ({
 }) => {
   const { widgetSize } = useWidgetSize();
   const { translations: t } = useLanguage();
+  const [isCategoryOpen, setIsCategoryOpen] = useState(true);
   const widgetId = 'pssr-progress';
   const getCategoryIcon = (name: string) => {
     const iconMap: Record<string, any> = {
@@ -111,46 +113,55 @@ export const PSSRProgressWidget: React.FC<PSSRProgressWidgetProps> = ({
           <Progress value={overallProgress} className="h-4" />
         </div>
 
-        {/* Category Progress */}
-        <div className="space-y-3 pt-2 border-t-2 border-border/40">
-          <div className="flex items-center gap-2 pt-1">
-            <div className="h-1 w-1 rounded-full bg-muted-foreground/60" />
-            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              {t.progressByCategory || 'Progress by Category'}
-            </label>
-          </div>
-          <div className="space-y-3 group/list">
-            {categoryProgress.map((category, index) => {
-              const Icon = getCategoryIcon(category.name);
-              const colors = getCategoryColors(category.name);
-              return (
-                <div
-                  key={index}
-                  className={`group p-3 rounded-lg border ${colors.border} hover:bg-accent/5 transition-all duration-300 cursor-pointer group-has-[:hover]/list:opacity-40 group-has-[:hover]/list:grayscale hover:!opacity-100 hover:!grayscale-0`}
-                  onClick={() => onCategoryClick?.(category.name)}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <div className={`w-8 h-8 rounded-full ${colors.bg} flex items-center justify-center transition-colors`}>
-                        <Icon className={`h-4 w-4 ${colors.icon}`} />
-                      </div>
-                      <span className="text-sm font-medium text-foreground">{category.name}</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs text-muted-foreground">
-                        {category.completed}/{category.total}
-                      </span>
-                      <span className={`text-sm font-semibold ${colors.icon} min-w-[3rem] text-right`}>
-                        {category.percentage}%
-                      </span>
-                    </div>
-                  </div>
-                  <Progress value={category.percentage} className={`!h-1.5 ${colors.progress}`} />
+        {/* Category Progress - Collapsible */}
+        <Collapsible open={isCategoryOpen} onOpenChange={setIsCategoryOpen}>
+          <div className="space-y-3 pt-2 border-t-2 border-border/40">
+            <CollapsibleTrigger asChild>
+              <button className="flex items-center justify-between w-full pt-1 group cursor-pointer">
+                <div className="flex items-center gap-2">
+                  <div className="h-1 w-1 rounded-full bg-muted-foreground/60" />
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    {t.progressByCategory || 'Progress by Category'}
+                  </span>
                 </div>
-              );
-            })}
+                <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${isCategoryOpen ? 'rotate-0' : '-rotate-90'}`} />
+              </button>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div className="space-y-3 group/list">
+                {categoryProgress.map((category, index) => {
+                  const Icon = getCategoryIcon(category.name);
+                  const colors = getCategoryColors(category.name);
+                  return (
+                    <div
+                      key={index}
+                      className={`group p-3 rounded-lg border ${colors.border} hover:bg-accent/5 transition-all duration-300 cursor-pointer group-has-[:hover]/list:opacity-40 group-has-[:hover]/list:grayscale hover:!opacity-100 hover:!grayscale-0`}
+                      onClick={() => onCategoryClick?.(category.name)}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <div className={`w-8 h-8 rounded-full ${colors.bg} flex items-center justify-center transition-colors`}>
+                            <Icon className={`h-4 w-4 ${colors.icon}`} />
+                          </div>
+                          <span className="text-sm font-medium text-foreground">{category.name}</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs text-muted-foreground">
+                            {category.completed}/{category.total}
+                          </span>
+                          <span className={`text-sm font-semibold ${colors.icon} min-w-[3rem] text-right`}>
+                            {category.percentage}%
+                          </span>
+                        </div>
+                      </div>
+                      <Progress value={category.percentage} className={`!h-1.5 ${colors.progress}`} />
+                    </div>
+                  );
+                })}
+              </div>
+            </CollapsibleContent>
           </div>
-        </div>
+        </Collapsible>
       </div>
     </WidgetCard>
   );
