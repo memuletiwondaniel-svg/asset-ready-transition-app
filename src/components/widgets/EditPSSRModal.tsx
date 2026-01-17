@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,13 +8,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { useToast } from '@/hooks/use-toast';
-import { Save, X, Check, ChevronsUpDown, MapPin, Building, Layers } from 'lucide-react';
+import { Save, X, Check, ChevronsUpDown, MapPin, Building, Layers, Upload, ImageIcon, Trash2, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePSSRReasons } from '@/hooks/usePSSRReasons';
 import { useProfileUsers } from '@/hooks/useProfileUsers';
 import { usePlants } from '@/hooks/usePlants';
 import { useFields } from '@/hooks/useFields';
 import { useStations } from '@/hooks/useStations';
+import { supabase } from '@/integrations/supabase/client';
 
 interface EditPSSRModalProps {
   isOpen: boolean;
@@ -28,6 +29,8 @@ interface EditPSSRModalProps {
     projectName: string;
     initiator: string;
     scope: string;
+    scopeImages?: string[];
+    scopeImageUrl?: string;
     plantId?: string;
     fieldId?: string;
     stationId?: string;
@@ -67,6 +70,13 @@ export const EditPSSRModal: React.FC<EditPSSRModalProps> = ({
   
   // Popover state for PSSR Lead
   const [leadPopoverOpen, setLeadPopoverOpen] = useState(false);
+  
+  // Image upload state
+  const [scopeImageUrl, setScopeImageUrl] = useState<string | null>(
+    pssrData.scopeImageUrl || pssrData.scopeImages?.[0] || null
+  );
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Reset form when modal opens with new data
   useEffect(() => {
@@ -81,6 +91,7 @@ export const EditPSSRModal: React.FC<EditPSSRModalProps> = ({
       setPlantId(pssrData.plantId || '');
       setFieldId(pssrData.fieldId || '');
       setStationId(pssrData.stationId || '');
+      setScopeImageUrl(pssrData.scopeImageUrl || pssrData.scopeImages?.[0] || null);
     }
   }, [isOpen, pssrData]);
 
@@ -111,8 +122,75 @@ export const EditPSSRModal: React.FC<EditPSSRModalProps> = ({
       plantId,
       fieldId,
       stationId,
+      scope_image_url: scopeImageUrl,
     });
     onClose();
+  };
+
+  // Image upload handler
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: 'Invalid file type',
+        description: 'Please upload an image file (JPG, PNG, etc.)',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: 'File too large',
+        description: 'Please upload an image smaller than 5MB',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsUploadingImage(true);
+
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${pssrData.id}-scope-${Date.now()}.${fileExt}`;
+      const filePath = `scope-images/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('pssr-attachments')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from('pssr-attachments')
+        .getPublicUrl(filePath);
+
+      setScopeImageUrl(urlData.publicUrl);
+      toast({
+        title: 'Image uploaded',
+        description: 'Scope image has been uploaded successfully.',
+      });
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({
+        title: 'Upload failed',
+        description: 'Failed to upload image. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUploadingImage(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setScopeImageUrl(null);
   };
 
   // Get selected user for display
@@ -351,6 +429,85 @@ export const EditPSSRModal: React.FC<EditPSSRModalProps> = ({
               placeholder="Enter scope description"
               rows={4}
               className="resize-none"
+            />
+          </div>
+
+          {/* Scope Image */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-medium flex items-center gap-2">
+                <ImageIcon className="h-4 w-4" />
+                Scope Image
+              </Label>
+              {scopeImageUrl && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleRemoveImage}
+                  className="text-destructive hover:text-destructive/80 h-8"
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Remove
+                </Button>
+              )}
+            </div>
+            
+            {scopeImageUrl ? (
+              <div className="relative rounded-lg overflow-hidden border border-border bg-muted/20">
+                <img
+                  src={scopeImageUrl}
+                  alt="Scope"
+                  className="w-full h-40 object-cover"
+                />
+                <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploadingImage}
+                  >
+                    {isUploadingImage ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-4 w-4 mr-2" />
+                        Replace Image
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div
+                className="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 hover:bg-muted/30 transition-colors"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {isUploadingImage ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">Uploading...</span>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-2">
+                    <Upload className="h-8 w-8 text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">Click to upload scope image</span>
+                    <span className="text-xs text-muted-foreground">JPG, PNG up to 5MB</span>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="hidden"
             />
           </div>
         </div>
