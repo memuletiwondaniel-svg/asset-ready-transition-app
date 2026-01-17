@@ -295,19 +295,11 @@ export const PSSRChecklistProgressWidget: React.FC<PSSRChecklistProgressWidgetPr
           <div className="p-4 rounded-xl bg-gradient-to-br from-primary/10 via-primary/5 to-accent/10 border border-primary/20">
             <div className="flex items-center gap-6">
               <CircularProgress percentage={overallProgress} size={100} />
-              <div className="flex-1 space-y-2">
+              <div className="flex-1">
                 <div className="text-xl font-semibold text-foreground">
                   {remainingItems} items to go
                 </div>
-                <div className="w-full max-w-[180px]">
-                  <div className="h-1.5 bg-muted/30 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-gradient-to-r from-primary to-primary/70 rounded-full transition-all duration-500"
-                      style={{ width: `${overallProgress}%` }}
-                    />
-                  </div>
-                </div>
-                <div className="text-sm text-muted-foreground">
+                <div className="text-sm text-muted-foreground mt-0.5">
                   of {totalItems} total items
                 </div>
               </div>
