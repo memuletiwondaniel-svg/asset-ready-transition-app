@@ -309,13 +309,13 @@ export const PSSRChecklistProgressWidget: React.FC<PSSRChecklistProgressWidgetPr
             <div 
               onClick={() => onPriorityActionsClick?.()}
               className={cn(
-                "p-4 rounded-xl border cursor-pointer transition-all duration-200 group/priority",
+                "p-4 rounded-xl border cursor-pointer transition-all duration-200 group/priority relative",
                 "bg-card hover:bg-accent/5",
                 "border-border/50 hover:border-primary/30"
               )}
             >
               {/* Hero Numbers Row */}
-              <div className="flex items-center gap-6 mb-3">
+              <div className="flex items-center justify-center gap-6 mb-3">
                 {/* Pr1 - Primary focus */}
                 <div className="flex items-center gap-2">
                   <span className={cn(
@@ -348,7 +348,7 @@ export const PSSRChecklistProgressWidget: React.FC<PSSRChecklistProgressWidgetPr
                 </div>
                 
                 {/* Expand arrow */}
-                <div className="ml-auto">
+                <div className="absolute right-4 top-1/2 -translate-y-1/2">
                   <ArrowRight className="h-4 w-4 text-muted-foreground opacity-50 group-hover/priority:opacity-100 group-hover/priority:translate-x-1 transition-all" />
                 </div>
               </div>
