@@ -83,16 +83,35 @@ const CircularProgress: React.FC<{ percentage: number; size?: number }> = ({
   const offset = circumference - (percentage / 100) * circumference;
   
   const getProgressColor = () => {
-    if (percentage >= 70) return 'stroke-emerald-500';
-    if (percentage >= 40) return 'stroke-amber-500';
-    return 'stroke-orange-500';
+    if (percentage >= 70) return '#10b981'; // emerald-500
+    if (percentage >= 40) return '#f59e0b'; // amber-500
+    return '#f97316'; // orange-500
+  };
+
+  const getProgressColorEnd = () => {
+    if (percentage >= 70) return '#34d399'; // emerald-400
+    if (percentage >= 40) return '#fbbf24'; // amber-400
+    return '#fb923c'; // orange-400
   };
 
   return (
-    <div className="relative" style={{ width: size, height: size }}>
+    <div className="relative drop-shadow-md" style={{ width: size, height: size }}>
       <svg className="transform -rotate-90" width={size} height={size}>
+        <defs>
+          <linearGradient id={`progressGradient-${percentage}`} x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor={getProgressColor()} />
+            <stop offset="100%" stopColor={getProgressColorEnd()} />
+          </linearGradient>
+          <filter id="progressGlow">
+            <feGaussianBlur stdDeviation="1.5" result="coloredBlur"/>
+            <feMerge>
+              <feMergeNode in="coloredBlur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+        </defs>
         <circle
-          className="stroke-muted/30"
+          className="stroke-muted/20"
           strokeWidth={strokeWidth}
           fill="transparent"
           r={radius}
@@ -100,13 +119,15 @@ const CircularProgress: React.FC<{ percentage: number; size?: number }> = ({
           cy={size / 2}
         />
         <circle
-          className={cn(getProgressColor(), "transition-all duration-700 ease-out")}
+          stroke={`url(#progressGradient-${percentage})`}
           strokeWidth={strokeWidth}
           strokeLinecap="round"
           fill="transparent"
           r={radius}
           cx={size / 2}
           cy={size / 2}
+          filter="url(#progressGlow)"
+          className="transition-all duration-700 ease-out"
           style={{
             strokeDasharray: circumference,
             strokeDashoffset: offset,
@@ -114,8 +135,8 @@ const CircularProgress: React.FC<{ percentage: number; size?: number }> = ({
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-3xl font-bold text-foreground">{percentage}%</span>
-        <span className="text-xs text-muted-foreground font-medium">Complete</span>
+        <span className="text-2xl font-bold text-foreground leading-none">{percentage}%</span>
+        <span className="text-[11px] text-muted-foreground font-medium tracking-wide uppercase mt-1">Complete</span>
       </div>
     </div>
   );
@@ -272,13 +293,21 @@ export const PSSRChecklistProgressWidget: React.FC<PSSRChecklistProgressWidgetPr
           
           {/* Hero Section - Simplified (Removed horizontal progress bar) */}
           <div className="p-4 rounded-xl bg-gradient-to-br from-primary/10 via-primary/5 to-accent/10 border border-primary/20">
-            <div className="flex items-center gap-5">
-              <CircularProgress percentage={overallProgress} size={90} />
-              <div className="flex-1">
+            <div className="flex items-center gap-6">
+              <CircularProgress percentage={overallProgress} size={100} />
+              <div className="flex-1 space-y-2">
                 <div className="text-xl font-semibold text-foreground">
-                  {remainingItems} to go
+                  {remainingItems} items to go
                 </div>
-                <div className="text-sm text-muted-foreground mt-0.5">
+                <div className="w-full max-w-[180px]">
+                  <div className="h-1.5 bg-muted/30 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-primary to-primary/70 rounded-full transition-all duration-500"
+                      style={{ width: `${overallProgress}%` }}
+                    />
+                  </div>
+                </div>
+                <div className="text-sm text-muted-foreground">
                   of {totalItems} total items
                 </div>
               </div>
