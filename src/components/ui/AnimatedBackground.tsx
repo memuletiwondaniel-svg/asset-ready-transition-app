@@ -18,7 +18,7 @@ export const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({ children
   }, []);
 
   return (
-    <div className={cn('min-h-screen bg-background relative overflow-hidden', className)}>
+    <div className={cn('h-full bg-background relative overflow-hidden', className)}>
       {/* Dynamic Multicolor Animated Background - Softer, Corner-to-Center Movement */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {/* Primary orb - Starts top-left, journeys toward center */}
@@ -67,7 +67,7 @@ export const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({ children
         />
       </div>
       
-      <div className="relative z-10">
+      <div className="relative z-10 h-full">
         {children}
       </div>
     </div>

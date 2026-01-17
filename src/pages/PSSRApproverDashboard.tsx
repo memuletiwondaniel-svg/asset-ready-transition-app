@@ -401,7 +401,7 @@ const PSSRApproverDashboard: React.FC = () => {
   const hasNoResults = filteredTasks.length === 0 && filteredPSSRs.length === 0 && filteredOWLItems.length === 0;
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden bg-background">
+    <div className="flex-1 flex flex-col overflow-hidden">
           {/* Header */}
           <div className="border-b border-border/40 bg-card/50 p-4 md:p-6">
             <BreadcrumbNavigation currentPageLabel="My Tasks" />

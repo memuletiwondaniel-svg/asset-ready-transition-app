@@ -1,5 +1,4 @@
 import React, { useState, useRef } from 'react';
-import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -564,7 +563,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
   }];
 
   return (
-    <AnimatedBackground className="flex-1 overflow-y-auto">
+    <div className="flex-1 overflow-y-auto">
       {/* Main Content Area */}
       <div className="flex flex-col lg:flex-row gap-4 md:gap-6 p-4 md:p-6 relative">
           <div className="flex-1 flex flex-col items-center justify-center gap-6 transition-all duration-500 relative z-10">
@@ -723,7 +722,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
 
       {/* ORSH Chat Dialog */}
       <ORSHChatDialog open={chatOpen} onOpenChange={setChatOpen} initialMessage={initialPrompt} />
-    </AnimatedBackground>
+    </div>
   );
 };
 

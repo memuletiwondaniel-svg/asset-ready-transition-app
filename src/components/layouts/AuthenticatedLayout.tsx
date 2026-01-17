@@ -4,6 +4,7 @@ import { OrshSidebar } from '@/components/OrshSidebar';
 import { createSidebarNavigator } from '@/utils/sidebarNavigation';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 import { Loader2 } from 'lucide-react';
+import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
 
 /**
  * Persistent layout for authenticated pages.
@@ -68,9 +69,9 @@ export const AuthenticatedLayout: React.FC = () => {
         onNavigate={handleNavigate}
         onLogout={handleLogout}
       />
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <AnimatedBackground className="flex-1 flex flex-col overflow-hidden">
         <Outlet />
-      </div>
+      </AnimatedBackground>
     </div>
   );
 };
