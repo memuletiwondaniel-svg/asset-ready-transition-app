@@ -325,7 +325,7 @@ export const PSSRChecklistProgressWidget: React.FC<PSSRChecklistProgressWidgetPr
                     {priorityActionStats.priorityA.open}
                   </span>
                   <div className="flex flex-col">
-                    <span className="text-sm font-medium text-foreground">Pr1 open</span>
+                    <span className="text-sm font-medium text-foreground">Priority 1</span>
                     <span className="text-[10px] text-muted-foreground">Before startup</span>
                   </div>
                 </div>
@@ -342,7 +342,7 @@ export const PSSRChecklistProgressWidget: React.FC<PSSRChecklistProgressWidgetPr
                     {priorityActionStats.priorityB.open}
                   </span>
                   <div className="flex flex-col">
-                    <span className="text-sm font-medium text-foreground">Pr2 open</span>
+                    <span className="text-sm font-medium text-foreground">Priority 2</span>
                     <span className="text-[10px] text-muted-foreground">After startup</span>
                   </div>
                 </div>
@@ -353,22 +353,22 @@ export const PSSRChecklistProgressWidget: React.FC<PSSRChecklistProgressWidgetPr
                 </div>
               </div>
               
-              {/* Subtle progress footer */}
-              <div className="flex items-center gap-2">
-                <div className="flex-1 h-1 bg-muted/30 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-primary/60 rounded-full transition-all duration-500"
-                    style={{ 
-                      width: `${priorityActionStats.total > 0 
-                        ? ((priorityActionStats.priorityA.closed + priorityActionStats.priorityB.closed) / priorityActionStats.total) * 100 
-                        : 0}%` 
-                    }}
-                  />
+              {/* Subtle progress footer - only show when items exist */}
+              {priorityActionStats.total > 0 && (
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 h-1 bg-muted/30 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-primary/60 rounded-full transition-all duration-500"
+                      style={{ 
+                        width: `${((priorityActionStats.priorityA.closed + priorityActionStats.priorityB.closed) / priorityActionStats.total) * 100}%` 
+                      }}
+                    />
+                  </div>
+                  <span className="text-[11px] text-muted-foreground whitespace-nowrap">
+                    {priorityActionStats.priorityA.closed + priorityActionStats.priorityB.closed} of {priorityActionStats.total} closed
+                  </span>
                 </div>
-                <span className="text-[11px] text-muted-foreground whitespace-nowrap">
-                  {priorityActionStats.priorityA.closed + priorityActionStats.priorityB.closed} of {priorityActionStats.total} closed
-                </span>
-              </div>
+              )}
             </div>
           )}
 
