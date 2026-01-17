@@ -321,7 +321,7 @@ export const ApproverPendingItemsOverlay: React.FC<ApproverPendingItemsOverlayPr
                             </div>
                             <div className="flex items-center gap-2 flex-shrink-0">
                               {getStatusBadge(item.status)}
-                              {onSendReminder && (
+                              {onSendReminder && item.status !== 'completed' && (
                                 <Button
                                   variant="ghost"
                                   size="icon"
