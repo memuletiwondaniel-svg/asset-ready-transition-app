@@ -290,7 +290,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
         name: 'Martyn Turner',
         role: 'Engr. Manager - Projects',
         avatar: 'https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/0942bfe3-17b5-41a7-920e-c0802b9764b2/1757605550833.jpg',
-        pendingTasks: 0,
+        pendingTasks: 1,
         isOnline: true
       },
       {
@@ -298,7 +298,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
         name: 'Mohamed Ehab',
         role: 'Engr. Manager - Asset',
         avatar: 'https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/b028fda3-fe3f-482c-b14d-e0d31c7ebeb9/1768676724785.jpg',
-        pendingTasks: 0,
+        pendingTasks: 1,
         isOnline: true
       }
     ],
@@ -326,7 +326,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
         name: 'Ali Danbous',
         role: 'HSE Director',
         avatar: undefined,
-        pendingTasks: 0,
+        pendingTasks: 1,
         isOnline: true
       }
     ],
