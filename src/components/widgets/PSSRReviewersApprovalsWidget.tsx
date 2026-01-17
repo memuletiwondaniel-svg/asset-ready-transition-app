@@ -4,7 +4,7 @@ import { FullscreenWidgetModal } from './FullscreenWidgetModal';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, Eye, Bell, ChevronRight, ShieldCheck, Lock, MessageSquare, FileText, ChevronDown, Filter } from 'lucide-react';
+import { CheckCircle2, Eye, Bell, ChevronRight, ShieldCheck, Lock, MessageSquare, FileText, ChevronDown, Filter, ClipboardCheck } from 'lucide-react';
 import { useWidgetSize } from '@/contexts/WidgetSizeContext';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ChecklistCompletionBanner } from '@/components/pssr/ChecklistCompletionBanner';
@@ -437,7 +437,7 @@ export const PSSRReviewersApprovalsWidget: React.FC<PSSRReviewersApprovalsWidget
         {filteredReviewers.length > 0 && (
           <StageSection
             title="PSSR REVIEW"
-            icon={<Eye className="h-4 w-4" />}
+            icon={<ClipboardCheck className="h-4 w-4" />}
             people={filteredReviewers}
             isCurrentStage={currentStage === 'review'}
             isLocked={false}
