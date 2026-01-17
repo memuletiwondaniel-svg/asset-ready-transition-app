@@ -373,7 +373,7 @@ export const PSSRChecklistProgressWidget: React.FC<PSSRChecklistProgressWidgetPr
           )}
 
           {/* Status Pills - Renamed (Draft→Pending, Approved→Completed) */}
-          <div className="flex flex-wrap gap-2">
+          <div className="flex justify-center gap-4">
             <StatusPill 
               label="Pending" 
               value={draftItems} 
