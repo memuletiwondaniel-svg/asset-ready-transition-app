@@ -147,9 +147,8 @@ const StatusPill: React.FC<{
   label: string;
   value: number;
   variant: 'pending' | 'review' | 'completed';
-  icon: React.ReactNode;
   onClick?: () => void;
-}> = ({ label, value, variant, icon, onClick }) => {
+}> = ({ label, value, variant, onClick }) => {
   const variantStyles = {
     pending: 'bg-slate-500/10 text-slate-600 dark:text-slate-400 hover:bg-slate-500/20 border-slate-500/20',
     review: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 border-amber-500/20',
@@ -164,7 +163,6 @@ const StatusPill: React.FC<{
         variantStyles[variant]
       )}
     >
-      {icon}
       <span className="text-lg font-bold">{value}</span>
       <span className="text-xs font-medium opacity-80">{label}</span>
     </button>
@@ -380,21 +378,18 @@ export const PSSRChecklistProgressWidget: React.FC<PSSRChecklistProgressWidgetPr
               label="Pending" 
               value={draftItems} 
               variant="pending"
-              icon={<Clock className="h-4 w-4" />}
               onClick={() => onStatClick?.('draft')}
             />
             <StatusPill 
               label="In Review" 
               value={underReviewItems} 
               variant="review"
-              icon={<FileSearch className="h-4 w-4" />}
               onClick={() => onStatClick?.('under_review')}
             />
             <StatusPill 
               label="Completed" 
               value={approvedItems} 
               variant="completed"
-              icon={<CheckCircle2 className="h-4 w-4" />}
               onClick={() => onStatClick?.('approved')}
             />
           </div>
