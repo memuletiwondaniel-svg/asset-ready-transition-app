@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useBackgroundTheme } from '@/contexts/BackgroundThemeContext';
 import { cn } from '@/lib/utils';
 
 interface AnimatedBackgroundProps {
@@ -8,12 +7,11 @@ interface AnimatedBackgroundProps {
 }
 
 export const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({ children, className }) => {
-  const { config } = useBackgroundTheme();
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [colorPhase, setColorPhase] = useState(0);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      // Normalize mouse position to -1 to 1 range for subtle movement
       const x = (e.clientX / window.innerWidth - 0.5) * 2;
       const y = (e.clientY / window.innerHeight - 0.5) * 2;
       setMousePosition({ x, y });
@@ -23,29 +21,76 @@ export const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({ children
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
+  // Smooth color cycling
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setColorPhase((prev) => (prev + 0.5) % 360);
+    }, 50);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
-    <div className={cn(`min-h-screen bg-gradient-to-br ${config.baseGradient} relative overflow-hidden animate-smooth-in`, className)}>
-      {/* Animated Background Elements with Mouse Following */}
+    <div className={cn('min-h-screen bg-background relative overflow-hidden', className)}>
+      {/* Dynamic Multicolor Animated Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {/* Primary orb - Top left - Pink/Purple */}
         <div 
-          className={`absolute top-0 -left-4 w-96 h-96 bg-gradient-to-r ${config.gradients.orb1} rounded-full mix-blend-multiply filter blur-3xl animate-pulse transition-transform duration-1000 ease-out`}
+          className="absolute -top-20 -left-20 w-[500px] h-[500px] rounded-full opacity-30 dark:opacity-20 transition-transform duration-1000 ease-out will-change-transform"
           style={{ 
-            transform: `translate(${mousePosition.x * 20}px, ${mousePosition.y * 20}px)`,
-            animationDelay: '0ms'
+            transform: `translate(${mousePosition.x * 30}px, ${mousePosition.y * 30}px)`,
+            background: `radial-gradient(circle, hsl(${280 + colorPhase * 0.3}, 80%, 60%), transparent 70%)`,
+            filter: 'blur(80px)',
           }}
         />
+        
+        {/* Secondary orb - Top right - Blue/Cyan */}
         <div 
-          className={`absolute top-0 -right-4 w-96 h-96 bg-gradient-to-l ${config.gradients.orb2} rounded-full mix-blend-multiply filter blur-3xl animate-pulse transition-transform duration-1000 ease-out`}
+          className="absolute -top-10 -right-32 w-[600px] h-[600px] rounded-full opacity-25 dark:opacity-15 transition-transform duration-1200 ease-out will-change-transform"
           style={{ 
-            transform: `translate(${mousePosition.x * -15}px, ${mousePosition.y * 15}px)`,
-            animationDelay: '700ms'
+            transform: `translate(${mousePosition.x * -25}px, ${mousePosition.y * 20}px)`,
+            background: `radial-gradient(circle, hsl(${200 + colorPhase * 0.4}, 85%, 55%), transparent 70%)`,
+            filter: 'blur(100px)',
+            animationDelay: '500ms'
           }}
         />
+        
+        {/* Tertiary orb - Bottom left - Green/Teal */}
         <div 
-          className={`absolute -bottom-8 left-20 w-96 h-96 bg-gradient-to-t ${config.gradients.orb3} rounded-full mix-blend-multiply filter blur-3xl animate-pulse transition-transform duration-1000 ease-out`}
+          className="absolute -bottom-32 -left-10 w-[450px] h-[450px] rounded-full opacity-25 dark:opacity-15 transition-transform duration-1500 ease-out will-change-transform"
           style={{ 
-            transform: `translate(${mousePosition.x * 10}px, ${mousePosition.y * -20}px)`,
-            animationDelay: '1400ms'
+            transform: `translate(${mousePosition.x * 15}px, ${mousePosition.y * -25}px)`,
+            background: `radial-gradient(circle, hsl(${160 + colorPhase * 0.5}, 75%, 50%), transparent 70%)`,
+            filter: 'blur(90px)',
+          }}
+        />
+        
+        {/* Quaternary orb - Bottom right - Orange/Amber */}
+        <div 
+          className="absolute -bottom-20 -right-20 w-[400px] h-[400px] rounded-full opacity-30 dark:opacity-20 transition-transform duration-1300 ease-out will-change-transform"
+          style={{ 
+            transform: `translate(${mousePosition.x * -20}px, ${mousePosition.y * -15}px)`,
+            background: `radial-gradient(circle, hsl(${30 + colorPhase * 0.3}, 90%, 55%), transparent 70%)`,
+            filter: 'blur(70px)',
+          }}
+        />
+        
+        {/* Central glow - Subtle primary accent */}
+        <div 
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full opacity-10 dark:opacity-5 transition-transform duration-2000 ease-out will-change-transform"
+          style={{ 
+            transform: `translate(calc(-50% + ${mousePosition.x * 10}px), calc(-50% + ${mousePosition.y * 10}px))`,
+            background: `radial-gradient(circle, hsl(${240 + colorPhase * 0.2}, 70%, 60%), transparent 60%)`,
+            filter: 'blur(120px)',
+          }}
+        />
+        
+        {/* Accent orb - Floating - Rose/Pink */}
+        <div 
+          className="absolute top-1/3 right-1/4 w-[300px] h-[300px] rounded-full opacity-20 dark:opacity-10 transition-transform duration-1400 ease-out will-change-transform animate-float"
+          style={{ 
+            transform: `translate(${mousePosition.x * -12}px, ${mousePosition.y * 18}px)`,
+            background: `radial-gradient(circle, hsl(${340 + colorPhase * 0.4}, 85%, 60%), transparent 70%)`,
+            filter: 'blur(60px)',
           }}
         />
       </div>
