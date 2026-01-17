@@ -4885,6 +4885,7 @@ export type Database = {
           pssr_lead_id: string | null
           reason: string
           scope: string | null
+          scope_image_url: string | null
           station_id: string | null
           status: string
           title: string | null
@@ -4909,6 +4910,7 @@ export type Database = {
           pssr_lead_id?: string | null
           reason: string
           scope?: string | null
+          scope_image_url?: string | null
           station_id?: string | null
           status?: string
           title?: string | null
@@ -4933,6 +4935,7 @@ export type Database = {
           pssr_lead_id?: string | null
           reason?: string
           scope?: string | null
+          scope_image_url?: string | null
           station_id?: string | null
           status?: string
           title?: string | null

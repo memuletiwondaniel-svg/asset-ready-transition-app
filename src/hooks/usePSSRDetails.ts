@@ -10,6 +10,7 @@ interface PSSRUpdateData {
   plant_id?: string;
   field_id?: string;
   station_id?: string;
+  scope_image_url?: string | null;
 }
 
 export const usePSSRDetails = (pssrId: string) => {

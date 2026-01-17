@@ -180,9 +180,10 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
     initiator: dbPssr?.pssr_lead?.full_name || 'Ahmed Al-Rashid',
     tier: 'Tier 1',
     scope: dbPssr?.scope || 'Pre-start-up safety review for the commissioning of new natural gas processing units including safety systems, process controls, and emergency shutdown procedures.',
-    scopeImages: [
-      '/lovable-uploads/a389c47e-ef05-4852-85d3-e4be66d1eb1e.png'
-    ],
+    scopeImageUrl: dbPssr?.scope_image_url || null,
+    scopeImages: dbPssr?.scope_image_url 
+      ? [dbPssr.scope_image_url] 
+      : ['/lovable-uploads/a389c47e-ef05-4852-85d3-e4be66d1eb1e.png'],
     
     // Statistics - calculated from category progress
     statistics: {
@@ -870,6 +871,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
               plant_id: updatedData.plantId,
               field_id: updatedData.fieldId,
               station_id: updatedData.stationId,
+              scope_image_url: updatedData.scope_image_url,
             });
             toast({
               title: 'PSSR Updated',
