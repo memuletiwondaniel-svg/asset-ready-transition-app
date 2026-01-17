@@ -261,10 +261,10 @@ export const PSSRInfoScopeWidget: React.FC<PSSRInfoScopeWidgetProps> = ({
         title="Overview"
         headerAction={headerAction}
         showHeaderActionOnHover={true}
-        className={`min-h-[500px] md:min-h-[560px] lg:min-h-[600px] ${
-          widgetSize === 'compact' ? 'h-[500px] md:h-[560px] lg:h-[600px]' :
-          widgetSize === 'standard' ? 'h-[650px] md:h-[700px] lg:h-[750px]' :
-          'h-[850px] md:h-[900px] lg:h-[950px]'
+        className={`min-h-[526px] md:min-h-[593px] lg:min-h-[651px] ${
+          widgetSize === 'compact' ? 'h-[526px] md:h-[593px] lg:h-[651px]' :
+          widgetSize === 'standard' ? 'h-[689px] md:h-[746px] lg:h-[814px]' :
+          'h-[881px] md:h-[938px] lg:h-[1005px]'
         }`}
         widgetId={widgetId}
         dragAttributes={dragAttributes}
