@@ -157,11 +157,10 @@ export const PSSRInfoScopeWidget: React.FC<PSSRInfoScopeWidgetProps> = ({
           </div>
         </div>
 
-        {/* Scope Description */}
+        {/* PSSR Scope */}
         <div className="border-t border-border/40 pt-4 space-y-2">
-          <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-            <Target className="h-3.5 w-3.5" />
-            Scope Description
+          <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+            PSSR Scope
           </label>
           <p className="text-sm text-foreground leading-relaxed">{description}</p>
         </div>
