@@ -306,91 +306,69 @@ export const PSSRChecklistProgressWidget: React.FC<PSSRChecklistProgressWidgetPr
             </div>
           </div>
 
-          {/* Priority Actions Section - Elevated (Moved above Status Pills) */}
+          {/* Priority Actions Section - Clean Modern Design */}
           {priorityActionStats && (
             <div 
               onClick={() => onPriorityActionsClick?.()}
               className={cn(
-                "p-3 rounded-xl border cursor-pointer transition-all duration-300 group/priority",
-                "bg-gradient-to-r from-orange-500/5 to-red-500/5",
-                "hover:from-orange-500/10 hover:to-red-500/10",
-                hasPriorityAOpen 
-                  ? "border-red-500/40 hover:border-red-500/60 shadow-[0_0_15px_-3px_rgba(239,68,68,0.3)]" 
-                  : "border-border/50 hover:border-primary/30"
+                "p-4 rounded-xl border cursor-pointer transition-all duration-200 group/priority",
+                "bg-card hover:bg-accent/5",
+                "border-border/50 hover:border-primary/30"
               )}
             >
-              <div className="flex items-center justify-between mb-3">
+              {/* Hero Numbers Row */}
+              <div className="flex items-center gap-6 mb-3">
+                {/* Pr1 - Primary focus */}
                 <div className="flex items-center gap-2">
-                  <CircleAlert className={cn(
-                    "h-4 w-4",
-                    hasPriorityAOpen ? "text-red-500" : "text-muted-foreground"
-                  )} />
-                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Priority Actions
+                  <span className={cn(
+                    "text-3xl font-bold tabular-nums",
+                    priorityActionStats.priorityA.open > 0 ? "text-red-500" : "text-muted-foreground"
+                  )}>
+                    {priorityActionStats.priorityA.open}
                   </span>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium text-foreground">Pr1 open</span>
+                    <span className="text-[10px] text-muted-foreground">Before startup</span>
+                  </div>
                 </div>
+                
+                {/* Divider */}
+                <div className="h-10 w-px bg-border/50" />
+                
+                {/* Pr2 - Secondary */}
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium text-muted-foreground">
-                    {priorityActionStats.total} Total
+                  <span className={cn(
+                    "text-2xl font-semibold tabular-nums",
+                    priorityActionStats.priorityB.open > 0 ? "text-amber-500" : "text-muted-foreground"
+                  )}>
+                    {priorityActionStats.priorityB.open}
                   </span>
-                  <ArrowRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 -translate-x-2 group-hover/priority:opacity-100 group-hover/priority:translate-x-0 transition-all duration-200" />
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium text-foreground">Pr2 open</span>
+                    <span className="text-[10px] text-muted-foreground">After startup</span>
+                  </div>
+                </div>
+                
+                {/* Expand arrow */}
+                <div className="ml-auto">
+                  <ArrowRight className="h-4 w-4 text-muted-foreground opacity-50 group-hover/priority:opacity-100 group-hover/priority:translate-x-1 transition-all" />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                {/* Priority A */}
-                <div className={cn(
-                  "p-2.5 rounded-lg border transition-all",
-                  priorityActionStats.priorityA.open > 0 
-                    ? "bg-red-500/10 border-red-500/30" 
-                    : "bg-muted/30 border-border/50"
-                )}>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className={cn(
-                      "text-lg font-bold",
-                      priorityActionStats.priorityA.open > 0 ? "text-red-500" : "text-muted-foreground"
-                    )}>
-                      {priorityActionStats.priorityA.open}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground">Open</span>
-                  </div>
-                  <div className="text-xs font-medium text-muted-foreground">
-                    Pr 1 · Before Startup
-                  </div>
-                  {priorityActionStats.priorityA.closed > 0 && (
-                    <div className="text-[10px] text-muted-foreground/60 mt-1">
-                      {priorityActionStats.priorityA.closed} closed
-                    </div>
-                  )}
+              
+              {/* Subtle progress footer */}
+              <div className="flex items-center gap-2">
+                <div className="flex-1 h-1 bg-muted/30 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-primary/60 rounded-full transition-all duration-500"
+                    style={{ 
+                      width: `${priorityActionStats.total > 0 
+                        ? ((priorityActionStats.priorityA.closed + priorityActionStats.priorityB.closed) / priorityActionStats.total) * 100 
+                        : 0}%` 
+                    }}
+                  />
                 </div>
-                {/* Priority B */}
-                <div className={cn(
-                  "p-2.5 rounded-lg border transition-all",
-                  priorityActionStats.priorityB.open > 0 
-                    ? "bg-amber-500/10 border-amber-500/30" 
-                    : "bg-muted/30 border-border/50"
-                )}>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className={cn(
-                      "text-lg font-bold",
-                      priorityActionStats.priorityB.open > 0 ? "text-amber-500" : "text-muted-foreground"
-                    )}>
-                      {priorityActionStats.priorityB.open}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground">Open</span>
-                  </div>
-                  <div className="text-xs font-medium text-muted-foreground">
-                    Pr 2 · After Startup
-                  </div>
-                  {priorityActionStats.priorityB.closed > 0 && (
-                    <div className="text-[10px] text-muted-foreground/60 mt-1">
-                      {priorityActionStats.priorityB.closed} closed
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="flex justify-center mt-2">
-                <span className="text-xs text-primary font-medium opacity-0 group-hover/priority:opacity-100 transition-opacity duration-200">
-                  View Details →
+                <span className="text-[11px] text-muted-foreground whitespace-nowrap">
+                  {priorityActionStats.priorityA.closed + priorityActionStats.priorityB.closed} of {priorityActionStats.total} closed
                 </span>
               </div>
             </div>
