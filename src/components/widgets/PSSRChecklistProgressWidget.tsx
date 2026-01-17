@@ -114,8 +114,8 @@ const CircularProgress: React.FC<{ percentage: number; size?: number }> = ({
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-2xl font-bold text-foreground">{percentage}%</span>
-        <span className="text-[10px] text-muted-foreground font-medium">Complete</span>
+        <span className="text-3xl font-bold text-foreground">{percentage}%</span>
+        <span className="text-xs text-muted-foreground font-medium">Complete</span>
       </div>
     </div>
   );
@@ -275,8 +275,8 @@ export const PSSRChecklistProgressWidget: React.FC<PSSRChecklistProgressWidgetPr
             <div className="flex items-center gap-5">
               <CircularProgress percentage={overallProgress} size={90} />
               <div className="flex-1">
-                <div className="text-2xl font-bold text-foreground">
-                  {remainingItems} items remaining
+                <div className="text-xl font-semibold text-foreground">
+                  {remainingItems} to go
                 </div>
                 <div className="text-sm text-muted-foreground mt-0.5">
                   of {totalItems} total items
