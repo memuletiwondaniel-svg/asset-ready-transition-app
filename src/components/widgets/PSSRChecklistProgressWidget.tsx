@@ -35,6 +35,12 @@ export interface KeyActivity {
   type?: string;
 }
 
+interface PriorityActionStats {
+  total: number;
+  priorityA: { total: number; open: number; closed: number };
+  priorityB: { total: number; open: number; closed: number };
+}
+
 interface PSSRChecklistProgressWidgetProps {
   // Overall stats
   totalItems: number;
@@ -46,6 +52,10 @@ interface PSSRChecklistProgressWidgetProps {
   // Progress
   overallProgress: number;
   categoryProgress: CategoryProgress[];
+  
+  // Priority Actions
+  priorityActionStats?: PriorityActionStats;
+  onPriorityActionsClick?: () => void;
   
   // Key Activities
   keyActivities?: KeyActivity[];
@@ -173,6 +183,8 @@ export const PSSRChecklistProgressWidget: React.FC<PSSRChecklistProgressWidgetPr
   openActions = 0,
   overallProgress,
   categoryProgress,
+  priorityActionStats,
+  onPriorityActionsClick,
   keyActivities = [],
   onActivityClick,
   onStatClick,
@@ -273,6 +285,34 @@ export const PSSRChecklistProgressWidget: React.FC<PSSRChecklistProgressWidgetPr
               />
             ))}
           </div>
+
+          {/* Priority Actions Section */}
+          {priorityActionStats && priorityActionStats.total > 0 && (
+            <div 
+              onClick={() => onPriorityActionsClick?.()}
+              className="p-3 bg-muted/30 rounded-xl border border-border/50 hover:bg-muted/50 hover:border-primary/30 cursor-pointer transition-all group"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                  <AlertCircle className="h-3.5 w-3.5" />
+                  Priority Actions
+                </span>
+                <Badge variant="outline" className="text-[10px] group-hover:bg-primary/10 transition-colors">
+                  {priorityActionStats.total} Total
+                </Badge>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="p-2 bg-red-500/10 rounded-lg border border-red-500/20">
+                  <p className="text-lg font-bold text-red-600 dark:text-red-400">{priorityActionStats.priorityA.open}</p>
+                  <p className="text-[10px] text-red-500/80 dark:text-red-400/70">Pr 1 - Before Startup</p>
+                </div>
+                <div className="p-2 bg-orange-500/10 rounded-lg border border-orange-500/20">
+                  <p className="text-lg font-bold text-orange-600 dark:text-orange-400">{priorityActionStats.priorityB.open}</p>
+                  <p className="text-[10px] text-orange-500/80 dark:text-orange-400/70">Pr 2 - After Startup</p>
+                </div>
+              </div>
+            </div>
+          )}
 
           <Separator className="my-2" />
 
