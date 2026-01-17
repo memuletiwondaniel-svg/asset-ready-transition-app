@@ -234,6 +234,14 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
         isOnline: true
       },
       {
+        id: 'a08c4d0d-334c-421c-b217-51f3459d89ad',
+        name: 'Yasser Mohamed',
+        role: 'Elect TA2 - Project',
+        avatar: undefined,
+        pendingTasks: 0,
+        isOnline: true
+      },
+      {
         id: '9e6ddd6d-4afd-4af7-ad55-62f17c8d2e53',
         name: 'Stuart Lugo',
         role: 'Static TA2 - Project',
@@ -256,14 +264,6 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
         avatar: 'https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/9db7a3a8-f3aa-4618-80e5-e18dfeb5d808/1768676489853.jpg',
         pendingTasks: 6,
         isOnline: false
-      },
-      {
-        id: 'a08c4d0d-334c-421c-b217-51f3459d89ad',
-        name: 'Yasser Mohamed',
-        role: 'Elect TA2 - Project',
-        avatar: undefined,
-        pendingTasks: 0,
-        isOnline: true
       }
     ],
 
