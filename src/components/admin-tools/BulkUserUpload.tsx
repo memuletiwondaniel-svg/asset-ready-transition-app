@@ -74,41 +74,71 @@ export const BulkUserUpload: React.FC<BulkUserUploadProps> = ({ onBack }) => {
         const workbook = XLSX.read(data, { type: 'array' });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
-        const jsonData = XLSX.utils.sheet_to_json<ExcelUser>(worksheet);
+        const jsonData = XLSX.utils.sheet_to_json<Record<string, any>>(worksheet);
+
+        console.log('Sheet names:', workbook.SheetNames);
+        console.log('Raw JSON data sample:', jsonData.slice(0, 3));
+        console.log('First row keys:', jsonData[0] ? Object.keys(jsonData[0]) : 'No data');
+
+        // Helper function to get field value case-insensitively
+        const getField = (row: Record<string, any>, fieldName: string): any => {
+          const normalizedFieldName = fieldName.toLowerCase();
+          const key = Object.keys(row).find(k => k.toLowerCase().trim() === normalizedFieldName);
+          return key ? row[key] : undefined;
+        };
 
         const parsed: ParsedUser[] = jsonData
-          .filter(row => row.firstName && row.lastName && row.email)
+          .filter(row => {
+            // Skip completely empty rows
+            const hasData = Object.values(row).some(v => v && v.toString().trim());
+            const hasRequiredFields = getField(row, 'firstName') && getField(row, 'lastName') && getField(row, 'email');
+            return hasData && hasRequiredFields;
+          })
           .map(row => {
             const validationErrors: string[] = [];
             
-            if (!row.firstName) validationErrors.push('Missing first name');
-            if (!row.lastName) validationErrors.push('Missing last name');
-            if (!row.email) validationErrors.push('Missing email');
-            if (!row.Password) validationErrors.push('Missing password');
-            if (!row.company) validationErrors.push('Missing company');
+            const firstName = getField(row, 'firstName');
+            const lastName = getField(row, 'lastName');
+            const email = getField(row, 'email');
+            const password = getField(row, 'password');
+            const company = getField(row, 'company');
+            const personalEmail = getField(row, 'personalEmail');
+            const isFunctionalEmailRaw = getField(row, 'isFunctionalEmail');
+            const role = getField(row, 'role');
+            const plant = getField(row, 'plant');
+            const commission = getField(row, 'commission');
+            const phone = getField(row, 'phone');
+            const systemRole = getField(row, 'systemRole');
+            const hub = getField(row, 'hub');
 
-            const isFunctional = typeof row.isFunctionalEmail === 'boolean' 
-              ? row.isFunctionalEmail 
-              : row.isFunctionalEmail?.toString().toUpperCase() === 'TRUE';
+            if (!firstName) validationErrors.push('Missing first name');
+            if (!lastName) validationErrors.push('Missing last name');
+            if (!email) validationErrors.push('Missing email');
+            if (!password) validationErrors.push('Missing password');
+            if (!company) validationErrors.push('Missing company');
 
-            if (isFunctional && !row.personalEmail) {
+            const isFunctional = typeof isFunctionalEmailRaw === 'boolean' 
+              ? isFunctionalEmailRaw 
+              : isFunctionalEmailRaw?.toString().toUpperCase() === 'TRUE';
+
+            if (isFunctional && !personalEmail) {
               validationErrors.push('Functional email requires personal email');
             }
 
             return {
-              firstName: row.firstName?.toString().trim() || '',
-              lastName: row.lastName?.toString().trim() || '',
-              password: row.Password?.toString() || '',
-              personalEmail: row.personalEmail?.toString().replace(/<|>/g, '').trim() || '',
-              email: row.email?.toString().replace(/<|>/g, '').trim() || '',
+              firstName: firstName?.toString().trim() || '',
+              lastName: lastName?.toString().trim() || '',
+              password: password?.toString() || '',
+              personalEmail: personalEmail?.toString().replace(/<|>/g, '').trim() || '',
+              email: email?.toString().replace(/<|>/g, '').trim() || '',
               isFunctionalEmail: isFunctional,
-              company: row.company?.toString().trim() || '',
-              role: row.role?.toString().trim() || '',
-              plant: row.plant?.toString().trim() || undefined,
-              commission: row.commission?.toString().trim() || undefined,
-              phone: row.phone?.toString().trim() || undefined,
-              systemRole: row.systemRole?.toString().trim() || 'user',
-              hub: row.hub?.toString().trim() || undefined,
+              company: company?.toString().trim() || '',
+              role: role?.toString().trim() || '',
+              plant: plant?.toString().trim() || undefined,
+              commission: commission?.toString().trim() || undefined,
+              phone: phone?.toString().trim() || undefined,
+              systemRole: systemRole?.toString().trim() || 'user',
+              hub: hub?.toString().trim() || undefined,
               isValid: validationErrors.length === 0,
               validationErrors,
             };
@@ -118,7 +148,13 @@ export const BulkUserUpload: React.FC<BulkUserUploadProps> = ({ onBack }) => {
         setFileName(file.name);
         setUploadResults(null);
         setSummary(null);
-        toast.success(`Parsed ${parsed.length} users from ${file.name}`);
+        
+        if (parsed.length === 0) {
+          console.error('No users parsed. Raw data sample:', jsonData.slice(0, 5));
+          toast.error('No valid users found. Check console for debugging info.');
+        } else {
+          toast.success(`Parsed ${parsed.length} users from ${file.name}`);
+        }
       } catch (error) {
         console.error('Error parsing Excel file:', error);
         toast.error('Failed to parse Excel file');
