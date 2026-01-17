@@ -587,7 +587,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
             <div className="flex-1 min-h-[10vh] md:min-h-[15vh]" />
             
             {/* Bob AI Hero Section - Centered */}
-            <Card className="w-full max-w-2xl glass-card overflow-hidden animate-fade-in border border-border/40 shadow-xl">
+            <Card className="w-full max-w-3xl glass-card overflow-hidden animate-fade-in border border-border/40 shadow-xl">
               <div className="p-10 md:p-16 min-h-[200px] md:min-h-[280px]">
                 <div className="flex flex-col items-center text-center max-w-2xl mx-auto">
                   {/* Greeting */}
