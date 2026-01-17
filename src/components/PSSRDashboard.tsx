@@ -227,7 +227,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
         name: 'Christian Johnsen',
         role: 'TA2 Process - P&E',
         avatar: undefined,
-        pendingTasks: 3,
+        pendingTasks: 18,
         isOnline: true
       }
     ],
@@ -293,15 +293,16 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
 
   // Create pending items mapping for each reviewer/approver
   const pendingItemsByApprover: Record<string, PendingItem[]> = {
-    // Christian Johnsen (adf6a6f1-...) has 3 pending items
+    // Christian Johnsen (adf6a6f1-...) has 18 items (3 pending, 15 completed)
     'adf6a6f1-fdf2-4aaf-b8ec-ab8b1fd0503c': [
+      // Pending items (3)
       {
         id: 'item-1',
         uniqueId: 'PS-001',
         category: 'Process Safety',
         description: 'Verify pressure relief valves are correctly sized and tested',
         status: 'pending',
-        topic: 'Alarms'
+        topic: 'Relief Systems'
       },
       {
         id: 'item-2',
@@ -309,7 +310,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
         category: 'Process Safety',
         description: 'Confirm process alarms are configured per P&IDs',
         status: 'in_progress',
-        topic: 'Cause & Effect'
+        topic: 'Alarm Management'
       },
       {
         id: 'item-3',
@@ -317,7 +318,128 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
         category: 'Technical Integrity',
         description: 'Review corrosion monitoring program implementation',
         status: 'pending',
-        topic: 'Cathodic Protection'
+        topic: 'Corrosion'
+      },
+      // Completed items (15)
+      {
+        id: 'item-cj-4',
+        uniqueId: 'PS-002',
+        category: 'Process Safety',
+        description: 'Verify interlock logic matches approved design',
+        status: 'completed',
+        topic: 'Interlocks'
+      },
+      {
+        id: 'item-cj-5',
+        uniqueId: 'PS-004',
+        category: 'Process Safety',
+        description: 'Confirm safety instrumented systems are tested and documented',
+        status: 'completed',
+        topic: 'SIS'
+      },
+      {
+        id: 'item-cj-6',
+        uniqueId: 'PS-005',
+        category: 'Process Safety',
+        description: 'Review HAZOP action items closure status',
+        status: 'completed',
+        topic: 'HAZOP'
+      },
+      {
+        id: 'item-cj-7',
+        uniqueId: 'TI-001',
+        category: 'Technical Integrity',
+        description: 'Verify piping stress analysis completed and approved',
+        status: 'completed',
+        topic: 'Piping'
+      },
+      {
+        id: 'item-cj-8',
+        uniqueId: 'TI-002',
+        category: 'Technical Integrity',
+        description: 'Confirm vessel inspection reports are available',
+        status: 'completed',
+        topic: 'Vessels'
+      },
+      {
+        id: 'item-cj-9',
+        uniqueId: 'TI-003',
+        category: 'Technical Integrity',
+        description: 'Review rotating equipment vibration baselines',
+        status: 'completed',
+        topic: 'Rotating Equipment'
+      },
+      {
+        id: 'item-cj-10',
+        uniqueId: 'TI-004',
+        category: 'Technical Integrity',
+        description: 'Verify electrical equipment installation per specifications',
+        status: 'completed',
+        topic: 'Electrical'
+      },
+      {
+        id: 'item-cj-11',
+        uniqueId: 'TI-005',
+        category: 'Technical Integrity',
+        description: 'Confirm instrument calibration records are complete',
+        status: 'completed',
+        topic: 'Instrumentation'
+      },
+      {
+        id: 'item-cj-12',
+        uniqueId: 'DOC-001',
+        category: 'Documentation',
+        description: 'Verify P&IDs are updated to as-built condition',
+        status: 'completed',
+        topic: 'Drawings'
+      },
+      {
+        id: 'item-cj-13',
+        uniqueId: 'DOC-002',
+        category: 'Documentation',
+        description: 'Confirm operating procedures are reviewed and approved',
+        status: 'completed',
+        topic: 'Procedures'
+      },
+      {
+        id: 'item-cj-14',
+        uniqueId: 'DOC-003',
+        category: 'Documentation',
+        description: 'Review equipment datasheets for accuracy',
+        status: 'completed',
+        topic: 'Datasheets'
+      },
+      {
+        id: 'item-cj-15',
+        uniqueId: 'ORG-001',
+        category: 'Organization',
+        description: 'Verify operations staffing plan is finalized',
+        status: 'completed',
+        topic: 'Staffing'
+      },
+      {
+        id: 'item-cj-16',
+        uniqueId: 'HSE-001',
+        category: 'HSE & Environment',
+        description: 'Confirm environmental permits are in place',
+        status: 'completed',
+        topic: 'Permits'
+      },
+      {
+        id: 'item-cj-17',
+        uniqueId: 'HSE-002',
+        category: 'HSE & Environment',
+        description: 'Verify fire protection systems are tested',
+        status: 'completed',
+        topic: 'Fire Safety'
+      },
+      {
+        id: 'item-cj-18',
+        uniqueId: 'MR-001',
+        category: 'Maintenance Readiness',
+        description: 'Confirm spare parts inventory is stocked',
+        status: 'completed',
+        topic: 'Spare Parts'
       }
     ],
     // Lyle Koch has 2 pending items

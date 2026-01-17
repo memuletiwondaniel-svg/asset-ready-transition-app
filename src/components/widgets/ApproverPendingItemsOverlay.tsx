@@ -151,12 +151,26 @@ export const ApproverPendingItemsOverlay: React.FC<ApproverPendingItemsOverlayPr
               <div className="text-xl font-semibold">{approver.name}</div>
               <div className="text-sm text-muted-foreground font-normal">{approver.role}</div>
             </div>
-            <Badge variant="secondary" className="text-sm px-3 py-1">
-              {isFiltering && filteredItems.length !== pendingItems.length
-                ? `${filteredItems.length} of ${pendingItems.length} items`
-                : `${pendingItems.length} pending items`
-              }
-            </Badge>
+            {(() => {
+              const totalItems = pendingItems.length;
+              const completedItems = pendingItems.filter(item => item.status === 'completed').length;
+              const pendingCount = pendingItems.filter(item => item.status === 'pending' || item.status === 'in_progress').length;
+              const progressPercent = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
+              
+              return (
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary" className="text-sm px-3 py-1">
+                    {isFiltering && filteredItems.length !== totalItems
+                      ? `${filteredItems.length} of ${totalItems} items`
+                      : `${pendingCount} of ${totalItems} items pending`
+                    }
+                  </Badge>
+                  <Badge variant="outline" className="text-sm px-3 py-1 text-green-600 border-green-200 bg-green-50">
+                    {progressPercent}% complete
+                  </Badge>
+                </div>
+              );
+            })()}
           </DialogTitle>
         </DialogHeader>
 
