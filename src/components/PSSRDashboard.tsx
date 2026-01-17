@@ -24,6 +24,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { usePSSRCategoryProgress, CategoryItem } from '@/hooks/usePSSRCategoryProgress';
 import { PSSRItemDetailModal } from '@/components/pssr/PSSRItemDetailModal';
 import { PendingItem } from '@/components/widgets/ApproverPendingItemsOverlay';
+import { usePSSRDetails } from '@/hooks/usePSSRDetails';
 
 interface PSSRDashboardProps {
   pssrId: string;
@@ -161,21 +162,24 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
     if (size === 'large') return 'lg:col-span-2';
     return 'lg:col-span-1';
   };
-  // PSSR data state - can be updated via edit modal
-  const [pssrData, setPssrData] = useState({
+  // Fetch PSSR details from database
+  const { pssr: dbPssr, updatePSSR, isUpdating } = usePSSRDetails(pssrId);
+
+  // PSSR data - combines database data with defaults for missing fields
+  const pssrData = useMemo(() => ({
     id: pssrId,
-    title: 'DP300 HM Additional Compressors',
-    asset: 'NRNGL Plant',
-    reason: 'Start-up or Commissioning of a new Asset',
-    projectId: 'DP300',
-    projectName: 'HM Additional Compressors',
+    title: dbPssr?.title || dbPssr?.project_name || 'DP300 HM Additional Compressors',
+    asset: dbPssr?.asset || 'NRNGL Plant',
+    reason: dbPssr?.reason || 'Start-up or Commissioning of a new Asset',
+    projectId: dbPssr?.project_id || 'DP300',
+    projectName: dbPssr?.project_name || 'HM Additional Compressors',
     status: 'Under Review',
     progress: 75,
     created: '2024-01-15',
     dueDate: '2024-02-15',
-    initiator: 'Ahmed Al-Rashid',
+    initiator: dbPssr?.pssr_lead?.full_name || 'Ahmed Al-Rashid',
     tier: 'Tier 1',
-    scope: 'Pre-start-up safety review for the commissioning of new natural gas processing units including safety systems, process controls, and emergency shutdown procedures.',
+    scope: dbPssr?.scope || 'Pre-start-up safety review for the commissioning of new natural gas processing units including safety systems, process controls, and emergency shutdown procedures.',
     scopeImages: [
       '/lovable-uploads/a389c47e-ef05-4852-85d3-e4be66d1eb1e.png'
     ],
@@ -288,7 +292,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
         relationship: 'Dependent'
       }
     ]
-  });
+  }), [pssrId, dbPssr, categoryProgress]);
 
   // Create pending items mapping for each reviewer/approver
   const pendingItemsByApprover: Record<string, PendingItem[]> = {
@@ -855,20 +859,30 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
         isOpen={editModalOpen}
         onClose={() => setEditModalOpen(false)}
         pssrData={pssrData}
-        onSave={(updatedData) => {
-          setPssrData(prev => ({
-            ...prev,
-            title: updatedData.title || prev.title,
-            asset: updatedData.asset || prev.asset,
-            reason: updatedData.reason || prev.reason,
-            initiator: updatedData.pssrLead || prev.initiator,
-            scope: updatedData.scope || prev.scope,
-          }));
-          toast({
-            title: 'PSSR Updated',
-            description: 'Changes have been saved successfully.',
-          });
-          setEditModalOpen(false);
+        onSave={async (updatedData) => {
+          try {
+            await updatePSSR({
+              title: updatedData.title,
+              asset: updatedData.asset,
+              reason: updatedData.reason,
+              scope: updatedData.scope,
+              pssr_lead_id: updatedData.pssrLeadId,
+              plant_id: updatedData.plantId,
+              field_id: updatedData.fieldId,
+              station_id: updatedData.stationId,
+            });
+            toast({
+              title: 'PSSR Updated',
+              description: 'Changes have been saved to the database.',
+            });
+            setEditModalOpen(false);
+          } catch (error) {
+            toast({
+              title: 'Error',
+              description: 'Failed to save changes. Please try again.',
+              variant: 'destructive',
+            });
+          }
         }}
       />
 

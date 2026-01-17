@@ -4874,15 +4874,20 @@ export type Database = {
           completed_at: string | null
           created_at: string
           cs_location: string | null
+          field_id: string | null
           finalized_at: string | null
           id: string
           plant: string | null
+          plant_id: string | null
           project_id: string | null
           project_name: string | null
           pssr_id: string
+          pssr_lead_id: string | null
           reason: string
           scope: string | null
+          station_id: string | null
           status: string
+          title: string | null
           updated_at: string
           user_id: string
         }
@@ -4893,15 +4898,20 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           cs_location?: string | null
+          field_id?: string | null
           finalized_at?: string | null
           id?: string
           plant?: string | null
+          plant_id?: string | null
           project_id?: string | null
           project_name?: string | null
           pssr_id: string
+          pssr_lead_id?: string | null
           reason: string
           scope?: string | null
+          station_id?: string | null
           status?: string
+          title?: string | null
           updated_at?: string
           user_id: string
         }
@@ -4912,19 +4922,32 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           cs_location?: string | null
+          field_id?: string | null
           finalized_at?: string | null
           id?: string
           plant?: string | null
+          plant_id?: string | null
           project_id?: string | null
           project_name?: string | null
           pssr_id?: string
+          pssr_lead_id?: string | null
           reason?: string
           scope?: string | null
+          station_id?: string | null
           status?: string
+          title?: string | null
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "pssrs_pssr_lead_id_fkey"
+            columns: ["pssr_lead_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       role_category: {
         Row: {
