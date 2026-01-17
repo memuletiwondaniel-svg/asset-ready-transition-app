@@ -550,10 +550,10 @@ export const PSSRReviewersApprovalsWidget: React.FC<PSSRReviewersApprovalsWidget
     <>
       <WidgetCard 
         title="Approvals" 
-        className={`min-h-[526px] md:min-h-[593px] lg:min-h-[651px] ${
-          widgetSize === 'compact' ? 'h-[526px] md:h-[593px] lg:h-[651px]' :
-          widgetSize === 'standard' ? 'h-[689px] md:h-[746px] lg:h-[814px]' :
-          'h-[881px] md:h-[938px] lg:h-[1005px]'
+        className={`min-h-[579px] md:min-h-[652px] lg:min-h-[716px] ${
+          widgetSize === 'compact' ? 'h-[579px] md:h-[652px] lg:h-[716px]' :
+          widgetSize === 'standard' ? 'h-[758px] md:h-[821px] lg:h-[895px]' :
+          'h-[969px] md:h-[1032px] lg:h-[1106px]'
         }`}
         widgetId={widgetId}
         dragAttributes={dragAttributes}
