@@ -80,17 +80,39 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     'users': () => setActiveView('users'),
   });
 
-  // Fetch all initial data in parallel (optimized: use count queries instead of fetching full rows)
+  // Helper functions for fetching stats
+  const fetchUserStats = async () => {
+    const [usersTotalResult, usersPendingResult, usersActiveResult, usersInactiveResult] = await Promise.all([
+      supabase.from('profiles').select('id', { count: 'exact', head: true }),
+      supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('status', 'pending_approval'),
+      supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('status', 'active'),
+      supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('status', 'inactive')
+    ]);
+    setUserStats({
+      total: usersTotalResult.count || 0,
+      pending: usersPendingResult.count || 0,
+      active: usersActiveResult.count || 0,
+      inactive: usersInactiveResult.count || 0
+    });
+  };
+
+  const fetchProjectStats = async () => {
+    const { count } = await supabase
+      .from('projects')
+      .select('id', { count: 'exact', head: true })
+      .eq('is_active', true);
+    setProjectStats({ total: count || 0 });
+  };
+
+  // Single useEffect for initial data fetch + real-time subscriptions
   useEffect(() => {
     const fetchAllInitialData = async () => {
       try {
-        const [authResult, usersTotalResult, usersPendingResult, usersActiveResult, usersInactiveResult, projectsActiveResult] = await Promise.all([
+        // Fetch user profile and stats in parallel
+        const [authResult] = await Promise.all([
           supabase.auth.getUser(),
-          supabase.from('profiles').select('id', { count: 'exact', head: true }),
-          supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('status', 'pending_approval'),
-          supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('status', 'active'),
-          supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('status', 'inactive'),
-          supabase.from('projects').select('id', { count: 'exact', head: true }).eq('is_active', true)
+          fetchUserStats(),
+          fetchProjectStats()
         ]);
 
         // Set user profile
@@ -102,17 +124,6 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
             .single();
           if (profile) setUserProfile(profile);
         }
-
-        // Set user stats
-        setUserStats({
-          total: usersTotalResult.count || 0,
-          pending: usersPendingResult.count || 0,
-          active: usersActiveResult.count || 0,
-          inactive: usersInactiveResult.count || 0
-        });
-
-        // Set project stats
-        setProjectStats({ total: projectsActiveResult.count || 0 });
       } catch (error) {
         console.error('Error fetching initial data:', error);
       } finally {
@@ -121,72 +132,18 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     };
 
     fetchAllInitialData();
-  }, []);
-  // Real-time subscription for user changes
-  useEffect(() => {
-    const fetchUserStats = async () => {
-      try {
-        const [usersTotalResult, usersPendingResult, usersActiveResult, usersInactiveResult] = await Promise.all([
-          supabase.from('profiles').select('id', { count: 'exact', head: true }),
-          supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('status', 'pending_approval'),
-          supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('status', 'active'),
-          supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('status', 'inactive')
-        ]);
 
-        setUserStats({
-          total: usersTotalResult.count || 0,
-          pending: usersPendingResult.count || 0,
-          active: usersActiveResult.count || 0,
-          inactive: usersInactiveResult.count || 0
-        });
-      } catch (error) {
-        console.error('Error fetching user stats:', error);
-      }
-    };
-
-    // Set up real-time subscription for user changes
-    const userChannel = supabase.channel('user-stats-changes').on('postgres_changes', {
-      event: '*',
-      schema: 'public',
-      table: 'profiles'
-    }, () => {
-      fetchUserStats();
-    }).subscribe();
+    // Set up real-time subscriptions
+    const userChannel = supabase.channel('user-stats-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, fetchUserStats)
+      .subscribe();
+    
+    const projectChannel = supabase.channel('project-stats-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, fetchProjectStats)
+      .subscribe();
     
     return () => {
       supabase.removeChannel(userChannel);
-    };
-  }, []);
-
-  // Real-time subscription for project changes
-  useEffect(() => {
-    const fetchProjectStats = async () => {
-      try {
-        const { count, error } = await supabase
-          .from('projects')
-          .select('id', { count: 'exact', head: true })
-          .eq('is_active', true);
-
-        if (error) {
-          console.error('Error fetching project stats:', error);
-          return;
-        }
-        setProjectStats({ total: count || 0 });
-      } catch (error) {
-        console.error('Error fetching project stats:', error);
-      }
-    };
-
-    // Set up real-time subscription for project changes
-    const projectChannel = supabase.channel('project-stats-changes').on('postgres_changes', {
-      event: '*',
-      schema: 'public',
-      table: 'projects'
-    }, () => {
-      fetchProjectStats();
-    }).subscribe();
-    
-    return () => {
       supabase.removeChannel(projectChannel);
     };
   }, []);
