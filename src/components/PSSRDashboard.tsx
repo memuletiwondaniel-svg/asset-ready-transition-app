@@ -240,6 +240,38 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
         avatar: undefined,
         pendingTasks: 18,
         isOnline: true
+      },
+      {
+        id: 'stuart-static-ta2',
+        name: 'Stuart',
+        role: 'Static TA2',
+        avatar: undefined,
+        pendingTasks: 4,
+        isOnline: true
+      },
+      {
+        id: 'ghassan-majdalani-ta2',
+        name: 'Ghassan Majdalani',
+        role: 'Process TA2',
+        avatar: undefined,
+        pendingTasks: 2,
+        isOnline: true
+      },
+      {
+        id: 'satya-borra-ta2',
+        name: 'Satya Borra',
+        role: 'Civil TA2',
+        avatar: undefined,
+        pendingTasks: 6,
+        isOnline: false
+      },
+      {
+        id: 'yasser-elect-ta2',
+        name: 'Yasser',
+        role: 'Elect TA2',
+        avatar: undefined,
+        pendingTasks: 0,
+        isOnline: true
       }
     ],
 
@@ -492,6 +524,146 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
         description: 'Confirm maintenance schedule is finalized for new equipment',
         status: 'pending',
         topic: 'Flange Management'
+      }
+    ],
+    // Stuart (Static TA2) has 4 pending items
+    'stuart-static-ta2': [
+      {
+        id: 'item-stuart-1',
+        uniqueId: 'ST-001',
+        category: 'Technical Integrity',
+        description: 'Static equipment inspection records review',
+        status: 'pending',
+        topic: 'Static Equipment'
+      },
+      {
+        id: 'item-stuart-2',
+        uniqueId: 'ST-002',
+        category: 'Technical Integrity',
+        description: 'Pressure vessel certification review',
+        status: 'pending',
+        topic: 'Pressure Vessels'
+      },
+      {
+        id: 'item-stuart-3',
+        uniqueId: 'ST-003',
+        category: 'Technical Integrity',
+        description: 'Heat exchanger tube inspection verification',
+        status: 'pending',
+        topic: 'Heat Exchangers'
+      },
+      {
+        id: 'item-stuart-4',
+        uniqueId: 'ST-004',
+        category: 'Technical Integrity',
+        description: 'Storage tank integrity assessment review',
+        status: 'pending',
+        topic: 'Storage Tanks'
+      }
+    ],
+    // Ghassan Majdalani (Process TA2) has 2 pending items
+    'ghassan-majdalani-ta2': [
+      {
+        id: 'item-ghassan-1',
+        uniqueId: 'PR-001',
+        category: 'Process Safety',
+        description: 'Process flow verification against design basis',
+        status: 'pending',
+        topic: 'Process Flow'
+      },
+      {
+        id: 'item-ghassan-2',
+        uniqueId: 'PR-002',
+        category: 'Process Safety',
+        description: 'Control valve sizing confirmation review',
+        status: 'pending',
+        topic: 'Control Valves'
+      }
+    ],
+    // Satya Borra (Civil TA2) has 6 pending items
+    'satya-borra-ta2': [
+      {
+        id: 'item-satya-1',
+        uniqueId: 'CV-001',
+        category: 'Technical Integrity',
+        description: 'Foundation inspection report review',
+        status: 'pending',
+        topic: 'Foundations'
+      },
+      {
+        id: 'item-satya-2',
+        uniqueId: 'CV-002',
+        category: 'Technical Integrity',
+        description: 'Structural steel certification verification',
+        status: 'pending',
+        topic: 'Structural Steel'
+      },
+      {
+        id: 'item-satya-3',
+        uniqueId: 'CV-003',
+        category: 'Technical Integrity',
+        description: 'Pipe rack load analysis review',
+        status: 'pending',
+        topic: 'Pipe Racks'
+      },
+      {
+        id: 'item-satya-4',
+        uniqueId: 'CV-004',
+        category: 'Documentation',
+        description: 'Concrete curing records verification',
+        status: 'pending',
+        topic: 'Concrete'
+      },
+      {
+        id: 'item-satya-5',
+        uniqueId: 'CV-005',
+        category: 'HSE & Environment',
+        description: 'Secondary containment verification',
+        status: 'pending',
+        topic: 'Containment'
+      },
+      {
+        id: 'item-satya-6',
+        uniqueId: 'CV-006',
+        category: 'Documentation',
+        description: 'Building code compliance review',
+        status: 'pending',
+        topic: 'Building Codes'
+      }
+    ],
+    // Yasser (Elect TA2) has 0 pending items (all completed)
+    'yasser-elect-ta2': [
+      {
+        id: 'item-yasser-1',
+        uniqueId: 'EL-001',
+        category: 'Technical Integrity',
+        description: 'Electrical equipment installation verification',
+        status: 'completed',
+        topic: 'Electrical Installation'
+      },
+      {
+        id: 'item-yasser-2',
+        uniqueId: 'EL-002',
+        category: 'Technical Integrity',
+        description: 'Motor control center inspection review',
+        status: 'completed',
+        topic: 'MCC'
+      },
+      {
+        id: 'item-yasser-3',
+        uniqueId: 'EL-003',
+        category: 'Technical Integrity',
+        description: 'Cable tray installation verification',
+        status: 'completed',
+        topic: 'Cable Trays'
+      },
+      {
+        id: 'item-yasser-4',
+        uniqueId: 'EL-004',
+        category: 'Documentation',
+        description: 'Electrical single line diagrams review',
+        status: 'completed',
+        topic: 'SLDs'
       }
     ]
   };
