@@ -25,6 +25,8 @@ import { usePSSRCategoryProgress, CategoryItem } from '@/hooks/usePSSRCategoryPr
 import { PSSRItemDetailModal } from '@/components/pssr/PSSRItemDetailModal';
 import { PendingItem } from '@/components/widgets/ApproverPendingItemsOverlay';
 import { usePSSRDetails } from '@/hooks/usePSSRDetails';
+import { usePSSRPriorityActions } from '@/hooks/usePSSRPriorityActions';
+import { PriorityActionsOverlay } from '@/components/pssr/PriorityActionsOverlay';
 
 interface PSSRDashboardProps {
   pssrId: string;
@@ -89,6 +91,11 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
   const [selectedPendingItem, setSelectedPendingItem] = useState<CategoryItem | null>(null);
   const [isPendingItemModalOpen, setIsPendingItemModalOpen] = useState(false);
 
+  // Priority actions overlay state
+  const [priorityActionsOverlayOpen, setPriorityActionsOverlayOpen] = useState(false);
+  
+  // Fetch priority actions
+  const { stats: priorityActionStats } = usePSSRPriorityActions(pssrId);
   // Widget order state - persisted in localStorage
   const [widgetOrder, setWidgetOrder] = useState<string[]>(() => {
     const saved = localStorage.getItem(`pssr-widget-order-${pssrId}`);
@@ -780,6 +787,8 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
                         approvedItems={pssrData.statistics.approvedItems}
                         overallProgress={overallProgress}
                         categoryProgress={widgetCategoryProgress}
+                        priorityActionStats={priorityActionStats}
+                        onPriorityActionsClick={() => setPriorityActionsOverlayOpen(true)}
                         keyActivities={pssrData.keyActivities}
                         onActivityClick={handleActivityClick}
                         onCategoryClick={handleCategoryClick}
@@ -937,6 +946,13 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
         onOpenChange={setIsPendingItemModalOpen}
         item={selectedPendingItem}
         pssrId={pssrId || ''}
+      />
+
+      {/* Priority Actions Overlay */}
+      <PriorityActionsOverlay
+        open={priorityActionsOverlayOpen}
+        onOpenChange={setPriorityActionsOverlayOpen}
+        pssrId={pssrId}
       />
     </div>
   );
