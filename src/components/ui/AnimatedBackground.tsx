@@ -7,19 +7,7 @@ interface AnimatedBackgroundProps {
 }
 
 export const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({ children, className }) => {
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [colorPhase, setColorPhase] = useState(0);
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      const x = (e.clientX / window.innerWidth - 0.5) * 2;
-      const y = (e.clientY / window.innerHeight - 0.5) * 2;
-      setMousePosition({ x, y });
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, []);
 
   // Slower color cycling - full cycle in ~3 minutes
   useEffect(() => {
@@ -31,64 +19,50 @@ export const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({ children
 
   return (
     <div className={cn('min-h-screen bg-background relative overflow-hidden', className)}>
-      {/* Dynamic Multicolor Animated Background */}
+      {/* Dynamic Multicolor Animated Background - Softer, Corner-to-Center Movement */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {/* Primary orb - Top area - Pink/Purple - Drifts */}
+        {/* Primary orb - Starts top-left, journeys toward center */}
         <div 
-          className="absolute top-[10%] left-[15%] w-[500px] h-[500px] rounded-full opacity-30 dark:opacity-20 will-change-transform animate-drift-1"
+          className="absolute top-0 left-0 w-[600px] h-[600px] rounded-full opacity-[0.15] dark:opacity-[0.08] will-change-transform animate-journey-tl"
           style={{ 
-            transform: `translate(${mousePosition.x * 30}px, ${mousePosition.y * 30}px)`,
-            background: `radial-gradient(circle, hsl(${280 + colorPhase * 0.3}, 80%, 60%), transparent 70%)`,
-            filter: 'blur(80px)',
-          }}
-        />
-        
-        {/* Secondary orb - Top right area - Blue/Cyan - Drifts */}
-        <div 
-          className="absolute top-[5%] right-[20%] w-[600px] h-[600px] rounded-full opacity-25 dark:opacity-15 will-change-transform animate-drift-2"
-          style={{ 
-            transform: `translate(${mousePosition.x * -25}px, ${mousePosition.y * 20}px)`,
-            background: `radial-gradient(circle, hsl(${200 + colorPhase * 0.4}, 85%, 55%), transparent 70%)`,
+            background: `radial-gradient(circle, hsl(${280 + colorPhase * 0.3}, 50%, 70%), transparent 70%)`,
             filter: 'blur(100px)',
           }}
         />
         
-        {/* Tertiary orb - Bottom left area - Green/Teal - Drifts */}
+        {/* Secondary orb - Starts top-right, journeys toward center */}
         <div 
-          className="absolute bottom-[15%] left-[25%] w-[450px] h-[450px] rounded-full opacity-25 dark:opacity-15 will-change-transform animate-drift-3"
+          className="absolute top-0 right-0 w-[650px] h-[650px] rounded-full opacity-[0.12] dark:opacity-[0.07] will-change-transform animate-journey-tr"
           style={{ 
-            transform: `translate(${mousePosition.x * 15}px, ${mousePosition.y * -25}px)`,
-            background: `radial-gradient(circle, hsl(${160 + colorPhase * 0.5}, 75%, 50%), transparent 70%)`,
+            background: `radial-gradient(circle, hsl(${200 + colorPhase * 0.4}, 55%, 68%), transparent 70%)`,
+            filter: 'blur(110px)',
+          }}
+        />
+        
+        {/* Tertiary orb - Starts bottom-left, journeys toward center */}
+        <div 
+          className="absolute bottom-0 left-0 w-[550px] h-[550px] rounded-full opacity-[0.14] dark:opacity-[0.08] will-change-transform animate-journey-bl"
+          style={{ 
+            background: `radial-gradient(circle, hsl(${160 + colorPhase * 0.5}, 48%, 65%), transparent 70%)`,
+            filter: 'blur(100px)',
+          }}
+        />
+        
+        {/* Quaternary orb - Starts bottom-right, journeys toward center */}
+        <div 
+          className="absolute bottom-0 right-0 w-[500px] h-[500px] rounded-full opacity-[0.16] dark:opacity-[0.09] will-change-transform animate-journey-br"
+          style={{ 
+            background: `radial-gradient(circle, hsl(${30 + colorPhase * 0.3}, 52%, 68%), transparent 70%)`,
             filter: 'blur(90px)',
           }}
         />
         
-        {/* Quaternary orb - Bottom right area - Orange/Amber - Drifts */}
+        {/* Central glow - Subtle pulsing accent */}
         <div 
-          className="absolute bottom-[10%] right-[15%] w-[400px] h-[400px] rounded-full opacity-30 dark:opacity-20 will-change-transform animate-drift-4"
+          className="absolute top-1/2 left-1/2 w-[700px] h-[700px] rounded-full opacity-[0.06] dark:opacity-[0.04] will-change-transform animate-pulse-center"
           style={{ 
-            transform: `translate(${mousePosition.x * -20}px, ${mousePosition.y * -15}px)`,
-            background: `radial-gradient(circle, hsl(${30 + colorPhase * 0.3}, 90%, 55%), transparent 70%)`,
-            filter: 'blur(70px)',
-          }}
-        />
-        
-        {/* Central glow - Subtle primary accent - Slow drift */}
-        <div 
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full opacity-10 dark:opacity-5 will-change-transform animate-drift-1"
-          style={{ 
-            background: `radial-gradient(circle, hsl(${240 + colorPhase * 0.2}, 70%, 60%), transparent 60%)`,
-            filter: 'blur(120px)',
-          }}
-        />
-        
-        {/* Accent orb - Floating across screen - Rose/Pink */}
-        <div 
-          className="absolute top-[40%] left-[60%] w-[300px] h-[300px] rounded-full opacity-20 dark:opacity-10 will-change-transform animate-drift-2 animate-float"
-          style={{ 
-            transform: `translate(${mousePosition.x * -12}px, ${mousePosition.y * 18}px)`,
-            background: `radial-gradient(circle, hsl(${340 + colorPhase * 0.4}, 85%, 60%), transparent 70%)`,
-            filter: 'blur(60px)',
+            background: `radial-gradient(circle, hsl(${240 + colorPhase * 0.2}, 45%, 70%), transparent 60%)`,
+            filter: 'blur(130px)',
           }}
         />
       </div>
