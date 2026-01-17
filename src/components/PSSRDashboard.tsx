@@ -776,6 +776,8 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
                         approvedItems={pssrData.statistics.approvedItems}
                         overallProgress={overallProgress}
                         categoryProgress={widgetCategoryProgress}
+                        keyActivities={pssrData.keyActivities}
+                        onActivityClick={handleActivityClick}
                         onCategoryClick={handleCategoryClick}
                         onStatClick={handleStatClick}
                         onViewAll={handleViewAllChecklist}
@@ -801,8 +803,6 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
                       <OverviewStatsWidget
                         linkedPSSRs={pssrData.linkedPSSRs}
                         onPSSRClick={(id) => console.log('PSSR clicked:', id)}
-                        keyActivities={pssrData.keyActivities}
-                        onActivityClick={handleActivityClick}
                       />
                     ),
                   };
