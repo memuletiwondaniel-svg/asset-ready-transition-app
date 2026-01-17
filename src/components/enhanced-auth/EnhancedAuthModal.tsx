@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContentNoOverlay, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -109,7 +109,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
     setLoading(false);
   };
   return <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-none max-h-none w-screen h-screen p-0 bg-transparent border-none shadow-none overflow-hidden [&>button]:hidden" aria-describedby="enhanced-auth-description">
+      <DialogContentNoOverlay className="max-w-none max-h-none w-screen h-screen p-0 bg-transparent border-none shadow-none overflow-hidden [&>button]:hidden" aria-describedby="enhanced-auth-description">
         <DialogHeader className="sr-only">
           <DialogTitle>Authentication</DialogTitle>
           <DialogDescription id="enhanced-auth-description">Sign in or register</DialogDescription>
@@ -330,7 +330,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
             </div>
           </div>
         </div>
-      </DialogContent>
+      </DialogContentNoOverlay>
       
       <EnhancedRegistrationForm isOpen={showRegistrationForm} onClose={() => setShowRegistrationForm(false)} onSuccess={() => {
       setShowRegistrationForm(false);
