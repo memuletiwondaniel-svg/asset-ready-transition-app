@@ -286,8 +286,8 @@ export const PSSRChecklistProgressWidget: React.FC<PSSRChecklistProgressWidgetPr
             ))}
           </div>
 
-          {/* Priority Actions Section */}
-          {priorityActionStats && priorityActionStats.total > 0 && (
+          {/* Priority Actions Section - Always visible */}
+          {priorityActionStats && (
             <div 
               onClick={() => onPriorityActionsClick?.()}
               className="p-3 bg-muted/30 rounded-xl border border-border/50 hover:bg-muted/50 hover:border-primary/30 cursor-pointer transition-all group"

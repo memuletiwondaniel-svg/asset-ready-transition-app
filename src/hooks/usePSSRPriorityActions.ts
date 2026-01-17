@@ -39,7 +39,7 @@ export const usePSSRPriorityActions = (pssrId: string | undefined) => {
         .from('pssr_priority_actions')
         .select(`
           *,
-          pssr_item_approvals!inner(
+          pssr_item_approvals(
             approver_role,
             checklist_response_id
           )
@@ -49,7 +49,7 @@ export const usePSSRPriorityActions = (pssrId: string | undefined) => {
         .order('created_at', { ascending: true });
       
       if (error) throw error;
-      return data as PSSRPriorityAction[];
+      return (data || []) as PSSRPriorityAction[];
     },
     enabled: !!pssrId,
   });
