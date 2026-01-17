@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Users, FolderOpen, Settings, ArrowLeft, ClipboardList, CheckCircle, Home, Search, X, Star, Activity, Sliders, Building2, LayoutTemplate, Key, Loader2 } from 'lucide-react';
+import { Users, FolderOpen, Settings, ArrowLeft, ClipboardList, CheckCircle, Home, Search, X, Star, Activity, Sliders, Building2, LayoutTemplate, Key, Loader2, Upload } from 'lucide-react';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
@@ -26,6 +26,7 @@ const ORAConfigurationManagement = lazy(() => import("./ora/ORAConfigurationMana
 const ManageHandover = lazy(() => import("./handover/ManageHandover").then(m => ({ default: m.ManageHandover })));
 const AdminHeader = lazy(() => import("./admin/AdminHeader"));
 const AdminActivityLog = lazy(() => import("./AdminActivityLog"));
+const BulkUserUpload = lazy(() => import("./admin-tools/BulkUserUpload").then(m => ({ default: m.BulkUserUpload })));
 
 // Loading fallback component
 const ViewLoadingFallback = () => (
@@ -55,7 +56,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   const navigate = useNavigate();
 
   // State management - consolidated for cleaner code
-  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'pssr-settings' | 'activity-log' | 'ora-configuration' | 'handover-management'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'pssr-settings' | 'activity-log' | 'ora-configuration' | 'handover-management' | 'bulk-upload'>('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   const [favoriteTools, setFavoriteTools] = useState<string[]>([]);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
@@ -235,6 +236,16 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     stats: {},
     height: 'md:row-span-2',
     onClick: () => setActiveView('handover-management')
+  }, {
+    id: 'bulk-upload',
+    title: 'Bulk User Upload',
+    description: 'Upload multiple users from an Excel file',
+    icon: Upload,
+    gradient: 'from-teal-500 to-teal-600',
+    tooltip: 'Create multiple users at once by uploading an Excel spreadsheet',
+    stats: {},
+    height: 'md:row-span-2',
+    onClick: () => setActiveView('bulk-upload')
   }];
 
   // Filter admin tools based on search query
@@ -352,6 +363,13 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     return <div className="flex-1 overflow-hidden animate-fade-in">
         <Suspense fallback={<ViewLoadingFallback />}>
           <ManageHandover onBack={() => setActiveView('dashboard')} />
+        </Suspense>
+      </div>;
+  }
+  if (activeView === 'bulk-upload') {
+    return <div className="flex-1 overflow-hidden animate-fade-in p-6">
+        <Suspense fallback={<ViewLoadingFallback />}>
+          <BulkUserUpload onBack={() => setActiveView('dashboard')} />
         </Suspense>
       </div>;
   }

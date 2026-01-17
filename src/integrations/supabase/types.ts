@@ -3375,6 +3375,7 @@ export type Database = {
           full_name: string | null
           functional_email: boolean | null
           functional_email_address: string | null
+          hub: string | null
           id: string
           is_active: boolean
           last_login_at: string | null
@@ -3422,6 +3423,7 @@ export type Database = {
           full_name?: string | null
           functional_email?: boolean | null
           functional_email_address?: string | null
+          hub?: string | null
           id?: string
           is_active?: boolean
           last_login_at?: string | null
@@ -3469,6 +3471,7 @@ export type Database = {
           full_name?: string | null
           functional_email?: boolean | null
           functional_email_address?: string | null
+          hub?: string | null
           id?: string
           is_active?: boolean
           last_login_at?: string | null
@@ -3513,6 +3516,13 @@ export type Database = {
             columns: ["field"]
             isOneToOne: false
             referencedRelation: "field"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_hub_fkey"
+            columns: ["hub"]
+            isOneToOne: false
+            referencedRelation: "hubs"
             referencedColumns: ["id"]
           },
           {
