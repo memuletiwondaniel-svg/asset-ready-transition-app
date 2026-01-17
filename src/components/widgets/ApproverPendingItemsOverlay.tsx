@@ -138,44 +138,31 @@ export const ApproverPendingItemsOverlay: React.FC<ApproverPendingItemsOverlayPr
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh]">
-        <DialogHeader>
+      <DialogContent className="max-w-4xl w-[90vw] h-[85vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-3">
-            <Avatar className="h-10 w-10 border border-border">
+            <Avatar className="h-12 w-12 border border-border">
               <AvatarImage src={approver.avatar} alt={approver.name} />
-              <AvatarFallback className="bg-primary/10 text-primary font-medium">
+              <AvatarFallback className="bg-primary/10 text-primary font-medium text-lg">
                 {initials}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1">
-              <div className="text-lg font-semibold">{approver.name}</div>
+              <div className="text-xl font-semibold">{approver.name}</div>
               <div className="text-sm text-muted-foreground font-normal">{approver.role}</div>
             </div>
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary">
-                {isFiltering && filteredItems.length !== pendingItems.length
-                  ? `${filteredItems.length} of ${pendingItems.length} items`
-                  : `${pendingItems.length} pending items`
-                }
-              </Badge>
-              {hasPendingItems && onSendReminder && !showReminderForm && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleOpenReminderForm}
-                  className="gap-1.5"
-                >
-                  <Bell className="h-3.5 w-3.5" />
-                  Send Reminder
-                </Button>
-              )}
-            </div>
+            <Badge variant="secondary" className="text-sm px-3 py-1">
+              {isFiltering && filteredItems.length !== pendingItems.length
+                ? `${filteredItems.length} of ${pendingItems.length} items`
+                : `${pendingItems.length} pending items`
+              }
+            </Badge>
           </DialogTitle>
         </DialogHeader>
 
         {/* Reminder Form */}
         {showReminderForm && (
-          <div className="border border-border rounded-lg p-4 bg-muted/30 space-y-3">
+          <div className="border border-border rounded-lg p-4 bg-muted/30 space-y-3 flex-shrink-0">
             <div className="flex items-center justify-between">
               <h4 className="text-sm font-medium flex items-center gap-2">
                 <Bell className="h-4 w-4 text-primary" />
@@ -226,7 +213,7 @@ export const ApproverPendingItemsOverlay: React.FC<ApproverPendingItemsOverlayPr
 
         {/* Search and Filter Bar */}
         {hasPendingItems && (
-          <div className="flex items-center gap-3 pb-2 border-b border-border">
+          <div className="flex items-center gap-3 pb-3 border-b border-border flex-shrink-0">
             {/* Search Input */}
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -240,7 +227,7 @@ export const ApproverPendingItemsOverlay: React.FC<ApproverPendingItemsOverlayPr
             
             {/* Status Filter Dropdown */}
             <Select value={statusFilter} onValueChange={(val: typeof statusFilter) => setStatusFilter(val)}>
-              <SelectTrigger className="w-[140px]">
+              <SelectTrigger className="w-[150px]">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
@@ -255,19 +242,19 @@ export const ApproverPendingItemsOverlay: React.FC<ApproverPendingItemsOverlayPr
           </div>
         )}
 
-        <ScrollArea className="max-h-[60vh] pr-4">
+        <ScrollArea className="flex-1 pr-4 min-h-0">
           {pendingItems.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <CheckCircle2 className="h-12 w-12 text-green-500 mb-4" />
-              <h3 className="text-lg font-medium mb-2">All Caught Up!</h3>
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <CheckCircle2 className="h-16 w-16 text-green-500 mb-4" />
+              <h3 className="text-xl font-medium mb-2">All Caught Up!</h3>
               <p className="text-muted-foreground">
                 No pending items for this approver.
               </p>
             </div>
           ) : filteredItems.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <Search className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium mb-2">No Matching Items</h3>
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <Search className="h-16 w-16 text-muted-foreground mb-4" />
+              <h3 className="text-xl font-medium mb-2">No Matching Items</h3>
               <p className="text-muted-foreground">
                 No items match your search criteria.
               </p>
@@ -281,7 +268,7 @@ export const ApproverPendingItemsOverlay: React.FC<ApproverPendingItemsOverlayPr
               </Button>
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-6 py-2">
               {Object.entries(groupedItems).map(([category, items]) => (
                 <div key={category} className="space-y-3">
                   <div className="flex items-center gap-2 pb-2 border-b border-border/50">
@@ -299,7 +286,7 @@ export const ApproverPendingItemsOverlay: React.FC<ApproverPendingItemsOverlayPr
                       <div
                         key={item.id}
                         onClick={() => onItemClick?.(item.id)}
-                        className="flex items-start gap-3 p-3 rounded-lg border border-border/50 bg-card/50 hover:bg-accent/10 hover:border-primary/30 cursor-pointer transition-all group"
+                        className="flex items-start gap-3 p-4 rounded-lg border border-border/50 bg-card/50 hover:bg-accent/10 hover:border-primary/30 cursor-pointer transition-all group"
                       >
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2">
@@ -318,8 +305,22 @@ export const ApproverPendingItemsOverlay: React.FC<ApproverPendingItemsOverlayPr
                                 </p>
                               )}
                             </div>
-                            <div className="flex-shrink-0">
+                            <div className="flex items-center gap-2 flex-shrink-0">
                               {getStatusBadge(item.status)}
+                              {onSendReminder && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleOpenReminderForm();
+                                  }}
+                                  title="Send reminder"
+                                >
+                                  <Bell className="h-3.5 w-3.5" />
+                                </Button>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -331,6 +332,19 @@ export const ApproverPendingItemsOverlay: React.FC<ApproverPendingItemsOverlayPr
             </div>
           )}
         </ScrollArea>
+
+        {/* Footer with Send Reminder Button */}
+        {hasPendingItems && onSendReminder && !showReminderForm && (
+          <div className="border-t border-border pt-4 mt-2 flex justify-end flex-shrink-0">
+            <Button
+              onClick={handleOpenReminderForm}
+              className="gap-2"
+            >
+              <Bell className="h-4 w-4" />
+              Send Reminder to {approver.name.split(' ')[0]}
+            </Button>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
