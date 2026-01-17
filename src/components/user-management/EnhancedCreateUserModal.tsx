@@ -683,7 +683,9 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="email" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Email Address *</Label>
+            <Label htmlFor="email" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              {formData.isFunctionalEmail ? 'Functional Email Address *' : 'Email Address *'}
+            </Label>
             <Input
               id="email"
               type="email"

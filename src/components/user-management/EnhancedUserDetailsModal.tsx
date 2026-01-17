@@ -1145,7 +1145,9 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                 </div>
                 
                 <div>
-                  <Label htmlFor="email">Email Address *</Label>
+                  <Label htmlFor="email">
+                    {formData.functional_email ? 'Functional Email Address *' : 'Email Address *'}
+                  </Label>
                   <div className="flex items-center space-x-2">
                     <Mail className="h-4 w-4 text-muted-foreground" />
                     <Input
@@ -1172,7 +1174,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
 
                 {formData.functional_email && (
                   <div>
-                    <Label htmlFor="functional_email_address">Functional Email Address</Label>
+                    <Label htmlFor="functional_email_address">Personal Email Address</Label>
                     <Input
                       id="functional_email_address"
                       type="email"
@@ -1180,7 +1182,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                       onChange={(e) => handleInputChange('functional_email_address', e.target.value)}
                       disabled={!editMode}
                       className={!editMode ? 'bg-muted' : ''}
-                      placeholder="functional@company.com"
+                      placeholder="personal@gmail.com"
                     />
                   </div>
                 )}
