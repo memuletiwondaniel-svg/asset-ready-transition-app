@@ -1,0 +1,1 @@
+UPDATE hubs SET is_active = false WHERE id = 'e6128ab2-c3a2-4f3f-9225-17ae62b699eb';
