@@ -9,7 +9,7 @@ import { AlertTriangle, GripVertical } from 'lucide-react';
 import { PSSRInfoScopeWidget } from '@/components/widgets/PSSRInfoScopeWidget';
 import { PSSRChecklistProgressWidget, CategoryProgress } from '@/components/widgets/PSSRChecklistProgressWidget';
 import { PSSRReviewersApprovalsWidget } from '@/components/widgets/PSSRReviewersApprovalsWidget';
-import { OverviewStatsWidget } from '@/components/widgets/OverviewStatsWidget';
+
 import { EditPSSRModal } from '@/components/widgets/EditPSSRModal';
 import { ScheduleActivityModal } from '@/components/widgets/ScheduleActivityModal';
 import { CategoryItemsOverlay } from '@/components/pssr/CategoryItemsOverlay';
@@ -38,7 +38,6 @@ const DEFAULT_WIDGET_SETTINGS: WidgetSettings[] = [
   { id: 'widget-1', name: 'PSSR Info & Scope', visible: true, size: 'large' },
   { id: 'widget-2', name: 'Progress', visible: true, size: 'large' },
   { id: 'widget-4', name: 'Approval', visible: true, size: 'medium' },
-  { id: 'widget-6', name: 'Overview', visible: true, size: 'medium' },
 ];
 
 const PSSRDashboard: React.FC<PSSRDashboardProps> = ({ 
@@ -860,12 +859,6 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
                         projectName={pssrData.projectName}
                         pendingItemsByApprover={pendingItemsByApprover}
                         onPendingItemClick={handlePendingItemClick}
-                      />
-                    ),
-                    'widget-6': (
-                      <OverviewStatsWidget
-                        linkedPSSRs={pssrData.linkedPSSRs}
-                        onPSSRClick={(id) => console.log('PSSR clicked:', id)}
                       />
                     ),
                   };
