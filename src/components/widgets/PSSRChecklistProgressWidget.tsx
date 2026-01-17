@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
 import { WidgetCard } from './WidgetCard';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useWidgetSize } from '@/contexts/WidgetSizeContext';
+import { cn } from '@/lib/utils';
 import { 
   Wrench, 
   Shield, 
@@ -17,7 +15,10 @@ import {
   CheckCircle2,
   Clock,
   AlertCircle,
-  ChevronDown
+  ChevronDown,
+  FileSearch,
+  ArrowRight,
+  CircleAlert
 } from 'lucide-react';
 
 export interface CategoryProgress {
@@ -74,7 +75,7 @@ interface PSSRChecklistProgressWidgetProps {
 // Circular Progress Component
 const CircularProgress: React.FC<{ percentage: number; size?: number }> = ({ 
   percentage, 
-  size = 120 
+  size = 100 
 }) => {
   const strokeWidth = 8;
   const radius = (size - strokeWidth) / 2;
@@ -82,15 +83,14 @@ const CircularProgress: React.FC<{ percentage: number; size?: number }> = ({
   const offset = circumference - (percentage / 100) * circumference;
   
   const getProgressColor = () => {
-    if (percentage >= 70) return 'stroke-green-500';
-    if (percentage >= 40) return 'stroke-yellow-500';
-    return 'stroke-red-500';
+    if (percentage >= 70) return 'stroke-emerald-500';
+    if (percentage >= 40) return 'stroke-amber-500';
+    return 'stroke-orange-500';
   };
 
   return (
     <div className="relative" style={{ width: size, height: size }}>
       <svg className="transform -rotate-90" width={size} height={size}>
-        {/* Background circle */}
         <circle
           className="stroke-muted/30"
           strokeWidth={strokeWidth}
@@ -99,9 +99,8 @@ const CircularProgress: React.FC<{ percentage: number; size?: number }> = ({
           cx={size / 2}
           cy={size / 2}
         />
-        {/* Progress circle */}
         <circle
-          className={`${getProgressColor()} transition-all duration-1000 ease-out`}
+          className={cn(getProgressColor(), "transition-all duration-700 ease-out")}
           strokeWidth={strokeWidth}
           strokeLinecap="round"
           fill="transparent"
@@ -116,29 +115,40 @@ const CircularProgress: React.FC<{ percentage: number; size?: number }> = ({
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className="text-2xl font-bold text-foreground">{percentage}%</span>
-        <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Complete</span>
+        <span className="text-[10px] text-muted-foreground font-medium">Complete</span>
       </div>
     </div>
   );
 };
 
-// Status Pill Component
+// Status Pill Component - Redesigned
 const StatusPill: React.FC<{
   label: string;
   value: number;
-  bgClass: string;
+  variant: 'pending' | 'review' | 'completed';
+  icon: React.ReactNode;
   onClick?: () => void;
-}> = ({ label, value, bgClass, onClick }) => (
-  <button
-    onClick={onClick}
-    className={`flex items-center justify-center px-3 sm:px-4 py-2.5 rounded-lg ${bgClass} hover:opacity-80 transition-all cursor-pointer group`}
-  >
-    <div className="text-center">
-      <p className="text-base sm:text-lg font-bold text-foreground leading-none">{value}</p>
-      <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wide whitespace-nowrap">{label}</p>
-    </div>
-  </button>
-);
+}> = ({ label, value, variant, icon, onClick }) => {
+  const variantStyles = {
+    pending: 'bg-slate-500/10 text-slate-600 dark:text-slate-400 hover:bg-slate-500/20 border-slate-500/20',
+    review: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 border-amber-500/20',
+    completed: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 border-emerald-500/20',
+  };
+
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "flex items-center gap-2 px-3 py-2 rounded-lg border transition-all duration-200 hover:scale-[1.02]",
+        variantStyles[variant]
+      )}
+    >
+      {icon}
+      <span className="text-lg font-bold">{value}</span>
+      <span className="text-xs font-medium opacity-80">{label}</span>
+    </button>
+  );
+};
 
 // Category Progress Row Component
 const CategoryProgressRow: React.FC<{
@@ -155,7 +165,7 @@ const CategoryProgressRow: React.FC<{
     onClick={onClick}
     className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-muted/40 hover:shadow-md hover:scale-[1.02] transition-all duration-300 cursor-pointer group border border-transparent hover:border-border/50 group-has-[:hover]/list:opacity-40 group-has-[:hover]/list:grayscale hover:!opacity-100 hover:!grayscale-0"
   >
-    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${colorClass} transition-transform duration-200 group-hover:scale-110`}>
+    <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center transition-transform duration-200 group-hover:scale-110", colorClass)}>
       <Icon className="h-4 w-4 transition-transform duration-200 group-hover:rotate-3" />
     </div>
     <div className="flex-1 min-w-0">
@@ -167,7 +177,7 @@ const CategoryProgressRow: React.FC<{
       </div>
       <div className="relative h-1.5 bg-muted/50 rounded-full overflow-hidden">
         <div 
-          className={`absolute inset-y-0 left-0 rounded-full transition-all duration-500 ${progressClass} group-hover:brightness-110`}
+          className={cn("absolute inset-y-0 left-0 rounded-full transition-all duration-500 group-hover:brightness-110", progressClass)}
           style={{ width: `${percentage}%` }}
         />
       </div>
@@ -196,6 +206,10 @@ export const PSSRChecklistProgressWidget: React.FC<PSSRChecklistProgressWidgetPr
   const { widgetSize } = useWidgetSize();
   const widgetId = 'pssr-checklist-progress';
   const [activitiesExpanded, setActivitiesExpanded] = useState(false);
+  const [categoryExpanded, setCategoryExpanded] = useState(true);
+
+  const remainingItems = totalItems - approvedItems;
+  const hasPriorityAOpen = priorityActionStats && priorityActionStats.priorityA.open > 0;
 
   const getCategoryIcon = (categoryName: string) => {
     const name = categoryName.toLowerCase();
@@ -228,21 +242,15 @@ export const PSSRChecklistProgressWidget: React.FC<PSSRChecklistProgressWidgetPr
     return { colorClass: 'bg-primary/5 text-primary/70', progressClass: 'bg-primary/50' };
   };
 
-  const statusPills = [
-    { label: 'Draft', value: draftItems, bgClass: 'bg-muted/50', filter: 'draft' },
-    { label: 'Review', value: underReviewItems, bgClass: 'bg-muted/50', filter: 'under_review' },
-    { label: 'Approved', value: approvedItems, bgClass: 'bg-muted/50', filter: 'approved' },
-    ...(openActions > 0 ? [{ label: 'Actions', value: openActions, bgClass: 'bg-muted/50', filter: 'actions' }] : []),
-  ];
-
   return (
     <WidgetCard 
       title="Progress"
-      className={`min-h-[579px] md:min-h-[652px] lg:min-h-[716px] ${
+      className={cn(
+        "min-h-[579px] md:min-h-[652px] lg:min-h-[716px]",
         widgetSize === 'compact' ? 'h-[579px] md:h-[652px] lg:h-[716px]' :
         widgetSize === 'standard' ? 'h-[758px] md:h-[821px] lg:h-[895px]' :
         'h-[969px] md:h-[1032px] lg:h-[1106px]'
-      }`}
+      )}
       widgetId={widgetId}
       dragAttributes={dragAttributes}
       dragListeners={dragListeners}
@@ -261,167 +269,252 @@ export const PSSRChecklistProgressWidget: React.FC<PSSRChecklistProgressWidgetPr
     >
       <div className="h-full overflow-y-auto pr-2 scrollbar-auto-hide">
         <div className="space-y-4">
-          {/* Hero Section - Circular Progress + Stats */}
-          <div className="flex items-center gap-6 p-4 bg-muted/20 rounded-xl">
-            <CircularProgress percentage={overallProgress} />
-            <div className="flex-1 min-w-0">
-              <h3 className="text-xl font-bold text-foreground mb-1">
-                {approvedItems} of {totalItems}
-              </h3>
-              <p className="text-sm text-muted-foreground mb-3">Items completed</p>
-              <Progress value={overallProgress} className="h-2" />
+          
+          {/* Hero Section - Simplified (Removed horizontal progress bar) */}
+          <div className="p-4 rounded-xl bg-gradient-to-br from-primary/10 via-primary/5 to-accent/10 border border-primary/20">
+            <div className="flex items-center gap-5">
+              <CircularProgress percentage={overallProgress} size={90} />
+              <div className="flex-1">
+                <div className="text-2xl font-bold text-foreground">
+                  {remainingItems} items remaining
+                </div>
+                <div className="text-sm text-muted-foreground mt-0.5">
+                  of {totalItems} total items
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Status Pills Row */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            {statusPills.map((pill) => (
-              <StatusPill
-                key={pill.label}
-                label={pill.label}
-                value={pill.value}
-                bgClass={pill.bgClass}
-                onClick={() => onStatClick?.(pill.filter)}
-              />
-            ))}
-          </div>
-
-          {/* Priority Actions Section - Always visible */}
+          {/* Priority Actions Section - Elevated (Moved above Status Pills) */}
           {priorityActionStats && (
             <div 
               onClick={() => onPriorityActionsClick?.()}
-              className="p-3 bg-muted/30 rounded-xl border border-border/50 hover:bg-muted/50 hover:border-primary/30 cursor-pointer transition-all group"
+              className={cn(
+                "p-3 rounded-xl border cursor-pointer transition-all duration-300 group/priority",
+                "bg-gradient-to-r from-orange-500/5 to-red-500/5",
+                "hover:from-orange-500/10 hover:to-red-500/10",
+                hasPriorityAOpen 
+                  ? "border-red-500/40 hover:border-red-500/60 shadow-[0_0_15px_-3px_rgba(239,68,68,0.3)]" 
+                  : "border-border/50 hover:border-primary/30"
+              )}
             >
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                  <AlertCircle className="h-3.5 w-3.5" />
-                  Priority Actions
-                </span>
-                <Badge variant="outline" className="text-[10px] group-hover:bg-primary/10 transition-colors">
-                  {priorityActionStats.total} Total
-                </Badge>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <CircleAlert className={cn(
+                    "h-4 w-4",
+                    hasPriorityAOpen ? "text-red-500" : "text-muted-foreground"
+                  )} />
+                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Priority Actions
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-medium text-muted-foreground">
+                    {priorityActionStats.total} Total
+                  </span>
+                  <ArrowRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 -translate-x-2 group-hover/priority:opacity-100 group-hover/priority:translate-x-0 transition-all duration-200" />
+                </div>
               </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div className="p-2 bg-red-500/10 rounded-lg border border-red-500/20">
-                  <p className="text-lg font-bold text-red-600 dark:text-red-400">{priorityActionStats.priorityA.open}</p>
-                  <p className="text-[10px] text-red-500/80 dark:text-red-400/70">Pr 1 - Before Startup</p>
+              <div className="grid grid-cols-2 gap-3">
+                {/* Priority A */}
+                <div className={cn(
+                  "p-2.5 rounded-lg border transition-all",
+                  priorityActionStats.priorityA.open > 0 
+                    ? "bg-red-500/10 border-red-500/30" 
+                    : "bg-muted/30 border-border/50"
+                )}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className={cn(
+                      "text-lg font-bold",
+                      priorityActionStats.priorityA.open > 0 ? "text-red-500" : "text-muted-foreground"
+                    )}>
+                      {priorityActionStats.priorityA.open}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">Open</span>
+                  </div>
+                  <div className="text-xs font-medium text-muted-foreground">
+                    Pr 1 · Before Startup
+                  </div>
+                  {priorityActionStats.priorityA.closed > 0 && (
+                    <div className="text-[10px] text-muted-foreground/60 mt-1">
+                      {priorityActionStats.priorityA.closed} closed
+                    </div>
+                  )}
                 </div>
-                <div className="p-2 bg-orange-500/10 rounded-lg border border-orange-500/20">
-                  <p className="text-lg font-bold text-orange-600 dark:text-orange-400">{priorityActionStats.priorityB.open}</p>
-                  <p className="text-[10px] text-orange-500/80 dark:text-orange-400/70">Pr 2 - After Startup</p>
+                {/* Priority B */}
+                <div className={cn(
+                  "p-2.5 rounded-lg border transition-all",
+                  priorityActionStats.priorityB.open > 0 
+                    ? "bg-amber-500/10 border-amber-500/30" 
+                    : "bg-muted/30 border-border/50"
+                )}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className={cn(
+                      "text-lg font-bold",
+                      priorityActionStats.priorityB.open > 0 ? "text-amber-500" : "text-muted-foreground"
+                    )}>
+                      {priorityActionStats.priorityB.open}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">Open</span>
+                  </div>
+                  <div className="text-xs font-medium text-muted-foreground">
+                    Pr 2 · After Startup
+                  </div>
+                  {priorityActionStats.priorityB.closed > 0 && (
+                    <div className="text-[10px] text-muted-foreground/60 mt-1">
+                      {priorityActionStats.priorityB.closed} closed
+                    </div>
+                  )}
                 </div>
+              </div>
+              <div className="flex justify-center mt-2">
+                <span className="text-xs text-primary font-medium opacity-0 group-hover/priority:opacity-100 transition-opacity duration-200">
+                  View Details →
+                </span>
               </div>
             </div>
           )}
 
-          <Separator className="my-2" />
+          {/* Status Pills - Renamed (Draft→Pending, Approved→Completed) */}
+          <div className="flex flex-wrap gap-2">
+            <StatusPill 
+              label="Pending" 
+              value={draftItems} 
+              variant="pending"
+              icon={<Clock className="h-4 w-4" />}
+              onClick={() => onStatClick?.('draft')}
+            />
+            <StatusPill 
+              label="In Review" 
+              value={underReviewItems} 
+              variant="review"
+              icon={<FileSearch className="h-4 w-4" />}
+              onClick={() => onStatClick?.('under_review')}
+            />
+            <StatusPill 
+              label="Completed" 
+              value={approvedItems} 
+              variant="completed"
+              icon={<CheckCircle2 className="h-4 w-4" />}
+              onClick={() => onStatClick?.('approved')}
+            />
+          </div>
 
           {/* Category Progress Section - Collapsible */}
-          <Collapsible defaultOpen={true}>
-            <CollapsibleTrigger asChild>
-              <button className="w-full flex items-center justify-between cursor-pointer hover:bg-accent/5 transition-colors rounded-sm py-1 px-2">
-                <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Progress by Category
-                </h4>
-                <ChevronDown className="h-3.5 w-3.5 text-muted-foreground transition-transform duration-200 [[data-state=closed]_&]:-rotate-90" />
-              </button>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <div className="space-y-0 group/list mt-2">
-                {categoryProgress.map((category) => {
-                  const colors = getCategoryColors(category.name);
-                  return (
-                    <CategoryProgressRow
-                      key={category.name}
-                      name={category.name}
-                      completed={category.completed}
-                      total={category.total}
-                      percentage={category.percentage}
-                      icon={getCategoryIcon(category.name)}
-                      colorClass={colors.colorClass}
-                      progressClass={colors.progressClass}
-                      onClick={() => onCategoryClick?.(category.name)}
-                    />
-                  );
-                })}
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
-
-          {/* Key Activities Section */}
-          {keyActivities.length > 0 && (
-            <div className="mt-4 pt-3 border-t border-border/40">
-              <div 
-                className="flex items-center gap-2 py-1 px-2 cursor-pointer hover:bg-accent/5 transition-colors rounded-sm"
-                onClick={() => setActivitiesExpanded(!activitiesExpanded)}
-              >
-                <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex-1">
-                  Key Activities
-                </h4>
-                <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5">
-                  {keyActivities.length}
-                </Badge>
-                <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform duration-200 ${
-                  activitiesExpanded ? '' : '-rotate-90'
-                }`} />
-              </div>
-
-              {/* Expanded list */}
-              {activitiesExpanded && (
-                <div className="space-y-1 mt-2">
-                  {keyActivities.map((activity) => {
-                    const getStatusConfig = () => {
-                      switch (activity.status) {
-                        case 'Completed':
-                          return {
-                            icon: CheckCircle2,
-                            bgClass: 'bg-muted text-green-600',
-                            badgeClass: 'bg-muted text-green-600 border-border'
-                          };
-                        case 'Scheduled':
-                          return {
-                            icon: Clock,
-                            bgClass: 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400',
-                            badgeClass: 'bg-amber-100 text-amber-600 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800'
-                          };
-                        default:
-                          return {
-                            icon: AlertCircle,
-                            bgClass: 'bg-muted text-muted-foreground/60',
-                            badgeClass: 'bg-muted text-muted-foreground/60 border-border'
-                          };
-                      }
-                    };
-                    const config = getStatusConfig();
-                    const Icon = config.icon;
-                    
+          <Collapsible open={categoryExpanded} onOpenChange={setCategoryExpanded}>
+            <div className="pt-3 border-t border-border/40">
+              <CollapsibleTrigger asChild>
+                <button className="w-full flex items-center justify-between cursor-pointer hover:bg-accent/5 transition-colors rounded-sm py-1 px-2">
+                  <div className="flex items-center gap-2">
+                    <div className="h-1 w-1 rounded-full bg-muted-foreground/60" />
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      Progress by Category
+                    </span>
+                  </div>
+                  <ChevronDown className={cn(
+                    "h-4 w-4 text-muted-foreground transition-transform duration-200",
+                    categoryExpanded ? 'rotate-0' : '-rotate-90'
+                  )} />
+                </button>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="space-y-0 group/list mt-2">
+                  {categoryProgress.map((category) => {
+                    const colors = getCategoryColors(category.name);
                     return (
-                      <button
-                        key={activity.name}
-                        onClick={() => onActivityClick?.(activity.type || activity.name)}
-                        className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-muted/30 transition-colors cursor-pointer"
-                      >
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${config.bgClass}`}>
-                          <Icon className="h-4 w-4" />
-                        </div>
-                        <div className="flex-1 min-w-0 text-left">
-                          <span className="text-xs font-medium text-foreground truncate block">{activity.name}</span>
-                          {activity.date && (
-                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                              <Calendar className="h-3 w-3" />
-                              {new Date(activity.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                            </div>
-                          )}
-                        </div>
-                        <span className={`text-[10px] font-medium px-2 py-1 rounded-full border ${config.badgeClass}`}>
-                          {activity.status}
-                        </span>
-                      </button>
+                      <CategoryProgressRow
+                        key={category.name}
+                        name={category.name}
+                        completed={category.completed}
+                        total={category.total}
+                        percentage={category.percentage}
+                        icon={getCategoryIcon(category.name)}
+                        colorClass={colors.colorClass}
+                        progressClass={colors.progressClass}
+                        onClick={() => onCategoryClick?.(category.name)}
+                      />
                     );
                   })}
                 </div>
-              )}
+              </CollapsibleContent>
             </div>
+          </Collapsible>
+
+          {/* Key Activities Section - Collapsible */}
+          {keyActivities.length > 0 && (
+            <Collapsible open={activitiesExpanded} onOpenChange={setActivitiesExpanded}>
+              <div className="pt-3 border-t border-border/40">
+                <CollapsibleTrigger asChild>
+                  <button className="w-full flex items-center justify-between cursor-pointer hover:bg-accent/5 transition-colors rounded-sm py-1 px-2">
+                    <div className="flex items-center gap-2">
+                      <div className="h-1 w-1 rounded-full bg-muted-foreground/60" />
+                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        Key Activities
+                      </span>
+                      <span className="text-xs text-muted-foreground/60">({keyActivities.length})</span>
+                    </div>
+                    <ChevronDown className={cn(
+                      "h-4 w-4 text-muted-foreground transition-transform duration-200",
+                      activitiesExpanded ? 'rotate-0' : '-rotate-90'
+                    )} />
+                  </button>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="space-y-1 mt-2">
+                    {keyActivities.map((activity) => {
+                      const getStatusConfig = () => {
+                        switch (activity.status) {
+                          case 'Completed':
+                            return {
+                              icon: CheckCircle2,
+                              bgClass: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+                              badgeClass: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                            };
+                          case 'Scheduled':
+                            return {
+                              icon: Clock,
+                              bgClass: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+                              badgeClass: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
+                            };
+                          default:
+                            return {
+                              icon: AlertCircle,
+                              bgClass: 'bg-muted text-muted-foreground/60',
+                              badgeClass: 'bg-muted text-muted-foreground/60 border-border'
+                            };
+                        }
+                      };
+                      const config = getStatusConfig();
+                      const Icon = config.icon;
+                      
+                      return (
+                        <button
+                          key={activity.name}
+                          onClick={() => onActivityClick?.(activity.type || activity.name)}
+                          className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-muted/30 transition-colors cursor-pointer"
+                        >
+                          <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", config.bgClass)}>
+                            <Icon className="h-4 w-4" />
+                          </div>
+                          <div className="flex-1 min-w-0 text-left">
+                            <span className="text-xs font-medium text-foreground truncate block">{activity.name}</span>
+                            {activity.date && (
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                <Calendar className="h-3 w-3" />
+                                {new Date(activity.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                              </div>
+                            )}
+                          </div>
+                          <span className={cn("text-[10px] font-medium px-2 py-1 rounded-full border", config.badgeClass)}>
+                            {activity.status}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </CollapsibleContent>
+              </div>
+            </Collapsible>
           )}
 
         </div>
