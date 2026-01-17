@@ -242,33 +242,33 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
         isOnline: true
       },
       {
-        id: 'stuart-static-ta2',
-        name: 'Stuart',
-        role: 'Static TA2',
-        avatar: undefined,
+        id: '9e6ddd6d-4afd-4af7-ad55-62f17c8d2e53',
+        name: 'Stuart Lugo',
+        role: 'Static TA2 - Project',
+        avatar: 'https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/9e6ddd6d-4afd-4af7-ad55-62f17c8d2e53/1768676472169.jpg',
         pendingTasks: 4,
         isOnline: true
       },
       {
-        id: 'ghassan-majdalani-ta2',
+        id: 'b502edf2-984a-44f4-855c-ede788fa0d5e',
         name: 'Ghassan Majdalani',
-        role: 'Process TA2',
+        role: 'Process TA2 - Project',
         avatar: undefined,
         pendingTasks: 2,
         isOnline: true
       },
       {
-        id: 'satya-borra-ta2',
+        id: '9db7a3a8-f3aa-4618-80e5-e18dfeb5d808',
         name: 'Satya Borra',
         role: 'Civil TA2',
-        avatar: undefined,
+        avatar: 'https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/9db7a3a8-f3aa-4618-80e5-e18dfeb5d808/1768676489853.jpg',
         pendingTasks: 6,
         isOnline: false
       },
       {
-        id: 'yasser-elect-ta2',
-        name: 'Yasser',
-        role: 'Elect TA2',
+        id: 'a08c4d0d-334c-421c-b217-51f3459d89ad',
+        name: 'Yasser Mohamed',
+        role: 'Elect TA2 - Project',
         avatar: undefined,
         pendingTasks: 0,
         isOnline: true
@@ -526,8 +526,8 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
         topic: 'Flange Management'
       }
     ],
-    // Stuart (Static TA2) has 4 pending items
-    'stuart-static-ta2': [
+    // Stuart Lugo (Static TA2 - Project) has 4 pending items
+    '9e6ddd6d-4afd-4af7-ad55-62f17c8d2e53': [
       {
         id: 'item-stuart-1',
         uniqueId: 'ST-001',
@@ -561,8 +561,8 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
         topic: 'Storage Tanks'
       }
     ],
-    // Ghassan Majdalani (Process TA2) has 2 pending items
-    'ghassan-majdalani-ta2': [
+    // Ghassan Majdalani (Process TA2 - Project) has 2 pending items
+    'b502edf2-984a-44f4-855c-ede788fa0d5e': [
       {
         id: 'item-ghassan-1',
         uniqueId: 'PR-001',
@@ -581,7 +581,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
       }
     ],
     // Satya Borra (Civil TA2) has 6 pending items
-    'satya-borra-ta2': [
+    '9db7a3a8-f3aa-4618-80e5-e18dfeb5d808': [
       {
         id: 'item-satya-1',
         uniqueId: 'CV-001',
@@ -631,8 +631,8 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
         topic: 'Building Codes'
       }
     ],
-    // Yasser (Elect TA2) has 0 pending items (all completed)
-    'yasser-elect-ta2': [
+    // Yasser Mohamed (Elect TA2 - Project) has 0 pending items (all completed)
+    'a08c4d0d-334c-421c-b217-51f3459d89ad': [
       {
         id: 'item-yasser-1',
         uniqueId: 'EL-001',
