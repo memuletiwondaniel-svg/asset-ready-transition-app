@@ -136,7 +136,7 @@ export const PSSRInfoScopeWidget: React.FC<PSSRInfoScopeWidgetProps> = ({
         {/* Asset, Date, PSSR Lead Row */}
         <div className="grid grid-cols-3 gap-3">
           <div className="bg-muted/30 rounded-lg p-3 space-y-1">
-            <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Asset</label>
+            <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Location</label>
             <p className="text-sm font-semibold text-foreground truncate">{asset}</p>
           </div>
 

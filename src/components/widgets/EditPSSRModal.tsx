@@ -90,16 +90,17 @@ export const EditPSSRModal: React.FC<EditPSSRModalProps> = ({
 
   // Build location string from hierarchy
   const getLocationString = () => {
-    const parts: string[] = [];
-    const plant = plants?.find(p => p.id === plantId);
-    const field = fields?.find(f => f.id === fieldId);
+    // Return the lowest level location (most specific)
     const station = stations?.find(s => s.id === stationId);
+    if (station) return station.name;
     
-    if (plant) parts.push(plant.name);
-    if (field) parts.push(field.name);
-    if (station) parts.push(station.name);
+    const field = fields?.find(f => f.id === fieldId);
+    if (field) return field.name;
     
-    return parts.join(' > ');
+    const plant = plants?.find(p => p.id === plantId);
+    if (plant) return plant.name;
+    
+    return '';
   };
 
   const handleSave = () => {
