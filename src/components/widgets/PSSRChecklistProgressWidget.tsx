@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useWidgetSize } from '@/contexts/WidgetSizeContext';
 import { 
   Wrench, 
@@ -275,30 +276,37 @@ export const PSSRChecklistProgressWidget: React.FC<PSSRChecklistProgressWidgetPr
 
           <Separator className="my-2" />
 
-          {/* Category Progress Section */}
-          <div>
-            <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3 px-2">
-              Progress by Category
-            </h4>
-            <div className="space-y-0 group/list">
-              {categoryProgress.map((category) => {
-                const colors = getCategoryColors(category.name);
-                return (
-                  <CategoryProgressRow
-                    key={category.name}
-                    name={category.name}
-                    completed={category.completed}
-                    total={category.total}
-                    percentage={category.percentage}
-                    icon={getCategoryIcon(category.name)}
-                    colorClass={colors.colorClass}
-                    progressClass={colors.progressClass}
-                    onClick={() => onCategoryClick?.(category.name)}
-                  />
-                );
-              })}
-            </div>
-          </div>
+          {/* Category Progress Section - Collapsible */}
+          <Collapsible defaultOpen={true}>
+            <CollapsibleTrigger asChild>
+              <button className="w-full flex items-center justify-between cursor-pointer hover:bg-accent/5 transition-colors rounded-sm py-1 px-2">
+                <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Progress by Category
+                </h4>
+                <ChevronDown className="h-3.5 w-3.5 text-muted-foreground transition-transform duration-200 [[data-state=closed]_&]:-rotate-90" />
+              </button>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div className="space-y-0 group/list mt-2">
+                {categoryProgress.map((category) => {
+                  const colors = getCategoryColors(category.name);
+                  return (
+                    <CategoryProgressRow
+                      key={category.name}
+                      name={category.name}
+                      completed={category.completed}
+                      total={category.total}
+                      percentage={category.percentage}
+                      icon={getCategoryIcon(category.name)}
+                      colorClass={colors.colorClass}
+                      progressClass={colors.progressClass}
+                      onClick={() => onCategoryClick?.(category.name)}
+                    />
+                  );
+                })}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
 
           {/* Key Activities Section */}
           {keyActivities.length > 0 && (
