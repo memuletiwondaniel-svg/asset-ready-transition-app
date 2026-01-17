@@ -80,19 +80,30 @@ export const BulkUserUpload: React.FC<BulkUserUploadProps> = ({ onBack }) => {
         console.log('Raw JSON data sample:', jsonData.slice(0, 3));
         console.log('First row keys:', jsonData[0] ? Object.keys(jsonData[0]) : 'No data');
 
-        // Helper function to get field value case-insensitively
+        // Helper function to get field value with flexible column name matching
         const getField = (row: Record<string, any>, fieldName: string): any => {
-          const normalizedFieldName = fieldName.toLowerCase();
-          const key = Object.keys(row).find(k => k.toLowerCase().trim() === normalizedFieldName);
-          return key ? row[key] : undefined;
+          // Normalize the target field name
+          const normalizedFieldName = fieldName.toLowerCase().replace(/[\s_-]/g, '');
+          
+          // Try to find a matching key
+          const key = Object.keys(row).find(k => {
+            const normalizedKey = k.toLowerCase().trim().replace(/[\s_-]/g, '');
+            return normalizedKey === normalizedFieldName;
+          });
+          
+          const value = key ? row[key] : undefined;
+          return value;
         };
+
+        // Log all column names found for debugging
+        const foundColumns = jsonData[0] ? Object.keys(jsonData[0]) : [];
+        console.log('Found columns:', foundColumns);
+        console.log('Expected columns: firstName, lastName, email, password, company, personalEmail, isFunctionalEmail, role, plant, commission, phone, systemRole, hub');
 
         const parsed: ParsedUser[] = jsonData
           .filter(row => {
-            // Skip completely empty rows
-            const hasData = Object.values(row).some(v => v && v.toString().trim());
-            const hasRequiredFields = getField(row, 'firstName') && getField(row, 'lastName') && getField(row, 'email');
-            return hasData && hasRequiredFields;
+            // Skip completely empty rows - only check if ANY value exists
+            return Object.values(row).some(v => v !== null && v !== undefined && v.toString().trim() !== '');
           })
           .map(row => {
             const validationErrors: string[] = [];
