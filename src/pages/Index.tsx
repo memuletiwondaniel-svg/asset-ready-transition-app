@@ -16,7 +16,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 
 const Index = () => {
   const [showAuth, setShowAuth] = useState(false);
-  const { session, signOut } = useAuth();
+  const { session, signOut, loading } = useAuth();
   const isAuthenticated = !!session;
   const navigate = useNavigate();
   const location = useLocation();
@@ -64,11 +64,15 @@ const Index = () => {
     }
   }, [isAuthenticated, location.pathname, navigate]);
 
-  // If we're at the root '/' and NOT authenticated, show the welcome screen
-  // This ensures the welcome page never has the sidebar
-  if (location.pathname === '/' && !isAuthenticated) {
-    // The welcome screen is rendered below (after this block)
-    // Let it fall through to the welcome screen return statement
+  // While auth is loading, show nothing for non-root paths (AuthenticatedLayout handles this)
+  // For root path, we can show the welcome screen once loading is complete
+  if (loading && location.pathname !== '/') {
+    return null; // AuthenticatedLayout shows the loading state
+  }
+
+  // If we're at the root '/' and NOT authenticated (and not loading), show the welcome screen
+  if (location.pathname === '/' && !isAuthenticated && !loading) {
+    // Fall through to the welcome screen return statement below
   } else if (isAuthenticated) {
     // Show specific section based on navigation
     if (currentSection) {

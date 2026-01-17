@@ -1,17 +1,19 @@
 import React, { useMemo } from 'react';
-import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { OrshSidebar } from '@/components/OrshSidebar';
 import { createSidebarNavigator } from '@/utils/sidebarNavigation';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
+import { Loader2 } from 'lucide-react';
 
 /**
  * Persistent layout for authenticated pages.
  * The sidebar stays mounted across all navigation, preventing reloads.
+ * Shows loading state while auth is being determined.
  */
 export const AuthenticatedLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { signOut } = useAuth();
+  const { signOut, session, loading } = useAuth();
 
   // Determine current page from route for sidebar highlighting
   const currentPage = useMemo(() => {
@@ -41,6 +43,23 @@ export const AuthenticatedLayout: React.FC = () => {
   };
 
   const handleNavigate = createSidebarNavigator(navigate);
+
+  // Show loading state while auth is being determined
+  if (loading) {
+    return (
+      <div className="h-screen w-full flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-muted-foreground text-sm">Loading ORSH...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect to landing page if not authenticated
+  if (!session) {
+    return <Navigate to="/" replace />;
+  }
 
   return (
     <div className="h-screen flex w-full overflow-hidden">
