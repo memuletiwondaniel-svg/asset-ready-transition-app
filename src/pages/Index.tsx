@@ -64,35 +64,39 @@ const Index = () => {
     }
   }, [isAuthenticated, location.pathname, navigate]);
 
-  // Show specific section based on navigation
-  if (isAuthenticated && currentSection) {
-    switch (currentSection) {
-      case 'pssr':
-        return <PSSRSummaryPage onBack={handleBackToLanding} />;
-      case 'users':
-      case 'user-management':
-        return <UserManagement onBack={handleBackToLanding} />;
-      case 'admin-tools':
-        return <AdminToolsPage onBack={handleBackToLanding} />;
-      case 'projects':
-        return <ProjectsHomePage onBack={handleBackToLanding} />;
-      case 'p2o':
-        return (
-          <div className="min-h-screen flex items-center justify-center bg-gray-100">
-            <div className="text-center">
-              <h1 className="text-3xl font-bold mb-4">Project-to-Operations (P2O)</h1>
-              <p className="text-gray-600 mb-6">PAC and FAC workflows - Coming Soon...</p>
-              <Button onClick={handleBackToLanding}>Back to Dashboard</Button>
+  // If we're at the root '/' and NOT authenticated, show the welcome screen
+  // This ensures the welcome page never has the sidebar
+  if (location.pathname === '/' && !isAuthenticated) {
+    // The welcome screen is rendered below (after this block)
+    // Let it fall through to the welcome screen return statement
+  } else if (isAuthenticated) {
+    // Show specific section based on navigation
+    if (currentSection) {
+      switch (currentSection) {
+        case 'pssr':
+          return <PSSRSummaryPage onBack={handleBackToLanding} />;
+        case 'users':
+        case 'user-management':
+          return <UserManagement onBack={handleBackToLanding} />;
+        case 'admin-tools':
+          return <AdminToolsPage onBack={handleBackToLanding} />;
+        case 'projects':
+          return <ProjectsHomePage onBack={handleBackToLanding} />;
+        case 'p2o':
+          return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-100">
+              <div className="text-center">
+                <h1 className="text-3xl font-bold mb-4">Project-to-Operations (P2O)</h1>
+                <p className="text-gray-600 mb-6">PAC and FAC workflows - Coming Soon...</p>
+                <Button onClick={handleBackToLanding}>Back to Dashboard</Button>
+              </div>
             </div>
-          </div>
-        );
-      default:
-        return <LandingPage onBack={handleBack} onNavigate={handleNavigate} />;
+          );
+        default:
+          return <LandingPage onBack={handleBack} onNavigate={handleNavigate} />;
+      }
     }
-  }
-
-  // Show landing page after authentication
-  if (isAuthenticated) {
+    // Show dashboard for authenticated users at /home
     return <LandingPage onBack={handleBack} onNavigate={handleNavigate} />;
   }
 
