@@ -315,7 +315,7 @@ export const PSSRChecklistProgressWidget: React.FC<PSSRChecklistProgressWidgetPr
               )}
             >
               {/* Hero Numbers Row */}
-              <div className="flex items-center justify-center gap-6 mb-3">
+              <div className="flex items-center justify-center gap-10 mb-3">
                 {/* Pr1 - Primary focus */}
                 <div className="flex items-center gap-2">
                   <span className={cn(
@@ -347,10 +347,6 @@ export const PSSRChecklistProgressWidget: React.FC<PSSRChecklistProgressWidgetPr
                   </div>
                 </div>
                 
-                {/* Expand arrow */}
-                <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                  <ArrowRight className="h-4 w-4 text-muted-foreground opacity-50 group-hover/priority:opacity-100 group-hover/priority:translate-x-1 transition-all" />
-                </div>
               </div>
               
               {/* Subtle progress footer - only show when items exist */}
