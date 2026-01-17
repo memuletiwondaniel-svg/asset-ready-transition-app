@@ -171,7 +171,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
     // Engineering TA2 roles with commission (exclude Civil TA2 and Tech Safety TA2)
     const ta2RolesWithCommission = ['Elect TA2', 'Rotating TA2', 'PACO TA2', 'Static TA2', 'Process TA2'];
     if (ta2RolesWithCommission.includes(role) && commission) {
-      return `${role} (${commission})`;
+      return `${role} - ${commission}`;
     }
     
     // Civil TA2, Tech Safety TA2, and HSE Manager - no drill-down needed
