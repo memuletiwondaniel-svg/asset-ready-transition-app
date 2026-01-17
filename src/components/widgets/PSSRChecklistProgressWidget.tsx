@@ -150,7 +150,7 @@ const CategoryProgressRow: React.FC<{
     </div>
     <div className="flex-1 min-w-0">
       <div className="flex items-center justify-between mb-1">
-        <span className="text-sm font-medium text-foreground truncate transition-colors group-hover:text-primary">{name}</span>
+        <span className="text-sm font-medium text-foreground truncate">{name}</span>
         <span className="text-xs text-muted-foreground ml-2 flex-shrink-0">
           {completed}/{total}
         </span>
@@ -312,11 +312,12 @@ export const PSSRChecklistProgressWidget: React.FC<PSSRChecklistProgressWidgetPr
           {keyActivities.length > 0 && (
             <div className="mt-4 pt-3 border-t border-border/40">
               <div 
-                className="flex items-center gap-2 py-2 cursor-pointer hover:bg-accent/5 transition-colors rounded-sm"
+                className="flex items-center gap-2 py-1 px-2 cursor-pointer hover:bg-accent/5 transition-colors rounded-sm"
                 onClick={() => setActivitiesExpanded(!activitiesExpanded)}
               >
-                <Calendar className="h-4 w-4 text-primary" />
-                <span className="text-sm font-medium flex-1">Key Activities</span>
+                <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex-1">
+                  Key Activities
+                </h4>
                 <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5">
                   {keyActivities.length}
                 </Badge>
@@ -340,8 +341,8 @@ export const PSSRChecklistProgressWidget: React.FC<PSSRChecklistProgressWidgetPr
                         case 'Scheduled':
                           return {
                             icon: Clock,
-                            bgClass: 'bg-muted text-muted-foreground',
-                            badgeClass: 'bg-muted text-muted-foreground border-border'
+                            bgClass: 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400',
+                            badgeClass: 'bg-amber-100 text-amber-600 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800'
                           };
                         default:
                           return {

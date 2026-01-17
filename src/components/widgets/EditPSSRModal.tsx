@@ -135,6 +135,18 @@ export const EditPSSRModal: React.FC<EditPSSRModalProps> = ({
   };
 
   const handleSave = () => {
+    // Validate required location
+    if (!plantId.trim()) {
+      toast({
+        title: 'Location Required',
+        description: 'Please select at least a Plant location.',
+        variant: 'destructive',
+      });
+      // Expand location section if collapsed
+      setExpandedSections(prev => new Set([...prev, 'location']));
+      return;
+    }
+
     const locationString = getLocationString();
     const emptyToNull = (v: string) => (v.trim().length ? v : null);
 
@@ -390,7 +402,7 @@ export const EditPSSRModal: React.FC<EditPSSRModalProps> = ({
 
           {/* Location Section */}
           <Collapsible open={expandedSections.has('location')}>
-            <SectionHeader id="location" icon={MapPin} title="Location" badge="Optional" />
+            <SectionHeader id="location" icon={MapPin} title="Location" badge="Required" />
             <CollapsibleContent className="pt-4 pb-2 px-1">
               <div className="grid grid-cols-3 gap-3">
                 <div className="space-y-2">
