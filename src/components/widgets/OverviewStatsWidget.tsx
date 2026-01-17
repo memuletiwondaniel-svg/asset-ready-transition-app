@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ClipboardList, CheckCircle, Clock, Link2, ChevronDown, CheckCircle2, AlertCircle, ExternalLink, Calendar } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useWidgetSize } from '@/contexts/WidgetSizeContext';
 
 interface LinkedPSSR {
   id: string;
@@ -93,6 +94,7 @@ export const OverviewStatsWidget: React.FC<OverviewStatsWidgetProps> = ({
   const [linkedExpanded, setLinkedExpanded] = useState(false);
   const [activitiesExpanded, setActivitiesExpanded] = useState(false);
   const { translations: t } = useLanguage();
+  const { widgetSize } = useWidgetSize();
 
   const stats = [
     {
@@ -149,7 +151,11 @@ export const OverviewStatsWidget: React.FC<OverviewStatsWidgetProps> = ({
   };
 
   return (
-    <Card className="glass-card glass-card-hover overflow-hidden min-h-[380px] md:min-h-[420px] lg:min-h-[450px]">
+    <Card className={`glass-card glass-card-hover overflow-hidden min-h-[526px] md:min-h-[593px] lg:min-h-[651px] ${
+      widgetSize === 'compact' ? 'h-[526px] md:h-[593px] lg:h-[651px]' :
+      widgetSize === 'standard' ? 'h-[689px] md:h-[746px] lg:h-[814px]' :
+      'h-[881px] md:h-[938px] lg:h-[1005px]'
+    }`}>
       <CardHeader className="border-b border-border/40 py-3">
         <CardTitle className="text-lg font-bold">{t.widgetOverview || 'Overview'}</CardTitle>
       </CardHeader>
