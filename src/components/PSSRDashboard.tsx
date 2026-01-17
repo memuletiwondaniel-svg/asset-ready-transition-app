@@ -531,12 +531,12 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
 
   // Mock category data for when real data is empty
   const mockCategoryProgress = [
-    { id: '1', name: 'Technical Integrity', ref_id: 'TI', completed: 18, total: 24, percentage: 75, display_order: 1 },
-    { id: '2', name: 'Process Safety', ref_id: 'PS', completed: 22, total: 28, percentage: 79, display_order: 2 },
-    { id: '3', name: 'Organization', ref_id: 'ORG', completed: 14, total: 18, percentage: 78, display_order: 3 },
-    { id: '4', name: 'Documentation', ref_id: 'DOC', completed: 12, total: 20, percentage: 60, display_order: 4 },
-    { id: '5', name: 'HSE & Environment', ref_id: 'HSE', completed: 9, total: 12, percentage: 75, display_order: 5 },
-    { id: '6', name: 'Maintenance Readiness', ref_id: 'MR', completed: 8, total: 10, percentage: 80, display_order: 6 },
+    { id: '1', name: 'Technical Integrity', ref_id: 'TI', completed: 16, total: 24, percentage: 67, display_order: 1 },
+    { id: '2', name: 'Process Safety', ref_id: 'PS', completed: 19, total: 28, percentage: 68, display_order: 2 },
+    { id: '3', name: 'Organization', ref_id: 'ORG', completed: 12, total: 18, percentage: 67, display_order: 3 },
+    { id: '4', name: 'Documentation', ref_id: 'DOC', completed: 13, total: 20, percentage: 65, display_order: 4 },
+    { id: '5', name: 'HSE & Environment', ref_id: 'HSE', completed: 8, total: 12, percentage: 67, display_order: 5 },
+    { id: '6', name: 'Maintenance Readiness', ref_id: 'MR', completed: 7, total: 10, percentage: 70, display_order: 6 },
   ];
 
   // Use mock data if real data is empty or not available
