@@ -607,6 +607,10 @@ export const PSSRReviewersApprovalsWidget: React.FC<PSSRReviewersApprovalsWidget
         approver={selectedApprover}
         pendingItems={selectedApprover ? (pendingItemsByApprover[selectedApprover.id] || []) : []}
         onItemClick={onPendingItemClick}
+        onSendReminder={async (personId, message) => {
+          onSendReminder?.(personId);
+          console.log('Sending reminder to:', personId, 'Message:', message);
+        }}
       />
 
       <FullscreenWidgetModal widgetId={widgetId} title="Approvals">
