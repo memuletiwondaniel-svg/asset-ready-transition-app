@@ -102,7 +102,7 @@ export const ApproverPendingItemsOverlay: React.FC<ApproverPendingItemsOverlayPr
       case 'na':
         return <Badge variant="outline" className="text-muted-foreground">N/A</Badge>;
       default:
-        return <Badge variant="outline" className="text-blue-600 border-blue-200 bg-blue-50">Pending</Badge>;
+        return <Badge variant="outline" className="text-amber-600 border-amber-200 bg-amber-50">Pending</Badge>;
     }
   };
 
