@@ -286,7 +286,29 @@ export default {
 				background: 'radial-gradient(circle at 30% 30%, hsl(0, 80%, 50%), hsl(0, 80%, 40%))',
 				boxShadow: 'inset -1px -1px 2px rgba(0, 0, 0, 0.3), inset 1px 1px 2px rgba(255, 255, 255, 0.4), 0 2px 4px rgba(0, 0, 0, 0.2), 0 0 8px hsla(0, 80%, 50%, 0.5)',
 			},
-		}
+		},
+		'drift-1': {
+			'0%, 100%': { transform: 'translate(0, 0)' },
+			'25%': { transform: 'translate(80px, -50px)' },
+			'50%': { transform: 'translate(120px, 30px)' },
+			'75%': { transform: 'translate(40px, 80px)' },
+		},
+		'drift-2': {
+			'0%, 100%': { transform: 'translate(0, 0)' },
+			'33%': { transform: 'translate(-100px, 60px)' },
+			'66%': { transform: 'translate(60px, -80px)' },
+		},
+		'drift-3': {
+			'0%, 100%': { transform: 'translate(0, 0)' },
+			'20%': { transform: 'translate(-50px, -40px)' },
+			'40%': { transform: 'translate(30px, -70px)' },
+			'60%': { transform: 'translate(70px, 20px)' },
+			'80%': { transform: 'translate(-30px, 50px)' },
+		},
+		'drift-4': {
+			'0%, 100%': { transform: 'translate(0, 0)' },
+			'50%': { transform: 'translate(-80px, -60px)' },
+		},
 	},
 		animation: {
 			'accordion-down': 'accordion-down 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
@@ -313,6 +335,10 @@ export default {
 		'pulse-glow': 'pulse-glow 2s ease-in-out infinite',
 		'micro-press': 'micro-press 0.15s cubic-bezier(0.16, 1, 0.3, 1)',
 		'dot-pulse': 'dot-color-shift 24s ease-in-out infinite',
+		'drift-1': 'drift-1 35s ease-in-out infinite',
+		'drift-2': 'drift-2 28s ease-in-out infinite',
+		'drift-3': 'drift-3 40s ease-in-out infinite',
+		'drift-4': 'drift-4 32s ease-in-out infinite',
 			// Combined animations for visible background movement
 			'gradient-shift-morph': 'gradient-shift 12s ease infinite, gradient-color-morph 18s linear infinite',
 			'gradient-sweep-morph': 'gradient-sweep 20s ease-in-out infinite, gradient-color-morph-fast 15s linear infinite',
