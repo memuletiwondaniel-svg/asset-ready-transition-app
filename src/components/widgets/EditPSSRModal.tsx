@@ -116,12 +116,15 @@ export const EditPSSRModal: React.FC<EditPSSRModalProps> = ({
 
   const handleSave = () => {
     const locationString = getLocationString();
+    const emptyToNull = (v: string) => (v.trim().length ? v : null);
+
     onSave({
       ...formData,
       asset: locationString,
-      plantId,
-      fieldId,
-      stationId,
+      plantId: emptyToNull(plantId),
+      fieldId: emptyToNull(fieldId),
+      stationId: emptyToNull(stationId),
+      pssrLeadId: emptyToNull(formData.pssrLeadId),
       scope_image_url: scopeImageUrl,
     });
     onClose();

@@ -16,33 +16,48 @@ interface PSSRUpdateData {
 export const usePSSRDetails = (pssrId: string) => {
   const queryClient = useQueryClient();
 
+  const isUuid = (value: string) =>
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+
   const query = useQuery({
     queryKey: ['pssr-details', pssrId],
     queryFn: async () => {
-      // Try to find by id first, then by pssr_id (for compatibility)
-      let { data, error } = await supabase
-        .from('pssrs')
-        .select(`
+      const select = `
           *,
           pssr_lead:profiles!pssrs_pssr_lead_id_fkey(user_id, full_name, position, avatar_url)
-        `)
-        .eq('id', pssrId)
-        .maybeSingle();
-      
-      // If not found by id, try pssr_id
-      if (!data && !error) {
-        const result = await supabase
+        `;
+
+      // IMPORTANT: Only query by UUID id if pssrId is actually a UUID.
+      // Otherwise Postgres throws 22P02 before we can fall back.
+      if (isUuid(pssrId)) {
+        let { data, error } = await supabase
           .from('pssrs')
-          .select(`
-            *,
-            pssr_lead:profiles!pssrs_pssr_lead_id_fkey(user_id, full_name, position, avatar_url)
-          `)
-          .eq('pssr_id', pssrId)
+          .select(select)
+          .eq('id', pssrId)
           .maybeSingle();
-        data = result.data;
-        error = result.error;
+
+        // Compatibility fallback
+        if (!data && !error) {
+          const result = await supabase
+            .from('pssrs')
+            .select(select)
+            .eq('pssr_id', pssrId)
+            .maybeSingle();
+          data = result.data;
+          error = result.error;
+        }
+
+        if (error) throw error;
+        return data;
       }
-      
+
+      // Non-UUID route param (e.g. "PSSR-DP300-001")
+      const { data, error } = await supabase
+        .from('pssrs')
+        .select(select)
+        .eq('pssr_id', pssrId)
+        .maybeSingle();
+
       if (error) throw error;
       return data;
     },
@@ -51,23 +66,15 @@ export const usePSSRDetails = (pssrId: string) => {
 
   const updateMutation = useMutation({
     mutationFn: async (updates: PSSRUpdateData) => {
-      // First try to update by id, then by pssr_id
-      let { error, count } = await supabase
-        .from('pssrs')
-        .update(updates)
-        .eq('id', pssrId)
-        .select();
-      
-      // If no rows updated, try by pssr_id
-      if (!error && count === 0) {
-        const result = await supabase
-          .from('pssrs')
-          .update(updates)
-          .eq('pssr_id', pssrId);
-        error = result.error;
-      }
-      
+      const result = isUuid(pssrId)
+        ? await supabase.from('pssrs').update(updates).eq('id', pssrId).select('id')
+        : await supabase.from('pssrs').update(updates).eq('pssr_id', pssrId).select('id');
+
+      const { data, error } = result;
       if (error) throw error;
+      if (!data || data.length === 0) {
+        throw new Error('PSSR not found (no rows updated)');
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pssr-details', pssrId] });

@@ -862,16 +862,22 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
         pssrData={pssrData}
         onSave={async (updatedData) => {
           try {
+            const toNullableUuid = (value: unknown) => {
+              if (typeof value !== 'string') return null;
+              const trimmed = value.trim();
+              return trimmed.length ? trimmed : null;
+            };
+
             await updatePSSR({
               title: updatedData.title,
               asset: updatedData.asset,
               reason: updatedData.reason,
               scope: updatedData.scope,
-              pssr_lead_id: updatedData.pssrLeadId,
-              plant_id: updatedData.plantId,
-              field_id: updatedData.fieldId,
-              station_id: updatedData.stationId,
-              scope_image_url: updatedData.scope_image_url,
+              pssr_lead_id: toNullableUuid(updatedData.pssrLeadId) ?? undefined,
+              plant_id: toNullableUuid(updatedData.plantId) ?? undefined,
+              field_id: toNullableUuid(updatedData.fieldId) ?? undefined,
+              station_id: toNullableUuid(updatedData.stationId) ?? undefined,
+              scope_image_url: updatedData.scope_image_url ?? null,
             });
             toast({
               title: 'PSSR Updated',
@@ -879,9 +885,15 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
             });
             setEditModalOpen(false);
           } catch (error) {
+            console.error('Failed to save PSSR:', error);
+            const message =
+              typeof error === 'object' && error && 'message' in error
+                ? String((error as any).message)
+                : 'Failed to save changes. Please try again.';
+
             toast({
               title: 'Error',
-              description: 'Failed to save changes. Please try again.',
+              description: message,
               variant: 'destructive',
             });
           }
