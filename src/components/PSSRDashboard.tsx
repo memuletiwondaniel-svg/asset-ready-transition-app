@@ -310,7 +310,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
         name: 'Paul Van Den Hemel',
         role: 'P&M Director',
         avatar: 'https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/0dae95bb-6cdb-491d-ac4c-4c0cd7b2e8b2/1757605571147.jpg',
-        pendingTasks: 0,
+        pendingTasks: 1,
         isOnline: true
       }
     ],
@@ -664,6 +664,17 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
         description: 'Electrical single line diagrams review',
         status: 'completed',
         topic: 'SLDs'
+      }
+    ],
+    // Paul Van Den Hemel (SoF Approver) has 1 pending item
+    'c89c4b90-d52c-44d5-adc6-a3e51ccb0fcb': [
+      {
+        id: 'item-paul-1',
+        uniqueId: 'SOF-001',
+        category: 'Documentation',
+        description: 'Statement of Fitness approval pending',
+        status: 'pending',
+        topic: 'SoF Approval'
       }
     ]
   };
