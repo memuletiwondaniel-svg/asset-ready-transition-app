@@ -64,7 +64,7 @@ export const P2ALandingPage: React.FC = () => {
   }, []);
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden bg-gradient-to-br from-background via-background to-muted/20">
+    <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
         <div className="border-b border-border/40 bg-card/50 backdrop-blur-xl p-4 md:p-6">
           <BreadcrumbNavigation currentPageLabel={t.p2aTitle} />

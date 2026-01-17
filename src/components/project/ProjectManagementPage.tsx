@@ -34,7 +34,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { ProjectFilters } from './ProjectFilters';
 
-import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
+
 import { useProjectPreferences } from '@/hooks/useProjectPreferences';
 import {
   DndContext,
@@ -307,17 +307,14 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
 
   if (isLoading) {
     return (
-      <AnimatedBackground>
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-muted-foreground">Loading projects...</div>
-        </div>
-      </AnimatedBackground>
+      <div className="flex-1 flex items-center justify-center">
+        <div className="text-muted-foreground">Loading projects...</div>
+      </div>
     );
   }
 
   return (
-    <AnimatedBackground>
-      <div className="flex-1 flex flex-col overflow-hidden">
+    <div className="flex-1 flex flex-col overflow-hidden">
           {/* Header */}
           <div className="border-b border-border/40 bg-card/50 backdrop-blur-xl p-4 md:p-6">
             <BreadcrumbNavigation 
@@ -593,7 +590,6 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
               ) : null}
             </div>
           </div>
-        </div>
 
       {/* Add Project Wizard */}
       <CreateProjectWizard 
@@ -647,7 +643,7 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </AnimatedBackground>
+    </div>
   );
 };
 
