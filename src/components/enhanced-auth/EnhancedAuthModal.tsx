@@ -10,7 +10,6 @@ import { Eye, EyeOff, Mail, Lock, ArrowLeft, ArrowRight, Star, X } from 'lucide-
 import { useAuth } from './AuthProvider';
 import EnhancedRegistrationForm from '@/components/user-management/EnhancedRegistrationForm';
 import OrshLogo from '@/components/ui/OrshLogo';
-import BackgroundSlideshow from '@/components/BackgroundSlideshow';
 interface EnhancedAuthModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -115,9 +114,6 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
           <DialogTitle>Authentication</DialogTitle>
           <DialogDescription id="enhanced-auth-description">Sign in or register</DialogDescription>
         </DialogHeader>
-        
-        {/* ORSH Background Slideshow */}
-        <BackgroundSlideshow showFunFacts={false} />
         
         {/* Clickable backdrop to close modal */}
         <div 

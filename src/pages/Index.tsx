@@ -133,7 +133,7 @@ const Index = () => {
         </div>
       </header>
       
-      {/* Main Content */}
+      {/* Main Content - hidden when auth modal is shown, but slideshow continues */}
       {!showAuth && (
         <main className="relative z-10 flex items-center justify-center min-h-screen pt-24 pb-12 px-6">
           <div className="max-w-4xl mx-auto text-center space-y-10">
