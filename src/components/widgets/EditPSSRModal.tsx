@@ -7,8 +7,11 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
-import { Save, X, Check, ChevronsUpDown, MapPin, Building, Layers, Upload, ImageIcon, Trash2, Loader2 } from 'lucide-react';
+import { Check, ChevronsUpDown, Upload, Loader2, ChevronDown, FileText, MapPin, ClipboardList, Info, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePSSRReasons } from '@/hooks/usePSSRReasons';
 import { useProfileUsers } from '@/hooks/useProfileUsers';
@@ -78,6 +81,11 @@ export const EditPSSRModal: React.FC<EditPSSRModalProps> = ({
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Section expansion state
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(
+    new Set(['basic', 'scope'])
+  );
+
   // Reset form when modal opens with new data
   useEffect(() => {
     if (isOpen) {
@@ -92,8 +100,21 @@ export const EditPSSRModal: React.FC<EditPSSRModalProps> = ({
       setFieldId(pssrData.fieldId || '');
       setStationId(pssrData.stationId || '');
       setScopeImageUrl(pssrData.scopeImageUrl || pssrData.scopeImages?.[0] || null);
+      setExpandedSections(new Set(['basic', 'scope']));
     }
   }, [isOpen, pssrData]);
+
+  const toggleSection = (section: string) => {
+    setExpandedSections(prev => {
+      const next = new Set(prev);
+      if (next.has(section)) {
+        next.delete(section);
+      } else {
+        next.add(section);
+      }
+      return next;
+    });
+  };
 
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -101,17 +122,16 @@ export const EditPSSRModal: React.FC<EditPSSRModalProps> = ({
 
   // Build location string from hierarchy
   const getLocationString = () => {
-    // Return the lowest level location (most specific)
-    const station = stations?.find(s => s.id === stationId);
-    if (station) return station.name;
-    
-    const field = fields?.find(f => f.id === fieldId);
-    if (field) return field.name;
-    
+    const parts: string[] = [];
     const plant = plants?.find(p => p.id === plantId);
-    if (plant) return plant.name;
+    const field = fields?.find(f => f.id === fieldId);
+    const station = stations?.find(s => s.id === stationId);
     
-    return '';
+    if (plant) parts.push(plant.name);
+    if (field) parts.push(field.name);
+    if (station) parts.push(station.name);
+    
+    return parts.join(' > ') || '';
   };
 
   const handleSave = () => {
@@ -135,7 +155,6 @@ export const EditPSSRModal: React.FC<EditPSSRModalProps> = ({
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       toast({
         title: 'Invalid file type',
@@ -145,7 +164,6 @@ export const EditPSSRModal: React.FC<EditPSSRModalProps> = ({
       return;
     }
 
-    // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       toast({
         title: 'File too large',
@@ -199,329 +217,363 @@ export const EditPSSRModal: React.FC<EditPSSRModalProps> = ({
   // Get selected user for display
   const selectedUser = profileUsers?.find(u => u.user_id === formData.pssrLeadId);
 
+  // Section header component
+  const SectionHeader = ({ 
+    id, 
+    icon: Icon, 
+    title, 
+    badge 
+  }: { 
+    id: string; 
+    icon: React.ElementType; 
+    title: string; 
+    badge?: string;
+  }) => (
+    <CollapsibleTrigger 
+      className="flex w-full items-center justify-between py-3 px-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+      onClick={() => toggleSection(id)}
+    >
+      <div className="flex items-center gap-3">
+        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10">
+          <Icon className="h-4 w-4 text-primary" />
+        </div>
+        <span className="font-medium text-foreground">{title}</span>
+        {badge && (
+          <Badge variant="outline" className="text-xs">
+            {badge}
+          </Badge>
+        )}
+      </div>
+      <ChevronDown 
+        className={cn(
+          "h-4 w-4 text-muted-foreground transition-transform duration-200",
+          expandedSections.has(id) && "rotate-180"
+        )} 
+      />
+    </CollapsibleTrigger>
+  );
+
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
-        <SheetHeader className="mb-6">
-          <SheetTitle className="text-xl font-semibold">Edit PSSR Details</SheetTitle>
+      <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
+        <SheetHeader className="space-y-3 pb-6 border-b">
+          <div className="flex items-center gap-3">
+            <SheetTitle className="text-xl">Edit PSSR Details</SheetTitle>
+            {pssrData?.id && (
+              <Badge variant="secondary" className="font-mono text-xs">
+                {pssrData.id}
+              </Badge>
+            )}
+          </div>
           <SheetDescription>
-            Update the PSSR information below. Changes will be saved when you click Save.
+            Update the pre-startup safety review information
           </SheetDescription>
         </SheetHeader>
 
-        <div className="space-y-5">
-          {/* PSSR ID - Read Only */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium text-muted-foreground">PSSR ID</Label>
-            <Input 
-              value={pssrData.id} 
-              disabled 
-              className="bg-muted/50 text-muted-foreground"
-            />
-          </div>
-
-          {/* Title */}
-          <div className="space-y-2">
-            <Label htmlFor="title" className="text-sm font-medium">Title</Label>
-            <Input
-              id="title"
-              value={formData.title}
-              onChange={(e) => handleChange('title', e.target.value)}
-              placeholder="Enter PSSR title"
-            />
-          </div>
-
-          {/* Location - Asset Hierarchy */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-primary" />
-              <Label className="text-sm font-medium">Location</Label>
-            </div>
-            
-            {/* Plant Selection */}
-            <div className="space-y-2">
-              <Label htmlFor="plant" className="text-xs text-muted-foreground flex items-center gap-1">
-                <Building className="h-3 w-3" />
-                Plant *
-              </Label>
-              <Select
-                value={plantId}
-                onValueChange={(value) => {
-                  setPlantId(value);
-                  setFieldId('');
-                  setStationId('');
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={plantsLoading ? "Loading plants..." : "Select a plant"} />
-                </SelectTrigger>
-                <SelectContent className="bg-popover border border-border">
-                  {plants?.map((plant) => (
-                    <SelectItem key={plant.id} value={plant.id}>
-                      {plant.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Field Selection */}
-            <div className="space-y-2">
-              <Label htmlFor="field" className="text-xs text-muted-foreground flex items-center gap-1">
-                <Layers className="h-3 w-3" />
-                Field
-              </Label>
-              <Select
-                value={fieldId}
-                onValueChange={(value) => {
-                  setFieldId(value);
-                  setStationId('');
-                }}
-                disabled={!plantId}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={
-                    !plantId 
-                      ? "Select a plant first" 
-                      : fieldsLoading 
-                        ? "Loading fields..." 
-                        : "Select a field (optional)"
-                  } />
-                </SelectTrigger>
-                <SelectContent className="bg-popover border border-border">
-                  {fields?.map((field) => (
-                    <SelectItem key={field.id} value={field.id}>
-                      {field.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Station Selection */}
-            <div className="space-y-2">
-              <Label htmlFor="station" className="text-xs text-muted-foreground flex items-center gap-1">
-                <MapPin className="h-3 w-3" />
-                Station / CS Location
-              </Label>
-              <Select
-                value={stationId}
-                onValueChange={setStationId}
-                disabled={!plantId}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={
-                    !plantId 
-                      ? "Select a plant first" 
-                      : stationsLoading 
-                        ? "Loading stations..." 
-                        : "Select a station (optional)"
-                  } />
-                </SelectTrigger>
-                <SelectContent className="bg-popover border border-border">
-                  {stations?.map((station) => (
-                    <SelectItem key={station.id} value={station.id}>
-                      {station.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Project - Read Only */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium text-muted-foreground">Project</Label>
-            <Input 
-              value={`${pssrData.projectId} - ${pssrData.projectName}`} 
-              disabled 
-              className="bg-muted/50 text-muted-foreground"
-            />
-          </div>
-
-          {/* Reason - Database driven */}
-          <div className="space-y-2">
-            <Label htmlFor="reason" className="text-sm font-medium">Reason for PSSR</Label>
-            <Select value={formData.reason} onValueChange={(value) => handleChange('reason', value)}>
-              <SelectTrigger>
-                <SelectValue placeholder={reasonsLoading ? "Loading reasons..." : "Select reason"} />
-              </SelectTrigger>
-              <SelectContent className="bg-popover border border-border max-h-[300px]">
-                {pssrReasons?.map((reason) => (
-                  <SelectItem key={reason.id} value={reason.name}>
-                    {reason.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* PSSR Lead - Searchable */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">PSSR Lead</Label>
-            <Popover open={leadPopoverOpen} onOpenChange={setLeadPopoverOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={leadPopoverOpen}
-                  className="w-full justify-between font-normal"
-                >
-                  {selectedUser ? (
-                    <span className="flex items-center gap-2">
-                      <span>{selectedUser.full_name}</span>
-                      {selectedUser.position && (
-                        <span className="text-muted-foreground text-xs">- {selectedUser.position}</span>
-                      )}
-                    </span>
-                  ) : formData.pssrLead ? (
-                    formData.pssrLead
-                  ) : (
-                    <span className="text-muted-foreground">
-                      {usersLoading ? "Loading users..." : "Search and select PSSR lead..."}
-                    </span>
-                  )}
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[400px] p-0" align="start">
-                <Command>
-                  <CommandInput placeholder="Search by name or role..." />
-                  <CommandList>
-                    <CommandEmpty>No user found.</CommandEmpty>
-                    <CommandGroup className="max-h-[300px] overflow-y-auto">
-                      {profileUsers?.map((user) => (
-                        <CommandItem
-                          key={user.user_id}
-                          value={`${user.full_name} ${user.role || ''} ${user.position || ''}`}
-                          onSelect={() => {
-                            handleChange('pssrLeadId', user.user_id);
-                            handleChange('pssrLead', user.full_name);
-                            setLeadPopoverOpen(false);
-                          }}
-                          className="flex items-center justify-between py-2"
-                        >
-                          <div className="flex flex-col">
-                            <span className="font-medium">{user.full_name}</span>
-                            <span className="text-xs text-muted-foreground">
-                              {[user.role, user.position].filter(Boolean).join(' • ')}
-                            </span>
-                          </div>
-                          <Check
-                            className={cn(
-                              "h-4 w-4",
-                              formData.pssrLeadId === user.user_id ? "opacity-100" : "opacity-0"
-                            )}
-                          />
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
-          </div>
-
-          {/* Scope Description */}
-          <div className="space-y-2">
-            <Label htmlFor="scope" className="text-sm font-medium">Scope Description</Label>
-            <Textarea
-              id="scope"
-              value={formData.scope}
-              onChange={(e) => handleChange('scope', e.target.value)}
-              placeholder="Enter scope description"
-              rows={4}
-              className="resize-none"
-            />
-          </div>
-
-          {/* Scope Image */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Label className="text-sm font-medium flex items-center gap-2">
-                <ImageIcon className="h-4 w-4" />
-                Scope Image
-              </Label>
-              {scopeImageUrl && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleRemoveImage}
-                  className="text-destructive hover:text-destructive/80 h-8"
-                >
-                  <Trash2 className="h-4 w-4 mr-1" />
-                  Remove
-                </Button>
-              )}
-            </div>
-            
-            {scopeImageUrl ? (
-              <div className="relative rounded-lg overflow-hidden border border-border bg-muted/20">
-                <img
-                  src={scopeImageUrl}
-                  alt="Scope"
-                  className="w-full h-40 object-cover"
+        <div className="py-6 space-y-4">
+          {/* Basic Information Section */}
+          <Collapsible open={expandedSections.has('basic')}>
+            <SectionHeader id="basic" icon={FileText} title="Basic Information" badge="Required" />
+            <CollapsibleContent className="pt-4 pb-2 px-1 space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="title" className="text-sm font-medium">
+                  PSSR Title
+                </Label>
+                <Input
+                  id="title"
+                  value={formData.title}
+                  onChange={(e) => handleChange('title', e.target.value)}
+                  placeholder="Enter a descriptive title"
+                  className="h-10"
                 />
-                <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isUploadingImage}
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Lead Reviewer</Label>
+                <Popover open={leadPopoverOpen} onOpenChange={setLeadPopoverOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={leadPopoverOpen}
+                      className="w-full justify-between h-10"
+                    >
+                      {selectedUser ? (
+                        <div className="flex items-center gap-2">
+                          <Avatar className="h-6 w-6">
+                            <AvatarImage src={selectedUser.avatar_url || ''} />
+                            <AvatarFallback className="text-xs">
+                              {selectedUser.full_name?.charAt(0) || '?'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="truncate">{selectedUser.full_name}</span>
+                        </div>
+                      ) : formData.pssrLead ? (
+                        <span>{formData.pssrLead}</span>
+                      ) : (
+                        <span className="text-muted-foreground">
+                          {usersLoading ? "Loading..." : "Select lead reviewer..."}
+                        </span>
+                      )}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[300px] p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder="Search users..." />
+                      <CommandList>
+                        <CommandEmpty>No users found.</CommandEmpty>
+                        <CommandGroup className="max-h-[250px] overflow-y-auto">
+                          {profileUsers?.map((user) => (
+                            <CommandItem
+                              key={user.user_id}
+                              value={`${user.full_name} ${user.role || ''} ${user.position || ''}`}
+                              onSelect={() => {
+                                handleChange('pssrLeadId', user.user_id);
+                                handleChange('pssrLead', user.full_name);
+                                setLeadPopoverOpen(false);
+                              }}
+                            >
+                              <div className="flex items-center gap-2 w-full">
+                                <Avatar className="h-6 w-6">
+                                  <AvatarImage src={user.avatar_url || ''} />
+                                  <AvatarFallback className="text-xs">
+                                    {user.full_name?.charAt(0) || '?'}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className="flex flex-col flex-1 min-w-0">
+                                  <span className="truncate">{user.full_name}</span>
+                                  {user.position && (
+                                    <span className="text-xs text-muted-foreground truncate">
+                                      {user.position}
+                                    </span>
+                                  )}
+                                </div>
+                                <Check
+                                  className={cn(
+                                    'h-4 w-4 shrink-0',
+                                    formData.pssrLeadId === user.user_id
+                                      ? 'opacity-100'
+                                      : 'opacity-0'
+                                  )}
+                                />
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">PSSR Reason</Label>
+                <Select 
+                  value={formData.reason} 
+                  onValueChange={(value) => handleChange('reason', value)}
+                >
+                  <SelectTrigger className="h-10">
+                    <SelectValue placeholder={reasonsLoading ? "Loading..." : "Select reason..."} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {pssrReasons?.map((reason) => (
+                      <SelectItem key={reason.id} value={reason.name}>
+                        {reason.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+
+          {/* Location Section */}
+          <Collapsible open={expandedSections.has('location')}>
+            <SectionHeader id="location" icon={MapPin} title="Location" badge="Optional" />
+            <CollapsibleContent className="pt-4 pb-2 px-1">
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-2">
+                  <Label className="text-xs text-muted-foreground">Plant</Label>
+                  <Select 
+                    value={plantId} 
+                    onValueChange={(value) => {
+                      setPlantId(value);
+                      setFieldId('');
+                      setStationId('');
+                    }}
                   >
-                    {isUploadingImage ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Uploading...
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="h-4 w-4 mr-2" />
-                        Replace Image
-                      </>
-                    )}
-                  </Button>
+                    <SelectTrigger className="h-9 text-sm">
+                      <SelectValue placeholder={plantsLoading ? "..." : "Select"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {plants?.map((plant) => (
+                        <SelectItem key={plant.id} value={plant.id}>
+                          {plant.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs text-muted-foreground">Field</Label>
+                  <Select 
+                    value={fieldId} 
+                    onValueChange={(value) => {
+                      setFieldId(value);
+                      setStationId('');
+                    }}
+                    disabled={!plantId}
+                  >
+                    <SelectTrigger className="h-9 text-sm">
+                      <SelectValue placeholder="Select" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {fields?.map((field) => (
+                        <SelectItem key={field.id} value={field.id}>
+                          {field.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs text-muted-foreground">Station</Label>
+                  <Select 
+                    value={stationId} 
+                    onValueChange={setStationId}
+                    disabled={!plantId}
+                  >
+                    <SelectTrigger className="h-9 text-sm">
+                      <SelectValue placeholder="Select" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {stations?.map((station) => (
+                        <SelectItem key={station.id} value={station.id}>
+                          {station.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
-            ) : (
-              <div
-                className="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 hover:bg-muted/30 transition-colors"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                {isUploadingImage ? (
-                  <div className="flex flex-col items-center gap-2">
-                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">Uploading...</span>
+            </CollapsibleContent>
+          </Collapsible>
+
+          {/* Scope Details Section */}
+          <Collapsible open={expandedSections.has('scope')}>
+            <SectionHeader id="scope" icon={ClipboardList} title="Scope of Work" />
+            <CollapsibleContent className="pt-4 pb-2 px-1 space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="scope" className="text-sm font-medium">
+                  Description
+                </Label>
+                <Textarea
+                  id="scope"
+                  value={formData.scope}
+                  onChange={(e) => handleChange('scope', e.target.value)}
+                  placeholder="Describe the scope of work for this PSSR..."
+                  rows={4}
+                  className="resize-none"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Scope Image</Label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleImageUpload}
+                  disabled={isUploadingImage}
+                />
+                {scopeImageUrl ? (
+                  <div className="relative rounded-lg overflow-hidden border bg-muted">
+                    <img
+                      src={scopeImageUrl}
+                      alt="Scope"
+                      className="w-full h-40 object-cover"
+                    />
+                    <div className="absolute top-2 right-2 flex gap-1">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploadingImage}
+                      >
+                        <Upload className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={handleRemoveImage}
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center gap-2">
-                    <Upload className="h-8 w-8 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">Click to upload scope image</span>
-                    <span className="text-xs text-muted-foreground">JPG, PNG up to 5MB</span>
+                  <div 
+                    className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <div className="flex flex-col items-center justify-center py-4">
+                      {isUploadingImage ? (
+                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                      ) : (
+                        <>
+                          <Upload className="h-6 w-6 text-muted-foreground mb-2" />
+                          <span className="text-sm text-muted-foreground">
+                            Click to upload image
+                          </span>
+                          <span className="text-xs text-muted-foreground/70">
+                            PNG, JPG up to 5MB
+                          </span>
+                        </>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
-            )}
-            
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              className="hidden"
-            />
-          </div>
+            </CollapsibleContent>
+          </Collapsible>
+
+          {/* Reference Info Section */}
+          <Collapsible open={expandedSections.has('reference')}>
+            <SectionHeader id="reference" icon={Info} title="Reference Information" />
+            <CollapsibleContent className="pt-4 pb-2 px-1">
+              <div className="flex flex-wrap gap-2">
+                {pssrData?.projectName && (
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-muted/50 border">
+                    <span className="text-xs text-muted-foreground">Project:</span>
+                    <span className="text-sm font-medium">
+                      {pssrData.projectId} - {pssrData.projectName}
+                    </span>
+                  </div>
+                )}
+                {getLocationString() && (
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-muted/50 border">
+                    <MapPin className="h-3 w-3 text-muted-foreground" />
+                    <span className="text-sm">{getLocationString()}</span>
+                  </div>
+                )}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
         </div>
 
-        <SheetFooter className="mt-8 flex gap-3">
-          <Button variant="outline" onClick={onClose} className="flex-1">
-            <X className="h-4 w-4 mr-2" />
+        <SheetFooter className="pt-4 border-t gap-2 sm:gap-0">
+          <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={handleSave} className="flex-1">
-            <Save className="h-4 w-4 mr-2" />
+          <Button onClick={handleSave}>
             Save Changes
           </Button>
         </SheetFooter>
