@@ -72,8 +72,36 @@ export const usePSSRDetails = (pssrId: string) => {
 
       const { data, error } = result;
       if (error) throw error;
+
+      // If no rows updated, the record likely doesn't exist yet (common when the UI uses seeded/mock IDs).
+      // Create it on-the-fly so the overview widget can be saved.
       if (!data || data.length === 0) {
-        throw new Error('PSSR not found (no rows updated)');
+        const { data: authData, error: authError } = await supabase.auth.getUser();
+        if (authError) throw authError;
+        if (!authData.user) throw new Error('You must be logged in to save this PSSR');
+
+        // When saving by UUID route param, we don't know the human-friendly pssr_id.
+        // In that case we require the row to already exist.
+        if (isUuid(pssrId)) {
+          throw new Error('PSSR not found (missing record for UUID id)');
+        }
+
+        const insertPayload = {
+          ...updates,
+          pssr_id: pssrId,
+          user_id: authData.user.id,
+        };
+
+        const insertResult = await supabase
+          .from('pssrs')
+          .insert([insertPayload] as any)
+          .select('id');
+
+        const { data: inserted, error: insertError } = insertResult;
+        if (insertError) throw insertError;
+        if (!inserted || inserted.length === 0) {
+          throw new Error('PSSR not found (insert failed)');
+        }
       }
     },
     onSuccess: () => {
