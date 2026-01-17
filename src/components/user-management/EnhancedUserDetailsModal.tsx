@@ -432,7 +432,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
         first_name: user.first_name || '',
         last_name: user.last_name || '',
         email: user.email || '',
-        functional_email_address: user.functional_email_address || '',
+        functional_email_address: user.personal_email || user.functional_email_address || '',
         phone_number: user.phone_number || '',
         primary_phone: user.primary_phone || '',
         secondary_phone: user.secondary_phone || '',
@@ -1054,7 +1054,19 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
               </div>
               <div>
                 <h2 className="text-xl font-semibold">{user.full_name || 'Unknown User'}</h2>
-                <p className="text-sm text-muted-foreground">{user.email}</p>
+                <p className="text-sm text-muted-foreground flex items-center gap-2">
+                  {user.email}
+                  {user.functional_email && (
+                    <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300">
+                      Functional
+                    </span>
+                  )}
+                </p>
+                {user.functional_email && (user.personal_email || user.functional_email_address) && (
+                  <p className="text-xs text-muted-foreground">
+                    Personal: {user.personal_email || user.functional_email_address}
+                  </p>
+                )}
                 <Badge variant="outline" className={getStatusColor(user.status || 'inactive')}>
                   {user.status || 'inactive'}
                 </Badge>
@@ -1145,8 +1157,13 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                 </div>
                 
                 <div>
-                  <Label htmlFor="email">
+                  <Label htmlFor="email" className="flex items-center gap-2">
                     {formData.functional_email ? 'Functional Email Address *' : 'Email Address *'}
+                    {!editMode && formData.functional_email && (
+                      <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300">
+                        Functional
+                      </span>
+                    )}
                   </Label>
                   <div className="flex items-center space-x-2">
                     <Mail className="h-4 w-4 text-muted-foreground" />
