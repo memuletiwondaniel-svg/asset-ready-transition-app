@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { ProjectIdBadge } from '@/components/ui/project-id-badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { FileText, Calendar, Users, Image, Building, CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
@@ -76,9 +77,9 @@ export const ProjectSummaryModal: React.FC<ProjectSummaryModalProps> = ({
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Project ID</label>
                   <div className="flex items-center gap-2 mt-1">
-                    <Badge variant="outline" className="bg-blue-100/80 text-blue-700 border-blue-200/60">
+                    <ProjectIdBadge>
                       {formData.project_id_prefix}{formData.project_id_number}
-                    </Badge>
+                    </ProjectIdBadge>
                   </div>
                 </div>
                 <div>

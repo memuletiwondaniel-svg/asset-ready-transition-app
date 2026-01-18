@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Settings, GripVertical, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { ProjectIdBadge } from '@/components/ui/project-id-badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 
@@ -175,12 +176,9 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails }) =
     switch (columnId) {
       case 'projectId':
         return (
-          <Badge 
-            variant="outline" 
-            className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800 font-mono font-semibold px-2.5 py-1 rounded-md"
-          >
+          <ProjectIdBadge>
             {pssr.projectId}
-          </Badge>
+          </ProjectIdBadge>
         );
       case 'projectName':
         return <div className="font-semibold text-foreground truncate">{pssr.projectName}</div>;

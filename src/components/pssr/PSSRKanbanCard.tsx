@@ -3,7 +3,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Pin, PinOff, Clock, CheckCircle2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { ProjectIdBadge } from '@/components/ui/project-id-badge';
 import { cn } from '@/lib/utils';
 
 interface PSSRKanbanCardProps {
@@ -70,12 +70,9 @@ const PSSRKanbanCard: React.FC<PSSRKanbanCardProps> = ({
       >
         {/* Header: Project ID + Pin */}
         <div className="flex items-center justify-between mb-1.5">
-          <Badge 
-            variant="outline" 
-            className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800 font-mono font-semibold text-[10px] px-1.5 py-0"
-          >
+          <ProjectIdBadge size="sm">
             {pssr.projectId}
-          </Badge>
+          </ProjectIdBadge>
           <button
             onClick={(e) => {
               e.stopPropagation();
