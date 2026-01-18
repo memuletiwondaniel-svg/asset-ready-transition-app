@@ -294,17 +294,8 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
 
   const hasActiveFilters = Boolean(searchQuery || selectedPlant !== 'all' || selectedHub !== 'all');
 
-  const handleNavigate = (section: string) => {
-    if (section === 'home') {
-      onBack?.();
-    } else if (section === 'projects') {
-      // Already on projects page
-      return;
-    } else {
-      // Handle other navigation
-      window.location.href = `/${section}`;
-    }
-  };
+  // Navigation is handled by AuthenticatedLayout's sidebar
+  // No local handler needed as we use the centralized navigation
 
   if (isLoading) {
     return (

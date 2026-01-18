@@ -15,6 +15,7 @@ export const SIDEBAR_ROUTES: Record<string, string> = {
   'users': '/users',
   'user-management': '/users',
   'manage-checklist': '/manage-checklist',
+  'pssr-reviews': '/my-tasks',
 };
 
 /**
@@ -28,10 +29,14 @@ export const getSidebarRoute = (section: string): string => {
  * Create a navigation handler for the sidebar
  * @param navigate - React Router navigate function
  * @param customHandlers - Optional custom handlers for specific sections (e.g., staying on current page)
+ * @param onSameRouteNavigate - Optional callback when navigating to the same route (useful for resetting state)
+ * @param currentPath - Current route path (optional, for same-route detection)
  */
 export const createSidebarNavigator = (
   navigate: (path: string) => void,
-  customHandlers?: Record<string, () => void>
+  customHandlers?: Record<string, () => void>,
+  onSameRouteNavigate?: () => void,
+  currentPath?: string
 ) => {
   return (section: string) => {
     // Check for custom handlers first (e.g., staying on current page)
@@ -41,6 +46,12 @@ export const createSidebarNavigator = (
     }
     
     const route = getSidebarRoute(section);
+    
+    // If navigating to the same route, call the reset callback
+    if (currentPath && route === currentPath && onSameRouteNavigate) {
+      onSameRouteNavigate();
+    }
+    
     navigate(route);
   };
 };

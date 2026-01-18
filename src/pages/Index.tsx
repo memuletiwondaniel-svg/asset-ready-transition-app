@@ -36,15 +36,14 @@ const Index = () => {
   
   const handleNavigate = (section: string) => {
     console.log('Index handleNavigate called with section:', section);
-    if (section === 'home') {
-      navigate('/home');
-    } else if (section === 'operation-readiness') {
-      navigate('/operation-readiness');
-    } else if (section === 'p2a-handover') {
-      navigate('/p2a-handover');
-    } else {
-      navigate(`/${section}`);
-    }
+    // Use centralized route mapping
+    const routes: Record<string, string> = {
+      'home': '/home',
+      'operation-readiness': '/operation-readiness',
+      'p2a-handover': '/p2a-handover',
+    };
+    const route = routes[section] || `/${section}`;
+    navigate(route);
   };
   
   const handleBackToLanding = () => {

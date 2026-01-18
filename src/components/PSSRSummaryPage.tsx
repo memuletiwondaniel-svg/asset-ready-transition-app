@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent, DragStartEvent } from '@dnd-kit/core';
 import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { useWidgetConfigs } from '@/hooks/useWidgetConfigs';
@@ -55,6 +55,7 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
   onBack
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { translations: t } = useLanguage();
   
   // Mock user role - in a real app, this would come from authentication context
@@ -121,6 +122,16 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
     };
     fetchUserProfile();
   }, []);
+
+  // Reset to list view when navigating to /pssr (even from the same route)
+  // This handles the case when user clicks PSSR in sidebar while viewing a PSSR detail
+  useEffect(() => {
+    if (location.pathname === '/pssr') {
+      setActiveView('list');
+      setSelectedPSSR(null);
+      setSelectedCategory(null);
+    }
+  }, [location.key]); // location.key changes on each navigation, even to the same route
 
   // Derive widget states from persisted configs
   const widgetVisibility = useMemo(() => {

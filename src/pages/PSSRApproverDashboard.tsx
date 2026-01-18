@@ -277,24 +277,8 @@ const PSSRApproverDashboard: React.FC = () => {
     navigate(`/pssr/${pssrId}/review?role=${encodeURIComponent(approverRole)}`);
   };
 
-  const handleSidebarNavigate = (section: string) => {
-    const routes: Record<string, string> = {
-      'home': '/',
-      'pssr': '/pssr',
-      'users': '/users',
-      'manage-checklist': '/manage-checklist',
-      'admin-tools': '/admin-tools',
-      'projects': '/projects',
-      'project-management': '/project-management',
-      'operation-readiness': '/operation-readiness',
-      'p2a-handover': '/p2a-handover',
-      'or-maintenance': '/or-maintenance',
-      'my-tasks': '/my-tasks',
-      'pssr-reviews': '/my-tasks',
-    };
-    const route = routes[section] || `/${section}`;
-    navigate(route);
-  };
+  // Use centralized sidebar navigation - imported from sidebarNavigation.ts
+  // This is handled by AuthenticatedLayout, so no local handler needed
 
   const handleTaskDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
