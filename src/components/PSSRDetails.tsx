@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { ProjectIdBadge } from '@/components/ui/project-id-badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, Clock, CheckCircle2, AlertCircle, Users, FileText, MessageSquare } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
@@ -118,9 +119,9 @@ const PSSRDetails: React.FC<PSSRDetailsProps> = ({ pssrId, onBack }) => {
                 <ArrowLeft className="h-3 w-3 mr-1" />
                 Back to PSSR List
               </Button>
-              <div>
-                <h1 className="text-lg font-bold text-gray-900">{pssrData.id}</h1>
-                <p className="text-xs text-gray-600">{pssrData.title}</p>
+              <div className="flex items-center gap-3">
+                <ProjectIdBadge>{pssrData.id}</ProjectIdBadge>
+                <p className="text-sm text-muted-foreground">{pssrData.title}</p>
               </div>
             </div>
             <div className="flex items-center space-x-2">

@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { ProjectIdBadge } from '@/components/ui/project-id-badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { FileText, Calendar, Users, MapPin, Building, Target, FileCheck, UserCircle, ExternalLink, Edit, Link as LinkIcon, File, FileSpreadsheet, FileImage, Presentation, FileCode } from 'lucide-react';
@@ -231,9 +232,9 @@ export const ViewProjectModal: React.FC<ViewProjectModalProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex items-center gap-3">
                     <span className="text-sm font-medium text-muted-foreground">Project ID:</span>
-                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+                    <ProjectIdBadge>
                       {getProjectId()}
-                    </Badge>
+                    </ProjectIdBadge>
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-sm font-medium text-muted-foreground">Status:</span>

@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { ProjectIdBadge } from '@/components/ui/project-id-badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, FolderOpen, Users, Calendar, FileText, MoreVertical, Eye, Edit3, Trash2, Folder, Star, GitBranch, Milestone, Layers } from 'lucide-react';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
@@ -539,12 +540,9 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
                                   </DropdownMenu>
                                 </TableCell>
                                 <TableCell className="px-6 py-4">
-                                  <Badge
-                                    variant="outline"
-                                    className="bg-blue-100/80 text-blue-700 border-blue-200/60 text-xs font-medium"
-                                  >
+                                  <ProjectIdBadge>
                                     {getProjectId(project)}
-                                  </Badge>
+                                  </ProjectIdBadge>
                                 </TableCell>
                                 <TableCell className="px-6 py-4">
                                   <div className="font-medium text-gray-900">{project.project_title}</div>
