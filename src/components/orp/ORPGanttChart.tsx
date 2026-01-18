@@ -78,11 +78,103 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
       d.deliverable?.name?.toLowerCase().includes(query)
     );
   }, [deliverables, searchQuery]);
-  // Calculate date range
-  const dates = filteredDeliverables
-    .filter(d => d.start_date && d.end_date)
-    .flatMap(d => [parseISO(d.start_date), parseISO(d.end_date)]);
 
+  // Calculate date range
+  const dates = useMemo(() => {
+    return filteredDeliverables
+      .filter(d => d.start_date && d.end_date)
+      .flatMap(d => [parseISO(d.start_date), parseISO(d.end_date)]);
+  }, [filteredDeliverables]);
+
+  const { minDate, maxDate, totalDays } = useMemo(() => {
+    if (!dates.length) {
+      return { minDate: new Date(), maxDate: new Date(), totalDays: 1 };
+    }
+    const min = new Date(Math.min(...dates.map(d => d.getTime())));
+    const max = new Date(Math.max(...dates.map(d => d.getTime())));
+    return { minDate: min, maxDate: max, totalDays: differenceInDays(max, min) + 1 };
+  }, [dates]);
+
+  // Generate time markers based on zoom level - must be before any early returns
+  const timeMarkers = useMemo(() => {
+    if (!dates.length) return [];
+    
+    const markers: { date: Date; label: string }[] = [];
+    let currentDate = new Date(minDate);
+    
+    // Determine marker interval based on zoom level
+    const showWeeks = zoomLevel >= 2;
+    const showDays = zoomLevel >= 4;
+    
+    if (showDays) {
+      // Show every 7 days
+      while (currentDate <= maxDate) {
+        markers.push({ date: new Date(currentDate), label: format(currentDate, 'd MMM') });
+        currentDate = addDays(currentDate, 7);
+      }
+    } else if (showWeeks) {
+      // Show bi-weekly
+      while (currentDate <= maxDate) {
+        markers.push({ date: new Date(currentDate), label: format(currentDate, 'd MMM') });
+        currentDate = addDays(currentDate, 14);
+      }
+    } else {
+      // Show months
+      while (currentDate <= maxDate) {
+        markers.push({ date: new Date(currentDate), label: format(currentDate, 'MMM yyyy') });
+        currentDate.setMonth(currentDate.getMonth() + 1);
+      }
+    }
+    
+    return markers;
+  }, [dates.length, minDate, maxDate, zoomLevel]);
+
+  // Helper function to get bar position
+  const getBarPosition = useCallback((startDate: string, endDate: string) => {
+    const start = parseISO(startDate);
+    const end = parseISO(endDate);
+    const left = (differenceInDays(start, minDate) / totalDays) * 100;
+    const width = (differenceInDays(end, start) / totalDays) * 100;
+    return { left: `${left}%`, width: `${width}%` };
+  }, [minDate, totalDays]);
+
+  // Zoom controls
+  const handleZoomIn = useCallback(() => {
+    const currentIndex = ZOOM_LEVELS.indexOf(zoomLevel);
+    if (currentIndex < ZOOM_LEVELS.length - 1) {
+      setZoomLevel(ZOOM_LEVELS[currentIndex + 1]);
+    }
+  }, [zoomLevel]);
+
+  const handleZoomOut = useCallback(() => {
+    const currentIndex = ZOOM_LEVELS.indexOf(zoomLevel);
+    if (currentIndex > 0) {
+      setZoomLevel(ZOOM_LEVELS[currentIndex - 1]);
+    }
+  }, [zoomLevel]);
+
+  const handleFitToScreen = useCallback(() => {
+    setZoomLevel(1);
+  }, []);
+
+  // Handle mouse wheel zoom on header only
+  const handleHeaderWheel = useCallback((e: React.WheelEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.deltaY < 0) {
+      handleZoomIn();
+    } else {
+      handleZoomOut();
+    }
+  }, [handleZoomIn, handleZoomOut]);
+
+  // Dynamic cursor based on zoom capability
+  const currentZoomIndex = ZOOM_LEVELS.indexOf(zoomLevel);
+  const canZoomIn = currentZoomIndex < ZOOM_LEVELS.length - 1;
+  const canZoomOut = currentZoomIndex > 0;
+  const zoomCursor = canZoomIn ? 'cursor-zoom-in' : canZoomOut ? 'cursor-zoom-out' : 'cursor-default';
+
+  // Early return for no data - AFTER all hooks
   if (!dates.length) {
     return (
       <Card>
@@ -126,95 +218,6 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
       </Card>
     );
   }
-
-  const minDate = new Date(Math.min(...dates.map(d => d.getTime())));
-  const maxDate = new Date(Math.max(...dates.map(d => d.getTime())));
-  const totalDays = differenceInDays(maxDate, minDate) + 1;
-
-  const getBarPosition = (startDate: string, endDate: string) => {
-    const start = parseISO(startDate);
-    const end = parseISO(endDate);
-    const left = (differenceInDays(start, minDate) / totalDays) * 100;
-    const width = (differenceInDays(end, start) / totalDays) * 100;
-    return { left: `${left}%`, width: `${width}%` };
-  };
-
-
-  // Generate month markers
-  const monthMarkers: Date[] = [];
-  let currentDate = new Date(minDate);
-  while (currentDate <= maxDate) {
-    monthMarkers.push(new Date(currentDate));
-    currentDate.setMonth(currentDate.getMonth() + 1);
-  }
-
-  // Zoom controls
-  const handleZoomIn = () => {
-    const currentIndex = ZOOM_LEVELS.indexOf(zoomLevel);
-    if (currentIndex < ZOOM_LEVELS.length - 1) {
-      setZoomLevel(ZOOM_LEVELS[currentIndex + 1]);
-    }
-  };
-
-  const handleZoomOut = () => {
-    const currentIndex = ZOOM_LEVELS.indexOf(zoomLevel);
-    if (currentIndex > 0) {
-      setZoomLevel(ZOOM_LEVELS[currentIndex - 1]);
-    }
-  };
-
-  const handleFitToScreen = () => {
-    setZoomLevel(1);
-  };
-
-  // Handle mouse wheel zoom on header only
-  const handleHeaderWheel = (e: React.WheelEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.deltaY < 0) {
-      handleZoomIn();
-    } else {
-      handleZoomOut();
-    }
-  };
-
-  // Dynamic cursor based on zoom capability
-  const currentZoomIndex = ZOOM_LEVELS.indexOf(zoomLevel);
-  const canZoomIn = currentZoomIndex < ZOOM_LEVELS.length - 1;
-  const canZoomOut = currentZoomIndex > 0;
-  const zoomCursor = canZoomIn ? 'cursor-zoom-in' : canZoomOut ? 'cursor-zoom-out' : 'cursor-default';
-
-  // Generate time markers based on zoom level
-  const timeMarkers = useMemo(() => {
-    const markers: { date: Date; label: string }[] = [];
-    let currentDate = new Date(minDate);
-    
-    // Determine marker interval based on zoom level
-    const showWeeks = zoomLevel >= 2;
-    const showDays = zoomLevel >= 4;
-    
-    if (showDays) {
-      // Show every 7 days
-      while (currentDate <= maxDate) {
-        markers.push({ date: new Date(currentDate), label: format(currentDate, 'd MMM') });
-        currentDate = addDays(currentDate, 7);
-      }
-    } else if (showWeeks) {
-      // Show bi-weekly
-      while (currentDate <= maxDate) {
-        markers.push({ date: new Date(currentDate), label: format(currentDate, 'd MMM') });
-        currentDate = addDays(currentDate, 14);
-      }
-    } else {
-      // Show months
-      while (currentDate <= maxDate) {
-        markers.push({ date: new Date(currentDate), label: format(currentDate, 'MMM yyyy') });
-        currentDate.setMonth(currentDate.getMonth() + 1);
-      }
-    }
-    
-    return markers;
-  }, [minDate, maxDate, zoomLevel]);
 
   return (
     <Card>
