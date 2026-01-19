@@ -2570,10 +2570,11 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
             .maybeSingle();
           pssrLabel = pssr?.pssr_id || pssr?.title || args.pssr_id;
         } else if (args.project_code) {
+          const projectCode = String(args.project_code).replace(/[^a-z0-9]/gi, '');
           const { data: pssrs } = await supabaseClient
             .from('pssrs')
             .select('id, pssr_id, title, asset, project_name')
-            .or(`pssr_id.ilike.%${args.project_code}%,title.ilike.%${args.project_code}%,asset.ilike.%${args.project_code}%,project_name.ilike.%${args.project_code}%`)
+            .or(`pssr_id.ilike.%${projectCode}%,title.ilike.%${projectCode}%,asset.ilike.%${projectCode}%,project_name.ilike.%${projectCode}%`)
             .limit(10);
           
           if (!pssrs || pssrs.length === 0) {
@@ -3691,6 +3692,8 @@ serve(async (req) => {
       // Execute all tool calls and track navigation actions
       const toolResults = [];
       let navigationAction: { action: string; path: string } | null = null;
+      let lastToolName: string | null = null;
+      let lastToolResult: any = null;
       
       for (const toolCall of assistantMessage.tool_calls) {
         const toolName = toolCall.function.name;
@@ -3699,6 +3702,9 @@ serve(async (req) => {
         console.log(`Executing tool: ${toolName}`, toolArgs);
         const result = await executeTool(toolName, toolArgs, supabase);
         console.log(`Tool result for ${toolName}:`, result);
+
+        lastToolName = toolName;
+        lastToolResult = result;
         
         // Capture navigation action if present
         if (result?.action === "navigate" && result?.path) {
@@ -3742,7 +3748,41 @@ serve(async (req) => {
       }
 
       const finalResult = await finalResponse.json();
-      let finalContent = finalResult.choices?.[0]?.message?.content || "I couldn't process that request.";
+      let finalContent = finalResult.choices?.[0]?.message?.content;
+
+      // Fallback: if model returns no content after tools, deterministically format the last tool result
+      if (!finalContent || !finalContent.trim()) {
+        if (lastToolResult?.error) {
+          finalContent = `I couldn't find that information: ${lastToolResult.error}`;
+        } else if (lastToolName === 'get_pssr_pending_items' && lastToolResult) {
+          const label = lastToolResult.pssr_label || 'PSSR';
+          const count = lastToolResult.pending_count ?? 0;
+          const byCat = lastToolResult.by_category || {};
+          const breakdown = Object.keys(byCat).length
+            ? Object.entries(byCat).map(([k, v]) => `• ${k}: ${v} items`).join('\n')
+            : '';
+          finalContent = `For **${label}**, there are **${count} pending items**${breakdown ? `:\n${breakdown}` : '.'}`;
+        } else if (lastToolName === 'get_pssr_pending_approvers' && lastToolResult) {
+          const label = lastToolResult.pssr_label || 'PSSR';
+          const pendingFinal = (lastToolResult.final_approvers || []).filter((a: any) => a.status === 'PENDING');
+          if (pendingFinal.length === 0) {
+            finalContent = `**${label}** has no pending final approvers.`;
+          } else {
+            finalContent = `**${label}** is awaiting approvals:\n\n**Final Sign-offs Pending:**\n${pendingFinal.map((a: any, i: number) => `${i + 1}. ${a.name} (${a.role})`).join('\n')}`;
+          }
+        } else if (lastToolName === 'get_executive_summary' && lastToolResult) {
+          const label = lastToolResult.pssr_label || 'PSSR';
+          const health = lastToolResult.health || 'attention_needed';
+          const healthText = health === 'critical' ? 'Critical Issues' : health === 'on_track' ? 'On Track' : 'Attention Needed';
+          const issues = (lastToolResult.issues || []).slice(0, 3);
+          const blockers = (lastToolResult.blockers || []).slice(0, 3);
+          const issueLines = issues.length ? `\n\n**Issues/Concerns:**\n${issues.map((i: any) => `• ${i.severity === 'critical' ? '🔴' : i.severity === 'warning' ? '🟡' : 'ℹ️'} ${i.message}`).join('\n')}` : '';
+          const blockerLines = blockers.length ? `\n\n**Blockers:**\n${blockers.map((b: string) => `• ${b}`).join('\n')}` : '';
+          finalContent = `**${label} - ${healthText}**\nOverall progress: ${lastToolResult.overall_progress ?? 0}%${issueLines}${blockerLines}`;
+        } else {
+          finalContent = "I couldn't process that request.";
+        }
+      }
       
       // Append navigation action to response so frontend can detect and execute
       if (navigationAction) {
