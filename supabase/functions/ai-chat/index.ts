@@ -1711,7 +1711,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         "home": () => "/",
         "my-tasks": () => "/my-tasks",
         "pssr": () => "/pssr",
-        "pssr-detail": (id) => id ? `/pssr/${id}/review` : "/pssr",
+        "pssr-detail": (id) => id ? `/pssr/${id}` : "/pssr",
         "project-detail": (id) => id ? `/project/${id}` : "/projects",
         "ora-plans": () => "/operation-readiness",
         "ora-detail": (id) => id ? `/operation-readiness/${id}` : "/operation-readiness",
@@ -2045,7 +2045,7 @@ async function handleDeterministicNavigation(
         if (pssrs.length === 1) {
           const pssr = pssrs[0];
           const label = pssr.pssr_id || pssr.title || `PSSR for ${pssr.asset}`;
-          const path = `/pssr/${pssr.id}/review`;
+          const path = `/pssr/${pssr.id}`;
           console.log("🧭 NAV_RESOLVED: Single PSSR match -", label, "->", path);
           return {
             handled: true,
