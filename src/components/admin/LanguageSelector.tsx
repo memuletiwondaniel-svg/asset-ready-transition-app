@@ -18,6 +18,7 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({
     { code: "en", name: "English" },
     { code: "ar", name: "العربية" },
     { code: "fr", name: "Français" },
+    { code: "zh", name: "中文" },
     { code: "ms", name: "Bahasa Melayu" },
     { code: "kk", name: "Қазақша" }
   ];

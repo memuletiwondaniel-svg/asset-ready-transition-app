@@ -13,6 +13,7 @@ import ProjectManagementPage from "@/components/project/ProjectManagementPage";
 import ProjectsHomePage from "@/components/project/ProjectsHomePage";
 import OrshLogo from "@/components/ui/OrshLogo";
 import { useLanguage } from "@/contexts/LanguageContext";
+import LandingLanguageSelector from "@/components/LandingLanguageSelector";
 
 const Index = () => {
   const [showAuth, setShowAuth] = useState(false);
@@ -20,7 +21,7 @@ const Index = () => {
   const isAuthenticated = !!session;
   const navigate = useNavigate();
   const location = useLocation();
-  const { translations: t } = useLanguage();
+  const { language, setLanguage, translations: t } = useLanguage();
   
   // Get current section from URL path
   const currentSection = location.pathname === '/' ? null : location.pathname.slice(1);
@@ -112,8 +113,13 @@ const Index = () => {
       <header className="fixed top-0 left-0 right-0 z-30 px-6 py-4">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between">
-            {/* Empty spacer for layout balance */}
-            <div className="w-24" />
+            {/* Language Selector - Left */}
+            <div className="flex items-center">
+              <LandingLanguageSelector 
+                selectedLanguage={language}
+                onLanguageChange={setLanguage}
+              />
+            </div>
             
             {/* ORSH Logo - Center */}
             <div className="absolute left-1/2 transform -translate-x-1/2">
