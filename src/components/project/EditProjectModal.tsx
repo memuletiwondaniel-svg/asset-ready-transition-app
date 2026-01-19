@@ -442,7 +442,7 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
               <CardContent className="space-y-6">
                 {/* Project ID Section */}
                 <div className="space-y-3 p-4 rounded-lg bg-muted/30 border border-border/40">
-                  <Label htmlFor="project_id" className="text-sm font-semibold text-foreground">
+                  <Label htmlFor="project_id" className="text-sm font-medium text-muted-foreground">
                     Project ID
                   </Label>
                   <div className="flex items-center gap-2">
