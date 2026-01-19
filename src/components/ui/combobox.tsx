@@ -88,7 +88,7 @@ export function Combobox({
     onAddCustom
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={setOpen} modal={true}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -102,7 +102,10 @@ export function Combobox({
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[--radix-popover-trigger-width] p-0 z-[100] bg-popover border shadow-lg">
+      <PopoverContent 
+        className="w-[--radix-popover-trigger-width] p-0 z-[100] bg-popover border shadow-lg"
+        onWheel={(e) => e.stopPropagation()}
+      >
         <Command shouldFilter={false}>
           <CommandInput 
             placeholder={searchPlaceholder} 
@@ -192,14 +195,17 @@ export function MultiSelectCombobox({
   }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={setOpen} modal={true}>
       <PopoverTrigger asChild>
         <Button variant="outline" role="combobox" aria-expanded={open} className={cn("w-full justify-between", className)}>
           {value.length ? `${value.length} selected` : placeholder}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[--radix-popover-trigger-width] p-0 z-[100] bg-popover border shadow-lg">
+      <PopoverContent 
+        className="w-[--radix-popover-trigger-width] p-0 z-[100] bg-popover border shadow-lg"
+        onWheel={(e) => e.stopPropagation()}
+      >
         <Command shouldFilter={false}>
           <CommandInput placeholder={searchPlaceholder} value={search} onValueChange={setSearch} />
           <CommandList className="max-h-[350px] overflow-y-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/50">
