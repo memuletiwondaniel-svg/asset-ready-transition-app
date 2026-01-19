@@ -28,8 +28,7 @@ interface PSSRInfoScopeWidgetProps {
   description: string;
   images?: string[];
   projectData?: any;
-  plantName?: string;
-  stationName?: string;
+  regionName?: string;
   hubName?: string;
   linkedPSSRs?: LinkedPSSR[];
   onNavigateToProject?: () => void;
@@ -50,8 +49,7 @@ export const PSSRInfoScopeWidget: React.FC<PSSRInfoScopeWidgetProps> = ({
   description,
   images = [],
   projectData,
-  plantName,
-  stationName,
+  regionName,
   hubName,
   linkedPSSRs = [],
   onNavigateToProject,
@@ -294,8 +292,7 @@ export const PSSRInfoScopeWidget: React.FC<PSSRInfoScopeWidgetProps> = ({
           open={showProjectModal}
           onClose={() => setShowProjectModal(false)}
           project={projectData}
-          plantName={plantName}
-          stationName={stationName}
+          regionName={regionName}
           hubName={hubName}
         />
       )}

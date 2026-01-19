@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { ProjectIdBadge } from '@/components/ui/project-id-badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { FileText, Calendar, Users, MapPin, Building, Target, FileCheck, UserCircle, ExternalLink, Edit, Link as LinkIcon, File, FileSpreadsheet, FileImage, Presentation, FileCode } from 'lucide-react';
+import { FileText, Calendar, Users, MapPin, Building, Briefcase, UserCircle, ExternalLink, Edit, Link as LinkIcon, File, FileSpreadsheet, FileImage, Presentation, FileCode } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 
@@ -15,9 +15,13 @@ interface ViewProjectModalProps {
   onClose: () => void;
   onEdit?: () => void;
   project: any;
-  plantName?: string;
-  stationName?: string;
+  regionName?: string;
   hubName?: string;
+}
+
+interface ProjectLocation {
+  id: string;
+  stationName: string;
 }
 
 export const ViewProjectModal: React.FC<ViewProjectModalProps> = ({ 
@@ -25,14 +29,14 @@ export const ViewProjectModal: React.FC<ViewProjectModalProps> = ({
   onClose,
   onEdit,
   project,
-  plantName,
-  stationName,
+  regionName,
   hubName
 }) => {
   const navigate = useNavigate();
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
   const [milestones, setMilestones] = useState<any[]>([]);
   const [documents, setDocuments] = useState<any[]>([]);
+  const [locations, setLocations] = useState<ProjectLocation[]>([]);
   const [loading, setLoading] = useState(false);
 
   // Helper function to convert relative avatar paths to full Supabase storage URLs
@@ -102,6 +106,7 @@ export const ViewProjectModal: React.FC<ViewProjectModalProps> = ({
       setTeamMembers([]);
       setMilestones([]);
       setDocuments([]);
+      setLocations([]);
       fetchProjectData();
     }
   }, [open, project?.id, project?.updated_at]);
@@ -160,6 +165,29 @@ export const ViewProjectModal: React.FC<ViewProjectModalProps> = ({
         console.error('Error fetching documents:', documentsError);
       } else if (documentsData) {
         setDocuments(documentsData);
+      }
+
+      // Fetch project locations with station names
+      const { data: locationsData, error: locationsError } = await supabase
+        .from('project_locations')
+        .select('id, station_id')
+        .eq('project_id', project.id);
+
+      if (locationsError) {
+        console.error('Error fetching locations:', locationsError);
+      } else if (locationsData && locationsData.length > 0) {
+        // Fetch station names
+        const stationIds = locationsData.map(l => l.station_id);
+        const { data: stationsData } = await supabase
+          .from('station')
+          .select('id, name')
+          .in('id', stationIds);
+
+        const enrichedLocations = locationsData.map(loc => ({
+          id: loc.id,
+          stationName: stationsData?.find(s => s.id === loc.station_id)?.name || 'Unknown'
+        }));
+        setLocations(enrichedLocations);
       }
     } catch (error) {
       console.error('Error fetching project data:', error);
@@ -238,29 +266,38 @@ export const ViewProjectModal: React.FC<ViewProjectModalProps> = ({
                   <p className="text-foreground font-medium text-lg">{project.project_title}</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Portfolio and Hub - 2 columns */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <span className="text-sm font-medium text-muted-foreground">Plant</span>
+                    <span className="text-sm font-medium text-muted-foreground">Portfolio (Region)</span>
                     <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/30">
-                      <Building className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-foreground font-medium">{plantName || 'Not assigned'}</span>
+                      <Briefcase className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-foreground font-medium">{regionName || 'Not assigned'}</span>
                     </div>
                   </div>
-                  {stationName && (
-                    <div className="space-y-2">
-                      <span className="text-sm font-medium text-muted-foreground">Station</span>
-                      <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/30">
-                        <MapPin className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-foreground font-medium">{stationName}</span>
-                      </div>
-                    </div>
-                  )}
                   <div className="space-y-2">
-                    <span className="text-sm font-medium text-muted-foreground">Hub</span>
+                    <span className="text-sm font-medium text-muted-foreground">Project Hub</span>
                     <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/30">
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
+                      <Building className="h-4 w-4 text-muted-foreground" />
                       <span className="text-foreground font-medium">{hubName || 'Not assigned'}</span>
                     </div>
+                  </div>
+                </div>
+
+                {/* Locations - full width */}
+                <div className="space-y-2">
+                  <span className="text-sm font-medium text-muted-foreground">Locations</span>
+                  <div className="flex flex-wrap gap-2 p-3 rounded-lg bg-muted/30 min-h-[44px]">
+                    {locations.length > 0 ? (
+                      locations.map(loc => (
+                        <Badge key={loc.id} variant="secondary" className="flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          {loc.stationName}
+                        </Badge>
+                      ))
+                    ) : (
+                      <span className="text-muted-foreground">No locations assigned</span>
+                    )}
                   </div>
                 </div>
 

@@ -14,6 +14,7 @@ import { useProjects } from '@/hooks/useProjects';
 import { usePlants } from '@/hooks/usePlants';
 import { useStations } from '@/hooks/useStations';
 import { useHubs } from '@/hooks/useHubs';
+import { useProjectRegions } from '@/hooks/useProjectRegions';
 import { EditProjectModal } from '@/components/project/EditProjectModal';
 import { ViewProjectModal } from '@/components/project/ViewProjectModal';
 import { supabase } from '@/integrations/supabase/client';
@@ -93,6 +94,8 @@ export default function ProjectDetailsPage() {
   const plant = plants.find(p => p.id === project?.plant_id);
   const station = stations.find(s => s.id === project?.station_id);
   const hub = hubs.find(h => h.id === project?.hub_id);
+  const { regions } = useProjectRegions();
+  const region = regions.find(r => r.id === project?.region_id);
 
   useEffect(() => {
     if (project) {
@@ -272,8 +275,7 @@ export default function ProjectDetailsPage() {
               open={viewModalOpen}
               onClose={() => setViewModalOpen(false)}
               project={project}
-              plantName={plant?.name}
-              stationName={station?.name}
+              regionName={region?.name}
               hubName={hub?.name}
               onEdit={() => {
                 setViewModalOpen(false);
