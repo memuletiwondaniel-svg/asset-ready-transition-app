@@ -29,6 +29,21 @@ interface ApprovalRecord {
   comments: string | null;
 }
 
+// Role to user mapping - maps approval roles to user emails
+const ROLE_USER_MAPPING: Record<string, string> = {
+  'ORA Lead': 'roaa.abdullah@basrahgas.iq',
+  'Project Manager': 'willem.Moelker@basrahgas.iq',
+  'Deputy Plant Director': 'ewan.mcconnachie2@basrahgas.iq',
+  'Plant Director': 'yesr.tamoul@basrahgas.iq'
+};
+
+const APPROVAL_SEQUENCE = [
+  { role: 'ORA Lead', defaultPosition: 'Operations Readiness Lead' },
+  { role: 'Project Manager', defaultPosition: 'Senior Project Manager' },
+  { role: 'Deputy Plant Director', defaultPosition: 'Deputy Plant Director' },
+  { role: 'Plant Director', defaultPosition: 'Plant Director' }
+];
+
 const getFullAvatarUrl = (avatarUrl: string | null) => {
   if (!avatarUrl) return null;
   if (avatarUrl.startsWith('http')) return avatarUrl;
@@ -36,40 +51,19 @@ const getFullAvatarUrl = (avatarUrl: string | null) => {
   return data.publicUrl;
 };
 
-// Fetch approvals from the database for a specific plan
-const useORPApprovals = (planId: string) => {
+const useApproverProfiles = () => {
   return useQuery({
-    queryKey: ['orp-approvals', planId],
+    queryKey: ['ora-approver-profiles'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('orp_approvals')
-        .select('*')
-        .eq('orp_plan_id', planId)
-        .order('created_at', { ascending: true });
-
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!planId
-  });
-};
-
-// Fetch profiles for approvers by user_id
-const useApproverProfilesByIds = (userIds: string[]) => {
-  return useQuery({
-    queryKey: ['approver-profiles-by-id', userIds],
-    queryFn: async () => {
-      if (userIds.length === 0) return [];
-      
+      const emails = Object.values(ROLE_USER_MAPPING);
       const { data, error } = await supabase
         .from('profiles')
-        .select('user_id, full_name, first_name, last_name, position, avatar_url')
-        .in('user_id', userIds);
+        .select('email, full_name, first_name, last_name, position, avatar_url')
+        .in('email', emails);
 
       if (error) throw error;
       return data || [];
-    },
-    enabled: userIds.length > 0
+    }
   });
 };
 
@@ -104,8 +98,8 @@ const getStatusConfig = (status: string) => {
       return {
         icon: Clock,
         label: 'Unknown',
-        badgeClass: 'bg-muted text-muted-foreground',
-        accentClass: 'border-l-muted'
+        badgeClass: '',
+        accentClass: 'border-l-border'
       };
   }
 };
@@ -145,7 +139,6 @@ const ApprovalCard = ({ approval, isLast }: ApprovalCardProps) => {
                     <span className="text-muted-foreground">·</span>
                     <span className="text-sm text-muted-foreground">{approval.position}</span>
                   </div>
-                  <span className="text-xs text-muted-foreground">{approval.role}</span>
                 </div>
               </div>
               
@@ -176,59 +169,50 @@ const ApprovalCard = ({ approval, isLast }: ApprovalCardProps) => {
 };
 
 export const ORAApprovalsPanel: React.FC<ORAApprovalsPanelProps> = ({ planId }) => {
-  // Fetch real approvals from the database
-  const { data: dbApprovals, isLoading: approvalsLoading } = useORPApprovals(planId);
-  
-  // Extract user IDs from approvals that have approver_user_id
-  const approverUserIds = useMemo(() => {
-    return (dbApprovals || [])
-      .map(a => a.approver_user_id)
-      .filter((id): id is string => !!id);
-  }, [dbApprovals]);
-
-  // Fetch profiles for those users
-  const { data: profiles, isLoading: profilesLoading } = useApproverProfilesByIds(approverUserIds);
+  const { data: profiles, isLoading } = useApproverProfiles();
 
   // Build approvals list with real user data
   const approvals = useMemo((): ApprovalRecord[] => {
-    if (!dbApprovals) return [];
-
     const profileMap = new Map(
-      profiles?.map(p => [p.user_id, p]) || []
+      profiles?.map(p => [p.email?.toLowerCase(), p]) || []
     );
 
-    return dbApprovals.map((dbApproval, index) => {
-      const profile = dbApproval.approver_user_id 
-        ? profileMap.get(dbApproval.approver_user_id) 
-        : null;
+    // Mock approval data - in production this would come from the database
+    const mockApprovalData = [
+      { status: 'APPROVED' as const, approvalDate: new Date('2026-01-05T09:30:00'), comments: 'All ORA activities have been reviewed and verified. Training plan is comprehensive and maintenance readiness checklist is complete.' },
+      { status: 'APPROVED' as const, approvalDate: new Date('2026-01-06T14:15:00'), comments: 'Project deliverables align with operational requirements. Resource allocation is adequate.' },
+      { status: 'APPROVED' as const, approvalDate: new Date('2026-01-07T11:45:00'), comments: 'Reviewed handover documentation and maintenance readiness. All safety protocols have been addressed.' },
+      { status: 'APPROVED' as const, approvalDate: new Date('2026-01-08T16:30:00'), comments: 'Final approval granted. ORA Plan meets all operational readiness criteria.' }
+    ];
+
+    return APPROVAL_SEQUENCE.map((seq, index) => {
+      const email = ROLE_USER_MAPPING[seq.role]?.toLowerCase();
+      const profile = profileMap.get(email);
+      const approvalData = mockApprovalData[index];
       
       const fullName = profile?.full_name || 
         (profile?.first_name && profile?.last_name 
           ? `${profile.first_name} ${profile.last_name}` 
-          : dbApproval.approver_role);
-
-      const position = profile?.position || dbApproval.approver_role;
+          : seq.role);
 
       return {
-        id: dbApproval.id,
+        id: `${index + 1}`,
         sequenceOrder: index + 1,
-        role: dbApproval.approver_role,
+        role: seq.role,
         name: fullName,
-        position: position,
+        position: profile?.position || seq.defaultPosition,
         avatarUrl: getFullAvatarUrl(profile?.avatar_url || null),
-        status: dbApproval.status as 'APPROVED' | 'PENDING' | 'REJECTED',
-        approvalDate: dbApproval.approved_at ? new Date(dbApproval.approved_at) : null,
-        comments: dbApproval.comments
+        status: approvalData.status,
+        approvalDate: approvalData.approvalDate,
+        comments: approvalData.comments
       };
     });
-  }, [dbApprovals, profiles]);
+  }, [profiles]);
 
   const approvedCount = approvals.filter(a => a.status === 'APPROVED').length;
   const totalCount = approvals.length;
-  const progress = totalCount > 0 ? (approvedCount / totalCount) * 100 : 0;
-  const allApproved = totalCount > 0 && approvedCount === totalCount;
-
-  const isLoading = approvalsLoading || profilesLoading;
+  const progress = (approvedCount / totalCount) * 100;
+  const allApproved = approvedCount === totalCount;
 
   if (isLoading) {
     return (
@@ -240,18 +224,6 @@ export const ORAApprovalsPanel: React.FC<ORAApprovalsPanelProps> = ({ planId }) 
               <div key={i} className="h-24 bg-muted rounded" />
             ))}
           </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (approvals.length === 0) {
-    return (
-      <div className="p-6 space-y-5 max-w-3xl mx-auto">
-        <div className="text-center py-8 text-muted-foreground">
-          <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
-          <p className="text-lg font-medium">No Approvals Configured</p>
-          <p className="text-sm">Approval workflow has not been set up for this plan yet.</p>
         </div>
       </div>
     );
