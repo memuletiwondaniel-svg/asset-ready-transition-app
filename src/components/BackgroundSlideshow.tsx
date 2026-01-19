@@ -106,8 +106,8 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = ({ showFunFacts 
   ];
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [previousImageIndex, setPreviousImageIndex] = useState<number | null>(null);
   const [loadedImages, setLoadedImages] = useState<Set<number>>(new Set());
-
   // Preload all images on mount
   useEffect(() => {
     images.forEach((src, index) => {
@@ -129,11 +129,17 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = ({ showFunFacts 
 
   // Slideshow interval
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % images.length);
+    const FADE_MS = 2500;
+
+    const interval = window.setInterval(() => {
+      setCurrentImageIndex((prevIndex) => {
+        setPreviousImageIndex(prevIndex);
+        window.setTimeout(() => setPreviousImageIndex(null), FADE_MS);
+        return (prevIndex + 1) % images.length;
+      });
     }, 7000); // Change image every 7 seconds
 
-    return () => clearInterval(interval);
+    return () => window.clearInterval(interval);
   }, [images.length]);
 
   const isFirstImageLoaded = loadedImages.has(0);
@@ -149,28 +155,53 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = ({ showFunFacts 
         }`}
       />
       
-      {/* Slideshow images */}
-      {images.map((image, index) => {
-        const isActive = index === currentImageIndex && loadedImages.has(index);
+      {/* Slideshow images (2-layer crossfade to avoid abrupt swaps) */}
+      {(() => {
+        const FADE_MS = 2500;
+        const DISPLAY_MS = 7000;
+
+        const currentSrc = images[currentImageIndex];
+        const prevSrc = previousImageIndex !== null ? images[previousImageIndex] : null;
+
+        const currentLoaded = loadedImages.has(currentImageIndex);
+        const prevLoaded = previousImageIndex !== null ? loadedImages.has(previousImageIndex) : false;
+
         return (
-          <div
-            key={index}
-            className={`absolute inset-0 transition-opacity duration-[3000ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${
-              isActive ? 'opacity-100' : 'opacity-0'
-            }`}
-          >
-            <img
-              src={image}
-              alt=""
-              loading={index === 0 ? "eager" : "lazy"}
-              className={`w-full h-full object-cover object-center ${
-                isActive ? 'animate-ken-burns' : ''
+          <>
+            {/* Previous layer: fades out while the new one fades in */}
+            {prevSrc && prevLoaded && (
+              <div
+                className={`absolute inset-0 transition-opacity duration-[${FADE_MS}ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${
+                  currentLoaded ? 'opacity-0' : 'opacity-100'
+                }`}
+              >
+                <img
+                  src={prevSrc}
+                  alt=""
+                  loading={previousImageIndex === 0 ? 'eager' : 'lazy'}
+                  className="w-full h-full object-cover object-center animate-ken-burns"
+                  style={{ animationDuration: `${DISPLAY_MS}ms` }}
+                />
+              </div>
+            )}
+
+            {/* Current layer */}
+            <div
+              className={`absolute inset-0 transition-opacity duration-[${FADE_MS}ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${
+                currentLoaded ? 'opacity-100' : 'opacity-0'
               }`}
-              style={{ animationDuration: '7000ms' }}
-            />
-          </div>
+            >
+              <img
+                src={currentSrc}
+                alt=""
+                loading={currentImageIndex === 0 ? 'eager' : 'lazy'}
+                className={`w-full h-full object-cover object-center ${currentLoaded ? 'animate-ken-burns' : ''}`}
+                style={{ animationDuration: `${DISPLAY_MS}ms` }}
+              />
+            </div>
+          </>
         );
-      })}
+      })()}
       
       {/* Overlay for better text readability */}
       <div className="absolute inset-0 bg-black/30" />
