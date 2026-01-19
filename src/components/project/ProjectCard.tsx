@@ -85,29 +85,28 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
 
   return (
     <Card 
-      className={`group relative overflow-hidden border-border/50 bg-card transition-all duration-200 ease-out group-hover/cards:opacity-60 hover:!opacity-100 hover:shadow-xl hover:shadow-primary/10 hover:border-primary/30 hover:-translate-y-1 hover:scale-[1.01] hover:ring-1 hover:ring-primary/20 cursor-pointer ${isDragging ? 'opacity-50' : ''}`}
+      className={`group relative border-border/50 bg-card transition-all duration-200 ease-out group-hover/cards:opacity-60 hover:!opacity-100 hover:shadow-xl hover:shadow-primary/10 hover:border-primary/30 hover:-translate-y-1 hover:scale-[1.01] hover:ring-1 hover:ring-primary/20 cursor-pointer ${isDragging ? 'opacity-50' : ''}`}
       onClick={handleCardClick}
     >
       {/* Favorite Star - Top Right */}
-      <Button
-        variant="ghost"
-        size="sm"
+      <button
+        type="button"
         onClick={(e) => {
           e.stopPropagation();
           onToggleFavorite();
         }}
-        className={`absolute top-2 right-2 h-8 w-8 p-0 z-10 transition-all duration-200 hover:bg-yellow-500/10 ${
+        className={`absolute top-3 right-3 h-8 w-8 flex items-center justify-center rounded-full z-20 transition-all duration-200 hover:bg-yellow-500/20 ${
           isFavorite ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
         }`}
       >
         <Star
           className={`h-5 w-5 transition-all duration-200 ${
             isFavorite
-              ? 'fill-yellow-400 text-yellow-400 scale-110'
-              : 'text-muted-foreground hover:text-yellow-400 hover:scale-110'
+              ? 'fill-yellow-400 text-yellow-400'
+              : 'text-muted-foreground hover:text-yellow-400'
           }`}
         />
-      </Button>
+      </button>
       
       <CardContent className="relative p-4 transition-all duration-200">
         <div className="flex items-start justify-between mb-3">
