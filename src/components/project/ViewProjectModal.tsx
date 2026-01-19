@@ -197,17 +197,6 @@ export const ViewProjectModal: React.FC<ViewProjectModalProps> = ({
               {getProjectId()} - {project.project_title}
             </DialogTitle>
             <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => {
-                  onClose();
-                  navigate(`/project/${project.id}`);
-                }}
-              >
-                <ExternalLink className="h-4 w-4 mr-2" />
-                View Dashboard
-              </Button>
               {onEdit && (
                 <Button variant="default" size="sm" onClick={onEdit}>
                   <Edit className="h-4 w-4 mr-2" />
