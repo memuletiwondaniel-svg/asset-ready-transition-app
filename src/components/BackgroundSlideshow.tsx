@@ -131,19 +131,21 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = ({ showFunFacts 
   // Slideshow interval with smooth crossfade
   useEffect(() => {
     const interval = setInterval(() => {
-      setPreviousImageIndex(currentImageIndex);
-      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % images.length);
-      
+      setCurrentImageIndex((prevIndex) => {
+        setPreviousImageIndex(prevIndex);
+        return (prevIndex + 1) % images.length;
+      });
+
       // Clear previous image after transition completes
       const timeout = setTimeout(() => {
         setPreviousImageIndex(null);
-      }, 4500); // Slightly longer than transition to ensure smooth cleanup
-      
+      }, 5200); // Slightly longer than fade duration
+
       return () => clearTimeout(timeout);
-    }, 8000); // Longer interval for smoother experience
+    }, 10000); // Give each image more time to "settle" before fading
 
     return () => clearInterval(interval);
-  }, [currentImageIndex, images.length]);
+  }, [images.length]);
 
   const isFirstImageLoaded = loadedImages.has(0);
 
@@ -170,13 +172,13 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = ({ showFunFacts 
             alt=""
             loading={index === 0 ? "eager" : "lazy"}
             style={{
-              willChange: isActive || isPrevious ? 'opacity, transform' : 'auto',
+              willChange: isActive || isPrevious ? 'opacity' : 'auto',
             }}
             className={`
               absolute inset-0 w-full h-full object-cover object-center
-              transition-all duration-[4000ms] ease-[cubic-bezier(0.4,0,0.2,1)]
-              ${isActive ? 'opacity-100 scale-100 z-20 animate-ken-burns' : ''}
-              ${isPrevious ? 'opacity-100 scale-105 z-10' : ''}
+              transition-opacity duration-[5000ms] ease-in-out
+              ${isActive ? 'opacity-100 z-20 animate-ken-burns' : ''}
+              ${isPrevious ? 'opacity-100 z-10' : ''}
               ${!isActive && !isPrevious ? 'opacity-0 z-0' : ''}
             `}
           />
