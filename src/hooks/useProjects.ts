@@ -18,6 +18,7 @@ export interface Project {
   created_at: string;
   updated_at: string;
   is_active: boolean;
+  is_favorite?: boolean;
   // Joined data
   plant_name?: string;
   station_name?: string;
