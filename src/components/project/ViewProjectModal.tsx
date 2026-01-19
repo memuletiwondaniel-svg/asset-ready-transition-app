@@ -549,11 +549,6 @@ export const ViewProjectModal: React.FC<ViewProjectModalProps> = ({
           </div>
         </ScrollArea>
 
-        <div className="px-6 py-4 border-t shrink-0 flex justify-end">
-          <Button variant="outline" onClick={onClose}>
-            Close
-          </Button>
-        </div>
       </DialogContent>
     </Dialog>
   );
