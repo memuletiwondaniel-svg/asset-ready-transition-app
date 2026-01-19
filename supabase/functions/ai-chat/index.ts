@@ -2039,8 +2039,10 @@ serve(async (req) => {
     if (assistantMessage?.tool_calls && assistantMessage.tool_calls.length > 0) {
       console.log("AI requested tool calls:", assistantMessage.tool_calls.length);
       
-      // Execute all tool calls
+      // Execute all tool calls and track navigation actions
       const toolResults = [];
+      let navigationAction: { action: string; path: string } | null = null;
+      
       for (const toolCall of assistantMessage.tool_calls) {
         const toolName = toolCall.function.name;
         const toolArgs = JSON.parse(toolCall.function.arguments || '{}');
@@ -2048,6 +2050,11 @@ serve(async (req) => {
         console.log(`Executing tool: ${toolName}`, toolArgs);
         const result = await executeTool(toolName, toolArgs, supabase);
         console.log(`Tool result for ${toolName}:`, result);
+        
+        // Capture navigation action if present
+        if (result?.action === "navigate" && result?.path) {
+          navigationAction = { action: "navigate", path: result.path };
+        }
         
         toolResults.push({
           role: "tool",
@@ -2086,7 +2093,12 @@ serve(async (req) => {
       }
 
       const finalResult = await finalResponse.json();
-      const finalContent = finalResult.choices?.[0]?.message?.content || "I couldn't process that request.";
+      let finalContent = finalResult.choices?.[0]?.message?.content || "I couldn't process that request.";
+      
+      // Append navigation action to response so frontend can detect and execute
+      if (navigationAction) {
+        finalContent += ` ${JSON.stringify(navigationAction)}`;
+      }
       
       // Return as SSE format for compatibility with frontend
       const sseData = `data: ${JSON.stringify({

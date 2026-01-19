@@ -399,10 +399,11 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
       if (assistantMessage) {
         await saveMessage('assistant', assistantMessage);
         
-        const navigationMatch = assistantMessage.match(/\{"action":\s*"navigate",\s*"path":\s*"([^"]+)"\}/);
+        // More flexible regex to detect navigation JSON anywhere in message with optional extra fields
+        const navigationMatch = assistantMessage.match(/\{"action"\s*:\s*"navigate"\s*,\s*"path"\s*:\s*"([^"]+)"[^}]*\}/);
         if (navigationMatch) {
           const path = navigationMatch[1];
-          const cleanMessage = assistantMessage.replace(/\{"action":\s*"navigate",\s*"path":\s*"[^"]+"\}/, '').trim();
+          const cleanMessage = assistantMessage.replace(/\{"action"\s*:\s*"navigate"\s*,\s*"path"\s*:\s*"[^"]+?"[^}]*\}/g, '').trim();
           setMessages([...newMessages, { role: 'assistant', content: cleanMessage }]);
           
           setTimeout(() => {
