@@ -106,6 +106,7 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = ({ showFunFacts 
   ];
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [previousImageIndex, setPreviousImageIndex] = useState<number | null>(null);
   const [loadedImages, setLoadedImages] = useState<Set<number>>(new Set());
 
   // Preload all images on mount
@@ -127,14 +128,22 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = ({ showFunFacts 
     });
   }, []);
 
-  // Slideshow interval
+  // Slideshow interval with smooth crossfade
   useEffect(() => {
     const interval = setInterval(() => {
+      setPreviousImageIndex(currentImageIndex);
       setCurrentImageIndex((prevIndex) => (prevIndex + 1) % images.length);
-    }, 7000); // Change image every 7 seconds
+      
+      // Clear previous image after transition completes
+      const timeout = setTimeout(() => {
+        setPreviousImageIndex(null);
+      }, 4000); // Match transition duration
+      
+      return () => clearTimeout(timeout);
+    }, 8000); // Longer interval for smoother experience
 
     return () => clearInterval(interval);
-  }, [images.length]);
+  }, [currentImageIndex, images.length]);
 
   const isFirstImageLoaded = loadedImages.has(0);
 
@@ -150,17 +159,29 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = ({ showFunFacts 
       />
       
       {/* Slideshow images */}
-      {images.map((image, index) => (
-        <img
-          key={index}
-          src={image}
-          alt=""
-          loading={index === 0 ? "eager" : "lazy"}
-          className={`absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-[3000ms] ease-in-out ${
-            index === currentImageIndex && loadedImages.has(index) ? 'opacity-100' : 'opacity-0'
-          }`}
-        />
-      ))}
+      {images.map((image, index) => {
+        const isActive = index === currentImageIndex && loadedImages.has(index);
+        const isPrevious = index === previousImageIndex && loadedImages.has(index);
+        
+        return (
+          <img
+            key={index}
+            src={image}
+            alt=""
+            loading={index === 0 ? "eager" : "lazy"}
+            style={{
+              willChange: isActive || isPrevious ? 'opacity, transform' : 'auto',
+            }}
+            className={`
+              absolute inset-0 w-full h-full object-cover object-center
+              transition-all duration-[4000ms] ease-[cubic-bezier(0.4,0,0.2,1)]
+              ${isActive ? 'opacity-100 scale-100 animate-ken-burns' : ''}
+              ${isPrevious ? 'opacity-0 scale-105' : ''}
+              ${!isActive && !isPrevious ? 'opacity-0 scale-100' : ''}
+            `}
+          />
+        );
+      })}
       
       {/* Overlay for better text readability */}
       <div className="absolute inset-0 bg-black/30" />
