@@ -221,7 +221,7 @@ export const ViewProjectModal: React.FC<ViewProjectModalProps> = ({
       <DialogContent className="max-w-5xl h-[90vh] flex flex-col p-0">
         <DialogHeader className="px-6 pt-6 pb-4 border-b shrink-0">
           <div className="flex items-center justify-between">
-            <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            <DialogTitle className="text-2xl font-bold text-foreground">
               {getProjectId()} - {project.project_title}
             </DialogTitle>
             <div className="flex gap-2">
