@@ -1910,6 +1910,280 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
   }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// DETERMINISTIC NAVIGATION CONTROLLER
+// Detects explicit navigation intents and handles them reliably without
+// depending on AI model tool-calling behavior
+// ═══════════════════════════════════════════════════════════════════════════
+
+interface NavigationIntent {
+  detected: boolean;
+  module: 'pssr' | 'ora' | 'orm' | 'p2a' | 'project' | 'task' | 'home' | null;
+  entitySearch: string | null;
+  isModuleOnly: boolean;
+}
+
+function detectNavigationIntent(message: string): NavigationIntent {
+  const lowerMessage = message.toLowerCase().trim();
+  
+  // Navigation trigger phrases
+  const navTriggers = [
+    /^(take me to|go to|open|navigate to|show me|bring me to|let'?s go to|i want to see|i need to see)\s+/i,
+    /^(pssr|ora|orm|p2a|project|task|home|dashboard)\b/i, // Direct module mention at start
+  ];
+  
+  const hasNavIntent = navTriggers.some(pattern => pattern.test(lowerMessage));
+  
+  if (!hasNavIntent) {
+    return { detected: false, module: null, entitySearch: null, isModuleOnly: false };
+  }
+  
+  // Normalize input: add spaces between letters and numbers (e.g., "DP300PSSR" -> "DP300 PSSR")
+  const normalized = message.replace(/([a-zA-Z])(\d)/g, '$1 $2').replace(/(\d)([a-zA-Z])/g, '$1 $2');
+  
+  // Detect module type
+  let module: NavigationIntent['module'] = null;
+  if (/pssr/i.test(normalized)) module = 'pssr';
+  else if (/\bora\b|operation(al)?\s*readiness/i.test(normalized)) module = 'ora';
+  else if (/\borm\b|or\s*maintenance/i.test(normalized)) module = 'orm';
+  else if (/p2a|project\s*to\s*asset/i.test(normalized)) module = 'p2a';
+  else if (/\bproject(s)?\b/i.test(normalized)) module = 'project';
+  else if (/\btask(s)?\b/i.test(normalized)) module = 'task';
+  else if (/\bhome\b|\bdashboard\b/i.test(normalized)) module = 'home';
+  
+  if (!module) {
+    return { detected: false, module: null, entitySearch: null, isModuleOnly: false };
+  }
+  
+  // Extract potential entity identifier (project codes like DP300, JV100, etc.)
+  const codeMatch = normalized.match(/\b([A-Z]{1,4}\d{2,4})\b/i);
+  const entitySearch = codeMatch ? codeMatch[1].toUpperCase() : null;
+  
+  // Check if this is just "go to PSSR" (module only) vs "go to DP300 PSSR" (specific entity)
+  const isModuleOnly = !entitySearch && !/(for|of)\s+\w+/i.test(normalized);
+  
+  console.log("🧭 NAV_INTENT_DETECTED:", { module, entitySearch, isModuleOnly });
+  
+  return { detected: true, module, entitySearch, isModuleOnly };
+}
+
+interface NavigationResult {
+  handled: boolean;
+  response?: string;
+  navigationJson?: string;
+}
+
+async function handleDeterministicNavigation(
+  intent: NavigationIntent,
+  supabaseClient: any
+): Promise<NavigationResult> {
+  if (!intent.detected || !intent.module) {
+    return { handled: false };
+  }
+  
+  // Module-only navigation (no specific entity)
+  if (intent.isModuleOnly || !intent.entitySearch) {
+    const modulePaths: Record<string, string> = {
+      pssr: '/pssr',
+      ora: '/ora',
+      orm: '/orm',
+      p2a: '/p2a',
+      project: '/projects',
+      task: '/tasks',
+      home: '/',
+    };
+    
+    const path = modulePaths[intent.module] || '/';
+    const moduleNames: Record<string, string> = {
+      pssr: 'PSSR Dashboard',
+      ora: 'ORA Dashboard',
+      orm: 'OR Maintenance',
+      p2a: 'P2A Handovers',
+      project: 'Projects',
+      task: 'Tasks',
+      home: 'Home',
+    };
+    
+    const response = `Got it! Opening the ${moduleNames[intent.module]} now.`;
+    const navigationJson = JSON.stringify({ action: "navigate", path });
+    
+    console.log("🧭 NAV_RESOLVED: Module-only navigation to", path);
+    return { handled: true, response, navigationJson };
+  }
+  
+  // Specific entity navigation - resolve from database
+  const searchTerm = intent.entitySearch;
+  
+  try {
+    switch (intent.module) {
+      case 'pssr': {
+        // Search PSSRs - prioritize pssr_id matches, then project_name
+        const { data: pssrs, error } = await supabaseClient
+          .from('pssrs')
+          .select('id, pssr_id, title, asset, status, project_name')
+          .or(`pssr_id.ilike.%${searchTerm}%,project_name.ilike.%${searchTerm}%,title.ilike.%${searchTerm}%,asset.ilike.%${searchTerm}%`)
+          .limit(10);
+        
+        if (error) {
+          console.error("🧭 NAV_ERROR: PSSR lookup failed:", error);
+          return {
+            handled: true,
+            response: `I had trouble looking up PSSRs. Opening the PSSR dashboard instead.`,
+            navigationJson: JSON.stringify({ action: "navigate", path: "/pssr" })
+          };
+        }
+        
+        if (!pssrs || pssrs.length === 0) {
+          console.log("🧭 NAV_RESOLVED: No PSSRs found for", searchTerm);
+          return {
+            handled: true,
+            response: `I couldn't find a PSSR matching "${searchTerm}". Opening the PSSR dashboard so you can search.`,
+            navigationJson: JSON.stringify({ action: "navigate", path: "/pssr" })
+          };
+        }
+        
+        if (pssrs.length === 1) {
+          const pssr = pssrs[0];
+          const label = pssr.pssr_id || pssr.title || `PSSR for ${pssr.asset}`;
+          const path = `/pssr/${pssr.id}/review`;
+          console.log("🧭 NAV_RESOLVED: Single PSSR match -", label, "->", path);
+          return {
+            handled: true,
+            response: `Found it! Taking you to ${label} now.`,
+            navigationJson: JSON.stringify({ action: "navigate", path })
+          };
+        }
+        
+        // Multiple matches - ask for clarification (no navigation)
+        const options = pssrs.slice(0, 5).map((p: any, i: number) => {
+          const label = p.pssr_id || p.title || `PSSR for ${p.asset}`;
+          return `${i + 1}. ${label} (${p.status})`;
+        }).join('\n');
+        
+        console.log("🧭 NAV_AMBIGUOUS: Multiple PSSRs found for", searchTerm);
+        return {
+          handled: true,
+          response: `I found ${pssrs.length} PSSRs matching "${searchTerm}". Which one?\n\n${options}\n\nJust reply with the number or name.`
+        };
+      }
+      
+      case 'ora': {
+        const { data: oraPlans, error } = await supabaseClient
+          .from('orp_plans')
+          .select(`id, phase, status, project:projects!inner(project_id_prefix, project_id_number, project_title)`)
+          .or(`projects.project_id_prefix.ilike.%${searchTerm}%,projects.project_id_number.ilike.%${searchTerm}%`)
+          .limit(10);
+        
+        if (error || !oraPlans || oraPlans.length === 0) {
+          return {
+            handled: true,
+            response: `I couldn't find an ORA plan for "${searchTerm}". Opening the ORA dashboard.`,
+            navigationJson: JSON.stringify({ action: "navigate", path: "/ora" })
+          };
+        }
+        
+        if (oraPlans.length === 1) {
+          const plan = oraPlans[0];
+          const code = `${plan.project?.project_id_prefix}${plan.project?.project_id_number}`;
+          return {
+            handled: true,
+            response: `Found it! Taking you to ORA plan for ${code} now.`,
+            navigationJson: JSON.stringify({ action: "navigate", path: `/ora/${plan.id}` })
+          };
+        }
+        
+        const options = oraPlans.slice(0, 5).map((p: any, i: number) => {
+          const code = `${p.project?.project_id_prefix}${p.project?.project_id_number}`;
+          return `${i + 1}. ${code} - ${p.phase} (${p.status})`;
+        }).join('\n');
+        
+        return {
+          handled: true,
+          response: `I found ${oraPlans.length} ORA plans matching "${searchTerm}". Which one?\n\n${options}`
+        };
+      }
+      
+      case 'orm': {
+        const { data: ormPlans, error } = await supabaseClient
+          .from('orm_plans')
+          .select(`id, status, overall_progress, project:projects!inner(project_id_prefix, project_id_number, project_title)`)
+          .or(`projects.project_id_prefix.ilike.%${searchTerm}%,projects.project_id_number.ilike.%${searchTerm}%`)
+          .limit(10);
+        
+        if (error || !ormPlans || ormPlans.length === 0) {
+          return {
+            handled: true,
+            response: `I couldn't find an ORM plan for "${searchTerm}". Opening the ORM dashboard.`,
+            navigationJson: JSON.stringify({ action: "navigate", path: "/orm" })
+          };
+        }
+        
+        if (ormPlans.length === 1) {
+          const plan = ormPlans[0];
+          const code = `${plan.project?.project_id_prefix}${plan.project?.project_id_number}`;
+          return {
+            handled: true,
+            response: `Found it! Taking you to ORM plan for ${code} now.`,
+            navigationJson: JSON.stringify({ action: "navigate", path: `/orm/${plan.id}` })
+          };
+        }
+        
+        const options = ormPlans.slice(0, 5).map((p: any, i: number) => {
+          const code = `${p.project?.project_id_prefix}${p.project?.project_id_number}`;
+          return `${i + 1}. ${code} (${p.status})`;
+        }).join('\n');
+        
+        return {
+          handled: true,
+          response: `I found ${ormPlans.length} ORM plans matching "${searchTerm}". Which one?\n\n${options}`
+        };
+      }
+      
+      case 'project': {
+        const { data: projects, error } = await supabaseClient
+          .from('projects')
+          .select('id, project_id_prefix, project_id_number, project_title')
+          .or(`project_id_prefix.ilike.%${searchTerm}%,project_id_number.ilike.%${searchTerm}%,project_title.ilike.%${searchTerm}%`)
+          .limit(10);
+        
+        if (error || !projects || projects.length === 0) {
+          return {
+            handled: true,
+            response: `I couldn't find a project matching "${searchTerm}". Opening the Projects page.`,
+            navigationJson: JSON.stringify({ action: "navigate", path: "/projects" })
+          };
+        }
+        
+        if (projects.length === 1) {
+          const proj = projects[0];
+          const code = `${proj.project_id_prefix}${proj.project_id_number}`;
+          return {
+            handled: true,
+            response: `Found it! Taking you to project ${code} now.`,
+            navigationJson: JSON.stringify({ action: "navigate", path: `/projects/${proj.id}` })
+          };
+        }
+        
+        const options = projects.slice(0, 5).map((p: any, i: number) => {
+          const code = `${p.project_id_prefix}${p.project_id_number}`;
+          return `${i + 1}. ${code} - ${p.project_title}`;
+        }).join('\n');
+        
+        return {
+          handled: true,
+          response: `I found ${projects.length} projects matching "${searchTerm}". Which one?\n\n${options}`
+        };
+      }
+      
+      default:
+        return { handled: false };
+    }
+  } catch (err) {
+    console.error("🧭 NAV_ERROR: Exception during navigation resolution:", err);
+    return { handled: false };
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -1946,6 +2220,32 @@ serve(async (req) => {
       return new Response(sseData, {
         headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
       });
+    }
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // DETERMINISTIC NAVIGATION: Handle navigation intents before AI processing
+    // This ensures navigation ALWAYS happens when Bob claims it will
+    // ═══════════════════════════════════════════════════════════════════════
+    if (lastUserMessage) {
+      const navIntent = detectNavigationIntent(lastUserMessage.content);
+      if (navIntent.detected) {
+        const navResult = await handleDeterministicNavigation(navIntent, supabase);
+        if (navResult.handled) {
+          let responseContent = navResult.response || "Navigating now.";
+          if (navResult.navigationJson) {
+            responseContent += ` ${navResult.navigationJson}`;
+          }
+          
+          const sseData = `data: ${JSON.stringify({
+            choices: [{ delta: { content: responseContent } }]
+          })}\n\ndata: [DONE]\n\n`;
+          
+          console.log("🧭 NAV_COMPLETE: Returning deterministic navigation response");
+          return new Response(sseData, {
+            headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+          });
+        }
+      }
     }
 
     // Transform messages to support vision with multiple images
