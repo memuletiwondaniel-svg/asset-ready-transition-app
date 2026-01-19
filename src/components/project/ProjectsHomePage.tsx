@@ -10,7 +10,7 @@ import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useProjects } from '@/hooks/useProjects';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { AddProjectModal } from '@/components/project/AddProjectModal';
+import { AddProjectWizard } from '@/components/project/AddProjectWizard';
 
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { format } from 'date-fns';
@@ -317,7 +317,7 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
         </div>
 
       {/* Add Project Modal */}
-      <AddProjectModal 
+      <AddProjectWizard 
         open={isAddModalOpen} 
         onClose={() => setIsAddModalOpen(false)} 
       />
