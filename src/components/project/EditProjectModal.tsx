@@ -488,22 +488,6 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
                   />
                 </div>
 
-                {/* Favorite Toggle */}
-                <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/30">
-                  <div className="flex items-center gap-3">
-                    <Star className={cn("h-5 w-5", formData.is_favorite ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground")} />
-                    <div>
-                      <Label htmlFor="is_favorite" className="font-medium cursor-pointer">Mark as Favorite</Label>
-                      <p className="text-xs text-muted-foreground">Favorite projects appear at the top of your list</p>
-                    </div>
-                  </div>
-                  <Switch
-                    id="is_favorite"
-                    checked={formData.is_favorite}
-                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_favorite: checked }))}
-                  />
-                </div>
-
                 {/* Portfolio and Hub - 2 columns */}
                 <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
                   <div className="space-y-2">
