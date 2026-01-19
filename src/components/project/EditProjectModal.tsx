@@ -477,7 +477,7 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
                   <div className="grid gap-5 grid-cols-1 md:grid-cols-2">
                     <div className="space-y-2">
                       <Label htmlFor="region" className="text-sm font-medium text-muted-foreground">
-                        Portfolio (Region)
+                        Portfolio
                       </Label>
                       <EnhancedCombobox
                         options={regions.map(region => ({ value: region.id, label: region.name }))}
@@ -514,7 +514,7 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
                   {/* Locations - full width */}
                   <div className="space-y-2 pt-2">
                     <Label htmlFor="locations" className="text-sm font-medium text-muted-foreground">
-                      Locations (Stations)
+                      Locations
                     </Label>
                     <MultiSelectCombobox
                       options={stations.map(station => ({ value: station.id, label: station.name }))}
