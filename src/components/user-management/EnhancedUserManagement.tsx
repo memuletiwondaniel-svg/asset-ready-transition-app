@@ -972,7 +972,10 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
         <EnhancedUserDetailsModal
           user={editingUser as any}
           isOpen={!!editingUser}
-          onClose={() => setEditingUser(null)}
+          onClose={() => {
+            setEditingUser(null);
+            setSelectedUser(null);
+          }}
           onUserUpdated={fetchUsers}
           initialEditMode={true}
         />
