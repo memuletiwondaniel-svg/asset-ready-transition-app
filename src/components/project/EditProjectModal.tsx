@@ -454,7 +454,7 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
                       }
                       placeholder="Prefix"
                       allowCreate={false}
-                      className="w-28"
+                      className="w-28 bg-muted/50"
                     />
                     <Input
                       value={formData.project_id_number}
@@ -463,7 +463,7 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
                         setFormData(prev => ({ ...prev, project_id_number: value }));
                       }}
                       placeholder="Enter number"
-                      className="flex-1 bg-background"
+                      className="flex-1 bg-muted/50"
                     />
                   </div>
                   {formData.project_id_prefix && formData.project_id_number && (
@@ -484,7 +484,7 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
                     onChange={(e) => setFormData(prev => ({ ...prev, project_title: e.target.value }))}
                     placeholder="Enter project title"
                     required
-                    className="bg-background"
+                    className="bg-muted/50"
                   />
                 </div>
 
@@ -509,7 +509,7 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
                         placeholder="Select portfolio"
                         emptyText="No portfolios found"
                         allowCreate={false}
-                        className="w-full bg-background"
+                        className="w-full bg-muted/50"
                       />
                     </div>
 
@@ -527,7 +527,7 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
                         placeholder="Select or create hub"
                         emptyText="No hubs found"
                         createText="Create hub"
-                        className="w-full bg-background"
+                        className="w-full bg-muted/50"
                       />
                     </div>
                   </div>
