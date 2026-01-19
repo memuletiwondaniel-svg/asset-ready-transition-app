@@ -729,11 +729,11 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
         />
 
         {/* Main Tabs for Users and Configuration */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="max-w-7xl mx-auto w-full px-6 pt-6">
-            <Tabs value={activeMainTab} onValueChange={setActiveMainTab} className="w-full flex flex-col flex-1">
-              {/* Sticky Tabs Row */}
-              <TabsList className="grid w-full grid-cols-3 max-w-xl mb-4 bg-background/95 backdrop-blur-md">
+        <div className="flex-1 flex flex-col overflow-hidden min-h-0">
+          <div className="max-w-7xl mx-auto w-full px-6 pt-6 flex-1 flex flex-col min-h-0">
+            <Tabs value={activeMainTab} onValueChange={setActiveMainTab} className="w-full flex flex-col flex-1 min-h-0">
+              {/* Tabs Row (kept fixed; only the table body scrolls) */}
+              <TabsList className="grid w-full grid-cols-3 max-w-xl mb-4 bg-background/95 backdrop-blur-md flex-shrink-0">
                 <TabsTrigger value="users" className="flex items-center gap-2">
                   <Users className="h-4 w-4" />
                   Users
@@ -748,8 +748,8 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="users" className="flex-1 flex flex-col space-y-4 mt-0 overflow-hidden">
-                {/* Sticky Search and Filters Bar */}
+              <TabsContent value="users" className="flex-1 flex flex-col space-y-4 mt-0 overflow-hidden min-h-0">
+                {/* Search and Filters Bar (fixed) */}
                 <Card className="border-border/40 shadow-sm animate-fade-in bg-card/95 backdrop-blur-md flex-shrink-0">
                   <CardContent className="p-6">
                     <div className="flex items-center gap-3">
@@ -891,8 +891,8 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
                 </Card>
 
                 {/* Users Table with Scrollable Body */}
-                <Card className="border-border/40 shadow-sm animate-fade-in flex-1 flex flex-col overflow-hidden mb-6">
-                  <CardContent className="p-0 flex-1 flex flex-col overflow-hidden">
+                <Card className="border-border/40 shadow-sm animate-fade-in flex-1 flex flex-col overflow-hidden mb-6 min-h-0">
+                  <CardContent className="p-0 flex-1 flex flex-col overflow-hidden min-h-0">
                     <DndContext
                       sensors={sensors}
                       collisionDetection={closestCenter}
@@ -919,7 +919,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
                         </Table>
                         
                         {/* Scrollable Table Body */}
-                        <div className="flex-1 overflow-auto">
+                        <div className="flex-1 overflow-auto min-h-0">
                           <Table>
                             <TableBody>
                               {filteredUsers.map((user, index) => (
