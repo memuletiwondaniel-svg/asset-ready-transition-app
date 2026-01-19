@@ -585,19 +585,60 @@ You have FULL real-time access through these tools:
 
 ALWAYS use these tools for data queries. NEVER say you don't have access.
 
-=== NAVIGATION ===
-Only navigate when user EXPLICITLY asks (e.g., "take me to", "open", "go to").
-DO NOT navigate for informational questions.
+=== NAVIGATION BEHAVIOR ===
 
-Available pages:
+WHEN TO NAVIGATE:
+Only navigate when user EXPLICITLY asks using phrases like:
+- "take me to...", "go to...", "show me...", "open...", "navigate to..."
+- "I want to see the PSSR for DP300"
+- "Show my tasks", "Open the project page"
+
+DO NOT navigate for informational questions (e.g., "how many PSSRs are there?").
+
+RESPONSE STYLE - Be succinct and friendly:
+- DO: "Sure! Here's the link to the DP300 PSSR: [LINK]"
+- DO: "Got it! Opening your tasks now: [LINK]"
+- DO: "Here's the ORA plan you requested: [LINK]"
+- DON'T: Write long explanations before providing the link
+- DON'T: Ask for confirmation if the request is clear
+
+WORKFLOW FOR SPECIFIC ENTITIES:
+1. If user mentions a specific entity (e.g., "PSSR for DP300", "project JV100", "ORA for DP200"):
+   - First use resolve_entity_for_navigation to find the entity ID
+   - If SINGLE match found: use navigate_to_page with entity details and give succinct response
+   - If MULTIPLE matches found: briefly list them (max 5) and ask which one
+   - If NO matches: say "I couldn't find [entity]. Would you like me to search differently?"
+
+2. If user mentions a module without specifics (e.g., "take me to PSSR", "open projects"):
+   - Use navigate_to_page directly for the landing page
+
+AVAILABLE DESTINATIONS:
 - home: / (Dashboard)
 - my-tasks: /my-tasks
-- pssr: /pssr
-- ora-plans: /operation-readiness
-- or-maintenance: /or-maintenance
-- p2a-handover: /p2a-handover
+- pssr: /pssr (PSSR landing page)
+- pssr-detail: /pssr/{id}/review (Specific PSSR - requires entity_id)
+- project-detail: /project/{id} (Specific project - requires entity_id)
+- ora-plans: /operation-readiness (ORA landing page)
+- ora-detail: /operation-readiness/{id} (Specific ORA plan - requires entity_id)
+- or-maintenance: /or-maintenance (ORM landing page)
+- orm-detail: /or-maintenance/{id} (Specific ORM plan - requires entity_id)
+- p2a-handover: /p2a-handover (P2A landing page)
+- p2a-detail: /p2a-handover/{id} (Specific P2A - requires entity_id)
 - projects: /projects
+- project-management: /project-management
 - admin-tools: /admin-tools
+
+NAVIGATION RESPONSE EXAMPLES:
+User: "Take me to the PSSR for DP300"
+Bob: (uses resolve_entity_for_navigation first)
+- If 1 result: "Got it! Here's the PSSR for DP300: [LINK]"
+- If multiple: "I found 3 PSSRs for DP300:\n1. PSSR-DP300-001 (Compressor A)\n2. PSSR-DP300-002 (Pump Station)\nWhich one would you like?"
+
+User: "Open my tasks"
+Bob: "Sure thing! Here's your tasks page: [LINK]"
+
+User: "Go to the ORA plans"
+Bob: "Opening Operation Readiness page for you: [LINK]"
 
 === RESPONSE PHILOSOPHY ===
 
@@ -1106,17 +1147,47 @@ const tools = [
     type: "function",
     function: {
       name: "navigate_to_page",
-      description: "Navigate user to a specific page. ONLY use when user explicitly asks to go somewhere.",
+      description: "Navigate user to a specific page or entity. Use for module landing pages OR specific entities like a PSSR, project, ORA plan. ONLY use when user EXPLICITLY asks to 'go to', 'take me to', 'show me', 'open', 'navigate to' a page or item. For specific entities, first use resolve_entity_for_navigation to get the entity_id.",
       parameters: {
         type: "object",
         properties: {
           page: { 
             type: "string", 
-            enum: ["home", "my-tasks", "pssr", "ora-plans", "or-maintenance", "p2a-handover", "projects", "admin-tools"],
-            description: "Page to navigate to"
+            enum: ["home", "my-tasks", "pssr", "pssr-detail", "project-detail", "ora-plans", "ora-detail", "or-maintenance", "orm-detail", "p2a-handover", "p2a-detail", "projects", "project-management", "admin-tools"],
+            description: "Target page or entity type. Use '-detail' variants for specific entities (requires entity_id)."
+          },
+          entity_id: {
+            type: "string",
+            description: "UUID of the specific entity for detail pages. Required for pssr-detail, project-detail, ora-detail, orm-detail, p2a-detail."
+          },
+          entity_label: {
+            type: "string",
+            description: "Human-readable label for the entity (e.g., 'PSSR-DP300-001', 'Project DP300'). Used in response messages."
           }
         },
         required: ["page"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "resolve_entity_for_navigation",
+      description: "Look up entity IDs for navigation. Use when user mentions a project code (DP300), PSSR reference (PSSR-DP300-001), or wants to navigate to a specific item. Call this BEFORE navigate_to_page when the user asks to go to a specific entity.",
+      parameters: {
+        type: "object",
+        properties: {
+          entity_type: {
+            type: "string",
+            enum: ["pssr", "project", "ora", "orm", "p2a"],
+            description: "Type of entity to look up: pssr, project, ora (ORA/ORP plan), orm (OR Maintenance plan), p2a (P2A Handover)"
+          },
+          search_term: {
+            type: "string",
+            description: "Project code (e.g., DP300), PSSR number (e.g., PSSR-DP300-001), or search term to find the entity"
+          }
+        },
+        required: ["entity_type", "search_term"]
       }
     }
   }
@@ -1630,18 +1701,231 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
     }
     
     case "navigate_to_page": {
-      const paths: Record<string, string> = {
-        "home": "/",
-        "my-tasks": "/my-tasks",
-        "pssr": "/pssr",
-        "ora-plans": "/operation-readiness",
-        "or-maintenance": "/or-maintenance",
-        "p2a-handover": "/p2a-handover",
-        "projects": "/projects",
-        "admin-tools": "/admin-tools"
+      const entityId = args.entity_id;
+      const entityLabel = args.entity_label;
+      
+      const pathBuilders: Record<string, (id?: string) => string> = {
+        "home": () => "/",
+        "my-tasks": () => "/my-tasks",
+        "pssr": () => "/pssr",
+        "pssr-detail": (id) => id ? `/pssr/${id}/review` : "/pssr",
+        "project-detail": (id) => id ? `/project/${id}` : "/projects",
+        "ora-plans": () => "/operation-readiness",
+        "ora-detail": (id) => id ? `/operation-readiness/${id}` : "/operation-readiness",
+        "or-maintenance": () => "/or-maintenance",
+        "orm-detail": (id) => id ? `/or-maintenance/${id}` : "/or-maintenance",
+        "p2a-handover": () => "/p2a-handover",
+        "p2a-detail": (id) => id ? `/p2a-handover/${id}` : "/p2a-handover",
+        "projects": () => "/projects",
+        "project-management": () => "/project-management",
+        "admin-tools": () => "/admin-tools"
       };
       
-      return { action: "navigate", path: paths[args.page] || "/" };
+      const pathFn = pathBuilders[args.page];
+      const path = pathFn ? pathFn(entityId) : "/";
+      
+      return { 
+        action: "navigate", 
+        path, 
+        entity_label: entityLabel,
+        page_type: args.page
+      };
+    }
+    
+    case "resolve_entity_for_navigation": {
+      const { entity_type, search_term } = args;
+      console.log(`Resolving ${entity_type} for navigation with search: ${search_term}`);
+      
+      try {
+        switch (entity_type) {
+          case "pssr": {
+            // Search PSSRs by number, equipment tag, or project code
+            const { data: pssrs, error } = await supabaseClient
+              .from('pssrs')
+              .select(`
+                id, 
+                pssr_number, 
+                equipment_tag,
+                status,
+                project:projects(project_id_prefix, project_id_number, project_title)
+              `)
+              .or(`pssr_number.ilike.%${search_term}%,equipment_tag.ilike.%${search_term}%`)
+              .limit(10);
+            
+            if (error) {
+              console.error('PSSR lookup error:', error);
+              return { error: error.message, entity_type };
+            }
+            
+            // If no direct match, search by project code
+            if (!pssrs || pssrs.length === 0) {
+              const { data: projectPssrs } = await supabaseClient
+                .from('pssrs')
+                .select(`
+                  id, 
+                  pssr_number, 
+                  equipment_tag,
+                  status,
+                  project:projects!inner(project_id_prefix, project_id_number, project_title)
+                `)
+                .or(`projects.project_id_prefix.ilike.%${search_term}%,projects.project_id_number.ilike.%${search_term}%`)
+                .limit(10);
+              
+              if (projectPssrs && projectPssrs.length > 0) {
+                return { 
+                  entity_type: 'pssr',
+                  count: projectPssrs.length,
+                  entities: projectPssrs.map((p: any) => ({
+                    id: p.id,
+                    label: p.pssr_number || `PSSR for ${p.equipment_tag}`,
+                    equipment_tag: p.equipment_tag,
+                    status: p.status,
+                    project_code: p.project ? `${p.project.project_id_prefix}${p.project.project_id_number}` : null
+                  }))
+                };
+              }
+              
+              return { entity_type: 'pssr', count: 0, entities: [], message: `No PSSRs found matching "${search_term}"` };
+            }
+            
+            return { 
+              entity_type: 'pssr',
+              count: pssrs.length,
+              entities: pssrs.map((p: any) => ({
+                id: p.id,
+                label: p.pssr_number || `PSSR for ${p.equipment_tag}`,
+                equipment_tag: p.equipment_tag,
+                status: p.status,
+                project_code: p.project ? `${p.project.project_id_prefix}${p.project.project_id_number}` : null
+              }))
+            };
+          }
+          
+          case "project": {
+            const { data: projects, error } = await supabaseClient
+              .from('projects')
+              .select('id, project_id_prefix, project_id_number, project_title')
+              .or(`project_id_prefix.ilike.%${search_term}%,project_id_number.ilike.%${search_term}%,project_title.ilike.%${search_term}%`)
+              .eq('is_active', true)
+              .limit(10);
+            
+            if (error) {
+              console.error('Project lookup error:', error);
+              return { error: error.message, entity_type };
+            }
+            
+            return {
+              entity_type: 'project',
+              count: projects?.length || 0,
+              entities: (projects || []).map((p: any) => ({
+                id: p.id,
+                label: `${p.project_id_prefix}${p.project_id_number}`,
+                title: p.project_title
+              }))
+            };
+          }
+          
+          case "ora": {
+            // Search ORP plans by project code
+            const { data: oraPlans, error } = await supabaseClient
+              .from('orp_plans')
+              .select(`
+                id,
+                phase,
+                status,
+                project:projects!inner(project_id_prefix, project_id_number, project_title)
+              `)
+              .or(`projects.project_id_prefix.ilike.%${search_term}%,projects.project_id_number.ilike.%${search_term}%,projects.project_title.ilike.%${search_term}%`)
+              .eq('is_active', true)
+              .limit(10);
+            
+            if (error) {
+              console.error('ORA plan lookup error:', error);
+              return { error: error.message, entity_type };
+            }
+            
+            return {
+              entity_type: 'ora',
+              count: oraPlans?.length || 0,
+              entities: (oraPlans || []).map((p: any) => ({
+                id: p.id,
+                label: `ORA - ${p.project?.project_id_prefix}${p.project?.project_id_number}`,
+                phase: p.phase,
+                status: p.status,
+                project_title: p.project?.project_title
+              }))
+            };
+          }
+          
+          case "orm": {
+            // Search ORM plans by project code
+            const { data: ormPlans, error } = await supabaseClient
+              .from('orm_plans')
+              .select(`
+                id,
+                status,
+                overall_progress,
+                project:projects!inner(project_id_prefix, project_id_number, project_title)
+              `)
+              .or(`projects.project_id_prefix.ilike.%${search_term}%,projects.project_id_number.ilike.%${search_term}%,projects.project_title.ilike.%${search_term}%`)
+              .eq('is_active', true)
+              .limit(10);
+            
+            if (error) {
+              console.error('ORM plan lookup error:', error);
+              return { error: error.message, entity_type };
+            }
+            
+            return {
+              entity_type: 'orm',
+              count: ormPlans?.length || 0,
+              entities: (ormPlans || []).map((p: any) => ({
+                id: p.id,
+                label: `ORM - ${p.project?.project_id_prefix}${p.project?.project_id_number}`,
+                status: p.status,
+                progress: p.overall_progress,
+                project_title: p.project?.project_title
+              }))
+            };
+          }
+          
+          case "p2a": {
+            // Search P2A handovers by project code
+            const { data: p2aHandovers, error } = await supabaseClient
+              .from('p2a_handovers')
+              .select(`
+                id,
+                handover_number,
+                status,
+                project:projects!inner(project_id_prefix, project_id_number, project_title)
+              `)
+              .or(`projects.project_id_prefix.ilike.%${search_term}%,projects.project_id_number.ilike.%${search_term}%,handover_number.ilike.%${search_term}%`)
+              .limit(10);
+            
+            if (error) {
+              console.error('P2A handover lookup error:', error);
+              return { error: error.message, entity_type };
+            }
+            
+            return {
+              entity_type: 'p2a',
+              count: p2aHandovers?.length || 0,
+              entities: (p2aHandovers || []).map((p: any) => ({
+                id: p.id,
+                label: p.handover_number || `P2A - ${p.project?.project_id_prefix}${p.project?.project_id_number}`,
+                status: p.status,
+                project_title: p.project?.project_title
+              }))
+            };
+          }
+          
+          default:
+            return { error: `Unknown entity type: ${entity_type}`, entity_type };
+        }
+      } catch (err) {
+        console.error('Entity resolution exception:', err);
+        return { error: String(err), entity_type };
+      }
     }
     
     default:
