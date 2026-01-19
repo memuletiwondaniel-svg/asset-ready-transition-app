@@ -443,13 +443,34 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
                 {/* Project ID Section */}
                 <div className="space-y-3 p-4 rounded-lg bg-muted/30 border border-border/40">
                   <Label htmlFor="project_id" className="text-sm font-medium text-muted-foreground">
-                    Project ID
+                    Project ID <span className="text-destructive">*</span>
                   </Label>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 text-sm px-3 py-1">
-                      {project.project_id}
-                    </Badge>
+                  <div className="flex gap-3">
+                    <EnhancedCombobox
+                      options={prefixOptions}
+                      value={formData.project_id_prefix}
+                      onValueChange={(value) => 
+                        setFormData(prev => ({ ...prev, project_id_prefix: value as 'DP' | 'ST' | 'MoC' }))
+                      }
+                      placeholder="Prefix"
+                      allowCreate={false}
+                      className="w-28"
+                    />
+                    <Input
+                      value={formData.project_id_number}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/[^0-9]/g, '');
+                        setFormData(prev => ({ ...prev, project_id_number: value }));
+                      }}
+                      placeholder="Enter number"
+                      className="flex-1 bg-background"
+                    />
                   </div>
+                  {formData.project_id_prefix && formData.project_id_number && (
+                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 mt-1">
+                      {formData.project_id_prefix}{formData.project_id_number}
+                    </Badge>
+                  )}
                 </div>
 
                 {/* Project Title Section */}
