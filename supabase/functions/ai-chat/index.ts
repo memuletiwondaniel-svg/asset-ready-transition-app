@@ -3299,15 +3299,28 @@ interface NavigationIntent {
 function detectNavigationIntent(message: string): NavigationIntent {
   const lowerMessage = message.toLowerCase().trim();
   
-  // Navigation trigger phrases
+  // Strip common prefixes that don't affect navigation intent
+  const cleanedMessage = lowerMessage
+    .replace(/^(ok(ay)?|please|sure|yes|can you|could you|would you|will you)\s*/i, '')
+    .trim();
+  
+  // Navigation trigger phrases - check both original and cleaned message
   const navTriggers = [
-    /^(take me to|go to|open|navigate to|show me|bring me to|let'?s go to|i want to see|i need to see)\s+/i,
+    /\b(take me to|go to|open|navigate to|show me|bring me to|let'?s go to|i want to see|i need to see)\s+/i,
     /^(pssr|ora|orm|p2a|project|task|home|dashboard)\b/i, // Direct module mention at start
+    /\bthe\s+(pssr|ora|orm|p2a|project|task|home|dashboard)\s+(page|dashboard|module)\b/i, // "the PSSR page"
+    /\bfor\s+\w+.*(pssr|ora|orm|p2a)/i, // "for DP300 PSSR"
   ];
   
-  const hasNavIntent = navTriggers.some(pattern => pattern.test(lowerMessage));
+  const hasNavIntent = navTriggers.some(pattern => 
+    pattern.test(lowerMessage) || pattern.test(cleanedMessage)
+  );
   
   if (!hasNavIntent) {
+    // Log missed potential navigation for debugging
+    if (/pssr|ora|orm|p2a|project|task/i.test(lowerMessage)) {
+      console.log("🧭 NAV_INTENT_MISSED: Potential nav in message but no trigger match:", lowerMessage);
+    }
     return { detected: false, module: null, entitySearch: null, isModuleOnly: false };
   }
   
@@ -3358,22 +3371,22 @@ async function handleDeterministicNavigation(
   if (intent.isModuleOnly || !intent.entitySearch) {
     const modulePaths: Record<string, string> = {
       pssr: '/pssr',
-      ora: '/ora',
-      orm: '/orm',
-      p2a: '/p2a',
+      ora: '/operation-readiness',
+      orm: '/or-maintenance',
+      p2a: '/p2a-handover',
       project: '/projects',
-      task: '/tasks',
-      home: '/',
+      task: '/my-tasks',
+      home: '/home',
     };
     
-    const path = modulePaths[intent.module] || '/';
+    const path = modulePaths[intent.module] || '/home';
     const moduleNames: Record<string, string> = {
       pssr: 'PSSR Dashboard',
-      ora: 'ORA Dashboard',
-      orm: 'OR Maintenance',
-      p2a: 'P2A Handovers',
+      ora: 'Operation Readiness Dashboard',
+      orm: 'OR Maintenance Dashboard',
+      p2a: 'P2A Handover Dashboard',
       project: 'Projects',
-      task: 'Tasks',
+      task: 'My Tasks',
       home: 'Home',
     };
     
@@ -3450,8 +3463,8 @@ async function handleDeterministicNavigation(
         if (error || !oraPlans || oraPlans.length === 0) {
           return {
             handled: true,
-            response: `I couldn't find an ORA plan for "${searchTerm}". Opening the ORA dashboard.`,
-            navigationJson: JSON.stringify({ action: "navigate", path: "/ora" })
+            response: `I couldn't find an ORA plan for "${searchTerm}". Opening the Operation Readiness dashboard.`,
+            navigationJson: JSON.stringify({ action: "navigate", path: "/operation-readiness" })
           };
         }
         
@@ -3461,7 +3474,7 @@ async function handleDeterministicNavigation(
           return {
             handled: true,
             response: `Found it! Taking you to ORA plan for ${code} now.`,
-            navigationJson: JSON.stringify({ action: "navigate", path: `/ora/${plan.id}` })
+            navigationJson: JSON.stringify({ action: "navigate", path: `/operation-readiness/${plan.id}` })
           };
         }
         
@@ -3486,8 +3499,8 @@ async function handleDeterministicNavigation(
         if (error || !ormPlans || ormPlans.length === 0) {
           return {
             handled: true,
-            response: `I couldn't find an ORM plan for "${searchTerm}". Opening the ORM dashboard.`,
-            navigationJson: JSON.stringify({ action: "navigate", path: "/orm" })
+            response: `I couldn't find an ORM plan for "${searchTerm}". Opening the OR Maintenance dashboard.`,
+            navigationJson: JSON.stringify({ action: "navigate", path: "/or-maintenance" })
           };
         }
         
@@ -3497,7 +3510,7 @@ async function handleDeterministicNavigation(
           return {
             handled: true,
             response: `Found it! Taking you to ORM plan for ${code} now.`,
-            navigationJson: JSON.stringify({ action: "navigate", path: `/orm/${plan.id}` })
+            navigationJson: JSON.stringify({ action: "navigate", path: `/or-maintenance/${plan.id}` })
           };
         }
         
@@ -3533,7 +3546,7 @@ async function handleDeterministicNavigation(
           return {
             handled: true,
             response: `Found it! Taking you to project ${code} now.`,
-            navigationJson: JSON.stringify({ action: "navigate", path: `/projects/${proj.id}` })
+            navigationJson: JSON.stringify({ action: "navigate", path: `/project/${proj.id}` })
           };
         }
         
