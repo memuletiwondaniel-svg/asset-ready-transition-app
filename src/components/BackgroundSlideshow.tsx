@@ -132,7 +132,7 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = ({ showFunFacts 
 
   // Slideshow interval
   useEffect(() => {
-    const FADE_MS = 2500;
+    const FADE_MS = 4000;
 
     const interval = window.setInterval(() => {
       setCurrentImageIndex((prevIndex) => {
@@ -173,7 +173,7 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = ({ showFunFacts 
       
       {/* Slideshow images (true crossfade: force initial opacity, then transition next frame) */}
       {(() => {
-        const FADE_MS = 2500;
+        const FADE_MS = 4000;
 
         const currentSrc = images[currentImageIndex];
         const prevSrc = previousImageIndex !== null ? images[previousImageIndex] : null;
