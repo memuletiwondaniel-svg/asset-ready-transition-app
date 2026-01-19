@@ -574,6 +574,8 @@ ROLE HIERARCHY:
 
 === DATABASE TOOLS ===
 You have FULL real-time access through these tools:
+
+BASIC STATS:
 1. get_pssr_stats - PSSR counts and status breakdowns
 2. get_checklist_item_stats - Approval progress
 3. get_priority_action_stats - Priority A/B actions
@@ -581,9 +583,55 @@ You have FULL real-time access through these tools:
 5. get_region_info - Region/portfolio data
 6. get_project_info - Project details
 7. get_hub_info - Hub information
-8. navigate_to_page - Navigate user (only when explicitly requested)
+
+STATUS QUERY TOOLS (for detailed status questions):
+8. get_pssr_pending_items - Get pending checklist items with category breakdown. Use for "how many items pending", "what items are open", "show pending items for DP300"
+9. get_pssr_pending_approvers - Get pending approvers with names and roles. Use for "who needs to approve", "pending approvers for DP300", "who's blocking"
+10. get_pssr_detailed_summary - Get comprehensive status summary. Use for "status of DP300 PSSR", "give me a summary", "what's the status"
+11. get_discipline_status - Get breakdown by discipline/category. Use for "discipline progress", "which disciplines are complete"
+
+NAVIGATION:
+12. navigate_to_page - Navigate user (only when explicitly requested)
 
 ALWAYS use these tools for data queries. NEVER say you don't have access.
+
+=== STATUS QUERY RESPONSE FORMATTING ===
+
+When answering status questions, use clear formatting:
+
+COUNT QUESTIONS (e.g., "How many items pending for DP300?"):
+Format: "For **{PSSR Label}**, there are **{count} pending items**:
+• {Category1}: {count} items
+• {Category2}: {count} items
+Would you like to see the details?"
+
+APPROVER QUESTIONS (e.g., "Who needs to approve DP300?"):
+Format: "**{PSSR Label}** is awaiting approvals:
+
+**Final Sign-offs Pending:**
+1. 🔴 {Name} ({Role})
+2. 🔴 {Name} ({Role})
+
+**Discipline Reviewers with pending items:**
+• {Name} ({Discipline}) - {count} items"
+
+SUMMARY QUESTIONS (e.g., "Status of DP300 PSSR?"):
+Use structured format with sections:
+- **Progress**: X% complete (Y of Z items)
+- **By Category**: list categories with completion
+- **Approvers**: X pending of Y total
+- **Priority Actions**: X open Priority A, Y open Priority B
+- **Blocking Items**: list what's preventing closure
+
+WHEN DATA IS EXTENSIVE (>10 items):
+Offer to navigate: "I found 25 pending items. Would you like me to show you the full list? I can take you to the PSSR review page."
+
+RESPONSE DECISION LOGIC:
+- Simple counts → Answer directly in chat
+- Lists of 5 or fewer → Show in chat
+- Lists of 6-15 → Summarize and offer navigation
+- Lists of 16+ → Summarize and recommend navigation
+- "Show me" or "take me to" → Navigate to filtered view
 
 === NAVIGATION BEHAVIOR ===
 
@@ -1629,6 +1677,106 @@ const tools = [
         required: ["entity_type", "search_term"]
       }
     }
+  },
+  // ═══════════════════════════════════════════════════════════════════════════
+  // STATUS QUERY TOOLS - For answering detailed status questions
+  // ═══════════════════════════════════════════════════════════════════════════
+  {
+    type: "function",
+    function: {
+      name: "get_pssr_pending_items",
+      description: "Get detailed list of pending PSSR checklist items with their status, category, and approver info. Use for questions like 'what items are pending for DP300', 'show me open items', 'list incomplete checklist items', 'how many items pending'.",
+      parameters: {
+        type: "object",
+        properties: {
+          project_code: { 
+            type: "string", 
+            description: "Project code like DP300, JV100" 
+          },
+          pssr_id: { 
+            type: "string", 
+            description: "Specific PSSR UUID if known" 
+          },
+          category_filter: { 
+            type: "string", 
+            description: "Filter by category/discipline like 'Electrical', 'Mechanical', 'Process'" 
+          },
+          status_filter: {
+            type: "string",
+            enum: ["pending", "approved", "rejected", "all"],
+            description: "Filter by item status. Default is 'pending'"
+          },
+          limit: { 
+            type: "number", 
+            description: "Max items to return (default 20)" 
+          }
+        },
+        required: []
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_pssr_pending_approvers",
+      description: "Get list of pending approvers for a PSSR with their names, roles, and what they need to approve. Use for 'who needs to approve DP300', 'pending approvers', 'who's blocking approval', 'approvers still pending'.",
+      parameters: {
+        type: "object",
+        properties: {
+          project_code: { 
+            type: "string", 
+            description: "Project code like DP300" 
+          },
+          pssr_id: { 
+            type: "string", 
+            description: "Specific PSSR UUID if known" 
+          }
+        },
+        required: []
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_pssr_detailed_summary",
+      description: "Get comprehensive PSSR summary with all status info: items by category, approvers, priority actions, progress percentage. Use for 'give me DP300 PSSR summary', 'status report for PSSR', 'full overview', 'what's the status of DP300 PSSR'.",
+      parameters: {
+        type: "object",
+        properties: {
+          project_code: { 
+            type: "string", 
+            description: "Project code like DP300" 
+          },
+          pssr_id: { 
+            type: "string", 
+            description: "Specific PSSR UUID if known" 
+          }
+        },
+        required: []
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_discipline_status",
+      description: "Get status breakdown by discipline/category for a PSSR. Shows completion percentage and pending items per discipline. Use for 'discipline progress', 'category breakdown', 'which disciplines are complete', 'electrical items status'.",
+      parameters: {
+        type: "object",
+        properties: {
+          project_code: { 
+            type: "string", 
+            description: "Project code like DP300" 
+          },
+          pssr_id: { 
+            type: "string", 
+            description: "Specific PSSR UUID if known" 
+          }
+        },
+        required: []
+      }
+    }
   }
 ];
 
@@ -2338,6 +2486,492 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
       } catch (err) {
         console.error('Entity resolution exception:', err);
         return { error: String(err), entity_type };
+      }
+    }
+    
+    // ═══════════════════════════════════════════════════════════════════════════
+    // STATUS QUERY TOOL HANDLERS
+    // ═══════════════════════════════════════════════════════════════════════════
+    
+    case "get_pssr_pending_items": {
+      try {
+        let pssrIds: string[] = [];
+        let pssrLabel = "";
+        
+        // Resolve PSSR(s) from project_code or pssr_id
+        if (args.pssr_id) {
+          pssrIds = [args.pssr_id];
+          const { data: pssr } = await supabaseClient
+            .from('pssrs')
+            .select('pssr_id, title')
+            .eq('id', args.pssr_id)
+            .maybeSingle();
+          pssrLabel = pssr?.pssr_id || pssr?.title || args.pssr_id;
+        } else if (args.project_code) {
+          const { data: pssrs } = await supabaseClient
+            .from('pssrs')
+            .select('id, pssr_id, title, project_name')
+            .or(`project_name.ilike.%${args.project_code}%,pssr_id.ilike.%${args.project_code}%`)
+            .limit(10);
+          
+          if (!pssrs || pssrs.length === 0) {
+            return { 
+              error: `No PSSRs found for project "${args.project_code}"`,
+              pending_count: 0,
+              items: []
+            };
+          }
+          pssrIds = pssrs.map((p: any) => p.id);
+          pssrLabel = pssrs.length === 1 
+            ? (pssrs[0].pssr_id || pssrs[0].title) 
+            : `${pssrs.length} PSSRs for ${args.project_code}`;
+        } else {
+          // Get all PSSRs if no filter
+          const { data: pssrs } = await supabaseClient
+            .from('pssrs')
+            .select('id')
+            .in('status', ['Active', 'Ready for Review', 'Pending Approval'])
+            .limit(50);
+          pssrIds = (pssrs || []).map((p: any) => p.id);
+          pssrLabel = "All Active PSSRs";
+        }
+        
+        if (pssrIds.length === 0) {
+          return { pssr_label: pssrLabel, pending_count: 0, items: [], by_category: {} };
+        }
+        
+        // Get checklist responses with their items
+        let query = supabaseClient
+          .from('pssr_checklist_responses')
+          .select(`
+            id,
+            pssr_id,
+            status,
+            response,
+            checklist_item:checklist_item_id (
+              id,
+              unique_id,
+              question,
+              category,
+              topic
+            )
+          `)
+          .in('pssr_id', pssrIds);
+        
+        // Apply status filter
+        const statusFilter = args.status_filter || 'pending';
+        if (statusFilter === 'pending') {
+          query = query.in('status', ['NOT_SUBMITTED', 'PENDING', null]);
+        } else if (statusFilter === 'approved') {
+          query = query.eq('status', 'APPROVED');
+        } else if (statusFilter === 'rejected') {
+          query = query.eq('status', 'REJECTED');
+        }
+        
+        // Apply category filter
+        if (args.category_filter) {
+          query = query.ilike('checklist_item.category', `%${args.category_filter}%`);
+        }
+        
+        const limit = args.limit || 20;
+        query = query.limit(limit);
+        
+        const { data: responses, error } = await query;
+        
+        if (error) {
+          console.error('Pending items error:', error);
+          return { error: error.message };
+        }
+        
+        // Group by category
+        const byCategory: Record<string, number> = {};
+        const items = (responses || []).map((r: any) => {
+          const category = r.checklist_item?.category || 'Unknown';
+          byCategory[category] = (byCategory[category] || 0) + 1;
+          return {
+            id: r.id,
+            unique_id: r.checklist_item?.unique_id,
+            question: r.checklist_item?.question,
+            category: category,
+            topic: r.checklist_item?.topic,
+            status: r.status || 'NOT_SUBMITTED'
+          };
+        });
+        
+        return {
+          pssr_label: pssrLabel,
+          pending_count: items.length,
+          items: items,
+          by_category: byCategory,
+          has_more: items.length >= limit
+        };
+      } catch (err) {
+        console.error('Pending items exception:', err);
+        return { error: String(err) };
+      }
+    }
+    
+    case "get_pssr_pending_approvers": {
+      try {
+        let pssrId: string | null = null;
+        let pssrLabel = "";
+        
+        // Resolve PSSR
+        if (args.pssr_id) {
+          pssrId = args.pssr_id;
+          const { data: pssr } = await supabaseClient
+            .from('pssrs')
+            .select('pssr_id, title')
+            .eq('id', args.pssr_id)
+            .maybeSingle();
+          pssrLabel = pssr?.pssr_id || pssr?.title || args.pssr_id;
+        } else if (args.project_code) {
+          const { data: pssrs } = await supabaseClient
+            .from('pssrs')
+            .select('id, pssr_id, title')
+            .or(`project_name.ilike.%${args.project_code}%,pssr_id.ilike.%${args.project_code}%`)
+            .limit(1)
+            .maybeSingle();
+          
+          if (!pssrs) {
+            return { 
+              error: `No PSSR found for project "${args.project_code}"`,
+              final_approvers: [],
+              item_reviewers: []
+            };
+          }
+          pssrId = pssrs.id;
+          pssrLabel = pssrs.pssr_id || pssrs.title;
+        } else {
+          return { error: "Please specify a project code or PSSR ID" };
+        }
+        
+        // Get final approvers (pssr_approvers table)
+        const { data: approvers, error: approversError } = await supabaseClient
+          .from('pssr_approvers')
+          .select('id, approver_name, approver_role, approver_level, status, approved_at')
+          .eq('pssr_id', pssrId)
+          .order('approver_level', { ascending: true });
+        
+        if (approversError) {
+          console.error('Approvers error:', approversError);
+        }
+        
+        const finalApprovers = (approvers || []).map((a: any) => ({
+          name: a.approver_name,
+          role: a.approver_role,
+          level: a.approver_level,
+          status: a.status,
+          approved_at: a.approved_at
+        }));
+        
+        // Get discipline reviewers from pssr_reviewers table
+        const { data: reviewers, error: reviewersError } = await supabaseClient
+          .from('pssr_reviewers')
+          .select('id, reviewer_name, reviewer_role, status, discipline')
+          .eq('pssr_id', pssrId);
+        
+        if (reviewersError) {
+          console.error('Reviewers error:', reviewersError);
+        }
+        
+        // Count pending items per discipline from checklist responses
+        const { data: pendingCounts } = await supabaseClient
+          .from('pssr_checklist_responses')
+          .select(`
+            status,
+            checklist_item:checklist_item_id (category)
+          `)
+          .eq('pssr_id', pssrId)
+          .in('status', ['NOT_SUBMITTED', 'PENDING', null]);
+        
+        const pendingByDiscipline: Record<string, number> = {};
+        (pendingCounts || []).forEach((r: any) => {
+          const cat = r.checklist_item?.category || 'Unknown';
+          pendingByDiscipline[cat] = (pendingByDiscipline[cat] || 0) + 1;
+        });
+        
+        const itemReviewers = (reviewers || []).map((r: any) => ({
+          name: r.reviewer_name,
+          role: r.reviewer_role,
+          discipline: r.discipline,
+          status: r.status,
+          pending_items: pendingByDiscipline[r.discipline] || 0
+        }));
+        
+        return {
+          pssr_label: pssrLabel,
+          pssr_id: pssrId,
+          final_approvers: finalApprovers,
+          pending_final_approvers: finalApprovers.filter((a: any) => a.status === 'PENDING'),
+          item_reviewers: itemReviewers,
+          pending_disciplines: Object.entries(pendingByDiscipline).map(([discipline, count]) => ({
+            discipline,
+            pending_count: count
+          }))
+        };
+      } catch (err) {
+        console.error('Pending approvers exception:', err);
+        return { error: String(err) };
+      }
+    }
+    
+    case "get_pssr_detailed_summary": {
+      try {
+        let pssrId: string | null = null;
+        
+        // Resolve PSSR
+        if (args.pssr_id) {
+          pssrId = args.pssr_id;
+        } else if (args.project_code) {
+          const { data: pssrs } = await supabaseClient
+            .from('pssrs')
+            .select('id')
+            .or(`project_name.ilike.%${args.project_code}%,pssr_id.ilike.%${args.project_code}%`)
+            .limit(1)
+            .maybeSingle();
+          
+          if (!pssrs) {
+            return { error: `No PSSR found for project "${args.project_code}"` };
+          }
+          pssrId = pssrs.id;
+        } else {
+          return { error: "Please specify a project code or PSSR ID" };
+        }
+        
+        // Get PSSR header
+        const { data: pssr, error: pssrError } = await supabaseClient
+          .from('pssrs')
+          .select('*')
+          .eq('id', pssrId)
+          .maybeSingle();
+        
+        if (pssrError || !pssr) {
+          return { error: "PSSR not found" };
+        }
+        
+        // Get checklist responses with category info
+        const { data: responses } = await supabaseClient
+          .from('pssr_checklist_responses')
+          .select(`
+            status,
+            checklist_item:checklist_item_id (category)
+          `)
+          .eq('pssr_id', pssrId);
+        
+        // Calculate progress by category
+        const categoryStats: Record<string, { total: number; complete: number; pending: number }> = {};
+        (responses || []).forEach((r: any) => {
+          const cat = r.checklist_item?.category || 'Unknown';
+          if (!categoryStats[cat]) {
+            categoryStats[cat] = { total: 0, complete: 0, pending: 0 };
+          }
+          categoryStats[cat].total++;
+          if (r.status === 'APPROVED' || r.status === 'NOT_APPLICABLE') {
+            categoryStats[cat].complete++;
+          } else {
+            categoryStats[cat].pending++;
+          }
+        });
+        
+        const totalItems = (responses || []).length;
+        const completeItems = (responses || []).filter((r: any) => 
+          r.status === 'APPROVED' || r.status === 'NOT_APPLICABLE'
+        ).length;
+        const overallProgress = totalItems > 0 ? Math.round((completeItems / totalItems) * 100) : 0;
+        
+        // Get approvers
+        const { data: approvers } = await supabaseClient
+          .from('pssr_approvers')
+          .select('approver_name, approver_role, status')
+          .eq('pssr_id', pssrId);
+        
+        const approverStats = {
+          total: approvers?.length || 0,
+          approved: (approvers || []).filter((a: any) => a.status === 'APPROVED').length,
+          pending: (approvers || []).filter((a: any) => a.status === 'PENDING').length,
+          rejected: (approvers || []).filter((a: any) => a.status === 'REJECTED').length,
+          pending_names: (approvers || [])
+            .filter((a: any) => a.status === 'PENDING')
+            .map((a: any) => `${a.approver_name} (${a.approver_role})`)
+        };
+        
+        // Get priority actions
+        const { data: actions } = await supabaseClient
+          .from('pssr_priority_actions')
+          .select('priority, status')
+          .eq('pssr_id', pssrId);
+        
+        const actionStats = {
+          a_total: (actions || []).filter((a: any) => a.priority === 'A').length,
+          a_open: (actions || []).filter((a: any) => a.priority === 'A' && a.status === 'open').length,
+          a_closed: (actions || []).filter((a: any) => a.priority === 'A' && a.status === 'closed').length,
+          b_total: (actions || []).filter((a: any) => a.priority === 'B').length,
+          b_open: (actions || []).filter((a: any) => a.priority === 'B' && a.status === 'open').length,
+          b_closed: (actions || []).filter((a: any) => a.priority === 'B' && a.status === 'closed').length
+        };
+        
+        // Identify blocking items
+        const blockingItems: string[] = [];
+        if (actionStats.a_open > 0) {
+          blockingItems.push(`${actionStats.a_open} Priority A action(s) still open`);
+        }
+        if (approverStats.pending > 0) {
+          blockingItems.push(`${approverStats.pending} final approver(s) pending`);
+        }
+        const pendingCategories = Object.entries(categoryStats)
+          .filter(([_, stats]) => stats.pending > 0)
+          .map(([cat, stats]) => `${cat}: ${stats.pending}`);
+        if (pendingCategories.length > 0) {
+          blockingItems.push(`Pending items by category: ${pendingCategories.join(', ')}`);
+        }
+        
+        return {
+          pssr: {
+            id: pssr.id,
+            pssr_id: pssr.pssr_id,
+            title: pssr.title,
+            status: pssr.status,
+            asset: pssr.asset,
+            project_name: pssr.project_name,
+            created_at: pssr.created_at
+          },
+          progress: {
+            overall: overallProgress,
+            total_items: totalItems,
+            complete_items: completeItems,
+            pending_items: totalItems - completeItems,
+            by_category: categoryStats
+          },
+          approvers: approverStats,
+          priority_actions: actionStats,
+          blocking_items: blockingItems,
+          can_close: actionStats.a_open === 0 && approverStats.pending === 0
+        };
+      } catch (err) {
+        console.error('Detailed summary exception:', err);
+        return { error: String(err) };
+      }
+    }
+    
+    case "get_discipline_status": {
+      try {
+        let pssrId: string | null = null;
+        let pssrLabel = "";
+        
+        // Resolve PSSR
+        if (args.pssr_id) {
+          pssrId = args.pssr_id;
+          const { data: pssr } = await supabaseClient
+            .from('pssrs')
+            .select('pssr_id, title')
+            .eq('id', args.pssr_id)
+            .maybeSingle();
+          pssrLabel = pssr?.pssr_id || pssr?.title || args.pssr_id;
+        } else if (args.project_code) {
+          const { data: pssrs } = await supabaseClient
+            .from('pssrs')
+            .select('id, pssr_id, title')
+            .or(`project_name.ilike.%${args.project_code}%,pssr_id.ilike.%${args.project_code}%`)
+            .limit(1)
+            .maybeSingle();
+          
+          if (!pssrs) {
+            return { error: `No PSSR found for project "${args.project_code}"` };
+          }
+          pssrId = pssrs.id;
+          pssrLabel = pssrs.pssr_id || pssrs.title;
+        } else {
+          return { error: "Please specify a project code or PSSR ID" };
+        }
+        
+        // Get all responses grouped by category
+        const { data: responses, error } = await supabaseClient
+          .from('pssr_checklist_responses')
+          .select(`
+            status,
+            checklist_item:checklist_item_id (category, topic)
+          `)
+          .eq('pssr_id', pssrId);
+        
+        if (error) {
+          return { error: error.message };
+        }
+        
+        // Build discipline/category breakdown
+        const disciplines: Record<string, {
+          total: number;
+          approved: number;
+          pending: number;
+          rejected: number;
+          not_applicable: number;
+          completion_pct: number;
+          topics: Set<string>;
+        }> = {};
+        
+        (responses || []).forEach((r: any) => {
+          const cat = r.checklist_item?.category || 'Unknown';
+          const topic = r.checklist_item?.topic;
+          
+          if (!disciplines[cat]) {
+            disciplines[cat] = {
+              total: 0,
+              approved: 0,
+              pending: 0,
+              rejected: 0,
+              not_applicable: 0,
+              completion_pct: 0,
+              topics: new Set()
+            };
+          }
+          
+          disciplines[cat].total++;
+          if (topic) disciplines[cat].topics.add(topic);
+          
+          switch (r.status) {
+            case 'APPROVED': disciplines[cat].approved++; break;
+            case 'REJECTED': disciplines[cat].rejected++; break;
+            case 'NOT_APPLICABLE': disciplines[cat].not_applicable++; break;
+            default: disciplines[cat].pending++; break;
+          }
+        });
+        
+        // Calculate completion percentages
+        const disciplineList = Object.entries(disciplines).map(([name, stats]) => {
+          const completedCount = stats.approved + stats.not_applicable;
+          const pct = stats.total > 0 ? Math.round((completedCount / stats.total) * 100) : 0;
+          return {
+            name,
+            total: stats.total,
+            approved: stats.approved,
+            pending: stats.pending,
+            rejected: stats.rejected,
+            not_applicable: stats.not_applicable,
+            completion_pct: pct,
+            is_complete: stats.pending === 0 && stats.rejected === 0,
+            topics: Array.from(stats.topics)
+          };
+        }).sort((a, b) => a.completion_pct - b.completion_pct); // Sort by completion (lowest first)
+        
+        const totalItems = (responses || []).length;
+        const totalComplete = disciplineList.reduce((sum, d) => sum + d.approved + d.not_applicable, 0);
+        
+        return {
+          pssr_label: pssrLabel,
+          pssr_id: pssrId,
+          overall_progress: totalItems > 0 ? Math.round((totalComplete / totalItems) * 100) : 0,
+          total_items: totalItems,
+          disciplines: disciplineList,
+          complete_disciplines: disciplineList.filter(d => d.is_complete).map(d => d.name),
+          incomplete_disciplines: disciplineList.filter(d => !d.is_complete).map(d => ({
+            name: d.name,
+            pending: d.pending,
+            rejected: d.rejected
+          }))
+        };
+      } catch (err) {
+        console.error('Discipline status exception:', err);
+        return { error: String(err) };
       }
     }
     
