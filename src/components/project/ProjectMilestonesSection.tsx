@@ -422,103 +422,106 @@ export const ProjectMilestonesSection: React.FC<ProjectMilestonesSectionProps> =
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center text-lg gap-2">
-          <Calendar className="h-5 w-5" />
+    <Card className="border-border/60 shadow-sm">
+      <CardHeader className="pb-4">
+        <CardTitle className="flex items-center text-lg gap-2 text-foreground">
+          <Calendar className="h-5 w-5 text-primary" />
           Project Milestones
-          <Badge variant="secondary" className="ml-1 h-6 w-6 rounded-full p-0 flex items-center justify-center text-xs font-medium">
+          <Badge variant="secondary" className="ml-1 h-6 w-6 rounded-full p-0 flex items-center justify-center text-xs font-medium bg-primary/10 text-primary">
             {milestones.length}
           </Badge>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-6">
         {/* Add Milestone */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
-          <div className="space-y-2">
-            <Label>Milestone Type</Label>
-            <EnhancedSearchableCombobox
-              options={milestoneOptions}
-              value={newMilestone.milestone_type_id}
-              onValueChange={handleMilestoneTypeSelect}
-              placeholder={isLoading ? "Loading..." : "Select milestone..."}
-              searchPlaceholder="Search milestones..."
-              allowCreate={true}
-              onCreateNew={handleCreateNewMilestoneType}
-              disabled={isLoading || isCreating}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Description/Comments</Label>
-            <Textarea
-              value={newMilestone.milestone_description}
-              onChange={(e) => setNewMilestone(prev => ({ ...prev, milestone_description: e.target.value }))}
-              placeholder="Additional comments..."
-              className="h-10 min-h-[40px] resize-none"
-              rows={1}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Milestone Date</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !newMilestone.milestone_date && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarDays className="mr-2 h-4 w-4" />
-                  {newMilestone.milestone_date ? (
-                    format(newMilestone.milestone_date, "do MMMM yyyy")
-                  ) : (
-                    <span>Pick a date</span>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <CalendarComponent
-                  mode="single"
-                  selected={newMilestone.milestone_date}
-                  onSelect={(date) => setNewMilestone(prev => ({ ...prev, milestone_date: date }))}
-                  initialFocus
-                  className="pointer-events-auto"
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Scorecard</Label>
-            <div className="flex items-center space-x-2 h-10">
-              <Switch
-                checked={newMilestone.is_scorecard_project}
-                onCheckedChange={(checked) => setNewMilestone(prev => ({ ...prev, is_scorecard_project: checked }))}
+        <div className="p-4 rounded-lg bg-muted/30 border border-border/40">
+          <h4 className="text-sm font-semibold text-foreground border-b border-border/40 pb-2 mb-4">Add New Milestone</h4>
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-muted-foreground">Milestone Type</Label>
+              <EnhancedSearchableCombobox
+                options={milestoneOptions}
+                value={newMilestone.milestone_type_id}
+                onValueChange={handleMilestoneTypeSelect}
+                placeholder={isLoading ? "Loading..." : "Select milestone..."}
+                searchPlaceholder="Search milestones..."
+                allowCreate={true}
+                onCreateNew={handleCreateNewMilestoneType}
+                disabled={isLoading || isCreating}
               />
-              <span className="text-sm text-muted-foreground">
-                {newMilestone.is_scorecard_project ? 'Yes' : 'No'}
-              </span>
             </div>
-          </div>
 
-          <Button 
-            type="button"
-            onClick={addMilestone}
-            disabled={!newMilestone.milestone_name || !newMilestone.milestone_date || isCreating}
-            className="bg-green-600 hover:bg-green-700 text-white"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Milestone
-          </Button>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-muted-foreground">Description/Comments</Label>
+              <Textarea
+                value={newMilestone.milestone_description}
+                onChange={(e) => setNewMilestone(prev => ({ ...prev, milestone_description: e.target.value }))}
+                placeholder="Additional comments..."
+                className="h-10 min-h-[40px] resize-none bg-background"
+                rows={1}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-muted-foreground">Milestone Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal bg-background",
+                      !newMilestone.milestone_date && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarDays className="mr-2 h-4 w-4" />
+                    {newMilestone.milestone_date ? (
+                      format(newMilestone.milestone_date, "do MMMM yyyy")
+                    ) : (
+                      <span>Pick a date</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <CalendarComponent
+                    mode="single"
+                    selected={newMilestone.milestone_date}
+                    onSelect={(date) => setNewMilestone(prev => ({ ...prev, milestone_date: date }))}
+                    initialFocus
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-muted-foreground">Scorecard</Label>
+              <div className="flex items-center space-x-2 h-10">
+                <Switch
+                  checked={newMilestone.is_scorecard_project}
+                  onCheckedChange={(checked) => setNewMilestone(prev => ({ ...prev, is_scorecard_project: checked }))}
+                />
+                <span className="text-sm text-muted-foreground">
+                  {newMilestone.is_scorecard_project ? 'Yes' : 'No'}
+                </span>
+              </div>
+            </div>
+
+            <Button 
+              type="button"
+              onClick={addMilestone}
+              disabled={!newMilestone.milestone_name || !newMilestone.milestone_date || isCreating}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Milestone
+            </Button>
+          </div>
         </div>
 
         {/* Milestones List */}
         {milestones.length > 0 && (
-          <div className="space-y-3">
-            <h4 className="font-medium text-foreground">Project Milestones</h4>
+          <div className="space-y-3 p-4 rounded-lg bg-muted/30 border border-border/40">
+            <h4 className="text-sm font-semibold text-foreground border-b border-border/40 pb-2">Existing Milestones</h4>
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}

@@ -158,24 +158,24 @@ export const EnhancedProjectDocumentsSection: React.FC<ProjectDocumentsSectionPr
   }, []);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center text-lg gap-2">
-          <FileText className="h-5 w-5" />
+    <Card className="border-border/60 shadow-sm">
+      <CardHeader className="pb-4">
+        <CardTitle className="flex items-center text-lg gap-2 text-foreground">
+          <FileText className="h-5 w-5 text-primary" />
           Supporting Documents
-          <Badge variant="secondary" className="ml-1 h-6 w-6 rounded-full p-0 flex items-center justify-center text-xs font-medium">
+          <Badge variant="secondary" className="ml-1 h-6 w-6 rounded-full p-0 flex items-center justify-center text-xs font-medium bg-primary/10 text-primary">
             {documents.length}
           </Badge>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-6">
         {/* Add Document Button */}
         <Dialog open={isAddDocumentOpen} onOpenChange={setIsAddDocumentOpen}>
           <DialogTrigger asChild>
             <Button 
               type="button"
               variant="outline"
-              className="w-full border-dashed border-2 border-gray-300 hover:border-blue-400 hover:bg-blue-50/50 h-12"
+              className="w-full border-dashed border-2 border-border hover:border-primary/50 hover:bg-primary/5 h-12 transition-colors"
             >
               <Plus className="h-5 w-5 mr-2" />
               Add Document
@@ -332,13 +332,13 @@ export const EnhancedProjectDocumentsSection: React.FC<ProjectDocumentsSectionPr
 
         {/* Documents List */}
         {documents.length > 0 && (
-          <div className="space-y-3">
-            <h4 className="font-medium text-gray-900">Uploaded Documents</h4>
+          <div className="space-y-3 p-4 rounded-lg bg-muted/30 border border-border/40">
+            <h4 className="text-sm font-semibold text-foreground border-b border-border/40 pb-2">Uploaded Documents</h4>
             <div className="space-y-2">
               {documents.map((doc) => (
                 <div 
                   key={doc.id}
-                  className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                  className="flex items-center justify-between p-4 bg-background rounded-lg border border-border/60 hover:border-border transition-colors"
                 >
                   <div className="flex items-center gap-3">
                     {doc.document_type === 'file' 
@@ -346,7 +346,7 @@ export const EnhancedProjectDocumentsSection: React.FC<ProjectDocumentsSectionPr
                       : getLinkIcon(doc.link_type)
                     }
                     <div className="flex flex-col">
-                      <span className="font-medium text-gray-900">{doc.document_name}</span>
+                      <span className="font-medium text-foreground">{doc.document_name}</span>
                       {doc.file_extension && (
                         <span className="text-xs text-muted-foreground uppercase">
                           {doc.file_extension} file
@@ -359,7 +359,7 @@ export const EnhancedProjectDocumentsSection: React.FC<ProjectDocumentsSectionPr
                     variant="ghost"
                     size="sm"
                     onClick={() => removeDocument(doc.id)}
-                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
                   >
                     <X className="h-4 w-4" />
                   </Button>

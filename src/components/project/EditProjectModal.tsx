@@ -652,12 +652,13 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
         </ScrollArea>
 
         {/* Actions */}
-        <div className="px-6 py-4 border-t shrink-0 flex justify-end gap-3">
+        <div className="px-6 py-4 border-t border-border/60 bg-muted/20 shrink-0 flex justify-end gap-3">
           <Button 
             type="button" 
             variant="outline" 
             onClick={onClose}
             disabled={isUpdating || loading}
+            className="min-w-[100px]"
           >
             Cancel
           </Button>
@@ -665,8 +666,9 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
             type="submit"
             onClick={handleSubmit}
             disabled={isUpdating || loading}
+            className="min-w-[100px]"
           >
-            {isUpdating ? 'Saving...' : 'Save'}
+            {isUpdating ? 'Saving...' : 'Save Changes'}
           </Button>
         </div>
       </DialogContent>

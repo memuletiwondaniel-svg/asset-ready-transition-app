@@ -105,30 +105,30 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center text-lg gap-2">
-          <Users className="h-5 w-5" />
+    <Card className="border-border/60 shadow-sm">
+      <CardHeader className="pb-4">
+        <CardTitle className="flex items-center text-lg gap-2 text-foreground">
+          <Users className="h-5 w-5 text-primary" />
           Project Team
-          <Badge variant="secondary" className="ml-1 h-6 w-6 rounded-full p-0 flex items-center justify-center text-xs font-medium">
+          <Badge variant="secondary" className="ml-1 h-6 w-6 rounded-full p-0 flex items-center justify-center text-xs font-medium bg-primary/10 text-primary">
             {teamMembers.length}
           </Badge>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Required Roles Status */}
-        <div className="bg-blue-50/50 p-4 rounded-lg">
-          <h4 className="font-medium text-blue-900 mb-3">Required Team Roles</h4>
+        <div className="p-4 rounded-lg bg-muted/30 border border-border/40">
+          <h4 className="text-sm font-semibold text-foreground border-b border-border/40 pb-2 mb-3">Required Team Roles</h4>
           <div className="flex flex-wrap gap-2">
             {getRequiredRolesStatus().map(({ role, required, assigned }) => (
               <Badge 
                 key={role}
                 variant={assigned ? "default" : "outline"}
                 className={assigned 
-                  ? "bg-green-100 text-green-700 border-green-200" 
+                  ? "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800" 
                   : required 
-                    ? "bg-red-100 text-red-700 border-red-200"
-                    : "bg-gray-100 text-gray-700 border-gray-200"
+                    ? "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800"
+                    : "bg-muted text-muted-foreground border-border"
                 }
               >
                 {role} {assigned ? '✓' : required ? '○' : ''}
@@ -138,18 +138,18 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
         </div>
 
         {/* Required Roles Assignment */}
-        <div className="space-y-4">
-          <h4 className="font-medium text-gray-900">Assign Team Members</h4>
+        <div className="space-y-4 p-4 rounded-lg bg-muted/30 border border-border/40">
+          <h4 className="text-sm font-semibold text-foreground border-b border-border/40 pb-2">Assign Team Members</h4>
           {REQUIRED_ROLES.map(({ role, required }) => {
             const assignedMember = getRoleMember(role);
             const isAutoPopulated = assignedMember?.is_auto_populated;
             return (
-              <div key={role} className={`grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg ${
-                isAutoPopulated ? 'bg-amber-50/50 border-amber-200' : 'bg-gray-50/50'
+              <div key={role} className={`grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg transition-colors ${
+                isAutoPopulated ? 'bg-amber-50/50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800' : 'bg-background border-border/60'
               }`}>
                 <div className="flex items-center gap-3">
                   <div className="flex-1 flex items-center gap-2">
-                    <h5 className="font-medium text-gray-900">{role}</h5>
+                    <h5 className="font-medium text-foreground">{role}</h5>
                     {isAutoPopulated && (
                       <span title="Auto-populated">
                         <Sparkles className="h-4 w-4 text-amber-500" />
@@ -215,19 +215,19 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
 
         {/* Additional Team Members */}
         {teamMembers.filter(member => !REQUIRED_ROLES.some(r => r.role === member.role)).length > 0 && (
-          <div className="space-y-3">
-            <h4 className="font-medium text-gray-900">Additional Team Members</h4>
+          <div className="space-y-3 p-4 rounded-lg bg-muted/30 border border-border/40">
+            <h4 className="text-sm font-semibold text-foreground border-b border-border/40 pb-2">Additional Team Members</h4>
             <div className="space-y-3">
               {teamMembers
                 .filter(member => !REQUIRED_ROLES.some(r => r.role === member.role))
                 .map((member) => (
                   <div 
                     key={member.id}
-                    className="p-4 border rounded-lg bg-gray-50/50"
+                    className="p-4 border rounded-lg bg-background border-border/60"
                   >
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
                       <div className="space-y-2">
-                        <label className="text-sm font-medium">Team Member</label>
+                        <label className="text-sm font-medium text-muted-foreground">Team Member</label>
                         <EnhancedCombobox
                           options={allUsers.map(user => ({
                             value: user.user_id,
@@ -267,7 +267,7 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
           type="button"
           variant="outline"
           onClick={addAdditionalMember}
-          className="w-full border-dashed border-2 hover:border-blue-300 hover:bg-blue-50/50"
+          className="w-full border-dashed border-2 border-border hover:border-primary/50 hover:bg-primary/5 transition-colors"
         >
           <Plus className="h-4 w-4 mr-2" />
           Add Additional Team Member
