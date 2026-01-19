@@ -2540,37 +2540,20 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           return { pssr_label: pssrLabel, pending_count: 0, items: [], by_category: {} };
         }
         
-        // Get checklist responses with their items
+        // Get checklist responses first
         let query = supabaseClient
           .from('pssr_checklist_responses')
-          .select(`
-            id,
-            pssr_id,
-            status,
-            response,
-            checklist_item:checklist_item_id (
-              id,
-              unique_id,
-              question,
-              category,
-              topic
-            )
-          `)
+          .select('id, pssr_id, status, response, checklist_item_id')
           .in('pssr_id', pssrIds);
         
         // Apply status filter
         const statusFilter = args.status_filter || 'pending';
         if (statusFilter === 'pending') {
-          query = query.in('status', ['NOT_SUBMITTED', 'PENDING', null]);
+          query = query.in('status', ['NOT_SUBMITTED', 'PENDING', 'SUBMITTED']);
         } else if (statusFilter === 'approved') {
           query = query.eq('status', 'APPROVED');
         } else if (statusFilter === 'rejected') {
           query = query.eq('status', 'REJECTED');
-        }
-        
-        // Apply category filter
-        if (args.category_filter) {
-          query = query.ilike('checklist_item.category', `%${args.category_filter}%`);
         }
         
         const limit = args.limit || 20;
@@ -2583,17 +2566,43 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           return { error: error.message };
         }
         
+        // Get unique checklist item IDs and fetch their details
+        const checklistItemIds = [...new Set((responses || []).map((r: any) => r.checklist_item_id).filter(Boolean))];
+        
+        let checklistItems: Record<string, any> = {};
+        if (checklistItemIds.length > 0) {
+          const { data: items } = await supabaseClient
+            .from('checklist_items')
+            .select('unique_id, question, category, topic')
+            .in('unique_id', checklistItemIds);
+          
+          (items || []).forEach((item: any) => {
+            checklistItems[item.unique_id] = item;
+          });
+        }
+        
+        // Apply category filter if specified
+        let filteredResponses = responses || [];
+        if (args.category_filter) {
+          const categoryFilter = args.category_filter.toLowerCase();
+          filteredResponses = filteredResponses.filter((r: any) => {
+            const item = checklistItems[r.checklist_item_id];
+            return item?.category?.toLowerCase().includes(categoryFilter);
+          });
+        }
+        
         // Group by category
         const byCategory: Record<string, number> = {};
-        const items = (responses || []).map((r: any) => {
-          const category = r.checklist_item?.category || 'Unknown';
+        const items = filteredResponses.map((r: any) => {
+          const item = checklistItems[r.checklist_item_id] || {};
+          const category = item.category || 'Unknown';
           byCategory[category] = (byCategory[category] || 0) + 1;
           return {
             id: r.id,
-            unique_id: r.checklist_item?.unique_id,
-            question: r.checklist_item?.question,
+            unique_id: item.unique_id || r.checklist_item_id,
+            question: item.question || 'Unknown item',
             category: category,
-            topic: r.checklist_item?.topic,
+            topic: item.topic,
             status: r.status || 'NOT_SUBMITTED'
           };
         });
@@ -2750,19 +2759,29 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           return { error: "PSSR not found" };
         }
         
-        // Get checklist responses with category info
+        // Get checklist responses
         const { data: responses } = await supabaseClient
           .from('pssr_checklist_responses')
-          .select(`
-            status,
-            checklist_item:checklist_item_id (category)
-          `)
+          .select('status, checklist_item_id')
           .eq('pssr_id', pssrId);
+        
+        // Get checklist item details for category info
+        const itemIds = [...new Set((responses || []).map((r: any) => r.checklist_item_id).filter(Boolean))];
+        let itemCategories: Record<string, string> = {};
+        if (itemIds.length > 0) {
+          const { data: items } = await supabaseClient
+            .from('checklist_items')
+            .select('unique_id, category')
+            .in('unique_id', itemIds);
+          (items || []).forEach((item: any) => {
+            itemCategories[item.unique_id] = item.category;
+          });
+        }
         
         // Calculate progress by category
         const categoryStats: Record<string, { total: number; complete: number; pending: number }> = {};
         (responses || []).forEach((r: any) => {
-          const cat = r.checklist_item?.category || 'Unknown';
+          const cat = itemCategories[r.checklist_item_id] || 'Unknown';
           if (!categoryStats[cat]) {
             categoryStats[cat] = { total: 0, complete: 0, pending: 0 };
           }
@@ -2885,17 +2904,27 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           return { error: "Please specify a project code or PSSR ID" };
         }
         
-        // Get all responses grouped by category
+        // Get all responses
         const { data: responses, error } = await supabaseClient
           .from('pssr_checklist_responses')
-          .select(`
-            status,
-            checklist_item:checklist_item_id (category, topic)
-          `)
+          .select('status, checklist_item_id')
           .eq('pssr_id', pssrId);
         
         if (error) {
           return { error: error.message };
+        }
+        
+        // Get checklist item details for category/topic info
+        const itemIds = [...new Set((responses || []).map((r: any) => r.checklist_item_id).filter(Boolean))];
+        let itemDetails: Record<string, { category: string; topic: string }> = {};
+        if (itemIds.length > 0) {
+          const { data: items } = await supabaseClient
+            .from('checklist_items')
+            .select('unique_id, category, topic')
+            .in('unique_id', itemIds);
+          (items || []).forEach((item: any) => {
+            itemDetails[item.unique_id] = { category: item.category, topic: item.topic };
+          });
         }
         
         // Build discipline/category breakdown
@@ -2910,8 +2939,9 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         }> = {};
         
         (responses || []).forEach((r: any) => {
-          const cat = r.checklist_item?.category || 'Unknown';
-          const topic = r.checklist_item?.topic;
+          const details = itemDetails[r.checklist_item_id] || { category: 'Unknown', topic: null };
+          const cat = details.category;
+          const topic = details.topic;
           
           if (!disciplines[cat]) {
             disciplines[cat] = {
