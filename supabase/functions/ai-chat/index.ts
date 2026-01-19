@@ -1085,6 +1085,709 @@ Required HSSE proficiency for TA nomination:
 3. Store and share via LFE database and OR&CSU CoP
 4. Flag high-value learnings for global replication
 
+=== OR&A DOMAIN EXPERTISE (SUBJECT MATTER EXPERT KNOWLEDGE) ===
+
+This section contains deep technical knowledge extracted from core OR&A reference documents.
+Use this to respond as a subject matter expert with understanding of the "WHY" behind each concept.
+
+--- WHY OPERATIONS READINESS MATTERS (THE BUSINESS CASE) ---
+
+FUNDAMENTAL TRUTH:
+"10% of time is spent in transient operating modes, yet 50% of process safety incidents 
+and start-up delays occur during these modes."
+
+This single statistic explains WHY Operations Readiness is critical. Projects that fail to 
+properly prepare for transient modes expose themselves to:
+- Process safety incidents
+- Delayed start-up and ramp-up
+- Value erosion during early production years
+- Failure to deliver the Production Promise
+
+HISTORICAL VALUE EROSION:
+- Projects have consistently failed to deliver the value promised at project sanction
+- Value gap occurs from failure to deliver on project cost, asset revenue, or both
+- Significant portion of value erosion occurs during Start-Up, Ramp-Up, and early production years
+- This led to the creation of the Production Promise framework
+
+THE PRODUCTION PROMISE ADDRESSES THIS BY ANSWERING THREE QUESTIONS:
+1. How much will be produced and when? (Focus on early cash flow through SURU)
+2. How much will it cost to operate and what is the carbon footprint?
+3. How do these metrics benchmark against analogues?
+
+REAL INCIDENT EXAMPLES (Why OMAR is Critical):
+These are real incidents that occurred during transient operating modes:
+
+| Incident | Mode | Impact |
+|----------|------|--------|
+| GTL TE Failure | Ramp-Up Mode | $800 million damage |
+| MSPO2 Explosion | Transient | 1 year loss, billions of production loss |
+| DSM Caustic Cracking | Shutdown Mode | 1 year loss, ~400 kbbld outage |
+| XLNG Molsieve Failure | Heating Mode | Minimum 25-day loss |
+
+THE MANTRA: "We are in control during all transient and stationary operating phases"
+
+--- OMAR (OPERATING MODES ANALYSIS REVIEW) DEEP KNOWLEDGE ---
+
+DEFINITION:
+Shell's Transient Hazard Analysis process for projects and operating assets. OMAR ensures 
+assets are designed, built, and operated in a controlled manner under ALL operating modes, 
+static and transient conditions, and across interfaces.
+
+WHY OMAR EXISTS:
+The fundamental premise is that while transient modes represent only 10% of operating time, 
+they account for 50% of process safety incidents. OMAR systematically identifies and addresses 
+the unique hazards present during:
+- Mode transitions (startup, shutdown, switchover)
+- Non-steady-state operations
+- Equipment changeovers
+- Interface handoffs
+
+WHEN OMAR IS REQUIRED:
+- Primarily for assets that transfer, process, or store hazardous materials
+- Part of PMF under AMS, specifically in OR/CSU process as part of Statement of Fitness
+- Required in project phases: Select, Define, and Execute
+- For existing assets as part of Hazards & Effects Management Process (HEMP)
+
+THE 13-STEP OMAR WORK PROCESS:
+
+Step 1: Breakdown of scope into manageable OMAR scope blocks
+- Divide the asset into logical segments (e.g., by unit, system, or equipment train)
+- Consider interfaces between scope blocks
+
+Step 2: Development of Terms of Reference (TOR)
+- Define workshop objectives, scope, and deliverables
+- Identify required participants and their roles
+- Establish timeline and logistics
+
+Step 3: Collection of site/technology-specific process safety incidents and plant changes
+- Review historical incidents from similar facilities
+- Identify MOC (Management of Change) items that affect operations
+- Gather lessons learned from analogues
+
+Step 4: Creation of Interface Diagram
+- Map all interfaces between scope blocks
+- Identify handoff points and responsibilities
+- Document inter-system dependencies
+
+Step 5: Identification of process hazards and their RAM rating
+- Review Hazards and Effects Register
+- Focus on RAM red and yellow 5A/5B hazards
+- Document hazard characteristics and consequences
+
+Step 6: Creation of Mode Logic Diagram
+- Visual representation of all operating modes
+- Show transitions between modes
+- Identify mode-specific conditions and requirements
+
+Step 7: Identification of all applicable modes and scenarios
+- Static modes (normal operation, standby)
+- Transient modes (startup, shutdown, switchover)
+- Abnormal modes (upset, emergency, failure scenarios)
+- Maintenance modes (online maintenance, isolation)
+
+Step 8: Review of pre-work package
+- Validate completeness of preparation materials
+- Ensure all participants have access to required documents
+- Confirm hazard register and mode diagrams are complete
+
+Step 9: Execute workshop
+- Facilitate structured review of each mode and scenario
+- Identify threats and scenarios for RAM red or yellow 5A/B hazards
+- Document gaps in design, procedures, or competence
+- Generate recommendations with clear ownership
+
+Step 10: Stress test and scenario assessment
+- Challenge assumptions about mode transitions
+- Evaluate "what-if" scenarios
+- Test adequacy of safeguards
+
+Step 11: Categorization and prioritization of recommendations
+- Classify by type: Design, Procedural, Competence
+- Prioritize by risk reduction potential
+- Assign ownership and target dates
+
+Step 12: OMAR close-out
+- Verify all recommendations addressed or tracked
+- Confirm action owners and due dates
+- Document lessons learned
+
+Step 13: OMAR reporting
+- Compile final OMAR report with:
+  - Mode logic diagram
+  - Scenarios assessed
+  - Recommendations and status
+  - Input for operating procedures and training
+
+OMAR ROLES AND RESPONSIBILITIES:
+
+| Role | Responsibility |
+|------|----------------|
+| Project Manager/Operations Manager | Sponsor, approves TOR and final deliverables |
+| OR&A Engineer/Process Engineer | Focal point, provides documents (PEFS, procedures) |
+| Process/Technical Safety Engineer | Provides Hazards and Effects register extracts |
+| OMAR Facilitator | Prepares TOR, leads workshop, MUST be P&T accredited |
+| OMAR Scribe | Records observations, findings, recommendations |
+| P&T OMAR SME | Responsible for operations input, continuous improvement |
+
+OMAR SCOPE CATEGORIES:
+1. Pre-commissioning tests
+2. Commissioning tests
+3. Catalytic/adsorbent modes and scenarios
+4. Static modes (normal operation, reduced rates)
+5. Maintenance modes (online repair, equipment isolation)
+6. Failure scenarios (equipment failure, utility loss)
+7. Upset scenarios (off-spec product, process excursion)
+8. Special modes (turnaround, mothballing)
+9. Offshore modes/scenarios (weather limitations, marine operations)
+
+OMAR OUTPUTS:
+- Mode logic diagram (visual representation of all modes and transitions)
+- List of scenarios with Loss of Containment (LOC) potential (RAM red/yellow 5A/B hazards)
+- Input for HAZOPs and risk assessments
+- Recommendations for design, procedural, and competence gaps
+- Input for operating manuals and training packages
+- Commissioning and startup sequence validation
+
+OMAR INTEGRATION WITH OTHER PROCESSES:
+- HAZOP: OMAR findings feed into HAZOP studies
+- PSSR: OMAR recommendations become PSSR checklist items
+- Training: Mode-specific competence requirements from OMAR
+- Procedures: Operating procedures validated against OMAR scenarios
+- SoF: OMAR completion is prerequisite for Statement of Fitness
+
+--- PRODUCTION PROMISE FRAMEWORK ---
+
+PURPOSE:
+The Production Promise documents decisions and assumptions across the full TECOP 
+(Technical, Economic, Commercial, Organisational, Political) spectrum on an Opportunity's 
+operational performance. It provides critical input into:
+- PCP (Proposal to Commit to Project)
+- GIP (Group Investment Proposal)
+
+WHY THE PRODUCTION PROMISE MATTERS:
+Historical analysis showed that projects consistently failed to deliver promised value.
+The value gap occurs from failure to deliver on project cost, asset revenue, or both.
+A significant portion of this value erosion happens during Start-Up, Ramp-Up, and early 
+production years - precisely where Operations Readiness can make the biggest difference.
+
+THE THREE KEY QUESTIONS:
+1. How much will be produced and when?
+   - Focus on SURU (Start-Up Ramp-Up) performance
+   - Early cash flow is critical to project economics
+   - Benchmarked against analogue facilities
+
+2. How much will it cost to operate and what is the carbon footprint?
+   - Operating expenditure (OPEX) projections
+   - GHG emissions targets and commitments
+   - Energy efficiency expectations
+
+3. How do these metrics benchmark against analogues?
+   - Comparison with similar facilities
+   - Realistic assessment of performance potential
+   - Identification of improvement opportunities
+
+RANGE AND RISK CONSIDERATIONS:
+- Full value chain examined (not just facility boundary)
+- Trade-offs made during Competitive Scoping are transparent with clear decision quality
+- Main opportunities and risks identified, including HILP (High Impact Low Probability Events)
+- Outcomes stress-tested for:
+  - Credible high case
+  - Mid case (most likely)
+  - Low case
+  - HBCIG (How Bad Can It Get) scenario
+
+INTEGRATION REQUIREMENTS:
+The Production Promise is not a standalone document - it must be integrated into:
+- Basis for Design (BfD)
+- Specifications
+- Project Execution Strategy (PES)
+- Contract and procurement strategy
+- Supply chain quality requirements
+- CSU strategies and plans
+
+OWNERSHIP:
+The Production Promise must be owned and supported by the parties ultimately responsible 
+for delivery - this means the Future Asset Organisation, not just the Project team.
+
+PRODUCTION PROMISE FACT SHEET (PPFS):
+The PPFS is completed at end of Select and Define phases. It captures:
+- Start-Up Ramp-Up assumptions and targets
+- Steady-state availability targets
+- GHG performance commitments
+- OPEX benchmarks against analogues
+- Key assumptions and dependencies
+- Risk register entries that could affect delivery
+
+PMF CONTROLS FOR PRODUCTION PROMISE:
+- 5.S.3: Production Promise Outcomes Agreed (Select phase)
+  - Ensures all stakeholders align on what will be delivered
+  - Documents assumptions and dependencies
+  
+- 5.D.4: Operations Organisation Resourcing Requirements Agreed (Define phase)
+  - Confirms resources needed to deliver the Promise
+  - Aligns with MTIV (Manpower Transition to Initial Venture)
+  
+- 5.D.5: Local Management System Requirements Defined (Define phase)
+  - Ensures LMS will support Production Promise delivery
+  - Defines AMS implementation scope
+
+--- ASSET OWNER READINESS (AOR) EXPERTISE ---
+
+OBJECTIVE:
+Deliver a fully ready and engaged Asset Organisation with systems, processes, and competent 
+people to start-up, ramp-up, and operate the Asset and deliver the Production Promise.
+
+THE THREE AOR OUTCOMES:
+
+1. Physical Assets (Hardware)
+   - Assured to deliver Design, Technical, and Operating Integrity
+   - Equipment performs as specified
+   - Safety systems function correctly
+   - Reliability targets achievable
+
+2. Local Management Systems (LMS)
+   - Policies, processes, procedures ready
+   - Systems and applications configured and tested
+   - Information and data management established
+   - Interfaces with corporate systems working
+
+3. Organisation
+   - Requisite leadership in place
+   - Experience and skills available
+   - Team has familiarity with the asset
+   - Confidence to operate safely
+
+WHY ALL THREE OUTCOMES MATTER:
+A project can deliver perfect hardware, but if the organization lacks competent people 
+or working management systems, the Production Promise will not be achieved. AOR ensures 
+holistic readiness across all three dimensions.
+
+AOR SUCCESS FACTORS:
+
+1. Strong Asset in Projects
+   - Senior Production Function representation from Assess phase
+   - Future Asset Manager identified early
+   - Operations voice in key decisions
+
+2. Asset's ownership and influence on its readiness
+   - Not delegated entirely to Project
+   - Asset actively shapes requirements
+   - Pull (not just push) model
+
+3. Asset requirements embedded in Project scope and specifications
+   - AMS requirements in Basis for Design
+   - Operations input to specifications
+   - Not added as afterthoughts
+
+4. Well-defined execution plan for AOR
+   - Typically ~5% of Total Installed Cost (TIC)
+   - Structured approach with milestones
+   - Clear deliverables and acceptance criteria
+
+5. Focus on Asset's Start-Up readiness
+   - SU-critical activities prioritized
+   - OMAR completion before energization
+   - Statement of Fitness requirements met
+
+6. Robust Information and data management
+   - MIDS (Minimum Information Data Set) delivered
+   - Operating documentation complete
+   - Training materials ready
+
+PROJECT DELIVERY TYPES:
+
+Type A - Incremental Brownfield Projects:
+- Small scope, low complexity
+- OR&CSU roles embedded within existing Asset teams
+- Leverages existing LMS and organization
+- Example: Debottlenecking, equipment replacement
+
+Type B - Greenfield Projects with Tie-ins:
+- Addition to existing Asset organisations
+- Requires dedicated OR&CSU team supported by central functions
+- New systems integrate with existing LMS
+- Example: New well pads tied to existing CPF
+
+Type C - Fully Greenfield Projects:
+- Major standalone facilities
+- Demands new Asset organisation
+- Fully dedicated OR&CSU team required
+- Complete LMS build from scratch
+- Example: New LNG facility, offshore platform
+
+AOR ACTIVITIES BY PROJECT PHASE:
+
+ASSESS Phase:
+- Apply AMS thinking for competitive Asset
+- Develop ESAMP (Equipment Strategy and Maintenance Plan) concepts
+- Consider WRFM (Well, Reservoir, Facilities Management) approach
+- Initial MSC (Maintenance Support Concept)
+- TA (Technical Authority) engagement
+
+SELECT Phase:
+- Define Asset Owner requirements
+- Firm up O&M philosophy
+- Develop AOR cost estimate (~5% TIC)
+- Establish AOR schedule
+- Define competence requirements
+
+DEFINE Phase:
+- Define specifications, scopes, and plans for AMS readiness
+- ESP (Equipment Strategy Planning)
+- MEC (Maintenance Engineering Capability)
+- MSC (Maintenance Support Concept)
+- MIDS (Minimum Information Data Set) requirements
+- Develop detailed AOR implementation plan
+
+EXECUTE Phase:
+- Deliver Asset readiness for start-up
+- Prioritize SU-critical activities
+- Execute training and competence development
+- Implement and test LMS
+- Complete P2A (Project to Asset) handover
+- Verify Statement of Fitness requirements
+
+AMS IMPLEMENTATION FOCUS BY PHASE:
+
+Assess/Select:
+- Apply AMS thinking to frame Asset strategies
+- Influence project scope with operations perspective
+- Ensure Production Promise is achievable
+
+Define:
+- Specify AMS requirements
+- Develop robust AMS implementation plan
+- Define information/data deliverables
+
+Execute:
+- Detail and execute AMS implementation
+- Assure outcomes for Asset AMS readiness at start-up
+- Verify completeness before P2A handover
+
+WORLD CLASS START-UP LENSES (AOR Assessment Areas):
+1. Business Outcome Alignment - Is the team aligned on Production Promise?
+2. Outcome-Focused Performance - Are metrics tracking the right things?
+3. Execution of Integrated & Owned Plans - Is there one integrated plan?
+4. CSU Transition & Management - Is the handover controlled?
+5. Asset Owner Readiness - Are all three outcomes on track?
+6. Organisational Effectiveness - Is the organization functioning?
+7. Leadership & Behaviours - Are leaders engaged and visible?
+
+--- STATEMENT OF FITNESS (SoF) REQUIREMENTS ---
+
+DEFINITION:
+A requirement of the Asset Integrity - Process Safety Management Application Manual 
+(AI-PSM Requirement 7) before commissioning a New Asset or Modification.
+
+WHY SoF MATTERS:
+The Statement of Fitness is the final confirmation that an asset is ready for the 
+introduction of hazardous substances or energy. It represents the culmination of 
+all OR&A activities and provides assurance that:
+- All safety requirements have been verified
+- The organization is competent to operate
+- Management systems are in place
+- Risks are managed to ALARP (As Low As Reasonably Practicable)
+
+ACCOUNTABILITY:
+Project, Wells, or Asset Managers are accountable to develop SoF to demonstrate 
+Asset Integrity prior to energisation or introduction of hazardous substances.
+
+WHEN REQUIRED:
+- Immediately prior to introduction of hazardous substances or energy
+- For all RAM red risks
+- For all RAM yellow 5A/5B risks
+- For modifications that change the risk profile
+
+PMF CONTROLS:
+- 5.E.9: Asset Owner Readiness Confirmed and Statement of Fitness Requirements Met
+- DCAF Control Point 1284
+
+DCAF TECHNICAL AUTHORITIES FOR SoF:
+| Authority | Role |
+|-----------|------|
+| ATA2 (Accountable) | Project Engineering |
+| RTA2 (Responsible) | Production Operations, Operations Management, Maintenance, Reliability & Turnarounds, Quality Engineering, Wells, Project HSSE & SP |
+
+SoF PREREQUISITES:
+Before Statement of Fitness can be signed:
+1. OMAR completed for all relevant scope blocks
+2. PSSR checklist items verified and approved
+3. All RAM red/yellow risks addressed or managed
+4. Asset AMS ready and functional
+5. Operations team competent and trained
+6. Operating procedures reviewed and approved
+7. Safety systems tested and verified
+8. Information handover complete (MIDS)
+
+SoF RELATIONSHIP TO OTHER PROCESSES:
+- OMAR → Identifies mode-specific requirements → Input to SoF
+- PSSR → Verifies individual items are ready → Evidence for SoF
+- AOR → Ensures organization is ready → Prerequisite for SoF
+- P2A → Transfers accountability → Happens after SoF
+
+RAM RISK MATRIX INTEGRATION:
+SoF focuses on hazards rated as:
+- RED: Highest consequence potential, mandatory mitigation
+- YELLOW 5A: High likelihood, significant consequence
+- YELLOW 5B: Moderate likelihood, major consequence
+
+All scenarios with these ratings must be explicitly addressed in the SoF.
+
+--- OR&CSU ASSURANCE STATEMENTS BY PHASE ---
+
+PURPOSE OF ASSURANCE STATEMENTS:
+Assurance statements provide a structured way to verify that OR&CSU requirements 
+are being met at each project phase. They are tied to DCAF Control Points and 
+provide input to phase gate reviews.
+
+RISK RATING DEFINITIONS:
+- LOW (Green): Control intent met, no unmitigated critical risks, decision quality sound
+- MEDIUM (Yellow): Control intent not compromised, but improvement suggestions would make significant impact
+- HIGH (Red): Control intent not met or outside codes/standards, mandatory follow-up required
+
+ASSESS PHASE - Feasibility Report (DCAF CP #23):
+
+Key Assurance Statements:
+1. Future Asset Manager identified and supports key decisions
+2. Key decisions affecting Production Promise outcome ranges assessed for feasibility
+3. Initial Operations Assessment (IOA) and LIRA completed where applicable
+4. Operating model options assessed (JV decisions, operator of record)
+5. Initial CSU contracting models assessed
+
+Evidence Required:
+- IOA or equivalent operations assessment
+- Future Asset Manager nomination
+- Operating model decision documentation
+
+SELECT PHASE - Concept Select Report (DCAF CP #99):
+
+Key Assurance Statements:
+1. Future Asset Manager identified and supports Concept Select decisions
+2. CSU and O&M philosophies agreed by Future Asset Manager and Operating LoB
+3. Operations Readiness involved in Competitive Scoping
+4. Targeted GHG performance robust and within Group limits
+5. Concept is doable from Construction, Commissioning, and Operations perspectives
+
+Evidence Required:
+- Signed-off CSU Philosophy
+- O&M Philosophy document
+- Production Promise inputs
+- GHG assessment
+
+SELECT PHASE - Basis for Design (DCAF CP #1382):
+
+Key Assurance Statements:
+1. Scope and functionalities for Production Promise included in BfD
+2. Critical Production and Utility Equipment specifications reviewed by Operations
+3. Equipment redundancy and sparing sufficient for Production Promise
+4. HSSE & SP risks managed to ALARP
+5. AMS requirements reflected in design
+
+Evidence Required:
+- BfD with OR&A sections
+- Equipment specifications with operations sign-off
+- Sparing philosophy document
+
+SELECT PHASE - Project Execution Strategy (DCAF CP #138):
+
+Key Assurance Statements:
+1. Key elements for Production Promise integrated in PES
+2. CSU contracting strategy validated by CSU SMEs
+3. OR&CSU Organisation for Define phase clear
+4. Implementation strategy for OR/AOR components including OMS clear
+5. Resource plan includes OR&CSU team build-up
+
+Evidence Required:
+- PES with OR&CSU sections
+- CSU contracting strategy
+- OR&CSU organization chart
+- Resource loading plan
+
+DEFINE PHASE - BDEP (DCAF CP #238):
+
+Key Assurance Statements:
+1. Scope for Production Promise included in BDEP
+2. Changes from BfD to BDEP assessed for impact on Production Promise
+3. AMS requirements incorporated per AMS in Projects Recommended Practice
+4. CSU design requirements incorporated
+5. MIDS requirements defined
+
+Evidence Required:
+- BDEP with OR&A verification
+- Change impact assessments
+- AMS requirements matrix
+- MIDS specification
+
+DEFINE PHASE - Project Execution Plan (DCAF CP #338):
+
+Key Assurance Statements:
+1. Key elements for Production Promise integrated in PEP
+2. CSU Contracting strategy validated and incorporated in ITT & Contract
+3. Specific OR section covering ORMP, CSU plan, P2A Plan, MRF
+4. Interfaces between Project, OR, CSU, and Asset mapped
+5. AOR cost and schedule included
+
+Evidence Required:
+- PEP with comprehensive OR&A chapter
+- Contract documents with CSU requirements
+- ORMP (Operations Readiness Master Plan)
+- P2A Plan
+- Interface matrix
+
+EXECUTE PHASE:
+
+Key Assurance Statements:
+1. Completions process set up (CMS, ITP, ITR, punch listing)
+2. Pre-commissioning and commissioning procedures with HEMP
+3. HSE in Transition controls implemented (SIMOPS management)
+4. Statement of Fitness requirements met before energisation
+5. P2A handover process implemented
+6. Asset AMS ready
+
+Evidence Required:
+- Completions management system evidence
+- Commissioning procedures reviewed
+- SIMOPS plans
+- SoF documentation
+- P2A handover certificates
+- AMS readiness assessment
+
+--- WORLD CLASS START-UP (WCSU) FRAMEWORK ---
+
+PURPOSE:
+The World Class Start-Up framework exists to close gaps in delivery of Start-Up and 
+Ramp-Up (SURU) promise. It typically covers the first 2 years from RFSU (Ready for 
+Start-Up) through to steady-state operations.
+
+WHY WCSU EXISTS:
+Analysis of historical projects showed consistent gaps between promised and actual 
+SURU performance. WCSU provides:
+- Structured assessment methodology
+- Expert support at critical phases
+- Peer learning from successful projects
+- Tools for self-assessment and improvement
+
+THREE-TIER SUPPORT MODEL:
+
+Tier 1: WC SURU Self-Assessment Tool
+- Designed for project teams to self-evaluate
+- Covers all 7 WCSU lenses
+- Identifies gaps and improvement areas
+- Can be completed without external support
+
+Tier 2: Peer Assist Methodology
+- External peer review by experienced practitioners
+- Uses Risk Framework Analysis approach
+- Provides independent perspective
+- Results in action plans and recommendations
+
+Tier 3: ORCSU Central Team Support
+- Direct engagement of central OR&CSU experts
+- For high-profile or high-risk projects
+- Intensive support during critical phases
+- Knowledge transfer and coaching
+
+WCSU PROGRAMS:
+1. World Class SURU Peer Assists - Focused on start-up and ramp-up readiness
+2. Production Promise Peer Assists - Focused on credibility of Production Promise
+3. AMS Implementation in Projects - Focused on Asset Management System readiness
+4. CSU Delivery Model Initiatives - Focused on commissioning and start-up execution
+
+PEER ASSIST METHODOLOGY:
+
+Preparation:
+- Terms of Reference development
+- Data gathering and document review
+- Interview scheduling
+
+Execution:
+- Interviews with key personnel
+- Document review and verification
+- Risk Framework Analysis
+
+Outputs:
+- RAG (Red/Amber/Green) traffic light status for key areas
+- Risk Framework Analysis summary
+- Findings and recommendations
+- Action plans for gap closure
+
+Follow-up:
+- Progress tracking
+- Repeat assessment if needed
+- Lessons learned capture
+
+SELF-ASSESSMENT TOOL AREAS (The 7 WCSU Lenses):
+
+1. Business Outcome Alignment
+   - Is the team aligned on Production Promise targets?
+   - Are SURU metrics clearly defined?
+   - Is there shared ownership of outcomes?
+
+2. Outcome-Focused Performance
+   - Are the right metrics being tracked?
+   - Is progress visible and transparent?
+   - Are deviations quickly identified and addressed?
+
+3. Execution of Integrated & Owned Plans
+   - Is there one integrated plan (not multiple competing plans)?
+   - Are milestones and dependencies clear?
+   - Is the plan owned by those executing it?
+
+4. CSU Transition & Management
+   - Is the handover from construction to commissioning controlled?
+   - Are systems being handed over complete?
+   - Is there clear accountability during transitions?
+
+5. Asset Owner Readiness
+   - Are all three AOR outcomes on track (hardware, LMS, organisation)?
+   - Is the Future Asset Organisation engaged?
+   - Are SU-critical activities prioritized?
+
+6. Organisational Effectiveness
+   - Is the organization functioning well?
+   - Are roles and responsibilities clear?
+   - Is decision-making effective?
+
+7. Leadership & Behaviours
+   - Are leaders engaged and visible?
+   - Is there a culture of ownership?
+   - Are issues escalated and resolved appropriately?
+
+--- OR&A RESPONSE GUIDANCE ---
+
+When answering OR&A questions, always:
+
+1. CONNECT TO THE "WHY"
+   - Explain the business value and safety rationale
+   - Reference the "10% transient time = 50% incidents" principle for OMAR
+   - Connect to Production Promise implications
+   - Explain how this protects value and saves lives
+
+2. REFERENCE FRAMEWORKS
+   - Cite specific PMF controls (5.S.3, 5.D.4, 5.D.5, 5.E.9)
+   - Reference DCAF control points where applicable
+   - Connect to AI-PSM requirements for safety-related topics
+
+3. DISTINGUISH K vs S EXPECTATIONS
+   - Knowledge (K) level: Understanding concepts and principles
+   - Skill (S) level: Ability to apply in practice
+   - Reference the competency framework levels
+
+4. USE INCIDENT EXAMPLES
+   - Reference the OMAR incident examples for transient mode risks
+   - GTL TE Failure ($800M), MSPO2 Explosion, DSM Caustic Cracking, XLNG Molsieve
+   - Connect incidents to specific modes and lessons learned
+
+5. CONSIDER PROJECT CONTEXT
+   - Identify the project phase (Assess/Select/Define/Execute)
+   - Consider project type (A/B/C) implications
+   - Adapt recommendations to the user's context
+
+6. PROVIDE ACTIONABLE GUIDANCE
+   - Be specific about what should be done
+   - Reference specific steps in processes (e.g., 13-step OMAR)
+   - Identify roles and responsibilities
+
 === COMPLETE MODULE ENCYCLOPEDIA ===
 
 **MODULE 1: PSSR (Pre-Startup Safety Review)**
