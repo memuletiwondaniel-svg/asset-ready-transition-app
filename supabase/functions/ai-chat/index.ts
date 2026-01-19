@@ -1938,7 +1938,11 @@ function detectNavigationIntent(message: string): NavigationIntent {
     return { detected: false, module: null, entitySearch: null, isModuleOnly: false };
   }
   
-  // Normalize input: add spaces between letters and numbers (e.g., "DP300PSSR" -> "DP300 PSSR")
+  // FIXED: Extract entity code BEFORE normalization to preserve codes like "DP300"
+  const codeMatch = message.match(/\b([A-Z]{1,4}\d{2,4})\b/i);
+  const entitySearch = codeMatch ? codeMatch[1].toUpperCase() : null;
+  
+  // Now normalize for module detection only (handles "DP300PSSR" -> "DP300 PSSR")
   const normalized = message.replace(/([a-zA-Z])(\d)/g, '$1 $2').replace(/(\d)([a-zA-Z])/g, '$1 $2');
   
   // Detect module type
@@ -1954,10 +1958,6 @@ function detectNavigationIntent(message: string): NavigationIntent {
   if (!module) {
     return { detected: false, module: null, entitySearch: null, isModuleOnly: false };
   }
-  
-  // Extract potential entity identifier (project codes like DP300, JV100, etc.)
-  const codeMatch = normalized.match(/\b([A-Z]{1,4}\d{2,4})\b/i);
-  const entitySearch = codeMatch ? codeMatch[1].toUpperCase() : null;
   
   // Check if this is just "go to PSSR" (module only) vs "go to DP300 PSSR" (specific entity)
   const isModuleOnly = !entitySearch && !/(for|of)\s+\w+/i.test(normalized);
