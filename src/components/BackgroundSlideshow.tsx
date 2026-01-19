@@ -139,10 +139,10 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = ({ showFunFacts 
       // Clear previous image after transition completes
       const timeout = setTimeout(() => {
         setPreviousImageIndex(null);
-      }, 5200); // Slightly longer than fade duration
+      }, 7600); // Slightly longer than fade duration
 
       return () => clearTimeout(timeout);
-    }, 10000); // Give each image more time to "settle" before fading
+    }, 12000); // Slower pace + longer fade = smoother blend
 
     return () => clearInterval(interval);
   }, [images.length]);
@@ -162,8 +162,9 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = ({ showFunFacts 
       
       {/* Slideshow images */}
       {images.map((image, index) => {
-        const isActive = index === currentImageIndex && loadedImages.has(index);
-        const isPrevious = index === previousImageIndex && loadedImages.has(index);
+        const isLoaded = loadedImages.has(index);
+        const isActive = index === currentImageIndex;
+        const isPrevious = index === previousImageIndex;
         
         return (
           <img
@@ -172,13 +173,13 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = ({ showFunFacts 
             alt=""
             loading={index === 0 ? "eager" : "lazy"}
             style={{
-              willChange: isActive || isPrevious ? 'opacity' : 'auto',
+              willChange: isActive || isPrevious ? 'opacity, transform' : 'auto',
             }}
             className={`
               absolute inset-0 w-full h-full object-cover object-center
-              transition-opacity duration-[5000ms] ease-in-out
-              ${isActive ? 'opacity-100 z-20 animate-ken-burns' : ''}
-              ${isPrevious ? 'opacity-100 z-10' : ''}
+              transition-opacity duration-[7000ms] ease-in-out
+              ${isActive ? (isLoaded ? 'opacity-100 z-20 animate-ken-burns' : 'opacity-0 z-20') : ''}
+              ${isPrevious ? (isLoaded ? 'opacity-100 z-10' : 'opacity-0 z-10') : ''}
               ${!isActive && !isPrevious ? 'opacity-0 z-0' : ''}
             `}
           />
