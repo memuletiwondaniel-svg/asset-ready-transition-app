@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Grid, List, FolderOpen, Plus } from 'lucide-react';
+import { Search, Grid, List, FolderOpen, Plus, Star } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -11,6 +11,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useProjects } from '@/hooks/useProjects';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { AddProjectWizard } from '@/components/project/AddProjectWizard';
+import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { format } from 'date-fns';
@@ -27,6 +31,7 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   // Filter projects based on search query
   const filteredProjects = projects?.filter(project => 
@@ -37,6 +42,24 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
 
   const handleProjectClick = (projectId: string) => {
     navigate(`/project/${projectId}`);
+  };
+
+  const handleToggleFavorite = async (e: React.MouseEvent, projectId: string, currentValue: boolean | null) => {
+    e.stopPropagation();
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .update({ is_favorite: !currentValue })
+        .eq('id', projectId);
+
+      if (error) throw error;
+      
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      toast.success(currentValue ? 'Removed from favorites' : 'Added to favorites');
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      toast.error('Failed to update favorite status');
+    }
   };
 
   const getProjectColor = (prefix: string, number: string) => {
@@ -58,7 +81,8 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
   };
 
   return (
-    <main className="flex-1 p-6 overflow-y-auto bg-background">
+    <AnimatedBackground className="flex-1">
+      <main className="flex-1 p-6 overflow-y-auto">
         <div className="max-w-7xl mx-auto space-y-6">
           {/* Breadcrumb */}
           <BreadcrumbNavigation 
@@ -69,23 +93,17 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
           />
 
           {/* Header */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 shadow-lg">
-                <FolderOpen className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-foreground">My Projects</h1>
-                <p className="text-muted-foreground">Browse and access your assigned projects</p>
-              </div>
+          <div className="flex items-center gap-3">
+            <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 shadow-lg">
+              <FolderOpen className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
             </div>
-            <Button onClick={() => setIsAddModalOpen(true)} className="gap-2">
-              <Plus className="h-4 w-4" />
-              New Project
-            </Button>
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">My Projects</h1>
+              <p className="text-muted-foreground">Browse and access your assigned projects</p>
+            </div>
           </div>
 
-          {/* Search and View Toggle */}
+          {/* Search, New Project Button, and View Toggle */}
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
             <div className="relative w-full sm:w-96">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -97,19 +115,23 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
               />
             </div>
             <div className="flex items-center gap-2">
+              <Button onClick={() => setIsAddModalOpen(true)} className="gap-2">
+                <Plus className="h-4 w-4" />
+                New Project
+              </Button>
               <Button
                 variant={viewMode === 'grid' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setViewMode('grid')}
               >
-                <Grid className="h-4 w-4" />
+                <Grid className="h-4 w-4 text-blue-500" />
               </Button>
               <Button
                 variant={viewMode === 'list' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setViewMode('list')}
               >
-                <List className="h-4 w-4" />
+                <List className="h-4 w-4 text-blue-500" />
               </Button>
             </div>
           </div>
@@ -150,15 +172,32 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                 return (
                   <Card 
                     key={project.id}
-                    className="group relative cursor-pointer transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 border-0 bg-gradient-to-br from-card to-card/50 backdrop-blur overflow-hidden"
+                    className="group relative cursor-pointer transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 border-0 bg-gradient-to-br from-card to-card/50 backdrop-blur"
                     onClick={() => handleProjectClick(project.id)}
                   >
+                    {/* Favorite Star - Top Right */}
+                    <button
+                      type="button"
+                      onClick={(e) => handleToggleFavorite(e, project.id, project.is_favorite)}
+                      className={`absolute top-3 right-3 h-8 w-8 flex items-center justify-center rounded-full z-20 transition-all duration-200 hover:bg-yellow-500/20 ${
+                        project.is_favorite ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                      }`}
+                    >
+                      <Star
+                        className={`h-5 w-5 transition-all duration-200 ${
+                          project.is_favorite
+                            ? 'fill-yellow-400 text-yellow-400'
+                            : 'text-muted-foreground hover:text-yellow-400'
+                        }`}
+                      />
+                    </button>
+
                     {/* Gradient Background Effect */}
                     <div className={`absolute inset-0 bg-gradient-to-br ${projectColor.bg} opacity-0 group-hover:opacity-10 transition-opacity duration-300`} />
                     <CardContent className="relative p-4 space-y-4">
                       {/* Header */}
                       <div className="flex items-start justify-between">
-                        <div className="flex-1 min-w-0">
+                        <div className="flex-1 min-w-0 pr-8">
                           <Badge 
                             variant="outline" 
                             className={`bg-gradient-to-r ${projectColor.bg} ${projectColor.text} ${projectColor.border} text-xs font-semibold px-2 py-0.5 mb-2`}
@@ -264,12 +303,29 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                 return (
                   <Card 
                     key={project.id}
-                    className="group relative cursor-pointer transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5 border-0 bg-gradient-to-br from-card to-card/50 backdrop-blur overflow-hidden"
+                    className="group relative cursor-pointer transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5 border-0 bg-gradient-to-br from-card to-card/50 backdrop-blur"
                     onClick={() => handleProjectClick(project.id)}
                   >
+                    {/* Favorite Star */}
+                    <button
+                      type="button"
+                      onClick={(e) => handleToggleFavorite(e, project.id, project.is_favorite)}
+                      className={`absolute top-1/2 -translate-y-1/2 right-3 h-8 w-8 flex items-center justify-center rounded-full z-20 transition-all duration-200 hover:bg-yellow-500/20 ${
+                        project.is_favorite ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                      }`}
+                    >
+                      <Star
+                        className={`h-5 w-5 transition-all duration-200 ${
+                          project.is_favorite
+                            ? 'fill-yellow-400 text-yellow-400'
+                            : 'text-muted-foreground hover:text-yellow-400'
+                        }`}
+                      />
+                    </button>
+
                     {/* Gradient Background Effect */}
                     <div className={`absolute inset-0 bg-gradient-to-br ${projectColor.bg} opacity-0 group-hover:opacity-10 transition-opacity duration-300`} />
-                    <CardContent className="relative p-4 flex items-center gap-4">
+                    <CardContent className="relative p-4 flex items-center gap-4 pr-14">
                       <Badge 
                         variant="outline" 
                         className={`bg-gradient-to-r ${projectColor.bg} ${projectColor.text} ${projectColor.border} text-xs font-semibold px-2 py-0.5 shrink-0`}
@@ -321,7 +377,8 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
         open={isAddModalOpen} 
         onClose={() => setIsAddModalOpen(false)} 
       />
-    </main>
+      </main>
+    </AnimatedBackground>
   );
 };
 

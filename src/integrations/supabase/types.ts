@@ -3928,6 +3928,7 @@ export type Database = {
           hub_id: string | null
           id: string
           is_active: boolean
+          is_favorite: boolean | null
           plant_id: string | null
           project_id_number: string
           project_id_prefix: string
@@ -3944,6 +3945,7 @@ export type Database = {
           hub_id?: string | null
           id?: string
           is_active?: boolean
+          is_favorite?: boolean | null
           plant_id?: string | null
           project_id_number: string
           project_id_prefix: string
@@ -3960,6 +3962,7 @@ export type Database = {
           hub_id?: string | null
           id?: string
           is_active?: boolean
+          is_favorite?: boolean | null
           plant_id?: string | null
           project_id_number?: string
           project_id_prefix?: string
