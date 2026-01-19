@@ -150,17 +150,23 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = ({ showFunFacts 
       />
       
       {/* Slideshow images */}
-      {images.map((image, index) => (
-        <img
-          key={index}
-          src={image}
-          alt=""
-          loading={index === 0 ? "eager" : "lazy"}
-          className={`absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-[3000ms] ease-in-out ${
-            index === currentImageIndex && loadedImages.has(index) ? 'opacity-100' : 'opacity-0'
-          }`}
-        />
-      ))}
+      {images.map((image, index) => {
+        const isActive = index === currentImageIndex && loadedImages.has(index);
+        return (
+          <img
+            key={index}
+            src={image}
+            alt=""
+            loading={index === 0 ? "eager" : "lazy"}
+            style={isActive ? { animationDuration: '7000ms' } : undefined}
+            className={`absolute inset-0 w-full h-full object-cover object-center transition-all duration-[4000ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${
+              isActive 
+                ? 'opacity-100 animate-ken-burns' 
+                : 'opacity-0 scale-100'
+            }`}
+          />
+        );
+      })}
       
       {/* Overlay for better text readability */}
       <div className="absolute inset-0 bg-black/30" />
