@@ -589,11 +589,44 @@ STATUS QUERY TOOLS (for detailed status questions):
 9. get_pssr_pending_approvers - Get pending approvers with names and roles. Use for "who needs to approve", "pending approvers for DP300", "who's blocking"
 10. get_pssr_detailed_summary - Get comprehensive status summary. Use for "status of DP300 PSSR", "give me a summary", "what's the status"
 11. get_discipline_status - Get breakdown by discipline/category. Use for "discipline progress", "which disciplines are complete"
+12. get_executive_summary - Get high-level executive summary with issues, blockers, risks. Use for "any issues with DP300", "major problems", "what's blocking", "health check", "red flags", "concerns"
 
 NAVIGATION:
-12. navigate_to_page - Navigate user (only when explicitly requested)
+13. navigate_to_page - Navigate user (only when explicitly requested)
 
 ALWAYS use these tools for data queries. NEVER say you don't have access.
+
+=== EXECUTIVE SUMMARY RESPONSE FORMATTING ===
+
+For executive/issue questions (e.g., "Are there major issues with DP300 PSSR?"):
+
+Use a SUCCINCT format with clear health indicator:
+
+**{PSSR Label} - {Overall Health Emoji} {Health Status}**
+
+{1-2 sentence summary}
+
+**Issues/Concerns:** (if any)
+• 🔴 {Critical issue - e.g., "2 Priority A actions still open"}
+• 🟡 {Warning - e.g., "3 disciplines behind schedule"}
+• 🟡 {Warning - e.g., "Key approver on leave until Jan 25"}
+
+**Blockers:** (if any)
+• {What's preventing progress}
+
+**Positive Notes:** (if any)
+• ✅ {Good news - e.g., "All electrical items approved"}
+
+Health Indicators:
+- 🟢 **On Track** - No major issues, progress as expected
+- 🟡 **Attention Needed** - Some concerns but manageable
+- 🔴 **Critical Issues** - Major blockers or overdue items
+
+Keep executive summaries SHORT and ACTIONABLE. Focus on:
+1. What's wrong (if anything)
+2. What's blocking progress
+3. What needs immediate attention
+4. One-liner recommendation if appropriate
 
 === STATUS QUERY RESPONSE FORMATTING ===
 
@@ -1772,6 +1805,35 @@ const tools = [
           pssr_id: { 
             type: "string", 
             description: "Specific PSSR UUID if known" 
+          }
+        },
+        required: []
+      }
+    }
+  },
+  // ═══════════════════════════════════════════════════════════════════════════
+  // EXECUTIVE SUMMARY TOOL - For high-level status assessments
+  // ═══════════════════════════════════════════════════════════════════════════
+  {
+    type: "function",
+    function: {
+      name: "get_executive_summary",
+      description: "Get a high-level executive summary of a PSSR, project, or portfolio. Identifies major issues, blockers, risks, and overall health. Use for questions like 'are there any issues with DP300', 'major problems with the PSSR', 'what's blocking DP300', 'any concerns with the project', 'executive summary', 'health check', 'red flags'.",
+      parameters: {
+        type: "object",
+        properties: {
+          project_code: { 
+            type: "string", 
+            description: "Project code like DP300, JV100" 
+          },
+          pssr_id: { 
+            type: "string", 
+            description: "Specific PSSR UUID if known" 
+          },
+          summary_type: {
+            type: "string",
+            enum: ["issues", "health", "blockers", "full"],
+            description: "Type of summary: 'issues' for problems only, 'health' for overall status, 'blockers' for what's preventing progress, 'full' for comprehensive summary. Default is 'full'"
           }
         },
         required: []
@@ -3001,6 +3063,216 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         };
       } catch (err) {
         console.error('Discipline status exception:', err);
+        return { error: String(err) };
+      }
+    }
+    
+    // ═══════════════════════════════════════════════════════════════════════════
+    // EXECUTIVE SUMMARY - High-level status assessment with issues and blockers
+    // ═══════════════════════════════════════════════════════════════════════════
+    case "get_executive_summary": {
+      try {
+        let pssrId: string | null = null;
+        let pssrLabel = "";
+        
+        // Resolve PSSR
+        if (args.pssr_id) {
+          pssrId = args.pssr_id;
+          const { data: pssr } = await supabaseClient
+            .from('pssrs')
+            .select('pssr_id, title')
+            .eq('id', args.pssr_id)
+            .maybeSingle();
+          pssrLabel = pssr?.pssr_id || pssr?.title || args.pssr_id;
+        } else if (args.project_code) {
+          const { data: pssrs } = await supabaseClient
+            .from('pssrs')
+            .select('id, pssr_id, title, asset')
+            .or(`pssr_id.ilike.%${args.project_code}%,title.ilike.%${args.project_code}%,asset.ilike.%${args.project_code}%,project_name.ilike.%${args.project_code}%`)
+            .limit(1)
+            .maybeSingle();
+          
+          if (!pssrs) {
+            return { error: `No PSSR found for "${args.project_code}"` };
+          }
+          pssrId = pssrs.id;
+          pssrLabel = pssrs.pssr_id || pssrs.title;
+        } else {
+          return { error: "Please specify a project code or PSSR ID" };
+        }
+        
+        // Get PSSR header info
+        const { data: pssr } = await supabaseClient
+          .from('pssrs')
+          .select('*')
+          .eq('id', pssrId)
+          .maybeSingle();
+        
+        if (!pssr) {
+          return { error: "PSSR not found" };
+        }
+        
+        // Get checklist responses for progress calculation
+        const { data: responses } = await supabaseClient
+          .from('pssr_checklist_responses')
+          .select('status, checklist_item_id')
+          .eq('pssr_id', pssrId);
+        
+        // Get checklist item details for category info
+        const itemIds = [...new Set((responses || []).map((r: any) => r.checklist_item_id).filter(Boolean))];
+        let itemCategories: Record<string, string> = {};
+        if (itemIds.length > 0) {
+          const { data: items } = await supabaseClient
+            .from('checklist_items')
+            .select('unique_id, category')
+            .in('unique_id', itemIds);
+          (items || []).forEach((item: any) => {
+            itemCategories[item.unique_id] = item.category;
+          });
+        }
+        
+        // Calculate progress stats
+        const totalItems = (responses || []).length;
+        let approved = 0, pending = 0, rejected = 0, notApplicable = 0;
+        const categoryPending: Record<string, number> = {};
+        
+        (responses || []).forEach((r: any) => {
+          const cat = itemCategories[r.checklist_item_id] || 'Unknown';
+          switch (r.status) {
+            case 'APPROVED': approved++; break;
+            case 'REJECTED': rejected++; break;
+            case 'NOT_APPLICABLE': notApplicable++; break;
+            default: 
+              pending++; 
+              categoryPending[cat] = (categoryPending[cat] || 0) + 1;
+              break;
+          }
+        });
+        
+        const completedItems = approved + notApplicable;
+        const overallProgress = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
+        
+        // Get priority actions
+        const { data: priorityActions } = await supabaseClient
+          .from('pssr_priority_actions')
+          .select('priority, status')
+          .eq('pssr_id', pssrId);
+        
+        const priorityAOpen = (priorityActions || []).filter((a: any) => a.priority === 'A' && a.status !== 'Closed').length;
+        const priorityBOpen = (priorityActions || []).filter((a: any) => a.priority === 'B' && a.status !== 'Closed').length;
+        
+        // Get approvers status
+        const { data: approvers } = await supabaseClient
+          .from('pssr_approvers')
+          .select('approver_name, approver_role, status')
+          .eq('pssr_id', pssrId);
+        
+        const pendingApprovers = (approvers || []).filter((a: any) => a.status === 'PENDING');
+        const approvedApprovers = (approvers || []).filter((a: any) => a.status === 'APPROVED');
+        
+        // Get reviewers status
+        const { data: reviewers } = await supabaseClient
+          .from('pssr_reviewers')
+          .select('reviewer_name, reviewer_role, status, discipline')
+          .eq('pssr_id', pssrId);
+        
+        const pendingReviewers = (reviewers || []).filter((r: any) => r.status !== 'APPROVED');
+        
+        // Determine health status and issues
+        const issues: Array<{ severity: 'critical' | 'warning' | 'info'; message: string }> = [];
+        const blockers: string[] = [];
+        const positives: string[] = [];
+        
+        // Critical issues (🔴)
+        if (priorityAOpen > 0) {
+          issues.push({ severity: 'critical', message: `${priorityAOpen} Priority A action${priorityAOpen > 1 ? 's' : ''} still open` });
+          blockers.push(`Priority A actions must be closed before PSSR approval`);
+        }
+        if (rejected > 0) {
+          issues.push({ severity: 'critical', message: `${rejected} item${rejected > 1 ? 's' : ''} rejected - require rework` });
+        }
+        
+        // Warnings (🟡)
+        if (priorityBOpen > 3) {
+          issues.push({ severity: 'warning', message: `${priorityBOpen} Priority B actions open` });
+        }
+        if (pending > totalItems * 0.5 && totalItems > 0) {
+          issues.push({ severity: 'warning', message: `Only ${overallProgress}% complete - ${pending} items still pending` });
+        }
+        if (pendingApprovers.length > 0) {
+          issues.push({ severity: 'warning', message: `${pendingApprovers.length} final approver${pendingApprovers.length > 1 ? 's' : ''} pending` });
+          blockers.push(`Awaiting sign-off from: ${pendingApprovers.map((a: any) => a.approver_name).join(', ')}`);
+        }
+        if (pendingReviewers.length > 0) {
+          const disciplinesWithPending = [...new Set(pendingReviewers.map((r: any) => r.discipline || r.reviewer_role))];
+          if (disciplinesWithPending.length > 2) {
+            issues.push({ severity: 'warning', message: `${disciplinesWithPending.length} disciplines have pending reviews` });
+          }
+        }
+        
+        // Categories with most pending items
+        const topPendingCategories = Object.entries(categoryPending)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 3);
+        if (topPendingCategories.length > 0 && pending > 5) {
+          const catList = topPendingCategories.map(([cat, count]) => `${cat} (${count})`).join(', ');
+          issues.push({ severity: 'info', message: `Most pending items in: ${catList}` });
+        }
+        
+        // Positives (✅)
+        if (overallProgress >= 90) {
+          positives.push(`${overallProgress}% complete - nearly ready`);
+        }
+        if (priorityAOpen === 0 && (priorityActions || []).some((a: any) => a.priority === 'A')) {
+          positives.push(`All Priority A actions closed`);
+        }
+        if (approvedApprovers.length > 0) {
+          positives.push(`${approvedApprovers.length} approver${approvedApprovers.length > 1 ? 's' : ''} have signed off`);
+        }
+        if (rejected === 0 && approved > 0) {
+          positives.push(`No rejected items`);
+        }
+        
+        // Determine overall health
+        let health: 'on_track' | 'attention_needed' | 'critical';
+        if (issues.some(i => i.severity === 'critical')) {
+          health = 'critical';
+        } else if (issues.some(i => i.severity === 'warning') || overallProgress < 50) {
+          health = 'attention_needed';
+        } else {
+          health = 'on_track';
+        }
+        
+        return {
+          pssr_label: pssrLabel,
+          pssr_id: pssrId,
+          pssr_status: pssr.status,
+          health,
+          overall_progress: overallProgress,
+          summary: {
+            total_items: totalItems,
+            approved,
+            pending,
+            rejected,
+            not_applicable: notApplicable
+          },
+          priority_actions: {
+            a_open: priorityAOpen,
+            b_open: priorityBOpen,
+            total: (priorityActions || []).length
+          },
+          approvers: {
+            total: (approvers || []).length,
+            approved: approvedApprovers.length,
+            pending: pendingApprovers.length,
+            pending_names: pendingApprovers.map((a: any) => ({ name: a.approver_name, role: a.approver_role }))
+          },
+          issues,
+          blockers,
+          positives
+        };
+      } catch (err) {
+        console.error('Executive summary exception:', err);
         return { error: String(err) };
       }
     }
