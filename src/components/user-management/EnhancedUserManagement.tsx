@@ -729,10 +729,11 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
         />
 
         {/* Main Tabs for Users and Configuration */}
-        <div className="flex-1 overflow-auto">
-          <div className="max-w-7xl mx-auto p-6 space-y-6">
-            <Tabs value={activeMainTab} onValueChange={setActiveMainTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-3 max-w-xl mb-6">
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="max-w-7xl mx-auto w-full px-6 pt-6">
+            <Tabs value={activeMainTab} onValueChange={setActiveMainTab} className="w-full flex flex-col flex-1">
+              {/* Sticky Tabs Row */}
+              <TabsList className="grid w-full grid-cols-3 max-w-xl mb-4 bg-background/95 backdrop-blur-md">
                 <TabsTrigger value="users" className="flex items-center gap-2">
                   <Users className="h-4 w-4" />
                   Users
@@ -747,203 +748,210 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="users" className="space-y-4 mt-0">
-            {/* Search and Filters Bar */}
-            <Card className="border-border/40 shadow-sm animate-fade-in sticky top-0 z-20 bg-card/95 backdrop-blur-md">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-3">
-                  {/* Search Input */}
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      type="text"
-                      placeholder="Search users by name, email, or role..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10 bg-background border-border/60 focus-visible:ring-primary/20"
-                    />
-                  </div>
-                  
-                  {/* Filters Dropdown */}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" className="border-border/60 min-w-[120px]">
-                        <Filter className="h-4 w-4 mr-2" />
-                        Filters
-                        {(statusFilter !== 'all' || companyFilter !== 'all' || roleFilter !== 'all') && (
-                          <Badge variant="secondary" className="ml-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-primary text-primary-foreground">
-                            {[statusFilter !== 'all', companyFilter !== 'all', roleFilter !== 'all'].filter(Boolean).length}
-                          </Badge>
-                        )}
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-72 bg-popover border shadow-lg z-50 p-4">
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="font-medium text-sm">Filter Users</h4>
-                          {(statusFilter !== 'all' || companyFilter !== 'all' || roleFilter !== 'all') && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                setStatusFilter('all');
-                                setCompanyFilter('all');
-                                setRoleFilter('all');
-                              }}
-                              className="h-7 text-xs text-muted-foreground hover:text-foreground"
-                            >
-                              Clear All
-                            </Button>
-                          )}
-                        </div>
-                        
-                        <div className="space-y-3">
-                          {/* Status Filter */}
-                          <div className="space-y-2">
-                            <label className="text-xs font-medium text-muted-foreground">Status</label>
-                            <Select value={statusFilter} onValueChange={setStatusFilter}>
-                              <SelectTrigger className="w-full border-border/60 bg-background">
-                                <SelectValue placeholder="Select status" />
-                              </SelectTrigger>
-                              <SelectContent className="bg-popover z-[100]">
-                                <SelectItem value="all">All Status</SelectItem>
-                                <SelectItem value="active">Active</SelectItem>
-                                <SelectItem value="pending_approval">Awaiting Authentication</SelectItem>
-                                <SelectItem value="suspended">Suspended</SelectItem>
-                                <SelectItem value="inactive">Inactive</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          
-                          {/* Company Filter */}
-                          <div className="space-y-2">
-                            <label className="text-xs font-medium text-muted-foreground">Company</label>
-                            <Select value={companyFilter} onValueChange={setCompanyFilter}>
-                              <SelectTrigger className="w-full border-border/60 bg-background">
-                                <SelectValue placeholder="Select company" />
-                              </SelectTrigger>
-                              <SelectContent className="bg-popover z-[100]">
-                                <SelectItem value="all">All Companies</SelectItem>
-                                {companies.map(company => (
-                                  <SelectItem key={company} value={company}>{company}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          
-                          {/* Role Filter */}
-                          <div className="space-y-2">
-                            <label className="text-xs font-medium text-muted-foreground">Role</label>
-                            <Select value={roleFilter} onValueChange={setRoleFilter}>
-                              <SelectTrigger className="w-full border-border/60 bg-background">
-                                <SelectValue placeholder="Select role" />
-                              </SelectTrigger>
-                              <SelectContent className="bg-popover z-[100]">
-                                <SelectItem value="all">All Roles</SelectItem>
-                                {roles.map(role => (
-                                  <SelectItem key={role} value={role}>{role}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
+              <TabsContent value="users" className="flex-1 flex flex-col space-y-4 mt-0 overflow-hidden">
+                {/* Sticky Search and Filters Bar */}
+                <Card className="border-border/40 shadow-sm animate-fade-in bg-card/95 backdrop-blur-md flex-shrink-0">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-3">
+                      {/* Search Input */}
+                      <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          type="text"
+                          placeholder="Search users by name, email, or role..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="pl-10 bg-background border-border/60 focus-visible:ring-primary/20"
+                        />
                       </div>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                  
-                  {/* Column Visibility */}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm" className="border-border/60">
-                        <Columns className="h-4 w-4 mr-2" />
-                        Columns
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-56 bg-popover border shadow-lg z-50">
-                      <div className="p-2">
-                        <div className="text-sm font-medium mb-2">Show/Hide Columns</div>
-                        {columns.map((column) => (
-                          <div key={column.id} className="flex items-center space-x-2 py-1">
-                            <input
-                              type="checkbox"
-                              checked={column.visible}
-                              onChange={() => toggleColumnVisibility(column.id)}
-                              className="rounded"
-                            />
-                            <span className="text-sm">{column.label}</span>
+                      
+                      {/* Filters Dropdown */}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" className="border-border/60 min-w-[120px]">
+                            <Filter className="h-4 w-4 mr-2" />
+                            Filters
+                            {(statusFilter !== 'all' || companyFilter !== 'all' || roleFilter !== 'all') && (
+                              <Badge variant="secondary" className="ml-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-primary text-primary-foreground">
+                                {[statusFilter !== 'all', companyFilter !== 'all', roleFilter !== 'all'].filter(Boolean).length}
+                              </Badge>
+                            )}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-72 bg-popover border shadow-lg z-50 p-4">
+                          <div className="space-y-4">
+                            <div className="flex items-center justify-between mb-2">
+                              <h4 className="font-medium text-sm">Filter Users</h4>
+                              {(statusFilter !== 'all' || companyFilter !== 'all' || roleFilter !== 'all') && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    setStatusFilter('all');
+                                    setCompanyFilter('all');
+                                    setRoleFilter('all');
+                                  }}
+                                  className="h-7 text-xs text-muted-foreground hover:text-foreground"
+                                >
+                                  Clear All
+                                </Button>
+                              )}
+                            </div>
+                            
+                            <div className="space-y-3">
+                              {/* Status Filter */}
+                              <div className="space-y-2">
+                                <label className="text-xs font-medium text-muted-foreground">Status</label>
+                                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                                  <SelectTrigger className="w-full border-border/60 bg-background">
+                                    <SelectValue placeholder="Select status" />
+                                  </SelectTrigger>
+                                  <SelectContent className="bg-popover z-[100]">
+                                    <SelectItem value="all">All Status</SelectItem>
+                                    <SelectItem value="active">Active</SelectItem>
+                                    <SelectItem value="pending_approval">Awaiting Authentication</SelectItem>
+                                    <SelectItem value="suspended">Suspended</SelectItem>
+                                    <SelectItem value="inactive">Inactive</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              
+                              {/* Company Filter */}
+                              <div className="space-y-2">
+                                <label className="text-xs font-medium text-muted-foreground">Company</label>
+                                <Select value={companyFilter} onValueChange={setCompanyFilter}>
+                                  <SelectTrigger className="w-full border-border/60 bg-background">
+                                    <SelectValue placeholder="Select company" />
+                                  </SelectTrigger>
+                                  <SelectContent className="bg-popover z-[100]">
+                                    <SelectItem value="all">All Companies</SelectItem>
+                                    {companies.map(company => (
+                                      <SelectItem key={company} value={company}>{company}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              
+                              {/* Role Filter */}
+                              <div className="space-y-2">
+                                <label className="text-xs font-medium text-muted-foreground">Role</label>
+                                <Select value={roleFilter} onValueChange={setRoleFilter}>
+                                  <SelectTrigger className="w-full border-border/60 bg-background">
+                                    <SelectValue placeholder="Select role" />
+                                  </SelectTrigger>
+                                  <SelectContent className="bg-popover z-[100]">
+                                    <SelectItem value="all">All Roles</SelectItem>
+                                    {roles.map(role => (
+                                      <SelectItem key={role} value={role}>{role}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
                           </div>
-                        ))}
-                      </div>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                  
-                  {/* Add User Button */}
-                  <Button 
-                    onClick={() => setShowCreateUser(true)}
-                    className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add User
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                      
+                      {/* Column Visibility */}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="sm" className="border-border/60">
+                            <Columns className="h-4 w-4 mr-2" />
+                            Columns
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-56 bg-popover border shadow-lg z-50">
+                          <div className="p-2">
+                            <div className="text-sm font-medium mb-2">Show/Hide Columns</div>
+                            {columns.map((column) => (
+                              <div key={column.id} className="flex items-center space-x-2 py-1">
+                                <input
+                                  type="checkbox"
+                                  checked={column.visible}
+                                  onChange={() => toggleColumnVisibility(column.id)}
+                                  className="rounded"
+                                />
+                                <span className="text-sm">{column.label}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                      
+                      {/* Add User Button */}
+                      <Button 
+                        onClick={() => setShowCreateUser(true)}
+                        className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add User
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
 
-            {/* Users Table */}
-            <Card className="border-border/40 shadow-sm animate-fade-in">
-              <CardContent className="p-0">
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragEnd={handleDragEnd}
-                >
-                  <div className="rounded-lg overflow-hidden">
-                    <Table>
-                      <TableHeader className="bg-muted/50">
-                        <TableRow className="hover:bg-transparent border-border/40">
-                          <SortableContext items={columns.filter(col => col.visible).map(col => col.id)} strategy={horizontalListSortingStrategy}>
-                            {columns.filter(col => col.visible).map((column) => (
-                              <SortableTableHeader
-                                key={column.id}
-                                column={column}
-                                onResize={handleColumnResize}
-                                sortDirection={columnSort[column.id] || null}
-                                onSort={handleColumnSort}
-                              />
-                            ))}
-                          </SortableContext>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredUsers.map((user, index) => (
-                          <TableRow 
-                            key={user.user_id}
-                            className="hover:bg-muted/50 transition-colors border-border/40 cursor-pointer"
-                            style={{ animationDelay: `${index * 50}ms` }}
-                            onClick={() => setSelectedUser(user as any)}
-                          >
-                            {columns.filter(col => col.visible).map((column) => (
-                              <TableCell 
-                                key={column.id} 
-                                style={{ width: column.width, minWidth: column.minWidth }}
-                                onClick={(e) => {
-                                  // Stop propagation for actions column to prevent row click
-                                  if (column.id === 'actions') {
-                                    e.stopPropagation();
-                                  }
-                                }}
-                              >
-                                {renderCellContent(column.id, user)}
-                              </TableCell>
-                            ))}
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </DndContext>
-              </CardContent>
-            </Card>
+                {/* Users Table with Scrollable Body */}
+                <Card className="border-border/40 shadow-sm animate-fade-in flex-1 flex flex-col overflow-hidden mb-6">
+                  <CardContent className="p-0 flex-1 flex flex-col overflow-hidden">
+                    <DndContext
+                      sensors={sensors}
+                      collisionDetection={closestCenter}
+                      onDragEnd={handleDragEnd}
+                    >
+                      <div className="rounded-lg flex flex-col flex-1 overflow-hidden">
+                        {/* Sticky Table Header */}
+                        <Table>
+                          <TableHeader className="bg-muted/50">
+                            <TableRow className="hover:bg-transparent border-border/40">
+                              <SortableContext items={columns.filter(col => col.visible).map(col => col.id)} strategy={horizontalListSortingStrategy}>
+                                {columns.filter(col => col.visible).map((column) => (
+                                  <SortableTableHeader
+                                    key={column.id}
+                                    column={column}
+                                    onResize={handleColumnResize}
+                                    sortDirection={columnSort[column.id] || null}
+                                    onSort={handleColumnSort}
+                                  />
+                                ))}
+                              </SortableContext>
+                            </TableRow>
+                          </TableHeader>
+                        </Table>
+                        
+                        {/* Scrollable Table Body */}
+                        <div className="flex-1 overflow-auto">
+                          <Table>
+                            <TableBody>
+                              {filteredUsers.map((user, index) => (
+                                <TableRow 
+                                  key={user.user_id}
+                                  className="hover:bg-muted/50 transition-colors border-border/40 cursor-pointer"
+                                  style={{ animationDelay: `${index * 50}ms` }}
+                                  onClick={() => setSelectedUser(user as any)}
+                                >
+                                  {columns.filter(col => col.visible).map((column) => (
+                                    <TableCell 
+                                      key={column.id} 
+                                      style={{ width: column.width, minWidth: column.minWidth }}
+                                      onClick={(e) => {
+                                        // Stop propagation for actions column to prevent row click
+                                        if (column.id === 'actions') {
+                                          e.stopPropagation();
+                                        }
+                                      }}
+                                    >
+                                      {renderCellContent(column.id, user)}
+                                    </TableCell>
+                                  ))}
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </div>
+                    </DndContext>
+                  </CardContent>
+                </Card>
               </TabsContent>
 
               <TabsContent value="locations" className="mt-0">
