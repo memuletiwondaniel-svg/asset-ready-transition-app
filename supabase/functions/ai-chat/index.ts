@@ -596,11 +596,14 @@ Only navigate when user EXPLICITLY asks using phrases like:
 DO NOT navigate for informational questions (e.g., "how many PSSRs are there?").
 
 RESPONSE STYLE - Be succinct and friendly:
-- DO: "Sure! Here's the link to the DP300 PSSR: [LINK]"
-- DO: "Got it! Opening your tasks now: [LINK]"
-- DO: "Here's the ORA plan you requested: [LINK]"
-- DON'T: Write long explanations before providing the link
+- DO: "Sure! Taking you to the DP300 PSSR now."
+- DO: "Got it! Opening your tasks page."
+- DO: "Here's the ORA plan - opening it now."
+- DON'T: Write long explanations before navigating
 - DON'T: Ask for confirmation if the request is clear
+- DON'T: Use Markdown link syntax like [text](/path) - navigation is handled automatically via navigate_to_page tool
+
+IMPORTANT: Never output Markdown links. The navigate_to_page tool handles navigation automatically - just call the tool and provide a friendly confirmation message.
 
 WORKFLOW FOR SPECIFIC ENTITIES:
 1. If user mentions a specific entity (e.g., "PSSR for DP300", "project JV100", "ORA for DP200"):
@@ -1739,17 +1742,12 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
       try {
         switch (entity_type) {
           case "pssr": {
-            // Search PSSRs by number, equipment tag, or project code
+            // Search PSSRs by pssr_id, title, asset, or project_name
+            // Uses correct column names from the pssrs table schema
             const { data: pssrs, error } = await supabaseClient
               .from('pssrs')
-              .select(`
-                id, 
-                pssr_number, 
-                equipment_tag,
-                status,
-                project:projects(project_id_prefix, project_id_number, project_title)
-              `)
-              .or(`pssr_number.ilike.%${search_term}%,equipment_tag.ilike.%${search_term}%`)
+              .select('id, pssr_id, title, asset, status, project_name')
+              .or(`pssr_id.ilike.%${search_term}%,title.ilike.%${search_term}%,asset.ilike.%${search_term}%,project_name.ilike.%${search_term}%`)
               .limit(10);
             
             if (error) {
@@ -1757,35 +1755,13 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
               return { error: error.message, entity_type };
             }
             
-            // If no direct match, search by project code
             if (!pssrs || pssrs.length === 0) {
-              const { data: projectPssrs } = await supabaseClient
-                .from('pssrs')
-                .select(`
-                  id, 
-                  pssr_number, 
-                  equipment_tag,
-                  status,
-                  project:projects!inner(project_id_prefix, project_id_number, project_title)
-                `)
-                .or(`projects.project_id_prefix.ilike.%${search_term}%,projects.project_id_number.ilike.%${search_term}%`)
-                .limit(10);
-              
-              if (projectPssrs && projectPssrs.length > 0) {
-                return { 
-                  entity_type: 'pssr',
-                  count: projectPssrs.length,
-                  entities: projectPssrs.map((p: any) => ({
-                    id: p.id,
-                    label: p.pssr_number || `PSSR for ${p.equipment_tag}`,
-                    equipment_tag: p.equipment_tag,
-                    status: p.status,
-                    project_code: p.project ? `${p.project.project_id_prefix}${p.project.project_id_number}` : null
-                  }))
-                };
-              }
-              
-              return { entity_type: 'pssr', count: 0, entities: [], message: `No PSSRs found matching "${search_term}"` };
+              return { 
+                entity_type: 'pssr', 
+                count: 0, 
+                entities: [], 
+                message: `No PSSRs found matching "${search_term}"` 
+              };
             }
             
             return { 
@@ -1793,10 +1769,11 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
               count: pssrs.length,
               entities: pssrs.map((p: any) => ({
                 id: p.id,
-                label: p.pssr_number || `PSSR for ${p.equipment_tag}`,
-                equipment_tag: p.equipment_tag,
+                label: p.pssr_id || p.title || `PSSR for ${p.asset}`,
+                title: p.title,
+                asset: p.asset,
                 status: p.status,
-                project_code: p.project ? `${p.project.project_id_prefix}${p.project.project_id_number}` : null
+                project_name: p.project_name
               }))
             };
           }
