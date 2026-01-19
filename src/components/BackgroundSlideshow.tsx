@@ -171,7 +171,7 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = ({ showFunFacts 
         }`}
       />
       
-      {/* Slideshow images (true crossfade: force initial opacity, then transition next frame) */}
+      {/* Slideshow images - current always visible, previous fades out on top */}
       {(() => {
         const FADE_MS = 4000;
 
@@ -181,45 +181,37 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = ({ showFunFacts 
         const currentLoaded = loadedImages.has(currentImageIndex);
         const prevLoaded = previousImageIndex !== null ? loadedImages.has(previousImageIndex) : false;
 
-        const fadeStyle: React.CSSProperties = {
-          transitionProperty: 'opacity',
-          transitionDuration: `${FADE_MS}ms`,
-          transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
-          willChange: 'opacity',
-        };
-
-        const showPrev = Boolean(prevSrc && prevLoaded);
-        const prevOpacity = isCrossfading ? 0 : 1;
-        const currentOpacity = isCrossfading ? 1 : 0;
-
         return (
           <>
-            {showPrev && (
+            {/* Current layer - always at full opacity when loaded (sits behind) */}
+            {currentLoaded && (
+              <div className="absolute inset-0">
+                <img
+                  src={currentSrc}
+                  alt=""
+                  loading={currentImageIndex === 0 ? 'eager' : 'lazy'}
+                  className="w-full h-full object-cover object-center"
+                />
+              </div>
+            )}
+
+            {/* Previous layer - fades out on top of current */}
+            {prevSrc && prevLoaded && (
               <div
                 className="absolute inset-0"
-                style={{ ...fadeStyle, opacity: prevOpacity }}
+                style={{
+                  opacity: isCrossfading ? 0 : 1,
+                  transition: `opacity ${FADE_MS}ms cubic-bezier(0.4, 0, 0.2, 1)`,
+                }}
               >
                 <img
-                  src={prevSrc as string}
+                  src={prevSrc}
                   alt=""
                   loading={previousImageIndex === 0 ? 'eager' : 'lazy'}
                   className="w-full h-full object-cover object-center"
                 />
               </div>
             )}
-
-            {/* Current layer */}
-            <div
-              className="absolute inset-0"
-              style={{ ...fadeStyle, opacity: currentLoaded ? currentOpacity : 0 }}
-            >
-              <img
-                src={currentSrc}
-                alt=""
-                loading={currentImageIndex === 0 ? 'eager' : 'lazy'}
-                className="w-full h-full object-cover object-center"
-              />
-            </div>
           </>
         );
       })()}
