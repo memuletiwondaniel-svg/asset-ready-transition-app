@@ -124,9 +124,9 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
         
         <div className="w-screen h-screen flex items-center justify-center p-4 relative z-10 pointer-events-none">
           
-          <div className="w-full max-w-xs relative z-10 pointer-events-auto" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-sm relative z-10 pointer-events-auto" onClick={(e) => e.stopPropagation()}>
             {/* Modern Fluent Design Card */}
-            <div className="bg-card/80 backdrop-blur-2xl rounded-2xl shadow-[0_32px_64px_-12px_rgba(0,0,0,0.25)] border border-border/20 p-5 relative overflow-hidden transition-all duration-500 hover:shadow-[0_40px_80px_-12px_rgba(0,0,0,0.3)] hover:bg-card/85">
+            <div className="bg-card/80 backdrop-blur-2xl rounded-2xl shadow-[0_32px_64px_-12px_rgba(0,0,0,0.25)] border border-border/20 p-8 relative overflow-hidden transition-all duration-500 hover:shadow-[0_40px_80px_-12px_rgba(0,0,0,0.3)] hover:bg-card/85">
               
               {/* Fluent Design Acrylic Effect */}
               <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-card/40 to-accent/6 rounded-2xl"></div>
@@ -135,56 +135,56 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
               {/* Content */}
               <div className="relative z-10">
                 {/* Sign In Header */}
-                <div className="text-center mb-4">
-                  <div className="flex justify-center mb-2">
-                    <OrshLogo className="h-10 w-auto" />
+                <div className="text-center mb-6">
+                  <div className="flex justify-center mb-3">
+                    <OrshLogo className="h-12 w-auto" />
                   </div>
-                  <p className="text-muted-foreground text-xs">
+                  <p className="text-muted-foreground text-sm">
                     {activeTab === 'reset' ? 'Reset your password' : 'Sign in to your ORSH account'}
                   </p>
                 </div>
 
-              <div className="space-y-3">
+              <div className="space-y-4">
                   {activeTab === 'reset' ? (
                     /* Password Reset Form */
                     resetEmailSent ? (
-                      <div className="text-center space-y-3 py-4">
-                        <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                          <Mail className="h-6 w-6 text-primary" />
+                      <div className="text-center space-y-4 py-6">
+                        <div className="mx-auto w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center">
+                          <Mail className="h-7 w-7 text-primary" />
                         </div>
-                        <h3 className="text-sm font-semibold">Check Your Email</h3>
-                        <p className="text-xs text-muted-foreground">
+                        <h3 className="text-base font-semibold">Check Your Email</h3>
+                        <p className="text-sm text-muted-foreground">
                           We've sent reset instructions to <strong>{resetEmail}</strong>
                         </p>
                         <Button
                           variant="outline"
-                          size="sm"
+                          size="default"
                           onClick={() => {
                             setActiveTab('signin');
                             setResetEmailSent(false);
                             setResetEmail('');
                           }}
-                          className="w-full h-8 text-xs"
+                          className="w-full h-10 text-sm"
                         >
-                          <ArrowLeft className="mr-1.5 h-3 w-3" />
+                          <ArrowLeft className="mr-2 h-4 w-4" />
                           Back to Sign In
                         </Button>
                       </div>
                     ) : (
-                      <form onSubmit={handlePasswordReset} className="space-y-3">
-                        <div className="space-y-1">
-                          <Label htmlFor="reset-email" className="text-xs font-medium">
+                      <form onSubmit={handlePasswordReset} className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="reset-email" className="text-sm font-medium">
                             Email Address
                           </Label>
                           <div className="relative">
-                            <Mail className="absolute left-2.5 top-2 h-4 w-4 text-muted-foreground" />
+                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <Input
                               id="reset-email"
                               type="email"
                               placeholder="your.email@bgc.com"
                               value={resetEmail}
                               onChange={(e) => setResetEmail(e.target.value)}
-                              className="pl-9 h-8 text-xs border-border bg-input"
+                              className="pl-10 h-10 text-sm border-border bg-input"
                               required
                             />
                           </div>
@@ -192,7 +192,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
 
                         <Button
                           type="submit"
-                          className="w-full h-8 text-xs font-semibold bg-gradient-to-r from-primary to-primary-hover text-primary-foreground"
+                          className="w-full h-10 text-sm font-semibold bg-gradient-to-r from-primary to-primary-hover text-primary-foreground"
                           disabled={loading}
                         >
                           {loading ? 'Sending...' : 'Send Reset Link'}
@@ -201,43 +201,43 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                         <Button
                           type="button"
                           variant="ghost"
-                          size="sm"
+                          size="default"
                           onClick={() => {
                             setActiveTab('signin');
                             setResetEmail('');
                           }}
-                          className="w-full h-8 text-xs"
+                          className="w-full h-10 text-sm"
                         >
-                          <ArrowLeft className="mr-1.5 h-3 w-3" />
+                          <ArrowLeft className="mr-2 h-4 w-4" />
                           Back to Sign In
                         </Button>
                       </form>
                     )
                   ) : (
                   /* Email/Password Sign In */
-                  <form onSubmit={handleSignIn} className="space-y-2.5">
-                    <div className="space-y-1">
-                      <Label htmlFor="signin-email" className="text-xs font-medium">Email</Label>
+                  <form onSubmit={handleSignIn} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="signin-email" className="text-sm font-medium">Email</Label>
                       <div className="relative">
-                        <Mail className="absolute left-2.5 top-2 h-4 w-4 text-muted-foreground" />
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input id="signin-email" type="email" placeholder="your.email@bgc.com" value={signInData.email} onChange={e => setSignInData({
                         ...signInData,
                         email: e.target.value
-                      })} className="pl-9 h-8 text-xs border-border bg-input" required />
+                      })} className="pl-10 h-10 text-sm border-border bg-input" required />
                       </div>
                     </div>
 
-                    <div className="space-y-1">
-                      <Label htmlFor="signin-password" className="text-xs font-medium">Password</Label>
+                    <div className="space-y-2">
+                      <Label htmlFor="signin-password" className="text-sm font-medium">Password</Label>
                       <div className="relative">
-                        <Lock className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input id="signin-password" type={showPassword ? 'text' : 'password'} placeholder="Enter your password" value={signInData.password} onChange={e => setSignInData({
                         ...signInData,
                         password: e.target.value
-                      })} className="pl-9 pr-9 h-8 text-xs border-border bg-input" required />
+                      })} className="pl-10 pr-10 h-10 text-sm border-border bg-input" required />
                         <button 
                           type="button" 
-                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors" 
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors" 
                           onClick={() => setShowPassword(!showPassword)}
                         >
                           {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -246,23 +246,23 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-1.5">
+                      <div className="flex items-center space-x-2">
                         <Checkbox
                           id="remember-me"
                           checked={rememberMe}
                           onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                          className="h-3.5 w-3.5"
+                          className="h-4 w-4"
                         />
-                        <Label htmlFor="remember-me" className="text-xs text-muted-foreground cursor-pointer">
+                        <Label htmlFor="remember-me" className="text-sm text-muted-foreground cursor-pointer">
                           Remember me
                         </Label>
                       </div>
-                      <Button variant="link" className="p-0 h-auto text-primary text-xs" onClick={() => setActiveTab('reset')}>
+                      <Button variant="link" className="p-0 h-auto text-primary text-sm" onClick={() => setActiveTab('reset')}>
                         Forgot password?
                       </Button>
                     </div>
 
-                    <Button type="submit" className="w-full h-9 text-xs font-semibold bg-gradient-to-r from-primary to-primary-hover text-primary-foreground
+                    <Button type="submit" className="w-full h-11 text-sm font-semibold bg-gradient-to-r from-primary to-primary-hover text-primary-foreground
                                  shadow-lg hover:shadow-xl transition-all duration-300 ease-out
                                  hover:scale-[1.02] hover:-translate-y-0.5 active:scale-[0.98]
                                  border border-primary/20 hover:border-primary/40
@@ -276,8 +276,8 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                   {activeTab === 'signin' && (
                     <>
                       {/* SSO Buttons */}
-                  <div className="space-y-2 pt-1">
-                    <Button onClick={() => handleSSO('azure')} disabled={loading} className="w-full h-8 text-xs font-semibold bg-muted/40 text-muted-foreground 
+                  <div className="space-y-3 pt-2">
+                    <Button onClick={() => handleSSO('azure')} disabled={loading} className="w-full h-10 text-sm font-semibold bg-muted/40 text-muted-foreground 
                                  hover:bg-gradient-to-r hover:from-bgc hover:to-bgc/90 hover:text-bgc-foreground
                                  shadow-sm hover:shadow-lg transition-all duration-300 ease-out
                                  hover:scale-[1.02] active:scale-[0.98]
@@ -285,12 +285,12 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                                  relative overflow-hidden group">
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
                       <div className="relative z-10 flex items-center justify-center">
-                        <img src="/lovable-uploads/6e3cd7e2-9a08-4d20-88f7-d3a2ab9f4f7b.png" alt="BGC Logo" className="w-4 h-4 mr-2 opacity-60 group-hover:opacity-100 transition-all duration-300" />
+                        <img src="/lovable-uploads/6e3cd7e2-9a08-4d20-88f7-d3a2ab9f4f7b.png" alt="BGC Logo" className="w-5 h-5 mr-2 opacity-60 group-hover:opacity-100 transition-all duration-300" />
                         Continue with BGC
                       </div>
                     </Button>
                     
-                    <Button onClick={() => handleSSO('google')} disabled={loading} className="w-full h-8 text-xs font-semibold bg-muted/40 text-muted-foreground 
+                    <Button onClick={() => handleSSO('google')} disabled={loading} className="w-full h-10 text-sm font-semibold bg-muted/40 text-muted-foreground 
                                  hover:bg-gradient-to-r hover:from-kent hover:to-kent/90 hover:text-kent-foreground
                                  shadow-sm hover:shadow-lg transition-all duration-300 ease-out
                                  hover:scale-[1.02] active:scale-[0.98]
@@ -298,28 +298,28 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                                  relative overflow-hidden group">
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
                       <div className="relative z-10 flex items-center justify-center">
-                        <img src="/lovable-uploads/dc6cee89-84f7-416a-b996-ec5cbb00d683.png" alt="Kent Logo" className="w-4 h-4 mr-2 opacity-60 group-hover:opacity-100 transition-all duration-300" />
+                        <img src="/lovable-uploads/dc6cee89-84f7-416a-b996-ec5cbb00d683.png" alt="Kent Logo" className="w-5 h-5 mr-2 opacity-60 group-hover:opacity-100 transition-all duration-300" />
                         Continue with Kent
                       </div>
                     </Button>
                   </div>
 
                   {/* New to ORSH Text */}
-                  <div className="text-center text-xs text-muted-foreground pt-2">
+                  <div className="text-center text-sm text-muted-foreground pt-3">
                     New to ORSH?{' '}
-                    <Button variant="link" className="p-0 h-auto text-primary text-xs font-medium" onClick={() => setShowRegistrationForm(true)}>
+                    <Button variant="link" className="p-0 h-auto text-primary text-sm font-medium" onClick={() => setShowRegistrationForm(true)}>
                       Create your account
                     </Button>
                   </div>
 
                   {/* Terms */}
-                  <div className="text-center text-[10px] text-muted-foreground pt-1">
+                  <div className="text-center text-xs text-muted-foreground pt-2">
                     By signing in, you agree to our{' '}
-                    <Button variant="link" className="p-0 h-auto text-primary text-[10px]">
+                    <Button variant="link" className="p-0 h-auto text-primary text-xs">
                       Terms
                     </Button>{' '}
                     and{' '}
-                    <Button variant="link" className="p-0 h-auto text-primary text-[10px]">
+                    <Button variant="link" className="p-0 h-auto text-primary text-xs">
                       Privacy Policy
                     </Button>
                   </div>
