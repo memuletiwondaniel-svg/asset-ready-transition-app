@@ -984,7 +984,13 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
             setEditingUser(null);
             setSelectedUser(null);
           }}
-          onUserUpdated={fetchUsers}
+          onUserUpdated={() => {
+            // Ensure we never fall back to the view modal after an edit-save.
+            // (Users expect to return to the list with ALL modals closed.)
+            setEditingUser(null);
+            setSelectedUser(null);
+            fetchUsers();
+          }}
           initialEditMode={true}
         />
       )}
