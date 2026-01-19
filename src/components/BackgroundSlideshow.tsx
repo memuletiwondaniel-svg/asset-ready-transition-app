@@ -106,7 +106,6 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = ({ showFunFacts 
   ];
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [previousImageIndex, setPreviousImageIndex] = useState<number | null>(null);
   const [loadedImages, setLoadedImages] = useState<Set<number>>(new Set());
 
   // Preload all images on mount
@@ -128,21 +127,11 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = ({ showFunFacts 
     });
   }, []);
 
-  // Slideshow interval with smooth crossfade
+  // Slideshow interval
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentImageIndex((prevIndex) => {
-        setPreviousImageIndex(prevIndex);
-        return (prevIndex + 1) % images.length;
-      });
-
-      // Clear previous image after transition completes
-      const timeout = setTimeout(() => {
-        setPreviousImageIndex(null);
-      }, 7600); // Slightly longer than fade duration
-
-      return () => clearTimeout(timeout);
-    }, 12000); // Slower pace + longer fade = smoother blend
+      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % images.length);
+    }, 7000); // Change image every 7 seconds
 
     return () => clearInterval(interval);
   }, [images.length]);
@@ -161,30 +150,17 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = ({ showFunFacts 
       />
       
       {/* Slideshow images */}
-      {images.map((image, index) => {
-        const isLoaded = loadedImages.has(index);
-        const isActive = index === currentImageIndex;
-        const isPrevious = index === previousImageIndex;
-        
-        return (
-          <img
-            key={index}
-            src={image}
-            alt=""
-            loading={index === 0 ? "eager" : "lazy"}
-            style={{
-              willChange: isActive || isPrevious ? 'opacity, transform' : 'auto',
-            }}
-            className={`
-              absolute inset-0 w-full h-full object-cover object-center
-              transition-opacity duration-[7000ms] ease-in-out
-              ${isActive ? (isLoaded ? 'opacity-100 z-20 animate-ken-burns' : 'opacity-0 z-20') : ''}
-              ${isPrevious ? (isLoaded ? 'opacity-100 z-10' : 'opacity-0 z-10') : ''}
-              ${!isActive && !isPrevious ? 'opacity-0 z-0' : ''}
-            `}
-          />
-        );
-      })}
+      {images.map((image, index) => (
+        <img
+          key={index}
+          src={image}
+          alt=""
+          loading={index === 0 ? "eager" : "lazy"}
+          className={`absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-[3000ms] ease-in-out ${
+            index === currentImageIndex && loadedImages.has(index) ? 'opacity-100' : 'opacity-0'
+          }`}
+        />
+      ))}
       
       {/* Overlay for better text readability */}
       <div className="absolute inset-0 bg-black/30" />
