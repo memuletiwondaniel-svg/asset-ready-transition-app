@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Grid, List, FolderOpen } from 'lucide-react';
+import { Search, Grid, List, FolderOpen, Plus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -10,6 +10,7 @@ import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useProjects } from '@/hooks/useProjects';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { AddProjectModal } from '@/components/project/AddProjectModal';
 
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { format } from 'date-fns';
@@ -25,6 +26,7 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
   const { projects, isLoading } = useProjects();
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   // Filter projects based on search query
   const filteredProjects = projects?.filter(project => 
@@ -77,6 +79,10 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                 <p className="text-muted-foreground">Browse and access your assigned projects</p>
               </div>
             </div>
+            <Button onClick={() => setIsAddModalOpen(true)} className="gap-2">
+              <Plus className="h-4 w-4" />
+              New Project
+            </Button>
           </div>
 
           {/* Search and View Toggle */}
@@ -309,6 +315,12 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
             </div>
           )}
         </div>
+
+      {/* Add Project Modal */}
+      <AddProjectModal 
+        open={isAddModalOpen} 
+        onClose={() => setIsAddModalOpen(false)} 
+      />
     </main>
   );
 };
