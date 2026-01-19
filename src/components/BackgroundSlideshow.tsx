@@ -153,18 +153,22 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = ({ showFunFacts 
       {images.map((image, index) => {
         const isActive = index === currentImageIndex && loadedImages.has(index);
         return (
-          <img
+          <div
             key={index}
-            src={image}
-            alt=""
-            loading={index === 0 ? "eager" : "lazy"}
-            style={isActive ? { animationDuration: '7000ms' } : undefined}
-            className={`absolute inset-0 w-full h-full object-cover object-center transition-all duration-[4000ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${
-              isActive 
-                ? 'opacity-100 animate-ken-burns' 
-                : 'opacity-0 scale-100'
+            className={`absolute inset-0 transition-opacity duration-[3000ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${
+              isActive ? 'opacity-100' : 'opacity-0'
             }`}
-          />
+          >
+            <img
+              src={image}
+              alt=""
+              loading={index === 0 ? "eager" : "lazy"}
+              className={`w-full h-full object-cover object-center ${
+                isActive ? 'animate-ken-burns' : ''
+              }`}
+              style={{ animationDuration: '7000ms' }}
+            />
+          </div>
         );
       })}
       
