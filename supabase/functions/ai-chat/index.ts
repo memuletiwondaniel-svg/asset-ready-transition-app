@@ -2510,8 +2510,8 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         } else if (args.project_code) {
           const { data: pssrs } = await supabaseClient
             .from('pssrs')
-            .select('id, pssr_id, title, project_name')
-            .or(`project_name.ilike.%${args.project_code}%,pssr_id.ilike.%${args.project_code}%`)
+            .select('id, pssr_id, title, asset, project_name')
+            .or(`pssr_id.ilike.%${args.project_code}%,title.ilike.%${args.project_code}%,asset.ilike.%${args.project_code}%,project_name.ilike.%${args.project_code}%`)
             .limit(10);
           
           if (!pssrs || pssrs.length === 0) {
@@ -2628,8 +2628,8 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         } else if (args.project_code) {
           const { data: pssrs } = await supabaseClient
             .from('pssrs')
-            .select('id, pssr_id, title')
-            .or(`project_name.ilike.%${args.project_code}%,pssr_id.ilike.%${args.project_code}%`)
+            .select('id, pssr_id, title, asset')
+            .or(`pssr_id.ilike.%${args.project_code}%,title.ilike.%${args.project_code}%,asset.ilike.%${args.project_code}%,project_name.ilike.%${args.project_code}%`)
             .limit(1)
             .maybeSingle();
           
@@ -2727,7 +2727,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           const { data: pssrs } = await supabaseClient
             .from('pssrs')
             .select('id')
-            .or(`project_name.ilike.%${args.project_code}%,pssr_id.ilike.%${args.project_code}%`)
+            .or(`pssr_id.ilike.%${args.project_code}%,title.ilike.%${args.project_code}%,asset.ilike.%${args.project_code}%,project_name.ilike.%${args.project_code}%`)
             .limit(1)
             .maybeSingle();
           
@@ -2871,8 +2871,8 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         } else if (args.project_code) {
           const { data: pssrs } = await supabaseClient
             .from('pssrs')
-            .select('id, pssr_id, title')
-            .or(`project_name.ilike.%${args.project_code}%,pssr_id.ilike.%${args.project_code}%`)
+            .select('id, pssr_id, title, asset')
+            .or(`pssr_id.ilike.%${args.project_code}%,title.ilike.%${args.project_code}%,asset.ilike.%${args.project_code}%,project_name.ilike.%${args.project_code}%`)
             .limit(1)
             .maybeSingle();
           
