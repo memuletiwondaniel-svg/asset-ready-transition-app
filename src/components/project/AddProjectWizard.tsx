@@ -9,7 +9,8 @@ import { MultiSelectCombobox } from '@/components/ui/multi-select-combobox';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { X, Image, FileText, Users, Calendar, FolderOpen, ChevronLeft, ChevronRight, Check } from 'lucide-react';
+import { X, Image, FileText, Users, Calendar, FolderOpen, ChevronLeft, ChevronRight, Check, Star } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import { useProjects } from '@/hooks/useProjects';
 import { usePlants } from '@/hooks/usePlants';
 import { useStations } from '@/hooks/useStations';
@@ -64,6 +65,7 @@ export const AddProjectWizard: React.FC<AddProjectWizardProps> = ({ open, onClos
     station_id: '',
     project_scope: '',
     project_scope_image_url: '',
+    is_favorite: false,
   });
 
   const [selectedLocationIds, setSelectedLocationIds] = useState<string[]>([]);
@@ -166,6 +168,7 @@ export const AddProjectWizard: React.FC<AddProjectWizardProps> = ({ open, onClos
       station_id: '',
       project_scope: '',
       project_scope_image_url: '',
+      is_favorite: false,
     });
     setSelectedLocationIds([]);
     setTeamMembers([]);
@@ -190,6 +193,7 @@ export const AddProjectWizard: React.FC<AddProjectWizardProps> = ({ open, onClos
       hub_id: formData.hub_id || undefined,
       plant_id: formData.plant_id || undefined,
       station_id: formData.station_id || undefined,
+      is_favorite: formData.is_favorite,
     };
 
     try {
@@ -326,6 +330,22 @@ export const AddProjectWizard: React.FC<AddProjectWizardProps> = ({ open, onClos
                 value={formData.project_title}
                 onChange={(e) => setFormData(prev => ({ ...prev, project_title: e.target.value }))}
                 placeholder="Enter project title"
+              />
+            </div>
+
+            {/* Favorite Toggle */}
+            <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/30">
+              <div className="flex items-center gap-3">
+                <Star className={cn("h-5 w-5", formData.is_favorite ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground")} />
+                <div>
+                  <Label htmlFor="is_favorite" className="font-medium cursor-pointer">Mark as Favorite</Label>
+                  <p className="text-xs text-muted-foreground">Favorite projects appear at the top of your list</p>
+                </div>
+              </div>
+              <Switch
+                id="is_favorite"
+                checked={formData.is_favorite}
+                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_favorite: checked }))}
               />
             </div>
 
@@ -508,7 +528,10 @@ export const AddProjectWizard: React.FC<AddProjectWizardProps> = ({ open, onClos
                   </div>
                   <div>
                     <Label className="text-muted-foreground text-xs">Title</Label>
-                    <p className="font-medium">{formData.project_title}</p>
+                    <p className="font-medium flex items-center gap-2">
+                      {formData.project_title}
+                      {formData.is_favorite && <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />}
+                    </p>
                   </div>
                 </div>
                 {formData.project_scope && (
