@@ -1,8 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 interface BackgroundSlideshowProps {
   showFunFacts?: boolean;
 }
+
+// Timing constants
+const DISPLAY_MS = 7000; // How long each image is shown
+const FADE_MS = 4000;    // Crossfade duration
 
 const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = ({ showFunFacts = false }) => {
   const images = [
@@ -105,12 +109,19 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = ({ showFunFacts 
     ]
   ];
 
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [previousImageIndex, setPreviousImageIndex] = useState<number | null>(null);
-  const [isCrossfading, setIsCrossfading] = useState(false);
+  // Core slideshow state
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [layers, setLayers] = useState<{ index: number; opacity: number; key: number }[]>([
+    { index: 0, opacity: 1, key: 0 }
+  ]);
   const [loadedImages, setLoadedImages] = useState<Set<number>>(new Set());
+  
+  // Refs for cleanup
+  const intervalRef = useRef<number | null>(null);
+  const fadeTimeoutRef = useRef<number | null>(null);
+  const keyCounterRef = useRef(1);
+  const isFadingRef = useRef(false);
 
-  const fadeTimeoutRef = React.useRef<number | null>(null);
   // Preload all images on mount
   useEffect(() => {
     images.forEach((src, index) => {
@@ -119,10 +130,8 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = ({ showFunFacts 
         setLoadedImages(prev => new Set([...prev, index]));
       };
       img.onerror = () => {
-        // Still mark as "loaded" to not block the slideshow
         setLoadedImages(prev => new Set([...prev, index]));
       };
-      // Set high priority for first image
       if (index === 0) {
         img.fetchPriority = 'high';
       }
@@ -130,37 +139,66 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = ({ showFunFacts 
     });
   }, []);
 
+  // Start transition to next image
+  const startTransition = useCallback(() => {
+    if (isFadingRef.current) return; // Don't overlap transitions
+    
+    const nextIndex = (activeIndex + 1) % images.length;
+    
+    // Check if next image is loaded
+    if (!loadedImages.has(nextIndex)) {
+      // Skip if not loaded yet - will try again next interval
+      return;
+    }
+
+    isFadingRef.current = true;
+    const newKey = keyCounterRef.current++;
+
+    // Add new layer at opacity 0
+    setLayers(prev => [
+      ...prev,
+      { index: nextIndex, opacity: 0, key: newKey }
+    ]);
+
+    // Next frame: trigger fade (incoming to 1, outgoing to 0)
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setLayers(prev => prev.map((layer, i) => ({
+          ...layer,
+          opacity: i === prev.length - 1 ? 1 : 0
+        })));
+      });
+    });
+
+    // After fade completes, clean up old layers
+    if (fadeTimeoutRef.current) {
+      window.clearTimeout(fadeTimeoutRef.current);
+    }
+    fadeTimeoutRef.current = window.setTimeout(() => {
+      setActiveIndex(nextIndex);
+      setLayers([{ index: nextIndex, opacity: 1, key: newKey }]);
+      isFadingRef.current = false;
+    }, FADE_MS);
+  }, [activeIndex, images.length, loadedImages]);
+
   // Slideshow interval
   useEffect(() => {
-    const FADE_MS = 4000;
-
-    const interval = window.setInterval(() => {
-      setCurrentImageIndex((prevIndex) => {
-        const nextIndex = (prevIndex + 1) % images.length;
-
-        // Kick off crossfade: first paint (prev=1, current=0), next frame transition (prev=0, current=1)
-        setPreviousImageIndex(prevIndex);
-        setIsCrossfading(false);
-        window.requestAnimationFrame(() => setIsCrossfading(true));
-
-        if (fadeTimeoutRef.current) window.clearTimeout(fadeTimeoutRef.current);
-        fadeTimeoutRef.current = window.setTimeout(() => {
-          setPreviousImageIndex(null);
-        }, FADE_MS);
-
-        return nextIndex;
-      });
-    }, 7000); // Change image every 7 seconds
+    intervalRef.current = window.setInterval(() => {
+      startTransition();
+    }, DISPLAY_MS);
 
     return () => {
-      window.clearInterval(interval);
-      if (fadeTimeoutRef.current) window.clearTimeout(fadeTimeoutRef.current);
+      if (intervalRef.current) {
+        window.clearInterval(intervalRef.current);
+      }
+      if (fadeTimeoutRef.current) {
+        window.clearTimeout(fadeTimeoutRef.current);
+      }
     };
-  }, [images.length]);
+  }, [startTransition]);
 
   const isFirstImageLoaded = loadedImages.has(0);
-
-  const currentFacts = bgcFactsSets[currentImageIndex] || bgcFactsSets[0];
+  const currentFacts = bgcFactsSets[activeIndex] || bgcFactsSets[0];
 
   return (
     <div className="fixed inset-0 -z-10 overflow-hidden">
@@ -171,50 +209,29 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = ({ showFunFacts 
         }`}
       />
       
-      {/* Slideshow images - current always visible, previous fades out on top */}
-      {(() => {
-        const FADE_MS = 4000;
-
-        const currentSrc = images[currentImageIndex];
-        const prevSrc = previousImageIndex !== null ? images[previousImageIndex] : null;
-
-        const currentLoaded = loadedImages.has(currentImageIndex);
-        const prevLoaded = previousImageIndex !== null ? loadedImages.has(previousImageIndex) : false;
+      {/* Slideshow layers with crossfade and Ken Burns */}
+      {layers.map((layer) => {
+        const isLoaded = loadedImages.has(layer.index);
+        if (!isLoaded) return null;
 
         return (
-          <>
-            {/* Current layer - always at full opacity when loaded (sits behind) */}
-            {currentLoaded && (
-              <div className="absolute inset-0">
-                <img
-                  src={currentSrc}
-                  alt=""
-                  loading={currentImageIndex === 0 ? 'eager' : 'lazy'}
-                  className="w-full h-full object-cover object-center"
-                />
-              </div>
-            )}
-
-            {/* Previous layer - fades out on top of current */}
-            {prevSrc && prevLoaded && (
-              <div
-                className="absolute inset-0"
-                style={{
-                  opacity: isCrossfading ? 0 : 1,
-                  transition: `opacity ${FADE_MS}ms cubic-bezier(0.4, 0, 0.2, 1)`,
-                }}
-              >
-                <img
-                  src={prevSrc}
-                  alt=""
-                  loading={previousImageIndex === 0 ? 'eager' : 'lazy'}
-                  className="w-full h-full object-cover object-center"
-                />
-              </div>
-            )}
-          </>
+          <div
+            key={layer.key}
+            className="absolute inset-0"
+            style={{
+              opacity: layer.opacity,
+              transition: `opacity ${FADE_MS}ms cubic-bezier(0.4, 0, 0.2, 1)`,
+              willChange: 'opacity',
+            }}
+          >
+            <img
+              src={images[layer.index]}
+              alt=""
+              className="w-full h-full object-cover object-center animate-ken-burns"
+            />
+          </div>
         );
-      })()}
+      })}
       
       {/* Overlay for better text readability */}
       <div className="absolute inset-0 bg-black/30" />
