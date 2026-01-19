@@ -9,7 +9,8 @@ import { MultiSelectCombobox } from '@/components/ui/multi-select-combobox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { X, FileText, Image } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { X, FileText, Image, Star, Calendar, Users } from 'lucide-react';
 import { useProjects } from '@/hooks/useProjects';
 import { usePlants } from '@/hooks/usePlants';
 import { useStations } from '@/hooks/useStations';
@@ -23,6 +24,7 @@ import { ProjectTeamSection } from './ProjectTeamSection';
 import { ProjectMilestonesSection } from './ProjectMilestonesSection';
 import { EnhancedProjectDocumentsSection } from './EnhancedProjectDocumentsSection';
 import { supabase } from '@/integrations/supabase/client';
+import { cn } from '@/lib/utils';
 
 interface EditProjectModalProps {
   open: boolean;
@@ -57,6 +59,7 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
     station_id: '',
     project_scope: '',
     project_scope_image_url: '',
+    is_favorite: false,
   });
 
   const [selectedLocationIds, setSelectedLocationIds] = useState<string[]>([]);
@@ -65,6 +68,16 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
   const [documents, setDocuments] = useState<any[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // Helper function to format date
+  const formatDate = (dateString: string) => {
+    if (!dateString) return 'Not set';
+    return new Date(dateString).toLocaleDateString('en-US', { 
+      day: 'numeric',
+      month: 'long', 
+      year: 'numeric' 
+    });
+  };
 
   // Load existing project data
   useEffect(() => {
@@ -79,6 +92,7 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
         station_id: project.station_id || '',
         project_scope: project.project_scope || '',
         project_scope_image_url: project.project_scope_image_url || '',
+        is_favorite: project.is_favorite || false,
       });
       
       // Fetch existing team members, milestones, and documents
@@ -231,6 +245,7 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
         hub_id: formData.hub_id || undefined,
         plant_id: formData.plant_id || undefined,
         station_id: formData.station_id || undefined,
+        is_favorite: formData.is_favorite,
       };
 
       updateProject({ id: project.id, updates: projectData });
@@ -414,8 +429,8 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
     <Dialog open={open} onOpenChange={onClose} modal={true}>
       <DialogContent className="max-w-5xl h-[90vh] flex flex-col p-0">
         <DialogHeader className="px-6 pt-6 pb-4 border-b shrink-0">
-          <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Edit Project
+          <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            Edit: {formData.project_id_prefix}{formData.project_id_number} - {formData.project_title || 'Untitled Project'}
           </DialogTitle>
         </DialogHeader>
 
@@ -424,8 +439,8 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
             {/* Basic Information */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center text-lg">
-                  <FileText className="h-5 w-5 mr-2" />
+                <CardTitle className="flex items-center text-lg gap-2">
+                  <FileText className="h-5 w-5" />
                   Project Information
                 </CardTitle>
               </CardHeader>
@@ -470,6 +485,22 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
                     onChange={(e) => setFormData(prev => ({ ...prev, project_title: e.target.value }))}
                     placeholder="Enter project title"
                     required
+                  />
+                </div>
+
+                {/* Favorite Toggle */}
+                <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/30">
+                  <div className="flex items-center gap-3">
+                    <Star className={cn("h-5 w-5", formData.is_favorite ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground")} />
+                    <div>
+                      <Label htmlFor="is_favorite" className="font-medium cursor-pointer">Mark as Favorite</Label>
+                      <p className="text-xs text-muted-foreground">Favorite projects appear at the top of your list</p>
+                    </div>
+                  </div>
+                  <Switch
+                    id="is_favorite"
+                    checked={formData.is_favorite}
+                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_favorite: checked }))}
                   />
                 </div>
 
@@ -642,6 +673,26 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
                     </div>
                   </div>
                 </div>
+
+                {/* Created/Updated Dates (Read-only) */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
+                  <div className="space-y-2">
+                    <span className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                      <Calendar className="h-4 w-4" />
+                      Created Date
+                    </span>
+                    <p className="text-foreground font-medium">{formatDate(project.created_at)}</p>
+                  </div>
+                  {project.updated_at && (
+                    <div className="space-y-2">
+                      <span className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
+                        Last Updated
+                      </span>
+                      <p className="text-foreground font-medium">{formatDate(project.updated_at)}</p>
+                    </div>
+                  )}
+                </div>
               </CardContent>
             </Card>
 
@@ -679,7 +730,6 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
             type="submit"
             onClick={handleSubmit}
             disabled={isUpdating || loading}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
           >
             {isUpdating ? 'Updating...' : 'Update Project'}
           </Button>

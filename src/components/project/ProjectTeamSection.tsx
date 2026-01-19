@@ -107,9 +107,12 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center text-lg">
-          <Users className="h-5 w-5 mr-2" />
+        <CardTitle className="flex items-center text-lg gap-2">
+          <Users className="h-5 w-5" />
           Project Team
+          <Badge variant="secondary" className="ml-1 h-6 w-6 rounded-full p-0 flex items-center justify-center text-xs font-medium">
+            {teamMembers.length}
+          </Badge>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
