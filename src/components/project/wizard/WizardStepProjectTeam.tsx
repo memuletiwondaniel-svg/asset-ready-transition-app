@@ -19,6 +19,7 @@ interface WizardStepProjectTeamProps {
   setTeamMembers: React.Dispatch<React.SetStateAction<TeamMember[]>>;
   regionName?: string | null;
   hubName?: string | null;
+  hubId?: string | null;
 }
 
 const WizardStepProjectTeam: React.FC<WizardStepProjectTeamProps> = ({
@@ -26,9 +27,10 @@ const WizardStepProjectTeam: React.FC<WizardStepProjectTeamProps> = ({
   setTeamMembers,
   regionName = null,
   hubName = null,
+  hubId = null,
 }) => {
   const [hasAutoPopulated, setHasAutoPopulated] = useState(false);
-  const { suggestedTeam, isLoading } = useAutoPopulateTeam(regionName, hubName);
+  const { suggestedTeam, isLoading } = useAutoPopulateTeam(regionName, hubName, hubId);
 
   // Auto-populate on mount if team is empty and we have suggestions
   useEffect(() => {
@@ -109,6 +111,7 @@ const WizardStepProjectTeam: React.FC<WizardStepProjectTeamProps> = ({
         setTeamMembers={setTeamMembers}
         regionName={regionName}
         hubName={hubName}
+        hubId={hubId}
       />
     </div>
   );

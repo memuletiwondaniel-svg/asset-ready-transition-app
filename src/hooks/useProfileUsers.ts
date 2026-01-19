@@ -5,8 +5,10 @@ export interface ProfileUser {
   user_id: string;
   full_name: string;
   role?: string;
+  role_id?: string;
   position?: string;
   avatar_url?: string;
+  hub_id?: string;
 }
 
 const getFullAvatarUrl = (avatarUrl: string | null) => {
@@ -25,10 +27,10 @@ export const useProfileUsers = () => {
     queryKey: ['profile-users'],
     staleTime: 120000, // Cache for 2 minutes
     queryFn: async () => {
-      // Fetch profiles with role UUIDs
+      // Fetch profiles with role UUIDs and hub
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('user_id, full_name, position, avatar_url, role')
+        .select('user_id, full_name, position, avatar_url, role, hub')
         .eq('is_active', true)
         .not('full_name', 'is', null);
 
@@ -48,8 +50,10 @@ export const useProfileUsers = () => {
         user_id: profile.user_id,
         full_name: profile.full_name || '',
         role: roleMap.get(profile.role) || '',
+        role_id: profile.role || '',
         position: profile.position || '',
-        avatar_url: getFullAvatarUrl(profile.avatar_url)
+        avatar_url: getFullAvatarUrl(profile.avatar_url),
+        hub_id: profile.hub || ''
       })) || [];
     }
   });
