@@ -646,7 +646,7 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
             onClick={handleSubmit}
             disabled={isUpdating || loading}
           >
-            {isUpdating ? 'Updating...' : 'Update Project'}
+            {isUpdating ? 'Saving...' : 'Save'}
           </Button>
         </div>
       </DialogContent>
