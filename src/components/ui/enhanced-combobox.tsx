@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 interface EnhancedComboboxOption {
   value: string
   label: string
+  description?: string
 }
 
 interface EnhancedComboboxProps {
@@ -115,14 +116,22 @@ export function EnhancedCombobox({
                     setOpen(false)
                     setSearchValue("")
                   }}
+                  className="flex flex-col items-start py-2"
                 >
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      value === option.value ? "opacity-100" : "opacity-0"
-                    )}
-                  />
-                  {option.label}
+                  <div className="flex items-center w-full">
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4 shrink-0",
+                        value === option.value ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                    <span className="font-medium">{option.label}</span>
+                  </div>
+                  {option.description && (
+                    <span className="text-xs text-muted-foreground ml-6 mt-0.5">
+                      {option.description}
+                    </span>
+                  )}
                 </CommandItem>
               ))}
               {shouldShowCreateOption && filteredOptions.length > 0 && (

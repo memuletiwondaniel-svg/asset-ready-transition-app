@@ -635,6 +635,9 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
             <ProjectTeamSection 
               teamMembers={teamMembers}
               setTeamMembers={setTeamMembers}
+              regionName={regions.find(r => r.id === formData.region_id)?.name || null}
+              hubName={filteredHubs.find(h => h.id === formData.hub_id)?.name || null}
+              hubId={formData.hub_id || null}
             />
 
             {/* Milestones */}

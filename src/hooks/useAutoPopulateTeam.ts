@@ -18,31 +18,33 @@ interface AutoPopulateResult {
   isLoading: boolean;
 }
 
-// Role matching configuration
+// Role matching configuration with function/role patterns
+// matchType: 'hub' = matches users assigned to selected hub, 'region' = matches by region text, 'global' = any match
 const ROLE_MATCHING_CONFIG: Record<string, { patterns: string[]; matchType: 'region' | 'hub' | 'global' }> = {
-  'Project Manager': { patterns: ['project manager', 'proj manager'], matchType: 'region' },
-  'Commissioning Lead': { patterns: ['commissioning'], matchType: 'region' },
-  'Construction Lead': { patterns: ['construction'], matchType: 'region' },
-  'ORA Engineer': { patterns: ['ora engr', 'ora engineer'], matchType: 'region' },
   'Project Hub Lead': { patterns: ['hub lead', 'project hub lead'], matchType: 'hub' },
   'Project Engineer': { patterns: ['proj eng', 'project eng', 'project engineer'], matchType: 'hub' },
+  'Commissioning Lead': { patterns: ['commissioning lead', 'commissioning'], matchType: 'hub' },
+  'Construction Lead': { patterns: ['construction lead', 'construction'], matchType: 'hub' },
+  'ORA Engineer': { patterns: ['ora engr', 'ora engineer', 'ora eng'], matchType: 'hub' },
+  'Project Manager': { patterns: ['project manager', 'proj manager'], matchType: 'region' },
   'ORA Lead': { patterns: ['ora lead'], matchType: 'global' },
   'P&E Director': { patterns: ['p&e director', 'pe director'], matchType: 'global' },
 };
 
 export const useAutoPopulateTeam = (
   regionName: string | null,
-  hubName: string | null
+  hubName: string | null,
+  hubId?: string | null
 ): AutoPopulateResult => {
   const { data: allUsers = [], isLoading } = useProfileUsers();
 
   const suggestedTeam = useMemo(() => {
-    if (!regionName && !hubName) return [];
+    if (!regionName && !hubName && !hubId) return [];
 
     const team: TeamMember[] = [];
 
     Object.entries(ROLE_MATCHING_CONFIG).forEach(([role, config]) => {
-      const matchedUser = findMatchingUser(allUsers, config.patterns, config.matchType, regionName, hubName);
+      const matchedUser = findMatchingUser(allUsers, config.patterns, config.matchType, regionName, hubName, hubId);
       
       if (matchedUser) {
         team.push({
@@ -59,7 +61,7 @@ export const useAutoPopulateTeam = (
     });
 
     return team;
-  }, [allUsers, regionName, hubName]);
+  }, [allUsers, regionName, hubName, hubId]);
 
   const getSuggestedUserForRole = (role: string): TeamMember | null => {
     return suggestedTeam.find(member => member.role === role) || null;
@@ -77,8 +79,29 @@ function findMatchingUser(
   patterns: string[],
   matchType: 'region' | 'hub' | 'global',
   regionName: string | null,
-  hubName: string | null
+  hubName: string | null,
+  hubId?: string | null
 ): any | null {
+  // For hub-based matching, prioritize users with matching hub_id
+  if (matchType === 'hub' && hubId) {
+    // First try to find user with matching hub_id AND role pattern
+    for (const user of users) {
+      if (user.hub_id !== hubId) continue;
+      
+      const position = (user.position || '').toLowerCase();
+      const userRole = (user.role || '').toLowerCase();
+      
+      const matchesPattern = patterns.some(pattern => 
+        position.includes(pattern) || userRole.includes(pattern)
+      );
+
+      if (matchesPattern) {
+        return user;
+      }
+    }
+  }
+
+  // Fallback to text-based matching
   const locationToMatch = matchType === 'region' ? regionName : matchType === 'hub' ? hubName : null;
 
   for (const user of users) {
