@@ -107,7 +107,10 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = ({ showFunFacts 
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [previousImageIndex, setPreviousImageIndex] = useState<number | null>(null);
+  const [isCrossfading, setIsCrossfading] = useState(false);
   const [loadedImages, setLoadedImages] = useState<Set<number>>(new Set());
+
+  const fadeTimeoutRef = React.useRef<number | null>(null);
   // Preload all images on mount
   useEffect(() => {
     images.forEach((src, index) => {
@@ -133,13 +136,26 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = ({ showFunFacts 
 
     const interval = window.setInterval(() => {
       setCurrentImageIndex((prevIndex) => {
+        const nextIndex = (prevIndex + 1) % images.length;
+
+        // Kick off crossfade: first paint (prev=1, current=0), next frame transition (prev=0, current=1)
         setPreviousImageIndex(prevIndex);
-        window.setTimeout(() => setPreviousImageIndex(null), FADE_MS);
-        return (prevIndex + 1) % images.length;
+        setIsCrossfading(false);
+        window.requestAnimationFrame(() => setIsCrossfading(true));
+
+        if (fadeTimeoutRef.current) window.clearTimeout(fadeTimeoutRef.current);
+        fadeTimeoutRef.current = window.setTimeout(() => {
+          setPreviousImageIndex(null);
+        }, FADE_MS);
+
+        return nextIndex;
       });
     }, 7000); // Change image every 7 seconds
 
-    return () => window.clearInterval(interval);
+    return () => {
+      window.clearInterval(interval);
+      if (fadeTimeoutRef.current) window.clearTimeout(fadeTimeoutRef.current);
+    };
   }, [images.length]);
 
   const isFirstImageLoaded = loadedImages.has(0);
@@ -155,10 +171,9 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = ({ showFunFacts 
         }`}
       />
       
-      {/* Slideshow images (2-layer crossfade to avoid abrupt swaps) */}
+      {/* Slideshow images (true crossfade: force initial opacity, then transition next frame) */}
       {(() => {
         const FADE_MS = 2500;
-        const DISPLAY_MS = 7000;
 
         const currentSrc = images[currentImageIndex];
         const prevSrc = previousImageIndex !== null ? images[previousImageIndex] : null;
@@ -166,37 +181,43 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = ({ showFunFacts 
         const currentLoaded = loadedImages.has(currentImageIndex);
         const prevLoaded = previousImageIndex !== null ? loadedImages.has(previousImageIndex) : false;
 
+        const fadeStyle: React.CSSProperties = {
+          transitionProperty: 'opacity',
+          transitionDuration: `${FADE_MS}ms`,
+          transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
+          willChange: 'opacity',
+        };
+
+        const showPrev = Boolean(prevSrc && prevLoaded);
+        const prevOpacity = isCrossfading ? 0 : 1;
+        const currentOpacity = isCrossfading ? 1 : 0;
+
         return (
           <>
-            {/* Previous layer: fades out while the new one fades in */}
-            {prevSrc && prevLoaded && (
+            {showPrev && (
               <div
-                className={`absolute inset-0 transition-opacity duration-[${FADE_MS}ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${
-                  currentLoaded ? 'opacity-0' : 'opacity-100'
-                }`}
+                className="absolute inset-0"
+                style={{ ...fadeStyle, opacity: prevOpacity }}
               >
                 <img
-                  src={prevSrc}
+                  src={prevSrc as string}
                   alt=""
                   loading={previousImageIndex === 0 ? 'eager' : 'lazy'}
-                  className="w-full h-full object-cover object-center animate-ken-burns"
-                  style={{ animationDuration: `${DISPLAY_MS}ms` }}
+                  className="w-full h-full object-cover object-center"
                 />
               </div>
             )}
 
             {/* Current layer */}
             <div
-              className={`absolute inset-0 transition-opacity duration-[${FADE_MS}ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${
-                currentLoaded ? 'opacity-100' : 'opacity-0'
-              }`}
+              className="absolute inset-0"
+              style={{ ...fadeStyle, opacity: currentLoaded ? currentOpacity : 0 }}
             >
               <img
                 src={currentSrc}
                 alt=""
                 loading={currentImageIndex === 0 ? 'eager' : 'lazy'}
-                className={`w-full h-full object-cover object-center ${currentLoaded ? 'animate-ken-burns' : ''}`}
-                style={{ animationDuration: `${DISPLAY_MS}ms` }}
+                className="w-full h-full object-cover object-center"
               />
             </div>
           </>
