@@ -429,21 +429,23 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
           </DialogTitle>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 px-6 py-4">
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <ScrollArea className="flex-1 px-6 py-6">
+          <form onSubmit={handleSubmit} className="space-y-8">
             {/* Basic Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center text-lg gap-2">
-                  <FileText className="h-5 w-5" />
+            <Card className="border-border/60 shadow-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center text-lg gap-2 text-foreground">
+                  <FileText className="h-5 w-5 text-primary" />
                   Project Information
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Project ID */}
-                <div className="space-y-2">
-                  <Label htmlFor="project_id">Project ID *</Label>
-                  <div className="flex gap-2">
+              <CardContent className="space-y-6">
+                {/* Project ID Section */}
+                <div className="space-y-3 p-4 rounded-lg bg-muted/30 border border-border/40">
+                  <Label htmlFor="project_id" className="text-sm font-semibold text-foreground">
+                    Project ID <span className="text-destructive">*</span>
+                  </Label>
+                  <div className="flex gap-3">
                     <EnhancedCombobox
                       options={prefixOptions}
                       value={formData.project_id_prefix}
@@ -465,74 +467,92 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
                     />
                   </div>
                   {formData.project_id_prefix && formData.project_id_number && (
-                    <Badge variant="outline" className="bg-blue-100/80 text-blue-700 border-blue-200/60">
+                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 mt-1">
                       {formData.project_id_prefix}{formData.project_id_number}
                     </Badge>
                   )}
                 </div>
 
-                {/* Project Title */}
-                <div className="space-y-2">
-                  <Label htmlFor="project_title">Project Title *</Label>
+                {/* Project Title Section */}
+                <div className="space-y-3 p-4 rounded-lg bg-muted/30 border border-border/40">
+                  <Label htmlFor="project_title" className="text-sm font-semibold text-foreground">
+                    Project Title <span className="text-destructive">*</span>
+                  </Label>
                   <Input
                     id="project_title"
                     value={formData.project_title}
                     onChange={(e) => setFormData(prev => ({ ...prev, project_title: e.target.value }))}
                     placeholder="Enter project title"
                     required
+                    className="bg-background"
                   />
                 </div>
 
-                {/* Portfolio and Hub - 2 columns */}
-                <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="region">Portfolio (Region)</Label>
-                    <EnhancedCombobox
-                      options={regions.map(region => ({ value: region.id, label: region.name }))}
-                      value={formData.region_id}
-                      onValueChange={(value) => {
-                        setFormData(prev => ({ ...prev, region_id: value, hub_id: '' }));
-                      }}
-                      placeholder="Select portfolio"
-                      emptyText="No portfolios found"
-                      allowCreate={false}
-                      className="w-full"
-                    />
+                {/* Location Section */}
+                <div className="space-y-4 p-4 rounded-lg bg-muted/30 border border-border/40">
+                  <h4 className="text-sm font-semibold text-foreground border-b border-border/40 pb-2">
+                    Location Details
+                  </h4>
+                  
+                  {/* Portfolio and Hub - 2 columns */}
+                  <div className="grid gap-5 grid-cols-1 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="region" className="text-sm font-medium text-muted-foreground">
+                        Portfolio (Region)
+                      </Label>
+                      <EnhancedCombobox
+                        options={regions.map(region => ({ value: region.id, label: region.name }))}
+                        value={formData.region_id}
+                        onValueChange={(value) => {
+                          setFormData(prev => ({ ...prev, region_id: value, hub_id: '' }));
+                        }}
+                        placeholder="Select portfolio"
+                        emptyText="No portfolios found"
+                        allowCreate={false}
+                        className="w-full bg-background"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="hub" className="text-sm font-medium text-muted-foreground">
+                        Project Hub
+                      </Label>
+                      <EnhancedCombobox
+                        options={filteredHubs.map(hub => ({ value: hub.id, label: hub.name }))}
+                        value={formData.hub_id}
+                        onValueChange={(value) => setFormData(prev => ({ ...prev, hub_id: value }))}
+                        onCreateNew={async (name) => {
+                          await createHub(name);
+                        }}
+                        placeholder="Select or create hub"
+                        emptyText="No hubs found"
+                        createText="Create hub"
+                        className="w-full bg-background"
+                      />
+                    </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="hub">Project Hub</Label>
-                    <EnhancedCombobox
-                      options={filteredHubs.map(hub => ({ value: hub.id, label: hub.name }))}
-                      value={formData.hub_id}
-                      onValueChange={(value) => setFormData(prev => ({ ...prev, hub_id: value }))}
-                      onCreateNew={async (name) => {
-                        await createHub(name);
-                      }}
-                      placeholder="Select or create hub"
-                      emptyText="No hubs found"
-                      createText="Create hub"
-                      className="w-full"
+                  {/* Locations - full width */}
+                  <div className="space-y-2 pt-2">
+                    <Label htmlFor="locations" className="text-sm font-medium text-muted-foreground">
+                      Locations (Stations)
+                    </Label>
+                    <MultiSelectCombobox
+                      options={stations.map(station => ({ value: station.id, label: station.name }))}
+                      selectedValues={selectedLocationIds}
+                      onValueChange={setSelectedLocationIds}
+                      placeholder="Select locations"
+                      emptyText="No locations found"
+                      className="w-full bg-background"
                     />
                   </div>
                 </div>
 
-                {/* Locations - full width */}
-                <div className="space-y-2">
-                  <Label htmlFor="locations">Locations (Stations)</Label>
-                  <MultiSelectCombobox
-                    options={stations.map(station => ({ value: station.id, label: station.name }))}
-                    selectedValues={selectedLocationIds}
-                    onValueChange={setSelectedLocationIds}
-                    placeholder="Select locations"
-                    emptyText="No locations found"
-                    className="w-full"
-                  />
-                </div>
-
-                {/* Project Scope with Image Paste Support */}
-                <div className="space-y-2">
-                  <Label htmlFor="project_scope">Project Scope</Label>
+                {/* Project Scope Section */}
+                <div className="space-y-3 p-4 rounded-lg bg-muted/30 border border-border/40">
+                  <Label htmlFor="project_scope" className="text-sm font-semibold text-foreground">
+                    Project Scope
+                  </Label>
                   <div className="relative">
                     <Textarea
                       id="project_scope"
@@ -561,13 +581,13 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
                       }}
                       placeholder="Describe the project scope... (You can paste an image here)"
                       rows={4}
-                      className="resize-none"
+                      className="resize-none bg-background"
                     />
                   </div>
                   
                   {/* Pasted Image Preview */}
                   {formData.project_scope_image_url && (
-                    <div className="relative border rounded-lg p-2 bg-muted/30">
+                    <div className="relative border border-border/60 rounded-lg p-3 bg-background">
                       <img 
                         src={formData.project_scope_image_url} 
                         alt="Project Scope" 
@@ -584,27 +604,27 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
                       </Button>
                     </div>
                   )}
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-muted-foreground italic">
                     Tip: You can paste an image directly into the text field above
                   </p>
                 </div>
 
-                {/* Created/Updated Dates (Read-only) */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
-                  <div className="space-y-2">
-                    <span className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      Created Date
+                {/* Metadata Section */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-lg bg-muted/20 border border-border/30">
+                  <div className="space-y-1">
+                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                      <Calendar className="h-3.5 w-3.5" />
+                      Created
                     </span>
-                    <p className="text-foreground font-medium">{formatDate(project.created_at)}</p>
+                    <p className="text-sm text-foreground font-medium">{formatDate(project.created_at)}</p>
                   </div>
                   {project.updated_at && (
-                    <div className="space-y-2">
-                      <span className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                        <Calendar className="h-4 w-4" />
+                    <div className="space-y-1">
+                      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                        <Calendar className="h-3.5 w-3.5" />
                         Last Updated
                       </span>
-                      <p className="text-foreground font-medium">{formatDate(project.updated_at)}</p>
+                      <p className="text-sm text-foreground font-medium">{formatDate(project.updated_at)}</p>
                     </div>
                   )}
                 </div>
