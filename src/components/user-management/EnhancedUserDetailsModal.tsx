@@ -39,6 +39,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useHubs } from '@/hooks/useHubs';
 import { useLogActivity } from '@/hooks/useActivityLogs';
+import { useCategorizedRoles } from '@/hooks/useCategorizedRoles';
 import { 
   requiresPortfolio as roleRequiresPortfolio, 
   requiresHub as roleRequiresHubAssignment,
@@ -131,6 +132,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
     primary_phone: '',
     secondary_phone: '',
     country_code: '',
+    function: '', // NEW: Function/category for role selection
     role: '',
     discipline: '',
     commission: '',
@@ -148,6 +150,16 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
     functional_email: false,
     position: ''
   });
+
+  // Use categorized roles hook for function -> role hierarchy
+  const { data: categorizedRoles, isLoading: rolesLoading } = useCategorizedRoles();
+
+  // Get roles for the selected function
+  const getRolesForFunction = () => {
+    if (!formData.function || !categorizedRoles) return [];
+    const functionGroup = categorizedRoles.find(g => g.category.name === formData.function);
+    return functionGroup?.roles || [];
+  };
 
   const { data: hubs } = useHubs();
 
@@ -428,6 +440,15 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
   // Initialize form data when modal opens or user changes
   useEffect(() => {
     if (isOpen && user) {
+      // Find the function/category for the user's current role
+      let userFunction = '';
+      if (user.role && categorizedRoles) {
+        const categoryWithRole = categorizedRoles.find(group => 
+          group.roles.some(r => r.name === user.role)
+        );
+        userFunction = categoryWithRole?.category.name || '';
+      }
+
       setFormData({
         first_name: user.first_name || '',
         last_name: user.last_name || '',
@@ -437,6 +458,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
         primary_phone: user.primary_phone || '',
         secondary_phone: user.secondary_phone || '',
         country_code: user.country_code || '+964',
+        function: userFunction,
         role: user.role || '',
         discipline: user.ta2_discipline || '',
         commission: user.ta2_commission || '',
@@ -474,7 +496,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
       fetchActivityLogs();
       fetchUserSessions();
     }
-  }, [isOpen, user]);
+  }, [isOpen, user, categorizedRoles]);
 
   const fetchActivityLogs = async () => {
     if (!user?.user_id) return;
@@ -1297,22 +1319,52 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                 <div className="space-y-4">
                   {editMode ? (
                     <>
-                      {/* Role and conditional fields on same row - Edit Mode Only */}
+                      {/* Function and Role selection - Edit Mode Only */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-end">
-                        {/* Primary Role Field */}
+                        {/* Function (Category) Field */}
+                        <div>
+                          <Label>Function *</Label>
+                          <Select
+                            value={formData.function}
+                            onValueChange={(value) => setFormData(prev => ({ 
+                              ...prev, 
+                              function: value,
+                              role: '' // Reset role when function changes
+                            }))}
+                            disabled={!editMode}
+                          >
+                            <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
+                              <SelectValue placeholder={rolesLoading ? "Loading..." : "Select function"} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {categorizedRoles?.map((group) => (
+                                <SelectItem key={group.category.id} value={group.category.name}>
+                                  {group.category.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {/* Role Field - Filtered by selected Function */}
                         <div>
                           <Label>Role *</Label>
-                          <Combobox
+                          <Select
                             value={formData.role}
-                            onValueChange={handleRoleChange}
-                            options={databaseRoles}
-                            placeholder="Select role"
-                            searchPlaceholder="Search roles..."
-                            emptyText="No roles found"
-                            allowCustom={editMode}
-                            onAddCustom={handleRoleChange}
-                            className={!editMode ? 'bg-muted pointer-events-none' : ''}
-                          />
+                            onValueChange={(value) => handleRoleChange(value)}
+                            disabled={!editMode || !formData.function}
+                          >
+                            <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
+                              <SelectValue placeholder={formData.function ? "Select role" : "Select function first"} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {getRolesForFunction().map((role) => (
+                                <SelectItem key={role.id} value={role.name}>
+                                  {role.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
 
                         {/* Conditional fields based on role */}
@@ -1531,12 +1583,20 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                       )}
                     </>
                   ) : (
-                    /* View Mode - Show Role and Position */
+                    /* View Mode - Show Function, Role and Position */
                     <div className="space-y-4">
-                      <div>
-                        <Label>Role</Label>
-                        <div className="p-3 bg-muted rounded-md border">
-                          <span className="font-medium">{formData.role || user.role || 'Not assigned'}</span>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label>Function</Label>
+                          <div className="p-3 bg-muted rounded-md border">
+                            <span className="font-medium">{formData.function || 'Not specified'}</span>
+                          </div>
+                        </div>
+                        <div>
+                          <Label>Role</Label>
+                          <div className="p-3 bg-muted rounded-md border">
+                            <span className="font-medium">{formData.role || user.role || 'Not assigned'}</span>
+                          </div>
                         </div>
                       </div>
                       {isTitleReady() && (
