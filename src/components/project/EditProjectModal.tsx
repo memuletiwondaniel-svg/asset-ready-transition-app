@@ -609,25 +609,6 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
                   </p>
                 </div>
 
-                {/* Metadata Section */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-lg bg-muted/20 border border-border/30">
-                  <div className="space-y-1">
-                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
-                      <Calendar className="h-3.5 w-3.5" />
-                      Created
-                    </span>
-                    <p className="text-sm text-foreground font-medium">{formatDate(project.created_at)}</p>
-                  </div>
-                  {project.updated_at && (
-                    <div className="space-y-1">
-                      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
-                        <Calendar className="h-3.5 w-3.5" />
-                        Last Updated
-                      </span>
-                      <p className="text-sm text-foreground font-medium">{formatDate(project.updated_at)}</p>
-                    </div>
-                  )}
-                </div>
               </CardContent>
             </Card>
 
