@@ -137,7 +137,7 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = ({ showFunFacts 
       // Clear previous image after transition completes
       const timeout = setTimeout(() => {
         setPreviousImageIndex(null);
-      }, 4000); // Match transition duration
+      }, 4500); // Slightly longer than transition to ensure smooth cleanup
       
       return () => clearTimeout(timeout);
     }, 8000); // Longer interval for smoother experience
@@ -175,9 +175,9 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = ({ showFunFacts 
             className={`
               absolute inset-0 w-full h-full object-cover object-center
               transition-all duration-[4000ms] ease-[cubic-bezier(0.4,0,0.2,1)]
-              ${isActive ? 'opacity-100 scale-100 animate-ken-burns' : ''}
-              ${isPrevious ? 'opacity-0 scale-105' : ''}
-              ${!isActive && !isPrevious ? 'opacity-0 scale-100' : ''}
+              ${isActive ? 'opacity-100 scale-100 z-20 animate-ken-burns' : ''}
+              ${isPrevious ? 'opacity-100 scale-105 z-10' : ''}
+              ${!isActive && !isPrevious ? 'opacity-0 z-0' : ''}
             `}
           />
         );
