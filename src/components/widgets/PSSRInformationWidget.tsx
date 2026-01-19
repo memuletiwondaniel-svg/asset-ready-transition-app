@@ -16,8 +16,7 @@ interface PSSRInformationWidgetProps {
   dateInitiated: string;
   pssrLead: string;
   projectData?: any;
-  plantName?: string;
-  stationName?: string;
+  regionName?: string;
   hubName?: string;
   onNavigateToProject?: () => void;
   dragAttributes?: any;
@@ -33,8 +32,7 @@ export const PSSRInformationWidget: React.FC<PSSRInformationWidgetProps> = ({
   dateInitiated,
   pssrLead,
   projectData,
-  plantName,
-  stationName,
+  regionName,
   hubName,
   onNavigateToProject,
   dragAttributes,
@@ -141,8 +139,7 @@ export const PSSRInformationWidget: React.FC<PSSRInformationWidgetProps> = ({
           open={showProjectModal}
           onClose={() => setShowProjectModal(false)}
           project={projectData}
-          plantName={plantName}
-          stationName={stationName}
+          regionName={regionName}
           hubName={hubName}
         />
       )}

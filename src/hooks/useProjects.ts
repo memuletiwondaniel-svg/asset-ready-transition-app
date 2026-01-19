@@ -14,6 +14,7 @@ export interface Project {
   project_scope?: string;
   project_scope_image_url?: string;
   hub_id?: string;
+  region_id?: string;
   created_by: string;
   created_at: string;
   updated_at: string;

@@ -504,8 +504,8 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
                   />
                 </div>
 
-                {/* Portfolio, Hub, and Locations */}
-                <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
+                {/* Portfolio and Hub - 2 columns */}
+                <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="region">Portfolio (Region)</Label>
                     <EnhancedCombobox
@@ -536,18 +536,19 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
                       className="w-full"
                     />
                   </div>
+                </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="locations">Locations (Stations)</Label>
-                    <MultiSelectCombobox
-                      options={stations.map(station => ({ value: station.id, label: station.name }))}
-                      selectedValues={selectedLocationIds}
-                      onValueChange={setSelectedLocationIds}
-                      placeholder="Select locations"
-                      emptyText="No locations found"
-                      className="w-full"
-                    />
-                  </div>
+                {/* Locations - full width */}
+                <div className="space-y-2">
+                  <Label htmlFor="locations">Locations (Stations)</Label>
+                  <MultiSelectCombobox
+                    options={stations.map(station => ({ value: station.id, label: station.name }))}
+                    selectedValues={selectedLocationIds}
+                    onValueChange={setSelectedLocationIds}
+                    placeholder="Select locations"
+                    emptyText="No locations found"
+                    className="w-full"
+                  />
                 </div>
 
                 {/* Plant (Legacy - keep for backward compatibility) */}

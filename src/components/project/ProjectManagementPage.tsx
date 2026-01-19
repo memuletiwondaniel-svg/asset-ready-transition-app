@@ -14,6 +14,7 @@ import { useProjects } from '@/hooks/useProjects';
 import { usePlants } from '@/hooks/usePlants';
 import { useStations } from '@/hooks/useStations';
 import { useHubs } from '@/hooks/useHubs';
+import { useProjectRegions } from '@/hooks/useProjectRegions';
 import { useLogActivity } from '@/hooks/useActivityLogs';
 import { supabase } from '@/integrations/supabase/client';
 import { CreateProjectWizard } from './CreateProjectWizard';
@@ -96,6 +97,7 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
   const { plants } = usePlants();
   const { stations } = useStations();
   const { data: hubs = [] } = useHubs();
+  const { regions } = useProjectRegions();
   const { mutate: logActivity } = useLogActivity();
   const { updateMetadata } = useBreadcrumb();
   const {
@@ -595,9 +597,8 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
           setViewProject(null);
         }}
         project={viewProject}
-        plantName={viewProject ? getPlantName(viewProject.plant_id) : undefined}
-        stationName={viewProject ? getStationName(viewProject.station_id) : undefined}
-        hubName={viewProject ? getHubName(viewProject.hub_id) : undefined}
+        regionName={viewProject ? regions.find(r => r.id === viewProject.region_id)?.name : undefined}
+        hubName={viewProject ? hubs.find(h => h.id === viewProject.hub_id)?.name : undefined}
       />
 
       {/* Edit Project Modal */}
