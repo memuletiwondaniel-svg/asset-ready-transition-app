@@ -424,7 +424,7 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
     <Dialog open={open} onOpenChange={onClose} modal={true}>
       <DialogContent className="max-w-5xl h-[90vh] flex flex-col p-0 data-[state=open]:zoom-in-100 data-[state=closed]:zoom-out-100">
         <DialogHeader className="px-6 pt-6 pb-4 border-b shrink-0">
-          <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+          <DialogTitle className="text-2xl font-bold text-foreground">
             Edit: {formData.project_id_prefix}{formData.project_id_number} - {formData.project_title || 'Untitled Project'}
           </DialogTitle>
         </DialogHeader>
