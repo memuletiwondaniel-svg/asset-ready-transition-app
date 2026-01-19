@@ -9,10 +9,8 @@ import { MultiSelectCombobox } from '@/components/ui/multi-select-combobox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Switch } from '@/components/ui/switch';
-import { X, FileText, Image, Star, Calendar, Users } from 'lucide-react';
+import { X, FileText, Calendar, Users } from 'lucide-react';
 import { useProjects } from '@/hooks/useProjects';
-import { usePlants } from '@/hooks/usePlants';
 import { useStations } from '@/hooks/useStations';
 import { useHubs } from '@/hooks/useHubs';
 import { useProjectRegions } from '@/hooks/useProjectRegions';
@@ -40,8 +38,7 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
   project
 }) => {
   const { updateProject, isUpdating } = useProjects();
-  const { plants, createPlant } = usePlants();
-  const { stations, createStation } = useStations();
+  const { stations } = useStations();
   const { data: hubs = [], createHub } = useHubs();
   const { regions } = useProjectRegions();
   const { regions: hierarchyRegions } = useProjectHierarchy();
@@ -421,8 +418,6 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
     return hubs.filter(hub => hubIdsInRegion.includes(hub.id));
   }, [formData.region_id, hierarchyRegions, hubs]);
 
-  const showStationField = formData.plant_id && plants.find(p => p.id === formData.plant_id)?.name === 'CS';
-
   if (!project) return null;
 
   return (
@@ -535,128 +530,63 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
                   />
                 </div>
 
-                {/* Plant (Legacy - keep for backward compatibility) */}
-                <div className={`grid gap-4 ${showStationField ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
-                  <div className="space-y-2">
-                    <Label htmlFor="plant">Plant (Optional)</Label>
-                    <EnhancedCombobox
-                      options={plants.map(plant => ({ value: plant.id, label: plant.name }))}
-                      value={formData.plant_id}
-                      onValueChange={(value) => {
-                        setFormData(prev => ({ ...prev, plant_id: value, station_id: '' }));
-                      }}
-                      onCreateNew={async (name) => {
-                        await createPlant(name);
-                      }}
-                      placeholder="Select or create plant"
-                      emptyText="No plants found"
-                      createText="Create plant"
-                      className="w-full"
-                    />
-                  </div>
-
-                  {showStationField && (
-                    <div className="space-y-2">
-                      <Label htmlFor="station">Station</Label>
-                      <EnhancedCombobox
-                        options={stations.map(station => ({ value: station.id, label: station.name }))}
-                        value={formData.station_id}
-                        onValueChange={(value) => setFormData(prev => ({ ...prev, station_id: value }))}
-                        onCreateNew={async (name) => {
-                          await createStation(name);
-                        }}
-                        placeholder="Select or create station"
-                        emptyText="No stations found"
-                        createText="Create station"
-                        className="w-full"
-                      />
-                    </div>
-                  )}
-                </div>
-
-                {/* Project Scope */}
+                {/* Project Scope with Image Paste Support */}
                 <div className="space-y-2">
                   <Label htmlFor="project_scope">Project Scope</Label>
-                  <div className="space-y-3">
+                  <div className="relative">
                     <Textarea
                       id="project_scope"
                       value={formData.project_scope}
                       onChange={(e) => setFormData(prev => ({ ...prev, project_scope: e.target.value }))}
-                      placeholder="Describe the project scope..."
-                      rows={4}
-                    />
-                    
-                    {/* Drag and Drop Image Area */}
-                    <div className="space-y-2">
-                      <Label>Project Scope Image (Optional)</Label>
-                      <div
-                        className={`
-                          border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer
-                          ${isDragOver ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'}
-                          ${formData.project_scope_image_url ? 'bg-gray-50' : ''}
-                        `}
-                        onDrop={handleImageDrop}
-                        onDragOver={handleImageDragOver}
-                        onDragLeave={handleImageDragLeave}
-                        onClick={() => document.getElementById('project_scope_image_edit')?.click()}
-                      >
-                        {formData.project_scope_image_url ? (
-                          <div className="relative">
-                            <img 
-                              src={formData.project_scope_image_url} 
-                              alt="Project Scope" 
-                              className="w-full max-h-48 object-contain rounded-lg mx-auto"
-                            />
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setFormData(prev => ({ ...prev, project_scope_image_url: '' }));
-                              }}
-                              className="absolute top-2 right-2 bg-red-100 hover:bg-red-200 text-red-600 z-10"
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ) : (
-                          <div className="space-y-2">
-                            <div className="flex justify-center">
-                              <Image className="h-12 w-12 text-gray-400" />
-                            </div>
-                            <div className="text-sm text-gray-600">
-                              <span className="font-medium">Drag and drop an image here</span>
-                              <br />
-                              or click to browse files
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              PNG, JPG, GIF up to 10MB
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                      <Input
-                        id="project_scope_image_edit"
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            const reader = new FileReader();
-                            reader.onload = (event) => {
-                              setFormData(prev => ({ 
-                                ...prev, 
-                                project_scope_image_url: event.target?.result as string 
-                              }));
-                            };
-                            reader.readAsDataURL(file);
+                      onPaste={(e) => {
+                        const items = e.clipboardData?.items;
+                        if (items) {
+                          for (let i = 0; i < items.length; i++) {
+                            if (items[i].type.indexOf('image') !== -1) {
+                              const blob = items[i].getAsFile();
+                              if (blob) {
+                                const reader = new FileReader();
+                                reader.onload = (event) => {
+                                  setFormData(prev => ({ 
+                                    ...prev, 
+                                    project_scope_image_url: event.target?.result as string 
+                                  }));
+                                };
+                                reader.readAsDataURL(blob);
+                              }
+                              break;
+                            }
                           }
-                        }}
-                        className="hidden"
-                      />
-                    </div>
+                        }
+                      }}
+                      placeholder="Describe the project scope... (You can paste an image here)"
+                      rows={4}
+                      className="resize-none"
+                    />
                   </div>
+                  
+                  {/* Pasted Image Preview */}
+                  {formData.project_scope_image_url && (
+                    <div className="relative border rounded-lg p-2 bg-muted/30">
+                      <img 
+                        src={formData.project_scope_image_url} 
+                        alt="Project Scope" 
+                        className="w-full max-h-48 object-contain rounded-lg"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setFormData(prev => ({ ...prev, project_scope_image_url: '' }))}
+                        className="absolute top-4 right-4 bg-destructive/10 hover:bg-destructive/20 text-destructive"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Tip: You can paste an image directly into the text field above
+                  </p>
                 </div>
 
                 {/* Created/Updated Dates (Read-only) */}
