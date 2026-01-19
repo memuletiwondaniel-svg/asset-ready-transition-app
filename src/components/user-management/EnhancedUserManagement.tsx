@@ -971,7 +971,10 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
         <EnhancedUserDetailsModal
           user={selectedUser as any}
           isOpen={!!selectedUser}
-          onClose={() => setSelectedUser(null)}
+          onClose={() => {
+            selectedUserRef.current = null;
+            setSelectedUser(null);
+          }}
           onUserUpdated={fetchUsers}
         />
       )}
@@ -981,12 +984,16 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
           user={editingUser as any}
           isOpen={!!editingUser}
           onClose={() => {
+            // Prevent fetchUsers() from re-hydrating modal state from stale closures.
+            editingUserRef.current = null;
+            selectedUserRef.current = null;
             setEditingUser(null);
             setSelectedUser(null);
           }}
           onUserUpdated={() => {
-            // Ensure we never fall back to the view modal after an edit-save.
-            // (Users expect to return to the list with ALL modals closed.)
+            // Close ALL modals first (and sync refs immediately), then refresh.
+            editingUserRef.current = null;
+            selectedUserRef.current = null;
             setEditingUser(null);
             setSelectedUser(null);
             fetchUsers();
