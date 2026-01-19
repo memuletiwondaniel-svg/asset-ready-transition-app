@@ -315,6 +315,10 @@ export default {
 			'0%, 100%': { transform: 'translate(-50%, -50%) scale(1)', opacity: '0.08' },
 			'50%': { transform: 'translate(-50%, -50%) scale(1.2)', opacity: '0.12' },
 		},
+		'ken-burns': {
+			'0%': { transform: 'scale(1)' },
+			'100%': { transform: 'scale(1.08)' },
+		},
 	},
 		animation: {
 			'accordion-down': 'accordion-down 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
@@ -346,7 +350,7 @@ export default {
 		'journey-bl': 'journey-bl 60s ease-in-out infinite',
 		'journey-br': 'journey-br 52s ease-in-out infinite',
 		'pulse-center': 'pulse-center 35s ease-in-out infinite',
-			// Combined animations for visible background movement
+		'ken-burns': 'ken-burns 8s ease-out forwards',
 			'gradient-shift-morph': 'gradient-shift 12s ease infinite, gradient-color-morph 18s linear infinite',
 			'gradient-sweep-morph': 'gradient-sweep 20s ease-in-out infinite, gradient-color-morph-fast 15s linear infinite',
 			'gradient-horizontal-morph': 'gradient-horizontal 14s ease-in-out infinite, gradient-color-morph-fast 15s linear infinite',
