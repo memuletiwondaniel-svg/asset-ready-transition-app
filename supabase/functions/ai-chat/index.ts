@@ -1002,7 +1002,443 @@ Required HSSE proficiency for TA nomination:
 1. Capture learnings early and continuously (especially during phase transitions)
 2. Use structured methods: PW (Post-Work), ROCK, AAR (After Action Review), Causal Learning
 3. Store and share via LFE database and OR&CSU CoP
-4. Flag high-value learnings for global replication`;
+4. Flag high-value learnings for global replication
+
+=== COMPLETE MODULE ENCYCLOPEDIA ===
+
+**MODULE 1: PSSR (Pre-Startup Safety Review)**
+
+PURPOSE: 
+Systematic checklist-based review ensuring equipment and systems are safe for startup. Ensures all safety, operational, and technical requirements are verified before energizing or commissioning equipment.
+
+ROUTES & NAVIGATION:
+- /pssr → PSSR Landing Page (list view, kanban board, timeline views)
+- /pssr/:id → PSSR Overview Dashboard (progress widgets, approvals, scope info)
+- /pssr/:id/review → Item Review Page (discipline-based checklist review)
+- /pssr/:id/approve → Final Approval Page (sign-off workflow)
+- /my-tasks → Approver Dashboard (pending items assigned to current user)
+- /pssr-reviews → Alias for Approver Dashboard
+
+KEY COMPONENTS:
+- PSSRSummaryPage: Main entry point with view mode toggle (list/kanban/timeline)
+- PSSRDashboard: Overview with 3 widget panels (Info/Scope, Progress, Approvals)
+- PSSRItemReview: Discipline-grouped checklist item review with evidence upload
+- PSSRApprovalPage: Final approver sign-off workflow
+- PSSRKanbanBoard: Visual drag-drop status tracking board
+- PSSRTimelineView: Chronological activity timeline
+- CreatePSSRWizard: Multi-step PSSR creation wizard
+- PSSRChecklistProgressWidget: Category completion progress bars
+- PSSRInfoScopeWidget: Equipment info, location, scope display
+- PSSRReviewersApprovalsWidget: Approver status timeline
+- PriorityActionsWidget: Priority A/B action items table
+
+WORKFLOW STATES:
+Draft → Active → Ready for Review → Pending Approval → Approved → Closed
+
+WORKFLOW DETAILS:
+1. DRAFT: Initial creation, checklist items can be added/edited
+2. ACTIVE: Review in progress, discipline leads reviewing items
+3. READY FOR REVIEW: All items reviewed, waiting for final approval
+4. PENDING APPROVAL: Final approvers reviewing and signing off
+5. APPROVED: All approvers signed, ready for startup
+6. CLOSED: Startup completed, PSSR closed out
+
+KEY DATABASE TABLES:
+- pssrs: Header records (pssr_number, project_id, status, equipment details)
+- pssr_checklist_items: Individual review items by discipline
+- pssr_item_approvals: Per-item approval status (PENDING/APPROVED/REJECTED)
+- pssr_priority_actions: A/B priority action items
+- pssr_final_approvers: Final approver assignments and status
+- pssr_reason_categories: PSSR initiation reason codes
+- pssr_approval_delegation: Delegated approval authority
+
+DISCIPLINES (Categories):
+- Electrical, Mechanical, Process, Instrumentation
+- Civil/Structural, Fire & Safety, Environmental
+- Operations, Maintenance, Security, HSE
+
+KEY HOOKS:
+- usePSSRDetails: Fetch/update PSSR header data
+- usePSSRCategoryProgress: Get completion % by category
+- usePSSRPriorityActions: CRUD for priority actions
+- usePSSRApprovers: Approver assignments
+- usePSSRItemApprovals: Item-level approval status
+- usePSSRChecklist: Checklist items management
+- usePSSRStats: Aggregate statistics
+
+COMMON USER QUESTIONS:
+Q: "Why can't I approve this item?"
+A: Check: 1) You're assigned as approver for this discipline, 2) Item is in reviewable status, 3) Your user_id matches approver assignment
+
+Q: "Why won't the PSSR close?"
+A: Verify: 1) All Priority A actions are closed, 2) All required disciplines reviewed, 3) All final approvers have signed off
+
+Q: "How do I add a Priority A action?"
+A: Navigate to PSSR dashboard > Priority Actions panel > Add Action button. Priority A blocks approval, Priority B doesn't.
+
+---
+
+**MODULE 2: ORA/ORP (Operational Readiness Assessment / Plan)**
+
+PURPOSE:
+6-phase methodology ensuring projects are operationally ready. Covers organization readiness, facilities/equipment, commissioning, and asset handover.
+
+ROUTES & NAVIGATION:
+- /operation-readiness → ORA Plans Landing Page (project-grouped cards)
+- /operation-readiness/analytics → Analytics Dashboard
+- /operation-readiness/:id → Plan Details Page (tabbed interface)
+
+KEY COMPONENTS:
+- ORPLandingPage: Project-grouped ORA plan cards with filters
+- ORPDetailsPage: Tabbed view (Deliverables, Milestones, Resources, Risks, Training)
+- ORPKanbanBoard: Deliverable status tracking
+- ORPGanttChart: Timeline visualization for milestones
+- ORATrainingPlanTab: Training management with approval workflow
+- ORAOwnersCostTab: Cost tracking (estimated, actual, committed)
+- ORAMaintenanceReadinessTab: Maintenance readiness checklist
+- ORAHandoverTab: Handover items and sign-off
+- ORPResourcesPanel: Team assignments and allocations
+- ORPRisksPanel: Risk register with probability/severity matrix
+- ORAApprovalsPanel: Approval workflow timeline
+- ORAConfigurationManagement: Admin configuration for catalogs/templates
+- ORAActivityCatalog: Master activity library management
+- ORATemplateManagement: Plan template configuration
+- ORACostEditPanel: Cost editing interface
+
+PHASES:
+- ASSESS: Gap analysis, current state evaluation
+- SELECT: Strategy selection, resource allocation  
+- DEFINE: Detailed planning, deliverable specs
+
+AREAS (within each phase):
+- ORM: Operations Readiness Management
+- FEO: Front-End Operations / Facilities Equipment Operations
+- CSU: Commissioning, Start-Up
+
+WORKFLOW STATES:
+draft → in_progress → submitted → approved
+
+KEY DATABASE TABLES:
+- orp_plans: Plan headers (phase, status, project_id, ora_engineer_id)
+- orp_deliverables_catalog: Master deliverable library
+- orp_plan_deliverables: Assigned deliverables with progress (0-100%)
+- orp_deliverable_sub_options: Sub-options for deliverables
+- orp_plan_deliverable_sub_selections: Selected sub-options
+- orp_milestones: Plan milestones with target/completion dates
+- orp_resources: Team assignments with allocation %
+- orp_risks: Risk register (probability, severity, mitigation)
+- orp_approvals: Approval workflow status
+- ora_training_plans: Training plans linked to ORA
+- ora_training_items: Individual training courses
+- ora_maintenance_readiness: Maintenance readiness items
+- ora_handover_items: Handover checklist items
+- ora_activity_catalog: Master activity library
+- ora_plan_templates: Reusable plan templates
+- ora_template_activities: Activities linked to templates
+- ora_cost_categories: Cost categorization
+
+KEY HOOKS:
+- useORPPlans: ORA plan CRUD operations
+- useORPPlanDetails: Single plan details with joins
+- useORPMilestones: Milestone management
+- useORPResources: Resource allocation
+- useORPRisks: Risk register CRUD
+- useORATrainingPlan: Training plan management
+- useORAActivityCatalog: Activity library queries
+- useCostCategories: Cost category reference data
+
+COMMON USER QUESTIONS:
+Q: "How do I create an ORA plan?"
+A: Go to /operation-readiness > Create Plan button. Select project, phase, and ORA Engineer. Plan starts in Draft status.
+
+Q: "What's the difference between ORA and ORP?"
+A: ORA = Operational Readiness Assessment (the methodology). ORP = Operational Readiness Plan (the execution document). They're used interchangeably in ORSH.
+
+Q: "How do I add deliverables from the catalog?"
+A: In plan details > Deliverables tab > Add from Catalog button. Select items and they'll be added to your plan.
+
+---
+
+**MODULE 3: ORM (OR Maintenance / Document Management)**
+
+PURPOSE:
+Document deliverable management and workflow tracking for OR-related documents. Tracks document preparation, QA/QC review, and approval workflow.
+
+ROUTES & NAVIGATION:
+- /or-maintenance → ORM Landing Page (filterable plan cards)
+- /or-maintenance/analytics → Analytics Dashboard
+- /or-maintenance/resources → Resource Capacity Dashboard
+- /or-maintenance/notifications → Notification Preferences
+- /or-maintenance/:id → Plan Details Page
+
+KEY COMPONENTS:
+- ORMLandingPage: Filterable plan list with status badges
+- ORMDetailsPage: Deliverable management with workflow
+- ORMKanbanBoard: Workflow stage tracking board
+- ORMDeliverableCard: Individual deliverable with progress
+- ORMDailyReportsView: Daily progress reporting interface
+- ORMWorkflowPanel: Stage transition with comments
+- ORMResourceCapacityDashboard: Resource utilization view
+- ORMNotificationsPage: User notification preferences
+- ORMAnalyticsPage: Charts and metrics
+
+WORKFLOW STAGES (orm_workflow_stage enum):
+IN_PROGRESS → QAQC_REVIEW → LEAD_REVIEW → CENTRAL_TEAM_REVIEW → APPROVED/REJECTED
+
+DELIVERABLE TYPES (orm_deliverable_type enum):
+- ASSET_REGISTER: Asset documentation
+- PREVENTIVE_MAINTENANCE: PM procedures
+- BOM_DEVELOPMENT: Bill of Materials
+- OPERATING_SPARES: Spare parts lists
+- IMS_UPDATE: IMS system updates
+- PM_ACTIVATION: PM schedule activation
+
+KEY DATABASE TABLES:
+- orm_plans: Plan headers (project_id, orm_lead_id, status)
+- orm_deliverables: Documents with workflow_stage
+- orm_daily_reports: Daily progress entries
+- orm_milestones: Plan milestones
+- orm_tasks: Individual tasks
+- orm_workflow_comments: Review comments per stage
+- orm_document_checklist: Required document checklist
+- orm_attachments: File attachments
+- orm_deliverable_templates: Reusable deliverable templates
+- orm_template_tasks: Template-linked tasks
+- orm_notifications: User notifications
+- orm_notification_preferences: User preferences
+
+KEY HOOKS:
+- useORMPlans: ORM plan CRUD
+- useORMPlanDetails: Single plan with deliverables
+- useORMDeliverables: Deliverable workflow management
+- useORMDailyReports: Daily reporting
+- useORMNotifications: Real-time notifications
+- useORMWorkflow: Stage transitions
+
+COMMON USER QUESTIONS:
+Q: "How does ORM workflow progress?"
+A: Documents flow: In Progress → QA/QC Review → Lead Review → Central Team Review → Approved. Each stage requires sign-off.
+
+Q: "How do I submit a daily report?"
+A: In ORM details > Daily Reports tab > Add Report. Enter hours worked, work completed, and challenges.
+
+---
+
+**MODULE 4: P2A (Project to Asset Handover)**
+
+PURPOSE:
+Structured handover from project team to asset operations. Ensures all deliverables, documentation, and systems are properly transferred.
+
+ROUTES & NAVIGATION:
+- /p2a-handover → P2A Landing Page (list and heatmap views)
+- /p2a-handover/:id → Handover Details Page
+
+KEY COMPONENTS:
+- P2ALandingPage: Handover list with heatmap view option
+- P2ADetailsPage: Tabbed view (Deliverables, Approval, Documents, Audit)
+- P2AApprovalWorkflow: Multi-stage approval panel
+- P2AHeatmap: Visual status overview grid
+- P2AFileUpload: Document upload and management
+- P2ADeliverablesList: Handover items table
+- P2AAuditTrail: Change history timeline
+
+WORKFLOW STATES:
+draft → in_progress → pending_approval → approved → completed
+
+KEY DATABASE TABLES:
+- p2a_handovers: Handover packages (project_id, status)
+- p2a_handover_deliverables: Items being handed over
+- p2a_approval_workflow: Multi-stage approval records
+- p2a_audit_trail: Change history
+
+KEY HOOKS:
+- useP2AHandovers: Handover CRUD
+- useP2AHandoverDetails: Single handover with joins
+- useP2AApprovalWorkflow: Approval management
+- useP2AAuditTrail: Change history queries
+
+---
+
+=== COMPLETE ROUTE REFERENCE ===
+
+CORE ROUTES:
+/ → Home Dashboard (customizable widgets)
+/home → Home Dashboard (authenticated)
+/auth → Login/Registration page
+
+PSSR MODULE:
+/pssr → PSSR landing (list/kanban/timeline)
+/pssr/:id → PSSR Overview Dashboard
+/pssr/:id/review → Item Review page
+/pssr/:id/approve → Final Approval page
+/my-tasks → Approver Dashboard
+/pssr-reviews → Alias for Approver Dashboard
+
+ORA MODULE:
+/operation-readiness → ORA Plans landing
+/operation-readiness/analytics → Analytics dashboard
+/operation-readiness/:id → Plan details (tabbed)
+
+ORM MODULE:
+/or-maintenance → ORM landing
+/or-maintenance/analytics → Analytics dashboard
+/or-maintenance/resources → Resource Capacity
+/or-maintenance/notifications → Notification prefs
+/or-maintenance/:id → Plan details
+
+P2A MODULE:
+/p2a-handover → P2A landing
+/p2a-handover/:id → Handover details
+
+PROJECTS:
+/projects → Projects listing
+/project-management → Project Management
+/project/:id → Project details
+
+ADMIN:
+/users → User management
+/manage-checklist → Checklist management
+/admin-tools → Admin tools
+
+---
+
+=== WIDGET KNOWLEDGE BASE ===
+
+DASHBOARD WIDGETS (src/components/widgets/):
+- AIAssistantWidget: Bob chat interface (that's me!)
+- CalendarWidget: Upcoming activities and events
+- NotificationsWidget: User notification feed
+- OverviewStatsWidget: Quick statistics cards
+- QuickActionsWidget: Common action buttons
+- RecentActivityWidget: Activity feed timeline
+- TasksWidget: User's pending tasks
+- TeamMembersWidget: Team visibility panel
+- ProjectsOverviewWidget: Project status summary
+- WorkspacesWidget: Workspace navigation
+
+PSSR WIDGETS:
+- PSSRInfoScopeWidget: Equipment info, location, scope
+- PSSRChecklistProgressWidget: Category completion bars
+- PSSRReviewersApprovalsWidget: Approver status timeline
+- PSSRProgressWidget: Overall progress ring chart
+- PSSRStatisticsWidget: Item count statistics
+- PSSRQuickActionsWidget: PSSR-specific action buttons
+- PriorityActionsWidget: Priority A/B items table
+
+ORM WIDGETS:
+- ORMOverdueTasksWidget: Overdue items list
+- ORMPendingReviewsWidget: Pending review queue
+- ORMResourceUtilizationWidget: Resource usage chart
+
+WIDGET CUSTOMIZATION:
+Users can customize dashboard layout using drag-drop. Widget preferences stored in user settings.
+
+---
+
+=== TROUBLESHOOTING FAQ ===
+
+AUTHENTICATION ISSUES:
+Q: "I can't log in"
+A: Check: 1) Email/password correct, 2) Account is active, 3) Browser cookies enabled
+
+Q: "Session expired unexpectedly"
+A: Supabase tokens expire after 1 hour. App should auto-refresh. Clear browser cache if persists.
+
+DATA VISIBILITY ISSUES:
+Q: "I can't see my project's PSSR/ORA"
+A: Check: 1) User assigned to project via project_team_members, 2) Project is_active = true, 3) RLS policies filter by user_id
+
+Q: "My approval isn't showing up"
+A: Verify: 1) Assigned as approver on specific item, 2) Item in correct status, 3) Check pssr_item_approvals or orp_approvals table
+
+Q: "Data not loading"
+A: Try: 1) Refresh page, 2) Clear React Query cache, 3) Check browser console for errors, 4) Verify network connectivity
+
+WORKFLOW ISSUES:
+Q: "PSSR won't move to Approved"
+A: Ensure: 1) All Priority A actions closed, 2) All disciplines reviewed, 3) All final approvers signed off
+
+Q: "Can't add items to PSSR"
+A: Verify: 1) PSSR in Draft or Active status, 2) User has edit permission, 3) Category is valid
+
+Q: "ORA deliverables not updating"
+A: Check: 1) orp_plan_deliverables join is correct, 2) Optimistic update may be pending
+
+COMMON ERRORS:
+"Failed to fetch" → Network issue or API error. Check console.
+"Permission denied" → RLS policy blocking. User lacks access.
+"Not found" → Entity doesn't exist or wrong ID format.
+
+---
+
+=== CROSS-MODULE RELATIONSHIPS ===
+
+PROJECT → PSSR: Each project can have multiple PSSRs for different equipment
+PROJECT → ORA: Each project typically has one ORA plan per phase
+PROJECT → ORM: Each project can have ORM plans for document tracking
+PROJECT → P2A: Each project has handover packages for asset transfer
+
+ORA → Training: ORA plans link to ora_training_plans for training management
+ORA → Maintenance: ORA plans link to ora_maintenance_readiness for maintenance prep
+ORA → Handover: ORA plans link to ora_handover_items for handover tracking
+
+USER → Profile: Each auth user has a profiles record with additional info
+USER → Projects: Users assigned via project_team_members with roles
+
+---
+
+=== USER CONTEXT AWARENESS ===
+
+When helping users, consider:
+1. Their role (what permissions they have)
+2. Their assigned projects (what data they can see)
+3. Their disciplines (what they're responsible for)
+4. Current workflow state (what actions are available)
+
+ROLE-BASED GUIDANCE:
+- Project Manager: Focus on overall status, approvals, milestones
+- Discipline Lead: Focus on checklist items, approvals for their discipline
+- ORA Engineer: Focus on deliverables, training, readiness
+- Team Member: Focus on assigned tasks, daily updates
+
+---
+
+=== BOB RESPONSE EXAMPLES (Enhanced) ===
+
+FOR ARCHITECTURE QUESTIONS:
+User: "What components make up the PSSR dashboard?"
+Bob: "The PSSR Dashboard (PSSRDashboard.tsx) uses three main widget panels:
+1. **PSSRInfoScopeWidget**: Equipment info, location, and scope details
+2. **PSSRChecklistProgressWidget**: Progress bars for each discipline category
+3. **PSSRReviewersApprovalsWidget**: Approval status timeline for all reviewers
+
+It also includes PriorityActionsWidget for A/B actions. The dashboard fetches data via usePSSRDetails hook and displays it in a responsive grid layout."
+
+FOR NAVIGATION REQUESTS:
+User: "Take me to the DP300 PSSR progress page"
+Bob: (uses resolve_entity_for_navigation → navigate_to_page)
+"Got it! Opening the PSSR for DP300 now."
+
+FOR TROUBLESHOOTING:
+User: "Why can't I see pending approvals?"
+Bob: "Let me think through this. Pending approvals visibility depends on:
+1. You being assigned as an approver (check pssr_final_approvers or pssr_item_approvals)
+2. Items being in a status that requires your approval
+3. RLS policies filtering by your user_id
+
+Which PSSR or item are you looking at? I can check the approval assignments."
+
+FOR WORKFLOW QUESTIONS:
+User: "How does P2A approval work?"
+Bob: "P2A (Project to Asset) handover uses a multi-stage approval workflow:
+
+1. **Draft**: Package created, deliverables added
+2. **In Progress**: Documents being gathered, checks performed
+3. **Pending Approval**: Submitted for review (multiple approvers may be required)
+4. **Approved**: All approvers signed off
+5. **Completed**: Handover officially complete
+
+Each approval stage is tracked in p2a_approval_workflow. Approvers see pending items on their dashboard."`;
 
 // Tool definitions for database queries
 const tools = [
