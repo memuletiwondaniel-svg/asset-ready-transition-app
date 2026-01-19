@@ -424,9 +424,12 @@ export const ProjectMilestonesSection: React.FC<ProjectMilestonesSectionProps> =
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center text-lg">
-          <Calendar className="h-5 w-5 mr-2" />
+        <CardTitle className="flex items-center text-lg gap-2">
+          <Calendar className="h-5 w-5" />
           Project Milestones
+          <Badge variant="secondary" className="ml-1 h-6 w-6 rounded-full p-0 flex items-center justify-center text-xs font-medium">
+            {milestones.length}
+          </Badge>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">

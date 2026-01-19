@@ -160,9 +160,12 @@ export const EnhancedProjectDocumentsSection: React.FC<ProjectDocumentsSectionPr
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center text-lg">
-          <FileText className="h-5 w-5 mr-2" />
+        <CardTitle className="flex items-center text-lg gap-2">
+          <FileText className="h-5 w-5" />
           Supporting Documents
+          <Badge variant="secondary" className="ml-1 h-6 w-6 rounded-full p-0 flex items-center justify-center text-xs font-medium">
+            {documents.length}
+          </Badge>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
