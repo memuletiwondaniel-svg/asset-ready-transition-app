@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -46,6 +46,7 @@ import {
   hasNoAssignment,
   PORTFOLIO_REGIONS 
 } from '@/utils/roleAssignmentConfig';
+import { AvatarCropDialog } from './AvatarCropDialog';
 
 // Type definitions matching the database schema exactly
 interface DatabaseUser {
@@ -114,6 +115,12 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
   const [localAvatarUrl, setLocalAvatarUrl] = useState<string | null>(null);
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
   const [userSessions, setUserSessions] = useState<any[]>([]);
+  
+  // Avatar crop dialog state
+  const [cropDialogOpen, setCropDialogOpen] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState<string | null>(null);
+  const [pendingCroppedBlob, setPendingCroppedBlob] = useState<Blob | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Password reset state
   const [newPassword, setNewPassword] = useState('');
@@ -851,9 +858,10 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
     }
   };
 
-  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle file selection - opens the crop dialog
+  const handleAvatarSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file || !user?.user_id) return;
+    if (!file) return;
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
@@ -867,30 +875,59 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
       return;
     }
 
+    // Create a URL for the crop dialog
+    const reader = new FileReader();
+    reader.onload = () => {
+      setImageToCrop(reader.result as string);
+      setCropDialogOpen(true);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Handle crop complete - store the blob and show preview
+  const handleCropComplete = (croppedBlob: Blob) => {
+    setPendingCroppedBlob(croppedBlob);
+    setLocalAvatarUrl(URL.createObjectURL(croppedBlob));
+    setCropDialogOpen(false);
+    setImageToCrop(null);
+    
+    // Upload the cropped image immediately
+    uploadCroppedAvatar(croppedBlob);
+  };
+
+  // Handle crop cancel
+  const handleCropCancel = () => {
+    setCropDialogOpen(false);
+    setImageToCrop(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // Upload the cropped avatar
+  const uploadCroppedAvatar = async (blob: Blob) => {
+    if (!user?.user_id) return;
+
     try {
       setUploadingAvatar(true);
 
-      // Create unique filename
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user.user_id}/${Date.now()}.${fileExt}`;
-
-      // Read file as base64
-      const toBase64 = (file: File) => new Promise<string>((resolve, reject) => {
+      // Convert blob to base64
+      const toBase64 = (blob: Blob) => new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => resolve((reader.result as string));
         reader.onerror = reject;
-        reader.readAsDataURL(file);
+        reader.readAsDataURL(blob);
       });
 
-      const dataUrl = await toBase64(file);
+      const dataUrl = await toBase64(blob);
       const base64 = dataUrl.includes(',') ? dataUrl.split(',')[1] : dataUrl;
 
       // Upload via edge function (service role) which also updates the profile
       const { data: uploadResp, error: uploadFnErr } = await supabase.functions.invoke('upload-user-avatar', {
         body: {
           userId: user.user_id,
-          fileExt: fileExt || 'png',
-          contentType: file.type,
+          fileExt: 'jpg', // Cropped images are always JPEG
+          contentType: 'image/jpeg',
           base64
         }
       });
@@ -901,13 +938,16 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
         return;
       }
 
-      // Update local preview immediately
+      // Update local preview with the server URL
       if ((uploadResp as any)?.publicUrl) {
         setLocalAvatarUrl((uploadResp as any).publicUrl);
       }
 
       console.log('Avatar upload response:', uploadResp);
       toast.success('Profile picture updated successfully');
+      
+      // Clear the pending blob
+      setPendingCroppedBlob(null);
       
       // Force refresh the user data in the parent component
       onUserUpdated();
@@ -916,6 +956,9 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
       console.error('Avatar upload error:', error);
     } finally {
       setUploadingAvatar(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -1063,9 +1106,10 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                       </div>
                       <input
                         id="avatar-upload"
+                        ref={fileInputRef}
                         type="file"
                         accept="image/*"
-                        onChange={handleAvatarUpload}
+                        onChange={handleAvatarSelect}
                         className="hidden"
                         disabled={uploadingAvatar}
                       />
@@ -1824,6 +1868,16 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
           </TabsContent>
         </Tabs>
       </DialogContent>
+      
+      {/* Avatar Crop Dialog */}
+      {imageToCrop && (
+        <AvatarCropDialog
+          open={cropDialogOpen}
+          imageSrc={imageToCrop}
+          onCropComplete={handleCropComplete}
+          onCancel={handleCropCancel}
+        />
+      )}
     </Dialog>
   );
 };
