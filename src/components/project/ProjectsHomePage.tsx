@@ -82,29 +82,37 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
   };
 
   return (
-    <AnimatedBackground className="flex-1">
-      <main className="flex-1 p-6 overflow-y-auto">
-        <div className="max-w-7xl mx-auto space-y-6">
-          {/* Breadcrumb */}
-          <BreadcrumbNavigation 
-            currentPageLabel="Projects" 
-            customBreadcrumbs={[
-              { label: 'Home', path: '/', onClick: () => navigate('/') }
-            ]}
-          />
-
-          {/* Header */}
-          <div className="flex items-center gap-3">
-            <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 shadow-lg">
-              <FolderOpen className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">My Projects</h1>
-              <p className="text-muted-foreground">Browse and access your assigned projects</p>
+    <div className="flex-1 flex flex-col overflow-hidden">
+      {/* Header */}
+      <div className="border-b border-border bg-card px-6 py-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-3">
+            <BreadcrumbNavigation 
+              currentPageLabel="Projects" 
+              customBreadcrumbs={[
+                { label: 'Home', path: '/', onClick: () => navigate('/') }
+              ]}
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-accent">
+                <FolderOpen className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-foreground">Projects</h1>
+                <p className="text-sm text-muted-foreground mt-1">Browse and access your assigned projects</p>
+              </div>
             </div>
           </div>
+        </div>
+      </div>
 
-          {/* Search, New Project Button, and View Toggle */}
+      {/* Main Content */}
+      <AnimatedBackground className="flex-1 overflow-y-auto">
+        <main className="p-6">
+          <div className="max-w-7xl mx-auto space-y-6">
+            {/* Search, New Project Button, and View Toggle */}
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
             <div className="relative w-full sm:w-96">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -385,15 +393,16 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
               })}
             </div>
           )}
-        </div>
+          </div>
+        </main>
+      </AnimatedBackground>
 
       {/* Add Project Modal */}
       <AddProjectWizard 
         open={isAddModalOpen} 
         onClose={() => setIsAddModalOpen(false)} 
       />
-      </main>
-    </AnimatedBackground>
+    </div>
   );
 };
 
