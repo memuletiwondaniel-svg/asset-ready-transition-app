@@ -138,6 +138,10 @@ serve(async (req) => {
           const normalizedCompany = normalizeCompany(company);
           const finalRole = computeFinalRole(role, discipline, commission);
 
+          // Get position from request body if provided
+          const { position } = body as { position?: string };
+          const positionToSave = position || finalRole;
+
           // Map commission name to ID
           let commissionId: string | null = null;
           if (commission) {
@@ -157,9 +161,9 @@ serve(async (req) => {
               phone_number: phone ?? null,
               personal_email: personalEmail ?? null,
               functional_email: !!isFunctionalEmail,
-              functional_email_address: functionalEmail ?? null,
+              functional_email_address: isFunctionalEmail ? email : null, // Store functional email address
               status: 'active',
-              position: finalRole,
+              position: positionToSave,
               commission: commissionId,
               account_status: 'active',
             }, { onConflict: 'user_id' });
@@ -227,6 +231,10 @@ serve(async (req) => {
     }
 
     // 2) Upsert profile (handle case where a row may already exist)
+    // Get the position from the request body (if provided, use it; otherwise use finalRole)
+    const { position } = body as { position?: string };
+    const positionToSave = position || finalRole;
+
     const { error: profileErr } = await admin
       .from('profiles')
       .upsert({
@@ -239,8 +247,9 @@ serve(async (req) => {
         phone_number: phone ?? null,
         personal_email: personalEmail ?? null,
         functional_email: !!isFunctionalEmail,
+        functional_email_address: isFunctionalEmail ? email : null, // Store functional email address
         status: 'active',
-        position: finalRole,
+        position: positionToSave,
         commission: commissionId,
         account_status: 'active',
       }, { onConflict: 'user_id' });
