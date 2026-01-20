@@ -26,6 +26,7 @@ import { ORMNotificationPreferences } from "@/components/orm/ORMNotificationPref
 import ProjectManagementPage from "@/components/project/ProjectManagementPage";
 import ProjectDetailsPage from "@/pages/ProjectDetailsPage";
 import PSSRApproverDashboard from "@/pages/PSSRApproverDashboard";
+import MyTasksPage from "@/pages/MyTasksPage";
 import PSSRItemReview from "@/pages/PSSRItemReview";
 import PSSRApprovalPage from "@/pages/PSSRApprovalPage";
 import PSSRDetailsPage from "@/pages/PSSRDetailsPage";
@@ -70,7 +71,7 @@ const App = () => (
                       <Route path="/project/:id" element={<ProjectDetailsPage />} />
                       <Route path="/pssr/approver-dashboard" element={<PSSRApproverDashboard />} />
                       <Route path="/pssr-reviews" element={<PSSRApproverDashboard />} />
-                      <Route path="/my-tasks" element={<PSSRApproverDashboard />} />
+                      <Route path="/my-tasks" element={<MyTasksPage />} />
                       <Route path="/pssr/:id/review" element={<PSSRItemReview />} />
                       <Route path="/pssr/:id/approve" element={<PSSRApprovalPage />} />
                       <Route path="/pssr/:id" element={<PSSRDetailsPage />} />
