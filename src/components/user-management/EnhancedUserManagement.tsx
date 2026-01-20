@@ -221,7 +221,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
     { id: 'role', label: 'Position', width: 180, minWidth: 120, visible: true, sortable: true },
     { id: 'systemRole', label: 'System Role', width: 150, minWidth: 120, visible: false, sortable: false },
     { id: 'status', label: 'Status', width: 100, minWidth: 80, visible: true, sortable: true },
-    { id: 'actions', label: 'Actions', width: 100, minWidth: 80, visible: true, sortable: false }
+    { id: 'actions', label: 'Actions', width: 70, minWidth: 60, visible: true, sortable: false }
   ]);
   const [columnSort, setColumnSort] = useState<{ [key: string]: 'asc' | 'desc' | null }>({});
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
