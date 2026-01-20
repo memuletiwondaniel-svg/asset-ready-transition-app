@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { MyTasksPanelCard } from './MyTasksPanelCard';
 import { usePSSRsAwaitingReview } from '@/hooks/usePSSRItemApprovals';
 import { useUserLastLogin } from '@/hooks/useUserLastLogin';
+import { generateMockPSSRReviews, MockPSSRReview } from '@/hooks/useMyTasksMockData';
 import { cn } from '@/lib/utils';
 
 interface PSSRReviewsPanelProps {
@@ -26,10 +27,14 @@ export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({
   isRelocated = false,
 }) => {
   const navigate = useNavigate();
-  const { data: pssrs, isLoading } = usePSSRsAwaitingReview(userId);
+  const { data: realPssrs, isLoading } = usePSSRsAwaitingReview(userId);
   const { isNewSinceLastLogin } = useUserLastLogin();
 
-  const pendingPssrs = (pssrs || []).filter(p => {
+  // Use mock data if real data is empty
+  const mockData = generateMockPSSRReviews();
+  const pssrs = (realPssrs && realPssrs.length > 0) ? realPssrs : mockData;
+
+  const pendingPssrs = pssrs.filter(p => {
     if (!searchQuery.trim()) return true;
     const query = searchQuery.toLowerCase();
     return (
@@ -37,7 +42,7 @@ export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({
       p.pssr?.project_name?.toLowerCase().includes(query)
     );
   });
-  // Use pendingSince for "new" detection since that's when items were assigned
+
   const newCount = pendingPssrs.filter(p => isNewSinceLastLogin(p.pendingSince)).length;
 
   const getDaysPendingColor = (days: number) => {
@@ -69,18 +74,19 @@ export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({
           (Date.now() - new Date(item.pendingSince).getTime()) / (1000 * 60 * 60 * 24)
         );
         const pssr = item.pssr;
+        const isMock = (item as MockPSSRReview).id?.startsWith('mock-');
 
         return (
           <div
             key={pssr?.id || item.pendingSince}
             className={cn(
-              "p-3 rounded-lg border bg-background/50 hover:bg-background/80 transition-all cursor-pointer",
+              "p-3 rounded-lg border bg-background/50 hover:bg-background/80 transition-all cursor-pointer group/item",
               "hover:shadow-sm hover:border-primary/20",
               isNew && "border-l-2 border-l-primary",
               "animate-fade-in"
             )}
             style={{ animationDelay: `${index * 50}ms` }}
-            onClick={() => navigate(`/pssr/${pssr?.id}/review`)}
+            onClick={() => !isMock && navigate(`/pssr/${pssr?.id}/review`)}
           >
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0">
@@ -99,7 +105,7 @@ export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({
                 </p>
                 <div className="flex items-center gap-2 mt-1.5">
                   <span className="text-xs text-muted-foreground">
-                    {item.itemCount || 0} items awaiting review
+                    {item.itemCount || 0} items • {item.approverRole || 'Reviewer'}
                   </span>
                 </div>
               </div>
@@ -113,10 +119,10 @@ export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="h-6 text-xs px-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="h-6 text-xs px-2 opacity-0 group-hover/item:opacity-100 transition-opacity"
                   onClick={(e) => {
                     e.stopPropagation();
-                    navigate(`/pssr/${pssr?.id}/review`);
+                    if (!isMock) navigate(`/pssr/${pssr?.id}/review`);
                   }}
                 >
                   Review
