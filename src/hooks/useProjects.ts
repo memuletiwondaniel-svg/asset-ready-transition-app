@@ -213,6 +213,7 @@ export const useProjects = () => {
     error,
     createProject: createProjectMutation.mutate,
     updateProject: updateProjectMutation.mutate,
+    updateProjectAsync: updateProjectMutation.mutateAsync,
     deleteProject: deleteProjectMutation.mutate,
     isCreating: createProjectMutation.isPending,
     isUpdating: updateProjectMutation.isPending,

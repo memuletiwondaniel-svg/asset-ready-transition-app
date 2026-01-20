@@ -43,7 +43,7 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
   onSave,
   project
 }) => {
-  const { updateProject, isUpdating } = useProjects();
+  const { updateProjectAsync, isUpdating } = useProjects();
   const { allStations, getStationsByField, isLoading: stationsLoading } = useStations();
   const { plants, isLoading: plantsLoading } = usePlants();
   const { allFields, getFieldsByPlant, isLoading: fieldsLoading } = useFields();
@@ -298,15 +298,16 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
         project_title: formData.project_title,
         project_scope: formData.project_scope,
         project_scope_image_url: formData.project_scope_image_url,
-        region_id: formData.region_id || undefined,
-        hub_id: formData.hub_id || undefined,
+        region_id: formData.region_id || null,
+        hub_id: formData.hub_id || null,
         // Use the first location's plant and station for backward compatibility
-        plant_id: projectLocations[0]?.plant_id || undefined,
-        station_id: projectLocations[0]?.station_id || undefined,
+        plant_id: projectLocations[0]?.plant_id || null,
+        station_id: projectLocations[0]?.station_id || null,
         is_favorite: formData.is_favorite,
       };
 
-      updateProject({ id: project.id, updates: projectData });
+      // Await the project update to ensure it completes before continuing
+      const updatedProject = await updateProjectAsync({ id: project.id, updates: projectData });
 
       // 2. Save project locations (multiple stations from all location entries)
       const stationIds = projectLocations
@@ -459,11 +460,15 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
       });
 
       // Call onSave with updated project data if provided
+      // Use the actual returned data from the database to ensure we have fresh data
       if (onSave) {
-        onSave({ ...project, ...projectData });
+        onSave(updatedProject);
       } else {
         onClose();
       }
+      
+      // Invalidate queries to refresh data across the app
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
     } catch (error) {
       console.error('Error updating project:', error);
       toast({
