@@ -145,8 +145,7 @@ export const ProjectSummaryModal: React.FC<ProjectSummaryModalProps> = ({
                   <h4 className="text-sm font-medium text-muted-foreground mb-3">Required Roles</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {teamMembers
-                      .filter(member => ['Project Manager', 'Project Engineer', 'Commissioning Lead', 
-                                         'Construction Lead', 'ORA Lead'].includes(member.role))
+                      .filter(member => ['Project Hub Lead', 'Commissioning Lead', 'Construction Lead', 'Snr ORA Engr.', 'Snr. ORA Engr.', 'Snr ORA Engr.', 'Senior ORA Engr.'].includes(member.role))
                       .map((member, index) => (
                         <div key={index} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
                           <Avatar className="h-10 w-10">
@@ -165,14 +164,12 @@ export const ProjectSummaryModal: React.FC<ProjectSummaryModalProps> = ({
                 </div>
                 
                 {/* Additional Team Members (if any) */}
-                {teamMembers.filter(m => !['Project Manager', 'Project Engineer', 'Commissioning Lead', 
-                                           'Construction Lead', 'ORA Lead'].includes(m.role)).length > 0 && (
+                {teamMembers.filter(m => !['Project Hub Lead', 'Commissioning Lead', 'Construction Lead', 'Snr ORA Engr.', 'Snr. ORA Engr.', 'Snr ORA Engr.', 'Senior ORA Engr.'].includes(m.role)).length > 0 && (
                   <div>
                     <h4 className="text-sm font-medium text-muted-foreground mb-3">Additional Members</h4>
                     <div className="space-y-2">
                       {teamMembers
-                        .filter(m => !['Project Manager', 'Project Engineer', 'Commissioning Lead', 
-                                       'Construction Lead', 'ORA Lead'].includes(m.role))
+                        .filter(m => !['Project Hub Lead', 'Commissioning Lead', 'Construction Lead', 'Snr ORA Engr.', 'Snr. ORA Engr.', 'Snr ORA Engr.', 'Senior ORA Engr.'].includes(m.role))
                         .map((member, index) => (
                           <div key={index} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
                             <Avatar className="h-9 w-9">
