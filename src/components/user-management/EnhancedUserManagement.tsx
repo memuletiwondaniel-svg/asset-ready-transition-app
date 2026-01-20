@@ -538,6 +538,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
         user.functional_email_address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         user.company?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         user.role?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.position?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         user.phone_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         user.projects?.some(project => project.toLowerCase().includes(searchQuery.toLowerCase()));
 
