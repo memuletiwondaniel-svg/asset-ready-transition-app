@@ -207,42 +207,58 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
               </div>
             )}
 
-            {/* Team Members */}
-            <div className="space-y-3">
-              <h3 className="font-semibold text-sm text-muted-foreground flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                Team Members {teamMembers.length > 0 && `(${teamMembers.length})`}
-              </h3>
-              <div className="space-y-2 pl-6">
-                {teamMembers.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No team members assigned</p>
-                ) : (
-                  teamMembers.map((member) => {
-                    const profile = member.profiles;
-                    return (
-                      <div key={member.id} className="flex items-center gap-3 p-2 rounded-lg bg-muted/30">
-                        <Avatar className="h-8 w-8">
-                          {profile?.avatar_url ? (
-                            <AvatarImage src={getAvatarUrl(profile.avatar_url)} alt={profile?.full_name} />
-                          ) : (
-                            <AvatarFallback className="bg-primary/10">
-                              <UserCircle className="h-4 w-4 text-primary" />
-                            </AvatarFallback>
-                          )}
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{profile?.full_name || 'Unassigned'}</p>
-                          <p className="text-xs text-muted-foreground truncate">{member.role || 'No role'}</p>
-                        </div>
-                        {member.is_lead && (
-                          <Badge className="text-xs" variant="outline">Lead</Badge>
-                        )}
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </div>
+            {/* Team Members - Required Roles Only */}
+            {(() => {
+              const REQUIRED_ROLES = [
+                'Project Hub Lead',
+                'Construction Lead',
+                'Commissioning Lead',
+                'Snr ORA Engr.',
+                'Snr. ORA Engr.',
+                'Senior ORA Engr.',
+                'Senior ORA Engineer',
+              ];
+              const requiredRoleMembers = teamMembers.filter(member => 
+                REQUIRED_ROLES.includes(member.role)
+              );
+              return (
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-sm text-muted-foreground flex items-center gap-2">
+                    <Users className="h-4 w-4" />
+                    Team Members {requiredRoleMembers.length > 0 && `(${requiredRoleMembers.length})`}
+                  </h3>
+                  <div className="space-y-2 pl-6">
+                    {requiredRoleMembers.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">No team members assigned</p>
+                    ) : (
+                      requiredRoleMembers.map((member) => {
+                        const profile = member.profiles;
+                        return (
+                          <div key={member.id} className="flex items-center gap-3 p-2 rounded-lg bg-muted/30">
+                            <Avatar className="h-8 w-8">
+                              {profile?.avatar_url ? (
+                                <AvatarImage src={getAvatarUrl(profile.avatar_url)} alt={profile?.full_name} />
+                              ) : (
+                                <AvatarFallback className="bg-primary/10">
+                                  <UserCircle className="h-4 w-4 text-primary" />
+                                </AvatarFallback>
+                              )}
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">{profile?.full_name || 'Unassigned'}</p>
+                              <p className="text-xs text-muted-foreground truncate">{member.role || 'No role'}</p>
+                            </div>
+                            {member.is_lead && (
+                              <Badge className="text-xs" variant="outline">Lead</Badge>
+                            )}
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Milestones */}
             <div className="space-y-3">
