@@ -16,12 +16,10 @@ interface ProjectTeamSectionProps {
 }
 
 const REQUIRED_ROLES = [
-  { role: 'Project Manager', required: true, function: 'Project Management' },
   { role: 'Project Hub Lead', required: true, function: 'Hub Operations' },
-  { role: 'Project Engr', required: true, function: 'Engineering' },
   { role: 'Construction Lead', required: true, function: 'Construction' },
   { role: 'Commissioning Lead', required: true, function: 'Commissioning' },
-  { role: 'ORA Engr.', required: true, function: 'Operations Readiness' }
+  { role: 'Snr ORA Engr.', required: true, function: 'Operations Readiness' }
 ];
 
 export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({ 
@@ -120,7 +118,7 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
         role: role,
         user_id: userId,
         user_name: selectedUser.full_name,
-        is_lead: ['Project Manager', 'Project Engr'].includes(role),
+        is_lead: role === 'Project Hub Lead',
         avatar_url: selectedUser.avatar_url || '',
         position: selectedUser.position || '',
         function_role: selectedUser.role || '',
@@ -275,16 +273,6 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
                         const userPos = (user.position || '').toLowerCase().trim();
                         
                         switch (role) {
-                          case 'Project Manager':
-                            return userRole.includes('proj manager') || 
-                                   userRole.includes('project manager') ||
-                                   userPos.includes('proj manager') ||
-                                   userPos.includes('project manager');
-                          case 'Project Engr':
-                            return userRole.includes('proj eng') || 
-                                   userRole.includes('project eng') ||
-                                   userPos.includes('proj eng') ||
-                                   userPos.includes('project eng');
                           case 'Commissioning Lead':
                             return userRole.includes('commissioning lead') ||
                                    userPos.includes('commissioning lead') ||
@@ -295,9 +283,13 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
                                    userPos.includes('construction lead') ||
                                    userRole.includes('construction') ||
                                    userPos.includes('construction');
-                          case 'ORA Engr.':
-                            return userRole.includes('ora') ||
-                                   userPos.includes('ora');
+                          case 'Snr ORA Engr.':
+                            return userRole.includes('snr ora') ||
+                                   userRole.includes('snr. ora') ||
+                                   userRole.includes('senior ora') ||
+                                   userPos.includes('snr ora') ||
+                                   userPos.includes('snr. ora') ||
+                                   userPos.includes('senior ora');
                           case 'Project Hub Lead':
                             return userRole.includes('hub lead') ||
                                    userPos.includes('hub lead') ||

@@ -21,13 +21,16 @@ interface AutoPopulateResult {
 // Role matching configuration with function/role patterns
 // matchType: 'hub' = matches users assigned to selected hub, 'region' = matches by region text, 'global' = any match
 // allowMultiple: true = find all matching users for this role (e.g., ORA Engineers)
-const ROLE_MATCHING_CONFIG: Record<string, { patterns: string[]; matchType: 'region' | 'hub' | 'global'; allowMultiple?: boolean }> = {
-  'Project Manager': { patterns: ['project manager', 'proj manager'], matchType: 'region' },
-  'Project Hub Lead': { patterns: ['hub lead', 'project hub lead'], matchType: 'hub' },
-  'Project Engr': { patterns: ['proj eng', 'project eng', 'project engr'], matchType: 'hub' },
-  'Construction Lead': { patterns: ['construction lead', 'construction'], matchType: 'region' },
-  'Commissioning Lead': { patterns: ['commissioning lead', 'commissioning'], matchType: 'region' },
-  'ORA Engr.': { patterns: ['ora engr', 'ora engineer', 'ora eng', 'ora'], matchType: 'hub', allowMultiple: true },
+// isRequired: true = required role, false = goes to additional team members
+const ROLE_MATCHING_CONFIG: Record<string, { patterns: string[]; matchType: 'region' | 'hub' | 'global'; allowMultiple?: boolean; isRequired?: boolean }> = {
+  'Project Hub Lead': { patterns: ['hub lead', 'project hub lead'], matchType: 'hub', isRequired: true },
+  'Construction Lead': { patterns: ['construction lead', 'construction'], matchType: 'region', isRequired: true },
+  'Commissioning Lead': { patterns: ['commissioning lead', 'commissioning'], matchType: 'region', isRequired: true },
+  'Snr ORA Engr.': { patterns: ['snr ora', 'snr. ora', 'senior ora'], matchType: 'hub', isRequired: true },
+  // Additional team member roles (auto-populated but not required)
+  'Project Manager': { patterns: ['project manager', 'proj manager'], matchType: 'region', isRequired: false },
+  'Project Engr': { patterns: ['proj eng', 'project eng', 'project engr'], matchType: 'hub', isRequired: false },
+  'ORA Engr.': { patterns: ['ora engr', 'ora engineer', 'ora eng'], matchType: 'hub', allowMultiple: true, isRequired: false },
 };
 
 export const useAutoPopulateTeam = (
@@ -50,7 +53,8 @@ export const useAutoPopulateTeam = (
           team.push({
             id: `${role}-auto-${Date.now()}-${Math.random()}-${index}`,
             user_id: matchedUser.user_id,
-            role: role,
+            // Non-required roles go to Additional Team Member
+            role: config.isRequired ? role : 'Additional Team Member',
             is_lead: false,
             user_name: matchedUser.full_name,
             avatar_url: matchedUser.avatar_url || '',
@@ -66,8 +70,9 @@ export const useAutoPopulateTeam = (
           team.push({
             id: `${role}-auto-${Date.now()}-${Math.random()}`,
             user_id: matchedUser.user_id,
-            role: role,
-            is_lead: ['Project Manager', 'Project Engr'].includes(role),
+            // Non-required roles go to Additional Team Member
+            role: config.isRequired ? role : 'Additional Team Member',
+            is_lead: role === 'Project Hub Lead',
             user_name: matchedUser.full_name,
             avatar_url: matchedUser.avatar_url || '',
             position: matchedUser.position || '',
