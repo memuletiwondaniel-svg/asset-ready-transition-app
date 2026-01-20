@@ -62,7 +62,7 @@ export const OWLPanel: React.FC = () => {
 
   return (
     <MyTasksPanelCard
-      title="Outstanding Work List"
+      title="(OWL) Outstanding Work List"
       icon={<ListTodo className="h-5 w-5 text-white" />}
       iconColorClass="from-amber-500 to-amber-600"
       primaryStat={stats.open + stats.inProgress}
