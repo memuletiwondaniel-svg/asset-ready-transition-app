@@ -846,68 +846,71 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
             )}
           </div>
 
-          <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Function *</Label>
-            <Select
-              value={formData.function}
-              onValueChange={(value) => setFormData(prev => ({ 
-                ...prev, 
-                function: value,
-                role: '' // Reset role when function changes
-              }))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder={rolesLoading ? "Loading..." : "Select function"} />
-              </SelectTrigger>
-              <SelectContent>
-                {categorizedRoles?.map((group) => (
-                  <SelectItem key={group.category.id} value={group.category.name}>
-                    {group.category.name}
-                  </SelectItem>
-                ))}
-                <SelectItem value="Other">Other</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Role *</Label>
-            <Select
-              value={formData.role}
-              onValueChange={handleRoleChange}
-              disabled={!formData.function}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder={formData.function ? "Select role" : "Select function first"} />
-              </SelectTrigger>
-              <SelectContent>
-                {formData.function === 'Other' ? (
-                  <SelectItem value="Others (specify)">Others (specify)</SelectItem>
-                ) : (
-                  <>
-                    {getRolesForFunction().map((role) => (
-                      <SelectItem key={role.id} value={role.name}>
-                        {role.name}
-                      </SelectItem>
-                    ))}
-                    <SelectItem value="__add_new_role__" className="text-primary font-medium">
-                      <span className="flex items-center gap-2">
-                        <Plus className="h-4 w-4" />
-                        Add New Role
-                      </span>
+          {/* Function and Role - Same Row */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Function *</Label>
+              <Select
+                value={formData.function}
+                onValueChange={(value) => setFormData(prev => ({ 
+                  ...prev, 
+                  function: value,
+                  role: '' // Reset role when function changes
+                }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={rolesLoading ? "Loading..." : "Select function"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {categorizedRoles?.map((group) => (
+                    <SelectItem key={group.category.id} value={group.category.name}>
+                      {group.category.name}
                     </SelectItem>
-                  </>
-                )}
-              </SelectContent>
-            </Select>
-            {formData.role === 'Others (specify)' && (
-              <Input
-                className="mt-2"
-                value={formData.customRole}
-                onChange={(e) => setFormData(prev => ({ ...prev, customRole: e.target.value }))}
-                placeholder="Specify role"
-              />
-            )}
+                  ))}
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Role *</Label>
+              <Select
+                value={formData.role}
+                onValueChange={handleRoleChange}
+                disabled={!formData.function}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={formData.function ? "Select role" : "Select function first"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {formData.function === 'Other' ? (
+                    <SelectItem value="Others (specify)">Others (specify)</SelectItem>
+                  ) : (
+                    <>
+                      {getRolesForFunction().map((role) => (
+                        <SelectItem key={role.id} value={role.name}>
+                          {role.name}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value="__add_new_role__" className="text-primary font-medium">
+                        <span className="flex items-center gap-2">
+                          <Plus className="h-4 w-4" />
+                          Add New Role
+                        </span>
+                      </SelectItem>
+                    </>
+                  )}
+                </SelectContent>
+              </Select>
+              {formData.role === 'Others (specify)' && (
+                <Input
+                  className="mt-2"
+                  value={formData.customRole}
+                  onChange={(e) => setFormData(prev => ({ ...prev, customRole: e.target.value }))}
+                  placeholder="Specify role"
+                />
+              )}
+            </div>
           </div>
 
           {/* Portfolio Selection - for roles that require it */}
@@ -988,74 +991,65 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
             </div>
           )}
 
+          {/* Plant, Field, Station - Same Row */}
           {requiresPlant(formData.role) && (
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Plant *</Label>
-              <Select
-                value={formData.plant_id}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, plant_id: value, field_id: '', station_id: '' }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={locationsLoading ? "Loading plants..." : "Select plant"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {plants.map(plant => (
-                    <SelectItem key={plant.id} value={plant.id}>{plant.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Plant *</Label>
+                <Select
+                  value={formData.plant_id}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, plant_id: value, field_id: '', station_id: '' }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={locationsLoading ? "Loading..." : "Select plant"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {plants.map(plant => (
+                      <SelectItem key={plant.id} value={plant.id}>{plant.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-          {requiresField(formData.role) && getPlantName(formData.plant_id || '') === 'CS' && (
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Field *</Label>
-              <Select
-                value={formData.field_id}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, field_id: value, station_id: '' }))}
-                disabled={!formData.plant_id}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={
-                    !formData.plant_id 
-                      ? "Select plant first" 
-                      : locationsLoading 
-                        ? "Loading fields..." 
-                        : "Select field"
-                  } />
-                </SelectTrigger>
-                <SelectContent>
-                  {getFieldsByPlant(formData.plant_id || '').map(field => (
-                    <SelectItem key={field.id} value={field.id}>{field.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
+              {requiresField(formData.role) && getPlantName(formData.plant_id || '') === 'CS' && (
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Field *</Label>
+                  <Select
+                    value={formData.field_id}
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, field_id: value, station_id: '' }))}
+                    disabled={!formData.plant_id}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={!formData.plant_id ? "Select plant first" : "Select field"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {getFieldsByPlant(formData.plant_id || '').map(field => (
+                        <SelectItem key={field.id} value={field.id}>{field.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
-          {roleRequiresStationInHierarchy(formData.role) && getPlantName(formData.plant_id || '') === 'CS' && fieldHasStations(formData.field_id || '') && (
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Station *</Label>
-              <Select
-                value={formData.station_id}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, station_id: value }))}
-                disabled={!formData.field_id}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={
-                    !formData.field_id 
-                      ? "Select field first" 
-                      : locationsLoading 
-                        ? "Loading stations..." 
-                        : "Select station"
-                  } />
-                </SelectTrigger>
-                <SelectContent>
-                  {getStationsByField(formData.field_id || '').map(station => (
-                    <SelectItem key={station.id} value={station.id}>{station.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {roleRequiresStationInHierarchy(formData.role) && getPlantName(formData.plant_id || '') === 'CS' && fieldHasStations(formData.field_id || '') && (
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Station *</Label>
+                  <Select
+                    value={formData.station_id}
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, station_id: value }))}
+                    disabled={!formData.field_id}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={!formData.field_id ? "Select field first" : "Select station"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {getStationsByField(formData.field_id || '').map(station => (
+                        <SelectItem key={station.id} value={station.id}>{station.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
           )}
 
