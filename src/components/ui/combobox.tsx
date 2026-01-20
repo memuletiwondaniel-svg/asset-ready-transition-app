@@ -35,6 +35,7 @@ interface ComboboxProps {
   allowCustom?: boolean
   onAddCustom?: (value: string) => void
   className?: string
+  showSearch?: boolean
 }
 
 export function Combobox({
@@ -48,6 +49,7 @@ export function Combobox({
   allowCustom = false,
   onAddCustom,
   className,
+  showSearch = true,
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false)
   const [searchValue, setSearchValue] = React.useState("")
@@ -107,11 +109,13 @@ export function Combobox({
         onWheel={(e) => e.stopPropagation()}
       >
         <Command shouldFilter={false}>
-          <CommandInput 
-            placeholder={searchPlaceholder} 
-            value={searchValue}
-            onValueChange={setSearchValue}
-          />
+          {showSearch && (
+            <CommandInput 
+              placeholder={searchPlaceholder} 
+              value={searchValue}
+              onValueChange={setSearchValue}
+            />
+          )}
           <CommandList className="max-h-[350px] overflow-y-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/50">{/* Enhanced scroll styling */}
             <CommandEmpty>
               {showAddCustomOption ? (

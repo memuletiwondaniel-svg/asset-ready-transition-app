@@ -1658,17 +1658,17 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                           </div>
                         )}
 
-                        {/* Portfolio (Region) Selection */}
+                        {/* Portfolio Selection */}
                         {requiresPortfolioSelection(formData.role) && (
                           <div>
-                            <Label>Portfolio (Region) *</Label>
+                            <Label>Portfolio *</Label>
                             <Combobox
                               value={formData.portfolio}
                               onValueChange={(value) => setFormData(prev => ({ ...prev, portfolio: value, hub: '' }))}
                               options={PORTFOLIO_REGIONS.map(r => ({ value: r, label: r }))}
-                              placeholder="Select Portfolio (North, Central, South)"
-                              searchPlaceholder="Search portfolios..."
+                              placeholder="Select portfolio"
                               emptyText="No portfolios found"
+                              showSearch={false}
                               className={!editMode ? 'bg-muted pointer-events-none' : ''}
                             />
                           </div>
