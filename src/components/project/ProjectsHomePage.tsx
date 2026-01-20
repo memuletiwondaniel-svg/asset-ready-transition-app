@@ -316,70 +316,112 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
             </div>
           )}
 
-          {/* List View */}
+          {/* Table/List View */}
           {!isLoading && filteredProjects.length > 0 && viewMode === 'list' && (
-            <div className="space-y-2">
-              {filteredProjects.map((project) => {
-                const projectColor = getProjectColor(project.project_id_prefix, project.project_id_number);
-                const progress = calculateProgress(project.completed_milestone_count || 0, project.milestone_count || 0);
-                
-                return (
-                  <Card 
-                    key={project.id}
-                    className="group relative cursor-pointer transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5 border-0 bg-gradient-to-br from-card to-card/50 backdrop-blur"
-                    onClick={() => handleProjectClick(project.id)}
-                  >
-                    {/* Favorite Star */}
-                    <button
-                      type="button"
-                      onClick={(e) => handleToggleFavorite(e, project.id, project.is_favorite)}
-                      className={`absolute top-1/2 -translate-y-1/2 right-3 h-8 w-8 flex items-center justify-center rounded-full z-20 transition-all duration-200 hover:bg-yellow-500/20 ${
-                        project.is_favorite ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                      }`}
+            <div className="rounded-lg border border-border bg-card overflow-hidden">
+              {/* Table Header */}
+              <div className="grid grid-cols-12 gap-4 px-4 py-3 bg-muted/50 border-b border-border text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <div className="col-span-1">ID</div>
+                <div className="col-span-3">Project Title</div>
+                <div className="col-span-2">Plant / Location</div>
+                <div className="col-span-2">Team</div>
+                <div className="col-span-2">Progress</div>
+                <div className="col-span-1">Status</div>
+                <div className="col-span-1 text-right">Fav</div>
+              </div>
+              
+              {/* Table Body */}
+              <div className="divide-y divide-border">
+                {filteredProjects.map((project) => {
+                  const projectColor = getProjectColor(project.project_id_prefix, project.project_id_number);
+                  const progress = calculateProgress(project.completed_milestone_count || 0, project.milestone_count || 0);
+                  
+                  return (
+                    <div 
+                      key={project.id}
+                      className="grid grid-cols-12 gap-4 px-4 py-3 items-center cursor-pointer transition-colors hover:bg-muted/30 group"
+                      onClick={() => handleProjectClick(project.id)}
                     >
-                      <Star
-                        className={`h-5 w-5 transition-all duration-200 ${
-                          project.is_favorite
-                            ? 'fill-yellow-400 text-yellow-400'
-                            : 'text-muted-foreground hover:text-yellow-400'
-                        }`}
-                      />
-                    </button>
-
-                    {/* Gradient Background Effect */}
-                    <div className={`absolute inset-0 bg-gradient-to-br ${projectColor.bg} opacity-0 group-hover:opacity-10 transition-opacity duration-300`} />
-                    <CardContent className="relative p-4 flex items-center gap-4 pr-14">
-                      <Badge 
-                        variant="outline" 
-                        className={`bg-gradient-to-r ${projectColor.bg} ${projectColor.text} ${projectColor.border} text-xs font-semibold px-2 py-0.5 shrink-0`}
-                      >
-                        {project.project_id_prefix}{project.project_id_number}
-                      </Badge>
+                      {/* Project ID */}
+                      <div className="col-span-1">
+                        <Badge 
+                          variant="outline" 
+                          className={`bg-gradient-to-r ${projectColor.bg} ${projectColor.text} ${projectColor.border} text-xs font-semibold px-2 py-0.5`}
+                        >
+                          {project.project_id_prefix}{project.project_id_number}
+                        </Badge>
+                      </div>
                       
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors truncate">
+                      {/* Project Title */}
+                      <div className="col-span-3 min-w-0">
+                        <h3 className="font-medium text-foreground group-hover:text-primary transition-colors truncate">
                           {project.project_title}
                         </h3>
-                        <p className="text-sm text-muted-foreground truncate">
-                          {project.plant_name || 'No plant assigned'}
-                          {project.station_name && ` • ${project.station_name}`}
-                        </p>
                       </div>
-
-                      <div className="hidden md:flex items-center gap-4 shrink-0">
-                        {project.team_count && project.team_count > 0 && (
-                          <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                            <Users className="h-4 w-4" />
-                            <span>{project.team_count}</span>
-                          </div>
+                      
+                      {/* Plant / Location */}
+                      <div className="col-span-2 min-w-0">
+                        <p className="text-sm text-foreground truncate">
+                          {project.plant_name || 'Not assigned'}
+                        </p>
+                        {project.station_name && (
+                          <p className="text-xs text-muted-foreground truncate">
+                            {project.station_name}
+                          </p>
                         )}
-                        
-                        {project.milestone_count && project.milestone_count > 0 && (
-                          <div className="w-24">
-                            <Progress value={progress} className="h-1.5" indicatorClassName={progress === 100 ? "bg-emerald-500" : "bg-muted-foreground/50"} />
+                      </div>
+                      
+                      {/* Team */}
+                      <div className="col-span-2">
+                        {project.team_count && project.team_count > 0 ? (
+                          <div className="flex items-center gap-2">
+                            {project.team_lead_name && (
+                              <Avatar className="h-6 w-6 border border-border/50">
+                                <AvatarImage src={project.team_lead_avatar} />
+                                <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
+                                  {project.team_lead_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                                </AvatarFallback>
+                              </Avatar>
+                            )}
+                            <div className="min-w-0">
+                              <p className="text-sm text-foreground truncate">
+                                {project.team_lead_name || 'No lead'}
+                              </p>
+                              {project.team_count > 1 && (
+                                <p className="text-xs text-muted-foreground">
+                                  +{project.team_count - 1} members
+                                </p>
+                              )}
+                            </div>
                           </div>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">No team</span>
                         )}
-
+                      </div>
+                      
+                      {/* Progress */}
+                      <div className="col-span-2">
+                        {project.milestone_count && project.milestone_count > 0 ? (
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="text-muted-foreground">
+                                {project.completed_milestone_count || 0}/{project.milestone_count}
+                              </span>
+                              <span className="font-medium text-foreground">{progress}%</span>
+                            </div>
+                            <Progress 
+                              value={progress} 
+                              className="h-1.5" 
+                              indicatorClassName={progress === 100 ? "bg-emerald-500" : "bg-primary"} 
+                            />
+                          </div>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">No milestones</span>
+                        )}
+                      </div>
+                      
+                      {/* Status */}
+                      <div className="col-span-1">
                         <Badge 
                           variant={project.is_scorecard ? 'default' : 'secondary'} 
                           className={`text-xs ${project.is_scorecard ? 'bg-gradient-to-b from-amber-400 via-amber-500 to-amber-600 text-white shadow-md border border-amber-300/50' : ''}`}
@@ -387,10 +429,29 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                           {project.is_scorecard ? 'Scorecard' : 'Active'}
                         </Badge>
                       </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+                      
+                      {/* Favorite */}
+                      <div className="col-span-1 text-right">
+                        <button
+                          type="button"
+                          onClick={(e) => handleToggleFavorite(e, project.id, project.is_favorite)}
+                          className={`h-8 w-8 inline-flex items-center justify-center rounded-full transition-all duration-200 hover:bg-yellow-500/20 ${
+                            project.is_favorite ? 'opacity-100' : 'opacity-30 group-hover:opacity-100'
+                          }`}
+                        >
+                          <Star
+                            className={`h-4 w-4 transition-all duration-200 ${
+                              project.is_favorite
+                                ? 'fill-yellow-400 text-yellow-400'
+                                : 'text-muted-foreground hover:text-yellow-400'
+                            }`}
+                          />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
           </div>
