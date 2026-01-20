@@ -529,6 +529,7 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
                         placeholder="Select or create hub"
                         emptyText="No hubs found"
                         createText="Create hub"
+                        showSearch={false}
                         className="w-full bg-muted/50"
                       />
                     </div>
