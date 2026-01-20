@@ -663,7 +663,17 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
       }
       setShowAddRoleDialog(true);
     } else {
-      setFormData(prev => ({ ...prev, role: value, plant: '', hub: '' }));
+      // Reset all conditional fields when role changes
+      setFormData(prev => ({ 
+        ...prev, 
+        role: value, 
+        plant_id: '', 
+        field_id: '', 
+        station_id: '',
+        hub: '',
+        portfolio: '',
+        commission: ''
+      }));
     }
   };
 
