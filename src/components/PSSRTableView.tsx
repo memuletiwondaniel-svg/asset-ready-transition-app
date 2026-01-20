@@ -16,9 +16,9 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Settings, GripVertical, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { ProjectIdBadge } from '@/components/ui/project-id-badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import { getProjectColor } from '@/utils/projectColors';
 
 interface Column {
   id: string;
@@ -173,10 +173,21 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails }) =
   const renderCell = (pssr: PSSR, columnId: string) => {
     switch (columnId) {
       case 'projectId':
+        // Parse projectId to extract prefix and number (format: "PREFIX-NUMBER" or "PREFIXNUMBER")
+        const parts = pssr.projectId.includes('-') 
+          ? pssr.projectId.split('-') 
+          : [pssr.projectId.replace(/[0-9]/g, ''), pssr.projectId.replace(/[^0-9]/g, '')];
+        const prefix = parts[0] || '';
+        const number = parts[1] || parts[0] || '';
+        const projectColor = getProjectColor(prefix, number);
         return (
-          <ProjectIdBadge>
-            {pssr.projectId}
-          </ProjectIdBadge>
+          <Badge 
+            variant="outline" 
+            className="text-xs font-semibold px-2 py-0.5 text-white border-0"
+            style={{ background: `linear-gradient(to right, ${projectColor.bgStart}, ${projectColor.bgEnd})` }}
+          >
+            {prefix}-{number}
+          </Badge>
         );
       case 'projectName':
         return <div className="font-semibold text-foreground truncate">{pssr.projectName}</div>;
