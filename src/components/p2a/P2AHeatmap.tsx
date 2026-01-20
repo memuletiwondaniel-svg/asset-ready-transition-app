@@ -96,7 +96,7 @@ export const P2AHeatmap: React.FC = () => {
                   >
                     <Badge 
                       variant="outline" 
-                      className="text-[10px] sm:text-xs font-semibold px-1.5 py-0.5 text-white border-0 mb-0.5"
+                      className="text-[10px] sm:text-xs font-semibold px-2 py-1 text-white border-0 mb-0.5 inline-flex items-center justify-center leading-none"
                       style={{ background: `linear-gradient(to right, ${projectColor.bgStart}, ${projectColor.bgEnd})` }}
                     >
                       {prefix}-{number}
