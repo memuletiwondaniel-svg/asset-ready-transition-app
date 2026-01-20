@@ -426,7 +426,7 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                           className="text-xs font-semibold px-2 py-0.5 text-white border-0"
                           style={{ background: `linear-gradient(to right, ${projectColor.bgStart}, ${projectColor.bgEnd})` }}
                         >
-                          {project.project_id_prefix}{project.project_id_number}
+                          {project.project_id_prefix}-{project.project_id_number}
                         </Badge>
                       </div>
                       
