@@ -214,7 +214,7 @@ export const ORMLandingPage: React.FC = () => {
                 <UserCog className="w-4 h-4" />
                 <span className="hidden sm:inline">Resources</span>
               </Button>
-              <Button size="sm" onClick={() => setShowCreateModal(true)} className="flex-1 sm:flex-none gap-2">
+              <Button size="sm" onClick={() => setShowCreateModal(true)} className="flex-1 sm:flex-none gap-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm">
                 <Plus className="w-4 h-4" />
                 Create ORM
               </Button>

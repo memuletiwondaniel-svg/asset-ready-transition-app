@@ -132,7 +132,7 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
             </div>
           </div>
           
-          <Button size="sm" onClick={() => setIsAddModalOpen(true)} className="flex-1 sm:flex-none gap-2">
+          <Button size="sm" onClick={() => setIsAddModalOpen(true)} className="flex-1 sm:flex-none gap-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm">
             <Plus className="h-4 w-4" />
             New Project
           </Button>
