@@ -44,20 +44,24 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
 }) => {
   const { data: allUsers = [], isLoading } = useProfileUsers();
   const { suggestedTeam, isLoading: isAutoPopulating } = useAutoPopulateTeam(regionName, hubName, hubId);
-  const [hasAutoPopulated, setHasAutoPopulated] = useState(false);
 
-  // Auto-populate when hub or region changes and team is empty
+  // Auto-populate when hub or region changes - always refresh suggestions
   useEffect(() => {
     // Trigger auto-population if we have either hubId OR regionName (for region-based roles)
-    const shouldAutoPopulate = (hubId || regionName) && suggestedTeam.length > 0 && !hasAutoPopulated && teamMembers.length === 0;
-    
-    if (shouldAutoPopulate) {
+    if ((hubId || regionName) && suggestedTeam.length > 0 && !isAutoPopulating) {
       // Process suggested team: first member per role goes to required slot, others become additional
       const requiredRoleNames = REQUIRED_ROLES.map(r => r.role);
       const processedRoles = new Set<string>();
       const newTeamMembers: any[] = [];
       
+      // Keep manually added members that aren't auto-populated
+      const manualMembers = teamMembers.filter(m => !m.is_auto_populated);
+      
       suggestedTeam.forEach(member => {
+        // Skip if this role already has a manual assignment
+        const hasManualAssignment = manualMembers.some(m => m.role === member.role);
+        if (hasManualAssignment) return;
+        
         if (requiredRoleNames.includes(member.role)) {
           if (!processedRoles.has(member.role)) {
             newTeamMembers.push(member);
@@ -74,15 +78,10 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
         }
       });
       
-      setTeamMembers(newTeamMembers);
-      setHasAutoPopulated(true);
+      // Merge manual members with auto-populated ones
+      setTeamMembers([...manualMembers, ...newTeamMembers]);
     }
-  }, [hubId, regionName, suggestedTeam, hasAutoPopulated, teamMembers.length, setTeamMembers]);
-
-  // Reset auto-populate flag when hub or region changes
-  useEffect(() => {
-    setHasAutoPopulated(false);
-  }, [hubId, regionName]);
+  }, [hubId, regionName, suggestedTeam, isAutoPopulating]);
 
   const handleAutoPopulate = () => {
     if (suggestedTeam.length > 0) {
@@ -117,7 +116,6 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
       const filteredManual = manualMembers.filter(m => !suggestedRoles.includes(m.role));
       
       setTeamMembers([...filteredManual, ...newTeamMembers]);
-      setHasAutoPopulated(true);
     }
   };
 
