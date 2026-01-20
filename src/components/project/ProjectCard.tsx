@@ -125,7 +125,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                   variant="outline" 
                   className={`bg-gradient-to-r ${projectColor.bg} ${projectColor.text} ${projectColor.border} text-xs font-semibold px-2 py-0.5`}
                 >
-                  {project.project_id_prefix}{project.project_id_number}
+                  {project.project_id_prefix}-{project.project_id_number}
                 </Badge>
               </div>
               <h3 className="font-bold text-base text-foreground group-hover:text-primary transition-colors duration-200 truncate">
