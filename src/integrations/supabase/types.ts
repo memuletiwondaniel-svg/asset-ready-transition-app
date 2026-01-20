@@ -5675,6 +5675,7 @@ export type Database = {
           hub_name: string | null
           id: string | null
           is_active: boolean | null
+          is_favorite: boolean | null
           is_scorecard: boolean | null
           milestone_count: number | null
           next_milestone_date: string | null
