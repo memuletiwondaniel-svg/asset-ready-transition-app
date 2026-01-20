@@ -886,16 +886,16 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
             )}
           </div>
 
-          {/* Portfolio (Region) Selection - for roles that require it */}
+          {/* Portfolio Selection - for roles that require it */}
           {requiresPortfolioSelection(formData.role) && (
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Portfolio (Region) *</Label>
+              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Portfolio *</Label>
               <Select
                 value={formData.portfolio}
                 onValueChange={(value) => setFormData(prev => ({ ...prev, portfolio: value, hub: '' }))}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select portfolio (North, Central, or South)" />
+                  <SelectValue placeholder="Select portfolio" />
                 </SelectTrigger>
                 <SelectContent>
                   {PORTFOLIO_REGIONS.map(region => (
