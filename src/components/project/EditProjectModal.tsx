@@ -510,6 +510,7 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
                         placeholder="Select portfolio"
                         emptyText="No portfolios found"
                         allowCreate={false}
+                        showSearch={false}
                         className="w-full bg-muted/50"
                       />
                     </div>

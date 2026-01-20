@@ -21,14 +21,12 @@ interface AutoPopulateResult {
 // Role matching configuration with function/role patterns
 // matchType: 'hub' = matches users assigned to selected hub, 'region' = matches by region text, 'global' = any match
 const ROLE_MATCHING_CONFIG: Record<string, { patterns: string[]; matchType: 'region' | 'hub' | 'global' }> = {
-  'Project Hub Lead': { patterns: ['hub lead', 'project hub lead'], matchType: 'hub' },
-  'Project Engineer': { patterns: ['proj eng', 'project eng', 'project engineer'], matchType: 'hub' },
-  'Commissioning Lead': { patterns: ['commissioning lead', 'commissioning'], matchType: 'hub' },
-  'Construction Lead': { patterns: ['construction lead', 'construction'], matchType: 'hub' },
-  'ORA Engineer': { patterns: ['ora engr', 'ora engineer', 'ora eng'], matchType: 'hub' },
   'Project Manager': { patterns: ['project manager', 'proj manager'], matchType: 'region' },
-  'ORA Lead': { patterns: ['ora lead'], matchType: 'global' },
-  'P&E Director': { patterns: ['p&e director', 'pe director'], matchType: 'global' },
+  'Project Hub Lead': { patterns: ['hub lead', 'project hub lead'], matchType: 'hub' },
+  'Project Engr': { patterns: ['proj eng', 'project eng', 'project engr'], matchType: 'hub' },
+  'Construction Lead': { patterns: ['construction lead', 'construction'], matchType: 'hub' },
+  'Commissioning Lead': { patterns: ['commissioning lead', 'commissioning'], matchType: 'hub' },
+  'ORA Engr.': { patterns: ['ora engr', 'ora engineer', 'ora eng', 'ora'], matchType: 'hub' },
 };
 
 export const useAutoPopulateTeam = (
@@ -51,7 +49,7 @@ export const useAutoPopulateTeam = (
           id: `${role}-auto-${Date.now()}-${Math.random()}`,
           user_id: matchedUser.user_id,
           role: role,
-          is_lead: ['Project Manager', 'Project Engineer'].includes(role),
+          is_lead: ['Project Manager', 'Project Engr'].includes(role),
           user_name: matchedUser.full_name,
           avatar_url: matchedUser.avatar_url || '',
           position: matchedUser.position || '',
