@@ -473,27 +473,43 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                         <div className="w-48 shrink-0">
                           {project.team_count && project.team_count > 0 ? (
                             <div className="flex items-center gap-2">
-                              {project.team_lead_name && (
-                                <Avatar className="h-7 w-7 border border-border/50 shrink-0">
-                                  <AvatarImage src={project.team_lead_avatar} />
-                                  <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
-                                    {project.team_lead_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                                  </AvatarFallback>
-                                </Avatar>
-                              )}
+                              {/* Stacked avatars - lead in front, others behind */}
+                              <div className="flex items-center shrink-0">
+                                {/* Background stacked avatars for additional members */}
+                                {project.team_count > 1 && (
+                                  <div className="flex -mr-3">
+                                    {Array.from({ length: Math.min(project.team_count - 1, 2) }).map((_, i) => (
+                                      <div 
+                                        key={i} 
+                                        className="h-7 w-7 rounded-full bg-muted border-2 border-background"
+                                        style={{ marginLeft: i > 0 ? '-10px' : '0', zIndex: 2 - i }}
+                                      />
+                                    ))}
+                                  </div>
+                                )}
+                                {/* Lead avatar in front */}
+                                {project.team_lead_name && (
+                                  <Avatar className="h-8 w-8 border-2 border-background shrink-0 relative z-10 ring-2 ring-primary/20">
+                                    <AvatarImage src={project.team_lead_avatar} />
+                                    <AvatarFallback className="text-[10px] bg-primary/10 text-primary font-medium">
+                                      {project.team_lead_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                )}
+                              </div>
                               <div className="min-w-0 flex-1">
-                                <p className="text-sm text-foreground truncate">
+                                <p className="text-sm font-medium text-foreground truncate">
                                   {project.team_lead_name || 'No lead'}
                                 </p>
                                 {project.team_count > 1 && (
                                   <p className="text-xs text-muted-foreground">
-                                    +{project.team_count - 1} members
+                                    +{project.team_count - 1} Members
                                   </p>
                                 )}
                               </div>
                             </div>
                           ) : (
-                            <span className="text-sm text-muted-foreground">No team</span>
+                            <span className="text-sm text-muted-foreground italic">No team</span>
                           )}
                         </div>
                       )}
