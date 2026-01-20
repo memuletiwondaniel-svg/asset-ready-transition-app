@@ -11,9 +11,19 @@ import { cn } from '@/lib/utils';
 
 interface ORPActivitiesPanelProps {
   searchQuery?: string;
+  isExpanded: boolean;
+  onToggleExpand: () => void;
+  isFullHeight?: boolean;
+  isRelocated?: boolean;
 }
 
-export const ORPActivitiesPanel: React.FC<ORPActivitiesPanelProps> = ({ searchQuery = '' }) => {
+export const ORPActivitiesPanel: React.FC<ORPActivitiesPanelProps> = ({ 
+  searchQuery = '',
+  isExpanded,
+  onToggleExpand,
+  isFullHeight = false,
+  isRelocated = false,
+}) => {
   const navigate = useNavigate();
   const { activities: rawActivities, stats, isLoading } = useUserORPActivities();
   const { isNewSinceLastLogin } = useUserLastLogin();
@@ -66,12 +76,16 @@ export const ORPActivitiesPanel: React.FC<ORPActivitiesPanelProps> = ({ searchQu
       secondaryStat={stats.totalDeliverables - stats.completedDeliverables}
       secondaryLabel="deliverables pending"
       newCount={newCount}
+      isExpanded={isExpanded}
+      onToggleExpand={onToggleExpand}
+      isFullHeight={isFullHeight}
+      isRelocated={isRelocated}
       isLoading={isLoading}
       isEmpty={uniquePlans.length === 0}
       emptyMessage="No ORA activities assigned"
       onViewAll={() => navigate('/operation-readiness')}
     >
-      {uniquePlans.slice(0, 5).map((activity) => {
+      {uniquePlans.map((activity, index) => {
         const isNew = isNewSinceLastLogin(activity.created_at);
         const progress = activity.deliverable_count > 0
           ? Math.round((activity.completed_deliverables / activity.deliverable_count) * 100)
@@ -82,8 +96,11 @@ export const ORPActivitiesPanel: React.FC<ORPActivitiesPanelProps> = ({ searchQu
             key={activity.id}
             className={cn(
               "p-3 rounded-lg border bg-background/50 hover:bg-background/80 transition-all cursor-pointer",
-              isNew && "border-l-2 border-l-primary"
+              "hover:shadow-sm hover:border-primary/20",
+              isNew && "border-l-2 border-l-primary",
+              "animate-fade-in"
             )}
+            style={{ animationDelay: `${index * 50}ms` }}
             onClick={() => navigate(`/operation-readiness/${activity.plan_id}`)}
           >
             <div className="flex items-start justify-between gap-2">
@@ -121,7 +138,7 @@ export const ORPActivitiesPanel: React.FC<ORPActivitiesPanelProps> = ({ searchQu
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="h-6 text-xs px-2"
+                  className="h-6 text-xs px-2 opacity-0 group-hover:opacity-100 transition-opacity"
                   onClick={(e) => {
                     e.stopPropagation();
                     navigate(`/operation-readiness/${activity.plan_id}`);

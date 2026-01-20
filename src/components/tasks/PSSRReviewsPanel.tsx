@@ -11,9 +11,20 @@ import { cn } from '@/lib/utils';
 interface PSSRReviewsPanelProps {
   userId: string;
   searchQuery?: string;
+  isExpanded: boolean;
+  onToggleExpand: () => void;
+  isFullHeight?: boolean;
+  isRelocated?: boolean;
 }
 
-export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({ userId, searchQuery = '' }) => {
+export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({ 
+  userId, 
+  searchQuery = '',
+  isExpanded,
+  onToggleExpand,
+  isFullHeight = false,
+  isRelocated = false,
+}) => {
   const navigate = useNavigate();
   const { data: pssrs, isLoading } = usePSSRsAwaitingReview(userId);
   const { isNewSinceLastLogin } = useUserLastLogin();
@@ -43,12 +54,16 @@ export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({ userId, sear
       primaryStat={pendingPssrs.length}
       primaryLabel="pending"
       newCount={newCount}
+      isExpanded={isExpanded}
+      onToggleExpand={onToggleExpand}
+      isFullHeight={isFullHeight}
+      isRelocated={isRelocated}
       isLoading={isLoading}
       isEmpty={pendingPssrs.length === 0}
       emptyMessage="No PSSR reviews pending"
       onViewAll={() => navigate('/pssr-reviews')}
     >
-      {pendingPssrs.slice(0, 5).map((item) => {
+      {pendingPssrs.map((item, index) => {
         const isNew = isNewSinceLastLogin(item.pendingSince);
         const daysPending = Math.floor(
           (Date.now() - new Date(item.pendingSince).getTime()) / (1000 * 60 * 60 * 24)
@@ -60,8 +75,11 @@ export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({ userId, sear
             key={pssr?.id || item.pendingSince}
             className={cn(
               "p-3 rounded-lg border bg-background/50 hover:bg-background/80 transition-all cursor-pointer",
-              isNew && "border-l-2 border-l-primary"
+              "hover:shadow-sm hover:border-primary/20",
+              isNew && "border-l-2 border-l-primary",
+              "animate-fade-in"
             )}
+            style={{ animationDelay: `${index * 50}ms` }}
             onClick={() => navigate(`/pssr/${pssr?.id}/review`)}
           >
             <div className="flex items-start justify-between gap-2">
@@ -95,7 +113,7 @@ export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({ userId, sear
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="h-6 text-xs px-2"
+                  className="h-6 text-xs px-2 opacity-0 group-hover:opacity-100 transition-opacity"
                   onClick={(e) => {
                     e.stopPropagation();
                     navigate(`/pssr/${pssr?.id}/review`);

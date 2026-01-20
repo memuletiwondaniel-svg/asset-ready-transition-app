@@ -11,9 +11,19 @@ import { format, isPast, isToday } from 'date-fns';
 
 interface OWLPanelProps {
   searchQuery?: string;
+  isExpanded: boolean;
+  onToggleExpand: () => void;
+  isFullHeight?: boolean;
+  isRelocated?: boolean;
 }
 
-export const OWLPanel: React.FC<OWLPanelProps> = ({ searchQuery = '' }) => {
+export const OWLPanel: React.FC<OWLPanelProps> = ({ 
+  searchQuery = '',
+  isExpanded,
+  onToggleExpand,
+  isFullHeight = false,
+  isRelocated = false,
+}) => {
   const navigate = useNavigate();
   const { items: rawItems, stats, isLoading, updateStatus, isUpdatingStatus } = useUserOWLItems();
   const { isNewSinceLastLogin } = useUserLastLogin();
@@ -86,11 +96,15 @@ export const OWLPanel: React.FC<OWLPanelProps> = ({ searchQuery = '' }) => {
       secondaryStat={stats.overdue}
       secondaryLabel="overdue"
       newCount={newCount}
+      isExpanded={isExpanded}
+      onToggleExpand={onToggleExpand}
+      isFullHeight={isFullHeight}
+      isRelocated={isRelocated}
       isLoading={isLoading}
       isEmpty={openItems.length === 0}
       emptyMessage="No outstanding work items"
     >
-      {openItems.slice(0, 5).map((item) => {
+      {openItems.map((item, index) => {
         const isNew = isNewSinceLastLogin(item.created_at);
         const dueStatus = getDueStatus(item.due_date);
 
@@ -99,8 +113,11 @@ export const OWLPanel: React.FC<OWLPanelProps> = ({ searchQuery = '' }) => {
             key={item.id}
             className={cn(
               "p-3 rounded-lg border bg-background/50 hover:bg-background/80 transition-all",
-              isNew && "border-l-2 border-l-primary"
+              "hover:shadow-sm hover:border-primary/20",
+              isNew && "border-l-2 border-l-primary",
+              "animate-fade-in"
             )}
+            style={{ animationDelay: `${index * 50}ms` }}
           >
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0">

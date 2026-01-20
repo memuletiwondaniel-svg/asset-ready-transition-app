@@ -10,9 +10,19 @@ import { cn } from '@/lib/utils';
 
 interface HandoverReviewsPanelProps {
   searchQuery?: string;
+  isExpanded: boolean;
+  onToggleExpand: () => void;
+  isFullHeight?: boolean;
+  isRelocated?: boolean;
 }
 
-export const HandoverReviewsPanel: React.FC<HandoverReviewsPanelProps> = ({ searchQuery = '' }) => {
+export const HandoverReviewsPanel: React.FC<HandoverReviewsPanelProps> = ({ 
+  searchQuery = '',
+  isExpanded,
+  onToggleExpand,
+  isFullHeight = false,
+  isRelocated = false,
+}) => {
   const navigate = useNavigate();
   const { approvals: rawApprovals, stats, isLoading } = useUserP2AApprovals();
   const { isNewSinceLastLogin } = useUserLastLogin();
@@ -49,12 +59,16 @@ export const HandoverReviewsPanel: React.FC<HandoverReviewsPanelProps> = ({ sear
       secondaryStat={stats.pac}
       secondaryLabel="PAC"
       newCount={newCount}
+      isExpanded={isExpanded}
+      onToggleExpand={onToggleExpand}
+      isFullHeight={isFullHeight}
+      isRelocated={isRelocated}
       isLoading={isLoading}
       isEmpty={approvals.length === 0}
       emptyMessage="No handover reviews pending"
       onViewAll={() => navigate('/p2a-handover')}
     >
-      {approvals.slice(0, 5).map((approval) => {
+      {approvals.map((approval, index) => {
         const isNew = isNewSinceLastLogin(approval.created_at);
 
         return (
@@ -62,8 +76,11 @@ export const HandoverReviewsPanel: React.FC<HandoverReviewsPanelProps> = ({ sear
             key={approval.id}
             className={cn(
               "p-3 rounded-lg border bg-background/50 hover:bg-background/80 transition-all cursor-pointer",
-              isNew && "border-l-2 border-l-primary"
+              "hover:shadow-sm hover:border-primary/20",
+              isNew && "border-l-2 border-l-primary",
+              "animate-fade-in"
             )}
+            style={{ animationDelay: `${index * 50}ms` }}
             onClick={() => navigate(`/p2a-handover/${approval.handover_id}`)}
           >
             <div className="flex items-start justify-between gap-2">
@@ -95,7 +112,7 @@ export const HandoverReviewsPanel: React.FC<HandoverReviewsPanelProps> = ({ sear
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="h-6 text-xs px-2"
+                  className="h-6 text-xs px-2 opacity-0 group-hover:opacity-100 transition-opacity"
                   onClick={(e) => {
                     e.stopPropagation();
                     navigate(`/p2a-handover/${approval.handover_id}`);

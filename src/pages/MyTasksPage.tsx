@@ -14,6 +14,7 @@ import { useUserLastLogin } from '@/hooks/useUserLastLogin';
 import { cn } from '@/lib/utils';
 
 type ViewMode = 'grid' | 'table';
+type ExpandedCard = 'pssr' | 'handover' | 'ora' | 'owl' | null;
 
 const MyTasksPage: React.FC = () => {
   const { user } = useAuth();
@@ -21,6 +22,7 @@ const MyTasksPage: React.FC = () => {
   const [createTaskModalOpen, setCreateTaskModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [expandedCard, setExpandedCard] = useState<ExpandedCard>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -29,9 +31,126 @@ const MyTasksPage: React.FC = () => {
     return () => clearTimeout(timer);
   }, [updateLastLogin]);
 
+  const handleCardExpand = (cardId: ExpandedCard) => {
+    setExpandedCard(prev => prev === cardId ? null : cardId);
+  };
+
   if (!user) {
     return null;
   }
+
+  // Determine which cards go in which column based on expanded state
+  const getColumnLayout = () => {
+    // Default layout:
+    // Left: PSSR (top), ORA (bottom)
+    // Right: Handover (top), OWL (bottom)
+    
+    if (!expandedCard) {
+      return {
+        leftColumn: ['pssr', 'ora'] as const,
+        rightColumn: ['handover', 'owl'] as const,
+        expandedSide: null as 'left' | 'right' | null
+      };
+    }
+
+    switch (expandedCard) {
+      case 'pssr':
+        // PSSR expands, ORA moves to right
+        return {
+          leftColumn: ['pssr'] as const,
+          rightColumn: ['handover', 'owl', 'ora'] as const,
+          expandedSide: 'left' as const
+        };
+      case 'ora':
+        // ORA expands, PSSR moves to right
+        return {
+          leftColumn: ['ora'] as const,
+          rightColumn: ['handover', 'owl', 'pssr'] as const,
+          expandedSide: 'left' as const
+        };
+      case 'handover':
+        // Handover expands, OWL moves to left
+        return {
+          leftColumn: ['pssr', 'ora', 'owl'] as const,
+          rightColumn: ['handover'] as const,
+          expandedSide: 'right' as const
+        };
+      case 'owl':
+        // OWL expands, Handover moves to left
+        return {
+          leftColumn: ['pssr', 'ora', 'handover'] as const,
+          rightColumn: ['owl'] as const,
+          expandedSide: 'right' as const
+        };
+      default:
+        return {
+          leftColumn: ['pssr', 'ora'] as const,
+          rightColumn: ['handover', 'owl'] as const,
+          expandedSide: null as 'left' | 'right' | null
+        };
+    }
+  };
+
+  const layout = getColumnLayout();
+
+  const renderCard = (cardId: string, isInExpandedColumn: boolean, isRelocated: boolean) => {
+    const isThisCardExpanded = expandedCard === cardId;
+    const isFullHeight = isInExpandedColumn && isThisCardExpanded;
+
+    const commonProps = {
+      isExpanded: isThisCardExpanded,
+      onToggleExpand: () => handleCardExpand(cardId as ExpandedCard),
+      isFullHeight,
+      isRelocated,
+      searchQuery,
+    };
+
+    switch (cardId) {
+      case 'pssr':
+        return (
+          <PSSRReviewsPanel 
+            key="pssr"
+            userId={user.id} 
+            {...commonProps}
+          />
+        );
+      case 'handover':
+        return (
+          <HandoverReviewsPanel 
+            key="handover"
+            {...commonProps}
+          />
+        );
+      case 'ora':
+        return (
+          <ORPActivitiesPanel 
+            key="ora"
+            {...commonProps}
+          />
+        );
+      case 'owl':
+        return (
+          <OWLPanel 
+            key="owl"
+            {...commonProps}
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
+  // Determine which cards are relocated
+  const getRelocatedCards = () => {
+    switch (expandedCard) {
+      case 'pssr': return ['ora'];
+      case 'ora': return ['pssr'];
+      case 'handover': return ['owl'];
+      case 'owl': return ['handover'];
+      default: return [];
+    }
+  };
+  const relocatedCards = getRelocatedCards();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
@@ -104,11 +223,55 @@ const MyTasksPage: React.FC = () => {
 
         {/* Content based on view mode */}
         {viewMode === 'grid' ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <PSSRReviewsPanel userId={user.id} searchQuery={searchQuery} />
-            <HandoverReviewsPanel searchQuery={searchQuery} />
-            <ORPActivitiesPanel searchQuery={searchQuery} />
-            <OWLPanel searchQuery={searchQuery} />
+          <div className={cn(
+            "grid grid-cols-1 lg:grid-cols-2 gap-6 transition-all duration-500",
+            expandedCard && "min-h-[calc(100vh-300px)]"
+          )}>
+            {/* Left Column */}
+            <div className={cn(
+              "flex flex-col gap-6 transition-all duration-500",
+              layout.expandedSide === 'left' && "h-full"
+            )}>
+              {layout.leftColumn.map((cardId) => {
+                const isRelocated = relocatedCards.includes(cardId);
+                const isExpanded = expandedCard === cardId;
+                
+                return (
+                  <div 
+                    key={cardId}
+                    className={cn(
+                      "transition-all duration-500",
+                      layout.expandedSide === 'left' && isExpanded && "flex-1 min-h-0"
+                    )}
+                  >
+                    {renderCard(cardId, layout.expandedSide === 'left', isRelocated)}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Right Column */}
+            <div className={cn(
+              "flex flex-col gap-6 transition-all duration-500",
+              layout.expandedSide === 'right' && "h-full"
+            )}>
+              {layout.rightColumn.map((cardId) => {
+                const isRelocated = relocatedCards.includes(cardId);
+                const isExpanded = expandedCard === cardId;
+                
+                return (
+                  <div 
+                    key={cardId}
+                    className={cn(
+                      "transition-all duration-500",
+                      layout.expandedSide === 'right' && isExpanded && "flex-1 min-h-0"
+                    )}
+                  >
+                    {renderCard(cardId, layout.expandedSide === 'right', isRelocated)}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         ) : (
           <AllTasksTable searchQuery={searchQuery} userId={user.id} />
