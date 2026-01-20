@@ -23,6 +23,7 @@ import { useP2AHandovers, P2AHandover } from '@/hooks/useP2AHandovers';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { Eye, ClipboardList, Award, FileText, MoreHorizontal, ArrowUpRight, Search } from 'lucide-react';
+import { getProjectColor } from '@/utils/projectColors';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -220,12 +221,25 @@ export const P2AHandoverList: React.FC = () => {
                     onClick={() => handleViewHandover(handover.id)}
                   >
                     <TableCell>
-                      <div className="font-medium">
-                        {handover.project?.project_id_prefix}-{handover.project?.project_id_number}
-                      </div>
-                      <div className="text-sm text-muted-foreground truncate max-w-[200px]">
-                        {handover.project?.project_title}
-                      </div>
+                      {(() => {
+                        const prefix = handover.project?.project_id_prefix || '';
+                        const number = handover.project?.project_id_number || '';
+                        const projectColor = getProjectColor(prefix, number);
+                        return (
+                          <div className="space-y-1">
+                            <Badge 
+                              variant="outline" 
+                              className="text-xs font-semibold px-2.5 py-1 text-white border-0 inline-flex items-center justify-center leading-none"
+                              style={{ background: `linear-gradient(to right, ${projectColor.bgStart}, ${projectColor.bgEnd})` }}
+                            >
+                              {prefix}-{number}
+                            </Badge>
+                            <div className="text-sm text-muted-foreground truncate max-w-[200px]">
+                              {handover.project?.project_title}
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className="gap-1">
