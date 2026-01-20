@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -121,6 +121,37 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
   const [pendingCroppedBlob, setPendingCroppedBlob] = useState<Blob | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Track visibility of top buttons for smart sticky footer
+  const topButtonsRef = useRef<HTMLDivElement>(null);
+  const [showStickyFooter, setShowStickyFooter] = useState(false);
+  
+  // Intersection Observer to detect when top buttons are out of view
+  useEffect(() => {
+    if (!editMode) {
+      setShowStickyFooter(false);
+      return;
+    }
+    
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        // Show sticky footer only when top buttons are NOT visible
+        setShowStickyFooter(!entry.isIntersecting);
+      },
+      { threshold: 0.1 }
+    );
+    
+    const currentRef = topButtonsRef.current;
+    if (currentRef) {
+      observer.observe(currentRef);
+    }
+    
+    return () => {
+      if (currentRef) {
+        observer.unobserve(currentRef);
+      }
+    };
+  }, [editMode]);
   
   // Password reset state
   const [newPassword, setNewPassword] = useState('');
@@ -1229,7 +1260,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                   Edit Details
                 </Button>
               ) : (
-                <>
+                <div ref={topButtonsRef} className="flex gap-2">
                   <Button variant="outline" onClick={() => setEditMode(false)}>
                     <X className="h-4 w-4 mr-2" />
                     Cancel
@@ -1238,7 +1269,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                     <Save className="h-4 w-4 mr-2" />
                     {loading ? 'Saving...' : 'Save Changes'}
                   </Button>
-                </>
+                </div>
               )}
             </div>
           </DialogTitle>
@@ -2043,9 +2074,9 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
           </TabsContent>
         </Tabs>
         
-        {/* Footer with Save button when in edit mode */}
-        {editMode && (
-          <div className="sticky bottom-0 bg-background border-t pt-4 mt-4 flex justify-end gap-2">
+        {/* Sticky Footer - only shows when top buttons are scrolled out of view */}
+        {editMode && showStickyFooter && (
+          <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm border-t pt-4 mt-4 flex justify-end gap-2 animate-in fade-in slide-in-from-bottom-2 duration-200">
             <Button variant="outline" onClick={() => setEditMode(false)} disabled={loading}>
               Cancel
             </Button>
