@@ -222,6 +222,9 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
           console.error('Error saving team members:', teamError);
         }
       }
+      
+      // Invalidate team members query so widgets refresh
+      queryClient.invalidateQueries({ queryKey: ['project-team-members', newProject.id] });
 
       // Save milestones
       const validMilestones = milestones.filter(m => 

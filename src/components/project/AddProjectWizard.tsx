@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { X, Image, FileText, Users, Calendar, FolderOpen, ChevronLeft, ChevronRight, Check } from 'lucide-react';
 import { useProjects } from '@/hooks/useProjects';
-
+import { useQueryClient } from '@tanstack/react-query';
 import { useStations } from '@/hooks/useStations';
 import { useHubs } from '@/hooks/useHubs';
 import { useProjectRegions } from '@/hooks/useProjectRegions';
@@ -49,6 +49,7 @@ export const AddProjectWizard: React.FC<AddProjectWizardProps> = ({ open, onClos
   const { saveLocations } = useProjectLocations();
   const { toast } = useToast();
   const { mutate: logActivity } = useLogActivity();
+  const queryClient = useQueryClient();
 
   const [currentStep, setCurrentStep] = useState<WizardStep>('basics');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -211,6 +212,9 @@ export const AddProjectWizard: React.FC<AddProjectWizardProps> = ({ open, onClos
           if (teamError) throw teamError;
         }
       }
+      
+      // Invalidate team members query so widgets refresh
+      queryClient.invalidateQueries({ queryKey: ['project-team-members', newProject.id] });
 
       if (milestones.length > 0) {
         const validMilestones = milestones.filter(m => m.milestone_name?.trim() && m.milestone_date);

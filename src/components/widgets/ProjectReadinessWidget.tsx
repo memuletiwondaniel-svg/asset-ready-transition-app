@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Users, Target, FileText, UserCircle, Building, MapPin, Calendar } from 'lucide-react';
-import { useProjects } from '@/hooks/useProjects';
+import { useProjects, useProjectTeamMembers } from '@/hooks/useProjects';
 import { usePlants } from '@/hooks/usePlants';
 import { useStations } from '@/hooks/useStations';
 import { useHubs } from '@/hooks/useHubs';
@@ -24,15 +24,25 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
   const { stations } = useStations();
   const { data: hubs = [] } = useHubs();
   
-  const [teamMembers, setTeamMembers] = useState<any[]>([]);
+  // Use react-query hook for team members - automatically refetches when cache is invalidated
+  const { teamMembers: rawTeamMembers, isLoading: teamLoading } = useProjectTeamMembers(projectId);
   const [milestones, setMilestones] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [milestonesLoading, setMilestonesLoading] = useState(true);
   const [isScopeExpanded, setIsScopeExpanded] = useState(false);
 
   const project = projects.find(p => p.id === projectId);
   const plant = plants.find(p => p.id === project?.plant_id);
   const station = stations.find(s => s.id === project?.station_id);
   const hub = hubs.find(h => h.id === project?.hub_id);
+
+  // Transform team members to include profiles data structure expected by display logic
+  const teamMembers = rawTeamMembers.map(member => ({
+    ...member,
+    profiles: {
+      full_name: member.user_name,
+      avatar_url: member.avatar_url,
+    }
+  }));
 
   // Helper function to convert relative avatar paths to full Supabase storage URLs
   const getAvatarUrl = (avatarUrl: string | null | undefined): string | null => {
@@ -41,41 +51,13 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
     return supabase.storage.from('user-avatars').getPublicUrl(avatarUrl).data.publicUrl;
   };
 
+  // Fetch milestones only (team members now use react-query)
   useEffect(() => {
-    const fetchProjectData = async () => {
+    const fetchMilestones = async () => {
       if (!projectId) return;
       
-      setLoading(true);
+      setMilestonesLoading(true);
       try {
-        // Fetch team members with profile data
-        // Fetch ALL team members (no limit) so we can filter for required roles
-        const { data: teamData, error: teamError } = await (supabase as any)
-          .from('project_team_members')
-          .select('*')
-          .eq('project_id', projectId);
-        
-        if (!teamError && teamData) {
-          // Fetch profiles for team members
-          const userIds = teamData.map((m: any) => m.user_id).filter(Boolean);
-          if (userIds.length > 0) {
-            const { data: profilesData } = await (supabase as any)
-              .from('profiles')
-              .select('user_id, full_name, avatar_url, position')
-              .in('user_id', userIds);
-            
-            // Merge team data with profiles
-            const enrichedTeamData = teamData.map((member: any) => ({
-              ...member,
-              profiles: profilesData?.find((p: any) => p.user_id === member.user_id)
-            }));
-            
-            setTeamMembers(enrichedTeamData);
-          } else {
-            setTeamMembers(teamData);
-          }
-        }
-
-        // Fetch milestones
         const { data: milestonesData, error: milestonesError } = await (supabase as any)
           .from('project_milestones')
           .select('*')
@@ -87,14 +69,16 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
           setMilestones(milestonesData);
         }
       } catch (error) {
-        console.error('Error fetching project data:', error);
+        console.error('Error fetching milestones:', error);
       } finally {
-        setLoading(false);
+        setMilestonesLoading(false);
       }
     };
 
-    fetchProjectData();
+    fetchMilestones();
   }, [projectId]);
+
+  const loading = teamLoading || milestonesLoading;
 
 
   const getMilestoneStatusColor = (status: string) => {
