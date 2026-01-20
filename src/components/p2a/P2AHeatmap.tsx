@@ -104,9 +104,6 @@ export const P2AHeatmap: React.FC = () => {
                     <div className="text-[9px] sm:text-[10px] text-muted-foreground truncate">
                       {handover.project?.project_title}
                     </div>
-                    <Badge variant="outline" className="mt-0.5 text-[8px] sm:text-[10px] h-4 px-1">
-                      {handover.phase}
-                    </Badge>
                   </div>
                   {categories?.map((category) => {
                     const cellKey = `${handover.id}-${category.id}`;
