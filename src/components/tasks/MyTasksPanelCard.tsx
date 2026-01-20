@@ -41,7 +41,15 @@ export const MyTasksPanelCard: React.FC<MyTasksPanelCardProps> = ({
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
 
   return (
-    <Card className="relative overflow-hidden bg-gradient-to-br from-card/90 to-card/70 backdrop-blur-sm border-border/50 shadow-sm hover:shadow-md transition-all duration-300">
+    <Card className={cn(
+      "relative overflow-hidden bg-gradient-to-br from-card/90 to-card/70",
+      "backdrop-blur-sm border-border/50",
+      "shadow-sm transition-all duration-300",
+      "hover:shadow-lg hover:shadow-primary/5",
+      "hover:border-primary/20",
+      "hover:-translate-y-0.5",
+      "group cursor-pointer"
+    )}>
       {/* New task indicator glow */}
       {newCount > 0 && (
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/60 via-primary to-primary/60 animate-pulse" />
@@ -51,7 +59,8 @@ export const MyTasksPanelCard: React.FC<MyTasksPanelCardProps> = ({
         <div className="flex items-center justify-between min-h-[72px]">
           <div className="flex items-center gap-4">
             <div className={cn(
-              "p-3 rounded-xl bg-gradient-to-br",
+              "p-3 rounded-xl bg-gradient-to-br transition-transform duration-300",
+              "group-hover:scale-105",
               iconColorClass
             )}>
               {icon}
