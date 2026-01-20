@@ -113,31 +113,29 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="border-b border-border bg-card px-6 py-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="mb-3">
-            <BreadcrumbNavigation 
-              currentPageLabel="Projects" 
-              customBreadcrumbs={[
-                { label: 'Home', path: '/', onClick: () => navigate('/') }
-              ]}
-            />
-          </div>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-accent">
-                <FolderOpen className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-foreground">Projects</h1>
-                <p className="text-sm text-muted-foreground mt-1">Browse and access your assigned projects</p>
-              </div>
+      <div className="border-b border-border/40 bg-card/50 backdrop-blur-xl p-4 md:p-6">
+        <BreadcrumbNavigation 
+          currentPageLabel="Projects" 
+          customBreadcrumbs={[
+            { label: 'Home', path: '/', onClick: () => navigate('/') }
+          ]}
+        />
+        
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
+          <div className="min-w-0 flex items-center gap-3">
+            <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-primary to-accent">
+              <FolderOpen className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
             </div>
-            <Button onClick={() => setIsAddModalOpen(true)} className="gap-2">
-              <Plus className="h-4 w-4" />
-              New Project
-            </Button>
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">Projects</h1>
+              <p className="text-sm text-muted-foreground mt-1">Browse and access your assigned projects</p>
+            </div>
           </div>
+          
+          <Button size="sm" onClick={() => setIsAddModalOpen(true)} className="flex-1 sm:flex-none gap-2">
+            <Plus className="h-4 w-4" />
+            New Project
+          </Button>
         </div>
       </div>
 

@@ -17,6 +17,7 @@ import {
   Clock, 
   AlertTriangle, 
   CheckCircle2, 
+  CheckSquare,
   Search,
   ListChecks,
   Plus,
@@ -387,15 +388,23 @@ const PSSRApproverDashboard: React.FC = () => {
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
           {/* Header */}
-          <div className="border-b border-border/40 bg-card/50 p-4 md:p-6">
+          <div className="border-b border-border/40 bg-card/50 backdrop-blur-xl p-4 md:p-6">
             <BreadcrumbNavigation currentPageLabel="My Tasks" />
             
-            <div className="flex items-center justify-between gap-3 mt-4">
-              <h1 className="text-xl font-semibold text-foreground">My Tasks</h1>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
+              <div className="min-w-0 flex items-center gap-3">
+                <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-violet-500 to-purple-500">
+                  <CheckSquare className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-foreground">My Tasks</h1>
+                  <p className="text-sm text-muted-foreground mt-1">Manage and track your assigned tasks</p>
+                </div>
+              </div>
               
               <div className="flex items-center gap-2">
-                <Button size="sm" variant="outline" onClick={() => setShowCreateTaskDialog(true)} className="gap-1.5">
-                  <Plus className="h-3.5 w-3.5" />
+                <Button size="sm" variant="outline" onClick={() => setShowCreateTaskDialog(true)} className="gap-2">
+                  <Plus className="h-4 w-4" />
                   Create Task
                 </Button>
                 <NotificationCenter />
