@@ -118,6 +118,16 @@ export const useORPDeliverableCategories = () => {
   const { data: categories, isLoading } = useQuery({
     queryKey: ['p2a-deliverable-categories'],
     queryFn: async () => {
+      // Initial columns for the heatmap (kept intentionally small)
+      const initialCategoryOrder = [
+        'Mech Comp (MC)',
+        'RFSU',
+        'CMMS',
+        '2Y Spares',
+        'Documents',
+        'SUOP',
+      ];
+
       // Use P2A deliverable categories for the heatmap columns
       const { data, error } = await supabase
         .from('p2a_deliverable_categories')
@@ -126,8 +136,17 @@ export const useORPDeliverableCategories = () => {
         .order('display_order');
 
       if (error) throw error;
+
+      const filtered = (data || [])
+        .filter((cat) => initialCategoryOrder.includes(cat.name))
+        .sort(
+          (a, b) =>
+            initialCategoryOrder.indexOf(a.name) -
+            initialCategoryOrder.indexOf(b.name)
+        );
+
       // Map to expected interface - phase is not used for P2A categories
-      return (data || []).map(cat => ({
+      return filtered.map(cat => ({
         id: cat.id,
         name: cat.name,
         phase: 'EXECUTE' as ORPPhase, // Default phase for P2A
