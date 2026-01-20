@@ -334,7 +334,12 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
 
   // Check if role requires field selection (for Ops roles - excluding Ops Coach which uses full hierarchy)
   const requiresField = (role: string) => {
-    return ['Ops Team Lead', 'Section Head'].includes(role);
+    return ['Ops Team Lead'].includes(role);
+  };
+
+  // Check if role requires plant + field selection (for Section Head with KAZ plant)
+  const requiresPlantAndField = (role: string) => {
+    return role === 'Section Head';
   };
 
   // Check if role requires full asset hierarchy (Plant > Field > Station)
@@ -1532,6 +1537,57 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                               className={!editMode ? 'bg-muted pointer-events-none' : ''}
                             />
                           </div>
+                        )}
+
+                        {/* Section Head - Plant + Field selection (for KAZ and CS plants) */}
+                        {requiresPlantAndField(formData.role) && (
+                          <>
+                            <div>
+                              <Label>Plant *</Label>
+                              <Select
+                                value={formData.plant}
+                                onValueChange={handlePlantChange}
+                                disabled={!editMode}
+                              >
+                                <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
+                                  <SelectValue placeholder="Select plant" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {plants.map(plant => (
+                                    <SelectItem key={plant.value} value={plant.value}>
+                                      {plant.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            {['CS', 'KAZ'].includes(formData.plant) && (
+                              <div>
+                                <Label>{formData.plant === 'KAZ' ? 'Section *' : 'Field *'}</Label>
+                                <Select
+                                  value={formData.field}
+                                  onValueChange={handleFieldChange}
+                                  disabled={!editMode || !formData.plant}
+                                >
+                                  <SelectTrigger className={!editMode || !formData.plant ? 'bg-muted' : ''}>
+                                    <SelectValue placeholder={formData.plant ? `Select ${formData.plant === 'KAZ' ? 'section' : 'field'}` : "Select plant first"} />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {fields
+                                      .filter(field => {
+                                        // Filter fields by the selected plant
+                                        return true; // Show all fields for now since hierarchy filtering requires additional data
+                                      })
+                                      .map(field => (
+                                        <SelectItem key={field.value} value={field.value}>
+                                          {field.label}
+                                        </SelectItem>
+                                      ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            )}
+                          </>
                         )}
 
                         {/* Ops Coach - Full Asset Hierarchy (Plant > Field > Station) */}
