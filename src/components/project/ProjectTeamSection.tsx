@@ -38,7 +38,29 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
   // Auto-populate when hub changes and team is empty
   useEffect(() => {
     if (hubId && suggestedTeam.length > 0 && !hasAutoPopulated && teamMembers.length === 0) {
-      setTeamMembers(suggestedTeam);
+      // Process suggested team: first member per role goes to required slot, others become additional
+      const requiredRoleNames = REQUIRED_ROLES.map(r => r.role);
+      const processedRoles = new Set<string>();
+      const newTeamMembers: any[] = [];
+      
+      suggestedTeam.forEach(member => {
+        if (requiredRoleNames.includes(member.role)) {
+          if (!processedRoles.has(member.role)) {
+            newTeamMembers.push(member);
+            processedRoles.add(member.role);
+          } else {
+            newTeamMembers.push({
+              ...member,
+              id: `additional-${member.role}-${Date.now()}-${Math.random()}`,
+              role: 'Additional Team Member'
+            });
+          }
+        } else {
+          newTeamMembers.push(member);
+        }
+      });
+      
+      setTeamMembers(newTeamMembers);
       setHasAutoPopulated(true);
     }
   }, [hubId, suggestedTeam, hasAutoPopulated, teamMembers.length, setTeamMembers]);
@@ -50,12 +72,37 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
 
   const handleAutoPopulate = () => {
     if (suggestedTeam.length > 0) {
-      // Merge: keep manually assigned roles, add/replace with suggested ones
+      // Separate suggested team into required roles and additional (for roles allowing multiple)
+      const requiredRoleNames = REQUIRED_ROLES.map(r => r.role);
+      const processedRoles = new Set<string>();
+      const newTeamMembers: any[] = [];
+      
+      // For each required role, take the first matching suggested member
+      suggestedTeam.forEach(member => {
+        if (requiredRoleNames.includes(member.role)) {
+          if (!processedRoles.has(member.role)) {
+            // First member for this required role
+            newTeamMembers.push(member);
+            processedRoles.add(member.role);
+          } else {
+            // Additional members for this role become "Additional Team Member"
+            newTeamMembers.push({
+              ...member,
+              id: `additional-${member.role}-${Date.now()}-${Math.random()}`,
+              role: 'Additional Team Member'
+            });
+          }
+        } else {
+          newTeamMembers.push(member);
+        }
+      });
+      
+      // Keep manually assigned members that don't conflict with suggested
       const manualMembers = teamMembers.filter(m => !m.is_auto_populated);
-      const suggestedRoles = suggestedTeam.map(s => s.role);
+      const suggestedRoles = [...processedRoles];
       const filteredManual = manualMembers.filter(m => !suggestedRoles.includes(m.role));
       
-      setTeamMembers([...filteredManual, ...suggestedTeam]);
+      setTeamMembers([...filteredManual, ...newTeamMembers]);
       setHasAutoPopulated(true);
     }
   };
