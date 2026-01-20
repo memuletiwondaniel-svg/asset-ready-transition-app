@@ -193,7 +193,10 @@ export const AvatarCropDialog: React.FC<AvatarCropDialogProps> = ({
           </div>
 
           {/* Cropper */}
-          <div className="relative w-full h-96 bg-white rounded-lg overflow-hidden">
+          <div
+            className="relative w-full h-96 bg-background rounded-lg overflow-hidden"
+            onWheel={(e) => e.preventDefault()}
+          >
             <Cropper
               image={imageSrc}
               crop={crop}
@@ -206,16 +209,17 @@ export const AvatarCropDialog: React.FC<AvatarCropDialogProps> = ({
               showGrid={cropShape === 'rect'}
               restrictPosition={false}
               objectFit="contain"
+              zoomWithScroll={false}
               onCropChange={onCropChange}
               onZoomChange={onZoomChange}
               onRotationChange={setRotation}
               onCropComplete={onCropCompleteHandler}
               style={{
                 containerStyle: {
-                  backgroundColor: '#ffffff',
+                  backgroundColor: 'hsl(var(--background))',
                 },
                 mediaStyle: {
-                  backgroundColor: '#ffffff',
+                  backgroundColor: 'hsl(var(--background))',
                 },
               }}
             />
