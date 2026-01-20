@@ -23,6 +23,7 @@ import { useProjectLocations } from '@/hooks/useProjectLocations';
 import { useProjectHierarchy } from '@/hooks/useProjectHierarchy';
 import { useToast } from '@/hooks/use-toast';
 import { useLogActivity } from '@/hooks/useActivityLogs';
+import { useQueryClient } from '@tanstack/react-query';
 import { ProjectTeamSection } from './ProjectTeamSection';
 import { ProjectMilestonesSection } from './ProjectMilestonesSection';
 import { EnhancedProjectDocumentsSection } from './EnhancedProjectDocumentsSection';
@@ -52,6 +53,7 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
   const { locations, saveLocations } = useProjectLocations(project?.id);
   const { toast } = useToast();
   const { mutate: logActivity } = useLogActivity();
+  const queryClient = useQueryClient();
 
   const [formData, setFormData] = useState({
     project_id_prefix: '' as 'DP' | 'ST' | 'MoC' | '',
@@ -350,6 +352,9 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
           });
         }
       }
+      
+      // Invalidate team members query so widgets refresh
+      queryClient.invalidateQueries({ queryKey: ['project-team-members', project.id] });
 
       // 3. Update milestones - delete existing and insert new (filter invalid)
       await supabase.from('project_milestones').delete().eq('project_id', project.id);

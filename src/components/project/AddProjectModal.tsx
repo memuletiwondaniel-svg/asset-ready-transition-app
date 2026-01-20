@@ -18,6 +18,7 @@ import { useProjectRegions } from '@/hooks/useProjectRegions';
 import { useProjectLocations } from '@/hooks/useProjectLocations';
 import { useProjectHierarchy } from '@/hooks/useProjectHierarchy';
 import { useToast } from '@/hooks/use-toast';
+import { useQueryClient } from '@tanstack/react-query';
 import { ProjectTeamSection } from './ProjectTeamSection';
 import { ProjectMilestonesSection } from './ProjectMilestonesSection';
 import { EnhancedProjectDocumentsSection } from './EnhancedProjectDocumentsSection';
@@ -41,6 +42,7 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({ open, onClose 
   const { saveLocations } = useProjectLocations();
   const { toast } = useToast();
   const { mutate: logActivity } = useLogActivity();
+  const queryClient = useQueryClient();
 
   const [formData, setFormData] = useState({
     project_id_prefix: '' as 'DP' | 'ST' | 'MoC' | '',
@@ -216,6 +218,9 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({ open, onClose 
           });
         }
       }
+      
+      // Invalidate team members query so widgets refresh
+      queryClient.invalidateQueries({ queryKey: ['project-team-members', newProject.id] });
 
       // 3. Save milestones - Filter out invalid entries
       if (milestones.length > 0) {
