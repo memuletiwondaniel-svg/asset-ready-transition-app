@@ -905,7 +905,12 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
                     >
                       <div className="rounded-lg flex flex-col flex-1 overflow-hidden">
                         {/* Sticky Table Header */}
-                        <Table>
+                        <Table style={{ tableLayout: 'fixed', width: '100%' }}>
+                          <colgroup>
+                            {columns.filter(col => col.visible).map((column) => (
+                              <col key={column.id} style={{ width: column.width, minWidth: column.minWidth }} />
+                            ))}
+                          </colgroup>
                           <TableHeader className="bg-muted/50">
                             <TableRow className="hover:bg-transparent border-border/40">
                               <SortableContext items={columns.filter(col => col.visible).map(col => col.id)} strategy={horizontalListSortingStrategy}>
@@ -925,7 +930,12 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
                         
                         {/* Scrollable Table Body */}
                         <div className="flex-1 overflow-auto min-h-0">
-                          <Table>
+                          <Table style={{ tableLayout: 'fixed', width: '100%' }}>
+                            <colgroup>
+                              {columns.filter(col => col.visible).map((column) => (
+                                <col key={column.id} style={{ width: column.width, minWidth: column.minWidth }} />
+                              ))}
+                            </colgroup>
                             <TableBody>
                               {filteredUsers.map((user, index) => (
                                 <TableRow 
