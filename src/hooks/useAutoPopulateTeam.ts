@@ -106,6 +106,25 @@ function findMatchingUser(
   hubName: string | null,
   hubId?: string | null
 ): any | null {
+  // For region-based matching (Construction Lead, Commissioning Lead, Snr. ORA Engr., Project Manager)
+  // Check position contains both the role pattern AND the region name
+  if (matchType === 'region' && regionName) {
+    const regionLower = regionName.toLowerCase();
+    for (const user of users) {
+      const position = (user.position || '').toLowerCase();
+      const userRole = (user.role || '').toLowerCase();
+      
+      const matchesPattern = patterns.some(pattern => 
+        position.includes(pattern) || userRole.includes(pattern)
+      );
+
+      if (matchesPattern && position.includes(regionLower)) {
+        return user;
+      }
+    }
+    return null; // No match found for region-based role
+  }
+  
   // For hub-based matching, first try to find user with matching hub_id
   if (matchType === 'hub' && hubId) {
     for (const user of users) {
@@ -137,23 +156,6 @@ function findMatchingUser(
         if (matchesPattern && position.includes(hubNameLower)) {
           return user;
         }
-      }
-    }
-  }
-
-  // For region-based matching or hub fallback, check position contains region name
-  if (regionName) {
-    const regionLower = regionName.toLowerCase();
-    for (const user of users) {
-      const position = (user.position || '').toLowerCase();
-      const userRole = (user.role || '').toLowerCase();
-      
-      const matchesPattern = patterns.some(pattern => 
-        position.includes(pattern) || userRole.includes(pattern)
-      );
-
-      if (matchesPattern && position.includes(regionLower)) {
-        return user;
       }
     }
   }
