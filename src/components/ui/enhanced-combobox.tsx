@@ -23,6 +23,7 @@ interface EnhancedComboboxProps {
   allowCreate?: boolean
   className?: string
   disabled?: boolean
+  showSearch?: boolean
 }
 
 export function EnhancedCombobox({
@@ -35,7 +36,8 @@ export function EnhancedCombobox({
   createText = "Create",
   allowCreate = true,
   className,
-  disabled = false
+  disabled = false,
+  showSearch = true
 }: EnhancedComboboxProps) {
   const [open, setOpen] = React.useState(false)
   const [searchValue, setSearchValue] = React.useState("")
@@ -83,11 +85,13 @@ export function EnhancedCombobox({
       </PopoverTrigger>
       <PopoverContent className="w-full p-0" align="start">
         <Command shouldFilter={false}>
-          <CommandInput 
-            placeholder="Search..." 
-            value={searchValue}
-            onValueChange={setSearchValue}
-          />
+          {showSearch && (
+            <CommandInput 
+              placeholder="Search..." 
+              value={searchValue}
+              onValueChange={setSearchValue}
+            />
+          )}
           <CommandList className="max-h-[350px] overflow-y-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/50">
             <CommandEmpty>
               {emptyText}

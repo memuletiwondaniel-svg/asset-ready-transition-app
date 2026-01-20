@@ -454,6 +454,7 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
                       }
                       placeholder="Prefix"
                       allowCreate={false}
+                      showSearch={false}
                       className="w-28 bg-muted/50"
                     />
                     <Input
