@@ -1,13 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Grid, List, FolderOpen, Plus, Star } from 'lucide-react';
+import { Search, Grid, List, FolderOpen, Plus, Star, Settings2, Eye, EyeOff, Target } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useProjects } from '@/hooks/useProjects';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -16,10 +15,28 @@ import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuCheckboxItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { format } from 'date-fns';
-import { Users, Calendar, FileText } from 'lucide-react';
+import { Users, Calendar, FileText, Building2, MapPin } from 'lucide-react';
+
+// Column visibility configuration
+interface ColumnVisibility {
+  portfolio: boolean;
+  hub: boolean;
+  plant: boolean;
+  team: boolean;
+  milestone: boolean;
+  scope: boolean;
+}
 
 interface ProjectsHomePageProps {
   onBack?: () => void;
@@ -31,6 +48,14 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
   const { projects, isLoading } = useProjects();
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [columnVisibility, setColumnVisibility] = useState<ColumnVisibility>({
+    portfolio: false,
+    hub: true,
+    plant: true,
+    team: true,
+    milestone: true,
+    scope: false,
+  });
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const queryClient = useQueryClient();
 
@@ -84,10 +109,6 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
     return { bgStart, bgEnd, borderColor };
   };
 
-  const calculateProgress = (completed: number, total: number) => {
-    if (total === 0) return 0;
-    return Math.round((completed / total) * 100);
-  };
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
@@ -136,6 +157,57 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
               />
             </div>
             <div className="flex items-center gap-2">
+              {/* Column Visibility Toggle - only show in list view */}
+              {viewMode === 'list' && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-8 gap-2">
+                      <Settings2 className="h-4 w-4" />
+                      <span className="hidden sm:inline">Columns</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuLabel>Toggle Columns</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuCheckboxItem
+                      checked={columnVisibility.hub}
+                      onCheckedChange={(checked) => setColumnVisibility(prev => ({ ...prev, hub: checked }))}
+                    >
+                      <Building2 className="h-4 w-4 mr-2" />
+                      Project Hub
+                    </DropdownMenuCheckboxItem>
+                    <DropdownMenuCheckboxItem
+                      checked={columnVisibility.plant}
+                      onCheckedChange={(checked) => setColumnVisibility(prev => ({ ...prev, plant: checked }))}
+                    >
+                      <MapPin className="h-4 w-4 mr-2" />
+                      Plant
+                    </DropdownMenuCheckboxItem>
+                    <DropdownMenuCheckboxItem
+                      checked={columnVisibility.team}
+                      onCheckedChange={(checked) => setColumnVisibility(prev => ({ ...prev, team: checked }))}
+                    >
+                      <Users className="h-4 w-4 mr-2" />
+                      Team
+                    </DropdownMenuCheckboxItem>
+                    <DropdownMenuCheckboxItem
+                      checked={columnVisibility.milestone}
+                      onCheckedChange={(checked) => setColumnVisibility(prev => ({ ...prev, milestone: checked }))}
+                    >
+                      <Target className="h-4 w-4 mr-2" />
+                      Milestones
+                    </DropdownMenuCheckboxItem>
+                    <DropdownMenuCheckboxItem
+                      checked={columnVisibility.scope}
+                      onCheckedChange={(checked) => setColumnVisibility(prev => ({ ...prev, scope: checked }))}
+                    >
+                      <FileText className="h-4 w-4 mr-2" />
+                      Scope
+                    </DropdownMenuCheckboxItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+
               <div className="flex gap-1 bg-muted/30 p-1 rounded-lg border border-border/30">
                 <Button
                   variant="ghost"
@@ -198,7 +270,6 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredProjects.map((project) => {
                 const projectColor = getProjectColor(project.project_id_prefix, project.project_id_number);
-                const progress = calculateProgress(project.completed_milestone_count || 0, project.milestone_count || 0);
                 
                 return (
                   <Card 
@@ -284,14 +355,16 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                         </div>
                       )}
 
-                      {/* Progress */}
-                      {project.milestone_count && project.milestone_count > 0 && (
-                        <div className="space-y-1.5">
-                          <div className="flex items-center justify-between text-xs">
-                            <span className="text-muted-foreground">Progress</span>
-                            <span className="font-medium text-foreground">{progress}%</span>
-                          </div>
-                          <Progress value={progress} className="h-1.5" indicatorClassName={progress === 100 ? "bg-emerald-500" : "bg-muted-foreground/50"} />
+                      {/* Upcoming Milestone - replaces Progress bar */}
+                      {project.next_milestone_name && (
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Target className="h-3 w-3 text-primary" />
+                          <span className="truncate">{project.next_milestone_name}</span>
+                          {project.next_milestone_date && (
+                            <span className="text-muted-foreground/70">
+                              · {format(new Date(project.next_milestone_date), 'MMM d')}
+                            </span>
+                          )}
                         </div>
                       )}
 
@@ -304,19 +377,16 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                               <span>{project.document_count}</span>
                             </div>
                           )}
-                          {project.next_milestone_date && (
+                          {project.hub_name && (
                             <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                              <Calendar className="h-3 w-3" />
-                              <span>{format(new Date(project.next_milestone_date), 'MMM d')}</span>
+                              <Building2 className="h-3 w-3" />
+                              <span className="truncate max-w-[80px]">{project.hub_name}</span>
                             </div>
                           )}
                         </div>
-                          <Badge 
-                            variant={project.is_scorecard ? 'default' : 'secondary'} 
-                            className={`text-[10px] ${project.is_scorecard ? 'bg-gradient-to-b from-amber-400 via-amber-500 to-amber-600 text-white shadow-md border border-amber-300/50' : ''}`}
-                          >
-                            {project.is_scorecard ? 'Scorecard' : 'Active'}
-                          </Badge>
+                        <Badge variant="secondary" className="text-[10px]">
+                          {project.is_active ? 'Active' : 'Inactive'}
+                        </Badge>
                       </div>
                     </CardContent>
                   </Card>
@@ -329,30 +399,31 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
           {!isLoading && filteredProjects.length > 0 && viewMode === 'list' && (
             <div className="rounded-lg border border-border bg-card overflow-hidden">
               {/* Table Header */}
-              <div className="grid grid-cols-12 gap-4 px-4 py-3 bg-muted/50 border-b border-border text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                <div className="col-span-1">ID</div>
-                <div className="col-span-3">Project Title</div>
-                <div className="col-span-2">Plant / Location</div>
-                <div className="col-span-2">Team</div>
-                <div className="col-span-2">Progress</div>
-                <div className="col-span-1">Status</div>
-                <div className="col-span-1 text-right">Fav</div>
+              <div className="flex items-center gap-4 px-4 py-3 bg-muted/50 border-b border-border text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <div className="w-20 shrink-0">ID</div>
+                <div className="flex-1 min-w-[200px]">Project Title</div>
+                {columnVisibility.hub && <div className="w-32 shrink-0">Hub</div>}
+                {columnVisibility.plant && <div className="w-36 shrink-0">Plant</div>}
+                {columnVisibility.team && <div className="w-48 shrink-0">Team</div>}
+                {columnVisibility.milestone && <div className="w-48 shrink-0">Upcoming Milestone</div>}
+                {columnVisibility.scope && <div className="w-40 shrink-0">Scope</div>}
+                <div className="w-20 shrink-0">Status</div>
+                <div className="w-12 shrink-0 text-right">Fav</div>
               </div>
               
               {/* Table Body */}
               <div className="divide-y divide-border">
                 {filteredProjects.map((project) => {
                   const projectColor = getProjectColor(project.project_id_prefix, project.project_id_number);
-                  const progress = calculateProgress(project.completed_milestone_count || 0, project.milestone_count || 0);
                   
                   return (
                     <div 
                       key={project.id}
-                      className="grid grid-cols-12 gap-4 px-4 py-3 items-center cursor-pointer transition-colors hover:bg-muted/30 group"
+                      className="flex items-center gap-4 px-4 py-3 cursor-pointer transition-colors hover:bg-muted/30 group"
                       onClick={() => handleProjectClick(project.id)}
                     >
                       {/* Project ID */}
-                      <div className="col-span-1">
+                      <div className="w-20 shrink-0">
                         <Badge 
                           variant="outline" 
                           className="text-xs font-semibold px-2 py-0.5 text-white border-0"
@@ -363,85 +434,106 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                       </div>
                       
                       {/* Project Title */}
-                      <div className="col-span-3 min-w-0">
+                      <div className="flex-1 min-w-[200px] min-w-0">
                         <h3 className="font-medium text-foreground group-hover:text-primary transition-colors truncate">
                           {project.project_title}
                         </h3>
                       </div>
-                      
-                      {/* Plant / Location */}
-                      <div className="col-span-2 min-w-0">
-                        <p className="text-sm text-foreground truncate">
-                          {project.plant_name || 'Not assigned'}
-                        </p>
-                        {project.station_name && (
-                          <p className="text-xs text-muted-foreground truncate">
-                            {project.station_name}
+
+                      {/* Hub */}
+                      {columnVisibility.hub && (
+                        <div className="w-32 shrink-0 min-w-0">
+                          <p className="text-sm text-foreground truncate">
+                            {project.hub_name || '-'}
                           </p>
-                        )}
-                      </div>
+                        </div>
+                      )}
                       
-                      {/* Team */}
-                      <div className="col-span-2">
-                        {project.team_count && project.team_count > 0 ? (
-                          <div className="flex items-center gap-2">
-                            {project.team_lead_name && (
-                              <Avatar className="h-6 w-6 border border-border/50">
-                                <AvatarImage src={project.team_lead_avatar} />
-                                <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
-                                  {project.team_lead_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                                </AvatarFallback>
-                              </Avatar>
-                            )}
-                            <div className="min-w-0">
-                              <p className="text-sm text-foreground truncate">
-                                {project.team_lead_name || 'No lead'}
-                              </p>
-                              {project.team_count > 1 && (
-                                <p className="text-xs text-muted-foreground">
-                                  +{project.team_count - 1} members
+                      {/* Plant */}
+                      {columnVisibility.plant && (
+                        <div className="w-36 shrink-0 min-w-0">
+                          <p className="text-sm text-foreground truncate">
+                            {project.plant_name || 'Not assigned'}
+                          </p>
+                          {project.station_name && (
+                            <p className="text-xs text-muted-foreground truncate">
+                              {project.station_name}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                      
+                      {/* Team - with lead image and count */}
+                      {columnVisibility.team && (
+                        <div className="w-48 shrink-0">
+                          {project.team_count && project.team_count > 0 ? (
+                            <div className="flex items-center gap-2">
+                              {project.team_lead_name && (
+                                <Avatar className="h-7 w-7 border border-border/50 shrink-0">
+                                  <AvatarImage src={project.team_lead_avatar} />
+                                  <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
+                                    {project.team_lead_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                                  </AvatarFallback>
+                                </Avatar>
+                              )}
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm text-foreground truncate">
+                                  {project.team_lead_name || 'No lead'}
+                                </p>
+                                {project.team_count > 1 && (
+                                  <p className="text-xs text-muted-foreground">
+                                    +{project.team_count - 1} members
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">No team</span>
+                          )}
+                        </div>
+                      )}
+                      
+                      {/* Upcoming Milestone - replaces Progress */}
+                      {columnVisibility.milestone && (
+                        <div className="w-48 shrink-0">
+                          {project.next_milestone_name ? (
+                            <div className="space-y-0.5">
+                              <div className="flex items-center gap-1.5">
+                                <Target className="h-3 w-3 text-primary shrink-0" />
+                                <p className="text-sm text-foreground truncate">
+                                  {project.next_milestone_name}
+                                </p>
+                              </div>
+                              {project.next_milestone_date && (
+                                <p className="text-xs text-muted-foreground pl-4">
+                                  {format(new Date(project.next_milestone_date), 'MMM d, yyyy')}
                                 </p>
                               )}
                             </div>
-                          </div>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">No team</span>
-                        )}
-                      </div>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">No milestones</span>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Scope */}
+                      {columnVisibility.scope && (
+                        <div className="w-40 shrink-0 min-w-0">
+                          <p className="text-sm text-muted-foreground truncate">
+                            {project.project_scope ? project.project_scope.substring(0, 50) + (project.project_scope.length > 50 ? '...' : '') : '-'}
+                          </p>
+                        </div>
+                      )}
                       
-                      {/* Progress */}
-                      <div className="col-span-2">
-                        {project.milestone_count && project.milestone_count > 0 ? (
-                          <div className="space-y-1">
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="text-muted-foreground">
-                                {project.completed_milestone_count || 0}/{project.milestone_count}
-                              </span>
-                              <span className="font-medium text-foreground">{progress}%</span>
-                            </div>
-                            <Progress 
-                              value={progress} 
-                              className="h-1.5" 
-                              indicatorClassName={progress === 100 ? "bg-emerald-500" : "bg-primary"} 
-                            />
-                          </div>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">No milestones</span>
-                        )}
-                      </div>
-                      
-                      {/* Status */}
-                      <div className="col-span-1">
-                        <Badge 
-                          variant={project.is_scorecard ? 'default' : 'secondary'} 
-                          className={`text-xs ${project.is_scorecard ? 'bg-gradient-to-b from-amber-400 via-amber-500 to-amber-600 text-white shadow-md border border-amber-300/50' : ''}`}
-                        >
-                          {project.is_scorecard ? 'Scorecard' : 'Active'}
+                      {/* Status - simplified, no Scorecard at project level */}
+                      <div className="w-20 shrink-0">
+                        <Badge variant="secondary" className="text-xs">
+                          {project.is_active ? 'Active' : 'Inactive'}
                         </Badge>
                       </div>
                       
                       {/* Favorite */}
-                      <div className="col-span-1 text-right">
+                      <div className="w-12 shrink-0 text-right">
                         <button
                           type="button"
                           onClick={(e) => handleToggleFavorite(e, project.id, project.is_favorite)}
