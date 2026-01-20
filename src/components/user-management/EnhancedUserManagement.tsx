@@ -301,9 +301,9 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
                 {user.full_name ? user.full_name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
               </AvatarFallback>
             </Avatar>
-            <div>
-              <div className="font-medium">{user.full_name || 'Unknown'}</div>
-              <div className="text-sm text-muted-foreground flex items-center whitespace-nowrap overflow-hidden">
+            <div className="min-w-0 flex-1">
+              <div className="font-medium truncate">{user.full_name || 'Unknown'}</div>
+              <div className="text-sm text-muted-foreground flex items-center min-w-0">
                 <Mail className="h-3 w-3 mr-1 flex-shrink-0" />
                 <span className="truncate">
                   {user.functional_email_address || user.email}
