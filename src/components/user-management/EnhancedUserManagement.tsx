@@ -164,9 +164,9 @@ const SortableTableHeader: React.FC<SortableTableHeaderProps> = ({ column, onRes
       className={`relative select-none group ${isDragging ? 'opacity-50' : ''}`}
       {...attributes}
     >
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-center w-full relative">
         <div 
-          className={`flex items-center flex-1 ${column.sortable ? 'cursor-pointer hover:text-primary transition-colors' : ''}`}
+          className={`flex items-center justify-center ${column.sortable ? 'cursor-pointer hover:text-primary transition-colors' : ''}`}
           onClick={() => column.sortable && onSort(column.id)}
         >
           {column.label}
@@ -182,7 +182,7 @@ const SortableTableHeader: React.FC<SortableTableHeaderProps> = ({ column, onRes
             </div>
           )}
         </div>
-        <div className="flex items-center">
+        <div className="absolute right-0 flex items-center">
           <div 
             {...listeners}
             className="cursor-grab hover:cursor-grabbing p-1 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -219,8 +219,8 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
     { id: 'user', label: 'User', width: 250, minWidth: 200, visible: true, sortable: true },
     { id: 'company', label: 'Company', width: 200, minWidth: 150, visible: true, sortable: true },
     { id: 'role', label: 'Position', width: 180, minWidth: 120, visible: true, sortable: true },
-    { id: 'systemRole', label: 'System Role', width: 150, minWidth: 120, visible: true, sortable: false },
-    { id: 'status', label: 'Status', width: 140, minWidth: 100, visible: true, sortable: true },
+    { id: 'systemRole', label: 'System Role', width: 150, minWidth: 120, visible: false, sortable: false },
+    { id: 'status', label: 'Status', width: 100, minWidth: 80, visible: true, sortable: true },
     { id: 'actions', label: 'Actions', width: 100, minWidth: 80, visible: true, sortable: false }
   ]);
   const [columnSort, setColumnSort] = useState<{ [key: string]: 'asc' | 'desc' | null }>({});
