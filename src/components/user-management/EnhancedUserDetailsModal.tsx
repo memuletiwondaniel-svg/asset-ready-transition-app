@@ -1668,20 +1668,23 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                                 </SelectContent>
                               </Select>
                             </div>
-                            <div>
-                              <Label>Station</Label>
-                              <Combobox
-                                value={formData.station}
-                                onValueChange={handleStationChange}
-                                options={stations}
-                                placeholder={formData.field ? "Select station" : "Select field first"}
-                                searchPlaceholder="Search stations..."
-                                emptyText="No stations found"
-                                allowCustom={editMode}
-                                onAddCustom={handleStationChange}
-                                className={!editMode || !formData.field ? 'bg-muted pointer-events-none' : ''}
-                              />
-                            </div>
+                            {/* Station - hidden for Ops Coach with CS plant */}
+                            {!(formData.role === 'Ops Coach' && formData.plant === 'CS') && (
+                              <div>
+                                <Label>Station</Label>
+                                <Combobox
+                                  value={formData.station}
+                                  onValueChange={handleStationChange}
+                                  options={stations}
+                                  placeholder={formData.field ? "Select station" : "Select field first"}
+                                  searchPlaceholder="Search stations..."
+                                  emptyText="No stations found"
+                                  allowCustom={editMode}
+                                  onAddCustom={handleStationChange}
+                                  className={!editMode || !formData.field ? 'bg-muted pointer-events-none' : ''}
+                                />
+                              </div>
+                            )}
                           </>
                         )}
 
