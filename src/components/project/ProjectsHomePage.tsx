@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Grid, List, FolderOpen, Plus, Star, Settings2, Eye, EyeOff, Target } from 'lucide-react';
+import { Search, Grid, List, FolderOpen, Plus, Star, Settings2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -26,7 +26,7 @@ import {
 
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { format } from 'date-fns';
-import { Users, Calendar, FileText, Building2, MapPin } from 'lucide-react';
+import { Users, Calendar, FileText, Building2, MapPin, Target } from 'lucide-react';
 
 // Column visibility configuration
 interface ColumnVisibility {
@@ -399,13 +399,12 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
               {/* Table Header */}
               <div className="flex items-center gap-4 px-4 py-3 bg-muted/50 border-b border-border text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 <div className="w-20 shrink-0">ID</div>
-                <div className="flex-1 min-w-[200px]">Project Title</div>
+                <div className={cn("min-w-[200px]", columnVisibility.scope ? "w-[280px]" : "flex-1")}>Project Title</div>
+                {columnVisibility.scope && <div className="flex-1 min-w-[200px]">Scope</div>}
                 {columnVisibility.hub && <div className="w-32 shrink-0">Hub</div>}
                 {columnVisibility.plant && <div className="w-36 shrink-0">Plant</div>}
                 {columnVisibility.team && <div className="w-48 shrink-0">Team</div>}
-                {columnVisibility.milestone && <div className="w-48 shrink-0">Upcoming Milestone</div>}
-                {columnVisibility.scope && <div className="w-40 shrink-0">Scope</div>}
-                <div className="w-20 shrink-0">Status</div>
+                {columnVisibility.milestone && <div className="w-52 shrink-0">Upcoming Milestone</div>}
                 <div className="w-12 shrink-0 text-right">Fav</div>
               </div>
               
@@ -417,11 +416,11 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                   return (
                     <div 
                       key={project.id}
-                      className="flex items-center gap-4 px-4 py-3 cursor-pointer transition-colors hover:bg-muted/30 group"
+                      className="flex items-start gap-4 px-4 py-3 cursor-pointer transition-colors hover:bg-muted/30 group"
                       onClick={() => handleProjectClick(project.id)}
                     >
                       {/* Project ID */}
-                      <div className="w-20 shrink-0">
+                      <div className="w-20 shrink-0 pt-0.5">
                         <Badge 
                           variant="outline" 
                           className="text-xs font-semibold px-2 py-0.5 text-white border-0"
@@ -431,16 +430,25 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                         </Badge>
                       </div>
                       
-                      {/* Project Title */}
-                      <div className="flex-1 min-w-[200px] min-w-0">
-                        <h3 className="font-medium text-foreground group-hover:text-primary transition-colors truncate">
+                      {/* Project Title - always fully visible */}
+                      <div className={cn("min-w-[200px]", columnVisibility.scope ? "w-[280px] shrink-0" : "flex-1")}>
+                        <h3 className="font-medium text-foreground group-hover:text-primary transition-colors whitespace-nowrap">
                           {project.project_title}
                         </h3>
                       </div>
 
+                      {/* Scope - next to title, wraps to multiple lines */}
+                      {columnVisibility.scope && (
+                        <div className="flex-1 min-w-[200px]">
+                          <p className="text-sm text-muted-foreground leading-relaxed">
+                            {project.project_scope || '-'}
+                          </p>
+                        </div>
+                      )}
+
                       {/* Hub */}
                       {columnVisibility.hub && (
-                        <div className="w-32 shrink-0 min-w-0">
+                        <div className="w-32 shrink-0">
                           <p className="text-sm text-foreground truncate">
                             {project.hub_name || '-'}
                           </p>
@@ -491,19 +499,23 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                         </div>
                       )}
                       
-                      {/* Upcoming Milestone - replaces Progress */}
+                      {/* Upcoming Milestone - no icon, golden badge if scorecard */}
                       {columnVisibility.milestone && (
-                        <div className="w-48 shrink-0">
+                        <div className="w-52 shrink-0">
                           {project.next_milestone_name ? (
                             <div className="space-y-0.5">
-                              <div className="flex items-center gap-1.5">
-                                <Target className="h-3 w-3 text-primary shrink-0" />
+                              <div className="flex items-center gap-2">
                                 <p className="text-sm text-foreground truncate">
                                   {project.next_milestone_name}
                                 </p>
+                                {project.is_scorecard && (
+                                  <Badge className="text-[10px] px-1.5 py-0 bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700">
+                                    Scorecard
+                                  </Badge>
+                                )}
                               </div>
                               {project.next_milestone_date && (
-                                <p className="text-xs text-muted-foreground pl-4">
+                                <p className="text-xs text-muted-foreground">
                                   {format(new Date(project.next_milestone_date), 'MMM d, yyyy')}
                                 </p>
                               )}
@@ -513,22 +525,6 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                           )}
                         </div>
                       )}
-
-                      {/* Scope */}
-                      {columnVisibility.scope && (
-                        <div className="w-40 shrink-0 min-w-0">
-                          <p className="text-sm text-muted-foreground truncate">
-                            {project.project_scope ? project.project_scope.substring(0, 50) + (project.project_scope.length > 50 ? '...' : '') : '-'}
-                          </p>
-                        </div>
-                      )}
-                      
-                      {/* Status - simplified, no Scorecard at project level */}
-                      <div className="w-20 shrink-0">
-                        <Badge variant="secondary" className="text-xs">
-                          {project.is_active ? 'Active' : 'Inactive'}
-                        </Badge>
-                      </div>
                       
                       {/* Favorite */}
                       <div className="w-12 shrink-0 text-right">
