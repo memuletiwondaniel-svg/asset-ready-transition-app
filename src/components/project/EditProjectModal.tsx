@@ -59,21 +59,60 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
     project_title: '',
     region_id: '',
     hub_id: '',
-    plant_id: '',
-    field_id: '',
-    station_id: '',
     project_scope: '',
     project_scope_image_url: '',
     is_favorite: false,
   });
 
+  // Multiple locations state - each with plant_id, field_id, station_id
+  interface LocationEntry {
+    id: string;
+    plant_id: string;
+    field_id: string;
+    station_id: string;
+  }
+  
+  const [projectLocations, setProjectLocations] = useState<LocationEntry[]>([
+    { id: crypto.randomUUID(), plant_id: '', field_id: '', station_id: '' }
+  ]);
+  const [openStationPopovers, setOpenStationPopovers] = useState<Record<string, boolean>>({});
+
   const [selectedLocationIds, setSelectedLocationIds] = useState<string[]>([]);
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
   const [milestones, setMilestones] = useState<any[]>([]);
   const [documents, setDocuments] = useState<any[]>([]);
-  const [stationSearchOpen, setStationSearchOpen] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // Helper functions for location management
+  const addLocation = () => {
+    setProjectLocations(prev => [...prev, { 
+      id: crypto.randomUUID(), 
+      plant_id: '', 
+      field_id: '', 
+      station_id: '' 
+    }]);
+  };
+
+  const removeLocation = (id: string) => {
+    if (projectLocations.length > 1) {
+      setProjectLocations(prev => prev.filter(loc => loc.id !== id));
+    }
+  };
+
+  const updateLocation = (id: string, field: 'plant_id' | 'field_id' | 'station_id', value: string) => {
+    setProjectLocations(prev => prev.map(loc => {
+      if (loc.id === id) {
+        if (field === 'plant_id') {
+          return { ...loc, plant_id: value, field_id: '', station_id: '' };
+        } else if (field === 'field_id') {
+          return { ...loc, field_id: value, station_id: '' };
+        }
+        return { ...loc, [field]: value };
+      }
+      return loc;
+    }));
+  };
 
   // Helper function to format date
   const formatDate = (dateString: string) => {
@@ -94,13 +133,22 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
         project_title: project.project_title || '',
         region_id: project.region_id || '',
         hub_id: project.hub_id || '',
-        plant_id: project.plant_id || '',
-        field_id: project.field_id || '',
-        station_id: project.station_id || '',
         project_scope: project.project_scope || '',
         project_scope_image_url: project.project_scope_image_url || '',
         is_favorite: project.is_favorite || false,
       });
+      
+      // Initialize locations from project data
+      if (project.plant_id || project.station_id) {
+        setProjectLocations([{
+          id: crypto.randomUUID(),
+          plant_id: project.plant_id || '',
+          field_id: project.field_id || '',
+          station_id: project.station_id || ''
+        }]);
+      } else {
+        setProjectLocations([{ id: crypto.randomUUID(), plant_id: '', field_id: '', station_id: '' }]);
+      }
       
       // Fetch existing team members, milestones, and documents
       fetchProjectDetails();
@@ -250,15 +298,19 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
         project_scope_image_url: formData.project_scope_image_url,
         region_id: formData.region_id || undefined,
         hub_id: formData.hub_id || undefined,
-        plant_id: formData.plant_id || undefined,
-        station_id: formData.station_id || undefined,
+        // Use the first location's plant and station for backward compatibility
+        plant_id: projectLocations[0]?.plant_id || undefined,
+        station_id: projectLocations[0]?.station_id || undefined,
         is_favorite: formData.is_favorite,
       };
 
       updateProject({ id: project.id, updates: projectData });
 
-      // 2. Save project locations (multiple stations)
-      await saveLocations({ projectId: project.id, stationIds: selectedLocationIds });
+      // 2. Save project locations (multiple stations from all location entries)
+      const stationIds = projectLocations
+        .filter(loc => loc.station_id)
+        .map(loc => loc.station_id);
+      await saveLocations({ projectId: project.id, stationIds });
 
       // 2. Update team members - delete existing and insert new (filter invalid)
       await supabase.from('project_team_members').delete().eq('project_id', project.id);
@@ -545,137 +597,166 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
                     </div>
                   </div>
 
-                  {/* Asset Hierarchy Location Selection */}
+                  {/* Asset Hierarchy Location Selection - Multiple Locations */}
                   <div className="space-y-4 pt-2">
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-primary" />
-                      <Label className="text-sm font-medium text-muted-foreground">
-                        Location
-                      </Label>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4 text-primary" />
+                        <Label className="text-sm font-medium text-muted-foreground">
+                          Locations
+                        </Label>
+                        {projectLocations.length > 1 && (
+                          <Badge variant="secondary" className="text-xs">
+                            {projectLocations.length}
+                          </Badge>
+                        )}
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={addLocation}
+                        className="text-xs"
+                      >
+                        + Add Location
+                      </Button>
                     </div>
 
-                    <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
-                      {/* Plant Selection - No Search */}
-                      <div className="space-y-2">
-                        <Label htmlFor="plant" className="text-xs text-muted-foreground flex items-center gap-1">
-                          <Building className="h-3 w-3" />
-                          Plant
-                        </Label>
-                        <Select
-                          value={formData.plant_id}
-                          onValueChange={(value) => {
-                            setFormData(prev => ({ 
-                              ...prev, 
-                              plant_id: value,
-                              field_id: '',
-                              station_id: ''
-                            }));
-                          }}
+                    <div className="space-y-3">
+                      {projectLocations.map((location, index) => (
+                        <div 
+                          key={location.id} 
+                          className="grid gap-3 grid-cols-1 md:grid-cols-[1fr_1fr_1fr_auto] items-end p-3 rounded-lg bg-background border border-border/40"
                         >
-                          <SelectTrigger className="bg-muted/50">
-                            <SelectValue placeholder={plantsLoading ? "Loading..." : "Select plant"} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {plants?.map((plant) => (
-                              <SelectItem key={plant.id} value={plant.id}>
-                                {plant.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      {/* Field Selection - No Search */}
-                      <div className="space-y-2">
-                        <Label htmlFor="field" className="text-xs text-muted-foreground flex items-center gap-1">
-                          <Layers className="h-3 w-3" />
-                          Field
-                        </Label>
-                        <Select
-                          value={formData.field_id}
-                          onValueChange={(value) => {
-                            setFormData(prev => ({ 
-                              ...prev, 
-                              field_id: value,
-                              station_id: ''
-                            }));
-                          }}
-                          disabled={!formData.plant_id}
-                        >
-                          <SelectTrigger className="bg-muted/50">
-                            <SelectValue placeholder={
-                              !formData.plant_id 
-                                ? "Select plant first" 
-                                : fieldsLoading 
-                                  ? "Loading..." 
-                                  : "Select field"
-                            } />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {getFieldsByPlant(formData.plant_id)?.map((field) => (
-                              <SelectItem key={field.id} value={field.id}>
-                                {field.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      {/* Station Selection - With Search */}
-                      <div className="space-y-2">
-                        <Label htmlFor="station" className="text-xs text-muted-foreground flex items-center gap-1">
-                          <MapPin className="h-3 w-3" />
-                          Station
-                        </Label>
-                        <Popover open={stationSearchOpen} onOpenChange={setStationSearchOpen} modal={true}>
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="outline"
-                              role="combobox"
-                              aria-expanded={stationSearchOpen}
-                              className="w-full justify-between bg-muted/50"
-                              disabled={!formData.field_id}
+                          {/* Plant Selection - No Search */}
+                          <div className="space-y-1.5">
+                            <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Building className="h-3 w-3" />
+                              Plant
+                            </Label>
+                            <Select
+                              value={location.plant_id}
+                              onValueChange={(value) => updateLocation(location.id, 'plant_id', value)}
                             >
-                              {formData.station_id
-                                ? getStationsByField(formData.field_id)?.find(s => s.id === formData.station_id)?.name || "Select station"
-                                : !formData.field_id 
-                                  ? "Select field first"
-                                  : stationsLoading 
-                                    ? "Loading..." 
-                                    : "Select station"}
-                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-full p-0 z-50" align="start">
-                            <Command>
-                              <CommandInput placeholder="Search station..." />
-                              <CommandList>
-                                <CommandEmpty>No station found.</CommandEmpty>
-                                <CommandGroup>
-                                  {getStationsByField(formData.field_id)?.map((station) => (
-                                    <CommandItem
-                                      key={station.id}
-                                      value={station.name}
-                                      onSelect={() => {
-                                        setFormData(prev => ({ ...prev, station_id: station.id }));
-                                        setStationSearchOpen(false);
-                                      }}
-                                    >
-                                      <Check
-                                        className={cn(
-                                          "mr-2 h-4 w-4",
-                                          formData.station_id === station.id ? "opacity-100" : "opacity-0"
-                                        )}
-                                      />
-                                      {station.name}
-                                    </CommandItem>
-                                  ))}
-                                </CommandGroup>
-                              </CommandList>
-                            </Command>
-                          </PopoverContent>
-                        </Popover>
-                      </div>
+                              <SelectTrigger className="bg-muted/50">
+                                <SelectValue placeholder={plantsLoading ? "Loading..." : "Select plant"} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {plants?.map((plant) => (
+                                  <SelectItem key={plant.id} value={plant.id}>
+                                    {plant.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          {/* Field Selection - No Search */}
+                          <div className="space-y-1.5">
+                            <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Layers className="h-3 w-3" />
+                              Field
+                            </Label>
+                            <Select
+                              value={location.field_id}
+                              onValueChange={(value) => updateLocation(location.id, 'field_id', value)}
+                              disabled={!location.plant_id}
+                            >
+                              <SelectTrigger className="bg-muted/50">
+                                <SelectValue placeholder={
+                                  !location.plant_id 
+                                    ? "Select plant first" 
+                                    : fieldsLoading 
+                                      ? "Loading..." 
+                                      : "Select field"
+                                } />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {getFieldsByPlant(location.plant_id)?.map((field) => (
+                                  <SelectItem key={field.id} value={field.id}>
+                                    {field.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          {/* Station Selection - With Search */}
+                          <div className="space-y-1.5">
+                            <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                              <MapPin className="h-3 w-3" />
+                              Station
+                            </Label>
+                            <Popover 
+                              open={openStationPopovers[location.id] || false} 
+                              onOpenChange={(open) => setOpenStationPopovers(prev => ({ ...prev, [location.id]: open }))}
+                              modal={true}
+                            >
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  role="combobox"
+                                  aria-expanded={openStationPopovers[location.id] || false}
+                                  className="w-full justify-between bg-muted/50"
+                                  disabled={!location.field_id}
+                                >
+                                  {location.station_id
+                                    ? getStationsByField(location.field_id)?.find(s => s.id === location.station_id)?.name || "Select station"
+                                    : !location.field_id 
+                                      ? "Select field first"
+                                      : stationsLoading 
+                                        ? "Loading..." 
+                                        : "Select station"}
+                                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-full p-0 z-50" align="start">
+                                <Command>
+                                  <CommandInput placeholder="Search station..." />
+                                  <CommandList>
+                                    <CommandEmpty>No station found.</CommandEmpty>
+                                    <CommandGroup>
+                                      {getStationsByField(location.field_id)?.map((station) => (
+                                        <CommandItem
+                                          key={station.id}
+                                          value={station.name}
+                                          onSelect={() => {
+                                            updateLocation(location.id, 'station_id', station.id);
+                                            setOpenStationPopovers(prev => ({ ...prev, [location.id]: false }));
+                                          }}
+                                        >
+                                          <Check
+                                            className={cn(
+                                              "mr-2 h-4 w-4",
+                                              location.station_id === station.id ? "opacity-100" : "opacity-0"
+                                            )}
+                                          />
+                                          {station.name}
+                                        </CommandItem>
+                                      ))}
+                                    </CommandGroup>
+                                  </CommandList>
+                                </Command>
+                              </PopoverContent>
+                            </Popover>
+                          </div>
+
+                          {/* Remove button */}
+                          <div className="flex items-center justify-center">
+                            {projectLocations.length > 1 && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => removeLocation(location.id)}
+                                className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
