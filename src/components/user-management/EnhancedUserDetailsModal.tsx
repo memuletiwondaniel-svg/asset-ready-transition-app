@@ -1986,6 +1986,18 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
             </Card>
           </TabsContent>
         </Tabs>
+        
+        {/* Footer with Save button when in edit mode */}
+        {editMode && (
+          <div className="sticky bottom-0 bg-background border-t pt-4 mt-4 flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setEditMode(false)} disabled={loading}>
+              Cancel
+            </Button>
+            <Button onClick={handleSave} disabled={loading}>
+              {loading ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </div>
+        )}
       </DialogContent>
       
       {/* Avatar Crop Dialog */}
