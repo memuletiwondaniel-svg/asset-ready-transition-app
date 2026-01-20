@@ -116,16 +116,23 @@ export const useORPPlans = () => {
 // Fetch deliverable categories from catalog
 export const useORPDeliverableCategories = () => {
   const { data: categories, isLoading } = useQuery({
-    queryKey: ['orp-deliverable-categories'],
+    queryKey: ['p2a-deliverable-categories'],
     queryFn: async () => {
+      // Use P2A deliverable categories for the heatmap columns
       const { data, error } = await supabase
-        .from('orp_deliverables_catalog')
-        .select('id, name, phase, display_order')
+        .from('p2a_deliverable_categories')
+        .select('id, name, display_order')
         .eq('is_active', true)
         .order('display_order');
 
       if (error) throw error;
-      return data as ORPDeliverableCategory[];
+      // Map to expected interface - phase is not used for P2A categories
+      return (data || []).map(cat => ({
+        id: cat.id,
+        name: cat.name,
+        phase: 'EXECUTE' as ORPPhase, // Default phase for P2A
+        display_order: cat.display_order
+      })) as ORPDeliverableCategory[];
     }
   });
 
