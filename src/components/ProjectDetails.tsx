@@ -132,7 +132,7 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({ project, onContextActio
           )}
 
           <div className="p-2 bg-green-50 rounded-md">
-            <span className="text-xs text-gray-600 block mb-1">Project Manager</span>
+            <span className="text-xs text-gray-600 block mb-1">Project Hub Lead</span>
             <span className="text-sm font-medium text-gray-900">{currentProject.hubLead.name}</span>
           </div>
 
@@ -197,8 +197,10 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({ project, onContextActio
               </div>
             </div>
 
-            {/* Others */}
-            {currentProject.others.map((member, index) => (
+            {/* Required roles only */}
+            {currentProject.others
+              .filter(member => ['Construction Lead', 'Commissioning Lead', 'Snr ORA Engr.', 'Snr. ORA Engr.', 'Snr ORA Engr.', 'Senior ORA Engr.'].includes(member.role || ''))
+              .map((member, index) => (
               <div key={index} className="flex items-center gap-2">
                 <ContextMenu>
                   <ContextMenuTrigger>

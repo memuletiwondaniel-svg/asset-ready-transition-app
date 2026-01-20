@@ -212,7 +212,15 @@ export const ViewProjectModal: React.FC<ViewProjectModalProps> = ({
   };
 
   // Separate required roles from additional members
-  const REQUIRED_ROLES = ['Project Manager', 'Project Engineer', 'Commissioning Lead', 'Construction Lead', 'ORA Lead'];
+  const REQUIRED_ROLES = [
+    'Project Hub Lead',
+    'Construction Lead',
+    'Commissioning Lead',
+    'Snr ORA Engr.',
+    'Snr. ORA Engr.',
+    'Snr ORA Engr.',
+    'Senior ORA Engr.',
+  ];
   const requiredRoleMembers = teamMembers.filter(m => REQUIRED_ROLES.includes(m.role));
   const additionalMembers = teamMembers.filter(m => !REQUIRED_ROLES.includes(m.role));
 
