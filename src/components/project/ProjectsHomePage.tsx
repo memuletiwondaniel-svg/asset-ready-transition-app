@@ -64,16 +64,24 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
   };
 
   const getProjectColor = (prefix: string, number: string) => {
-    const hash = `${prefix}${number}`.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    const colors = [
-      { bg: 'from-slate-400 to-slate-500', text: 'text-white', border: 'border-slate-300' },
-      { bg: 'from-blue-400 to-blue-500', text: 'text-white', border: 'border-blue-300' },
-      { bg: 'from-violet-400 to-violet-500', text: 'text-white', border: 'border-violet-300' },
-      { bg: 'from-indigo-400 to-indigo-500', text: 'text-white', border: 'border-indigo-300' },
-      { bg: 'from-purple-400 to-purple-500', text: 'text-white', border: 'border-purple-300' },
-      { bg: 'from-zinc-400 to-zinc-500', text: 'text-white', border: 'border-zinc-300' },
-    ];
-    return colors[hash % colors.length];
+    // Generate unique hash from project ID
+    const str = `${prefix}${number}`;
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+      hash = hash & hash;
+    }
+    
+    // Generate unique subtle HSL color - low saturation for muted look
+    const hue = Math.abs(hash) % 360;
+    const saturation = 25 + (Math.abs(hash >> 8) % 15); // 25-40% saturation (subtle)
+    const lightness = 55 + (Math.abs(hash >> 16) % 10); // 55-65% lightness (muted)
+    
+    const bgStart = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+    const bgEnd = `hsl(${hue}, ${saturation + 5}%, ${lightness - 8}%)`;
+    const borderColor = `hsl(${hue}, ${saturation - 5}%, ${lightness + 15}%)`;
+    
+    return { bgStart, bgEnd, borderColor };
   };
 
   const calculateProgress = (completed: number, total: number) => {
@@ -216,14 +224,15 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                     </button>
 
                     {/* Gradient Background Effect */}
-                    <div className={`absolute inset-0 bg-gradient-to-br ${projectColor.bg} opacity-0 group-hover:opacity-10 transition-opacity duration-300`} />
+                    <div className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-300" style={{ background: `linear-gradient(to bottom right, ${projectColor.bgStart}, ${projectColor.bgEnd})` }} />
                     <CardContent className="relative p-4 space-y-4">
                       {/* Header */}
                       <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0 pr-8">
                           <Badge 
                             variant="outline" 
-                            className={`bg-gradient-to-r ${projectColor.bg} ${projectColor.text} ${projectColor.border} text-xs font-semibold px-2 py-0.5 mb-2`}
+                            className="text-xs font-semibold px-2 py-0.5 mb-2 text-white border-0"
+                            style={{ background: `linear-gradient(to right, ${projectColor.bgStart}, ${projectColor.bgEnd})` }}
                           >
                             {project.project_id_prefix}{project.project_id_number}
                           </Badge>
@@ -346,7 +355,8 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                       <div className="col-span-1">
                         <Badge 
                           variant="outline" 
-                          className={`bg-gradient-to-r ${projectColor.bg} ${projectColor.text} ${projectColor.border} text-xs font-semibold px-2 py-0.5`}
+                          className="text-xs font-semibold px-2 py-0.5 text-white border-0"
+                          style={{ background: `linear-gradient(to right, ${projectColor.bgStart}, ${projectColor.bgEnd})` }}
                         >
                           {project.project_id_prefix}{project.project_id_number}
                         </Badge>
