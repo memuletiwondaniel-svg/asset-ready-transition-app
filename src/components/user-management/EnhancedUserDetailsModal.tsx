@@ -301,6 +301,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
       case 'Site Engr.':
         return !!station;
       case 'Ops Coach':
+        return !!plant && !!field; // Ops Coach requires plant and field (station optional)
       case 'Ops Team Lead':
       case 'Section Head':
         return !!field;
@@ -331,9 +332,14 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
     return ['Plant Director', 'Dep. Plant Director'].includes(role);
   };
 
-  // Check if role requires field selection (for Ops roles)
+  // Check if role requires field selection (for Ops roles - excluding Ops Coach which uses full hierarchy)
   const requiresField = (role: string) => {
-    return ['Ops Team Lead', 'Ops Coach', 'Section Head'].includes(role);
+    return ['Ops Team Lead', 'Section Head'].includes(role);
+  };
+
+  // Check if role requires full asset hierarchy (Plant > Field > Station)
+  const requiresAssetHierarchy = (role: string) => {
+    return role === 'Ops Coach';
   };
 
   // Check if TA2 role should show commission field (exclude Civil TA2 and Tech Safety TA2)
@@ -1051,7 +1057,12 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
         setPlants(prev => [...prev, { value: newPlant.name, label: newPlant.name }]);
       }
     }
-    setFormData(prev => ({ ...prev, plant: value }));
+    // For Ops Coach, reset field and station when plant changes (hierarchy)
+    if (requiresAssetHierarchy(formData.role)) {
+      setFormData(prev => ({ ...prev, plant: value, field: '', station: '' }));
+    } else {
+      setFormData(prev => ({ ...prev, plant: value }));
+    }
   };
 
   const handleStationChange = async (value: string) => {
@@ -1071,7 +1082,12 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
         setFields(prev => [...prev, { value: newField.name, label: newField.name }]);
       }
     }
-    setFormData(prev => ({ ...prev, field: value }));
+    // For Ops Coach, reset station when field changes (hierarchy)
+    if (requiresAssetHierarchy(formData.role)) {
+      setFormData(prev => ({ ...prev, field: value, station: '' }));
+    } else {
+      setFormData(prev => ({ ...prev, field: value }));
+    }
   };
 
   const handleInputChange = (field: string, value: any) => {
@@ -1477,6 +1493,70 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                               className={!editMode ? 'bg-muted pointer-events-none' : ''}
                             />
                           </div>
+                        )}
+
+                        {/* Ops Coach - Full Asset Hierarchy (Plant > Field > Station) */}
+                        {requiresAssetHierarchy(formData.role) && (
+                          <>
+                            <div>
+                              <Label>Plant *</Label>
+                              <Select
+                                value={formData.plant}
+                                onValueChange={handlePlantChange}
+                                disabled={!editMode}
+                              >
+                                <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
+                                  <SelectValue placeholder="Select plant" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {plants.map(plant => (
+                                    <SelectItem key={plant.value} value={plant.value}>
+                                      {plant.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label>Field *</Label>
+                              <Select
+                                value={formData.field}
+                                onValueChange={handleFieldChange}
+                                disabled={!editMode || !formData.plant}
+                              >
+                                <SelectTrigger className={!editMode || !formData.plant ? 'bg-muted' : ''}>
+                                  <SelectValue placeholder={formData.plant ? "Select field" : "Select plant first"} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {fields
+                                    .filter(field => {
+                                      // Filter fields by the selected plant
+                                      // We need to match by plant name since we're using names not IDs
+                                      return true; // Show all fields for now since hierarchy filtering requires additional data
+                                    })
+                                    .map(field => (
+                                      <SelectItem key={field.value} value={field.value}>
+                                        {field.label}
+                                      </SelectItem>
+                                    ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label>Station</Label>
+                              <Combobox
+                                value={formData.station}
+                                onValueChange={handleStationChange}
+                                options={stations}
+                                placeholder={formData.field ? "Select station" : "Select field first"}
+                                searchPlaceholder="Search stations..."
+                                emptyText="No stations found"
+                                allowCustom={editMode}
+                                onAddCustom={handleStationChange}
+                                className={!editMode || !formData.field ? 'bg-muted pointer-events-none' : ''}
+                              />
+                            </div>
+                          </>
                         )}
 
                         {/* TA2 Roles with Commission (Elect, Rotating, PACO, Static, Process) */}
