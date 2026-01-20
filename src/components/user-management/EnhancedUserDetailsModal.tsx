@@ -451,13 +451,50 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
   };
 
   // Initialize form data when modal opens or user changes
+  // Helper function to extract base role from position string
+  // Position can be like "Ops Coach – Artawi", "Project Manager – North", etc.
+  const extractBaseRoleFromPosition = (position: string, availableRoles: string[]): string => {
+    if (!position) return '';
+    
+    // First, try exact match
+    if (availableRoles.includes(position)) {
+      return position;
+    }
+    
+    // Try to find a role that the position starts with (handle " – " and " - " separators)
+    const separators = [' – ', ' - ', '–', '-'];
+    for (const separator of separators) {
+      if (position.includes(separator)) {
+        const basePart = position.split(separator)[0].trim();
+        if (availableRoles.includes(basePart)) {
+          return basePart;
+        }
+      }
+    }
+    
+    // Try to find any role that is a prefix of the position
+    const matchingRole = availableRoles.find(role => position.startsWith(role));
+    if (matchingRole) {
+      return matchingRole;
+    }
+    
+    return position;
+  };
+
   useEffect(() => {
     if (isOpen && user) {
-      // Find the function/category for the user's current role
+      // Get all available role names for matching
+      const allRoleNames = categorizedRoles?.flatMap(group => group.roles.map(r => r.name)) || [];
+      
+      // Extract base role from position (position may contain full title like "Ops Coach – Artawi")
+      const positionOrRole = user.position || user.role || '';
+      const baseRole = extractBaseRoleFromPosition(positionOrRole, allRoleNames);
+      
+      // Find the function/category for the user's role
       let userFunction = '';
-      if (user.role && categorizedRoles) {
+      if (baseRole && categorizedRoles) {
         const categoryWithRole = categorizedRoles.find(group => 
-          group.roles.some(r => r.name === user.role)
+          group.roles.some(r => r.name === baseRole)
         );
         userFunction = categoryWithRole?.category.name || '';
       }
@@ -466,13 +503,15 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
         first_name: user.first_name || '',
         last_name: user.last_name || '',
         email: user.email || '',
-        functional_email_address: user.personal_email || user.functional_email_address || '',
+        // When functional_email is true, personal_email contains the user's personal email address
+        // The field named "functional_email_address" in the form is actually used to display the personal email
+        functional_email_address: user.personal_email || '',
         phone_number: user.phone_number || '',
         primary_phone: user.primary_phone || '',
         secondary_phone: user.secondary_phone || '',
         country_code: user.country_code || '+964',
         function: userFunction,
-        role: user.role || '',
+        role: baseRole, // Use extracted base role, not full position
         discipline: user.ta2_discipline || '',
         commission: user.ta2_commission || '',
         portfolio: '',
