@@ -131,6 +131,15 @@ export default {
 				'xs': '2px',
 			},
 			keyframes: {
+				'card-relocate': {
+					'0%': { opacity: '0', transform: 'translateY(-10px) scale(0.98)' },
+					'100%': { opacity: '1', transform: 'translateY(0) scale(1)' }
+				},
+				'card-expand': {
+					'0%': { transform: 'scale(1)' },
+					'50%': { transform: 'scale(1.01)' },
+					'100%': { transform: 'scale(1)' }
+				},
 				'accordion-down': {
 					from: { height: '0', opacity: '0' },
 					to: { height: 'var(--radix-accordion-content-height)', opacity: '1' }
@@ -321,6 +330,8 @@ export default {
 		},
 	},
 		animation: {
+			'card-relocate': 'card-relocate 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+			'card-expand': 'card-expand 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
 			'accordion-down': 'accordion-down 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
 			'accordion-up': 'accordion-up 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
 			'fade-in': 'fade-in 0.25s ease-in-out',
