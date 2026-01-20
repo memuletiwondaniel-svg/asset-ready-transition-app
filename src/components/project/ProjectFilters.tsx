@@ -9,6 +9,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Search, X, Filter, LayoutGrid, List } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface ProjectFiltersProps {
   searchQuery: string;
@@ -94,20 +95,30 @@ export const ProjectFilters: React.FC<ProjectFiltersProps> = ({
           </Button>
         )}
 
-        <div className="flex gap-1 bg-muted/50 p-1 rounded-lg shrink-0">
+        <div className="flex gap-1 bg-muted/30 p-1 rounded-lg border border-border/30 shrink-0">
           <Button
-            variant={viewMode === 'table' ? 'secondary' : 'ghost'}
+            variant="ghost"
             size="sm"
             onClick={() => onViewModeChange('table')}
-            className="h-8"
+            className={cn(
+              "h-8 px-2.5",
+              viewMode === 'table' 
+                ? "bg-background shadow-sm text-foreground" 
+                : "text-muted-foreground hover:text-foreground"
+            )}
           >
             <List className="h-4 w-4" />
           </Button>
           <Button
-            variant={viewMode === 'cards' ? 'secondary' : 'ghost'}
+            variant="ghost"
             size="sm"
             onClick={() => onViewModeChange('cards')}
-            className="h-8"
+            className={cn(
+              "h-8 px-2.5",
+              viewMode === 'cards' 
+                ? "bg-background shadow-sm text-foreground" 
+                : "text-muted-foreground hover:text-foreground"
+            )}
           >
             <LayoutGrid className="h-4 w-4" />
           </Button>
