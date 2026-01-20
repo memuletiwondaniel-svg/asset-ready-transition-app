@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { MyTasksPanelCard } from './MyTasksPanelCard';
 import { useUserOWLItems, OWLStatus } from '@/hooks/useUserOWLItems';
 import { useUserLastLogin } from '@/hooks/useUserLastLogin';
+import { generateMockOWLItems, MockOWLItem } from '@/hooks/useMyTasksMockData';
 import { cn } from '@/lib/utils';
 import { format, isPast, isToday } from 'date-fns';
 
@@ -25,15 +26,17 @@ export const OWLPanel: React.FC<OWLPanelProps> = ({
   isRelocated = false,
 }) => {
   const navigate = useNavigate();
-  const { items: rawItems, stats, isLoading, updateStatus, isUpdatingStatus } = useUserOWLItems();
+  const { items: realItems, stats: realStats, isLoading, updateStatus, isUpdatingStatus } = useUserOWLItems();
   const { isNewSinceLastLogin } = useUserLastLogin();
 
-  const items = (rawItems || []).filter(i => {
+  // Use mock data if real data is empty
+  const mockData = generateMockOWLItems();
+  const rawItems = (realItems && realItems.length > 0) ? realItems : mockData;
+
+  const items = rawItems.filter(i => {
     if (!searchQuery.trim()) return true;
     const query = searchQuery.toLowerCase();
-    const projectName = typeof i.project === 'object' && i.project !== null
-      ? ((i.project as any).project_title || (i.project as any).name || '')
-      : '';
+    const projectName = i.project?.name || '';
     return (
       i.title?.toLowerCase().includes(query) ||
       projectName.toLowerCase().includes(query)
@@ -41,8 +44,15 @@ export const OWLPanel: React.FC<OWLPanelProps> = ({
   });
 
   const newCount = items.filter(i => isNewSinceLastLogin(i.created_at)).length;
-  // Items already filtered to OPEN and IN_PROGRESS in the hook
-  const openItems = items;
+  
+  // Calculate stats
+  const stats = (realItems && realItems.length > 0) ? realStats : {
+    total: items.length,
+    open: items.filter(i => i.status === 'OPEN').length,
+    inProgress: items.filter(i => i.status === 'IN_PROGRESS').length,
+    overdue: items.filter(i => i.due_date && new Date(i.due_date) < new Date()).length,
+    priority1: items.filter(i => i.priority === 1).length,
+  };
 
   const getSourceColor = (source: string) => {
     switch (source) {
@@ -83,7 +93,10 @@ export const OWLPanel: React.FC<OWLPanelProps> = ({
   };
 
   const handleStatusUpdate = (id: string, status: OWLStatus) => {
-    updateStatus({ id, status });
+    // Only update real items, not mock
+    if (!id.startsWith('mock-')) {
+      updateStatus({ id, status });
+    }
   };
 
   return (
@@ -101,18 +114,19 @@ export const OWLPanel: React.FC<OWLPanelProps> = ({
       isFullHeight={isFullHeight}
       isRelocated={isRelocated}
       isLoading={isLoading}
-      isEmpty={openItems.length === 0}
+      isEmpty={items.length === 0}
       emptyMessage="No outstanding work items"
     >
-      {openItems.map((item, index) => {
+      {items.map((item, index) => {
         const isNew = isNewSinceLastLogin(item.created_at);
         const dueStatus = getDueStatus(item.due_date);
+        const isMock = (item as MockOWLItem).id?.startsWith('mock-');
 
         return (
           <div
             key={item.id}
             className={cn(
-              "p-3 rounded-lg border bg-background/50 hover:bg-background/80 transition-all",
+              "p-3 rounded-lg border bg-background/50 hover:bg-background/80 transition-all group/item",
               "hover:shadow-sm hover:border-primary/20",
               isNew && "border-l-2 border-l-primary",
               "animate-fade-in"
@@ -121,7 +135,7 @@ export const OWLPanel: React.FC<OWLPanelProps> = ({
           >
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <Badge 
                     variant="outline" 
                     className={cn("text-[10px]", getSourceColor(item.source))}
@@ -165,7 +179,7 @@ export const OWLPanel: React.FC<OWLPanelProps> = ({
                     size="sm"
                     variant="outline"
                     className="h-6 text-xs px-2"
-                    disabled={isUpdatingStatus}
+                    disabled={isUpdatingStatus || isMock}
                     onClick={() => handleStatusUpdate(item.id, 'IN_PROGRESS')}
                   >
                     Start
@@ -176,7 +190,7 @@ export const OWLPanel: React.FC<OWLPanelProps> = ({
                     size="sm"
                     variant="default"
                     className="h-6 text-xs px-2"
-                    disabled={isUpdatingStatus}
+                    disabled={isUpdatingStatus || isMock}
                     onClick={() => handleStatusUpdate(item.id, 'CLOSED')}
                   >
                     Complete
