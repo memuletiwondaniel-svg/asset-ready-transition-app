@@ -226,7 +226,7 @@ export const AvatarCropDialog: React.FC<AvatarCropDialogProps> = ({
                   <ZoomOut className="h-4 w-4 text-muted-foreground" />
                   <Slider
                     value={[zoom]}
-                    min={1}
+                    min={0.5}
                     max={3}
                     step={0.1}
                     onValueChange={(value) => setZoom(value[0])}
