@@ -59,9 +59,9 @@ interface UserFormData {
   commission?: string;
   portfolio?: string; // Region: North, Central, South
   hub: string;
-  plant?: string;
-  field?: string;
-  station?: string;
+  plant_id?: string;
+  field_id?: string;
+  station_id?: string;
   authenticator: string;
 }
 
@@ -102,25 +102,25 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
   const { data: hubs } = useHubs();
   const { plants, fields, stations, getFieldsByPlant, getStationsByField, isLoading: locationsLoading } = useLocations();
 
-  // Get fields filtered by selected plant (using database relationships)
-  const getFieldsForPlant = (plantName: string) => {
-    const plant = plants.find(p => p.name === plantName);
-    if (!plant) return fields; // Return all fields if no plant selected
-    return getFieldsByPlant(plant.id);
+  // Get plant name by ID
+  const getPlantName = (plantId: string) => {
+    return plants.find(p => p.id === plantId)?.name || '';
   };
 
-  // Get stations filtered by selected field (using database relationships)
-  const getStationsForField = (fieldName: string) => {
-    const field = fields.find(f => f.name === fieldName);
-    if (!field) return [];
-    return getStationsByField(field.id);
+  // Get field name by ID
+  const getFieldName = (fieldId: string) => {
+    return fields.find(f => f.id === fieldId)?.name || '';
+  };
+
+  // Get station name by ID
+  const getStationName = (stationId: string) => {
+    return stations.find(s => s.id === stationId)?.name || '';
   };
 
   // Check if selected field has any stations linked (for CS plant hierarchy)
-  const fieldRequiresStation = (fieldName: string) => {
-    const field = fields.find(f => f.name === fieldName);
-    if (!field) return false;
-    return getStationsByField(field.id).length > 0;
+  const fieldHasStations = (fieldId: string) => {
+    if (!fieldId) return false;
+    return getStationsByField(fieldId).length > 0;
   };
 
   // Check if role requires direct station selection (Site Engr.)
@@ -290,8 +290,12 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
 
   // Generate position based on role and contextual fields
   const generatePosition = () => {
-    const { role, hub, portfolio, commission, plant, station, field } = formData;
+    const { role, hub, portfolio, commission, plant_id, station_id, field_id } = formData;
     if (!role) return '';
+    
+    const plantName = getPlantName(plant_id || '');
+    const fieldName = getFieldName(field_id || '');
+    const stationName = getStationName(station_id || '');
     
     // Roles that require portfolio + hub (e.g., Project Hub Lead, Project Engr)
     // Display only Role - Hub (without portfolio/region name)
@@ -321,23 +325,23 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
     }
     
     // Plant Director and Dep. Plant Director - stop at plant
-    if (['Plant Director', 'Dep. Plant Director'].includes(role) && plant) {
-      return `${role} - ${plant}`;
+    if (['Plant Director', 'Dep. Plant Director'].includes(role) && plantName) {
+      return `${role} - ${plantName}`;
     }
     
     // Site Engr. requires station directly
-    if (role === 'Site Engr.' && station) {
-      return `Site Engr. - ${station}`;
+    if (role === 'Site Engr.' && stationName) {
+      return `Site Engr. - ${stationName}`;
     }
     
     // Ops Coach and Ops Team Lead with field
-    if (['Ops Coach', 'Ops Team Lead'].includes(role) && field) {
-      return `${role} - ${field}`;
+    if (['Ops Coach', 'Ops Team Lead'].includes(role) && fieldName) {
+      return `${role} - ${fieldName}`;
     }
     
     // Section Head with field
-    if (role === 'Section Head' && field) {
-      return `Section Head - ${field}`;
+    if (role === 'Section Head' && fieldName) {
+      return `Section Head - ${fieldName}`;
     }
     
     // Default: just return the role name for roles without additional context
@@ -374,7 +378,7 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
       }
 
       // Validate plant for roles that require it
-      if (requiresPlant(formData.role) && !formData.plant) {
+      if (requiresPlant(formData.role) && !formData.plant_id) {
         toast({
           title: "Missing Plant",
           description: "Please select a plant.",
@@ -383,8 +387,12 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
         return;
       }
 
+      // Check if selected plant is CS (Compression Station)
+      const selectedPlantName = getPlantName(formData.plant_id || '');
+      const isCSPlant = selectedPlantName === 'CS';
+
       // Validate field selection when CS plant is selected for operations roles that require field
-      if (requiresField(formData.role) && formData.plant === 'CS' && !formData.field) {
+      if (requiresField(formData.role) && isCSPlant && !formData.field_id) {
         toast({
           title: "Missing Field",
           description: "Please select a field for Compression Station.",
@@ -394,17 +402,17 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
       }
 
       // Validate station selection when field requires station (for ops roles with CS plant, except Ops Coach)
-      if (roleRequiresStationInHierarchy(formData.role) && formData.plant === 'CS' && fieldRequiresStation(formData.field || '') && !formData.station) {
+      if (roleRequiresStationInHierarchy(formData.role) && isCSPlant && fieldHasStations(formData.field_id || '') && !formData.station_id) {
         toast({
           title: "Missing Station",
-          description: `Please select a station for ${formData.field}.`,
+          description: `Please select a station for ${getFieldName(formData.field_id || '')}.`,
           variant: "destructive",
         });
         return;
       }
 
       // Validate station for Site Engr. role
-      if (roleRequiresStation(formData.role) && !formData.station) {
+      if (roleRequiresStation(formData.role) && !formData.station_id) {
         toast({
           title: "Missing Station",
           description: "Please select a station for Site Engineer.",
@@ -481,9 +489,9 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
             functionalEmail: formData.isFunctionalEmail ? formData.email : null,
             isFunctionalEmail: formData.isFunctionalEmail,
             commission: formData.commission || null,
-            plant: formData.plant || null,
-            station: formData.station || null,
-            field: formData.field || null,
+            plant: getPlantName(formData.plant_id || '') || null,
+            station: getStationName(formData.station_id || '') || null,
+            field: getFieldName(formData.field_id || '') || null,
           }
         });
 
@@ -562,9 +570,9 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
       commission: '',
       portfolio: '',
       hub: '',
-      plant: '',
-      field: '',
-      station: '',
+      plant_id: '',
+      field_id: '',
+      station_id: '',
       authenticator: 'Daniel Memuletiwon',
     });
     setEmailError('');
@@ -974,53 +982,67 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Plant *</Label>
               <Select
-                value={formData.plant}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, plant: value, field: '' }))}
+                value={formData.plant_id}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, plant_id: value, field_id: '', station_id: '' }))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder={locationsLoading ? "Loading plants..." : "Select plant"} />
                 </SelectTrigger>
                 <SelectContent>
                   {plants.map(plant => (
-                    <SelectItem key={plant.id} value={plant.name}>{plant.name}</SelectItem>
+                    <SelectItem key={plant.id} value={plant.id}>{plant.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
           )}
 
-          {requiresField(formData.role) && formData.plant === 'CS' && (
+          {requiresField(formData.role) && getPlantName(formData.plant_id || '') === 'CS' && (
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Field *</Label>
               <Select
-                value={formData.field}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, field: value, station: '' }))}
+                value={formData.field_id}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, field_id: value, station_id: '' }))}
+                disabled={!formData.plant_id}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder={locationsLoading ? "Loading fields..." : "Select field"} />
+                  <SelectValue placeholder={
+                    !formData.plant_id 
+                      ? "Select plant first" 
+                      : locationsLoading 
+                        ? "Loading fields..." 
+                        : "Select field"
+                  } />
                 </SelectTrigger>
                 <SelectContent>
-                  {getFieldsForPlant(formData.plant || '').map(field => (
-                    <SelectItem key={field.id} value={field.name}>{field.name}</SelectItem>
+                  {getFieldsByPlant(formData.plant_id || '').map(field => (
+                    <SelectItem key={field.id} value={field.id}>{field.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
           )}
 
-          {roleRequiresStationInHierarchy(formData.role) && formData.plant === 'CS' && fieldRequiresStation(formData.field || '') && (
+          {roleRequiresStationInHierarchy(formData.role) && getPlantName(formData.plant_id || '') === 'CS' && fieldHasStations(formData.field_id || '') && (
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Station *</Label>
               <Select
-                value={formData.station}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, station: value }))}
+                value={formData.station_id}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, station_id: value }))}
+                disabled={!formData.field_id}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder={locationsLoading ? "Loading stations..." : "Select station"} />
+                  <SelectValue placeholder={
+                    !formData.field_id 
+                      ? "Select field first" 
+                      : locationsLoading 
+                        ? "Loading stations..." 
+                        : "Select station"
+                  } />
                 </SelectTrigger>
                 <SelectContent>
-                  {getStationsForField(formData.field || '').map(station => (
-                    <SelectItem key={station.id} value={station.name}>{station.name}</SelectItem>
+                  {getStationsByField(formData.field_id || '').map(station => (
+                    <SelectItem key={station.id} value={station.id}>{station.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -1032,15 +1054,15 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Station *</Label>
               <Select
-                value={formData.station}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, station: value }))}
+                value={formData.station_id}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, station_id: value }))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder={locationsLoading ? "Loading stations..." : "Select station"} />
                 </SelectTrigger>
                 <SelectContent>
                   {stations.map(station => (
-                    <SelectItem key={station.id} value={station.name}>{station.name}</SelectItem>
+                    <SelectItem key={station.id} value={station.id}>{station.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -1151,22 +1173,22 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
                   <p className="text-sm mt-1">{formData.hub}</p>
                 </>
               )}
-              {formData.plant && (
+              {formData.plant_id && (
                 <>
                   <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Plant</span>
-                  <p className="text-sm mt-1">{formData.plant}</p>
+                  <p className="text-sm mt-1">{getPlantName(formData.plant_id)}</p>
                 </>
               )}
-              {formData.station && (
-                <>
-                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Station</span>
-                  <p className="text-sm mt-1">{formData.station}</p>
-                </>
-              )}
-              {formData.field && (
+              {formData.field_id && (
                 <>
                   <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Field</span>
-                  <p className="text-sm mt-1">{formData.field}</p>
+                  <p className="text-sm mt-1">{getFieldName(formData.field_id)}</p>
+                </>
+              )}
+              {formData.station_id && (
+                <>
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Station</span>
+                  <p className="text-sm mt-1">{getStationName(formData.station_id)}</p>
                 </>
               )}
             </div>
