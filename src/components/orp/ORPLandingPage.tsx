@@ -143,13 +143,6 @@ export const ORPLandingPage: React.FC = () => {
                 </p>
               </div>
             </div>
-            
-            <div className="flex gap-2">
-              <Button size="sm" onClick={() => navigate('/operation-readiness/analytics')} variant="outline" className="gap-2">
-                <BarChart3 className="w-4 h-4" />
-                {t.analytics || 'Analytics'}
-              </Button>
-            </div>
           </div>
         </div>
 
