@@ -47,7 +47,7 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
   const { translations: t } = useLanguage();
   const { projects, isLoading } = useProjects();
   const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [columnVisibility, setColumnVisibility] = useState<ColumnVisibility>({
     portfolio: false,
     hub: true,
