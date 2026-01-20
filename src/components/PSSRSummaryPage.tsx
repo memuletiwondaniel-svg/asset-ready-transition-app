@@ -776,7 +776,7 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
               
               {/* Actions */}
               <div className="flex items-center gap-2">
-                <Button onClick={() => setShowCreateIntro(true)} className="gap-2">
+                <Button onClick={() => setShowCreateIntro(true)} className="gap-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm">
                   <Plus className="h-4 w-4" />
                   {t.createNewPSSR || 'Create PSSR'}
                 </Button>
