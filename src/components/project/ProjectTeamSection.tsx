@@ -46,9 +46,12 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
   const { suggestedTeam, isLoading: isAutoPopulating } = useAutoPopulateTeam(regionName, hubName, hubId);
   const [hasAutoPopulated, setHasAutoPopulated] = useState(false);
 
-  // Auto-populate when hub changes and team is empty
+  // Auto-populate when hub or region changes and team is empty
   useEffect(() => {
-    if (hubId && suggestedTeam.length > 0 && !hasAutoPopulated && teamMembers.length === 0) {
+    // Trigger auto-population if we have either hubId OR regionName (for region-based roles)
+    const shouldAutoPopulate = (hubId || regionName) && suggestedTeam.length > 0 && !hasAutoPopulated && teamMembers.length === 0;
+    
+    if (shouldAutoPopulate) {
       // Process suggested team: first member per role goes to required slot, others become additional
       const requiredRoleNames = REQUIRED_ROLES.map(r => r.role);
       const processedRoles = new Set<string>();
@@ -74,12 +77,12 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
       setTeamMembers(newTeamMembers);
       setHasAutoPopulated(true);
     }
-  }, [hubId, suggestedTeam, hasAutoPopulated, teamMembers.length, setTeamMembers]);
+  }, [hubId, regionName, suggestedTeam, hasAutoPopulated, teamMembers.length, setTeamMembers]);
 
-  // Reset auto-populate flag when hub changes
+  // Reset auto-populate flag when hub or region changes
   useEffect(() => {
     setHasAutoPopulated(false);
-  }, [hubId]);
+  }, [hubId, regionName]);
 
   const handleAutoPopulate = () => {
     if (suggestedTeam.length > 0) {
