@@ -128,6 +128,12 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
     return role === 'Site Engr.';
   };
 
+  // Check if role should show station selector when in CS plant with field selected
+  // Ops Coach does NOT require station - they work at field level
+  const roleRequiresStationInHierarchy = (role: string) => {
+    return ['Ops Team Lead', 'Section Head'].includes(role);
+  };
+
   const { data: categorizedRoles, isLoading: rolesLoading } = useCategorizedRoles();
   const { data: roleCategories } = useRoleCategories();
   const { addRole } = useAddRole();
@@ -387,8 +393,8 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
         return;
       }
 
-      // Validate station selection when field requires station (for ops roles with CS plant)
-      if (requiresField(formData.role) && formData.plant === 'CS' && fieldRequiresStation(formData.field || '') && !formData.station) {
+      // Validate station selection when field requires station (for ops roles with CS plant, except Ops Coach)
+      if (roleRequiresStationInHierarchy(formData.role) && formData.plant === 'CS' && fieldRequiresStation(formData.field || '') && !formData.station) {
         toast({
           title: "Missing Station",
           description: `Please select a station for ${formData.field}.`,
@@ -1002,7 +1008,7 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
             </div>
           )}
 
-          {requiresField(formData.role) && formData.plant === 'CS' && fieldRequiresStation(formData.field || '') && (
+          {roleRequiresStationInHierarchy(formData.role) && formData.plant === 'CS' && fieldRequiresStation(formData.field || '') && (
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Station *</Label>
               <Select
