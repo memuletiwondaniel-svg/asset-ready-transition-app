@@ -28,7 +28,7 @@ export const HandoverReviewsPanel: React.FC = () => {
 
   return (
     <MyTasksPanelCard
-      title="Handover Reviews"
+      title="P2A Handover Reviews"
       icon={<RefreshCw className="h-5 w-5 text-white" />}
       iconColorClass="from-teal-500 to-teal-600"
       primaryStat={stats.total}
