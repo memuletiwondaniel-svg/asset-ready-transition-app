@@ -8,10 +8,23 @@ import { useUserP2AApprovals } from '@/hooks/useUserP2AApprovals';
 import { useUserLastLogin } from '@/hooks/useUserLastLogin';
 import { cn } from '@/lib/utils';
 
-export const HandoverReviewsPanel: React.FC = () => {
+interface HandoverReviewsPanelProps {
+  searchQuery?: string;
+}
+
+export const HandoverReviewsPanel: React.FC<HandoverReviewsPanelProps> = ({ searchQuery = '' }) => {
   const navigate = useNavigate();
-  const { approvals, stats, isLoading } = useUserP2AApprovals();
+  const { approvals: rawApprovals, stats, isLoading } = useUserP2AApprovals();
   const { isNewSinceLastLogin } = useUserLastLogin();
+
+  const approvals = rawApprovals.filter(a => {
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      a.handover_name?.toLowerCase().includes(query) ||
+      a.project_number?.toLowerCase().includes(query)
+    );
+  });
 
   const newCount = approvals.filter(a => isNewSinceLastLogin(a.created_at)).length;
 

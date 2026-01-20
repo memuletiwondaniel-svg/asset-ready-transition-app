@@ -10,14 +10,22 @@ import { cn } from '@/lib/utils';
 
 interface PSSRReviewsPanelProps {
   userId: string;
+  searchQuery?: string;
 }
 
-export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({ userId }) => {
+export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({ userId, searchQuery = '' }) => {
   const navigate = useNavigate();
   const { data: pssrs, isLoading } = usePSSRsAwaitingReview(userId);
   const { isNewSinceLastLogin } = useUserLastLogin();
 
-  const pendingPssrs = pssrs || [];
+  const pendingPssrs = (pssrs || []).filter(p => {
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      p.pssr?.pssr_id?.toLowerCase().includes(query) ||
+      p.pssr?.project_name?.toLowerCase().includes(query)
+    );
+  });
   // Use pendingSince for "new" detection since that's when items were assigned
   const newCount = pendingPssrs.filter(p => isNewSinceLastLogin(p.pendingSince)).length;
 
