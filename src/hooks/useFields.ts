@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -7,11 +7,12 @@ interface Field {
   name: string;
   description?: string;
   is_active: boolean;
+  plant_id?: string;
   created_at: string;
   updated_at: string;
 }
 
-export const useFields = () => {
+export const useFields = (plantId?: string) => {
   const [fields, setFields] = useState<Field[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -41,12 +42,13 @@ export const useFields = () => {
     }
   };
 
-  const addField = async (fieldName: string) => {
+  const addField = async (fieldName: string, fieldPlantId?: string) => {
     try {
       const { data, error: insertError } = await supabase
         .from('field')
         .insert({
           name: fieldName,
+          plant_id: fieldPlantId || plantId,
           is_active: true
         })
         .select()
@@ -76,15 +78,23 @@ export const useFields = () => {
     }
   };
 
+  // Filter fields by plant if plantId is provided
+  const filteredFields = useMemo(() => {
+    if (!plantId) return fields;
+    return fields.filter(f => f.plant_id === plantId);
+  }, [fields, plantId]);
+
   useEffect(() => {
     fetchFields();
   }, []);
 
   return {
-    fields,
+    fields: filteredFields,
+    allFields: fields,
     isLoading,
     error,
     fetchFields,
-    addField
+    addField,
+    getFieldsByPlant: (pId: string) => fields.filter(f => f.plant_id === pId)
   };
 };

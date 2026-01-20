@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -7,6 +7,7 @@ interface Station {
   name: string;
   description?: string;
   is_active: boolean;
+  field_id?: string;
   created_at: string;
   updated_at: string;
   hierarchyLabel?: string;
@@ -14,7 +15,7 @@ interface Station {
   field_name?: string;
 }
 
-export const useStations = () => {
+export const useStations = (fieldId?: string) => {
   const [stations, setStations] = useState<Station[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -52,6 +53,7 @@ export const useStations = () => {
           name: station.name,
           description: station.description,
           is_active: station.is_active,
+          field_id: station.field_id,
           created_at: station.created_at,
           updated_at: station.updated_at,
           hierarchyLabel,
@@ -69,12 +71,13 @@ export const useStations = () => {
     }
   };
 
-  const addStation = async (stationName: string) => {
+  const addStation = async (stationName: string, stationFieldId?: string) => {
     try {
       const { data, error: insertError } = await supabase
         .from('station')
         .insert({
           name: stationName,
+          field_id: stationFieldId || fieldId,
           is_active: true
         })
         .select()
@@ -104,16 +107,24 @@ export const useStations = () => {
     }
   };
 
+  // Filter stations by field if fieldId is provided
+  const filteredStations = useMemo(() => {
+    if (!fieldId) return stations;
+    return stations.filter(s => s.field_id === fieldId);
+  }, [stations, fieldId]);
+
   useEffect(() => {
     fetchStations();
   }, []);
 
   return {
-    stations,
+    stations: filteredStations,
+    allStations: stations,
     isLoading,
     error,
     fetchStations,
     addStation,
-    createStation: addStation
+    createStation: addStation,
+    getStationsByField: (fId: string) => stations.filter(s => s.field_id === fId)
   };
 };
