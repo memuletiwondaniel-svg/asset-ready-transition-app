@@ -11,7 +11,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useProjects } from '@/hooks/useProjects';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { AddProjectWizard } from '@/components/project/AddProjectWizard';
-import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -113,7 +112,7 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="border-b border-border/40 bg-card/50 backdrop-blur-xl p-4 md:p-6">
+      <div className="border-b border-border/40 bg-card/30 backdrop-blur-xl p-4 md:p-6">
         <BreadcrumbNavigation 
           currentPageLabel="Projects" 
           customBreadcrumbs={[
@@ -140,7 +139,7 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
       </div>
 
       {/* Main Content */}
-      <AnimatedBackground className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto">
         <main className="p-6">
           <div className="max-w-7xl mx-auto space-y-6">
             {/* Search, New Project Button, and View Toggle */}
@@ -552,7 +551,7 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
           )}
           </div>
         </main>
-      </AnimatedBackground>
+      </div>
 
       {/* Add Project Modal */}
       <AddProjectWizard 

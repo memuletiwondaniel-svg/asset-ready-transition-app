@@ -666,7 +666,7 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
   return <div className="flex-1 flex flex-col overflow-hidden">
 
         {/* Modern Minimalist Header */}
-        <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/40 shadow-sm">
+        <header className="sticky top-0 z-50 bg-card/30 backdrop-blur-xl border-b border-border/40 shadow-sm">
           <div className="max-w-[1400px] mx-auto px-6 py-5">
             {/* Breadcrumb at top */}
             <Breadcrumb>

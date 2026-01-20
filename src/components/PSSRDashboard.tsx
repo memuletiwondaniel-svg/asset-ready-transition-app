@@ -734,28 +734,9 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
 
   return (
     <div className="min-h-screen flex-1 relative overflow-hidden">
-      {/* Background matching home page */}
-      <div className="absolute inset-0 bg-background overflow-hidden">
-        <div className="absolute inset-0 opacity-30 dark:opacity-20">
-          <div 
-            className="absolute inset-0 animate-gradient-shift-morph"
-            style={{
-              background: 'radial-gradient(at 20% 30%, hsl(var(--primary) / 0.15) 0%, transparent 50%), radial-gradient(at 80% 20%, hsl(var(--accent) / 0.1) 0%, transparent 50%), radial-gradient(at 40% 80%, hsl(var(--primary) / 0.12) 0%, transparent 50%)',
-              filter: 'blur(80px)',
-            }}
-          />
-        </div>
-        <div className="absolute inset-0 bg-grid-pattern opacity-[0.02] dark:opacity-[0.03]" 
-          style={{
-            backgroundImage: 'linear-gradient(hsl(var(--foreground) / 0.1) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--foreground) / 0.1) 1px, transparent 1px)',
-            backgroundSize: '50px 50px'
-          }}
-        />
-      </div>
-      
       <div className="flex-1 relative z-10 w-full">
         {/* Modern Header */}
-        <header className="sticky top-0 z-20 bg-card/80 backdrop-blur-xl border-b border-border/50 shadow-sm">
+        <header className="sticky top-0 z-20 bg-card/30 backdrop-blur-xl border-b border-border/40 shadow-sm">
           <div className="px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
             {/* Breadcrumb Navigation with History */}
             <BreadcrumbNavigation 
