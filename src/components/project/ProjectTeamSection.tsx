@@ -19,8 +19,21 @@ const REQUIRED_ROLES = [
   { role: 'Project Hub Lead', required: true, function: 'Hub Operations' },
   { role: 'Construction Lead', required: true, function: 'Construction' },
   { role: 'Commissioning Lead', required: true, function: 'Commissioning' },
-  { role: 'Snr ORA Engr.', required: true, function: 'Operations Readiness' }
+  { role: 'Snr. ORA Engr.', required: true, function: 'Operations Readiness' }
 ];
+
+// Variations that should map to the canonical role names
+const ROLE_VARIATIONS: Record<string, string[]> = {
+  'Snr. ORA Engr.': ['Snr ORA Engr', 'Snr ORA Engr.', 'Snr. ORA Engr.', 'Snr. ORA Engr', 'Senior ORA Engr.', 'Senior ORA Engineer'],
+};
+
+// Get the canonical role name from any variation
+const getCanonicalRole = (role: string): string => {
+  for (const [canonical, variations] of Object.entries(ROLE_VARIATIONS)) {
+    if (variations.includes(role)) return canonical;
+  }
+  return role;
+};
 
 export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({ 
   teamMembers, 
@@ -108,8 +121,13 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
   const updateRoleMember = (role: string, userId: string) => {
     const selectedUser = allUsers.find(user => user.user_id === userId);
     
-    // Remove existing member with this role
-    const updatedMembers = teamMembers.filter(member => member.role !== role);
+    // Get all variations of this role to remove
+    const variations = ROLE_VARIATIONS[role] || [role];
+    
+    // Remove existing member with this role or any of its variations
+    const updatedMembers = teamMembers.filter(member => 
+      member.role !== role && !variations.includes(member.role)
+    );
     
     if (selectedUser) {
       // Add new member for this role (mark as manual, not auto-populated)
@@ -131,7 +149,11 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
   };
 
   const getRoleMember = (role: string) => {
-    return teamMembers.find(member => member.role === role);
+    // Check for exact match first, then check variations
+    const variations = ROLE_VARIATIONS[role] || [role];
+    return teamMembers.find(member => 
+      member.role === role || variations.includes(member.role)
+    );
   };
 
   const addAdditionalMember = () => {
@@ -173,12 +195,17 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
   };
 
   const getRequiredRolesStatus = () => {
-    return REQUIRED_ROLES.map(({ role, required, function: func }) => ({
-      role,
-      required,
-      function: func,
-      assigned: teamMembers.some(member => member.role === role)
-    }));
+    return REQUIRED_ROLES.map(({ role, required, function: func }) => {
+      const variations = ROLE_VARIATIONS[role] || [role];
+      return {
+        role,
+        required,
+        function: func,
+        assigned: teamMembers.some(member => 
+          member.role === role || variations.includes(member.role)
+        )
+      };
+    });
   };
 
   return (
