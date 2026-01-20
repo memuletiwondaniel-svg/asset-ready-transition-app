@@ -9,14 +9,30 @@ import { useUserLastLogin } from '@/hooks/useUserLastLogin';
 import { cn } from '@/lib/utils';
 import { format, isPast, isToday } from 'date-fns';
 
-export const OWLPanel: React.FC = () => {
+interface OWLPanelProps {
+  searchQuery?: string;
+}
+
+export const OWLPanel: React.FC<OWLPanelProps> = ({ searchQuery = '' }) => {
   const navigate = useNavigate();
-  const { items, stats, isLoading, updateStatus, isUpdatingStatus } = useUserOWLItems();
+  const { items: rawItems, stats, isLoading, updateStatus, isUpdatingStatus } = useUserOWLItems();
   const { isNewSinceLastLogin } = useUserLastLogin();
 
-  const newCount = items?.filter(i => isNewSinceLastLogin(i.created_at)).length || 0;
+  const items = (rawItems || []).filter(i => {
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase();
+    const projectName = typeof i.project === 'object' && i.project !== null
+      ? ((i.project as any).project_title || (i.project as any).name || '')
+      : '';
+    return (
+      i.title?.toLowerCase().includes(query) ||
+      projectName.toLowerCase().includes(query)
+    );
+  });
+
+  const newCount = items.filter(i => isNewSinceLastLogin(i.created_at)).length;
   // Items already filtered to OPEN and IN_PROGRESS in the hook
-  const openItems = items || [];
+  const openItems = items;
 
   const getSourceColor = (source: string) => {
     switch (source) {

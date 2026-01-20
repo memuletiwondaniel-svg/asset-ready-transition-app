@@ -9,10 +9,24 @@ import { useUserORPActivities } from '@/hooks/useUserORPActivities';
 import { useUserLastLogin } from '@/hooks/useUserLastLogin';
 import { cn } from '@/lib/utils';
 
-export const ORPActivitiesPanel: React.FC = () => {
+interface ORPActivitiesPanelProps {
+  searchQuery?: string;
+}
+
+export const ORPActivitiesPanel: React.FC<ORPActivitiesPanelProps> = ({ searchQuery = '' }) => {
   const navigate = useNavigate();
-  const { activities, stats, isLoading } = useUserORPActivities();
+  const { activities: rawActivities, stats, isLoading } = useUserORPActivities();
   const { isNewSinceLastLogin } = useUserLastLogin();
+
+  const activities = rawActivities.filter(a => {
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      a.project_name?.toLowerCase().includes(query) ||
+      a.plan_name?.toLowerCase().includes(query) ||
+      a.role?.toLowerCase().includes(query)
+    );
+  });
 
   const newCount = activities.filter(a => isNewSinceLastLogin(a.created_at)).length;
 

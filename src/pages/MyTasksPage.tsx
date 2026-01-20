@@ -1,19 +1,26 @@
 import React, { useEffect, useState } from 'react';
-import { ListChecks, Plus } from 'lucide-react';
+import { ListChecks, Plus, Search, LayoutGrid, Table } from 'lucide-react';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { PSSRReviewsPanel } from '@/components/tasks/PSSRReviewsPanel';
 import { HandoverReviewsPanel } from '@/components/tasks/HandoverReviewsPanel';
 import { ORPActivitiesPanel } from '@/components/tasks/ORPActivitiesPanel';
 import { OWLPanel } from '@/components/tasks/OWLPanel';
 import { NewTaskModal } from '@/components/tasks/NewTaskModal';
+import { AllTasksTable } from '@/components/tasks/AllTasksTable';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 import { useUserLastLogin } from '@/hooks/useUserLastLogin';
+import { cn } from '@/lib/utils';
+
+type ViewMode = 'grid' | 'table';
 
 const MyTasksPage: React.FC = () => {
   const { user } = useAuth();
   const { updateLastLogin } = useUserLastLogin();
   const [createTaskModalOpen, setCreateTaskModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -31,37 +38,81 @@ const MyTasksPage: React.FC = () => {
       <div className="border-b border-border/40 bg-card/50 backdrop-blur-xl p-4 md:p-6">
         <BreadcrumbNavigation currentPageLabel="My Tasks" />
         
-        <div className="flex items-center justify-between mt-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500">
-              <ListChecks className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">My Tasks</h1>
-              <p className="text-sm text-muted-foreground mt-1">
-                Your pending work across all modules
-              </p>
-            </div>
+        <div className="flex items-center gap-3 mt-4">
+          <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500">
+            <ListChecks className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
           </div>
-          
-          <Button
-            size="sm"
-            onClick={() => setCreateTaskModalOpen(true)}
-            className="gap-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm"
-          >
-            <Plus className="h-4 w-4" />
-            New Task
-          </Button>
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">My Tasks</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Your pending work across all modules
+            </p>
+          </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-6 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <PSSRReviewsPanel userId={user.id} />
-          <HandoverReviewsPanel />
-          <ORPActivitiesPanel />
-          <OWLPanel />
+        {/* Search and Actions Row */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 mb-6">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search tasks..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          
+          <div className="flex items-center gap-2">
+            {/* View Toggle */}
+            <div className="flex items-center border rounded-lg p-1 bg-muted/50">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setViewMode('grid')}
+                className={cn(
+                  "h-8 w-8 p-0",
+                  viewMode === 'grid' && "bg-background shadow-sm"
+                )}
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setViewMode('table')}
+                className={cn(
+                  "h-8 w-8 p-0",
+                  viewMode === 'table' && "bg-background shadow-sm"
+                )}
+              >
+                <Table className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            <Button
+              size="sm"
+              onClick={() => setCreateTaskModalOpen(true)}
+              className="gap-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm"
+            >
+              <Plus className="h-4 w-4" />
+              New Task
+            </Button>
+          </div>
         </div>
+
+        {/* Content based on view mode */}
+        {viewMode === 'grid' ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <PSSRReviewsPanel userId={user.id} searchQuery={searchQuery} />
+            <HandoverReviewsPanel searchQuery={searchQuery} />
+            <ORPActivitiesPanel searchQuery={searchQuery} />
+            <OWLPanel searchQuery={searchQuery} />
+          </div>
+        ) : (
+          <AllTasksTable searchQuery={searchQuery} userId={user.id} />
+        )}
       </div>
 
       <NewTaskModal 
