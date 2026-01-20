@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { FileText, Calendar, Users, MapPin, Building, Briefcase, UserCircle, ExternalLink, Edit, Link as LinkIcon, File, FileSpreadsheet, FileImage, Presentation, FileCode } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
+import { cn } from '@/lib/utils';
 
 interface ViewProjectModalProps {
   open: boolean;
@@ -212,19 +213,36 @@ export const ViewProjectModal: React.FC<ViewProjectModalProps> = ({
   };
 
   // Separate required roles from additional members
-  const REQUIRED_ROLES = [
+  // Canonical required roles that should always appear
+  const CANONICAL_REQUIRED_ROLES = [
     'Project Hub Lead',
     'Construction Lead',
     'Commissioning Lead',
-    'Snr ORA Engr',
-    'Snr ORA Engr.',
     'Snr. ORA Engr.',
-    'Snr. ORA Engr',
-    'Senior ORA Engr.',
-    'Senior ORA Engineer',
   ];
-  const requiredRoleMembers = teamMembers.filter(m => REQUIRED_ROLES.includes(m.role));
-  const additionalMembers = teamMembers.filter(m => !REQUIRED_ROLES.includes(m.role));
+  
+  // Variations for matching existing team members
+  const ROLE_VARIATIONS: Record<string, string[]> = {
+    'Project Hub Lead': ['Project Hub Lead'],
+    'Construction Lead': ['Construction Lead'],
+    'Commissioning Lead': ['Commissioning Lead'],
+    'Snr. ORA Engr.': ['Snr ORA Engr', 'Snr ORA Engr.', 'Snr. ORA Engr.', 'Snr. ORA Engr', 'Senior ORA Engr.', 'Senior ORA Engineer'],
+  };
+  
+  // Build display data - always show all 4 roles
+  const roleDisplayData = CANONICAL_REQUIRED_ROLES.map(role => {
+    const variations = ROLE_VARIATIONS[role];
+    const assignedMember = teamMembers.find(member => variations.includes(member.role));
+    return {
+      role,
+      member: assignedMember || null,
+      profile: assignedMember?.profiles || null,
+    };
+  });
+  
+  // Get all role variations for filtering additional members
+  const allRequiredVariations = Object.values(ROLE_VARIATIONS).flat();
+  const additionalMembers = teamMembers.filter(m => !allRequiredVariations.includes(m.role));
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -366,73 +384,64 @@ export const ViewProjectModal: React.FC<ViewProjectModalProps> = ({
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {teamMembers.length === 0 ? (
-                  <p className="text-muted-foreground text-sm text-center py-8">
-                    No team members assigned to this project yet.
-                  </p>
-                ) : (
-                  <>
-                    {/* Required Roles */}
-                    <div className="space-y-3">
-                      <h4 className="font-medium text-foreground">Required Roles</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {requiredRoleMembers.map((member) => {
-                          const profile = member.profiles;
-                          return (
-                              <div key={member.id} className="p-3 border rounded-lg bg-muted/30">
-                              <div className="flex items-center gap-3">
-                                <Avatar className="h-10 w-10">
-                                  {getAvatarUrl(profile?.avatar_url) ? (
-                                    <AvatarImage src={getAvatarUrl(profile?.avatar_url)!} alt={profile?.full_name || 'Team member'} />
-                                  ) : (
-                                    <AvatarFallback className="bg-primary/10">
-                                      <UserCircle className="h-5 w-5 text-primary" />
-                                    </AvatarFallback>
-                                  )}
-                                </Avatar>
-                                <div className="flex-1 min-w-0">
-                                  <p className="font-medium text-foreground text-sm">{profile?.full_name || 'Unassigned'}</p>
-                                  <p className="text-xs text-muted-foreground">{member.role}</p>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Additional Members */}
-                    {additionalMembers.length > 0 && (
-                      <div className="space-y-3 pt-3 border-t">
-                        <h4 className="font-medium text-foreground">Additional Team Members</h4>
-                        <div className="space-y-2">
-                          {additionalMembers.map((member) => {
-                            const profile = member.profiles;
-                            return (
-                              <div key={member.id} className="flex items-center gap-3 p-3 border rounded-lg bg-muted/30">
-                                <Avatar className="h-10 w-10">
-                                  {getAvatarUrl(profile?.avatar_url) ? (
-                                    <AvatarImage src={getAvatarUrl(profile?.avatar_url)!} alt={profile?.full_name || 'Team member'} />
-                                  ) : (
-                                    <AvatarFallback className="bg-primary/10">
-                                      <UserCircle className="h-5 w-5 text-primary" />
-                                    </AvatarFallback>
-                                  )}
-                                </Avatar>
-                                <div className="flex-1 min-w-0">
-                                  <p className="font-medium text-foreground text-sm">{profile?.full_name || 'Unassigned'}</p>
-                                  <p className="text-xs text-muted-foreground">{profile?.position || 'No position'}</p>
-                                </div>
-                                <Badge variant="outline" className="shrink-0 text-xs">
-                                  {member.role}
-                                </Badge>
-                              </div>
-                            );
-                          })}
+                {/* Required Roles - Always show all 4 */}
+                <div className="space-y-3">
+                  <h4 className="font-medium text-foreground">Required Roles</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {roleDisplayData.map((data) => (
+                      <div key={data.role} className="p-3 border rounded-lg bg-muted/30">
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-10 w-10">
+                            {getAvatarUrl(data.profile?.avatar_url) ? (
+                              <AvatarImage src={getAvatarUrl(data.profile?.avatar_url)!} alt={data.profile?.full_name || 'Team member'} />
+                            ) : (
+                              <AvatarFallback className="bg-primary/10">
+                                <UserCircle className="h-5 w-5 text-primary" />
+                              </AvatarFallback>
+                            )}
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <p className={cn("font-medium text-sm", data.member ? "text-foreground" : "text-muted-foreground italic")}>
+                              {data.profile?.full_name || 'Unassigned'}
+                            </p>
+                            <p className="text-xs text-muted-foreground">{data.role}</p>
+                          </div>
                         </div>
                       </div>
-                    )}
-                  </>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Additional Members */}
+                {additionalMembers.length > 0 && (
+                  <div className="space-y-3 pt-3 border-t">
+                    <h4 className="font-medium text-foreground">Additional Team Members</h4>
+                    <div className="space-y-2">
+                      {additionalMembers.map((member) => {
+                        const profile = member.profiles;
+                        return (
+                          <div key={member.id} className="flex items-center gap-3 p-3 border rounded-lg bg-muted/30">
+                            <Avatar className="h-10 w-10">
+                              {getAvatarUrl(profile?.avatar_url) ? (
+                                <AvatarImage src={getAvatarUrl(profile?.avatar_url)!} alt={profile?.full_name || 'Team member'} />
+                              ) : (
+                                <AvatarFallback className="bg-primary/10">
+                                  <UserCircle className="h-5 w-5 text-primary" />
+                                </AvatarFallback>
+                              )}
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-foreground text-sm">{profile?.full_name || 'Unassigned'}</p>
+                              <p className="text-xs text-muted-foreground">{profile?.position || 'No position'}</p>
+                            </div>
+                            <Badge variant="outline" className="shrink-0 text-xs">
+                              {member.role}
+                            </Badge>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
                 )}
               </CardContent>
             </Card>
