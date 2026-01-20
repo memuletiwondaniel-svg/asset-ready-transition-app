@@ -387,15 +387,18 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
         return;
       }
 
-      // Check if selected plant is CS (Compression Station)
+      // Check if selected plant is CS or KAZ
       const selectedPlantName = getPlantName(formData.plant_id || '');
       const isCSPlant = selectedPlantName === 'CS';
+      const isKAZPlant = selectedPlantName === 'KAZ';
 
-      // Validate field selection when CS plant is selected for operations roles that require field
-      if (requiresField(formData.role) && isCSPlant && !formData.field_id) {
+      // Validate field selection when CS or KAZ plant is selected for operations roles that require field
+      if (requiresField(formData.role) && (isCSPlant || isKAZPlant) && !formData.field_id) {
         toast({
-          title: "Missing Field",
-          description: "Please select a field for Compression Station.",
+          title: isKAZPlant ? "Missing Section" : "Missing Field",
+          description: isKAZPlant 
+            ? "Please select a section for KAZ plant." 
+            : "Please select a field for Compression Station.",
           variant: "destructive",
         });
         return;
@@ -1011,16 +1014,19 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
                 </Select>
               </div>
 
-              {requiresField(formData.role) && getPlantName(formData.plant_id || '') === 'CS' && (
+              {/* Field selection for CS and KAZ plants when role requires field */}
+              {requiresField(formData.role) && ['CS', 'KAZ'].includes(getPlantName(formData.plant_id || '')) && (
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Field *</Label>
+                  <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    {getPlantName(formData.plant_id || '') === 'KAZ' ? 'Section *' : 'Field *'}
+                  </Label>
                   <Select
                     value={formData.field_id}
                     onValueChange={(value) => setFormData(prev => ({ ...prev, field_id: value, station_id: '' }))}
                     disabled={!formData.plant_id}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder={!formData.plant_id ? "Select plant first" : "Select field"} />
+                      <SelectValue placeholder={!formData.plant_id ? "Select plant first" : `Select ${getPlantName(formData.plant_id || '') === 'KAZ' ? 'section' : 'field'}`} />
                     </SelectTrigger>
                     <SelectContent>
                       {getFieldsByPlant(formData.plant_id || '').map(field => (
