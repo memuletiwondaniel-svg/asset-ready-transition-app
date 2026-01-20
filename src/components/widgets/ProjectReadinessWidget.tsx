@@ -47,11 +47,11 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
       setLoading(true);
       try {
         // Fetch team members with profile data
+        // Fetch ALL team members (no limit) so we can filter for required roles
         const { data: teamData, error: teamError } = await (supabase as any)
           .from('project_team_members')
           .select('*')
-          .eq('project_id', projectId)
-          .limit(5);
+          .eq('project_id', projectId);
         
         if (!teamError && teamData) {
           // Fetch profiles for team members
@@ -213,8 +213,10 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
                 'Project Hub Lead',
                 'Construction Lead',
                 'Commissioning Lead',
+                'Snr ORA Engr',
                 'Snr ORA Engr.',
                 'Snr. ORA Engr.',
+                'Snr. ORA Engr',
                 'Senior ORA Engr.',
                 'Senior ORA Engineer',
               ];

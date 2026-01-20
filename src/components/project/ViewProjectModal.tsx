@@ -216,10 +216,12 @@ export const ViewProjectModal: React.FC<ViewProjectModalProps> = ({
     'Project Hub Lead',
     'Construction Lead',
     'Commissioning Lead',
+    'Snr ORA Engr',
     'Snr ORA Engr.',
     'Snr. ORA Engr.',
-    'Snr ORA Engr.',
+    'Snr. ORA Engr',
     'Senior ORA Engr.',
+    'Senior ORA Engineer',
   ];
   const requiredRoleMembers = teamMembers.filter(m => REQUIRED_ROLES.includes(m.role));
   const additionalMembers = teamMembers.filter(m => !REQUIRED_ROLES.includes(m.role));

@@ -199,7 +199,7 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({ project, onContextActio
 
             {/* Required roles only */}
             {currentProject.others
-              .filter(member => ['Construction Lead', 'Commissioning Lead', 'Snr ORA Engr.', 'Snr. ORA Engr.', 'Snr ORA Engr.', 'Senior ORA Engr.'].includes(member.role || ''))
+              .filter(member => ['Construction Lead', 'Commissioning Lead', 'Snr ORA Engr', 'Snr ORA Engr.', 'Snr. ORA Engr.', 'Snr. ORA Engr', 'Senior ORA Engr.', 'Senior ORA Engineer'].includes(member.role || ''))
               .map((member, index) => (
               <div key={index} className="flex items-center gap-2">
                 <ContextMenu>
