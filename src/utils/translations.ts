@@ -395,7 +395,7 @@ export const translations = {
     // ORA Plans Page
     oraPlansTitle: 'ORA Plans',
     oraPlansSubtitle: 'Manage and track operation readiness activities',
-    createNewORA: 'Create New ORA',
+    createNewORA: 'New ORA Plan',
     analytics: 'Analytics',
     searchProjects: 'Search projects...',
     projectsWithORAPlans: 'projects with ORA plans',
@@ -1091,7 +1091,7 @@ export const translations = {
     // ORA Plans Page
     oraPlansTitle: 'خطط ORA',
     oraPlansSubtitle: 'إدارة وتتبع أنشطة الجاهزية التشغيلية',
-    createNewORA: 'إنشاء ORA جديد',
+    createNewORA: 'خطة ORA جديدة',
     analytics: 'التحليلات',
     searchProjects: 'البحث في المشاريع...',
     projectsWithORAPlans: 'مشاريع مع خطط ORA',
@@ -1773,7 +1773,7 @@ export const translations = {
     // ORA Plans Page
     oraPlansTitle: 'Plans ORA',
     oraPlansSubtitle: 'Gérer et suivre les activités de préparation opérationnelle',
-    createNewORA: 'Créer Nouveau ORA',
+    createNewORA: 'Nouveau Plan ORA',
     analytics: 'Analytique',
     searchProjects: 'Rechercher projets...',
     projectsWithORAPlans: 'projets avec plans ORA',
@@ -2455,7 +2455,7 @@ export const translations = {
     // ORA Plans Page
     oraPlansTitle: 'Pelan ORA',
     oraPlansSubtitle: 'Urus dan jejak aktiviti kesediaan operasi',
-    createNewORA: 'Cipta ORA Baharu',
+    createNewORA: 'Pelan ORA Baharu',
     analytics: 'Analitik',
     searchProjects: 'Cari projek...',
     projectsWithORAPlans: 'projek dengan pelan ORA',
@@ -3137,7 +3137,7 @@ export const translations = {
     // ORA Plans Page
     oraPlansTitle: 'ORA жоспарлары',
     oraPlansSubtitle: 'Операциялық дайындық әрекеттерін басқару және бақылау',
-    createNewORA: 'Жаңа ORA құру',
+    createNewORA: 'Жаңа ORA жоспары',
     analytics: 'Аналитика',
     searchProjects: 'Жобаларды іздеу...',
     projectsWithORAPlans: 'ORA жоспарлары бар жобалар',
@@ -3819,7 +3819,7 @@ export const translations = {
     // ORA Plans Page
     oraPlansTitle: 'ORA 计划',
     oraPlansSubtitle: '管理和跟踪运营就绪活动',
-    createNewORA: '创建新 ORA',
+    createNewORA: '新 ORA 计划',
     analytics: '分析',
     searchProjects: '搜索项目...',
     projectsWithORAPlans: '个项目有 ORA 计划',

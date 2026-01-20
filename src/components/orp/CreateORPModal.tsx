@@ -127,7 +127,7 @@ export const CreateORPModal: React.FC<CreateORPModalProps> = ({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
-            <DialogTitle>Create New ORA Plan</DialogTitle>
+            <DialogTitle>New ORA Plan</DialogTitle>
             <DialogDescription>
               {step === 1 && 'Select project, phase, and ORA engineer'}
               {step === 2 && 'Choose a template or create from scratch'}
