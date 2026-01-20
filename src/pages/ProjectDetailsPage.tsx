@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ArrowLeft, FileText, Calendar, Users, MapPin, Building, Target, FileCheck, UserCircle, ExternalLink, Edit, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, FileText, Calendar, Users, MapPin, Building, Target, FileCheck, UserCircle, ExternalLink, Edit, Eye, EyeOff, FolderOpen } from 'lucide-react';
 
 import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
@@ -210,13 +210,18 @@ export default function ProjectDetailsPage() {
         <div className="container mx-auto p-6 space-y-6">
           <BreadcrumbNavigation currentPageLabel={project ? `${getProjectId()}` : 'Project'} />
 
-          {/* Header */}
-          <div className="flex items-center justify-between flex-shrink-0">
-            <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                {getProjectId()} - {project.project_title}
-              </h1>
-              <p className="text-muted-foreground mt-1">Project Dashboard</p>
+          {/* Header - standardized design */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
+            <div className="min-w-0 flex items-center gap-3">
+              <div className="p-2 sm:p-3 rounded-xl bg-primary/10">
+                <FolderOpen className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-foreground">
+                  {getProjectId()} - {project.project_title}
+                </h1>
+                <p className="text-sm text-muted-foreground mt-1">Project Dashboard</p>
+              </div>
             </div>
             {hiddenWidgets.length > 0 && (
               <Button onClick={() => setHiddenWidgets([])} variant="outline" size="sm">
