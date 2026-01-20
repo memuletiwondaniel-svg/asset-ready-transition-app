@@ -26,7 +26,7 @@ const ROLE_MATCHING_CONFIG: Record<string, { patterns: string[]; matchType: 'reg
   'Project Hub Lead': { patterns: ['hub lead', 'project hub lead'], matchType: 'hub', isRequired: true },
   'Construction Lead': { patterns: ['construction lead', 'construction'], matchType: 'region', isRequired: true },
   'Commissioning Lead': { patterns: ['commissioning lead', 'commissioning'], matchType: 'region', isRequired: true },
-  'Snr ORA Engr.': { patterns: ['snr ora', 'snr. ora', 'senior ora'], matchType: 'hub', isRequired: true },
+  'Snr ORA Engr.': { patterns: ['snr ora', 'snr. ora', 'senior ora'], matchType: 'region', isRequired: true },
   // Additional team member roles (auto-populated but not required)
   'Project Manager': { patterns: ['project manager', 'proj manager'], matchType: 'region', isRequired: false },
   'Project Engr': { patterns: ['proj eng', 'project eng', 'project engr'], matchType: 'hub', isRequired: false },
