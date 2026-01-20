@@ -66,12 +66,12 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
   const getProjectColor = (prefix: string, number: string) => {
     const hash = `${prefix}${number}`.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
     const colors = [
-      { bg: 'from-blue-500 to-blue-600', text: 'text-white', border: 'border-blue-400' },
-      { bg: 'from-emerald-500 to-emerald-600', text: 'text-white', border: 'border-emerald-400' },
-      { bg: 'from-violet-500 to-violet-600', text: 'text-white', border: 'border-violet-400' },
-      { bg: 'from-amber-500 to-amber-600', text: 'text-white', border: 'border-amber-400' },
-      { bg: 'from-rose-500 to-rose-600', text: 'text-white', border: 'border-rose-400' },
-      { bg: 'from-cyan-500 to-cyan-600', text: 'text-white', border: 'border-cyan-400' },
+      { bg: 'from-slate-400 to-slate-500', text: 'text-white', border: 'border-slate-300' },
+      { bg: 'from-blue-400 to-blue-500', text: 'text-white', border: 'border-blue-300' },
+      { bg: 'from-violet-400 to-violet-500', text: 'text-white', border: 'border-violet-300' },
+      { bg: 'from-indigo-400 to-indigo-500', text: 'text-white', border: 'border-indigo-300' },
+      { bg: 'from-purple-400 to-purple-500', text: 'text-white', border: 'border-purple-300' },
+      { bg: 'from-zinc-400 to-zinc-500', text: 'text-white', border: 'border-zinc-300' },
     ];
     return colors[hash % colors.length];
   };
