@@ -183,7 +183,7 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails }) =
         return (
           <Badge 
             variant="outline" 
-            className="text-xs font-semibold px-2 py-0.5 text-white border-0"
+            className="text-xs font-semibold px-2.5 py-1 text-white border-0 inline-flex items-center justify-center leading-none"
             style={{ background: `linear-gradient(to right, ${projectColor.bgStart}, ${projectColor.bgEnd})` }}
           >
             {prefix}-{number}
