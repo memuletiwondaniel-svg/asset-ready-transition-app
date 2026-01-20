@@ -17,6 +17,8 @@ export const ROLES_REQUIRING_PORTFOLIO_ONLY = [
   'ORA Engr',
   'Snr ORA Engr.',
   'Snr ORA Engr',
+  'Snr. ORA Engr.',
+  'Snr. ORA Engr',
   'Senior ORA Engr.',
   'Senior ORA Engineer',
 ];
