@@ -47,19 +47,19 @@ export const MyTasksPanelCard: React.FC<MyTasksPanelCardProps> = ({
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/60 via-primary to-primary/60 animate-pulse" />
       )}
       
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+      <CardHeader className={cn("pb-3", !isExpanded && "py-6")}>
+        <div className="flex items-center justify-between min-h-[72px]">
+          <div className="flex items-center gap-4">
             <div className={cn(
-              "p-2 rounded-lg bg-gradient-to-br",
+              "p-3 rounded-xl bg-gradient-to-br",
               iconColorClass
             )}>
               {icon}
             </div>
             <div>
-              <h3 className="font-semibold text-foreground">{title}</h3>
-              <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-2xl font-bold text-foreground">{primaryStat}</span>
+              <h3 className="font-semibold text-lg text-foreground">{title}</h3>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-3xl font-bold text-foreground">{primaryStat}</span>
                 <span className="text-sm text-muted-foreground">{primaryLabel}</span>
                 {secondaryStat !== undefined && (
                   <>
@@ -73,11 +73,11 @@ export const MyTasksPanelCard: React.FC<MyTasksPanelCardProps> = ({
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             {newCount > 0 && (
               <Badge 
                 variant="default" 
-                className="bg-primary/90 text-primary-foreground animate-pulse-glow flex items-center gap-1"
+                className="bg-primary/90 text-primary-foreground animate-pulse-glow flex items-center gap-1 px-3 py-1"
               >
                 <Sparkles className="h-3 w-3" />
                 {newCount} New
@@ -87,12 +87,12 @@ export const MyTasksPanelCard: React.FC<MyTasksPanelCardProps> = ({
               variant="ghost"
               size="sm"
               onClick={() => setIsExpanded(!isExpanded)}
-              className="h-8 w-8 p-0"
+              className="h-10 w-10 p-0"
             >
               {isExpanded ? (
-                <ChevronUp className="h-4 w-4" />
+                <ChevronUp className="h-5 w-5" />
               ) : (
-                <ChevronDown className="h-4 w-4" />
+                <ChevronDown className="h-5 w-5" />
               )}
             </Button>
           </div>
