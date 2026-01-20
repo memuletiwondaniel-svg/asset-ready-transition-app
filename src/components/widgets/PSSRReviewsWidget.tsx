@@ -238,11 +238,10 @@ export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
           </p>
         </div>
 
-        {/* Content Views - Scrollable Area with fixed height */}
+        {/* Content Views - Scrollable Area with fixed height to prevent resizing */}
         <div 
           ref={scrollContainerRef}
-          className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent pr-1 pt-4" 
-          style={{ minHeight: '400px', maxHeight: '500px' }}
+          className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent pr-1 pt-4 h-[500px]"
         >
           {viewMode === 'table' ? (
             <PSSRTableView pssrs={filteredPSSRs} onViewDetails={onViewDetails} />
