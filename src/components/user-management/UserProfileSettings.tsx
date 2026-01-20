@@ -10,6 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { 
   User, 
   Mail, 
@@ -21,12 +23,21 @@ import {
   Eye,
   EyeOff,
   Save,
-  RefreshCw
+  RefreshCw,
+  MapPin,
+  Building,
+  Layers,
+  Check,
+  ChevronsUpDown
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 import { toast } from 'sonner';
 import { usePositions } from '@/hooks/usePositions';
+import { usePlants } from '@/hooks/usePlants';
+import { useFields } from '@/hooks/useFields';
+import { useStations } from '@/hooks/useStations';
+import { cn } from '@/lib/utils';
 
 interface UserProfileSettingsProps {
   isOpen: boolean;
@@ -41,6 +52,10 @@ const UserProfileSettings: React.FC<UserProfileSettingsProps> = ({ isOpen, onClo
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const { data: positions, isLoading: positionsLoading } = usePositions();
+  const { plants, isLoading: plantsLoading } = usePlants();
+  const { allFields, getFieldsByPlant, isLoading: fieldsLoading } = useFields();
+  const { allStations, getStationsByField, isLoading: stationsLoading } = useStations();
+  const [stationSearchOpen, setStationSearchOpen] = useState(false);
 
   const [profileData, setProfileData] = useState({
     full_name: '',
@@ -51,7 +66,10 @@ const UserProfileSettings: React.FC<UserProfileSettingsProps> = ({ isOpen, onClo
     position: '',
     department: '',
     company: '',
-    backup_email: ''
+    backup_email: '',
+    plant: '',
+    field: '',
+    station: ''
   });
 
   const [passwordData, setPasswordData] = useState({
@@ -97,7 +115,10 @@ const UserProfileSettings: React.FC<UserProfileSettingsProps> = ({ isOpen, onClo
         position: data.position || '',
         department: data.department || '',
         company: data.company || '',
-        backup_email: data.backup_email || ''
+        backup_email: data.backup_email || '',
+        plant: data.plant || '',
+        field: data.field || '',
+        station: data.station || ''
       });
 
       const preferences = data.notification_preferences as any;
@@ -386,6 +407,141 @@ const UserProfileSettings: React.FC<UserProfileSettingsProps> = ({ isOpen, onClo
                       <SelectItem value="OTHER">Other</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+
+                <Separator />
+
+                {/* Asset Hierarchy Location Selection */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-5 w-5 text-primary" />
+                    <h4 className="text-sm font-medium">Work Location</h4>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Select your primary work location using the asset hierarchy
+                  </p>
+
+                  {/* Plant Selection - No Search */}
+                  <div>
+                    <Label htmlFor="plant" className="flex items-center gap-2">
+                      <Building className="h-4 w-4" />
+                      Plant
+                    </Label>
+                    <Select
+                      value={profileData.plant}
+                      onValueChange={(value) => {
+                        setProfileData({ 
+                          ...profileData, 
+                          plant: value,
+                          field: '',
+                          station: ''
+                        });
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={plantsLoading ? "Loading plants..." : "Select a plant"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {plants?.map((plant) => (
+                          <SelectItem key={plant.id} value={plant.id}>
+                            {plant.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Field Selection - No Search */}
+                  <div>
+                    <Label htmlFor="field" className="flex items-center gap-2">
+                      <Layers className="h-4 w-4" />
+                      Field
+                    </Label>
+                    <Select
+                      value={profileData.field}
+                      onValueChange={(value) => {
+                        setProfileData({ 
+                          ...profileData, 
+                          field: value,
+                          station: ''
+                        });
+                      }}
+                      disabled={!profileData.plant}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={
+                          !profileData.plant 
+                            ? "Select a plant first" 
+                            : fieldsLoading 
+                              ? "Loading fields..." 
+                              : "Select a field"
+                        } />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {getFieldsByPlant(profileData.plant)?.map((field) => (
+                          <SelectItem key={field.id} value={field.id}>
+                            {field.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Station Selection - With Search */}
+                  <div>
+                    <Label htmlFor="station" className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4" />
+                      Station
+                    </Label>
+                    <Popover open={stationSearchOpen} onOpenChange={setStationSearchOpen} modal={true}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={stationSearchOpen}
+                          className="w-full justify-between"
+                          disabled={!profileData.field}
+                        >
+                          {profileData.station
+                            ? getStationsByField(profileData.field)?.find(s => s.id === profileData.station)?.name || "Select station"
+                            : !profileData.field 
+                              ? "Select a field first"
+                              : stationsLoading 
+                                ? "Loading stations..." 
+                                : "Select a station"}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-full p-0 z-50" align="start">
+                        <Command>
+                          <CommandInput placeholder="Search station..." />
+                          <CommandList>
+                            <CommandEmpty>No station found.</CommandEmpty>
+                            <CommandGroup>
+                              {getStationsByField(profileData.field)?.map((station) => (
+                                <CommandItem
+                                  key={station.id}
+                                  value={station.name}
+                                  onSelect={() => {
+                                    setProfileData({ ...profileData, station: station.id });
+                                    setStationSearchOpen(false);
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      profileData.station === station.id ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                  {station.name}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
                 </div>
 
                 <Button onClick={handleProfileUpdate} disabled={loading} className="w-full">
