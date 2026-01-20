@@ -188,20 +188,22 @@ export const ORMLandingPage: React.FC = () => {
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="border-b border-border bg-card/80 backdrop-blur-sm px-6 py-4 sticky top-0 z-10">
+      <div className="border-b border-border/40 bg-card/50 backdrop-blur-xl p-4 md:p-6">
           <BreadcrumbNavigation currentPageLabel="OR Maintenance" />
-          <div className="flex items-center justify-between mt-3">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-gradient-to-br from-primary/20 to-primary/5 rounded-xl">
-                <Wrench className="w-6 h-6 text-primary" />
+          
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
+            <div className="min-w-0 flex items-center gap-3">
+              <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500">
+                <Wrench className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-foreground tracking-tight">OR Maintenance</h1>
-                <p className="text-sm text-muted-foreground mt-0.5">
+                <h1 className="text-2xl font-bold text-foreground">OR Maintenance</h1>
+                <p className="text-sm text-muted-foreground mt-1">
                   CMMS & IMS Development Management System
                 </p>
               </div>
             </div>
+            
             <div className="flex items-center gap-2">
               <ORMNotificationCenter />
               <Button variant="outline" size="sm" onClick={() => navigate('/or-maintenance/analytics')} className="gap-2">
@@ -212,7 +214,7 @@ export const ORMLandingPage: React.FC = () => {
                 <UserCog className="w-4 h-4" />
                 <span className="hidden sm:inline">Resources</span>
               </Button>
-              <Button onClick={() => setShowCreateModal(true)} className="gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg shadow-primary/25">
+              <Button size="sm" onClick={() => setShowCreateModal(true)} className="flex-1 sm:flex-none gap-2">
                 <Plus className="w-4 h-4" />
                 Create ORM
               </Button>

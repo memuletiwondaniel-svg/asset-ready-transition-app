@@ -128,14 +128,13 @@ export const ORPLandingPage: React.FC = () => {
     <>
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="border-b border-border bg-card px-6 py-4">
-          <div className="mb-3">
-            <BreadcrumbNavigation currentPageLabel="ORA Plans" />
-          </div>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-accent">
-                <CalendarCheck className="w-5 h-5 text-white" />
+        <div className="border-b border-border/40 bg-card/50 backdrop-blur-xl p-4 md:p-6">
+          <BreadcrumbNavigation currentPageLabel="ORA Plans" />
+          
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
+            <div className="min-w-0 flex items-center gap-3">
+              <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-primary to-accent">
+                <CalendarCheck className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-foreground">{t.oraPlansTitle || 'ORA Plans'}</h1>
@@ -144,12 +143,13 @@ export const ORPLandingPage: React.FC = () => {
                 </p>
               </div>
             </div>
+            
             <div className="flex gap-2">
-              <Button onClick={() => navigate('/operation-readiness/analytics')} variant="outline" className="gap-2">
+              <Button size="sm" onClick={() => navigate('/operation-readiness/analytics')} variant="outline" className="gap-2">
                 <BarChart3 className="w-4 h-4" />
                 {t.analytics || 'Analytics'}
               </Button>
-              <Button onClick={() => setShowCreateModal(true)} className="gap-2">
+              <Button size="sm" onClick={() => setShowCreateModal(true)} className="flex-1 sm:flex-none gap-2">
                 <Plus className="w-4 h-4" />
                 {t.createNewORA || 'Create New ORA'}
               </Button>

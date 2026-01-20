@@ -404,19 +404,21 @@ const PSSRModule: React.FC = () => {
           </div>
           
           {/* Header Actions */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <Button 
+              size="sm"
               variant="outline"
-              className="border-border/50 hover:bg-secondary/50"
+              className="gap-2"
             >
-              <Filter className="h-4 w-4 mr-2" />
+              <Filter className="h-4 w-4" />
               Export
             </Button>
             <Button 
+              size="sm"
               onClick={() => setActiveView('create')}
-              className="bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground shadow-md hover:shadow-lg transition-all duration-200"
+              className="flex-1 sm:flex-none gap-2"
             >
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="h-4 w-4" />
               New PSSR
             </Button>
           </div>
