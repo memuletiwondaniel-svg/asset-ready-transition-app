@@ -9,10 +9,9 @@ import { MultiSelectCombobox } from '@/components/ui/multi-select-combobox';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { X, Image, FileText, Users, Calendar, FolderOpen, ChevronLeft, ChevronRight, Check, Star } from 'lucide-react';
-import { Switch } from '@/components/ui/switch';
+import { X, Image, FileText, Users, Calendar, FolderOpen, ChevronLeft, ChevronRight, Check } from 'lucide-react';
 import { useProjects } from '@/hooks/useProjects';
-import { usePlants } from '@/hooks/usePlants';
+
 import { useStations } from '@/hooks/useStations';
 import { useHubs } from '@/hooks/useHubs';
 import { useProjectRegions } from '@/hooks/useProjectRegions';
@@ -43,8 +42,7 @@ const STEPS: { id: WizardStep; label: string; icon: React.ElementType }[] = [
 
 export const AddProjectWizard: React.FC<AddProjectWizardProps> = ({ open, onClose }) => {
   const { isCreating } = useProjects();
-  const { plants, createPlant } = usePlants();
-  const { stations, createStation } = useStations();
+  const { stations } = useStations();
   const { data: hubs = [], createHub } = useHubs();
   const { regions } = useProjectRegions();
   const { regions: hierarchyRegions } = useProjectHierarchy();
@@ -61,11 +59,8 @@ export const AddProjectWizard: React.FC<AddProjectWizardProps> = ({ open, onClos
     project_title: '',
     region_id: '',
     hub_id: '',
-    plant_id: '',
-    station_id: '',
     project_scope: '',
     project_scope_image_url: '',
-    is_favorite: false,
   });
 
   const [selectedLocationIds, setSelectedLocationIds] = useState<string[]>([]);
@@ -104,8 +99,6 @@ export const AddProjectWizard: React.FC<AddProjectWizardProps> = ({ open, onClos
     const hubIdsInRegion = selectedRegion.hubs.map(h => h.id);
     return hubs.filter(hub => hubIdsInRegion.includes(hub.id));
   }, [formData.region_id, hierarchyRegions, hubs]);
-
-  const showStationField = formData.plant_id && plants.find(p => p.id === formData.plant_id)?.name === 'CS';
 
   const validateBasics = () => {
     if (!formData.project_id_prefix || !formData.project_id_number || !formData.project_title) {
@@ -164,11 +157,8 @@ export const AddProjectWizard: React.FC<AddProjectWizardProps> = ({ open, onClos
       project_title: '',
       region_id: '',
       hub_id: '',
-      plant_id: '',
-      station_id: '',
       project_scope: '',
       project_scope_image_url: '',
-      is_favorite: false,
     });
     setSelectedLocationIds([]);
     setTeamMembers([]);
@@ -191,9 +181,6 @@ export const AddProjectWizard: React.FC<AddProjectWizardProps> = ({ open, onClos
       project_scope_image_url: formData.project_scope_image_url,
       region_id: formData.region_id || undefined,
       hub_id: formData.hub_id || undefined,
-      plant_id: formData.plant_id || undefined,
-      station_id: formData.station_id || undefined,
-      is_favorite: formData.is_favorite,
     };
 
     try {
@@ -303,15 +290,13 @@ export const AddProjectWizard: React.FC<AddProjectWizardProps> = ({ open, onClos
                   onValueChange={(value) => setFormData(prev => ({ ...prev, project_id_prefix: value as 'DP' | 'ST' | 'MoC' }))}
                   placeholder="Prefix"
                   allowCreate={false}
+                  showSearch={false}
                   className="w-32"
                 />
                 <Input
                   value={formData.project_id_number}
-                  onChange={(e) => {
-                    const value = e.target.value.replace(/[^0-9]/g, '');
-                    setFormData(prev => ({ ...prev, project_id_number: value }));
-                  }}
-                  placeholder="Enter numbers only"
+                  onChange={(e) => setFormData(prev => ({ ...prev, project_id_number: e.target.value }))}
+                  placeholder="Enter project number"
                   className="flex-1"
                 />
               </div>
@@ -333,26 +318,10 @@ export const AddProjectWizard: React.FC<AddProjectWizardProps> = ({ open, onClos
               />
             </div>
 
-            {/* Favorite Toggle */}
-            <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/30">
-              <div className="flex items-center gap-3">
-                <Star className={cn("h-5 w-5", formData.is_favorite ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground")} />
-                <div>
-                  <Label htmlFor="is_favorite" className="font-medium cursor-pointer">Mark as Favorite</Label>
-                  <p className="text-xs text-muted-foreground">Favorite projects appear at the top of your list</p>
-                </div>
-              </div>
-              <Switch
-                id="is_favorite"
-                checked={formData.is_favorite}
-                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_favorite: checked }))}
-              />
-            </div>
-
             {/* Portfolio, Hub, and Locations */}
             <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
               <div className="space-y-2">
-                <Label>Portfolio (Region)</Label>
+                <Label>Portfolio</Label>
                 <EnhancedCombobox
                   options={regions.map(region => ({ value: region.id, label: region.name }))}
                   value={formData.region_id}
@@ -360,6 +329,7 @@ export const AddProjectWizard: React.FC<AddProjectWizardProps> = ({ open, onClos
                   placeholder="Select portfolio"
                   emptyText="No portfolios found"
                   allowCreate={false}
+                  showSearch={false}
                   className="w-full"
                 />
               </div>
@@ -374,14 +344,15 @@ export const AddProjectWizard: React.FC<AddProjectWizardProps> = ({ open, onClos
                   placeholder="Select or create hub"
                   emptyText="No hubs found"
                   createText="Create hub"
+                  showSearch={false}
                   className="w-full"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label>Locations (Stations)</Label>
+                <Label>Locations</Label>
                 <MultiSelectCombobox
-                  options={stations.map(station => ({ value: station.id, label: station.name }))}
+                  options={stations.map(station => ({ value: station.id, label: station.name, description: station.hierarchyLabel || undefined }))}
                   selectedValues={selectedLocationIds}
                   onValueChange={setSelectedLocationIds}
                   placeholder="Select locations"
@@ -391,83 +362,63 @@ export const AddProjectWizard: React.FC<AddProjectWizardProps> = ({ open, onClos
               </div>
             </div>
 
-            {/* Plant */}
-            <div className={`grid gap-4 ${showStationField ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
-              <div className="space-y-2">
-                <Label>Plant (Optional)</Label>
-                <EnhancedCombobox
-                  options={plants.map(plant => ({ value: plant.id, label: plant.name }))}
-                  value={formData.plant_id}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, plant_id: value, station_id: '' }))}
-                  onCreateNew={async (name) => { await createPlant(name); }}
-                  placeholder="Select or create plant"
-                  emptyText="No plants found"
-                  createText="Create plant"
-                  className="w-full"
-                />
-              </div>
-
-              {showStationField && (
-                <div className="space-y-2">
-                  <Label>Station</Label>
-                  <EnhancedCombobox
-                    options={stations.map(station => ({ value: station.id, label: station.name }))}
-                    value={formData.station_id}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, station_id: value }))}
-                    onCreateNew={async (name) => { await createStation(name); }}
-                    placeholder="Select or create station"
-                    emptyText="No stations found"
-                    createText="Create station"
-                    className="w-full"
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Project Scope */}
+            {/* Project Scope - Combined text and image */}
             <div className="space-y-2">
               <Label>Project Scope</Label>
-              <Textarea
-                value={formData.project_scope}
-                onChange={(e) => setFormData(prev => ({ ...prev, project_scope: e.target.value }))}
-                placeholder="Describe the project scope..."
-                rows={4}
-              />
-            </div>
-
-            {/* Scope Image */}
-            <div className="space-y-2">
-              <Label>Project Scope Image (Optional)</Label>
               <div
                 className={cn(
-                  "border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer",
-                  isDragOver ? "border-primary bg-primary/5" : "border-border hover:border-primary/50",
-                  formData.project_scope_image_url && "bg-muted/50"
+                  "border rounded-lg transition-colors",
+                  isDragOver ? "border-primary bg-primary/5" : "border-input"
                 )}
                 onDrop={handleImageDrop}
                 onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
                 onDragLeave={(e) => { e.preventDefault(); setIsDragOver(false); }}
-                onClick={() => document.getElementById('project_scope_image')?.click()}
               >
+                <Textarea
+                  value={formData.project_scope}
+                  onChange={(e) => setFormData(prev => ({ ...prev, project_scope: e.target.value }))}
+                  onPaste={(e) => {
+                    const items = e.clipboardData.items;
+                    for (let i = 0; i < items.length; i++) {
+                      if (items[i].type.startsWith('image/')) {
+                        e.preventDefault();
+                        const file = items[i].getAsFile();
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = (event) => {
+                            setFormData(prev => ({ ...prev, project_scope_image_url: event.target?.result as string }));
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                        break;
+                      }
+                    }
+                  }}
+                  placeholder="Describe the project scope... (Ctrl+V to paste images)"
+                  rows={4}
+                  className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                />
                 {formData.project_scope_image_url ? (
-                  <div className="relative">
-                    <img src={formData.project_scope_image_url} alt="Project Scope" className="w-full max-h-48 object-contain rounded-lg mx-auto" />
+                  <div className="relative p-3 border-t">
+                    <img src={formData.project_scope_image_url} alt="Project Scope" className="w-full max-h-48 object-contain rounded-lg" />
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
-                      onClick={(e) => { e.stopPropagation(); setFormData(prev => ({ ...prev, project_scope_image_url: '' })); }}
-                      className="absolute top-2 right-2 bg-destructive/10 hover:bg-destructive/20 text-destructive"
+                      onClick={() => setFormData(prev => ({ ...prev, project_scope_image_url: '' }))}
+                      className="absolute top-5 right-5 bg-destructive/10 hover:bg-destructive/20 text-destructive"
                     >
                       <X className="h-4 w-4" />
                     </Button>
                   </div>
                 ) : (
-                  <div className="space-y-2">
-                    <Image className="h-12 w-12 text-muted-foreground mx-auto" />
-                    <div className="text-sm text-muted-foreground">
-                      <span className="font-medium">Drag and drop an image here</span>
-                      <br />or click to browse
+                  <div 
+                    className="p-3 border-t text-center cursor-pointer hover:bg-muted/50 transition-colors"
+                    onClick={() => document.getElementById('project_scope_image')?.click()}
+                  >
+                    <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                      <Image className="h-4 w-4" />
+                      <span>Drop image here, paste (Ctrl+V), or click to browse</span>
                     </div>
                   </div>
                 )}
@@ -528,10 +479,7 @@ export const AddProjectWizard: React.FC<AddProjectWizardProps> = ({ open, onClos
                   </div>
                   <div>
                     <Label className="text-muted-foreground text-xs">Title</Label>
-                    <p className="font-medium flex items-center gap-2">
-                      {formData.project_title}
-                      {formData.is_favorite && <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />}
-                    </p>
+                    <p className="font-medium">{formData.project_title}</p>
                   </div>
                 </div>
                 {formData.project_scope && (

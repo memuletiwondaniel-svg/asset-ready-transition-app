@@ -9,6 +9,9 @@ interface Station {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  hierarchyLabel?: string;
+  plant_name?: string;
+  field_name?: string;
 }
 
 export const useStations = () => {
@@ -24,7 +27,15 @@ export const useStations = () => {
       
       const { data, error: fetchError } = await supabase
         .from('station')
-        .select('*')
+        .select(`
+          *,
+          field:field_id (
+            name,
+            plant:plant_id (
+              name
+            )
+          )
+        `)
         .eq('is_active', true)
         .order('name', { ascending: true });
 
@@ -32,7 +43,24 @@ export const useStations = () => {
         throw fetchError;
       }
 
-      setStations(data || []);
+      // Map stations with hierarchy labels
+      const stationsWithHierarchy = (data || []).map((station: any) => {
+        const plantName = station.field?.plant?.name;
+        const hierarchyLabel = plantName ? `${plantName} > ${station.name}` : undefined;
+        return {
+          id: station.id,
+          name: station.name,
+          description: station.description,
+          is_active: station.is_active,
+          created_at: station.created_at,
+          updated_at: station.updated_at,
+          hierarchyLabel,
+          plant_name: plantName,
+          field_name: station.field?.name
+        };
+      });
+
+      setStations(stationsWithHierarchy);
     } catch (err) {
       console.error('Error fetching stations:', err);
       setError('Failed to load stations');
