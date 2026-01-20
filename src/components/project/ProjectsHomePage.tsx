@@ -104,6 +104,10 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                 <p className="text-sm text-muted-foreground mt-1">Browse and access your assigned projects</p>
               </div>
             </div>
+            <Button onClick={() => setIsAddModalOpen(true)} className="gap-2">
+              <Plus className="h-4 w-4" />
+              New Project
+            </Button>
           </div>
         </div>
       </div>
@@ -124,10 +128,6 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
               />
             </div>
             <div className="flex items-center gap-2">
-              <Button onClick={() => setIsAddModalOpen(true)} className="gap-2">
-                <Plus className="h-4 w-4" />
-                New Project
-              </Button>
               <div className="flex gap-1 bg-muted/30 p-1 rounded-lg border border-border/30">
                 <Button
                   variant="ghost"
