@@ -1,12 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { WidgetCard } from './WidgetCard';
-import { LayoutGrid, Table as TableIcon, Columns3 } from 'lucide-react';
+import { LayoutGrid, Table as TableIcon, Columns3, Plus } from 'lucide-react';
 import PSSRAdvancedSearch from '../PSSRAdvancedSearch';
 import PSSRFilters from '../PSSRFilters';
 import PSSRTableView from '../PSSRTableView';
 import PSSRKanbanBoard from '../PSSRKanbanBoard';
 import DraggablePSSRCard from '../DraggablePSSRCard';
 import { PSSRQuickStatsBar } from './PSSRQuickStatsBar';
+import { Button } from '@/components/ui/button';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent, DragOverlay } from '@dnd-kit/core';
 import { SortableContext, arrayMove, verticalListSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 
@@ -50,6 +51,7 @@ interface PSSRReviewsWidgetProps {
   };
   activeStatFilter?: 'all' | 'under-review' | 'draft' | 'completed';
   onStatFilterClick?: (filter: 'all' | 'under-review' | 'draft' | 'completed') => void;
+  onCreateNew?: () => void;
 }
 
 export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
@@ -86,6 +88,7 @@ export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
   stats,
   activeStatFilter,
   onStatFilterClick,
+  onCreateNew,
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -216,6 +219,17 @@ export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
               uniqueStatuses={uniqueStatuses}
               uniqueLeads={uniqueLeads}
             />
+
+            {onCreateNew && (
+              <Button 
+                onClick={onCreateNew} 
+                size="sm"
+                className="gap-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm"
+              >
+                <Plus className="h-4 w-4" />
+                New PSSR
+              </Button>
+            )}
           </div>
 
           {/* Results Count */}

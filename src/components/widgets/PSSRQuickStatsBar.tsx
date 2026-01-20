@@ -13,7 +13,7 @@ interface PSSRQuickStatsBarProps {
 }
 
 const statConfigs = [
-  { key: 'all' as const, label: 'Total', activeClass: 'bg-primary text-primary-foreground border-primary', inactiveClass: 'text-primary border-primary/30 hover:border-primary/60' },
+  { key: 'all' as const, label: 'Total', activeClass: 'bg-slate-600 text-white border-slate-600', inactiveClass: 'text-slate-600 dark:text-slate-400 border-slate-300 dark:border-slate-600 hover:border-slate-500' },
   { key: 'draft' as const, label: 'Draft', activeClass: 'bg-muted-foreground text-white border-muted-foreground', inactiveClass: 'text-muted-foreground border-muted-foreground/30 hover:border-muted-foreground/60' },
   { key: 'under-review' as const, label: 'Under Review', activeClass: 'bg-amber-500 text-white border-amber-500', inactiveClass: 'text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-700 hover:border-amber-500' },
   { key: 'completed' as const, label: 'Completed', activeClass: 'bg-emerald-600 text-white border-emerald-600', inactiveClass: 'text-emerald-600 dark:text-emerald-400 border-emerald-300 dark:border-emerald-700 hover:border-emerald-600' },
