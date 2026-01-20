@@ -403,10 +403,6 @@ const PSSRApproverDashboard: React.FC = () => {
               </div>
               
               <div className="flex items-center gap-2">
-                <Button size="sm" onClick={() => setShowCreateTaskDialog(true)} className="gap-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm">
-                  <Plus className="h-4 w-4" />
-                  New Task
-                </Button>
                 <NotificationCenter />
               </div>
             </div>
@@ -468,25 +464,31 @@ const PSSRApproverDashboard: React.FC = () => {
               </button>
             </div>
 
-            {/* Search */}
-            <div className="relative max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search tasks..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-              {searchQuery && (
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" 
-                  onClick={() => setSearchQuery('')}
-                >
-                  <X className="w-3 h-3" />
-                </Button>
-              )}
+            {/* Search and New Task */}
+            <div className="flex items-center gap-3">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search tasks..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+                {searchQuery && (
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" 
+                    onClick={() => setSearchQuery('')}
+                  >
+                    <X className="w-3 h-3" />
+                  </Button>
+                )}
+              </div>
+              <Button size="sm" onClick={() => setShowCreateTaskDialog(true)} className="gap-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm">
+                <Plus className="h-4 w-4" />
+                New Task
+              </Button>
             </div>
 
             {/* Bulk Actions */}
