@@ -15,6 +15,10 @@ export const ROLES_REQUIRING_PORTFOLIO_ONLY = [
   'ORA Engr.',
   'ORA Engineer',
   'ORA Engr',
+  'Snr ORA Engr.',
+  'Snr ORA Engr',
+  'Senior ORA Engr.',
+  'Senior ORA Engineer',
 ];
 
 // Roles that require BOTH Portfolio AND Hub assignment
