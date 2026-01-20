@@ -149,10 +149,6 @@ export const ORPLandingPage: React.FC = () => {
                 <BarChart3 className="w-4 h-4" />
                 {t.analytics || 'Analytics'}
               </Button>
-              <Button size="sm" onClick={() => setShowCreateModal(true)} className="flex-1 sm:flex-none gap-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm">
-                <Plus className="w-4 h-4" />
-                {t.createNewORA || 'New ORA Plan'}
-              </Button>
             </div>
           </div>
         </div>
@@ -160,8 +156,8 @@ export const ORPLandingPage: React.FC = () => {
         {/* Main Content */}
         <div className="flex-1 overflow-auto p-6">
           <div className="max-w-7xl mx-auto space-y-6">
-            {/* Search Bar */}
-            <div className="flex items-center justify-between">
+            {/* Search Bar with New ORA Plan Button */}
+            <div className="flex items-center justify-between gap-4">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
@@ -171,9 +167,15 @@ export const ORPLandingPage: React.FC = () => {
                   className="pl-10 w-80"
                 />
               </div>
-              <p className="text-sm text-muted-foreground">
-                {filteredProjects.length} {t.projectsWithORAPlans || 'projects with ORA plans'}
-              </p>
+              <div className="flex items-center gap-4">
+                <p className="text-sm text-muted-foreground">
+                  {filteredProjects.length} {t.projectsWithORAPlans || 'projects with ORA plans'}
+                </p>
+                <Button size="sm" onClick={() => setShowCreateModal(true)} className="gap-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm">
+                  <Plus className="w-4 h-4" />
+                  {t.createNewORA || 'New ORA Plan'}
+                </Button>
+              </div>
             </div>
 
             {/* Project Cards Grid */}
