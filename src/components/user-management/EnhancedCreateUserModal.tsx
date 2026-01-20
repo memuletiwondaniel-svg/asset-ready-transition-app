@@ -348,6 +348,57 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
     return role;
   };
 
+  // Check if all required fields for the role are filled - mirrors Edit modal logic
+  const isTitleReady = () => {
+    const { role, commission, portfolio, hub, plant_id, station_id, field_id } = formData;
+    
+    if (!role) return false;
+    
+    // Roles that require portfolio + hub
+    if (requiresHub(role)) {
+      return !!portfolio && !!hub;
+    }
+    
+    // Roles that require only portfolio
+    if (requiresPortfolioSelection(role) && !requiresHub(role)) {
+      return !!portfolio;
+    }
+    
+    // TA2 roles with commission requirement
+    if (shouldShowTA2Commission(role)) {
+      return !!commission;
+    }
+    
+    // Civil TA2 and Tech Safety TA2 - no additional fields needed
+    if (['Civil TA2', 'Tech Safety TA2', 'HSE Manager'].includes(role)) {
+      return true;
+    }
+    
+    const plantName = getPlantName(plant_id || '');
+    
+    switch (role) {
+      case 'Director':
+      case 'Engr. Manager':
+      case 'HSE Lead':
+        return !!commission;
+      case 'Plant Director':
+      case 'Dep. Plant Director':
+        return !!plant_id;
+      case 'Site Engr.':
+        return !!station_id;
+      case 'Ops Coach':
+        return !!plant_id && !!field_id; // Ops Coach requires plant and field (station optional for CS)
+      case 'Ops Team Lead':
+        return !!plant_id && !!field_id;
+      case 'Section Head':
+        return !!plant_id && !!field_id;
+      case 'ER Lead':
+        return true;
+      default:
+        return true; // Other roles don't need additional fields
+    }
+  };
+
   const handleSubmit = async () => {
     if (step === 'form') {
       // Validate required fields
@@ -658,26 +709,17 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
   };
 
   const handleRoleChange = (value: string) => {
-    if (value === '__add_new_role__') {
-      // Pre-select the current function in the dialog
-      const currentFunction = categorizedRoles?.find(g => g.category.name === formData.function);
-      if (currentFunction) {
-        setNewRoleFunctionId(currentFunction.category.id);
-      }
-      setShowAddRoleDialog(true);
-    } else {
-      // Reset all conditional fields when role changes
-      setFormData(prev => ({ 
-        ...prev, 
-        role: value, 
-        plant_id: '', 
-        field_id: '', 
-        station_id: '',
-        hub: '',
-        portfolio: '',
-        commission: ''
-      }));
-    }
+    // Reset all conditional fields when role changes
+    setFormData(prev => ({ 
+      ...prev, 
+      role: value, 
+      plant_id: '', 
+      field_id: '', 
+      station_id: '',
+      hub: '',
+      portfolio: '',
+      commission: ''
+    }));
   };
 
   const renderForm = () => (
@@ -889,19 +931,11 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
                   {formData.function === 'Other' ? (
                     <SelectItem value="Others (specify)">Others (specify)</SelectItem>
                   ) : (
-                    <>
-                      {getRolesForFunction().map((role) => (
-                        <SelectItem key={role.id} value={role.name}>
-                          {role.name}
-                        </SelectItem>
-                      ))}
-                      <SelectItem value="__add_new_role__" className="text-primary font-medium">
-                        <span className="flex items-center gap-2">
-                          <Plus className="h-4 w-4" />
-                          Add New Role
-                        </span>
+                    getRolesForFunction().map((role) => (
+                      <SelectItem key={role.id} value={role.name}>
+                        {role.name}
                       </SelectItem>
-                    </>
+                    ))
                   )}
                 </SelectContent>
               </Select>
@@ -1076,6 +1110,19 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+          )}
+
+          {/* Position Display - Shows generated position when all required fields are filled */}
+          {isTitleReady() && (
+            <div className="space-y-1.5 mt-4 pt-4 border-t">
+              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Position</Label>
+              <div className="p-3 bg-muted rounded-md border">
+                <span className="font-medium text-primary">{generatePosition()}</span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                This position is automatically generated based on your role and selections above.
+              </p>
             </div>
           )}
         </CardContent>
