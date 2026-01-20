@@ -530,17 +530,21 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
 
   const filterAndSortUsers = () => {
     let filtered = users.filter(user => {
+      const searchLower = searchQuery?.toLowerCase() || '';
       const matchesSearch = !searchQuery || 
-        user.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.first_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.last_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.functional_email_address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.company?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.role?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.position?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.phone_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.projects?.some(project => project.toLowerCase().includes(searchQuery.toLowerCase()));
+        user.full_name?.toLowerCase().includes(searchLower) ||
+        user.first_name?.toLowerCase().includes(searchLower) ||
+        user.last_name?.toLowerCase().includes(searchLower) ||
+        user.email?.toLowerCase().includes(searchLower) ||
+        user.functional_email_address?.toLowerCase().includes(searchLower) ||
+        user.company?.toLowerCase().includes(searchLower) ||
+        user.role?.toLowerCase().includes(searchLower) ||
+        user.position?.toLowerCase().includes(searchLower) ||
+        user.phone_number?.toLowerCase().includes(searchLower) ||
+        user.projects?.some(project => project.toLowerCase().includes(searchLower)) ||
+        user.ta2_discipline?.toLowerCase().includes(searchLower) ||
+        user.ta2_commission?.toLowerCase().includes(searchLower) ||
+        user.roles?.some(role => role?.toLowerCase().includes(searchLower));
 
       const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
       const matchesCompany = companyFilter === 'all' || user.company === companyFilter;
