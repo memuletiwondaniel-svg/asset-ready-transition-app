@@ -36,9 +36,9 @@ export const ManageHandover: React.FC<ManageHandoverProps> = ({ onBack }) => {
   const [activeTab, setActiveTab] = useState('pac');
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden bg-background">
+    <div className="flex-1 flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="border-b border-border bg-card/80 backdrop-blur-sm px-6 py-4 sticky top-0 z-10">
+      <div className="border-b border-border/40 bg-card/30 backdrop-blur-xl px-6 py-4 sticky top-0 z-10">
         <BreadcrumbNavigation 
           currentPageLabel="P2A Handover" 
           customBreadcrumbs={[
