@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -227,6 +227,81 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [activeMainTab, setActiveMainTab] = useState('users');
+  const [hiddenBySpace, setHiddenBySpace] = useState<Set<string>>(new Set());
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+
+  // Priority order for columns - lower index = higher priority (always shown first)
+  // 'user' and 'role' have highest priority, 'actions' is always shown
+  const columnPriority = ['user', 'role', 'actions', 'status', 'company', 'systemRole'];
+
+  // Calculate which columns should be visible based on available space
+  const updateResponsiveColumns = useCallback(() => {
+    if (!tableContainerRef.current) return;
+    
+    const containerWidth = tableContainerRef.current.offsetWidth;
+    const visibleColumns = columns.filter(col => col.visible);
+    
+    // Calculate total width needed for all visible columns
+    const totalNeededWidth = visibleColumns.reduce((sum, col) => sum + col.minWidth, 0);
+    
+    if (totalNeededWidth <= containerWidth) {
+      // All columns fit - show all that are marked visible
+      setHiddenBySpace(new Set());
+      return;
+    }
+    
+    // Not enough space - hide columns in reverse priority order
+    const newHiddenBySpace = new Set<string>();
+    let currentWidth = 0;
+    
+    // Sort visible columns by priority
+    const sortedByPriority = [...visibleColumns].sort((a, b) => {
+      const priorityA = columnPriority.indexOf(a.id);
+      const priorityB = columnPriority.indexOf(b.id);
+      return (priorityA === -1 ? 999 : priorityA) - (priorityB === -1 ? 999 : priorityB);
+    });
+    
+    // Add columns until we run out of space
+    for (const col of sortedByPriority) {
+      if (currentWidth + col.minWidth <= containerWidth) {
+        currentWidth += col.minWidth;
+      } else {
+        // This column doesn't fit - hide it (unless it's a priority column)
+        if (col.id !== 'user' && col.id !== 'role') {
+          newHiddenBySpace.add(col.id);
+        }
+      }
+    }
+    
+    setHiddenBySpace(newHiddenBySpace);
+  }, [columns]);
+
+  // Set up resize observer
+  useEffect(() => {
+    const container = tableContainerRef.current;
+    if (!container) return;
+
+    const resizeObserver = new ResizeObserver(() => {
+      updateResponsiveColumns();
+    });
+
+    resizeObserver.observe(container);
+    updateResponsiveColumns(); // Initial check
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [updateResponsiveColumns]);
+
+  // Re-check when columns change
+  useEffect(() => {
+    updateResponsiveColumns();
+  }, [columns, updateResponsiveColumns]);
+
+  // Get effectively visible columns (visible AND not hidden by space constraints)
+  const getVisibleColumns = () => {
+    return columns.filter(col => col.visible && !hiddenBySpace.has(col.id));
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -903,18 +978,18 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
                       collisionDetection={closestCenter}
                       onDragEnd={handleDragEnd}
                     >
-                      <div className="rounded-lg flex flex-col flex-1 overflow-hidden">
+                      <div ref={tableContainerRef} className="rounded-lg flex flex-col flex-1 overflow-hidden">
                         {/* Sticky Table Header */}
                         <Table style={{ tableLayout: 'fixed', width: '100%' }}>
                           <colgroup>
-                            {columns.filter(col => col.visible).map((column) => (
+                            {getVisibleColumns().map((column) => (
                               <col key={column.id} style={{ width: column.width, minWidth: column.minWidth }} />
                             ))}
                           </colgroup>
                           <TableHeader className="bg-muted/50">
                             <TableRow className="hover:bg-transparent border-border/40">
-                              <SortableContext items={columns.filter(col => col.visible).map(col => col.id)} strategy={horizontalListSortingStrategy}>
-                                {columns.filter(col => col.visible).map((column) => (
+                              <SortableContext items={getVisibleColumns().map(col => col.id)} strategy={horizontalListSortingStrategy}>
+                                {getVisibleColumns().map((column) => (
                                   <SortableTableHeader
                                     key={column.id}
                                     column={column}
@@ -932,7 +1007,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
                         <div className="flex-1 overflow-auto min-h-0">
                           <Table style={{ tableLayout: 'fixed', width: '100%' }}>
                             <colgroup>
-                              {columns.filter(col => col.visible).map((column) => (
+                              {getVisibleColumns().map((column) => (
                                 <col key={column.id} style={{ width: column.width, minWidth: column.minWidth }} />
                               ))}
                             </colgroup>
@@ -944,7 +1019,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
                                   style={{ animationDelay: `${index * 50}ms` }}
                                   onClick={() => setSelectedUser(user as any)}
                                 >
-                                  {columns.filter(col => col.visible).map((column) => (
+                                  {getVisibleColumns().map((column) => (
                                     <TableCell 
                                       key={column.id} 
                                       style={{ width: column.width, minWidth: column.minWidth }}
