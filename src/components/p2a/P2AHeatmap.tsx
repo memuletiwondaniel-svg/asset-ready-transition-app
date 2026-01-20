@@ -8,6 +8,7 @@ import { P2AHeatmapCell } from './P2AHeatmapCell';
 import { P2AHeatmapCellDialog, HeatmapCellClickData } from './P2AHeatmapCellDialog';
 import { useNavigate } from 'react-router-dom';
 import { useP2AHeatmapData } from '@/hooks/useP2AHeatmapData';
+import { getProjectColor } from '@/utils/projectColors';
 
 export const P2AHeatmap: React.FC = () => {
   const { handovers, isLoading: loadingHandovers } = useP2AHandovers();
@@ -82,15 +83,24 @@ export const P2AHeatmap: React.FC = () => {
                 No handovers found. Create your first P2A handover to get started.
               </div>
             ) : (
-              handovers?.map((handover) => (
+              handovers?.map((handover) => {
+                const prefix = handover.project?.project_id_prefix || '';
+                const number = handover.project?.project_id_number || '';
+                const projectColor = getProjectColor(prefix, number);
+                
+                return (
                 <div key={handover.id} className="flex border-b border-border/40 hover:bg-muted/20">
                   <div 
                     className="w-32 sm:w-44 p-1.5 sm:p-2 border-r border-border/40 sticky left-0 bg-card z-10 cursor-pointer hover:bg-muted/50 transition-colors" 
                     onClick={() => navigate(`/project/${handover.project_id}`)}
                   >
-                    <div className="font-medium text-[10px] sm:text-xs">
-                      {handover.project?.project_id_prefix}-{handover.project?.project_id_number}
-                    </div>
+                    <Badge 
+                      variant="outline" 
+                      className="text-[10px] sm:text-xs font-semibold px-1.5 py-0.5 text-white border-0 mb-0.5"
+                      style={{ background: `linear-gradient(to right, ${projectColor.bgStart}, ${projectColor.bgEnd})` }}
+                    >
+                      {prefix}-{number}
+                    </Badge>
                     <div className="text-[9px] sm:text-[10px] text-muted-foreground truncate">
                       {handover.project?.project_title}
                     </div>
@@ -127,7 +137,8 @@ export const P2AHeatmap: React.FC = () => {
                     );
                   })}
                 </div>
-              ))
+              );
+              })
             )}
           </div>
           <ScrollBar orientation="horizontal" />
