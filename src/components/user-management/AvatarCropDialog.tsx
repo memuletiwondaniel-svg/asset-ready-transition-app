@@ -77,6 +77,10 @@ export const AvatarCropDialog: React.FC<AvatarCropDialogProps> = ({
         canvas.width = croppedAreaPixels.width;
         canvas.height = croppedAreaPixels.height;
 
+        // Fill background so JPEG doesn't turn transparent areas black
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
         // Apply filters
         ctx.filter = `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%)`;
 
