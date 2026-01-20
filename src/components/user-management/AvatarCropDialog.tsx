@@ -198,10 +198,14 @@ export const AvatarCropDialog: React.FC<AvatarCropDialogProps> = ({
               image={imageSrc}
               crop={crop}
               zoom={zoom}
+              minZoom={0.5}
+              maxZoom={3}
               rotation={rotation}
               aspect={aspectRatio}
               cropShape={cropShape}
               showGrid={cropShape === 'rect'}
+              restrictPosition={false}
+              objectFit="contain"
               onCropChange={onCropChange}
               onZoomChange={onZoomChange}
               onRotationChange={setRotation}
