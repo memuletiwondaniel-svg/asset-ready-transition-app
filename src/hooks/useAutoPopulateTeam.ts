@@ -20,13 +20,14 @@ interface AutoPopulateResult {
 
 // Role matching configuration with function/role patterns
 // matchType: 'hub' = matches users assigned to selected hub, 'region' = matches by region text, 'global' = any match
-const ROLE_MATCHING_CONFIG: Record<string, { patterns: string[]; matchType: 'region' | 'hub' | 'global' }> = {
+// allowMultiple: true = find all matching users for this role (e.g., ORA Engineers)
+const ROLE_MATCHING_CONFIG: Record<string, { patterns: string[]; matchType: 'region' | 'hub' | 'global'; allowMultiple?: boolean }> = {
   'Project Manager': { patterns: ['project manager', 'proj manager'], matchType: 'region' },
   'Project Hub Lead': { patterns: ['hub lead', 'project hub lead'], matchType: 'hub' },
   'Project Engr': { patterns: ['proj eng', 'project eng', 'project engr'], matchType: 'hub' },
-  'Construction Lead': { patterns: ['construction lead', 'construction'], matchType: 'hub' },
-  'Commissioning Lead': { patterns: ['commissioning lead', 'commissioning'], matchType: 'hub' },
-  'ORA Engr.': { patterns: ['ora engr', 'ora engineer', 'ora eng', 'ora'], matchType: 'hub' },
+  'Construction Lead': { patterns: ['construction lead', 'construction'], matchType: 'region' },
+  'Commissioning Lead': { patterns: ['commissioning lead', 'commissioning'], matchType: 'region' },
+  'ORA Engr.': { patterns: ['ora engr', 'ora engineer', 'ora eng', 'ora'], matchType: 'hub', allowMultiple: true },
 };
 
 export const useAutoPopulateTeam = (
@@ -42,19 +43,37 @@ export const useAutoPopulateTeam = (
     const team: TeamMember[] = [];
 
     Object.entries(ROLE_MATCHING_CONFIG).forEach(([role, config]) => {
-      const matchedUser = findMatchingUser(allUsers, config.patterns, config.matchType, regionName, hubName, hubId);
-      
-      if (matchedUser) {
-        team.push({
-          id: `${role}-auto-${Date.now()}-${Math.random()}`,
-          user_id: matchedUser.user_id,
-          role: role,
-          is_lead: ['Project Manager', 'Project Engr'].includes(role),
-          user_name: matchedUser.full_name,
-          avatar_url: matchedUser.avatar_url || '',
-          position: matchedUser.position || '',
-          is_auto_populated: true,
+      if (config.allowMultiple) {
+        // Find all matching users for this role
+        const matchedUsers = findAllMatchingUsers(allUsers, config.patterns, config.matchType, regionName, hubName, hubId);
+        matchedUsers.forEach((matchedUser, index) => {
+          team.push({
+            id: `${role}-auto-${Date.now()}-${Math.random()}-${index}`,
+            user_id: matchedUser.user_id,
+            role: role,
+            is_lead: false,
+            user_name: matchedUser.full_name,
+            avatar_url: matchedUser.avatar_url || '',
+            position: matchedUser.position || '',
+            is_auto_populated: true,
+          });
         });
+      } else {
+        // Find single best matching user
+        const matchedUser = findMatchingUser(allUsers, config.patterns, config.matchType, regionName, hubName, hubId);
+        
+        if (matchedUser) {
+          team.push({
+            id: `${role}-auto-${Date.now()}-${Math.random()}`,
+            user_id: matchedUser.user_id,
+            role: role,
+            is_lead: ['Project Manager', 'Project Engr'].includes(role),
+            user_name: matchedUser.full_name,
+            avatar_url: matchedUser.avatar_url || '',
+            position: matchedUser.position || '',
+            is_auto_populated: true,
+          });
+        }
       }
     });
 
@@ -80,9 +99,8 @@ function findMatchingUser(
   hubName: string | null,
   hubId?: string | null
 ): any | null {
-  // For hub-based matching, prioritize users with matching hub_id
+  // For hub-based matching, first try to find user with matching hub_id
   if (matchType === 'hub' && hubId) {
-    // First try to find user with matching hub_id AND role pattern
     for (const user of users) {
       if (user.hub_id !== hubId) continue;
       
@@ -97,37 +115,146 @@ function findMatchingUser(
         return user;
       }
     }
+    
+    // Fallback: try matching by hub name in position
+    if (hubName) {
+      const hubNameLower = hubName.toLowerCase();
+      for (const user of users) {
+        const position = (user.position || '').toLowerCase();
+        const userRole = (user.role || '').toLowerCase();
+        
+        const matchesPattern = patterns.some(pattern => 
+          position.includes(pattern) || userRole.includes(pattern)
+        );
+        
+        if (matchesPattern && position.includes(hubNameLower)) {
+          return user;
+        }
+      }
+    }
   }
 
-  // Fallback to text-based matching
-  const locationToMatch = matchType === 'region' ? regionName : matchType === 'hub' ? hubName : null;
+  // For region-based matching or hub fallback, check position contains region name
+  if (regionName) {
+    const regionLower = regionName.toLowerCase();
+    for (const user of users) {
+      const position = (user.position || '').toLowerCase();
+      const userRole = (user.role || '').toLowerCase();
+      
+      const matchesPattern = patterns.some(pattern => 
+        position.includes(pattern) || userRole.includes(pattern)
+      );
 
-  for (const user of users) {
-    const position = (user.position || '').toLowerCase();
-    const userRole = (user.role || '').toLowerCase();
-    
-    // Check if user position/role matches any of the patterns
-    const matchesPattern = patterns.some(pattern => 
-      position.includes(pattern) || userRole.includes(pattern)
-    );
-
-    if (!matchesPattern) continue;
-
-    // For global roles, just matching the pattern is enough
-    if (matchType === 'global') {
-      return user;
+      if (matchesPattern && position.includes(regionLower)) {
+        return user;
+      }
     }
+  }
 
-    // For region/hub roles, also check if the position contains the location name
-    if (locationToMatch) {
-      const locationLower = locationToMatch.toLowerCase();
-      if (position.includes(locationLower)) {
+  // For global roles, just match the pattern
+  if (matchType === 'global') {
+    for (const user of users) {
+      const position = (user.position || '').toLowerCase();
+      const userRole = (user.role || '').toLowerCase();
+      
+      const matchesPattern = patterns.some(pattern => 
+        position.includes(pattern) || userRole.includes(pattern)
+      );
+
+      if (matchesPattern) {
         return user;
       }
     }
   }
 
   return null;
+}
+
+// Find all matching users for roles that allow multiple (e.g., ORA Engineers)
+function findAllMatchingUsers(
+  users: any[],
+  patterns: string[],
+  matchType: 'region' | 'hub' | 'global',
+  regionName: string | null,
+  hubName: string | null,
+  hubId?: string | null
+): any[] {
+  const matchedUsers: any[] = [];
+  const addedUserIds = new Set<string>();
+
+  // For hub-based matching, first find users with matching hub_id
+  if (matchType === 'hub' && hubId) {
+    for (const user of users) {
+      if (user.hub_id !== hubId) continue;
+      
+      const position = (user.position || '').toLowerCase();
+      const userRole = (user.role || '').toLowerCase();
+      
+      const matchesPattern = patterns.some(pattern => 
+        position.includes(pattern) || userRole.includes(pattern)
+      );
+
+      if (matchesPattern && !addedUserIds.has(user.user_id)) {
+        matchedUsers.push(user);
+        addedUserIds.add(user.user_id);
+      }
+    }
+  }
+
+  // Also find users matching by hub name in position
+  if (hubName) {
+    const hubNameLower = hubName.toLowerCase();
+    for (const user of users) {
+      const position = (user.position || '').toLowerCase();
+      const userRole = (user.role || '').toLowerCase();
+      
+      const matchesPattern = patterns.some(pattern => 
+        position.includes(pattern) || userRole.includes(pattern)
+      );
+      
+      if (matchesPattern && position.includes(hubNameLower) && !addedUserIds.has(user.user_id)) {
+        matchedUsers.push(user);
+        addedUserIds.add(user.user_id);
+      }
+    }
+  }
+
+  // Also find users matching by region name in position
+  if (regionName) {
+    const regionLower = regionName.toLowerCase();
+    for (const user of users) {
+      const position = (user.position || '').toLowerCase();
+      const userRole = (user.role || '').toLowerCase();
+      
+      const matchesPattern = patterns.some(pattern => 
+        position.includes(pattern) || userRole.includes(pattern)
+      );
+
+      if (matchesPattern && position.includes(regionLower) && !addedUserIds.has(user.user_id)) {
+        matchedUsers.push(user);
+        addedUserIds.add(user.user_id);
+      }
+    }
+  }
+
+  // For global matching, just match the pattern
+  if (matchType === 'global') {
+    for (const user of users) {
+      const position = (user.position || '').toLowerCase();
+      const userRole = (user.role || '').toLowerCase();
+      
+      const matchesPattern = patterns.some(pattern => 
+        position.includes(pattern) || userRole.includes(pattern)
+      );
+
+      if (matchesPattern && !addedUserIds.has(user.user_id)) {
+        matchedUsers.push(user);
+        addedUserIds.add(user.user_id);
+      }
+    }
+  }
+
+  return matchedUsers;
 }
 
 export default useAutoPopulateTeam;
