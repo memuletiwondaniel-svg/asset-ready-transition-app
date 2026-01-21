@@ -284,7 +284,7 @@ export const P2AHeatmap: React.FC = () => {
           <div className="min-w-max">
             {/* Header Row */}
             <div className="flex border-b border-border/40 bg-muted/30">
-              <div className="w-36 sm:w-48 p-1.5 sm:p-2 font-semibold text-[10px] sm:text-xs border-r border-border/40 sticky left-0 bg-muted/30 z-10">
+              <div className="w-28 sm:w-36 p-1.5 sm:p-2 font-semibold text-[10px] sm:text-xs border-r border-border/40 sticky left-0 bg-muted/30 z-10">
                 Project
               </div>
               {categories?.map((category) => (
@@ -312,7 +312,7 @@ export const P2AHeatmap: React.FC = () => {
                 return (
                 <div key={plan.id} className="flex border-b border-border/40 hover:bg-muted/20">
                   <div 
-                    className="w-36 sm:w-48 p-1.5 sm:p-2 border-r border-border/40 sticky left-0 bg-card z-10 cursor-pointer hover:bg-muted/50 transition-colors" 
+                    className="w-28 sm:w-36 p-1.5 sm:p-2 border-r border-border/40 sticky left-0 bg-card z-10 cursor-pointer hover:bg-muted/50 transition-colors"
                     onClick={() => (isUsingProjects || !isMockData) && navigate(`/project/${plan.project_id}`)}
                   >
                     <Badge 
