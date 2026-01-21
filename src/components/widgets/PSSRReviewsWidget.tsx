@@ -152,38 +152,42 @@ export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
       onToggleVisibility={onToggleVisibility}
       dragAttributes={dragAttributes}
       dragListeners={dragListeners}
-      className="flex flex-col h-[600px]"
+      className="flex flex-col h-[600px] w-full"
     >
       <div className="flex flex-col h-full overflow-hidden">
         {/* Combined Controls Bar - Stats inline with Search */}
         <div className={`sticky top-0 z-10 bg-card pb-3 border-b border-border/40 transition-shadow duration-300 ${
           isScrolled ? 'shadow-md' : ''
         }`}>
-          <div className="flex flex-wrap items-center gap-3 mb-3">
+          <div className="flex flex-nowrap items-center gap-3 mb-3 overflow-x-auto">
             {/* Stats Filter Chips - Left */}
             {stats && onStatFilterClick && (
-              <PSSRQuickStatsBar
-                stats={stats}
-                activeFilter={activeStatFilter || 'all'}
-                onFilterClick={onStatFilterClick}
-              />
+              <div className="shrink-0">
+                <PSSRQuickStatsBar
+                  stats={stats}
+                  activeFilter={activeStatFilter || 'all'}
+                  onFilterClick={onStatFilterClick}
+                />
+              </div>
             )}
             
             {/* Flexible Spacer */}
             <div className="flex-1 min-w-0" />
             
             {/* Search */}
-            <PSSRAdvancedSearch
-              pssrs={pssrs}
-              value={searchTerm}
-              onChange={onSearchChange}
-              onSelectPSSR={onSelectPSSR}
-              placeholder="Search by ID, project, asset, lead..."
-              className="w-72 lg:w-80 xl:w-96"
-            />
+            <div className="shrink-0 min-w-[280px]">
+              <PSSRAdvancedSearch
+                pssrs={pssrs}
+                value={searchTerm}
+                onChange={onSearchChange}
+                onSelectPSSR={onSelectPSSR}
+                placeholder="Search by ID, project, asset, lead..."
+                className="w-full"
+              />
+            </div>
 
             {/* View Mode Selector */}
-            <div className="inline-flex items-center gap-0.5 p-0.5 rounded-lg bg-muted border border-border/50">
+            <div className="shrink-0 inline-flex items-center gap-0.5 p-0.5 rounded-lg bg-muted border border-border/50">
               <button
                 onClick={() => onViewModeChange('card')}
                 className={`px-2 py-1 rounded-md text-xs font-medium transition-all ${
@@ -221,14 +225,16 @@ export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
             />
 
             {onCreateNew && (
-              <Button 
-                onClick={onCreateNew} 
-                size="sm"
-                className="gap-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm"
-              >
-                <Plus className="h-4 w-4" />
-                New PSSR
-              </Button>
+              <div className="shrink-0">
+                <Button 
+                  onClick={onCreateNew} 
+                  size="sm"
+                  className="gap-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm"
+                >
+                  <Plus className="h-4 w-4" />
+                  New PSSR
+                </Button>
+              </div>
             )}
           </div>
 
