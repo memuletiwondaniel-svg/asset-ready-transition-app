@@ -290,9 +290,6 @@ export const P2AHeatmap: React.FC = () => {
               <div className="w-20 sm:w-24 p-1 sm:p-1.5 text-[8px] sm:text-[10px] font-semibold text-center border-r border-border/40">
                 Status
               </div>
-              <div className="w-14 sm:w-16 p-1 sm:p-1.5 text-[8px] sm:text-[10px] font-semibold text-center border-r border-border/40">
-                Progress
-              </div>
               {categories?.map((category) => (
                 <div
                   key={category.id}
@@ -339,16 +336,6 @@ export const P2AHeatmap: React.FC = () => {
                     <Badge variant="outline" className={`text-[8px] sm:text-[10px] px-1.5 font-normal whitespace-nowrap ${getStatusColor(plan.status)}`}>
                       {plan.status.replace(/_/g, ' ')}
                     </Badge>
-                  </div>
-
-                  {/* Progress Column */}
-                  <div className="w-14 sm:w-16 p-1 sm:p-1.5 border-r border-border/40 flex flex-col items-center justify-center gap-0.5">
-                    <span className="text-[10px] sm:text-xs font-semibold">
-                      {plan.deliverables_summary.overall_percentage}%
-                    </span>
-                    <span className="text-[8px] text-muted-foreground">
-                      {plan.deliverables_summary.completed}/{plan.deliverables_summary.total}
-                    </span>
                   </div>
 
                   {/* Deliverable Category Cells */}
