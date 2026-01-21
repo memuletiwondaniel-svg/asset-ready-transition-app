@@ -288,9 +288,6 @@ export const P2AHeatmap: React.FC = () => {
                 Project
               </div>
               <div className="w-20 sm:w-24 p-1 sm:p-1.5 text-[8px] sm:text-[10px] font-semibold text-center border-r border-border/40">
-                Phase
-              </div>
-              <div className="w-20 sm:w-24 p-1 sm:p-1.5 text-[8px] sm:text-[10px] font-semibold text-center border-r border-border/40">
                 Status
               </div>
               <div className="w-14 sm:w-16 p-1 sm:p-1.5 text-[8px] sm:text-[10px] font-semibold text-center border-r border-border/40">
@@ -336,12 +333,6 @@ export const P2AHeatmap: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Phase Column */}
-                  <div className="w-20 sm:w-24 p-1 sm:p-1.5 border-r border-border/40 flex items-center justify-center">
-                    <Badge variant="outline" className="text-[8px] sm:text-[10px] px-1.5">
-                      {getPhaseLabel(plan.phase)}
-                    </Badge>
-                  </div>
 
                   {/* Status Column */}
                   <div className="w-20 sm:w-24 p-1 sm:p-1.5 border-r border-border/40 flex items-center justify-center">
