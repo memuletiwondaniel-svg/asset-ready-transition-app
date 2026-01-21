@@ -490,11 +490,14 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                                 {/* Lead avatar in front */}
                                 {project.team_lead_name && (
                                   <Avatar className="h-8 w-8 border-2 border-background shrink-0 relative z-10 ring-2 ring-primary/20">
-                                    <AvatarImage 
-                                      src={project.team_lead_avatar 
-                                        ? `https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/profile-images/${project.team_lead_avatar}` 
-                                        : undefined
-                                      } 
+                                    <AvatarImage
+                                      src={
+                                        project.team_lead_avatar
+                                          ? supabase.storage
+                                              .from('user-avatars')
+                                              .getPublicUrl(project.team_lead_avatar).data.publicUrl
+                                          : undefined
+                                      }
                                     />
                                     <AvatarFallback className="text-[10px] bg-primary/10 text-primary font-medium">
                                       {project.team_lead_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
