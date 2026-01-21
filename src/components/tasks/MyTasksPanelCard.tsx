@@ -45,19 +45,28 @@ export const MyTasksPanelCard: React.FC<MyTasksPanelCardProps> = ({
   isFullHeight = false,
   isRelocated = false,
 }) => {
+  const handleCardClick = () => {
+    if (!isExpanded) {
+      onToggleExpand();
+    }
+  };
+
   return (
-    <Card className={cn(
-      "relative overflow-hidden bg-gradient-to-br from-card/90 to-card/70",
-      "backdrop-blur-sm border-border/50",
-      "shadow-sm transition-all duration-500 ease-out",
-      "hover:shadow-lg hover:shadow-primary/5",
-      "hover:border-primary/20",
-      "group",
-      isFullHeight && "h-full flex flex-col",
-      isFullHeight && isExpanded && "ring-2 ring-primary/20 shadow-xl shadow-primary/10",
-      isRelocated && "animate-card-relocate",
-      !isExpanded && "hover:-translate-y-0.5 cursor-pointer"
-    )}>
+    <Card 
+      className={cn(
+        "relative overflow-hidden bg-gradient-to-br from-card/90 to-card/70",
+        "backdrop-blur-sm border-border/50",
+        "shadow-sm transition-all duration-500 ease-out",
+        "hover:shadow-lg hover:shadow-primary/5",
+        "hover:border-primary/20",
+        "group",
+        isFullHeight && "h-full flex flex-col",
+        isFullHeight && isExpanded && "ring-2 ring-primary/20 shadow-xl shadow-primary/10",
+        isRelocated && "animate-card-relocate",
+        !isExpanded && "hover:-translate-y-0.5 cursor-pointer"
+      )}
+      onClick={handleCardClick}
+    >
       {/* New task indicator glow */}
       {newCount > 0 && (
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/60 via-primary to-primary/60 animate-pulse" />
