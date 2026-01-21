@@ -332,7 +332,7 @@ export const P2AHeatmap: React.FC = () => {
 
                   {/* Status Column */}
                   <div className="w-16 sm:w-20 p-1 sm:p-1.5 border-r border-border/40 flex items-center justify-center">
-                    <Badge className={`text-[8px] sm:text-[10px] px-1.5 ${getStatusColor(plan.status)}`}>
+                    <Badge variant="outline" className={`text-[8px] sm:text-[10px] px-1.5 font-normal ${getStatusColor(plan.status)}`}>
                       {plan.status.replace(/_/g, ' ')}
                     </Badge>
                   </div>
