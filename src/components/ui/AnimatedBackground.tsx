@@ -23,9 +23,9 @@ export const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({ children
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {/* Primary orb - Purple/Magenta - Starts top-left */}
         <div 
-          className="absolute top-0 left-0 w-[600px] h-[600px] rounded-full opacity-[0.15] dark:opacity-[0.08] will-change-transform animate-journey-tl"
+          className="absolute top-0 left-0 w-[600px] h-[600px] rounded-full opacity-[0.08] dark:opacity-[0.04] will-change-transform animate-journey-tl"
           style={{ 
-            background: `radial-gradient(circle, hsl(${280 + colorPhase * 0.3}, 55%, 65%), transparent 70%)`,
+            background: `radial-gradient(circle, hsl(${280 + colorPhase * 0.3}, 45%, 60%), transparent 70%)`,
             filter: 'blur(100px)',
           }}
         />
