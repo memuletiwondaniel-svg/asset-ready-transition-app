@@ -30,11 +30,11 @@ export const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({ children
           }}
         />
         
-        {/* Secondary orb - Starts top-right, journeys toward center */}
+        {/* Secondary orb - Starts top-right, journeys toward center (Blue - more intense) */}
         <div 
-          className="absolute top-0 right-0 w-[650px] h-[650px] rounded-full opacity-[0.12] dark:opacity-[0.07] will-change-transform animate-journey-tr"
+          className="absolute top-0 right-0 w-[650px] h-[650px] rounded-full opacity-[0.18] dark:opacity-[0.10] will-change-transform animate-journey-tr"
           style={{ 
-            background: `radial-gradient(circle, hsl(${200 + colorPhase * 0.4}, 55%, 68%), transparent 70%)`,
+            background: `radial-gradient(circle, hsl(${200 + colorPhase * 0.4}, 70%, 60%), transparent 70%)`,
             filter: 'blur(110px)',
           }}
         />
@@ -48,11 +48,11 @@ export const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({ children
           }}
         />
         
-        {/* Quaternary orb - Starts bottom-right, journeys toward center */}
+        {/* Quaternary orb - Starts bottom-right, journeys toward center (Yellow - more intense) */}
         <div 
-          className="absolute bottom-0 right-0 w-[500px] h-[500px] rounded-full opacity-[0.16] dark:opacity-[0.09] will-change-transform animate-journey-br"
+          className="absolute bottom-0 right-0 w-[500px] h-[500px] rounded-full opacity-[0.22] dark:opacity-[0.12] will-change-transform animate-journey-br"
           style={{ 
-            background: `radial-gradient(circle, hsl(${30 + colorPhase * 0.3}, 52%, 68%), transparent 70%)`,
+            background: `radial-gradient(circle, hsl(${45 + colorPhase * 0.3}, 75%, 60%), transparent 70%)`,
             filter: 'blur(90px)',
           }}
         />
