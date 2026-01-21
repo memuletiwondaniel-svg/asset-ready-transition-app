@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Users, Target, FileText, UserCircle, Building, MapPin, Calendar } from 'lucide-react';
+import { Users, Target, FileText, UserCircle, Building, MapPin, Calendar, FolderOpen, Layers } from 'lucide-react';
 import { useProjects, useProjectTeamMembers } from '@/hooks/useProjects';
 import { usePlants } from '@/hooks/usePlants';
 import { useStations } from '@/hooks/useStations';
@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
+import { StyledWidgetIcon } from './StyledWidgetIcon';
 
 interface ProjectReadinessWidgetProps {
   projectId: string;
@@ -80,98 +81,137 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
 
   const loading = teamLoading || milestonesLoading;
 
-
   const getMilestoneStatusColor = (status: string) => {
     switch (status) {
       case 'completed':
-        return 'bg-emerald-500/10 text-emerald-700 border-emerald-500/20';
+        return 'bg-emerald-500/10 text-emerald-700 border-emerald-500/20 shadow-[0_0_8px_rgba(16,185,129,0.2)]';
       case 'in_progress':
-        return 'bg-blue-500/10 text-blue-700 border-blue-500/20';
+        return 'bg-blue-500/10 text-blue-700 border-blue-500/20 shadow-[0_0_8px_rgba(59,130,246,0.2)]';
       default:
-        return 'bg-muted text-muted-foreground';
+        return 'bg-muted text-muted-foreground border-border/40';
     }
   };
 
   if (loading) {
     return (
-      <Card className="h-full">
-        <CardHeader>
-          <Skeleton className="h-6 w-48" />
+      <Card className="h-full glass-card">
+        <CardHeader className="pb-4">
+          <Skeleton className="h-12 w-12 rounded-xl" />
+          <Skeleton className="h-6 w-48 mt-3" />
+          <div className="flex gap-2 mt-4">
+            <Skeleton className="h-8 w-24 rounded-full" />
+            <Skeleton className="h-8 w-28 rounded-full" />
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Skeleton className="h-32 w-full" />
-          <Skeleton className="h-32 w-full" />
-          <Skeleton className="h-32 w-full" />
+          <Skeleton className="h-24 w-full rounded-xl" />
+          <Skeleton className="h-32 w-full rounded-xl" />
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="h-full flex flex-col transition-all duration-300 hover:shadow-xl hover:border-primary/30 group">
-      <CardHeader className="pb-4 cursor-pointer" onClick={onViewDetails}>
-        <CardTitle className="text-lg hover:text-primary transition-colors mb-4">
-          Project Overview
-        </CardTitle>
+    <Card className="h-full flex flex-col glass-card glass-card-hover overflow-hidden group">
+      {/* Hero Header */}
+      <CardHeader className="pb-5 cursor-pointer relative overflow-hidden" onClick={onViewDetails}>
+        {/* Subtle shine effect on hover */}
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 pointer-events-none" />
         
-        {/* Project Key Info Banner */}
-        {project && (
-          <div className="relative rounded-lg overflow-hidden bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20">
-            <div className="flex items-center justify-between gap-4 p-4">
-              <div className="flex-1 min-w-0">
-                <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
-                  <div className="flex items-center gap-1.5">
-                    <Building className="h-3.5 w-3.5 text-muted-foreground" />
-                    <span className="text-muted-foreground">Plant:</span>
-                    <span className="font-medium truncate">{plant?.name || 'N/A'}</span>
-                  </div>
-                  {station && (
-                    <div className="flex items-center gap-1.5">
-                      <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span className="text-muted-foreground">Station:</span>
-                      <span className="font-medium truncate">{station.name}</span>
-                    </div>
-                  )}
-                  {hub && (
-                    <div className="flex items-center gap-1.5">
-                      <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span className="text-muted-foreground">Hub:</span>
-                      <span className="font-medium truncate">{hub.name}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
+        {/* Gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-accent/5 to-transparent pointer-events-none" />
+        
+        <div className="relative z-10">
+          {/* Icon and Title Row */}
+          <div className="flex items-center gap-4 mb-5">
+            <StyledWidgetIcon 
+              Icon={FolderOpen}
+              gradientFrom="from-blue-500"
+              gradientTo="to-cyan-500"
+              glowFrom="from-blue-500/40"
+              glowTo="to-cyan-500/40"
+            />
+            <div>
+              <h2 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
+                Project Overview
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Readiness & team status
+              </p>
             </div>
           </div>
-        )}
+          
+          {/* Location Badges */}
+          {project && (
+            <div className="flex flex-wrap gap-2">
+              {/* Plant Badge */}
+              {plant && (
+                <Badge 
+                  variant="outline" 
+                  className="bg-blue-500/10 border-blue-500/20 text-blue-700 dark:text-blue-400 px-3 py-1.5 text-xs font-medium hover:bg-blue-500/15 transition-colors"
+                >
+                  <Building className="h-3.5 w-3.5 mr-1.5" />
+                  {plant.name}
+                </Badge>
+              )}
+              
+              {/* Station Badge */}
+              {station && (
+                <Badge 
+                  variant="outline" 
+                  className="bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-400 px-3 py-1.5 text-xs font-medium hover:bg-emerald-500/15 transition-colors"
+                >
+                  <MapPin className="h-3.5 w-3.5 mr-1.5" />
+                  {station.name}
+                </Badge>
+              )}
+              
+              {/* Hub Badge - Full Width, No Truncation */}
+              {hub && (
+                <Badge 
+                  variant="outline" 
+                  className="w-full justify-center bg-primary/10 border-primary/20 text-primary px-3 py-2 text-xs font-medium hover:bg-primary/15 transition-colors mt-1"
+                >
+                  <Layers className="h-3.5 w-3.5 mr-2 flex-shrink-0" />
+                  <span className="text-center">{hub.name}</span>
+                </Badge>
+              )}
+            </div>
+          )}
+        </div>
       </CardHeader>
-      <CardContent className="flex-1 overflow-hidden">
+      
+      <CardContent className="flex-1 overflow-hidden pt-0">
         <ScrollArea className="h-full pr-4 overscroll-contain">
           <div className="space-y-6">
             {/* Project Scope */}
             {project?.project_scope && (
               <div className="space-y-3">
                 <h3 className="font-semibold text-sm text-muted-foreground flex items-center gap-2">
-                  <FileText className="h-4 w-4" />
+                  <div className="p-1.5 rounded-lg bg-amber-500/10">
+                    <FileText className="h-4 w-4 text-amber-600" />
+                  </div>
                   Project Scope
                 </h3>
-                <div className="pl-6 space-y-2">
-                  <p className={`text-sm text-foreground/90 ${!isScopeExpanded ? 'line-clamp-6' : ''}`}>
-                    {project.project_scope}
-                  </p>
-                  {project.project_scope.length > 300 && (
-                    <Button 
-                      variant="link" 
-                      size="sm" 
-                      className="p-0 h-auto text-primary"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setIsScopeExpanded(!isScopeExpanded);
-                      }}
-                    >
-                      {isScopeExpanded ? 'Show Less' : 'Read More'}
-                    </Button>
-                  )}
+                <div className="pl-1 space-y-2">
+                  <div className="p-4 rounded-xl bg-muted/30 border border-border/40">
+                    <p className={`text-sm text-foreground/90 leading-relaxed ${!isScopeExpanded ? 'line-clamp-4' : ''}`}>
+                      {project.project_scope}
+                    </p>
+                    {project.project_scope.length > 200 && (
+                      <Button 
+                        variant="link" 
+                        size="sm" 
+                        className="p-0 h-auto text-primary mt-2"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsScopeExpanded(!isScopeExpanded);
+                        }}
+                      >
+                        {isScopeExpanded ? 'Show Less' : 'Read More'}
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
@@ -180,13 +220,14 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
             {project?.project_scope_image_url && (
               <div className="space-y-3">
                 <div 
-                  className="relative rounded-xl overflow-hidden border border-primary/20 shadow-lg cursor-pointer hover:ring-2 hover:ring-primary/40 transition-all"
+                  className="relative rounded-xl overflow-hidden border border-border/40 shadow-lg cursor-pointer group/image"
                   onClick={onViewDetails}
                 >
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover/image:opacity-100 transition-opacity z-10" />
                   <img 
                     src={project.project_scope_image_url} 
                     alt={project.project_title}
-                    className="w-full h-64 object-cover hover:scale-105 transition-transform duration-300"
+                    className="w-full h-48 object-cover group-hover/image:scale-105 transition-transform duration-500"
                   />
                 </div>
               </div>
@@ -226,29 +267,56 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
               return (
                 <div className="space-y-3">
                   <h3 className="font-semibold text-sm text-muted-foreground flex items-center gap-2">
-                    <Users className="h-4 w-4" />
-                    Team Members ({assignedCount}/{CANONICAL_REQUIRED_ROLES.length})
+                    <div className="p-1.5 rounded-lg bg-violet-500/10">
+                      <Users className="h-4 w-4 text-violet-600" />
+                    </div>
+                    Team Members
+                    <Badge variant="secondary" className="ml-auto text-xs font-medium">
+                      {assignedCount}/{CANONICAL_REQUIRED_ROLES.length}
+                    </Badge>
                   </h3>
-                  <div className="space-y-2 pl-6">
-                    {roleDisplayData.map((data) => (
-                      <div key={data.role} className="flex items-center gap-3 p-2 rounded-lg bg-muted/30">
-                        <Avatar className="h-8 w-8">
+                  <div className="space-y-2 pl-1">
+                    {roleDisplayData.map((data, index) => (
+                      <div 
+                        key={data.role} 
+                        className={cn(
+                          "flex items-center gap-3 p-3 rounded-xl border transition-all duration-200",
+                          data.member 
+                            ? "bg-muted/30 border-border/40 hover:bg-muted/50 hover:border-primary/20" 
+                            : "bg-muted/10 border-dashed border-border/30"
+                        )}
+                      >
+                        <Avatar className={cn(
+                          "h-10 w-10 ring-2 ring-background shadow-md",
+                          data.member?.is_lead && "ring-primary/30"
+                        )}>
                           {data.profile?.avatar_url ? (
                             <AvatarImage src={getAvatarUrl(data.profile.avatar_url)} alt={data.profile?.full_name} />
                           ) : (
-                            <AvatarFallback className="bg-primary/10">
-                              <UserCircle className="h-4 w-4 text-primary" />
+                            <AvatarFallback className={cn(
+                              "text-sm font-medium",
+                              data.member ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                            )}>
+                              {data.profile?.full_name 
+                                ? data.profile.full_name.split(' ').map(n => n[0]).join('').slice(0, 2)
+                                : <UserCircle className="h-5 w-5" />
+                              }
                             </AvatarFallback>
                           )}
                         </Avatar>
                         <div className="flex-1 min-w-0">
-                          <p className={cn("text-sm font-medium truncate", !data.member && "text-muted-foreground italic")}>
+                          <p className={cn(
+                            "text-sm font-medium truncate",
+                            !data.member && "text-muted-foreground/60 italic"
+                          )}>
                             {data.profile?.full_name || 'Unassigned'}
                           </p>
                           <p className="text-xs text-muted-foreground truncate">{data.role}</p>
                         </div>
                         {data.member?.is_lead && (
-                          <Badge className="text-xs" variant="outline">Lead</Badge>
+                          <Badge className="text-xs bg-primary/10 text-primary border-primary/20 hover:bg-primary/15">
+                            Lead
+                          </Badge>
                         )}
                       </div>
                     ))}
@@ -260,28 +328,56 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
             {/* Milestones */}
             <div className="space-y-3">
               <h3 className="font-semibold text-sm text-muted-foreground flex items-center gap-2">
-                <Target className="h-4 w-4" />
-                Milestones {milestones.length > 0 && `(${milestones.length})`}
+                <div className="p-1.5 rounded-lg bg-rose-500/10">
+                  <Target className="h-4 w-4 text-rose-600" />
+                </div>
+                Milestones
+                {milestones.length > 0 && (
+                  <Badge variant="secondary" className="ml-auto text-xs font-medium">
+                    {milestones.length}
+                  </Badge>
+                )}
               </h3>
-              <div className="space-y-2 pl-6">
+              <div className="space-y-2 pl-1">
                 {milestones.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No milestones defined</p>
+                  <div className="p-4 rounded-xl bg-muted/20 border border-dashed border-border/30 text-center">
+                    <p className="text-sm text-muted-foreground">No milestones defined</p>
+                  </div>
                 ) : (
                   milestones.map((milestone) => (
-                    <div key={milestone.id} className="p-3 rounded-lg bg-muted/30 space-y-2">
-                      <div className="flex items-start justify-between gap-2">
-                        <p className="text-sm font-medium">{milestone.milestone_name}</p>
+                    <div 
+                      key={milestone.id} 
+                      className="p-4 rounded-xl bg-muted/30 border border-border/40 hover:bg-muted/40 transition-colors space-y-3"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <p className="text-sm font-medium flex-1">{milestone.milestone_name}</p>
                         <Badge 
                           variant="outline" 
-                          className={`text-xs ${getMilestoneStatusColor(milestone.status)}`}
+                          className={`text-xs shrink-0 ${getMilestoneStatusColor(milestone.status)}`}
                         >
-                          {milestone.status || 'pending'}
+                          {milestone.status === 'completed' ? 'Completed' : 
+                           milestone.status === 'in_progress' ? 'In Progress' : 'Pending'}
                         </Badge>
                       </div>
+                      
+                      {/* Progress bar for in_progress milestones */}
+                      {milestone.status === 'in_progress' && (
+                        <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full transition-all duration-500"
+                            style={{ width: '60%' }}
+                          />
+                        </div>
+                      )}
+                      
                       {milestone.milestone_date && (
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Calendar className="h-3 w-3" />
-                          <span>{new Date(milestone.milestone_date).toLocaleDateString()}</span>
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <Calendar className="h-3.5 w-3.5" />
+                          <span>{new Date(milestone.milestone_date).toLocaleDateString('en-US', { 
+                            month: 'short', 
+                            day: 'numeric', 
+                            year: 'numeric' 
+                          })}</span>
                         </div>
                       )}
                     </div>
