@@ -7,6 +7,7 @@ import { P2AHeatmapCell } from './P2AHeatmapCell';
 import { ORPPlanDetailDialog } from './ORPPlanDetailDialog';
 import { useNavigate } from 'react-router-dom';
 import { useORPPlans, useORPDeliverableCategories, useORPHeatmapData, ORPHeatmapCellData } from '@/hooks/useORPHeatmapData';
+import { useProjects } from '@/hooks/useProjects';
 import { getProjectColor } from '@/utils/projectColors';
 
 export interface ORPCellClickData {
@@ -142,21 +143,72 @@ export const P2AHeatmap: React.FC = () => {
   const { plans: realPlans, isLoading: loadingPlans } = useORPPlans();
   const { categories, isLoading: loadingCategories } = useORPDeliverableCategories();
   const { heatmapData, isLoading: loadingHeatmapData } = useORPHeatmapData();
+  const { projects: realProjects, isLoading: loadingProjects } = useProjects();
   const navigate = useNavigate();
   const [selectedCell, setSelectedCell] = useState<ORPCellClickData | null>(null);
 
-  // Use real plans if available, otherwise use mock data
+  // Convert actual projects to the plan format for display
+  const projectsAsPlanFormat = useMemo(() => {
+    if (!realProjects || realProjects.length === 0) return [];
+    
+    return realProjects.map((project, index) => {
+      // Generate varied mock progress based on project index
+      const seed = (index * 17 + 5) % 100;
+      const total = 6 + (seed % 10);
+      const completed = Math.floor(total * (seed / 100));
+      const inProgress = Math.floor((total - completed) * 0.6);
+      const notStarted = total - completed - inProgress;
+      const percentage = Math.round((completed / total) * 100);
+      
+      // Determine phase based on completion
+      let phase = 'EXECUTE';
+      let status = 'IN_PROGRESS';
+      if (percentage === 100) {
+        status = 'COMPLETED';
+      } else if (percentage < 20) {
+        phase = 'DEFINE';
+        status = 'DRAFT';
+      } else if (percentage < 40) {
+        phase = 'ASSESS_SELECT';
+      }
+      
+      return {
+        id: `project-${project.id}`,
+        project_id: project.id,
+        phase,
+        status,
+        project: {
+          project_id_prefix: project.project_id_prefix || 'DP',
+          project_id_number: project.project_id_number || '000',
+          project_title: project.project_title
+        },
+        deliverables_summary: {
+          total,
+          completed,
+          in_progress: inProgress,
+          not_started: notStarted,
+          overall_percentage: percentage
+        }
+      };
+    });
+  }, [realProjects]);
+
+  // Use real ORP plans if available, otherwise use actual projects, then fall back to mock data
   const plans = useMemo(() => {
     if (realPlans && realPlans.length > 0) {
       return realPlans;
     }
+    if (projectsAsPlanFormat && projectsAsPlanFormat.length > 0) {
+      return projectsAsPlanFormat;
+    }
     return generateMockProjects();
-  }, [realPlans]);
+  }, [realPlans, projectsAsPlanFormat]);
 
-  // Determine if we're using mock data
-  const isMockData = !realPlans || realPlans.length === 0;
+  // Determine data source
+  const isMockData = !realPlans?.length && !projectsAsPlanFormat?.length;
+  const isUsingProjects = !realPlans?.length && projectsAsPlanFormat?.length > 0;
 
-  if (loadingPlans || loadingCategories || loadingHeatmapData) {
+  if (loadingPlans || loadingCategories || loadingHeatmapData || loadingProjects) {
     return (
       <Card>
         <CardHeader className="p-3 sm:p-4">
@@ -257,7 +309,7 @@ export const P2AHeatmap: React.FC = () => {
                 <div key={plan.id} className="flex border-b border-border/40 hover:bg-muted/20">
                   <div 
                     className="w-36 sm:w-48 p-1.5 sm:p-2 border-r border-border/40 sticky left-0 bg-card z-10 cursor-pointer hover:bg-muted/50 transition-colors" 
-                    onClick={() => !isMockData && navigate(`/project/${plan.project_id}`)}
+                    onClick={() => (isUsingProjects || !isMockData) && navigate(`/project/${plan.project_id}`)}
                   >
                     <Badge 
                       variant="outline" 
@@ -301,7 +353,7 @@ export const P2AHeatmap: React.FC = () => {
                     
                     // Use real data if available, otherwise generate mock data
                     let cellData = heatmapData.get(cellKey);
-                    if (!cellData && isMockData) {
+                    if (!cellData && (isMockData || isUsingProjects)) {
                       cellData = generateMockCellData(plan.id, category.id, category.name, categoryIndex, planIndex);
                     }
                     
