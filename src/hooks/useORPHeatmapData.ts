@@ -118,13 +118,18 @@ export const useORPDeliverableCategories = () => {
   const { data: categories, isLoading } = useQuery({
     queryKey: ['p2a-deliverable-categories'],
     queryFn: async () => {
-      // Initial columns for the heatmap (kept intentionally small)
+      // Columns for the P2A heatmap
       const initialCategoryOrder = [
         'Mech Comp (MC)',
         'RFSU',
+        'Resourcing',
+        'Training',
         'CMMS',
         '2Y Spares',
         'Documents',
+        'PSSR/SoF',
+        'Perf Test',
+        'Service Contract',
         'SUOP',
       ];
 
