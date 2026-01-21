@@ -666,14 +666,6 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                 </Button>
                 <Button 
                   variant="outline"
-                  onClick={() => onNavigate('p2a')}
-                  className="rounded-lg px-3 py-1.5 h-auto text-xs bg-blue-500/5 hover:bg-blue-500/10 hover:border-blue-500/30 transition-all hover:scale-105"
-                >
-                  <FileText className="w-3.5 h-3.5 mr-1.5 text-blue-500" /> 
-                  {t.developP2A || 'Develop P2A'}
-                </Button>
-                <Button 
-                  variant="outline"
                   onClick={() => onNavigate('projects')}
                   className="rounded-lg px-3 py-1.5 h-auto text-xs bg-purple-500/5 hover:bg-purple-500/10 hover:border-purple-500/30 transition-all hover:scale-105"
                 >
