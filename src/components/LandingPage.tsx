@@ -646,46 +646,46 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
 
             {/* Quick Actions Section */}
             <div className="animate-fade-in" style={{ animationDelay: '100ms' }}>
-              <h2 className="text-lg font-semibold text-muted-foreground text-center mb-4">{t.quickActions || 'Quick Actions'}</h2>
-              <div className="flex flex-wrap justify-center gap-3">
+              <h2 className="text-sm font-semibold text-muted-foreground text-center mb-3">{t.quickActions || 'Quick Actions'}</h2>
+              <div className="flex flex-wrap justify-center gap-2">
                 <Button 
                   variant="outline"
                   onClick={() => onNavigate('pssr')}
-                  className="rounded-xl px-5 py-3 h-auto bg-primary/5 hover:bg-primary/10 hover:border-primary/30 transition-all hover:scale-105"
+                  className="rounded-lg px-3 py-1.5 h-auto text-xs bg-primary/5 hover:bg-primary/10 hover:border-primary/30 transition-all hover:scale-105"
                 >
-                  <Zap className="w-5 h-5 mr-2 text-primary" /> 
+                  <Zap className="w-3.5 h-3.5 mr-1.5 text-primary" /> 
                   {t.createAPSSR || 'Create PSSR'}
                 </Button>
                 <Button 
                   variant="outline"
                   onClick={() => onNavigate('pssr')}
-                  className="rounded-xl px-5 py-3 h-auto bg-green-500/5 hover:bg-green-500/10 hover:border-green-500/30 transition-all hover:scale-105"
+                  className="rounded-lg px-3 py-1.5 h-auto text-xs bg-green-500/5 hover:bg-green-500/10 hover:border-green-500/30 transition-all hover:scale-105"
                 >
-                  <CheckCircle className="w-5 h-5 mr-2 text-green-500" /> 
+                  <CheckCircle className="w-3.5 h-3.5 mr-1.5 text-green-500" /> 
                   {t.approveAPSSR || 'Approve PSSR'}
                 </Button>
                 <Button 
                   variant="outline"
                   onClick={() => onNavigate('p2a')}
-                  className="rounded-xl px-5 py-3 h-auto bg-blue-500/5 hover:bg-blue-500/10 hover:border-blue-500/30 transition-all hover:scale-105"
+                  className="rounded-lg px-3 py-1.5 h-auto text-xs bg-blue-500/5 hover:bg-blue-500/10 hover:border-blue-500/30 transition-all hover:scale-105"
                 >
-                  <FileText className="w-5 h-5 mr-2 text-blue-500" /> 
+                  <FileText className="w-3.5 h-3.5 mr-1.5 text-blue-500" /> 
                   {t.developP2A || 'Develop P2A'}
                 </Button>
                 <Button 
                   variant="outline"
                   onClick={() => onNavigate('projects')}
-                  className="rounded-xl px-5 py-3 h-auto bg-purple-500/5 hover:bg-purple-500/10 hover:border-purple-500/30 transition-all hover:scale-105"
+                  className="rounded-lg px-3 py-1.5 h-auto text-xs bg-purple-500/5 hover:bg-purple-500/10 hover:border-purple-500/30 transition-all hover:scale-105"
                 >
-                  <Zap className="w-5 h-5 mr-2 text-purple-500" /> 
+                  <Zap className="w-3.5 h-3.5 mr-1.5 text-purple-500" /> 
                   {t.addNewProject || 'Add Project'}
                 </Button>
                 <Button 
                   variant="outline"
                   onClick={() => onNavigate('pssr')}
-                  className="rounded-xl px-5 py-3 h-auto bg-amber-500/5 hover:bg-amber-500/10 hover:border-amber-500/30 transition-all hover:scale-105"
+                  className="rounded-lg px-3 py-1.5 h-auto text-xs bg-amber-500/5 hover:bg-amber-500/10 hover:border-amber-500/30 transition-all hover:scale-105"
                 >
-                  <ClipboardList className="w-5 h-5 mr-2 text-amber-500" /> 
+                  <ClipboardList className="w-3.5 h-3.5 mr-1.5 text-amber-500" /> 
                   {t.myTasks || 'My Tasks'}
                 </Button>
               </div>
