@@ -331,6 +331,27 @@ export default {
 			'75%': { transform: 'translate(-30%, -80%) scale(1.05)' },
 			'100%': { transform: 'translate(-50%, -50%) scale(1)' },
 		},
+		'journey-roam-1': {
+			'0%': { transform: 'translate(0%, 0%)' },
+			'20%': { transform: 'translate(-70%, 40%)' },
+			'40%': { transform: 'translate(-40%, -60%)' },
+			'60%': { transform: 'translate(50%, -30%)' },
+			'80%': { transform: 'translate(30%, 60%)' },
+			'100%': { transform: 'translate(0%, 0%)' },
+		},
+		'journey-roam-2': {
+			'0%': { transform: 'translate(0%, 0%)' },
+			'25%': { transform: 'translate(60%, -50%)' },
+			'50%': { transform: 'translate(-30%, -70%)' },
+			'75%': { transform: 'translate(-60%, 30%)' },
+			'100%': { transform: 'translate(0%, 0%)' },
+		},
+		'journey-roam-3': {
+			'0%': { transform: 'translate(0%, 0%)' },
+			'33%': { transform: 'translate(-50%, 70%)' },
+			'66%': { transform: 'translate(70%, 20%)' },
+			'100%': { transform: 'translate(0%, 0%)' },
+		},
 		'pulse-center': {
 			'0%, 100%': { transform: 'translate(-50%, -50%) scale(1)', opacity: '0.08' },
 			'50%': { transform: 'translate(-50%, -50%) scale(1.2)', opacity: '0.12' },
@@ -372,6 +393,9 @@ export default {
 		'journey-bl': 'journey-bl 32s ease-in-out infinite',
 		'journey-br': 'journey-br 28s ease-in-out infinite',
 		'journey-center': 'journey-center 40s ease-in-out infinite',
+		'journey-roam-1': 'journey-roam-1 38s ease-in-out infinite',
+		'journey-roam-2': 'journey-roam-2 42s ease-in-out infinite',
+		'journey-roam-3': 'journey-roam-3 36s ease-in-out infinite',
 		'pulse-center': 'pulse-center 25s ease-in-out infinite',
 		'ken-burns': 'ken-burns 7s ease-out forwards',
 			// Combined animations for visible background movement
