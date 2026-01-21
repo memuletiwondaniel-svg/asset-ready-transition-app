@@ -193,15 +193,28 @@ export const P2AHeatmap: React.FC = () => {
     });
   }, [realProjects]);
 
-  // Use real ORP plans if available, otherwise use actual projects, then fall back to mock data
+  // Show ALL projects, merging ORP plan data where available
   const plans = useMemo(() => {
-    if (realPlans && realPlans.length > 0) {
-      return realPlans;
+    // If no real projects, fall back to ORP plans or mock data
+    if (!projectsAsPlanFormat || projectsAsPlanFormat.length === 0) {
+      return realPlans?.length > 0 ? realPlans : generateMockProjects();
     }
-    if (projectsAsPlanFormat && projectsAsPlanFormat.length > 0) {
-      return projectsAsPlanFormat;
-    }
-    return generateMockProjects();
+    
+    // For each project, check if an ORP plan exists and use its data
+    return projectsAsPlanFormat.map(project => {
+      // Find matching ORP plan by project_id
+      const matchingPlan = realPlans?.find(
+        plan => plan.project_id === project.project_id
+      );
+      
+      if (matchingPlan) {
+        // Use ORP plan data (real status, phase, deliverables)
+        return matchingPlan;
+      }
+      
+      // Otherwise use project with generated mock progress
+      return project;
+    });
   }, [realPlans, projectsAsPlanFormat]);
 
   // Determine data source
@@ -277,7 +290,7 @@ export const P2AHeatmap: React.FC = () => {
               <div className="w-20 sm:w-24 p-1 sm:p-1.5 text-[8px] sm:text-[10px] font-semibold text-center border-r border-border/40">
                 Phase
               </div>
-              <div className="w-16 sm:w-20 p-1 sm:p-1.5 text-[8px] sm:text-[10px] font-semibold text-center border-r border-border/40">
+              <div className="w-20 sm:w-24 p-1 sm:p-1.5 text-[8px] sm:text-[10px] font-semibold text-center border-r border-border/40">
                 Status
               </div>
               <div className="w-14 sm:w-16 p-1 sm:p-1.5 text-[8px] sm:text-[10px] font-semibold text-center border-r border-border/40">
@@ -331,8 +344,8 @@ export const P2AHeatmap: React.FC = () => {
                   </div>
 
                   {/* Status Column */}
-                  <div className="w-16 sm:w-20 p-1 sm:p-1.5 border-r border-border/40 flex items-center justify-center">
-                    <Badge variant="outline" className={`text-[8px] sm:text-[10px] px-1.5 font-normal ${getStatusColor(plan.status)}`}>
+                  <div className="w-20 sm:w-24 p-1 sm:p-1.5 border-r border-border/40 flex items-center justify-center">
+                    <Badge variant="outline" className={`text-[8px] sm:text-[10px] px-1.5 font-normal whitespace-nowrap ${getStatusColor(plan.status)}`}>
                       {plan.status.replace(/_/g, ' ')}
                     </Badge>
                   </div>
