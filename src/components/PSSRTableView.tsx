@@ -267,8 +267,8 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails }) =
       </div>
 
       {/* Table */}
-      <div className="rounded-xl border border-border/50 overflow-hidden bg-card shadow-sm">
-        <Table>
+      <div className="rounded-xl border border-border/50 overflow-hidden bg-card shadow-sm min-w-full">
+        <Table className="table-fixed w-full">
           <TableHeader className="sticky top-0 z-10">
             <TableRow className="bg-muted/60 backdrop-blur-sm hover:bg-muted/60 border-b border-border/40">
               {visibleColumns.map((column) => (
