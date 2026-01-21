@@ -35,7 +35,7 @@ export const PSSRQuickStatsBar: React.FC<PSSRQuickStatsBarProps> = ({
   };
 
   return (
-    <div className="flex flex-wrap gap-2 items-center">
+    <div className="flex flex-nowrap gap-2 items-center">
       {statConfigs.map((stat) => {
         const isActive = activeFilter === stat.key;
         const value = getStatValue(stat.key);

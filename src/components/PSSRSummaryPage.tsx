@@ -794,7 +794,7 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
           </div>
         </header>
 
-      <main className="flex-1 overflow-y-auto max-w-[1400px] mx-auto px-6 py-8 space-y-6 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
+      <main className="flex-1 overflow-y-auto max-w-[1400px] w-full mx-auto px-6 py-8 space-y-6 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
         {/* PSSR Reviews Widget */}
         {widgetVisibility.reviews && (
           <PSSRReviewsWidget 
