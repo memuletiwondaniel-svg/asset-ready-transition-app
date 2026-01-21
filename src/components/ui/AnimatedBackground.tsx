@@ -19,18 +19,18 @@ export const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({ children
 
   return (
     <div className={cn('h-full bg-background relative overflow-hidden', className)}>
-      {/* Dynamic Multicolor Animated Background - Softer, Corner-to-Center Movement */}
+      {/* Dynamic Multicolor Animated Background - Full screen movement */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {/* Primary orb - Starts top-left, journeys toward center */}
+        {/* Primary orb - Purple/Magenta - Starts top-left */}
         <div 
           className="absolute top-0 left-0 w-[600px] h-[600px] rounded-full opacity-[0.15] dark:opacity-[0.08] will-change-transform animate-journey-tl"
           style={{ 
-            background: `radial-gradient(circle, hsl(${280 + colorPhase * 0.3}, 50%, 70%), transparent 70%)`,
+            background: `radial-gradient(circle, hsl(${280 + colorPhase * 0.3}, 55%, 65%), transparent 70%)`,
             filter: 'blur(100px)',
           }}
         />
         
-        {/* Secondary orb - Starts top-right, journeys toward center (Blue - more intense) */}
+        {/* Secondary orb - Blue - Starts top-right */}
         <div 
           className="absolute top-0 right-0 w-[650px] h-[650px] rounded-full opacity-[0.18] dark:opacity-[0.10] will-change-transform animate-journey-tr"
           style={{ 
@@ -39,21 +39,30 @@ export const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({ children
           }}
         />
         
-        {/* Tertiary orb - Starts bottom-left, journeys toward center */}
+        {/* Tertiary orb - Teal/Cyan - Starts bottom-left */}
         <div 
           className="absolute bottom-0 left-0 w-[550px] h-[550px] rounded-full opacity-[0.14] dark:opacity-[0.08] will-change-transform animate-journey-bl"
           style={{ 
-            background: `radial-gradient(circle, hsl(${160 + colorPhase * 0.5}, 48%, 65%), transparent 70%)`,
+            background: `radial-gradient(circle, hsl(${170 + colorPhase * 0.5}, 55%, 60%), transparent 70%)`,
             filter: 'blur(100px)',
           }}
         />
         
-        {/* Quaternary orb - Starts bottom-right, journeys toward center (Yellow - more intense) */}
+        {/* Quaternary orb - Yellow/Gold - Starts bottom-right (more intense) */}
         <div 
-          className="absolute bottom-0 right-0 w-[500px] h-[500px] rounded-full opacity-[0.22] dark:opacity-[0.12] will-change-transform animate-journey-br"
+          className="absolute bottom-0 right-0 w-[500px] h-[500px] rounded-full opacity-[0.24] dark:opacity-[0.14] will-change-transform animate-journey-br"
           style={{ 
-            background: `radial-gradient(circle, hsl(${45 + colorPhase * 0.3}, 75%, 60%), transparent 70%)`,
+            background: `radial-gradient(circle, hsl(${45 + colorPhase * 0.3}, 85%, 58%), transparent 70%)`,
             filter: 'blur(90px)',
+          }}
+        />
+        
+        {/* New orb - Rose/Pink - Roaming from center */}
+        <div 
+          className="absolute top-1/2 left-1/4 w-[450px] h-[450px] rounded-full opacity-[0.16] dark:opacity-[0.09] will-change-transform animate-journey-center"
+          style={{ 
+            background: `radial-gradient(circle, hsl(${330 + colorPhase * 0.4}, 60%, 65%), transparent 70%)`,
+            filter: 'blur(95px)',
           }}
         />
         
