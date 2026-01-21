@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
-import { Plus, BarChart3, CalendarCheck, Search, Building2, Calendar } from 'lucide-react';
+import { Plus, CalendarCheck, Search, Calendar } from 'lucide-react';
 import { CreateORPModal } from '@/components/orp/CreateORPModal';
 import { useORPRealtime } from '@/hooks/useORPRealtime';
 import { useORPPlans } from '@/hooks/useORPPlans';
@@ -13,7 +13,7 @@ import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { format } from 'date-fns';
-
+import { getProjectColor } from '@/utils/projectColors';
 export const ORPLandingPage: React.FC = () => {
   const navigate = useNavigate();
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -227,13 +227,16 @@ export const ORPLandingPage: React.FC = () => {
                       <CardHeader className="pb-3">
                         <div className="flex items-start justify-between">
                           <div className="flex-1 min-w-0">
-                            <CardTitle className="text-lg flex items-center gap-2 group-hover:text-primary transition-colors">
-                              <Building2 className="w-5 h-5 text-primary flex-shrink-0" />
-                              <span className="truncate">
-                                {project.project_id_prefix}-{project.project_id_number}
-                              </span>
-                            </CardTitle>
-                            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                            <Badge 
+                              variant="outline" 
+                              className="text-xs font-semibold px-2.5 py-1 text-white border-0 inline-flex items-center justify-center leading-none mb-2"
+                              style={{ 
+                                background: `linear-gradient(to right, ${getProjectColor(project.project_id_prefix, project.project_id_number).bgStart}, ${getProjectColor(project.project_id_prefix, project.project_id_number).bgEnd})` 
+                              }}
+                            >
+                              {project.project_id_prefix}-{project.project_id_number}
+                            </Badge>
+                            <p className="text-sm font-medium text-foreground line-clamp-2 group-hover:text-primary transition-colors">
                               {project.project_title}
                             </p>
                           </div>
@@ -257,7 +260,7 @@ export const ORPLandingPage: React.FC = () => {
                             <span className="text-muted-foreground">{t.progress || 'Progress'}</span>
                             <span className="font-medium">{mostRecentPlan.overall_progress || 0}%</span>
                           </div>
-                          <Progress value={mostRecentPlan.overall_progress || 0} className="h-2" />
+                          <Progress value={mostRecentPlan.overall_progress || 0} className="h-2" indicatorClassName="bg-muted-foreground/40" />
                         </div>
                         
                         {/* Phase count & Date */}
