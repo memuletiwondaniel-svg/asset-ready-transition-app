@@ -152,7 +152,7 @@ export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
       onToggleVisibility={onToggleVisibility}
       dragAttributes={dragAttributes}
       dragListeners={dragListeners}
-      className="flex flex-col min-h-[400px] max-h-[70vh] lg:max-h-[600px]"
+      className="flex flex-col h-[600px]"
     >
       <div className="flex flex-col h-full overflow-hidden">
         {/* Combined Controls Bar - Stats inline with Search */}
@@ -241,7 +241,7 @@ export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
         {/* Content Views - Scrollable Area with fixed height to prevent resizing */}
         <div 
           ref={scrollContainerRef}
-          className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent pr-1 pt-4 h-[500px]"
+          className="flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent pr-1 pt-4"
         >
           {viewMode === 'table' ? (
             <PSSRTableView pssrs={filteredPSSRs} onViewDetails={onViewDetails} />
