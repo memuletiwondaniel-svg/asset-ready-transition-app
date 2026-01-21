@@ -57,12 +57,39 @@ export const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({ children
           }}
         />
         
-        {/* New orb - Rose/Pink - Roaming from center */}
+        {/* Rose/Pink orb - Roaming from center-left */}
         <div 
           className="absolute top-1/2 left-1/4 w-[450px] h-[450px] rounded-full opacity-[0.16] dark:opacity-[0.09] will-change-transform animate-journey-center"
           style={{ 
             background: `radial-gradient(circle, hsl(${330 + colorPhase * 0.4}, 60%, 65%), transparent 70%)`,
             filter: 'blur(95px)',
+          }}
+        />
+        
+        {/* Amber/Orange orb - Roaming freely */}
+        <div 
+          className="absolute top-1/3 right-1/4 w-[480px] h-[480px] rounded-full opacity-[0.20] dark:opacity-[0.11] will-change-transform animate-journey-roam-1"
+          style={{ 
+            background: `radial-gradient(circle, hsl(${35 + colorPhase * 0.3}, 80%, 55%), transparent 70%)`,
+            filter: 'blur(100px)',
+          }}
+        />
+        
+        {/* Indigo/Violet orb - Roaming freely */}
+        <div 
+          className="absolute bottom-1/3 left-1/3 w-[420px] h-[420px] rounded-full opacity-[0.14] dark:opacity-[0.08] will-change-transform animate-journey-roam-2"
+          style={{ 
+            background: `radial-gradient(circle, hsl(${260 + colorPhase * 0.35}, 65%, 62%), transparent 70%)`,
+            filter: 'blur(95px)',
+          }}
+        />
+        
+        {/* Emerald/Green orb - Roaming freely */}
+        <div 
+          className="absolute top-1/4 left-1/2 w-[400px] h-[400px] rounded-full opacity-[0.12] dark:opacity-[0.07] will-change-transform animate-journey-roam-3"
+          style={{ 
+            background: `radial-gradient(circle, hsl(${150 + colorPhase * 0.4}, 55%, 58%), transparent 70%)`,
+            filter: 'blur(90px)',
           }}
         />
         
