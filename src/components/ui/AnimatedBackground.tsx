@@ -93,6 +93,15 @@ export const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({ children
           }}
         />
         
+        {/* Sky Blue orb - Roaming freely */}
+        <div 
+          className="absolute bottom-1/4 right-1/3 w-[460px] h-[460px] rounded-full opacity-[0.16] dark:opacity-[0.09] will-change-transform animate-journey-roam-2"
+          style={{ 
+            background: `radial-gradient(circle, hsl(${210 + colorPhase * 0.35}, 75%, 58%), transparent 70%)`,
+            filter: 'blur(95px)',
+          }}
+        />
+        
         {/* Central glow - Subtle pulsing accent */}
         <div 
           className="absolute top-1/2 left-1/2 w-[700px] h-[700px] rounded-full opacity-[0.06] dark:opacity-[0.04] will-change-transform animate-pulse-center"
