@@ -431,7 +431,7 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                       
                       {/* Project Title - always fully visible */}
                       <div className={cn("min-w-[200px]", columnVisibility.scope ? "w-[280px] shrink-0" : "flex-1")}>
-                        <h3 className="text-sm font-medium text-foreground group-hover:text-primary transition-colors whitespace-nowrap">
+                        <h3 className="text-xs text-foreground group-hover:text-primary transition-colors whitespace-nowrap truncate">
                           {project.project_title}
                         </h3>
                       </div>
