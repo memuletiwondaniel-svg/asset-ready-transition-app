@@ -431,7 +431,7 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                       
                       {/* Project Title - always fully visible */}
                       <div className={cn("min-w-[200px]", columnVisibility.scope ? "w-[280px] shrink-0" : "flex-1")}>
-                        <h3 className="font-medium text-foreground group-hover:text-primary transition-colors whitespace-nowrap">
+                        <h3 className="text-sm font-medium text-foreground group-hover:text-primary transition-colors whitespace-nowrap">
                           {project.project_title}
                         </h3>
                       </div>
@@ -439,7 +439,7 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                       {/* Scope - next to title, wraps to multiple lines */}
                       {columnVisibility.scope && (
                         <div className="flex-1 min-w-[200px]">
-                          <p className="text-sm text-muted-foreground leading-relaxed">
+                          <p className="text-xs text-muted-foreground leading-relaxed">
                             {project.project_scope || '-'}
                           </p>
                         </div>
@@ -448,7 +448,7 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                       {/* Hub */}
                       {columnVisibility.hub && (
                         <div className="w-32 shrink-0">
-                          <p className="text-sm text-foreground truncate">
+                          <p className="text-xs text-foreground truncate">
                             {project.hub_name || '-'}
                           </p>
                         </div>
@@ -457,7 +457,7 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                       {/* Plant */}
                       {columnVisibility.plant && (
                         <div className="w-36 shrink-0 min-w-0">
-                          <p className="text-sm text-foreground truncate">
+                          <p className="text-xs text-foreground truncate">
                             {project.plant_name || 'Not assigned'}
                           </p>
                           {project.station_name && (
@@ -498,7 +498,7 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                                 )}
                               </div>
                               <div className="min-w-0 flex-1">
-                                <p className="text-sm font-medium text-foreground truncate">
+                                <p className="text-xs font-medium text-foreground truncate">
                                   {project.team_lead_name || 'No lead'}
                                 </p>
                                 {project.team_count > 1 && (
@@ -509,7 +509,7 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                               </div>
                             </div>
                           ) : (
-                            <span className="text-sm text-muted-foreground italic">No team</span>
+                            <span className="text-xs text-muted-foreground italic">No team</span>
                           )}
                         </div>
                       )}
@@ -520,7 +520,7 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                           {project.next_milestone_name ? (
                             <div className="space-y-0.5">
                               <div className="flex items-center gap-2">
-                                <p className="text-sm text-foreground truncate">
+                                <p className="text-xs text-foreground truncate">
                                   {project.next_milestone_name}
                                 </p>
                                 {project.is_scorecard && (
@@ -536,7 +536,7 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                               )}
                             </div>
                           ) : (
-                            <span className="text-sm text-muted-foreground">No milestones</span>
+                            <span className="text-xs text-muted-foreground">No milestones</span>
                           )}
                         </div>
                       )}
