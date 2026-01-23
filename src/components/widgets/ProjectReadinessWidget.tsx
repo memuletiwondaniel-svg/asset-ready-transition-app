@@ -131,14 +131,9 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
               glowFrom="from-blue-500/40"
               glowTo="to-cyan-500/40"
             />
-            <div>
-              <h2 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
-                Project Overview
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                Readiness & team status
-              </p>
-            </div>
+            <h2 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
+              Project Overview
+            </h2>
           </div>
           
           {/* Location Badges */}
