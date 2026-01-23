@@ -101,29 +101,39 @@ const DEFAULT_PSSR_ROLES: { role: string; source: 'approver' | 'responsible' }[]
   { role: 'Commissioning Lead', source: 'responsible' },
 ];
 
-// Flexible role matching - handles location suffixes like "Tech Safety TA2 - Project"
+// Helper to normalize strings for robust role matching
+// Handles all dash variants (hyphen, en-dash, em-dash, Unicode minus) and dots
+function normalizeForMatching(str: string): string {
+  return str
+    .toLowerCase()
+    .replace(/[\-–—−.]/g, ' ')  // All dash variants + dots → spaces
+    .replace(/\s+/g, ' ')        // Collapse multiple spaces
+    .trim();
+}
+
+// Flexible role matching - handles location suffixes like "Tech Safety TA2 – Project"
 function matchesRole(profilePosition: string | undefined, profileRole: string | undefined, targetRole: string): boolean {
   if (!profilePosition && !profileRole) return false;
   
-  const targetLower = targetRole.toLowerCase().replace(/[.\-–]/g, ' ').trim();
+  const targetNorm = normalizeForMatching(targetRole);
   
   // Check position field
   if (profilePosition) {
-    const positionLower = profilePosition.toLowerCase().replace(/[.\-–]/g, ' ').trim();
+    const positionNorm = normalizeForMatching(profilePosition);
     // Exact match or starts with target role (to handle location suffixes)
-    if (positionLower === targetLower || positionLower.startsWith(targetLower + ' ')) {
+    if (positionNorm === targetNorm || positionNorm.startsWith(targetNorm + ' ')) {
       return true;
     }
     // Also check if position contains the core role name
-    if (positionLower.includes(targetLower)) {
+    if (positionNorm.includes(targetNorm)) {
       return true;
     }
   }
   
   // Check role field from roles table
   if (profileRole) {
-    const roleLower = profileRole.toLowerCase().replace(/[.\-–]/g, ' ').trim();
-    if (roleLower === targetLower || roleLower.includes(targetLower)) {
+    const roleNorm = normalizeForMatching(profileRole);
+    if (roleNorm === targetNorm || roleNorm.includes(targetNorm)) {
       return true;
     }
   }
@@ -161,10 +171,16 @@ export const useWalkdownSuggestedAttendees = (
       if (pssrError) throw pssrError;
 
       // Build location context for role resolution
-      const locationContext: PSSRLocationContext = {
-        commission: (pssr?.plant as any)?.name || undefined,
-        field: (pssr?.field as any)?.name || undefined,
-        station: (pssr?.station as any)?.name || undefined,
+      // Extract names from Supabase nested joins - handle both object and direct formats
+      const plantName = typeof pssr?.plant === 'object' && pssr.plant ? (pssr.plant as any).name : undefined;
+      const fieldName = typeof pssr?.field === 'object' && pssr.field ? (pssr.field as any).name : undefined;
+      const stationName = typeof pssr?.station === 'object' && pssr.station ? (pssr.station as any).name : undefined;
+      
+      const locationContext: PSSRLocationContext & { plant?: string } = {
+        commission: plantName,
+        plant: plantName,  // Add plant for location field usage
+        field: fieldName,
+        station: stationName,
         hub: undefined
       };
 

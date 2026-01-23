@@ -125,8 +125,11 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
     }
     // Pre-populate location from PSSR location context
     if (suggestedData?.locationContext && !location) {
-      const { station, field, commission } = suggestedData.locationContext;
-      const defaultLocation = [station, field, commission].filter(Boolean).join(', ');
+      const ctx = suggestedData.locationContext as any;
+      const station = ctx.station;
+      const field = ctx.field;
+      const plant = ctx.plant || ctx.commission;
+      const defaultLocation = [station, field, plant].filter(Boolean).join(', ');
       if (defaultLocation) {
         setLocation(defaultLocation);
       }
