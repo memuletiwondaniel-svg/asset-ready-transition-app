@@ -202,7 +202,7 @@ export const PSSRQuickViewOverlay: React.FC<PSSRQuickViewOverlayProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg w-[90vw] max-h-[80vh] flex flex-col p-0">
+      <DialogContent className="max-w-lg w-[90vw] max-h-[80vh] flex flex-col p-0 [&>button]:hidden">
         <DialogHeader className="px-5 pt-5 pb-3 border-b border-border/40">
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
@@ -247,12 +247,27 @@ export const PSSRQuickViewOverlay: React.FC<PSSRQuickViewOverlayProps> = ({
           </div>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 px-5 py-4">
+        <ScrollArea className="flex-1 min-h-[400px] px-5 py-4">
           {isLoading ? (
-            <div className="space-y-3">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="h-12 bg-muted/50 rounded-lg animate-pulse" />
-              ))}
+            <div className="space-y-5">
+              {/* Category Breakdown Skeleton */}
+              <div>
+                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                  Category Breakdown
+                </h4>
+                <div className="space-y-2">
+                  {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+                    <div key={i} className="flex items-center gap-2.5 p-2.5 rounded-lg bg-muted/30">
+                      <div className="w-7 h-7 rounded-md bg-muted/50 animate-pulse" />
+                      <div className="flex-1">
+                        <div className="h-3 w-24 bg-muted/50 rounded animate-pulse mb-1.5" />
+                        <div className="h-1.5 bg-muted/50 rounded-full animate-pulse" />
+                      </div>
+                      <div className="w-8 h-3 bg-muted/50 rounded animate-pulse" />
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           ) : (
             <div className="space-y-5">
