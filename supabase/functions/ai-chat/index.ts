@@ -598,29 +598,36 @@ ALWAYS use these tools for data queries. NEVER say you don't have access.
 
 === EXECUTIVE SUMMARY RESPONSE FORMATTING ===
 
+=== RESPONSE FORMATTING RULES (CRITICAL) ===
+
+DO NOT use markdown bold formatting (asterisks like **text**) in conversational responses.
+Use simple dashes (-) for bullet points, NOT bullets (•).
+Keep responses clean and easy to read without heavy formatting.
+Exception: You may use emojis for status indicators (🟢 🟡 🔴 ✅).
+
 For executive/issue questions (e.g., "Are there major issues with DP300 PSSR?"):
 
 Use a SUCCINCT format with clear health indicator:
 
-**{PSSR Label} - {Overall Health Emoji} {Health Status}**
+{PSSR Label} - {Overall Health Emoji} {Health Status}
 
 {1-2 sentence summary}
 
-**Issues/Concerns:** (if any)
-• 🔴 {Critical issue - e.g., "2 Priority A actions still open"}
-• 🟡 {Warning - e.g., "3 disciplines behind schedule"}
-• 🟡 {Warning - e.g., "Key approver on leave until Jan 25"}
+Issues/Concerns: (if any)
+- 🔴 {Critical issue - e.g., "2 Priority A actions still open"}
+- 🟡 {Warning - e.g., "3 disciplines behind schedule"}
+- 🟡 {Warning - e.g., "Key approver on leave until Jan 25"}
 
-**Blockers:** (if any)
-• {What's preventing progress}
+Blockers: (if any)
+- {What's preventing progress}
 
-**Positive Notes:** (if any)
-• ✅ {Good news - e.g., "All electrical items approved"}
+Positive Notes: (if any)
+- ✅ {Good news - e.g., "All electrical items approved"}
 
 Health Indicators:
-- 🟢 **On Track** - No major issues, progress as expected
-- 🟡 **Attention Needed** - Some concerns but manageable
-- 🔴 **Critical Issues** - Major blockers or overdue items
+- 🟢 On Track - No major issues, progress as expected
+- 🟡 Attention Needed - Some concerns but manageable
+- 🔴 Critical Issues - Major blockers or overdue items
 
 Keep executive summaries SHORT and ACTIONABLE. Focus on:
 1. What's wrong (if anything)
@@ -630,31 +637,31 @@ Keep executive summaries SHORT and ACTIONABLE. Focus on:
 
 === STATUS QUERY RESPONSE FORMATTING ===
 
-When answering status questions, use clear formatting:
+When answering status questions, use clear formatting WITHOUT markdown bold:
 
 COUNT QUESTIONS (e.g., "How many items pending for DP300?"):
-Format: "For **{PSSR Label}**, there are **{count} pending items**:
-• {Category1}: {count} items
-• {Category2}: {count} items
+Format: "For {PSSR Label}, there are {count} pending items:
+- {Category1}: {count} items
+- {Category2}: {count} items
 Would you like to see the details?"
 
 APPROVER QUESTIONS (e.g., "Who needs to approve DP300?"):
-Format: "**{PSSR Label}** is awaiting approvals:
+Format: "{PSSR Label} is awaiting approvals:
 
-**Final Sign-offs Pending:**
+Final Sign-offs Pending:
 1. 🔴 {Name} ({Role})
 2. 🔴 {Name} ({Role})
 
-**Discipline Reviewers with pending items:**
-• {Name} ({Discipline}) - {count} items"
+Discipline Reviewers with pending items:
+- {Name} ({Discipline}) - {count} items"
 
 SUMMARY QUESTIONS (e.g., "Status of DP300 PSSR?"):
 Use structured format with sections:
-- **Progress**: X% complete (Y of Z items)
-- **By Category**: list categories with completion
-- **Approvers**: X pending of Y total
-- **Priority Actions**: X open Priority A, Y open Priority B
-- **Blocking Items**: list what's preventing closure
+- Progress: X% complete (Y of Z items)
+- By Category: list categories with completion
+- Approvers: X pending of Y total
+- Priority Actions: X open Priority A, Y open Priority B
+- Blocking Items: list what's preventing closure
 
 WHEN DATA IS EXTENSIVE (>10 items):
 Offer to navigate: "I found 25 pending items. Would you like me to show you the full list? I can take you to the PSSR review page."
@@ -2673,14 +2680,92 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
     
     case "get_team_member_info": {
       try {
+        // Role abbreviation mappings for flexible search
+        const ROLE_ABBREVIATIONS: Record<string, string[]> = {
+          'deputy plant director': ['dep. plant director', 'dpty plant director', 'deputy pd', 'dep plant director'],
+          'plant director': ['pd', 'plt director'],
+          'project manager': ['pm', 'proj manager'],
+          'hse director': ['hse dir'],
+          'production director': ['prod director'],
+          'operations manager': ['ops manager', 'ops mgr'],
+          'maintenance manager': ['maint manager', 'maint mgr'],
+          'technical authority': ['ta', 'ta2', 'ta1'],
+        };
+        
+        // Expand search terms to include abbreviations and variations
+        const expandSearchTerms = (term: string): string[] => {
+          const lower = term.toLowerCase();
+          const terms = [lower];
+          
+          // Check if term matches any full form, add abbreviations
+          for (const [full, abbrevs] of Object.entries(ROLE_ABBREVIATIONS)) {
+            if (lower.includes(full)) {
+              abbrevs.forEach(abbr => terms.push(lower.replace(full, abbr)));
+            }
+            // Check reverse: if abbreviation used, add full form
+            abbrevs.forEach(abbr => {
+              if (lower.includes(abbr)) {
+                terms.push(lower.replace(abbr, full));
+              }
+            });
+          }
+          
+          return [...new Set(terms)];
+        };
+        
+        // Parse "X for Y" pattern (e.g., "deputy plant director for CS")
+        let searchTerm = args.search_term || '';
+        let locationFilter: string | null = null;
+        
+        const locationMatch = searchTerm.match(/(.+?)\s+(for|at|in)\s+(.+)/i);
+        if (locationMatch) {
+          searchTerm = locationMatch[1].trim();
+          locationFilter = locationMatch[3].trim();
+        }
+        
+        const searchTerms = searchTerm ? expandSearchTerms(searchTerm) : [];
+        
+        // Build OR conditions for all term variations
         let query = supabaseClient
           .from('profiles')
           .select('user_id, full_name, position, email, department, company')
           .eq('is_active', true);
         
-        // Search by name or position
-        if (args.search_term) {
-          query = query.or(`full_name.ilike.%${args.search_term}%,position.ilike.%${args.search_term}%`);
+        if (searchTerms.length > 0) {
+          // Create search conditions for each variation
+          const conditions = searchTerms.flatMap(term => [
+            `full_name.ilike.%${term}%`,
+            `position.ilike.%${term}%`
+          ]).join(',');
+          query = query.or(conditions);
+        }
+        
+        // If location filter specified, add position filter for location suffix
+        // Handles "Deputy Plant Director - CS", "Dep. Plant Director – North", etc.
+        if (locationFilter) {
+          const locationConditions = searchTerms.map(term => 
+            `position.ilike.%${term}%${locationFilter}%`
+          ).join(',');
+          
+          // Re-query with location-aware filter
+          const { data: locationProfiles, error: locError } = await supabaseClient
+            .from('profiles')
+            .select('user_id, full_name, position, email, department, company')
+            .eq('is_active', true)
+            .or(locationConditions)
+            .limit(20);
+          
+          if (!locError && locationProfiles && locationProfiles.length > 0) {
+            return {
+              total: locationProfiles.length,
+              members: locationProfiles.map((p: any) => ({
+                name: p.full_name,
+                position: p.position,
+                email: p.email,
+                department: p.department
+              }))
+            };
+          }
         }
         
         const { data: profiles, error } = await query.limit(20);
@@ -2690,11 +2775,14 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         }
         
         // If project_code specified, filter by project team members
+        // Handle variations: DP-300, DP300, DP 300
         if (args.project_code) {
+          const normalizedCode = args.project_code.replace(/[-\s]/g, '').toUpperCase();
+          
           const { data: project } = await supabaseClient
             .from('projects')
             .select('id')
-            .or(`project_id_prefix.ilike.%${args.project_code}%,project_id_number.ilike.%${args.project_code}%`)
+            .or(`project_id_prefix.ilike.%${normalizedCode}%,project_id_number.ilike.%${normalizedCode}%`)
             .maybeSingle();
           
           if (project) {
@@ -4027,9 +4115,11 @@ function detectNavigationIntent(message: string): NavigationIntent {
     return { detected: false, module: null, entitySearch: null, isModuleOnly: false };
   }
   
-  // FIXED: Extract entity code BEFORE normalization to preserve codes like "DP300"
-  const codeMatch = message.match(/\b([A-Z]{1,4}\d{2,4})\b/i);
-  const entitySearch = codeMatch ? codeMatch[1].toUpperCase() : null;
+  // FIXED: Extract entity code with flexible pattern to handle DP-217, DP217, DP 217 as equivalent
+  // Pattern matches: "DP300", "DP-300", "DP 300", "JV100", "JV-100", etc.
+  const codeMatch = message.match(/\b([A-Z]{1,4})[-\s]?(\d{2,4})\b/i);
+  // Normalize: remove hyphens/spaces to get consistent format (DP300)
+  const entitySearch = codeMatch ? (codeMatch[1] + codeMatch[2]).toUpperCase() : null;
   
   // Now normalize for module detection only (handles "DP300PSSR" -> "DP300 PSSR")
   const normalized = message.replace(/([a-zA-Z])(\d)/g, '$1 $2').replace(/(\d)([a-zA-Z])/g, '$1 $2');
