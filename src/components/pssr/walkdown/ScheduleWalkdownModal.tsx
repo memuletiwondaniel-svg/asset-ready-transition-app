@@ -16,31 +16,39 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { CalendarIcon, Clock, MapPin, Users, Loader2 } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { CalendarIcon, Clock, MapPin, Users, Loader2, Mail, Calendar as OutlookIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { usePSSRWalkdowns, WalkdownAttendee } from '@/hooks/usePSSRWalkdowns';
 import { useWalkdownSuggestedAttendees, SuggestedAttendee } from '@/hooks/useWalkdownSuggestedAttendees';
+import { useMicrosoftOAuth } from '@/hooks/useMicrosoftOAuth';
+import { useOutlookCalendar } from '@/hooks/useOutlookCalendar';
 
 interface ScheduleWalkdownModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   pssrId: string;
+  pssrTitle?: string;
 }
 
 export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
   open,
   onOpenChange,
   pssrId,
+  pssrTitle,
 }) => {
   const { scheduleWalkdown } = usePSSRWalkdowns(pssrId);
   const { data: suggestedData, isLoading: suggestedLoading } = useWalkdownSuggestedAttendees(pssrId);
+  const { isConnected: isMicrosoftConnected, connect: connectMicrosoft, isConnecting } = useMicrosoftOAuth();
+  const { createEvent, isCreatingEvent } = useOutlookCalendar();
 
   const [scheduledDate, setScheduledDate] = useState<Date | undefined>();
   const [scheduledTime, setScheduledTime] = useState('');
   const [location, setLocation] = useState('');
   const [description, setDescription] = useState('');
   const [selectedAttendeeIds, setSelectedAttendeeIds] = useState<Set<string>>(new Set());
+  const [useOutlook, setUseOutlook] = useState(false);
 
   // Initialize selected attendees when suggested data loads
   useEffect(() => {
@@ -48,6 +56,13 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
       setSelectedAttendeeIds(new Set(suggestedData.attendees.map(a => a.id)));
     }
   }, [suggestedData?.attendees]);
+
+  // Enable Outlook by default if connected
+  useEffect(() => {
+    if (isMicrosoftConnected) {
+      setUseOutlook(true);
+    }
+  }, [isMicrosoftConnected]);
 
   const toggleAttendee = (attendeeId: string) => {
     setSelectedAttendeeIds(prev => {
@@ -93,13 +108,37 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
         email: a.email
       }));
 
-    await scheduleWalkdown.mutateAsync({
+    // First, create the walkdown event in the database
+    const walkdownEvent = await scheduleWalkdown.mutateAsync({
       scheduledDate: format(scheduledDate, 'yyyy-MM-dd'),
       scheduledTime: scheduledTime || undefined,
       location: location || undefined,
       description: description || undefined,
       attendees
     });
+
+    // If Outlook integration is enabled, create calendar event
+    if (useOutlook && isMicrosoftConnected && walkdownEvent?.id) {
+      const startDateTime = scheduledTime 
+        ? `${format(scheduledDate, 'yyyy-MM-dd')}T${scheduledTime}:00`
+        : `${format(scheduledDate, 'yyyy-MM-dd')}T09:00:00`;
+      
+      // Default 2 hour duration for walkdown
+      const endDate = new Date(startDateTime);
+      endDate.setHours(endDate.getHours() + 2);
+      const endDateTime = endDate.toISOString().slice(0, 19);
+
+      await createEvent({
+        walkdownEventId: walkdownEvent.id,
+        title: `PSSR Walkdown${pssrTitle ? `: ${pssrTitle}` : ''}`,
+        description: description || `PSSR Walkdown for ${pssrId}`,
+        location: location || 'TBD',
+        startDateTime,
+        endDateTime,
+        attendees: attendees.filter(a => a.email).map(a => ({ ...a, email: a.email! })),
+        pssrId,
+      });
+    }
 
     // Reset form
     setScheduledDate(undefined);
@@ -112,6 +151,7 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
 
   const selectedCount = selectedAttendeeIds.size;
   const totalCount = suggestedData?.attendees?.length || 0;
+  const isSubmitting = scheduleWalkdown.isPending || isCreatingEvent;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -125,6 +165,56 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
 
         <ScrollArea className="flex-1 pr-4">
           <div className="space-y-4 py-4">
+            {/* Outlook Integration Toggle */}
+            <div className="p-3 rounded-lg border bg-muted/30">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={cn(
+                    "p-2 rounded-lg",
+                    isMicrosoftConnected ? "bg-[#0078d4]/10" : "bg-muted"
+                  )}>
+                    <OutlookIcon className={cn(
+                      "w-4 h-4",
+                      isMicrosoftConnected ? "text-[#0078d4]" : "text-muted-foreground"
+                    )} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">Send via Outlook</p>
+                    <p className="text-xs text-muted-foreground">
+                      {isMicrosoftConnected 
+                        ? "Create calendar event and track RSVPs" 
+                        : "Connect to send calendar invitations"}
+                    </p>
+                  </div>
+                </div>
+                {isMicrosoftConnected ? (
+                  <Switch
+                    checked={useOutlook}
+                    onCheckedChange={setUseOutlook}
+                  />
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={connectMicrosoft}
+                    disabled={isConnecting}
+                  >
+                    {isConnecting ? (
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                    ) : (
+                      'Connect'
+                    )}
+                  </Button>
+                )}
+              </div>
+              {!isMicrosoftConnected && (
+                <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+                  <Mail className="w-3 h-3" />
+                  Without Outlook, invitations will be sent via email with .ics attachment
+                </p>
+              )}
+            </div>
+
             {/* Date */}
             <div className="space-y-2">
               <Label>Date *</Label>
@@ -274,9 +364,19 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
           </Button>
           <Button 
             onClick={handleSubmit}
-            disabled={!scheduledDate || scheduleWalkdown.isPending}
+            disabled={!scheduledDate || isSubmitting}
           >
-            {scheduleWalkdown.isPending ? 'Scheduling...' : 'Schedule Walkdown'}
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                {useOutlook ? 'Sending to Outlook...' : 'Scheduling...'}
+              </>
+            ) : (
+              <>
+                {useOutlook && <OutlookIcon className="w-4 h-4 mr-2" />}
+                Schedule Walkdown
+              </>
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

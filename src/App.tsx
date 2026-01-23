@@ -30,6 +30,7 @@ import MyTasksPage from "@/pages/MyTasksPage";
 import PSSRItemReview from "@/pages/PSSRItemReview";
 import PSSRApprovalPage from "@/pages/PSSRApprovalPage";
 import PSSRDetailsPage from "@/pages/PSSRDetailsPage";
+import MicrosoftCallback from "@/pages/auth/MicrosoftCallback";
 
 // Create QueryClient outside component to prevent recreation on every render
 const queryClient = new QueryClient({
@@ -55,6 +56,7 @@ const App = () => (
                   <Routes>
                     {/* Public routes */}
                     <Route path="/auth" element={<AuthPage />} />
+                    <Route path="/auth/microsoft/callback" element={<MicrosoftCallback />} />
                     
                     {/* Root handles both welcome (unauthenticated) and home (authenticated) */}
                     <Route path="/" element={<Index />} />
