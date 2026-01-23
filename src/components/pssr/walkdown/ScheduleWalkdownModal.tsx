@@ -61,12 +61,20 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
     ...manualAttendees
   ];
 
-  // Initialize selected attendees when suggested data loads
+  // Initialize selected attendees and location when suggested data loads
   useEffect(() => {
     if (suggestedData?.attendees) {
       setSelectedAttendeeIds(new Set(suggestedData.attendees.map(a => a.id)));
     }
-  }, [suggestedData?.attendees]);
+    // Pre-populate location from PSSR location context
+    if (suggestedData?.locationContext && !location) {
+      const { station, field, commission } = suggestedData.locationContext;
+      const defaultLocation = [station, field, commission].filter(Boolean).join(', ');
+      if (defaultLocation) {
+        setLocation(defaultLocation);
+      }
+    }
+  }, [suggestedData]);
 
   const handleAddManualAttendee = (attendee: SuggestedAttendee) => {
     if (!selectedAttendeeIds.has(attendee.id)) {
