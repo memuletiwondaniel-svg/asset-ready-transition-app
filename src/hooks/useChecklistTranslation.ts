@@ -58,6 +58,22 @@ export const useChecklistTranslation = <T extends TranslatableItem>(
   const [isTranslating, setIsTranslating] = useState(false);
   const [translationProgress, setTranslationProgress] = useState(0);
   const abortControllerRef = useRef<AbortController | null>(null);
+  
+  // Stable reference for items to prevent infinite loops
+  const itemsRef = useRef<T[] | undefined>(items);
+  const fieldsRef = useRef(fields);
+  
+  // Only update refs when items actually change (by comparing IDs)
+  const itemsKey = items?.map(i => i.id).join(',') || '';
+  const prevItemsKeyRef = useRef(itemsKey);
+  
+  if (prevItemsKeyRef.current !== itemsKey) {
+    prevItemsKeyRef.current = itemsKey;
+    itemsRef.current = items;
+  }
+  
+  // Update fields ref
+  fieldsRef.current = fields;
 
   const getLanguageCode = useCallback((lang: string) => {
     return languageCodeMap[lang] || 'en';
@@ -100,7 +116,10 @@ export const useChecklistTranslation = <T extends TranslatableItem>(
   }, []);
 
   const translateItems = useCallback(async () => {
-    if (!items || items.length === 0) {
+    const currentItems = itemsRef.current;
+    const currentFields = fieldsRef.current;
+    
+    if (!currentItems || currentItems.length === 0) {
       setTranslatedItems([]);
       return;
     }
@@ -109,7 +128,7 @@ export const useChecklistTranslation = <T extends TranslatableItem>(
 
     // If English, just return original items
     if (langCode === 'en') {
-      setTranslatedItems(items);
+      setTranslatedItems(currentItems);
       setIsTranslating(false);
       return;
     }
@@ -128,14 +147,14 @@ export const useChecklistTranslation = <T extends TranslatableItem>(
     let completed = 0;
 
     try {
-      for (let i = 0; i < items.length; i += batchSize) {
-        const batch = items.slice(i, i + batchSize);
+      for (let i = 0; i < currentItems.length; i += batchSize) {
+        const batch = currentItems.slice(i, i + batchSize);
         
         const translatedBatch = await Promise.all(
           batch.map(async (item) => {
             const translatedItem = { ...item };
             
-            for (const field of fields) {
+            for (const field of currentFields) {
               const value = item[field];
               if (typeof value === 'string' && value) {
                 (translatedItem as any)[field] = await translateText(value, langCode);
@@ -148,7 +167,7 @@ export const useChecklistTranslation = <T extends TranslatableItem>(
 
         translated.push(...translatedBatch);
         completed += batch.length;
-        setTranslationProgress(Math.round((completed / items.length) * 100));
+        setTranslationProgress(Math.round((completed / currentItems.length) * 100));
 
         // Update state progressively so users see translations appearing
         setTranslatedItems([...translated]);
@@ -161,7 +180,7 @@ export const useChecklistTranslation = <T extends TranslatableItem>(
       setIsTranslating(false);
       setTranslationProgress(100);
     }
-  }, [items, language, fields, getLanguageCode, translateText]);
+  }, [language, getLanguageCode, translateText]);
 
   useEffect(() => {
     translateItems();
@@ -171,10 +190,10 @@ export const useChecklistTranslation = <T extends TranslatableItem>(
         abortControllerRef.current.abort();
       }
     };
-  }, [translateItems]);
+  }, [translateItems, itemsKey]);
 
   // Return original items while translating if no translated items yet
-  const displayItems = translatedItems.length > 0 ? translatedItems : (items || []);
+  const displayItems = translatedItems.length > 0 ? translatedItems : (itemsRef.current || []);
 
   return {
     items: displayItems,
