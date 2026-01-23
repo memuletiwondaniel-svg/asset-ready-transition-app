@@ -26,6 +26,7 @@ import { useMicrosoftOAuth } from '@/hooks/useMicrosoftOAuth';
 import { useOutlookCalendar } from '@/hooks/useOutlookCalendar';
 import { openInOutlook, openInTeams, downloadICSFile, OutlookMeetingData } from '@/lib/outlook-protocol';
 import { useToast } from '@/hooks/use-toast';
+import { AddAttendeePopover } from './AddAttendeePopover';
 
 interface ScheduleWalkdownModalProps {
   open: boolean;
@@ -51,7 +52,14 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
   const [location, setLocation] = useState('');
   const [description, setDescription] = useState('');
   const [selectedAttendeeIds, setSelectedAttendeeIds] = useState<Set<string>>(new Set());
+  const [manualAttendees, setManualAttendees] = useState<SuggestedAttendee[]>([]);
   const [sendMethod, setSendMethod] = useState<'outlook' | 'teams' | 'api'>('outlook');
+
+  // Combine suggested and manual attendees
+  const allAttendees = [
+    ...(suggestedData?.attendees || []),
+    ...manualAttendees
+  ];
 
   // Initialize selected attendees when suggested data loads
   useEffect(() => {
@@ -59,6 +67,13 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
       setSelectedAttendeeIds(new Set(suggestedData.attendees.map(a => a.id)));
     }
   }, [suggestedData?.attendees]);
+
+  const handleAddManualAttendee = (attendee: SuggestedAttendee) => {
+    if (!selectedAttendeeIds.has(attendee.id)) {
+      setManualAttendees(prev => [...prev, attendee]);
+      setSelectedAttendeeIds(prev => new Set([...prev, attendee.id]));
+    }
+  };
 
   const toggleAttendee = (attendeeId: string) => {
     setSelectedAttendeeIds(prev => {
@@ -73,9 +88,7 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
   };
 
   const selectAll = () => {
-    if (suggestedData?.attendees) {
-      setSelectedAttendeeIds(new Set(suggestedData.attendees.map(a => a.id)));
-    }
+    setSelectedAttendeeIds(new Set(allAttendees.map(a => a.id)));
   };
 
   const deselectAll = () => {
@@ -94,8 +107,8 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
   const handleSubmit = async () => {
     if (!scheduledDate) return;
 
-    // Build attendees array from selected IDs
-    const attendees: WalkdownAttendee[] = (suggestedData?.attendees || [])
+    // Build attendees array from selected IDs (includes both suggested and manual)
+    const attendees: WalkdownAttendee[] = allAttendees
       .filter(a => selectedAttendeeIds.has(a.id))
       .map(a => ({
         id: a.id,
@@ -175,12 +188,13 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
     setLocation('');
     setDescription('');
     setSelectedAttendeeIds(new Set());
+    setManualAttendees([]);
     setSendMethod('outlook');
     onOpenChange(false);
   };
 
   const selectedCount = selectedAttendeeIds.size;
-  const totalCount = suggestedData?.attendees?.length || 0;
+  const totalCount = allAttendees.length;
   const isSubmitting = scheduleWalkdown.isPending || isCreatingEvent;
 
   return (
@@ -333,13 +347,19 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
               <div className="flex items-center justify-between">
                 <Label className="flex items-center gap-2">
                   <Users className="h-3.5 w-3.5" />
-                  Attendees from Checklist Items
+                  Walkdown Attendees
                 </Label>
-                {totalCount > 0 && (
-                  <span className="text-xs text-muted-foreground">
-                    {selectedCount} of {totalCount} selected
-                  </span>
-                )}
+                <div className="flex items-center gap-2">
+                  {totalCount > 0 && (
+                    <span className="text-xs text-muted-foreground">
+                      {selectedCount} of {totalCount} selected
+                    </span>
+                  )}
+                  <AddAttendeePopover
+                    existingAttendeeIds={selectedAttendeeIds}
+                    onAddAttendee={handleAddManualAttendee}
+                  />
+                </div>
               </div>
 
               {suggestedLoading ? (
@@ -347,7 +367,7 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
                   <Loader2 className="h-5 w-5 animate-spin mr-2" />
                   <span className="text-sm">Loading suggested attendees...</span>
                 </div>
-              ) : suggestedData?.categorized && suggestedData.categorized.length > 0 ? (
+              ) : allAttendees.length > 0 ? (
                 <div className="space-y-4 border rounded-lg p-3 bg-muted/30">
                   {/* Select/Deselect All */}
                   <div className="flex items-center gap-2 pb-2 border-b">
@@ -371,8 +391,8 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
                     </Button>
                   </div>
 
-                  {/* Categorized Attendees */}
-                  {suggestedData.categorized.map((category) => (
+                  {/* Categorized Suggested Attendees */}
+                  {suggestedData?.categorized && suggestedData.categorized.map((category) => (
                     <div key={category.name} className="space-y-2">
                       <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                         {category.name}
@@ -390,6 +410,27 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
                       </div>
                     </div>
                   ))}
+
+                  {/* Manually Added Attendees */}
+                  {manualAttendees.length > 0 && (
+                    <div className="space-y-2">
+                      <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                        Manually Added
+                      </h4>
+                      <div className="space-y-1">
+                        {manualAttendees.map((attendee) => (
+                          <AttendeeRow
+                            key={attendee.id}
+                            attendee={{...attendee, source: 'responsible'}}
+                            isSelected={selectedAttendeeIds.has(attendee.id)}
+                            onToggle={() => toggleAttendee(attendee.id)}
+                            getInitials={getInitials}
+                            showManualBadge
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="p-4 bg-muted/50 rounded-lg border border-dashed text-center">
@@ -397,7 +438,7 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
                     No matching attendees found for this PSSR's checklist items.
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Attendees are matched based on roles assigned in checklist items.
+                    Use "Add Attendee" to manually add participants.
                   </p>
                 </div>
               )}
@@ -439,13 +480,15 @@ interface AttendeeRowProps {
   isSelected: boolean;
   onToggle: () => void;
   getInitials: (name: string) => string;
+  showManualBadge?: boolean;
 }
 
 const AttendeeRow: React.FC<AttendeeRowProps> = ({
   attendee,
   isSelected,
   onToggle,
-  getInitials
+  getInitials,
+  showManualBadge = false
 }) => {
   return (
     <label
@@ -473,12 +516,14 @@ const AttendeeRow: React.FC<AttendeeRowProps> = ({
         variant="outline" 
         className={cn(
           'shrink-0 text-[10px] px-1.5',
-          attendee.source === 'responsible' 
-            ? 'border-blue-500/50 text-blue-600 bg-blue-50' 
-            : 'border-amber-500/50 text-amber-600 bg-amber-50'
+          showManualBadge 
+            ? 'border-purple-500/50 text-purple-600 bg-purple-50'
+            : attendee.source === 'responsible' 
+              ? 'border-blue-500/50 text-blue-600 bg-blue-50' 
+              : 'border-amber-500/50 text-amber-600 bg-amber-50'
         )}
       >
-        {attendee.source === 'responsible' ? 'Responsible' : 'Approver'}
+        {showManualBadge ? 'Added' : attendee.source === 'responsible' ? 'Responsible' : 'Approver'}
       </Badge>
     </label>
   );

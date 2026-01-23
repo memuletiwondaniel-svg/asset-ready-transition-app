@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 export interface ProfileUser {
   user_id: string;
   full_name: string;
+  email?: string;
   role?: string;
   role_id?: string;
   position?: string;
@@ -30,7 +31,7 @@ export const useProfileUsers = () => {
       // Fetch profiles with role UUIDs and hub
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('user_id, full_name, position, avatar_url, role, hub')
+        .select('user_id, full_name, email, position, avatar_url, role, hub')
         .eq('is_active', true)
         .not('full_name', 'is', null);
 
@@ -49,6 +50,7 @@ export const useProfileUsers = () => {
       return profiles?.map(profile => ({
         user_id: profile.user_id,
         full_name: profile.full_name || '',
+        email: profile.email || '',
         role: roleMap.get(profile.role) || '',
         role_id: profile.role || '',
         position: profile.position || '',
