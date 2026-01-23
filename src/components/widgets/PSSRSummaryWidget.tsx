@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, ExternalLink, EyeOff } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Progress } from '@/components/ui/progress';
+import { AlertTriangle, EyeOff, FileText } from 'lucide-react';
 import { StyledWidgetIcon } from './StyledWidgetIcon';
+import { useProjectPSSRs } from '@/hooks/useProjectPSSRs';
+import { PSSRQuickViewOverlay } from '@/components/pssr/PSSRQuickViewOverlay';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface PSSRSummaryWidgetProps {
   projectId: string;
@@ -13,88 +15,115 @@ interface PSSRSummaryWidgetProps {
   onHide?: () => void;
 }
 
-export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({ projectId, dragAttributes, dragListeners, onHide }) => {
-  const navigate = useNavigate();
+export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({ 
+  projectId, 
+  dragAttributes, 
+  dragListeners, 
+  onHide 
+}) => {
+  const { data: pssrs, isLoading } = useProjectPSSRs(projectId);
+  const [selectedPSSR, setSelectedPSSR] = useState<{ id: string; displayId: string } | null>(null);
 
-  // Mock data - replace with actual data fetching
-  const pssrs = [
-    { id: '1', name: 'PSSR-DP300-001', status: 'in-review', progress: 75 },
-    { id: '2', name: 'PSSR-2024-002', status: 'draft', progress: 30 }
-  ];
-
-  const stats = {
-    total: 2,
-    completed: 0,
-    inReview: 1,
-    draft: 1
+  const handlePSSRClick = (pssrId: string, displayId: string) => {
+    setSelectedPSSR({ id: pssrId, displayId });
   };
 
   return (
-    <Card className="h-full transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:border-red-500/20 group">
-      <CardHeader {...dragAttributes} {...dragListeners} className="cursor-grab active:cursor-grabbing">
-        <CardTitle className="text-lg flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <StyledWidgetIcon 
-              Icon={AlertTriangle}
-              gradientFrom="from-red-500"
-              gradientTo="to-orange-500"
-              glowFrom="from-red-500/40"
-              glowTo="to-orange-500/40"
-            />
-            <span>PSSR / SoF</span>
-          </div>
-          {onHide && (
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={(e) => {
-                e.stopPropagation();
-                onHide();
-              }}
-              className="opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7"
-              title="Hide widget"
-            >
-              <EyeOff className="h-4 w-4" />
-            </Button>
-          )}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid grid-cols-4 gap-2">
-          <div className="text-center p-2 bg-muted/30 rounded-lg">
-            <div className="text-2xl font-bold text-primary">{stats.total}</div>
-            <div className="text-xs text-muted-foreground">Total</div>
-          </div>
-          <div className="text-center p-2 bg-emerald-500/10 rounded-lg">
-            <div className="text-2xl font-bold text-emerald-600">{stats.completed}</div>
-            <div className="text-xs text-muted-foreground">Completed</div>
-          </div>
-          <div className="text-center p-2 bg-blue-500/10 rounded-lg">
-            <div className="text-2xl font-bold text-blue-600">{stats.inReview}</div>
-            <div className="text-xs text-muted-foreground">In Review</div>
-          </div>
-          <div className="text-center p-2 bg-amber-500/10 rounded-lg">
-            <div className="text-2xl font-bold text-amber-600">{stats.draft}</div>
-            <div className="text-xs text-muted-foreground">Draft</div>
-          </div>
-        </div>
-        
-        <div className="space-y-2">
-          {pssrs.map((pssr) => (
-            <div key={pssr.id} className="p-3 border rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-medium text-sm">{pssr.name}</span>
-                <Badge variant="outline" className="text-xs">
-                  {pssr.status}
-                </Badge>
-              </div>
-              <Button size="sm" variant="link" className="p-0 h-auto" onClick={() => navigate('/pssr')}>
-                View Details <ExternalLink className="h-3 w-3 ml-1" />
-              </Button>
+    <>
+      <Card className="h-full transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:border-red-500/20 group">
+        <CardHeader {...dragAttributes} {...dragListeners} className="cursor-grab active:cursor-grabbing pb-3">
+          <CardTitle className="text-lg flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <StyledWidgetIcon 
+                Icon={AlertTriangle}
+                gradientFrom="from-red-500"
+                gradientTo="to-orange-500"
+                glowFrom="from-red-500/40"
+                glowTo="to-orange-500/40"
+              />
+              <span>PSSR / SoF</span>
             </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+            {onHide && (
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onHide();
+                }}
+                className="opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7"
+                title="Hide widget"
+              >
+                <EyeOff className="h-4 w-4" />
+              </Button>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3 pt-0">
+          {isLoading ? (
+            <div className="space-y-3">
+              {[1, 2].map((i) => (
+                <div key={i} className="p-3 border rounded-lg bg-muted/30">
+                  <Skeleton className="h-4 w-32 mb-2" />
+                  <Skeleton className="h-3 w-full mb-2" />
+                  <Skeleton className="h-2 w-full" />
+                </div>
+              ))}
+            </div>
+          ) : pssrs && pssrs.length > 0 ? (
+            <div className="space-y-3">
+              {pssrs.map((pssr) => (
+                <div 
+                  key={pssr.id} 
+                  className="p-3 border rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer group/item"
+                  onClick={() => handlePSSRClick(pssr.id, pssr.pssr_id)}
+                >
+                  {/* PSSR ID as clickable link */}
+                  <button
+                    className="text-sm font-semibold text-primary hover:underline focus:outline-none text-left"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePSSRClick(pssr.id, pssr.pssr_id);
+                    }}
+                  >
+                    {pssr.pssr_id}
+                  </button>
+                  
+                  {/* Brief description */}
+                  {pssr.scope && (
+                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                      {pssr.scope}
+                    </p>
+                  )}
+                  
+                  {/* Progress bar instead of status badge */}
+                  <div className="flex items-center gap-2 mt-2">
+                    <Progress value={pssr.progress} className="h-1.5 flex-1" />
+                    <span className="text-xs font-medium text-foreground min-w-[2.5rem] text-right">
+                      {pssr.progress}%
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-6 text-muted-foreground">
+              <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              <p className="text-sm">No PSSRs found for this project</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* PSSR Quick View Overlay */}
+      {selectedPSSR && (
+        <PSSRQuickViewOverlay
+          open={!!selectedPSSR}
+          onOpenChange={(open) => !open && setSelectedPSSR(null)}
+          pssrId={selectedPSSR.id}
+          pssrDisplayId={selectedPSSR.displayId}
+        />
+      )}
+    </>
   );
 };
