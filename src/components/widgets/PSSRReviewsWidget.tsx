@@ -213,7 +213,12 @@ export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
               onStatusChange={onStatusChange}
             />
           ) : (
-            <PSSRTableView pssrs={filteredPSSRs} onViewDetails={onViewDetails} />
+            <PSSRTableView 
+              pssrs={filteredPSSRs} 
+              onViewDetails={onViewDetails} 
+              pinnedPSSRs={pinnedPSSRs}
+              onTogglePin={onTogglePin}
+            />
           )}
         </div>
       </div>
