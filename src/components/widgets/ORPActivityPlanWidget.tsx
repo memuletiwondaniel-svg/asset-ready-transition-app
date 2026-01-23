@@ -132,49 +132,49 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
               
               {/* Upcoming Activities List */}
               {allUpcomingActivities.length > 0 ? (
-                <div className="space-y-2">
-                  <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                <div className="space-y-1.5">
+                  <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
                     Upcoming Activities
                   </div>
                   {allUpcomingActivities.slice(0, 4).map((activity) => (
                     <div 
                       key={activity.id} 
-                      className="flex items-center gap-3 p-2 rounded-md border bg-card hover:bg-muted/30 transition-colors"
+                      className="flex items-center gap-2 py-1.5 px-2 rounded-md border bg-card hover:bg-muted/30 transition-colors"
                     >
                       <div className={cn(
-                        "w-2 h-2 rounded-full shrink-0",
+                        "w-1.5 h-1.5 rounded-full shrink-0",
                         activity.status === 'IN_PROGRESS' ? 'bg-blue-500' : 'bg-muted-foreground/40'
                       )} />
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium truncate">
+                        <div className="text-xs font-medium truncate">
                           {activity.name}
                         </div>
                         {activity.start_date && (
-                          <div className="text-xs text-muted-foreground flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
+                          <div className="text-[10px] text-muted-foreground flex items-center gap-0.5">
+                            <Clock className="h-2.5 w-2.5" />
                             {format(parseISO(activity.start_date), 'MMM d')}
                             {activity.end_date && ` - ${format(parseISO(activity.end_date), 'MMM d')}`}
                           </div>
                         )}
                       </div>
                       {activity.completion_percentage > 0 && (
-                        <Badge variant="secondary" className="text-xs shrink-0">
+                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 shrink-0">
                           {activity.completion_percentage}%
                         </Badge>
                       )}
                     </div>
                   ))}
                   {allUpcomingActivities.length > 4 && (
-                    <div className="w-full text-center text-sm text-muted-foreground py-1.5 hover:text-foreground transition-colors">
+                    <div className="w-full text-center text-xs text-muted-foreground py-1 hover:text-foreground transition-colors">
                       +{allUpcomingActivities.length - 4} more activities
-                      <ChevronDown className="h-3 w-3 ml-1 inline" />
+                      <ChevronDown className="h-2.5 w-2.5 ml-0.5 inline" />
                     </div>
                   )}
                 </div>
               ) : (
-                <div className="flex items-center gap-2 p-3 bg-green-500/10 rounded-lg text-green-600">
-                  <CheckCircle2 className="h-4 w-4" />
-                  <span className="text-sm">All activities completed</span>
+                <div className="flex items-center gap-2 p-2 bg-green-500/10 rounded-lg text-green-600">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  <span className="text-xs">All activities completed</span>
                 </div>
               )}
             </div>
