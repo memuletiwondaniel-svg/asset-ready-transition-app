@@ -16,14 +16,16 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Switch } from '@/components/ui/switch';
-import { CalendarIcon, Clock, MapPin, Users, Loader2, Mail, Calendar as OutlookIcon } from 'lucide-react';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { CalendarIcon, Clock, MapPin, Users, Loader2, ExternalLink, Wifi } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { usePSSRWalkdowns, WalkdownAttendee } from '@/hooks/usePSSRWalkdowns';
 import { useWalkdownSuggestedAttendees, SuggestedAttendee } from '@/hooks/useWalkdownSuggestedAttendees';
 import { useMicrosoftOAuth } from '@/hooks/useMicrosoftOAuth';
 import { useOutlookCalendar } from '@/hooks/useOutlookCalendar';
+import { openInOutlook, openInTeams, downloadICSFile, OutlookMeetingData } from '@/lib/outlook-protocol';
+import { useToast } from '@/hooks/use-toast';
 
 interface ScheduleWalkdownModalProps {
   open: boolean;
@@ -42,13 +44,14 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
   const { data: suggestedData, isLoading: suggestedLoading } = useWalkdownSuggestedAttendees(pssrId);
   const { isConnected: isMicrosoftConnected, connect: connectMicrosoft, isConnecting } = useMicrosoftOAuth();
   const { createEvent, isCreatingEvent } = useOutlookCalendar();
+  const { toast } = useToast();
 
   const [scheduledDate, setScheduledDate] = useState<Date | undefined>();
   const [scheduledTime, setScheduledTime] = useState('');
   const [location, setLocation] = useState('');
   const [description, setDescription] = useState('');
   const [selectedAttendeeIds, setSelectedAttendeeIds] = useState<Set<string>>(new Set());
-  const [useOutlook, setUseOutlook] = useState(false);
+  const [sendMethod, setSendMethod] = useState<'outlook' | 'teams' | 'api'>('outlook');
 
   // Initialize selected attendees when suggested data loads
   useEffect(() => {
@@ -56,13 +59,6 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
       setSelectedAttendeeIds(new Set(suggestedData.attendees.map(a => a.id)));
     }
   }, [suggestedData?.attendees]);
-
-  // Enable Outlook by default if connected
-  useEffect(() => {
-    if (isMicrosoftConnected) {
-      setUseOutlook(true);
-    }
-  }, [isMicrosoftConnected]);
 
   const toggleAttendee = (attendeeId: string) => {
     setSelectedAttendeeIds(prev => {
@@ -108,6 +104,26 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
         email: a.email
       }));
 
+    // Build datetime strings
+    const startDateTime = scheduledTime 
+      ? `${format(scheduledDate, 'yyyy-MM-dd')}T${scheduledTime}:00`
+      : `${format(scheduledDate, 'yyyy-MM-dd')}T09:00:00`;
+    
+    const endDate = new Date(startDateTime);
+    endDate.setHours(endDate.getHours() + 2);
+    const endDateTime = endDate.toISOString().slice(0, 19);
+
+    // Prepare meeting data for Outlook
+    const meetingData: OutlookMeetingData = {
+      title: `PSSR Walkdown${pssrTitle ? `: ${pssrTitle}` : ''}`,
+      description: description || `PSSR Walkdown for ${pssrId}`,
+      location: location || 'TBD',
+      startDateTime,
+      endDateTime,
+      attendees: attendees.filter(a => a.email).map(a => ({ name: a.name, email: a.email! })),
+      pssrId,
+    };
+
     // First, create the walkdown event in the database
     const walkdownEvent = await scheduleWalkdown.mutateAsync({
       scheduledDate: format(scheduledDate, 'yyyy-MM-dd'),
@@ -117,26 +133,39 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
       attendees
     });
 
-    // If Outlook integration is enabled, create calendar event
-    if (useOutlook && isMicrosoftConnected && walkdownEvent?.id) {
-      const startDateTime = scheduledTime 
-        ? `${format(scheduledDate, 'yyyy-MM-dd')}T${scheduledTime}:00`
-        : `${format(scheduledDate, 'yyyy-MM-dd')}T09:00:00`;
-      
-      // Default 2 hour duration for walkdown
-      const endDate = new Date(startDateTime);
-      endDate.setHours(endDate.getHours() + 2);
-      const endDateTime = endDate.toISOString().slice(0, 19);
-
+    // Handle sending based on selected method
+    if (sendMethod === 'outlook') {
+      openInOutlook(meetingData);
+      toast({
+        title: "Opening Outlook",
+        description: "Your calendar app should open with the pre-filled meeting details.",
+      });
+    } else if (sendMethod === 'teams') {
+      openInTeams(meetingData);
+      toast({
+        title: "Opening Teams",
+        description: "Microsoft Teams should open with the meeting scheduler.",
+      });
+    } else if (sendMethod === 'api' && isMicrosoftConnected && walkdownEvent?.id) {
+      // Use OAuth integration for RSVP tracking
       await createEvent({
         walkdownEventId: walkdownEvent.id,
-        title: `PSSR Walkdown${pssrTitle ? `: ${pssrTitle}` : ''}`,
-        description: description || `PSSR Walkdown for ${pssrId}`,
-        location: location || 'TBD',
+        title: meetingData.title,
+        description: meetingData.description,
+        location: meetingData.location,
         startDateTime,
         endDateTime,
-        attendees: attendees.filter(a => a.email).map(a => ({ ...a, email: a.email! })),
+        attendees: attendees.filter(a => a.email).map(a => ({ 
+          id: a.id, 
+          name: a.name, 
+          email: a.email!,
+          role: a.role 
+        })),
         pssrId,
+      });
+      toast({
+        title: "Meeting Created",
+        description: "Calendar invitations sent. RSVP tracking is enabled.",
       });
     }
 
@@ -146,6 +175,7 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
     setLocation('');
     setDescription('');
     setSelectedAttendeeIds(new Set());
+    setSendMethod('outlook');
     onOpenChange(false);
   };
 
@@ -165,54 +195,71 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
 
         <ScrollArea className="flex-1 pr-4">
           <div className="space-y-4 py-4">
-            {/* Outlook Integration Toggle */}
-            <div className="p-3 rounded-lg border bg-muted/30">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className={cn(
-                    "p-2 rounded-lg",
-                    isMicrosoftConnected ? "bg-[#0078d4]/10" : "bg-muted"
-                  )}>
-                    <OutlookIcon className={cn(
-                      "w-4 h-4",
-                      isMicrosoftConnected ? "text-[#0078d4]" : "text-muted-foreground"
-                    )} />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">Send via Outlook</p>
-                    <p className="text-xs text-muted-foreground">
-                      {isMicrosoftConnected 
-                        ? "Create calendar event and track RSVPs" 
-                        : "Connect to send calendar invitations"}
+            {/* Send Method Selection */}
+            <div className="space-y-3">
+              <Label>How would you like to send the invitation?</Label>
+              <RadioGroup value={sendMethod} onValueChange={(v) => setSendMethod(v as 'outlook' | 'teams' | 'api')}>
+                <div className="flex items-start gap-3 p-3 rounded-lg border bg-muted/30 cursor-pointer hover:bg-muted/50" onClick={() => setSendMethod('outlook')}>
+                  <RadioGroupItem value="outlook" id="outlook" className="mt-1" />
+                  <div className="flex-1">
+                    <label htmlFor="outlook" className="flex items-center gap-2 text-sm font-medium cursor-pointer">
+                      <ExternalLink className="w-4 h-4 text-primary" />
+                      Open in Outlook
+                    </label>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Opens your Outlook app with all details pre-filled. Quick and seamless.
                     </p>
                   </div>
                 </div>
-                {isMicrosoftConnected ? (
-                  <Switch
-                    checked={useOutlook}
-                    onCheckedChange={setUseOutlook}
-                  />
-                ) : (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={connectMicrosoft}
-                    disabled={isConnecting}
-                  >
-                    {isConnecting ? (
-                      <Loader2 className="w-3 h-3 animate-spin" />
-                    ) : (
-                      'Connect'
+
+                <div className="flex items-start gap-3 p-3 rounded-lg border bg-muted/30 cursor-pointer hover:bg-muted/50" onClick={() => setSendMethod('teams')}>
+                  <RadioGroupItem value="teams" id="teams" className="mt-1" />
+                  <div className="flex-1">
+                    <label htmlFor="teams" className="flex items-center gap-2 text-sm font-medium cursor-pointer">
+                      <ExternalLink className="w-4 h-4 text-[#6264A7]" />
+                      Open in Teams
+                    </label>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Opens Microsoft Teams web meeting scheduler.
+                    </p>
+                  </div>
+                </div>
+
+                <div 
+                  className={cn(
+                    "flex items-start gap-3 p-3 rounded-lg border cursor-pointer",
+                    isMicrosoftConnected ? "bg-muted/30 hover:bg-muted/50" : "bg-muted/10 opacity-60"
+                  )} 
+                  onClick={() => isMicrosoftConnected && setSendMethod('api')}
+                >
+                  <RadioGroupItem value="api" id="api" className="mt-1" disabled={!isMicrosoftConnected} />
+                  <div className="flex-1">
+                    <label htmlFor="api" className={cn("flex items-center gap-2 text-sm font-medium", isMicrosoftConnected ? "cursor-pointer" : "cursor-not-allowed")}>
+                      <Wifi className="w-4 h-4 text-green-600" />
+                      Send & Track RSVPs
+                    </label>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {isMicrosoftConnected 
+                        ? "Send invitations directly and track responses within ORSH."
+                        : "Connect your Microsoft account in Settings to enable RSVP tracking."}
+                    </p>
+                    {!isMicrosoftConnected && (
+                      <Button
+                        variant="link"
+                        size="sm"
+                        className="h-auto p-0 text-xs text-primary"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          connectMicrosoft();
+                        }}
+                        disabled={isConnecting}
+                      >
+                        {isConnecting ? "Connecting..." : "Connect Microsoft Account →"}
+                      </Button>
                     )}
-                  </Button>
-                )}
-              </div>
-              {!isMicrosoftConnected && (
-                <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-                  <Mail className="w-3 h-3" />
-                  Without Outlook, invitations will be sent via email with .ics attachment
-                </p>
-              )}
+                  </div>
+                </div>
+              </RadioGroup>
             </div>
 
             {/* Date */}
@@ -369,11 +416,13 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
             {isSubmitting ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                {useOutlook ? 'Sending to Outlook...' : 'Scheduling...'}
+                {sendMethod === 'api' ? 'Sending...' : 'Scheduling...'}
               </>
             ) : (
               <>
-                {useOutlook && <OutlookIcon className="w-4 h-4 mr-2" />}
+                {sendMethod === 'outlook' && <ExternalLink className="w-4 h-4 mr-2" />}
+                {sendMethod === 'teams' && <ExternalLink className="w-4 h-4 mr-2" />}
+                {sendMethod === 'api' && <Wifi className="w-4 h-4 mr-2" />}
                 Schedule Walkdown
               </>
             )}
