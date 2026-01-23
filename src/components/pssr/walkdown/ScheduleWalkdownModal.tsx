@@ -14,10 +14,9 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Checkbox } from '@/components/ui/checkbox';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CalendarIcon, Clock, MapPin, Users, Loader2, ExternalLink, Wifi, Mail, Bell, Wrench } from 'lucide-react';
+import { CalendarIcon, Clock, MapPin, Users, Loader2, ExternalLink, Wifi, Mail, Bell, Wrench, ChevronLeft, ChevronRight, Check } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { usePSSRWalkdowns, WalkdownAttendee, WalkdownDiscipline } from '@/hooks/usePSSRWalkdowns';
@@ -26,7 +25,7 @@ import { usePSSRDetails } from '@/hooks/usePSSRDetails';
 import { useMicrosoftOAuth } from '@/hooks/useMicrosoftOAuth';
 import { useOutlookCalendar } from '@/hooks/useOutlookCalendar';
 import { useDisciplines } from '@/hooks/useDisciplines';
-import { openInOutlook, openInTeams, downloadICSFile, OutlookMeetingData, ReminderOption } from '@/lib/outlook-protocol';
+import { openInOutlook, openInTeams, OutlookMeetingData, ReminderOption } from '@/lib/outlook-protocol';
 import { useToast } from '@/hooks/use-toast';
 import { AddAttendeePopover } from './AddAttendeePopover';
 import { InvitationPreview } from './InvitationPreview';
@@ -37,6 +36,13 @@ interface ScheduleWalkdownModalProps {
   pssrId: string;
   pssrTitle?: string;
 }
+
+// Wizard step definitions
+const WIZARD_STEPS = [
+  { id: 1, title: 'Method', description: 'Choose invitation method' },
+  { id: 2, title: 'Details', description: 'Set date, time & location' },
+  { id: 3, title: 'Attendees', description: 'Select participants' },
+];
 
 export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
   open,
@@ -51,9 +57,24 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
   const { disciplines: availableDisciplines, isLoading: disciplinesLoading } = useDisciplines();
   const { toast } = useToast();
 
-  // State for discipline selection (needed before hook call)
+  // Wizard step state
+  const [currentStep, setCurrentStep] = useState(1);
+
+  // Step 1: Invitation method
+  const [sendMethod, setSendMethod] = useState<'outlook' | 'teams' | 'api'>('outlook');
+
+  // Step 2: Meeting details
+  const [scheduledDate, setScheduledDate] = useState<Date | undefined>();
+  const [scheduledTime, setScheduledTime] = useState('');
+  const [location, setLocation] = useState('');
+  const [reminder, setReminder] = useState<ReminderOption>('1day');
   const [isDisciplineWalkdown, setIsDisciplineWalkdown] = useState(false);
   const [selectedDisciplineIds, setSelectedDisciplineIds] = useState<Set<string>>(new Set());
+
+  // Step 3: Attendees
+  const [selectedAttendeeIds, setSelectedAttendeeIds] = useState<Set<string>>(new Set());
+  const [manualAttendees, setManualAttendees] = useState<SuggestedAttendee[]>([]);
+  const [customMessage, setCustomMessage] = useState<string | undefined>(undefined);
 
   // Get selected discipline names for filtering attendees
   const selectedDisciplineNames = isDisciplineWalkdown 
@@ -67,15 +88,6 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
     pssrId,
     selectedDisciplineNames.length > 0 ? selectedDisciplineNames : undefined
   );
-  const [scheduledDate, setScheduledDate] = useState<Date | undefined>();
-  const [scheduledTime, setScheduledTime] = useState('');
-  const [location, setLocation] = useState('');
-  const [selectedAttendeeIds, setSelectedAttendeeIds] = useState<Set<string>>(new Set());
-  const [manualAttendees, setManualAttendees] = useState<SuggestedAttendee[]>([]);
-  const [sendMethod, setSendMethod] = useState<'outlook' | 'teams' | 'api'>('outlook');
-  const [reminder, setReminder] = useState<ReminderOption>('1day');
-  const [customMessage, setCustomMessage] = useState<string | undefined>(undefined);
-  // Note: isDisciplineWalkdown and selectedDisciplineIds are defined earlier for use in useWalkdownSuggestedAttendees
 
   // Build PSSR link
   const pssrLink = `${window.location.origin}/pssr/${pssrId}`;
@@ -88,10 +100,10 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
       title += `: ${pssrTitle || pssrDetails?.title}`;
     }
     if (isDisciplineWalkdown && selectedDisciplineIds.size > 0) {
-      const selectedDisciplineNames = availableDisciplines
+      const names = availableDisciplines
         .filter(d => selectedDisciplineIds.has(d.id))
         .map(d => d.name);
-      title += ` – ${selectedDisciplineNames.join(', ')}`;
+      title += ` – ${names.join(', ')}`;
     }
     return title;
   };
@@ -118,6 +130,23 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
       }
     }
   }, [suggestedData]);
+
+  // Reset wizard when modal closes
+  useEffect(() => {
+    if (!open) {
+      setCurrentStep(1);
+      setScheduledDate(undefined);
+      setScheduledTime('');
+      setLocation('');
+      setSelectedAttendeeIds(new Set());
+      setManualAttendees([]);
+      setSendMethod('outlook');
+      setReminder('1day');
+      setCustomMessage(undefined);
+      setIsDisciplineWalkdown(false);
+      setSelectedDisciplineIds(new Set());
+    }
+  }, [open]);
 
   const handleAddManualAttendee = (attendee: SuggestedAttendee) => {
     if (!selectedAttendeeIds.has(attendee.id)) {
@@ -153,6 +182,34 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
       .join('')
       .toUpperCase()
       .slice(0, 2);
+  };
+
+  // Step validation
+  const validateStep = (step: number): boolean => {
+    switch (step) {
+      case 1:
+        return true; // Method is always selected with default
+      case 2:
+        if (!scheduledDate) {
+          toast({ title: 'Date required', description: 'Please select a date for the walkdown.', variant: 'destructive' });
+          return false;
+        }
+        return true;
+      case 3:
+        return true; // Attendees are optional
+      default:
+        return true;
+    }
+  };
+
+  const handleNext = () => {
+    if (validateStep(currentStep)) {
+      setCurrentStep(prev => Math.min(prev + 1, WIZARD_STEPS.length));
+    }
+  };
+
+  const handleBack = () => {
+    setCurrentStep(prev => Math.max(prev - 1, 1));
   };
 
   const handleSubmit = async () => {
@@ -244,42 +301,88 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
       });
     }
 
-    // Reset form
-    setScheduledDate(undefined);
-    setScheduledTime('');
-    setLocation('');
-    setSelectedAttendeeIds(new Set());
-    setManualAttendees([]);
-    setSendMethod('outlook');
-    setReminder('1day');
-    setCustomMessage(undefined);
-    setIsDisciplineWalkdown(false);
-    setSelectedDisciplineIds(new Set());
     onOpenChange(false);
   };
 
   const selectedCount = selectedAttendeeIds.size;
   const totalCount = allAttendees.length;
   const isSubmitting = scheduleWalkdown.isPending || isCreatingEvent;
+  const isLastStep = currentStep === WIZARD_STEPS.length;
+
+  // Calculate progress percentage
+  const progressPercent = ((currentStep - 1) / (WIZARD_STEPS.length - 1)) * 100;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] flex flex-col overflow-hidden">
-        <DialogHeader className="flex-shrink-0">
+      <DialogContent className="max-w-lg max-h-[90vh] flex flex-col overflow-hidden p-0">
+        {/* Header */}
+        <DialogHeader className="flex-shrink-0 px-6 pt-6 pb-4">
           <DialogTitle className="flex items-center gap-2">
             <CalendarIcon className="h-5 w-5 text-primary" />
             Schedule PSSR Walkdown
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto pr-2 -mr-2">
-          <div className="space-y-4 py-4">
-            {/* Send Method Selection */}
-            <div className="space-y-3">
-              <Label>How would you like to send the invitation?</Label>
+        {/* Progress Indicator */}
+        <div className="px-6 pb-4 flex-shrink-0">
+          <div className="relative">
+            {/* Track */}
+            <div className="absolute top-4 left-6 right-6 h-1 rounded-full bg-muted" aria-hidden />
+            {/* Progress */}
+            <div
+              className="absolute top-4 left-6 h-1 rounded-full bg-primary transition-all duration-500 ease-out"
+              style={{ width: `calc(${progressPercent}% * 0.85)` }}
+              aria-hidden
+            />
+            <ol className="relative flex justify-between">
+              {WIZARD_STEPS.map((step) => {
+                const isCompleted = currentStep > step.id;
+                const isCurrent = currentStep === step.id;
+                return (
+                  <li key={step.id} className="flex flex-col items-center text-center z-10">
+                    <div
+                      className={cn(
+                        'flex items-center justify-center w-8 h-8 rounded-full border-2 transition-all duration-300',
+                        isCompleted
+                          ? 'bg-primary border-primary text-primary-foreground'
+                          : isCurrent
+                            ? 'bg-primary border-primary text-primary-foreground ring-4 ring-primary/20'
+                            : 'bg-background border-muted-foreground/30 text-muted-foreground'
+                      )}
+                    >
+                      {isCompleted ? (
+                        <Check className="h-4 w-4" />
+                      ) : (
+                        <span className="text-xs font-medium">{step.id}</span>
+                      )}
+                    </div>
+                    <span className={cn(
+                      'mt-2 text-xs font-medium transition-colors',
+                      isCurrent || isCompleted ? 'text-foreground' : 'text-muted-foreground'
+                    )}>
+                      {step.title}
+                    </span>
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
+        </div>
+
+        {/* Step Content */}
+        <div className="flex-1 overflow-y-auto px-6">
+          {/* Step 1: Invitation Method */}
+          {currentStep === 1 && (
+            <div className="space-y-4 pb-4">
+              <div className="text-center pb-2">
+                <h3 className="text-sm font-medium text-muted-foreground">
+                  How would you like to send the invitation?
+                </h3>
+              </div>
+
               <RadioGroup value={sendMethod} onValueChange={(v) => setSendMethod(v as 'outlook' | 'teams' | 'api')}>
-                <div className="flex items-start gap-3 p-3 rounded-lg border bg-muted/30 cursor-pointer hover:bg-muted/50" onClick={() => setSendMethod('outlook')}>
-                  <RadioGroupItem value="outlook" id="outlook" className="mt-1" />
+                <div className="flex items-start gap-3 p-4 rounded-lg border bg-card cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setSendMethod('outlook')}>
+                  <RadioGroupItem value="outlook" id="outlook" className="mt-0.5" />
                   <div className="flex-1">
                     <label htmlFor="outlook" className="flex items-center gap-2 text-sm font-medium cursor-pointer">
                       <ExternalLink className="w-4 h-4 text-primary" />
@@ -291,8 +394,8 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 p-3 rounded-lg border bg-muted/30 cursor-pointer hover:bg-muted/50" onClick={() => setSendMethod('teams')}>
-                  <RadioGroupItem value="teams" id="teams" className="mt-1" />
+                <div className="flex items-start gap-3 p-4 rounded-lg border bg-card cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setSendMethod('teams')}>
+                  <RadioGroupItem value="teams" id="teams" className="mt-0.5" />
                   <div className="flex-1">
                     <label htmlFor="teams" className="flex items-center gap-2 text-sm font-medium cursor-pointer">
                       <ExternalLink className="w-4 h-4 text-[#6264A7]" />
@@ -306,12 +409,12 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
 
                 <div 
                   className={cn(
-                    "flex items-start gap-3 p-3 rounded-lg border cursor-pointer",
-                    isMicrosoftConnected ? "bg-muted/30 hover:bg-muted/50" : "bg-muted/10 opacity-60"
+                    "flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors",
+                    isMicrosoftConnected ? "bg-card hover:bg-muted/50" : "bg-muted/20 opacity-70"
                   )} 
                   onClick={() => isMicrosoftConnected && setSendMethod('api')}
                 >
-                  <RadioGroupItem value="api" id="api" className="mt-1" disabled={!isMicrosoftConnected} />
+                  <RadioGroupItem value="api" id="api" className="mt-0.5" disabled={!isMicrosoftConnected} />
                   <div className="flex-1">
                     <label htmlFor="api" className={cn("flex items-center gap-2 text-sm font-medium", isMicrosoftConnected ? "cursor-pointer" : "cursor-not-allowed")}>
                       <Wifi className="w-4 h-4 text-green-600" />
@@ -326,7 +429,7 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
                       <Button
                         variant="link"
                         size="sm"
-                        className="h-auto p-0 text-xs text-primary"
+                        className="h-auto p-0 text-xs text-primary mt-1"
                         onClick={(e) => {
                           e.stopPropagation();
                           connectMicrosoft();
@@ -340,297 +443,329 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
                 </div>
               </RadioGroup>
             </div>
+          )}
 
-            {/* Date */}
-            <div className="space-y-2">
-              <Label>Date *</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      'w-full justify-start text-left font-normal',
-                      !scheduledDate && 'text-muted-foreground'
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {scheduledDate ? format(scheduledDate, 'PPP') : 'Select date'}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={scheduledDate}
-                    onSelect={setScheduledDate}
-                    initialFocus
-                    disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-
-            {/* Time */}
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <Clock className="h-3.5 w-3.5" />
-                Time
-              </Label>
-              <Input
-                type="time"
-                value={scheduledTime}
-                onChange={(e) => setScheduledTime(e.target.value)}
-                placeholder="Select time"
-              />
-            </div>
-
-            {/* Location */}
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <MapPin className="h-3.5 w-3.5" />
-                Location / Meeting Point
-              </Label>
-              <Input
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                placeholder="e.g., Main Control Room, Area 4 Gate"
-              />
-            </div>
-
-            {/* Reminders */}
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <Bell className="h-3.5 w-3.5" />
-                Reminder
-              </Label>
-              <Select value={reminder} onValueChange={(v) => setReminder(v as ReminderOption)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select reminder" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">No reminder</SelectItem>
-                  <SelectItem value="15min">15 minutes before</SelectItem>
-                  <SelectItem value="30min">30 minutes before</SelectItem>
-                  <SelectItem value="1hour">1 hour before</SelectItem>
-                  <SelectItem value="1day">1 day before</SelectItem>
-                  <SelectItem value="1week">1 week before</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Discipline-Specific Walkdown */}
-            <div className="space-y-3">
-              <div className="flex items-start gap-3 p-3 rounded-lg border bg-muted/30">
-                <Checkbox
-                  id="discipline-walkdown"
-                  checked={isDisciplineWalkdown}
-                  onCheckedChange={(checked) => {
-                    setIsDisciplineWalkdown(checked as boolean);
-                    if (!checked) setSelectedDisciplineIds(new Set());
-                  }}
-                  className="mt-0.5"
-                />
-                <div className="flex-1">
-                  <label htmlFor="discipline-walkdown" className="flex items-center gap-2 text-sm font-medium cursor-pointer">
-                    <Wrench className="w-4 h-4 text-muted-foreground" />
-                    Discipline-Specific Walkdown
-                  </label>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Schedule a walkdown for specific discipline(s). The discipline name will be appended to the invitation subject.
-                  </p>
-                </div>
+          {/* Step 2: Meeting Details */}
+          {currentStep === 2 && (
+            <div className="space-y-5 pb-4">
+              {/* Date */}
+              <div className="space-y-2">
+                <Label>Date *</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        'w-full justify-start text-left font-normal',
+                        !scheduledDate && 'text-muted-foreground'
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {scheduledDate ? format(scheduledDate, 'PPP') : 'Select date'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={scheduledDate}
+                      onSelect={setScheduledDate}
+                      initialFocus
+                      disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
 
-              {isDisciplineWalkdown && (
-                <div className="border rounded-lg p-3 bg-muted/20">
-                  {disciplinesLoading ? (
-                    <div className="flex items-center justify-center py-4 text-muted-foreground">
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      <span className="text-xs">Loading disciplines...</span>
-                    </div>
-                  ) : availableDisciplines.length === 0 ? (
-                    <p className="text-xs text-muted-foreground text-center py-4">
-                      No disciplines configured
-                    </p>
-                  ) : (
-                    <div className="grid grid-cols-2 gap-2">
-                      {availableDisciplines.map(discipline => (
-                        <div
-                          key={discipline.id}
-                          className="flex items-center gap-2"
-                        >
-                          <Checkbox
-                            id={`discipline-${discipline.id}`}
-                            checked={selectedDisciplineIds.has(discipline.id)}
-                            onCheckedChange={(checked) => {
-                              setSelectedDisciplineIds(prev => {
-                                const newSet = new Set(prev);
-                                if (checked) {
-                                  newSet.add(discipline.id);
-                                } else {
-                                  newSet.delete(discipline.id);
-                                }
-                                return newSet;
-                              });
-                            }}
-                          />
-                          <label
-                            htmlFor={`discipline-${discipline.id}`}
-                            className="text-sm cursor-pointer"
-                          >
-                            {discipline.name}
-                          </label>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Invitation Preview */}
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <Mail className="h-3.5 w-3.5" />
-                Invitation Preview
-              </Label>
-              <InvitationPreview
-                subject={meetingTitle}
-                scope={pssrScope}
-                date={scheduledDate}
-                time={scheduledTime}
-                location={location}
-                pssrLink={pssrLink}
-                customMessage={customMessage}
-                onCustomMessageChange={setCustomMessage}
-              />
-            </div>
-
-            {/* Attendees Section */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
+              {/* Time */}
+              <div className="space-y-2">
                 <Label className="flex items-center gap-2">
-                  <Users className="h-3.5 w-3.5" />
-                  Walkdown Attendees
+                  <Clock className="h-3.5 w-3.5" />
+                  Time
                 </Label>
-                <div className="flex items-center gap-2">
-                  {totalCount > 0 && (
-                    <span className="text-xs text-muted-foreground">
-                      {selectedCount} of {totalCount} selected
-                    </span>
-                  )}
-                  <AddAttendeePopover
-                    existingAttendeeIds={selectedAttendeeIds}
-                    onAddAttendee={handleAddManualAttendee}
-                  />
-                </div>
+                <Input
+                  type="time"
+                  value={scheduledTime}
+                  onChange={(e) => setScheduledTime(e.target.value)}
+                  placeholder="Select time"
+                />
               </div>
 
-              {suggestedLoading ? (
-                <div className="flex items-center justify-center py-8 text-muted-foreground">
-                  <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                  <span className="text-sm">Loading suggested attendees...</span>
-                </div>
-              ) : allAttendees.length > 0 ? (
-                <div className="space-y-4 border rounded-lg p-3 bg-muted/30">
-                  {/* Select/Deselect All */}
-                  <div className="flex items-center gap-2 pb-2 border-b">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={selectAll}
-                      className="h-7 text-xs"
-                    >
-                      Select All
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={deselectAll}
-                      className="h-7 text-xs"
-                    >
-                      Deselect All
-                    </Button>
+              {/* Location */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <MapPin className="h-3.5 w-3.5" />
+                  Location / Meeting Point
+                </Label>
+                <Input
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  placeholder="e.g., Main Control Room, Area 4 Gate"
+                />
+              </div>
+
+              {/* Reminders */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Bell className="h-3.5 w-3.5" />
+                  Reminder
+                </Label>
+                <Select value={reminder} onValueChange={(v) => setReminder(v as ReminderOption)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select reminder" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No reminder</SelectItem>
+                    <SelectItem value="15min">15 minutes before</SelectItem>
+                    <SelectItem value="30min">30 minutes before</SelectItem>
+                    <SelectItem value="1hour">1 hour before</SelectItem>
+                    <SelectItem value="1day">1 day before</SelectItem>
+                    <SelectItem value="1week">1 week before</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Discipline-Specific Walkdown */}
+              <div className="space-y-3">
+                <div className="flex items-start gap-3 p-3 rounded-lg border bg-muted/30">
+                  <Checkbox
+                    id="discipline-walkdown"
+                    checked={isDisciplineWalkdown}
+                    onCheckedChange={(checked) => {
+                      setIsDisciplineWalkdown(checked as boolean);
+                      if (!checked) setSelectedDisciplineIds(new Set());
+                    }}
+                    className="mt-0.5"
+                  />
+                  <div className="flex-1">
+                    <label htmlFor="discipline-walkdown" className="flex items-center gap-2 text-sm font-medium cursor-pointer">
+                      <Wrench className="w-4 h-4 text-muted-foreground" />
+                      Discipline-Specific Walkdown
+                    </label>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Schedule a walkdown for specific discipline(s).
+                    </p>
                   </div>
+                </div>
 
-                  {/* Categorized Suggested Attendees */}
-                  {suggestedData?.categorized && suggestedData.categorized.map((category) => (
-                    <div key={category.name} className="space-y-2">
-                      <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                        {category.name}
-                      </h4>
-                      <div className="space-y-1">
-                        {category.attendees.map((attendee) => (
-                          <AttendeeRow
-                            key={attendee.id}
-                            attendee={attendee}
-                            isSelected={selectedAttendeeIds.has(attendee.id)}
-                            onToggle={() => toggleAttendee(attendee.id)}
-                            getInitials={getInitials}
-                          />
+                {isDisciplineWalkdown && (
+                  <div className="border rounded-lg p-3 bg-muted/20">
+                    {disciplinesLoading ? (
+                      <div className="flex items-center justify-center py-4 text-muted-foreground">
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        <span className="text-xs">Loading disciplines...</span>
+                      </div>
+                    ) : availableDisciplines.length === 0 ? (
+                      <p className="text-xs text-muted-foreground text-center py-4">
+                        No disciplines configured
+                      </p>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-2">
+                        {availableDisciplines.map(discipline => (
+                          <div
+                            key={discipline.id}
+                            className="flex items-center gap-2"
+                          >
+                            <Checkbox
+                              id={`discipline-${discipline.id}`}
+                              checked={selectedDisciplineIds.has(discipline.id)}
+                              onCheckedChange={(checked) => {
+                                setSelectedDisciplineIds(prev => {
+                                  const newSet = new Set(prev);
+                                  if (checked) {
+                                    newSet.add(discipline.id);
+                                  } else {
+                                    newSet.delete(discipline.id);
+                                  }
+                                  return newSet;
+                                });
+                              }}
+                            />
+                            <label
+                              htmlFor={`discipline-${discipline.id}`}
+                              className="text-sm cursor-pointer"
+                            >
+                              {discipline.name}
+                            </label>
+                          </div>
                         ))}
                       </div>
-                    </div>
-                  ))}
-
-                  {/* Manually Added Attendees */}
-                  {manualAttendees.length > 0 && (
-                    <div className="space-y-2">
-                      <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                        Manually Added
-                      </h4>
-                      <div className="space-y-1">
-                        {manualAttendees.map((attendee) => (
-                          <AttendeeRow
-                            key={attendee.id}
-                            attendee={{...attendee, source: 'responsible'}}
-                            isSelected={selectedAttendeeIds.has(attendee.id)}
-                            onToggle={() => toggleAttendee(attendee.id)}
-                            getInitials={getInitials}
-                            showManualBadge
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="p-4 bg-muted/50 rounded-lg border border-dashed text-center">
-                  <p className="text-sm text-muted-foreground">
-                    No matching attendees found for this PSSR's checklist items.
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Use "Add Attendee" to manually add participants.
-                  </p>
-                </div>
-              )}
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* Step 3: Attendees & Preview */}
+          {currentStep === 3 && (
+            <div className="space-y-5 pb-4">
+              {/* Invitation Preview */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Mail className="h-3.5 w-3.5" />
+                  Invitation Preview
+                </Label>
+                <InvitationPreview
+                  subject={meetingTitle}
+                  scope={pssrScope}
+                  date={scheduledDate}
+                  time={scheduledTime}
+                  location={location}
+                  pssrLink={pssrLink}
+                  customMessage={customMessage}
+                  onCustomMessageChange={setCustomMessage}
+                />
+              </div>
+
+              {/* Attendees Section */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="flex items-center gap-2">
+                    <Users className="h-3.5 w-3.5" />
+                    Walkdown Attendees
+                  </Label>
+                  <div className="flex items-center gap-2">
+                    {totalCount > 0 && (
+                      <span className="text-xs text-muted-foreground">
+                        {selectedCount} of {totalCount} selected
+                      </span>
+                    )}
+                    <AddAttendeePopover
+                      existingAttendeeIds={selectedAttendeeIds}
+                      onAddAttendee={handleAddManualAttendee}
+                    />
+                  </div>
+                </div>
+
+                {suggestedLoading ? (
+                  <div className="flex items-center justify-center py-8 text-muted-foreground">
+                    <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                    <span className="text-sm">Loading suggested attendees...</span>
+                  </div>
+                ) : allAttendees.length > 0 ? (
+                  <div className="space-y-4 border rounded-lg p-3 bg-muted/30">
+                    {/* Select/Deselect All */}
+                    <div className="flex items-center gap-2 pb-2 border-b">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={selectAll}
+                        className="h-7 text-xs"
+                      >
+                        Select All
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={deselectAll}
+                        className="h-7 text-xs"
+                      >
+                        Deselect All
+                      </Button>
+                    </div>
+
+                    {/* Categorized Suggested Attendees */}
+                    {suggestedData?.categorized && suggestedData.categorized.map((category) => (
+                      <div key={category.name} className="space-y-2">
+                        <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                          {category.name}
+                        </h4>
+                        <div className="space-y-1">
+                          {category.attendees.map((attendee) => (
+                            <AttendeeRow
+                              key={attendee.id}
+                              attendee={attendee}
+                              isSelected={selectedAttendeeIds.has(attendee.id)}
+                              onToggle={() => toggleAttendee(attendee.id)}
+                              getInitials={getInitials}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* Manually Added Attendees */}
+                    {manualAttendees.length > 0 && (
+                      <div className="space-y-2">
+                        <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                          Manually Added
+                        </h4>
+                        <div className="space-y-1">
+                          {manualAttendees.map((attendee) => (
+                            <AttendeeRow
+                              key={attendee.id}
+                              attendee={{...attendee, source: 'responsible'}}
+                              isSelected={selectedAttendeeIds.has(attendee.id)}
+                              onToggle={() => toggleAttendee(attendee.id)}
+                              getInitials={getInitials}
+                              showManualBadge
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="p-4 bg-muted/50 rounded-lg border border-dashed text-center">
+                    <p className="text-sm text-muted-foreground">
+                      No matching attendees found for this PSSR's checklist items.
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Use "Add Attendee" to manually add participants.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
-        <DialogFooter className="pt-4 border-t">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleSubmit}
-            disabled={!scheduledDate || isSubmitting}
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                {sendMethod === 'api' ? 'Sending...' : 'Scheduling...'}
-              </>
+        {/* Footer Navigation */}
+        <DialogFooter className="flex-shrink-0 px-6 py-4 border-t bg-muted/30">
+          <div className="flex w-full justify-between">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={currentStep === 1 ? () => onOpenChange(false) : handleBack}
+            >
+              {currentStep === 1 ? (
+                'Cancel'
+              ) : (
+                <>
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  Back
+                </>
+              )}
+            </Button>
+
+            {isLastStep ? (
+              <Button 
+                onClick={handleSubmit}
+                disabled={!scheduledDate || isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    {sendMethod === 'api' ? 'Sending...' : 'Scheduling...'}
+                  </>
+                ) : (
+                  <>
+                    {sendMethod === 'outlook' && <ExternalLink className="w-4 h-4 mr-2" />}
+                    {sendMethod === 'teams' && <ExternalLink className="w-4 h-4 mr-2" />}
+                    {sendMethod === 'api' && <Wifi className="w-4 h-4 mr-2" />}
+                    Schedule Walkdown
+                  </>
+                )}
+              </Button>
             ) : (
-              <>
-                {sendMethod === 'outlook' && <ExternalLink className="w-4 h-4 mr-2" />}
-                {sendMethod === 'teams' && <ExternalLink className="w-4 h-4 mr-2" />}
-                {sendMethod === 'api' && <Wifi className="w-4 h-4 mr-2" />}
-                Schedule Walkdown
-              </>
+              <Button onClick={handleNext}>
+                Next
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
             )}
-          </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
