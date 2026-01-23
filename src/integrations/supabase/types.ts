@@ -4486,9 +4486,11 @@ export type Database = {
           item_approval_id: string
           priority: Database["public"]["Enums"]["pssr_priority_level"]
           pssr_id: string
+          source_type: string | null
           status: Database["public"]["Enums"]["pssr_action_status"]
           target_date: string | null
           updated_at: string
+          walkdown_observation_id: string | null
         }
         Insert: {
           action_owner_id?: string | null
@@ -4502,9 +4504,11 @@ export type Database = {
           item_approval_id: string
           priority: Database["public"]["Enums"]["pssr_priority_level"]
           pssr_id: string
+          source_type?: string | null
           status?: Database["public"]["Enums"]["pssr_action_status"]
           target_date?: string | null
           updated_at?: string
+          walkdown_observation_id?: string | null
         }
         Update: {
           action_owner_id?: string | null
@@ -4518,11 +4522,20 @@ export type Database = {
           item_approval_id?: string
           priority?: Database["public"]["Enums"]["pssr_priority_level"]
           pssr_id?: string
+          source_type?: string | null
           status?: Database["public"]["Enums"]["pssr_action_status"]
           target_date?: string | null
           updated_at?: string
+          walkdown_observation_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_walkdown_observation"
+            columns: ["walkdown_observation_id"]
+            isOneToOne: false
+            referencedRelation: "pssr_walkdown_observations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "pssr_priority_actions_action_owner_id_fkey"
             columns: ["action_owner_id"]
@@ -4878,6 +4891,129 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      pssr_walkdown_events: {
+        Row: {
+          attendees: Json | null
+          completed_at: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          location: string | null
+          pssr_id: string
+          scheduled_date: string
+          scheduled_time: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          attendees?: Json | null
+          completed_at?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          location?: string | null
+          pssr_id: string
+          scheduled_date: string
+          scheduled_time?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          attendees?: Json | null
+          completed_at?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          location?: string | null
+          pssr_id?: string
+          scheduled_date?: string
+          scheduled_time?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pssr_walkdown_events_pssr_id_fkey"
+            columns: ["pssr_id"]
+            isOneToOne: false
+            referencedRelation: "pssrs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pssr_walkdown_observations: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string
+          id: string
+          linked_priority_action_id: string | null
+          location_details: string | null
+          observation_type: string
+          photo_urls: string[] | null
+          priority: string | null
+          pssr_id: string
+          updated_at: string | null
+          walkdown_event_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description: string
+          id?: string
+          linked_priority_action_id?: string | null
+          location_details?: string | null
+          observation_type: string
+          photo_urls?: string[] | null
+          priority?: string | null
+          pssr_id: string
+          updated_at?: string | null
+          walkdown_event_id: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string
+          id?: string
+          linked_priority_action_id?: string | null
+          location_details?: string | null
+          observation_type?: string
+          photo_urls?: string[] | null
+          priority?: string | null
+          pssr_id?: string
+          updated_at?: string | null
+          walkdown_event_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_linked_priority_action"
+            columns: ["linked_priority_action_id"]
+            isOneToOne: false
+            referencedRelation: "pssr_priority_actions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pssr_walkdown_observations_pssr_id_fkey"
+            columns: ["pssr_id"]
+            isOneToOne: false
+            referencedRelation: "pssrs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pssr_walkdown_observations_walkdown_event_id_fkey"
+            columns: ["walkdown_event_id"]
+            isOneToOne: false
+            referencedRelation: "pssr_walkdown_events"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pssrs: {
         Row: {
