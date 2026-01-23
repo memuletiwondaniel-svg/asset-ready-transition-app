@@ -27,6 +27,8 @@ import { useOutlookCalendar } from '@/hooks/useOutlookCalendar';
 import { useDisciplines } from '@/hooks/useDisciplines';
 import { openInOutlook, openInTeams, OutlookMeetingData, ReminderOption } from '@/lib/outlook-protocol';
 import { useToast } from '@/hooks/use-toast';
+import { useRealtimeProfile } from '@/hooks/useRealtimeProfile';
+import { supabase } from '@/integrations/supabase/client';
 import { AddAttendeePopover } from './AddAttendeePopover';
 import { InvitationPreview } from './InvitationPreview';
 
@@ -58,6 +60,18 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
   const { createEvent, isCreatingEvent } = useOutlookCalendar();
   const { disciplines: availableDisciplines, isLoading: disciplinesLoading } = useDisciplines();
   const { toast } = useToast();
+
+  // Get current user's profile for invitation signature
+  const [currentUserId, setCurrentUserId] = useState<string | undefined>();
+  const { profile: currentUserProfile } = useRealtimeProfile(currentUserId);
+
+  useEffect(() => {
+    const fetchUserId = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUserId(user?.id);
+    };
+    fetchUserId();
+  }, []);
 
   // Wizard step state
   const [currentStep, setCurrentStep] = useState(1);
@@ -755,6 +769,9 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
                   pssrLink={pssrLink}
                   customMessage={customMessage}
                   onCustomMessageChange={setCustomMessage}
+                  senderName={currentUserProfile?.full_name || undefined}
+                  senderPosition={currentUserProfile?.position || undefined}
+                  senderEmail={currentUserProfile?.email || undefined}
                 />
               </div>
 

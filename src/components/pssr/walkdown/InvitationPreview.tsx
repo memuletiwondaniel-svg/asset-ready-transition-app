@@ -14,6 +14,9 @@ interface InvitationPreviewProps {
   pssrLink: string;
   customMessage?: string;
   onCustomMessageChange?: (message: string) => void;
+  senderName?: string;
+  senderPosition?: string;
+  senderEmail?: string;
 }
 
 export const InvitationPreview: React.FC<InvitationPreviewProps> = ({
@@ -24,7 +27,10 @@ export const InvitationPreview: React.FC<InvitationPreviewProps> = ({
   location,
   pssrLink,
   customMessage,
-  onCustomMessageChange
+  onCustomMessageChange,
+  senderName,
+  senderPosition,
+  senderEmail
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   
@@ -32,6 +38,9 @@ export const InvitationPreview: React.FC<InvitationPreviewProps> = ({
   const formattedTime = time || '[Select time]';
   const displayLocation = location || '[Enter location]';
 
+  // Generate sender signature
+  const senderSignature = senderName || 'ORSH PSSR Team';
+  
   // Generate default message
   const defaultMessage = `Dear Colleagues,
 
@@ -40,7 +49,7 @@ You are invited to participate in the Pre-Startup Safety Review (PSSR) Walkdown 
 ${scope ? `SCOPE OF WORK:\n${scope}\n\n` : ''}Please confirm your attendance or assign a suitable delegate if you are unable to attend.
 
 Best regards,
-ORSH PSSR Team`;
+${senderSignature}`;
 
   const displayMessage = customMessage !== undefined ? customMessage : defaultMessage;
 
@@ -144,7 +153,13 @@ ORSH PSSR Team`;
             </p>
             <div className="pt-2">
               <p>Best regards,</p>
-              <p className="font-medium text-foreground">ORSH PSSR Team</p>
+              <p className="font-medium text-foreground">{senderName || 'ORSH PSSR Team'}</p>
+              {senderPosition && (
+                <p className="text-muted-foreground">{senderPosition}</p>
+              )}
+              {senderEmail && (
+                <p className="text-muted-foreground">{senderEmail}</p>
+              )}
             </div>
           </>
         )}
