@@ -225,12 +225,6 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails }) =
         return (
           <div className="flex items-center gap-2">
             {getStatusBadge(pssr.status)}
-            {pssr.pendingApprovals > 0 && (
-              <span className="text-xs text-orange-600 dark:text-orange-400 flex items-center gap-0.5">
-                <Clock className="w-3 h-3" />
-                {pssr.pendingApprovals}
-              </span>
-            )}
           </div>
         );
       case 'created':
