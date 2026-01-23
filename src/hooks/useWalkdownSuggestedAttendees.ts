@@ -84,6 +84,53 @@ function matchesDisciplineFilter(baseRole: string, disciplineNames: string[]): b
   });
 }
 
+// Default PSSR walkdown roles when no checklist items exist
+const DEFAULT_PSSR_ROLES: { role: string; source: 'approver' | 'responsible' }[] = [
+  { role: 'Process TA2', source: 'approver' },
+  { role: 'PACO TA2', source: 'approver' },
+  { role: 'Elect TA2', source: 'approver' },
+  { role: 'Static TA2', source: 'approver' },
+  { role: 'Rotating TA2', source: 'approver' },
+  { role: 'Civil TA2', source: 'approver' },
+  { role: 'Tech Safety TA2', source: 'approver' },
+  { role: 'ORA Lead', source: 'responsible' },
+  { role: 'ORA Engr.', source: 'responsible' },
+  { role: 'Ops Coach', source: 'responsible' },
+  { role: 'Site Engr.', source: 'responsible' },
+  { role: 'Project Engr', source: 'responsible' },
+  { role: 'Commissioning Lead', source: 'responsible' },
+];
+
+// Flexible role matching - handles location suffixes like "Tech Safety TA2 - Project"
+function matchesRole(profilePosition: string | undefined, profileRole: string | undefined, targetRole: string): boolean {
+  if (!profilePosition && !profileRole) return false;
+  
+  const targetLower = targetRole.toLowerCase().replace(/[.\-–]/g, ' ').trim();
+  
+  // Check position field
+  if (profilePosition) {
+    const positionLower = profilePosition.toLowerCase().replace(/[.\-–]/g, ' ').trim();
+    // Exact match or starts with target role (to handle location suffixes)
+    if (positionLower === targetLower || positionLower.startsWith(targetLower + ' ')) {
+      return true;
+    }
+    // Also check if position contains the core role name
+    if (positionLower.includes(targetLower)) {
+      return true;
+    }
+  }
+  
+  // Check role field from roles table
+  if (profileRole) {
+    const roleLower = profileRole.toLowerCase().replace(/[.\-–]/g, ' ').trim();
+    if (roleLower === targetLower || roleLower.includes(targetLower)) {
+      return true;
+    }
+  }
+  
+  return false;
+}
+
 export const useWalkdownSuggestedAttendees = (
   pssrId: string | undefined,
   selectedDisciplineNames?: string[]
@@ -157,35 +204,45 @@ export const useWalkdownSuggestedAttendees = (
         }
       }
 
-      // 4. Extract and deduplicate role names from approvers and responsible
+      // 4. Extract role names from approvers and responsible
       const roleSourceMap = new Map<string, 'approver' | 'responsible'>();
 
-      responses?.forEach((resp: any) => {
-        const item = resp.pssr_checklist_items;
-        if (!item) return;
+      // Parse from checklist responses if available
+      if (responses && responses.length > 0) {
+        responses.forEach((resp: any) => {
+          const item = resp.pssr_checklist_items;
+          if (!item) return;
 
-        // Parse approvers
-        if (item.approvers) {
-          item.approvers.split(',').forEach((role: string) => {
-            const trimmedRole = role.trim();
-            if (trimmedRole && !roleSourceMap.has(trimmedRole)) {
-              roleSourceMap.set(trimmedRole, 'approver');
-            }
-          });
-        }
+          // Parse approvers
+          if (item.approvers) {
+            item.approvers.split(',').forEach((role: string) => {
+              const trimmedRole = role.trim();
+              if (trimmedRole && !roleSourceMap.has(trimmedRole)) {
+                roleSourceMap.set(trimmedRole, 'approver');
+              }
+            });
+          }
 
-        // Parse responsible (overrides to 'responsible' if already exists as approver)
-        if (item.responsible) {
-          item.responsible.split(',').forEach((role: string) => {
-            const trimmedRole = role.trim();
-            if (trimmedRole) {
-              roleSourceMap.set(trimmedRole, 'responsible');
-            }
-          });
-        }
-      });
+          // Parse responsible
+          if (item.responsible) {
+            item.responsible.split(',').forEach((role: string) => {
+              const trimmedRole = role.trim();
+              if (trimmedRole) {
+                roleSourceMap.set(trimmedRole, 'responsible');
+              }
+            });
+          }
+        });
+      }
+      
+      // Fallback: Use default roles if no checklist responses exist
+      if (roleSourceMap.size === 0) {
+        DEFAULT_PSSR_ROLES.forEach(({ role, source }) => {
+          roleSourceMap.set(role, source);
+        });
+      }
 
-      // 5. Resolve roles and match to profiles
+      // 5. Resolve roles and match to profiles using flexible matching
       const suggestedAttendees: SuggestedAttendee[] = [];
       const seenUserIds = new Set<string>();
 
@@ -193,12 +250,9 @@ export const useWalkdownSuggestedAttendees = (
       roleSourceMap.forEach((source, baseRole) => {
         const resolvedRole = resolveChecklistRole(baseRole, locationContext);
         
-        const matchingProfiles = profileUsers?.filter(profile => {
-          if (profile.position === resolvedRole) return true;
-          if (profile.position?.includes(baseRole)) return true;
-          if (profile.role === baseRole) return true;
-          return false;
-        }) || [];
+        const matchingProfiles = profileUsers?.filter(profile => 
+          matchesRole(profile.position, profile.role, baseRole)
+        ) || [];
 
         matchingProfiles.forEach(profile => {
           if (!seenUserIds.has(profile.user_id)) {
