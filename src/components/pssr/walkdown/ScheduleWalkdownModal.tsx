@@ -45,13 +45,28 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
   pssrTitle,
 }) => {
   const { scheduleWalkdown } = usePSSRWalkdowns(pssrId);
-  const { data: suggestedData, isLoading: suggestedLoading } = useWalkdownSuggestedAttendees(pssrId);
   const { pssr: pssrDetails } = usePSSRDetails(pssrId);
   const { isConnected: isMicrosoftConnected, connect: connectMicrosoft, isConnecting } = useMicrosoftOAuth();
   const { createEvent, isCreatingEvent } = useOutlookCalendar();
   const { disciplines: availableDisciplines, isLoading: disciplinesLoading } = useDisciplines();
   const { toast } = useToast();
 
+  // State for discipline selection (needed before hook call)
+  const [isDisciplineWalkdown, setIsDisciplineWalkdown] = useState(false);
+  const [selectedDisciplineIds, setSelectedDisciplineIds] = useState<Set<string>>(new Set());
+
+  // Get selected discipline names for filtering attendees
+  const selectedDisciplineNames = isDisciplineWalkdown 
+    ? availableDisciplines
+        .filter(d => selectedDisciplineIds.has(d.id))
+        .map(d => d.name)
+    : [];
+
+  // Pass discipline filter to attendee hook
+  const { data: suggestedData, isLoading: suggestedLoading } = useWalkdownSuggestedAttendees(
+    pssrId,
+    selectedDisciplineNames.length > 0 ? selectedDisciplineNames : undefined
+  );
   const [scheduledDate, setScheduledDate] = useState<Date | undefined>();
   const [scheduledTime, setScheduledTime] = useState('');
   const [location, setLocation] = useState('');
@@ -60,8 +75,7 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
   const [sendMethod, setSendMethod] = useState<'outlook' | 'teams' | 'api'>('outlook');
   const [reminder, setReminder] = useState<ReminderOption>('1day');
   const [customMessage, setCustomMessage] = useState<string | undefined>(undefined);
-  const [isDisciplineWalkdown, setIsDisciplineWalkdown] = useState(false);
-  const [selectedDisciplineIds, setSelectedDisciplineIds] = useState<Set<string>>(new Set());
+  // Note: isDisciplineWalkdown and selectedDisciplineIds are defined earlier for use in useWalkdownSuggestedAttendees
 
   // Build PSSR link
   const pssrLink = `${window.location.origin}/pssr/${pssrId}`;
@@ -667,12 +681,20 @@ const AttendeeRow: React.FC<AttendeeRowProps> = ({
           'shrink-0 text-[10px] px-1.5',
           showManualBadge 
             ? 'border-purple-500/50 text-purple-600 bg-purple-50'
-            : attendee.source === 'responsible' 
-              ? 'border-blue-500/50 text-blue-600 bg-blue-50' 
-              : 'border-amber-500/50 text-amber-600 bg-amber-50'
+            : attendee.source === 'team'
+              ? 'border-green-500/50 text-green-600 bg-green-50'
+              : attendee.source === 'responsible' 
+                ? 'border-blue-500/50 text-blue-600 bg-blue-50' 
+                : 'border-amber-500/50 text-amber-600 bg-amber-50'
         )}
       >
-        {showManualBadge ? 'Added' : attendee.source === 'responsible' ? 'Responsible' : 'Approver'}
+        {showManualBadge 
+          ? 'Added' 
+          : attendee.source === 'team'
+            ? 'Project Team'
+            : attendee.source === 'responsible' 
+              ? 'Responsible' 
+              : 'Approver'}
       </Badge>
     </label>
   );
