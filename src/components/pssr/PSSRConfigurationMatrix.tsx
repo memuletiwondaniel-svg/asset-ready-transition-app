@@ -670,21 +670,11 @@ const PSSRConfigurationMatrix: React.FC = () => {
     <TooltipProvider delayDuration={200}>
       <Card className="fluent-card border-border/40">
         <CardHeader className="border-b border-border/40 bg-gradient-to-r from-muted/20 to-muted/5 pb-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-4">
-                <CardTitle className="text-2xl font-semibold">PSSR Templates</CardTitle>
-                <Button 
-                  onClick={() => setShowAddReasonWizard(true)}
-                  className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm text-white"
-                  size="sm"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  New Template
-                </Button>
-              </div>
-              {/* Quick Stats - Clickable filters */}
-              <div className="flex items-center gap-3 mt-2 text-sm">
+          <div className="flex flex-col gap-4">
+            <CardTitle className="text-2xl font-semibold">PSSR Templates</CardTitle>
+            {/* Quick Stats - Clickable filters with New Template button */}
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3 text-sm">
                 <button
                   onClick={() => setStatusFilter('all')}
                   className={`transition-colors ${statusFilter === 'all' ? 'text-primary font-medium' : 'text-muted-foreground hover:text-foreground'}`}
@@ -725,6 +715,14 @@ const PSSRConfigurationMatrix: React.FC = () => {
                   {statusCounts.inactive} Inactive
                 </Badge>
               </div>
+              <Button 
+                onClick={() => setShowAddReasonWizard(true)}
+                className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm text-white"
+                size="sm"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                New Template
+              </Button>
             </div>
           </div>
           
