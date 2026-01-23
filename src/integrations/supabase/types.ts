@@ -4982,6 +4982,7 @@ export type Database = {
           created_at: string | null
           created_by: string | null
           description: string | null
+          disciplines: Json | null
           id: string
           last_synced_at: string | null
           location: string | null
@@ -4999,6 +5000,7 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           description?: string | null
+          disciplines?: Json | null
           id?: string
           last_synced_at?: string | null
           location?: string | null
@@ -5016,6 +5018,7 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           description?: string | null
+          disciplines?: Json | null
           id?: string
           last_synced_at?: string | null
           location?: string | null

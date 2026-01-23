@@ -11,6 +11,11 @@ export interface WalkdownAttendee {
   email?: string;
 }
 
+export interface WalkdownDiscipline {
+  id: string;
+  name: string;
+}
+
 export interface PSSRWalkdownEvent {
   id: string;
   pssr_id: string;
@@ -21,6 +26,7 @@ export interface PSSRWalkdownEvent {
   status: WalkdownStatus;
   completed_at: string | null;
   attendees: WalkdownAttendee[];
+  disciplines: WalkdownDiscipline[];
   created_by: string | null;
   created_at: string;
   updated_at: string;
@@ -45,6 +51,7 @@ export const usePSSRWalkdowns = (pssrId: string | undefined) => {
       return (data || []).map(event => ({
         ...event,
         attendees: (event.attendees as unknown as WalkdownAttendee[]) || [],
+        disciplines: (event.disciplines as unknown as WalkdownDiscipline[]) || [],
       })) as PSSRWalkdownEvent[];
     },
     enabled: !!pssrId,
@@ -58,12 +65,14 @@ export const usePSSRWalkdowns = (pssrId: string | undefined) => {
       location,
       description,
       attendees,
+      disciplines,
     }: {
       scheduledDate: string;
       scheduledTime?: string;
       location?: string;
       description?: string;
       attendees?: WalkdownAttendee[];
+      disciplines?: WalkdownDiscipline[];
     }) => {
       if (!pssrId) throw new Error('PSSR ID is required');
       
@@ -78,6 +87,7 @@ export const usePSSRWalkdowns = (pssrId: string | undefined) => {
           location: location || null,
           description: description || null,
           attendees: JSON.parse(JSON.stringify(attendees || [])),
+          disciplines: JSON.parse(JSON.stringify(disciplines || [])),
           created_by: user.user?.id,
         })
         .select()
