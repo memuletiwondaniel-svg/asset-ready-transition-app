@@ -243,7 +243,7 @@ export const PSSRQuickViewOverlay: React.FC<PSSRQuickViewOverlayProps> = ({
               <span className="text-xs font-medium text-muted-foreground">Overall Progress</span>
               <span className="text-sm font-bold text-foreground">{overallProgress}%</span>
             </div>
-            <Progress value={overallProgress} className="h-2" />
+            <Progress value={overallProgress} className="h-2" indicatorClassName="bg-muted-foreground/50" />
           </div>
         </DialogHeader>
 
