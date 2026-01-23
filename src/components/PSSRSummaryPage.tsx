@@ -73,7 +73,7 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
     reorderWidgets
   } = useWidgetConfigs();
   const [activeView, setActiveView] = useState<'list' | 'create' | 'details' | 'category-items' | 'manage-checklist'>('list');
-  const [viewMode, setViewMode] = useState<'card' | 'table' | 'kanban' | 'timeline'>('table');
+  const [viewMode, setViewMode] = useState<'table' | 'kanban'>('table');
   const [showCreateIntro, setShowCreateIntro] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPSSR, setSelectedPSSR] = useState<string | null>(null);
@@ -803,7 +803,7 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
             searchTerm={searchTerm} 
             onSearchChange={handleSearchChange} 
             onSelectPSSR={handleViewDetails} 
-            viewMode={viewMode === 'timeline' ? 'card' : viewMode} 
+            viewMode={viewMode} 
             onViewModeChange={mode => setViewMode(mode)} 
             filters={filters} 
             onToggleFilter={toggleFilter} 
