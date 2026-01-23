@@ -4,6 +4,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -52,6 +53,9 @@ export const ORPGanttOverlay: React.FC<ORPGanttOverlayProps> = ({
                 <DialogTitle className="text-base font-bold">
                   ORA Activity Plan
                 </DialogTitle>
+                <DialogDescription className="sr-only">
+                  Gantt chart view of project activities and timeline
+                </DialogDescription>
                 {planName && (
                   <p className="text-xs text-muted-foreground">{planName}</p>
                 )}
@@ -83,13 +87,11 @@ export const ORPGanttOverlay: React.FC<ORPGanttOverlayProps> = ({
               <span className="ml-2 text-muted-foreground">Loading Gantt chart...</span>
             </div>
           ) : planDetails?.deliverables && planDetails.deliverables.length > 0 ? (
-            <div className="border rounded-lg overflow-hidden">
-              <ORPGanttChart
-                planId={planId}
-                deliverables={planDetails.deliverables}
-                hideToolbar
-              />
-            </div>
+            <ORPGanttChart
+              planId={planId}
+              deliverables={planDetails.deliverables}
+              hideToolbar
+            />
           ) : (
             <div className="text-center py-16 text-muted-foreground">
               <CalendarCheck className="h-12 w-12 mx-auto mb-3 opacity-50" />
