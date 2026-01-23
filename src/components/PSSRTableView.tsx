@@ -67,7 +67,7 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails, pin
     { id: 'favorite', label: '', visible: true, width: 50 },
   ]);
 
-  const [hoveredRow, setHoveredRow] = useState<string | null>(null);
+  // Use CSS hover (group-hover) for the favorite icon to avoid hover state desync.
 
   // Sort PSSRs with favorites at the top
   const sortedPSSRs = React.useMemo(() => {
@@ -245,30 +245,29 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails, pin
         );
       case 'created':
         return <div className="text-sm text-muted-foreground">{new Date(pssr.created).toLocaleDateString()}</div>;
-      case 'favorite':
+      case 'favorite': {
         const isFavorite = pinnedPSSRs.includes(pssr.id);
-        const isHovered = hoveredRow === pssr.id;
-        const showIcon = isFavorite || isHovered;
         return (
-          <div 
+          <div
             className="flex items-center justify-center"
+            onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => {
               e.stopPropagation();
               onTogglePin?.(pssr.id);
             }}
+            aria-label={isFavorite ? 'Unfavorite PSSR' : 'Favorite PSSR'}
+            role="button"
+            tabIndex={0}
           >
-            {showIcon && (
-              <Star 
-                className={cn(
-                  "h-4 w-4 cursor-pointer transition-all",
-                  isFavorite 
-                    ? "fill-amber-400 text-amber-400" 
-                    : "text-muted-foreground/50 hover:text-amber-400"
-                )}
-              />
-            )}
+            <Star
+              className={cn(
+                "h-4 w-4 cursor-pointer transition-opacity",
+                isFavorite ? "fill-amber-400 text-amber-400 opacity-100" : "text-muted-foreground/50 opacity-0 group-hover:opacity-100"
+              )}
+            />
           </div>
         );
+      }
       default:
         return null;
     }
@@ -339,8 +338,6 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails, pin
                   pinnedPSSRs.includes(pssr.id) && "bg-amber-50/30 dark:bg-amber-950/20"
                 )}
                 onClick={() => onViewDetails(pssr.id)}
-                onMouseEnter={() => setHoveredRow(pssr.id)}
-                onMouseLeave={() => setHoveredRow(null)}
               >
                 {visibleColumns.map((column) => (
                   <TableCell 
