@@ -17,14 +17,15 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CalendarIcon, Clock, MapPin, Users, Loader2, ExternalLink, Wifi, Mail, Bell } from 'lucide-react';
+import { CalendarIcon, Clock, MapPin, Users, Loader2, ExternalLink, Wifi, Mail, Bell, Wrench } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { usePSSRWalkdowns, WalkdownAttendee } from '@/hooks/usePSSRWalkdowns';
+import { usePSSRWalkdowns, WalkdownAttendee, WalkdownDiscipline } from '@/hooks/usePSSRWalkdowns';
 import { useWalkdownSuggestedAttendees, SuggestedAttendee } from '@/hooks/useWalkdownSuggestedAttendees';
 import { usePSSRDetails } from '@/hooks/usePSSRDetails';
 import { useMicrosoftOAuth } from '@/hooks/useMicrosoftOAuth';
 import { useOutlookCalendar } from '@/hooks/useOutlookCalendar';
+import { useDisciplines } from '@/hooks/useDisciplines';
 import { openInOutlook, openInTeams, downloadICSFile, OutlookMeetingData, ReminderOption } from '@/lib/outlook-protocol';
 import { useToast } from '@/hooks/use-toast';
 import { AddAttendeePopover } from './AddAttendeePopover';
@@ -48,6 +49,7 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
   const { pssr: pssrDetails } = usePSSRDetails(pssrId);
   const { isConnected: isMicrosoftConnected, connect: connectMicrosoft, isConnecting } = useMicrosoftOAuth();
   const { createEvent, isCreatingEvent } = useOutlookCalendar();
+  const { disciplines: availableDisciplines, isLoading: disciplinesLoading } = useDisciplines();
   const { toast } = useToast();
 
   const [scheduledDate, setScheduledDate] = useState<Date | undefined>();
@@ -58,10 +60,29 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
   const [sendMethod, setSendMethod] = useState<'outlook' | 'teams' | 'api'>('outlook');
   const [reminder, setReminder] = useState<ReminderOption>('1day');
   const [customMessage, setCustomMessage] = useState<string | undefined>(undefined);
+  const [isDisciplineWalkdown, setIsDisciplineWalkdown] = useState(false);
+  const [selectedDisciplineIds, setSelectedDisciplineIds] = useState<Set<string>>(new Set());
 
   // Build PSSR link
   const pssrLink = `${window.location.origin}/pssr/${pssrId}`;
   const pssrScope = pssrDetails?.scope || '';
+
+  // Build dynamic meeting title with disciplines
+  const buildMeetingTitle = () => {
+    let title = `PSSR Walkdown`;
+    if (pssrTitle || pssrDetails?.title) {
+      title += `: ${pssrTitle || pssrDetails?.title}`;
+    }
+    if (isDisciplineWalkdown && selectedDisciplineIds.size > 0) {
+      const selectedDisciplineNames = availableDisciplines
+        .filter(d => selectedDisciplineIds.has(d.id))
+        .map(d => d.name);
+      title += ` – ${selectedDisciplineNames.join(', ')}`;
+    }
+    return title;
+  };
+
+  const meetingTitle = buildMeetingTitle();
 
   // Combine suggested and manual attendees
   const allAttendees = [
@@ -142,9 +163,16 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
     endDate.setHours(endDate.getHours() + 2);
     const endDateTime = endDate.toISOString().slice(0, 19);
 
+    // Build selected disciplines
+    const disciplines: WalkdownDiscipline[] = isDisciplineWalkdown 
+      ? availableDisciplines
+          .filter(d => selectedDisciplineIds.has(d.id))
+          .map(d => ({ id: d.id, name: d.name }))
+      : [];
+
     // Prepare meeting data for Outlook
     const meetingData: OutlookMeetingData = {
-      title: `PSSR Walkdown${pssrTitle ? `: ${pssrTitle}` : ''}`,
+      title: meetingTitle,
       scope: pssrScope,
       description: customMessage,
       location: location || 'TBD',
@@ -162,7 +190,8 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
       scheduledTime: scheduledTime || undefined,
       location: location || undefined,
       description: pssrScope || undefined,
-      attendees
+      attendees,
+      disciplines,
     });
 
     // Handle sending based on selected method
@@ -210,6 +239,8 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
     setSendMethod('outlook');
     setReminder('1day');
     setCustomMessage(undefined);
+    setIsDisciplineWalkdown(false);
+    setSelectedDisciplineIds(new Set());
     onOpenChange(false);
   };
 
@@ -372,6 +403,76 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
               </Select>
             </div>
 
+            {/* Discipline-Specific Walkdown */}
+            <div className="space-y-3">
+              <div className="flex items-start gap-3 p-3 rounded-lg border bg-muted/30">
+                <Checkbox
+                  id="discipline-walkdown"
+                  checked={isDisciplineWalkdown}
+                  onCheckedChange={(checked) => {
+                    setIsDisciplineWalkdown(checked as boolean);
+                    if (!checked) setSelectedDisciplineIds(new Set());
+                  }}
+                  className="mt-0.5"
+                />
+                <div className="flex-1">
+                  <label htmlFor="discipline-walkdown" className="flex items-center gap-2 text-sm font-medium cursor-pointer">
+                    <Wrench className="w-4 h-4 text-muted-foreground" />
+                    Discipline-Specific Walkdown
+                  </label>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Schedule a walkdown for specific discipline(s). The discipline name will be appended to the invitation subject.
+                  </p>
+                </div>
+              </div>
+
+              {isDisciplineWalkdown && (
+                <div className="border rounded-lg p-3 bg-muted/20">
+                  {disciplinesLoading ? (
+                    <div className="flex items-center justify-center py-4 text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      <span className="text-xs">Loading disciplines...</span>
+                    </div>
+                  ) : availableDisciplines.length === 0 ? (
+                    <p className="text-xs text-muted-foreground text-center py-4">
+                      No disciplines configured
+                    </p>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-2">
+                      {availableDisciplines.map(discipline => (
+                        <div
+                          key={discipline.id}
+                          className="flex items-center gap-2"
+                        >
+                          <Checkbox
+                            id={`discipline-${discipline.id}`}
+                            checked={selectedDisciplineIds.has(discipline.id)}
+                            onCheckedChange={(checked) => {
+                              setSelectedDisciplineIds(prev => {
+                                const newSet = new Set(prev);
+                                if (checked) {
+                                  newSet.add(discipline.id);
+                                } else {
+                                  newSet.delete(discipline.id);
+                                }
+                                return newSet;
+                              });
+                            }}
+                          />
+                          <label
+                            htmlFor={`discipline-${discipline.id}`}
+                            className="text-sm cursor-pointer"
+                          >
+                            {discipline.name}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
             {/* Invitation Preview */}
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
@@ -379,7 +480,7 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
                 Invitation Preview
               </Label>
               <InvitationPreview
-                subject={`PSSR Walkdown: ${pssrTitle || pssrDetails?.title || ''}`}
+                subject={meetingTitle}
                 scope={pssrScope}
                 date={scheduledDate}
                 time={scheduledTime}

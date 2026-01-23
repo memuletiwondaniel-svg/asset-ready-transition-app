@@ -98,7 +98,7 @@ export const PSSRWalkdownManager: React.FC<PSSRWalkdownManagerProps> = ({
       >
         <CardHeader className="pb-2">
           <div className="flex items-start justify-between">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <Badge className={cn('text-white', statusConfig.color)}>
                 {statusConfig.icon}
                 <span className="ml-1">{statusConfig.label}</span>
@@ -108,6 +108,12 @@ export const PSSRWalkdownManager: React.FC<PSSRWalkdownManagerProps> = ({
                   Active Session
                 </Badge>
               )}
+              {/* Discipline Badges */}
+              {walkdown.disciplines?.length > 0 && walkdown.disciplines.map(d => (
+                <Badge key={d.id} variant="secondary" className="text-xs">
+                  {d.name}
+                </Badge>
+              ))}
             </div>
             <div className="text-xs text-muted-foreground">
               {format(new Date(walkdown.created_at), 'MMM d, yyyy')}
