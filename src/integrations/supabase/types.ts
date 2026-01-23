@@ -288,6 +288,39 @@ export type Database = {
         }
         Relationships: []
       }
+      microsoft_oauth_tokens: {
+        Row: {
+          access_token: string
+          created_at: string | null
+          expires_at: string
+          id: string
+          refresh_token: string
+          scope: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          created_at?: string | null
+          expires_at: string
+          id?: string
+          refresh_token: string
+          scope?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          refresh_token?: string
+          scope?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       notification_preferences: {
         Row: {
           checklist_items: boolean | null
@@ -4892,6 +4925,56 @@ export type Database = {
         }
         Relationships: []
       }
+      pssr_walkdown_attendees: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          name: string
+          response_time: string | null
+          role: string | null
+          rsvp_status: string | null
+          source: string | null
+          updated_at: string | null
+          user_id: string | null
+          walkdown_event_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id?: string
+          name: string
+          response_time?: string | null
+          role?: string | null
+          rsvp_status?: string | null
+          source?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          walkdown_event_id: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          name?: string
+          response_time?: string | null
+          role?: string | null
+          rsvp_status?: string | null
+          source?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          walkdown_event_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pssr_walkdown_attendees_walkdown_event_id_fkey"
+            columns: ["walkdown_event_id"]
+            isOneToOne: false
+            referencedRelation: "pssr_walkdown_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pssr_walkdown_events: {
         Row: {
           attendees: Json | null
@@ -4900,7 +4983,10 @@ export type Database = {
           created_by: string | null
           description: string | null
           id: string
+          last_synced_at: string | null
           location: string | null
+          outlook_event_id: string | null
+          outlook_ical_uid: string | null
           pssr_id: string
           scheduled_date: string
           scheduled_time: string | null
@@ -4914,7 +5000,10 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           id?: string
+          last_synced_at?: string | null
           location?: string | null
+          outlook_event_id?: string | null
+          outlook_ical_uid?: string | null
           pssr_id: string
           scheduled_date: string
           scheduled_time?: string | null
@@ -4928,7 +5017,10 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           id?: string
+          last_synced_at?: string | null
           location?: string | null
+          outlook_event_id?: string | null
+          outlook_ical_uid?: string | null
           pssr_id?: string
           scheduled_date?: string
           scheduled_time?: string | null
