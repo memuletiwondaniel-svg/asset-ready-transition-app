@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { DollarSign, TrendingUp, TrendingDown, EyeOff } from 'lucide-react';
+import { DollarSign, TrendingUp, TrendingDown } from 'lucide-react';
 import { StyledWidgetIcon } from './StyledWidgetIcon';
 
 interface OwnersCostWidgetProps {
@@ -45,20 +45,6 @@ export const OwnersCostWidget: React.FC<OwnersCostWidgetProps> = ({ projectId, d
             />
             <span>Owners Cost</span>
           </div>
-          {onHide && (
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={(e) => {
-                e.stopPropagation();
-                onHide();
-              }}
-              className="opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7"
-              title="Hide widget"
-            >
-              <EyeOff className="h-4 w-4" />
-            </Button>
-          )}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">

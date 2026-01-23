@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { AlertTriangle, EyeOff, FileText } from 'lucide-react';
+import { AlertTriangle, FileText } from 'lucide-react';
 import { StyledWidgetIcon } from './StyledWidgetIcon';
 import { useProjectPSSRs } from '@/hooks/useProjectPSSRs';
 import { PSSRQuickViewOverlay } from '@/components/pssr/PSSRQuickViewOverlay';
@@ -43,20 +43,6 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
               />
               <span>PSSR / SoF</span>
             </div>
-            {onHide && (
-              <Button
-                size="icon"
-                variant="ghost"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onHide();
-                }}
-                className="opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7"
-                title="Hide widget"
-              >
-                <EyeOff className="h-4 w-4" />
-              </Button>
-            )}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 pt-0">
