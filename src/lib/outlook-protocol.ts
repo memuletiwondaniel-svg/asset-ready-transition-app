@@ -6,11 +6,71 @@
 export interface OutlookMeetingData {
   title: string;
   description?: string;
+  scope?: string;
   location?: string;
   startDateTime: string; // ISO format
   endDateTime: string; // ISO format
   attendees: { name: string; email: string }[];
   pssrId?: string;
+  pssrLink?: string;
+}
+
+/**
+ * Generates an ICS (iCalendar) file content for the meeting
+ */
+/**
+ * Builds a structured invitation body for the meeting
+ */
+function buildInvitationBody(meeting: OutlookMeetingData): string {
+  const startDate = new Date(meeting.startDateTime);
+  const endDate = new Date(meeting.endDateTime);
+  
+  const dateStr = startDate.toLocaleDateString('en-US', { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  });
+  const startTimeStr = startDate.toLocaleTimeString('en-US', { 
+    hour: '2-digit', 
+    minute: '2-digit' 
+  });
+  const endTimeStr = endDate.toLocaleTimeString('en-US', { 
+    hour: '2-digit', 
+    minute: '2-digit' 
+  });
+
+  let body = `Dear Colleagues,
+
+You are invited to participate in the Pre-Startup Safety Review (PSSR) Walkdown for the following scope:
+
+`;
+
+  if (meeting.scope) {
+    body += `SCOPE OF WORK:
+${meeting.scope}
+
+`;
+  }
+
+  body += `Date: ${dateStr}
+Time: ${startTimeStr} - ${endTimeStr}
+Location: ${meeting.location || 'TBD'}
+`;
+
+  if (meeting.pssrLink) {
+    body += `
+View PSSR Details: ${meeting.pssrLink}
+`;
+  }
+
+  body += `
+Please confirm your attendance or assign a suitable delegate if you are unable to attend.
+
+Best regards,
+ORSH PSSR Team`;
+
+  return body;
 }
 
 /**
@@ -27,9 +87,7 @@ export function generateICSContent(meeting: OutlookMeetingData): string {
     .map(a => `ATTENDEE;CN=${escapeICS(a.name)};RSVP=TRUE:mailto:${a.email}`)
     .join('\r\n');
 
-  const description = meeting.description 
-    ? escapeICS(meeting.description)
-    : `PSSR Walkdown${meeting.pssrId ? ` for ${meeting.pssrId}` : ''}`;
+  const description = escapeICS(buildInvitationBody(meeting));
 
   return [
     'BEGIN:VCALENDAR',
@@ -95,7 +153,7 @@ export function openInOutlook(meeting: OutlookMeetingData): void {
 function buildOutlookDeepLink(meeting: OutlookMeetingData): string {
   const params = new URLSearchParams();
   params.set('subject', meeting.title);
-  params.set('body', meeting.description || `PSSR Walkdown${meeting.pssrId ? ` for ${meeting.pssrId}` : ''}`);
+  params.set('body', buildInvitationBody(meeting));
   params.set('startdt', meeting.startDateTime);
   params.set('enddt', meeting.endDateTime);
   
@@ -142,7 +200,7 @@ export function openInTeams(meeting: OutlookMeetingData): void {
     .map(a => a.email)
     .join(',');
   
-  const teamsUrl = `https://teams.microsoft.com/l/meeting/new?subject=${encodeURIComponent(meeting.title)}&attendees=${encodeURIComponent(emails)}&startTime=${encodeURIComponent(meeting.startDateTime)}&endTime=${encodeURIComponent(meeting.endDateTime)}&content=${encodeURIComponent(meeting.description || '')}`;
+  const teamsUrl = `https://teams.microsoft.com/l/meeting/new?subject=${encodeURIComponent(meeting.title)}&attendees=${encodeURIComponent(emails)}&startTime=${encodeURIComponent(meeting.startDateTime)}&endTime=${encodeURIComponent(meeting.endDateTime)}&content=${encodeURIComponent(buildInvitationBody(meeting))}`;
   
   window.open(teamsUrl, '_blank');
 }
@@ -158,17 +216,7 @@ export function generateMailtoWithMeeting(meeting: OutlookMeetingData): string {
     .join(',');
   
   const subject = encodeURIComponent(meeting.title);
-  const body = encodeURIComponent(`
-You are invited to a PSSR Walkdown.
-
-📅 Date: ${new Date(meeting.startDateTime).toLocaleDateString()}
-🕐 Time: ${new Date(meeting.startDateTime).toLocaleTimeString()} - ${new Date(meeting.endDateTime).toLocaleTimeString()}
-📍 Location: ${meeting.location || 'TBD'}
-
-${meeting.description || ''}
-
-Please add this event to your calendar.
-  `.trim());
+  const body = encodeURIComponent(buildInvitationBody(meeting));
   
   return `mailto:${emails}?subject=${subject}&body=${body}`;
 }

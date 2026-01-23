@@ -9,7 +9,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -17,16 +16,18 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { CalendarIcon, Clock, MapPin, Users, Loader2, ExternalLink, Wifi } from 'lucide-react';
+import { CalendarIcon, Clock, MapPin, Users, Loader2, ExternalLink, Wifi, Mail } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { usePSSRWalkdowns, WalkdownAttendee } from '@/hooks/usePSSRWalkdowns';
 import { useWalkdownSuggestedAttendees, SuggestedAttendee } from '@/hooks/useWalkdownSuggestedAttendees';
+import { usePSSRDetails } from '@/hooks/usePSSRDetails';
 import { useMicrosoftOAuth } from '@/hooks/useMicrosoftOAuth';
 import { useOutlookCalendar } from '@/hooks/useOutlookCalendar';
 import { openInOutlook, openInTeams, downloadICSFile, OutlookMeetingData } from '@/lib/outlook-protocol';
 import { useToast } from '@/hooks/use-toast';
 import { AddAttendeePopover } from './AddAttendeePopover';
+import { InvitationPreview } from './InvitationPreview';
 
 interface ScheduleWalkdownModalProps {
   open: boolean;
@@ -43,6 +44,7 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
 }) => {
   const { scheduleWalkdown } = usePSSRWalkdowns(pssrId);
   const { data: suggestedData, isLoading: suggestedLoading } = useWalkdownSuggestedAttendees(pssrId);
+  const { pssr: pssrDetails } = usePSSRDetails(pssrId);
   const { isConnected: isMicrosoftConnected, connect: connectMicrosoft, isConnecting } = useMicrosoftOAuth();
   const { createEvent, isCreatingEvent } = useOutlookCalendar();
   const { toast } = useToast();
@@ -50,10 +52,13 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
   const [scheduledDate, setScheduledDate] = useState<Date | undefined>();
   const [scheduledTime, setScheduledTime] = useState('');
   const [location, setLocation] = useState('');
-  const [description, setDescription] = useState('');
   const [selectedAttendeeIds, setSelectedAttendeeIds] = useState<Set<string>>(new Set());
   const [manualAttendees, setManualAttendees] = useState<SuggestedAttendee[]>([]);
   const [sendMethod, setSendMethod] = useState<'outlook' | 'teams' | 'api'>('outlook');
+
+  // Build PSSR link
+  const pssrLink = `${window.location.origin}/pssr/${pssrId}`;
+  const pssrScope = pssrDetails?.scope || '';
 
   // Combine suggested and manual attendees
   const allAttendees = [
@@ -137,12 +142,13 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
     // Prepare meeting data for Outlook
     const meetingData: OutlookMeetingData = {
       title: `PSSR Walkdown${pssrTitle ? `: ${pssrTitle}` : ''}`,
-      description: description || `PSSR Walkdown for ${pssrId}`,
+      scope: pssrScope,
       location: location || 'TBD',
       startDateTime,
       endDateTime,
       attendees: attendees.filter(a => a.email).map(a => ({ name: a.name, email: a.email! })),
       pssrId,
+      pssrLink,
     };
 
     // First, create the walkdown event in the database
@@ -150,7 +156,7 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
       scheduledDate: format(scheduledDate, 'yyyy-MM-dd'),
       scheduledTime: scheduledTime || undefined,
       location: location || undefined,
-      description: description || undefined,
+      description: pssrScope || undefined,
       attendees
     });
 
@@ -172,7 +178,7 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
       await createEvent({
         walkdownEventId: walkdownEvent.id,
         title: meetingData.title,
-        description: meetingData.description,
+        description: pssrScope,
         location: meetingData.location,
         startDateTime,
         endDateTime,
@@ -194,7 +200,6 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
     setScheduledDate(undefined);
     setScheduledTime('');
     setLocation('');
-    setDescription('');
     setSelectedAttendeeIds(new Set());
     setManualAttendees([]);
     setSendMethod('outlook');
@@ -339,14 +344,19 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
               />
             </div>
 
-            {/* Description */}
+            {/* Invitation Preview */}
             <div className="space-y-2">
-              <Label>Description / Scope</Label>
-              <Textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Describe the walkdown scope, areas to cover, etc."
-                rows={3}
+              <Label className="flex items-center gap-2">
+                <Mail className="h-3.5 w-3.5" />
+                Invitation Preview
+              </Label>
+              <InvitationPreview
+                subject={`PSSR Walkdown: ${pssrTitle || pssrDetails?.title || ''}`}
+                scope={pssrScope}
+                date={scheduledDate}
+                time={scheduledTime}
+                location={location}
+                pssrLink={pssrLink}
               />
             </div>
 
