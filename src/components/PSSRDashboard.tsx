@@ -27,6 +27,7 @@ import { PendingItem } from '@/components/widgets/ApproverPendingItemsOverlay';
 import { usePSSRDetails } from '@/hooks/usePSSRDetails';
 import { usePSSRPriorityActions } from '@/hooks/usePSSRPriorityActions';
 import { PriorityActionsOverlay } from '@/components/pssr/PriorityActionsOverlay';
+import { PSSRWalkdownManager } from '@/components/pssr/walkdown/PSSRWalkdownManager';
 
 interface PSSRDashboardProps {
   pssrId: string;
@@ -92,6 +93,9 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
 
   // Priority actions overlay state
   const [priorityActionsOverlayOpen, setPriorityActionsOverlayOpen] = useState(false);
+  
+  // Walkdown manager modal state
+  const [walkdownManagerOpen, setWalkdownManagerOpen] = useState(false);
   
   // Fetch priority actions
   const { stats: priorityActionStats } = usePSSRPriorityActions(pssrId);
@@ -648,6 +652,12 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
   };
 
   const handleActivityClick = (activityType: string) => {
+    // Open walkdown manager for walkdown activity type
+    if (activityType === 'walkdown') {
+      setWalkdownManagerOpen(true);
+      return;
+    }
+    
     const activity = pssrData.keyActivities.find(a => a.type === activityType || a.name === activityType);
     if (activity) {
       setActivityModal({
@@ -977,6 +987,14 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
         open={priorityActionsOverlayOpen}
         onOpenChange={setPriorityActionsOverlayOpen}
         pssrId={pssrId}
+      />
+
+      {/* Walkdown Manager */}
+      <PSSRWalkdownManager
+        open={walkdownManagerOpen}
+        onOpenChange={setWalkdownManagerOpen}
+        pssrId={pssrId}
+        pssrTitle={pssrData.title}
       />
     </div>
   );
