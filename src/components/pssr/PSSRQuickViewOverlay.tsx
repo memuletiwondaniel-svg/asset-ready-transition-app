@@ -73,18 +73,18 @@ const getCategoryIcon = (categoryName: string) => {
 
 const getCategoryColors = (categoryName: string) => {
   const colorMap: Record<string, { bg: string; progress: string }> = {
-    'Technical Integrity': { bg: 'bg-blue-500/10 text-blue-600', progress: 'bg-blue-500' },
-    'Process Safety': { bg: 'bg-red-500/10 text-red-600', progress: 'bg-red-500' },
-    'Organization': { bg: 'bg-purple-500/10 text-purple-600', progress: 'bg-purple-500' },
-    'Operations': { bg: 'bg-amber-500/10 text-amber-600', progress: 'bg-amber-500' },
-    'Electrical': { bg: 'bg-yellow-500/10 text-yellow-600', progress: 'bg-yellow-500' },
-    'Mechanical': { bg: 'bg-slate-500/10 text-slate-600', progress: 'bg-slate-500' },
-    'Instrumentation': { bg: 'bg-cyan-500/10 text-cyan-600', progress: 'bg-cyan-500' },
-    'Civil': { bg: 'bg-orange-500/10 text-orange-600', progress: 'bg-orange-500' },
-    'HSE': { bg: 'bg-green-500/10 text-green-600', progress: 'bg-green-500' },
-    'HSE & Environment': { bg: 'bg-green-500/10 text-green-600', progress: 'bg-green-500' },
-    'Maintenance Readiness': { bg: 'bg-indigo-500/10 text-indigo-600', progress: 'bg-indigo-500' },
-    'Documentation': { bg: 'bg-teal-500/10 text-teal-600', progress: 'bg-teal-500' },
+    'Technical Integrity': { bg: 'bg-blue-400/10 text-blue-500', progress: 'bg-blue-400/70' },
+    'Process Safety': { bg: 'bg-red-400/10 text-red-500', progress: 'bg-red-400/70' },
+    'Organization': { bg: 'bg-purple-400/10 text-purple-500', progress: 'bg-purple-400/70' },
+    'Operations': { bg: 'bg-amber-400/10 text-amber-500', progress: 'bg-amber-400/70' },
+    'Electrical': { bg: 'bg-yellow-400/10 text-yellow-500', progress: 'bg-yellow-400/70' },
+    'Mechanical': { bg: 'bg-slate-400/10 text-slate-500', progress: 'bg-slate-400/70' },
+    'Instrumentation': { bg: 'bg-cyan-400/10 text-cyan-500', progress: 'bg-cyan-400/70' },
+    'Civil': { bg: 'bg-orange-400/10 text-orange-500', progress: 'bg-orange-400/70' },
+    'HSE': { bg: 'bg-green-400/10 text-green-500', progress: 'bg-green-400/70' },
+    'HSE & Environment': { bg: 'bg-green-400/10 text-green-500', progress: 'bg-green-400/70' },
+    'Maintenance Readiness': { bg: 'bg-indigo-400/10 text-indigo-500', progress: 'bg-indigo-400/70' },
+    'Documentation': { bg: 'bg-teal-400/10 text-teal-500', progress: 'bg-teal-400/70' },
   };
   return colorMap[categoryName] || { bg: 'bg-muted text-muted-foreground', progress: 'bg-primary' };
 };
