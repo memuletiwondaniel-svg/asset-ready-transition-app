@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Wrench, Plus, ExternalLink, EyeOff, Database, Calendar, Shield, Boxes } from 'lucide-react';
+import { Wrench, ExternalLink, Database, Calendar, Shield, Boxes } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { StyledWidgetIcon } from './StyledWidgetIcon';
 import { cn } from '@/lib/utils';
@@ -82,25 +82,9 @@ export const ORMtceWidget: React.FC<ORMtceWidgetProps> = ({ projectId, dragAttri
               <span className="text-xs font-normal text-muted-foreground">{overallProgress}% Complete</span>
             </div>
           </div>
-          <div className="flex items-center gap-1">
-            {onHide && (
-              <Button
-                size="icon"
-                variant="ghost"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onHide();
-                }}
-                className="opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7"
-                title="Hide widget"
-              >
-                <EyeOff className="h-4 w-4" />
-              </Button>
-            )}
-            <Button size="sm" variant="ghost" onClick={() => navigate('/orm')}>
-              <ExternalLink className="h-4 w-4" />
-            </Button>
-          </div>
+          <Button size="sm" variant="ghost" onClick={() => navigate('/orm')}>
+            <ExternalLink className="h-4 w-4" />
+          </Button>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2 pt-0">

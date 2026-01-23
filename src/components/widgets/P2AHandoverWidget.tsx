@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Key, ExternalLink, EyeOff } from 'lucide-react';
+import { Key, ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { StyledWidgetIcon } from './StyledWidgetIcon';
 
@@ -36,20 +36,6 @@ export const P2AHandoverWidget: React.FC<P2AHandoverWidgetProps> = ({ projectId,
             />
             <span>P2A Handover</span>
           </div>
-          {onHide && (
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={(e) => {
-                e.stopPropagation();
-                onHide();
-              }}
-              className="opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7"
-              title="Hide widget"
-            >
-              <EyeOff className="h-4 w-4" />
-            </Button>
-          )}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">

@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CalendarCheck, ChevronDown, EyeOff, Loader2, Clock, CheckCircle2 } from 'lucide-react';
+import { CalendarCheck, ChevronDown, Loader2, Clock, CheckCircle2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { StyledWidgetIcon } from './StyledWidgetIcon';
 import { useProjectORPPlans } from '@/hooks/useProjectORPPlans';
@@ -78,22 +78,6 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
                 <Badge variant="secondary" className="ml-1 text-xs">
                   {completedDeliverables}/{totalDeliverables}
                 </Badge>
-              )}
-            </div>
-            <div className="flex items-center gap-1">
-              {onHide && (
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onHide();
-                  }}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7"
-                  title="Hide widget"
-                >
-                  <EyeOff className="h-4 w-4" />
-                </Button>
               )}
             </div>
           </CardTitle>
