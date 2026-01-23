@@ -159,7 +159,7 @@ export const SidebarContent = memo<SidebarContentProps>(({
                   </>
                 ) : (
                   <>
-                    <p className="text-sm font-medium truncate">{displayName}</p>
+                    <p className="text-sm font-medium truncate">{displayName.split(' ')[0]}</p>
                     <p className="text-xs text-muted-foreground truncate">{displayTitle}</p>
                   </>
                 )}
