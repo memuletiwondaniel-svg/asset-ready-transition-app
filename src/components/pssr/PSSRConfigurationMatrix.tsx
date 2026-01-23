@@ -676,11 +676,11 @@ const PSSRConfigurationMatrix: React.FC = () => {
                 <CardTitle className="text-2xl font-semibold">PSSR Templates</CardTitle>
                 <Button 
                   onClick={() => setShowAddReasonWizard(true)}
-                  className="fluent-button"
+                  className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm text-white"
                   size="sm"
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Create Template
+                  New Template
                 </Button>
               </div>
               {/* Quick Stats - Clickable filters */}
