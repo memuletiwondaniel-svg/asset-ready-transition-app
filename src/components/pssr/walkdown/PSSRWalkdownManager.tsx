@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   Calendar,
   Clock,
@@ -23,6 +24,7 @@ import {
   AlertTriangle,
   FileText,
   Eye,
+  ChevronDown,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -31,6 +33,7 @@ import { useWalkdownObservations } from '@/hooks/useWalkdownObservations';
 import { ScheduleWalkdownModal } from './ScheduleWalkdownModal';
 import { WalkdownObservationCapture } from './WalkdownObservationCapture';
 import { WalkdownObservationsList } from './WalkdownObservationsList';
+import { WalkdownAttendeesStatus } from './WalkdownAttendeesStatus';
 
 interface PSSRWalkdownManagerProps {
   open: boolean;
@@ -129,12 +132,6 @@ export const PSSRWalkdownManager: React.FC<PSSRWalkdownManagerProps> = ({
                 <span className="truncate">{walkdown.location}</span>
               </div>
             )}
-            {walkdown.attendees && walkdown.attendees.length > 0 && (
-              <div className="flex items-center gap-2 text-muted-foreground col-span-2">
-                <Users className="h-4 w-4" />
-                <span>{walkdown.attendees.length} attendee{walkdown.attendees.length !== 1 ? 's' : ''}</span>
-              </div>
-            )}
           </div>
 
           {walkdown.description && (
@@ -142,6 +139,9 @@ export const PSSRWalkdownManager: React.FC<PSSRWalkdownManagerProps> = ({
               {walkdown.description}
             </p>
           )}
+
+          {/* RSVP Status - Collapsible */}
+          <WalkdownRSVPSection walkdownEventId={walkdown.id} />
 
           {/* Observation Stats */}
           <WalkdownObservationStats walkdownEventId={walkdown.id} pssrId={pssrId} />
@@ -370,7 +370,40 @@ export const PSSRWalkdownManager: React.FC<PSSRWalkdownManagerProps> = ({
   );
 };
 
-// Mini component to show observation stats per walkdown
+// Component to show RSVP status per walkdown with expand/collapse
+const WalkdownRSVPSection: React.FC<{ walkdownEventId: string }> = ({ walkdownEventId }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  return (
+    <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
+      <div className="flex items-center justify-between">
+        <CollapsibleTrigger asChild>
+          <Button variant="ghost" size="sm" className="h-7 gap-1 px-2 -ml-2">
+            <Users className="h-3.5 w-3.5" />
+            <span className="text-xs">Attendee RSVPs</span>
+            <ChevronDown className={cn(
+              "h-3.5 w-3.5 transition-transform",
+              isExpanded && "rotate-180"
+            )} />
+          </Button>
+        </CollapsibleTrigger>
+        <WalkdownAttendeesStatus 
+          walkdownEventId={walkdownEventId} 
+          compact 
+          showSyncButton 
+        />
+      </div>
+      <CollapsibleContent className="pt-2">
+        <div className="border rounded-lg p-3 bg-muted/30">
+          <WalkdownAttendeesStatus 
+            walkdownEventId={walkdownEventId} 
+            showSyncButton={false}
+          />
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+};
 const WalkdownObservationStats: React.FC<{ walkdownEventId: string; pssrId: string }> = ({ 
   walkdownEventId, 
   pssrId 
