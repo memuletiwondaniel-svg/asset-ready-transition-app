@@ -3,6 +3,8 @@
  * Provides seamless integration with native Outlook/Teams apps
  */
 
+export type ReminderOption = 'none' | '15min' | '30min' | '1hour' | '1day' | '1week';
+
 export interface OutlookMeetingData {
   title: string;
   description?: string;
@@ -13,6 +15,7 @@ export interface OutlookMeetingData {
   attendees: { name: string; email: string }[];
   pssrId?: string;
   pssrLink?: string;
+  reminder?: ReminderOption;
 }
 
 /**
@@ -74,6 +77,21 @@ ORSH PSSR Team`;
 }
 
 /**
+ * Converts reminder option to minutes for ICS VALARM
+ */
+function getReminderMinutes(reminder: ReminderOption): number | null {
+  switch (reminder) {
+    case '15min': return 15;
+    case '30min': return 30;
+    case '1hour': return 60;
+    case '1day': return 1440; // 24 * 60
+    case '1week': return 10080; // 7 * 24 * 60
+    case 'none':
+    default: return null;
+  }
+}
+
+/**
  * Generates an ICS (iCalendar) file content for the meeting
  */
 export function generateICSContent(meeting: OutlookMeetingData): string {
@@ -88,6 +106,16 @@ export function generateICSContent(meeting: OutlookMeetingData): string {
     .join('\r\n');
 
   const description = escapeICS(buildInvitationBody(meeting));
+  
+  // Build reminder/alarm block if specified
+  const reminderMinutes = meeting.reminder ? getReminderMinutes(meeting.reminder) : getReminderMinutes('1day');
+  const alarmBlock = reminderMinutes ? [
+    'BEGIN:VALARM',
+    'TRIGGER:-PT' + reminderMinutes + 'M',
+    'ACTION:DISPLAY',
+    'DESCRIPTION:PSSR Walkdown Reminder',
+    'END:VALARM'
+  ].join('\r\n') : '';
 
   return [
     'BEGIN:VCALENDAR',
@@ -106,6 +134,7 @@ export function generateICSContent(meeting: OutlookMeetingData): string {
     attendeeLines,
     'STATUS:CONFIRMED',
     'SEQUENCE:0',
+    alarmBlock,
     'END:VEVENT',
     'END:VCALENDAR'
   ].filter(Boolean).join('\r\n');

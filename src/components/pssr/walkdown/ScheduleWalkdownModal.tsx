@@ -16,7 +16,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { CalendarIcon, Clock, MapPin, Users, Loader2, ExternalLink, Wifi, Mail } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { CalendarIcon, Clock, MapPin, Users, Loader2, ExternalLink, Wifi, Mail, Bell } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { usePSSRWalkdowns, WalkdownAttendee } from '@/hooks/usePSSRWalkdowns';
@@ -24,7 +25,7 @@ import { useWalkdownSuggestedAttendees, SuggestedAttendee } from '@/hooks/useWal
 import { usePSSRDetails } from '@/hooks/usePSSRDetails';
 import { useMicrosoftOAuth } from '@/hooks/useMicrosoftOAuth';
 import { useOutlookCalendar } from '@/hooks/useOutlookCalendar';
-import { openInOutlook, openInTeams, downloadICSFile, OutlookMeetingData } from '@/lib/outlook-protocol';
+import { openInOutlook, openInTeams, downloadICSFile, OutlookMeetingData, ReminderOption } from '@/lib/outlook-protocol';
 import { useToast } from '@/hooks/use-toast';
 import { AddAttendeePopover } from './AddAttendeePopover';
 import { InvitationPreview } from './InvitationPreview';
@@ -55,6 +56,8 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
   const [selectedAttendeeIds, setSelectedAttendeeIds] = useState<Set<string>>(new Set());
   const [manualAttendees, setManualAttendees] = useState<SuggestedAttendee[]>([]);
   const [sendMethod, setSendMethod] = useState<'outlook' | 'teams' | 'api'>('outlook');
+  const [reminder, setReminder] = useState<ReminderOption>('1day');
+  const [customMessage, setCustomMessage] = useState<string | undefined>(undefined);
 
   // Build PSSR link
   const pssrLink = `${window.location.origin}/pssr/${pssrId}`;
@@ -143,12 +146,14 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
     const meetingData: OutlookMeetingData = {
       title: `PSSR Walkdown${pssrTitle ? `: ${pssrTitle}` : ''}`,
       scope: pssrScope,
+      description: customMessage,
       location: location || 'TBD',
       startDateTime,
       endDateTime,
       attendees: attendees.filter(a => a.email).map(a => ({ name: a.name, email: a.email! })),
       pssrId,
       pssrLink,
+      reminder,
     };
 
     // First, create the walkdown event in the database
@@ -203,6 +208,8 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
     setSelectedAttendeeIds(new Set());
     setManualAttendees([]);
     setSendMethod('outlook');
+    setReminder('1day');
+    setCustomMessage(undefined);
     onOpenChange(false);
   };
 
@@ -212,15 +219,15 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] flex flex-col">
-        <DialogHeader>
+      <DialogContent className="max-w-lg max-h-[90vh] flex flex-col overflow-hidden">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <CalendarIcon className="h-5 w-5 text-primary" />
             Schedule PSSR Walkdown
           </DialogTitle>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 pr-4">
+        <div className="flex-1 overflow-y-auto pr-2 -mr-2">
           <div className="space-y-4 py-4">
             {/* Send Method Selection */}
             <div className="space-y-3">
@@ -344,6 +351,27 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
               />
             </div>
 
+            {/* Reminders */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Bell className="h-3.5 w-3.5" />
+                Reminder
+              </Label>
+              <Select value={reminder} onValueChange={(v) => setReminder(v as ReminderOption)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select reminder" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No reminder</SelectItem>
+                  <SelectItem value="15min">15 minutes before</SelectItem>
+                  <SelectItem value="30min">30 minutes before</SelectItem>
+                  <SelectItem value="1hour">1 hour before</SelectItem>
+                  <SelectItem value="1day">1 day before</SelectItem>
+                  <SelectItem value="1week">1 week before</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Invitation Preview */}
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
@@ -357,6 +385,8 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
                 time={scheduledTime}
                 location={location}
                 pssrLink={pssrLink}
+                customMessage={customMessage}
+                onCustomMessageChange={setCustomMessage}
               />
             </div>
 
@@ -462,7 +492,7 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
               )}
             </div>
           </div>
-        </ScrollArea>
+        </div>
 
         <DialogFooter className="pt-4 border-t">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
