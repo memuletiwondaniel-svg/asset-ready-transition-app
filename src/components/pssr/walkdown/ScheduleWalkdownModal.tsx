@@ -40,8 +40,10 @@ interface ScheduleWalkdownModalProps {
 // Wizard step definitions
 const WIZARD_STEPS = [
   { id: 1, title: 'Method', description: 'Choose invitation method' },
-  { id: 2, title: 'Details', description: 'Set date, time & location' },
-  { id: 3, title: 'Attendees', description: 'Select participants' },
+  { id: 2, title: 'Schedule', description: 'Set date & time' },
+  { id: 3, title: 'Location', description: 'Set location & reminder' },
+  { id: 4, title: 'Attendees', description: 'Select participants' },
+  { id: 5, title: 'Review', description: 'Preview & confirm' },
 ];
 
 export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
@@ -445,9 +447,15 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
             </div>
           )}
 
-          {/* Step 2: Meeting Details */}
+          {/* Step 2: Date & Time */}
           {currentStep === 2 && (
             <div className="space-y-5 pb-4">
+              <div className="text-center pb-2">
+                <h3 className="text-sm font-medium text-muted-foreground">
+                  When should the walkdown take place?
+                </h3>
+              </div>
+
               {/* Date */}
               <div className="space-y-2">
                 <Label>Date *</Label>
@@ -490,42 +498,8 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
                 />
               </div>
 
-              {/* Location */}
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  <MapPin className="h-3.5 w-3.5" />
-                  Location / Meeting Point
-                </Label>
-                <Input
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  placeholder="e.g., Main Control Room, Area 4 Gate"
-                />
-              </div>
-
-              {/* Reminders */}
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  <Bell className="h-3.5 w-3.5" />
-                  Reminder
-                </Label>
-                <Select value={reminder} onValueChange={(v) => setReminder(v as ReminderOption)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select reminder" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">No reminder</SelectItem>
-                    <SelectItem value="15min">15 minutes before</SelectItem>
-                    <SelectItem value="30min">30 minutes before</SelectItem>
-                    <SelectItem value="1hour">1 hour before</SelectItem>
-                    <SelectItem value="1day">1 day before</SelectItem>
-                    <SelectItem value="1week">1 week before</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
               {/* Discipline-Specific Walkdown */}
-              <div className="space-y-3">
+              <div className="space-y-3 pt-2">
                 <div className="flex items-start gap-3 p-3 rounded-lg border bg-muted/30">
                   <Checkbox
                     id="discipline-walkdown"
@@ -596,25 +570,58 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
             </div>
           )}
 
-          {/* Step 3: Attendees & Preview */}
+          {/* Step 3: Location & Reminder */}
           {currentStep === 3 && (
             <div className="space-y-5 pb-4">
-              {/* Invitation Preview */}
+              <div className="text-center pb-2">
+                <h3 className="text-sm font-medium text-muted-foreground">
+                  Where will the walkdown take place?
+                </h3>
+              </div>
+
+              {/* Location */}
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
-                  <Mail className="h-3.5 w-3.5" />
-                  Invitation Preview
+                  <MapPin className="h-3.5 w-3.5" />
+                  Location / Meeting Point
                 </Label>
-                <InvitationPreview
-                  subject={meetingTitle}
-                  scope={pssrScope}
-                  date={scheduledDate}
-                  time={scheduledTime}
-                  location={location}
-                  pssrLink={pssrLink}
-                  customMessage={customMessage}
-                  onCustomMessageChange={setCustomMessage}
+                <Input
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  placeholder="e.g., Main Control Room, Area 4 Gate"
                 />
+              </div>
+
+              {/* Reminders */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Bell className="h-3.5 w-3.5" />
+                  Reminder
+                </Label>
+                <Select value={reminder} onValueChange={(v) => setReminder(v as ReminderOption)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select reminder" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No reminder</SelectItem>
+                    <SelectItem value="15min">15 minutes before</SelectItem>
+                    <SelectItem value="30min">30 minutes before</SelectItem>
+                    <SelectItem value="1hour">1 hour before</SelectItem>
+                    <SelectItem value="1day">1 day before</SelectItem>
+                    <SelectItem value="1week">1 week before</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+
+          {/* Step 4: Attendees */}
+          {currentStep === 4 && (
+            <div className="space-y-5 pb-4">
+              <div className="text-center pb-2">
+                <h3 className="text-sm font-medium text-muted-foreground">
+                  Who should attend the walkdown?
+                </h3>
               </div>
 
               {/* Attendees Section */}
@@ -714,6 +721,69 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
                       Use "Add Attendee" to manually add participants.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Step 5: Review & Preview */}
+          {currentStep === 5 && (
+            <div className="space-y-5 pb-4">
+              <div className="text-center pb-2">
+                <h3 className="text-sm font-medium text-muted-foreground">
+                  Review your invitation before sending
+                </h3>
+              </div>
+
+              {/* Invitation Preview */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Mail className="h-3.5 w-3.5" />
+                  Invitation Preview
+                </Label>
+                <InvitationPreview
+                  subject={meetingTitle}
+                  scope={pssrScope}
+                  date={scheduledDate}
+                  time={scheduledTime}
+                  location={location}
+                  pssrLink={pssrLink}
+                  customMessage={customMessage}
+                  onCustomMessageChange={setCustomMessage}
+                />
+              </div>
+
+              {/* Summary */}
+              <div className="space-y-3 border rounded-lg p-4 bg-muted/20">
+                <h4 className="text-sm font-medium">Summary</h4>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Date:</span>
+                    <p className="font-medium">{scheduledDate ? format(scheduledDate, 'PPP') : 'Not set'}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Time:</span>
+                    <p className="font-medium">{scheduledTime || 'Not set'}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Location:</span>
+                    <p className="font-medium">{location || 'TBD'}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Attendees:</span>
+                    <p className="font-medium">{selectedCount} selected</p>
+                  </div>
+                </div>
+                {isDisciplineWalkdown && selectedDisciplineIds.size > 0 && (
+                  <div>
+                    <span className="text-muted-foreground text-sm">Disciplines:</span>
+                    <p className="font-medium text-sm">
+                      {availableDisciplines
+                        .filter(d => selectedDisciplineIds.has(d.id))
+                        .map(d => d.name)
+                        .join(', ')}
                     </p>
                   </div>
                 )}
