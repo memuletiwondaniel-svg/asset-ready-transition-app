@@ -42,10 +42,9 @@ interface ScheduleWalkdownModalProps {
 // Wizard step definitions
 const WIZARD_STEPS = [
   { id: 1, title: 'Method', description: 'Choose invitation method' },
-  { id: 2, title: 'Schedule', description: 'Set date & time' },
-  { id: 3, title: 'Location', description: 'Set location & reminder' },
-  { id: 4, title: 'Attendees', description: 'Select participants' },
-  { id: 5, title: 'Review', description: 'Preview & confirm' },
+  { id: 2, title: 'Details', description: 'Date, time & location' },
+  { id: 3, title: 'Attendees', description: 'Select participants' },
+  { id: 4, title: 'Review', description: 'Preview & confirm' },
 ];
 
 export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
@@ -464,55 +463,92 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
             </div>
           )}
 
-          {/* Step 2: Date & Time */}
+          {/* Step 2: Date, Time, Location & Options */}
           {currentStep === 2 && (
             <div className="space-y-5 pb-4">
               <div className="text-center pb-2">
                 <h3 className="text-sm font-medium text-muted-foreground">
-                  When should the walkdown take place?
+                  Set the walkdown schedule and location
                 </h3>
               </div>
 
-              {/* Date */}
-              <div className="space-y-2">
-                <Label>Date *</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        'w-full justify-start text-left font-normal',
-                        !scheduledDate && 'text-muted-foreground'
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {scheduledDate ? format(scheduledDate, 'PPP') : 'Select date'}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={scheduledDate}
-                      onSelect={setScheduledDate}
-                      initialFocus
-                      disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-                    />
-                  </PopoverContent>
-                </Popover>
+              {/* Date & Time Row */}
+              <div className="grid grid-cols-2 gap-4">
+                {/* Date */}
+                <div className="space-y-2">
+                  <Label>Date *</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          'w-full justify-start text-left font-normal',
+                          !scheduledDate && 'text-muted-foreground'
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {scheduledDate ? format(scheduledDate, 'PPP') : 'Select date'}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={scheduledDate}
+                        onSelect={setScheduledDate}
+                        initialFocus
+                        disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                {/* Time */}
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <Clock className="h-3.5 w-3.5" />
+                    Time
+                  </Label>
+                  <Input
+                    type="time"
+                    value={scheduledTime}
+                    onChange={(e) => setScheduledTime(e.target.value)}
+                    placeholder="Select time"
+                  />
+                </div>
               </div>
 
-              {/* Time */}
+              {/* Location */}
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
-                  <Clock className="h-3.5 w-3.5" />
-                  Time
+                  <MapPin className="h-3.5 w-3.5" />
+                  Location / Meeting Point
                 </Label>
                 <Input
-                  type="time"
-                  value={scheduledTime}
-                  onChange={(e) => setScheduledTime(e.target.value)}
-                  placeholder="Select time"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  placeholder="e.g., Main Control Room, Area 4 Gate"
                 />
+              </div>
+
+              {/* Reminders */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Bell className="h-3.5 w-3.5" />
+                  Reminder
+                </Label>
+                <Select value={reminder} onValueChange={(v) => setReminder(v as ReminderOption)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select reminder" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No reminder</SelectItem>
+                    <SelectItem value="15min">15 minutes before</SelectItem>
+                    <SelectItem value="30min">30 minutes before</SelectItem>
+                    <SelectItem value="1hour">1 hour before</SelectItem>
+                    <SelectItem value="1day">1 day before</SelectItem>
+                    <SelectItem value="1week">1 week before</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Discipline-Specific Walkdown */}
@@ -587,53 +623,8 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
             </div>
           )}
 
-          {/* Step 3: Location & Reminder */}
+          {/* Step 3: Attendees */}
           {currentStep === 3 && (
-            <div className="space-y-5 pb-4">
-              <div className="text-center pb-2">
-                <h3 className="text-sm font-medium text-muted-foreground">
-                  Where will the walkdown take place?
-                </h3>
-              </div>
-
-              {/* Location */}
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  <MapPin className="h-3.5 w-3.5" />
-                  Location / Meeting Point
-                </Label>
-                <Input
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  placeholder="e.g., Main Control Room, Area 4 Gate"
-                />
-              </div>
-
-              {/* Reminders */}
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  <Bell className="h-3.5 w-3.5" />
-                  Reminder
-                </Label>
-                <Select value={reminder} onValueChange={(v) => setReminder(v as ReminderOption)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select reminder" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">No reminder</SelectItem>
-                    <SelectItem value="15min">15 minutes before</SelectItem>
-                    <SelectItem value="30min">30 minutes before</SelectItem>
-                    <SelectItem value="1hour">1 hour before</SelectItem>
-                    <SelectItem value="1day">1 day before</SelectItem>
-                    <SelectItem value="1week">1 week before</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          )}
-
-          {/* Step 4: Attendees */}
-          {currentStep === 4 && (
             <div className="space-y-5 pb-4">
               <div className="text-center pb-2">
                 <h3 className="text-sm font-medium text-muted-foreground">
@@ -745,8 +736,8 @@ export const ScheduleWalkdownModal: React.FC<ScheduleWalkdownModalProps> = ({
             </div>
           )}
 
-          {/* Step 5: Review & Preview */}
-          {currentStep === 5 && (
+          {/* Step 4: Review & Preview */}
+          {currentStep === 4 && (
             <div className="space-y-5 pb-4">
               <div className="text-center pb-2">
                 <h3 className="text-sm font-medium text-muted-foreground">
