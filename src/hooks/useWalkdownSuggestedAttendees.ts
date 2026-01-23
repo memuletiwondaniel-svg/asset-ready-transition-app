@@ -152,6 +152,7 @@ export const useWalkdownSuggestedAttendees = (pssrId: string | undefined) => {
             suggestedAttendees.push({
               id: profile.user_id,
               name: profile.full_name,
+              email: profile.email,
               role: profile.position || profile.role || resolvedRole,
               avatar_url: profile.avatar_url,
               source,
