@@ -57,14 +57,14 @@ interface PSSRTableViewProps {
 
 const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails, pinnedPSSRs = [], onTogglePin }) => {
   const [columns, setColumns] = useState<Column[]>([
-    { id: 'projectId', label: 'Project ID', visible: true, width: 120 },
+    { id: 'projectId', label: 'Project ID', visible: true, width: 100 },
     { id: 'projectName', label: 'Project Name', visible: true, width: 250 },
     { id: 'asset', label: 'Plant/Asset', visible: true, width: 150 },
     { id: 'pssrLead', label: 'PSSR Lead', visible: true, width: 160 },
     { id: 'progress', label: 'Progress', visible: true, width: 140 },
-    { id: 'status', label: 'Status', visible: true, width: 180 },
-    { id: 'created', label: 'Created', visible: true, width: 120 },
-    { id: 'favorite', label: '', visible: true, width: 50 },
+    { id: 'status', label: 'Status', visible: true, width: 110 },
+    { id: 'created', label: 'Created', visible: true, width: 90 },
+    { id: 'favorite', label: '', visible: true, width: 44 },
   ]);
 
   // Use CSS hover (group-hover) for the favorite icon to avoid hover state desync.
@@ -148,7 +148,10 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails, pin
     }
   }, [resizingColumn, resizeStart]);
 
+  // Filter visible columns, excluding 'favorite' from user toggle (always visible)
   const visibleColumns = columns.filter(col => col.visible);
+  // Columns available for user toggle (exclude favorite)
+  const toggleableColumns = columns.filter(col => col.id !== 'favorite');
 
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { bg: string; text: string; border: string }> = {
@@ -285,7 +288,7 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails, pin
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56 bg-background/95 backdrop-blur-md border-border/50 shadow-lg z-50">
-            {columns.map(column => (
+            {toggleableColumns.map(column => (
               <DropdownMenuCheckboxItem
                 key={column.id}
                 checked={column.visible}
@@ -315,8 +318,8 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails, pin
                   className="relative group cursor-move select-none h-11 px-4"
                 >
                   <div className="flex items-center gap-2">
-                    <GripVertical className="h-3.5 w-3.5 text-muted-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{column.label}</span>
+                    <GripVertical className="h-3.5 w-3.5 text-muted-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">{column.label}</span>
                   </div>
                   {/* Resize Handle */}
                   <div
