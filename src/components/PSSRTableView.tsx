@@ -14,7 +14,7 @@ import {
   DropdownMenuContent, 
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
-import { Settings, GripVertical, Clock } from 'lucide-react';
+import { Settings, GripVertical, Star } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
@@ -51,9 +51,11 @@ interface PSSR {
 interface PSSRTableViewProps {
   pssrs: PSSR[];
   onViewDetails: (pssrId: string) => void;
+  pinnedPSSRs?: string[];
+  onTogglePin?: (pssrId: string) => void;
 }
 
-const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails }) => {
+const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails, pinnedPSSRs = [], onTogglePin }) => {
   const [columns, setColumns] = useState<Column[]>([
     { id: 'projectId', label: 'Project ID', visible: true, width: 120 },
     { id: 'projectName', label: 'Project Name', visible: true, width: 250 },
@@ -62,7 +64,21 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails }) =
     { id: 'progress', label: 'Progress', visible: true, width: 140 },
     { id: 'status', label: 'Status', visible: true, width: 180 },
     { id: 'created', label: 'Created', visible: true, width: 120 },
+    { id: 'favorite', label: '', visible: true, width: 50 },
   ]);
+
+  const [hoveredRow, setHoveredRow] = useState<string | null>(null);
+
+  // Sort PSSRs with favorites at the top
+  const sortedPSSRs = React.useMemo(() => {
+    return [...pssrs].sort((a, b) => {
+      const aIsFavorite = pinnedPSSRs.includes(a.id);
+      const bIsFavorite = pinnedPSSRs.includes(b.id);
+      if (aIsFavorite && !bIsFavorite) return -1;
+      if (!aIsFavorite && bIsFavorite) return 1;
+      return 0;
+    });
+  }, [pssrs, pinnedPSSRs]);
 
   const [draggedColumn, setDraggedColumn] = useState<string | null>(null);
   const [resizingColumn, setResizingColumn] = useState<string | null>(null);
@@ -229,6 +245,30 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails }) =
         );
       case 'created':
         return <div className="text-sm text-muted-foreground">{new Date(pssr.created).toLocaleDateString()}</div>;
+      case 'favorite':
+        const isFavorite = pinnedPSSRs.includes(pssr.id);
+        const isHovered = hoveredRow === pssr.id;
+        const showIcon = isFavorite || isHovered;
+        return (
+          <div 
+            className="flex items-center justify-center"
+            onClick={(e) => {
+              e.stopPropagation();
+              onTogglePin?.(pssr.id);
+            }}
+          >
+            {showIcon && (
+              <Star 
+                className={cn(
+                  "h-4 w-4 cursor-pointer transition-all",
+                  isFavorite 
+                    ? "fill-amber-400 text-amber-400" 
+                    : "text-muted-foreground/50 hover:text-amber-400"
+                )}
+              />
+            )}
+          </div>
+        );
       default:
         return null;
     }
@@ -289,15 +329,18 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails }) =
             </TableRow>
           </TableHeader>
           <TableBody>
-            {pssrs.map((pssr, index) => (
+            {sortedPSSRs.map((pssr, index) => (
               <TableRow
                 key={pssr.id}
                 className={cn(
                   "group cursor-pointer transition-all duration-150 border-b border-border/20 last:border-0",
                   "hover:bg-primary/5 hover:shadow-sm",
-                  index % 2 === 0 ? "bg-background" : "bg-muted/10"
+                  index % 2 === 0 ? "bg-background" : "bg-muted/10",
+                  pinnedPSSRs.includes(pssr.id) && "bg-amber-50/30 dark:bg-amber-950/20"
                 )}
                 onClick={() => onViewDetails(pssr.id)}
+                onMouseEnter={() => setHoveredRow(pssr.id)}
+                onMouseLeave={() => setHoveredRow(null)}
               >
                 {visibleColumns.map((column) => (
                   <TableCell 
