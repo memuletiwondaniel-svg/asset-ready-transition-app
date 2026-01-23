@@ -672,7 +672,17 @@ const PSSRConfigurationMatrix: React.FC = () => {
         <CardHeader className="border-b border-border/40 bg-gradient-to-r from-muted/20 to-muted/5 pb-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <CardTitle className="text-2xl font-semibold">PSSR Templates</CardTitle>
+              <div className="flex items-center gap-4">
+                <CardTitle className="text-2xl font-semibold">PSSR Templates</CardTitle>
+                <Button 
+                  onClick={() => setShowAddReasonWizard(true)}
+                  className="fluent-button"
+                  size="sm"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Template
+                </Button>
+              </div>
               {/* Quick Stats - Clickable filters */}
               <div className="flex items-center gap-3 mt-2 text-sm">
                 <button
