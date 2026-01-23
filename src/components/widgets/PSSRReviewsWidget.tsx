@@ -1,15 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { WidgetCard } from './WidgetCard';
-import { LayoutGrid, Table as TableIcon, Columns3, Plus } from 'lucide-react';
+import { Table as TableIcon, Columns3, Plus } from 'lucide-react';
 import PSSRAdvancedSearch from '../PSSRAdvancedSearch';
 import PSSRFilters from '../PSSRFilters';
 import PSSRTableView from '../PSSRTableView';
 import PSSRKanbanBoard from '../PSSRKanbanBoard';
-import DraggablePSSRCard from '../DraggablePSSRCard';
 import { PSSRQuickStatsBar } from './PSSRQuickStatsBar';
 import { Button } from '@/components/ui/button';
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent, DragOverlay } from '@dnd-kit/core';
-import { SortableContext, arrayMove, verticalListSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 
 interface PSSRReviewsWidgetProps {
   pssrs: any[];
@@ -17,8 +14,8 @@ interface PSSRReviewsWidgetProps {
   searchTerm: string;
   onSearchChange: (value: string) => void;
   onSelectPSSR: (pssrId: string) => void;
-  viewMode: 'card' | 'table' | 'kanban';
-  onViewModeChange: (mode: 'card' | 'table' | 'kanban') => void;
+  viewMode: 'table' | 'kanban';
+  onViewModeChange: (mode: 'table' | 'kanban') => void;
   filters: any;
   onToggleFilter: (category: string, value: string) => void;
   onDateChange: (field: string, value: string) => void;
@@ -91,19 +88,7 @@ export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
   onCreateNew,
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
-  const [activeId, setActiveId] = useState<string | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
 
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current;
@@ -116,32 +101,6 @@ export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
     scrollContainer.addEventListener('scroll', handleScroll);
     return () => scrollContainer.removeEventListener('scroll', handleScroll);
   }, []);
-
-  const handleDragStart = (event: DragEndEvent) => {
-    setActiveId(event.active.id as string);
-  };
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-
-    if (over && active.id !== over.id && onPSSROrderChange) {
-      const oldIndex = filteredPSSRs.findIndex(p => p.id === active.id);
-      const newIndex = filteredPSSRs.findIndex(p => p.id === over.id);
-
-      if (oldIndex !== -1 && newIndex !== -1) {
-        const reorderedPSSRs = arrayMove(filteredPSSRs, oldIndex, newIndex);
-        onPSSROrderChange(reorderedPSSRs.map(p => p.id));
-      }
-    }
-
-    setActiveId(null);
-  };
-
-  const handleDragCancel = () => {
-    setActiveId(null);
-  };
-
-  const activePSSR = filteredPSSRs.find(p => p.id === activeId);
 
   return (
     <WidgetCard
@@ -189,12 +148,12 @@ export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
             {/* View Mode Selector */}
             <div className="shrink-0 inline-flex items-center gap-0.5 p-0.5 rounded-lg bg-muted border border-border/50">
               <button
-                onClick={() => onViewModeChange('card')}
+                onClick={() => onViewModeChange('table')}
                 className={`px-2 py-1 rounded-md text-xs font-medium transition-all ${
-                  viewMode === 'card' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                  viewMode === 'table' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                <LayoutGrid className="h-3.5 w-3.5" />
+                <TableIcon className="h-3.5 w-3.5" />
               </button>
               <button
                 onClick={() => onViewModeChange('kanban')}
@@ -203,14 +162,6 @@ export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
                 }`}
               >
                 <Columns3 className="h-3.5 w-3.5" />
-              </button>
-              <button
-                onClick={() => onViewModeChange('table')}
-                className={`px-2 py-1 rounded-md text-xs font-medium transition-all ${
-                  viewMode === 'table' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                <TableIcon className="h-3.5 w-3.5" />
               </button>
             </div>
 
@@ -249,9 +200,7 @@ export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
           ref={scrollContainerRef}
           className="flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent pr-1 pt-4 w-full min-w-full"
         >
-          {viewMode === 'table' ? (
-            <PSSRTableView pssrs={filteredPSSRs} onViewDetails={onViewDetails} />
-          ) : viewMode === 'kanban' ? (
+          {viewMode === 'kanban' ? (
             <PSSRKanbanBoard
               pssrs={filteredPSSRs}
               onViewDetails={onViewDetails}
@@ -264,53 +213,7 @@ export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
               onStatusChange={onStatusChange}
             />
           ) : (
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragStart={handleDragStart}
-              onDragEnd={handleDragEnd}
-              onDragCancel={handleDragCancel}
-            >
-              <SortableContext
-                items={filteredPSSRs.map(p => p.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                <div className="space-y-3">
-                  {filteredPSSRs.map((pssr, idx) => (
-                    <DraggablePSSRCard
-                      key={pssr.id}
-                      pssr={pssr}
-                      index={idx}
-                      onViewDetails={onViewDetails}
-                      getPriorityColor={getPriorityColor}
-                      getStatusIcon={getStatusIcon}
-                      getTeamStatusColor={getTeamStatusColor}
-                      getRiskLevelColor={getRiskLevelColor}
-                      isPinned={pinnedPSSRs.includes(pssr.id)}
-                      onTogglePin={onTogglePin}
-                    />
-                  ))}
-                </div>
-              </SortableContext>
-
-              <DragOverlay>
-                {activeId && activePSSR ? (
-                  <div className="opacity-80 rotate-2 scale-105">
-                    <DraggablePSSRCard
-                      pssr={activePSSR}
-                      index={0}
-                      onViewDetails={onViewDetails}
-                      getPriorityColor={getPriorityColor}
-                      getStatusIcon={getStatusIcon}
-                      getTeamStatusColor={getTeamStatusColor}
-                      getRiskLevelColor={getRiskLevelColor}
-                      isPinned={pinnedPSSRs.includes(activePSSR.id)}
-                      onTogglePin={onTogglePin}
-                    />
-                  </div>
-                ) : null}
-              </DragOverlay>
-            </DndContext>
+            <PSSRTableView pssrs={filteredPSSRs} onViewDetails={onViewDetails} />
           )}
         </div>
       </div>
