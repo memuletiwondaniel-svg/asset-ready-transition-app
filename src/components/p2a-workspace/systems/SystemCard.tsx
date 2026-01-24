@@ -15,15 +15,19 @@ interface SystemCardProps {
   isDragging?: boolean;
 }
 
-const getStatusColor = (percentage: number, status: string) => {
-  if (status === 'RFO' || status === 'RFSU') return 'bg-emerald-500';
-  if (percentage >= 50) return 'bg-amber-500';
-  return 'bg-slate-400';
+// For HC systems: completion means RFSU, for non-HC: completion means RFO
+const getCompletionStatus = (system: P2ASystem) => {
+  return system.is_hydrocarbon ? 'RFSU' : 'RFO';
 };
 
-const getCardBackground = (percentage: number, status: string) => {
-  if (status === 'RFO' || status === 'RFSU') return 'border-emerald-500/30 bg-emerald-500/5';
-  if (percentage >= 50) return 'border-amber-500/30 bg-amber-500/5';
+const isComplete = (system: P2ASystem) => {
+  const targetStatus = getCompletionStatus(system);
+  return system.completion_status === targetStatus;
+};
+
+const getCardBackground = (system: P2ASystem) => {
+  if (isComplete(system)) return 'border-emerald-500/30 bg-emerald-500/5';
+  if (system.completion_percentage >= 50) return 'border-amber-500/30 bg-amber-500/5';
   return 'border-border bg-card';
 };
 
@@ -33,8 +37,8 @@ export const SystemCard: React.FC<SystemCardProps> = ({
   compact = false,
   isDragging = false,
 }) => {
-  const statusColor = getStatusColor(system.completion_percentage, system.completion_status);
-  const cardBg = getCardBackground(system.completion_percentage, system.completion_status);
+  const cardBg = getCardBackground(system);
+  const complete = isComplete(system);
 
   return (
     <Card 
@@ -85,7 +89,7 @@ export const SystemCard: React.FC<SystemCardProps> = ({
               />
               <span className={cn(
                 'text-[8px] font-medium shrink-0 w-5 text-right',
-                system.completion_percentage >= 100 ? 'text-emerald-500' : 'text-muted-foreground'
+                complete ? 'text-emerald-500' : 'text-muted-foreground'
               )}>
                 {system.completion_percentage}%
               </span>

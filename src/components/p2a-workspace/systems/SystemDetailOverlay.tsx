@@ -225,29 +225,33 @@ export const SystemDetailOverlay: React.FC<SystemDetailOverlayProps> = ({
                 <TrendingUp className="w-4 h-4 text-muted-foreground" />
                 <span className="text-sm text-muted-foreground">Status</span>
               </div>
-              {isEditing ? (
-                <Select
-                  value={editFormData.completion_status}
-                  onValueChange={(value) => setEditFormData({ 
-                    ...editFormData, 
-                    completion_status: value as P2ASystem['completion_status'] 
-                  })}
-                >
-                  <SelectTrigger className="w-32 h-8 text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="NOT_STARTED">Not Started</SelectItem>
-                    <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-                    <SelectItem value="RFO">RFO</SelectItem>
+            {isEditing ? (
+              <Select
+                value={editFormData.completion_status}
+                onValueChange={(value) => setEditFormData({ 
+                  ...editFormData, 
+                  completion_status: value as P2ASystem['completion_status'] 
+                })}
+              >
+                <SelectTrigger className="w-32 h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="NOT_STARTED">Not Started</SelectItem>
+                  <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+                  {/* HC systems use RFSU, non-HC use RFO */}
+                  {editFormData.is_hydrocarbon ? (
                     <SelectItem value="RFSU">RFSU</SelectItem>
-                  </SelectContent>
-                </Select>
-              ) : (
-                <Badge className={cn('text-white text-xs', getStatusColor(system.completion_status))}>
-                  {system.completion_status.replace('_', ' ')}
-                </Badge>
-              )}
+                  ) : (
+                    <SelectItem value="RFO">RFO</SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Badge className={cn('text-white text-xs', getStatusColor(system.completion_status))}>
+                {system.completion_status.replace('_', ' ')}
+              </Badge>
+            )}
             </div>
 
             {/* Completion Slider (Edit mode) */}
@@ -386,47 +390,38 @@ export const SystemDetailOverlay: React.FC<SystemDetailOverlayProps> = ({
 
             <Separator />
 
-            {/* Target Dates */}
+            {/* Target Date - shows RFO for non-HC, RFSU for HC */}
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Calendar className="w-4 h-4" />
-                <span>Target Dates</span>
+                <span>Target {displayData.is_hydrocarbon ? 'RFSU' : 'RFO'} Date</span>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">RFO</Label>
-                  {isEditing ? (
-                    <Input
-                      type="date"
-                      value={editFormData.target_rfo_date}
-                      onChange={(e) => setEditFormData({ ...editFormData, target_rfo_date: e.target.value })}
-                      className="h-9"
-                    />
-                  ) : (
-                    <div className="text-sm font-medium">
-                      {system.target_rfo_date 
-                        ? format(new Date(system.target_rfo_date), 'dd MMM yyyy')
-                        : '—'}
-                    </div>
-                  )}
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">RFSU</Label>
-                  {isEditing ? (
-                    <Input
-                      type="date"
-                      value={editFormData.target_rfsu_date}
-                      onChange={(e) => setEditFormData({ ...editFormData, target_rfsu_date: e.target.value })}
-                      className="h-9"
-                    />
-                  ) : (
-                    <div className="text-sm font-medium">
-                      {system.target_rfsu_date 
-                        ? format(new Date(system.target_rfsu_date), 'dd MMM yyyy')
-                        : '—'}
-                    </div>
-                  )}
-                </div>
+              <div className="space-y-1.5">
+                {isEditing ? (
+                  <Input
+                    type="date"
+                    value={editFormData.is_hydrocarbon ? editFormData.target_rfsu_date : editFormData.target_rfo_date}
+                    onChange={(e) => {
+                      if (editFormData.is_hydrocarbon) {
+                        setEditFormData({ ...editFormData, target_rfsu_date: e.target.value, target_rfo_date: '' });
+                      } else {
+                        setEditFormData({ ...editFormData, target_rfo_date: e.target.value, target_rfsu_date: '' });
+                      }
+                    }}
+                    className="h-9"
+                  />
+                ) : (
+                  <div className="text-sm font-medium">
+                    {system.is_hydrocarbon 
+                      ? (system.target_rfsu_date 
+                          ? format(new Date(system.target_rfsu_date), 'dd MMM yyyy')
+                          : '—')
+                      : (system.target_rfo_date 
+                          ? format(new Date(system.target_rfo_date), 'dd MMM yyyy')
+                          : '—')
+                    }
+                  </div>
+                )}
               </div>
             </div>
           </div>
