@@ -118,28 +118,24 @@ export const EmptyWorkspaceState: React.FC<EmptyWorkspaceStateProps> = ({
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="project-code">Project Code</Label>
-                <Input
-                  id="project-code"
-                  value={formData.project_code}
-                  onChange={(e) => setFormData({ ...formData, project_code: e.target.value })}
-                  placeholder="e.g., DP300"
-                />
-                <p className="text-xs text-muted-foreground">Used in VCR codes</p>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="plant-code">Plant Code</Label>
-                <Input
-                  id="plant-code"
-                  value={formData.plant_code}
-                  onChange={(e) => setFormData({ ...formData, plant_code: e.target.value })}
-                  placeholder="e.g., N003"
-                />
-                <p className="text-xs text-muted-foreground">Used in System IDs</p>
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="plant-code">Plant Code</Label>
+              <Input
+                id="plant-code"
+                value={formData.plant_code}
+                onChange={(e) => setFormData({ ...formData, plant_code: e.target.value })}
+                placeholder="e.g., N003"
+              />
+              <p className="text-xs text-muted-foreground">Used in System IDs (e.g., N003-{projectNumber || 'XXX'}-100)</p>
             </div>
+
+            {projectNumber && (
+              <div className="p-3 bg-muted/50 rounded-lg">
+                <div className="text-xs text-muted-foreground mb-1">Project Code (from project)</div>
+                <div className="font-mono text-sm font-medium">{projectNumber}</div>
+                <p className="text-xs text-muted-foreground mt-1">Used in VCR codes (e.g., VCR-{projectNumber}-001)</p>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="description">Description (optional)</Label>
