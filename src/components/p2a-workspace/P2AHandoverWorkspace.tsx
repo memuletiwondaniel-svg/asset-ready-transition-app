@@ -38,8 +38,10 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
     isLoading: systemsLoading,
     addSystem,
     addSystemsBulk,
+    updateSystem,
     isAdding,
     isImporting,
+    isUpdating,
   } = useP2ASystems(plan?.id || '');
   const { milestones, addMilestone } = useP2AMilestones(plan?.id || '');
   const { phases, isLoading: phasesLoading, addPhase, deletePhase, isAdding: isAddingPhase } = useP2APhases(plan?.id || '');
@@ -166,8 +168,10 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
           projectCode={plan.project_code}
           onAddSystem={addSystem}
           onImportSystems={addSystemsBulk}
+          onUpdateSystem={(id, updates) => updateSystem({ id, updates })}
           isAdding={isAdding}
           isImporting={isImporting}
+          isUpdating={isUpdating}
           isCollapsed={systemsPanelCollapsed}
           onToggleCollapse={() => setSystemsPanelCollapsed(!systemsPanelCollapsed)}
         />

@@ -30,8 +30,10 @@ interface SystemsPanelProps {
   projectCode?: string;
   onAddSystem: (system: any) => void;
   onImportSystems: (systems: any[]) => void;
+  onUpdateSystem?: (id: string, updates: Partial<P2ASystem>) => void;
   isAdding?: boolean;
   isImporting?: boolean;
+  isUpdating?: boolean;
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
 }
@@ -45,8 +47,10 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
   projectCode,
   onAddSystem,
   onImportSystems,
+  onUpdateSystem,
   isAdding,
   isImporting,
+  isUpdating,
   isCollapsed = false,
   onToggleCollapse,
 }) => {
@@ -244,6 +248,8 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
           system={selectedSystem}
           open={!!selectedSystem}
           onOpenChange={(open) => !open && setSelectedSystem(null)}
+          onUpdateSystem={onUpdateSystem}
+          isUpdating={isUpdating}
         />
       )}
     </>
