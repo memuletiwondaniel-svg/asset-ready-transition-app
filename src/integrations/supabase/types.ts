@@ -2810,6 +2810,148 @@ export type Database = {
           },
         ]
       }
+      p2a_handover_plans: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          name: string
+          ora_plan_id: string
+          plant_code: string | null
+          project_code: string | null
+          status: Database["public"]["Enums"]["p2a_plan_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          ora_plan_id: string
+          plant_code?: string | null
+          project_code?: string | null
+          status?: Database["public"]["Enums"]["p2a_plan_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          ora_plan_id?: string
+          plant_code?: string | null
+          project_code?: string | null
+          status?: Database["public"]["Enums"]["p2a_plan_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_handover_plans_ora_plan_id_fkey"
+            columns: ["ora_plan_id"]
+            isOneToOne: false
+            referencedRelation: "orp_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      p2a_handover_point_systems: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          handover_point_id: string
+          id: string
+          system_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          handover_point_id: string
+          id?: string
+          system_id: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          handover_point_id?: string
+          id?: string
+          system_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_handover_point_systems_handover_point_id_fkey"
+            columns: ["handover_point_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_handover_points"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_handover_point_systems_system_id_fkey"
+            columns: ["system_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_systems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      p2a_handover_points: {
+        Row: {
+          completion_date: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          name: string
+          phase_id: string
+          position_x: number
+          position_y: number
+          status: Database["public"]["Enums"]["p2a_handover_point_status"]
+          target_date: string | null
+          updated_at: string
+          vcr_code: string
+        }
+        Insert: {
+          completion_date?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          phase_id: string
+          position_x?: number
+          position_y?: number
+          status?: Database["public"]["Enums"]["p2a_handover_point_status"]
+          target_date?: string | null
+          updated_at?: string
+          vcr_code: string
+        }
+        Update: {
+          completion_date?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          phase_id?: string
+          position_x?: number
+          position_y?: number
+          status?: Database["public"]["Enums"]["p2a_handover_point_status"]
+          target_date?: string | null
+          updated_at?: string
+          vcr_code?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_handover_points_phase_id_fkey"
+            columns: ["phase_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_project_phases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       p2a_handover_prerequisites: {
         Row: {
           comments: string | null
@@ -3043,6 +3185,265 @@ export type Database = {
           },
         ]
       }
+      p2a_project_milestones: {
+        Row: {
+          actual_date: string | null
+          code: string | null
+          created_at: string
+          display_order: number
+          external_id: string | null
+          handover_plan_id: string
+          id: string
+          metadata: Json | null
+          name: string
+          source: Database["public"]["Enums"]["p2a_milestone_source"]
+          target_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          actual_date?: string | null
+          code?: string | null
+          created_at?: string
+          display_order?: number
+          external_id?: string | null
+          handover_plan_id: string
+          id?: string
+          metadata?: Json | null
+          name: string
+          source?: Database["public"]["Enums"]["p2a_milestone_source"]
+          target_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          actual_date?: string | null
+          code?: string | null
+          created_at?: string
+          display_order?: number
+          external_id?: string | null
+          handover_plan_id?: string
+          id?: string
+          metadata?: Json | null
+          name?: string
+          source?: Database["public"]["Enums"]["p2a_milestone_source"]
+          target_date?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_project_milestones_handover_plan_id_fkey"
+            columns: ["handover_plan_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_handover_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      p2a_project_phases: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          display_order: number
+          end_milestone_id: string | null
+          handover_plan_id: string
+          id: string
+          name: string
+          start_milestone_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          end_milestone_id?: string | null
+          handover_plan_id: string
+          id?: string
+          name: string
+          start_milestone_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          end_milestone_id?: string | null
+          handover_plan_id?: string
+          id?: string
+          name?: string
+          start_milestone_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_project_phases_end_milestone_id_fkey"
+            columns: ["end_milestone_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_project_milestones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_project_phases_handover_plan_id_fkey"
+            columns: ["handover_plan_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_handover_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_project_phases_start_milestone_id_fkey"
+            columns: ["start_milestone_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_project_milestones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      p2a_subsystems: {
+        Row: {
+          comm_status: Database["public"]["Enums"]["p2a_subsystem_status"]
+          completion_percentage: number
+          created_at: string
+          display_order: number | null
+          id: string
+          itr_count: number
+          mc_status: Database["public"]["Enums"]["p2a_subsystem_status"]
+          metadata: Json | null
+          name: string
+          pcc_status: Database["public"]["Enums"]["p2a_subsystem_status"]
+          punchlist_a_count: number
+          punchlist_b_count: number
+          subsystem_id: string
+          system_id: string
+          updated_at: string
+        }
+        Insert: {
+          comm_status?: Database["public"]["Enums"]["p2a_subsystem_status"]
+          completion_percentage?: number
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          itr_count?: number
+          mc_status?: Database["public"]["Enums"]["p2a_subsystem_status"]
+          metadata?: Json | null
+          name: string
+          pcc_status?: Database["public"]["Enums"]["p2a_subsystem_status"]
+          punchlist_a_count?: number
+          punchlist_b_count?: number
+          subsystem_id: string
+          system_id: string
+          updated_at?: string
+        }
+        Update: {
+          comm_status?: Database["public"]["Enums"]["p2a_subsystem_status"]
+          completion_percentage?: number
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          itr_count?: number
+          mc_status?: Database["public"]["Enums"]["p2a_subsystem_status"]
+          metadata?: Json | null
+          name?: string
+          pcc_status?: Database["public"]["Enums"]["p2a_subsystem_status"]
+          punchlist_a_count?: number
+          punchlist_b_count?: number
+          subsystem_id?: string
+          system_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_subsystems_system_id_fkey"
+            columns: ["system_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_systems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      p2a_systems: {
+        Row: {
+          actual_rfo_date: string | null
+          actual_rfsu_date: string | null
+          completion_percentage: number
+          completion_status: Database["public"]["Enums"]["p2a_system_completion_status"]
+          created_at: string
+          display_order: number | null
+          external_id: string | null
+          handover_plan_id: string
+          id: string
+          is_hydrocarbon: boolean
+          itr_a_count: number
+          itr_b_count: number
+          itr_total_count: number
+          metadata: Json | null
+          name: string
+          punchlist_a_count: number
+          punchlist_b_count: number
+          source_type: Database["public"]["Enums"]["p2a_system_source_type"]
+          system_id: string
+          target_rfo_date: string | null
+          target_rfsu_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          actual_rfo_date?: string | null
+          actual_rfsu_date?: string | null
+          completion_percentage?: number
+          completion_status?: Database["public"]["Enums"]["p2a_system_completion_status"]
+          created_at?: string
+          display_order?: number | null
+          external_id?: string | null
+          handover_plan_id: string
+          id?: string
+          is_hydrocarbon?: boolean
+          itr_a_count?: number
+          itr_b_count?: number
+          itr_total_count?: number
+          metadata?: Json | null
+          name: string
+          punchlist_a_count?: number
+          punchlist_b_count?: number
+          source_type?: Database["public"]["Enums"]["p2a_system_source_type"]
+          system_id: string
+          target_rfo_date?: string | null
+          target_rfsu_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          actual_rfo_date?: string | null
+          actual_rfsu_date?: string | null
+          completion_percentage?: number
+          completion_status?: Database["public"]["Enums"]["p2a_system_completion_status"]
+          created_at?: string
+          display_order?: number | null
+          external_id?: string | null
+          handover_plan_id?: string
+          id?: string
+          is_hydrocarbon?: boolean
+          itr_a_count?: number
+          itr_b_count?: number
+          itr_total_count?: number
+          metadata?: Json | null
+          name?: string
+          punchlist_a_count?: number
+          punchlist_b_count?: number
+          source_type?: Database["public"]["Enums"]["p2a_system_source_type"]
+          system_id?: string
+          target_rfo_date?: string | null
+          target_rfsu_date?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_systems_handover_plan_id_fkey"
+            columns: ["handover_plan_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_handover_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       p2a_user_presence: {
         Row: {
           deliverable_id: string | null
@@ -3081,6 +3482,190 @@ export type Database = {
             columns: ["handover_id"]
             isOneToOne: false
             referencedRelation: "p2a_handovers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      p2a_vcr_evidence: {
+        Row: {
+          created_at: string
+          description: string | null
+          file_name: string
+          file_path: string
+          file_size: number | null
+          file_type: string | null
+          id: string
+          uploaded_by: string | null
+          vcr_prerequisite_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          uploaded_by?: string | null
+          vcr_prerequisite_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          uploaded_by?: string | null
+          vcr_prerequisite_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_vcr_evidence_vcr_prerequisite_id_fkey"
+            columns: ["vcr_prerequisite_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_vcr_prerequisites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      p2a_vcr_prerequisites: {
+        Row: {
+          comments: string | null
+          created_at: string
+          delivering_party_id: string | null
+          delivering_party_name: string | null
+          description: string | null
+          display_order: number
+          evidence_links: Json | null
+          handover_point_id: string
+          id: string
+          pac_prerequisite_id: string | null
+          receiving_party_id: string | null
+          receiving_party_name: string | null
+          reviewed_at: string | null
+          status: Database["public"]["Enums"]["p2a_vcr_prerequisite_status"]
+          submitted_at: string | null
+          summary: string
+          updated_at: string
+        }
+        Insert: {
+          comments?: string | null
+          created_at?: string
+          delivering_party_id?: string | null
+          delivering_party_name?: string | null
+          description?: string | null
+          display_order?: number
+          evidence_links?: Json | null
+          handover_point_id: string
+          id?: string
+          pac_prerequisite_id?: string | null
+          receiving_party_id?: string | null
+          receiving_party_name?: string | null
+          reviewed_at?: string | null
+          status?: Database["public"]["Enums"]["p2a_vcr_prerequisite_status"]
+          submitted_at?: string | null
+          summary: string
+          updated_at?: string
+        }
+        Update: {
+          comments?: string | null
+          created_at?: string
+          delivering_party_id?: string | null
+          delivering_party_name?: string | null
+          description?: string | null
+          display_order?: number
+          evidence_links?: Json | null
+          handover_point_id?: string
+          id?: string
+          pac_prerequisite_id?: string | null
+          receiving_party_id?: string | null
+          receiving_party_name?: string | null
+          reviewed_at?: string | null
+          status?: Database["public"]["Enums"]["p2a_vcr_prerequisite_status"]
+          submitted_at?: string | null
+          summary?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_vcr_prerequisites_handover_point_id_fkey"
+            columns: ["handover_point_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_handover_points"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_vcr_prerequisites_pac_prerequisite_id_fkey"
+            columns: ["pac_prerequisite_id"]
+            isOneToOne: false
+            referencedRelation: "pac_prerequisites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      p2a_vcr_qualifications: {
+        Row: {
+          action_owner_id: string | null
+          action_owner_name: string | null
+          created_at: string
+          follow_up_action: string | null
+          id: string
+          mitigation: string
+          reason: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reviewer_comments: string | null
+          status: Database["public"]["Enums"]["p2a_qualification_status"]
+          submitted_at: string
+          submitted_by: string | null
+          target_date: string
+          updated_at: string
+          vcr_prerequisite_id: string
+        }
+        Insert: {
+          action_owner_id?: string | null
+          action_owner_name?: string | null
+          created_at?: string
+          follow_up_action?: string | null
+          id?: string
+          mitigation: string
+          reason: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewer_comments?: string | null
+          status?: Database["public"]["Enums"]["p2a_qualification_status"]
+          submitted_at?: string
+          submitted_by?: string | null
+          target_date: string
+          updated_at?: string
+          vcr_prerequisite_id: string
+        }
+        Update: {
+          action_owner_id?: string | null
+          action_owner_name?: string | null
+          created_at?: string
+          follow_up_action?: string | null
+          id?: string
+          mitigation?: string
+          reason?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewer_comments?: string | null
+          status?: Database["public"]["Enums"]["p2a_qualification_status"]
+          submitted_at?: string
+          submitted_by?: string | null
+          target_date?: string
+          updated_at?: string
+          vcr_prerequisite_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_vcr_qualifications_vcr_prerequisite_id_fkey"
+            columns: ["vcr_prerequisite_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_vcr_prerequisites"
             referencedColumns: ["id"]
           },
         ]
@@ -6033,6 +6618,7 @@ export type Database = {
         Returns: string
       }
       delete_user_account: { Args: { target_user_id: string }; Returns: Json }
+      generate_vcr_code: { Args: { project_code: string }; Returns: string }
       get_active_roles: {
         Args: never
         Returns: {
@@ -6257,8 +6843,31 @@ export type Database = {
         | "BEHIND_SCHEDULE"
         | "COMPLETED"
         | "NOT_APPLICABLE"
+      p2a_handover_point_status: "PENDING" | "IN_PROGRESS" | "READY" | "SIGNED"
+      p2a_milestone_source: "MANUAL" | "PRIMAVERA_API"
       p2a_phase: "PAC" | "FAC"
+      p2a_plan_status: "DRAFT" | "ACTIVE" | "COMPLETED" | "ARCHIVED"
+      p2a_qualification_status: "PENDING" | "APPROVED" | "REJECTED"
       p2a_status: "DRAFT" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED"
+      p2a_subsystem_status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED"
+      p2a_system_completion_status:
+        | "NOT_STARTED"
+        | "IN_PROGRESS"
+        | "RFO"
+        | "RFSU"
+      p2a_system_source_type:
+        | "MANUAL"
+        | "EXCEL_IMPORT"
+        | "API_GOCOMPLETIONS"
+        | "API_HUB2"
+      p2a_vcr_prerequisite_status:
+        | "NOT_STARTED"
+        | "IN_PROGRESS"
+        | "READY_FOR_REVIEW"
+        | "ACCEPTED"
+        | "REJECTED"
+        | "QUALIFICATION_REQUESTED"
+        | "QUALIFICATION_APPROVED"
       pssr_action_status: "open" | "in_progress" | "closed"
       pssr_item_approval_status:
         | "pending"
@@ -6491,8 +7100,34 @@ export const Constants = {
         "COMPLETED",
         "NOT_APPLICABLE",
       ],
+      p2a_handover_point_status: ["PENDING", "IN_PROGRESS", "READY", "SIGNED"],
+      p2a_milestone_source: ["MANUAL", "PRIMAVERA_API"],
       p2a_phase: ["PAC", "FAC"],
+      p2a_plan_status: ["DRAFT", "ACTIVE", "COMPLETED", "ARCHIVED"],
+      p2a_qualification_status: ["PENDING", "APPROVED", "REJECTED"],
       p2a_status: ["DRAFT", "IN_PROGRESS", "COMPLETED", "CANCELLED"],
+      p2a_subsystem_status: ["NOT_STARTED", "IN_PROGRESS", "COMPLETED"],
+      p2a_system_completion_status: [
+        "NOT_STARTED",
+        "IN_PROGRESS",
+        "RFO",
+        "RFSU",
+      ],
+      p2a_system_source_type: [
+        "MANUAL",
+        "EXCEL_IMPORT",
+        "API_GOCOMPLETIONS",
+        "API_HUB2",
+      ],
+      p2a_vcr_prerequisite_status: [
+        "NOT_STARTED",
+        "IN_PROGRESS",
+        "READY_FOR_REVIEW",
+        "ACCEPTED",
+        "REJECTED",
+        "QUALIFICATION_REQUESTED",
+        "QUALIFICATION_APPROVED",
+      ],
       pssr_action_status: ["open", "in_progress", "closed"],
       pssr_item_approval_status: [
         "pending",
