@@ -174,7 +174,7 @@ export const ORPDetailsPage: React.FC = () => {
               </TabsTrigger>
               <TabsTrigger value="handover" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm group">
                 <ArrowLeftRight className="w-4 h-4 text-muted-foreground group-data-[state=active]:text-cyan-500" />
-                {t.handover}
+                P2A Handover
               </TabsTrigger>
               <TabsTrigger value="owners-cost" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm group">
                 <DollarSign className="w-4 h-4 text-muted-foreground group-data-[state=active]:text-amber-500" />
