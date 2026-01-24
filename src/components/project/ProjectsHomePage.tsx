@@ -403,7 +403,7 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                 {columnVisibility.hub && <div className="w-32 shrink-0">Hub</div>}
                 {columnVisibility.plant && <div className="w-36 shrink-0">Plant</div>}
                 {columnVisibility.team && <div className="w-48 shrink-0">Team</div>}
-                {columnVisibility.milestone && <div className="w-52 shrink-0">Upcoming Milestone</div>}
+                {columnVisibility.milestone && <div className="w-52 shrink-0">Milestone</div>}
                 <div className="w-12 shrink-0 text-right">Fav</div>
               </div>
               
