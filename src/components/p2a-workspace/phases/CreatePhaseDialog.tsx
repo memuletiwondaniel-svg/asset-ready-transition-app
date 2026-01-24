@@ -151,14 +151,14 @@ export const CreatePhaseDialog: React.FC<CreatePhaseDialogProps> = ({
                     </Button>
                   </div>
                   <Select 
-                    value={phaseData.start_milestone_id} 
-                    onValueChange={(v) => setPhaseData({ ...phaseData, start_milestone_id: v })}
+                    value={phaseData.start_milestone_id || "none"} 
+                    onValueChange={(v) => setPhaseData({ ...phaseData, start_milestone_id: v === "none" ? "" : v })}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select milestone" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">None (Project Start)</SelectItem>
+                      <SelectItem value="none">None (Project Start)</SelectItem>
                       {milestones.map(m => (
                         <SelectItem key={m.id} value={m.id}>
                           {m.name} {m.target_date && `(${format(new Date(m.target_date), 'MMM yyyy')})`}
@@ -182,14 +182,14 @@ export const CreatePhaseDialog: React.FC<CreatePhaseDialogProps> = ({
                     </Button>
                   </div>
                   <Select 
-                    value={phaseData.end_milestone_id} 
-                    onValueChange={(v) => setPhaseData({ ...phaseData, end_milestone_id: v })}
+                    value={phaseData.end_milestone_id || "none"} 
+                    onValueChange={(v) => setPhaseData({ ...phaseData, end_milestone_id: v === "none" ? "" : v })}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select milestone" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">None (Ongoing)</SelectItem>
+                      <SelectItem value="none">None (Ongoing)</SelectItem>
                       {milestones.map(m => (
                         <SelectItem key={m.id} value={m.id}>
                           {m.name} {m.target_date && `(${format(new Date(m.target_date), 'MMM yyyy')})`}
