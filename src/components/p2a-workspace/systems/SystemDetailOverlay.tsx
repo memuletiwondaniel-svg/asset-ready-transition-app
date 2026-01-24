@@ -1,10 +1,14 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
@@ -16,7 +20,9 @@ import {
   CheckCircle2,
   Clock,
   BarChart3,
-  Layers
+  Layers,
+  Pencil,
+  Save
 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis } from 'recharts';
 import { P2ASystem, useP2ASubsystems } from '../hooks/useP2ASystems';
@@ -26,6 +32,8 @@ interface SystemDetailOverlayProps {
   system: P2ASystem;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onUpdateSystem?: (id: string, updates: Partial<P2ASystem>) => void;
+  isUpdating?: boolean;
 }
 
 const CHART_COLORS = ['#ef4444', '#f59e0b', '#22c55e', '#3b82f6'];
@@ -34,8 +42,52 @@ export const SystemDetailOverlay: React.FC<SystemDetailOverlayProps> = ({
   system,
   open,
   onOpenChange,
+  onUpdateSystem,
+  isUpdating = false,
 }) => {
   const { subsystems, isLoading: subsystemsLoading } = useP2ASubsystems(system.id);
+  
+  // Edit form state
+  const [editFormData, setEditFormData] = useState({
+    name: system.name,
+    system_id: system.system_id,
+    is_hydrocarbon: system.is_hydrocarbon,
+    completion_status: system.completion_status,
+    completion_percentage: system.completion_percentage,
+    target_rfo_date: system.target_rfo_date || '',
+    target_rfsu_date: system.target_rfsu_date || '',
+    punchlist_a_count: system.punchlist_a_count,
+    punchlist_b_count: system.punchlist_b_count,
+    itr_a_count: system.itr_a_count,
+    itr_b_count: system.itr_b_count,
+  });
+  
+  // Reset form when system changes
+  useEffect(() => {
+    setEditFormData({
+      name: system.name,
+      system_id: system.system_id,
+      is_hydrocarbon: system.is_hydrocarbon,
+      completion_status: system.completion_status,
+      completion_percentage: system.completion_percentage,
+      target_rfo_date: system.target_rfo_date || '',
+      target_rfsu_date: system.target_rfsu_date || '',
+      punchlist_a_count: system.punchlist_a_count,
+      punchlist_b_count: system.punchlist_b_count,
+      itr_a_count: system.itr_a_count,
+      itr_b_count: system.itr_b_count,
+    });
+  }, [system]);
+  
+  const handleSaveChanges = () => {
+    if (onUpdateSystem) {
+      onUpdateSystem(system.id, {
+        ...editFormData,
+        target_rfo_date: editFormData.target_rfo_date || undefined,
+        target_rfsu_date: editFormData.target_rfsu_date || undefined,
+      });
+    }
+  };
 
   // Chart data
   const punchlistData = [
@@ -101,10 +153,14 @@ export const SystemDetailOverlay: React.FC<SystemDetailOverlayProps> = ({
         </DialogHeader>
 
         <Tabs defaultValue="overview" className="flex-1 flex flex-col overflow-hidden">
-          <TabsList className="grid grid-cols-3 w-full">
+          <TabsList className="grid grid-cols-4 w-full">
             <TabsTrigger value="overview" className="gap-2">
               <BarChart3 className="w-4 h-4" />
               Overview
+            </TabsTrigger>
+            <TabsTrigger value="edit" className="gap-2">
+              <Pencil className="w-4 h-4" />
+              Edit
             </TabsTrigger>
             <TabsTrigger value="subsystems" className="gap-2">
               <Layers className="w-4 h-4" />
@@ -236,6 +292,191 @@ export const SystemDetailOverlay: React.FC<SystemDetailOverlayProps> = ({
                   </div>
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            {/* Edit Tab */}
+            <TabsContent value="edit" className="m-0 space-y-4">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm">System Details</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-name">System Name</Label>
+                      <Input
+                        id="edit-name"
+                        value={editFormData.name}
+                        onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-system-id">System ID</Label>
+                      <Input
+                        id="edit-system-id"
+                        value={editFormData.system_id}
+                        onChange={(e) => setEditFormData({ ...editFormData, system_id: e.target.value })}
+                        className="font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-status">Completion Status</Label>
+                      <Select
+                        value={editFormData.completion_status}
+                        onValueChange={(value) => setEditFormData({ 
+                          ...editFormData, 
+                          completion_status: value as P2ASystem['completion_status'] 
+                        })}
+                      >
+                        <SelectTrigger id="edit-status">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="NOT_STARTED">Not Started</SelectItem>
+                          <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+                          <SelectItem value="RFO">RFO</SelectItem>
+                          <SelectItem value="RFSU">RFSU</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-percentage">Completion %</Label>
+                      <Input
+                        id="edit-percentage"
+                        type="number"
+                        min={0}
+                        max={100}
+                        value={editFormData.completion_percentage}
+                        onChange={(e) => setEditFormData({ 
+                          ...editFormData, 
+                          completion_percentage: parseInt(e.target.value) || 0 
+                        })}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                    <Switch
+                      id="edit-hydrocarbon"
+                      checked={editFormData.is_hydrocarbon}
+                      onCheckedChange={(checked) => setEditFormData({ ...editFormData, is_hydrocarbon: checked })}
+                    />
+                    <Label htmlFor="edit-hydrocarbon" className="flex items-center gap-2 cursor-pointer">
+                      {editFormData.is_hydrocarbon ? (
+                        <>
+                          <Flame className="w-4 h-4 text-orange-500" />
+                          Hydrocarbon System
+                        </>
+                      ) : (
+                        <>
+                          <Snowflake className="w-4 h-4 text-blue-500" />
+                          Non-Hydrocarbon System
+                        </>
+                      )}
+                    </Label>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm">Target Dates</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-rfo-date">Target RFO Date</Label>
+                      <Input
+                        id="edit-rfo-date"
+                        type="date"
+                        value={editFormData.target_rfo_date}
+                        onChange={(e) => setEditFormData({ ...editFormData, target_rfo_date: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-rfsu-date">Target RFSU Date</Label>
+                      <Input
+                        id="edit-rfsu-date"
+                        type="date"
+                        value={editFormData.target_rfsu_date}
+                        onChange={(e) => setEditFormData({ ...editFormData, target_rfsu_date: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm">Counts (Manual Override)</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-4 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-pl-a">Punchlist A</Label>
+                      <Input
+                        id="edit-pl-a"
+                        type="number"
+                        min={0}
+                        value={editFormData.punchlist_a_count}
+                        onChange={(e) => setEditFormData({ 
+                          ...editFormData, 
+                          punchlist_a_count: parseInt(e.target.value) || 0 
+                        })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-pl-b">Punchlist B</Label>
+                      <Input
+                        id="edit-pl-b"
+                        type="number"
+                        min={0}
+                        value={editFormData.punchlist_b_count}
+                        onChange={(e) => setEditFormData({ 
+                          ...editFormData, 
+                          punchlist_b_count: parseInt(e.target.value) || 0 
+                        })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-itr-a">ITR-A</Label>
+                      <Input
+                        id="edit-itr-a"
+                        type="number"
+                        min={0}
+                        value={editFormData.itr_a_count}
+                        onChange={(e) => setEditFormData({ 
+                          ...editFormData, 
+                          itr_a_count: parseInt(e.target.value) || 0 
+                        })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-itr-b">ITR-B</Label>
+                      <Input
+                        id="edit-itr-b"
+                        type="number"
+                        min={0}
+                        value={editFormData.itr_b_count}
+                        onChange={(e) => setEditFormData({ 
+                          ...editFormData, 
+                          itr_b_count: parseInt(e.target.value) || 0 
+                        })}
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <div className="flex justify-end">
+                <Button onClick={handleSaveChanges} disabled={isUpdating} className="gap-2">
+                  <Save className="w-4 h-4" />
+                  {isUpdating ? 'Saving...' : 'Save Changes'}
+                </Button>
+              </div>
             </TabsContent>
 
             {/* Subsystems Tab */}
