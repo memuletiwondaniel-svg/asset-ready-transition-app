@@ -1,6 +1,8 @@
 import React from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Flame, Snowflake, GripVertical } from 'lucide-react';
+import { Flame, Snowflake, GripVertical, Link2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { P2ASystem } from '../hooks/useP2ASystems';
 import { useDraggable } from '@dnd-kit/core';
@@ -13,10 +15,16 @@ interface SystemCardProps {
   isDragging?: boolean;
 }
 
-const getProgressColor = (percentage: number, status: string) => {
+const getStatusColor = (percentage: number, status: string) => {
   if (status === 'RFO' || status === 'RFSU') return 'bg-emerald-500';
   if (percentage >= 50) return 'bg-amber-500';
-  return 'bg-primary/60';
+  return 'bg-slate-400';
+};
+
+const getCardBackground = (percentage: number, status: string) => {
+  if (status === 'RFO' || status === 'RFSU') return 'border-emerald-500/30 bg-emerald-500/5';
+  if (percentage >= 50) return 'border-amber-500/30 bg-amber-500/5';
+  return 'border-border bg-card';
 };
 
 export const SystemCard: React.FC<SystemCardProps> = ({
@@ -25,54 +33,73 @@ export const SystemCard: React.FC<SystemCardProps> = ({
   compact = false,
   isDragging = false,
 }) => {
+  const statusColor = getStatusColor(system.completion_percentage, system.completion_status);
+  const cardBg = getCardBackground(system.completion_percentage, system.completion_status);
+
   return (
-    <div 
+    <Card 
       className={cn(
-        'group flex items-center gap-1.5 px-2 py-1.5 rounded-md cursor-pointer',
-        'bg-muted/30 hover:bg-muted/60 border border-transparent hover:border-border/50',
-        'transition-all duration-150',
-        isDragging && 'opacity-50 shadow-lg scale-105 bg-muted'
+        'cursor-pointer transition-all duration-200 hover:shadow-sm',
+        cardBg,
+        isDragging && 'opacity-50 shadow-lg scale-105'
       )}
       onClick={onClick}
     >
-      {/* Drag Handle */}
-      <div className="cursor-grab active:cursor-grabbing text-muted-foreground/30 group-hover:text-muted-foreground/60">
-        <GripVertical className="w-3 h-3" />
-      </div>
-
-      {/* HC/Non-HC Indicator - small dot */}
-      <div className={cn(
-        'w-1.5 h-1.5 rounded-full shrink-0',
-        system.is_hydrocarbon ? 'bg-orange-500' : 'bg-blue-500'
-      )} />
-
-      {/* Content */}
-      <div className="flex-1 min-w-0 flex items-center gap-2">
-        {/* System Name */}
-        <span className="text-[11px] font-medium truncate flex-1 text-foreground/90">
-          {system.name}
-        </span>
-        
-        {/* Progress indicator */}
-        <div className="flex items-center gap-1 shrink-0">
-          <div className="w-8 h-1 bg-muted rounded-full overflow-hidden">
-            <div 
-              className={cn(
-                'h-full rounded-full transition-all',
-                getProgressColor(system.completion_percentage, system.completion_status)
-              )}
-              style={{ width: `${system.completion_percentage}%` }}
-            />
+      <CardContent className="p-2">
+        <div className="flex items-center gap-1.5">
+          {/* Drag Handle */}
+          <div className="cursor-grab active:cursor-grabbing text-muted-foreground/40 hover:text-muted-foreground">
+            <GripVertical className="w-3 h-3" />
           </div>
-          <span className={cn(
-            'text-[9px] tabular-nums w-6 text-right',
-            system.completion_percentage >= 100 ? 'text-emerald-500 font-medium' : 'text-muted-foreground'
+
+          {/* HC/Non-HC Indicator */}
+          <div className={cn(
+            'w-4 h-4 rounded flex items-center justify-center shrink-0',
+            system.is_hydrocarbon 
+              ? 'bg-orange-500/10 text-orange-500' 
+              : 'bg-blue-500/10 text-blue-500'
           )}>
-            {system.completion_percentage}%
-          </span>
+            {system.is_hydrocarbon ? (
+              <Flame className="w-2.5 h-2.5" />
+            ) : (
+              <Snowflake className="w-2.5 h-2.5" />
+            )}
+          </div>
+
+          <div className="flex-1 min-w-0">
+            {/* System Name & ID Row */}
+            <div className="flex items-center gap-1">
+              <span className="text-[10px] font-medium truncate flex-1">
+                {system.name}
+              </span>
+              <span className="text-[8px] font-mono text-muted-foreground shrink-0">
+                {system.system_id}
+              </span>
+            </div>
+
+            {/* Progress Row */}
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <Progress 
+                value={system.completion_percentage} 
+                className="h-1 flex-1"
+              />
+              <span className={cn(
+                'text-[8px] font-medium shrink-0 w-5 text-right',
+                system.completion_percentage >= 100 ? 'text-emerald-500' : 'text-muted-foreground'
+              )}>
+                {system.completion_percentage}%
+              </span>
+              {system.assigned_vcr_code && (
+                <Badge variant="secondary" className="text-[7px] px-0.5 py-0 h-3 gap-0.5">
+                  <Link2 className="w-2 h-2" />
+                  {system.assigned_vcr_code}
+                </Badge>
+              )}
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 
