@@ -3,11 +3,14 @@ import { DndContext, DragEndEvent, DragOverlay, useSensor, useSensors, PointerSe
 import { Skeleton } from '@/components/ui/skeleton';
 import { useP2AHandoverPlan } from './hooks/useP2AHandoverPlan';
 import { useP2ASystems } from './hooks/useP2ASystems';
-import { useP2APhases } from './hooks/useP2APhases';
-import { useP2AHandoverPoints } from './hooks/useP2AHandoverPoints';
+import { useP2APhases, useP2AMilestones } from './hooks/useP2APhases';
+import { useP2AHandoverPoints, P2AHandoverPoint } from './hooks/useP2AHandoverPoints';
 import { EmptyWorkspaceState } from './EmptyWorkspaceState';
 import { SystemsPanel } from './systems/SystemsPanel';
 import { SystemCard } from './systems/SystemCard';
+import { PhasesTimeline } from './phases/PhasesTimeline';
+import { CreateHandoverPointDialog } from './handover-points/CreateHandoverPointDialog';
+import { VCRDetailOverlay } from './handover-points/VCRDetailOverlay';
 
 interface P2AHandoverWorkspaceProps {
   oraPlanId: string;
@@ -22,6 +25,9 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
 }) => {
   const [systemsPanelCollapsed, setSystemsPanelCollapsed] = useState(false);
   const [activeDragSystem, setActiveDragSystem] = useState<any>(null);
+  const [showCreateVCRDialog, setShowCreateVCRDialog] = useState(false);
+  const [selectedPhaseForVCR, setSelectedPhaseForVCR] = useState<{ id: string; name: string } | null>(null);
+  const [selectedVCR, setSelectedVCR] = useState<P2AHandoverPoint | null>(null);
 
   // Hooks
   const { plan, isLoading: planLoading, createPlan, isCreating } = useP2AHandoverPlan(oraPlanId);
@@ -35,10 +41,13 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
     isAdding,
     isImporting,
   } = useP2ASystems(plan?.id || '');
-  const { phases, isLoading: phasesLoading } = useP2APhases(plan?.id || '');
+  const { milestones, addMilestone } = useP2AMilestones(plan?.id || '');
+  const { phases, isLoading: phasesLoading, addPhase, deletePhase, isAdding: isAddingPhase } = useP2APhases(plan?.id || '');
   const { 
     handoverPoints,
+    createHandoverPoint,
     assignSystemToPoint,
+    isCreating: isCreatingVCR,
   } = useP2AHandoverPoints(plan?.id || '');
 
   // DnD sensors
@@ -66,6 +75,18 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
       const handoverPointId = over.id.toString().replace('vcr-', '');
       assignSystemToPoint({ handoverPointId, systemId });
     }
+  };
+
+  const handleCreateHandoverPoint = (phaseId: string) => {
+    const phase = phases.find(p => p.id === phaseId);
+    if (phase) {
+      setSelectedPhaseForVCR({ id: phase.id, name: phase.name });
+      setShowCreateVCRDialog(true);
+    }
+  };
+
+  const handleOpenVCR = (point: P2AHandoverPoint) => {
+    setSelectedVCR(point);
   };
 
   // Loading state
@@ -120,28 +141,19 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
           </div>
 
           {/* Phases Timeline Area */}
-          <div className="flex-1 p-6 overflow-auto">
-            {phases.length === 0 ? (
-              <div className="flex items-center justify-center h-full">
-                <div className="text-center max-w-md">
-                  <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
-                    <span className="text-2xl">📅</span>
-                  </div>
-                  <h3 className="font-semibold mb-2">No Phases Defined</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Create project phases to organize handover points between milestones.
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Phase and milestone management coming in next update.
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center text-muted-foreground">
-                Phases timeline will be rendered here
-              </div>
-            )}
-          </div>
+          <PhasesTimeline
+            phases={phases}
+            milestones={milestones}
+            handoverPoints={handoverPoints}
+            handoverPlanId={plan.id}
+            projectCode={plan.project_code}
+            onCreatePhase={addPhase}
+            onCreateMilestone={addMilestone}
+            onDeletePhase={deletePhase}
+            onCreateHandoverPoint={handleCreateHandoverPoint}
+            onOpenVCR={handleOpenVCR}
+            isCreatingPhase={isAddingPhase}
+          />
         </div>
 
         {/* Systems Panel - Right Side */}
@@ -169,6 +181,28 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
           </div>
         )}
       </DragOverlay>
+
+      {/* Create VCR Dialog */}
+      {selectedPhaseForVCR && (
+        <CreateHandoverPointDialog
+          open={showCreateVCRDialog}
+          onOpenChange={setShowCreateVCRDialog}
+          onCreateHandoverPoint={createHandoverPoint}
+          phaseId={selectedPhaseForVCR.id}
+          phaseName={selectedPhaseForVCR.name}
+          projectCode={plan.project_code || 'XXX'}
+          isCreating={isCreatingVCR}
+        />
+      )}
+
+      {/* VCR Detail Overlay */}
+      {selectedVCR && (
+        <VCRDetailOverlay
+          handoverPoint={selectedVCR}
+          open={!!selectedVCR}
+          onOpenChange={(open) => !open && setSelectedVCR(null)}
+        />
+      )}
     </DndContext>
   );
 };
