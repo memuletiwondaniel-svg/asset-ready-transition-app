@@ -320,25 +320,10 @@ const ChecklistItemsLibrary: React.FC = () => {
                 PSSR Checklist Items
               </CardTitle>
             </div>
-            <div className="flex items-center gap-2">
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  if (items && categories) {
-                    const filename = exportPSSRChecklistToExcel(items, categories);
-                    toast.success(`Exported to ${filename}`);
-                  }
-                }}
-                disabled={!items || items.length === 0}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Export Excel
-              </Button>
-              <Button onClick={handleOpenCreate}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Item
-              </Button>
-            </div>
+            <Button onClick={handleOpenCreate}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Item
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
@@ -412,6 +397,30 @@ const ChecklistItemsLibrary: React.FC = () => {
                 </DropdownMenuCheckboxItem>
               </DropdownMenuContent>
             </DropdownMenu>
+
+            {/* Export Button */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="icon"
+                    onClick={() => {
+                      if (items && categories) {
+                        const filename = exportPSSRChecklistToExcel(items, categories);
+                        toast.success(`Exported to ${filename}`);
+                      }
+                    }}
+                    disabled={!items || items.length === 0}
+                  >
+                    <Download className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Export to Excel</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
 
           {/* Stats */}
