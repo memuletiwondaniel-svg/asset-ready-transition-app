@@ -11,7 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Plus, Edit2, Trash2, Search, Filter, X, FileText, Loader2, FolderPlus, Info, Columns } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, Filter, X, FileText, Loader2, FolderPlus, Info, Columns, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -25,6 +25,8 @@ import {
   ChecklistItem,
 } from '@/hooks/usePSSRChecklistLibrary';
 import { getRoleResolutionDescription, BASE_ROLES_FOR_CHECKLIST } from '@/utils/resolveChecklistRole';
+import { exportPSSRChecklistToExcel } from '@/utils/pssrChecklistExport';
+import { toast } from 'sonner';
 
 interface ItemFormData {
   category: string;
@@ -318,10 +320,25 @@ const ChecklistItemsLibrary: React.FC = () => {
                 PSSR Checklist Items
               </CardTitle>
             </div>
-            <Button onClick={handleOpenCreate}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Item
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  if (items && categories) {
+                    const filename = exportPSSRChecklistToExcel(items, categories);
+                    toast.success(`Exported to ${filename}`);
+                  }
+                }}
+                disabled={!items || items.length === 0}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export Excel
+              </Button>
+              <Button onClick={handleOpenCreate}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Item
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
