@@ -40,85 +40,63 @@ export const SystemCard: React.FC<SystemCardProps> = ({
   return (
     <Card 
       className={cn(
-        'cursor-pointer transition-all duration-200 hover:shadow-md',
+        'cursor-pointer transition-all duration-200 hover:shadow-sm',
         cardBg,
-        isDragging && 'opacity-50 shadow-lg scale-105',
-        compact ? 'p-2' : ''
+        isDragging && 'opacity-50 shadow-lg scale-105'
       )}
       onClick={onClick}
     >
-      <CardContent className={cn('p-3', compact && 'p-2')}>
-        <div className="flex items-start gap-2">
+      <CardContent className="p-2">
+        <div className="flex items-center gap-1.5">
           {/* Drag Handle */}
-          <div className="mt-0.5 cursor-grab active:cursor-grabbing text-muted-foreground/50 hover:text-muted-foreground">
-            <GripVertical className="w-4 h-4" />
+          <div className="cursor-grab active:cursor-grabbing text-muted-foreground/40 hover:text-muted-foreground">
+            <GripVertical className="w-3 h-3" />
+          </div>
+
+          {/* HC/Non-HC Indicator */}
+          <div className={cn(
+            'w-4 h-4 rounded flex items-center justify-center shrink-0',
+            system.is_hydrocarbon 
+              ? 'bg-orange-500/10 text-orange-500' 
+              : 'bg-blue-500/10 text-blue-500'
+          )}>
+            {system.is_hydrocarbon ? (
+              <Flame className="w-2.5 h-2.5" />
+            ) : (
+              <Snowflake className="w-2.5 h-2.5" />
+            )}
           </div>
 
           <div className="flex-1 min-w-0">
-            {/* Header Row */}
-            <div className="flex items-center gap-2 mb-1">
-              {/* HC/Non-HC Indicator */}
-              <div className={cn(
-                'w-5 h-5 rounded flex items-center justify-center shrink-0',
-                system.is_hydrocarbon 
-                  ? 'bg-orange-500/10 text-orange-500' 
-                  : 'bg-blue-500/10 text-blue-500'
-              )}>
-                {system.is_hydrocarbon ? (
-                  <Flame className="w-3 h-3" />
-                ) : (
-                  <Snowflake className="w-3 h-3" />
-                )}
-              </div>
-
-              {/* System Name */}
-              <span className={cn(
-                'font-medium truncate',
-                compact ? 'text-xs' : 'text-sm'
-              )}>
+            {/* System Name & ID Row */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-medium truncate flex-1">
                 {system.name}
               </span>
-            </div>
-
-            {/* System ID */}
-            <div className="flex items-center gap-2 mb-2">
-              <Badge variant="outline" className="text-[10px] font-mono px-1.5 py-0">
+              <Badge variant="outline" className="text-[9px] font-mono px-1 py-0 h-4 shrink-0">
                 {system.system_id}
               </Badge>
-              
+            </div>
+
+            {/* Progress Row */}
+            <div className="flex items-center gap-2 mt-1">
+              <Progress 
+                value={system.completion_percentage} 
+                className="h-1 flex-1"
+              />
+              <span className={cn(
+                'text-[9px] font-medium shrink-0 w-7 text-right',
+                system.completion_percentage >= 100 ? 'text-emerald-500' : 'text-muted-foreground'
+              )}>
+                {system.completion_percentage}%
+              </span>
               {system.assigned_vcr_code && (
-                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 gap-1">
-                  <Link2 className="w-2.5 h-2.5" />
+                <Badge variant="secondary" className="text-[9px] px-1 py-0 h-4 gap-0.5">
+                  <Link2 className="w-2 h-2" />
                   {system.assigned_vcr_code}
                 </Badge>
               )}
             </div>
-
-            {/* Progress Bar */}
-            <div className="space-y-1">
-              <div className="flex items-center justify-between text-[10px]">
-                <span className="text-muted-foreground">
-                  {system.completion_status.replace('_', ' ')}
-                </span>
-                <span className={cn(
-                  'font-medium',
-                  system.completion_percentage >= 100 ? 'text-emerald-500' : 'text-foreground'
-                )}>
-                  {system.completion_percentage}%
-                </span>
-              </div>
-              <Progress 
-                value={system.completion_percentage} 
-                className="h-1.5"
-              />
-            </div>
-
-            {/* Target Date - if not compact */}
-            {!compact && system.target_rfsu_date && (
-              <div className="mt-2 text-[10px] text-muted-foreground">
-                Target: {format(new Date(system.target_rfsu_date), 'dd MMM yyyy')}
-              </div>
-            )}
           </div>
         </div>
       </CardContent>
