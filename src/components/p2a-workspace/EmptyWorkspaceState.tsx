@@ -28,15 +28,14 @@ export const EmptyWorkspaceState: React.FC<EmptyWorkspaceStateProps> = ({
   projectNumber,
 }) => {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [formData, setFormData] = useState({
-    name: projectName ? `${projectName} - P2A Handover` : 'P2A Handover Plan',
-    description: '',
-    project_code: projectNumber || '',
-    plant_code: '',
-  });
+  const [plantCode, setPlantCode] = useState('');
 
   const handleCreate = () => {
-    onCreatePlan(formData);
+    onCreatePlan({
+      name: `${projectNumber} P2A Plan`,
+      project_code: projectNumber || '',
+      plant_code: plantCode,
+    });
     setShowCreateDialog(false);
   };
 
@@ -108,44 +107,22 @@ export const EmptyWorkspaceState: React.FC<EmptyWorkspaceStateProps> = ({
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="plan-name">Plan Name *</Label>
-              <Input
-                id="plan-name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="e.g., Project Alpha - P2A Handover"
-              />
-            </div>
+            {projectNumber && (
+              <div className="p-3 bg-muted/50 rounded-lg">
+                <div className="text-xs text-muted-foreground mb-1">Plan Name</div>
+                <div className="font-medium">{projectNumber} P2A Plan</div>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="plant-code">Plant Code</Label>
               <Input
                 id="plant-code"
-                value={formData.plant_code}
-                onChange={(e) => setFormData({ ...formData, plant_code: e.target.value })}
+                value={plantCode}
+                onChange={(e) => setPlantCode(e.target.value)}
                 placeholder="e.g., N003"
               />
               <p className="text-xs text-muted-foreground">Used in System IDs (e.g., N003-{projectNumber || 'XXX'}-100)</p>
-            </div>
-
-            {projectNumber && (
-              <div className="p-3 bg-muted/50 rounded-lg">
-                <div className="text-xs text-muted-foreground mb-1">Project Code (from project)</div>
-                <div className="font-mono text-sm font-medium">{projectNumber}</div>
-                <p className="text-xs text-muted-foreground mt-1">Used in VCR codes (e.g., VCR-{projectNumber}-001)</p>
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Description (optional)</Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Brief description of this handover plan..."
-                rows={3}
-              />
             </div>
           </div>
 
@@ -155,7 +132,7 @@ export const EmptyWorkspaceState: React.FC<EmptyWorkspaceStateProps> = ({
             </Button>
             <Button 
               onClick={handleCreate} 
-              disabled={!formData.name.trim() || isCreating}
+              disabled={isCreating}
             >
               {isCreating ? 'Creating...' : 'Create Plan'}
             </Button>
