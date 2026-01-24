@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { 
   Flame, 
   Snowflake, 
-  X,
   Calendar,
   TrendingUp,
   AlertCircle,
@@ -19,8 +19,7 @@ import {
   Save,
   RotateCcw
 } from 'lucide-react';
-import { P2ASystem
-} from '../hooks/useP2ASystems';
+import { P2ASystem } from '../hooks/useP2ASystems';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -127,310 +126,314 @@ export const SystemDetailOverlay: React.FC<SystemDetailOverlayProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg p-0 gap-0 overflow-hidden border-0 shadow-2xl">
+      <DialogContent className="max-w-lg p-0 gap-0 overflow-hidden flex flex-col max-h-[85vh]">
+        {/* Accessibility */}
+        <VisuallyHidden>
+          <DialogTitle>{system.name} - System Details</DialogTitle>
+          <DialogDescription>View and edit system details</DialogDescription>
+        </VisuallyHidden>
+
         {/* Header with gradient */}
         <div className={cn(
-          'relative px-6 pt-6 pb-8',
+          'relative px-6 pt-6 pb-6 shrink-0',
           system.is_hydrocarbon 
             ? 'bg-gradient-to-br from-orange-500/10 via-orange-500/5 to-transparent' 
             : 'bg-gradient-to-br from-blue-500/10 via-blue-500/5 to-transparent'
         )}>
-          {/* Close button */}
-          <button
-            onClick={() => onOpenChange(false)}
-            className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-background/80 transition-colors"
-          >
-            <X className="w-4 h-4 text-muted-foreground" />
-          </button>
-
-          {/* System Type Icon */}
-          <div className={cn(
-            'w-12 h-12 rounded-xl flex items-center justify-center mb-4',
-            system.is_hydrocarbon 
-              ? 'bg-orange-500/15 text-orange-500' 
-              : 'bg-blue-500/15 text-blue-500'
-          )}>
-            {system.is_hydrocarbon ? (
-              <Flame className="w-6 h-6" />
-            ) : (
-              <Snowflake className="w-6 h-6" />
-            )}
-          </div>
-
-          {/* Title & ID */}
-          {isEditing ? (
-            <div className="space-y-3">
-              <Input
-                value={editFormData.name}
-                onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
-                className="text-xl font-semibold bg-background/50 border-border/50 h-auto py-2"
-                placeholder="System Name"
-              />
-              <Input
-                value={editFormData.system_id}
-                onChange={(e) => setEditFormData({ ...editFormData, system_id: e.target.value })}
-                className="font-mono text-xs bg-background/50 border-border/50 w-fit"
-                placeholder="System ID"
-              />
+          <div className="flex items-start gap-4">
+            {/* System Type Icon */}
+            <div className={cn(
+              'w-12 h-12 rounded-xl flex items-center justify-center shrink-0',
+              system.is_hydrocarbon 
+                ? 'bg-orange-500/15 text-orange-500' 
+                : 'bg-blue-500/15 text-blue-500'
+            )}>
+              {system.is_hydrocarbon ? (
+                <Flame className="w-6 h-6" />
+              ) : (
+                <Snowflake className="w-6 h-6" />
+              )}
             </div>
-          ) : (
-            <>
-              <h2 className="text-xl font-semibold text-foreground mb-1">{system.name}</h2>
-              <span className="text-xs font-mono text-muted-foreground">{system.system_id}</span>
-            </>
-          )}
 
-          {/* Progress Ring */}
-          <div className="absolute top-6 right-14 text-center">
-            <div className="relative w-16 h-16">
-              <svg className="w-16 h-16 -rotate-90" viewBox="0 0 64 64">
-                <circle
-                  cx="32"
-                  cy="32"
-                  r="28"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                  fill="none"
-                  className="text-muted/30"
-                />
-                <circle
-                  cx="32"
-                  cy="32"
-                  r="28"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                  fill="none"
-                  strokeDasharray={`${(displayData.completion_percentage / 100) * 176} 176`}
-                  strokeLinecap="round"
-                  className={cn(
-                    displayData.completion_percentage >= 100 ? 'text-emerald-500' :
-                    displayData.completion_percentage >= 50 ? 'text-amber-500' : 'text-primary'
-                  )}
-                />
-              </svg>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-sm font-bold">{displayData.completion_percentage}%</span>
+            {/* Title & ID */}
+            <div className="flex-1 min-w-0">
+              {isEditing ? (
+                <div className="space-y-2">
+                  <Input
+                    value={editFormData.name}
+                    onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                    className="text-lg font-semibold bg-background/50 border-border/50 h-auto py-1.5"
+                    placeholder="System Name"
+                  />
+                  <Input
+                    value={editFormData.system_id}
+                    onChange={(e) => setEditFormData({ ...editFormData, system_id: e.target.value })}
+                    className="font-mono text-xs bg-background/50 border-border/50 w-fit h-8"
+                    placeholder="System ID"
+                  />
+                </div>
+              ) : (
+                <>
+                  <h2 className="text-lg font-semibold text-foreground mb-0.5 truncate">{system.name}</h2>
+                  <span className="text-xs font-mono text-muted-foreground">{system.system_id}</span>
+                </>
+              )}
+            </div>
+
+            {/* Progress Ring */}
+            <div className="text-center shrink-0">
+              <div className="relative w-14 h-14">
+                <svg className="w-14 h-14 -rotate-90" viewBox="0 0 64 64">
+                  <circle
+                    cx="32"
+                    cy="32"
+                    r="28"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                    fill="none"
+                    className="text-muted/30"
+                  />
+                  <circle
+                    cx="32"
+                    cy="32"
+                    r="28"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                    fill="none"
+                    strokeDasharray={`${(displayData.completion_percentage / 100) * 176} 176`}
+                    strokeLinecap="round"
+                    className={cn(
+                      displayData.completion_percentage >= 100 ? 'text-emerald-500' :
+                      displayData.completion_percentage >= 50 ? 'text-amber-500' : 'text-primary'
+                    )}
+                  />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-xs font-bold">{displayData.completion_percentage}%</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Content */}
-        <div className="px-6 py-5 space-y-5">
-          {/* Status Row */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Status</span>
-            </div>
-            {isEditing ? (
-              <Select
-                value={editFormData.completion_status}
-                onValueChange={(value) => setEditFormData({ 
-                  ...editFormData, 
-                  completion_status: value as P2ASystem['completion_status'] 
-                })}
-              >
-                <SelectTrigger className="w-32 h-8 text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="NOT_STARTED">Not Started</SelectItem>
-                  <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-                  <SelectItem value="RFO">RFO</SelectItem>
-                  <SelectItem value="RFSU">RFSU</SelectItem>
-                </SelectContent>
-              </Select>
-            ) : (
-              <Badge className={cn('text-white text-xs', getStatusColor(system.completion_status))}>
-                {system.completion_status.replace('_', ' ')}
-              </Badge>
-            )}
-          </div>
-
-          {/* Completion Slider (Edit mode) */}
-          {isEditing && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label className="text-xs text-muted-foreground">Completion</Label>
-                <span className="text-xs font-medium">{editFormData.completion_percentage}%</span>
-              </div>
-              <Input
-                type="range"
-                min={0}
-                max={100}
-                value={editFormData.completion_percentage}
-                onChange={(e) => setEditFormData({ 
-                  ...editFormData, 
-                  completion_percentage: parseInt(e.target.value) 
-                })}
-                className="h-2 cursor-pointer"
-              />
-            </div>
-          )}
-
-          {/* System Type Toggle (Edit mode) */}
-          {isEditing && (
-            <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+        {/* Scrollable Content */}
+        <ScrollArea className="flex-1 min-h-0">
+          <div className="px-6 py-4 space-y-4">
+            {/* Status Row */}
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                {editFormData.is_hydrocarbon ? (
-                  <Flame className="w-4 h-4 text-orange-500" />
-                ) : (
-                  <Snowflake className="w-4 h-4 text-blue-500" />
-                )}
-                <span className="text-sm">
-                  {editFormData.is_hydrocarbon ? 'Hydrocarbon' : 'Non-Hydrocarbon'}
-                </span>
-              </div>
-              <Switch
-                checked={editFormData.is_hydrocarbon}
-                onCheckedChange={(checked) => setEditFormData({ ...editFormData, is_hydrocarbon: checked })}
-              />
-            </div>
-          )}
-
-          <Separator />
-
-          {/* Metrics Grid */}
-          <div className="grid grid-cols-2 gap-3">
-            {/* Punchlist A */}
-            <div className="p-3 rounded-lg bg-red-500/5 border border-red-500/10">
-              <div className="flex items-center gap-2 mb-1">
-                <AlertCircle className="w-3.5 h-3.5 text-red-500" />
-                <span className="text-xs text-muted-foreground">Punchlist A</span>
+                <TrendingUp className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">Status</span>
               </div>
               {isEditing ? (
-                <Input
-                  type="number"
-                  min={0}
-                  value={editFormData.punchlist_a_count}
-                  onChange={(e) => setEditFormData({ 
+                <Select
+                  value={editFormData.completion_status}
+                  onValueChange={(value) => setEditFormData({ 
                     ...editFormData, 
-                    punchlist_a_count: parseInt(e.target.value) || 0 
+                    completion_status: value as P2ASystem['completion_status'] 
                   })}
-                  className="h-8 text-lg font-bold bg-transparent border-red-500/20"
-                />
+                >
+                  <SelectTrigger className="w-32 h-8 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="NOT_STARTED">Not Started</SelectItem>
+                    <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+                    <SelectItem value="RFO">RFO</SelectItem>
+                    <SelectItem value="RFSU">RFSU</SelectItem>
+                  </SelectContent>
+                </Select>
               ) : (
-                <div className="text-xl font-bold text-red-500">{system.punchlist_a_count}</div>
+                <Badge className={cn('text-white text-xs', getStatusColor(system.completion_status))}>
+                  {system.completion_status.replace('_', ' ')}
+                </Badge>
               )}
             </div>
 
-            {/* Punchlist B */}
-            <div className="p-3 rounded-lg bg-amber-500/5 border border-amber-500/10">
-              <div className="flex items-center gap-2 mb-1">
-                <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
-                <span className="text-xs text-muted-foreground">Punchlist B</span>
-              </div>
-              {isEditing ? (
-                <Input
-                  type="number"
+            {/* Completion Slider (Edit mode) */}
+            {isEditing && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs text-muted-foreground">Completion</Label>
+                  <span className="text-xs font-medium">{editFormData.completion_percentage}%</span>
+                </div>
+                <input
+                  type="range"
                   min={0}
-                  value={editFormData.punchlist_b_count}
+                  max={100}
+                  value={editFormData.completion_percentage}
                   onChange={(e) => setEditFormData({ 
                     ...editFormData, 
-                    punchlist_b_count: parseInt(e.target.value) || 0 
+                    completion_percentage: parseInt(e.target.value) 
                   })}
-                  className="h-8 text-lg font-bold bg-transparent border-amber-500/20"
+                  className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
                 />
-              ) : (
-                <div className="text-xl font-bold text-amber-500">{system.punchlist_b_count}</div>
-              )}
-            </div>
-
-            {/* ITR-A */}
-            <div className="p-3 rounded-lg bg-blue-500/5 border border-blue-500/10">
-              <div className="flex items-center gap-2 mb-1">
-                <FileCheck className="w-3.5 h-3.5 text-blue-500" />
-                <span className="text-xs text-muted-foreground">ITR-A</span>
               </div>
-              {isEditing ? (
-                <Input
-                  type="number"
-                  min={0}
-                  value={editFormData.itr_a_count}
-                  onChange={(e) => setEditFormData({ 
-                    ...editFormData, 
-                    itr_a_count: parseInt(e.target.value) || 0 
-                  })}
-                  className="h-8 text-lg font-bold bg-transparent border-blue-500/20"
-                />
-              ) : (
-                <div className="text-xl font-bold text-blue-500">{system.itr_a_count}</div>
-              )}
-            </div>
+            )}
 
-            {/* ITR-B */}
-            <div className="p-3 rounded-lg bg-purple-500/5 border border-purple-500/10">
-              <div className="flex items-center gap-2 mb-1">
-                <FileCheck className="w-3.5 h-3.5 text-purple-500" />
-                <span className="text-xs text-muted-foreground">ITR-B</span>
+            {/* System Type Toggle (Edit mode) */}
+            {isEditing && (
+              <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                <div className="flex items-center gap-2">
+                  {editFormData.is_hydrocarbon ? (
+                    <Flame className="w-4 h-4 text-orange-500" />
+                  ) : (
+                    <Snowflake className="w-4 h-4 text-blue-500" />
+                  )}
+                  <span className="text-sm">
+                    {editFormData.is_hydrocarbon ? 'Hydrocarbon' : 'Non-Hydrocarbon'}
+                  </span>
+                </div>
+                <Switch
+                  checked={editFormData.is_hydrocarbon}
+                  onCheckedChange={(checked) => setEditFormData({ ...editFormData, is_hydrocarbon: checked })}
+                />
               </div>
-              {isEditing ? (
-                <Input
-                  type="number"
-                  min={0}
-                  value={editFormData.itr_b_count}
-                  onChange={(e) => setEditFormData({ 
-                    ...editFormData, 
-                    itr_b_count: parseInt(e.target.value) || 0 
-                  })}
-                  className="h-8 text-lg font-bold bg-transparent border-purple-500/20"
-                />
-              ) : (
-                <div className="text-xl font-bold text-purple-500">{system.itr_b_count}</div>
-              )}
-            </div>
-          </div>
+            )}
 
-          <Separator />
+            <Separator />
 
-          {/* Target Dates */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Calendar className="w-4 h-4" />
-              <span>Target Dates</span>
-            </div>
+            {/* Metrics Grid */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">RFO</Label>
+              {/* Punchlist A */}
+              <div className="p-3 rounded-lg bg-red-500/5 border border-red-500/10">
+                <div className="flex items-center gap-2 mb-1">
+                  <AlertCircle className="w-3.5 h-3.5 text-red-500" />
+                  <span className="text-xs text-muted-foreground">Punchlist A</span>
+                </div>
                 {isEditing ? (
                   <Input
-                    type="date"
-                    value={editFormData.target_rfo_date}
-                    onChange={(e) => setEditFormData({ ...editFormData, target_rfo_date: e.target.value })}
-                    className="h-9"
+                    type="number"
+                    min={0}
+                    value={editFormData.punchlist_a_count}
+                    onChange={(e) => setEditFormData({ 
+                      ...editFormData, 
+                      punchlist_a_count: parseInt(e.target.value) || 0 
+                    })}
+                    className="h-8 text-lg font-bold bg-transparent border-red-500/20"
                   />
                 ) : (
-                  <div className="text-sm font-medium">
-                    {system.target_rfo_date 
-                      ? format(new Date(system.target_rfo_date), 'dd MMM yyyy')
-                      : '—'}
-                  </div>
+                  <div className="text-xl font-bold text-red-500">{system.punchlist_a_count}</div>
                 )}
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">RFSU</Label>
+
+              {/* Punchlist B */}
+              <div className="p-3 rounded-lg bg-amber-500/5 border border-amber-500/10">
+                <div className="flex items-center gap-2 mb-1">
+                  <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
+                  <span className="text-xs text-muted-foreground">Punchlist B</span>
+                </div>
                 {isEditing ? (
                   <Input
-                    type="date"
-                    value={editFormData.target_rfsu_date}
-                    onChange={(e) => setEditFormData({ ...editFormData, target_rfsu_date: e.target.value })}
-                    className="h-9"
+                    type="number"
+                    min={0}
+                    value={editFormData.punchlist_b_count}
+                    onChange={(e) => setEditFormData({ 
+                      ...editFormData, 
+                      punchlist_b_count: parseInt(e.target.value) || 0 
+                    })}
+                    className="h-8 text-lg font-bold bg-transparent border-amber-500/20"
                   />
                 ) : (
-                  <div className="text-sm font-medium">
-                    {system.target_rfsu_date 
-                      ? format(new Date(system.target_rfsu_date), 'dd MMM yyyy')
-                      : '—'}
-                  </div>
+                  <div className="text-xl font-bold text-amber-500">{system.punchlist_b_count}</div>
+                )}
+              </div>
+
+              {/* ITR-A */}
+              <div className="p-3 rounded-lg bg-blue-500/5 border border-blue-500/10">
+                <div className="flex items-center gap-2 mb-1">
+                  <FileCheck className="w-3.5 h-3.5 text-blue-500" />
+                  <span className="text-xs text-muted-foreground">ITR-A</span>
+                </div>
+                {isEditing ? (
+                  <Input
+                    type="number"
+                    min={0}
+                    value={editFormData.itr_a_count}
+                    onChange={(e) => setEditFormData({ 
+                      ...editFormData, 
+                      itr_a_count: parseInt(e.target.value) || 0 
+                    })}
+                    className="h-8 text-lg font-bold bg-transparent border-blue-500/20"
+                  />
+                ) : (
+                  <div className="text-xl font-bold text-blue-500">{system.itr_a_count}</div>
+                )}
+              </div>
+
+              {/* ITR-B */}
+              <div className="p-3 rounded-lg bg-purple-500/5 border border-purple-500/10">
+                <div className="flex items-center gap-2 mb-1">
+                  <FileCheck className="w-3.5 h-3.5 text-purple-500" />
+                  <span className="text-xs text-muted-foreground">ITR-B</span>
+                </div>
+                {isEditing ? (
+                  <Input
+                    type="number"
+                    min={0}
+                    value={editFormData.itr_b_count}
+                    onChange={(e) => setEditFormData({ 
+                      ...editFormData, 
+                      itr_b_count: parseInt(e.target.value) || 0 
+                    })}
+                    className="h-8 text-lg font-bold bg-transparent border-purple-500/20"
+                  />
+                ) : (
+                  <div className="text-xl font-bold text-purple-500">{system.itr_b_count}</div>
                 )}
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Footer Actions */}
-        <div className="px-6 py-4 bg-muted/30 border-t flex items-center justify-between">
+            <Separator />
+
+            {/* Target Dates */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Calendar className="w-4 h-4" />
+                <span>Target Dates</span>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">RFO</Label>
+                  {isEditing ? (
+                    <Input
+                      type="date"
+                      value={editFormData.target_rfo_date}
+                      onChange={(e) => setEditFormData({ ...editFormData, target_rfo_date: e.target.value })}
+                      className="h-9"
+                    />
+                  ) : (
+                    <div className="text-sm font-medium">
+                      {system.target_rfo_date 
+                        ? format(new Date(system.target_rfo_date), 'dd MMM yyyy')
+                        : '—'}
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">RFSU</Label>
+                  {isEditing ? (
+                    <Input
+                      type="date"
+                      value={editFormData.target_rfsu_date}
+                      onChange={(e) => setEditFormData({ ...editFormData, target_rfsu_date: e.target.value })}
+                      className="h-9"
+                    />
+                  ) : (
+                    <div className="text-sm font-medium">
+                      {system.target_rfsu_date 
+                        ? format(new Date(system.target_rfsu_date), 'dd MMM yyyy')
+                        : '—'}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </ScrollArea>
+
+        {/* Sticky Footer Actions */}
+        <div className="px-6 py-4 bg-muted/30 border-t flex items-center justify-between shrink-0">
           {isEditing ? (
             <>
               <Button 
