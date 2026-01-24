@@ -1,32 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 import { 
   Flame, 
   Snowflake, 
-  FileText, 
-  Download,
-  AlertTriangle,
-  CheckCircle2,
-  Clock,
-  BarChart3,
-  Layers,
-  Pencil,
-  Save
+  X,
+  Calendar,
+  TrendingUp,
+  AlertCircle,
+  FileCheck,
+  Save,
+  RotateCcw
 } from 'lucide-react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis } from 'recharts';
-import { P2ASystem, useP2ASubsystems } from '../hooks/useP2ASystems';
+import { P2ASystem
+} from '../hooks/useP2ASystems';
 import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 interface SystemDetailOverlayProps {
   system: P2ASystem;
@@ -36,8 +32,6 @@ interface SystemDetailOverlayProps {
   isUpdating?: boolean;
 }
 
-const CHART_COLORS = ['#ef4444', '#f59e0b', '#22c55e', '#3b82f6'];
-
 export const SystemDetailOverlay: React.FC<SystemDetailOverlayProps> = ({
   system,
   open,
@@ -45,7 +39,7 @@ export const SystemDetailOverlay: React.FC<SystemDetailOverlayProps> = ({
   onUpdateSystem,
   isUpdating = false,
 }) => {
-  const { subsystems, isLoading: subsystemsLoading } = useP2ASubsystems(system.id);
+  const [isEditing, setIsEditing] = useState(false);
   
   // Edit form state
   const [editFormData, setEditFormData] = useState({
@@ -62,7 +56,7 @@ export const SystemDetailOverlay: React.FC<SystemDetailOverlayProps> = ({
     itr_b_count: system.itr_b_count,
   });
   
-  // Reset form when system changes
+  // Reset form when system changes or dialog opens
   useEffect(() => {
     setEditFormData({
       name: system.name,
@@ -77,7 +71,8 @@ export const SystemDetailOverlay: React.FC<SystemDetailOverlayProps> = ({
       itr_a_count: system.itr_a_count,
       itr_b_count: system.itr_b_count,
     });
-  }, [system]);
+    setIsEditing(false);
+  }, [system, open]);
   
   const handleSaveChanges = () => {
     if (onUpdateSystem) {
@@ -86,484 +81,394 @@ export const SystemDetailOverlay: React.FC<SystemDetailOverlayProps> = ({
         target_rfo_date: editFormData.target_rfo_date || undefined,
         target_rfsu_date: editFormData.target_rfsu_date || undefined,
       });
+      setIsEditing(false);
     }
   };
 
-  // Chart data
-  const punchlistData = [
-    { name: 'Category A', value: system.punchlist_a_count, color: '#ef4444' },
-    { name: 'Category B', value: system.punchlist_b_count, color: '#f59e0b' },
-  ].filter(d => d.value > 0);
+  const handleCancel = () => {
+    setEditFormData({
+      name: system.name,
+      system_id: system.system_id,
+      is_hydrocarbon: system.is_hydrocarbon,
+      completion_status: system.completion_status,
+      completion_percentage: system.completion_percentage,
+      target_rfo_date: system.target_rfo_date || '',
+      target_rfsu_date: system.target_rfsu_date || '',
+      punchlist_a_count: system.punchlist_a_count,
+      punchlist_b_count: system.punchlist_b_count,
+      itr_a_count: system.itr_a_count,
+      itr_b_count: system.itr_b_count,
+    });
+    setIsEditing(false);
+  };
 
-  const itrData = [
-    { name: 'ITR-A', value: system.itr_a_count, color: '#3b82f6' },
-    { name: 'ITR-B', value: system.itr_b_count, color: '#8b5cf6' },
-  ].filter(d => d.value > 0);
-
-  const getStatusBadge = (status: string) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case 'COMPLETED':
-        return <Badge className="bg-emerald-500 text-white"><CheckCircle2 className="w-3 h-3 mr-1" />Completed</Badge>;
-      case 'IN_PROGRESS':
-        return <Badge className="bg-amber-500 text-white"><Clock className="w-3 h-3 mr-1" />In Progress</Badge>;
-      default:
-        return <Badge variant="secondary"><Clock className="w-3 h-3 mr-1" />Not Started</Badge>;
+      case 'RFSU': return 'bg-emerald-500';
+      case 'RFO': return 'bg-blue-500';
+      case 'IN_PROGRESS': return 'bg-amber-500';
+      default: return 'bg-muted-foreground/50';
     }
+  };
+
+  const displayData = isEditing ? editFormData : {
+    name: system.name,
+    system_id: system.system_id,
+    is_hydrocarbon: system.is_hydrocarbon,
+    completion_status: system.completion_status,
+    completion_percentage: system.completion_percentage,
+    target_rfo_date: system.target_rfo_date || '',
+    target_rfsu_date: system.target_rfsu_date || '',
+    punchlist_a_count: system.punchlist_a_count,
+    punchlist_b_count: system.punchlist_b_count,
+    itr_a_count: system.itr_a_count,
+    itr_b_count: system.itr_b_count,
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-        <DialogHeader className="pb-4 border-b">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                system.is_hydrocarbon 
-                  ? 'bg-orange-500/10 text-orange-500' 
-                  : 'bg-blue-500/10 text-blue-500'
-              }`}>
-                {system.is_hydrocarbon ? (
-                  <Flame className="w-5 h-5" />
-                ) : (
-                  <Snowflake className="w-5 h-5" />
-                )}
-              </div>
-              <div>
-                <DialogTitle className="text-xl">{system.name}</DialogTitle>
-                <div className="flex items-center gap-2 mt-1">
-                  <Badge variant="outline" className="font-mono text-xs">
-                    {system.system_id}
-                  </Badge>
-                  <Badge className={
-                    system.completion_status === 'RFSU' ? 'bg-emerald-500' :
-                    system.completion_status === 'RFO' ? 'bg-blue-500' :
-                    system.completion_status === 'IN_PROGRESS' ? 'bg-amber-500' :
-                    'bg-slate-500'
-                  }>
-                    {system.completion_status.replace('_', ' ')}
-                  </Badge>
-                </div>
-              </div>
+      <DialogContent className="max-w-lg p-0 gap-0 overflow-hidden border-0 shadow-2xl">
+        {/* Header with gradient */}
+        <div className={cn(
+          'relative px-6 pt-6 pb-8',
+          system.is_hydrocarbon 
+            ? 'bg-gradient-to-br from-orange-500/10 via-orange-500/5 to-transparent' 
+            : 'bg-gradient-to-br from-blue-500/10 via-blue-500/5 to-transparent'
+        )}>
+          {/* Close button */}
+          <button
+            onClick={() => onOpenChange(false)}
+            className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-background/80 transition-colors"
+          >
+            <X className="w-4 h-4 text-muted-foreground" />
+          </button>
+
+          {/* System Type Icon */}
+          <div className={cn(
+            'w-12 h-12 rounded-xl flex items-center justify-center mb-4',
+            system.is_hydrocarbon 
+              ? 'bg-orange-500/15 text-orange-500' 
+              : 'bg-blue-500/15 text-blue-500'
+          )}>
+            {system.is_hydrocarbon ? (
+              <Flame className="w-6 h-6" />
+            ) : (
+              <Snowflake className="w-6 h-6" />
+            )}
+          </div>
+
+          {/* Title & ID */}
+          {isEditing ? (
+            <div className="space-y-3">
+              <Input
+                value={editFormData.name}
+                onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                className="text-xl font-semibold bg-background/50 border-border/50 h-auto py-2"
+                placeholder="System Name"
+              />
+              <Input
+                value={editFormData.system_id}
+                onChange={(e) => setEditFormData({ ...editFormData, system_id: e.target.value })}
+                className="font-mono text-xs bg-background/50 border-border/50 w-fit"
+                placeholder="System ID"
+              />
             </div>
-            <div className="text-right">
-              <div className="text-3xl font-bold">{system.completion_percentage}%</div>
-              <div className="text-xs text-muted-foreground">Complete</div>
+          ) : (
+            <>
+              <h2 className="text-xl font-semibold text-foreground mb-1">{system.name}</h2>
+              <span className="text-xs font-mono text-muted-foreground">{system.system_id}</span>
+            </>
+          )}
+
+          {/* Progress Ring */}
+          <div className="absolute top-6 right-14 text-center">
+            <div className="relative w-16 h-16">
+              <svg className="w-16 h-16 -rotate-90" viewBox="0 0 64 64">
+                <circle
+                  cx="32"
+                  cy="32"
+                  r="28"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                  fill="none"
+                  className="text-muted/30"
+                />
+                <circle
+                  cx="32"
+                  cy="32"
+                  r="28"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                  fill="none"
+                  strokeDasharray={`${(displayData.completion_percentage / 100) * 176} 176`}
+                  strokeLinecap="round"
+                  className={cn(
+                    displayData.completion_percentage >= 100 ? 'text-emerald-500' :
+                    displayData.completion_percentage >= 50 ? 'text-amber-500' : 'text-primary'
+                  )}
+                />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-sm font-bold">{displayData.completion_percentage}%</span>
+              </div>
             </div>
           </div>
-        </DialogHeader>
+        </div>
 
-        <Tabs defaultValue="overview" className="flex-1 flex flex-col overflow-hidden">
-          <TabsList className="grid grid-cols-4 w-full">
-            <TabsTrigger value="overview" className="gap-2">
-              <BarChart3 className="w-4 h-4" />
-              Overview
-            </TabsTrigger>
-            <TabsTrigger value="edit" className="gap-2">
-              <Pencil className="w-4 h-4" />
-              Edit
-            </TabsTrigger>
-            <TabsTrigger value="subsystems" className="gap-2">
-              <Layers className="w-4 h-4" />
-              Subsystems
-            </TabsTrigger>
-            <TabsTrigger value="punchlist" className="gap-2">
-              <AlertTriangle className="w-4 h-4" />
-              Punchlist
-            </TabsTrigger>
-          </TabsList>
+        {/* Content */}
+        <div className="px-6 py-5 space-y-5">
+          {/* Status Row */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">Status</span>
+            </div>
+            {isEditing ? (
+              <Select
+                value={editFormData.completion_status}
+                onValueChange={(value) => setEditFormData({ 
+                  ...editFormData, 
+                  completion_status: value as P2ASystem['completion_status'] 
+                })}
+              >
+                <SelectTrigger className="w-32 h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="NOT_STARTED">Not Started</SelectItem>
+                  <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+                  <SelectItem value="RFO">RFO</SelectItem>
+                  <SelectItem value="RFSU">RFSU</SelectItem>
+                </SelectContent>
+              </Select>
+            ) : (
+              <Badge className={cn('text-white text-xs', getStatusColor(system.completion_status))}>
+                {system.completion_status.replace('_', ' ')}
+              </Badge>
+            )}
+          </div>
 
-          <ScrollArea className="flex-1 mt-4">
-            {/* Overview Tab */}
-            <TabsContent value="overview" className="m-0 space-y-4">
-              {/* Key Metrics */}
-              <div className="grid grid-cols-4 gap-4">
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="text-sm text-muted-foreground">Punchlist A</div>
-                    <div className="text-2xl font-bold text-red-500">{system.punchlist_a_count}</div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="text-sm text-muted-foreground">Punchlist B</div>
-                    <div className="text-2xl font-bold text-amber-500">{system.punchlist_b_count}</div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="text-sm text-muted-foreground">ITR-A Outstanding</div>
-                    <div className="text-2xl font-bold text-blue-500">{system.itr_a_count}</div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="text-sm text-muted-foreground">ITR-B Outstanding</div>
-                    <div className="text-2xl font-bold text-purple-500">{system.itr_b_count}</div>
-                  </CardContent>
-                </Card>
+          {/* Completion Slider (Edit mode) */}
+          {isEditing && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs text-muted-foreground">Completion</Label>
+                <span className="text-xs font-medium">{editFormData.completion_percentage}%</span>
               </div>
+              <Input
+                type="range"
+                min={0}
+                max={100}
+                value={editFormData.completion_percentage}
+                onChange={(e) => setEditFormData({ 
+                  ...editFormData, 
+                  completion_percentage: parseInt(e.target.value) 
+                })}
+                className="h-2 cursor-pointer"
+              />
+            </div>
+          )}
 
-              {/* Charts */}
-              <div className="grid grid-cols-2 gap-4">
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm">Outstanding Punchlist</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {punchlistData.length > 0 ? (
-                      <ResponsiveContainer width="100%" height={180}>
-                        <PieChart>
-                          <Pie
-                            data={punchlistData}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={40}
-                            outerRadius={70}
-                            dataKey="value"
-                            label={({ name, value }) => `${name}: ${value}`}
-                          >
-                            {punchlistData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Pie>
-                          <Tooltip />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    ) : (
-                      <div className="h-[180px] flex items-center justify-center text-muted-foreground">
-                        <CheckCircle2 className="w-8 h-8 mr-2 text-emerald-500" />
-                        No outstanding punchlist
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm">Outstanding ITRs</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {itrData.length > 0 ? (
-                      <ResponsiveContainer width="100%" height={180}>
-                        <BarChart data={itrData}>
-                          <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                          <YAxis tick={{ fontSize: 12 }} />
-                          <Tooltip />
-                          <Bar dataKey="value" fill="#3b82f6" radius={[4, 4, 0, 0]}>
-                            {itrData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Bar>
-                        </BarChart>
-                      </ResponsiveContainer>
-                    ) : (
-                      <div className="h-[180px] flex items-center justify-center text-muted-foreground">
-                        <CheckCircle2 className="w-8 h-8 mr-2 text-emerald-500" />
-                        No outstanding ITRs
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+          {/* System Type Toggle (Edit mode) */}
+          {isEditing && (
+            <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+              <div className="flex items-center gap-2">
+                {editFormData.is_hydrocarbon ? (
+                  <Flame className="w-4 h-4 text-orange-500" />
+                ) : (
+                  <Snowflake className="w-4 h-4 text-blue-500" />
+                )}
+                <span className="text-sm">
+                  {editFormData.is_hydrocarbon ? 'Hydrocarbon' : 'Non-Hydrocarbon'}
+                </span>
               </div>
+              <Switch
+                checked={editFormData.is_hydrocarbon}
+                onCheckedChange={(checked) => setEditFormData({ ...editFormData, is_hydrocarbon: checked })}
+              />
+            </div>
+          )}
 
-              {/* Dates */}
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">Target Dates</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-3 bg-muted/50 rounded-lg">
-                      <div className="text-xs text-muted-foreground">Target RFO</div>
-                      <div className="font-medium">
-                        {system.target_rfo_date 
-                          ? format(new Date(system.target_rfo_date), 'dd MMM yyyy')
-                          : 'Not set'}
-                      </div>
-                    </div>
-                    <div className="p-3 bg-muted/50 rounded-lg">
-                      <div className="text-xs text-muted-foreground">Target RFSU</div>
-                      <div className="font-medium">
-                        {system.target_rfsu_date 
-                          ? format(new Date(system.target_rfsu_date), 'dd MMM yyyy')
-                          : 'Not set'}
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
+          <Separator />
 
-            {/* Edit Tab */}
-            <TabsContent value="edit" className="m-0 space-y-4">
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">System Details</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="edit-name">System Name</Label>
-                      <Input
-                        id="edit-name"
-                        value={editFormData.name}
-                        onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="edit-system-id">System ID</Label>
-                      <Input
-                        id="edit-system-id"
-                        value={editFormData.system_id}
-                        onChange={(e) => setEditFormData({ ...editFormData, system_id: e.target.value })}
-                        className="font-mono"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="edit-status">Completion Status</Label>
-                      <Select
-                        value={editFormData.completion_status}
-                        onValueChange={(value) => setEditFormData({ 
-                          ...editFormData, 
-                          completion_status: value as P2ASystem['completion_status'] 
-                        })}
-                      >
-                        <SelectTrigger id="edit-status">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="NOT_STARTED">Not Started</SelectItem>
-                          <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-                          <SelectItem value="RFO">RFO</SelectItem>
-                          <SelectItem value="RFSU">RFSU</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="edit-percentage">Completion %</Label>
-                      <Input
-                        id="edit-percentage"
-                        type="number"
-                        min={0}
-                        max={100}
-                        value={editFormData.completion_percentage}
-                        onChange={(e) => setEditFormData({ 
-                          ...editFormData, 
-                          completion_percentage: parseInt(e.target.value) || 0 
-                        })}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                    <Switch
-                      id="edit-hydrocarbon"
-                      checked={editFormData.is_hydrocarbon}
-                      onCheckedChange={(checked) => setEditFormData({ ...editFormData, is_hydrocarbon: checked })}
-                    />
-                    <Label htmlFor="edit-hydrocarbon" className="flex items-center gap-2 cursor-pointer">
-                      {editFormData.is_hydrocarbon ? (
-                        <>
-                          <Flame className="w-4 h-4 text-orange-500" />
-                          Hydrocarbon System
-                        </>
-                      ) : (
-                        <>
-                          <Snowflake className="w-4 h-4 text-blue-500" />
-                          Non-Hydrocarbon System
-                        </>
-                      )}
-                    </Label>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">Target Dates</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="edit-rfo-date">Target RFO Date</Label>
-                      <Input
-                        id="edit-rfo-date"
-                        type="date"
-                        value={editFormData.target_rfo_date}
-                        onChange={(e) => setEditFormData({ ...editFormData, target_rfo_date: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="edit-rfsu-date">Target RFSU Date</Label>
-                      <Input
-                        id="edit-rfsu-date"
-                        type="date"
-                        value={editFormData.target_rfsu_date}
-                        onChange={(e) => setEditFormData({ ...editFormData, target_rfsu_date: e.target.value })}
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">Counts (Manual Override)</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-4 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="edit-pl-a">Punchlist A</Label>
-                      <Input
-                        id="edit-pl-a"
-                        type="number"
-                        min={0}
-                        value={editFormData.punchlist_a_count}
-                        onChange={(e) => setEditFormData({ 
-                          ...editFormData, 
-                          punchlist_a_count: parseInt(e.target.value) || 0 
-                        })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="edit-pl-b">Punchlist B</Label>
-                      <Input
-                        id="edit-pl-b"
-                        type="number"
-                        min={0}
-                        value={editFormData.punchlist_b_count}
-                        onChange={(e) => setEditFormData({ 
-                          ...editFormData, 
-                          punchlist_b_count: parseInt(e.target.value) || 0 
-                        })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="edit-itr-a">ITR-A</Label>
-                      <Input
-                        id="edit-itr-a"
-                        type="number"
-                        min={0}
-                        value={editFormData.itr_a_count}
-                        onChange={(e) => setEditFormData({ 
-                          ...editFormData, 
-                          itr_a_count: parseInt(e.target.value) || 0 
-                        })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="edit-itr-b">ITR-B</Label>
-                      <Input
-                        id="edit-itr-b"
-                        type="number"
-                        min={0}
-                        value={editFormData.itr_b_count}
-                        onChange={(e) => setEditFormData({ 
-                          ...editFormData, 
-                          itr_b_count: parseInt(e.target.value) || 0 
-                        })}
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <div className="flex justify-end">
-                <Button onClick={handleSaveChanges} disabled={isUpdating} className="gap-2">
-                  <Save className="w-4 h-4" />
-                  {isUpdating ? 'Saving...' : 'Save Changes'}
-                </Button>
+          {/* Metrics Grid */}
+          <div className="grid grid-cols-2 gap-3">
+            {/* Punchlist A */}
+            <div className="p-3 rounded-lg bg-red-500/5 border border-red-500/10">
+              <div className="flex items-center gap-2 mb-1">
+                <AlertCircle className="w-3.5 h-3.5 text-red-500" />
+                <span className="text-xs text-muted-foreground">Punchlist A</span>
               </div>
-            </TabsContent>
-
-            {/* Subsystems Tab */}
-            <TabsContent value="subsystems" className="m-0">
-              <div className="flex justify-between items-center mb-4">
-                <div className="text-sm text-muted-foreground">
-                  {subsystems.length} subsystems
-                </div>
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Download className="w-4 h-4" />
-                  Export Excel
-                </Button>
-              </div>
-
-              {subsystems.length > 0 ? (
-                <Card>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Subsystem ID</TableHead>
-                        <TableHead>Name</TableHead>
-                        <TableHead>MC Status</TableHead>
-                        <TableHead>PCC Status</TableHead>
-                        <TableHead>PL-A</TableHead>
-                        <TableHead>PL-B</TableHead>
-                        <TableHead>ITRs</TableHead>
-                        <TableHead>Progress</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {subsystems.map((sub) => (
-                        <TableRow key={sub.id}>
-                          <TableCell className="font-mono text-xs">{sub.subsystem_id}</TableCell>
-                          <TableCell>{sub.name}</TableCell>
-                          <TableCell>{getStatusBadge(sub.mc_status)}</TableCell>
-                          <TableCell>{getStatusBadge(sub.pcc_status)}</TableCell>
-                          <TableCell>{sub.punchlist_a_count}</TableCell>
-                          <TableCell>{sub.punchlist_b_count}</TableCell>
-                          <TableCell>{sub.itr_count}</TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Progress value={sub.completion_percentage} className="w-16 h-1.5" />
-                              <span className="text-xs">{sub.completion_percentage}%</span>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </Card>
+              {isEditing ? (
+                <Input
+                  type="number"
+                  min={0}
+                  value={editFormData.punchlist_a_count}
+                  onChange={(e) => setEditFormData({ 
+                    ...editFormData, 
+                    punchlist_a_count: parseInt(e.target.value) || 0 
+                  })}
+                  className="h-8 text-lg font-bold bg-transparent border-red-500/20"
+                />
               ) : (
-                <Card className="border-dashed">
-                  <CardContent className="flex flex-col items-center justify-center py-12">
-                    <Layers className="w-12 h-12 text-muted-foreground mb-4" />
-                    <p className="text-sm text-muted-foreground">No subsystems defined</p>
-                  </CardContent>
-                </Card>
+                <div className="text-xl font-bold text-red-500">{system.punchlist_a_count}</div>
               )}
-            </TabsContent>
+            </div>
 
-            {/* Punchlist Tab */}
-            <TabsContent value="punchlist" className="m-0">
-              <div className="flex justify-between items-center mb-4">
-                <div className="text-sm text-muted-foreground">
-                  {system.punchlist_a_count + system.punchlist_b_count} total punchlist items
-                </div>
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Download className="w-4 h-4" />
-                  Export Report
-                </Button>
+            {/* Punchlist B */}
+            <div className="p-3 rounded-lg bg-amber-500/5 border border-amber-500/10">
+              <div className="flex items-center gap-2 mb-1">
+                <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
+                <span className="text-xs text-muted-foreground">Punchlist B</span>
               </div>
+              {isEditing ? (
+                <Input
+                  type="number"
+                  min={0}
+                  value={editFormData.punchlist_b_count}
+                  onChange={(e) => setEditFormData({ 
+                    ...editFormData, 
+                    punchlist_b_count: parseInt(e.target.value) || 0 
+                  })}
+                  className="h-8 text-lg font-bold bg-transparent border-amber-500/20"
+                />
+              ) : (
+                <div className="text-xl font-bold text-amber-500">{system.punchlist_b_count}</div>
+              )}
+            </div>
 
-              <Card className="border-dashed">
-                <CardContent className="flex flex-col items-center justify-center py-12">
-                  <AlertTriangle className="w-12 h-12 text-muted-foreground mb-4" />
-                  <p className="text-sm text-muted-foreground text-center max-w-md">
-                    Punchlist details are synced from your completions management system.
-                    Connect via API to view individual items.
-                  </p>
-                  <Button variant="outline" className="mt-4">
-                    Connect API
-                  </Button>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </ScrollArea>
-        </Tabs>
+            {/* ITR-A */}
+            <div className="p-3 rounded-lg bg-blue-500/5 border border-blue-500/10">
+              <div className="flex items-center gap-2 mb-1">
+                <FileCheck className="w-3.5 h-3.5 text-blue-500" />
+                <span className="text-xs text-muted-foreground">ITR-A</span>
+              </div>
+              {isEditing ? (
+                <Input
+                  type="number"
+                  min={0}
+                  value={editFormData.itr_a_count}
+                  onChange={(e) => setEditFormData({ 
+                    ...editFormData, 
+                    itr_a_count: parseInt(e.target.value) || 0 
+                  })}
+                  className="h-8 text-lg font-bold bg-transparent border-blue-500/20"
+                />
+              ) : (
+                <div className="text-xl font-bold text-blue-500">{system.itr_a_count}</div>
+              )}
+            </div>
+
+            {/* ITR-B */}
+            <div className="p-3 rounded-lg bg-purple-500/5 border border-purple-500/10">
+              <div className="flex items-center gap-2 mb-1">
+                <FileCheck className="w-3.5 h-3.5 text-purple-500" />
+                <span className="text-xs text-muted-foreground">ITR-B</span>
+              </div>
+              {isEditing ? (
+                <Input
+                  type="number"
+                  min={0}
+                  value={editFormData.itr_b_count}
+                  onChange={(e) => setEditFormData({ 
+                    ...editFormData, 
+                    itr_b_count: parseInt(e.target.value) || 0 
+                  })}
+                  className="h-8 text-lg font-bold bg-transparent border-purple-500/20"
+                />
+              ) : (
+                <div className="text-xl font-bold text-purple-500">{system.itr_b_count}</div>
+              )}
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Target Dates */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Calendar className="w-4 h-4" />
+              <span>Target Dates</span>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">RFO</Label>
+                {isEditing ? (
+                  <Input
+                    type="date"
+                    value={editFormData.target_rfo_date}
+                    onChange={(e) => setEditFormData({ ...editFormData, target_rfo_date: e.target.value })}
+                    className="h-9"
+                  />
+                ) : (
+                  <div className="text-sm font-medium">
+                    {system.target_rfo_date 
+                      ? format(new Date(system.target_rfo_date), 'dd MMM yyyy')
+                      : '—'}
+                  </div>
+                )}
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">RFSU</Label>
+                {isEditing ? (
+                  <Input
+                    type="date"
+                    value={editFormData.target_rfsu_date}
+                    onChange={(e) => setEditFormData({ ...editFormData, target_rfsu_date: e.target.value })}
+                    className="h-9"
+                  />
+                ) : (
+                  <div className="text-sm font-medium">
+                    {system.target_rfsu_date 
+                      ? format(new Date(system.target_rfsu_date), 'dd MMM yyyy')
+                      : '—'}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer Actions */}
+        <div className="px-6 py-4 bg-muted/30 border-t flex items-center justify-between">
+          {isEditing ? (
+            <>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleCancel}
+                className="gap-2"
+              >
+                <RotateCcw className="w-4 h-4" />
+                Cancel
+              </Button>
+              <Button 
+                size="sm" 
+                onClick={handleSaveChanges}
+                disabled={isUpdating}
+                className="gap-2"
+              >
+                <Save className="w-4 h-4" />
+                {isUpdating ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </>
+          ) : (
+            <>
+              <span className="text-xs text-muted-foreground">
+                {system.assigned_vcr_code 
+                  ? `Assigned to ${system.assigned_vcr_code}` 
+                  : 'Not assigned to VCR'}
+              </span>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setIsEditing(true)}
+              >
+                Edit System
+              </Button>
+            </>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );
