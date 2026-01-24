@@ -1,9 +1,22 @@
 export { P2AHandoverWorkspace } from './P2AHandoverWorkspace';
 export { EmptyWorkspaceState } from './EmptyWorkspaceState';
+
+// Systems
 export { SystemsPanel } from './systems/SystemsPanel';
 export { SystemCard, DraggableSystemCard } from './systems/SystemCard';
 export { AddSystemDialog } from './systems/AddSystemDialog';
 export { SystemDetailOverlay } from './systems/SystemDetailOverlay';
+
+// Phases
+export { PhasesTimeline } from './phases/PhasesTimeline';
+export { PhaseColumn } from './phases/PhaseColumn';
+export { MilestoneMarker } from './phases/MilestoneMarker';
+export { CreatePhaseDialog } from './phases/CreatePhaseDialog';
+
+// Handover Points (VCR)
+export { HandoverPointCard, DroppableHandoverPointCard } from './handover-points/HandoverPointCard';
+export { CreateHandoverPointDialog } from './handover-points/CreateHandoverPointDialog';
+export { VCRDetailOverlay } from './handover-points/VCRDetailOverlay';
 
 // Hooks
 export { useP2AHandoverPlan } from './hooks/useP2AHandoverPlan';
