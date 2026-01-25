@@ -6,23 +6,27 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { P2APhase } from '../hooks/useP2APhases';
 
 interface CreateHandoverPointDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCreateHandoverPoint: (data: {
-    phase_id: string;
+    phase_id?: string;
     name: string;
     description?: string;
     project_code: string;
     target_date?: string;
+    handover_plan_id: string;
   }) => void;
-  phaseId: string;
-  phaseName: string;
+  phases: P2APhase[];
+  selectedPhaseId?: string | null; // Optional - if provided, pre-selects the phase
   projectCode: string;
+  handoverPlanId: string;
   isCreating?: boolean;
 }
 
@@ -30,36 +34,49 @@ export const CreateHandoverPointDialog: React.FC<CreateHandoverPointDialogProps>
   open,
   onOpenChange,
   onCreateHandoverPoint,
-  phaseId,
-  phaseName,
+  phases,
+  selectedPhaseId,
   projectCode,
+  handoverPlanId,
   isCreating,
 }) => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
+    phase_id: selectedPhaseId || '',
     target_date: undefined as Date | undefined,
   });
+
+  // Update phase_id when selectedPhaseId changes
+  React.useEffect(() => {
+    if (selectedPhaseId) {
+      setFormData(prev => ({ ...prev, phase_id: selectedPhaseId }));
+    }
+  }, [selectedPhaseId]);
 
   const resetForm = () => {
     setFormData({
       name: '',
       description: '',
+      phase_id: selectedPhaseId || '',
       target_date: undefined,
     });
   };
 
   const handleCreate = () => {
     onCreateHandoverPoint({
-      phase_id: phaseId,
+      phase_id: formData.phase_id || undefined,
       name: formData.name,
       description: formData.description || undefined,
       project_code: projectCode,
       target_date: formData.target_date ? format(formData.target_date, 'yyyy-MM-dd') : undefined,
+      handover_plan_id: handoverPlanId,
     });
     resetForm();
     onOpenChange(false);
   };
+
+  const selectedPhase = phases.find(p => p.id === formData.phase_id);
 
   return (
     <Dialog open={open} onOpenChange={(o) => { onOpenChange(o); if (!o) resetForm(); }}>
@@ -67,7 +84,10 @@ export const CreateHandoverPointDialog: React.FC<CreateHandoverPointDialogProps>
         <DialogHeader>
           <DialogTitle>Create Handover Point (VCR)</DialogTitle>
           <DialogDescription>
-            Add a Verification of Readiness checkpoint in the "{phaseName}" phase
+            {selectedPhase 
+              ? `Add a Verification of Readiness checkpoint in the "${selectedPhase.name}" phase`
+              : 'Create a VCR that can be assigned to a phase later'
+            }
           </DialogDescription>
         </DialogHeader>
 
@@ -88,6 +108,31 @@ export const CreateHandoverPointDialog: React.FC<CreateHandoverPointDialogProps>
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="e.g., Critical Utilities Batch 1"
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Phase (Optional)</Label>
+            <Select 
+              value={formData.phase_id || "unassigned"} 
+              onValueChange={(v) => setFormData({ ...formData, phase_id: v === "unassigned" ? "" : v })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a phase (optional)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="unassigned">
+                  <span className="text-muted-foreground">No Phase (Unassigned)</span>
+                </SelectItem>
+                {phases.map(phase => (
+                  <SelectItem key={phase.id} value={phase.id}>
+                    {phase.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              You can assign this VCR to a phase later
+            </p>
           </div>
 
           <div className="space-y-2">

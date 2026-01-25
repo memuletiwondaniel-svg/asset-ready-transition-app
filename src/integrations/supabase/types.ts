@@ -2902,9 +2902,10 @@ export type Database = {
           created_at: string
           created_by: string | null
           description: string | null
+          handover_plan_id: string | null
           id: string
           name: string
-          phase_id: string
+          phase_id: string | null
           position_x: number
           position_y: number
           status: Database["public"]["Enums"]["p2a_handover_point_status"]
@@ -2917,9 +2918,10 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          handover_plan_id?: string | null
           id?: string
           name: string
-          phase_id: string
+          phase_id?: string | null
           position_x?: number
           position_y?: number
           status?: Database["public"]["Enums"]["p2a_handover_point_status"]
@@ -2932,9 +2934,10 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          handover_plan_id?: string | null
           id?: string
           name?: string
-          phase_id?: string
+          phase_id?: string | null
           position_x?: number
           position_y?: number
           status?: Database["public"]["Enums"]["p2a_handover_point_status"]
@@ -2943,6 +2946,13 @@ export type Database = {
           vcr_code?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "p2a_handover_points_handover_plan_id_fkey"
+            columns: ["handover_plan_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_handover_plans"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "p2a_handover_points_phase_id_fkey"
             columns: ["phase_id"]
