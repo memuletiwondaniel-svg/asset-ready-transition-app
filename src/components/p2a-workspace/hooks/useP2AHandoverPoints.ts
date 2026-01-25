@@ -91,7 +91,7 @@ export const useP2AHandoverPoints = (handoverPlanId: string) => {
     }) => {
       // Generate VCR code
       const { data: vcrCode, error: vcrError } = await supabase.rpc('generate_vcr_code', {
-        project_code: data.project_code,
+        p_project_code: data.project_code,
       });
 
       if (vcrError) throw vcrError;
