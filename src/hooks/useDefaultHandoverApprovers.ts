@@ -7,7 +7,7 @@ export interface DefaultApprover {
   display_order: number;
 }
 
-export function useDefaultHandoverApprovers(certificateType: 'PAC' | 'FAC') {
+export function useDefaultHandoverApprovers(certificateType: 'PAC' | 'FAC' | 'VCR') {
   const queryClient = useQueryClient();
 
   const { data: approvers, isLoading, error } = useQuery({

@@ -6453,6 +6453,73 @@ export type Database = {
         }
         Relationships: []
       }
+      vcr_templates: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          created_by: string | null
+          delivering_party_role_id: string | null
+          description: string | null
+          display_order: number
+          id: string
+          is_active: boolean
+          receiving_party_role_id: string | null
+          sample_evidence: string | null
+          summary: string
+          updated_at: string
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          delivering_party_role_id?: string | null
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          receiving_party_role_id?: string | null
+          sample_evidence?: string | null
+          summary: string
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          delivering_party_role_id?: string | null
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          receiving_party_role_id?: string | null
+          sample_evidence?: string | null
+          summary?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vcr_templates_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "pac_prerequisite_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vcr_templates_delivering_party_role_id_fkey"
+            columns: ["delivering_party_role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vcr_templates_receiving_party_role_id_fkey"
+            columns: ["receiving_party_role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       widget_layout_presets: {
         Row: {
           created_at: string

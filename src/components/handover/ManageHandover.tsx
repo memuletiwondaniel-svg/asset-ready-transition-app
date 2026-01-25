@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Key, ClipboardList, Award, AlertTriangle, FileCheck2 } from 'lucide-react';
+import { ArrowLeft, Key, ClipboardList, Award, AlertTriangle, FileCheck2, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
@@ -9,6 +9,7 @@ import PACManagementTab from './PACManagementTab';
 import FACManagementTab from './FACManagementTab';
 import SOFCertificateManagement from './SOFCertificateManagement';
 import OWLManagementTab from './OWLManagementTab';
+import VCRManagementTab from './VCRManagementTab';
 
 interface ManageHandoverProps {
   onBack: () => void;
@@ -26,6 +27,8 @@ const getParentTabIconColor = (tabValue: string, isActive: boolean) => {
       return 'text-blue-500 dark:text-blue-400';
     case 'owl':
       return 'text-amber-500 dark:text-amber-400';
+    case 'vcr':
+      return 'text-cyan-500 dark:text-cyan-400';
     default:
       return 'text-foreground';
   }
@@ -117,6 +120,17 @@ export const ManageHandover: React.FC<ManageHandoverProps> = ({ onBack }) => {
               <AlertTriangle className={cn("h-4 w-4 shrink-0 transition-colors duration-200", getParentTabIconColor('owl', activeTab === 'owl'))} />
               <span>OWL</span>
             </TabsTrigger>
+            <TabsTrigger 
+              value="vcr" 
+              className={cn(
+                "flex items-center gap-2 px-4 transition-colors duration-200",
+                activeTab !== 'vcr' && "text-muted-foreground/60"
+              )}
+            >
+              <CheckCircle className={cn("h-4 w-4 shrink-0 transition-colors duration-200", getParentTabIconColor('vcr', activeTab === 'vcr'))} />
+              <span className="hidden sm:inline whitespace-nowrap">VCR Templates</span>
+              <span className="sm:hidden">VCR</span>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="pac" className="mt-6">
@@ -133,6 +147,10 @@ export const ManageHandover: React.FC<ManageHandoverProps> = ({ onBack }) => {
 
           <TabsContent value="owl" className="mt-6">
             <OWLManagementTab />
+          </TabsContent>
+
+          <TabsContent value="vcr" className="mt-6">
+            <VCRManagementTab />
           </TabsContent>
         </Tabs>
       </div>
