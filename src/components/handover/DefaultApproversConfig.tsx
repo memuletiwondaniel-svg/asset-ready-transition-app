@@ -101,7 +101,7 @@ function SortableApproverItem({ approver, onEdit, onDelete }: SortableApproverIt
 }
 
 interface DefaultApproversConfigProps {
-  certificateType: 'PAC' | 'FAC';
+  certificateType: 'PAC' | 'FAC' | 'VCR';
 }
 
 export default function DefaultApproversConfig({ certificateType }: DefaultApproversConfigProps) {
