@@ -6618,7 +6618,7 @@ export type Database = {
         Returns: string
       }
       delete_user_account: { Args: { target_user_id: string }; Returns: Json }
-      generate_vcr_code: { Args: { project_code: string }; Returns: string }
+      generate_vcr_code: { Args: { p_project_code: string }; Returns: string }
       get_active_roles: {
         Args: never
         Returns: {
