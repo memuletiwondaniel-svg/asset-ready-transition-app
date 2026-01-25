@@ -43,22 +43,24 @@ export const CreateHandoverPointDialog: React.FC<CreateHandoverPointDialogProps>
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    phase_id: selectedPhaseId || '',
+    phase_id: selectedPhaseId || (phases.length > 0 ? phases[0].id : ''),
     target_date: undefined as Date | undefined,
   });
 
-  // Update phase_id when selectedPhaseId changes
+  // Update phase_id when selectedPhaseId or phases change
   React.useEffect(() => {
-    if (selectedPhaseId) {
-      setFormData(prev => ({ ...prev, phase_id: selectedPhaseId }));
+    if (open) {
+      // Default to selected phase, or first phase if none selected
+      const defaultPhaseId = selectedPhaseId || (phases.length > 0 ? phases[0].id : '');
+      setFormData(prev => ({ ...prev, phase_id: defaultPhaseId }));
     }
-  }, [selectedPhaseId]);
+  }, [selectedPhaseId, phases, open]);
 
   const resetForm = () => {
     setFormData({
       name: '',
       description: '',
-      phase_id: selectedPhaseId || '',
+      phase_id: selectedPhaseId || (phases.length > 0 ? phases[0].id : ''),
       target_date: undefined,
     });
   };
@@ -111,27 +113,30 @@ export const CreateHandoverPointDialog: React.FC<CreateHandoverPointDialogProps>
           </div>
 
           <div className="space-y-2">
-            <Label>Phase (Optional)</Label>
+            <Label>Phase {phases.length > 0 && <span className="text-muted-foreground font-normal">(defaults to first phase)</span>}</Label>
             <Select 
               value={formData.phase_id || "unassigned"} 
               onValueChange={(v) => setFormData({ ...formData, phase_id: v === "unassigned" ? "" : v })}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select a phase (optional)" />
+                <SelectValue placeholder="Select a phase" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="unassigned">
-                  <span className="text-muted-foreground">No Phase (Unassigned)</span>
-                </SelectItem>
-                {phases.map(phase => (
+              <SelectContent className="bg-popover z-50">
+                {phases.map((phase, idx) => (
                   <SelectItem key={phase.id} value={phase.id}>
-                    {phase.name}
+                    <div className="flex items-center gap-2">
+                      <span className="w-5 h-5 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center">
+                        {idx + 1}
+                      </span>
+                      {phase.name}
+                      {idx === 0 && <span className="text-xs text-muted-foreground">(default)</span>}
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
-              You can assign this VCR to a phase later
+              VCRs are placed in phases to show handover progression
             </p>
           </div>
 

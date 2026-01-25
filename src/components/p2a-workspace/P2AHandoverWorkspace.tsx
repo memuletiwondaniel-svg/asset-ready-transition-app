@@ -82,8 +82,11 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
     }
   };
 
+  // Default to first phase when creating VCR without specific phase
   const handleCreateHandoverPoint = (phaseId?: string) => {
-    setSelectedPhaseIdForVCR(phaseId || null);
+    // If no phase specified and phases exist, default to first phase
+    const defaultPhaseId = phaseId || (phases.length > 0 ? phases[0].id : null);
+    setSelectedPhaseIdForVCR(defaultPhaseId);
     setShowCreateVCRDialog(true);
   };
 
@@ -120,6 +123,24 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
       onDragEnd={handleDragEnd}
     >
       <div className="flex-1 flex h-full overflow-hidden">
+        {/* Systems Panel - LEFT Side */}
+        <SystemsPanel
+          systems={systems}
+          unassignedSystems={unassignedSystems}
+          assignedSystems={assignedSystems}
+          handoverPlanId={plan.id}
+          plantCode={plan.plant_code}
+          projectCode={plan.project_code}
+          onAddSystem={addSystem}
+          onImportSystems={addSystemsBulk}
+          onUpdateSystem={(id, updates) => updateSystem({ id, updates })}
+          isAdding={isAdding}
+          isImporting={isImporting}
+          isUpdating={isUpdating}
+          isCollapsed={systemsPanelCollapsed}
+          onToggleCollapse={() => setSystemsPanelCollapsed(!systemsPanelCollapsed)}
+        />
+
         {/* Main Workspace Area */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Workspace Header */}
@@ -159,24 +180,6 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
             isCreatingPhase={isAddingPhase}
           />
         </div>
-
-        {/* Systems Panel - Right Side */}
-        <SystemsPanel
-          systems={systems}
-          unassignedSystems={unassignedSystems}
-          assignedSystems={assignedSystems}
-          handoverPlanId={plan.id}
-          plantCode={plan.plant_code}
-          projectCode={plan.project_code}
-          onAddSystem={addSystem}
-          onImportSystems={addSystemsBulk}
-          onUpdateSystem={(id, updates) => updateSystem({ id, updates })}
-          isAdding={isAdding}
-          isImporting={isImporting}
-          isUpdating={isUpdating}
-          isCollapsed={systemsPanelCollapsed}
-          onToggleCollapse={() => setSystemsPanelCollapsed(!systemsPanelCollapsed)}
-        />
       </div>
 
       {/* Drag Overlay */}
