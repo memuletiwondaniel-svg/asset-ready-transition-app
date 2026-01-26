@@ -43,7 +43,7 @@ export const SystemCard: React.FC<SystemCardProps> = ({
   return (
     <Card 
       className={cn(
-        'cursor-pointer transition-all duration-200 hover:shadow-sm',
+        'group cursor-pointer transition-all duration-200 hover:shadow-sm',
         cardBg,
         isDragging && 'opacity-50 shadow-lg scale-105'
       )}
@@ -51,8 +51,8 @@ export const SystemCard: React.FC<SystemCardProps> = ({
     >
       <CardContent className="p-2">
         <div className="flex items-center gap-1.5">
-          {/* Drag Handle */}
-          <div className="cursor-grab active:cursor-grabbing text-muted-foreground/40 hover:text-muted-foreground">
+          {/* Drag Handle - hidden by default, shown on hover */}
+          <div className="cursor-grab active:cursor-grabbing text-muted-foreground/40 hover:text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
             <GripVertical className="w-3 h-3" />
           </div>
 
