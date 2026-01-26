@@ -8,6 +8,50 @@ import { P2AHandoverPoint } from '../hooks/useP2AHandoverPoints';
 import { useDroppable } from '@dnd-kit/core';
 import { format } from 'date-fns';
 
+/**
+ * Generates a unique, subtle HSL-based color from a VCR code.
+ * Avoids red, amber, and green to prevent confusion with status indicators.
+ */
+const getVCRColor = (vcrCode: string) => {
+  let hash = 0;
+  for (let i = 0; i < vcrCode.length; i++) {
+    hash = vcrCode.charCodeAt(i) + ((hash << 5) - hash);
+    hash = hash & hash;
+  }
+  
+  // Safe hue ranges: cyan (170-200), blue (200-260), purple (260-290), magenta/pink (290-330)
+  const safeHueRanges = [
+    { start: 170, end: 200 },
+    { start: 200, end: 260 },
+    { start: 260, end: 290 },
+    { start: 290, end: 330 },
+  ];
+  
+  const totalRange = safeHueRanges.reduce((sum, range) => sum + (range.end - range.start), 0);
+  let position = Math.abs(hash) % totalRange;
+  let hue = 0;
+  
+  for (const range of safeHueRanges) {
+    const rangeSize = range.end - range.start;
+    if (position < rangeSize) {
+      hue = range.start + position;
+      break;
+    }
+    position -= rangeSize;
+  }
+  
+  // Very subtle background - high lightness, low saturation
+  const saturation = 35 + (Math.abs(hash >> 8) % 15); // 35-50%
+  const lightness = 94 + (Math.abs(hash >> 16) % 4); // 94-98% (very light)
+  const borderLightness = 75 + (Math.abs(hash >> 24) % 10); // 75-85%
+  
+  return {
+    background: `hsl(${hue}, ${saturation}%, ${lightness}%)`,
+    border: `hsl(${hue}, ${saturation - 10}%, ${borderLightness}%)`,
+    accent: `hsl(${hue}, ${saturation + 10}%, ${lightness - 10}%)`,
+  };
+};
+
 interface HandoverPointCardProps {
   handoverPoint: P2AHandoverPoint;
   onClick?: () => void;
@@ -54,6 +98,7 @@ export const HandoverPointCard: React.FC<HandoverPointCardProps> = ({
 }) => {
   const statusConfig = getStatusConfig(handoverPoint.status);
   const StatusIcon = statusConfig.icon;
+  const vcrColor = getVCRColor(handoverPoint.vcr_code);
 
   // Calculate progress (mock for now - would be based on prerequisites)
   const progress = handoverPoint.status === 'SIGNED' ? 100 :
@@ -63,10 +108,13 @@ export const HandoverPointCard: React.FC<HandoverPointCardProps> = ({
   return (
     <Card 
       className={cn(
-        'cursor-pointer transition-all duration-200 hover:shadow-md',
-        statusConfig.borderColor,
-        isDropTarget && 'ring-2 ring-primary ring-offset-2 bg-primary/5'
+        'cursor-pointer transition-all duration-200 hover:shadow-md border-2',
+        isDropTarget && 'ring-2 ring-primary ring-offset-2'
       )}
+      style={{
+        backgroundColor: isDropTarget ? 'hsl(var(--primary) / 0.05)' : vcrColor.background,
+        borderColor: isDropTarget ? 'hsl(var(--primary))' : vcrColor.border,
+      }}
       onClick={onClick}
     >
       <CardContent className="p-3">
