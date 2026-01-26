@@ -260,7 +260,7 @@ export const VCRSystemsTab: React.FC<VCRSystemsTabProps> = ({ handoverPoint }) =
                       </div>
                       
                       {/* Stats - Outstanding counts */}
-                      <div className="flex flex-col items-end gap-1">
+                      <div className="flex flex-col items-center gap-1">
                         <div className="text-[9px] text-muted-foreground/70 uppercase tracking-wide">Outstanding</div>
                         <div className="flex items-center gap-4 text-center">
                           <div>
@@ -277,7 +277,7 @@ export const VCRSystemsTab: React.FC<VCRSystemsTabProps> = ({ handoverPoint }) =
                           </div>
                         </div>
                       </div>
-                      <div className="ml-4">
+                      <div className="ml-6">
                         <Badge className={cn(
                           "text-[10px] px-2",
                           system.is_hydrocarbon 
