@@ -139,7 +139,8 @@ export const HandoverPointCard: React.FC<HandoverPointCardProps> = ({
           {/* Name & ID stacked */}
           <div className="flex-1 min-w-0">
             <span className="text-[10px] font-mono text-muted-foreground block">
-              {handoverPoint.vcr_code?.replace(/^VCR-?/i, 'VCR-') || 'VCR-???'}
+              {/* Display only VCR-XXX from VCR-XXX-DPYYY format */}
+              {handoverPoint.vcr_code?.match(/^(VCR-\d+)/)?.[1] || 'VCR-???'}
             </span>
             <span className="text-xs font-medium truncate block">
               {handoverPoint.name}
