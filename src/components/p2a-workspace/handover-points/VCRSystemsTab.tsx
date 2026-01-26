@@ -212,14 +212,14 @@ export const VCRSystemsTab: React.FC<VCRSystemsTabProps> = ({ handoverPoint }) =
               <Card className="overflow-hidden">
                 <CollapsibleTrigger asChild>
                   <CardContent className="p-4 cursor-pointer hover:bg-muted/50 transition-colors">
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-6">
                       {/* Circular Progress Wheel */}
                       <CircularProgressWheel percentage={system.completion_percentage} size={56} />
                       
                       {/* System Info */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <Badge variant="outline" className="font-mono text-xs">
+                          <Badge variant="outline" className="font-mono text-xs text-muted-foreground border-muted">
                             {system.system_id}
                           </Badge>
                           {system.completion_status !== 'NOT_STARTED' && (
