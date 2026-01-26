@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { DndContext, DragEndEvent, DragOverlay, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
+import { DndContext, DragEndEvent, DragOverlay, useSensor, useSensors, PointerSensor, closestCenter } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -85,24 +85,29 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
     if (!over) return;
 
     // Handle reordering phase columns
-    if (active.data.current?.type === 'phase-column' && over.data.current?.type === 'phase-column') {
-      const activeId = active.id.toString();
-      const overId = over.id.toString();
+    if (active.data.current?.type === 'phase-column') {
+      // The over target could be the sortable (phase.id) or another phase-column
+      const overType = over.data.current?.type;
       
-      if (activeId !== overId) {
-        const oldIndex = phases.findIndex(p => p.id === activeId);
-        const newIndex = phases.findIndex(p => p.id === overId);
+      if (overType === 'phase-column') {
+        const activeId = active.id.toString();
+        const overId = over.id.toString();
         
-        if (oldIndex !== -1 && newIndex !== -1) {
-          const reordered = arrayMove(phases, oldIndex, newIndex);
-          const updates = reordered.map((phase, idx) => ({
-            id: phase.id,
-            display_order: idx,
-          }));
-          reorderPhases(updates);
+        if (activeId !== overId) {
+          const oldIndex = phases.findIndex(p => p.id === activeId);
+          const newIndex = phases.findIndex(p => p.id === overId);
+          
+          if (oldIndex !== -1 && newIndex !== -1) {
+            const reordered = arrayMove(phases, oldIndex, newIndex);
+            const updates = reordered.map((phase, idx) => ({
+              id: phase.id,
+              display_order: idx,
+            }));
+            reorderPhases(updates);
+          }
         }
+        return;
       }
-      return;
     }
 
     // Handle reordering VCRs within same phase
@@ -196,6 +201,7 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
     >
     <DndContext
       sensors={sensors}
+      collisionDetection={closestCenter}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
