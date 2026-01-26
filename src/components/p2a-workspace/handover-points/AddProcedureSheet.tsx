@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Rocket, 
   Settings,
@@ -18,9 +19,11 @@ import {
   Plus,
   X,
   Upload,
-  Send
+  Send,
+  Flame,
+  Snowflake
 } from 'lucide-react';
-import { P2AHandoverPoint } from '../hooks/useP2AHandoverPoints';
+import { P2AHandoverPoint, useHandoverPointSystems } from '../hooks/useP2AHandoverPoints';
 import { Procedure, ProcedureStatus } from '@/components/ora/ProcedureDetailModal';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -34,21 +37,15 @@ interface AddProcedureSheetProps {
 
 type ProcedureType = 'startup' | 'normal';
 
-// Mock systems - in real implementation this would come from VCR systems
-const mockSystems = [
-  { id: '1', name: 'Gas Turbine Generator', system_id: 'GTG-001' },
-  { id: '2', name: 'Steam Turbine', system_id: 'STG-001' },
-  { id: '3', name: 'Compressor Train A', system_id: 'CMP-001' },
-  { id: '4', name: 'Heat Recovery Steam Generator', system_id: 'HRSG-001' },
-  { id: '5', name: 'Cooling Water System', system_id: 'CWS-001' },
-];
-
 export const AddProcedureSheet: React.FC<AddProcedureSheetProps> = ({
   open,
   onOpenChange,
   handoverPoint,
   onProcedureCreated,
 }) => {
+  // Fetch systems mapped to this VCR
+  const { systems: vcrSystems, isLoading: systemsLoading } = useHandoverPointSystems(handoverPoint.id);
+  
   const [procedureType, setProcedureType] = useState<ProcedureType>('startup');
   const [procedureName, setProcedureName] = useState('');
   const [description, setDescription] = useState('');
@@ -60,22 +57,26 @@ export const AddProcedureSheet: React.FC<AddProcedureSheetProps> = ({
   // Generate document number based on BGC standard
   useEffect(() => {
     if (open) {
-      // Format: BGC-ISGP-N001-OA-XXXX-YYY
-      // BGC = Company prefix
-      // ISGP = Project code (would come from project context)
-      // N001 = Section/Area
-      // OA = Document type (Operating Procedure)
-      // XXXX = Sequential number (from a counter)
-      // YYY = Revision suffix
       const projectCode = 'ISGP';
       const areaCode = 'N001';
-      const docType = procedureType === 'startup' ? 'ISU' : 'NOP'; // Initial Start-Up or Normal Operating Procedure
+      const docType = procedureType === 'startup' ? 'ISU' : 'NOP';
       const sequentialNumber = String(Math.floor(Math.random() * 9000) + 1000);
       const revisionNumber = '001';
       
       setDocumentNumber(`BGC-${projectCode}-${areaCode}-${docType}-${sequentialNumber}-${revisionNumber}`);
     }
   }, [open, procedureType]);
+
+  // Reset form when sheet opens
+  useEffect(() => {
+    if (open) {
+      setProcedureName('');
+      setDescription('');
+      setSelectedSystems([]);
+      setApprovers(['']);
+      setComments('');
+    }
+  }, [open]);
 
   const handleSystemToggle = (systemId: string) => {
     setSelectedSystems(prev => 
@@ -125,7 +126,7 @@ export const AddProcedureSheet: React.FC<AddProcedureSheetProps> = ({
       type: procedureType,
       status: 'draft' as ProcedureStatus,
       version: '1.0',
-      owner: 'Current User', // Would come from auth context
+      owner: 'Current User',
       lastUpdated: new Date().toISOString().split('T')[0],
     };
 
@@ -135,9 +136,6 @@ export const AddProcedureSheet: React.FC<AddProcedureSheetProps> = ({
       title: "Procedure Created",
       description: `${procedureName} has been created with document number ${documentNumber}`,
     });
-
-    // Reset form
-    resetForm();
   };
 
   const handleSendForApproval = () => {
@@ -157,15 +155,6 @@ export const AddProcedureSheet: React.FC<AddProcedureSheetProps> = ({
       title: "Sent for Approval",
       description: `Procedure sent to ${validApprovers.length} approver(s)`,
     });
-  };
-
-  const resetForm = () => {
-    setProcedureType('startup');
-    setProcedureName('');
-    setDescription('');
-    setSelectedSystems([]);
-    setApprovers(['']);
-    setComments('');
   };
 
   return (
@@ -291,7 +280,7 @@ export const AddProcedureSheet: React.FC<AddProcedureSheetProps> = ({
 
             <Separator />
 
-            {/* Applicable Systems */}
+            {/* Applicable Systems - From VCR */}
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <Layers className="w-4 h-4 text-muted-foreground" />
@@ -299,29 +288,48 @@ export const AddProcedureSheet: React.FC<AddProcedureSheetProps> = ({
                   Applicable Systems <span className="text-destructive">*</span>
                 </Label>
               </div>
-              <div className="space-y-2 max-h-[200px] overflow-y-auto border rounded-lg p-3">
-                {mockSystems.map((system) => (
-                  <div 
-                    key={system.id}
-                    className={cn(
-                      "flex items-center gap-3 p-2 rounded-md cursor-pointer transition-colors",
-                      selectedSystems.includes(system.id) 
-                        ? "bg-emerald-500/10" 
-                        : "hover:bg-muted/50"
-                    )}
-                    onClick={() => handleSystemToggle(system.id)}
-                  >
-                    <Checkbox 
-                      checked={selectedSystems.includes(system.id)}
-                      onCheckedChange={() => handleSystemToggle(system.id)}
-                    />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">{system.name}</p>
-                      <p className="text-[10px] text-muted-foreground font-mono">{system.system_id}</p>
+              
+              {systemsLoading ? (
+                <div className="space-y-2 border rounded-lg p-3">
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+              ) : vcrSystems.length === 0 ? (
+                <div className="border rounded-lg p-4 text-center text-sm text-muted-foreground">
+                  No systems mapped to this VCR. Please add systems first.
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-[200px] overflow-y-auto border rounded-lg p-3">
+                  {vcrSystems.map((system: any) => (
+                    <div 
+                      key={system.id}
+                      className={cn(
+                        "flex items-center gap-3 p-2 rounded-md cursor-pointer transition-colors",
+                        selectedSystems.includes(system.id) 
+                          ? "bg-emerald-500/10" 
+                          : "hover:bg-muted/50"
+                      )}
+                      onClick={() => handleSystemToggle(system.id)}
+                    >
+                      <Checkbox 
+                        checked={selectedSystems.includes(system.id)}
+                        onCheckedChange={() => handleSystemToggle(system.id)}
+                      />
+                      <div className="flex items-center gap-2 flex-1">
+                        {system.is_hydrocarbon ? (
+                          <Flame className="w-4 h-4 text-orange-500 shrink-0" />
+                        ) : (
+                          <Snowflake className="w-4 h-4 text-blue-500 shrink-0" />
+                        )}
+                        <div>
+                          <p className="text-sm font-medium">{system.name}</p>
+                          <p className="text-[10px] text-muted-foreground font-mono">{system.system_id}</p>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
               {selectedSystems.length > 0 && (
                 <p className="text-xs text-muted-foreground">
                   {selectedSystems.length} system(s) selected

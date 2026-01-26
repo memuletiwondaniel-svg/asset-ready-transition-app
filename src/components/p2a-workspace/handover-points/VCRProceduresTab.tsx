@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Plus, 
   BookOpen, 
@@ -11,12 +13,12 @@ import {
   Calendar,
   ChevronRight,
   Rocket,
-  Settings
+  Settings,
+  Search
 } from 'lucide-react';
 import { P2AHandoverPoint } from '../hooks/useP2AHandoverPoints';
 import { AddProcedureSheet } from './AddProcedureSheet';
 import { ProcedureDetailModal, Procedure, ProcedureStatus } from '@/components/ora/ProcedureDetailModal';
-import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 interface VCRProceduresTabProps {
@@ -66,11 +68,15 @@ const STATUS_CONFIG: Record<ProcedureStatus, { label: string; className: string 
   'approved': { label: 'Approved for Use', className: 'bg-green-50 text-green-600 border-green-300' },
 };
 
+type ProcedureFilter = 'all' | 'startup' | 'normal';
+
 export const VCRProceduresTab: React.FC<VCRProceduresTabProps> = ({ handoverPoint }) => {
   const [addSheetOpen, setAddSheetOpen] = useState(false);
   const [selectedProcedure, setSelectedProcedure] = useState<Procedure | null>(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [procedures, setProcedures] = useState<Procedure[]>(mockProcedures);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [typeFilter, setTypeFilter] = useState<ProcedureFilter>('all');
 
   const handleProcedureClick = (procedure: Procedure) => {
     setSelectedProcedure(procedure);
@@ -81,24 +87,41 @@ export const VCRProceduresTab: React.FC<VCRProceduresTabProps> = ({ handoverPoin
     setProcedures(prev => 
       prev.map(p => p.id === procedureId ? { ...p, status: newStatus } : p)
     );
-    // Update selected procedure if it's the one being modified
     if (selectedProcedure?.id === procedureId) {
       setSelectedProcedure(prev => prev ? { ...prev, status: newStatus } : null);
     }
   };
+
+  // Filtered procedures based on search and type
+  const filteredProcedures = useMemo(() => {
+    return procedures.filter(p => {
+      const matchesSearch = searchQuery === '' || 
+        p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.procedureNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.owner.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesType = typeFilter === 'all' || p.type === typeFilter;
+      
+      return matchesSearch && matchesType;
+    });
+  }, [procedures, searchQuery, typeFilter]);
+
+  // Grouped procedures
+  const startupProcedures = filteredProcedures.filter(p => p.type === 'startup');
+  const normalProcedures = filteredProcedures.filter(p => p.type === 'normal');
 
   const startupCount = procedures.filter(p => p.type === 'startup').length;
   const normalCount = procedures.filter(p => p.type === 'normal').length;
   const approvedCount = procedures.filter(p => p.status === 'approved').length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header with Stats */}
       <div className="flex flex-wrap items-center gap-3">
         <Card>
           <CardContent className="p-3 text-center">
             <div className="text-lg font-bold text-emerald-500">{procedures.length}</div>
-            <div className="text-[10px] text-muted-foreground">Total Procedures</div>
+            <div className="text-[10px] text-muted-foreground">Total</div>
           </CardContent>
         </Card>
         <Card>
@@ -110,7 +133,7 @@ export const VCRProceduresTab: React.FC<VCRProceduresTabProps> = ({ handoverPoin
         <Card>
           <CardContent className="p-3 text-center">
             <div className="text-lg font-bold text-blue-500">{normalCount}</div>
-            <div className="text-[10px] text-muted-foreground">Normal Operating</div>
+            <div className="text-[10px] text-muted-foreground">Normal Op</div>
           </CardContent>
         </Card>
         <Card>
@@ -128,6 +151,32 @@ export const VCRProceduresTab: React.FC<VCRProceduresTabProps> = ({ handoverPoin
           <Plus className="w-4 h-4" />
           Add Procedure
         </Button>
+      </div>
+
+      {/* Search and Filter */}
+      <div className="flex items-center gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Search procedures..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <Tabs value={typeFilter} onValueChange={(v) => setTypeFilter(v as ProcedureFilter)}>
+          <TabsList className="grid grid-cols-3 w-auto">
+            <TabsTrigger value="all" className="text-xs px-3">All</TabsTrigger>
+            <TabsTrigger value="startup" className="text-xs px-3 gap-1">
+              <Rocket className="w-3 h-3" />
+              Start-up
+            </TabsTrigger>
+            <TabsTrigger value="normal" className="text-xs px-3 gap-1">
+              <Settings className="w-3 h-3" />
+              Normal
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
       </div>
 
       {/* Procedures List */}
@@ -150,16 +199,66 @@ export const VCRProceduresTab: React.FC<VCRProceduresTabProps> = ({ handoverPoin
             </Button>
           </CardContent>
         </Card>
+      ) : filteredProcedures.length === 0 ? (
+        <Card>
+          <CardContent className="py-8 text-center">
+            <p className="text-sm text-muted-foreground">No procedures match your search</p>
+          </CardContent>
+        </Card>
       ) : (
-        <ScrollArea className="h-[400px] pr-4">
-          <div className="space-y-3">
-            {procedures.map((procedure) => (
-              <ProcedureCard 
-                key={procedure.id} 
-                procedure={procedure}
-                onClick={() => handleProcedureClick(procedure)}
-              />
-            ))}
+        <ScrollArea className="h-[350px] pr-4">
+          <div className="space-y-4">
+            {/* Grouped by type when showing all */}
+            {typeFilter === 'all' ? (
+              <>
+                {startupProcedures.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Rocket className="w-4 h-4 text-orange-500" />
+                      <span className="text-sm font-medium">Initial Start-up Procedures</span>
+                      <Badge variant="outline" className="text-[10px]">{startupProcedures.length}</Badge>
+                    </div>
+                    <div className="space-y-2 pl-6">
+                      {startupProcedures.map((procedure) => (
+                        <ProcedureCard 
+                          key={procedure.id} 
+                          procedure={procedure}
+                          onClick={() => handleProcedureClick(procedure)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {normalProcedures.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Settings className="w-4 h-4 text-blue-500" />
+                      <span className="text-sm font-medium">Normal Operating Procedures</span>
+                      <Badge variant="outline" className="text-[10px]">{normalProcedures.length}</Badge>
+                    </div>
+                    <div className="space-y-2 pl-6">
+                      {normalProcedures.map((procedure) => (
+                        <ProcedureCard 
+                          key={procedure.id} 
+                          procedure={procedure}
+                          onClick={() => handleProcedureClick(procedure)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="space-y-2">
+                {filteredProcedures.map((procedure) => (
+                  <ProcedureCard 
+                    key={procedure.id} 
+                    procedure={procedure}
+                    onClick={() => handleProcedureClick(procedure)}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </ScrollArea>
       )}
@@ -198,26 +297,21 @@ const ProcedureCard: React.FC<{
       className="cursor-pointer transition-all hover:border-emerald-500/50 hover:shadow-sm"
       onClick={onClick}
     >
-      <CardContent className="p-4">
+      <CardContent className="p-3">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
-            {/* Title and Type */}
             <div className="flex items-center gap-2">
               {procedure.type === 'startup' ? (
                 <Rocket className="w-4 h-4 text-orange-500 shrink-0" />
               ) : (
                 <Settings className="w-4 h-4 text-blue-500 shrink-0" />
               )}
-              <h4 className="font-medium truncate">{procedure.title}</h4>
+              <h4 className="font-medium text-sm truncate">{procedure.title}</h4>
             </div>
-
-            {/* Document Number */}
-            <p className="text-xs text-muted-foreground font-mono mt-1">
+            <p className="text-[10px] text-muted-foreground font-mono mt-1">
               {procedure.procedureNumber}
             </p>
-
-            {/* Meta Info */}
-            <div className="flex flex-wrap gap-4 mt-3 text-xs">
+            <div className="flex flex-wrap gap-3 mt-2 text-[10px]">
               <span className="flex items-center gap-1 text-muted-foreground">
                 <User className="w-3 h-3" />
                 {procedure.owner}
@@ -232,12 +326,10 @@ const ProcedureCard: React.FC<{
               </span>
             </div>
           </div>
-
-          {/* Right Side - Status Badge */}
           <div className="flex items-center gap-2 shrink-0">
             <Badge 
               variant="outline"
-              className={cn('whitespace-nowrap text-xs', statusInfo.className)}
+              className={cn('whitespace-nowrap text-[10px]', statusInfo.className)}
             >
               {statusInfo.label}
             </Badge>

@@ -22,9 +22,11 @@ import {
   Layers,
   Upload,
   Send,
-  AlertCircle
+  AlertCircle,
+  Flame,
+  Snowflake
 } from 'lucide-react';
-import { P2AHandoverPoint } from '../hooks/useP2AHandoverPoints';
+import { P2AHandoverPoint, useHandoverPointSystems } from '../hooks/useP2AHandoverPoints';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -44,6 +46,7 @@ interface VCRDocument {
   documentTypeName: string;
   title: string;
   tier: 1 | 2;
+  category: 'afc' | 'rlmu' | 'asb';
   status: 'not_started' | 'draft' | 'in_review' | 'approved' | 'published';
   version: string;
   owner: string;
@@ -61,14 +64,7 @@ interface PLIPDocumentType {
   display_order: number;
 }
 
-// Mock systems - in real implementation this would come from VCR systems
-const mockSystems = [
-  { id: '1', name: 'Gas Turbine Generator', system_id: 'GTG-001' },
-  { id: '2', name: 'Steam Turbine', system_id: 'STG-001' },
-  { id: '3', name: 'Compressor Train A', system_id: 'CMP-001' },
-  { id: '4', name: 'Heat Recovery Steam Generator', system_id: 'HRSG-001' },
-  { id: '5', name: 'Cooling Water System', system_id: 'CWS-001' },
-];
+type DocumentCategoryType = 'afc' | 'rlmu' | 'asb';
 
 export const AddDocumentSheet: React.FC<AddDocumentSheetProps> = ({
   open,
@@ -76,7 +72,11 @@ export const AddDocumentSheet: React.FC<AddDocumentSheetProps> = ({
   handoverPoint,
   onDocumentCreated,
 }) => {
+  // Fetch systems mapped to this VCR
+  const { systems: vcrSystems, isLoading: systemsLoading } = useHandoverPointSystems(handoverPoint.id);
+
   const [tier, setTier] = useState<'1' | '2'>('1');
+  const [documentCategory, setDocumentCategory] = useState<DocumentCategoryType>('rlmu');
   const [selectedDocumentType, setSelectedDocumentType] = useState<string>('');
   const [documentTitle, setDocumentTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -116,16 +116,29 @@ export const AddDocumentSheet: React.FC<AddDocumentSheetProps> = ({
       const docType = documentTypes.find(dt => dt.id === selectedDocumentType);
       if (docType) {
         const tierPrefix = tier === '1' ? 'T1' : 'T2';
+        const categoryPrefix = documentCategory.toUpperCase();
         const sequentialNumber = String(Math.floor(Math.random() * 900) + 100);
-        setDocumentNumber(`RLMU-${tierPrefix}-${sequentialNumber}`);
+        setDocumentNumber(`${categoryPrefix}-${tierPrefix}-${sequentialNumber}`);
       }
     }
-  }, [selectedDocumentType, tier, documentTypes]);
+  }, [selectedDocumentType, tier, documentCategory, documentTypes]);
 
   // Reset document type when tier changes
   useEffect(() => {
     setSelectedDocumentType('');
   }, [tier]);
+
+  // Reset form when sheet opens
+  useEffect(() => {
+    if (open) {
+      setTier('1');
+      setDocumentCategory('rlmu');
+      setSelectedDocumentType('');
+      setDocumentTitle('');
+      setDescription('');
+      setSelectedSystems([]);
+    }
+  }, [open]);
 
   const handleSystemToggle = (systemId: string) => {
     setSelectedSystems(prev => 
@@ -164,9 +177,9 @@ export const AddDocumentSheet: React.FC<AddDocumentSheetProps> = ({
     }
 
     const docType = documentTypes?.find(dt => dt.id === selectedDocumentType);
-    const systemIds = mockSystems
-      .filter(s => selectedSystems.includes(s.id))
-      .map(s => s.system_id);
+    const systemIds = vcrSystems
+      .filter((s: any) => selectedSystems.includes(s.id))
+      .map((s: any) => s.system_id);
 
     const newDocument: VCRDocument = {
       id: crypto.randomUUID(),
@@ -175,6 +188,7 @@ export const AddDocumentSheet: React.FC<AddDocumentSheetProps> = ({
       documentTypeName: docType?.name || '',
       title: documentTitle,
       tier: parseInt(tier) as 1 | 2,
+      category: documentCategory,
       status: 'draft',
       version: '1.0',
       owner: 'Current User',
@@ -188,16 +202,6 @@ export const AddDocumentSheet: React.FC<AddDocumentSheetProps> = ({
       title: "Document Added",
       description: `${documentTitle} has been added with number ${documentNumber}`,
     });
-
-    resetForm();
-  };
-
-  const resetForm = () => {
-    setTier('1');
-    setSelectedDocumentType('');
-    setDocumentTitle('');
-    setDescription('');
-    setSelectedSystems([]);
   };
 
   const selectedDocType = documentTypes?.find(dt => dt.id === selectedDocumentType);
@@ -211,9 +215,9 @@ export const AddDocumentSheet: React.FC<AddDocumentSheetProps> = ({
               <FileText className="w-5 h-5 text-amber-500" />
             </div>
             <div>
-              <SheetTitle>Add Document (RLMU)</SheetTitle>
+              <SheetTitle>Add Document</SheetTitle>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Red Line Markup for {handoverPoint.name}
+                For {handoverPoint.name}
               </p>
             </div>
           </div>
@@ -221,6 +225,75 @@ export const AddDocumentSheet: React.FC<AddDocumentSheetProps> = ({
 
         <ScrollArea className="flex-1 px-6 py-4">
           <div className="space-y-6">
+            {/* Document Category Selection */}
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">Document Category</Label>
+              <RadioGroup 
+                value={documentCategory} 
+                onValueChange={(value) => setDocumentCategory(value as DocumentCategoryType)}
+                className="grid grid-cols-3 gap-3"
+              >
+                <Label
+                  htmlFor="afc"
+                  className={cn(
+                    "flex flex-col items-center gap-1 p-3 rounded-lg border cursor-pointer transition-all",
+                    documentCategory === 'afc' 
+                      ? "border-blue-500 bg-blue-500/5" 
+                      : "border-border hover:border-blue-500/50"
+                  )}
+                >
+                  <RadioGroupItem value="afc" id="afc" className="sr-only" />
+                  <span className={cn(
+                    "text-sm font-bold",
+                    documentCategory === 'afc' ? "text-blue-600" : "text-foreground"
+                  )}>AFC</span>
+                  <span className="text-[9px] text-muted-foreground text-center">
+                    Approved for Construction
+                  </span>
+                </Label>
+
+                <Label
+                  htmlFor="rlmu"
+                  className={cn(
+                    "flex flex-col items-center gap-1 p-3 rounded-lg border cursor-pointer transition-all",
+                    documentCategory === 'rlmu' 
+                      ? "border-amber-500 bg-amber-500/5" 
+                      : "border-border hover:border-amber-500/50"
+                  )}
+                >
+                  <RadioGroupItem value="rlmu" id="rlmu" className="sr-only" />
+                  <span className={cn(
+                    "text-sm font-bold",
+                    documentCategory === 'rlmu' ? "text-amber-600" : "text-foreground"
+                  )}>RLMU</span>
+                  <span className="text-[9px] text-muted-foreground text-center">
+                    Red Line Markup
+                  </span>
+                </Label>
+
+                <Label
+                  htmlFor="asb"
+                  className={cn(
+                    "flex flex-col items-center gap-1 p-3 rounded-lg border cursor-pointer transition-all",
+                    documentCategory === 'asb' 
+                      ? "border-green-500 bg-green-500/5" 
+                      : "border-border hover:border-green-500/50"
+                  )}
+                >
+                  <RadioGroupItem value="asb" id="asb" className="sr-only" />
+                  <span className={cn(
+                    "text-sm font-bold",
+                    documentCategory === 'asb' ? "text-green-600" : "text-foreground"
+                  )}>ASB</span>
+                  <span className="text-[9px] text-muted-foreground text-center">
+                    As-Built
+                  </span>
+                </Label>
+              </RadioGroup>
+            </div>
+
+            <Separator />
+
             {/* Tier Selection */}
             <div className="space-y-3">
               <Label className="text-sm font-medium">Document Tier</Label>
@@ -250,7 +323,7 @@ export const AddDocumentSheet: React.FC<AddDocumentSheetProps> = ({
                     Tier 1 - Critical
                   </span>
                   <span className="text-[10px] text-muted-foreground text-center">
-                    Essential documents for safe operations
+                    Essential for safe operations
                   </span>
                 </Label>
 
@@ -367,7 +440,7 @@ export const AddDocumentSheet: React.FC<AddDocumentSheetProps> = ({
 
             <Separator />
 
-            {/* Applicable Systems */}
+            {/* Applicable Systems - From VCR */}
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <Layers className="w-4 h-4 text-muted-foreground" />
@@ -375,29 +448,48 @@ export const AddDocumentSheet: React.FC<AddDocumentSheetProps> = ({
                   Applicable Systems <span className="text-destructive">*</span>
                 </Label>
               </div>
-              <div className="space-y-2 max-h-[200px] overflow-y-auto border rounded-lg p-3">
-                {mockSystems.map((system) => (
-                  <div 
-                    key={system.id}
-                    className={cn(
-                      "flex items-center gap-3 p-2 rounded-md cursor-pointer transition-colors",
-                      selectedSystems.includes(system.id) 
-                        ? "bg-amber-500/10" 
-                        : "hover:bg-muted/50"
-                    )}
-                    onClick={() => handleSystemToggle(system.id)}
-                  >
-                    <Checkbox 
-                      checked={selectedSystems.includes(system.id)}
-                      onCheckedChange={() => handleSystemToggle(system.id)}
-                    />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">{system.name}</p>
-                      <p className="text-[10px] text-muted-foreground font-mono">{system.system_id}</p>
+              
+              {systemsLoading ? (
+                <div className="space-y-2 border rounded-lg p-3">
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+              ) : vcrSystems.length === 0 ? (
+                <div className="border rounded-lg p-4 text-center text-sm text-muted-foreground">
+                  No systems mapped to this VCR. Please add systems first.
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-[200px] overflow-y-auto border rounded-lg p-3">
+                  {vcrSystems.map((system: any) => (
+                    <div 
+                      key={system.id}
+                      className={cn(
+                        "flex items-center gap-3 p-2 rounded-md cursor-pointer transition-colors",
+                        selectedSystems.includes(system.id) 
+                          ? "bg-amber-500/10" 
+                          : "hover:bg-muted/50"
+                      )}
+                      onClick={() => handleSystemToggle(system.id)}
+                    >
+                      <Checkbox 
+                        checked={selectedSystems.includes(system.id)}
+                        onCheckedChange={() => handleSystemToggle(system.id)}
+                      />
+                      <div className="flex items-center gap-2 flex-1">
+                        {system.is_hydrocarbon ? (
+                          <Flame className="w-4 h-4 text-orange-500 shrink-0" />
+                        ) : (
+                          <Snowflake className="w-4 h-4 text-blue-500 shrink-0" />
+                        )}
+                        <div>
+                          <p className="text-sm font-medium">{system.name}</p>
+                          <p className="text-[10px] text-muted-foreground font-mono">{system.system_id}</p>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
               {selectedSystems.length > 0 && (
                 <p className="text-xs text-muted-foreground">
                   {selectedSystems.length} system(s) selected
