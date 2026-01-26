@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { DndContext, DragEndEvent, DragOverlay, useSensor, useSensors, PointerSensor, closestCenter } from '@dnd-kit/core';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { DndContext, DragEndEvent, DragOverlay, useSensor, useSensors, PointerSensor, closestCenter, rectIntersection, CollisionDetection, pointerWithin } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -118,6 +118,30 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
       activationConstraint: { distance: 8 },
     })
   );
+
+  // Custom collision detection: when dragging phases, only consider other phases as drop targets
+  const customCollisionDetection: CollisionDetection = useCallback((args) => {
+    const { active, droppableContainers } = args;
+    
+    // If dragging a phase-column, use closestCenter but filter to only phase targets
+    if (active.data.current?.type === 'phase-column') {
+      // Get all collisions using closestCenter
+      const collisions = closestCenter(args);
+      
+      // Filter to only include phase-related droppables
+      const phaseCollisions = collisions.filter(collision => {
+        const id = collision.id.toString();
+        const container = droppableContainers.find(c => c.id === collision.id);
+        const data = container?.data.current;
+        return data?.type === 'phase-column' || data?.type === 'phase' || phases.some(p => p.id === id);
+      });
+      
+      return phaseCollisions.length > 0 ? phaseCollisions : collisions;
+    }
+    
+    // For other drag types (VCRs, systems), use pointerWithin for better precision
+    return pointerWithin(args);
+  }, [phases]);
 
   const handleDragStart = (event: any) => {
     const { active } = event;
@@ -309,7 +333,7 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
     >
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCenter}
+      collisionDetection={customCollisionDetection}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
