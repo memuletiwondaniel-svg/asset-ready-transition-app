@@ -166,11 +166,11 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
           </>
         )}
         
-        {/* Add VCR Button at bottom */}
+        {/* Add VCR Button at bottom - always on top */}
         <Button 
           variant="ghost" 
           size="sm" 
-          className="absolute bottom-2 left-1/2 -translate-x-1/2 w-[200px] gap-1 text-xs border border-dashed border-border/50 hover:border-primary/50"
+          className="absolute bottom-2 left-1/2 -translate-x-1/2 w-[200px] gap-1 text-xs border border-dashed border-border/50 hover:border-primary/50 z-20 bg-card/90 backdrop-blur-sm"
           onClick={onCreateHandoverPoint}
         >
           <Plus className="w-3 h-3" />
