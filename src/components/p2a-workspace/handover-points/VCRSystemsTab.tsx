@@ -212,25 +212,21 @@ export const VCRSystemsTab: React.FC<VCRSystemsTabProps> = ({ handoverPoint }) =
                 <CollapsibleContent>
                   <div className="px-4 pb-4 pt-0 border-t bg-muted/30">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 py-4">
-                      {/* RFO Status */}
+                      {/* Show only applicable certificate based on system type */}
                       <div className="space-y-1">
-                        <div className="text-xs text-muted-foreground">RFO Status</div>
+                        <div className="text-xs text-muted-foreground">
+                          {system.is_hydrocarbon ? 'RFSU' : 'RFO'} Status
+                        </div>
                         <Badge className={cn(
                           "w-full justify-center",
-                          system.actual_rfo_date ? "bg-emerald-500" : "bg-slate-400"
+                          system.is_hydrocarbon 
+                            ? (system.actual_rfsu_date ? "bg-emerald-500" : "bg-slate-400")
+                            : (system.actual_rfo_date ? "bg-emerald-500" : "bg-slate-400")
                         )}>
-                          {system.actual_rfo_date ? 'Achieved' : 'Pending'}
-                        </Badge>
-                      </div>
-                      
-                      {/* RFSU Status */}
-                      <div className="space-y-1">
-                        <div className="text-xs text-muted-foreground">RFSU Status</div>
-                        <Badge className={cn(
-                          "w-full justify-center",
-                          system.actual_rfsu_date ? "bg-emerald-500" : "bg-slate-400"
-                        )}>
-                          {system.actual_rfsu_date ? 'Achieved' : 'Pending'}
+                          {system.is_hydrocarbon 
+                            ? (system.actual_rfsu_date ? 'Achieved' : 'Pending')
+                            : (system.actual_rfo_date ? 'Achieved' : 'Pending')
+                          }
                         </Badge>
                       </div>
                       
