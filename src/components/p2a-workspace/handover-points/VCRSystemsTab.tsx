@@ -234,19 +234,12 @@ export const VCRSystemsTab: React.FC<VCRSystemsTabProps> = ({ handoverPoint }) =
                         <p className="text-sm font-medium text-foreground">{system.name}</p>
                         
                         {/* Hydrocarbon Indicator */}
-                        <div className="flex items-center gap-1.5 mt-1">
-                          {system.is_hydrocarbon ? (
-                            <>
-                              <Flame className="w-3 h-3 text-orange-500" />
-                              <span className="text-xs text-muted-foreground">Hydrocarbon</span>
-                            </>
-                          ) : (
-                            <>
-                              <Snowflake className="w-3 h-3 text-blue-500" />
-                              <span className="text-xs text-muted-foreground">Non-Hydrocarbon</span>
-                            </>
-                          )}
-                        </div>
+                        {system.is_hydrocarbon && (
+                          <div className="flex items-center gap-1.5 mt-1">
+                            <Flame className="w-3 h-3 text-orange-500" />
+                            <span className="text-xs text-muted-foreground">Hydrocarbon</span>
+                          </div>
+                        )}
                       </div>
                       
                       {/* Stats with Certificate Label */}
