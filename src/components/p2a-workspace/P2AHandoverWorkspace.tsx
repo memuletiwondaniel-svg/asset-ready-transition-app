@@ -71,10 +71,13 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
 
   const handleDragStart = (event: any) => {
     const { active } = event;
+   console.log('Drag started:', active.id, active.data.current?.type);
     if (active.data.current?.type === 'system') {
       setActiveDragItem({ type: 'system', data: active.data.current.system });
     } else if (active.data.current?.type === 'vcr') {
       setActiveDragItem({ type: 'vcr', data: active.data.current.handoverPoint });
+   } else if (active.data.current?.type === 'phase-column') {
+     setActiveDragItem({ type: 'vcr', data: active.data.current.phase });
     }
   };
 
@@ -82,6 +85,13 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
     setActiveDragItem(null);
     
     const { active, over } = event;
+   console.log('Drag ended:', { 
+     activeId: active.id, 
+     activeType: active.data.current?.type,
+     overId: over?.id, 
+     overType: over?.data.current?.type 
+   });
+   
     if (!over) return;
 
     // Handle reordering phase columns
@@ -89,6 +99,8 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
       // The over target could be the sortable (phase.id) or another phase-column
       const overType = over.data.current?.type;
       
+     console.log('Phase reorder attempt:', { overType, activeId: active.id, overId: over.id });
+     
       if (overType === 'phase-column') {
         const activeId = active.id.toString();
         const overId = over.id.toString();
