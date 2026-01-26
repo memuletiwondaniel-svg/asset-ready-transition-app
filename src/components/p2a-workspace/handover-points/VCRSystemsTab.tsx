@@ -221,9 +221,9 @@ export const VCRSystemsTab: React.FC<VCRSystemsTabProps> = ({ handoverPoint }) =
                       {/* System Info */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <Badge variant="outline" className="font-mono text-xs text-muted-foreground border-muted">
+                          <span className="font-mono text-[10px] text-muted-foreground/60">
                             {system.system_id}
-                          </Badge>
+                          </span>
                           {system.completion_status !== 'NOT_STARTED' && (
                             <Badge className={cn("text-[10px]", statusConfig.color)}>
                               {statusConfig.label}
@@ -256,19 +256,15 @@ export const VCRSystemsTab: React.FC<VCRSystemsTabProps> = ({ handoverPoint }) =
                           <div className="text-sm font-bold text-blue-500">{system.itr_a_count + system.itr_b_count}</div>
                           <div className="text-[10px] text-muted-foreground">ITRs</div>
                         </div>
-                        <div>
-                          <div className={cn(
-                            "text-sm font-bold",
+                        <div className="ml-4">
+                          <Badge className={cn(
+                            "text-[10px] px-2",
                             system.is_hydrocarbon 
-                              ? (system.actual_rfsu_date ? "text-emerald-500" : "text-muted-foreground")
-                              : (system.actual_rfo_date ? "text-emerald-500" : "text-muted-foreground")
+                              ? (system.actual_rfsu_date ? "bg-emerald-500" : "bg-slate-400")
+                              : (system.actual_rfo_date ? "bg-emerald-500" : "bg-slate-400")
                           )}>
-                            {system.is_hydrocarbon 
-                              ? (system.actual_rfsu_date ? '✓' : '–')
-                              : (system.actual_rfo_date ? '✓' : '–')
-                            }
-                          </div>
-                          <div className="text-[10px] text-muted-foreground">{targetCert}</div>
+                            {targetCert}
+                          </Badge>
                         </div>
                         <ChevronDown className={cn(
                           "w-4 h-4 text-muted-foreground transition-transform",
