@@ -209,12 +209,35 @@ export const useP2APhases = (handoverPlanId: string) => {
     },
   });
 
+  const reorderPhases = useMutation({
+    mutationFn: async (reorderedPhases: { id: string; display_order: number }[]) => {
+      // Update all phases with their new display_order
+      const updates = reorderedPhases.map(({ id, display_order }) =>
+        supabase
+          .from('p2a_project_phases')
+          .update({ display_order })
+          .eq('id', id)
+      );
+
+      const results = await Promise.all(updates);
+      const errors = results.filter(r => r.error);
+      if (errors.length > 0) throw errors[0].error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['p2a-phases', handoverPlanId] });
+    },
+    onError: (error) => {
+      toast({ title: 'Error', description: 'Failed to reorder phases', variant: 'destructive' });
+    },
+  });
+
   return {
     phases: phases || [],
     isLoading,
     addPhase: addPhase.mutate,
     updatePhase: updatePhase.mutate,
     deletePhase: deletePhase.mutate,
+    reorderPhases: reorderPhases.mutate,
     isAdding: addPhase.isPending,
   };
 };

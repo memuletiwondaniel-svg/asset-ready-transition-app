@@ -7,6 +7,7 @@ import { P2AHandoverPoint } from '../hooks/useP2AHandoverPoints';
 import { StaircasePhaseColumn } from './StaircasePhaseColumn';
 import { MilestoneMarker } from './MilestoneMarker';
 import { CreatePhaseDialog } from './CreatePhaseDialog';
+import { SortableContext, horizontalListSortingStrategy } from '@dnd-kit/sortable';
 import { cn } from '@/lib/utils';
 
 interface PhasesTimelineProps {
@@ -192,22 +193,24 @@ export const PhasesTimeline: React.FC<PhasesTimelineProps> = ({
 
             {/* Phase Columns in Staircase Layout */}
             <div className="flex gap-4 relative z-10">
-              {phases.map((phase, idx) => (
-                <StaircasePhaseColumn
-                  key={phase.id}
-                  phase={phase}
-                  phaseIndex={idx}
-                  handoverPoints={handoverPoints.filter(p => p.phase_id === phase.id)}
-                  staircaseOffset={getStaircaseOffset(idx)}
-                  onCreateHandoverPoint={() => onCreateHandoverPoint(phase.id)}
-                  onEditPhase={() => {/* TODO */}}
-                  onDeletePhase={() => onDeletePhase(phase.id)}
-                  onOpenVCR={onOpenVCR}
-                  projectCode={projectCode}
-                  isFirstPhase={idx === 0}
-                  isLastPhase={idx === phases.length - 1}
-                />
-              ))}
+              <SortableContext items={phases.map(p => p.id)} strategy={horizontalListSortingStrategy}>
+                {phases.map((phase, idx) => (
+                  <StaircasePhaseColumn
+                    key={phase.id}
+                    phase={phase}
+                    phaseIndex={idx}
+                    handoverPoints={handoverPoints.filter(p => p.phase_id === phase.id)}
+                    staircaseOffset={getStaircaseOffset(idx)}
+                    onCreateHandoverPoint={() => onCreateHandoverPoint(phase.id)}
+                    onEditPhase={() => {/* TODO */}}
+                    onDeletePhase={() => onDeletePhase(phase.id)}
+                    onOpenVCR={onOpenVCR}
+                    projectCode={projectCode}
+                    isFirstPhase={idx === 0}
+                    isLastPhase={idx === phases.length - 1}
+                  />
+                ))}
+              </SortableContext>
 
               {/* Add Phase Button */}
               <div 

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { DndContext, DragEndEvent, DragOverlay, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
+import { arrayMove } from '@dnd-kit/sortable';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Maximize2, Minimize2 } from 'lucide-react';
@@ -49,7 +50,7 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
     isUpdating,
   } = useP2ASystems(plan?.id || '');
   const { milestones, addMilestone } = useP2AMilestones(plan?.id || '');
-  const { phases, isLoading: phasesLoading, addPhase, deletePhase, isAdding: isAddingPhase } = useP2APhases(plan?.id || '');
+  const { phases, isLoading: phasesLoading, addPhase, deletePhase, reorderPhases, isAdding: isAddingPhase } = useP2APhases(plan?.id || '');
   const { 
     handoverPoints,
     assignedPoints,
@@ -81,6 +82,27 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
     
     const { active, over } = event;
     if (!over) return;
+
+    // Handle reordering phase columns
+    if (active.data.current?.type === 'phase-column' && over.data.current?.type === 'phase-column') {
+      const activeId = active.id.toString();
+      const overId = over.id.toString();
+      
+      if (activeId !== overId) {
+        const oldIndex = phases.findIndex(p => p.id === activeId);
+        const newIndex = phases.findIndex(p => p.id === overId);
+        
+        if (oldIndex !== -1 && newIndex !== -1) {
+          const reordered = arrayMove(phases, oldIndex, newIndex);
+          const updates = reordered.map((phase, idx) => ({
+            id: phase.id,
+            display_order: idx,
+          }));
+          reorderPhases(updates);
+        }
+      }
+      return;
+    }
 
     // Handle dropping system on VCR
     if (active.data.current?.type === 'system' && over.id.toString().startsWith('vcr-')) {
