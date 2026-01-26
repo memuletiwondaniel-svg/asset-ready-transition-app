@@ -218,17 +218,6 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      {/* Workspace Header - Full Width at Top */}
-      <div className="p-4 border-b border-border bg-card/50">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-semibold">{plan.name}</h2>
-            {plan.description && (
-              <p className="text-sm text-muted-foreground">{plan.description}</p>
-            )}
-          </div>
-        </div>
-      </div>
 
       {/* Main Content Area - Systems Panel + Timeline */}
       <div className="flex-1 flex overflow-hidden">
