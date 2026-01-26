@@ -58,6 +58,7 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
     createHandoverPoint,
     assignSystemToPoint,
     moveHandoverPointToPhase,
+    reorderHandoverPoints,
     isCreating: isCreatingVCR,
   } = useP2AHandoverPoints(plan?.id || '');
 
@@ -104,6 +105,32 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
       return;
     }
 
+    // Handle reordering VCRs within same phase
+    if (active.data.current?.type === 'vcr' && over.data.current?.type === 'vcr') {
+      const activeVCR = active.data.current.handoverPoint;
+      const overVCR = over.data.current.handoverPoint;
+      
+      // Only reorder if same phase and different VCR
+      if (activeVCR.phase_id === overVCR.phase_id && activeVCR.id !== overVCR.id) {
+        const phasePoints = handoverPoints
+          .filter(p => p.phase_id === activeVCR.phase_id)
+          .sort((a, b) => a.position_y - b.position_y);
+        
+        const oldIndex = phasePoints.findIndex(p => p.id === activeVCR.id);
+        const newIndex = phasePoints.findIndex(p => p.id === overVCR.id);
+        
+        if (oldIndex !== -1 && newIndex !== -1) {
+          const reordered = arrayMove(phasePoints, oldIndex, newIndex);
+          const updates = reordered.map((point, idx) => ({
+            id: point.id,
+            position_y: idx,
+          }));
+          reorderHandoverPoints(updates);
+        }
+      }
+      return;
+    }
+
     // Handle dropping system on VCR
     if (active.data.current?.type === 'system' && over.id.toString().startsWith('vcr-')) {
       const systemId = active.data.current.system.id;
@@ -111,7 +138,7 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
       assignSystemToPoint({ handoverPointId, systemId });
     }
     
-    // Handle dropping VCR on phase
+    // Handle dropping VCR on phase (cross-phase move)
     if (active.data.current?.type === 'vcr' && over.id.toString().startsWith('phase-')) {
       const vcrId = active.data.current.handoverPoint.id;
       const phaseId = over.id.toString().replace('phase-', '');
