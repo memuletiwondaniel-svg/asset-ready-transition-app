@@ -148,19 +148,15 @@ export const HandoverPointCard: React.FC<HandoverPointCardProps> = ({
                 {handoverPoint.name}
               </span>
               <span className="text-[8px] font-mono text-muted-foreground shrink-0">
-                {handoverPoint.vcr_code}
+                {handoverPoint.vcr_code?.replace(/^VCR-?/i, 'VCR-').slice(0, 7) || 'VCR-???'}
               </span>
             </div>
 
-            {/* Progress Row */}
-            <div className="flex items-center gap-1.5 mt-0.5">
-              <Progress value={progress} className="h-1 flex-1" />
-              <span className="text-[8px] font-medium shrink-0 w-5 text-right text-muted-foreground">
-                {progress}%
+            {/* Progress % */}
+            <div className="flex items-center mt-0.5">
+              <span className="text-[9px] font-medium text-muted-foreground">
+                {progress}% complete
               </span>
-              <Badge variant="secondary" className="text-[7px] px-0.5 py-0 h-3">
-                {handoverPoint.systems_count || 0} sys
-              </Badge>
             </div>
           </div>
         </div>
