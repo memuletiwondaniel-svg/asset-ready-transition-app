@@ -218,7 +218,35 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="flex-1 flex h-full overflow-hidden">
+      {/* Workspace Header - Full Width at Top */}
+      <div className="p-4 border-b border-border bg-card/50">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold">{plan.name}</h2>
+            {plan.description && (
+              <p className="text-sm text-muted-foreground">{plan.description}</p>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsFullscreen(!isFullscreen)}
+              className="h-8 w-8"
+              title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+            >
+              {isFullscreen ? (
+                <Minimize2 className="h-4 w-4" />
+              ) : (
+                <Maximize2 className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content Area - Systems Panel + Timeline */}
+      <div className="flex-1 flex overflow-hidden">
         {/* Systems Panel - LEFT Side */}
         <SystemsPanel
           systems={systems}
@@ -237,52 +265,22 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
           onToggleCollapse={() => setSystemsPanelCollapsed(!systemsPanelCollapsed)}
         />
 
-        {/* Main Workspace Area */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Workspace Header */}
-          <div className="p-4 border-b border-border bg-card/50">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-lg font-semibold">{plan.name}</h2>
-                {plan.description && (
-                  <p className="text-sm text-muted-foreground">{plan.description}</p>
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setIsFullscreen(!isFullscreen)}
-                  className="h-8 w-8"
-                  title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
-                >
-                  {isFullscreen ? (
-                    <Minimize2 className="h-4 w-4" />
-                  ) : (
-                    <Maximize2 className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Phases Timeline Area */}
-          <PhasesTimeline
-            phases={phases}
-            milestones={milestones}
-            handoverPoints={assignedPoints}
-            unassignedPoints={unassignedPoints}
-            handoverPlanId={plan.id}
-            projectCode={plan.project_code}
-            onCreatePhase={addPhase}
-            onCreateMilestone={addMilestone}
-            onDeletePhase={deletePhase}
-            onCreateHandoverPoint={handleCreateHandoverPoint}
-            onOpenVCR={handleOpenVCR}
-            onAssignVCRToPhase={(vcrId, phaseId) => moveHandoverPointToPhase({ handoverPointId: vcrId, newPhaseId: phaseId })}
-            isCreatingPhase={isAddingPhase}
-          />
-        </div>
+        {/* Phases Timeline Area */}
+        <PhasesTimeline
+          phases={phases}
+          milestones={milestones}
+          handoverPoints={assignedPoints}
+          unassignedPoints={unassignedPoints}
+          handoverPlanId={plan.id}
+          projectCode={plan.project_code}
+          onCreatePhase={addPhase}
+          onCreateMilestone={addMilestone}
+          onDeletePhase={deletePhase}
+          onCreateHandoverPoint={handleCreateHandoverPoint}
+          onOpenVCR={handleOpenVCR}
+          onAssignVCRToPhase={(vcrId, phaseId) => moveHandoverPointToPhase({ handoverPointId: vcrId, newPhaseId: phaseId })}
+          isCreatingPhase={isAddingPhase}
+        />
       </div>
 
       {/* Drag Overlay */}
