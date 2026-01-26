@@ -259,19 +259,19 @@ export const VCRSystemsTab: React.FC<VCRSystemsTabProps> = ({ handoverPoint }) =
                         )}
                       </div>
                       
-                      {/* Stats with Certificate Label */}
+                      {/* Stats - Outstanding counts */}
                       <div className="flex items-center gap-4 text-center">
                         <div>
                           <div className="text-sm font-bold text-red-500">{system.punchlist_a_count}</div>
-                          <div className="text-[10px] text-muted-foreground">PL-A</div>
+                          <div className="text-[10px] text-muted-foreground">O/S PL-A</div>
                         </div>
                         <div>
                           <div className="text-sm font-bold text-amber-500">{system.punchlist_b_count}</div>
-                          <div className="text-[10px] text-muted-foreground">PL-B</div>
+                          <div className="text-[10px] text-muted-foreground">O/S PL-B</div>
                         </div>
                         <div>
                           <div className="text-sm font-bold text-blue-500">{system.itr_a_count + system.itr_b_count}</div>
-                          <div className="text-[10px] text-muted-foreground">ITRs</div>
+                          <div className="text-[10px] text-muted-foreground">O/S ITRs</div>
                         </div>
                         <div className="ml-4">
                           <Badge className={cn(
