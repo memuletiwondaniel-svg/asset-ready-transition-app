@@ -23,6 +23,7 @@ import { cn } from '@/lib/utils';
 
 interface VCROverviewTabProps {
   handoverPoint: P2AHandoverPoint;
+  onNavigateToTab?: (tabId: string) => void;
 }
 
 const getStatusConfig = (status: string) => {
@@ -38,7 +39,7 @@ const getStatusConfig = (status: string) => {
   }
 };
 
-export const VCROverviewTab: React.FC<VCROverviewTabProps> = ({ handoverPoint }) => {
+export const VCROverviewTab: React.FC<VCROverviewTabProps> = ({ handoverPoint, onNavigateToTab }) => {
   const { systems, isLoading: systemsLoading } = useHandoverPointSystems(handoverPoint.id);
   const { prerequisites, progress, isLoading: prereqLoading } = useVCRPrerequisites(handoverPoint.id);
 
@@ -73,42 +74,48 @@ export const VCROverviewTab: React.FC<VCROverviewTabProps> = ({ handoverPoint })
       value: systemsReadiness, 
       icon: Layers, 
       color: 'text-cyan-500',
-      bgColor: 'bg-cyan-500/10' 
+      bgColor: 'bg-cyan-500/10',
+      tabId: 'systems'
     },
     { 
       label: 'Checklist Items', 
       value: progress.checklist, 
       icon: ClipboardCheck, 
       color: 'text-blue-500',
-      bgColor: 'bg-blue-500/10' 
+      bgColor: 'bg-blue-500/10',
+      tabId: 'checklist'
     },
     { 
       label: 'Training', 
       value: progress.training, 
       icon: GraduationCap, 
       color: 'text-violet-500',
-      bgColor: 'bg-violet-500/10' 
+      bgColor: 'bg-violet-500/10',
+      tabId: 'training'
     },
     { 
       label: 'Documentation', 
       value: progress.documentation, 
       icon: FileText, 
       color: 'text-amber-500',
-      bgColor: 'bg-amber-500/10' 
+      bgColor: 'bg-amber-500/10',
+      tabId: 'documentation'
     },
     { 
       label: 'Procedures', 
       value: progress.procedures, 
       icon: BookOpen, 
       color: 'text-emerald-500',
-      bgColor: 'bg-emerald-500/10' 
+      bgColor: 'bg-emerald-500/10',
+      tabId: 'procedures'
     },
     { 
       label: 'CMMS', 
       value: progress.cmms, 
       icon: Settings2, 
       color: 'text-rose-500',
-      bgColor: 'bg-rose-500/10' 
+      bgColor: 'bg-rose-500/10',
+      tabId: 'cmms'
     },
   ];
 
@@ -207,13 +214,14 @@ export const VCROverviewTab: React.FC<VCROverviewTabProps> = ({ handoverPoint })
               return (
                 <div 
                   key={item.label} 
-                  className="p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+                  className="p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors cursor-pointer group"
+                  onClick={() => onNavigateToTab?.(item.tabId)}
                 >
                   <div className="flex items-center gap-2 mb-2">
                     <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", item.bgColor)}>
                       <Icon className={cn("w-4 h-4", item.color)} />
                     </div>
-                    <span className="text-xs text-muted-foreground font-medium">{item.label}</span>
+                    <span className="text-xs text-muted-foreground font-medium group-hover:text-foreground transition-colors">{item.label}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Progress 
