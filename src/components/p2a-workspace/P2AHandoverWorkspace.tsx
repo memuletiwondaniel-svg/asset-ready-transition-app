@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { DndContext, DragEndEvent, DragOverlay, useSensor, useSensors, PointerSensor, closestCenter } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -34,6 +34,10 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
   const [selectedPhaseIdForVCR, setSelectedPhaseIdForVCR] = useState<string | null>(null);
   const [selectedVCR, setSelectedVCR] = useState<P2AHandoverPoint | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  // Local UI overrides to prevent post-drop "snap-back" while React Query + Supabase sync.
+  const [uiVcrOverrides, setUiVcrOverrides] = useState<
+    Record<string, { position_x: number; position_y: number; phase_id?: string | null }>
+  >({});
 
   // Hooks
   const { plan, isLoading: planLoading, createPlan, isCreating } = useP2AHandoverPlan(oraPlanId);
@@ -62,6 +66,51 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
     updateVCRPosition,
     isCreating: isCreatingVCR,
   } = useP2AHandoverPoints(plan?.id || '');
+
+  const handoverPointsWithUi = useMemo(() => {
+    if (!handoverPoints?.length) return [];
+    return handoverPoints.map((p) => {
+      const o = uiVcrOverrides[p.id];
+      return o
+        ? {
+            ...p,
+            position_x: o.position_x,
+            position_y: o.position_y,
+            phase_id: o.phase_id !== undefined ? o.phase_id : p.phase_id,
+          }
+        : p;
+    });
+  }, [handoverPoints, uiVcrOverrides]);
+
+  const assignedPointsWithUi = useMemo(
+    () => handoverPointsWithUi.filter((p) => p.phase_id),
+    [handoverPointsWithUi]
+  );
+  const unassignedPointsWithUi = useMemo(
+    () => handoverPointsWithUi.filter((p) => !p.phase_id),
+    [handoverPointsWithUi]
+  );
+
+  // Clear overrides once server/cache has caught up to the same coordinates.
+  useEffect(() => {
+    if (!handoverPoints?.length) return;
+
+    setUiVcrOverrides((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      for (const [id, o] of Object.entries(prev)) {
+        const p = handoverPoints.find((hp) => hp.id === id);
+        if (!p) continue;
+        const phaseMatches = o.phase_id === undefined ? true : (p.phase_id ?? null) === (o.phase_id ?? null);
+        const posMatches = p.position_x === o.position_x && p.position_y === o.position_y;
+        if (phaseMatches && posMatches) {
+          delete next[id];
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [handoverPoints]);
 
   // DnD sensors
   const sensors = useSensors(
@@ -100,6 +149,12 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
         const vcr = active.data.current.handoverPoint;
         const newX = Math.round(Math.max(0, vcr.position_x + delta.x));
         const newY = Math.round(Math.max(0, vcr.position_y + delta.y));
+
+        // Immediate UI update to avoid snap-back
+        setUiVcrOverrides((prev) => ({
+          ...prev,
+          [vcr.id]: { position_x: newX, position_y: newY },
+        }));
         updateVCRPosition({ 
           id: vcr.id, 
           position_x: newX, 
@@ -152,6 +207,16 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
         if (delta) {
           const newX = Math.round(Math.max(0, Math.min(50, vcr.position_x + delta.x))); // Constrain X within phase
           const newY = Math.round(Math.max(0, Math.min(320, vcr.position_y + delta.y))); // Constrain Y within phase
+
+            // Immediate UI update (prevents snap-back between drag end and cache update)
+            setUiVcrOverrides((prev) => ({
+              ...prev,
+              [vcr.id]: {
+                position_x: newX,
+                position_y: newY,
+                phase_id: isSamePhase ? undefined : phaseId,
+              },
+            }));
           
           updateVCRPosition({ 
             id: vcr.id, 
@@ -172,6 +237,15 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
         if (delta) {
           const newX = Math.round(Math.max(0, vcr.position_x + delta.x));
           const newY = Math.round(Math.max(0, vcr.position_y + delta.y));
+
+            // Immediate UI update (prevents snap-back between drag end and cache update)
+            setUiVcrOverrides((prev) => ({
+              ...prev,
+              [vcr.id]: {
+                position_x: newX,
+                position_y: newY,
+              },
+            }));
           updateVCRPosition({ 
             id: vcr.id, 
             position_x: newX, 
@@ -264,8 +338,8 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
         <PhasesTimeline
           phases={phases}
           milestones={milestones}
-          handoverPoints={assignedPoints}
-          unassignedPoints={unassignedPoints}
+          handoverPoints={assignedPointsWithUi}
+          unassignedPoints={unassignedPointsWithUi}
           handoverPlanId={plan.id}
           projectCode={plan.project_code}
           onCreatePhase={addPhase}
