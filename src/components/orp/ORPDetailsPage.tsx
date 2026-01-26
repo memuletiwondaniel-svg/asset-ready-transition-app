@@ -156,6 +156,10 @@ export const ORPDetailsPage: React.FC = () => {
                 <CalendarCheck className="w-4 h-4 text-muted-foreground group-data-[state=active]:text-blue-500" />
                 {t.activityPlan}
               </TabsTrigger>
+              <TabsTrigger value="handover" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm group">
+                <ArrowLeftRight className="w-4 h-4 text-muted-foreground group-data-[state=active]:text-cyan-500" />
+                P2A Handover
+              </TabsTrigger>
               <TabsTrigger value="training" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm group">
                 <GraduationCap className="w-4 h-4 text-muted-foreground group-data-[state=active]:text-emerald-500" />
                 {t.training}
@@ -171,10 +175,6 @@ export const ORPDetailsPage: React.FC = () => {
               <TabsTrigger value="maintenance" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm group">
                 <Wrench className="w-4 h-4 text-muted-foreground group-data-[state=active]:text-orange-500" />
                 {t.orMaintenance}
-              </TabsTrigger>
-              <TabsTrigger value="handover" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm group">
-                <ArrowLeftRight className="w-4 h-4 text-muted-foreground group-data-[state=active]:text-cyan-500" />
-                P2A Handover
               </TabsTrigger>
               <TabsTrigger value="owners-cost" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm group">
                 <DollarSign className="w-4 h-4 text-muted-foreground group-data-[state=active]:text-amber-500" />
