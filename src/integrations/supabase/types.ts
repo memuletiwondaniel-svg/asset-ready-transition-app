@@ -4002,6 +4002,45 @@ export type Database = {
         }
         Relationships: []
       }
+      plip_document_types: {
+        Row: {
+          category: string
+          code: string
+          created_at: string
+          description: string | null
+          display_order: number
+          id: string
+          is_active: boolean
+          name: string
+          tier: number
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          code: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          name: string
+          tier?: number
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          code?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          tier?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       positions: {
         Row: {
           created_at: string | null
