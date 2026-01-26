@@ -98,13 +98,15 @@ export const HandoverPointCard: React.FC<HandoverPointCardProps> = ({
   return (
     <Card 
       className={cn(
-        'group cursor-pointer transition-all duration-200 hover:shadow-md w-[200px]',
+        'group cursor-pointer transition-all duration-200 hover:shadow-md w-[200px] border',
         isDropTarget && 'ring-2 ring-primary ring-offset-2',
         isDragging && 'opacity-50 shadow-lg rotate-2'
       )}
       style={{
         backgroundColor: isDropTarget ? 'hsl(var(--primary) / 0.05)' : vcrColor.background,
         borderColor: isDropTarget ? 'hsl(var(--primary))' : vcrColor.border,
+        borderWidth: '1px',
+        borderStyle: 'solid',
       }}
       onClick={onClick}
     >
