@@ -14,7 +14,9 @@ import {
   CheckCircle2,
   Clock,
   AlertCircle,
-  ListTodo
+  ListTodo,
+  Flame,
+  Snowflake
 } from 'lucide-react';
 import { P2AHandoverPoint } from '../hooks/useP2AHandoverPoints';
 import { useHandoverPointSystems } from '../hooks/useP2AHandoverPoints';
@@ -230,6 +232,21 @@ export const VCRSystemsTab: React.FC<VCRSystemsTabProps> = ({ handoverPoint }) =
                         </div>
                         
                         <p className="text-sm font-medium text-foreground">{system.name}</p>
+                        
+                        {/* Hydrocarbon Indicator */}
+                        <div className="flex items-center gap-1.5 mt-1">
+                          {system.is_hydrocarbon ? (
+                            <>
+                              <Flame className="w-3 h-3 text-orange-500" />
+                              <span className="text-xs text-muted-foreground">Hydrocarbon</span>
+                            </>
+                          ) : (
+                            <>
+                              <Snowflake className="w-3 h-3 text-blue-500" />
+                              <span className="text-xs text-muted-foreground">Non-Hydrocarbon</span>
+                            </>
+                          )}
+                        </div>
                       </div>
                       
                       {/* Stats with Certificate Label */}
