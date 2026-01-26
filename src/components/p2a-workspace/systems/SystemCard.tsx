@@ -91,10 +91,7 @@ export const SystemCard: React.FC<SystemCardProps> = ({
                 {system.completion_percentage}%
               </span>
               {system.assigned_vcr_code && (
-                <Badge variant="secondary" className="text-[7px] px-0.5 py-0 h-3 gap-0.5">
-                  <Link2 className="w-2 h-2" />
-                  {system.assigned_vcr_code}
-                </Badge>
+                <Link2 className="w-2.5 h-2.5 text-muted-foreground shrink-0" />
               )}
             </div>
           </div>
