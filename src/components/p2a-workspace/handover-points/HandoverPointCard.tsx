@@ -139,8 +139,17 @@ export const HandoverPointCard: React.FC<HandoverPointCardProps> = ({
           {/* Name & ID stacked */}
           <div className="flex-1 min-w-0">
             <span className="text-[10px] font-mono text-muted-foreground block">
-              {/* Display only VCR-XXX from VCR-XXX-DPYYY format */}
-              {handoverPoint.vcr_code?.match(/^(VCR-\d+)/)?.[1] || 'VCR-???'}
+              {/* Display VCR-XXX: handle both old (VCR-300-001) and new (VCR-001-DP300) formats */}
+              {(() => {
+                const code = handoverPoint.vcr_code || '';
+                // New format: VCR-001-DP300 -> VCR-001
+                const newMatch = code.match(/^(VCR-\d+)-DP/);
+                if (newMatch) return newMatch[1];
+                // Old format: VCR-300-001 -> VCR-001 (use last number)
+                const oldMatch = code.match(/(\d+)$/);
+                if (oldMatch) return `VCR-${oldMatch[1]}`;
+                return 'VCR-???';
+              })()}
             </span>
             <span className="text-xs font-medium truncate block">
               {handoverPoint.name}
