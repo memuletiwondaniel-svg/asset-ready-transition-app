@@ -96,30 +96,29 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
 
     // Handle reordering phase columns
     if (active.data.current?.type === 'phase-column') {
-      // The over target could be the sortable (phase.id) or another phase-column
-      const overType = over.data.current?.type;
+      const activeId = active.id.toString();
+      const overId = over.id.toString();
       
-     console.log('Phase reorder attempt:', { overType, activeId: active.id, overId: over.id });
-     
-      if (overType === 'phase-column') {
-        const activeId = active.id.toString();
-        const overId = over.id.toString();
+      // Check if we're dropping on another phase (either by type or by matching phase ID)
+      const overType = over.data.current?.type;
+      const isOverPhase = overType === 'phase-column' || phases.some(p => p.id === overId);
+      
+      console.log('Phase reorder attempt:', { overType, activeId, overId, isOverPhase });
+      
+      if (isOverPhase && activeId !== overId) {
+        const oldIndex = phases.findIndex(p => p.id === activeId);
+        const newIndex = phases.findIndex(p => p.id === overId);
         
-        if (activeId !== overId) {
-          const oldIndex = phases.findIndex(p => p.id === activeId);
-          const newIndex = phases.findIndex(p => p.id === overId);
-          
-          if (oldIndex !== -1 && newIndex !== -1) {
-            const reordered = arrayMove(phases, oldIndex, newIndex);
-            const updates = reordered.map((phase, idx) => ({
-              id: phase.id,
-              display_order: idx,
-            }));
-            reorderPhases(updates);
-          }
+        if (oldIndex !== -1 && newIndex !== -1) {
+          const reordered = arrayMove(phases, oldIndex, newIndex);
+          const updates = reordered.map((phase, idx) => ({
+            id: phase.id,
+            display_order: idx,
+          }));
+          reorderPhases(updates);
         }
-        return;
       }
+      return;
     }
 
     // Handle reordering VCRs within same phase
