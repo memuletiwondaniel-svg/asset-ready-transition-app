@@ -125,51 +125,41 @@ export const HandoverPointCard: React.FC<HandoverPointCardProps> = ({
       }}
       onClick={onClick}
     >
-      <CardContent className="p-3">
-        <div className="flex items-start gap-2">
+    <CardContent className="p-2">
+        <div className="flex items-start gap-1.5">
           {/* Drag Handle */}
-          <div className="mt-0.5 cursor-grab active:cursor-grabbing text-muted-foreground/50 hover:text-muted-foreground">
-            <GripVertical className="w-4 h-4" />
+          <div className="cursor-grab active:cursor-grabbing text-muted-foreground/50 hover:text-muted-foreground">
+            <GripVertical className="w-3.5 h-3.5" />
           </div>
 
           <div className="flex-1 min-w-0">
             {/* Header */}
-            <div className="flex items-center justify-between mb-1">
-              <Badge variant="outline" className="text-[10px] font-mono px-1.5 py-0">
+            <div className="flex items-center justify-between gap-1">
+              <Badge variant="outline" className="text-[9px] font-mono px-1 py-0 h-4">
                 {handoverPoint.vcr_code}
               </Badge>
-              <Badge className={cn('text-[10px] px-1.5 py-0', statusConfig.color)}>
-                <StatusIcon className="w-2.5 h-2.5 mr-1" />
+              <Badge className={cn('text-[9px] px-1 py-0 h-4', statusConfig.color)}>
                 {statusConfig.label}
               </Badge>
             </div>
 
             {/* Name */}
-            <h4 className="font-medium text-sm truncate mb-1">
+            <h4 className="font-medium text-xs truncate mt-1">
               {handoverPoint.name}
             </h4>
 
-            {/* Systems count */}
-            <div className="flex items-center gap-2 text-[10px] text-muted-foreground mb-2">
-              <div className="flex items-center gap-1">
-                <Layers className="w-3 h-3" />
-                {handoverPoint.systems_count || 0} systems
-              </div>
+            {/* Meta row */}
+            <div className="flex items-center justify-between text-[9px] text-muted-foreground mt-1">
+              <span>{handoverPoint.systems_count || 0} sys</span>
               {handoverPoint.target_date && (
-                <div className="flex items-center gap-1">
-                  <Target className="w-3 h-3" />
-                  {format(new Date(handoverPoint.target_date), 'dd MMM')}
-                </div>
+                <span>{format(new Date(handoverPoint.target_date), 'dd MMM')}</span>
               )}
             </div>
 
             {/* Progress */}
-            <div className="space-y-1">
-              <div className="flex items-center justify-between text-[10px]">
-                <span className="text-muted-foreground">Prerequisites</span>
-                <span className="font-medium">{progress}%</span>
-              </div>
-              <Progress value={progress} className="h-1" />
+            <div className="flex items-center gap-2 mt-1">
+              <Progress value={progress} className="h-1 flex-1" />
+              <span className="text-[9px] font-medium w-6 text-right">{progress}%</span>
             </div>
           </div>
         </div>
