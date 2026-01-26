@@ -11,42 +11,34 @@ import { CSS } from '@dnd-kit/utilities';
 import { format } from 'date-fns';
 
 /**
- * Generates a unique, subtle HSL-based color from a VCR code.
+ * Generates a unique, vibrant HSL-based color from a VCR code.
+ * Uses the numeric portion of the VCR code to ensure distinct colors.
  * Avoids red, amber, and green to prevent confusion with status indicators.
  */
 const getVCRColor = (vcrCode: string | undefined) => {
   const code = vcrCode || 'DEFAULT';
-  let hash = 0;
-  for (let i = 0; i < code.length; i++) {
-    hash = code.charCodeAt(i) + ((hash << 5) - hash);
-    hash = hash & hash;
-  }
   
-  // Safe hue ranges: cyan (170-200), blue (200-260), purple (260-290), magenta/pink (290-330)
-  const safeHueRanges = [
-    { start: 170, end: 200 },
-    { start: 200, end: 260 },
-    { start: 260, end: 290 },
-    { start: 290, end: 330 },
-  ];
+  // Extract numeric portion from VCR code (e.g., "VCR-001" -> 1, "VCR-200" -> 200)
+  const numericMatch = code.match(/\d+/);
+  const numericValue = numericMatch ? parseInt(numericMatch[0], 10) : 0;
   
-  const totalRange = safeHueRanges.reduce((sum, range) => sum + (range.end - range.start), 0);
-  let position = Math.abs(hash) % totalRange;
-  let hue = 0;
+  // Use golden ratio for better color distribution
+  const goldenRatio = 0.618033988749895;
   
-  for (const range of safeHueRanges) {
-    const rangeSize = range.end - range.start;
-    if (position < rangeSize) {
-      hue = range.start + position;
-      break;
-    }
-    position -= rangeSize;
-  }
+  // Safe hue values: cyan (180), blue (220), purple (270), magenta (310)
+  // Spread across these using the numeric value
+  const baseHues = [180, 200, 220, 240, 260, 280, 300, 320];
+  const hueIndex = numericValue % baseHues.length;
+  const baseHue = baseHues[hueIndex];
   
-  // More vibrant background - higher saturation, lower lightness
-  const saturation = 50 + (Math.abs(hash >> 8) % 20); // 50-70%
-  const lightness = 88 + (Math.abs(hash >> 16) % 5); // 88-93%
-  const borderLightness = 65 + (Math.abs(hash >> 24) % 10); // 65-75%
+  // Add variation within the hue range based on the full numeric value
+  const hueOffset = ((numericValue * goldenRatio) % 1) * 20 - 10; // -10 to +10 variation
+  const hue = Math.round(baseHue + hueOffset);
+  
+  // Vary saturation and lightness slightly for additional distinction
+  const saturation = 55 + (numericValue % 15); // 55-70%
+  const lightness = 88 + (numericValue % 5); // 88-93%
+  const borderLightness = 60 + (numericValue % 10); // 60-70%
   
   return {
     background: `hsl(${hue}, ${saturation}%, ${lightness}%)`,
