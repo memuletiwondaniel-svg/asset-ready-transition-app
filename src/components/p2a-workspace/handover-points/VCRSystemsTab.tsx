@@ -186,7 +186,7 @@ export const VCRSystemsTab: React.FC<VCRSystemsTabProps> = ({ handoverPoint }) =
   return (
     <div className="space-y-4">
       {/* Aggregated Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <Card>
           <CardContent className="p-3 text-center">
             <div className="text-lg font-bold text-cyan-500">{totalSystems}</div>
@@ -215,6 +215,15 @@ export const VCRSystemsTab: React.FC<VCRSystemsTabProps> = ({ handoverPoint }) =
             <div className="text-[10px] text-muted-foreground">Outstanding Punchlists</div>
           </CardContent>
         </Card>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setAddSystemOpen(true)}
+          className="gap-2 ml-auto"
+        >
+          <Plus className="w-4 h-4" />
+          Add System
+        </Button>
       </div>
 
       {/* Systems List */}
@@ -358,18 +367,6 @@ export const VCRSystemsTab: React.FC<VCRSystemsTabProps> = ({ handoverPoint }) =
         })}
       </div>
 
-      {/* Add System Button */}
-      <div className="flex justify-end mt-4">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setAddSystemOpen(true)}
-          className="gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Add System
-        </Button>
-      </div>
 
       {/* Add System Sheet */}
       <AddSystemSheet
