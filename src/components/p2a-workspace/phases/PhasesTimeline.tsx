@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { Plus, GitBranch, FileCheck } from 'lucide-react';
+import { Plus, GitBranch } from 'lucide-react';
 import { P2APhase, P2AMilestone } from '../hooks/useP2APhases';
 import { P2AHandoverPoint } from '../hooks/useP2AHandoverPoints';
 import { StaircasePhaseColumn } from './StaircasePhaseColumn';
@@ -95,36 +95,6 @@ export const PhasesTimeline: React.FC<PhasesTimelineProps> = ({
   return (
     <>
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Action Bar */}
-        <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-card/50">
-          <div className="flex items-center gap-4">
-            <span className="text-sm font-medium">Handover Timeline</span>
-            <span className="text-xs text-muted-foreground">
-              {phases.length} Phase{phases.length !== 1 ? 's' : ''} • {handoverPoints.length + unassignedPoints.length} VCR{(handoverPoints.length + unassignedPoints.length) !== 1 ? 's' : ''}
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => onCreateHandoverPoint()}
-              className="gap-1.5"
-            >
-              <FileCheck className="w-3.5 h-3.5" />
-              New VCR
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => setShowCreateDialog(true)}
-              className="gap-1.5"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              New Phase
-            </Button>
-          </div>
-        </div>
-
         {/* Milestones Timeline Header */}
         {sortedMilestones.length > 0 && (
           <div className="flex items-center gap-0 px-4 py-3 border-b border-border bg-muted/30 overflow-x-auto">
