@@ -133,12 +133,12 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
       {/* VCRs Container - Free-form positioning */}
       <div 
         className={cn(
-          "border border-t-0 rounded-b-xl p-3 h-[400px] overflow-hidden transition-colors relative",
+          "border border-t-0 border-b-0 p-3 h-[360px] overflow-hidden transition-colors relative",
           isOver ? 'border-primary bg-primary/5' : 'border-border bg-card/50'
         )}
       >
         {sortedPoints.length === 0 && (
-          <div className="absolute inset-0 flex items-center justify-center pb-12">
+          <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center py-4">
               <ArrowDown className="w-6 h-6 mx-auto mb-2 text-muted-foreground/30" />
               <div className="text-xs text-muted-foreground">
@@ -163,12 +163,17 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
             />
           </div>
         ))}
-        
-        {/* Add VCR Button at bottom - always on top */}
+      </div>
+
+      {/* Add VCR Button - Fixed at bottom */}
+      <div className={cn(
+        "border border-t-0 rounded-b-xl p-2 transition-colors",
+        isOver ? 'border-primary bg-primary/5' : 'border-border bg-card/50'
+      )}>
         <Button 
           variant="ghost" 
           size="sm" 
-          className="absolute bottom-2 left-1/2 -translate-x-1/2 w-[200px] gap-1 text-xs border border-dashed border-border/50 hover:border-primary/50 z-20 bg-card/90 backdrop-blur-sm"
+          className="w-full gap-1 text-xs border border-dashed border-border/50 hover:border-primary/50"
           onClick={onCreateHandoverPoint}
         >
           <Plus className="w-3 h-3" />
