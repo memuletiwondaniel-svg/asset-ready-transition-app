@@ -23,6 +23,7 @@ import { VCRQualificationsTab } from './VCRQualificationsTab';
 import { VCRSystemsTab } from './VCRSystemsTab';
 import { VCRTrainingTab } from './VCRTrainingTab';
 import { VCRProceduresTab } from './VCRProceduresTab';
+import { VCRDocumentationTab } from './VCRDocumentationTab';
 import { cn } from '@/lib/utils';
 
 // Placeholder components for new tabs
@@ -155,7 +156,7 @@ export const VCRDetailOverlay: React.FC<VCRDetailOverlayProps> = ({
               </TabsContent>
 
               <TabsContent value="documentation" className="m-0">
-                <PlaceholderTab title="Documentation" icon={<FileText className="w-8 h-8 text-amber-500" />} />
+                <VCRDocumentationTab handoverPoint={handoverPoint} />
               </TabsContent>
 
               <TabsContent value="procedures" className="m-0">
