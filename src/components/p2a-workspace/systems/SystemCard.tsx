@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { P2ASystem } from '../hooks/useP2ASystems';
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
+import { getVCRColor } from '../utils/vcrColors';
 
 interface SystemCardProps {
   system: P2ASystem;
@@ -23,26 +24,33 @@ const isComplete = (system: P2ASystem) => {
   return system.completion_status === targetStatus;
 };
 
-const getCardBackground = (system: P2ASystem) => {
-  if (isComplete(system)) return 'border-emerald-500/30 bg-emerald-500/5';
-  return 'border-border bg-card';
-};
-
 export const SystemCard: React.FC<SystemCardProps> = ({
   system,
   onClick,
   compact = false,
   isDragging = false,
 }) => {
-  const cardBg = getCardBackground(system);
+  // Get VCR color if system is assigned to a VCR
+  const vcrColor = getVCRColor(system.assigned_vcr_code);
+  
+  // Card styling - use VCR color if assigned, otherwise default styling
+  const cardStyle = vcrColor ? {
+    backgroundColor: vcrColor.background,
+    borderColor: vcrColor.border,
+  } : undefined;
+
+  const defaultClasses = !vcrColor ? (
+    isComplete(system) ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-border bg-card'
+  ) : '';
 
   return (
     <Card 
       className={cn(
-        'group cursor-pointer transition-all duration-200 hover:shadow-sm w-[140px]',
-        cardBg,
+        'group cursor-pointer transition-all duration-200 hover:shadow-sm w-[140px] border',
+        defaultClasses,
         isDragging && 'opacity-50 shadow-lg scale-105'
       )}
+      style={cardStyle}
       onClick={onClick}
     >
       <CardContent className="p-1.5">

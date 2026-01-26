@@ -5,47 +5,7 @@ import { cn } from '@/lib/utils';
 import { P2AHandoverPoint } from '../hooks/useP2AHandoverPoints';
 import { useDroppable, useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
-
-/**
- * Generates a unique, vibrant HSL-based color from a VCR code.
- * Format: VCR-XXX-DPYYY where XXX is the sequence number
- * e.g., VCR-001-DP300 -> uses 1 for color generation
- */
-const getVCRColor = (vcrCode: string | undefined) => {
-  const code = vcrCode || 'DEFAULT';
-  
-  // Extract sequence number from new format VCR-XXX-DPYYY
-  // e.g., "VCR-001-DP300" -> "001" -> 1
-  const seqMatch = code.match(/^VCR-(\d+)-DP/);
-  let seqNumber = 0;
-  
-  if (seqMatch) {
-    seqNumber = parseInt(seqMatch[1], 10);
-  } else {
-    // Fallback for old format VCR-YYY-XXX: use last number
-    const numericMatches = code.match(/\d+/g);
-    seqNumber = numericMatches && numericMatches.length > 0 
-      ? parseInt(numericMatches[numericMatches.length - 1], 10) 
-      : 0;
-  }
-  
-  // Safe hue values spread across different color families for better distinction
-  // Index 0=cyan, 1=teal, 2=blue, 3=orange, 4=purple, 5=pink, 6=green, 7=rose, 8=indigo
-  const baseHues = [180, 165, 210, 30, 250, 330, 145, 350, 270];
-  const hueIndex = seqNumber % baseHues.length;
-  const hue = baseHues[hueIndex];
-  
-  // Vary saturation and lightness for additional distinction
-  const saturation = 55 + ((seqNumber * 3) % 15); // 55-70%
-  const lightness = 88 + (seqNumber % 5); // 88-93%
-  const borderLightness = 55 + ((seqNumber * 2) % 15); // 55-70%
-  
-  return {
-    background: `hsl(${hue}, ${saturation}%, ${lightness}%)`,
-    border: `hsl(${hue}, ${saturation}%, ${borderLightness}%)`,
-    accent: `hsl(${hue}, ${saturation + 15}%, ${lightness - 15}%)`,
-  };
-};
+import { getVCRColor } from '../utils/vcrColors';
 
 interface HandoverPointCardProps {
   handoverPoint: P2AHandoverPoint;
@@ -103,8 +63,8 @@ export const HandoverPointCard: React.FC<HandoverPointCardProps> = ({
         isDragging && 'opacity-50 shadow-lg rotate-2'
       )}
       style={{
-        backgroundColor: isDropTarget ? 'hsl(var(--primary) / 0.05)' : vcrColor.background,
-        borderColor: isDropTarget ? 'hsl(var(--primary))' : vcrColor.border,
+        backgroundColor: isDropTarget ? 'hsl(var(--primary) / 0.05)' : vcrColor?.background ?? 'hsl(var(--card))',
+        borderColor: isDropTarget ? 'hsl(var(--primary))' : vcrColor?.border ?? 'hsl(var(--border))',
         borderWidth: '1px',
         borderStyle: 'solid',
       }}
