@@ -227,21 +227,6 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
               <p className="text-sm text-muted-foreground">{plan.description}</p>
             )}
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsFullscreen(!isFullscreen)}
-              className="h-8 w-8"
-              title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
-            >
-              {isFullscreen ? (
-                <Minimize2 className="h-4 w-4" />
-              ) : (
-                <Maximize2 className="h-4 w-4" />
-              )}
-            </Button>
-          </div>
         </div>
       </div>
 
@@ -278,6 +263,8 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
           onDeletePhase={deletePhase}
           onCreateHandoverPoint={handleCreateHandoverPoint}
           onOpenVCR={handleOpenVCR}
+          isFullscreen={isFullscreen}
+          onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
           onAssignVCRToPhase={(vcrId, phaseId) => moveHandoverPointToPhase({ handoverPointId: vcrId, newPhaseId: phaseId })}
           isCreatingPhase={isAddingPhase}
         />

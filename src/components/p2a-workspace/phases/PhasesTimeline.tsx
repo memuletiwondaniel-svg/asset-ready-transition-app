@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { Plus, GitBranch } from 'lucide-react';
+import { Plus, GitBranch, Maximize2, Minimize2 } from 'lucide-react';
 import { P2APhase, P2AMilestone } from '../hooks/useP2APhases';
 import { P2AHandoverPoint } from '../hooks/useP2AHandoverPoints';
 import { StaircasePhaseColumn } from './StaircasePhaseColumn';
@@ -24,6 +24,8 @@ interface PhasesTimelineProps {
   onOpenVCR: (point: P2AHandoverPoint) => void;
   onAssignVCRToPhase: (vcrId: string, phaseId: string | null) => void;
   isCreatingPhase?: boolean;
+  isFullscreen?: boolean;
+  onToggleFullscreen?: () => void;
 }
 
 export const PhasesTimeline: React.FC<PhasesTimelineProps> = ({
@@ -40,6 +42,8 @@ export const PhasesTimeline: React.FC<PhasesTimelineProps> = ({
   onOpenVCR,
   onAssignVCRToPhase,
   isCreatingPhase,
+  isFullscreen,
+  onToggleFullscreen,
 }) => {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
 
@@ -96,24 +100,37 @@ export const PhasesTimeline: React.FC<PhasesTimelineProps> = ({
     <>
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Milestones Timeline Header */}
-        {sortedMilestones.length > 0 && (
-          <div className="flex items-center gap-0 px-4 py-3 border-b border-border bg-muted/30 overflow-x-auto">
-            <div className="flex items-center">
-              {sortedMilestones.map((milestone, idx) => (
-                <React.Fragment key={milestone.id}>
-                  <MilestoneMarker 
-                    milestone={milestone} 
-                    isFirst={idx === 0}
-                    isLast={idx === sortedMilestones.length - 1}
-                  />
-                  {idx < sortedMilestones.length - 1 && (
-                    <div className="w-24 h-0.5 bg-border mx-1" />
-                  )}
-                </React.Fragment>
-              ))}
-            </div>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/30">
+          <div className="flex items-center overflow-x-auto">
+            {sortedMilestones.length > 0 && sortedMilestones.map((milestone, idx) => (
+              <React.Fragment key={milestone.id}>
+                <MilestoneMarker 
+                  milestone={milestone} 
+                  isFirst={idx === 0}
+                  isLast={idx === sortedMilestones.length - 1}
+                />
+                {idx < sortedMilestones.length - 1 && (
+                  <div className="w-24 h-0.5 bg-border mx-1" />
+                )}
+              </React.Fragment>
+            ))}
           </div>
-        )}
+          {onToggleFullscreen && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onToggleFullscreen}
+              className="h-8 w-8 flex-shrink-0 ml-2"
+              title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+            >
+              {isFullscreen ? (
+                <Minimize2 className="h-4 w-4" />
+              ) : (
+                <Maximize2 className="h-4 w-4" />
+              )}
+            </Button>
+          )}
+        </div>
 
         {/* Staircase Workspace */}
         <ScrollArea className="flex-1">
