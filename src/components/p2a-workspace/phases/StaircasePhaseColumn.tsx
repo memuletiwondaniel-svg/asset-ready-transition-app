@@ -137,8 +137,8 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
           isOver ? 'border-primary bg-primary/5' : 'border-border bg-card/50'
         )}
       >
-        {sortedPoints.length === 0 ? (
-          <div className="absolute inset-0 flex items-center justify-center">
+        {sortedPoints.length === 0 && (
+          <div className="absolute inset-0 flex items-center justify-center pb-12">
             <div className="text-center py-4">
               <ArrowDown className="w-6 h-6 mx-auto mb-2 text-muted-foreground/30" />
               <div className="text-xs text-muted-foreground">
@@ -146,25 +146,23 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
               </div>
             </div>
           </div>
-        ) : (
-          <>
-            {sortedPoints.map((point) => (
-              <div 
-                key={point.id} 
-                className="absolute"
-                style={{
-                  left: `${point.position_x}px`,
-                  top: `${point.position_y}px`,
-                }}
-              >
-                <DraggableHandoverPointCard
-                  handoverPoint={point}
-                  onClick={() => onOpenVCR(point)}
-                />
-              </div>
-            ))}
-          </>
         )}
+        
+        {sortedPoints.map((point) => (
+          <div 
+            key={point.id} 
+            className="absolute"
+            style={{
+              left: `${point.position_x}px`,
+              top: `${point.position_y}px`,
+            }}
+          >
+            <DraggableHandoverPointCard
+              handoverPoint={point}
+              onClick={() => onOpenVCR(point)}
+            />
+          </div>
+        ))}
         
         {/* Add VCR Button at bottom - always on top */}
         <Button 
