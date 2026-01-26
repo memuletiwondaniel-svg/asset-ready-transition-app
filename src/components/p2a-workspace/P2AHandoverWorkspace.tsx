@@ -97,13 +97,15 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
     // Handle reordering phase columns
     if (active.data.current?.type === 'phase-column') {
       const activeId = active.id.toString();
-      const overId = over.id.toString();
+      const rawOverId = over.id.toString();
+      // Can be either the sortable id (phase.id) or the droppable id (phase-<phase.id>)
+      const overId = rawOverId.startsWith('phase-') ? rawOverId.replace('phase-', '') : rawOverId;
       
       // Check if we're dropping on another phase (either by type or by matching phase ID)
       const overType = over.data.current?.type;
-      const isOverPhase = overType === 'phase-column' || phases.some(p => p.id === overId);
+      const isOverPhase = overType === 'phase-column' || overType === 'phase' || phases.some(p => p.id === overId);
       
-      console.log('Phase reorder attempt:', { overType, activeId, overId, isOverPhase });
+      console.log('Phase reorder attempt:', { overType, activeId, rawOverId, overId, isOverPhase });
       
       if (isOverPhase && activeId !== overId) {
         const oldIndex = phases.findIndex(p => p.id === activeId);
