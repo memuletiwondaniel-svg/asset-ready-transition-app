@@ -92,10 +92,6 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
           "group rounded-t-xl border border-b-0 p-3 transition-colors",
           isOver ? 'border-primary bg-primary/10' : 'border-border bg-card'
         )}
-        style={{ 
-          borderTopColor: phase.color,
-          borderTopWidth: '4px',
-        }}
       >
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2">
