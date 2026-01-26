@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Flame, Snowflake, GripVertical, Link2 } from 'lucide-react';
+import { Flame, Snowflake, GripVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { P2ASystem } from '../hooks/useP2ASystems';
 import { useDraggable } from '@dnd-kit/core';
@@ -68,19 +68,22 @@ export const SystemCard: React.FC<SystemCardProps> = ({
 
           <div className="flex-1 min-w-0">
             {/* System Name */}
-            <div className="flex items-center gap-1">
-              <span className="text-[10px] font-medium truncate flex-1 leading-tight">
-                {system.name}
-              </span>
-              {system.assigned_vcr_code && (
-                <Link2 className="w-2.5 h-2.5 text-muted-foreground shrink-0" />
-              )}
-            </div>
-
-            {/* System ID */}
-            <span className="text-[8px] text-muted-foreground font-mono truncate block">
-              {system.system_id}
+            <span className="text-[10px] font-medium truncate block leading-tight">
+              {system.name}
             </span>
+
+            {/* System ID + Progress */}
+            <div className="flex items-center justify-between gap-1">
+              <span className="text-[8px] text-muted-foreground font-mono truncate">
+                {system.system_id}
+              </span>
+              <span className={cn(
+                'text-[8px] font-medium shrink-0',
+                isComplete(system) ? 'text-emerald-500' : 'text-muted-foreground'
+              )}>
+                {system.completion_percentage}%
+              </span>
+            </div>
           </div>
         </div>
       </CardContent>
