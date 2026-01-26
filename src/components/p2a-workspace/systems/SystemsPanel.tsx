@@ -219,11 +219,12 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
         {/* Add System Button */}
         <div className="p-3 border-t border-border">
           <Button 
-            className="w-full gap-2" 
+            variant="ghost"
+            className="w-full gap-1 text-xs border border-dashed border-border/50 hover:border-primary/50" 
             size="sm"
             onClick={() => setShowAddDialog(true)}
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-3 h-3" />
             Add Systems
           </Button>
         </div>
