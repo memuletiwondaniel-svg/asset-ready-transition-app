@@ -98,8 +98,8 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
       // If VCR was dropped but not over any target, update its position in current phase
       if (active.data.current?.type === 'vcr' && delta) {
         const vcr = active.data.current.handoverPoint;
-        const newX = Math.max(0, vcr.position_x + delta.x);
-        const newY = Math.max(0, vcr.position_y + delta.y);
+        const newX = Math.round(Math.max(0, vcr.position_x + delta.x));
+        const newY = Math.round(Math.max(0, vcr.position_y + delta.y));
         updateVCRPosition({ 
           id: vcr.id, 
           position_x: newX, 
@@ -150,8 +150,8 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
         const isSamePhase = phaseId === vcr.phase_id;
         
         if (delta) {
-          const newX = Math.max(0, Math.min(50, vcr.position_x + delta.x)); // Constrain X within phase
-          const newY = Math.max(0, Math.min(320, vcr.position_y + delta.y)); // Constrain Y within phase
+          const newX = Math.round(Math.max(0, Math.min(50, vcr.position_x + delta.x))); // Constrain X within phase
+          const newY = Math.round(Math.max(0, Math.min(320, vcr.position_y + delta.y))); // Constrain Y within phase
           
           updateVCRPosition({ 
             id: vcr.id, 
@@ -170,8 +170,8 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
       if (overType === 'vcr') {
         // Just update position based on delta
         if (delta) {
-          const newX = Math.max(0, vcr.position_x + delta.x);
-          const newY = Math.max(0, vcr.position_y + delta.y);
+          const newX = Math.round(Math.max(0, vcr.position_x + delta.x));
+          const newY = Math.round(Math.max(0, vcr.position_y + delta.y));
           updateVCRPosition({ 
             id: vcr.id, 
             position_x: newX, 
