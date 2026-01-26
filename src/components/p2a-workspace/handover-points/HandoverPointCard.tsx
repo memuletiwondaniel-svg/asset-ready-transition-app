@@ -136,24 +136,20 @@ export const HandoverPointCard: React.FC<HandoverPointCardProps> = ({
             <StatusIcon className="w-3 h-3" />
           </div>
 
+          {/* Name & ID stacked */}
           <div className="flex-1 min-w-0">
-            {/* Name & Code Row */}
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-xs font-medium truncate">
-                {handoverPoint.name}
-              </span>
-              <span className="text-[10px] font-mono font-medium text-muted-foreground shrink-0">
-                {handoverPoint.vcr_code?.replace(/^VCR-?/i, 'VCR-').slice(0, 7) || 'VCR-???'}
-              </span>
-            </div>
-
-            {/* Progress % only */}
-            <div className="flex items-center mt-0.5">
-              <span className="text-[10px] text-muted-foreground">
-                {progress}% complete
-              </span>
-            </div>
+            <span className="text-[10px] font-mono text-muted-foreground block">
+              {handoverPoint.vcr_code?.replace(/^VCR-?/i, 'VCR-') || 'VCR-???'}
+            </span>
+            <span className="text-xs font-medium truncate block">
+              {handoverPoint.name}
+            </span>
           </div>
+
+          {/* Progress % on the right */}
+          <span className="text-xs font-semibold text-muted-foreground shrink-0">
+            {progress}%
+          </span>
         </div>
       </CardContent>
     </Card>
