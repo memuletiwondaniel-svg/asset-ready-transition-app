@@ -1,13 +1,14 @@
 import React from 'react';
-import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Plus, MoreVertical, Trash2, Edit, ArrowDown, CheckCircle2 } from 'lucide-react';
+import { Plus, MoreVertical, Trash2, Edit, ArrowDown, CheckCircle2, GripVertical } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { P2APhase } from '../hooks/useP2APhases';
 import { P2AHandoverPoint } from '../hooks/useP2AHandoverPoints';
 import { DraggableHandoverPointCard } from '../handover-points/HandoverPointCard';
 import { useDroppable } from '@dnd-kit/core';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { cn } from '@/lib/utils';
 
 interface StaircasePhaseColumnProps {
@@ -37,7 +38,7 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
   isFirstPhase,
   isLastPhase,
 }) => {
-  const { isOver, setNodeRef } = useDroppable({
+  const { isOver, setNodeRef: setDroppableRef } = useDroppable({
     id: `phase-${phase.id}`,
     data: {
       type: 'phase',
@@ -45,14 +46,44 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
     },
   });
 
+  const {
+    attributes,
+    listeners,
+    setNodeRef: setSortableRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: phase.id,
+    data: {
+      type: 'phase-column',
+      phase,
+    },
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    paddingTop: staircaseOffset,
+  };
+
+  // Combine refs
+  const setNodeRef = (node: HTMLDivElement | null) => {
+    setDroppableRef(node);
+    setSortableRef(node);
+  };
+
   // Sort VCRs by position for consistent ordering
   const sortedPoints = [...handoverPoints].sort((a, b) => a.position_y - b.position_y);
 
   return (
     <div 
       ref={setNodeRef}
-      className="flex-shrink-0 w-72 flex flex-col"
-      style={{ paddingTop: staircaseOffset }}
+      className={cn(
+        "flex-shrink-0 w-72 flex flex-col",
+        isDragging && "opacity-50 z-50"
+      )}
+      style={style}
     >
       {/* Phase Header Card */}
       <div 
@@ -67,6 +98,14 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
       >
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2">
+            {/* Drag handle */}
+            <div 
+              {...attributes} 
+              {...listeners}
+              className="cursor-grab active:cursor-grabbing p-1 -ml-1 rounded hover:bg-muted/50 touch-none"
+            >
+              <GripVertical className="w-4 h-4 text-muted-foreground" />
+            </div>
             <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold">
               {phaseIndex + 1}
             </div>
