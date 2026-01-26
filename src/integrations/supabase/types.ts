@@ -1101,6 +1101,55 @@ export type Database = {
           },
         ]
       }
+      ora_training_system_mappings: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          handover_point_id: string | null
+          id: string
+          system_id: string
+          training_item_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          handover_point_id?: string | null
+          id?: string
+          system_id: string
+          training_item_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          handover_point_id?: string | null
+          id?: string
+          system_id?: string
+          training_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ora_training_system_mappings_handover_point_id_fkey"
+            columns: ["handover_point_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_handover_points"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ora_training_system_mappings_system_id_fkey"
+            columns: ["system_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_systems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ora_training_system_mappings_training_item_id_fkey"
+            columns: ["training_item_id"]
+            isOneToOne: false
+            referencedRelation: "ora_training_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orm_attachments: {
         Row: {
           attachment_type: string
