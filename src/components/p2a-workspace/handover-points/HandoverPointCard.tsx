@@ -125,42 +125,34 @@ export const HandoverPointCard: React.FC<HandoverPointCardProps> = ({
       }}
       onClick={onClick}
     >
-    <CardContent className="p-2">
-        <div className="flex items-start gap-1.5">
+    <CardContent className="px-2 py-1.5">
+        <div className="flex items-center gap-1.5">
           {/* Drag Handle */}
           <div className="cursor-grab active:cursor-grabbing text-muted-foreground/50 hover:text-muted-foreground">
-            <GripVertical className="w-3.5 h-3.5" />
+            <GripVertical className="w-3 h-3" />
           </div>
 
-          <div className="flex-1 min-w-0">
-            {/* Header */}
-            <div className="flex items-center justify-between gap-1">
-              <Badge variant="outline" className="text-[9px] font-mono px-1 py-0 h-4">
-                {handoverPoint.vcr_code}
-              </Badge>
-              <Badge className={cn('text-[9px] px-1 py-0 h-4', statusConfig.color)}>
-                {statusConfig.label}
-              </Badge>
-            </div>
-
+          <div className="flex-1 min-w-0 flex items-center gap-2">
+            {/* VCR Code */}
+            <Badge variant="outline" className="text-[8px] font-mono px-1 py-0 h-3.5 shrink-0">
+              {handoverPoint.vcr_code}
+            </Badge>
+            
             {/* Name */}
-            <h4 className="font-medium text-xs truncate mt-1">
-              {handoverPoint.name}
-            </h4>
+            <span className="text-xs truncate flex-1">{handoverPoint.name}</span>
 
-            {/* Meta row */}
-            <div className="flex items-center justify-between text-[9px] text-muted-foreground mt-1">
-              <span>{handoverPoint.systems_count || 0} sys</span>
-              {handoverPoint.target_date && (
-                <span>{format(new Date(handoverPoint.target_date), 'dd MMM')}</span>
-              )}
-            </div>
+            {/* Systems count */}
+            <span className="text-[9px] text-muted-foreground shrink-0">{handoverPoint.systems_count || 0}</span>
 
             {/* Progress */}
-            <div className="flex items-center gap-2 mt-1">
-              <Progress value={progress} className="h-1 flex-1" />
-              <span className="text-[9px] font-medium w-6 text-right">{progress}%</span>
+            <div className="flex items-center gap-1 shrink-0">
+              <Progress value={progress} className="h-1 w-10" />
             </div>
+
+            {/* Status */}
+            <Badge className={cn('text-[8px] px-1 py-0 h-3.5 shrink-0', statusConfig.color)}>
+              {statusConfig.label}
+            </Badge>
           </div>
         </div>
       </CardContent>
