@@ -50,6 +50,7 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
     attributes,
     listeners,
     setNodeRef: setSortableRef,
+   setActivatorNodeRef,
     transform,
     transition,
     isDragging,
@@ -100,6 +101,7 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
           <div className="flex items-center gap-2">
             {/* Drag handle */}
             <div 
+             ref={setActivatorNodeRef}
               {...attributes} 
               {...listeners}
               className="cursor-grab active:cursor-grabbing p-1 -ml-1 rounded hover:bg-muted/50 touch-none"
