@@ -27,14 +27,14 @@ export const getVCRColor = (vcrCode: string | undefined) => {
   const hueIndex = seqNumber % baseHues.length;
   const hue = baseHues[hueIndex];
   
-  // Vary saturation and lightness for additional distinction
-  const saturation = 55 + ((seqNumber * 3) % 15); // 55-70%
-  const lightness = 88 + (seqNumber % 5); // 88-93%
-  const borderLightness = 55 + ((seqNumber * 2) % 15); // 55-70%
+  // Softer saturation and higher lightness for a more muted, pastel look
+  const saturation = 35 + ((seqNumber * 3) % 10); // 35-45% (was 55-70%)
+  const lightness = 92 + (seqNumber % 4); // 92-96% (was 88-93%)
+  const borderLightness = 70 + ((seqNumber * 2) % 10); // 70-80% (was 55-70%)
   
   return {
     background: `hsl(${hue}, ${saturation}%, ${lightness}%)`,
     border: `hsl(${hue}, ${saturation}%, ${borderLightness}%)`,
-    accent: `hsl(${hue}, ${saturation + 15}%, ${lightness - 15}%)`,
+    accent: `hsl(${hue}, ${saturation + 10}%, ${lightness - 10}%)`,
   };
 };
