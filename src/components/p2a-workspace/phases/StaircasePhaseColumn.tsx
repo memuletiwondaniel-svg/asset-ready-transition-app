@@ -171,7 +171,7 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
       {/* VCRs Container */}
       <div 
         className={cn(
-          "border border-t-0 rounded-b-xl p-3 space-y-2 h-[280px] overflow-y-auto transition-colors",
+          "border border-t-0 rounded-b-xl p-3 space-y-2 h-[280px] overflow-y-auto transition-colors flex flex-col items-center",
           isOver ? 'border-primary bg-primary/5' : 'border-border bg-card/50'
         )}
       >
