@@ -29,7 +29,7 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
   projectNumber,
 }) => {
   const [systemsPanelCollapsed, setSystemsPanelCollapsed] = useState(false);
-  const [activeDragItem, setActiveDragItem] = useState<{ type: 'system' | 'vcr'; data: any } | null>(null);
+  const [activeDragItem, setActiveDragItem] = useState<{ type: 'system' | 'vcr' | 'phase'; data: any } | null>(null);
   const [showCreateVCRDialog, setShowCreateVCRDialog] = useState(false);
   const [selectedPhaseIdForVCR, setSelectedPhaseIdForVCR] = useState<string | null>(null);
   const [selectedVCR, setSelectedVCR] = useState<P2AHandoverPoint | null>(null);
@@ -76,8 +76,8 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
       setActiveDragItem({ type: 'system', data: active.data.current.system });
     } else if (active.data.current?.type === 'vcr') {
       setActiveDragItem({ type: 'vcr', data: active.data.current.handoverPoint });
-   } else if (active.data.current?.type === 'phase-column') {
-     setActiveDragItem({ type: 'vcr', data: active.data.current.phase });
+    } else if (active.data.current?.type === 'phase-column') {
+      setActiveDragItem({ type: 'phase', data: active.data.current.phase });
     }
   };
 
@@ -302,6 +302,11 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
         {activeDragItem?.type === 'vcr' && (
           <div className="opacity-80 rotate-2">
             <HandoverPointCard handoverPoint={activeDragItem.data} />
+          </div>
+        )}
+        {activeDragItem?.type === 'phase' && (
+          <div className="opacity-80 rotate-1 bg-card border-2 border-primary rounded-lg px-4 py-2 shadow-lg">
+            <span className="font-medium">{activeDragItem.data?.name || 'Phase'}</span>
           </div>
         )}
       </DragOverlay>
