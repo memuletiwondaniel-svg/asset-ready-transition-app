@@ -249,14 +249,6 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
                 )}
               </div>
               <div className="flex items-center gap-2">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  {plan.project_code && (
-                    <span className="px-2 py-1 bg-muted rounded">Project: {plan.project_code}</span>
-                  )}
-                  {plan.plant_code && (
-                    <span className="px-2 py-1 bg-muted rounded">Plant: {plan.plant_code}</span>
-                  )}
-                </div>
                 <Button
                   variant="ghost"
                   size="icon"
