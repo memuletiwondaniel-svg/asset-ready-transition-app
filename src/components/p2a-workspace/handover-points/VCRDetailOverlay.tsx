@@ -82,9 +82,9 @@ export const VCRDetailOverlay: React.FC<VCRDetailOverlayProps> = ({
               <div>
                 <DialogTitle className="text-xl">{handoverPoint.name}</DialogTitle>
                 <div className="flex items-center gap-2 mt-1">
-                  <Badge variant="outline" className="font-mono text-xs">
+                  <span className="font-mono text-xs text-muted-foreground/60">
                     {handoverPoint.vcr_code}
-                  </Badge>
+                  </span>
                   <Badge className={statusConfig.color}>
                     {statusConfig.label}
                   </Badge>
