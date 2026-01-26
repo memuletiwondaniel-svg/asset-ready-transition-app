@@ -112,7 +112,7 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-6 w-6">
+              <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity">
                 <MoreVertical className="w-3.5 h-3.5" />
               </Button>
             </DropdownMenuTrigger>
