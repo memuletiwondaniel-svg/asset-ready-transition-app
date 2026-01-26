@@ -89,7 +89,7 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
       {/* Phase Header Card */}
       <div 
         className={cn(
-          "group rounded-t-xl border border-b-0 p-3 transition-colors",
+          "group rounded-t-xl border border-b-0 p-3 transition-all duration-200 hover:shadow-md hover:bg-accent/50",
           isOver ? 'border-primary bg-primary/10' : 'border-border bg-card'
         )}
       >
@@ -139,30 +139,6 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
           {phase.end_milestone && (
             <Badge variant="outline" className="text-[10px] px-1.5 py-0">
               To: {phase.end_milestone.code || phase.end_milestone.name}
-            </Badge>
-          )}
-        </div>
-
-        {phase.description && (
-          <p className="text-[10px] text-muted-foreground mt-1 line-clamp-2">
-            {phase.description}
-          </p>
-        )}
-
-        {/* Phase stats */}
-        <div className="flex items-center gap-3 mt-2 pt-2 border-t border-border/50">
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <CheckCircle2 className="w-3 h-3" />
-            <span>{handoverPoints.length} VCR{handoverPoints.length !== 1 ? 's' : ''}</span>
-          </div>
-          {isFirstPhase && (
-            <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-              Start
-            </Badge>
-          )}
-          {isLastPhase && (
-            <Badge variant="default" className="text-[10px] px-1.5 py-0">
-              Handover
             </Badge>
           )}
         </div>
