@@ -133,52 +133,44 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
       {/* VCRs Container */}
       <div 
         className={cn(
-          "border border-t-0 rounded-b-xl p-3 space-y-2 h-[280px] overflow-y-auto transition-colors flex flex-col items-center",
+          "border border-t-0 rounded-b-xl p-3 h-[280px] overflow-y-auto transition-colors flex flex-col items-center",
           isOver ? 'border-primary bg-primary/5' : 'border-border bg-card/50'
         )}
       >
         {sortedPoints.length === 0 ? (
-          <div className="h-full flex items-center justify-center">
+          <div className="flex-1 flex items-center justify-center">
             <div className="text-center py-4">
               <ArrowDown className="w-6 h-6 mx-auto mb-2 text-muted-foreground/30" />
-              <div className="text-xs text-muted-foreground mb-2">
-                Drop systems here or
+              <div className="text-xs text-muted-foreground">
+                Drop systems here
               </div>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="gap-1"
-                onClick={onCreateHandoverPoint}
-              >
-                <Plus className="w-3 h-3" />
-                Add VCR
-              </Button>
             </div>
           </div>
         ) : (
-          <>
+          <div className="flex-1 w-full space-y-2">
             <SortableContext items={sortedPoints.map(p => p.id)} strategy={verticalListSortingStrategy}>
               {sortedPoints.map((point) => (
-                <DraggableHandoverPointCard
-                  key={point.id}
-                  handoverPoint={point}
-                  onClick={() => onOpenVCR(point)}
-                />
+                <div key={point.id} className="flex justify-center">
+                  <DraggableHandoverPointCard
+                    handoverPoint={point}
+                    onClick={() => onOpenVCR(point)}
+                  />
+                </div>
               ))}
             </SortableContext>
-            
-            {/* Add VCR Button at bottom */}
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="w-full gap-1 text-xs border border-dashed border-border/50 hover:border-primary/50"
-              onClick={onCreateHandoverPoint}
-            >
-              <Plus className="w-3 h-3" />
-              Add VCR
-            </Button>
-          </>
+          </div>
         )}
+        
+        {/* Add VCR Button at bottom */}
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="w-[200px] gap-1 text-xs border border-dashed border-border/50 hover:border-primary/50 mt-auto shrink-0"
+          onClick={onCreateHandoverPoint}
+        >
+          <Plus className="w-3 h-3" />
+          Add VCR
+        </Button>
       </div>
 
       {/* Flow indicator to next phase */}
