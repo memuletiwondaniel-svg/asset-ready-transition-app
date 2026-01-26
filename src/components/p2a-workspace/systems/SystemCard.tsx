@@ -71,13 +71,10 @@ export const SystemCard: React.FC<SystemCardProps> = ({
           </div>
 
           <div className="flex-1 min-w-0">
-            {/* System Name & ID Row */}
+            {/* System Name */}
             <div className="flex items-center gap-1">
               <span className="text-[10px] font-medium truncate flex-1">
                 {system.name}
-              </span>
-              <span className="text-[8px] font-mono text-muted-foreground shrink-0">
-                {system.system_id}
               </span>
             </div>
 
