@@ -128,28 +128,15 @@ export const VCROverviewTab: React.FC<VCROverviewTabProps> = ({ handoverPoint })
     <div className="space-y-6">
       {/* Header with Status and Target Date */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* VCR Identity Card */}
-        <Card className="border-primary/20">
-          <CardContent className="p-4">
-            <div className="flex items-start gap-3">
-              <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center", statusConfig.color + '/20')}>
-                <StatusIcon className={cn("w-5 h-5", statusConfig.color.replace('bg-', 'text-'))} />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <Badge variant="outline" className="font-mono text-xs">
-                    {handoverPoint.vcr_code}
-                  </Badge>
-                  <Badge className={statusConfig.color}>{statusConfig.label}</Badge>
-                </div>
-                <h3 className="font-semibold text-foreground">{handoverPoint.name}</h3>
-                {handoverPoint.description && (
-                  <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                    {handoverPoint.description}
-                  </p>
-                )}
-              </div>
-            </div>
+        {/* Description Card */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Description</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <p className="text-sm text-muted-foreground">
+              {handoverPoint.description || 'No description provided for this VCR.'}
+            </p>
           </CardContent>
         </Card>
 
