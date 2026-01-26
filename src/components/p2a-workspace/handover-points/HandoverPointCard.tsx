@@ -5,7 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { Target, Layers, GripVertical, CheckCircle2, Clock, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { P2AHandoverPoint } from '../hooks/useP2AHandoverPoints';
-import { useDroppable } from '@dnd-kit/core';
+import { useDroppable, useDraggable } from '@dnd-kit/core';
 import { format } from 'date-fns';
 
 /**
@@ -56,6 +56,8 @@ interface HandoverPointCardProps {
   handoverPoint: P2AHandoverPoint;
   onClick?: () => void;
   isDropTarget?: boolean;
+  isDragging?: boolean;
+  compact?: boolean;
 }
 
 const getStatusConfig = (status: string) => {
@@ -95,6 +97,8 @@ export const HandoverPointCard: React.FC<HandoverPointCardProps> = ({
   handoverPoint,
   onClick,
   isDropTarget = false,
+  isDragging = false,
+  compact = false,
 }) => {
   const statusConfig = getStatusConfig(handoverPoint.status);
   const StatusIcon = statusConfig.icon;
@@ -109,7 +113,8 @@ export const HandoverPointCard: React.FC<HandoverPointCardProps> = ({
     <Card 
       className={cn(
         'cursor-pointer transition-all duration-200 hover:shadow-md border-2',
-        isDropTarget && 'ring-2 ring-primary ring-offset-2'
+        isDropTarget && 'ring-2 ring-primary ring-offset-2',
+        isDragging && 'opacity-50 shadow-lg rotate-2'
       )}
       style={{
         backgroundColor: isDropTarget ? 'hsl(var(--primary) / 0.05)' : vcrColor.background,
@@ -170,7 +175,39 @@ export const HandoverPointCard: React.FC<HandoverPointCardProps> = ({
   );
 };
 
-// Droppable version for receiving systems
+// Draggable + Droppable version for phase columns
+export const DraggableHandoverPointCard: React.FC<HandoverPointCardProps> = (props) => {
+  const { attributes, listeners, setNodeRef: setDragRef, isDragging } = useDraggable({
+    id: `vcr-drag-${props.handoverPoint.id}`,
+    data: {
+      type: 'vcr',
+      handoverPoint: props.handoverPoint,
+    },
+  });
+
+  const { isOver, setNodeRef: setDropRef } = useDroppable({
+    id: `vcr-${props.handoverPoint.id}`,
+    data: {
+      type: 'vcr',
+      handoverPoint: props.handoverPoint,
+    },
+  });
+
+  return (
+    <div 
+      ref={(node) => {
+        setDragRef(node);
+        setDropRef(node);
+      }}
+      {...listeners}
+      {...attributes}
+    >
+      <HandoverPointCard {...props} isDropTarget={isOver} isDragging={isDragging} />
+    </div>
+  );
+};
+
+// Droppable-only version (legacy, for receiving systems)
 export const DroppableHandoverPointCard: React.FC<HandoverPointCardProps> = (props) => {
   const { isOver, setNodeRef } = useDroppable({
     id: `vcr-${props.handoverPoint.id}`,

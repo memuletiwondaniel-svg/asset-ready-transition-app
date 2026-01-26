@@ -12,6 +12,7 @@ import { SystemsPanel } from './systems/SystemsPanel';
 import { SystemCard } from './systems/SystemCard';
 import { PhasesTimeline } from './phases/PhasesTimeline';
 import { CreateHandoverPointDialog } from './handover-points/CreateHandoverPointDialog';
+import { HandoverPointCard } from './handover-points/HandoverPointCard';
 import { VCRDetailOverlay } from './handover-points/VCRDetailOverlay';
 import { cn } from '@/lib/utils';
 
@@ -27,7 +28,7 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
   projectNumber,
 }) => {
   const [systemsPanelCollapsed, setSystemsPanelCollapsed] = useState(false);
-  const [activeDragSystem, setActiveDragSystem] = useState<any>(null);
+  const [activeDragItem, setActiveDragItem] = useState<{ type: 'system' | 'vcr'; data: any } | null>(null);
   const [showCreateVCRDialog, setShowCreateVCRDialog] = useState(false);
   const [selectedPhaseIdForVCR, setSelectedPhaseIdForVCR] = useState<string | null>(null);
   const [selectedVCR, setSelectedVCR] = useState<P2AHandoverPoint | null>(null);
@@ -67,22 +68,37 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
   );
 
   const handleDragStart = (event: any) => {
-    if (event.active.data.current?.type === 'system') {
-      setActiveDragSystem(event.active.data.current.system);
+    const { active } = event;
+    if (active.data.current?.type === 'system') {
+      setActiveDragItem({ type: 'system', data: active.data.current.system });
+    } else if (active.data.current?.type === 'vcr') {
+      setActiveDragItem({ type: 'vcr', data: active.data.current.handoverPoint });
     }
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
-    setActiveDragSystem(null);
+    setActiveDragItem(null);
     
     const { active, over } = event;
     if (!over) return;
 
-    // Check if dropping system on VCR
+    // Handle dropping system on VCR
     if (active.data.current?.type === 'system' && over.id.toString().startsWith('vcr-')) {
       const systemId = active.data.current.system.id;
       const handoverPointId = over.id.toString().replace('vcr-', '');
       assignSystemToPoint({ handoverPointId, systemId });
+    }
+    
+    // Handle dropping VCR on phase
+    if (active.data.current?.type === 'vcr' && over.id.toString().startsWith('phase-')) {
+      const vcrId = active.data.current.handoverPoint.id;
+      const phaseId = over.id.toString().replace('phase-', '');
+      const currentPhaseId = active.data.current.handoverPoint.phase_id;
+      
+      // Only move if dropping on a different phase
+      if (phaseId !== currentPhaseId) {
+        moveHandoverPointToPhase({ handoverPointId: vcrId, newPhaseId: phaseId });
+      }
     }
   };
 
@@ -211,9 +227,14 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
 
       {/* Drag Overlay */}
       <DragOverlay>
-        {activeDragSystem && (
+        {activeDragItem?.type === 'system' && (
           <div className="opacity-80">
-            <SystemCard system={activeDragSystem} compact />
+            <SystemCard system={activeDragItem.data} compact />
+          </div>
+        )}
+        {activeDragItem?.type === 'vcr' && (
+          <div className="opacity-80 rotate-2">
+            <HandoverPointCard handoverPoint={activeDragItem.data} />
           </div>
         )}
       </DragOverlay>
