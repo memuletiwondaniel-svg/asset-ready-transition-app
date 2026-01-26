@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -333,7 +334,14 @@ export const VCRSystemsTab: React.FC<VCRSystemsTabProps> = ({ handoverPoint }) =
                       </div>
                     </div>
                     
-                    <Button variant="outline" size="sm" className="w-full">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full"
+                      onClick={() => toast.info('Punchlist details coming soon', {
+                        description: `View detailed punchlist for ${system.name}`
+                      })}
+                    >
                       <ListTodo className="w-4 h-4 mr-2" />
                       View Punchlist Details
                     </Button>
