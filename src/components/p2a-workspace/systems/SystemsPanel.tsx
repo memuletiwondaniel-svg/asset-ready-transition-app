@@ -154,9 +154,9 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
                   )}
                   <span className="text-xs text-muted-foreground">Assigned</span>
                 </div>
-                <Badge variant="outline" className="text-xs">
+                <span className="text-[10px] text-muted-foreground">
                   {filteredAssigned.length}
-                </Badge>
+                </span>
               </CollapsibleTrigger>
               <CollapsibleContent className="pt-2 space-y-2">
                 {filteredAssigned.length === 0 ? (
@@ -192,9 +192,9 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
                   )}
                   <span className="text-xs text-muted-foreground">Unassigned</span>
                 </div>
-                <Badge variant="outline" className="text-xs">
+                <span className="text-[10px] text-muted-foreground">
                   {filteredUnassigned.length}
-                </Badge>
+                </span>
               </CollapsibleTrigger>
               <CollapsibleContent className="pt-2 space-y-2">
                 {filteredUnassigned.length === 0 ? (
