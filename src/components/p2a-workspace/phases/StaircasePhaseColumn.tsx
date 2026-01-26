@@ -7,7 +7,7 @@ import { P2APhase } from '../hooks/useP2APhases';
 import { P2AHandoverPoint } from '../hooks/useP2AHandoverPoints';
 import { DraggableHandoverPointCard } from '../handover-points/HandoverPointCard';
 import { useDroppable } from '@dnd-kit/core';
-import { useSortable, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { cn } from '@/lib/utils';
 
@@ -130,42 +130,47 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
         </div>
       </div>
 
-      {/* VCRs Container */}
+      {/* VCRs Container - Free-form positioning */}
       <div 
         className={cn(
-          "border border-t-0 rounded-b-xl p-3 h-[400px] overflow-y-auto transition-colors flex flex-col items-center",
+          "border border-t-0 rounded-b-xl p-3 h-[400px] overflow-hidden transition-colors relative",
           isOver ? 'border-primary bg-primary/5' : 'border-border bg-card/50'
         )}
       >
         {sortedPoints.length === 0 ? (
-          <div className="flex-1 flex items-center justify-center">
+          <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center py-4">
               <ArrowDown className="w-6 h-6 mx-auto mb-2 text-muted-foreground/30" />
               <div className="text-xs text-muted-foreground">
-                Drop systems here
+                Drop VCRs here
               </div>
             </div>
           </div>
         ) : (
-          <div className="flex-1 w-full space-y-2">
-            <SortableContext items={sortedPoints.map(p => p.id)} strategy={verticalListSortingStrategy}>
-              {sortedPoints.map((point) => (
-                <div key={point.id} className="flex justify-center">
-                  <DraggableHandoverPointCard
-                    handoverPoint={point}
-                    onClick={() => onOpenVCR(point)}
-                  />
-                </div>
-              ))}
-            </SortableContext>
-          </div>
+          <>
+            {sortedPoints.map((point) => (
+              <div 
+                key={point.id} 
+                className="absolute"
+                style={{
+                  left: `${point.position_x}px`,
+                  top: `${point.position_y}px`,
+                }}
+              >
+                <DraggableHandoverPointCard
+                  handoverPoint={point}
+                  onClick={() => onOpenVCR(point)}
+                />
+              </div>
+            ))}
+          </>
         )}
         
         {/* Add VCR Button at bottom */}
         <Button 
           variant="ghost" 
           size="sm" 
-          className="w-[200px] gap-1 text-xs border border-dashed border-border/50 hover:border-primary/50 mt-auto shrink-0"
+          className="absolute bottom-2 left-1/2 -translate-x-1/2 w-[200px] gap-1 text-xs border border-dashed border-border/50 hover:border-primary/50"
           onClick={onCreateHandoverPoint}
         >
           <Plus className="w-3 h-3" />

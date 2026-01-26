@@ -235,13 +235,17 @@ export const useP2AHandoverPoints = (handoverPlanId: string) => {
   });
 
   const reorderHandoverPoints = useMutation({
-    mutationFn: async (reorderedPoints: { id: string; position_y: number }[]) => {
-      const updates = reorderedPoints.map(({ id, position_y }) =>
-        supabase
+    mutationFn: async (reorderedPoints: { id: string; position_x?: number; position_y?: number }[]) => {
+      const updates = reorderedPoints.map(({ id, position_x, position_y }) => {
+        const updateData: { position_x?: number; position_y?: number } = {};
+        if (position_x !== undefined) updateData.position_x = position_x;
+        if (position_y !== undefined) updateData.position_y = position_y;
+        
+        return supabase
           .from('p2a_handover_points')
-          .update({ position_y })
-          .eq('id', id)
-      );
+          .update(updateData)
+          .eq('id', id);
+      });
 
       const results = await Promise.all(updates);
       const errors = results.filter(r => r.error);
@@ -251,7 +255,40 @@ export const useP2AHandoverPoints = (handoverPlanId: string) => {
       queryClient.invalidateQueries({ queryKey: ['p2a-handover-points', handoverPlanId] });
     },
     onError: () => {
-      toast({ title: 'Error', description: 'Failed to reorder VCRs', variant: 'destructive' });
+      toast({ title: 'Error', description: 'Failed to update VCR position', variant: 'destructive' });
+    },
+  });
+
+  const updateVCRPosition = useMutation({
+    mutationFn: async ({ id, position_x, position_y, phase_id }: { 
+      id: string; 
+      position_x: number; 
+      position_y: number;
+      phase_id?: string | null;
+    }) => {
+      const updateData: { position_x: number; position_y: number; phase_id?: string | null } = {
+        position_x,
+        position_y,
+      };
+      if (phase_id !== undefined) {
+        updateData.phase_id = phase_id;
+      }
+      
+      const { data, error } = await supabase
+        .from('p2a_handover_points')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['p2a-handover-points', handoverPlanId] });
+    },
+    onError: () => {
+      toast({ title: 'Error', description: 'Failed to update VCR position', variant: 'destructive' });
     },
   });
 
@@ -271,6 +308,7 @@ export const useP2AHandoverPoints = (handoverPlanId: string) => {
     unassignSystemFromPoint: unassignSystemFromPoint.mutate,
     moveHandoverPointToPhase: moveHandoverPointToPhase.mutate,
     reorderHandoverPoints: reorderHandoverPoints.mutate,
+    updateVCRPosition: updateVCRPosition.mutate,
     isCreating: createHandoverPoint.isPending,
   };
 };
