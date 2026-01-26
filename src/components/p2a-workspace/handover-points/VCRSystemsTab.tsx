@@ -296,58 +296,57 @@ export const VCRSystemsTab: React.FC<VCRSystemsTabProps> = ({ handoverPoint }) =
                 </CollapsibleTrigger>
                 
                 <CollapsibleContent>
-                  <div className="px-4 pb-4 pt-0 border-t bg-muted/30">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 py-4">
-                      {/* Show only applicable certificate based on system type */}
-                      <div className="space-y-1">
-                        <div className="text-xs text-muted-foreground">
-                          {system.is_hydrocarbon ? 'RFSU' : 'RFO'} Status
-                        </div>
-                        <Badge className={cn(
-                          "w-full justify-center",
-                          system.is_hydrocarbon 
-                            ? (system.actual_rfsu_date ? "bg-emerald-500" : "bg-slate-400")
-                            : (system.actual_rfo_date ? "bg-emerald-500" : "bg-slate-400")
-                        )}>
-                          {system.is_hydrocarbon 
-                            ? (system.actual_rfsu_date ? 'Achieved' : 'Pending')
-                            : (system.actual_rfo_date ? 'Achieved' : 'Pending')
-                          }
-                        </Badge>
-                      </div>
+                  <div className="px-4 pb-4 pt-3 border-t bg-muted/30">
+                    {/* Punchlist Items Placeholder */}
+                    <div className="space-y-2">
+                      <div className="text-xs font-medium text-muted-foreground mb-3">Punchlist Items</div>
                       
-                      {/* ITR Breakdown */}
-                      <div className="space-y-1">
-                        <div className="text-xs text-muted-foreground">ITR Breakdown</div>
-                        <div className="flex items-center gap-2 text-sm">
-                          <span className="text-blue-500 font-medium">A: {system.itr_a_count}</span>
-                          <span className="text-muted-foreground">|</span>
-                          <span className="text-amber-500 font-medium">B: {system.itr_b_count}</span>
+                      {(system.punchlist_a_count + system.punchlist_b_count) === 0 ? (
+                        <div className="text-center py-6 text-sm text-muted-foreground">
+                          No outstanding punchlist items
                         </div>
-                      </div>
-                      
-                      {/* Total Punchlist */}
-                      <div className="space-y-1">
-                        <div className="text-xs text-muted-foreground">Punchlist Total</div>
-                        <div className="flex items-center gap-2 text-sm">
-                          <span className="text-red-500 font-medium">A: {system.punchlist_a_count}</span>
-                          <span className="text-muted-foreground">|</span>
-                          <span className="text-amber-500 font-medium">B: {system.punchlist_b_count}</span>
+                      ) : (
+                        <div className="space-y-2">
+                          {/* Placeholder punchlist rows - will be replaced with actual data */}
+                          {Array.from({ length: Math.min(system.punchlist_a_count + system.punchlist_b_count, 5) }).map((_, idx) => (
+                            <div 
+                              key={idx}
+                              className="flex items-center justify-between p-2 rounded-md bg-background border text-sm"
+                            >
+                              <div className="flex items-center gap-3">
+                                <Badge 
+                                  variant="outline" 
+                                  className={cn(
+                                    "text-[10px]",
+                                    idx < system.punchlist_a_count 
+                                      ? "border-red-500 text-red-500" 
+                                      : "border-amber-500 text-amber-500"
+                                  )}
+                                >
+                                  {idx < system.punchlist_a_count ? 'A' : 'B'}
+                                </Badge>
+                                <span className="text-muted-foreground">PL-{String(idx + 1).padStart(3, '0')}</span>
+                              </div>
+                              <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                                <span>Created: --</span>
+                                <Badge variant="outline" className="text-[10px]">Open</Badge>
+                              </div>
+                            </div>
+                          ))}
+                          
+                          {(system.punchlist_a_count + system.punchlist_b_count) > 5 && (
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="w-full text-xs text-muted-foreground"
+                              onClick={() => toast.info('Full punchlist view coming soon')}
+                            >
+                              View all {system.punchlist_a_count + system.punchlist_b_count} items
+                            </Button>
+                          )}
                         </div>
-                      </div>
+                      )}
                     </div>
-                    
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="w-full"
-                      onClick={() => toast.info('Punchlist details coming soon', {
-                        description: `View detailed punchlist for ${system.name}`
-                      })}
-                    >
-                      <ListTodo className="w-4 h-4 mr-2" />
-                      View Punchlist Details
-                    </Button>
                   </div>
                 </CollapsibleContent>
               </Card>
