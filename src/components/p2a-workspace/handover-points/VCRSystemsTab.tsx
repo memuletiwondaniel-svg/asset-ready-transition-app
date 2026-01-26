@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Collapsible,
@@ -42,6 +41,67 @@ interface P2ASystem {
   itr_b_count: number;
   itr_total_count: number;
 }
+
+// Circular Progress Wheel Component
+const CircularProgressWheel: React.FC<{ percentage: number; size?: number }> = ({ 
+  percentage, 
+  size = 56 
+}) => {
+  const strokeWidth = 5;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = radius * 2 * Math.PI;
+  const offset = circumference - (percentage / 100) * circumference;
+  
+  const getProgressColor = () => {
+    if (percentage >= 70) return '#10b981'; // emerald-500
+    if (percentage >= 40) return '#f59e0b'; // amber-500
+    return '#f97316'; // orange-500
+  };
+
+  const getProgressColorEnd = () => {
+    if (percentage >= 70) return '#34d399'; // emerald-400
+    if (percentage >= 40) return '#fbbf24'; // amber-400
+    return '#fb923c'; // orange-400
+  };
+
+  return (
+    <div className="relative" style={{ width: size, height: size }}>
+      <svg className="transform -rotate-90" width={size} height={size}>
+        <defs>
+          <linearGradient id={`sysProgressGradient-${percentage}`} x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor={getProgressColor()} />
+            <stop offset="100%" stopColor={getProgressColorEnd()} />
+          </linearGradient>
+        </defs>
+        <circle
+          className="stroke-muted/20"
+          strokeWidth={strokeWidth}
+          fill="transparent"
+          r={radius}
+          cx={size / 2}
+          cy={size / 2}
+        />
+        <circle
+          stroke={`url(#sysProgressGradient-${percentage})`}
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+          fill="transparent"
+          r={radius}
+          cx={size / 2}
+          cy={size / 2}
+          className="transition-all duration-700 ease-out"
+          style={{
+            strokeDasharray: circumference,
+            strokeDashoffset: offset,
+          }}
+        />
+      </svg>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <span className="text-xs font-bold">{percentage}%</span>
+      </div>
+    </div>
+  );
+};
 
 const getCompletionStatusConfig = (status: P2ASystem['completion_status']) => {
   switch (status) {
@@ -152,14 +212,11 @@ export const VCRSystemsTab: React.FC<VCRSystemsTabProps> = ({ handoverPoint }) =
               <Card className="overflow-hidden">
                 <CollapsibleTrigger asChild>
                   <CardContent className="p-4 cursor-pointer hover:bg-muted/50 transition-colors">
-                    <div className="flex items-start gap-3">
-                      <div className={cn(
-                        "w-10 h-10 rounded-lg flex items-center justify-center shrink-0",
-                        statusConfig.color + '/20'
-                      )}>
-                        <StatusIcon className={cn("w-5 h-5", statusConfig.textColor)} />
-                      </div>
+                    <div className="flex items-center gap-4">
+                      {/* Circular Progress Wheel */}
+                      <CircularProgressWheel percentage={system.completion_percentage} size={56} />
                       
+                      {/* System Info */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <Badge variant="outline" className="font-mono text-xs">
@@ -170,25 +227,12 @@ export const VCRSystemsTab: React.FC<VCRSystemsTabProps> = ({ handoverPoint }) =
                               {statusConfig.label}
                             </Badge>
                           )}
-                          <Badge variant="secondary" className="text-[10px]">
-                            Target: {targetCert}
-                          </Badge>
                         </div>
                         
                         <p className="text-sm font-medium text-foreground">{system.name}</p>
-                        
-                        <div className="flex items-center gap-2 mt-2">
-                          <Progress 
-                            value={system.completion_percentage} 
-                            className="h-1.5 flex-1 max-w-[200px]" 
-                            indicatorClassName={statusConfig.color}
-                          />
-                          <span className="text-xs text-muted-foreground">
-                            {system.completion_percentage}%
-                          </span>
-                        </div>
                       </div>
                       
+                      {/* Stats with Certificate Label */}
                       <div className="flex items-center gap-4 text-center">
                         <div>
                           <div className="text-sm font-bold text-red-500">{system.punchlist_a_count}</div>
@@ -201,6 +245,20 @@ export const VCRSystemsTab: React.FC<VCRSystemsTabProps> = ({ handoverPoint }) =
                         <div>
                           <div className="text-sm font-bold text-blue-500">{system.itr_a_count + system.itr_b_count}</div>
                           <div className="text-[10px] text-muted-foreground">ITRs</div>
+                        </div>
+                        <div>
+                          <div className={cn(
+                            "text-sm font-bold",
+                            system.is_hydrocarbon 
+                              ? (system.actual_rfsu_date ? "text-emerald-500" : "text-muted-foreground")
+                              : (system.actual_rfo_date ? "text-emerald-500" : "text-muted-foreground")
+                          )}>
+                            {system.is_hydrocarbon 
+                              ? (system.actual_rfsu_date ? '✓' : '–')
+                              : (system.actual_rfo_date ? '✓' : '–')
+                            }
+                          </div>
+                          <div className="text-[10px] text-muted-foreground">{targetCert}</div>
                         </div>
                         <ChevronDown className={cn(
                           "w-4 h-4 text-muted-foreground transition-transform",
