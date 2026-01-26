@@ -30,8 +30,9 @@ const getVCRColor = (vcrCode: string | undefined) => {
       : 0;
   }
   
-  // Safe hue values spread across cyan, blue, purple, magenta
-  const baseHues = [180, 195, 210, 230, 250, 270, 290, 310, 325];
+  // Safe hue values spread across different color families for better distinction
+  // Index 0=cyan, 1=teal, 2=blue, 3=orange, 4=purple, 5=pink, 6=green, 7=rose, 8=indigo
+  const baseHues = [180, 165, 210, 30, 250, 330, 145, 350, 270];
   const hueIndex = seqNumber % baseHues.length;
   const hue = baseHues[hueIndex];
   
