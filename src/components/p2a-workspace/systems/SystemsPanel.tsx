@@ -58,8 +58,8 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [selectedSystem, setSelectedSystem] = useState<P2ASystem | null>(null);
   const [expandedSections, setExpandedSections] = useState({
-    unassigned: true,
-    assigned: false,
+    unassigned: false,
+    assigned: true,
   });
 
   const toggleSection = (section: 'unassigned' | 'assigned') => {
@@ -140,44 +140,6 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
         {/* Systems List */}
         <ScrollArea className="flex-1">
           <div className="p-3 space-y-3">
-            {/* Unassigned Systems Section */}
-            <Collapsible 
-              open={expandedSections.unassigned}
-              onOpenChange={() => toggleSection('unassigned')}
-            >
-              <CollapsibleTrigger className="flex items-center justify-between w-full p-2 rounded-md hover:bg-muted/50 transition-colors">
-                <div className="flex items-center gap-2">
-                  {expandedSections.unassigned ? (
-                    <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                  ) : (
-                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                  )}
-                  <span className="text-sm font-medium">Unassigned</span>
-                </div>
-                <Badge variant="outline" className="text-xs">
-                  {filteredUnassigned.length}
-                </Badge>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="pt-2 space-y-2">
-                {filteredUnassigned.length === 0 ? (
-                  <div className="text-xs text-muted-foreground text-center py-4">
-                    {searchQuery ? 'No matching systems' : 'No unassigned systems'}
-                  </div>
-                ) : (
-                  filteredUnassigned.map(system => (
-                    <DraggableSystemCard
-                      key={system.id}
-                      system={system}
-                      compact
-                      onClick={() => setSelectedSystem(system)}
-                    />
-                  ))
-                )}
-              </CollapsibleContent>
-            </Collapsible>
-
-            <Separator />
-
             {/* Assigned Systems Section */}
             <Collapsible 
               open={expandedSections.assigned}
@@ -203,6 +165,44 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
                   </div>
                 ) : (
                   filteredAssigned.map(system => (
+                    <DraggableSystemCard
+                      key={system.id}
+                      system={system}
+                      compact
+                      onClick={() => setSelectedSystem(system)}
+                    />
+                  ))
+                )}
+              </CollapsibleContent>
+            </Collapsible>
+
+            <Separator />
+
+            {/* Unassigned Systems Section */}
+            <Collapsible 
+              open={expandedSections.unassigned}
+              onOpenChange={() => toggleSection('unassigned')}
+            >
+              <CollapsibleTrigger className="flex items-center justify-between w-full p-2 rounded-md hover:bg-muted/50 transition-colors">
+                <div className="flex items-center gap-2">
+                  {expandedSections.unassigned ? (
+                    <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                  )}
+                  <span className="text-sm font-medium">Unassigned</span>
+                </div>
+                <Badge variant="outline" className="text-xs">
+                  {filteredUnassigned.length}
+                </Badge>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pt-2 space-y-2">
+                {filteredUnassigned.length === 0 ? (
+                  <div className="text-xs text-muted-foreground text-center py-4">
+                    {searchQuery ? 'No matching systems' : 'No unassigned systems'}
+                  </div>
+                ) : (
+                  filteredUnassigned.map(system => (
                     <DraggableSystemCard
                       key={system.id}
                       system={system}
