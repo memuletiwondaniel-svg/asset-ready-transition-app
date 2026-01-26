@@ -12,28 +12,36 @@ import { format } from 'date-fns';
 
 /**
  * Generates a unique, vibrant HSL-based color from a VCR code.
- * Uses the LAST numeric portion (sequence number) to ensure distinct colors.
- * e.g., VCR-300-001 -> 1, VCR-300-004 -> 4
+ * Format: VCR-XXX-DPYYY where XXX is the sequence number
+ * e.g., VCR-001-DP300 -> uses 1 for color generation
  */
 const getVCRColor = (vcrCode: string | undefined) => {
   const code = vcrCode || 'DEFAULT';
   
-  // Extract ALL numbers and use the last one (the sequence number)
-  // e.g., "VCR-300-001" -> ["300", "001"] -> use "001" -> 1
-  const numericMatches = code.match(/\d+/g);
-  const lastNumber = numericMatches && numericMatches.length > 0 
-    ? parseInt(numericMatches[numericMatches.length - 1], 10) 
-    : 0;
+  // Extract sequence number from new format VCR-XXX-DPYYY
+  // e.g., "VCR-001-DP300" -> "001" -> 1
+  const seqMatch = code.match(/^VCR-(\d+)-DP/);
+  let seqNumber = 0;
+  
+  if (seqMatch) {
+    seqNumber = parseInt(seqMatch[1], 10);
+  } else {
+    // Fallback for old format VCR-YYY-XXX: use last number
+    const numericMatches = code.match(/\d+/g);
+    seqNumber = numericMatches && numericMatches.length > 0 
+      ? parseInt(numericMatches[numericMatches.length - 1], 10) 
+      : 0;
+  }
   
   // Safe hue values spread across cyan, blue, purple, magenta
   const baseHues = [180, 195, 210, 230, 250, 270, 290, 310, 325];
-  const hueIndex = lastNumber % baseHues.length;
+  const hueIndex = seqNumber % baseHues.length;
   const hue = baseHues[hueIndex];
   
   // Vary saturation and lightness for additional distinction
-  const saturation = 55 + ((lastNumber * 3) % 15); // 55-70%
-  const lightness = 88 + (lastNumber % 5); // 88-93%
-  const borderLightness = 55 + ((lastNumber * 2) % 15); // 55-70%
+  const saturation = 55 + ((seqNumber * 3) % 15); // 55-70%
+  const lightness = 88 + (seqNumber % 5); // 88-93%
+  const borderLightness = 55 + ((seqNumber * 2) % 15); // 55-70%
   
   return {
     background: `hsl(${hue}, ${saturation}%, ${lightness}%)`,
