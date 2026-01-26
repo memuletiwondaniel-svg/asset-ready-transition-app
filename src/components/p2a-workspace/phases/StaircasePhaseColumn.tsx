@@ -99,15 +99,16 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
       >
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2">
-            {/* Drag handle - hidden by default, shown on hover */}
-            <div 
-             ref={setActivatorNodeRef}
+            {/* Drag handle for phase reordering */}
+            <button 
+              ref={setActivatorNodeRef}
               {...attributes} 
               {...listeners}
-              className="cursor-grab active:cursor-grabbing p-1 -ml-1 rounded hover:bg-muted/50 touch-none opacity-0 group-hover:opacity-100 transition-opacity"
+              className="cursor-grab active:cursor-grabbing p-1 -ml-1 rounded hover:bg-muted/50 opacity-0 group-hover:opacity-100 transition-opacity touch-none"
+              type="button"
             >
               <GripVertical className="w-4 h-4 text-muted-foreground" />
-            </div>
+            </button>
             <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold">
               {phaseIndex + 1}
             </div>
