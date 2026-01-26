@@ -223,11 +223,39 @@ export const useP2APhases = (handoverPlanId: string) => {
       const errors = results.filter(r => r.error);
       if (errors.length > 0) throw errors[0].error;
     },
+    onMutate: async (reorderedPhases) => {
+      // Optimistically update cache so the UI doesn't snap back after dropping
+      await queryClient.cancelQueries({ queryKey: ['p2a-phases', handoverPlanId] });
+
+      const previous = queryClient.getQueryData<P2APhase[]>(['p2a-phases', handoverPlanId]);
+
+      queryClient.setQueryData<P2APhase[]>(['p2a-phases', handoverPlanId], (current) => {
+        const phasesList = current ?? [];
+        const orderMap = new Map(reorderedPhases.map((p) => [p.id, p.display_order] as const));
+
+        const next = phasesList
+          .map((p) => {
+            const nextOrder = orderMap.get(p.id);
+            return nextOrder === undefined ? p : { ...p, display_order: nextOrder };
+          })
+          .sort((a, b) => a.display_order - b.display_order);
+
+        return next;
+      });
+
+      return { previous };
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['p2a-phases', handoverPlanId] });
     },
-    onError: (error) => {
+    onError: (_error, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['p2a-phases', handoverPlanId], context.previous);
+      }
       toast({ title: 'Error', description: 'Failed to reorder phases', variant: 'destructive' });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['p2a-phases', handoverPlanId] });
     },
   });
 
