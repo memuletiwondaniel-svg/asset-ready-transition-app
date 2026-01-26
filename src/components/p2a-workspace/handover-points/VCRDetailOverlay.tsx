@@ -1,14 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
   Target, 
   Layers, 
   ClipboardList,
   AlertTriangle,
   BarChart3,
+  GraduationCap,
+  FileText,
+  BookOpen,
+  Settings2,
 } from 'lucide-react';
 import { P2AHandoverPoint } from '../hooks/useP2AHandoverPoints';
 import { useVCRPrerequisites } from '../hooks/useVCRPrerequisites';
@@ -17,6 +22,21 @@ import { VCRChecklistTab } from './VCRChecklistTab';
 import { VCRQualificationsTab } from './VCRQualificationsTab';
 import { VCRSystemsTab } from './VCRSystemsTab';
 import { cn } from '@/lib/utils';
+
+// Placeholder components for new tabs
+const PlaceholderTab: React.FC<{ title: string; icon: React.ReactNode }> = ({ title, icon }) => (
+  <Card>
+    <CardContent className="p-8 text-center">
+      <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+        {icon}
+      </div>
+      <CardTitle className="text-lg mb-2">{title}</CardTitle>
+      <p className="text-sm text-muted-foreground">
+        {title} details will be displayed here.
+      </p>
+    </CardContent>
+  </Card>
+);
 
 interface VCRDetailOverlayProps {
   handoverPoint: P2AHandoverPoint;
@@ -42,8 +62,13 @@ export const VCRDetailOverlay: React.FC<VCRDetailOverlayProps> = ({
   open,
   onOpenChange,
 }) => {
+  const [activeTab, setActiveTab] = useState('overview');
   const { progress } = useVCRPrerequisites(handoverPoint.id);
   const statusConfig = getStatusConfig(handoverPoint.status);
+
+  const handleTabChange = (tabId: string) => {
+    setActiveTab(tabId);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -73,42 +98,74 @@ export const VCRDetailOverlay: React.FC<VCRDetailOverlayProps> = ({
           </div>
         </DialogHeader>
 
-        <Tabs defaultValue="overview" className="flex-1 flex flex-col overflow-hidden">
-          <TabsList className="grid grid-cols-4 w-full shrink-0">
-            <TabsTrigger value="overview" className="gap-2 text-xs sm:text-sm">
-              <BarChart3 className="w-4 h-4" />
-              <span className="hidden sm:inline">Overview</span>
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="flex-1 flex flex-col overflow-hidden">
+          <TabsList className="grid grid-cols-8 w-full shrink-0">
+            <TabsTrigger value="overview" className="gap-1 text-xs">
+              <BarChart3 className="w-3.5 h-3.5" />
+              <span className="hidden lg:inline">Overview</span>
             </TabsTrigger>
-            <TabsTrigger value="checklist" className="gap-2 text-xs sm:text-sm">
-              <ClipboardList className="w-4 h-4" />
-              <span className="hidden sm:inline">Checklist</span>
+            <TabsTrigger value="systems" className="gap-1 text-xs">
+              <Layers className="w-3.5 h-3.5" />
+              <span className="hidden lg:inline">Systems</span>
             </TabsTrigger>
-            <TabsTrigger value="qualifications" className="gap-2 text-xs sm:text-sm">
-              <AlertTriangle className="w-4 h-4" />
-              <span className="hidden sm:inline">Qualifications</span>
+            <TabsTrigger value="checklist" className="gap-1 text-xs">
+              <ClipboardList className="w-3.5 h-3.5" />
+              <span className="hidden lg:inline">Checklist</span>
             </TabsTrigger>
-            <TabsTrigger value="systems" className="gap-2 text-xs sm:text-sm">
-              <Layers className="w-4 h-4" />
-              <span className="hidden sm:inline">Systems</span>
+            <TabsTrigger value="training" className="gap-1 text-xs">
+              <GraduationCap className="w-3.5 h-3.5" />
+              <span className="hidden lg:inline">Training</span>
+            </TabsTrigger>
+            <TabsTrigger value="documentation" className="gap-1 text-xs">
+              <FileText className="w-3.5 h-3.5" />
+              <span className="hidden lg:inline">Docs</span>
+            </TabsTrigger>
+            <TabsTrigger value="procedures" className="gap-1 text-xs">
+              <BookOpen className="w-3.5 h-3.5" />
+              <span className="hidden lg:inline">Procedures</span>
+            </TabsTrigger>
+            <TabsTrigger value="cmms" className="gap-1 text-xs">
+              <Settings2 className="w-3.5 h-3.5" />
+              <span className="hidden lg:inline">CMMS</span>
+            </TabsTrigger>
+            <TabsTrigger value="qualifications" className="gap-1 text-xs">
+              <AlertTriangle className="w-3.5 h-3.5" />
+              <span className="hidden lg:inline">Quals</span>
             </TabsTrigger>
           </TabsList>
 
           <ScrollArea className="flex-1 mt-4">
             <div className="pr-4">
               <TabsContent value="overview" className="m-0">
-                <VCROverviewTab handoverPoint={handoverPoint} />
+                <VCROverviewTab handoverPoint={handoverPoint} onNavigateToTab={handleTabChange} />
+              </TabsContent>
+
+              <TabsContent value="systems" className="m-0">
+                <VCRSystemsTab handoverPoint={handoverPoint} />
               </TabsContent>
 
               <TabsContent value="checklist" className="m-0">
                 <VCRChecklistTab handoverPoint={handoverPoint} />
               </TabsContent>
 
-              <TabsContent value="qualifications" className="m-0">
-                <VCRQualificationsTab handoverPoint={handoverPoint} />
+              <TabsContent value="training" className="m-0">
+                <PlaceholderTab title="Training" icon={<GraduationCap className="w-8 h-8 text-violet-500" />} />
               </TabsContent>
 
-              <TabsContent value="systems" className="m-0">
-                <VCRSystemsTab handoverPoint={handoverPoint} />
+              <TabsContent value="documentation" className="m-0">
+                <PlaceholderTab title="Documentation" icon={<FileText className="w-8 h-8 text-amber-500" />} />
+              </TabsContent>
+
+              <TabsContent value="procedures" className="m-0">
+                <PlaceholderTab title="Procedures" icon={<BookOpen className="w-8 h-8 text-emerald-500" />} />
+              </TabsContent>
+
+              <TabsContent value="cmms" className="m-0">
+                <PlaceholderTab title="CMMS" icon={<Settings2 className="w-8 h-8 text-rose-500" />} />
+              </TabsContent>
+
+              <TabsContent value="qualifications" className="m-0">
+                <VCRQualificationsTab handoverPoint={handoverPoint} />
               </TabsContent>
             </div>
           </ScrollArea>
