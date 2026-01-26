@@ -43,15 +43,15 @@ const getVCRColor = (vcrCode: string | undefined) => {
     position -= rangeSize;
   }
   
-  // Very subtle background - high lightness, low saturation
-  const saturation = 35 + (Math.abs(hash >> 8) % 15); // 35-50%
-  const lightness = 94 + (Math.abs(hash >> 16) % 4); // 94-98% (very light)
-  const borderLightness = 75 + (Math.abs(hash >> 24) % 10); // 75-85%
+  // More vibrant background - higher saturation, lower lightness
+  const saturation = 50 + (Math.abs(hash >> 8) % 20); // 50-70%
+  const lightness = 88 + (Math.abs(hash >> 16) % 5); // 88-93%
+  const borderLightness = 65 + (Math.abs(hash >> 24) % 10); // 65-75%
   
   return {
     background: `hsl(${hue}, ${saturation}%, ${lightness}%)`,
-    border: `hsl(${hue}, ${saturation - 10}%, ${borderLightness}%)`,
-    accent: `hsl(${hue}, ${saturation + 10}%, ${lightness - 10}%)`,
+    border: `hsl(${hue}, ${saturation}%, ${borderLightness}%)`,
+    accent: `hsl(${hue}, ${saturation + 15}%, ${lightness - 15}%)`,
   };
 };
 
