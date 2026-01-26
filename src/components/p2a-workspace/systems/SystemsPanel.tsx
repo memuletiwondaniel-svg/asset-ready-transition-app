@@ -152,7 +152,7 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
                   ) : (
                     <ChevronRight className="w-4 h-4 text-muted-foreground" />
                   )}
-                  <span className="text-sm font-medium">Assigned to VCR</span>
+                  <span className="text-xs text-muted-foreground">Assigned</span>
                 </div>
                 <Badge variant="outline" className="text-xs">
                   {filteredAssigned.length}
@@ -190,7 +190,7 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
                   ) : (
                     <ChevronRight className="w-4 h-4 text-muted-foreground" />
                   )}
-                  <span className="text-sm font-medium">Unassigned</span>
+                  <span className="text-xs text-muted-foreground">Unassigned</span>
                 </div>
                 <Badge variant="outline" className="text-xs">
                   {filteredUnassigned.length}
