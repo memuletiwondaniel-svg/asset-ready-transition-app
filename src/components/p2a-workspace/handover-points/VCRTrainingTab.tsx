@@ -80,14 +80,16 @@ export const VCRTrainingTab: React.FC<VCRTrainingTabProps> = ({ handoverPoint })
             {allTrainingItems.length} total items • {vcrTrainingItems.length} mapped to this VCR
           </p>
         </div>
-        <Button 
-          size="sm" 
-          onClick={() => setAddDialogOpen(true)}
-          className="bg-violet-500 hover:bg-violet-600 gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Add Training
-        </Button>
+        {allTrainingItems.length > 0 && (
+          <Button 
+            size="sm" 
+            onClick={() => setAddDialogOpen(true)}
+            className="bg-violet-500 hover:bg-violet-600 gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Add Training
+          </Button>
+        )}
       </div>
 
       {/* Training Items List */}
