@@ -98,7 +98,7 @@ export const HandoverPointCard: React.FC<HandoverPointCardProps> = ({
   return (
     <Card 
       className={cn(
-        'group cursor-pointer transition-all duration-200 hover:shadow-md max-w-[200px]',
+        'group cursor-pointer transition-all duration-200 hover:shadow-md w-[200px]',
         isDropTarget && 'ring-2 ring-primary ring-offset-2',
         isDragging && 'opacity-50 shadow-lg rotate-2'
       )}
