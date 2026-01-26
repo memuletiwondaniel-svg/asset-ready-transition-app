@@ -1,14 +1,11 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Target, Layers, GripVertical, CheckCircle2, Clock, AlertTriangle } from 'lucide-react';
+import { GripVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { P2AHandoverPoint } from '../hooks/useP2AHandoverPoints';
 import { useDroppable } from '@dnd-kit/core';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { format } from 'date-fns';
 
 /**
  * Generates a unique, vibrant HSL-based color from a VCR code.
@@ -63,30 +60,22 @@ const getStatusConfig = (status: string) => {
     case 'SIGNED':
       return { 
         label: 'Signed', 
-        color: 'bg-emerald-500', 
-        icon: CheckCircle2,
-        borderColor: 'border-emerald-500/30'
+        borderAccent: 'hsl(152, 76%, 36%)', // Emerald
       };
     case 'READY':
       return { 
-        label: 'Ready', 
-        color: 'bg-blue-500', 
-        icon: CheckCircle2,
-        borderColor: 'border-blue-500/30'
+        label: 'Ready',
+        borderAccent: 'hsl(217, 91%, 60%)', // Blue
       };
     case 'IN_PROGRESS':
       return { 
         label: 'In Progress', 
-        color: 'bg-amber-500', 
-        icon: Clock,
-        borderColor: 'border-amber-500/30'
+        borderAccent: 'hsl(38, 92%, 50%)', // Amber
       };
     default:
       return { 
         label: 'Pending', 
-        color: 'bg-slate-400', 
-        icon: AlertTriangle,
-        borderColor: 'border-border'
+        borderAccent: 'hsl(215, 14%, 58%)', // Slate
       };
   }
 };
@@ -99,7 +88,6 @@ export const HandoverPointCard: React.FC<HandoverPointCardProps> = ({
   compact = false,
 }) => {
   const statusConfig = getStatusConfig(handoverPoint.status);
-  const StatusIcon = statusConfig.icon;
   const vcrColor = getVCRColor(handoverPoint.vcr_code);
 
   // Calculate progress (mock for now - would be based on prerequisites)
@@ -110,42 +98,31 @@ export const HandoverPointCard: React.FC<HandoverPointCardProps> = ({
   return (
     <Card 
       className={cn(
-        'group cursor-pointer transition-all duration-200 hover:shadow-md border',
+        'group cursor-pointer transition-all duration-200 hover:shadow-md border-l-[3px]',
         isDropTarget && 'ring-2 ring-primary ring-offset-2',
         isDragging && 'opacity-50 shadow-lg rotate-2'
       )}
       style={{
         backgroundColor: isDropTarget ? 'hsl(var(--primary) / 0.05)' : vcrColor.background,
         borderColor: isDropTarget ? 'hsl(var(--primary))' : vcrColor.border,
+        borderLeftColor: statusConfig.borderAccent,
       }}
       onClick={onClick}
     >
-    <CardContent className="p-2">
+      <CardContent className="p-2">
         <div className="flex items-center gap-2">
           {/* Drag Handle - hidden by default, shown on hover */}
           <div className="cursor-grab active:cursor-grabbing text-muted-foreground/40 hover:text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
             <GripVertical className="w-3.5 h-3.5" />
           </div>
 
-          {/* Status indicator */}
-          <div className={cn(
-            'w-5 h-5 rounded flex items-center justify-center shrink-0',
-            statusConfig.color.replace('bg-', 'bg-').replace('500', '500/15'),
-            statusConfig.color.replace('bg-', 'text-')
-          )}>
-            <StatusIcon className="w-3 h-3" />
-          </div>
-
           {/* Name & ID stacked */}
           <div className="flex-1 min-w-0">
-            <span className="text-[10px] font-mono text-muted-foreground block">
-              {/* Display VCR-XXX: handle both old (VCR-300-001) and new (VCR-001-DP300) formats */}
+            <span className="text-[11px] font-mono text-muted-foreground block">
               {(() => {
                 const code = handoverPoint.vcr_code || '';
-                // New format: VCR-001-DP300 -> VCR-001
                 const newMatch = code.match(/^(VCR-\d+)-DP/);
                 if (newMatch) return newMatch[1];
-                // Old format: VCR-300-001 -> VCR-001 (use last number)
                 const oldMatch = code.match(/(\d+)$/);
                 if (oldMatch) return `VCR-${oldMatch[1]}`;
                 return 'VCR-???';
