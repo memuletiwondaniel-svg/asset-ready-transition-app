@@ -126,35 +126,35 @@ export const HandoverPointCard: React.FC<HandoverPointCardProps> = ({
       onClick={onClick}
     >
     <CardContent className="p-2">
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
           {/* Drag Handle */}
           <div className="cursor-grab active:cursor-grabbing text-muted-foreground/40 hover:text-muted-foreground">
-            <GripVertical className="w-3 h-3" />
+            <GripVertical className="w-3.5 h-3.5" />
           </div>
 
           {/* Status indicator */}
           <div className={cn(
-            'w-4 h-4 rounded flex items-center justify-center shrink-0',
-            statusConfig.color.replace('bg-', 'bg-').replace('500', '500/10'),
+            'w-5 h-5 rounded flex items-center justify-center shrink-0',
+            statusConfig.color.replace('bg-', 'bg-').replace('500', '500/15'),
             statusConfig.color.replace('bg-', 'text-')
           )}>
-            <StatusIcon className="w-2.5 h-2.5" />
+            <StatusIcon className="w-3 h-3" />
           </div>
 
           <div className="flex-1 min-w-0">
             {/* Name & Code Row */}
-            <div className="flex items-center gap-1">
-              <span className="text-[10px] font-medium truncate flex-1">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-medium truncate">
                 {handoverPoint.name}
               </span>
-              <span className="text-[8px] font-mono text-muted-foreground shrink-0">
+              <span className="text-[10px] font-mono font-medium text-muted-foreground shrink-0">
                 {handoverPoint.vcr_code?.replace(/^VCR-?/i, 'VCR-').slice(0, 7) || 'VCR-???'}
               </span>
             </div>
 
-            {/* Progress % */}
+            {/* Progress % only */}
             <div className="flex items-center mt-0.5">
-              <span className="text-[9px] font-medium text-muted-foreground">
+              <span className="text-[10px] text-muted-foreground">
                 {progress}% complete
               </span>
             </div>
