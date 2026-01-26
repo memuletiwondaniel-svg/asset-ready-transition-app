@@ -115,7 +115,7 @@ export const HandoverPointCard: React.FC<HandoverPointCardProps> = ({
   return (
     <Card 
       className={cn(
-        'cursor-pointer transition-all duration-200 hover:shadow-md border-2',
+        'group cursor-pointer transition-all duration-200 hover:shadow-md border-2',
         isDropTarget && 'ring-2 ring-primary ring-offset-2',
         isDragging && 'opacity-50 shadow-lg rotate-2'
       )}
@@ -127,8 +127,8 @@ export const HandoverPointCard: React.FC<HandoverPointCardProps> = ({
     >
     <CardContent className="p-2">
         <div className="flex items-center gap-2">
-          {/* Drag Handle */}
-          <div className="cursor-grab active:cursor-grabbing text-muted-foreground/40 hover:text-muted-foreground">
+          {/* Drag Handle - hidden by default, shown on hover */}
+          <div className="cursor-grab active:cursor-grabbing text-muted-foreground/40 hover:text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
             <GripVertical className="w-3.5 h-3.5" />
           </div>
 

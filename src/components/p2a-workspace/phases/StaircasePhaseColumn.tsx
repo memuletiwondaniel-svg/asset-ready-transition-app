@@ -89,7 +89,7 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
       {/* Phase Header Card */}
       <div 
         className={cn(
-          "rounded-t-xl border border-b-0 p-3 transition-colors",
+          "group rounded-t-xl border border-b-0 p-3 transition-colors",
           isOver ? 'border-primary bg-primary/10' : 'border-border bg-card'
         )}
         style={{ 
@@ -99,12 +99,12 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
       >
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2">
-            {/* Drag handle */}
+            {/* Drag handle - hidden by default, shown on hover */}
             <div 
              ref={setActivatorNodeRef}
               {...attributes} 
               {...listeners}
-              className="cursor-grab active:cursor-grabbing p-1 -ml-1 rounded hover:bg-muted/50 touch-none"
+              className="cursor-grab active:cursor-grabbing p-1 -ml-1 rounded hover:bg-muted/50 touch-none opacity-0 group-hover:opacity-100 transition-opacity"
             >
               <GripVertical className="w-4 h-4 text-muted-foreground" />
             </div>
