@@ -160,8 +160,20 @@ export const VCRSystemsTab: React.FC<VCRSystemsTabProps> = ({ handoverPoint }) =
 
   // Calculate aggregated stats
   const totalSystems = systems.length;
-  const rfoAchieved = systems.filter((s: P2ASystem) => s.completion_status === 'RFO' || s.completion_status === 'RFSU').length;
-  const rfsuAchieved = systems.filter((s: P2ASystem) => s.completion_status === 'RFSU').length;
+  const hydrocarbonSystems = systems.filter((s: P2ASystem) => s.is_hydrocarbon);
+  const nonHydrocarbonSystems = systems.filter((s: P2ASystem) => !s.is_hydrocarbon);
+  const hasHydrocarbon = hydrocarbonSystems.length > 0;
+  const hasNonHydrocarbon = nonHydrocarbonSystems.length > 0;
+  
+  // RFO count: non-HC systems that have achieved RFO (or RFSU)
+  const rfoAchieved = nonHydrocarbonSystems.filter((s: P2ASystem) => 
+    s.completion_status === 'RFO' || s.completion_status === 'RFSU'
+  ).length;
+  // RFSU count: HC systems that have achieved RFSU
+  const rfsuAchieved = hydrocarbonSystems.filter((s: P2ASystem) => 
+    s.completion_status === 'RFSU'
+  ).length;
+  
   const totalPunchlistA = systems.reduce((sum: number, s: P2ASystem) => sum + (s.punchlist_a_count || 0), 0);
   const totalPunchlistB = systems.reduce((sum: number, s: P2ASystem) => sum + (s.punchlist_b_count || 0), 0);
   const totalITRA = systems.reduce((sum: number, s: P2ASystem) => sum + (s.itr_a_count || 0), 0);
@@ -177,18 +189,22 @@ export const VCRSystemsTab: React.FC<VCRSystemsTabProps> = ({ handoverPoint }) =
             <div className="text-[10px] text-muted-foreground">Total Systems</div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="p-3 text-center">
-            <div className="text-lg font-bold text-blue-500">{rfoAchieved}/{totalSystems}</div>
-            <div className="text-[10px] text-muted-foreground">RFO Achieved</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-3 text-center">
-            <div className="text-lg font-bold text-emerald-500">{rfsuAchieved}/{totalSystems}</div>
-            <div className="text-[10px] text-muted-foreground">RFSU Achieved</div>
-          </CardContent>
-        </Card>
+        {hasNonHydrocarbon && (
+          <Card>
+            <CardContent className="p-3 text-center">
+              <div className="text-lg font-bold text-blue-500">{rfoAchieved}/{nonHydrocarbonSystems.length}</div>
+              <div className="text-[10px] text-muted-foreground">RFO Achieved</div>
+            </CardContent>
+          </Card>
+        )}
+        {hasHydrocarbon && (
+          <Card>
+            <CardContent className="p-3 text-center">
+              <div className="text-lg font-bold text-emerald-500">{rfsuAchieved}/{hydrocarbonSystems.length}</div>
+              <div className="text-[10px] text-muted-foreground">RFSU Achieved</div>
+            </CardContent>
+          </Card>
+        )}
         <Card>
           <CardContent className="p-3 text-center">
             <div className="text-lg font-bold text-amber-500">{totalPunchlistA + totalPunchlistB}</div>
