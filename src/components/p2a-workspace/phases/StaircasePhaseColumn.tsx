@@ -6,7 +6,7 @@ import { Plus, MoreVertical, Trash2, Edit, ArrowDown, CheckCircle2 } from 'lucid
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { P2APhase } from '../hooks/useP2APhases';
 import { P2AHandoverPoint } from '../hooks/useP2AHandoverPoints';
-import { DroppableHandoverPointCard } from '../handover-points/HandoverPointCard';
+import { DraggableHandoverPointCard } from '../handover-points/HandoverPointCard';
 import { useDroppable } from '@dnd-kit/core';
 import { cn } from '@/lib/utils';
 
@@ -157,8 +157,8 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
           </div>
         ) : (
           <>
-            {sortedPoints.map((point, idx) => (
-              <DroppableHandoverPointCard
+            {sortedPoints.map((point) => (
+              <DraggableHandoverPointCard
                 key={point.id}
                 handoverPoint={point}
                 onClick={() => onOpenVCR(point)}
