@@ -125,34 +125,43 @@ export const HandoverPointCard: React.FC<HandoverPointCardProps> = ({
       }}
       onClick={onClick}
     >
-    <CardContent className="px-2 py-1.5">
+    <CardContent className="p-2">
         <div className="flex items-center gap-1.5">
           {/* Drag Handle */}
-          <div className="cursor-grab active:cursor-grabbing text-muted-foreground/50 hover:text-muted-foreground">
+          <div className="cursor-grab active:cursor-grabbing text-muted-foreground/40 hover:text-muted-foreground">
             <GripVertical className="w-3 h-3" />
           </div>
 
-          <div className="flex-1 min-w-0 flex items-center gap-2">
-            {/* VCR Code */}
-            <Badge variant="outline" className="text-[8px] font-mono px-1 py-0 h-3.5 shrink-0">
-              {handoverPoint.vcr_code}
-            </Badge>
-            
-            {/* Name */}
-            <span className="text-xs truncate flex-1">{handoverPoint.name}</span>
+          {/* Status indicator */}
+          <div className={cn(
+            'w-4 h-4 rounded flex items-center justify-center shrink-0',
+            statusConfig.color.replace('bg-', 'bg-').replace('500', '500/10'),
+            statusConfig.color.replace('bg-', 'text-')
+          )}>
+            <StatusIcon className="w-2.5 h-2.5" />
+          </div>
 
-            {/* Systems count */}
-            <span className="text-[9px] text-muted-foreground shrink-0">{handoverPoint.systems_count || 0}</span>
-
-            {/* Progress */}
-            <div className="flex items-center gap-1 shrink-0">
-              <Progress value={progress} className="h-1 w-10" />
+          <div className="flex-1 min-w-0">
+            {/* Name & Code Row */}
+            <div className="flex items-center gap-1">
+              <span className="text-[10px] font-medium truncate flex-1">
+                {handoverPoint.name}
+              </span>
+              <span className="text-[8px] font-mono text-muted-foreground shrink-0">
+                {handoverPoint.vcr_code}
+              </span>
             </div>
 
-            {/* Status */}
-            <Badge className={cn('text-[8px] px-1 py-0 h-3.5 shrink-0', statusConfig.color)}>
-              {statusConfig.label}
-            </Badge>
+            {/* Progress Row */}
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <Progress value={progress} className="h-1 flex-1" />
+              <span className="text-[8px] font-medium shrink-0 w-5 text-right text-muted-foreground">
+                {progress}%
+              </span>
+              <Badge variant="secondary" className="text-[7px] px-0.5 py-0 h-3">
+                {handoverPoint.systems_count || 0} sys
+              </Badge>
+            </div>
           </div>
         </div>
       </CardContent>
