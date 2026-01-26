@@ -165,9 +165,11 @@ export const VCRSystemsTab: React.FC<VCRSystemsTabProps> = ({ handoverPoint }) =
                           <Badge variant="outline" className="font-mono text-xs">
                             {system.system_id}
                           </Badge>
-                          <Badge className={cn("text-[10px]", statusConfig.color)}>
-                            {statusConfig.label}
-                          </Badge>
+                          {system.completion_status !== 'NOT_STARTED' && (
+                            <Badge className={cn("text-[10px]", statusConfig.color)}>
+                              {statusConfig.label}
+                            </Badge>
+                          )}
                           <Badge variant="secondary" className="text-[10px]">
                             Target: {targetCert}
                           </Badge>
