@@ -59,6 +59,7 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
     assignSystemToPoint,
     moveHandoverPointToPhase,
     reorderHandoverPoints,
+    updateVCRPosition,
     isCreating: isCreatingVCR,
   } = useP2AHandoverPoints(plan?.id || '');
 
@@ -84,15 +85,29 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
   const handleDragEnd = (event: DragEndEvent) => {
     setActiveDragItem(null);
     
-    const { active, over } = event;
-   console.log('Drag ended:', { 
-     activeId: active.id, 
-     activeType: active.data.current?.type,
-     overId: over?.id, 
-     overType: over?.data.current?.type 
-   });
+    const { active, over, delta } = event;
+    console.log('Drag ended:', { 
+      activeId: active.id, 
+      activeType: active.data.current?.type,
+      overId: over?.id, 
+      overType: over?.data.current?.type,
+      delta
+    });
    
-    if (!over) return;
+    if (!over) {
+      // If VCR was dropped but not over any target, update its position in current phase
+      if (active.data.current?.type === 'vcr' && delta) {
+        const vcr = active.data.current.handoverPoint;
+        const newX = Math.max(0, vcr.position_x + delta.x);
+        const newY = Math.max(0, vcr.position_y + delta.y);
+        updateVCRPosition({ 
+          id: vcr.id, 
+          position_x: newX, 
+          position_y: newY 
+        });
+      }
+      return;
+    }
 
     // Handle reordering phase columns
     if (active.data.current?.type === 'phase-column') {
@@ -123,30 +138,48 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
       return;
     }
 
-    // Handle reordering VCRs within same phase
-    if (active.data.current?.type === 'vcr' && over.data.current?.type === 'vcr') {
-      const activeVCR = active.data.current.handoverPoint;
-      const overVCR = over.data.current.handoverPoint;
+    // Handle VCR positioning - update position based on drag delta
+    if (active.data.current?.type === 'vcr') {
+      const vcr = active.data.current.handoverPoint;
+      const overType = over.data.current?.type;
+      const overId = over.id.toString();
       
-      // Only reorder if same phase and different VCR
-      if (activeVCR.phase_id === overVCR.phase_id && activeVCR.id !== overVCR.id) {
-        const phasePoints = handoverPoints
-          .filter(p => p.phase_id === activeVCR.phase_id)
-          .sort((a, b) => a.position_y - b.position_y);
+      // If dropping on a phase (same or different)
+      if (overId.startsWith('phase-') || overType === 'phase') {
+        const phaseId = overId.startsWith('phase-') ? overId.replace('phase-', '') : overId;
+        const isSamePhase = phaseId === vcr.phase_id;
         
-        const oldIndex = phasePoints.findIndex(p => p.id === activeVCR.id);
-        const newIndex = phasePoints.findIndex(p => p.id === overVCR.id);
-        
-        if (oldIndex !== -1 && newIndex !== -1) {
-          const reordered = arrayMove(phasePoints, oldIndex, newIndex);
-          const updates = reordered.map((point, idx) => ({
-            id: point.id,
-            position_y: idx,
-          }));
-          reorderHandoverPoints(updates);
+        if (delta) {
+          const newX = Math.max(0, Math.min(50, vcr.position_x + delta.x)); // Constrain X within phase
+          const newY = Math.max(0, Math.min(320, vcr.position_y + delta.y)); // Constrain Y within phase
+          
+          updateVCRPosition({ 
+            id: vcr.id, 
+            position_x: newX, 
+            position_y: newY,
+            phase_id: isSamePhase ? undefined : phaseId
+          });
+        } else if (!isSamePhase) {
+          // Just move to new phase at default position
+          moveHandoverPointToPhase({ handoverPointId: vcr.id, newPhaseId: phaseId });
         }
+        return;
       }
-      return;
+      
+      // If dropping on another VCR (for system assignment, not position)
+      if (overType === 'vcr') {
+        // Just update position based on delta
+        if (delta) {
+          const newX = Math.max(0, vcr.position_x + delta.x);
+          const newY = Math.max(0, vcr.position_y + delta.y);
+          updateVCRPosition({ 
+            id: vcr.id, 
+            position_x: newX, 
+            position_y: newY 
+          });
+        }
+        return;
+      }
     }
 
     // Handle dropping system on VCR
@@ -154,18 +187,6 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
       const systemId = active.data.current.system.id;
       const handoverPointId = over.id.toString().replace('vcr-', '');
       assignSystemToPoint({ handoverPointId, systemId });
-    }
-    
-    // Handle dropping VCR on phase (cross-phase move)
-    if (active.data.current?.type === 'vcr' && over.id.toString().startsWith('phase-')) {
-      const vcrId = active.data.current.handoverPoint.id;
-      const phaseId = over.id.toString().replace('phase-', '');
-      const currentPhaseId = active.data.current.handoverPoint.phase_id;
-      
-      // Only move if dropping on a different phase
-      if (phaseId !== currentPhaseId) {
-        moveHandoverPointToPhase({ handoverPointId: vcrId, newPhaseId: phaseId });
-      }
     }
   };
 

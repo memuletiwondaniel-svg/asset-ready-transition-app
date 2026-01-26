@@ -3,8 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { GripVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { P2AHandoverPoint } from '../hooks/useP2AHandoverPoints';
-import { useDroppable } from '@dnd-kit/core';
-import { useSortable } from '@dnd-kit/sortable';
+import { useDroppable, useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 
 /**
@@ -145,16 +144,15 @@ export const HandoverPointCard: React.FC<HandoverPointCardProps> = ({
   );
 };
 
-// Sortable + Droppable version for phase columns (supports vertical reordering)
+// Draggable + Droppable version for free-form positioning in phase columns
 export const DraggableHandoverPointCard: React.FC<HandoverPointCardProps> = (props) => {
   const {
     attributes,
     listeners,
-    setNodeRef: setSortableRef,
+    setNodeRef: setDraggableRef,
     transform,
-    transition,
     isDragging,
-  } = useSortable({
+  } = useDraggable({
     id: props.handoverPoint.id,
     data: {
       type: 'vcr',
@@ -170,15 +168,15 @@ export const DraggableHandoverPointCard: React.FC<HandoverPointCardProps> = (pro
     },
   });
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
+  const style = transform ? {
+    transform: CSS.Translate.toString(transform),
+    zIndex: isDragging ? 999 : undefined,
+  } : undefined;
 
   return (
     <div 
       ref={(node) => {
-        setSortableRef(node);
+        setDraggableRef(node);
         setDropRef(node);
       }}
       style={style}
