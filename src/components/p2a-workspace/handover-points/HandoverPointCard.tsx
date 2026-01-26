@@ -14,10 +14,11 @@ import { format } from 'date-fns';
  * Generates a unique, subtle HSL-based color from a VCR code.
  * Avoids red, amber, and green to prevent confusion with status indicators.
  */
-const getVCRColor = (vcrCode: string) => {
+const getVCRColor = (vcrCode: string | undefined) => {
+  const code = vcrCode || 'DEFAULT';
   let hash = 0;
-  for (let i = 0; i < vcrCode.length; i++) {
-    hash = vcrCode.charCodeAt(i) + ((hash << 5) - hash);
+  for (let i = 0; i < code.length; i++) {
+    hash = code.charCodeAt(i) + ((hash << 5) - hash);
     hash = hash & hash;
   }
   
