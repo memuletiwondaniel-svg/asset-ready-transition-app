@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -15,6 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { 
   GraduationCap, 
   Search, 
@@ -26,7 +28,7 @@ import {
   Loader2,
   Target
 } from 'lucide-react';
-import { useP2ASystems, P2ASystem } from '../hooks/useP2ASystems';
+import { useHandoverPointSystems } from '../hooks/useP2AHandoverPoints';
 import { useVCRTraining } from '../hooks/useVCRTraining';
 import { useORATrainingPlans } from '@/hooks/useORATrainingPlan';
 import { cn } from '@/lib/utils';
@@ -57,7 +59,9 @@ export const AddTrainingDialog: React.FC<AddTrainingDialogProps> = ({
   preselectedSystemIds = [],
   preselectedVCRId,
 }) => {
-  const { systems, isLoading: systemsLoading } = useP2ASystems(handoverPlanId);
+  // Fetch systems mapped to this VCR (if VCR ID is provided)
+  const { systems: vcrSystems, isLoading: vcrSystemsLoading } = useHandoverPointSystems(preselectedVCRId || '');
+  
   const { addTrainingWithSystems, isAdding } = useVCRTraining(oraPlanId);
   const { trainingPlans } = useORATrainingPlans(oraPlanId);
 
@@ -71,6 +75,10 @@ export const AddTrainingDialog: React.FC<AddTrainingDialogProps> = ({
   const [targetAudience, setTargetAudience] = useState<string[]>([]);
   const [selectedSystemIds, setSelectedSystemIds] = useState<string[]>(preselectedSystemIds);
   const [systemSearch, setSystemSearch] = useState('');
+
+  // Use VCR-mapped systems
+  const availableSystems = vcrSystems || [];
+  const systemsLoading = vcrSystemsLoading;
 
   // Reset form when dialog opens
   useEffect(() => {
@@ -87,7 +95,7 @@ export const AddTrainingDialog: React.FC<AddTrainingDialogProps> = ({
     }
   }, [open, preselectedSystemIds]);
 
-  const filteredSystems = systems.filter(s =>
+  const filteredSystems = availableSystems.filter((s: any) =>
     s.name.toLowerCase().includes(systemSearch.toLowerCase()) ||
     s.system_id.toLowerCase().includes(systemSearch.toLowerCase())
   );
@@ -138,7 +146,7 @@ export const AddTrainingDialog: React.FC<AddTrainingDialogProps> = ({
     });
   };
 
-  const selectedSystems = systems.filter(s => selectedSystemIds.includes(s.id));
+  const selectedSystems = availableSystems.filter((s: any) => selectedSystemIds.includes(s.id));
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -150,6 +158,9 @@ export const AddTrainingDialog: React.FC<AddTrainingDialogProps> = ({
             </div>
             Add Training Item
           </DialogTitle>
+          <DialogDescription>
+            Create a training item and map it to systems in this VCR.
+          </DialogDescription>
         </DialogHeader>
 
         <ScrollArea className="flex-1 -mx-6 px-6">
@@ -262,7 +273,7 @@ export const AddTrainingDialog: React.FC<AddTrainingDialogProps> = ({
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                   <Layers className="w-4 h-4" />
-                  Map to Systems
+                  Map to Systems (from this VCR)
                 </h3>
                 {selectedSystemIds.length > 0 && (
                   <Badge variant="secondary" className="bg-violet-500/10 text-violet-500">
@@ -274,7 +285,7 @@ export const AddTrainingDialog: React.FC<AddTrainingDialogProps> = ({
               {/* Selected Systems Preview */}
               {selectedSystems.length > 0 && (
                 <div className="flex flex-wrap gap-2 p-3 rounded-lg bg-muted/30 border border-dashed">
-                  {selectedSystems.map(system => (
+                  {selectedSystems.map((system: any) => (
                     <Badge
                       key={system.id}
                       variant="secondary"
@@ -313,16 +324,22 @@ export const AddTrainingDialog: React.FC<AddTrainingDialogProps> = ({
                 <CardContent className="p-0">
                   <ScrollArea className="h-[200px]">
                     {systemsLoading ? (
-                      <div className="flex items-center justify-center h-full py-8">
-                        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                      <div className="p-4 space-y-2">
+                        <Skeleton className="h-12 w-full" />
+                        <Skeleton className="h-12 w-full" />
+                        <Skeleton className="h-12 w-full" />
+                      </div>
+                    ) : availableSystems.length === 0 ? (
+                      <div className="text-center py-8 text-sm text-muted-foreground">
+                        No systems mapped to this VCR. Please add systems first.
                       </div>
                     ) : filteredSystems.length === 0 ? (
                       <div className="text-center py-8 text-sm text-muted-foreground">
-                        No systems found
+                        No systems match your search
                       </div>
                     ) : (
                       <div className="divide-y">
-                        {filteredSystems.map((system) => {
+                        {filteredSystems.map((system: any) => {
                           const isSelected = selectedSystemIds.includes(system.id);
                           return (
                             <div
@@ -349,12 +366,6 @@ export const AddTrainingDialog: React.FC<AddTrainingDialogProps> = ({
                                   <div className="text-xs text-muted-foreground font-mono">{system.system_id}</div>
                                 </div>
                               </div>
-                              {system.assigned_vcr_code && (
-                                <Badge variant="outline" className="text-[10px] gap-1 shrink-0">
-                                  <Target className="w-3 h-3" />
-                                  {system.assigned_vcr_code.split('-').slice(0, 2).join('-')}
-                                </Badge>
-                              )}
                             </div>
                           );
                         })}
@@ -365,7 +376,7 @@ export const AddTrainingDialog: React.FC<AddTrainingDialogProps> = ({
               </Card>
 
               <p className="text-xs text-muted-foreground">
-                Select the systems this training applies to. The training will be visible in VCRs where these systems are assigned.
+                Select systems from this VCR that this training applies to.
               </p>
             </div>
           </div>
