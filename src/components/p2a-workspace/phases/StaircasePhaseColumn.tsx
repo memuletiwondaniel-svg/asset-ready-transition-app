@@ -128,20 +128,6 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-
-        {/* Milestone badges */}
-        <div className="flex flex-wrap gap-1 text-[10px]">
-          {phase.start_milestone && (
-            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-              {phase.start_milestone.code || phase.start_milestone.name}
-            </Badge>
-          )}
-          {phase.end_milestone && (
-            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-              {phase.end_milestone.code || phase.end_milestone.name}
-            </Badge>
-          )}
-        </div>
       </div>
 
       {/* VCRs Container */}
