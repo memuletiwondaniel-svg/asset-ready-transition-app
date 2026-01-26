@@ -46,10 +46,9 @@ export const PhasesTimeline: React.FC<PhasesTimelineProps> = ({
   // Sort milestones by display order
   const sortedMilestones = [...milestones].sort((a, b) => a.display_order - b.display_order);
 
-  // Calculate staircase offset for each phase
-  const getStaircaseOffset = (phaseIndex: number) => {
-    // Each phase starts lower than the previous, creating a staircase effect
-    return phaseIndex * 60; // 60px offset per phase
+  // All phases aligned at the same height (no staircase offset)
+  const getStaircaseOffset = (_phaseIndex: number) => {
+    return 0;
   };
 
   // Empty state
