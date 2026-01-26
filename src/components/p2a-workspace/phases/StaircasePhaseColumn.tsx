@@ -7,7 +7,7 @@ import { P2APhase } from '../hooks/useP2APhases';
 import { P2AHandoverPoint } from '../hooks/useP2AHandoverPoints';
 import { DraggableHandoverPointCard } from '../handover-points/HandoverPointCard';
 import { useDroppable } from '@dnd-kit/core';
-import { useSortable } from '@dnd-kit/sortable';
+import { useSortable, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { cn } from '@/lib/utils';
 
@@ -196,13 +196,15 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
           </div>
         ) : (
           <>
-            {sortedPoints.map((point) => (
-              <DraggableHandoverPointCard
-                key={point.id}
-                handoverPoint={point}
-                onClick={() => onOpenVCR(point)}
-              />
-            ))}
+            <SortableContext items={sortedPoints.map(p => p.id)} strategy={verticalListSortingStrategy}>
+              {sortedPoints.map((point) => (
+                <DraggableHandoverPointCard
+                  key={point.id}
+                  handoverPoint={point}
+                  onClick={() => onOpenVCR(point)}
+                />
+              ))}
+            </SortableContext>
             
             {/* Add VCR Button at bottom */}
             <Button 

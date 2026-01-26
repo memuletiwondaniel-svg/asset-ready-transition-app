@@ -234,6 +234,27 @@ export const useP2AHandoverPoints = (handoverPlanId: string) => {
     },
   });
 
+  const reorderHandoverPoints = useMutation({
+    mutationFn: async (reorderedPoints: { id: string; position_y: number }[]) => {
+      const updates = reorderedPoints.map(({ id, position_y }) =>
+        supabase
+          .from('p2a_handover_points')
+          .update({ position_y })
+          .eq('id', id)
+      );
+
+      const results = await Promise.all(updates);
+      const errors = results.filter(r => r.error);
+      if (errors.length > 0) throw errors[0].error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['p2a-handover-points', handoverPlanId] });
+    },
+    onError: () => {
+      toast({ title: 'Error', description: 'Failed to reorder VCRs', variant: 'destructive' });
+    },
+  });
+
   // Separate assigned and unassigned VCRs
   const assignedPoints = handoverPoints?.filter(p => p.phase_id) || [];
   const unassignedPoints = handoverPoints?.filter(p => !p.phase_id) || [];
@@ -249,6 +270,7 @@ export const useP2AHandoverPoints = (handoverPlanId: string) => {
     assignSystemToPoint: assignSystemToPoint.mutate,
     unassignSystemFromPoint: unassignSystemFromPoint.mutate,
     moveHandoverPointToPhase: moveHandoverPointToPhase.mutate,
+    reorderHandoverPoints: reorderHandoverPoints.mutate,
     isCreating: createHandoverPoint.isPending,
   };
 };

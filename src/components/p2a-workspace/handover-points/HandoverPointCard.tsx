@@ -5,7 +5,9 @@ import { Progress } from '@/components/ui/progress';
 import { Target, Layers, GripVertical, CheckCircle2, Clock, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { P2AHandoverPoint } from '../hooks/useP2AHandoverPoints';
-import { useDroppable, useDraggable } from '@dnd-kit/core';
+import { useDroppable } from '@dnd-kit/core';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { format } from 'date-fns';
 
 /**
@@ -175,10 +177,17 @@ export const HandoverPointCard: React.FC<HandoverPointCardProps> = ({
   );
 };
 
-// Draggable + Droppable version for phase columns
+// Sortable + Droppable version for phase columns (supports vertical reordering)
 export const DraggableHandoverPointCard: React.FC<HandoverPointCardProps> = (props) => {
-  const { attributes, listeners, setNodeRef: setDragRef, isDragging } = useDraggable({
-    id: `vcr-drag-${props.handoverPoint.id}`,
+  const {
+    attributes,
+    listeners,
+    setNodeRef: setSortableRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: props.handoverPoint.id,
     data: {
       type: 'vcr',
       handoverPoint: props.handoverPoint,
@@ -193,14 +202,21 @@ export const DraggableHandoverPointCard: React.FC<HandoverPointCardProps> = (pro
     },
   });
 
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
   return (
     <div 
       ref={(node) => {
-        setDragRef(node);
+        setSortableRef(node);
         setDropRef(node);
       }}
+      style={style}
       {...listeners}
       {...attributes}
+      className={cn(isDragging && 'z-50')}
     >
       <HandoverPointCard {...props} isDropTarget={isOver} isDragging={isDragging} />
     </div>
