@@ -260,34 +260,37 @@ export const VCRSystemsTab: React.FC<VCRSystemsTabProps> = ({ handoverPoint }) =
                       </div>
                       
                       {/* Stats - Outstanding counts */}
-                      <div className="flex items-center gap-4 text-center">
-                        <div>
-                          <div className="text-sm font-bold text-red-500">{system.punchlist_a_count}</div>
-                          <div className="text-[10px] text-muted-foreground">O/S PL-A</div>
+                      <div className="flex flex-col items-end gap-1">
+                        <div className="text-[9px] text-muted-foreground/70 uppercase tracking-wide">Outstanding</div>
+                        <div className="flex items-center gap-4 text-center">
+                          <div>
+                            <div className="text-sm font-bold text-red-500">{system.punchlist_a_count}</div>
+                            <div className="text-[10px] text-muted-foreground">PL-A</div>
+                          </div>
+                          <div>
+                            <div className="text-sm font-bold text-amber-500">{system.punchlist_b_count}</div>
+                            <div className="text-[10px] text-muted-foreground">PL-B</div>
+                          </div>
+                          <div>
+                            <div className="text-sm font-bold text-blue-500">{system.itr_a_count + system.itr_b_count}</div>
+                            <div className="text-[10px] text-muted-foreground">ITRs</div>
+                          </div>
                         </div>
-                        <div>
-                          <div className="text-sm font-bold text-amber-500">{system.punchlist_b_count}</div>
-                          <div className="text-[10px] text-muted-foreground">O/S PL-B</div>
-                        </div>
-                        <div>
-                          <div className="text-sm font-bold text-blue-500">{system.itr_a_count + system.itr_b_count}</div>
-                          <div className="text-[10px] text-muted-foreground">O/S ITRs</div>
-                        </div>
-                        <div className="ml-4">
-                          <Badge className={cn(
-                            "text-[10px] px-2",
-                            system.is_hydrocarbon 
-                              ? (system.actual_rfsu_date ? "bg-emerald-500" : "bg-slate-400")
-                              : (system.actual_rfo_date ? "bg-emerald-500" : "bg-slate-400")
-                          )}>
-                            {targetCert}
-                          </Badge>
-                        </div>
-                        <ChevronDown className={cn(
-                          "w-4 h-4 text-muted-foreground transition-transform",
-                          isExpanded && "rotate-180"
-                        )} />
                       </div>
+                      <div className="ml-4">
+                        <Badge className={cn(
+                          "text-[10px] px-2",
+                          system.is_hydrocarbon 
+                            ? (system.actual_rfsu_date ? "bg-emerald-500" : "bg-slate-400")
+                            : (system.actual_rfo_date ? "bg-emerald-500" : "bg-slate-400")
+                        )}>
+                          {targetCert}
+                        </Badge>
+                      </div>
+                      <ChevronDown className={cn(
+                        "w-4 h-4 text-muted-foreground transition-transform",
+                        isExpanded && "rotate-180"
+                      )} />
                     </div>
                   </CardContent>
                 </CollapsibleTrigger>
