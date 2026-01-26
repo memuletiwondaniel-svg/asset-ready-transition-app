@@ -17,11 +17,13 @@ import {
   AlertCircle,
   ListTodo,
   Flame,
-  Snowflake
+  Snowflake,
+  Plus
 } from 'lucide-react';
 import { P2AHandoverPoint } from '../hooks/useP2AHandoverPoints';
 import { useHandoverPointSystems } from '../hooks/useP2AHandoverPoints';
 import { cn } from '@/lib/utils';
+import { AddSystemSheet } from './AddSystemSheet';
 
 interface VCRSystemsTabProps {
   handoverPoint: P2AHandoverPoint;
@@ -122,6 +124,7 @@ const getCompletionStatusConfig = (status: P2ASystem['completion_status']) => {
 export const VCRSystemsTab: React.FC<VCRSystemsTabProps> = ({ handoverPoint }) => {
   const { systems, isLoading } = useHandoverPointSystems(handoverPoint.id);
   const [expandedSystems, setExpandedSystems] = useState<Set<string>>(new Set());
+  const [addSystemOpen, setAddSystemOpen] = useState(false);
 
   const toggleExpanded = (systemId: string) => {
     setExpandedSystems(prev => {
@@ -354,6 +357,28 @@ export const VCRSystemsTab: React.FC<VCRSystemsTabProps> = ({ handoverPoint }) =
           );
         })}
       </div>
+
+      {/* Add System Button */}
+      <div className="flex justify-end mt-4">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setAddSystemOpen(true)}
+          className="gap-2"
+        >
+          <Plus className="w-4 h-4" />
+          Add System
+        </Button>
+      </div>
+
+      {/* Add System Sheet */}
+      <AddSystemSheet
+        open={addSystemOpen}
+        onOpenChange={setAddSystemOpen}
+        handoverPointId={handoverPoint.id}
+        handoverPlanId={handoverPoint.handover_plan_id}
+        currentVcrCode={handoverPoint.vcr_code}
+      />
     </div>
   );
 };
