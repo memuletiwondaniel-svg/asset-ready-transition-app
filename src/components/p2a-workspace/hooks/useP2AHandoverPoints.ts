@@ -284,11 +284,42 @@ export const useP2AHandoverPoints = (handoverPlanId: string) => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['p2a-handover-points', handoverPlanId] });
+    // Optimistic update to prevent snap-back effect
+    onMutate: async ({ id, position_x, position_y, phase_id }) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['p2a-handover-points', handoverPlanId] });
+      
+      // Snapshot the previous value
+      const previousPoints = queryClient.getQueryData<P2AHandoverPoint[]>(['p2a-handover-points', handoverPlanId]);
+      
+      // Optimistically update to the new value
+      queryClient.setQueryData<P2AHandoverPoint[]>(['p2a-handover-points', handoverPlanId], (old) => {
+        if (!old) return old;
+        return old.map(point => {
+          if (point.id === id) {
+            return {
+              ...point,
+              position_x,
+              position_y,
+              phase_id: phase_id !== undefined ? phase_id : point.phase_id,
+            };
+          }
+          return point;
+        });
+      });
+      
+      return { previousPoints };
     },
-    onError: () => {
+    onError: (_error, _variables, context) => {
+      // Rollback on error
+      if (context?.previousPoints) {
+        queryClient.setQueryData(['p2a-handover-points', handoverPlanId], context.previousPoints);
+      }
       toast({ title: 'Error', description: 'Failed to update VCR position', variant: 'destructive' });
+    },
+    onSettled: () => {
+      // Sync with server after mutation
+      queryClient.invalidateQueries({ queryKey: ['p2a-handover-points', handoverPlanId] });
     },
   });
 
