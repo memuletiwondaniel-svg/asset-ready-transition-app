@@ -8,6 +8,7 @@ import { useP2AHandoverPlan } from './hooks/useP2AHandoverPlan';
 import { useP2ASystems } from './hooks/useP2ASystems';
 import { useP2APhases, useP2AMilestones } from './hooks/useP2APhases';
 import { useP2AHandoverPoints, P2AHandoverPoint } from './hooks/useP2AHandoverPoints';
+import { useVCRRelationships } from './hooks/useVCRRelationships';
 import { EmptyWorkspaceState } from './EmptyWorkspaceState';
 import { SystemsPanel } from './systems/SystemsPanel';
 import { SystemCard } from './systems/SystemCard';
@@ -15,6 +16,7 @@ import { PhasesTimeline } from './phases/PhasesTimeline';
 import { CreateHandoverPointDialog } from './handover-points/CreateHandoverPointDialog';
 import { HandoverPointCard } from './handover-points/HandoverPointCard';
 import { VCRDetailOverlay } from './handover-points/VCRDetailOverlay';
+import { VCRRelationshipDialog } from './handover-points/VCRRelationshipDialog';
 import { cn } from '@/lib/utils';
 
 interface P2AHandoverWorkspaceProps {
@@ -34,6 +36,14 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
   const [selectedPhaseIdForVCR, setSelectedPhaseIdForVCR] = useState<string | null>(null);
   const [selectedVCR, setSelectedVCR] = useState<P2AHandoverPoint | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  
+  // VCR Relationship Dialog state
+  const [showVCRRelationshipDialog, setShowVCRRelationshipDialog] = useState(false);
+  const [vcrRelationshipContext, setVcrRelationshipContext] = useState<{
+    source: P2AHandoverPoint;
+    target: P2AHandoverPoint;
+  } | null>(null);
+  
   // Local UI overrides to prevent post-drop "snap-back" while React Query + Supabase sync.
   const [uiVcrOverrides, setUiVcrOverrides] = useState<
     Record<string, { position_x: number; position_y: number; phase_id?: string | null }>
@@ -64,8 +74,16 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
     moveHandoverPointToPhase,
     reorderHandoverPoints,
     updateVCRPosition,
+    combineVCRs,
     isCreating: isCreatingVCR,
+    isCombining,
   } = useP2AHandoverPoints(plan?.id || '');
+
+  // VCR Relationships hook
+  const {
+    createRelationship,
+    isCreating: isCreatingRelationship,
+  } = useVCRRelationships(plan?.id || '');
 
   const handoverPointsWithUi = useMemo(() => {
     if (!handoverPoints?.length) return [];
@@ -255,26 +273,13 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
         return;
       }
       
-      // If dropping on another VCR (for system assignment, not position)
+      // If dropping on another VCR - open relationship dialog
       if (overType === 'vcr') {
-        // Just update position based on delta
-        if (delta) {
-          const newX = Math.round(Math.max(0, vcr.position_x + delta.x));
-          const newY = Math.round(Math.max(0, vcr.position_y + delta.y));
-
-            // Immediate UI update (prevents snap-back between drag end and cache update)
-            setUiVcrOverrides((prev) => ({
-              ...prev,
-              [vcr.id]: {
-                position_x: newX,
-                position_y: newY,
-              },
-            }));
-          updateVCRPosition({ 
-            id: vcr.id, 
-            position_x: newX, 
-            position_y: newY 
-          });
+        const targetVCR = over.data.current?.handoverPoint;
+        if (targetVCR && vcr.id !== targetVCR.id) {
+          // Open the relationship dialog instead of just updating position
+          setVcrRelationshipContext({ source: vcr, target: targetVCR });
+          setShowVCRRelationshipDialog(true);
         }
         return;
       }
@@ -415,6 +420,25 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
           handoverPoint={selectedVCR}
           open={!!selectedVCR}
           onOpenChange={(open) => !open && setSelectedVCR(null)}
+        />
+      )}
+
+      {/* VCR Relationship Dialog */}
+      {vcrRelationshipContext && (
+        <VCRRelationshipDialog
+          open={showVCRRelationshipDialog}
+          onOpenChange={setShowVCRRelationshipDialog}
+          sourceVCR={vcrRelationshipContext.source}
+          targetVCR={vcrRelationshipContext.target}
+          onCreateRelationship={createRelationship}
+          onCombineVCRs={(data) =>
+            combineVCRs({
+              ...data,
+              projectCode: plan.project_code || 'XXX',
+            })
+          }
+          isCreating={isCreatingRelationship}
+          isCombining={isCombining}
         />
       )}
     </DndContext>

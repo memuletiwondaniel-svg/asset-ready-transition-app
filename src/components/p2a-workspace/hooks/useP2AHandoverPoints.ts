@@ -323,6 +323,174 @@ export const useP2AHandoverPoints = (handoverPlanId: string) => {
     },
   });
 
+  // Combine two VCRs into a new one
+  const combineVCRs = useMutation({
+    mutationFn: async ({
+      sourceVcrId,
+      targetVcrId,
+      newName,
+      projectCode,
+    }: {
+      sourceVcrId: string;
+      targetVcrId: string;
+      newName: string;
+      projectCode: string;
+    }) => {
+      // 1. Get source and target VCR data
+      const { data: sourceVcr } = await supabase
+        .from('p2a_handover_points')
+        .select('*')
+        .eq('id', sourceVcrId)
+        .single();
+
+      const { data: targetVcr } = await supabase
+        .from('p2a_handover_points')
+        .select('*')
+        .eq('id', targetVcrId)
+        .single();
+
+      if (!sourceVcr || !targetVcr) throw new Error('VCRs not found');
+
+      // 2. Generate new VCR code
+      const { data: vcrCode, error: vcrError } = await supabase.rpc('generate_vcr_code', {
+        p_project_code: projectCode,
+      });
+      if (vcrError) throw vcrError;
+
+      // 3. Create new combined VCR (use target's phase if available, else source's)
+      const { data: newVcr, error: createError } = await supabase
+        .from('p2a_handover_points')
+        .insert({
+          phase_id: targetVcr.phase_id || sourceVcr.phase_id,
+          handover_plan_id: handoverPlanId,
+          vcr_code: vcrCode,
+          name: newName,
+          description: `Combined from ${sourceVcr.vcr_code} and ${targetVcr.vcr_code}`,
+          target_date: targetVcr.target_date || sourceVcr.target_date,
+          position_x: targetVcr.position_x,
+          position_y: targetVcr.position_y,
+          status: 'PENDING',
+          created_by: user?.id,
+        })
+        .select()
+        .single();
+
+      if (createError) throw createError;
+
+      // 4. Migrate systems from both VCRs
+      const { data: sourceSystems } = await supabase
+        .from('p2a_handover_point_systems')
+        .select('system_id')
+        .eq('handover_point_id', sourceVcrId);
+
+      const { data: targetSystems } = await supabase
+        .from('p2a_handover_point_systems')
+        .select('system_id')
+        .eq('handover_point_id', targetVcrId);
+
+      const allSystemIds = new Set([
+        ...(sourceSystems?.map((s) => s.system_id) || []),
+        ...(targetSystems?.map((s) => s.system_id) || []),
+      ]);
+
+      if (allSystemIds.size > 0) {
+        await supabase.from('p2a_handover_point_systems').insert(
+          Array.from(allSystemIds).map((systemId) => ({
+            handover_point_id: newVcr.id,
+            system_id: systemId,
+            assigned_by: user?.id,
+          }))
+        );
+      }
+
+      // 5. Migrate prerequisites
+      const { data: sourcePrereqs } = await supabase
+        .from('p2a_vcr_prerequisites')
+        .select('*')
+        .eq('handover_point_id', sourceVcrId);
+
+      const { data: targetPrereqs } = await supabase
+        .from('p2a_vcr_prerequisites')
+        .select('*')
+        .eq('handover_point_id', targetVcrId);
+
+      const allPrereqs = [...(sourcePrereqs || []), ...(targetPrereqs || [])];
+      if (allPrereqs.length > 0) {
+        // Deduplicate by pac_prerequisite_id
+        const uniquePrereqs = new Map();
+        allPrereqs.forEach((p) => {
+          if (!uniquePrereqs.has(p.pac_prerequisite_id)) {
+            uniquePrereqs.set(p.pac_prerequisite_id, p);
+          }
+        });
+
+        await supabase.from('p2a_vcr_prerequisites').insert(
+          Array.from(uniquePrereqs.values()).map((p, idx) => ({
+            handover_point_id: newVcr.id,
+            pac_prerequisite_id: p.pac_prerequisite_id,
+            summary: p.summary,
+            description: p.description,
+            status: p.status,
+            delivering_party_id: p.delivering_party_id,
+            delivering_party_name: p.delivering_party_name,
+            receiving_party_id: p.receiving_party_id,
+            receiving_party_name: p.receiving_party_name,
+            evidence_links: p.evidence_links,
+            comments: p.comments,
+            display_order: idx,
+          }))
+        );
+      }
+
+      // 6. Migrate training system mappings
+      const { data: sourceTraining } = await supabase
+        .from('ora_training_system_mappings')
+        .select('*')
+        .eq('handover_point_id', sourceVcrId);
+
+      const { data: targetTraining } = await supabase
+        .from('ora_training_system_mappings')
+        .select('*')
+        .eq('handover_point_id', targetVcrId);
+
+      const allTraining = [...(sourceTraining || []), ...(targetTraining || [])];
+      if (allTraining.length > 0) {
+        // Get unique training items and systems
+        const uniqueMappings = new Map();
+        allTraining.forEach((t) => {
+          const key = `${t.training_item_id}-${t.system_id}`;
+          if (!uniqueMappings.has(key)) {
+            uniqueMappings.set(key, t);
+          }
+        });
+
+        await supabase.from('ora_training_system_mappings').insert(
+          Array.from(uniqueMappings.values()).map((t) => ({
+            handover_point_id: newVcr.id,
+            training_item_id: t.training_item_id,
+            system_id: t.system_id,
+            created_by: user?.id,
+          }))
+        );
+      }
+
+      // 7. Delete original VCRs (cascades will clean up related data)
+      await supabase.from('p2a_handover_points').delete().eq('id', sourceVcrId);
+      await supabase.from('p2a_handover_points').delete().eq('id', targetVcrId);
+
+      return newVcr;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['p2a-handover-points', handoverPlanId] });
+      queryClient.invalidateQueries({ queryKey: ['p2a-systems'] });
+      queryClient.invalidateQueries({ queryKey: ['vcr-relationships', handoverPlanId] });
+      toast({ title: 'Success', description: 'VCRs combined successfully' });
+    },
+    onError: (error) => {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    },
+  });
+
   // Separate assigned and unassigned VCRs
   const assignedPoints = handoverPoints?.filter(p => p.phase_id) || [];
   const unassignedPoints = handoverPoints?.filter(p => !p.phase_id) || [];
@@ -340,7 +508,9 @@ export const useP2AHandoverPoints = (handoverPlanId: string) => {
     moveHandoverPointToPhase: moveHandoverPointToPhase.mutate,
     reorderHandoverPoints: reorderHandoverPoints.mutate,
     updateVCRPosition: updateVCRPosition.mutate,
+    combineVCRs: combineVCRs.mutate,
     isCreating: createHandoverPoint.isPending,
+    isCombining: combineVCRs.isPending,
   };
 };
 

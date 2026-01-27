@@ -3729,6 +3729,48 @@ export type Database = {
           },
         ]
       }
+      p2a_vcr_relationships: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          relationship_type: string
+          source_vcr_id: string
+          target_vcr_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          relationship_type: string
+          source_vcr_id: string
+          target_vcr_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          relationship_type?: string
+          source_vcr_id?: string
+          target_vcr_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_vcr_relationships_source_vcr_id_fkey"
+            columns: ["source_vcr_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_handover_points"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_vcr_relationships_target_vcr_id_fkey"
+            columns: ["target_vcr_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_handover_points"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pac_prerequisite_categories: {
         Row: {
           created_at: string | null
