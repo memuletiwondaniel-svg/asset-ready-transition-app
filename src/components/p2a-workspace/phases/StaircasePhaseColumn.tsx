@@ -95,7 +95,7 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
       <div 
         ref={setNodeRef}
         className={cn(
-          "flex-shrink-0 w-72 flex flex-col",
+          "flex-shrink-0 w-72 flex flex-col h-full",
           isDragging && "opacity-50 z-50"
         )}
         style={style}
@@ -152,7 +152,7 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
         {/* VCRs Container - Horizontal row layout */}
         <div 
           className={cn(
-            "border border-t-0 rounded-b-xl p-3 min-h-[120px] max-h-[360px] overflow-y-auto transition-colors",
+            "flex-1 border border-t-0 rounded-b-xl p-3 min-h-[200px] overflow-y-auto transition-colors",
             isOver ? 'border-primary bg-primary/5' : 'border-border bg-card/50'
           )}
         >
