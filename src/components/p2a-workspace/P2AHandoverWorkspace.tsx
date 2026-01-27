@@ -281,16 +281,28 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
             [vcr.id]: {
               position_x: newX,
               position_y: newY,
-              phase_id: newPhaseId,
+              // IMPORTANT: only include phase_id override when actually changing phases.
+              // Including `phase_id: undefined` can lead to accidental nulling in some update paths.
+              ...(newPhaseId !== undefined ? { phase_id: newPhaseId } : {}),
             },
           }));
           
-          updateVCRPosition({ 
-            id: vcr.id, 
-            position_x: newX, 
-            position_y: newY,
-            phase_id: newPhaseId
-          });
+          // IMPORTANT: only send phase_id when changing phases.
+          // Sending `phase_id: undefined` can cause the VCR to become unassigned (appear to disappear).
+          updateVCRPosition(
+            newPhaseId !== undefined
+              ? {
+                  id: vcr.id,
+                  position_x: newX,
+                  position_y: newY,
+                  phase_id: newPhaseId,
+                }
+              : {
+                  id: vcr.id,
+                  position_x: newX,
+                  position_y: newY,
+                }
+          );
 
           // Push undo action
           const vcrShortCode = vcr.vcr_code.match(/^(VCR-\d+)/)?.[1] || 'VCR';
@@ -302,11 +314,12 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
                 ...prev,
                 [vcr.id]: { position_x: oldX, position_y: oldY, phase_id: oldPhaseId },
               }));
-              updateVCRPosition({ 
-                id: vcr.id, 
-                position_x: oldX, 
+              // oldPhaseId is always a concrete value for an assigned VCR.
+              updateVCRPosition({
+                id: vcr.id,
+                position_x: oldX,
                 position_y: oldY,
-                phase_id: oldPhaseId
+                phase_id: oldPhaseId,
               });
             },
           });
