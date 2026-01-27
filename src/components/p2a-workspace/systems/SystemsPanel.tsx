@@ -158,20 +158,22 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
                   {filteredAssigned.length}
                 </span>
               </CollapsibleTrigger>
-              <CollapsibleContent className="pt-2 space-y-2">
+              <CollapsibleContent className="pt-2">
                 {filteredAssigned.length === 0 ? (
                   <div className="text-xs text-muted-foreground text-center py-4">
                     {searchQuery ? 'No matching systems' : 'No assigned systems'}
                   </div>
                 ) : (
-                  filteredAssigned.map(system => (
-                    <DraggableSystemCard
-                      key={system.id}
-                      system={system}
-                      compact
-                      onClick={() => setSelectedSystem(system)}
-                    />
-                  ))
+                  <div className="flex flex-wrap gap-1.5">
+                    {filteredAssigned.map(system => (
+                      <DraggableSystemCard
+                        key={system.id}
+                        system={system}
+                        compact
+                        onClick={() => setSelectedSystem(system)}
+                      />
+                    ))}
+                  </div>
                 )}
               </CollapsibleContent>
             </Collapsible>
@@ -196,20 +198,22 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
                   {filteredUnassigned.length}
                 </span>
               </CollapsibleTrigger>
-              <CollapsibleContent className="pt-2 space-y-2">
+              <CollapsibleContent className="pt-2">
                 {filteredUnassigned.length === 0 ? (
                   <div className="text-xs text-muted-foreground text-center py-4">
                     {searchQuery ? 'No matching systems' : 'No unassigned systems'}
                   </div>
                 ) : (
-                  filteredUnassigned.map(system => (
-                    <DraggableSystemCard
-                      key={system.id}
-                      system={system}
-                      compact
-                      onClick={() => setSelectedSystem(system)}
-                    />
-                  ))
+                  <div className="flex flex-wrap gap-1.5">
+                    {filteredUnassigned.map(system => (
+                      <DraggableSystemCard
+                        key={system.id}
+                        system={system}
+                        compact
+                        onClick={() => setSelectedSystem(system)}
+                      />
+                    ))}
+                  </div>
                 )}
               </CollapsibleContent>
             </Collapsible>
