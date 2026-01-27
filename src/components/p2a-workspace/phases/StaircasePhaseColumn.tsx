@@ -38,6 +38,12 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
   isFirstPhase,
   isLastPhase,
 }) => {
+  // VCR cards are absolutely positioned inside a fixed-size, overflow-hidden canvas.
+  // If historical data contains large coordinates (e.g. x=300+), cards become invisible
+  // while systems still appear assigned/colored. Clamp to keep cards discoverable.
+  const VCR_CANVAS_MAX_X = 72; // px
+  const VCR_CANVAS_MAX_Y = 320; // px
+
   const { isOver, setNodeRef: setDroppableRef } = useDroppable({
     id: `phase-${phase.id}`,
     data: {
@@ -153,8 +159,8 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
             key={point.id} 
             className="absolute"
             style={{
-              left: `${point.position_x}px`,
-              top: `${point.position_y}px`,
+              left: `${Math.max(0, Math.min(VCR_CANVAS_MAX_X, point.position_x))}px`,
+              top: `${Math.max(0, Math.min(VCR_CANVAS_MAX_Y, point.position_y))}px`,
             }}
           >
             <DraggableHandoverPointCard

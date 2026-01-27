@@ -21,6 +21,10 @@ export const UnassignedVCRColumn: React.FC<UnassignedVCRColumnProps> = ({
   onOpenVCR,
   onCreateHandoverPoint,
 }) => {
+  // Keep cards discoverable even if older data has out-of-range coordinates.
+  const VCR_CANVAS_MAX_X = 72; // px
+  const VCR_CANVAS_MAX_Y = 320; // px
+
   const { isOver, setNodeRef } = useDroppable({
     id: 'phase-unassigned',
     data: {
@@ -70,8 +74,8 @@ export const UnassignedVCRColumn: React.FC<UnassignedVCRColumnProps> = ({
             key={point.id}
             className="absolute"
             style={{
-              left: `${point.position_x}px`,
-              top: `${point.position_y}px`,
+              left: `${Math.max(0, Math.min(VCR_CANVAS_MAX_X, point.position_x))}px`,
+              top: `${Math.max(0, Math.min(VCR_CANVAS_MAX_Y, point.position_y))}px`,
             }}
           >
             <DraggableHandoverPointCard
