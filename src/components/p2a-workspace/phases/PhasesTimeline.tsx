@@ -260,7 +260,7 @@ export const PhasesTimeline: React.FC<PhasesTimelineProps> = ({
             </div>
 
             {/* Unassigned VCRs - Horizontal bar at bottom */}
-            <div className="mt-8">
+            <div className="mt-16">
               <UnassignedVCRColumn
                 handoverPoints={unassignedPoints}
                 onOpenVCR={onOpenVCR}
