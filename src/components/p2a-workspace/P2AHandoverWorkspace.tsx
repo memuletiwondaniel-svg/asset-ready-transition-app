@@ -110,12 +110,25 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
   }, [handoverPoints, uiVcrOverrides]);
 
   const assignedPointsWithUi = useMemo(
-    () => handoverPointsWithUi.filter((p) => p.phase_id),
-    [handoverPointsWithUi]
+    () => {
+      // Only treat a VCR as "assigned" if its phase actually exists.
+      // This prevents "ghost" VCRs (phase deleted / missing) from disappearing
+      // while their systems still look assigned/colored.
+      const validPhaseIds = new Set(phases.map((p) => p.id));
+      return handoverPointsWithUi.filter(
+        (p) => !!p.phase_id && validPhaseIds.has(p.phase_id)
+      );
+    },
+    [handoverPointsWithUi, phases]
   );
   const unassignedPointsWithUi = useMemo(
-    () => handoverPointsWithUi.filter((p) => !p.phase_id),
-    [handoverPointsWithUi]
+    () => {
+      const validPhaseIds = new Set(phases.map((p) => p.id));
+      return handoverPointsWithUi.filter(
+        (p) => !p.phase_id || !validPhaseIds.has(p.phase_id)
+      );
+    },
+    [handoverPointsWithUi, phases]
   );
 
   // Clear overrides once server/cache has caught up to the same coordinates.
