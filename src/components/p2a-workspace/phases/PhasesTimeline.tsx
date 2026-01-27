@@ -247,9 +247,7 @@ export const PhasesTimeline: React.FC<PhasesTimelineProps> = ({
               </SortableContext>
 
               {/* Add Phase Button */}
-              <div 
-                className="flex-shrink-0 w-48 flex items-center justify-center"
-              >
+              <div className="flex-shrink-0 flex items-center justify-center">
                 <Button 
                   variant="outline" 
                   className="h-auto py-8 px-6 border-dashed flex-col gap-2"
