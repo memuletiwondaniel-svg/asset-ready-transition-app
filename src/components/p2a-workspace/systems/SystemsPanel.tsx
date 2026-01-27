@@ -102,7 +102,7 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
 
   return (
     <>
-      <div className="w-48 h-full border-l border-border bg-card flex flex-col ml-4">
+      <div className="w-48 h-full border-l border-border bg-card flex flex-col ml-4 overflow-hidden">
         {/* Header */}
         <div className="p-4 border-b border-border">
           <div className="flex items-center justify-between mb-3">
@@ -137,8 +137,8 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
           </div>
         </div>
 
-        {/* Systems List - fills remaining height */}
-        <div className="flex-1 overflow-y-auto">
+        {/* Systems List - fills remaining height with internal scroll */}
+        <div className="flex-1 min-h-0 overflow-y-auto">
           <div className="p-3 space-y-3">
             {/* Assigned Systems Section */}
             <Collapsible 
