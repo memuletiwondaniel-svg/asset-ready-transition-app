@@ -66,26 +66,37 @@ export const PhasesTimeline: React.FC<PhasesTimelineProps> = ({
     return 0;
   };
 
-  // Empty state
+  // Empty state - still show unassigned section
   if (phases.length === 0) {
     return (
       <>
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center max-w-md">
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500/10 to-cyan-500/10 flex items-center justify-center mx-auto mb-4">
-              <GitBranch className="w-10 h-10 text-blue-500" />
+        <div className="flex-1 flex flex-col">
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center max-w-md">
+              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500/10 to-cyan-500/10 flex items-center justify-center mx-auto mb-4">
+                <GitBranch className="w-10 h-10 text-blue-500" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Get Started with Your Handover Plan</h3>
+              <p className="text-sm text-muted-foreground mb-6">
+                Create phases to organize your timeline. VCRs will be arranged in a staircase 
+                pattern showing the handover progression from top to bottom.
+              </p>
+              <div className="flex gap-3 justify-center">
+                <Button onClick={() => setShowCreateDialog(true)} className="gap-2">
+                  <Plus className="w-4 h-4" />
+                  Create First Phase
+                </Button>
+              </div>
             </div>
-            <h3 className="text-lg font-semibold mb-2">Get Started with Your Handover Plan</h3>
-            <p className="text-sm text-muted-foreground mb-6">
-              Create phases to organize your timeline. VCRs will be arranged in a staircase 
-              pattern showing the handover progression from top to bottom.
-            </p>
-            <div className="flex gap-3 justify-center">
-              <Button onClick={() => setShowCreateDialog(true)} className="gap-2">
-                <Plus className="w-4 h-4" />
-                Create First Phase
-              </Button>
-            </div>
+          </div>
+
+          {/* Unassigned VCRs - always visible */}
+          <div className="px-4 pb-4">
+            <UnassignedVCRColumn
+              handoverPoints={unassignedPoints}
+              onOpenVCR={onOpenVCR}
+              onCreateHandoverPoint={() => onCreateHandoverPoint(null)}
+            />
           </div>
         </div>
 
