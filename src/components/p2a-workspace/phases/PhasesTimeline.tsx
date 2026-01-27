@@ -260,11 +260,13 @@ export const PhasesTimeline: React.FC<PhasesTimelineProps> = ({
             </div>
 
             {/* Unassigned VCRs - Horizontal bar at bottom */}
-            <UnassignedVCRColumn
-              handoverPoints={unassignedPoints}
-              onOpenVCR={onOpenVCR}
-              onCreateHandoverPoint={() => onCreateHandoverPoint(null)}
-            />
+            <div className="mt-8">
+              <UnassignedVCRColumn
+                handoverPoints={unassignedPoints}
+                onOpenVCR={onOpenVCR}
+                onCreateHandoverPoint={() => onCreateHandoverPoint(null)}
+              />
+            </div>
           </div>
           <ScrollBar orientation="horizontal" />
           <ScrollBar orientation="vertical" />
