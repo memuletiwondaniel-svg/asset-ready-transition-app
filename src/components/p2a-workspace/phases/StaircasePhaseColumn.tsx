@@ -112,17 +112,17 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
           }}
         >
           <div className="flex items-center justify-between mb-1">
-            <div className="flex items-center gap-2">
-              {/* Drag handle for phase reordering */}
-              <button 
-                ref={setActivatorNodeRef}
-                {...attributes} 
-                {...listeners}
-                className="cursor-grab active:cursor-grabbing p-1 -ml-1 rounded hover:bg-muted/50 opacity-0 group-hover:opacity-100 transition-opacity touch-none"
-                type="button"
-              >
-                <GripVertical className="w-4 h-4 text-muted-foreground" />
-              </button>
+            {/* Drag handle for phase reordering */}
+            <button 
+              ref={setActivatorNodeRef}
+              {...attributes} 
+              {...listeners}
+              className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-muted/50 opacity-0 group-hover:opacity-100 transition-opacity touch-none"
+              type="button"
+            >
+              <GripVertical className="w-4 h-4 text-muted-foreground" />
+            </button>
+            <div className="flex items-center gap-2 flex-1 justify-center">
               <div 
                 className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                 style={{ backgroundColor: phase.color }}
