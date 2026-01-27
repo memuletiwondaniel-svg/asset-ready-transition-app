@@ -3,12 +3,14 @@ import { DndContext, DragEndEvent, DragOverlay, useSensor, useSensors, PointerSe
 import { arrayMove } from '@dnd-kit/sortable';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Maximize2, Minimize2 } from 'lucide-react';
+import { Maximize2, Minimize2, Undo2 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useP2AHandoverPlan } from './hooks/useP2AHandoverPlan';
 import { useP2ASystems } from './hooks/useP2ASystems';
 import { useP2APhases, useP2AMilestones } from './hooks/useP2APhases';
 import { useP2AHandoverPoints, P2AHandoverPoint } from './hooks/useP2AHandoverPoints';
 import { useVCRRelationships } from './hooks/useVCRRelationships';
+import { useUndoStack } from './hooks/useUndoStack';
 import { EmptyWorkspaceState } from './EmptyWorkspaceState';
 import { SystemsPanel } from './systems/SystemsPanel';
 import { SystemCard } from './systems/SystemCard';
@@ -18,6 +20,7 @@ import { HandoverPointCard } from './handover-points/HandoverPointCard';
 import { VCRDetailOverlay } from './handover-points/VCRDetailOverlay';
 import { VCRRelationshipDialog } from './handover-points/VCRRelationshipDialog';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 interface P2AHandoverWorkspaceProps {
   oraPlanId: string;
@@ -84,6 +87,10 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
     createRelationship,
     isCreating: isCreatingRelationship,
   } = useVCRRelationships(plan?.id || '');
+
+  // Undo stack for workspace actions
+  const { pushAction, undo, canUndo, isUndoing, lastActionDescription } = useUndoStack();
+  const { toast } = useToast();
 
   const handoverPointsWithUi = useMemo(() => {
     if (!handoverPoints?.length) return [];
@@ -261,28 +268,61 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
         const isSamePhase = phaseId === vcr.phase_id;
         
         if (delta) {
-          const newX = Math.round(Math.max(0, Math.min(50, vcr.position_x + delta.x))); // Constrain X within phase
-          const newY = Math.round(Math.max(0, Math.min(320, vcr.position_y + delta.y))); // Constrain Y within phase
+          const oldX = vcr.position_x;
+          const oldY = vcr.position_y;
+          const oldPhaseId = vcr.phase_id;
+          const newX = Math.round(Math.max(0, Math.min(50, vcr.position_x + delta.x)));
+          const newY = Math.round(Math.max(0, Math.min(320, vcr.position_y + delta.y)));
+          const newPhaseId = isSamePhase ? undefined : phaseId;
 
-            // Immediate UI update (prevents snap-back between drag end and cache update)
-            setUiVcrOverrides((prev) => ({
-              ...prev,
-              [vcr.id]: {
-                position_x: newX,
-                position_y: newY,
-                phase_id: isSamePhase ? undefined : phaseId,
-              },
-            }));
+          // Immediate UI update (prevents snap-back between drag end and cache update)
+          setUiVcrOverrides((prev) => ({
+            ...prev,
+            [vcr.id]: {
+              position_x: newX,
+              position_y: newY,
+              phase_id: newPhaseId,
+            },
+          }));
           
           updateVCRPosition({ 
             id: vcr.id, 
             position_x: newX, 
             position_y: newY,
-            phase_id: isSamePhase ? undefined : phaseId
+            phase_id: newPhaseId
+          });
+
+          // Push undo action
+          const vcrShortCode = vcr.vcr_code.match(/^(VCR-\d+)/)?.[1] || 'VCR';
+          pushAction({
+            type: 'vcr_move',
+            description: `Move ${vcrShortCode}`,
+            undo: () => {
+              setUiVcrOverrides((prev) => ({
+                ...prev,
+                [vcr.id]: { position_x: oldX, position_y: oldY, phase_id: oldPhaseId },
+              }));
+              updateVCRPosition({ 
+                id: vcr.id, 
+                position_x: oldX, 
+                position_y: oldY,
+                phase_id: oldPhaseId
+              });
+            },
           });
         } else if (!isSamePhase) {
-          // Just move to new phase at default position
+          const oldPhaseId = vcr.phase_id;
           moveHandoverPointToPhase({ handoverPointId: vcr.id, newPhaseId: phaseId });
+
+          // Push undo action for phase change
+          const vcrShortCode = vcr.vcr_code.match(/^(VCR-\d+)/)?.[1] || 'VCR';
+          pushAction({
+            type: 'vcr_move',
+            description: `Move ${vcrShortCode} to phase`,
+            undo: () => {
+              moveHandoverPointToPhase({ handoverPointId: vcr.id, newPhaseId: oldPhaseId || '' });
+            },
+          });
         }
         return;
       }
@@ -339,6 +379,35 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
           : "flex-1 h-full"
       )}
     >
+      {/* Undo Button - Fixed position */}
+      {canUndo && (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="fixed bottom-4 left-4 z-50 shadow-lg bg-background"
+                onClick={async () => {
+                  const success = await undo();
+                  if (success) {
+                    toast({ title: 'Undone', description: lastActionDescription || 'Action undone' });
+                  }
+                }}
+                disabled={isUndoing}
+              >
+                <Undo2 className="h-4 w-4 mr-1" />
+                Undo
+                <kbd className="ml-2 text-xs bg-muted px-1 rounded">⌘Z</kbd>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Undo: {lastActionDescription}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )}
+
     <DndContext
       sensors={sensors}
       collisionDetection={customCollisionDetection}
