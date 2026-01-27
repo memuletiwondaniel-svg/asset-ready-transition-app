@@ -35,7 +35,7 @@ export const UnassignedVCRColumn: React.FC<UnassignedVCRColumnProps> = ({
     <div 
       ref={setNodeRef}
       className={cn(
-        "w-full border-t mt-4 pt-3 transition-colors",
+        "w-full border-t pt-3 transition-colors",
         isOver ? 'border-primary bg-primary/5' : 'border-border bg-card/30'
       )}
     >
