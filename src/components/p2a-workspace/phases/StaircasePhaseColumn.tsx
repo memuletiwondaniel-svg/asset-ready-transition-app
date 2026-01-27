@@ -177,13 +177,6 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
             </div>
           )}
         </div>
-
-        {/* Flow indicator to next phase */}
-        {!isLastPhase && (
-          <div className="flex justify-center py-2">
-            <ArrowDown className="w-4 h-4 text-muted-foreground/30" />
-          </div>
-        )}
       </div>
 
       <DeletePhaseDialog
