@@ -392,34 +392,6 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
           : "flex-1 h-full"
       )}
     >
-      {/* Undo Button - Fixed position */}
-      {canUndo && (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="fixed bottom-4 left-4 z-50 shadow-lg bg-background"
-                onClick={async () => {
-                  const success = await undo();
-                  if (success) {
-                    toast({ title: 'Undone', description: lastActionDescription || 'Action undone' });
-                  }
-                }}
-                disabled={isUndoing}
-              >
-                <Undo2 className="h-4 w-4 mr-1" />
-                Undo
-                <kbd className="ml-2 text-xs bg-muted px-1 rounded">⌘Z</kbd>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Undo: {lastActionDescription}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      )}
 
     <DndContext
       sensors={sensors}
@@ -465,6 +437,16 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
           onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
           onAssignVCRToPhase={(vcrId, phaseId) => moveHandoverPointToPhase({ handoverPointId: vcrId, newPhaseId: phaseId })}
           isCreatingPhase={isAddingPhase}
+          canUndo={canUndo}
+          isUndoing={isUndoing}
+          lastActionDescription={lastActionDescription}
+          onUndo={async () => {
+            const success = await undo();
+            if (success) {
+              toast({ title: 'Undone', description: lastActionDescription || 'Action undone' });
+            }
+            return success;
+          }}
         />
       </div>
 

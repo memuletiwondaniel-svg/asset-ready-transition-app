@@ -480,10 +480,11 @@ export const useP2AHandoverPoints = (handoverPlanId: string) => {
 
       return newVcr;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['p2a-handover-points', handoverPlanId] });
-      queryClient.invalidateQueries({ queryKey: ['p2a-systems'] });
-      queryClient.invalidateQueries({ queryKey: ['vcr-relationships', handoverPlanId] });
+    onSuccess: async () => {
+      // Force immediate refetch to ensure UI updates
+      await queryClient.invalidateQueries({ queryKey: ['p2a-handover-points', handoverPlanId] });
+      await queryClient.invalidateQueries({ queryKey: ['p2a-systems', handoverPlanId] });
+      await queryClient.invalidateQueries({ queryKey: ['vcr-relationships', handoverPlanId] });
       toast({ title: 'Success', description: 'VCRs combined successfully' });
     },
     onError: (error) => {
