@@ -163,8 +163,11 @@ export const useP2AHandoverPoints = (handoverPlanId: string) => {
 
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['p2a-handover-points', handoverPlanId] });
+    onSuccess: async () => {
+      // Invalidate both VCRs and systems - cascade delete removes assignments,
+      // so systems need to refresh to show as unassigned
+      await queryClient.invalidateQueries({ queryKey: ['p2a-handover-points', handoverPlanId] });
+      await queryClient.invalidateQueries({ queryKey: ['p2a-systems', handoverPlanId] });
       toast({ title: 'Success', description: 'Handover point deleted' });
     },
   });
