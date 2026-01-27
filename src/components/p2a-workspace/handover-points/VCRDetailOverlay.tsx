@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { 
   Target, 
   Layers, 
@@ -14,9 +15,11 @@ import {
   FileText,
   BookOpen,
   Settings2,
+  Trash2,
 } from 'lucide-react';
-import { P2AHandoverPoint } from '../hooks/useP2AHandoverPoints';
+import { P2AHandoverPoint, useP2AHandoverPoints } from '../hooks/useP2AHandoverPoints';
 import { useVCRPrerequisites } from '../hooks/useVCRPrerequisites';
+import { useHandoverPointSystems } from '../hooks/useP2AHandoverPoints';
 import { VCROverviewTab } from './VCROverviewTab';
 import { VCRChecklistTab } from './VCRChecklistTab';
 import { VCRQualificationsTab } from './VCRQualificationsTab';
@@ -24,6 +27,7 @@ import { VCRSystemsTab } from './VCRSystemsTab';
 import { VCRTrainingTab } from './VCRTrainingTab';
 import { VCRProceduresTab } from './VCRProceduresTab';
 import { VCRDocumentationTab } from './VCRDocumentationTab';
+import { DeleteVCRDialog } from './DeleteVCRDialog';
 import { cn } from '@/lib/utils';
 
 // Placeholder components for new tabs
@@ -45,6 +49,8 @@ interface VCRDetailOverlayProps {
   handoverPoint: P2AHandoverPoint;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onDelete?: () => void;
+  isDeleting?: boolean;
 }
 
 const getStatusConfig = (status: string) => {
@@ -64,13 +70,25 @@ export const VCRDetailOverlay: React.FC<VCRDetailOverlayProps> = ({
   handoverPoint,
   open,
   onOpenChange,
+  onDelete,
+  isDeleting,
 }) => {
   const [activeTab, setActiveTab] = useState('overview');
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { progress } = useVCRPrerequisites(handoverPoint.id);
+  const { systems } = useHandoverPointSystems(handoverPoint.id);
   const statusConfig = getStatusConfig(handoverPoint.status);
 
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (onDelete) {
+      onDelete();
+      setShowDeleteDialog(false);
+      onOpenChange(false);
+    }
   };
 
   return (
@@ -94,9 +112,22 @@ export const VCRDetailOverlay: React.FC<VCRDetailOverlayProps> = ({
                 </div>
               </div>
             </div>
-            <div className="text-right">
-              <div className={cn('text-3xl font-bold', statusConfig.textColor)}>{progress.overall}%</div>
-              <div className="text-xs text-muted-foreground">Overall Complete</div>
+            <div className="flex items-start gap-4">
+              <div className="text-right">
+                <div className={cn('text-3xl font-bold', statusConfig.textColor)}>{progress.overall}%</div>
+                <div className="text-xs text-muted-foreground">Overall Complete</div>
+              </div>
+              {onDelete && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                  onClick={() => setShowDeleteDialog(true)}
+                  title="Delete VCR"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              )}
             </div>
           </div>
         </DialogHeader>
@@ -174,6 +205,16 @@ export const VCRDetailOverlay: React.FC<VCRDetailOverlayProps> = ({
           </ScrollArea>
         </Tabs>
       </DialogContent>
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteVCRDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        vcr={handoverPoint}
+        systemsCount={systems.length}
+        onConfirm={handleDeleteConfirm}
+        isDeleting={isDeleting}
+      />
     </Dialog>
   );
 };

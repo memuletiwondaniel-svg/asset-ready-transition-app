@@ -78,8 +78,10 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
     reorderHandoverPoints,
     updateVCRPosition,
     combineVCRs,
+    deleteHandoverPoint,
     isCreating: isCreatingVCR,
     isCombining,
+    isDeleting: isDeletingVCR,
   } = useP2AHandoverPoints(plan?.id || '');
 
   // VCR Relationships hook
@@ -487,6 +489,11 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
           handoverPoint={selectedVCR}
           open={!!selectedVCR}
           onOpenChange={(open) => !open && setSelectedVCR(null)}
+          onDelete={() => {
+            deleteHandoverPoint(selectedVCR.id);
+            setSelectedVCR(null);
+          }}
+          isDeleting={isDeletingVCR}
         />
       )}
 
