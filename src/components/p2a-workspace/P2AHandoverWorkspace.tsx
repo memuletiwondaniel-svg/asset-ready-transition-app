@@ -241,6 +241,20 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
       const overType = over.data.current?.type;
       const overId = over.id.toString();
       
+      // FIRST: Check if dropping on another VCR - open relationship dialog
+      // Must check this BEFORE phase check since VCRs are inside phases
+      if (overType === 'vcr' || overId.startsWith('vcr-')) {
+        const targetVCR = over.data.current?.handoverPoint;
+        if (targetVCR && vcr.id !== targetVCR.id) {
+          // Open the relationship dialog
+          setVcrRelationshipContext({ source: vcr, target: targetVCR });
+          setShowVCRRelationshipDialog(true);
+          return;
+        }
+        // If dropped on self, just return without action
+        return;
+      }
+      
       // If dropping on a phase (same or different)
       if (overId.startsWith('phase-') || overType === 'phase') {
         const phaseId = overId.startsWith('phase-') ? overId.replace('phase-', '') : overId;
@@ -269,17 +283,6 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
         } else if (!isSamePhase) {
           // Just move to new phase at default position
           moveHandoverPointToPhase({ handoverPointId: vcr.id, newPhaseId: phaseId });
-        }
-        return;
-      }
-      
-      // If dropping on another VCR - open relationship dialog
-      if (overType === 'vcr') {
-        const targetVCR = over.data.current?.handoverPoint;
-        if (targetVCR && vcr.id !== targetVCR.id) {
-          // Open the relationship dialog instead of just updating position
-          setVcrRelationshipContext({ source: vcr, target: targetVCR });
-          setShowVCRRelationshipDialog(true);
         }
         return;
       }
