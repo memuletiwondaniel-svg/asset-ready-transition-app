@@ -264,7 +264,7 @@ export const PhasesTimeline: React.FC<PhasesTimelineProps> = ({
         </ScrollArea>
 
         {/* Unassigned VCRs - Fixed at bottom, always visible */}
-        <div className="flex-shrink-0 px-4 pb-4">
+        <div className="flex-shrink-0 px-4 py-2 border-t border-border">
           <UnassignedVCRColumn
             handoverPoints={unassignedPoints}
             onOpenVCR={onOpenVCR}
