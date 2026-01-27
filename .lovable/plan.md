@@ -1,212 +1,159 @@
 
 
-# VCR Relationship Feature: Drop VCR on VCR Interaction
+# Phase Deletion Warning & Unassigned VCRs Layout Redesign
 
 ## Overview
+This plan implements two connected features:
+1. **Phase Deletion Warning**: When a user attempts to delete a phase, show a confirmation dialog that warns them about the implications and automatically moves all VCRs in that phase to the "Unassigned VCRs" section upon confirmation.
+2. **Unassigned VCRs Section Redesign**: Reposition the "Unassigned VCRs" section from a vertical column on the left side to a horizontal bar that always appears **beneath** all phase columns at the bottom of the workspace.
 
-When a user drops one VCR onto another VCR in the P2A Handover Workspace, an overlay dialog will appear offering three relationship options:
-1. **Prerequisite**: The dropped VCR must be completed before the target VCR
-2. **Dependent**: The target VCR can only be completed when the dropped VCR is completed  
-3. **Combine**: Merge both VCRs into a single new VCR with a user-provided name and auto-generated ID
+## Changes Summary
+
+### 1. Create Delete Phase Dialog Component
+**New File: `src/components/p2a-workspace/phases/DeletePhaseDialog.tsx`**
+
+Create a new confirmation dialog following the existing `DeleteVCRDialog` pattern:
+- Display phase name and a warning icon
+- Show the count of VCRs that will be moved to "Unassigned"
+- List implications:
+  - VCRs will be moved to the Unassigned section (not deleted)
+  - Systems assigned to those VCRs will remain assigned
+  - Phase milestones links will be removed
+- Include Cancel and "Delete Phase" action buttons
+- Accept props: `open`, `onOpenChange`, `phase`, `vcrCount`, `onConfirm`, `isDeleting`
+
+### 2. Modify useP2APhases Hook
+**File: `src/components/p2a-workspace/hooks/useP2APhases.ts`**
+
+Extend the `deletePhase` mutation to:
+1. Before deleting the phase, update all VCRs with that `phase_id` to set `phase_id = null` (moving them to unassigned)
+2. Then delete the phase
+3. Invalidate both `p2a-phases` and `p2a-handover-points` queries on success
+
+```text
+Current Flow:
+  deletePhase(id) → DELETE phase → invalidate phases
+
+New Flow:
+  deletePhase(id) → UPDATE VCRs SET phase_id = null WHERE phase_id = id 
+                  → DELETE phase 
+                  → invalidate phases + handover-points
+```
+
+### 3. Update StaircasePhaseColumn to Show Confirmation Dialog
+**File: `src/components/p2a-workspace/phases/StaircasePhaseColumn.tsx`**
+
+- Add local state for `showDeleteDialog`
+- Change the dropdown menu item to open the dialog instead of calling `onDeletePhase` directly
+- Pass the VCR count (from `handoverPoints.length`) to the dialog
+- Render the `DeletePhaseDialog` component
+
+### 4. Redesign Unassigned VCRs Section Layout
+**File: `src/components/p2a-workspace/phases/PhasesTimeline.tsx`**
+
+Restructure the layout:
+```text
+Current Layout:
+┌────────────────────────────────────────────────────┐
+│ [Unassigned] [Phase 1] [Phase 2] [Phase 3] [+ Add] │
+│   Column       Column    Column    Column          │
+└────────────────────────────────────────────────────┘
+
+New Layout:
+┌────────────────────────────────────────────────────┐
+│      [Phase 1] [Phase 2] [Phase 3] [+ Add Phase]   │  ← Horizontal row of phases
+├────────────────────────────────────────────────────┤
+│ ═══════════ Unassigned VCRs (Horizontal Bar) ════  │  ← Sticky bottom row
+└────────────────────────────────────────────────────┘
+```
+
+- Move `UnassignedVCRColumn` outside the phases flex container
+- Position it as a horizontal bar at the bottom of the workspace
+- Use `flex-col` for the main container to stack phases above unassigned row
+- The unassigned section should use `flex-wrap` for horizontal VCR card layout
+
+### 5. Update UnassignedVCRColumn for Horizontal Layout
+**File: `src/components/p2a-workspace/phases/UnassignedVCRColumn.tsx`**
+
+Modify the component to work as a horizontal bottom bar:
+- Change from vertical column (`w-72`) to full-width horizontal bar
+- Adjust header to be inline/compact
+- VCR cards arranged in horizontal row with flex-wrap
+- Add a collapsible/expandable behavior (optional enhancement)
+- Keep droppable functionality for drag-and-drop
+
+---
+
+## Technical Details
+
+### DeletePhaseDialog Component Structure
+```text
+AlertDialog
+├── AlertDialogContent
+│   ├── AlertDialogHeader
+│   │   ├── Warning Icon + Phase Name
+│   │   └── AlertDialogDescription
+│   │       ├── "You are about to delete this phase"
+│   │       └── Warning Box (amber styled)
+│   │           ├── "X VCRs will be moved to Unassigned"
+│   │           ├── "Systems will remain assigned to their VCRs"
+│   │           └── "Phase timeline links will be removed"
+│   └── AlertDialogFooter
+│       ├── Cancel button
+│       └── Delete Phase button (destructive)
+```
+
+### Database Operations on Phase Delete
+```text
+1. UPDATE p2a_handover_points 
+   SET phase_id = NULL 
+   WHERE phase_id = [deleted_phase_id]
+
+2. DELETE FROM p2a_project_phases 
+   WHERE id = [deleted_phase_id]
+```
+
+### Layout CSS Structure
+```text
+PhasesTimeline (flex-1 flex flex-col)
+├── Header (milestones bar)
+├── ScrollArea (flex-1)
+│   ├── Phase Columns Container (flex gap-4)
+│   │   ├── Phase 1
+│   │   ├── Phase 2
+│   │   ├── ...
+│   │   └── Add Phase Button
+│   └── Unassigned VCRs Bar (w-full, border-t, mt-4)
+│       ├── Compact Header ("Unassigned VCRs" + count)
+│       └── VCR Cards Container (flex flex-wrap gap-2)
+```
+
+---
+
+## Files to Create/Modify
+
+| File | Action | Description |
+|------|--------|-------------|
+| `src/components/p2a-workspace/phases/DeletePhaseDialog.tsx` | Create | New confirmation dialog component |
+| `src/components/p2a-workspace/hooks/useP2APhases.ts` | Modify | Update deletePhase to move VCRs first |
+| `src/components/p2a-workspace/phases/StaircasePhaseColumn.tsx` | Modify | Add dialog state and render DeletePhaseDialog |
+| `src/components/p2a-workspace/phases/PhasesTimeline.tsx` | Modify | Restructure layout with bottom unassigned bar |
+| `src/components/p2a-workspace/phases/UnassignedVCRColumn.tsx` | Modify | Convert to horizontal bar layout |
 
 ---
 
 ## User Experience Flow
 
-```text
-+------------------+       Drop VCR-004        +------------------+
-|     VCR-004      | -----------------------> |     VCR-001      |
-|  "Water System"  |                          |  "Power System"  |
-+------------------+                          +------------------+
-                                                      |
-                                                      v
-                              +--------------------------------+
-                              |    VCR Relationship Dialog     |
-                              |--------------------------------|
-                              |  What would you like to do?    |
-                              |                                |
-                              |  ( ) Prerequisite              |
-                              |      VCR-004 must complete     |
-                              |      before VCR-001            |
-                              |                                |
-                              |  ( ) Dependent                 |
-                              |      VCR-001 can only complete |
-                              |      when VCR-004 is done      |
-                              |                                |
-                              |  ( ) Combine                   |
-                              |      Merge into single VCR     |
-                              |                                |
-                              |  [Cancel]  [Confirm]           |
-                              +--------------------------------+
-                                             |
-                         If "Combine" selected & confirmed
-                                             v
-                              +--------------------------------+
-                              |      Name Combined VCR         |
-                              |--------------------------------|
-                              |  New VCR Name:                 |
-                              |  [_________________________]   |
-                              |                                |
-                              |  New ID: VCR-XXX-DPYYY (auto)  |
-                              |                                |
-                              |  [Cancel]  [Create Combined]   |
-                              +--------------------------------+
-```
-
----
-
-## Technical Implementation
-
-### 1. Database Schema (New Table)
-
-A new table `p2a_vcr_relationships` will store inter-VCR dependencies:
-
-```sql
-CREATE TABLE public.p2a_vcr_relationships (
-  id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-  source_vcr_id UUID NOT NULL REFERENCES public.p2a_handover_points(id) ON DELETE CASCADE,
-  target_vcr_id UUID NOT NULL REFERENCES public.p2a_handover_points(id) ON DELETE CASCADE,
-  relationship_type TEXT NOT NULL CHECK (relationship_type IN ('PREREQUISITE', 'DEPENDENT')),
-  created_by UUID REFERENCES auth.users(id),
-  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-  
-  -- Prevent duplicate relationships
-  UNIQUE(source_vcr_id, target_vcr_id, relationship_type)
-);
-
--- Enable RLS
-ALTER TABLE public.p2a_vcr_relationships ENABLE ROW LEVEL SECURITY;
-
--- Policy for authenticated users
-CREATE POLICY "Authenticated users can manage VCR relationships"
-  ON public.p2a_vcr_relationships
-  FOR ALL
-  USING (auth.role() = 'authenticated')
-  WITH CHECK (auth.role() = 'authenticated');
-```
-
-### 2. New React Components
-
-#### a. VCR Relationship Dialog Component
-**File:** `src/components/p2a-workspace/handover-points/VCRRelationshipDialog.tsx`
-
-A new dialog component that:
-- Displays both VCR names/codes clearly
-- Offers radio button selection for relationship type
-- Shows contextual descriptions for each option
-- Handles the "Combine" flow with a secondary name input step
-
-#### b. Combine VCR Name Input (within same dialog)
-- Conditional rendering when "Combine" is selected
-- Input field for new VCR name
-- Display auto-generated VCR code preview
-
-### 3. Hook Updates
-
-#### a. New Hook: `useVCRRelationships`
-**File:** `src/components/p2a-workspace/hooks/useVCRRelationships.ts`
-
-```typescript
-// Manages VCR relationships
-export const useVCRRelationships = (handoverPlanId: string) => {
-  // Query to fetch all relationships for the plan
-  // Mutation to create a relationship (PREREQUISITE or DEPENDENT)
-  // Mutation to delete a relationship
-  
-  return {
-    relationships,
-    createRelationship,
-    deleteRelationship,
-    isCreating,
-  };
-};
-```
-
-#### b. Update `useP2AHandoverPoints`
-- Add a `combineVCRs` mutation that:
-  1. Creates a new VCR with the provided name
-  2. Migrates all systems from both source VCRs to the new VCR
-  3. Migrates prerequisites, documents, training items to the new VCR
-  4. Deletes the two original VCRs
-
-### 4. Workspace Integration
-
-#### a. Update `P2AHandoverWorkspace.tsx`
-
-Modify the drag-end handler to detect VCR-on-VCR drops:
-
-```typescript
-// In handleDragEnd:
-if (active.data.current?.type === 'vcr' && over.data.current?.type === 'vcr') {
-  const sourceVCR = active.data.current.handoverPoint;
-  const targetVCR = over.data.current.handoverPoint;
-  
-  // Don't open dialog if dropping on self
-  if (sourceVCR.id !== targetVCR.id) {
-    setVcrRelationshipContext({ source: sourceVCR, target: targetVCR });
-    setShowVCRRelationshipDialog(true);
-  }
-  return; // Prevent position update
-}
-```
-
-Add state management:
-```typescript
-const [showVCRRelationshipDialog, setShowVCRRelationshipDialog] = useState(false);
-const [vcrRelationshipContext, setVcrRelationshipContext] = useState<{
-  source: P2AHandoverPoint;
-  target: P2AHandoverPoint;
-} | null>(null);
-```
-
-### 5. Files to Create/Modify
-
-| Action | File Path |
-|--------|-----------|
-| Create | `supabase/migrations/xxx_create_vcr_relationships.sql` |
-| Create | `src/components/p2a-workspace/hooks/useVCRRelationships.ts` |
-| Create | `src/components/p2a-workspace/handover-points/VCRRelationshipDialog.tsx` |
-| Modify | `src/components/p2a-workspace/P2AHandoverWorkspace.tsx` |
-| Modify | `src/components/p2a-workspace/hooks/useP2AHandoverPoints.ts` |
-| Update | `src/integrations/supabase/types.ts` (auto-generated after migration) |
-
----
-
-## Implementation Steps
-
-### Step 1: Database Migration
-Create the `p2a_vcr_relationships` table with proper foreign keys and RLS policies.
-
-### Step 2: Create useVCRRelationships Hook
-Build the React Query hook for managing VCR relationships with create/delete mutations.
-
-### Step 3: Add combineVCRs Mutation
-Extend `useP2AHandoverPoints` with a complex mutation that merges two VCRs:
-- Creates new VCR with auto-generated code
-- Transfers all associated data (systems, prerequisites, documents, training, procedures)
-- Cleans up old VCRs
-
-### Step 4: Create VCRRelationshipDialog Component
-Build the dialog UI with:
-- Radio group for relationship type selection
-- Dynamic descriptions based on VCR names
-- Conditional name input for "Combine" option
-- Loading states during mutations
-
-### Step 5: Integrate into Workspace
-- Add new state variables for dialog visibility and context
-- Modify `handleDragEnd` to intercept VCR-on-VCR drops
-- Render the new dialog component
-- Connect callbacks to the appropriate mutations
-
----
-
-## Visual Design
-
-The dialog will follow existing patterns:
-- Use the standard `Dialog` component from `@/components/ui/dialog`
-- Radio group with `@/components/ui/radio-group`
-- Input field with `@/components/ui/input`
-- Muted background boxes for VCR previews (matching CreateHandoverPointDialog style)
-- Clear labeling with VCR codes displayed in monospace font
+1. User clicks "Delete Phase" from phase dropdown menu
+2. Confirmation dialog appears showing:
+   - Phase name being deleted
+   - Number of VCRs that will be moved
+   - Warning about implications
+3. User clicks "Cancel" → Dialog closes, nothing happens
+4. User clicks "Delete Phase" → 
+   - VCRs in that phase move to Unassigned section (visible at bottom)
+   - Phase is deleted
+   - Toast confirms "Phase deleted"
+5. User can see moved VCRs in the horizontal "Unassigned VCRs" bar at the bottom
+6. User can drag VCRs from Unassigned bar back into other phases
 
