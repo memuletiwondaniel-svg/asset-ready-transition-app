@@ -106,6 +106,10 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
             "group rounded-t-xl border border-b-0 p-3 transition-all duration-200 hover:shadow-md hover:bg-accent/50",
             isOver ? 'border-primary bg-primary/10' : 'border-border bg-card'
           )}
+          style={{ 
+            borderTopColor: phase.color,
+            borderTopWidth: '3px',
+          }}
         >
           <div className="flex items-center justify-between mb-1">
             <div className="flex items-center gap-2">
@@ -119,9 +123,10 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
               >
                 <GripVertical className="w-4 h-4 text-muted-foreground" />
               </button>
-              <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold">
-                {phaseIndex + 1}
-              </div>
+              <div 
+                className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                style={{ backgroundColor: phase.color }}
+              />
               <h3 className="font-semibold text-sm truncate">{phase.name}</h3>
             </div>
             <DropdownMenu>
