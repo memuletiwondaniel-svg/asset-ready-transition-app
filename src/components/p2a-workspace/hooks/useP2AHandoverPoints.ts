@@ -512,6 +512,7 @@ export const useP2AHandoverPoints = (handoverPlanId: string) => {
     combineVCRs: combineVCRs.mutate,
     isCreating: createHandoverPoint.isPending,
     isCombining: combineVCRs.isPending,
+    isDeleting: deleteHandoverPoint.isPending,
   };
 };
 
