@@ -84,7 +84,7 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
 
   if (isCollapsed) {
     return (
-      <div className="w-12 h-full border-l border-border bg-card flex flex-col items-center py-4">
+      <div className="w-12 h-full border-l border-border bg-card flex flex-col items-center py-4 ml-2">
         <Button
           variant="ghost"
           size="icon"
@@ -102,7 +102,7 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
 
   return (
     <>
-      <div className="w-48 h-full border-l border-border bg-card flex flex-col">
+      <div className="w-48 h-full border-l border-border bg-card flex flex-col ml-2">
         {/* Header */}
         <div className="p-4 border-b border-border">
           <div className="flex items-center justify-between mb-3">
