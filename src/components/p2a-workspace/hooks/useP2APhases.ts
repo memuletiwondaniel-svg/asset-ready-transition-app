@@ -196,16 +196,26 @@ export const useP2APhases = (handoverPlanId: string) => {
 
   const deletePhase = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
+      // First, move all VCRs in this phase to unassigned (phase_id = null)
+      const { error: updateError } = await supabase
+        .from('p2a_handover_points')
+        .update({ phase_id: null })
+        .eq('phase_id', id);
+
+      if (updateError) throw updateError;
+
+      // Then delete the phase
+      const { error: deleteError } = await supabase
         .from('p2a_project_phases')
         .delete()
         .eq('id', id);
 
-      if (error) throw error;
+      if (deleteError) throw deleteError;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['p2a-phases', handoverPlanId] });
-      toast({ title: 'Success', description: 'Phase deleted' });
+      queryClient.invalidateQueries({ queryKey: ['p2a-handover-points', handoverPlanId] });
+      toast({ title: 'Success', description: 'Phase deleted. VCRs moved to Unassigned.' });
     },
   });
 

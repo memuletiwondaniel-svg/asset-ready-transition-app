@@ -1,11 +1,11 @@
-import React from 'react';
-import { Badge } from '@/components/ui/badge';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, MoreVertical, Trash2, Edit, ArrowDown, CheckCircle2, GripVertical } from 'lucide-react';
+import { Plus, MoreVertical, Trash2, Edit, ArrowDown, GripVertical } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { P2APhase } from '../hooks/useP2APhases';
 import { P2AHandoverPoint } from '../hooks/useP2AHandoverPoints';
 import { DraggableHandoverPointCard } from '../handover-points/HandoverPointCard';
+import { DeletePhaseDialog } from './DeletePhaseDialog';
 import { useDroppable } from '@dnd-kit/core';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -38,6 +38,9 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
   isFirstPhase,
   isLastPhase,
 }) => {
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const { isOver, setNodeRef: setDroppableRef } = useDroppable({
     id: `phase-${phase.id}`,
     data: {
@@ -50,7 +53,7 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
     attributes,
     listeners,
     setNodeRef: setSortableRef,
-   setActivatorNodeRef,
+    setActivatorNodeRef,
     transform,
     transition,
     isDragging,
@@ -77,110 +80,131 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
   // Sort VCRs by position for consistent ordering
   const sortedPoints = [...handoverPoints].sort((a, b) => a.position_y - b.position_y);
 
-  return (
-    <div 
-      ref={setNodeRef}
-      className={cn(
-        "flex-shrink-0 w-72 flex flex-col",
-        isDragging && "opacity-50 z-50"
-      )}
-      style={style}
-    >
-      {/* Phase Header Card */}
-      <div 
-        className={cn(
-          "group rounded-t-xl border border-b-0 p-3 transition-all duration-200 hover:shadow-md hover:bg-accent/50",
-          isOver ? 'border-primary bg-primary/10' : 'border-border bg-card'
-        )}
-      >
-        <div className="flex items-center justify-between mb-1">
-          <div className="flex items-center gap-2">
-            {/* Drag handle for phase reordering */}
-            <button 
-              ref={setActivatorNodeRef}
-              {...attributes} 
-              {...listeners}
-              className="cursor-grab active:cursor-grabbing p-1 -ml-1 rounded hover:bg-muted/50 opacity-0 group-hover:opacity-100 transition-opacity touch-none"
-              type="button"
-            >
-              <GripVertical className="w-4 h-4 text-muted-foreground" />
-            </button>
-            <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold">
-              {phaseIndex + 1}
-            </div>
-            <h3 className="font-semibold text-sm truncate">{phase.name}</h3>
-          </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity">
-                <MoreVertical className="w-3.5 h-3.5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-popover z-50">
-              <DropdownMenuItem onClick={onEditPhase}>
-                <Edit className="w-4 h-4 mr-2" />
-                Edit Phase
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={onDeletePhase} className="text-destructive">
-                <Trash2 className="w-4 h-4 mr-2" />
-                Delete Phase
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
+  const handleDeleteConfirm = async () => {
+    setIsDeleting(true);
+    try {
+      onDeletePhase();
+      setShowDeleteDialog(false);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
-      {/* VCRs Container - Horizontal row layout */}
+  return (
+    <>
       <div 
+        ref={setNodeRef}
         className={cn(
-          "border border-t-0 border-b-0 p-3 min-h-[120px] max-h-[360px] overflow-y-auto transition-colors",
-          isOver ? 'border-primary bg-primary/5' : 'border-border bg-card/50'
+          "flex-shrink-0 w-72 flex flex-col",
+          isDragging && "opacity-50 z-50"
         )}
+        style={style}
       >
-        {sortedPoints.length === 0 ? (
-          <div className="flex items-center justify-center h-full min-h-[100px]">
-            <div className="text-center py-4">
-              <ArrowDown className="w-6 h-6 mx-auto mb-2 text-muted-foreground/30" />
-              <div className="text-xs text-muted-foreground">
-                Drop VCRs here
+        {/* Phase Header Card */}
+        <div 
+          className={cn(
+            "group rounded-t-xl border border-b-0 p-3 transition-all duration-200 hover:shadow-md hover:bg-accent/50",
+            isOver ? 'border-primary bg-primary/10' : 'border-border bg-card'
+          )}
+        >
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center gap-2">
+              {/* Drag handle for phase reordering */}
+              <button 
+                ref={setActivatorNodeRef}
+                {...attributes} 
+                {...listeners}
+                className="cursor-grab active:cursor-grabbing p-1 -ml-1 rounded hover:bg-muted/50 opacity-0 group-hover:opacity-100 transition-opacity touch-none"
+                type="button"
+              >
+                <GripVertical className="w-4 h-4 text-muted-foreground" />
+              </button>
+              <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold">
+                {phaseIndex + 1}
+              </div>
+              <h3 className="font-semibold text-sm truncate">{phase.name}</h3>
+            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <MoreVertical className="w-3.5 h-3.5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-popover z-50">
+                <DropdownMenuItem onClick={onEditPhase}>
+                  <Edit className="w-4 h-4 mr-2" />
+                  Edit Phase
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setShowDeleteDialog(true)} className="text-destructive">
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete Phase
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+
+        {/* VCRs Container - Horizontal row layout */}
+        <div 
+          className={cn(
+            "border border-t-0 border-b-0 p-3 min-h-[120px] max-h-[360px] overflow-y-auto transition-colors",
+            isOver ? 'border-primary bg-primary/5' : 'border-border bg-card/50'
+          )}
+        >
+          {sortedPoints.length === 0 ? (
+            <div className="flex items-center justify-center h-full min-h-[100px]">
+              <div className="text-center py-4">
+                <ArrowDown className="w-6 h-6 mx-auto mb-2 text-muted-foreground/30" />
+                <div className="text-xs text-muted-foreground">
+                  Drop VCRs here
+                </div>
               </div>
             </div>
-          </div>
-        ) : (
-          <div className="flex flex-wrap gap-2 content-start">
-            {sortedPoints.map((point) => (
-              <DraggableHandoverPointCard
-                key={point.id}
-                handoverPoint={point}
-                onClick={() => onOpenVCR(point)}
-              />
-            ))}
+          ) : (
+            <div className="flex flex-wrap gap-2 content-start">
+              {sortedPoints.map((point) => (
+                <DraggableHandoverPointCard
+                  key={point.id}
+                  handoverPoint={point}
+                  onClick={() => onOpenVCR(point)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Add VCR Button - Fixed at bottom */}
+        <div className={cn(
+          "border border-t-0 rounded-b-xl p-2 transition-colors",
+          isOver ? 'border-primary bg-primary/5' : 'border-border bg-card/50'
+        )}>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="w-full gap-1 text-xs border border-dashed border-border/50 hover:border-primary/50"
+            onClick={onCreateHandoverPoint}
+          >
+            <Plus className="w-3 h-3" />
+            Add VCR
+          </Button>
+        </div>
+
+        {/* Flow indicator to next phase */}
+        {!isLastPhase && (
+          <div className="flex justify-center py-2">
+            <ArrowDown className="w-4 h-4 text-muted-foreground/30" />
           </div>
         )}
       </div>
 
-      {/* Add VCR Button - Fixed at bottom */}
-      <div className={cn(
-        "border border-t-0 rounded-b-xl p-2 transition-colors",
-        isOver ? 'border-primary bg-primary/5' : 'border-border bg-card/50'
-      )}>
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="w-full gap-1 text-xs border border-dashed border-border/50 hover:border-primary/50"
-          onClick={onCreateHandoverPoint}
-        >
-          <Plus className="w-3 h-3" />
-          Add VCR
-        </Button>
-      </div>
-
-      {/* Flow indicator to next phase */}
-      {!isLastPhase && (
-        <div className="flex justify-center py-2">
-          <ArrowDown className="w-4 h-4 text-muted-foreground/30" />
-        </div>
-      )}
-    </div>
+      <DeletePhaseDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        phase={phase}
+        vcrCount={handoverPoints.length}
+        onConfirm={handleDeleteConfirm}
+        isDeleting={isDeleting}
+      />
+    </>
   );
 };
