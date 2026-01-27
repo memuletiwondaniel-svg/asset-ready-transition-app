@@ -204,15 +204,17 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
                     {searchQuery ? 'No matching systems' : 'No unassigned systems'}
                   </div>
                 ) : (
-                  <div className="flex flex-wrap gap-1.5">
-                    {filteredUnassigned.map(system => (
-                      <DraggableSystemCard
-                        key={system.id}
-                        system={system}
-                        compact
-                        onClick={() => setSelectedSystem(system)}
-                      />
-                    ))}
+                  <div className="max-h-[200px] overflow-y-auto pr-1">
+                    <div className="flex flex-wrap gap-1.5">
+                      {filteredUnassigned.map(system => (
+                        <DraggableSystemCard
+                          key={system.id}
+                          system={system}
+                          compact
+                          onClick={() => setSelectedSystem(system)}
+                        />
+                      ))}
+                    </div>
                   </div>
                 )}
               </CollapsibleContent>
