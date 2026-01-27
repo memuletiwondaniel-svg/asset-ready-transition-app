@@ -40,49 +40,39 @@ export const UnassignedVCRColumn: React.FC<UnassignedVCRColumnProps> = ({
       )}
     >
       {/* Compact Header */}
-      <div className="flex items-center justify-between px-2 mb-2">
-        <div className="flex items-center gap-2">
-          <Inbox className="w-4 h-4 text-muted-foreground" />
-          <span className="text-xs font-medium text-muted-foreground">
-            Unassigned VCRs
+      <div className="flex items-center gap-2 px-2 mb-2">
+        <Inbox className="w-4 h-4 text-muted-foreground" />
+        <span className="text-xs font-medium text-muted-foreground">
+          Unassigned VCRs
+        </span>
+        {sortedPoints.length > 0 && (
+          <span className="text-xs text-muted-foreground/70">
+            ({sortedPoints.length})
           </span>
-          {sortedPoints.length > 0 && (
-            <span className="text-xs text-muted-foreground/70">
-              ({sortedPoints.length})
-            </span>
-          )}
-        </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-7 px-2 gap-1 text-xs border border-dashed border-border/50 hover:border-primary/50"
-          onClick={onCreateHandoverPoint}
-          disabled={!onCreateHandoverPoint}
-        >
-          <Plus className="w-3 h-3" />
-          Add VCR
-        </Button>
+        )}
       </div>
 
-      {/* VCR Cards Container - Horizontal wrap */}
+      {/* VCR Cards Container - Horizontal wrap with Add button inline */}
       <div className="px-2 pb-1 min-h-[50px]">
-        {sortedPoints.length === 0 ? (
-          <div className="flex items-center justify-center h-[60px] rounded-lg border border-dashed border-border/50 bg-muted/20">
-            <span className="text-xs text-muted-foreground">
-              Drop VCRs here or they'll appear here when phases are deleted
-            </span>
-          </div>
-        ) : (
-          <div className="flex flex-wrap gap-2">
-            {sortedPoints.map((point) => (
-              <DraggableHandoverPointCard
-                key={point.id}
-                handoverPoint={point}
-                onClick={() => onOpenVCR(point)}
-              />
-            ))}
-          </div>
-        )}
+        <div className="flex flex-wrap gap-2 items-center">
+          {sortedPoints.map((point) => (
+            <DraggableHandoverPointCard
+              key={point.id}
+              handoverPoint={point}
+              onClick={() => onOpenVCR(point)}
+            />
+          ))}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 gap-1 text-xs border border-dashed border-border/50 hover:border-primary/50"
+            onClick={onCreateHandoverPoint}
+            disabled={!onCreateHandoverPoint}
+          >
+            <Plus className="w-3 h-3" />
+            Add VCR
+          </Button>
+        </div>
       </div>
     </div>
   );
