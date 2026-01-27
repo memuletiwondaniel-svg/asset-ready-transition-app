@@ -35,8 +35,8 @@ export const UnassignedVCRColumn: React.FC<UnassignedVCRColumnProps> = ({
     <div 
       ref={setNodeRef}
       className={cn(
-        "w-full border-t pt-3 transition-colors",
-        isOver ? 'border-primary bg-primary/5' : 'border-border bg-card/30'
+        "w-full pt-2 transition-colors",
+        isOver ? 'bg-primary/5' : 'bg-card/30'
       )}
     >
       {/* Compact Header */}
@@ -65,7 +65,7 @@ export const UnassignedVCRColumn: React.FC<UnassignedVCRColumnProps> = ({
       </div>
 
       {/* VCR Cards Container - Horizontal wrap */}
-      <div className="px-2 pb-2 min-h-[60px]">
+      <div className="px-2 pb-1 min-h-[50px]">
         {sortedPoints.length === 0 ? (
           <div className="flex items-center justify-center h-[60px] rounded-lg border border-dashed border-border/50 bg-muted/20">
             <span className="text-xs text-muted-foreground">
