@@ -137,8 +137,8 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
           </div>
         </div>
 
-        {/* Systems List */}
-        <ScrollArea className="flex-1">
+        {/* Systems List - fills remaining height */}
+        <div className="flex-1 overflow-y-auto">
           <div className="p-3 space-y-3">
             {/* Assigned Systems Section */}
             <Collapsible 
@@ -204,8 +204,7 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
                     {searchQuery ? 'No matching systems' : 'No unassigned systems'}
                   </div>
                 ) : (
-                  <div className="max-h-[200px] overflow-y-auto pr-1">
-                    <div className="flex flex-wrap gap-1.5">
+                  <div className="flex flex-wrap gap-1.5">
                       {filteredUnassigned.map(system => (
                         <DraggableSystemCard
                           key={system.id}
@@ -214,13 +213,12 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
                           onClick={() => setSelectedSystem(system)}
                         />
                       ))}
-                    </div>
                   </div>
                 )}
               </CollapsibleContent>
             </Collapsible>
           </div>
-        </ScrollArea>
+        </div>
 
         {/* Add System Button */}
         <div className="p-3 border-t border-border">
