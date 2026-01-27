@@ -6,6 +6,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { P2APhase, P2AMilestone } from '../hooks/useP2APhases';
 import { P2AHandoverPoint } from '../hooks/useP2AHandoverPoints';
 import { StaircasePhaseColumn } from './StaircasePhaseColumn';
+import { UnassignedVCRColumn } from './UnassignedVCRColumn';
 import { MilestoneMarker } from './MilestoneMarker';
 import { CreatePhaseDialog } from './CreatePhaseDialog';
 import { SortableContext, horizontalListSortingStrategy } from '@dnd-kit/sortable';
@@ -21,7 +22,7 @@ interface PhasesTimelineProps {
   onCreatePhase: (data: any) => void;
   onCreateMilestone: (data: any) => void;
   onDeletePhase: (id: string) => void;
-  onCreateHandoverPoint: (phaseId?: string) => void;
+  onCreateHandoverPoint: (phaseId?: string | null) => void;
   onOpenVCR: (point: P2AHandoverPoint) => void;
   onAssignVCRToPhase: (vcrId: string, phaseId: string | null) => void;
   isCreatingPhase?: boolean;
@@ -216,6 +217,11 @@ export const PhasesTimeline: React.FC<PhasesTimelineProps> = ({
             {/* Phase Columns in Staircase Layout */}
             <div className="flex gap-4 relative z-10">
               <SortableContext items={phases.map(p => p.id)} strategy={horizontalListSortingStrategy}>
+                <UnassignedVCRColumn
+                  handoverPoints={unassignedPoints}
+                  onOpenVCR={onOpenVCR}
+                  onCreateHandoverPoint={() => onCreateHandoverPoint(null)}
+                />
                 {phases.map((phase, idx) => (
                   <StaircasePhaseColumn
                     key={phase.id}

@@ -279,8 +279,10 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
       
       // If dropping on a phase (same or different)
       if (overId.startsWith('phase-') || overType === 'phase') {
-        const phaseId = overId.startsWith('phase-') ? overId.replace('phase-', '') : overId;
-        const isSamePhase = phaseId === vcr.phase_id;
+        const rawPhaseId = overId.startsWith('phase-') ? overId.replace('phase-', '') : overId;
+        // Special drop zone: "phase-unassigned" => set phase_id to null
+        const phaseId: string | null = rawPhaseId === 'unassigned' ? null : rawPhaseId;
+        const isSamePhase = (phaseId ?? null) === (vcr.phase_id ?? null);
         
         if (delta) {
           const oldX = vcr.position_x;
@@ -288,7 +290,7 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
           const oldPhaseId = vcr.phase_id;
           const newX = Math.round(Math.max(0, Math.min(50, vcr.position_x + delta.x)));
           const newY = Math.round(Math.max(0, Math.min(320, vcr.position_y + delta.y)));
-          const newPhaseId = isSamePhase ? undefined : phaseId;
+          const newPhaseId: string | null | undefined = isSamePhase ? undefined : phaseId;
 
           // Immediate UI update (prevents snap-back between drag end and cache update)
           setUiVcrOverrides((prev) => ({
@@ -365,7 +367,14 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
   };
 
   // Default to first phase when creating VCR without specific phase
-  const handleCreateHandoverPoint = (phaseId?: string) => {
+  const handleCreateHandoverPoint = (phaseId?: string | null) => {
+    // If explicitly null, create as unassigned.
+    if (phaseId === null) {
+      setSelectedPhaseIdForVCR(null);
+      setShowCreateVCRDialog(true);
+      return;
+    }
+
     // If no phase specified and phases exist, default to first phase
     const defaultPhaseId = phaseId || (phases.length > 0 ? phases[0].id : null);
     setSelectedPhaseIdForVCR(defaultPhaseId);
