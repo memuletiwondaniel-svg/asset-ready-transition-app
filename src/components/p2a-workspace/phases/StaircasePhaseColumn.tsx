@@ -152,7 +152,7 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
         {/* VCRs Container - Horizontal row layout */}
         <div 
           className={cn(
-            "border border-t-0 border-b-0 p-3 min-h-[120px] max-h-[360px] overflow-y-auto transition-colors",
+            "border border-t-0 rounded-b-xl p-3 min-h-[120px] max-h-[360px] overflow-y-auto transition-colors",
             isOver ? 'border-primary bg-primary/5' : 'border-border bg-card/50'
           )}
         >
@@ -176,22 +176,6 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
               ))}
             </div>
           )}
-        </div>
-
-        {/* Add VCR Button - Fixed at bottom */}
-        <div className={cn(
-          "border border-t-0 rounded-b-xl p-2 transition-colors",
-          isOver ? 'border-primary bg-primary/5' : 'border-border bg-card/50'
-        )}>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="w-full gap-1 text-xs border border-dashed border-border/50 hover:border-primary/50"
-            onClick={onCreateHandoverPoint}
-          >
-            <Plus className="w-3 h-3" />
-            Add VCR
-          </Button>
         </div>
 
         {/* Flow indicator to next phase */}
