@@ -226,7 +226,7 @@ export const PhasesTimeline: React.FC<PhasesTimelineProps> = ({
             </svg>
 
             {/* Phase Columns in Staircase Layout */}
-            <div className="flex gap-4 relative z-10 flex-1">
+            <div className="flex gap-4 relative z-10 flex-1 min-h-[400px]">
               <SortableContext items={phases.map(p => p.id)} strategy={horizontalListSortingStrategy}>
                 {phases.map((phase, idx) => (
                   <StaircasePhaseColumn
@@ -260,7 +260,7 @@ export const PhasesTimeline: React.FC<PhasesTimelineProps> = ({
             </div>
 
             {/* Unassigned VCRs - Horizontal bar at bottom */}
-            <div className="mt-16">
+            <div className="mt-24">
               <UnassignedVCRColumn
                 handoverPoints={unassignedPoints}
                 onOpenVCR={onOpenVCR}
