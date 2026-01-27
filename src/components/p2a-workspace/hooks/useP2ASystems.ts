@@ -61,19 +61,31 @@ export const useP2ASystems = (handoverPlanId: string) => {
 
       if (systemsError) throw systemsError;
 
-      // Get all system assignments to handover points
-      const { data: assignments, error: assignmentsError } = await supabase
-        .from('p2a_handover_point_systems')
-        .select(`
-          system_id,
-          handover_point_id,
-          p2a_handover_points!inner (
-            id,
-            vcr_code
-          )
-        `);
+      // Get system assignments for handover points in this plan only
+      const { data: handoverPointIds } = await supabase
+        .from('p2a_handover_points')
+        .select('id')
+        .eq('handover_plan_id', handoverPlanId);
 
-      if (assignmentsError) throw assignmentsError;
+      const hpIds = handoverPointIds?.map(hp => hp.id) || [];
+
+      let assignments: any[] = [];
+      if (hpIds.length > 0) {
+        const { data: assignmentsData, error: assignmentsError } = await supabase
+          .from('p2a_handover_point_systems')
+          .select(`
+            system_id,
+            handover_point_id,
+            p2a_handover_points!inner (
+              id,
+              vcr_code
+            )
+          `)
+          .in('handover_point_id', hpIds);
+
+        if (assignmentsError) throw assignmentsError;
+        assignments = assignmentsData || [];
+      }
 
       // Create a map of system_id to assignment
       const assignmentMap = new Map<string, { handover_point_id: string; vcr_code: string }>();
