@@ -180,9 +180,9 @@ export const PhasesTimeline: React.FC<PhasesTimelineProps> = ({
           </div>
         </div>
 
-        {/* Staircase Workspace */}
+        {/* Staircase Workspace - Scrollable */}
         <ScrollArea className="flex-1">
-          <div className="relative p-4 min-h-[500px] flex flex-col">
+          <div className="relative p-4 min-h-[300px]">
             {/* Staircase Flow Line */}
             <svg 
               className="absolute inset-0 pointer-events-none z-0"
@@ -226,7 +226,7 @@ export const PhasesTimeline: React.FC<PhasesTimelineProps> = ({
             </svg>
 
             {/* Phase Columns in Staircase Layout */}
-            <div className="flex gap-4 relative z-10 flex-1 min-h-[400px]">
+            <div className="flex gap-4 relative z-10">
               <SortableContext items={phases.map(p => p.id)} strategy={horizontalListSortingStrategy}>
                 {phases.map((phase, idx) => (
                   <StaircasePhaseColumn
@@ -258,19 +258,19 @@ export const PhasesTimeline: React.FC<PhasesTimelineProps> = ({
                 </Button>
               </div>
             </div>
-
-            {/* Unassigned VCRs - Horizontal bar at bottom */}
-            <div className="mt-24">
-              <UnassignedVCRColumn
-                handoverPoints={unassignedPoints}
-                onOpenVCR={onOpenVCR}
-                onCreateHandoverPoint={() => onCreateHandoverPoint(null)}
-              />
-            </div>
           </div>
           <ScrollBar orientation="horizontal" />
           <ScrollBar orientation="vertical" />
         </ScrollArea>
+
+        {/* Unassigned VCRs - Fixed at bottom, always visible */}
+        <div className="flex-shrink-0 px-4 pb-4">
+          <UnassignedVCRColumn
+            handoverPoints={unassignedPoints}
+            onOpenVCR={onOpenVCR}
+            onCreateHandoverPoint={() => onCreateHandoverPoint(null)}
+          />
+        </div>
       </div>
 
       <CreatePhaseDialog
