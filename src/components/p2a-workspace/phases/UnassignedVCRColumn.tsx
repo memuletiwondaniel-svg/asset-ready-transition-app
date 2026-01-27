@@ -21,10 +21,6 @@ export const UnassignedVCRColumn: React.FC<UnassignedVCRColumnProps> = ({
   onOpenVCR,
   onCreateHandoverPoint,
 }) => {
-  // Keep cards discoverable even if older data has out-of-range coordinates.
-  const VCR_CANVAS_MAX_X = 72; // px
-  const VCR_CANVAS_MAX_Y = 320; // px
-
   const { isOver, setNodeRef } = useDroppable({
     id: 'phase-unassigned',
     data: {
@@ -56,34 +52,28 @@ export const UnassignedVCRColumn: React.FC<UnassignedVCRColumnProps> = ({
       <div
         ref={setNodeRef}
         className={cn(
-          'border border-t-0 border-b-0 p-3 h-[360px] overflow-hidden transition-colors relative',
+          'border border-t-0 border-b-0 p-3 min-h-[120px] max-h-[360px] overflow-y-auto transition-colors',
           isOver ? 'border-primary bg-primary/5' : 'border-border bg-card/50'
         )}
       >
-        {sortedPoints.length === 0 && (
-          <div className="absolute inset-0 flex items-center justify-center">
+        {sortedPoints.length === 0 ? (
+          <div className="flex items-center justify-center h-full min-h-[100px]">
             <div className="text-center py-4">
               <ArrowDown className="w-6 h-6 mx-auto mb-2 text-muted-foreground/30" />
               <div className="text-xs text-muted-foreground">Drop VCRs here</div>
             </div>
           </div>
-        )}
-
-        {sortedPoints.map((point) => (
-          <div
-            key={point.id}
-            className="absolute"
-            style={{
-              left: `${Math.max(0, Math.min(VCR_CANVAS_MAX_X, point.position_x))}px`,
-              top: `${Math.max(0, Math.min(VCR_CANVAS_MAX_Y, point.position_y))}px`,
-            }}
-          >
-            <DraggableHandoverPointCard
-              handoverPoint={point}
-              onClick={() => onOpenVCR(point)}
-            />
+        ) : (
+          <div className="flex flex-wrap gap-2 content-start">
+            {sortedPoints.map((point) => (
+              <DraggableHandoverPointCard
+                key={point.id}
+                handoverPoint={point}
+                onClick={() => onOpenVCR(point)}
+              />
+            ))}
           </div>
-        ))}
+        )}
       </div>
 
       <div
