@@ -248,8 +248,7 @@ export const PhasesTimeline: React.FC<PhasesTimelineProps> = ({
 
               {/* Add Phase Button */}
               <div 
-                className="flex-shrink-0 w-48 flex items-start justify-center"
-                style={{ paddingTop: getStaircaseOffset(phases.length) }}
+                className="flex-shrink-0 w-48 flex items-center justify-center"
               >
                 <Button 
                   variant="outline" 
