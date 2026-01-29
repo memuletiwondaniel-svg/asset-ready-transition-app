@@ -4460,7 +4460,6 @@ serve(async (req) => {
           ...transformedMessages,
         ],
         tools: tools,
-        temperature: 0.7,
         stream: false, // Non-streaming for tool calling
       }),
     });
@@ -4537,9 +4536,8 @@ serve(async (req) => {
             { role: "system", content: BOB_SYSTEM_PROMPT },
             ...transformedMessages,
             assistantMessage,
-            ...toolResults,
+          ...toolResults,
           ],
-          temperature: 0.7,
           stream: false,
         }),
       });
