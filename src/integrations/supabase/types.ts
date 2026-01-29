@@ -4012,6 +4012,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
+          {
+            foreignKeyName: "password_reset_tokens_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_safe"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       plant: {
@@ -4288,6 +4295,13 @@ export type Database = {
             columns: ["manager_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "profiles_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_safe"
             referencedColumns: ["user_id"]
           },
           {
@@ -5302,6 +5316,13 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
           {
+            foreignKeyName: "pssr_priority_actions_action_owner_id_fkey"
+            columns: ["action_owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_safe"
+            referencedColumns: ["user_id"]
+          },
+          {
             foreignKeyName: "pssr_priority_actions_item_approval_id_fkey"
             columns: ["item_approval_id"]
             isOneToOne: false
@@ -5919,6 +5940,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
+          {
+            foreignKeyName: "pssrs_pssr_lead_id_fkey"
+            columns: ["pssr_lead_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_safe"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       role_category: {
@@ -6288,6 +6316,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
+          {
+            foreignKeyName: "user_activity_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_safe"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       user_audit_logs: {
@@ -6326,6 +6361,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
+          {
+            foreignKeyName: "user_audit_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_safe"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       user_privileges: {
@@ -6358,6 +6400,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
+          {
+            foreignKeyName: "user_privileges_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_safe"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       user_projects: {
@@ -6388,6 +6437,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "user_projects_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_safe"
             referencedColumns: ["user_id"]
           },
         ]
@@ -6423,10 +6479,24 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
           {
+            foreignKeyName: "user_roles_granted_by_fkey"
+            columns: ["granted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_safe"
+            referencedColumns: ["user_id"]
+          },
+          {
             foreignKeyName: "user_roles_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "user_roles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_safe"
             referencedColumns: ["user_id"]
           },
         ]
@@ -6474,6 +6544,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "user_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_safe"
             referencedColumns: ["user_id"]
           },
         ]
@@ -6688,6 +6765,164 @@ export type Database = {
       }
     }
     Views: {
+      profiles_safe: {
+        Row: {
+          account_status: string | null
+          avatar_url: string | null
+          commission: string | null
+          company: Database["public"]["Enums"]["user_company"] | null
+          country_code: string | null
+          created_at: string | null
+          department: string | null
+          email: string | null
+          field: string | null
+          first_name: string | null
+          full_name: string | null
+          functional_email: boolean | null
+          functional_email_address: string | null
+          hub: string | null
+          id: string | null
+          is_active: boolean | null
+          last_login_at: string | null
+          last_name: string | null
+          manager_id: string | null
+          notification_preferences: Json | null
+          phone_number: string | null
+          plant: string | null
+          position: string | null
+          preferences: Json | null
+          primary_phone: string | null
+          role: string | null
+          secondary_phone: string | null
+          sso_enabled: boolean | null
+          station: string | null
+          status: Database["public"]["Enums"]["user_status"] | null
+          two_factor_enabled: boolean | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          account_status?: string | null
+          avatar_url?: string | null
+          commission?: string | null
+          company?: Database["public"]["Enums"]["user_company"] | null
+          country_code?: string | null
+          created_at?: string | null
+          department?: string | null
+          email?: string | null
+          field?: string | null
+          first_name?: string | null
+          full_name?: string | null
+          functional_email?: boolean | null
+          functional_email_address?: string | null
+          hub?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          last_login_at?: string | null
+          last_name?: string | null
+          manager_id?: string | null
+          notification_preferences?: Json | null
+          phone_number?: string | null
+          plant?: string | null
+          position?: string | null
+          preferences?: Json | null
+          primary_phone?: string | null
+          role?: string | null
+          secondary_phone?: string | null
+          sso_enabled?: boolean | null
+          station?: string | null
+          status?: Database["public"]["Enums"]["user_status"] | null
+          two_factor_enabled?: boolean | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          account_status?: string | null
+          avatar_url?: string | null
+          commission?: string | null
+          company?: Database["public"]["Enums"]["user_company"] | null
+          country_code?: string | null
+          created_at?: string | null
+          department?: string | null
+          email?: string | null
+          field?: string | null
+          first_name?: string | null
+          full_name?: string | null
+          functional_email?: boolean | null
+          functional_email_address?: string | null
+          hub?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          last_login_at?: string | null
+          last_name?: string | null
+          manager_id?: string | null
+          notification_preferences?: Json | null
+          phone_number?: string | null
+          plant?: string | null
+          position?: string | null
+          preferences?: Json | null
+          primary_phone?: string | null
+          role?: string | null
+          secondary_phone?: string | null
+          sso_enabled?: boolean | null
+          station?: string | null
+          status?: Database["public"]["Enums"]["user_status"] | null
+          two_factor_enabled?: boolean | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_commission_fkey"
+            columns: ["commission"]
+            isOneToOne: false
+            referencedRelation: "commission"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_field_fkey"
+            columns: ["field"]
+            isOneToOne: false
+            referencedRelation: "field"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_hub_fkey"
+            columns: ["hub"]
+            isOneToOne: false
+            referencedRelation: "hubs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "profiles_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_safe"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "profiles_plant_fkey"
+            columns: ["plant"]
+            isOneToOne: false
+            referencedRelation: "plant"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_station_fkey"
+            columns: ["station"]
+            isOneToOne: false
+            referencedRelation: "station"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects_enriched: {
         Row: {
           completed_milestone_count: number | null
@@ -6900,6 +7135,22 @@ export type Database = {
           role_description: string
           role_id: string
           role_name: string
+        }[]
+      }
+      get_safe_profile_data: {
+        Args: { target_user_id: string }
+        Returns: {
+          avatar_url: string
+          company: Database["public"]["Enums"]["user_company"]
+          department: string
+          email: string
+          first_name: string
+          full_name: string
+          is_active: boolean
+          last_name: string
+          phone_number: string
+          user_id: string
+          user_position: string
         }[]
       }
       get_team_member_info: {
