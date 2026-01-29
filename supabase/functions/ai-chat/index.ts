@@ -4454,7 +4454,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-pro",
+        model: "openai/gpt-5-mini",
         messages: [
           { role: "system", content: BOB_SYSTEM_PROMPT },
           ...transformedMessages,
@@ -4532,7 +4532,7 @@ serve(async (req) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-pro",
+          model: "openai/gpt-5-mini",
           messages: [
             { role: "system", content: BOB_SYSTEM_PROMPT },
             ...transformedMessages,
