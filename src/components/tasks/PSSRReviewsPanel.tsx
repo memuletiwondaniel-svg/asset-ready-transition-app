@@ -8,8 +8,6 @@ import { ProjectIdBadge } from '@/components/ui/project-id-badge';
 import { MyTasksPanelCard } from './MyTasksPanelCard';
 import { usePSSRsAwaitingReview } from '@/hooks/usePSSRItemApprovals';
 import { useUserLastLogin } from '@/hooks/useUserLastLogin';
-import { useMockPSSRReviewsFromProjects } from '@/hooks/useMockPSSRFromProjects';
-import { MockPSSRReview } from '@/hooks/useMyTasksMockData';
 import { getUrgencyBackground, getUrgencyGlow } from '@/utils/assetColors';
 import { cn } from '@/lib/utils';
 
@@ -45,13 +43,11 @@ export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({
   isDimmed = false,
 }) => {
   const navigate = useNavigate();
-  const { data: realPssrs, isLoading: isLoadingReal } = usePSSRsAwaitingReview(userId);
-  const { reviews: mockData, isLoading: isLoadingMock } = useMockPSSRReviewsFromProjects();
+  const { data: realPssrs, isLoading } = usePSSRsAwaitingReview(userId);
   const { isNewSinceLastLogin } = useUserLastLogin();
 
-  // Use real data if available, otherwise use mock data from actual projects
-  const pssrs = (realPssrs && realPssrs.length > 0) ? realPssrs : mockData;
-  const isLoading = isLoadingReal || ((!realPssrs || realPssrs.length === 0) && isLoadingMock);
+  // Only show real tasks assigned to the user - no mock data
+  const pssrs = realPssrs || [];
 
   const pendingPssrs = pssrs.filter(p => {
     if (!searchQuery.trim()) return true;
@@ -63,6 +59,11 @@ export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({
   });
 
   const newCount = pendingPssrs.filter(p => isNewSinceLastLogin(p.pendingSince)).length;
+
+  // Hide panel entirely when user has no tasks assigned
+  if (!isLoading && pendingPssrs.length === 0) {
+    return null;
+  }
 
   const getDaysPendingColor = (days: number) => {
     if (days >= 7) return 'bg-destructive/10 text-destructive border-destructive/20';
@@ -94,7 +95,6 @@ export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({
           (Date.now() - new Date(item.pendingSince).getTime()) / (1000 * 60 * 60 * 24)
         );
         const pssr = item.pssr;
-        const isMock = (item as MockPSSRReview).id?.startsWith('mock-');
         
         // Get urgency-based styling
         const urgencyBg = getUrgencyBackground(daysPending);
@@ -121,7 +121,7 @@ export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({
               "animate-fade-in"
             )}
             style={{ animationDelay: `${index * 50}ms` }}
-            onClick={() => !isMock && navigate(`/pssr/${pssr?.id}/review`)}
+            onClick={() => navigate(`/pssr/${pssr?.id}/review`)}
           >
             <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0 space-y-1">
@@ -177,7 +177,7 @@ export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({
                   className="h-6 text-xs px-2 opacity-0 group-hover/item:opacity-100 transition-opacity"
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (!isMock) navigate(`/pssr/${pssr?.id}/review`);
+                    navigate(`/pssr/${pssr?.id}/review`);
                   }}
                 >
                   Review

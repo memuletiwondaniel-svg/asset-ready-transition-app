@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { MyTasksPanelCard } from './MyTasksPanelCard';
 import { useUserP2AApprovals } from '@/hooks/useUserP2AApprovals';
 import { useUserLastLogin } from '@/hooks/useUserLastLogin';
-import { generateMockP2AApprovals, MockP2AApproval } from '@/hooks/useMyTasksMockData';
+
 import { cn } from '@/lib/utils';
 
 interface HandoverReviewsPanelProps {
@@ -27,12 +27,11 @@ export const HandoverReviewsPanel: React.FC<HandoverReviewsPanelProps> = ({
   isDimmed = false,
 }) => {
   const navigate = useNavigate();
-  const { approvals: realApprovals, stats: realStats, isLoading } = useUserP2AApprovals();
+  const { approvals: realApprovals, stats, isLoading } = useUserP2AApprovals();
   const { isNewSinceLastLogin } = useUserLastLogin();
 
-  // Use mock data if real data is empty
-  const mockData = generateMockP2AApprovals();
-  const rawApprovals = (realApprovals && realApprovals.length > 0) ? realApprovals : mockData;
+  // Only show real tasks assigned to the user - no mock data
+  const rawApprovals = realApprovals || [];
 
   const approvals = rawApprovals.filter(a => {
     if (!searchQuery.trim()) return true;
@@ -43,14 +42,12 @@ export const HandoverReviewsPanel: React.FC<HandoverReviewsPanelProps> = ({
     );
   });
 
-  // Calculate stats from filtered data
-  const stats = (realApprovals && realApprovals.length > 0) ? realStats : {
-    total: approvals.length,
-    pac: approvals.filter(a => a.stage === 'PAC').length,
-    fac: approvals.filter(a => a.stage === 'FAC').length,
-  };
-
   const newCount = approvals.filter(a => isNewSinceLastLogin(a.created_at)).length;
+
+  // Hide panel entirely when user has no tasks assigned
+  if (!isLoading && approvals.length === 0) {
+    return null;
+  }
 
   const getStageColor = (stage: string) => {
     switch (stage) {
@@ -85,7 +82,6 @@ export const HandoverReviewsPanel: React.FC<HandoverReviewsPanelProps> = ({
     >
       {approvals.map((approval, index) => {
         const isNew = isNewSinceLastLogin(approval.created_at);
-        const isMock = (approval as MockP2AApproval).id?.startsWith('mock-');
 
         return (
           <div
@@ -97,7 +93,7 @@ export const HandoverReviewsPanel: React.FC<HandoverReviewsPanelProps> = ({
               "animate-fade-in"
             )}
             style={{ animationDelay: `${index * 50}ms` }}
-            onClick={() => !isMock && navigate(`/p2a-handover/${approval.handover_id}`)}
+            onClick={() => navigate(`/p2a-handover/${approval.handover_id}`)}
           >
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0">
@@ -131,7 +127,7 @@ export const HandoverReviewsPanel: React.FC<HandoverReviewsPanelProps> = ({
                   className="h-6 text-xs px-2 opacity-0 group-hover/item:opacity-100 transition-opacity"
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (!isMock) navigate(`/p2a-handover/${approval.handover_id}`);
+                    navigate(`/p2a-handover/${approval.handover_id}`);
                   }}
                 >
                   Review

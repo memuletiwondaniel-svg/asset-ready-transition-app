@@ -7,7 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { MyTasksPanelCard } from './MyTasksPanelCard';
 import { useUserORPActivities } from '@/hooks/useUserORPActivities';
 import { useUserLastLogin } from '@/hooks/useUserLastLogin';
-import { generateMockORPActivities, MockORPActivity } from '@/hooks/useMyTasksMockData';
+
 import { cn } from '@/lib/utils';
 
 interface ORPActivitiesPanelProps {
@@ -28,12 +28,11 @@ export const ORPActivitiesPanel: React.FC<ORPActivitiesPanelProps> = ({
   isDimmed = false,
 }) => {
   const navigate = useNavigate();
-  const { activities: realActivities, stats: realStats, isLoading } = useUserORPActivities();
+  const { activities: realActivities, stats, isLoading } = useUserORPActivities();
   const { isNewSinceLastLogin } = useUserLastLogin();
 
-  // Use mock data if real data is empty
-  const mockData = generateMockORPActivities();
-  const rawActivities = (realActivities && realActivities.length > 0) ? realActivities : mockData;
+  // Only show real tasks assigned to the user - no mock data
+  const rawActivities = realActivities || [];
 
   const activities = rawActivities.filter(a => {
     if (!searchQuery.trim()) return true;
@@ -47,13 +46,10 @@ export const ORPActivitiesPanel: React.FC<ORPActivitiesPanelProps> = ({
 
   const newCount = activities.filter(a => isNewSinceLastLogin(a.created_at)).length;
 
-  // Calculate stats
-  const stats = (realActivities && realActivities.length > 0) ? realStats : {
-    totalPlans: [...new Set(activities.map(a => a.plan_id))].length,
-    totalDeliverables: activities.reduce((acc, a) => acc + (a.deliverable_count || 0), 0),
-    completedDeliverables: activities.reduce((acc, a) => acc + (a.completed_deliverables || 0), 0),
-    inProgress: activities.filter(a => a.plan_status === 'IN_PROGRESS').length,
-  };
+  // Hide panel entirely when user has no tasks assigned
+  if (!isLoading && activities.length === 0) {
+    return null;
+  }
 
   const getPhaseColor = (phase?: string) => {
     switch (phase) {
@@ -106,7 +102,6 @@ export const ORPActivitiesPanel: React.FC<ORPActivitiesPanelProps> = ({
         const progress = activity.deliverable_count > 0
           ? Math.round((activity.completed_deliverables / activity.deliverable_count) * 100)
           : 0;
-        const isMock = (activity as MockORPActivity).id?.startsWith('mock-');
 
         return (
           <div
@@ -118,7 +113,7 @@ export const ORPActivitiesPanel: React.FC<ORPActivitiesPanelProps> = ({
               "animate-fade-in"
             )}
             style={{ animationDelay: `${index * 50}ms` }}
-            onClick={() => !isMock && navigate(`/operation-readiness/${activity.plan_id}`)}
+            onClick={() => navigate(`/operation-readiness/${activity.plan_id}`)}
           >
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0">
@@ -158,7 +153,7 @@ export const ORPActivitiesPanel: React.FC<ORPActivitiesPanelProps> = ({
                   className="h-6 text-xs px-2 opacity-0 group-hover/item:opacity-100 transition-opacity"
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (!isMock) navigate(`/operation-readiness/${activity.plan_id}`);
+                    navigate(`/operation-readiness/${activity.plan_id}`);
                   }}
                 >
                   View
