@@ -1,8 +1,9 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ClipboardCheck, Shield, Wrench, AlertTriangle, Settings, User } from 'lucide-react';
+import { ClipboardCheck } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
 import { ProjectIdBadge } from '@/components/ui/project-id-badge';
 import { MyTasksPanelCard } from './MyTasksPanelCard';
 import { usePSSRsAwaitingReview } from '@/hooks/usePSSRItemApprovals';
@@ -20,28 +21,6 @@ interface PSSRReviewsPanelProps {
   isFullHeight?: boolean;
   isRelocated?: boolean;
   isDimmed?: boolean;
-}
-
-// Helper function to get role icon
-function getRoleIcon(role: string | undefined): React.ReactNode {
-  if (!role) return <User className="h-3 w-3" />;
-  
-  const normalizedRole = role.toLowerCase();
-  
-  if (normalizedRole.includes('director')) {
-    return <Shield className="h-3 w-3" />;
-  }
-  if (normalizedRole.includes('technical authority') || normalizedRole.includes('ta')) {
-    return <Wrench className="h-3 w-3" />;
-  }
-  if (normalizedRole.includes('hse')) {
-    return <AlertTriangle className="h-3 w-3" />;
-  }
-  if (normalizedRole.includes('operations')) {
-    return <Settings className="h-3 w-3" />;
-  }
-  
-  return <User className="h-3 w-3" />;
 }
 
 // Extract project code from project name or PSSR ID (e.g., "DP-300" from "PSSR-DP300-001")
@@ -123,7 +102,12 @@ export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({
         
         // Extract project code for badge
         const projectCode = extractProjectCode(pssr?.pssr_id);
-        const roleIcon = getRoleIcon(item.approverRole);
+        
+        // Calculate review progress (for mock: simulate some items reviewed)
+        const totalItems = item.itemCount || 0;
+        const reviewedItems = (item as any).reviewedCount ?? Math.floor(totalItems * 0.3); // Default 30% reviewed for mock
+        const progressPercent = totalItems > 0 ? Math.round((reviewedItems / totalItems) * 100) : 0;
+        const remainingItems = totalItems - reviewedItems;
 
         return (
           <div
@@ -167,16 +151,15 @@ export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({
                   </p>
                 )}
                 
-                {/* Row 4: Item count + Role */}
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span className="font-medium">{item.itemCount || 0} items</span>
-                  <span>•</span>
-                  <span className="flex items-center gap-1">
-                    {roleIcon}
-                    <span className="truncate max-w-[100px]">
-                      {item.approverRole || 'Reviewer'}
+                {/* Row 3: Review progress */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">
+                      {remainingItems} of {totalItems} items need your sign-off
                     </span>
-                  </span>
+                    <span className="font-medium text-primary">{progressPercent}%</span>
+                  </div>
+                  <Progress value={progressPercent} className="h-1.5" />
                 </div>
               </div>
               
