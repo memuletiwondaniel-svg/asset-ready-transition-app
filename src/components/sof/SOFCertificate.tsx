@@ -7,6 +7,7 @@ import { format } from 'date-fns';
 import { getCertificateText } from '@/hooks/useSOFCertificates';
 import { SOFSignatureDialog } from './SOFSignatureDialog';
 import { SOFRejectDialog } from './SOFRejectDialog';
+import { Pr1ActionDetailsOverlay } from './Pr1ActionDetailsOverlay';
 import { useUserSignature } from '@/hooks/useUserSignature';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
@@ -106,6 +107,8 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
   const certificateRef = useRef<HTMLDivElement>(null);
   const [signatureDialogOpen, setSignatureDialogOpen] = useState(false);
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [pr1DetailsOpen, setPr1DetailsOpen] = useState(false);
+  const [selectedRejection, setSelectedRejection] = useState<SOFApprover | null>(null);
   const [aliSignatureDialogOpen, setAliSignatureDialogOpen] = useState(false);
   const [aliSignature, setAliSignature] = useState<string | null>(() => {
     // Load from localStorage
@@ -421,13 +424,21 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
                         className="max-h-16 max-w-full object-contain mix-blend-multiply"
                       />
                     ) : isRejected ? (
-                      <div className="flex flex-col items-center gap-1 text-center px-2">
+                      <div 
+                        className="flex flex-col items-center gap-1 text-center px-2 cursor-pointer hover:bg-red-100/50 rounded py-1 transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedRejection(approver);
+                          setPr1DetailsOpen(true);
+                        }}
+                      >
                         <span className="text-xs font-medium text-red-600">
                           Pr1 Action Required
                         </span>
                         {approver.rejection_description && (
                           <p className="text-[10px] text-gray-500 line-clamp-2">{approver.rejection_description}</p>
                         )}
+                        <span className="text-[10px] text-primary hover:underline">View details</span>
                       </div>
                     ) : isClickable ? (
                       <div className="flex flex-col items-center gap-1 text-primary animate-pulse">
@@ -567,6 +578,18 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
           }
         }
       `}</style>
+
+      {/* Pr1 Action Details Overlay */}
+      <Pr1ActionDetailsOverlay
+        open={pr1DetailsOpen}
+        onOpenChange={setPr1DetailsOpen}
+        description={selectedRejection?.rejection_description}
+        linkedItem={selectedRejection?.rejection_linked_item}
+        assignedTo="PSSR Lead (Operations)"
+        rejectedAt={selectedRejection?.rejected_at}
+        rejectedBy={selectedRejection?.approver_name}
+        projectName={projectName}
+      />
     </div>
   );
 };
