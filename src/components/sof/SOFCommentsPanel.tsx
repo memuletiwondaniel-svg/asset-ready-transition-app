@@ -7,8 +7,7 @@ import { cn } from '@/lib/utils';
 import { 
   Shield, 
   Flame, 
-  Wrench, 
-  Gauge, 
+  SlidersHorizontal, 
   Zap, 
   Users,
   ChevronDown,
@@ -16,7 +15,8 @@ import {
   Heart,
   Cog,
   Fan,
-  Container
+  Container,
+  Building2
 } from 'lucide-react';
 
 interface SOFCommentsPanelProps {
@@ -57,7 +57,7 @@ const DEMO_COMMENTS = {
   },
   paco: {
     title: "PACO",
-    icon: Wrench,
+    icon: SlidersHorizontal,
     color: "text-blue-500",
     bgColor: "bg-blue-500/10",
     status: "complete" as const,
@@ -68,8 +68,8 @@ const DEMO_COMMENTS = {
   rotating: {
     title: "Rotating",
     icon: Fan,
-    color: "text-green-500",
-    bgColor: "bg-green-500/10",
+    color: "text-cyan-500",
+    bgColor: "bg-cyan-500/10",
     status: "complete" as const,
     summary: "Rotating equipment alignment verified. Vibration baselines established for all critical pumps and compressors. Lubrication systems charged and verified. Mechanical seals installed per specifications. Coupling guards and safety shields in place.",
     reviewer: "Nathan Roberts - Rotating TA2 (P&E)",
@@ -97,7 +97,7 @@ const DEMO_COMMENTS = {
   },
   civil: {
     title: "Civil",
-    icon: Gauge,
+    icon: Building2,
     color: "text-slate-500",
     bgColor: "bg-slate-500/10",
     status: "complete" as const,
