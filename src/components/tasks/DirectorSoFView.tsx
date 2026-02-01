@@ -1,13 +1,14 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FileCheck2, CheckCircle2, LogOut, ExternalLink, AlertCircle } from 'lucide-react';
+import { CheckCircle2, LogOut, ExternalLink, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { useSOFAwaitingDirectorReview } from '@/hooks/useSOFAwaitingDirectorReview';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ProjectIdBadge } from '@/components/ui/project-id-badge';
 
 interface DirectorSoFViewProps {
   userName?: string;
@@ -36,13 +37,10 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-6">
+      <div className="flex items-center justify-center p-6">
         <Card className="w-full max-w-2xl">
-          <CardHeader className="text-center">
+          <CardContent className="pt-6 space-y-4">
             <Skeleton className="h-8 w-64 mx-auto mb-2" />
-            <Skeleton className="h-4 w-48 mx-auto" />
-          </CardHeader>
-          <CardContent className="space-y-4">
             <Skeleton className="h-24 w-full" />
             <Skeleton className="h-24 w-full" />
           </CardContent>
@@ -107,25 +105,22 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 p-6">
+    <div className="space-y-6">
       <div className="max-w-3xl mx-auto">
         {/* Header */}
-        <div className="mb-8 text-center">
-          <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-4">
-            <FileCheck2 className="h-5 w-5 text-primary" />
-            <span className="text-sm font-medium text-primary">Statement of Fitness</span>
-          </div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">
-            Hi {firstName}, the following SoF require your review
-          </h1>
+        <div className="mb-6">
           <p className="text-muted-foreground">
-            {pendingItems.length} {pendingItems.length === 1 ? 'item' : 'items'} awaiting your approval
+            {pendingItems.length} {pendingItems.length === 1 ? 'SoF awaiting' : 'SoFs awaiting'} your approval
           </p>
         </div>
 
         {/* Pending SoF Items */}
         <div className="space-y-4">
-          {pendingItems.map((item, index) => (
+        {pendingItems.map((item, index) => {
+          const pssrId = item.pssr?.pssr_id || 'PSSR-DP300';
+          const projectName = item.pssr?.project_name || 'HM Additional Compressors';
+          
+          return (
             <Card
               key={item.id}
               className={cn(
@@ -138,16 +133,19 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
               <CardContent className="p-5">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-mono text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
-                        SoF-{item.pssr?.pssr_id?.replace('PSSR-', '') || 'DP300'}
-                      </span>
+                    <div className="flex items-center gap-2 mb-2">
+                      <ProjectIdBadge size="sm" projectId={pssrId}>
+                        {pssrId}
+                      </ProjectIdBadge>
+                      <Badge variant="outline" className="text-xs">
+                        SoF
+                      </Badge>
                       <Badge variant="secondary" className="text-xs bg-amber-500/10 text-amber-600 border-amber-500/20">
-                        Pending Your Approval
+                        Pending
                       </Badge>
                     </div>
                     <h3 className="font-semibold text-lg truncate">
-                      {item.pssr?.project_name || 'Unknown Project'}
+                      {projectName}
                     </h3>
                     {item.pssr?.asset && (
                       <p className="text-sm text-muted-foreground truncate mt-0.5">
@@ -171,7 +169,8 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                 </div>
               </CardContent>
             </Card>
-          ))}
+          );
+        })}
 
           {/* Locked items - still waiting for other approvers */}
           {lockedItems.length > 0 && (
@@ -181,48 +180,45 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                   Awaiting other approvers ({lockedItems.length})
                 </p>
               </div>
-              {lockedItems.map((item, index) => (
-                <Card
-                  key={item.id}
-                  className="opacity-60 bg-muted/30"
-                >
-                  <CardContent className="p-5">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-mono text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
-                            SoF-{item.pssr?.pssr_id?.replace('PSSR-', '') || 'DP300'}
-                          </span>
-                          <Badge variant="outline" className="text-xs">
-                            Awaiting Prerequisites
-                          </Badge>
+              {lockedItems.map((item) => {
+                const pssrId = item.pssr?.pssr_id || 'PSSR-DP300';
+                const projectName = item.pssr?.project_name || 'HM Additional Compressors';
+                
+                return (
+                  <Card
+                    key={item.id}
+                    className="opacity-60 bg-muted/30"
+                  >
+                    <CardContent className="p-5">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-2">
+                            <ProjectIdBadge size="sm" projectId={pssrId}>
+                              {pssrId}
+                            </ProjectIdBadge>
+                            <Badge variant="outline" className="text-xs">
+                              SoF
+                            </Badge>
+                            <Badge variant="outline" className="text-xs">
+                              Awaiting Prerequisites
+                            </Badge>
+                          </div>
+                          <h3 className="font-medium truncate">
+                            {projectName}
+                          </h3>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Waiting for PSSR/VCR approvals to complete
+                          </p>
                         </div>
-                        <h3 className="font-medium truncate">
-                          {item.pssr?.project_name || 'Unknown Project'}
-                        </h3>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Waiting for PSSR/VCR approvals to complete
-                        </p>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </>
           )}
         </div>
 
-        {/* Exit option */}
-        <div className="mt-8 text-center">
-          <Button
-            variant="ghost"
-            onClick={handleExit}
-            className="gap-2 text-muted-foreground hover:text-foreground"
-          >
-            <LogOut className="h-4 w-4" />
-            Sign Out
-          </Button>
-        </div>
       </div>
     </div>
   );
