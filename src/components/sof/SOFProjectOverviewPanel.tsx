@@ -39,11 +39,11 @@ const dp385ProjectData = {
     { name: 'Ahmed Raheem', role: 'Project Engr.', isLead: false, avatarUrl: '5f1600b1-8b23-4a5c-9a31-774d3dc7181e/1764591721491.png' },
   ],
   oraActivities: [
-    { id: '1', name: 'Hazard Operability Study (HAZOP)', dateRange: 'Dec 15 - Jan 15', progress: 100, status: 'completed' },
-    { id: '2', name: 'Design Safety Review (DSR)', dateRange: 'Jan 10 - Feb 10', progress: 100, status: 'completed' },
-    { id: '3', name: 'Reliability Availability Modelling', dateRange: 'Feb 1 - Mar 15', progress: 75, status: 'in_progress' },
-    { id: '4', name: 'Operating Mode Assurance Review', dateRange: 'Feb 15 - Mar 1', progress: 45, status: 'in_progress' },
-    { id: '5', name: 'Pre-Startup Safety Review', dateRange: 'Mar 1 - Mar 15', progress: 0, status: 'pending' },
+    { id: '1', name: 'Commissioning Safety Review', dateRange: 'Jan 5 - Jan 20', progress: 100, status: 'completed' },
+    { id: '2', name: 'Operating Procedures Validation', dateRange: 'Jan 15 - Feb 5', progress: 100, status: 'completed' },
+    { id: '3', name: 'Training Readiness Assessment', dateRange: 'Feb 1 - Feb 20', progress: 85, status: 'in_progress' },
+    { id: '4', name: 'Emergency Response Plan Review', dateRange: 'Feb 10 - Feb 28', progress: 60, status: 'in_progress' },
+    { id: '5', name: 'Pre-Startup Safety Review (PSSR)', dateRange: 'Mar 1 - Mar 15', progress: 15, status: 'in_progress' },
   ],
   vcrsAndPssrs: [
     { id: 'VCR-001', name: 'Utility System Handover', type: 'vcr', status: 'in_progress', progress: 75 },
