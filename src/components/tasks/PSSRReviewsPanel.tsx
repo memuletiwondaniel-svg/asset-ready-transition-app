@@ -89,7 +89,7 @@ export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({
 
   return (
     <MyTasksPanelCard
-      title="PSSR & SoF Reviews"
+      title="PSSR & VCR Reviews"
       icon={<ClipboardCheck className="h-5 w-5 text-white" />}
       iconColorClass="from-blue-500 to-blue-600"
       primaryStat={pendingPssrs.length}
