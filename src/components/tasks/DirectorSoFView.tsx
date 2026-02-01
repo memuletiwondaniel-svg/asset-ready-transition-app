@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle2, LogOut, ExternalLink, AlertCircle } from 'lucide-react';
+import { CheckCircle2, LogOut, ExternalLink, AlertCircle, Clock, FileCheck, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -9,6 +9,7 @@ import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ProjectIdBadge } from '@/components/ui/project-id-badge';
+import { formatDistanceToNow } from 'date-fns';
 
 interface DirectorSoFViewProps {
   userName?: string;
@@ -221,6 +222,56 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
               })}
             </>
           )}
+        </div>
+
+        {/* Recent Activity Section */}
+        <div className="mt-10 pt-6 border-t border-border/40">
+          <h3 className="text-sm font-medium text-muted-foreground mb-4 flex items-center gap-2">
+            <Clock className="h-4 w-4" />
+            Recent Activity
+          </h3>
+          <div className="space-y-3">
+            {/* Mock recent activities - would be replaced with real data */}
+            <div className="flex items-start gap-3 text-sm">
+              <div className="h-8 w-8 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
+                <FileCheck className="h-4 w-4 text-green-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-foreground">
+                  Signed SoF for <span className="font-medium">CS6 Produced Water</span>
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {formatDistanceToNow(new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), { addSuffix: true })}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3 text-sm">
+              <div className="h-8 w-8 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
+                <FileCheck className="h-4 w-4 text-green-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-foreground">
+                  Signed SoF for <span className="font-medium">MJ North Manifold</span>
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {formatDistanceToNow(new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), { addSuffix: true })}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3 text-sm">
+              <div className="h-8 w-8 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0">
+                <FileText className="h-4 w-4 text-blue-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-foreground">
+                  Reviewed VCR for <span className="font-medium">RM Degassing Station</span>
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {formatDistanceToNow(new Date(Date.now() - 8 * 24 * 60 * 60 * 1000), { addSuffix: true })}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
       </div>
