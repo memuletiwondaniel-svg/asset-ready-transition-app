@@ -325,37 +325,12 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
                     approver.status === 'LOCKED' && "opacity-40"
                   )}>
                     {approver.signature_data ? (
-                      <>
-                        <img 
-                          src={approver.signature_data} 
-                          alt={`${approver.approver_name}'s signature`}
-                          className="max-h-16 max-w-full object-contain"
-                        />
-                        {/* Edit button for Ali */}
-                        {approver.approver_name === 'Ali Danbous' && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setAliSignatureDialogOpen(true);
-                            }}
-                            className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded bg-white/80 hover:bg-white shadow-sm"
-                            title="Edit signature"
-                          >
-                            <Edit2 className="h-3 w-3 text-gray-600" />
-                          </button>
-                        )}
-                      </>
-                    ) : approver.approver_name === 'Ali Danbous' ? (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setAliSignatureDialogOpen(true);
-                        }}
-                        className="flex flex-col items-center gap-1 text-primary hover:text-primary/80 transition-colors"
-                      >
-                        <PenLine className="h-5 w-5" />
-                        <span className="text-xs font-medium">Draw signature</span>
-                      </button>
+                      <img 
+                        src={approver.signature_data} 
+                        alt={`${approver.approver_name}'s signature`}
+                        className="max-h-16 max-w-full object-contain"
+                        style={{ background: 'transparent' }}
+                      />
                     ) : isClickable ? (
                       <div className="flex flex-col items-center gap-1 text-primary animate-pulse">
                         <PenLine className="h-6 w-6" />
