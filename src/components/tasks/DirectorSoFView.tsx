@@ -251,7 +251,7 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                 {/* Text content */}
                 <div className="flex-1 text-center sm:text-left">
                   <h2 className="text-xl font-bold text-foreground mb-1">
-                    You're all caught up, {firstName}! 🎉
+                    You're all caught up, <span className="font-extrabold">{firstName}</span>! 🎉
                   </h2>
                   <p className="text-muted-foreground">
                     No pending Statement of Fitness reviews at this time.
