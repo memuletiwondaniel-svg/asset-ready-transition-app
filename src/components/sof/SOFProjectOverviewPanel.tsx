@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -13,6 +13,7 @@ import dp385PipelineImage from '@/assets/dp385-pipeline.jpeg';
 
 interface SOFProjectOverviewPanelProps {
   pssrId: string;
+  projectId?: string; // Optional project ID to fetch real data
 }
 
 // Helper to get avatar URL from Supabase storage
@@ -155,10 +156,41 @@ const handleWidgetScroll = (e: React.WheelEvent<HTMLDivElement>) => {
   }
 };
 
-export const SOFProjectOverviewPanel: React.FC<SOFProjectOverviewPanelProps> = ({ pssrId }) => {
+export const SOFProjectOverviewPanel: React.FC<SOFProjectOverviewPanelProps> = ({ pssrId, projectId }) => {
   const isDP385 = pssrId === 'mock-pssr-dp385';
-  const projectData = isDP385 ? dp385ProjectData : defaultProjectData;
+  const baseProjectData = isDP385 ? dp385ProjectData : defaultProjectData;
   const [isScopeExpanded, setIsScopeExpanded] = useState(false);
+  const [realProjectImage, setRealProjectImage] = useState<string | null>(null);
+
+  // Fetch real project image from database for non-DP385 projects
+  useEffect(() => {
+    const fetchProjectImage = async () => {
+      if (isDP385) return; // DP385 uses imported image
+      
+      try {
+        // For DP-300, fetch from database
+        const { data, error } = await supabase
+          .from('projects')
+          .select('project_scope_image_url')
+          .eq('project_id_number', '300')
+          .single();
+        
+        if (!error && data?.project_scope_image_url) {
+          setRealProjectImage(data.project_scope_image_url);
+        }
+      } catch (err) {
+        console.error('Error fetching project image:', err);
+      }
+    };
+
+    fetchProjectImage();
+  }, [isDP385]);
+
+  // Merge real project image with mock data
+  const projectData = {
+    ...baseProjectData,
+    projectImage: isDP385 ? baseProjectData.projectImage : (realProjectImage || baseProjectData.projectImage)
+  };
 
   const completedActivities = projectData.oraActivities.filter(a => a.status === 'completed').length;
   const totalActivities = projectData.oraActivities.length;
