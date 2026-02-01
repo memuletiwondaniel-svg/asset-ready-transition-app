@@ -31,8 +31,15 @@ interface SOFApprover {
   status: string;
   comments?: string;
   approved_at?: string;
+  rejected_at?: string;
   signature_data?: string;
+  rejection_priority?: 'Pr1' | 'Pr2';
+  rejection_description?: string;
+  rejection_linked_item?: string;
 }
+
+// Storage key for rejection activity
+const SOF_REJECTION_ACTIVITY_KEY = 'sof-rejection-activity';
 
 interface SOFCertificateProps {
   certificateNumber: string;
@@ -175,12 +182,61 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
           approved_at: new Date().toISOString(),
         };
       }
+      // Unlock next approver
+      if (approver.approver_name === 'Marije Hoedemaker') {
+        return { ...approver, status: 'PENDING' };
+      }
       return approver;
     }));
 
+    // Store activity for the dashboard
+    const activity = {
+      type: 'approved',
+      approver: 'Paul Van Den Hemel',
+      timestamp: new Date().toISOString(),
+      comments: comments || undefined,
+    };
+    localStorage.setItem(SOF_REJECTION_ACTIVITY_KEY, JSON.stringify(activity));
+
     toast({
       title: 'Statement of Fitness Signed',
-      description: 'Your signature has been recorded successfully.',
+      description: 'Your signature has been recorded successfully. PSSR Lead has been notified.',
+    });
+  };
+
+  const handleReject = (priorityLevel: 'Pr1' | 'Pr2', description: string, linkedItemId?: string) => {
+    // Update local state to show rejection
+    setLocalApprovers(prev => prev.map(approver => {
+      if (approver.approver_name === 'Paul Van Den Hemel') {
+        return {
+          ...approver,
+          status: priorityLevel === 'Pr1' ? 'REJECTED_PR1' : 'REJECTED_PR2',
+          rejected_at: new Date().toISOString(),
+          rejection_priority: priorityLevel,
+          rejection_description: description,
+          rejection_linked_item: linkedItemId,
+        };
+      }
+      return approver;
+    }));
+
+    // Store activity for the dashboard
+    const activity = {
+      type: 'rejected',
+      approver: 'Paul Van Den Hemel',
+      priorityLevel,
+      description,
+      linkedItemId,
+      timestamp: new Date().toISOString(),
+    };
+    localStorage.setItem(SOF_REJECTION_ACTIVITY_KEY, JSON.stringify(activity));
+
+    toast({
+      title: priorityLevel === 'Pr1' ? 'SoF Rejected - Priority 1 Action Created' : 'SoF Comment Added - Priority 2 Action',
+      description: priorityLevel === 'Pr1' 
+        ? 'PSSR Lead has been notified. This item must be resolved before re-review.'
+        : 'Comment logged and PSSR Lead notified. You may continue with approval.',
+      variant: priorityLevel === 'Pr1' ? 'destructive' : 'default',
     });
   };
 
@@ -191,11 +247,15 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
   const getStatusBadge = (approverStatus: string) => {
     switch (approverStatus) {
       case 'APPROVED':
-        return <Badge className="bg-green-500/20 text-green-400 border-green-500/30"><CheckCircle2 className="w-3 h-3 mr-1" /> Approved</Badge>;
+        return <Badge className="bg-green-500/20 text-green-700 dark:text-green-400 border-green-500/30"><CheckCircle2 className="w-3 h-3 mr-1" /> Approved</Badge>;
       case 'PENDING':
-        return <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30"><Clock className="w-3 h-3 mr-1" /> Pending</Badge>;
+        return <Badge className="bg-yellow-500/20 text-yellow-700 dark:text-yellow-400 border-yellow-500/30"><Clock className="w-3 h-3 mr-1" /> Pending</Badge>;
       case 'LOCKED':
         return <Badge className="bg-muted text-muted-foreground border-border"><Lock className="w-3 h-3 mr-1" /> Locked</Badge>;
+      case 'REJECTED_PR1':
+        return <Badge className="bg-red-500/20 text-red-700 dark:text-red-400 border-red-500/30">Rejected (Pr1)</Badge>;
+      case 'REJECTED_PR2':
+        return <Badge className="bg-amber-500/20 text-amber-700 dark:text-amber-400 border-amber-500/30">Comment (Pr2)</Badge>;
       default:
         return <Badge variant="outline">{approverStatus}</Badge>;
     }
@@ -303,7 +363,7 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
               const isPaul = approver.approver_name === 'Paul Van Den Hemel';
               const isPending = approver.status === 'PENDING';
               const isClickable = isPaul && isPending;
-              const isAlreadyApproved = approver.status === 'APPROVED';
+              const isRejected = approver.status === 'REJECTED_PR1' || approver.status === 'REJECTED_PR2';
               
               return (
                 <div 
@@ -314,6 +374,10 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
                       ? 'border-green-200 bg-green-50/50 opacity-70' 
                       : approver.status === 'LOCKED'
                       ? 'border-gray-200 bg-gray-50 opacity-80'
+                      : approver.status === 'REJECTED_PR1'
+                      ? 'border-red-300 bg-red-50/50'
+                      : approver.status === 'REJECTED_PR2'
+                      ? 'border-amber-300 bg-amber-50/50'
                       : 'border-yellow-300 bg-yellow-50',
                     isClickable && 'ring-2 ring-primary ring-offset-2 cursor-pointer hover:shadow-lg opacity-100'
                   )}
@@ -330,6 +394,18 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
                         alt={`${approver.approver_name}'s signature`}
                         className="max-h-16 max-w-full object-contain mix-blend-multiply"
                       />
+                    ) : isRejected ? (
+                      <div className="flex flex-col items-center gap-1 text-center px-2">
+                        <span className={cn(
+                          "text-xs font-medium",
+                          approver.status === 'REJECTED_PR1' ? 'text-red-600' : 'text-amber-600'
+                        )}>
+                          {approver.status === 'REJECTED_PR1' ? 'Pr1 Action Required' : 'Pr2 Comment Added'}
+                        </span>
+                        {approver.rejection_description && (
+                          <p className="text-[10px] text-gray-500 line-clamp-2">{approver.rejection_description}</p>
+                        )}
+                      </div>
                     ) : isClickable ? (
                       <div className="flex flex-col items-center gap-1 text-primary animate-pulse">
                         <PenLine className="h-6 w-6" />
@@ -354,10 +430,15 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
                         {format(new Date(approver.approved_at), 'dd MMM yyyy, HH:mm')}
                       </p>
                     )}
+                    {approver.rejected_at && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        {format(new Date(approver.rejected_at), 'dd MMM yyyy, HH:mm')}
+                      </p>
+                    )}
                     <div className="mt-2">
                       {getStatusBadge(approver.status)}
                     </div>
-                    {approver.comments && (
+                    {approver.comments && !isRejected && (
                       <p className="text-xs text-gray-500 mt-2 italic">"{approver.comments}"</p>
                     )}
                   </div>
@@ -385,6 +466,7 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
           approverRole={currentUserApprover.approver_role}
           savedSignature={savedSignature}
           onSign={handleSign}
+          onReject={handleReject}
           onSaveSignature={handleSaveSignature}
         />
       )}
