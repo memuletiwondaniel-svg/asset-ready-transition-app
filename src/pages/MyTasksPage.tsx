@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ListChecks, Plus, Search, LayoutGrid, Table, CheckCircle2 } from 'lucide-react';
+import { ListChecks, Plus, Search, LayoutGrid, Table } from 'lucide-react';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,10 +11,6 @@ import { NewTaskModal } from '@/components/tasks/NewTaskModal';
 import { AllTasksTable } from '@/components/tasks/AllTasksTable';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 import { useUserLastLogin } from '@/hooks/useUserLastLogin';
-import { usePSSRsAwaitingReview } from '@/hooks/usePSSRItemApprovals';
-import { useUserP2AApprovals } from '@/hooks/useUserP2AApprovals';
-import { useUserORPActivities } from '@/hooks/useUserORPActivities';
-import { useUserOWLItems } from '@/hooks/useUserOWLItems';
 import { cn } from '@/lib/utils';
 
 type ViewMode = 'grid' | 'table';
@@ -28,15 +24,8 @@ const MyTasksPage: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [expandedCard, setExpandedCard] = useState<ExpandedCard>(null);
 
-  // Fetch task counts to determine if we should show empty state
-  const { data: pssrTasks, isLoading: pssrLoading } = usePSSRsAwaitingReview(user?.id);
-  const { approvals: p2aTasks, isLoading: p2aLoading } = useUserP2AApprovals();
-  const { activities: orpTasks, isLoading: orpLoading } = useUserORPActivities();
-  const { items: owlTasks, isLoading: owlLoading } = useUserOWLItems();
-
-  const isLoadingTasks = pssrLoading || p2aLoading || orpLoading || owlLoading;
-  const totalTasks = (pssrTasks?.length || 0) + (p2aTasks?.length || 0) + (orpTasks?.length || 0) + (owlTasks?.length || 0);
-  const hasNoTasks = !isLoadingTasks && totalTasks === 0;
+  // Note: Mock data is handled inside individual panels, so we don't check for empty state here
+  // The panels will show mock data when real data is empty
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -211,17 +200,6 @@ const MyTasksPage: React.FC = () => {
 
         {/* Content based on view mode */}
         {viewMode === 'grid' ? (
-          hasNoTasks ? (
-            <div className="flex flex-col items-center justify-center py-16 px-4">
-              <div className="p-4 rounded-full bg-primary/10 mb-4">
-                <CheckCircle2 className="h-10 w-10 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold text-foreground mb-2">You're all caught up!</h3>
-              <p className="text-muted-foreground text-center max-w-md">
-                No tasks are currently assigned to you. When tasks need your attention, they'll appear here.
-              </p>
-            </div>
-          ) : (
           <div className={cn(
             "grid grid-cols-1 lg:grid-cols-2 gap-6 transition-all duration-500",
             expandedCard && "min-h-[calc(100vh-300px)]"
@@ -272,7 +250,6 @@ const MyTasksPage: React.FC = () => {
               })}
             </div>
           </div>
-          )
         ) : (
           <AllTasksTable searchQuery={searchQuery} userId={user.id} />
         )}
