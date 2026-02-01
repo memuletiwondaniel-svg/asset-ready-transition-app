@@ -160,7 +160,7 @@ export const SOFQualificationsPanel: React.FC<SOFQualificationsPanelProps> = ({ 
               {mockDeviations.length} Approved Deviation{mockDeviations.length !== 1 ? 's' : ''}
             </p>
             <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
-              Click on a qualification to view full details including risk assessment and attachments
+              The following qualifications against VCR or PSSR items have been reviewed, risk-assessed and approved with appropriate mitigations in place
             </p>
           </div>
         </div>
