@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { FileText, MessageSquare, ClipboardList } from 'lucide-react';
+import { FileText, MessageSquare, ClipboardList, Award } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SOFCertificate } from './SOFCertificate';
 import { SOFCommentsPanel } from './SOFCommentsPanel';
+import { SOFQualificationsPanel } from './SOFQualificationsPanel';
 
 
 interface SOFApprover {
@@ -28,7 +29,7 @@ interface SOFCertificateNavigatorProps {
   status: string;
 }
 
-type TabId = 'sof' | 'comments' | 'checklists';
+type TabId = 'sof' | 'comments' | 'qualifications' | 'checklists';
 
 interface TabItem {
   id: TabId;
@@ -39,6 +40,7 @@ interface TabItem {
 const tabs: TabItem[] = [
   { id: 'sof', label: 'SoF Certificate', icon: <FileText className="h-4 w-4" /> },
   { id: 'comments', label: 'Comments', icon: <MessageSquare className="h-4 w-4" /> },
+  { id: 'qualifications', label: 'Qualifications', icon: <Award className="h-4 w-4" /> },
   { id: 'checklists', label: 'Checklists', icon: <ClipboardList className="h-4 w-4" /> },
 ];
 
@@ -73,6 +75,10 @@ export const SOFCertificateNavigator: React.FC<SOFCertificateNavigatorProps> = (
       case 'comments':
         return (
           <SOFCommentsPanel pssrId={pssrId} />
+        );
+      case 'qualifications':
+        return (
+          <SOFQualificationsPanel pssrId={pssrId} />
         );
       case 'checklists':
         return null;
