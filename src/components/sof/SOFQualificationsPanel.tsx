@@ -117,8 +117,7 @@ export const SOFQualificationsPanel: React.FC<SOFQualificationsPanelProps> = ({ 
               {mockDeviations.length} Approved Deviation{mockDeviations.length !== 1 ? 's' : ''}
             </p>
             <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
-              The following items represent deviations from standard requirements that have been 
-              reviewed, risk-assessed, and approved with appropriate mitigation measures in place.
+              The following qualifications against VCR or PSSR items have been reviewed, risk-assessed and approved with appropriate mitigations in place
             </p>
           </div>
         </div>
