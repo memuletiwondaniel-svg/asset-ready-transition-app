@@ -60,15 +60,20 @@ export const MyTasksPanelCard: React.FC<MyTasksPanelCardProps> = ({
         "relative overflow-hidden bg-gradient-to-br from-card/90 to-card/70",
         "backdrop-blur-sm border-border/50",
         "shadow-sm transition-all duration-500 ease-out",
-        "hover:shadow-lg hover:shadow-primary/5",
-        "hover:border-primary/20",
         "group",
         isFullHeight && "h-full flex flex-col",
         isFullHeight && isExpanded && "ring-2 ring-primary/20 shadow-xl shadow-primary/10",
         isRelocated && "animate-card-relocate",
-        !isExpanded && "hover:-translate-y-0.5 cursor-pointer",
-        // Dim effect when another card is expanded
-        isDimmed && "opacity-50 scale-[0.98] hover:opacity-70 hover:scale-100"
+        // Dim effect when another card is expanded - more prominent
+        isDimmed ? [
+          "opacity-40 scale-[0.97] grayscale-[30%]",
+          "hover:opacity-60 hover:scale-[0.99] hover:grayscale-0",
+          "pointer-events-auto"
+        ] : [
+          "hover:shadow-lg hover:shadow-primary/5",
+          "hover:border-primary/20",
+          !isExpanded && "hover:-translate-y-0.5 cursor-pointer"
+        ]
       )}
       onClick={handleCardClick}
     >
