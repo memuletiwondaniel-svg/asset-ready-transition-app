@@ -151,7 +151,7 @@ export const OWLPanel: React.FC<OWLPanelProps> = ({
 
   return (
     <MyTasksPanelCard
-      title="Outstanding Work"
+      title="Qualifications & Outstanding Work"
       icon={<ListTodo className="h-5 w-5 text-white" />}
       iconColorClass="from-amber-500 to-amber-600"
       primaryStat={displayStats.open + displayStats.inProgress}
