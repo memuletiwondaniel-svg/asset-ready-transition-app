@@ -88,6 +88,53 @@ const defaultProjectData = {
   },
 };
 
+// Mini Circular Progress for VCR/PSSR cards
+const MiniCircularProgress: React.FC<{ percentage: number; size?: number }> = ({ 
+  percentage, 
+  size = 32 
+}) => {
+  const strokeWidth = 3;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = radius * 2 * Math.PI;
+  const offset = circumference - (percentage / 100) * circumference;
+  
+  const getProgressColor = () => {
+    if (percentage >= 70) return '#10b981'; // emerald-500
+    if (percentage >= 40) return '#f59e0b'; // amber-500
+    return '#94a3b8'; // slate-400 for low/zero
+  };
+
+  return (
+    <div className="relative flex-shrink-0" style={{ width: size, height: size }}>
+      <svg className="transform -rotate-90" width={size} height={size}>
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke="currentColor"
+          strokeWidth={strokeWidth}
+          fill="none"
+          className="text-muted/30"
+        />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke={getProgressColor()}
+          strokeWidth={strokeWidth}
+          fill="none"
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+        />
+      </svg>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <span className="text-[9px] font-semibold text-foreground">{percentage}%</span>
+      </div>
+    </div>
+  );
+};
+
 // Scroll isolation handler for widget-level scrolling
 const handleWidgetScroll = (e: React.WheelEvent<HTMLDivElement>) => {
   const target = e.currentTarget;
@@ -370,30 +417,30 @@ export const SOFProjectOverviewPanel: React.FC<SOFProjectOverviewPanelProps> = (
                           : "bg-amber-500/5 border-amber-500/20"
                       )}
                     >
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <Badge 
-                          variant="outline" 
-                          className={cn(
-                            "text-[10px] px-1.5 py-0 font-medium",
-                            item.type === 'vcr' 
-                              ? "bg-blue-500/10 border-blue-500/30 text-blue-700 dark:text-blue-400" 
-                              : "bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-400"
-                          )}
-                        >
-                          {item.id}
-                        </Badge>
-                        <div className={cn(
-                          "w-1.5 h-1.5 rounded-full flex-shrink-0",
-                          item.status === 'completed' ? "bg-emerald-500" :
-                          item.status === 'in_progress' ? "bg-blue-500" : "bg-muted-foreground/40"
-                        )} />
-                      </div>
-                      <p className="text-xs font-medium truncate">{item.name}</p>
-                      {item.progress > 0 && (
-                        <div className="mt-1.5">
-                          <Progress value={item.progress} className="h-1" />
+                      <div className="flex items-center gap-3">
+                        <MiniCircularProgress percentage={item.progress} size={36} />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <Badge 
+                              variant="outline" 
+                              className={cn(
+                                "text-[10px] px-1.5 py-0 font-medium",
+                                item.type === 'vcr' 
+                                  ? "bg-blue-500/10 border-blue-500/30 text-blue-700 dark:text-blue-400" 
+                                  : "bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-400"
+                              )}
+                            >
+                              {item.id}
+                            </Badge>
+                            <div className={cn(
+                              "w-1.5 h-1.5 rounded-full flex-shrink-0",
+                              item.status === 'completed' ? "bg-emerald-500" :
+                              item.status === 'in_progress' ? "bg-blue-500" : "bg-muted-foreground/40"
+                            )} />
+                          </div>
+                          <p className="text-xs font-medium truncate">{item.name}</p>
                         </div>
-                      )}
+                      </div>
                     </div>
                   ))}
                 </div>
