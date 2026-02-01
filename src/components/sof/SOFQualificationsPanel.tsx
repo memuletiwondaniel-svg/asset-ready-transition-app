@@ -103,7 +103,108 @@ const mockDeviations: QualificationDetail[] = [
   },
 ];
 
+// DP385-specific qualifications
+const dp385Deviations: QualificationDetail[] = [
+  {
+    id: 'dp385-1',
+    qualificationId: 'Q-DP385-ESD-001',
+    category: 'Safety Systems',
+    title: 'Temporary Override on ESD Valve at OT2 and OT3',
+    description: 'ESD valve logic override required at OT2 and OT3 as stations cannot be shut down to implement logic changes until Feb 17th 2026. Temporary override in place.',
+    severity: 'high',
+    status: 'approved',
+    approvedBy: 'Paul Van Den Hemel',
+    approverRole: 'Operations Director',
+    secondApprover: 'Marije Hoedemaker',
+    secondApproverRole: 'CS Director',
+    approvedAt: '2026-01-29',
+    mitigationMeasures: 'Independent safeguard installed at the inlet to CS6/7 on the other end of the piping is fully functional and appropriately sized to protect against overpressurization of the downstream facility. Daily verification checks in place.',
+    expiryDate: '2026-02-17',
+    punchlistRef: 'PL-2026-0412',
+    riskDescription: 'Potential overpressure scenario at downstream facility if ESD valve fails to actuate during process upset',
+    riskRating: 'High',
+    actionOwner: 'Rashid Al-Mansour',
+    actionOwnerRole: 'I&C Lead Engineer',
+    attachments: [
+      { name: 'ESD_Override_Risk_Assessment.pdf', type: 'PDF' },
+      { name: 'CS6_7_Safeguard_Verification.pdf', type: 'PDF' },
+      { name: 'Daily_Check_Procedure.docx', type: 'Word' },
+    ],
+  },
+  {
+    id: 'dp385-2',
+    qualificationId: 'Q-DP385-SYS-002',
+    category: 'Control Systems',
+    title: 'CS6/7 Control System Software Backups and Licence',
+    description: 'Software backups and licence documentation for the CS6/7 control system are yet to be received from vendor.',
+    severity: 'medium',
+    status: 'approved',
+    approvedBy: 'Ahmed Khalil',
+    approverRole: 'I&C TA2',
+    approvedAt: '2026-01-28',
+    mitigationMeasures: 'Vendor support agreement in place for emergency recovery. Temporary licence issued pending formal transfer. Backup scheduled for completion by Feb 28th.',
+    expiryDate: '2026-02-28',
+    riskDescription: 'Risk of extended downtime in case of control system failure requiring software restoration',
+    riskRating: 'Medium',
+    actionOwner: 'Fatima Al-Rashid',
+    actionOwnerRole: 'Control Systems Engineer',
+    attachments: [
+      { name: 'Vendor_Support_Agreement.pdf', type: 'PDF' },
+      { name: 'Temp_Licence_Confirmation.pdf', type: 'PDF' },
+    ],
+  },
+  {
+    id: 'dp385-3',
+    qualificationId: 'Q-DP385-MNT-003',
+    category: 'Maintenance',
+    title: 'CS7 Preventive Maintenance Plans Not Yet Activated',
+    description: 'Preventive Maintenance (PM) work orders for CS7 equipment have not yet been activated in SAP. PM strategy approved but awaiting system configuration.',
+    severity: 'low',
+    status: 'approved',
+    approvedBy: 'Dean Nye',
+    approverRole: 'Central MTCE Lead',
+    approvedAt: '2026-01-30',
+    mitigationMeasures: 'Manual PM tracking in place via spreadsheet. Critical equipment identified for priority activation. SAP configuration scheduled for completion by Mar 15th.',
+    expiryDate: '2026-03-15',
+    riskDescription: 'Potential for missed preventive maintenance activities leading to unplanned equipment failures',
+    riskRating: 'Low',
+    actionOwner: 'Hassan Ibrahim',
+    actionOwnerRole: 'SAP Maintenance Planner',
+    attachments: [
+      { name: 'CS7_PM_Strategy_Approved.pdf', type: 'PDF' },
+      { name: 'Manual_PM_Tracker.xlsx', type: 'Excel' },
+    ],
+  },
+  {
+    id: 'dp385-4',
+    qualificationId: 'Q-DP385-DOC-004',
+    category: 'Documentation',
+    title: 'BGC-WQ1FOD Interface Document and Custody Transfer Pending',
+    description: 'The BGC-WQ1FOD Interface document is yet to be updated. Transfer of custody, care and control of BGC-installed facilities within the WQ1FOD fence is still pending formal handover.',
+    severity: 'medium',
+    status: 'approved',
+    approvedBy: 'Ali Danbous',
+    approverRole: 'Operations Manager',
+    secondApprover: 'Lyle Koch',
+    secondApproverRole: 'CS Deputy Dir.',
+    approvedAt: '2026-01-27',
+    mitigationMeasures: 'Interim operating agreement in place between BGC and WQ1FOD. Weekly coordination meetings established. Draft interface document under review.',
+    expiryDate: '2026-03-31',
+    riskDescription: 'Potential for no maintenance activity being executed on BGC-installed facilities due to unclear custody and responsibility',
+    riskRating: 'Medium',
+    actionOwner: 'Khalid Rahman',
+    actionOwnerRole: 'Project Interface Manager',
+    attachments: [
+      { name: 'Interim_Operating_Agreement.pdf', type: 'PDF' },
+      { name: 'Draft_Interface_Document_v2.pdf', type: 'PDF' },
+      { name: 'Coordination_Meeting_Minutes.pdf', type: 'PDF' },
+    ],
+  },
+];
+
 export const SOFQualificationsPanel: React.FC<SOFQualificationsPanelProps> = ({ pssrId }) => {
+  const isDP385 = pssrId === 'mock-pssr-dp385';
+  const deviations = isDP385 ? dp385Deviations : mockDeviations;
   const [selectedQualification, setSelectedQualification] = useState<QualificationDetail | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -157,7 +258,7 @@ export const SOFQualificationsPanel: React.FC<SOFQualificationsPanelProps> = ({ 
           <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5" />
           <div>
             <p className="font-medium text-amber-800 dark:text-amber-200">
-              {mockDeviations.length} Approved Deviation{mockDeviations.length !== 1 ? 's' : ''}
+              {deviations.length} Approved Deviation{deviations.length !== 1 ? 's' : ''}
             </p>
             <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
               The following qualifications against VCR or PSSR items have been reviewed, risk-assessed and approved with appropriate mitigations in place
@@ -167,7 +268,7 @@ export const SOFQualificationsPanel: React.FC<SOFQualificationsPanelProps> = ({ 
       </div>
 
       <div className="space-y-3">
-        {mockDeviations.map((deviation) => {
+        {deviations.map((deviation) => {
           const formatDate = (dateStr: string) => {
             const date = new Date(dateStr);
             return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
