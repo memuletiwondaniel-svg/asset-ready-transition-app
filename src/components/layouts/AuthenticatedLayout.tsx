@@ -17,8 +17,9 @@ export const AuthenticatedLayout: React.FC = () => {
   const location = useLocation();
   const { signOut, session, loading } = useAuth();
   
-  // Auto-redirect directors to My Tasks after login
-  useDirectorRedirect();
+  // Auto-redirect directors to their appropriate landing page
+  // Returns isChecking to block render until redirect check completes
+  const { isChecking } = useDirectorRedirect();
 
   // Determine current page from route for sidebar highlighting
   const currentPage = useMemo(() => {
@@ -49,8 +50,8 @@ export const AuthenticatedLayout: React.FC = () => {
 
   const handleNavigate = createSidebarNavigator(navigate);
 
-  // Show loading state while auth is being determined
-  if (loading) {
+  // Show loading state while auth is being determined or director check is running
+  if (loading || isChecking) {
     return (
       <div className="h-screen w-full flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
