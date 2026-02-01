@@ -396,20 +396,20 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
         </div>
 
         {/* Recent Activity Section - always visible */}
-        <div className="mt-10 pt-6 border-t border-border/40">
-          <h3 className="text-sm font-medium text-muted-foreground mb-4 flex items-center gap-2">
-            <Clock className="h-4 w-4" />
+        <div className="mt-8 pt-5 border-t border-border/30">
+          <h3 className="text-xs font-medium text-muted-foreground/70 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+            <Clock className="h-3 w-3" />
             Recent Activity
           </h3>
-          <div className="space-y-1">
+          <div className="space-y-0.5">
             {/* Dynamic activity from recent rejection/approval */}
             {recentActivity && (
               <div 
-                className="flex items-center gap-2.5 text-sm py-2 px-2 -mx-2 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors group"
+                className="flex items-center gap-2 text-sm py-1.5 px-2 -mx-2 rounded-md hover:bg-muted/30 cursor-pointer transition-colors group"
                 onClick={() => handleViewSoF('mock-pssr-id', true)}
               >
                 <div className={cn(
-                  "h-6 w-6 rounded-full flex items-center justify-center shrink-0",
+                  "h-5 w-5 rounded-full flex items-center justify-center shrink-0 opacity-60",
                   recentActivity.type === 'approved' 
                     ? "bg-green-500/10" 
                     : recentActivity.priorityLevel === 'Pr1'
@@ -417,28 +417,28 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                     : "bg-amber-500/10"
                 )}>
                   {recentActivity.type === 'approved' ? (
-                    <FileCheck className="h-3.5 w-3.5 text-green-600" />
+                    <FileCheck className="h-3 w-3 text-green-600" />
                   ) : recentActivity.priorityLevel === 'Pr1' ? (
-                    <XCircle className="h-3.5 w-3.5 text-red-600" />
+                    <XCircle className="h-3 w-3 text-red-600" />
                   ) : (
-                    <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />
+                    <AlertTriangle className="h-3 w-3 text-amber-600" />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-foreground text-sm leading-snug">
+                  <p className="text-muted-foreground text-sm leading-snug">
                     {recentActivity.type === 'approved' ? (
                       <>
-                        Signed SoF for <span className="font-mono text-muted-foreground">DP-300:</span>{' '}
-                        <span className="font-medium">{recentActivity.projectName || 'HM Additional Compressors'}</span>
+                        Signed SoF for <span className="font-mono">DP-300:</span>{' '}
+                        <span className="font-medium text-foreground/80">{recentActivity.projectName || 'HM Additional Compressors'}</span>
                       </>
                     ) : (
                       <>
-                        Rejected SoF for <span className="font-mono text-muted-foreground">DP-300:</span>{' '}
-                        <span className="font-medium">{recentActivity.projectName || 'HM Additional Compressors'}</span>
+                        Rejected SoF for <span className="font-mono">DP-300:</span>{' '}
+                        <span className="font-medium text-foreground/80">{recentActivity.projectName || 'HM Additional Compressors'}</span>
                         <Badge 
                           variant="outline" 
                           className={cn(
-                            "ml-2 text-xs",
+                            "ml-2 text-xs opacity-70",
                             recentActivity.priorityLevel === 'Pr1' 
                               ? "border-red-300 text-red-700" 
                               : "border-amber-300 text-amber-700"
@@ -450,9 +450,9 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                     )}
                   </p>
                   {recentActivity.type === 'rejected' && recentActivity.description && (
-                    <div className="mt-1 max-w-[90%]">
+                    <div className="mt-0.5 max-w-[90%]">
                       <p className={cn(
-                        "text-xs text-muted-foreground",
+                        "text-xs text-muted-foreground/70",
                         !isDescriptionExpanded && "line-clamp-1"
                       )}>
                         {recentActivity.description}
@@ -463,72 +463,72 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                             e.stopPropagation();
                             setIsDescriptionExpanded(!isDescriptionExpanded);
                           }}
-                          className="text-xs text-primary hover:underline mt-0.5"
+                          className="text-xs text-primary/70 hover:underline mt-0.5"
                         >
                           {isDescriptionExpanded ? 'less' : 'more'}
                         </button>
                       )}
                     </div>
                   )}
-                  <p className="text-xs text-muted-foreground mt-0.5">
+                  <p className="text-xs text-muted-foreground/60">
                     {formatDistanceToNow(new Date(recentActivity.timestamp), { addSuffix: true })}
                   </p>
                 </div>
-                <Eye className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                <Eye className="h-3.5 w-3.5 text-muted-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
             )}
 
             {/* Static mock activities */}
             <div 
-              className="flex items-center gap-2.5 text-sm py-2 px-2 -mx-2 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors group"
+              className="flex items-center gap-2 text-sm py-1.5 px-2 -mx-2 rounded-md hover:bg-muted/30 cursor-pointer transition-colors group"
               onClick={() => handleViewSoF('mock-pssr-dp385', true)}
             >
-              <div className="h-6 w-6 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
-                <FileCheck className="h-3.5 w-3.5 text-green-600" />
+              <div className="h-5 w-5 rounded-full bg-green-500/10 flex items-center justify-center shrink-0 opacity-60">
+                <FileCheck className="h-3 w-3 text-green-600" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-foreground text-sm leading-snug">
-                  Signed SoF for <span className="font-mono text-muted-foreground">DP-385:</span>{' '}
-                  <span className="font-medium">OT2/3 Gas Feed to CS6/7</span>
+                <p className="text-muted-foreground text-sm leading-snug">
+                  Signed SoF for <span className="font-mono">DP-385:</span>{' '}
+                  <span className="font-medium text-foreground/80">OT2/3 Gas Feed to CS6/7</span>
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground/60">
                   {formatDistanceToNow(new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), { addSuffix: true })}
                 </p>
               </div>
-              <Eye className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+              <Eye className="h-3.5 w-3.5 text-muted-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
             <div 
-              className="flex items-center gap-2.5 text-sm py-2 px-2 -mx-2 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors group"
+              className="flex items-center gap-2 text-sm py-1.5 px-2 -mx-2 rounded-md hover:bg-muted/30 cursor-pointer transition-colors group"
               onClick={() => handleViewSoF('mock-pssr-dp40', true)}
             >
-              <div className="h-6 w-6 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
-                <FileCheck className="h-3.5 w-3.5 text-green-600" />
+              <div className="h-5 w-5 rounded-full bg-green-500/10 flex items-center justify-center shrink-0 opacity-60">
+                <FileCheck className="h-3 w-3 text-green-600" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-foreground text-sm leading-snug">
-                  Signed SoF for <span className="font-mono text-muted-foreground">DP-40:</span>{' '}
-                  <span className="font-medium">HM LLP Gas Capture</span>
+                <p className="text-muted-foreground text-sm leading-snug">
+                  Signed SoF for <span className="font-mono">DP-40:</span>{' '}
+                  <span className="font-medium text-foreground/80">HM LLP Gas Capture</span>
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground/60">
                   {formatDistanceToNow(new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), { addSuffix: true })}
                 </p>
               </div>
-              <Eye className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+              <Eye className="h-3.5 w-3.5 text-muted-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
-            <div className="flex items-center gap-2.5 text-sm py-2 px-2 -mx-2 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors group">
-              <div className="h-6 w-6 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0">
-                <FileText className="h-3.5 w-3.5 text-blue-600" />
+            <div className="flex items-center gap-2 text-sm py-1.5 px-2 -mx-2 rounded-md hover:bg-muted/30 cursor-pointer transition-colors group">
+              <div className="h-5 w-5 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0 opacity-60">
+                <FileText className="h-3 w-3 text-blue-600" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-foreground text-sm leading-snug">
-                  Reviewed VCR for <span className="font-mono text-muted-foreground">DP-230:</span>{' '}
-                  <span className="font-medium">RM Degassing Station</span>
+                <p className="text-muted-foreground text-sm leading-snug">
+                  Reviewed VCR for <span className="font-mono">DP-230:</span>{' '}
+                  <span className="font-medium text-foreground/80">RM Degassing Station</span>
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground/60">
                   {formatDistanceToNow(new Date(Date.now() - 8 * 24 * 60 * 60 * 1000), { addSuffix: true })}
                 </p>
               </div>
-              <Eye className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+              <Eye className="h-3.5 w-3.5 text-muted-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
           </div>
         </div>
