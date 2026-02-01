@@ -336,7 +336,7 @@ export const SOFProjectOverviewPanel: React.FC<SOFProjectOverviewPanelProps> = (
                   <span className="text-muted-foreground">Overall Progress</span>
                   <span className="font-medium">{overallProgress}%</span>
                 </div>
-                <Progress value={overallProgress} className="h-1.5" />
+                <Progress value={overallProgress} className="h-1.5 [&>div]:bg-muted-foreground/50" />
                 <p className="text-xs text-muted-foreground">
                   {completedActivities} of {totalActivities} activities completed
                 </p>
