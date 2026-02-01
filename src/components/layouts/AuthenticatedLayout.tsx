@@ -3,6 +3,7 @@ import { Outlet, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { OrshSidebar } from '@/components/OrshSidebar';
 import { createSidebarNavigator } from '@/utils/sidebarNavigation';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
+import { useDirectorRedirect } from '@/hooks/useDirectorRedirect';
 import { Loader2 } from 'lucide-react';
 import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
 
@@ -15,6 +16,9 @@ export const AuthenticatedLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { signOut, session, loading } = useAuth();
+  
+  // Auto-redirect directors to My Tasks after login
+  useDirectorRedirect();
 
   // Determine current page from route for sidebar highlighting
   const currentPage = useMemo(() => {
