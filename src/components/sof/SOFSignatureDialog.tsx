@@ -47,9 +47,8 @@ export const SOFSignatureDialog: React.FC<SOFSignatureDialogProps> = ({
   const [comments, setComments] = useState('');
   const [signatureData, setSignatureData] = useState<string | null>(null);
   
-  // Pr2 action state (optional follow-up with approval)
+  // Pr2 action state (marks comments as a follow-up action)
   const [addPr2Action, setAddPr2Action] = useState(false);
-  const [pr2Description, setPr2Description] = useState('');
 
   const handleClose = () => {
     // Reset state on close
@@ -59,7 +58,6 @@ export const SOFSignatureDialog: React.FC<SOFSignatureDialogProps> = ({
     setComments('');
     setSignatureData(null);
     setAddPr2Action(false);
-    setPr2Description('');
     onOpenChange(false);
   };
 
@@ -69,11 +67,11 @@ export const SOFSignatureDialog: React.FC<SOFSignatureDialogProps> = ({
 
   const handleSubmitSignature = () => {
     if (signatureData) {
-      // If Pr2 action is added, pass it along with the signature
-      const fullComments = addPr2Action && pr2Description.trim()
-        ? `${comments}${comments ? '\n\n' : ''}[Pr2 Action Required]: ${pr2Description}`
+      // If Pr2 action is checked, the comments become the Pr2 description
+      const fullComments = addPr2Action && comments.trim()
+        ? `[Pr2 Action Required]: ${comments}`
         : comments;
-      onSign(signatureData, fullComments, addPr2Action ? { priority: 'Pr2', description: pr2Description } : undefined);
+      onSign(signatureData, fullComments, addPr2Action && comments.trim() ? { priority: 'Pr2', description: comments } : undefined);
       handleClose();
     }
   };
@@ -149,19 +147,32 @@ export const SOFSignatureDialog: React.FC<SOFSignatureDialogProps> = ({
                 </div>
               </div>
 
-              {/* Optional Comments */}
+              {/* Optional Comments with Pr2 option */}
               <div className="space-y-2">
                 <Label htmlFor="signatureComments" className="text-sm font-medium">
                   Comments (optional)
                 </Label>
                 <Textarea
                   id="signatureComments"
-                  placeholder="Enter any comments you'd like to include with your signature..."
+                  placeholder="Enter any comments or follow-up actions required..."
                   value={comments}
                   onChange={(e) => setComments(e.target.value)}
                   className="resize-none"
                   rows={3}
                 />
+                {comments.trim() && (
+                  <div className="flex items-center gap-2 pt-1">
+                    <Checkbox
+                      id="markAsPr2"
+                      checked={addPr2Action}
+                      onCheckedChange={(checked) => setAddPr2Action(!!checked)}
+                    />
+                    <Label htmlFor="markAsPr2" className="text-sm cursor-pointer flex items-center gap-1.5">
+                      <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
+                      Mark as Priority 2 follow-up action
+                    </Label>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -204,45 +215,16 @@ export const SOFSignatureDialog: React.FC<SOFSignatureDialogProps> = ({
                 height={150}
               />
 
-              {/* Optional Pr2 Action */}
-              <div className="space-y-3 border-t pt-4 mt-4">
-                <div className="flex items-start gap-3">
-                  <Checkbox
-                    id="addPr2Action"
-                    checked={addPr2Action}
-                    onCheckedChange={(checked) => {
-                      setAddPr2Action(!!checked);
-                      if (!checked) setPr2Description('');
-                    }}
-                    className="mt-0.5"
-                  />
-                  <div className="flex-1">
-                    <Label htmlFor="addPr2Action" className="font-medium cursor-pointer flex items-center gap-2">
-                      <AlertTriangle className="h-4 w-4 text-amber-500" />
-                      Add Priority 2 Follow-up Action
-                    </Label>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Log an action to be completed after startup. Does not block approval.
-                    </p>
-                  </div>
-                </div>
-                
-                {addPr2Action && (
-                  <div className="ml-6">
-                    <Textarea
-                      placeholder="Describe the follow-up action required..."
-                      value={pr2Description}
-                      onChange={(e) => setPr2Description(e.target.value)}
-                      className="resize-none"
-                      rows={3}
-                    />
-                  </div>
-                )}
-              </div>
-
               {comments && (
                 <div className="mt-4 p-3 rounded-lg bg-muted/30 border">
-                  <p className="text-xs font-medium text-muted-foreground mb-1">Your comments:</p>
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="text-xs font-medium text-muted-foreground">Your comments:</p>
+                    {addPr2Action && (
+                      <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-medium">
+                        Pr2 Action
+                      </span>
+                    )}
+                  </div>
                   <p className="text-sm">{comments}</p>
                 </div>
               )}
