@@ -126,7 +126,7 @@ export const SOFSignatureDialog: React.FC<SOFSignatureDialogProps> = ({
                 <div className="flex-1">
                   <Label htmlFor="qualifications" className="font-medium cursor-pointer flex items-center gap-2">
                     <ShieldAlert className="h-4 w-4 text-amber-500" />
-                    Qualifications & Deviations
+                    Qualifications
                   </Label>
                   <p className="text-sm text-muted-foreground mt-1">
                     I have reviewed all approved deviations and requirements that could not be fully met.

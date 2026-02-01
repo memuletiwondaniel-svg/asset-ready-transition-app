@@ -101,7 +101,7 @@ export const SOFQualificationsPanel: React.FC<SOFQualificationsPanelProps> = ({ 
           <ShieldAlert className="h-5 w-5 text-amber-500" />
         </div>
         <div>
-          <h2 className="text-lg font-semibold">Qualifications & Deviations</h2>
+          <h2 className="text-lg font-semibold">Qualifications</h2>
           <p className="text-sm text-muted-foreground">
             Items that could not be fully completed but have been reviewed and approved with mitigation measures
           </p>
