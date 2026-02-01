@@ -38,21 +38,22 @@ const mockDeviations: QualificationDetail[] = [
     id: '2',
     qualificationId: 'Q-2026-0043',
     category: 'Training',
-    title: 'Deferred Operator Certification',
-    description: '2 operators pending final certification for new compressor unit. Supervised operation only until certification complete.',
+    title: 'Waukesha Engine Maintenance Training',
+    description: 'Maintenance technicians require specialized training on Waukesha gas engine overhaul procedures before performing independent maintenance. Training scheduled with vendor for Feb 25th 2026.',
     severity: 'low',
     status: 'approved',
     approvedBy: 'Ali Danbous',
     approverRole: 'Operations Manager',
     approvedAt: '2026-01-29',
-    mitigationMeasures: 'Senior operator supervision required at all times. Training scheduled for completion by Feb 10.',
-    expiryDate: '2026-02-10',
-    riskDescription: 'Operators may not respond optimally to abnormal situations',
+    mitigationMeasures: 'Vendor technical support available on-call until training complete. All Waukesha engine maintenance to be performed under supervision of certified personnel.',
+    expiryDate: '2026-03-15',
+    riskDescription: 'Improper maintenance procedures could lead to engine failure or safety incidents',
     riskRating: 'Low',
-    actionOwner: 'Ahmed Hassan',
-    actionOwnerRole: 'Training Coordinator',
+    actionOwner: 'Mohamed Ali',
+    actionOwnerRole: 'ORA Engr.',
     attachments: [
-      { name: 'Training_Schedule.pdf', type: 'PDF' },
+      { name: 'Waukesha_Training_Schedule.pdf', type: 'PDF' },
+      { name: 'Vendor_Confirmation_Letter.pdf', type: 'PDF' },
     ],
   },
   {
@@ -140,45 +141,59 @@ export const SOFQualificationsPanel: React.FC<SOFQualificationsPanelProps> = ({ 
       </div>
 
       <div className="space-y-3">
-        {mockDeviations.map((deviation) => (
-          <Card 
-            key={deviation.id}
-            className="cursor-pointer hover:border-primary/50 hover:shadow-sm transition-all group"
-            onClick={() => handleQualificationClick(deviation)}
-          >
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                    <Badge variant="outline" className="text-xs font-normal">
-                      {deviation.category}
-                    </Badge>
-                    {getSeverityBadge(deviation.severity)}
-                    <Badge variant="secondary" className="text-xs bg-green-100 text-green-700 border-green-200">
-                      <CheckCircle2 className="h-3 w-3 mr-1" />
-                      Approved
-                    </Badge>
-                  </div>
-                  <h3 className="font-medium text-sm group-hover:text-primary transition-colors">
-                    {deviation.title}
-                  </h3>
-                  <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
-                    {deviation.description}
-                  </p>
-                  
-                  {/* Subtle punchlist reference for hardware items */}
-                  {deviation.punchlistRef && (
-                    <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground/70">
-                      <Hash className="h-3 w-3" />
-                      <span>Punchlist: {deviation.punchlistRef}</span>
+        {mockDeviations.map((deviation) => {
+          const formatDate = (dateStr: string) => {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+          };
+          
+          return (
+            <Card 
+              key={deviation.id}
+              className="cursor-pointer hover:border-primary/50 hover:shadow-sm transition-all group"
+              onClick={() => handleQualificationClick(deviation)}
+            >
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                      <Badge variant="outline" className="text-xs font-normal">
+                        {deviation.category}
+                      </Badge>
+                      {getSeverityBadge(deviation.severity)}
+                      <Badge variant="secondary" className="text-xs bg-green-100 text-green-700 border-green-200">
+                        <CheckCircle2 className="h-3 w-3 mr-1" />
+                        Approved
+                      </Badge>
                     </div>
-                  )}
+                    <h3 className="font-medium text-sm group-hover:text-primary transition-colors">
+                      {deviation.title}
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                      {deviation.description}
+                    </p>
+                    
+                    {/* Approver and Valid Until info */}
+                    <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+                      <span>Approved by <span className="text-foreground">{deviation.approvedBy}</span></span>
+                      <span>•</span>
+                      <span>Valid until <span className="text-foreground">{formatDate(deviation.expiryDate)}</span></span>
+                    </div>
+                    
+                    {/* Subtle punchlist reference for hardware items */}
+                    {deviation.punchlistRef && (
+                      <div className="flex items-center gap-1 mt-1.5 text-xs text-muted-foreground/70">
+                        <Hash className="h-3 w-3" />
+                        <span>Punchlist: {deviation.punchlistRef}</span>
+                      </div>
+                    )}
                 </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0 mt-1" />
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+                  <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0 mt-1" />
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       <p className="text-xs text-muted-foreground text-center mt-6">
