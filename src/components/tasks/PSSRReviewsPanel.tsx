@@ -135,8 +135,8 @@ export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({
             onClick={() => !isMock && navigate(`/pssr/${pssr?.id}/review`)}
           >
             <div className="flex items-start justify-between gap-3">
-              <div className="flex-1 min-w-0 space-y-1.5">
-                {/* Row 1: Project ID (primary emphasis) + NEW badge */}
+            <div className="flex-1 min-w-0 space-y-1">
+                {/* Row 1: Project ID + Project Name + NEW badge */}
                 <div className="flex items-center gap-2">
                   {projectCode ? (
                     <ProjectIdBadge size="sm">{projectCode}</ProjectIdBadge>
@@ -145,17 +145,15 @@ export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({
                       {pssr?.pssr_id || 'Unknown'}
                     </span>
                   )}
+                  <span className="text-sm font-medium truncate">
+                    {pssr?.project_name || 'Unknown Project'}
+                  </span>
                   {isNew && (
-                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-primary/10 text-primary">
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-primary/10 text-primary shrink-0">
                       NEW
                     </Badge>
                   )}
                 </div>
-                
-                {/* Row 2: Project Name */}
-                <p className="text-sm font-medium truncate">
-                  {pssr?.project_name || 'Unknown Project'}
-                </p>
                 
                 {/* Row 3: Location (Asset) */}
                 {pssr?.asset && (
