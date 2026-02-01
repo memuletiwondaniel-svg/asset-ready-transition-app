@@ -115,6 +115,7 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
   
   // State for rejection activity (read from localStorage)
   const [recentActivity, setRecentActivity] = useState<RejectionActivity | null>(null);
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
 
   // Read rejection activity from localStorage on mount
   useEffect(() => {
@@ -456,18 +457,23 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                   </p>
                   {recentActivity.type === 'rejected' && recentActivity.description && (
                     <div className="mt-1 max-w-[90%]">
-                      <p className="text-xs text-muted-foreground line-clamp-1">
+                      <p className={cn(
+                        "text-xs text-muted-foreground",
+                        !isDescriptionExpanded && "line-clamp-1"
+                      )}>
                         {recentActivity.description}
                       </p>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleViewSoF('mock-pssr-id', true);
-                        }}
-                        className="text-xs text-primary hover:underline mt-0.5"
-                      >
-                        more
-                      </button>
+                      {recentActivity.description.length > 50 && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setIsDescriptionExpanded(!isDescriptionExpanded);
+                          }}
+                          className="text-xs text-primary hover:underline mt-0.5"
+                        >
+                          {isDescriptionExpanded ? 'less' : 'more'}
+                        </button>
+                      )}
                     </div>
                   )}
                   <p className="text-xs text-muted-foreground mt-0.5">
