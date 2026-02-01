@@ -103,6 +103,42 @@ const getMockApproversForOverlay = (activity?: RejectionActivity | null) => {
   return baseApprovers;
 };
 
+// Completed approvers for DP-385 historical view
+const getDP385Approvers = () => {
+  return [
+    {
+      id: 'approver-1',
+      approver_name: 'Ali Danbous',
+      approver_role: 'HSSE Director',
+      approver_level: 1,
+      status: 'APPROVED',
+      comments: 'All safety and environmental requirements verified. Facility ready for gas feed operations.',
+      approved_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+      signature_data: typeof window !== 'undefined' ? localStorage.getItem('ali-danbous-signature') : undefined,
+    },
+    {
+      id: 'approver-2',
+      approver_name: 'Paul Van Den Hemel',
+      approver_role: 'P&M Director',
+      approver_level: 2,
+      status: 'APPROVED',
+      comments: 'Production and maintenance systems reviewed and approved.',
+      approved_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
+      signature_data: typeof window !== 'undefined' ? localStorage.getItem('paul-vandenhemel-signature') : undefined,
+    },
+    {
+      id: 'approver-3',
+      approver_name: 'Marije Hoedemaker',
+      approver_role: 'P&E Director',
+      approver_level: 3,
+      status: 'APPROVED',
+      comments: 'Project engineering deliverables complete. Approved for startup.',
+      approved_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+      signature_data: typeof window !== 'undefined' ? localStorage.getItem('marije-hoedemaker-signature') : undefined,
+    },
+  ];
+};
+
 export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) => {
   const navigate = useNavigate();
   const { signOut } = useAuth();
@@ -555,14 +591,14 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
           open={overlayOpen}
           onOpenChange={setOverlayOpen}
           pssrId={selectedPssrId}
-          certificateNumber="SOF-2026-0042"
+          certificateNumber={selectedPssrId === 'mock-pssr-dp385' ? 'SOF-2025-0127' : 'SOF-2026-0042'}
           pssrReason="Start-up of a New Project or Facility"
           plantName="CS"
-          facilityName="Hammar Mishrif"
-          projectName="DP-300 HM Additional Compressors"
-          approvers={getMockApproversForOverlay(isViewOnly ? recentActivity : null)}
-          status={isViewOnly ? 'COMPLETED' : 'PENDING_SIGNATURE'}
-          isViewOnly={isViewOnly}
+          facilityName={selectedPssrId === 'mock-pssr-dp385' ? 'CS6 and CS7' : 'Hammar Mishrif'}
+          projectName={selectedPssrId === 'mock-pssr-dp385' ? 'DP-385: OT2/3 Gas Feed to CS6/7' : 'DP-300 HM Additional Compressors'}
+          approvers={selectedPssrId === 'mock-pssr-dp385' ? getDP385Approvers() : getMockApproversForOverlay(isViewOnly ? recentActivity : null)}
+          status={selectedPssrId === 'mock-pssr-dp385' ? 'COMPLETED' : (isViewOnly ? 'COMPLETED' : 'PENDING_SIGNATURE')}
+          isViewOnly={selectedPssrId === 'mock-pssr-dp385' ? true : isViewOnly}
         />
       )}
     </div>
