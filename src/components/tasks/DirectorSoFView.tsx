@@ -21,7 +21,7 @@ const getMockApproversForOverlay = () => [
   {
     id: 'approver-1',
     approver_name: 'Ali Danbous',
-    approver_role: 'Operations Director',
+    approver_role: 'HSSE Director',
     approver_level: 1,
     status: 'APPROVED',
     comments: 'All safety requirements have been verified. Ready for facility startup.',
@@ -40,8 +40,8 @@ const getMockApproversForOverlay = () => [
   },
   {
     id: 'approver-3',
-    approver_name: 'Marije de Groot',
-    approver_role: 'HSSE Director',
+    approver_name: 'Marije Hoedemaker',
+    approver_role: 'P&E Director',
     approver_level: 3,
     status: 'LOCKED',
     comments: undefined,
