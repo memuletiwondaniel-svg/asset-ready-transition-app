@@ -41,7 +41,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                 glowFrom="from-red-500/40"
                 glowTo="to-orange-500/40"
               />
-              <span>PSSR / SoF</span>
+              <span>VCRs and PSSRs</span>
             </div>
           </CardTitle>
         </CardHeader>
