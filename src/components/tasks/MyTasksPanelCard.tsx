@@ -88,7 +88,7 @@ export const MyTasksPanelCard: React.FC<MyTasksPanelCardProps> = ({
       )}
       
       <CardHeader className={cn("pb-3 shrink-0", !isExpanded && "py-6")}>
-        <div className="flex items-center justify-between min-h-[72px]">
+        <div className="flex items-center justify-between min-h-[56px]">
           <div className="flex items-center gap-4">
             <div className={cn(
               "p-3 rounded-xl bg-gradient-to-br transition-all duration-300",
@@ -99,20 +99,20 @@ export const MyTasksPanelCard: React.FC<MyTasksPanelCardProps> = ({
               {icon}
             </div>
             <div>
-              <h3 className="font-semibold text-lg text-foreground">{title}</h3>
-              <div className="flex items-center gap-2 mt-1">
-                <span className={cn(
-                  "font-bold text-foreground transition-all duration-300",
-                  isFullHeight && isExpanded ? "text-4xl" : "text-3xl"
-                )}>{primaryStat}</span>
-                <span className="text-sm text-muted-foreground">{primaryLabel}</span>
+              {/* Title-first hierarchy: title is prominent */}
+              <h3 className={cn(
+                "font-bold text-foreground transition-all duration-300",
+                isFullHeight && isExpanded ? "text-2xl" : "text-xl"
+              )}>{title}</h3>
+              {/* Stats as secondary badges */}
+              <div className="flex items-center gap-2 mt-1.5">
+                <Badge variant="secondary" className="text-sm font-semibold px-2 py-0.5 bg-muted">
+                  {primaryStat} {primaryLabel}
+                </Badge>
                 {secondaryStat !== undefined && (
-                  <>
-                    <span className="text-muted-foreground/50">•</span>
-                    <span className="text-sm text-muted-foreground">
-                      {secondaryStat} {secondaryLabel}
-                    </span>
-                  </>
+                  <Badge variant="outline" className="text-xs px-2 py-0.5">
+                    {secondaryStat} {secondaryLabel}
+                  </Badge>
                 )}
               </div>
             </div>

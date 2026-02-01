@@ -67,9 +67,13 @@ export function useMockPSSRReviewsFromProjects(): {
       const daysPendingOptions = [1, 2, 3, 5, 7, 10];
       const daysPending = daysPendingOptions[index % daysPendingOptions.length];
       
-      // Vary item counts
+      // Vary item counts and simulate review progress
       const itemCountOptions = [6, 8, 10, 12, 15, 18];
       const itemCount = itemCountOptions[index % itemCountOptions.length];
+      
+      // Vary review progress (20-70% reviewed)
+      const reviewedPercentOptions = [0.2, 0.3, 0.4, 0.5, 0.6, 0.7];
+      const reviewedCount = Math.floor(itemCount * reviewedPercentOptions[index % reviewedPercentOptions.length]);
       
       // Get location name (prefer plant, then station, then hub)
       const locationName = project.plant?.name || project.station?.name || project.hub?.name || 'Unknown Location';
@@ -88,8 +92,9 @@ export function useMockPSSRReviewsFromProjects(): {
         },
         approverRole,
         itemCount,
+        reviewedCount,
         pendingSince: new Date(now.getTime() - daysPending * 24 * 60 * 60 * 1000).toISOString(),
-      } as MockPSSRReview;
+      } as MockPSSRReview & { reviewedCount: number };
     });
   }, [projects]);
   
