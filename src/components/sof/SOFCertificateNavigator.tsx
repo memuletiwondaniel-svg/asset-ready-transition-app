@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FileText, MessageSquare, ClipboardList, ShieldAlert, CheckCircle2, LogOut, ExternalLink } from 'lucide-react';
+import { FileText, MessageSquare, ClipboardList, ShieldAlert, CheckCircle2, LogOut, ExternalLink, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SOFCertificate } from './SOFCertificate';
 import { SOFCommentsPanel } from './SOFCommentsPanel';
@@ -63,29 +63,51 @@ export const SOFCertificateNavigator: React.FC<SOFCertificateNavigatorProps> = (
   onExit,
 }) => {
   const [activeTab, setActiveTab] = useState<TabId>('sof');
-  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [confirmationState, setConfirmationState] = useState<'approved' | 'rejected' | null>(null);
 
   const handleSignComplete = () => {
-    setShowConfirmation(true);
+    setConfirmationState('approved');
   };
 
-  // Show confirmation page after signing
-  if (showConfirmation) {
+  const handleRejectComplete = () => {
+    setConfirmationState('rejected');
+  };
+
+  // Show confirmation page after signing or rejecting
+  if (confirmationState) {
+    const isApproved = confirmationState === 'approved';
+    
     return (
       <div className="flex items-center justify-center h-full p-6">
-        <Card className="w-full max-w-lg text-center border-green-500/30 bg-green-50/5">
+        <Card className={cn(
+          "w-full max-w-lg text-center",
+          isApproved 
+            ? "border-green-500/30 bg-green-50/5" 
+            : "border-red-500/30 bg-red-50/5"
+        )}>
           <CardContent className="pt-10 pb-8">
-            <div className="w-20 h-20 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-6">
-              <CheckCircle2 className="h-10 w-10 text-green-500" />
+            <div className={cn(
+              "w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6",
+              isApproved ? "bg-green-500/10" : "bg-red-500/10"
+            )}>
+              {isApproved ? (
+                <CheckCircle2 className="h-10 w-10 text-green-500" />
+              ) : (
+                <XCircle className="h-10 w-10 text-red-500" />
+              )}
             </div>
             <h1 className="text-2xl font-bold text-foreground mb-2">
-              Statement of Fitness Signed
+              {isApproved ? 'Statement of Fitness Signed' : 'Statement of Fitness Rejected'}
             </h1>
             <p className="text-muted-foreground mb-2">
-              Your signature has been recorded successfully.
+              {isApproved 
+                ? 'Your signature has been recorded successfully.'
+                : 'A Priority 1 action has been created.'}
             </p>
             <p className="text-sm text-muted-foreground mb-8">
-              The PSSR Lead has been notified and the next approver can now proceed.
+              {isApproved 
+                ? 'The PSSR Lead has been notified and the next approver can now proceed.'
+                : 'The PSSR Lead has been notified. This item must be resolved before re-review.'}
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Button
@@ -125,6 +147,7 @@ export const SOFCertificateNavigator: React.FC<SOFCertificateNavigatorProps> = (
             issuedAt={issuedAt}
             status={status}
             onSignComplete={handleSignComplete}
+            onRejectComplete={handleRejectComplete}
           />
         );
       case 'comments':

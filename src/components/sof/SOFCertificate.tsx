@@ -52,6 +52,7 @@ interface SOFCertificateProps {
   issuedAt?: string;
   status: string;
   onSignComplete?: () => void;
+  onRejectComplete?: () => void;
 }
 
 // Mock approvers with Ali Danbous already signed, Paul pending, Marije locked
@@ -98,6 +99,7 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
   issuedAt,
   status,
   onSignComplete,
+  onRejectComplete,
 }) => {
   const certificateRef = useRef<HTMLDivElement>(null);
   const [signatureDialogOpen, setSignatureDialogOpen] = useState(false);
@@ -245,6 +247,9 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
       timestamp: new Date().toISOString(),
     };
     localStorage.setItem(SOF_REJECTION_ACTIVITY_KEY, JSON.stringify(activity));
+
+    // Notify parent that rejection is complete
+    onRejectComplete?.();
 
     toast({
       title: 'SoF Rejected - Priority 1 Action Created',
