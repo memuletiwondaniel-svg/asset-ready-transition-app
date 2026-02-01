@@ -117,6 +117,11 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
   const [tempAliSignature, setTempAliSignature] = useState<string | null>(null);
   
   const [localApprovers, setLocalApprovers] = useState<SOFApprover[]>(() => {
+    // In view-only mode, use the passed approvers directly (they contain the actual state)
+    if (isViewOnly && propApprovers.length > 0) {
+      return propApprovers;
+    }
+    // Otherwise use mock data
     const saved = typeof window !== 'undefined' ? localStorage.getItem(ALI_SIGNATURE_KEY) : null;
     return getMockApprovers(saved);
   });
