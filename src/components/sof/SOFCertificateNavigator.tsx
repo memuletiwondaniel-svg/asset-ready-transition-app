@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FileText, MessageSquare, ClipboardList, ShieldAlert, CheckCircle2, LogOut, ExternalLink, XCircle } from 'lucide-react';
+import { FileText, MessageSquare, ClipboardList, ShieldAlert, CheckCircle2, LogOut, ExternalLink, XCircle, FolderOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SOFCertificate } from './SOFCertificate';
 import { SOFCommentsPanel } from './SOFCommentsPanel';
@@ -34,7 +34,7 @@ interface SOFCertificateNavigatorProps {
   isViewOnly?: boolean;
 }
 
-type TabId = 'sof' | 'comments' | 'qualifications' | 'checklists';
+type TabId = 'sof' | 'comments' | 'qualifications' | 'checklists' | 'overview';
 
 interface TabItem {
   id: TabId;
@@ -50,6 +50,7 @@ const getTabsForPssr = (pssrId: string): TabItem[] => {
     { id: 'comments', label: 'Comments', icon: <MessageSquare className="h-4 w-4" /> },
     { id: 'qualifications', label: 'Qualifications', icon: <ShieldAlert className="h-4 w-4" />, count: isDP385 ? 5 : 4 },
     { id: 'checklists', label: 'Checklists', icon: <ClipboardList className="h-4 w-4" /> },
+    { id: 'overview', label: 'Project Overview', icon: <FolderOpen className="h-4 w-4" /> },
   ];
 };
 
@@ -166,6 +167,8 @@ export const SOFCertificateNavigator: React.FC<SOFCertificateNavigatorProps> = (
           <SOFQualificationsPanel pssrId={pssrId} />
         );
       case 'checklists':
+        return null;
+      case 'overview':
         return null;
       default:
         return null;
