@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle2, LogOut, ExternalLink, AlertCircle, Clock, FileCheck, FileText, XCircle, AlertTriangle, Eye } from 'lucide-react';
+import { CheckCircle2, LogOut, ExternalLink, AlertCircle, Clock, FileCheck, FileText, XCircle, AlertTriangle, Eye, ThumbsUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -240,11 +240,11 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
             
             <div className="relative p-6">
               <div className="flex flex-col sm:flex-row items-center gap-5">
-                {/* Icon with glow effect */}
-                <div className="relative">
-                  <div className="absolute inset-0 bg-green-400/20 rounded-full blur-xl scale-150" />
-                  <div className="relative h-16 w-16 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center shadow-lg shadow-green-500/25">
-                    <CheckCircle2 className="h-8 w-8 text-white" />
+                {/* Animated thumbs up icon */}
+                <div className="relative group cursor-default">
+                  <div className="absolute inset-0 bg-green-400/20 rounded-full blur-xl scale-150 animate-pulse" />
+                  <div className="relative h-16 w-16 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center shadow-lg shadow-green-500/25 transition-transform duration-300 hover:scale-110 hover:rotate-12">
+                    <ThumbsUp className="h-8 w-8 text-white transition-transform duration-300 group-hover:scale-110" />
                   </div>
                 </div>
                 
