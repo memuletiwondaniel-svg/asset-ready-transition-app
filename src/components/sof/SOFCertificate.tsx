@@ -33,7 +33,7 @@ interface SOFApprover {
   approved_at?: string;
   rejected_at?: string;
   signature_data?: string;
-  rejection_priority?: 'Pr1' | 'Pr2';
+  rejection_priority?: 'Pr1';
   rejection_description?: string;
   rejection_linked_item?: string;
 }
@@ -170,7 +170,7 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
     }
   };
 
-  const handleSign = (signatureData: string, comments: string) => {
+  const handleSign = (signatureData: string, comments: string, pr2Action?: { priority: 'Pr2'; description: string }) => {
     // Update local state to show signature
     setLocalApprovers(prev => prev.map(approver => {
       if (approver.approver_name === 'Paul Van Den Hemel') {
@@ -195,24 +195,32 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
       approver: 'Paul Van Den Hemel',
       timestamp: new Date().toISOString(),
       comments: comments || undefined,
+      pr2Action: pr2Action || undefined,
     };
     localStorage.setItem(SOF_REJECTION_ACTIVITY_KEY, JSON.stringify(activity));
 
-    toast({
-      title: 'Statement of Fitness Signed',
-      description: 'Your signature has been recorded successfully. PSSR Lead has been notified.',
-    });
+    if (pr2Action) {
+      toast({
+        title: 'Statement of Fitness Signed with Pr2 Action',
+        description: 'Your signature has been recorded. A Priority 2 follow-up action has been logged.',
+      });
+    } else {
+      toast({
+        title: 'Statement of Fitness Signed',
+        description: 'Your signature has been recorded successfully. PSSR Lead has been notified.',
+      });
+    }
   };
 
-  const handleReject = (priorityLevel: 'Pr1' | 'Pr2', description: string, linkedItemId?: string) => {
-    // Update local state to show rejection
+  const handleReject = (priorityLevel: 'Pr1', description: string, linkedItemId?: string) => {
+    // Update local state to show rejection (always Pr1)
     setLocalApprovers(prev => prev.map(approver => {
       if (approver.approver_name === 'Paul Van Den Hemel') {
         return {
           ...approver,
-          status: priorityLevel === 'Pr1' ? 'REJECTED_PR1' : 'REJECTED_PR2',
+          status: 'REJECTED_PR1',
           rejected_at: new Date().toISOString(),
-          rejection_priority: priorityLevel,
+          rejection_priority: 'Pr1',
           rejection_description: description,
           rejection_linked_item: linkedItemId,
         };
@@ -224,7 +232,7 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
     const activity = {
       type: 'rejected',
       approver: 'Paul Van Den Hemel',
-      priorityLevel,
+      priorityLevel: 'Pr1',
       description,
       linkedItemId,
       timestamp: new Date().toISOString(),
@@ -232,11 +240,9 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
     localStorage.setItem(SOF_REJECTION_ACTIVITY_KEY, JSON.stringify(activity));
 
     toast({
-      title: priorityLevel === 'Pr1' ? 'SoF Rejected - Priority 1 Action Created' : 'SoF Comment Added - Priority 2 Action',
-      description: priorityLevel === 'Pr1' 
-        ? 'PSSR Lead has been notified. This item must be resolved before re-review.'
-        : 'Comment logged and PSSR Lead notified. You may continue with approval.',
-      variant: priorityLevel === 'Pr1' ? 'destructive' : 'default',
+      title: 'SoF Rejected - Priority 1 Action Created',
+      description: 'PSSR Lead has been notified. This item must be resolved before re-review.',
+      variant: 'destructive',
     });
   };
 
@@ -254,8 +260,6 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
         return <Badge className="bg-muted text-muted-foreground border-border"><Lock className="w-3 h-3 mr-1" /> Locked</Badge>;
       case 'REJECTED_PR1':
         return <Badge className="bg-red-500/20 text-red-700 dark:text-red-400 border-red-500/30">Rejected (Pr1)</Badge>;
-      case 'REJECTED_PR2':
-        return <Badge className="bg-amber-500/20 text-amber-700 dark:text-amber-400 border-amber-500/30">Comment (Pr2)</Badge>;
       default:
         return <Badge variant="outline">{approverStatus}</Badge>;
     }
@@ -363,7 +367,7 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
               const isPaul = approver.approver_name === 'Paul Van Den Hemel';
               const isPending = approver.status === 'PENDING';
               const isClickable = isPaul && isPending;
-              const isRejected = approver.status === 'REJECTED_PR1' || approver.status === 'REJECTED_PR2';
+              const isRejected = approver.status === 'REJECTED_PR1';
               
               return (
                 <div 
@@ -376,8 +380,6 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
                       ? 'border-gray-200 bg-gray-50 opacity-80'
                       : approver.status === 'REJECTED_PR1'
                       ? 'border-red-300 bg-red-50/50'
-                      : approver.status === 'REJECTED_PR2'
-                      ? 'border-amber-300 bg-amber-50/50'
                       : 'border-yellow-300 bg-yellow-50',
                     isClickable && 'ring-2 ring-primary ring-offset-2 cursor-pointer hover:shadow-lg opacity-100'
                   )}
@@ -396,11 +398,8 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
                       />
                     ) : isRejected ? (
                       <div className="flex flex-col items-center gap-1 text-center px-2">
-                        <span className={cn(
-                          "text-xs font-medium",
-                          approver.status === 'REJECTED_PR1' ? 'text-red-600' : 'text-amber-600'
-                        )}>
-                          {approver.status === 'REJECTED_PR1' ? 'Pr1 Action Required' : 'Pr2 Comment Added'}
+                        <span className="text-xs font-medium text-red-600">
+                          Pr1 Action Required
                         </span>
                         {approver.rejection_description && (
                           <p className="text-[10px] text-gray-500 line-clamp-2">{approver.rejection_description}</p>

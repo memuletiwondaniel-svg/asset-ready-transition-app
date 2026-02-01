@@ -22,7 +22,7 @@ const SOF_REJECTION_ACTIVITY_KEY = 'sof-rejection-activity';
 interface RejectionActivity {
   type: 'approved' | 'rejected';
   approver: string;
-  priorityLevel?: 'Pr1' | 'Pr2';
+  priorityLevel?: 'Pr1';
   description?: string;
   linkedItemId?: string;
   timestamp: string;

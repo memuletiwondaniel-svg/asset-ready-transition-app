@@ -11,10 +11,14 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { SignatureCanvas } from './SignatureCanvas';
 import { AlertTriangle, CheckCircle2, MessageSquare, ShieldAlert, XCircle, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+interface Pr2Action {
+  priority: 'Pr2';
+  description: string;
+}
 
 interface SOFSignatureDialogProps {
   open: boolean;
@@ -22,8 +26,8 @@ interface SOFSignatureDialogProps {
   approverName: string;
   approverRole: string;
   savedSignature?: string | null;
-  onSign: (signatureData: string, comments: string) => void;
-  onReject?: (priorityLevel: 'Pr1' | 'Pr2', description: string, linkedItemId?: string) => void;
+  onSign: (signatureData: string, comments: string, pr2Action?: Pr2Action) => void;
+  onReject?: (priorityLevel: 'Pr1', description: string, linkedItemId?: string) => void;
   onSaveSignature?: (signatureData: string) => void;
   isLoading?: boolean;
 }
@@ -53,8 +57,11 @@ export const SOFSignatureDialog: React.FC<SOFSignatureDialogProps> = ({
   const [comments, setComments] = useState('');
   const [signatureData, setSignatureData] = useState<string | null>(null);
   
-  // Rejection state
-  const [priorityLevel, setPriorityLevel] = useState<'Pr1' | 'Pr2'>('Pr1');
+  // Pr2 action state (optional follow-up with approval)
+  const [addPr2Action, setAddPr2Action] = useState(false);
+  const [pr2Description, setPr2Description] = useState('');
+  
+  // Rejection state (always Pr1)
   const [rejectionDescription, setRejectionDescription] = useState('');
   const [linkToItem, setLinkToItem] = useState(false);
   const [linkedItemId, setLinkedItemId] = useState<string>('');
@@ -66,7 +73,8 @@ export const SOFSignatureDialog: React.FC<SOFSignatureDialogProps> = ({
     setReviewedQualifications(false);
     setComments('');
     setSignatureData(null);
-    setPriorityLevel('Pr1');
+    setAddPr2Action(false);
+    setPr2Description('');
     setRejectionDescription('');
     setLinkToItem(false);
     setLinkedItemId('');
@@ -83,14 +91,19 @@ export const SOFSignatureDialog: React.FC<SOFSignatureDialogProps> = ({
 
   const handleSubmitSignature = () => {
     if (signatureData) {
-      onSign(signatureData, comments);
+      // If Pr2 action is added, pass it along with the signature
+      const fullComments = addPr2Action && pr2Description.trim()
+        ? `${comments}${comments ? '\n\n' : ''}[Pr2 Action Required]: ${pr2Description}`
+        : comments;
+      onSign(signatureData, fullComments, addPr2Action ? { priority: 'Pr2', description: pr2Description } : undefined);
       handleClose();
     }
   };
 
   const handleSubmitRejection = () => {
     if (rejectionDescription.trim() && onReject) {
-      onReject(priorityLevel, rejectionDescription, linkToItem ? linkedItemId : undefined);
+      // Rejection is always Pr1
+      onReject('Pr1', rejectionDescription, linkToItem ? linkedItemId : undefined);
       handleClose();
     }
   };
@@ -211,55 +224,20 @@ export const SOFSignatureDialog: React.FC<SOFSignatureDialogProps> = ({
                 Reject Statement of Fitness
               </DialogTitle>
               <DialogDescription>
-                Specify the reason for rejection and create a follow-up action.
+                This will create a Priority 1 action that must be resolved before you can re-review.
               </DialogDescription>
             </DialogHeader>
 
             <div className="space-y-5 py-4">
-              {/* Priority Level Selection */}
-              <div className="space-y-3">
-                <Label className="text-sm font-medium">Priority Level</Label>
-                <RadioGroup
-                  value={priorityLevel}
-                  onValueChange={(value) => setPriorityLevel(value as 'Pr1' | 'Pr2')}
-                  className="space-y-2"
-                >
-                  <div className={cn(
-                    "flex items-start gap-3 p-3 rounded-lg border transition-colors cursor-pointer",
-                    priorityLevel === 'Pr1' 
-                      ? "border-red-300 bg-red-50 dark:bg-red-950/30 dark:border-red-800" 
-                      : "border-border bg-muted/20 hover:bg-muted/40"
-                  )}>
-                    <RadioGroupItem value="Pr1" id="pr1" className="mt-0.5" />
-                    <div className="flex-1">
-                      <Label htmlFor="pr1" className="font-medium cursor-pointer flex items-center gap-2">
-                        <AlertCircle className="h-4 w-4 text-red-500" />
-                        Priority 1 (Pr1) - Must Complete Before Startup
-                      </Label>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Blocks SoF approval. Action must be closed before you can re-review.
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className={cn(
-                    "flex items-start gap-3 p-3 rounded-lg border transition-colors cursor-pointer",
-                    priorityLevel === 'Pr2' 
-                      ? "border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800" 
-                      : "border-border bg-muted/20 hover:bg-muted/40"
-                  )}>
-                    <RadioGroupItem value="Pr2" id="pr2" className="mt-0.5" />
-                    <div className="flex-1">
-                      <Label htmlFor="pr2" className="font-medium cursor-pointer flex items-center gap-2">
-                        <AlertTriangle className="h-4 w-4 text-amber-500" />
-                        Priority 2 (Pr2) - Comment / Follow-up After Startup
-                      </Label>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Logged as comment and priority action. Does not block SoF approval.
-                      </p>
-                    </div>
-                  </div>
-                </RadioGroup>
+              {/* Pr1 Info Banner */}
+              <div className="flex items-start gap-3 p-3 rounded-lg border border-red-300 bg-red-50 dark:bg-red-950/30 dark:border-red-800">
+                <AlertCircle className="h-5 w-5 text-red-500 mt-0.5" />
+                <div>
+                  <p className="font-medium text-sm">Priority 1 (Pr1) - Must Complete Before Startup</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    This blocks SoF approval. The action must be closed before you can re-review.
+                  </p>
+                </div>
               </div>
 
               {/* Link to Checklist Item Option */}
@@ -309,14 +287,14 @@ export const SOFSignatureDialog: React.FC<SOFSignatureDialogProps> = ({
                 </Label>
                 <Textarea
                   id="rejectionDescription"
-                  placeholder="Describe the issue that needs to be addressed..."
+                  placeholder="Describe the issue that needs to be addressed before startup..."
                   value={rejectionDescription}
                   onChange={(e) => setRejectionDescription(e.target.value)}
                   className="resize-none"
                   rows={4}
                 />
                 <p className="text-xs text-muted-foreground">
-                  This will be sent to the PSSR Lead as a {priorityLevel} action.
+                  This will be sent to the PSSR Lead as a Priority 1 action.
                 </p>
               </div>
             </div>
@@ -330,7 +308,7 @@ export const SOFSignatureDialog: React.FC<SOFSignatureDialogProps> = ({
                 onClick={handleSubmitRejection} 
                 disabled={!canReject || isLoading}
               >
-                {isLoading ? 'Submitting...' : `Submit ${priorityLevel} Rejection`}
+                {isLoading ? 'Submitting...' : 'Submit Pr1 Rejection'}
               </Button>
             </DialogFooter>
           </>
@@ -360,6 +338,42 @@ export const SOFSignatureDialog: React.FC<SOFSignatureDialogProps> = ({
                 width={400}
                 height={150}
               />
+
+              {/* Optional Pr2 Action */}
+              <div className="space-y-3 border-t pt-4">
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    id="addPr2Action"
+                    checked={addPr2Action}
+                    onCheckedChange={(checked) => {
+                      setAddPr2Action(!!checked);
+                      if (!checked) setPr2Description('');
+                    }}
+                    className="mt-0.5"
+                  />
+                  <div className="flex-1">
+                    <Label htmlFor="addPr2Action" className="font-medium cursor-pointer flex items-center gap-2">
+                      <AlertTriangle className="h-4 w-4 text-amber-500" />
+                      Add Priority 2 Follow-up Action
+                    </Label>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Log an action to be completed after startup. Does not block approval.
+                    </p>
+                  </div>
+                </div>
+                
+                {addPr2Action && (
+                  <div className="ml-6">
+                    <Textarea
+                      placeholder="Describe the follow-up action required..."
+                      value={pr2Description}
+                      onChange={(e) => setPr2Description(e.target.value)}
+                      className="resize-none"
+                      rows={3}
+                    />
+                  </div>
+                )}
+              </div>
 
               {comments && (
                 <div className="mt-4 p-3 rounded-lg bg-muted/30 border">
