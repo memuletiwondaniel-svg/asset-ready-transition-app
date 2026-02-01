@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FileText, MessageSquare, ClipboardList, Award } from 'lucide-react';
+import { FileText, MessageSquare, ClipboardList, ShieldAlert } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SOFCertificate } from './SOFCertificate';
 import { SOFCommentsPanel } from './SOFCommentsPanel';
@@ -40,7 +40,7 @@ interface TabItem {
 const tabs: TabItem[] = [
   { id: 'sof', label: 'SoF Certificate', icon: <FileText className="h-4 w-4" /> },
   { id: 'comments', label: 'Comments', icon: <MessageSquare className="h-4 w-4" /> },
-  { id: 'qualifications', label: 'Qualifications', icon: <Award className="h-4 w-4" /> },
+  { id: 'qualifications', label: 'Qualifications', icon: <ShieldAlert className="h-4 w-4" /> },
   { id: 'checklists', label: 'Checklists', icon: <ClipboardList className="h-4 w-4" /> },
 ];
 
