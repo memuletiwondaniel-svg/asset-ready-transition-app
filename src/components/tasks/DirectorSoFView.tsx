@@ -233,43 +233,55 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
       <div className="max-w-3xl mx-auto">
         {/* "All caught up" banner when no pending items but has recent activity */}
         {noPendingTasks && recentActivity && (
-          <Card className="mb-6 border-green-500/30 bg-green-50/5">
-            <CardContent className="p-5">
-              <div className="flex items-center gap-4">
-                <div className="h-12 w-12 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
-                  <CheckCircle2 className="h-6 w-6 text-green-500" />
+          <div className="mb-8 relative overflow-hidden rounded-xl bg-gradient-to-br from-green-50 to-emerald-50/50 dark:from-green-950/20 dark:to-emerald-950/10 border border-green-200/60 dark:border-green-800/30">
+            {/* Decorative background elements */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-green-400/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-emerald-400/10 rounded-full translate-y-1/2 -translate-x-1/2" />
+            
+            <div className="relative p-6">
+              <div className="flex flex-col sm:flex-row items-center gap-5">
+                {/* Icon with glow effect */}
+                <div className="relative">
+                  <div className="absolute inset-0 bg-green-400/20 rounded-full blur-xl scale-150" />
+                  <div className="relative h-16 w-16 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center shadow-lg shadow-green-500/25">
+                    <CheckCircle2 className="h-8 w-8 text-white" />
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <h2 className="text-lg font-semibold text-foreground">
-                    You're all caught up, {firstName}!
+                
+                {/* Text content */}
+                <div className="flex-1 text-center sm:text-left">
+                  <h2 className="text-xl font-bold text-foreground mb-1">
+                    You're all caught up, {firstName}! 🎉
                   </h2>
-                  <p className="text-sm text-muted-foreground">
-                    No pending SoF reviews. Your recent activity is shown below.
+                  <p className="text-muted-foreground">
+                    No pending Statement of Fitness reviews at this time.
                   </p>
                 </div>
-                <div className="flex gap-2">
+                
+                {/* Actions */}
+                <div className="flex gap-2 shrink-0">
                   <Button
-                    variant="outline"
+                    variant="default"
                     size="sm"
                     onClick={() => navigate('/dashboard')}
-                    className="gap-1.5"
+                    className="gap-1.5 bg-green-600 hover:bg-green-700 text-white"
                   >
                     <ExternalLink className="h-3.5 w-3.5" />
                     Dashboard
                   </Button>
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
                     onClick={handleExit}
-                    className="gap-1.5 text-muted-foreground"
+                    className="gap-1.5"
                   >
                     <LogOut className="h-3.5 w-3.5" />
                     Sign Out
                   </Button>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         )}
 
         {/* Header - only show if there are pending items */}
