@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { cn } from '@/lib/utils';
 import { 
   Shield, 
   Flame, 
@@ -27,6 +28,8 @@ const DEMO_COMMENTS = {
   interdisciplinary: {
     title: "Interdisciplinary Summary",
     icon: Users,
+    color: "text-primary",
+    bgColor: "bg-primary/10",
     status: "complete" as const,
     summary: "All disciplines have completed their reviews and confirmed readiness for startup. Cross-functional verification meetings held on Dec 5th with all discipline leads present. No outstanding interdisciplinary conflicts or dependencies remain. Safety systems integration verified across all disciplines. P&IDs, electrical diagrams, and process flows are aligned and approved.",
     reviewer: "Daniel Memuletiwon - PSSR Lead",
@@ -35,6 +38,8 @@ const DEMO_COMMENTS = {
   techSafety: {
     title: "Tech Safety",
     icon: Shield,
+    color: "text-red-500",
+    bgColor: "bg-red-500/10",
     status: "complete" as const,
     summary: "All safety instrumented systems (SIS) have been tested and verified. Emergency shutdown sequences confirmed operational. Fire & gas detection systems commissioned and integrated with DCS. HAZOP recommendations fully implemented. Safety relief valves tested and certified.",
     reviewer: "Andrew Banford - Tech Safety TA2",
@@ -43,6 +48,8 @@ const DEMO_COMMENTS = {
   process: {
     title: "Process",
     icon: Flame,
+    color: "text-orange-500",
+    bgColor: "bg-orange-500/10",
     status: "complete" as const,
     summary: "Process control loops tuned and verified. Operating procedures reviewed and approved. Start-up sequence documented and validated with operations team. Material balance confirmed. Heat exchanger performance verified against design specifications.",
     reviewer: "Chris Johnsen - Process TA2 (P&E)",
@@ -51,6 +58,8 @@ const DEMO_COMMENTS = {
   paco: {
     title: "PACO",
     icon: Wrench,
+    color: "text-blue-500",
+    bgColor: "bg-blue-500/10",
     status: "complete" as const,
     summary: "All piping systems pressure tested and certified. Instrument calibrations complete with certificates filed. Control valve stroking verified. P&ID walk-downs completed with no discrepancies. Flange management program implemented for all critical connections.",
     reviewer: "David Brown - PACO TA2 (P&E)",
@@ -59,6 +68,8 @@ const DEMO_COMMENTS = {
   rotating: {
     title: "Rotating",
     icon: Fan,
+    color: "text-green-500",
+    bgColor: "bg-green-500/10",
     status: "complete" as const,
     summary: "Rotating equipment alignment verified. Vibration baselines established for all critical pumps and compressors. Lubrication systems charged and verified. Mechanical seals installed per specifications. Coupling guards and safety shields in place.",
     reviewer: "Nathan Roberts - Rotating TA2 (P&E)",
@@ -67,6 +78,8 @@ const DEMO_COMMENTS = {
   static: {
     title: "Static",
     icon: Container,
+    color: "text-purple-500",
+    bgColor: "bg-purple-500/10",
     status: "complete" as const,
     summary: "All static equipment inspections completed including pressure vessels, heat exchangers, and storage tanks. Thickness measurements verified against minimum requirements. Relief device certifications current. Vessel internals inspected and reinstalled per specifications. Piping flexibility analysis confirmed.",
     reviewer: "Stuart Lugo - Static TA2 (P&E)",
@@ -75,6 +88,8 @@ const DEMO_COMMENTS = {
   electrical: {
     title: "Electrical",
     icon: Zap,
+    color: "text-amber-500",
+    bgColor: "bg-amber-500/10",
     status: "complete" as const,
     summary: "Motor rotation checks completed. Electrical isolation procedures verified. Ground fault protection tested. UPS systems commissioned. Emergency lighting operational. Cable terminations torqued and verified. Arc flash labels installed.",
     reviewer: "Mohammed Yassar - Elect TA2 (P&E)",
@@ -83,6 +98,8 @@ const DEMO_COMMENTS = {
   civil: {
     title: "Civil",
     icon: Gauge,
+    color: "text-slate-500",
+    bgColor: "bg-slate-500/10",
     status: "complete" as const,
     summary: "Structural integrity assessments completed for all new installations. Foundation bolt torque verification documented. Drainage systems tested and operational. Fire escape routes verified clear and properly marked. Secondary containment areas inspected and certified. All civil punch list items closed out.",
     reviewer: "Satya Borra - Civil TA2",
@@ -91,6 +108,8 @@ const DEMO_COMMENTS = {
   operations: {
     title: "Operations",
     icon: Cog,
+    color: "text-teal-500",
+    bgColor: "bg-teal-500/10",
     status: "complete" as const,
     summary: "Operating procedures reviewed and approved by shift supervisors. Control room displays configured and verified. Alarm rationalization completed. Operator training for DP300 completed with 100% attendance. Shift handover protocols established. Emergency response drills conducted successfully.",
     reviewer: "Lyle Koch - CS Deputy Director",
@@ -99,6 +118,8 @@ const DEMO_COMMENTS = {
   hse: {
     title: "HSE",
     icon: Heart,
+    color: "text-rose-500",
+    bgColor: "bg-rose-500/10",
     status: "complete" as const,
     summary: "Job Safety Analysis (JSA) completed for all startup activities. PPE requirements verified and communicated. Environmental permits confirmed active. Spill response equipment staged at designated locations. First aid stations stocked and accessible. Toolbox talks scheduled for startup crew.",
     reviewer: "Ahmed Kadhum - Ops HSE Manager",
@@ -129,8 +150,8 @@ const DisciplineCard = ({
       <CardHeader className="pb-2 pt-3 px-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-md bg-primary/10">
-              <Icon className="h-4 w-4 text-primary" />
+            <div className={cn("p-1.5 rounded-md", discipline.bgColor)}>
+              <Icon className={cn("h-4 w-4", discipline.color)} />
             </div>
             <CardTitle className="text-sm font-medium">{discipline.title}</CardTitle>
           </div>
