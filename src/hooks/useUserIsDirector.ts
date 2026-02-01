@@ -2,10 +2,11 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 
-// The 8 director roles that get the simplified SoF-only view
+// The director roles that get the simplified SoF-only view
 const DIRECTOR_ROLE_PATTERNS = [
   'P&E Director',
-  'P&M Director', 
+  'P&M Director',
+  'HSE Director',
   'HSSE Director',
   'BNGL Director',
   'CS Director',
