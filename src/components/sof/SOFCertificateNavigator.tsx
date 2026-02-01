@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { SOFCertificate } from './SOFCertificate';
 import { SOFCommentsPanel } from './SOFCommentsPanel';
 import { SOFQualificationsPanel } from './SOFQualificationsPanel';
+import { SOFProjectOverviewPanel } from './SOFProjectOverviewPanel';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
@@ -169,7 +170,7 @@ export const SOFCertificateNavigator: React.FC<SOFCertificateNavigatorProps> = (
       case 'checklists':
         return null;
       case 'overview':
-        return null;
+        return <SOFProjectOverviewPanel pssrId={pssrId} />;
       default:
         return null;
     }
