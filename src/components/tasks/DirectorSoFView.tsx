@@ -425,64 +425,66 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-muted-foreground text-sm leading-snug">
-                    {recentActivity.type === 'approved' ? (
-                      <>
-                        Signed SoF for <span className="font-mono">DP-300:</span>{' '}
-                        <span className="font-medium text-foreground/80">{recentActivity.projectName || 'HM Additional Compressors'}</span>
-                      </>
-                    ) : (
-                      <>
-                        Rejected SoF for <span className="font-mono">DP-300:</span>{' '}
-                        <span className="font-medium text-foreground/80">{recentActivity.projectName || 'HM Additional Compressors'}</span>
-                        <Badge 
-                          variant="outline" 
-                          className={cn(
-                            "ml-2 text-xs opacity-70",
-                            recentActivity.priorityLevel === 'Pr1' 
-                              ? "border-red-300 text-red-700" 
-                              : "border-amber-300 text-amber-700"
+                  <div className="inline-block max-w-full">
+                    <p className="text-muted-foreground text-sm leading-snug">
+                      {recentActivity.type === 'approved' ? (
+                        <>
+                          Signed SoF for <span className="font-mono">DP-300:</span>{' '}
+                          <span className="font-medium text-foreground/80">{recentActivity.projectName || 'HM Additional Compressors'}</span>
+                        </>
+                      ) : (
+                        <>
+                          Rejected SoF for <span className="font-mono">DP-300:</span>{' '}
+                          <span className="font-medium text-foreground/80">{recentActivity.projectName || 'HM Additional Compressors'}</span>
+                          <Badge 
+                            variant="outline" 
+                            className={cn(
+                              "ml-2 text-xs opacity-70",
+                              recentActivity.priorityLevel === 'Pr1' 
+                                ? "border-red-300 text-red-700" 
+                                : "border-amber-300 text-amber-700"
+                            )}
+                          >
+                            {recentActivity.priorityLevel}
+                          </Badge>
+                        </>
+                      )}
+                    </p>
+                    {recentActivity.type === 'rejected' && recentActivity.description && (
+                      <div className="mt-0.5">
+                        <div className="flex items-baseline gap-1">
+                          <p className={cn(
+                            "text-xs text-muted-foreground/70 min-w-0",
+                            !isDescriptionExpanded ? "truncate flex-1" : ""
+                          )}>
+                            {recentActivity.description}
+                          </p>
+                          {recentActivity.description.length > 30 && !isDescriptionExpanded && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setIsDescriptionExpanded(true);
+                              }}
+                              className="text-xs text-primary/70 hover:underline shrink-0"
+                            >
+                              more
+                            </button>
                           )}
-                        >
-                          {recentActivity.priorityLevel}
-                        </Badge>
-                      </>
-                    )}
-                  </p>
-                  {recentActivity.type === 'rejected' && recentActivity.description && (
-                    <div className="mt-0.5">
-                      <div className="flex items-baseline gap-1">
-                        <p className={cn(
-                          "text-xs text-muted-foreground/70 flex-1 min-w-0",
-                          !isDescriptionExpanded && "truncate"
-                        )}>
-                          {recentActivity.description}
-                        </p>
-                        {recentActivity.description.length > 30 && !isDescriptionExpanded && (
+                        </div>
+                        {isDescriptionExpanded && (
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              setIsDescriptionExpanded(true);
+                              setIsDescriptionExpanded(false);
                             }}
-                            className="text-xs text-primary/70 hover:underline shrink-0"
+                            className="text-xs text-primary/70 hover:underline mt-0.5"
                           >
-                            more
+                            less
                           </button>
                         )}
                       </div>
-                      {isDescriptionExpanded && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setIsDescriptionExpanded(false);
-                          }}
-                          className="text-xs text-primary/70 hover:underline mt-0.5"
-                        >
-                          less
-                        </button>
-                      )}
-                    </div>
-                  )}
+                    )}
+                  </div>
                   <p className="text-xs text-muted-foreground/60">
                     {formatDistanceToNow(new Date(recentActivity.timestamp), { addSuffix: true })}
                   </p>
