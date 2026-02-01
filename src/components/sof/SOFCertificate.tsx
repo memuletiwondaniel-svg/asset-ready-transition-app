@@ -34,43 +34,24 @@ interface SOFCertificateProps {
   status: string;
 }
 
-// SVG signature for Ali Danbous - stylized "A. Danbous" cursive
+// SVG signature for Ali Danbous - bold angular style like Trump's signature
 const AliSignatureSVG = () => (
-  <svg width="160" height="45" viewBox="0 0 160 45" className="max-h-11">
-    {/* Capital A with flourish */}
+  <svg width="150" height="40" viewBox="0 0 150 40" className="max-h-10">
+    {/* Bold angular signature - sharp peaks and valleys */}
     <path
-      d="M12 35 L22 8 L32 35 M16 24 L28 24"
+      d="M5 30 L12 8 L19 30 M9 22 L15 22
+       M25 30 L25 12 L32 30 L32 12
+       M40 8 L40 30 M40 20 L52 20 M52 8 L52 30
+       M60 30 L60 8 L72 8 L72 14 L64 14 L64 22 L70 22 L70 30 L60 30
+       M80 8 L80 30 L92 30 L92 24 L84 24
+       M100 8 L100 30 M100 8 L112 8
+       M118 30 C118 20, 118 12, 126 8 C134 4, 140 12, 138 22 C136 32, 126 34, 118 30
+       M145 8 L145 30"
       fill="none"
       stroke="#1a3a5c"
-      strokeWidth="2.2"
+      strokeWidth="2.5"
       strokeLinecap="round"
       strokeLinejoin="round"
-    />
-    {/* Period and connecting stroke */}
-    <circle cx="38" cy="33" r="1.5" fill="#1a3a5c" />
-    {/* "Danbous" in flowing cursive */}
-    <path
-      d="M48 32 C48 18, 52 14, 58 16 C64 18, 62 32, 56 34 C50 36, 48 32, 48 32 
-       M62 26 C66 20, 72 20, 74 26 C76 32, 70 36, 66 32 
-       M78 16 L78 34 M78 24 C82 20, 88 22, 88 28 C88 34, 82 36, 78 32
-       M94 34 C94 24, 94 18, 100 16 C106 14, 108 20, 106 26 C104 32, 98 36, 94 34
-       M112 26 C116 20, 122 20, 124 26 C126 32, 120 36, 116 32
-       M130 16 L130 34 M130 28 C130 22, 136 20, 140 24 C144 28, 140 34, 134 34
-       M146 24 C142 28, 144 36, 150 34 C156 32, 154 24, 148 24 C142 24, 144 32, 150 32"
-      fill="none"
-      stroke="#1a3a5c"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    {/* Subtle underline */}
-    <path
-      d="M10 40 Q50 42, 90 39 Q130 36, 155 38"
-      fill="none"
-      stroke="#1a3a5c"
-      strokeWidth="0.8"
-      strokeLinecap="round"
-      opacity="0.5"
     />
   </svg>
 );
@@ -300,6 +281,7 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
               const isPaul = approver.approver_name === 'Paul Van Den Hemel';
               const isPending = approver.status === 'PENDING';
               const isClickable = isPaul && isPending;
+              const isAlreadyApproved = approver.status === 'APPROVED';
               
               return (
                 <div 
@@ -307,11 +289,11 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
                   className={cn(
                     "border rounded-lg p-4 transition-all",
                     approver.status === 'APPROVED' 
-                      ? 'border-green-300 bg-green-50' 
+                      ? 'border-green-200 bg-green-50/50 opacity-70' 
                       : approver.status === 'LOCKED'
-                      ? 'border-gray-200 bg-gray-100'
+                      ? 'border-gray-200 bg-gray-100 opacity-50'
                       : 'border-yellow-300 bg-yellow-50',
-                    isClickable && 'ring-2 ring-primary ring-offset-2 cursor-pointer hover:shadow-lg'
+                    isClickable && 'ring-2 ring-primary ring-offset-2 cursor-pointer hover:shadow-lg opacity-100'
                   )}
                   onClick={isClickable ? handleSignClick : undefined}
                 >
