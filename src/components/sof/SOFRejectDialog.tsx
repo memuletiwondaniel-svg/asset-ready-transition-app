@@ -145,7 +145,7 @@ export const SOFRejectDialog: React.FC<SOFRejectDialogProps> = ({
             onClick={handleSubmitRejection} 
             disabled={!canReject || isLoading}
           >
-            {isLoading ? 'Submitting...' : 'Submit Pr1 Rejection'}
+            {isLoading ? 'Rejecting...' : 'Reject SoF'}
           </Button>
         </DialogFooter>
       </DialogContent>
