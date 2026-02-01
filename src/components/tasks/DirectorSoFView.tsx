@@ -409,12 +409,12 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                 onClick={() => handleViewSoF('mock-pssr-id', true)}
               >
                 <div className={cn(
-                  "h-5 w-5 rounded-full flex items-center justify-center shrink-0 opacity-60",
+                  "h-5 w-5 rounded-full flex items-center justify-center shrink-0 opacity-60 group-hover:opacity-100 transition-opacity",
                   recentActivity.type === 'approved' 
-                    ? "bg-green-500/10" 
+                    ? "bg-green-500/10 group-hover:bg-green-500/20" 
                     : recentActivity.priorityLevel === 'Pr1'
-                    ? "bg-red-500/10"
-                    : "bg-amber-500/10"
+                    ? "bg-red-500/10 group-hover:bg-red-500/20"
+                    : "bg-amber-500/10 group-hover:bg-amber-500/20"
                 )}>
                   {recentActivity.type === 'approved' ? (
                     <FileCheck className="h-3 w-3 text-green-600" />
@@ -426,20 +426,20 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="inline-block max-w-full">
-                    <p className="text-muted-foreground text-sm leading-snug">
+                    <p className="text-muted-foreground group-hover:text-foreground text-sm leading-snug transition-colors">
                       {recentActivity.type === 'approved' ? (
                         <>
                           Signed SoF for <span className="font-mono">DP-300:</span>{' '}
-                          <span className="font-medium text-foreground/80">{recentActivity.projectName || 'HM Additional Compressors'}</span>
+                          <span className="font-medium text-foreground/80 group-hover:text-foreground transition-colors">{recentActivity.projectName || 'HM Additional Compressors'}</span>
                         </>
                       ) : (
                         <>
                           Rejected SoF for <span className="font-mono">DP-300:</span>{' '}
-                          <span className="font-medium text-foreground/80">{recentActivity.projectName || 'HM Additional Compressors'}</span>
+                          <span className="font-medium text-foreground/80 group-hover:text-foreground transition-colors">{recentActivity.projectName || 'HM Additional Compressors'}</span>
                           <Badge 
                             variant="outline" 
                             className={cn(
-                              "ml-2 text-xs opacity-70",
+                              "ml-2 text-xs opacity-70 group-hover:opacity-100 transition-opacity",
                               recentActivity.priorityLevel === 'Pr1' 
                                 ? "border-red-300 text-red-700" 
                                 : "border-amber-300 text-amber-700"
@@ -485,7 +485,7 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                       </div>
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground/60">
+                  <p className="text-xs text-muted-foreground/60 group-hover:text-muted-foreground transition-colors">
                     {formatDistanceToNow(new Date(recentActivity.timestamp), { addSuffix: true }).replace('about ', '')}
                   </p>
                 </div>
@@ -498,15 +498,15 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
               className="flex items-center gap-2 text-sm py-1.5 px-2 -mx-2 rounded-md hover:bg-muted/30 cursor-pointer transition-colors group"
               onClick={() => handleViewSoF('mock-pssr-dp385', true)}
             >
-              <div className="h-5 w-5 rounded-full bg-green-500/10 flex items-center justify-center shrink-0 opacity-60">
+              <div className="h-5 w-5 rounded-full bg-green-500/10 group-hover:bg-green-500/20 flex items-center justify-center shrink-0 opacity-60 group-hover:opacity-100 transition-opacity">
                 <FileCheck className="h-3 w-3 text-green-600" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-muted-foreground text-sm leading-snug">
+                <p className="text-muted-foreground group-hover:text-foreground text-sm leading-snug transition-colors">
                   Signed SoF for <span className="font-mono">DP-385:</span>{' '}
-                  <span className="font-medium text-foreground/80">OT2/3 Gas Feed to CS6/7</span>
+                  <span className="font-medium text-foreground/80 group-hover:text-foreground transition-colors">OT2/3 Gas Feed to CS6/7</span>
                 </p>
-                <p className="text-xs text-muted-foreground/60">
+                <p className="text-xs text-muted-foreground/60 group-hover:text-muted-foreground transition-colors">
                   {formatDistanceToNow(new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), { addSuffix: true }).replace('about ', '')}
                 </p>
               </div>
@@ -516,29 +516,29 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
               className="flex items-center gap-2 text-sm py-1.5 px-2 -mx-2 rounded-md hover:bg-muted/30 cursor-pointer transition-colors group"
               onClick={() => handleViewSoF('mock-pssr-dp40', true)}
             >
-              <div className="h-5 w-5 rounded-full bg-green-500/10 flex items-center justify-center shrink-0 opacity-60">
+              <div className="h-5 w-5 rounded-full bg-green-500/10 group-hover:bg-green-500/20 flex items-center justify-center shrink-0 opacity-60 group-hover:opacity-100 transition-opacity">
                 <FileCheck className="h-3 w-3 text-green-600" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-muted-foreground text-sm leading-snug">
+                <p className="text-muted-foreground group-hover:text-foreground text-sm leading-snug transition-colors">
                   Signed SoF for <span className="font-mono">DP-40:</span>{' '}
-                  <span className="font-medium text-foreground/80">HM LLP Gas Capture</span>
+                  <span className="font-medium text-foreground/80 group-hover:text-foreground transition-colors">HM LLP Gas Capture</span>
                 </p>
-                <p className="text-xs text-muted-foreground/60">
+                <p className="text-xs text-muted-foreground/60 group-hover:text-muted-foreground transition-colors">
                   {formatDistanceToNow(new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), { addSuffix: true }).replace('about ', '')}
                 </p>
               </div>
               <Eye className="h-3.5 w-3.5 text-muted-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
             <div className="flex items-center gap-2 text-sm py-1.5 px-2 -mx-2 rounded-md hover:bg-muted/30 cursor-pointer transition-colors group">
-              <div className="h-5 w-5 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0 opacity-60">
+              <div className="h-5 w-5 rounded-full bg-blue-500/10 group-hover:bg-blue-500/20 flex items-center justify-center shrink-0 opacity-60 group-hover:opacity-100 transition-opacity">
                 <FileText className="h-3 w-3 text-blue-600" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-muted-foreground text-sm leading-snug">
-                  Reviewed <span className="font-medium text-foreground/80">BGC P2A Heatmap</span>
+                <p className="text-muted-foreground group-hover:text-foreground text-sm leading-snug transition-colors">
+                  Reviewed <span className="font-medium text-foreground/80 group-hover:text-foreground transition-colors">BGC P2A Heatmap</span>
                 </p>
-                <p className="text-xs text-muted-foreground/60">
+                <p className="text-xs text-muted-foreground/60 group-hover:text-muted-foreground transition-colors">
                   {formatDistanceToNow(new Date(Date.now() - 8 * 24 * 60 * 60 * 1000), { addSuffix: true }).replace('about ', '')}
                 </p>
               </div>
