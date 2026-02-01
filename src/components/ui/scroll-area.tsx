@@ -12,7 +12,21 @@ const ScrollArea = React.forwardRef<
     className={cn("relative overflow-hidden", className)}
     {...props}
   >
-    <ScrollAreaPrimitive.Viewport className="h-full w-full rounded-[inherit] pointer-events-auto">
+    <ScrollAreaPrimitive.Viewport 
+      className="h-full w-full rounded-[inherit] pointer-events-auto"
+      onWheel={(e) => {
+        // Stop scroll propagation to prevent parent page scrolling
+        const viewport = e.currentTarget;
+        const { scrollTop, scrollHeight, clientHeight } = viewport;
+        const isAtTop = scrollTop === 0;
+        const isAtBottom = scrollTop + clientHeight >= scrollHeight - 1;
+        
+        // Only stop propagation if we can scroll in the direction being scrolled
+        if ((e.deltaY < 0 && !isAtTop) || (e.deltaY > 0 && !isAtBottom)) {
+          e.stopPropagation();
+        }
+      }}
+    >
       {children}
     </ScrollAreaPrimitive.Viewport>
     <ScrollBar />
