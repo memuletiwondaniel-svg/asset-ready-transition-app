@@ -24,6 +24,8 @@ interface MyTasksPanelCardProps {
   isLoading?: boolean;
   isFullHeight?: boolean;
   isRelocated?: boolean;
+  /** Whether another card in the grid is expanded (dims this card) */
+  isDimmed?: boolean;
 }
 
 export const MyTasksPanelCard: React.FC<MyTasksPanelCardProps> = ({
@@ -44,6 +46,7 @@ export const MyTasksPanelCard: React.FC<MyTasksPanelCardProps> = ({
   isLoading = false,
   isFullHeight = false,
   isRelocated = false,
+  isDimmed = false,
 }) => {
   const handleCardClick = () => {
     if (!isExpanded) {
@@ -63,7 +66,9 @@ export const MyTasksPanelCard: React.FC<MyTasksPanelCardProps> = ({
         isFullHeight && "h-full flex flex-col",
         isFullHeight && isExpanded && "ring-2 ring-primary/20 shadow-xl shadow-primary/10",
         isRelocated && "animate-card-relocate",
-        !isExpanded && "hover:-translate-y-0.5 cursor-pointer"
+        !isExpanded && "hover:-translate-y-0.5 cursor-pointer",
+        // Dim effect when another card is expanded
+        isDimmed && "opacity-50 scale-[0.98] hover:opacity-70 hover:scale-100"
       )}
       onClick={handleCardClick}
     >

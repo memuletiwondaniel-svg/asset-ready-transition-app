@@ -16,6 +16,7 @@ interface OWLPanelProps {
   onToggleExpand: () => void;
   isFullHeight?: boolean;
   isRelocated?: boolean;
+  isDimmed?: boolean;
 }
 
 export const OWLPanel: React.FC<OWLPanelProps> = ({ 
@@ -24,6 +25,7 @@ export const OWLPanel: React.FC<OWLPanelProps> = ({
   onToggleExpand,
   isFullHeight = false,
   isRelocated = false,
+  isDimmed = false,
 }) => {
   const navigate = useNavigate();
   const { items: realItems, stats: realStats, isLoading, updateStatus, isUpdatingStatus } = useUserOWLItems();
@@ -113,6 +115,7 @@ export const OWLPanel: React.FC<OWLPanelProps> = ({
       onToggleExpand={onToggleExpand}
       isFullHeight={isFullHeight}
       isRelocated={isRelocated}
+      isDimmed={isDimmed}
       isLoading={isLoading}
       isEmpty={items.length === 0}
       emptyMessage="No outstanding work items"

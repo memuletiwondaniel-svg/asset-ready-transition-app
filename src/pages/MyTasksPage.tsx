@@ -67,12 +67,15 @@ const MyTasksPage: React.FC = () => {
   const renderCard = (cardId: string, isInExpandedColumn: boolean, isRelocated: boolean) => {
     const isThisCardExpanded = expandedCard === cardId;
     const isFullHeight = isInExpandedColumn && isThisCardExpanded;
+    // Dim cards when another card is expanded
+    const isDimmed = expandedCard !== null && !isThisCardExpanded;
 
     const commonProps = {
       isExpanded: isThisCardExpanded,
       onToggleExpand: () => handleCardExpand(cardId as ExpandedCard),
       isFullHeight,
       isRelocated,
+      isDimmed,
       searchQuery,
     };
 

@@ -18,6 +18,7 @@ interface PSSRReviewsPanelProps {
   onToggleExpand: () => void;
   isFullHeight?: boolean;
   isRelocated?: boolean;
+  isDimmed?: boolean;
 }
 
 // Helper function to get role icon
@@ -61,6 +62,7 @@ export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({
   onToggleExpand,
   isFullHeight = false,
   isRelocated = false,
+  isDimmed = false,
 }) => {
   const navigate = useNavigate();
   const { data: realPssrs, isLoading } = usePSSRsAwaitingReview(userId);
@@ -99,6 +101,7 @@ export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({
       onToggleExpand={onToggleExpand}
       isFullHeight={isFullHeight}
       isRelocated={isRelocated}
+      isDimmed={isDimmed}
       isLoading={isLoading}
       isEmpty={pendingPssrs.length === 0}
       emptyMessage="No PSSR reviews pending"
