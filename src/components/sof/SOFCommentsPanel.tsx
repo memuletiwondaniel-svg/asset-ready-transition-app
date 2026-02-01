@@ -12,9 +12,10 @@ import {
   Users,
   ChevronDown,
   MessageSquare,
-  HardHat,
   Heart,
-  Cog
+  Cog,
+  Fan,
+  Container
 } from 'lucide-react';
 
 interface SOFCommentsPanelProps {
@@ -28,7 +29,7 @@ const DEMO_COMMENTS = {
     icon: Users,
     status: "complete" as const,
     summary: "All disciplines have completed their reviews and confirmed readiness for startup. Cross-functional verification meetings held on Dec 5th with all discipline leads present. No outstanding interdisciplinary conflicts or dependencies remain. Safety systems integration verified across all disciplines. P&IDs, electrical diagrams, and process flows are aligned and approved.",
-    reviewer: "John Smith - Project Lead",
+    reviewer: "Daniel Memuletiwon - PSSR Lead",
     date: "Dec 6, 2024"
   },
   techSafety: {
@@ -36,7 +37,7 @@ const DEMO_COMMENTS = {
     icon: Shield,
     status: "complete" as const,
     summary: "All safety instrumented systems (SIS) have been tested and verified. Emergency shutdown sequences confirmed operational. Fire & gas detection systems commissioned and integrated with DCS. HAZOP recommendations fully implemented. Safety relief valves tested and certified.",
-    reviewer: "Sarah Johnson - Safety Engineer",
+    reviewer: "Andrew Banford - Tech Safety TA2",
     date: "Dec 5, 2024"
   },
   process: {
@@ -44,7 +45,7 @@ const DEMO_COMMENTS = {
     icon: Flame,
     status: "complete" as const,
     summary: "Process control loops tuned and verified. Operating procedures reviewed and approved. Start-up sequence documented and validated with operations team. Material balance confirmed. Heat exchanger performance verified against design specifications.",
-    reviewer: "Mike Chen - Process Engineer",
+    reviewer: "Chris Johnsen - Process TA2 (P&E)",
     date: "Dec 4, 2024"
   },
   paco: {
@@ -52,31 +53,39 @@ const DEMO_COMMENTS = {
     icon: Wrench,
     status: "complete" as const,
     summary: "All piping systems pressure tested and certified. Instrument calibrations complete with certificates filed. Control valve stroking verified. P&ID walk-downs completed with no discrepancies. Flange management program implemented for all critical connections.",
-    reviewer: "David Wilson - PACO Lead",
+    reviewer: "David Brown - PACO TA2 (P&E)",
     date: "Dec 4, 2024"
   },
-  mechanical: {
-    title: "Mechanical",
-    icon: Gauge,
+  rotating: {
+    title: "Rotating",
+    icon: Fan,
     status: "complete" as const,
     summary: "Rotating equipment alignment verified. Vibration baselines established for all critical pumps and compressors. Lubrication systems charged and verified. Mechanical seals installed per specifications. Coupling guards and safety shields in place.",
-    reviewer: "Lisa Brown - Mechanical Engineer",
+    reviewer: "Nathan Roberts - Rotating TA2 (P&E)",
     date: "Dec 3, 2024"
+  },
+  static: {
+    title: "Static",
+    icon: Container,
+    status: "complete" as const,
+    summary: "All static equipment inspections completed including pressure vessels, heat exchangers, and storage tanks. Thickness measurements verified against minimum requirements. Relief device certifications current. Vessel internals inspected and reinstalled per specifications. Piping flexibility analysis confirmed.",
+    reviewer: "Stuart Lugo - Static TA2 (P&E)",
+    date: "Dec 4, 2024"
   },
   electrical: {
     title: "Electrical",
     icon: Zap,
     status: "complete" as const,
     summary: "Motor rotation checks completed. Electrical isolation procedures verified. Ground fault protection tested. UPS systems commissioned. Emergency lighting operational. Cable terminations torqued and verified. Arc flash labels installed.",
-    reviewer: "Tom Davis - Electrical Engineer",
+    reviewer: "Mohammed Yassar - Elect TA2 (P&E)",
     date: "Dec 3, 2024"
   },
   civil: {
     title: "Civil",
-    icon: HardHat,
+    icon: Gauge,
     status: "complete" as const,
     summary: "Structural integrity assessments completed for all new installations. Foundation bolt torque verification documented. Drainage systems tested and operational. Fire escape routes verified clear and properly marked. Secondary containment areas inspected and certified. All civil punch list items closed out.",
-    reviewer: "Ahmed Hassan - Civil Engineer",
+    reviewer: "Satya Borra - Civil TA2",
     date: "Dec 5, 2024"
   },
   operations: {
@@ -84,7 +93,7 @@ const DEMO_COMMENTS = {
     icon: Cog,
     status: "complete" as const,
     summary: "Operating procedures reviewed and approved by shift supervisors. Control room displays configured and verified. Alarm rationalization completed. Operator training for DP300 completed with 100% attendance. Shift handover protocols established. Emergency response drills conducted successfully.",
-    reviewer: "Maria Garcia - Operations Superintendent",
+    reviewer: "Lyle Koch - CS Deputy Director",
     date: "Dec 6, 2024"
   },
   hse: {
@@ -92,7 +101,7 @@ const DEMO_COMMENTS = {
     icon: Heart,
     status: "complete" as const,
     summary: "Job Safety Analysis (JSA) completed for all startup activities. PPE requirements verified and communicated. Environmental permits confirmed active. Spill response equipment staged at designated locations. First aid stations stocked and accessible. Toolbox talks scheduled for startup crew.",
-    reviewer: "James Miller - HSE Lead",
+    reviewer: "Ahmed Kadhum - Ops HSE Manager",
     date: "Dec 5, 2024"
   }
 };
@@ -149,7 +158,8 @@ export const SOFCommentsPanel: React.FC<SOFCommentsPanelProps> = ({ pssrId }) =>
     DEMO_COMMENTS.techSafety,
     DEMO_COMMENTS.process,
     DEMO_COMMENTS.paco,
-    DEMO_COMMENTS.mechanical,
+    DEMO_COMMENTS.rotating,
+    DEMO_COMMENTS.static,
     DEMO_COMMENTS.electrical,
     DEMO_COMMENTS.civil,
     DEMO_COMMENTS.operations,
