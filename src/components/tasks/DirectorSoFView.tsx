@@ -118,7 +118,8 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
         {/* Pending SoF Items */}
         <div className="space-y-4">
         {pendingItems.map((item, index) => {
-          const pssrId = item.pssr?.pssr_id?.replace('PSSR-', '') || 'DP300';
+          const rawId = item.pssr?.pssr_id?.replace('PSSR-', '') || 'DP300';
+          const pssrId = rawId.includes('-') ? rawId : `DP-${rawId.replace('DP', '')}`;
           const projectName = item.pssr?.project_name || 'HM Additional Compressors';
           
           return (
@@ -184,7 +185,8 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                 </p>
               </div>
               {lockedItems.map((item) => {
-                const pssrId = item.pssr?.pssr_id?.replace('PSSR-', '') || 'DP300';
+                const rawId = item.pssr?.pssr_id?.replace('PSSR-', '') || 'DP300';
+                const pssrId = rawId.includes('-') ? rawId : `DP-${rawId.replace('DP', '')}`;
                 const projectName = item.pssr?.project_name || 'HM Additional Compressors';
                 
                 return (
