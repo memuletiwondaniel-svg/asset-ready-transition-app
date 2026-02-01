@@ -23,8 +23,8 @@ interface SOFCommentsPanelProps {
   pssrId: string;
 }
 
-// Demo data for discipline comments
-const DEMO_COMMENTS = {
+// Demo data for discipline comments - DP-300
+const DEMO_COMMENTS_DP300 = {
   interdisciplinary: {
     title: "Interdisciplinary Summary",
     icon: Users,
@@ -127,6 +127,100 @@ const DEMO_COMMENTS = {
   }
 };
 
+// Demo data for DP-385 - OT2/3 Gas Feed to CS6/7
+const DEMO_COMMENTS_DP385 = {
+  interdisciplinary: {
+    title: "Interdisciplinary Summary",
+    icon: Users,
+    color: "text-primary",
+    bgColor: "bg-primary/10",
+    status: "complete" as const,
+    summary: "All disciplines have confirmed readiness for gas feed operations to CS6 and CS7. Integration testing completed between OT2/3 systems and receiving facilities. Cross-discipline walkdowns verified tie-in points and isolation boundaries. No outstanding interdisciplinary issues. Final coordination meeting held with all TAs present.",
+    reviewer: "Roaa Abdullah - PSSR Lead",
+    date: "Jan 28, 2026"
+  },
+  techSafety: {
+    title: "Tech Safety",
+    icon: Shield,
+    color: "text-red-500",
+    bgColor: "bg-red-500/10",
+    status: "complete" as const,
+    summary: "Gas detection systems at tie-in locations commissioned and integrated. ESD logic verified for new gas feed isolation. HAZOP action items from gas routing study closed. Pressure relief sizing confirmed for upstream conditions. Flare capacity validated for emergency scenarios.",
+    reviewer: "Andrew Banford - Tech Safety TA2",
+    date: "Jan 27, 2026"
+  },
+  process: {
+    title: "Process",
+    icon: Workflow,
+    color: "text-orange-500",
+    bgColor: "bg-orange-500/10",
+    status: "complete" as const,
+    summary: "Gas composition analysis verified compatible with CS6/7 processing requirements. Flow control valves sized and tuned for design throughput. Pressure drop calculations validated during commissioning. Slug catcher performance confirmed. Operating envelope documented and communicated to operations.",
+    reviewer: "Ghassan Majdalani - Process TA2 (P&E)",
+    date: "Jan 26, 2026"
+  },
+  paco: {
+    title: "PACO",
+    icon: SlidersHorizontal,
+    color: "text-blue-500",
+    bgColor: "bg-blue-500/10",
+    status: "complete" as const,
+    summary: "All gas feed instrumentation calibrated and loop-checked. Flow metering accuracy verified to custody transfer standards. Control system graphics updated for new tie-ins. Pressure transmitters tested at operating conditions. Analyzer shelters commissioned with sample systems operational.",
+    reviewer: "Collin Hand - PACO TA2 (P&E)",
+    date: "Jan 26, 2026"
+  },
+  rotating: {
+    title: "Rotating",
+    icon: Fan,
+    color: "text-cyan-500",
+    bgColor: "bg-cyan-500/10",
+    status: "complete" as const,
+    summary: "Booster compressor alignment verified and baseline vibration recorded. Seal gas system operational with correct differential pressures. Lube oil analysis within specifications. Performance test completed at design conditions. Auxiliary systems including cooling water verified operational.",
+    reviewer: "Tim Brown - Rotating TA2 (P&E)",
+    date: "Jan 25, 2026"
+  },
+  static: {
+    title: "Static",
+    icon: Wrench,
+    color: "text-purple-500",
+    bgColor: "bg-purple-500/10",
+    status: "complete" as const,
+    summary: "New piping tie-ins hydrotested and certified. Pig launcher/receiver installations inspected. Flange integrity verification completed for all new connections. Corrosion allowance confirmed adequate for gas service. Support and hanger adjustments completed per stress analysis.",
+    reviewer: "Prakash Princeton - Static TA2 (P&E)",
+    date: "Jan 26, 2026"
+  },
+  civil: {
+    title: "Civil",
+    icon: Building2,
+    color: "text-slate-500",
+    bgColor: "bg-slate-500/10",
+    status: "complete" as const,
+    summary: "Pipe rack modifications structurally certified. New foundations for metering skid inspected and approved. Access platforms installed with proper egress. Drainage provisions verified for new equipment areas. Wind load calculations confirmed for elevated piping sections.",
+    reviewer: "Satya Borra - Civil TA2",
+    date: "Jan 27, 2026"
+  },
+  operations: {
+    title: "Operations",
+    icon: Cog,
+    color: "text-teal-500",
+    bgColor: "bg-teal-500/10",
+    status: "complete" as const,
+    summary: "Gas feed operating procedures developed and approved. Control room operators trained on new system configuration. Alarm setpoints rationalized and documented. Emergency isolation procedures tested during tabletop exercise. Coordination established with OT2/3 operations team for startup.",
+    reviewer: "Ewan McConnachie - CS Deputy Director",
+    date: "Jan 28, 2026"
+  },
+  hse: {
+    title: "HSE",
+    icon: Heart,
+    color: "text-rose-500",
+    bgColor: "bg-rose-500/10",
+    status: "complete" as const,
+    summary: "Gas release scenarios reviewed and emergency response updated. Portable gas monitors positioned at work locations. Environmental permit modifications approved. Simultaneous operations assessment completed. Toolbox talks conducted for all startup personnel.",
+    reviewer: "Ahmed Kadhum - Ops HSE Manager",
+    date: "Jan 27, 2026"
+  }
+};
+
 const getStatusBadge = (status: 'complete' | 'in-progress' | 'pending') => {
   switch (status) {
     case 'complete':
@@ -141,7 +235,7 @@ const getStatusBadge = (status: 'complete' | 'in-progress' | 'pending') => {
 const DisciplineCard = ({ 
   discipline 
 }: { 
-  discipline: typeof DEMO_COMMENTS.techSafety 
+  discipline: typeof DEMO_COMMENTS_DP300.techSafety 
 }) => {
   const Icon = discipline.icon;
   
@@ -173,19 +267,36 @@ const DisciplineCard = ({
 
 export const SOFCommentsPanel: React.FC<SOFCommentsPanelProps> = ({ pssrId }) => {
   const [isExpanded, setIsExpanded] = useState(true);
+  
+  // Select data based on pssrId
+  const isDP385 = pssrId === 'mock-pssr-dp385';
+  const DEMO_COMMENTS = isDP385 ? DEMO_COMMENTS_DP385 : DEMO_COMMENTS_DP300;
+  
   const InterIcon = DEMO_COMMENTS.interdisciplinary.icon;
 
-  const disciplines = [
-    DEMO_COMMENTS.techSafety,
-    DEMO_COMMENTS.process,
-    DEMO_COMMENTS.paco,
-    DEMO_COMMENTS.rotating,
-    DEMO_COMMENTS.static,
-    DEMO_COMMENTS.electrical,
-    DEMO_COMMENTS.civil,
-    DEMO_COMMENTS.operations,
-    DEMO_COMMENTS.hse
-  ];
+  // DP-385 doesn't have electrical, so filter it out
+  const disciplines = isDP385 
+    ? [
+        DEMO_COMMENTS.techSafety,
+        DEMO_COMMENTS.process,
+        DEMO_COMMENTS.paco,
+        DEMO_COMMENTS.rotating,
+        DEMO_COMMENTS.static,
+        DEMO_COMMENTS.civil,
+        DEMO_COMMENTS.operations,
+        DEMO_COMMENTS.hse
+      ]
+    : [
+        DEMO_COMMENTS_DP300.techSafety,
+        DEMO_COMMENTS_DP300.process,
+        DEMO_COMMENTS_DP300.paco,
+        DEMO_COMMENTS_DP300.rotating,
+        DEMO_COMMENTS_DP300.static,
+        DEMO_COMMENTS_DP300.electrical,
+        DEMO_COMMENTS_DP300.civil,
+        DEMO_COMMENTS_DP300.operations,
+        DEMO_COMMENTS_DP300.hse
+      ];
 
   return (
     <ScrollArea className="h-full">
