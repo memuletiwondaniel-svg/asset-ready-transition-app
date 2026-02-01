@@ -6,7 +6,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { cn } from '@/lib/utils';
 import { 
   Shield, 
-  Flame, 
+  Workflow, 
   SlidersHorizontal, 
   Zap, 
   Users,
@@ -47,7 +47,7 @@ const DEMO_COMMENTS = {
   },
   process: {
     title: "Process",
-    icon: Flame,
+    icon: Workflow,
     color: "text-orange-500",
     bgColor: "bg-orange-500/10",
     status: "complete" as const,
