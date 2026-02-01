@@ -152,11 +152,11 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
     }
   };
   
-  // Override props with mock data for display
-  const plantName = 'CS';
-  const facilityName = 'Hammar Mishrif';
-  const projectName = 'DP-300 HM Additional Compressors';
-  const pssrReason = 'Start-up of a New Project or Facility';
+  // Use props for display, with fallback defaults
+  const plantName = propPlantName || 'CS';
+  const facilityName = propFacilityName || 'Hammar Mishrif';
+  const projectName = propProjectName || 'DP-300 HM Additional Compressors';
+  const pssrReason = propPssrReason || 'Start-up of a New Project or Facility';
   
   const certificateText = getCertificateText(pssrReason);
   const isProcessSafetyIncidence = pssrReason.toLowerCase().includes('process safety incidence');
