@@ -280,7 +280,6 @@ export const SOFCommentsPanel: React.FC<SOFCommentsPanelProps> = ({ pssrId }) =>
         DEMO_COMMENTS.techSafety,
         DEMO_COMMENTS.process,
         DEMO_COMMENTS.paco,
-        DEMO_COMMENTS.rotating,
         DEMO_COMMENTS.static,
         DEMO_COMMENTS.civil,
         DEMO_COMMENTS.operations,
