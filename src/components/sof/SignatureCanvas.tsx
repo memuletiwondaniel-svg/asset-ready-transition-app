@@ -1,8 +1,8 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Eraser, RotateCcw, Save, Trash2, Check, Pen } from 'lucide-react';
+import { Eraser, RotateCcw, Save } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface SignatureCanvasProps {
   onSignatureChange?: (signatureData: string | null) => void;
@@ -33,11 +33,11 @@ export const SignatureCanvas: React.FC<SignatureCanvasProps> = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasSignature, setHasSignature] = useState(false);
-  const [useSaved, setUseSaved] = useState(false);
   const [strokeHistory, setStrokeHistory] = useState<ImageData[]>([]);
+  const [isUsingSaved, setIsUsingSaved] = useState(false);
   const lastPointRef = useRef<Point | null>(null);
 
-  // Initialize canvas
+  // Initialize canvas and auto-fill saved signature
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -57,14 +57,24 @@ export const SignatureCanvas: React.FC<SignatureCanvasProps> = ({
 
     // Clear with transparent background
     ctx.clearRect(0, 0, width, height);
-  }, [width, height]);
 
-  // Handle saved signature selection
-  useEffect(() => {
-    if (useSaved && savedSignature) {
-      onSignatureChange?.(savedSignature);
+    // Auto-fill saved signature if available
+    if (savedSignature && showSavedOption) {
+      const img = new Image();
+      img.onload = () => {
+        ctx.clearRect(0, 0, width, height);
+        // Center the image
+        const scale = Math.min(width / img.width, height / img.height) * 0.9;
+        const x = (width - img.width * scale) / 2;
+        const y = (height - img.height * scale) / 2;
+        ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
+        setHasSignature(true);
+        setIsUsingSaved(true);
+        onSignatureChange?.(savedSignature);
+      };
+      img.src = savedSignature;
     }
-  }, [useSaved, savedSignature, onSignatureChange]);
+  }, [width, height, savedSignature, showSavedOption, onSignatureChange]);
 
   const getCoordinates = useCallback((e: React.MouseEvent | React.TouchEvent): Point | null => {
     const canvas = canvasRef.current;
@@ -99,7 +109,7 @@ export const SignatureCanvas: React.FC<SignatureCanvasProps> = ({
   }, []);
 
   const startDrawing = useCallback((e: React.MouseEvent | React.TouchEvent) => {
-    if (disabled || useSaved) return;
+    if (disabled) return;
     
     e.preventDefault();
     const point = getCoordinates(e);
@@ -107,11 +117,12 @@ export const SignatureCanvas: React.FC<SignatureCanvasProps> = ({
 
     saveCurrentState();
     setIsDrawing(true);
+    setIsUsingSaved(false);
     lastPointRef.current = point;
-  }, [disabled, useSaved, getCoordinates, saveCurrentState]);
+  }, [disabled, getCoordinates, saveCurrentState]);
 
   const draw = useCallback((e: React.MouseEvent | React.TouchEvent) => {
-    if (!isDrawing || disabled || useSaved) return;
+    if (!isDrawing || disabled) return;
 
     e.preventDefault();
     const canvas = canvasRef.current;
@@ -130,7 +141,7 @@ export const SignatureCanvas: React.FC<SignatureCanvasProps> = ({
 
     lastPointRef.current = point;
     setHasSignature(true);
-  }, [isDrawing, disabled, useSaved, getCoordinates]);
+  }, [isDrawing, disabled, getCoordinates]);
 
   const stopDrawing = useCallback(() => {
     if (!isDrawing) return;
@@ -157,6 +168,7 @@ export const SignatureCanvas: React.FC<SignatureCanvasProps> = ({
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     setHasSignature(false);
     setStrokeHistory([]);
+    setIsUsingSaved(false);
     onSignatureChange?.(null);
   }, [onSignatureChange]);
 
@@ -178,10 +190,7 @@ export const SignatureCanvas: React.FC<SignatureCanvasProps> = ({
       
       // Check if canvas is now empty
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const isEmpty = imageData.data.every((value, index) => {
-        // Check if all pixels are white (255, 255, 255, 255)
-        return value === 255;
-      });
+      const isEmpty = imageData.data.every((value) => value === 0 || value === 255);
       
       if (isEmpty || newHistory.length === 0) {
         setHasSignature(false);
@@ -195,142 +204,106 @@ export const SignatureCanvas: React.FC<SignatureCanvasProps> = ({
 
   const handleSaveSignature = useCallback(() => {
     const canvas = canvasRef.current;
-    if (!canvas || !hasSignature) return;
+    if (!canvas || !hasSignature || isUsingSaved) return;
 
     const signatureData = canvas.toDataURL('image/png');
     onSaveSignature?.(signatureData);
-  }, [hasSignature, onSaveSignature]);
-
-  const handleUseSaved = useCallback(() => {
-    setUseSaved(true);
-    clearCanvas();
-  }, [clearCanvas]);
-
-  const handleDrawNew = useCallback(() => {
-    setUseSaved(false);
-    onSignatureChange?.(null);
-  }, [onSignatureChange]);
+  }, [hasSignature, isUsingSaved, onSaveSignature]);
 
   return (
-    <Card className={cn("w-full", className)}>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium flex items-center gap-2">
-          <Pen className="h-4 w-4" />
-          Signature
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {/* Option to use saved signature */}
-        {showSavedOption && savedSignature && (
-          <div className="flex gap-2 mb-3">
-            <Button
-              type="button"
-              variant={useSaved ? "default" : "outline"}
-              size="sm"
-              onClick={handleUseSaved}
-              disabled={disabled}
-              className="flex-1"
-            >
-              <Check className="h-4 w-4 mr-1" />
-              Use Saved Signature
-            </Button>
-            <Button
-              type="button"
-              variant={!useSaved ? "default" : "outline"}
-              size="sm"
-              onClick={handleDrawNew}
-              disabled={disabled}
-              className="flex-1"
-            >
-              <Pen className="h-4 w-4 mr-1" />
-              Draw New
-            </Button>
-          </div>
-        )}
+    <div className={cn("w-full", className)}>
+      <div className="flex gap-2">
+        {/* Canvas for drawing */}
+        <div 
+          className={cn(
+            "flex-1 border-2 border-dashed rounded-lg overflow-hidden transition-colors bg-white",
+            disabled ? "border-muted bg-muted/20 cursor-not-allowed" : "border-border hover:border-primary/50",
+            isDrawing && "border-primary"
+          )}
+        >
+          <canvas
+            ref={canvasRef}
+            className={cn(
+              "touch-none w-full",
+              disabled ? "cursor-not-allowed" : "cursor-crosshair"
+            )}
+            style={{ height: `${height}px` }}
+            onMouseDown={startDrawing}
+            onMouseMove={draw}
+            onMouseUp={stopDrawing}
+            onMouseLeave={stopDrawing}
+            onTouchStart={startDrawing}
+            onTouchMove={draw}
+            onTouchEnd={stopDrawing}
+          />
+        </div>
 
-        {/* Saved signature preview */}
-        {useSaved && savedSignature ? (
-          <div className="border-2 border-primary rounded-lg p-2 bg-white">
-            <img 
-              src={savedSignature} 
-              alt="Saved signature" 
-              className="max-h-[150px] mx-auto"
-            />
-            <p className="text-xs text-center text-muted-foreground mt-2">
-              Using your saved signature
-            </p>
-          </div>
-        ) : (
-          <>
-            {/* Canvas for drawing */}
-            <div 
-              className={cn(
-                "border-2 border-dashed rounded-lg overflow-hidden transition-colors",
-                disabled ? "border-muted bg-muted/20 cursor-not-allowed" : "border-border hover:border-primary/50",
-                isDrawing && "border-primary"
-              )}
-            >
-              <canvas
-                ref={canvasRef}
-                className={cn(
-                  "touch-none w-full",
-                  disabled ? "cursor-not-allowed" : "cursor-crosshair"
-                )}
-                style={{ height: `${height}px` }}
-                onMouseDown={startDrawing}
-                onMouseMove={draw}
-                onMouseUp={stopDrawing}
-                onMouseLeave={stopDrawing}
-                onTouchStart={startDrawing}
-                onTouchMove={draw}
-                onTouchEnd={stopDrawing}
-              />
-            </div>
-
-            {/* Instructions */}
-            <p className="text-xs text-muted-foreground text-center">
-              {disabled ? "Signature is disabled" : "Draw your signature above using mouse or touch"}
-            </p>
-
-            {/* Action buttons */}
-            <div className="flex gap-2 justify-center">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={undoLastStroke}
-                disabled={disabled || strokeHistory.length === 0}
-              >
-                <RotateCcw className="h-4 w-4 mr-1" />
-                Undo
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={clearCanvas}
-                disabled={disabled || !hasSignature}
-              >
-                <Eraser className="h-4 w-4 mr-1" />
-                Clear
-              </Button>
-              {onSaveSignature && (
+        {/* Side toolbar with icons */}
+        <TooltipProvider delayDuration={300}>
+          <div className="flex flex-col gap-1.5">
+            <Tooltip>
+              <TooltipTrigger asChild>
                 <Button
                   type="button"
-                  variant="default"
-                  size="sm"
-                  onClick={handleSaveSignature}
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={undoLastStroke}
+                  disabled={disabled || strokeHistory.length === 0}
+                >
+                  <RotateCcw className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="left">Undo</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={clearCanvas}
                   disabled={disabled || !hasSignature}
                 >
-                  <Save className="h-4 w-4 mr-1" />
-                  Save for Future
+                  <Eraser className="h-4 w-4" />
                 </Button>
-              )}
-            </div>
-          </>
-        )}
-      </CardContent>
-    </Card>
+              </TooltipTrigger>
+              <TooltipContent side="left">Clear</TooltipContent>
+            </Tooltip>
+
+            {onSaveSignature && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={handleSaveSignature}
+                    disabled={disabled || !hasSignature || isUsingSaved}
+                  >
+                    <Save className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="left">Save for future</TooltipContent>
+              </Tooltip>
+            )}
+          </div>
+        </TooltipProvider>
+      </div>
+
+      {/* Instructions */}
+      <p className="text-xs text-muted-foreground text-center mt-2">
+        {disabled 
+          ? "Signature is disabled" 
+          : isUsingSaved 
+            ? "Using your saved signature • Draw to replace"
+            : "Draw your signature above"
+        }
+      </p>
+    </div>
   );
 };
 
