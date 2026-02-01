@@ -101,8 +101,10 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
     return item.status === 'PENDING';
   }) || [];
   const lockedItems = sofItems?.filter(item => item.status === 'LOCKED') || [];
-  // Show "all done" only if no pending items AND no recent activity to display
-  const allDone = !isLoading && pendingItems.length === 0 && !hasPr1Rejection && !hasRecentApproval;
+  // "All done" means no pending items at all (regardless of recent activity)
+  const noPendingTasks = !isLoading && pendingItems.length === 0;
+  // Show the empty state only if truly nothing to show (no pending, no locked, no recent activity)
+  const showEmptyState = noPendingTasks && lockedItems.length === 0 && !recentActivity;
 
   const firstName = userName?.split(' ')[0] || 'there';
 
@@ -148,10 +150,10 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
     );
   }
 
-  // All done state - show success message
-  if (allDone && lockedItems.length === 0) {
+  // Empty state - show only if absolutely nothing (no pending, no locked, no history)
+  if (showEmptyState) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-b from-background to-muted/20">
+      <div className="flex items-center justify-center p-6 bg-gradient-to-b from-background to-muted/20">
         <Card className="w-full max-w-lg text-center border-green-500/30 bg-green-50/5">
           <CardContent className="pt-10 pb-8">
             <div className="w-20 h-20 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-6">
@@ -190,17 +192,55 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
   return (
     <div className="space-y-6">
       <div className="max-w-3xl mx-auto">
-        {/* Header */}
-        <div className="mb-6">
-          <p className="text-muted-foreground">
-            {pendingItems.length > 0
-              ? `${pendingItems.length} ${pendingItems.length === 1 ? 'SoF awaiting' : 'SoFs awaiting'} your approval`
-              : recentActivity
-              ? 'No pending SoF reviews'
-              : 'You have no pending Statement of Fitness reviews'
-            }
-          </p>
-        </div>
+        {/* "All caught up" banner when no pending items but has recent activity */}
+        {noPendingTasks && recentActivity && (
+          <Card className="mb-6 border-green-500/30 bg-green-50/5">
+            <CardContent className="p-5">
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
+                  <CheckCircle2 className="h-6 w-6 text-green-500" />
+                </div>
+                <div className="flex-1">
+                  <h2 className="text-lg font-semibold text-foreground">
+                    You're all caught up, {firstName}!
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    No pending SoF reviews. Your recent activity is shown below.
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate('/dashboard')}
+                    className="gap-1.5"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                    Dashboard
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleExit}
+                    className="gap-1.5 text-muted-foreground"
+                  >
+                    <LogOut className="h-3.5 w-3.5" />
+                    Sign Out
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Header - only show if there are pending items */}
+        {pendingItems.length > 0 && (
+          <div className="mb-6">
+            <p className="text-muted-foreground">
+              {`${pendingItems.length} ${pendingItems.length === 1 ? 'SoF awaiting' : 'SoFs awaiting'} your approval`}
+            </p>
+          </div>
+        )}
 
         {/* Pending SoF Items */}
         <div className="space-y-4">
