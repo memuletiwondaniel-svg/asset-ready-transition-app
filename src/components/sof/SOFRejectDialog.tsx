@@ -61,7 +61,7 @@ export const SOFRejectDialog: React.FC<SOFRejectDialogProps> = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <XCircle className="h-5 w-5 text-destructive" />
-            Reject Statement of Fitness
+            Reject SoF
           </DialogTitle>
           <DialogDescription>
             Describe the issue and specify the closure action required.
@@ -75,9 +75,27 @@ export const SOFRejectDialog: React.FC<SOFRejectDialogProps> = ({
             <div>
               <p className="font-medium text-sm">Priority 1 (Pr1) - Must Complete Before Startup</p>
               <p className="text-xs text-muted-foreground mt-1">
-                This blocks SoF approval. The action must be closed before you can re-review.
+                The action must be closed before you can re-review.
               </p>
             </div>
+          </div>
+
+          {/* Rejection Description */}
+          <div className="space-y-2">
+            <Label htmlFor="rejectionDescription" className="text-sm font-medium">
+              Closure Action Required <span className="text-destructive">*</span>
+            </Label>
+            <Textarea
+              id="rejectionDescription"
+              placeholder="Describe the issue and what specific action is required to close it..."
+              value={rejectionDescription}
+              onChange={(e) => setRejectionDescription(e.target.value)}
+              className="resize-none"
+              rows={4}
+            />
+            <p className="text-xs text-muted-foreground">
+              This will be sent to the PSSR Lead as a Priority 1 action.
+            </p>
           </div>
 
           {/* Link to Checklist Item Option */}
@@ -118,24 +136,6 @@ export const SOFRejectDialog: React.FC<SOFRejectDialogProps> = ({
                 </div>
               </div>
             )}
-          </div>
-
-          {/* Rejection Description */}
-          <div className="space-y-2">
-            <Label htmlFor="rejectionDescription" className="text-sm font-medium">
-              Issue Description & Closure Action Required <span className="text-destructive">*</span>
-            </Label>
-            <Textarea
-              id="rejectionDescription"
-              placeholder="Describe the issue and what specific action is required to close it..."
-              value={rejectionDescription}
-              onChange={(e) => setRejectionDescription(e.target.value)}
-              className="resize-none"
-              rows={4}
-            />
-            <p className="text-xs text-muted-foreground">
-              This will be sent to the PSSR Lead as a Priority 1 action.
-            </p>
           </div>
         </div>
 
