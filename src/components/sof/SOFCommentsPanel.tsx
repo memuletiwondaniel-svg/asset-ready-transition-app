@@ -15,7 +15,7 @@ import {
   Heart,
   Cog,
   Fan,
-  Container,
+  Wrench,
   Building2
 } from 'lucide-react';
 
@@ -77,7 +77,7 @@ const DEMO_COMMENTS = {
   },
   static: {
     title: "Static",
-    icon: Container,
+    icon: Wrench,
     color: "text-purple-500",
     bgColor: "bg-purple-500/10",
     status: "complete" as const,
