@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShieldAlert, CheckCircle2, AlertTriangle, FileWarning, Clock, ChevronRight, Hash } from 'lucide-react';
+import { ShieldAlert, CheckCircle2, AlertTriangle, FileWarning, Clock, ChevronRight } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -74,6 +74,32 @@ const mockDeviations: QualificationDetail[] = [
     actionOwner: 'Sarah Chen',
     actionOwnerRole: 'Document Control Lead',
     attachments: [],
+  },
+  {
+    id: '4',
+    qualificationId: 'Q-2026-0045',
+    category: 'Spares',
+    title: 'Ariel Compressor & Heat Exchanger Spares Pending',
+    description: 'Critical spares for Ariel compressor and Heat Exchanger are yet to be delivered.',
+    severity: 'medium',
+    status: 'approved',
+    approvedBy: 'Dean Nye',
+    approverRole: 'Central MTCE Lead',
+    secondApprover: 'Lyle Koch',
+    secondApproverRole: 'CS Deputy Dir.',
+    approvedAt: '2026-01-30',
+    mitigationMeasures: 'Vendor emergency support agreement in place. Nearest available spares identified at sister facility for emergency transfer if required.',
+    expiryDate: '2026-11-30',
+    riskDescription: 'Extended downtime if critical failure occurs before spares delivery',
+    riskRating: 'Medium',
+    actionOwner: 'Alex Burulin',
+    actionOwnerRole: 'CMMS Lead',
+    attachments: [
+      { name: 'BOM_MinMax_Approval.pdf', type: 'PDF' },
+      { name: 'PO_904413676_Confirmation.pdf', type: 'PDF' },
+    ],
+    poNumber: 'P# 904413676',
+    poDeliveryDate: 'Nov 2026',
   },
 ];
 
@@ -175,18 +201,10 @@ export const SOFQualificationsPanel: React.FC<SOFQualificationsPanelProps> = ({ 
                     
                     {/* Approver and Valid Until info */}
                     <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-                      <span>Approved by <span className="text-foreground">{deviation.approvedBy}</span></span>
+                      <span>Approved by <span className="text-foreground">{deviation.approvedBy}</span>{deviation.approverRole && <span className="text-muted-foreground"> - {deviation.approverRole}</span>}</span>
                       <span>•</span>
                       <span>Valid until <span className="text-foreground">{formatDate(deviation.expiryDate)}</span></span>
                     </div>
-                    
-                    {/* Subtle punchlist reference for hardware items */}
-                    {deviation.punchlistRef && (
-                      <div className="flex items-center gap-1 mt-1.5 text-xs text-muted-foreground/70">
-                        <Hash className="h-3 w-3" />
-                        <span>Punchlist: {deviation.punchlistRef}</span>
-                      </div>
-                    )}
                 </div>
                   <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0 mt-1" />
                 </div>

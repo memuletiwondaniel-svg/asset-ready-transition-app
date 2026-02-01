@@ -20,6 +20,8 @@ export interface QualificationDetail {
   status: string;
   approvedBy: string;
   approverRole: string;
+  secondApprover?: string;
+  secondApproverRole?: string;
   approvedAt: string;
   mitigationMeasures: string;
   expiryDate: string;
@@ -29,6 +31,8 @@ export interface QualificationDetail {
   actionOwner: string;
   actionOwnerRole: string;
   attachments: { name: string; type: string }[];
+  poNumber?: string;
+  poDeliveryDate?: string;
 }
 
 interface SOFQualificationDetailDialogProps {
@@ -165,6 +169,13 @@ export const SOFQualificationDetailDialog: React.FC<SOFQualificationDetailDialog
               Mitigation Measures
             </p>
             <p className="text-sm">{qualification.mitigationMeasures}</p>
+            {qualification.poNumber && (
+              <div className="mt-3 pt-3 border-t border-border/50">
+                <p className="text-xs text-muted-foreground">
+                  Bill of Materials (BOM) and min-max has been approved. Purchase Order <span className="font-mono text-foreground">{qualification.poNumber}</span> has been issued with delivery date of <span className="text-foreground">{qualification.poDeliveryDate}</span>.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Action Owner */}
@@ -202,11 +213,17 @@ export const SOFQualificationDetailDialog: React.FC<SOFQualificationDetailDialog
           <Separator />
 
           {/* Approval Details */}
-          <div className="grid grid-cols-3 gap-4 text-sm">
+          <div className={qualification.secondApprover ? "grid grid-cols-2 gap-4 text-sm" : "grid grid-cols-3 gap-4 text-sm"}>
             <div>
               <p className="text-xs text-muted-foreground mb-1">Approved by</p>
               <p className="font-medium">{qualification.approvedBy}</p>
               <p className="text-xs text-muted-foreground">{qualification.approverRole}</p>
+              {qualification.secondApprover && (
+                <div className="mt-2 pt-2 border-t border-border/50">
+                  <p className="font-medium">{qualification.secondApprover}</p>
+                  <p className="text-xs text-muted-foreground">{qualification.secondApproverRole}</p>
+                </div>
+              )}
             </div>
             <div>
               <p className="text-xs text-muted-foreground mb-1">Approved on</p>
@@ -215,14 +232,25 @@ export const SOFQualificationDetailDialog: React.FC<SOFQualificationDetailDialog
                 <span>{formatDate(qualification.approvedAt)}</span>
               </div>
             </div>
-            <div>
+            {!qualification.secondApprover && (
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Valid until</p>
+                <div className="flex items-center gap-1.5">
+                  <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span>{formatDate(qualification.expiryDate)}</span>
+                </div>
+              </div>
+            )}
+          </div>
+          {qualification.secondApprover && (
+            <div className="text-sm">
               <p className="text-xs text-muted-foreground mb-1">Valid until</p>
               <div className="flex items-center gap-1.5">
                 <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
                 <span>{formatDate(qualification.expiryDate)}</span>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
