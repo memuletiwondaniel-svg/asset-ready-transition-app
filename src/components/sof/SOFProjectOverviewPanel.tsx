@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { StyledWidgetIcon } from '@/components/widgets/StyledWidgetIcon';
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
+import dp385PipelineImage from '@/assets/dp385-pipeline.jpeg';
 
 interface SOFProjectOverviewPanelProps {
   pssrId: string;
@@ -29,7 +30,7 @@ const dp385ProjectData = {
   plant: 'CS',
   station: 'West Qurna 1 (WQ1)',
   hub: 'South Hub - BGC Integration',
-  projectImage: 'https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=800&auto=format&fit=crop&q=60',
+  projectImage: dp385PipelineImage,
   teamMembers: [
     { name: 'Mousa Al-Tarazi', role: 'Project Hub Lead', isLead: true, avatarUrl: '0e5dfc5e-070d-49f5-87e1-dd410145decd/1764587235433.jpg' },
     { name: 'Azamat Kenzhin', role: 'Snr. ORA Engr.', isLead: false, avatarUrl: '8ce8256c-b708-4c32-878b-623a56d596ce/1768916655721.jpg' },
