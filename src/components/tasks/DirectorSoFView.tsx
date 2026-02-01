@@ -119,7 +119,9 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
         <div className="space-y-4">
         {pendingItems.map((item, index) => {
           const rawId = item.pssr?.pssr_id?.replace('PSSR-', '') || 'DP300';
-          const pssrId = rawId.includes('-') ? rawId : `DP-${rawId.replace('DP', '')}`;
+          // Format for display with hyphen, but use raw for color generation
+          const displayId = rawId.includes('-') ? rawId : `DP-${rawId.replace('DP', '')}`;
+          const colorId = rawId.replace(/-/g, ''); // Remove hyphens for consistent color
           const projectName = item.pssr?.project_name || 'HM Additional Compressors';
           
           return (
@@ -136,8 +138,8 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 mb-2">
-                      <ProjectIdBadge projectId={pssrId}>
-                        {pssrId}
+                      <ProjectIdBadge projectId={colorId}>
+                        {displayId}
                       </ProjectIdBadge>
                       <h3 className="font-semibold text-base truncate">
                         {projectName}
@@ -186,7 +188,8 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
               </div>
               {lockedItems.map((item) => {
                 const rawId = item.pssr?.pssr_id?.replace('PSSR-', '') || 'DP300';
-                const pssrId = rawId.includes('-') ? rawId : `DP-${rawId.replace('DP', '')}`;
+                const displayId = rawId.includes('-') ? rawId : `DP-${rawId.replace('DP', '')}`;
+                const colorId = rawId.replace(/-/g, '');
                 const projectName = item.pssr?.project_name || 'HM Additional Compressors';
                 
                 return (
@@ -198,8 +201,8 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-3 mb-2">
-                            <ProjectIdBadge projectId={pssrId}>
-                              {pssrId}
+                            <ProjectIdBadge projectId={colorId}>
+                              {displayId}
                             </ProjectIdBadge>
                             <h3 className="font-medium text-base truncate">
                               {projectName}
