@@ -34,23 +34,26 @@ interface SOFCertificateProps {
   status: string;
 }
 
-// SVG signature for Ali Danbous - a realistic handwritten style signature
+// SVG signature for Ali Danbous - professional cursive signature
 const AliSignatureSVG = () => (
-  <svg width="200" height="60" viewBox="0 0 200 60" className="max-h-14">
+  <svg width="180" height="50" viewBox="0 0 180 50" className="max-h-12">
+    {/* Main signature stroke - "A. Danbous" style */}
     <path
-      d="M10 45 Q20 20, 35 35 T55 30 Q60 28, 65 32 T80 28 M85 25 Q90 20, 95 28 T105 22 M110 35 L115 20 L120 35 M125 20 Q130 35, 140 25 T155 30 Q165 28, 175 35 T190 30"
+      d="M8 38 C12 15, 18 12, 22 18 C26 24, 20 35, 28 32 C36 29, 32 20, 38 22 L42 24 M46 18 C44 28, 52 32, 56 26 C60 20, 54 16, 50 22 C46 28, 54 34, 62 28 M68 32 C68 22, 72 18, 76 22 C80 26, 76 34, 72 36 M82 18 L82 34 M82 26 C86 22, 92 22, 92 28 C92 34, 86 36, 82 34 M98 18 C96 28, 100 34, 106 30 C112 26, 108 18, 102 20 M114 22 C110 26, 112 34, 118 32 C124 30, 126 24, 122 20 C118 16, 112 22, 116 28 M132 34 C128 30, 130 22, 136 20 C142 18, 146 24, 144 30 C142 36, 134 38, 130 34 M152 22 C148 26, 150 34, 156 32 C162 30, 164 24, 160 20 C156 16, 150 22, 154 28"
       fill="none"
-      stroke="#1a365d"
-      strokeWidth="2"
+      stroke="#1e3a5f"
+      strokeWidth="1.8"
       strokeLinecap="round"
       strokeLinejoin="round"
     />
+    {/* Underline flourish */}
     <path
-      d="M15 48 Q25 50, 45 48 T85 50"
+      d="M15 42 Q60 44, 100 41 T160 43"
       fill="none"
-      stroke="#1a365d"
-      strokeWidth="1.5"
+      stroke="#1e3a5f"
+      strokeWidth="1"
       strokeLinecap="round"
+      opacity="0.6"
     />
   </svg>
 );
@@ -60,7 +63,7 @@ const getMockApprovers = (): SOFApprover[] => [
   {
     id: 'approver-1',
     approver_name: 'Ali Danbous',
-    approver_role: 'Operations Director',
+    approver_role: 'HSSE Director',
     approver_level: 1,
     status: 'APPROVED',
     comments: 'All safety requirements have been verified. Ready for facility startup.',
@@ -79,8 +82,8 @@ const getMockApprovers = (): SOFApprover[] => [
   },
   {
     id: 'approver-3',
-    approver_name: 'Marije de Groot',
-    approver_role: 'HSSE Director',
+    approver_name: 'Marije Hoedemaker',
+    approver_role: 'P&E Director',
     approver_level: 3,
     status: 'LOCKED',
     comments: undefined,
