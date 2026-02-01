@@ -34,10 +34,28 @@ interface SOFCertificateProps {
   status: string;
 }
 
-// Mock signature data URL for Ali Danbous
-const ALI_SIGNATURE = "data:image/png;base64,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";
+// SVG signature for Ali Danbous - a realistic handwritten style signature
+const AliSignatureSVG = () => (
+  <svg width="200" height="60" viewBox="0 0 200 60" className="max-h-14">
+    <path
+      d="M10 45 Q20 20, 35 35 T55 30 Q60 28, 65 32 T80 28 M85 25 Q90 20, 95 28 T105 22 M110 35 L115 20 L120 35 M125 20 Q130 35, 140 25 T155 30 Q165 28, 175 35 T190 30"
+      fill="none"
+      stroke="#1a365d"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M15 48 Q25 50, 45 48 T85 50"
+      fill="none"
+      stroke="#1a365d"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+    />
+  </svg>
+);
 
-// Mock approvers with Ali Danbous already signed
+// Mock approvers with Ali Danbous already signed, Paul pending, Marije locked
 const getMockApprovers = (): SOFApprover[] => [
   {
     id: 'approver-1',
@@ -47,7 +65,7 @@ const getMockApprovers = (): SOFApprover[] => [
     status: 'APPROVED',
     comments: 'All safety requirements have been verified. Ready for facility startup.',
     approved_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
-    signature_data: ALI_SIGNATURE,
+    signature_data: 'SVG', // Special marker to use SVG signature
   },
   {
     id: 'approver-2',
@@ -55,6 +73,16 @@ const getMockApprovers = (): SOFApprover[] => [
     approver_role: 'P&M Director',
     approver_level: 2,
     status: 'PENDING',
+    comments: undefined,
+    approved_at: undefined,
+    signature_data: undefined,
+  },
+  {
+    id: 'approver-3',
+    approver_name: 'Marije de Groot',
+    approver_role: 'HSSE Director',
+    approver_level: 3,
+    status: 'LOCKED',
     comments: undefined,
     approved_at: undefined,
     signature_data: undefined,
@@ -268,8 +296,13 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
                   onClick={isClickable ? handleSignClick : undefined}
                 >
                   {/* Signature Area */}
-                  <div className="h-20 border-b border-gray-300 mb-3 flex items-center justify-center">
-                    {approver.signature_data ? (
+                  <div className={cn(
+                    "h-20 border-b border-gray-300 mb-3 flex items-center justify-center",
+                    approver.status === 'LOCKED' && "opacity-40"
+                  )}>
+                    {approver.signature_data === 'SVG' ? (
+                      <AliSignatureSVG />
+                    ) : approver.signature_data ? (
                       <img 
                         src={approver.signature_data} 
                         alt={`${approver.approver_name}'s signature`}
@@ -288,7 +321,10 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
                   </div>
                   
                   {/* Approver Details */}
-                  <div className="text-center">
+                  <div className={cn(
+                    "text-center",
+                    approver.status === 'LOCKED' && "opacity-50"
+                  )}>
                     <p className="font-semibold text-gray-800">{approver.approver_name}</p>
                     <p className="text-sm text-gray-600">{approver.approver_role}</p>
                     {approver.approved_at && (
