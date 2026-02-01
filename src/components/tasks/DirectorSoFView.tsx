@@ -118,10 +118,13 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
         {/* Pending SoF Items */}
         <div className="space-y-4">
         {pendingItems.map((item, index) => {
-          const rawId = item.pssr?.pssr_id?.replace('PSSR-', '') || 'DP300';
-          // Format for display with hyphen, but use raw for color generation
-          const displayId = rawId.includes('-') ? rawId : `DP-${rawId.replace('DP', '')}`;
-          const colorId = rawId.replace(/-/g, ''); // Remove hyphens for consistent color
+          // Extract project code from PSSR ID (e.g., "PSSR-DP300-001" -> "DP300")
+          const pssrIdParts = item.pssr?.pssr_id?.replace('PSSR-', '').split('-') || ['DP300'];
+          const projectCode = pssrIdParts[0] || 'DP300'; // First part is the project code
+          // Display with hyphen for readability (DP-300), use raw for color (DP300)
+          const displayId = projectCode.match(/^([A-Z]+)(\d+)$/) 
+            ? `${projectCode.match(/^([A-Z]+)(\d+)$/)?.[1]}-${projectCode.match(/^([A-Z]+)(\d+)$/)?.[2]}`
+            : projectCode;
           const projectName = item.pssr?.project_name || 'HM Additional Compressors';
           
           return (
@@ -138,7 +141,7 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 mb-2">
-                      <ProjectIdBadge projectId={colorId}>
+                      <ProjectIdBadge projectId={projectCode}>
                         {displayId}
                       </ProjectIdBadge>
                       <h3 className="font-semibold text-base truncate">
@@ -187,9 +190,12 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                 </p>
               </div>
               {lockedItems.map((item) => {
-                const rawId = item.pssr?.pssr_id?.replace('PSSR-', '') || 'DP300';
-                const displayId = rawId.includes('-') ? rawId : `DP-${rawId.replace('DP', '')}`;
-                const colorId = rawId.replace(/-/g, '');
+                // Extract project code from PSSR ID (e.g., "PSSR-DP300-001" -> "DP300")
+                const pssrIdParts = item.pssr?.pssr_id?.replace('PSSR-', '').split('-') || ['DP300'];
+                const projectCode = pssrIdParts[0] || 'DP300';
+                const displayId = projectCode.match(/^([A-Z]+)(\d+)$/) 
+                  ? `${projectCode.match(/^([A-Z]+)(\d+)$/)?.[1]}-${projectCode.match(/^([A-Z]+)(\d+)$/)?.[2]}`
+                  : projectCode;
                 const projectName = item.pssr?.project_name || 'HM Additional Compressors';
                 
                 return (
@@ -201,7 +207,7 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-3 mb-2">
-                            <ProjectIdBadge projectId={colorId}>
+                            <ProjectIdBadge projectId={projectCode}>
                               {displayId}
                             </ProjectIdBadge>
                             <h3 className="font-medium text-base truncate">
