@@ -1,8 +1,8 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Printer, CheckCircle2, Clock, Lock, PenLine } from 'lucide-react';
+import { Printer, CheckCircle2, Clock, Lock, PenLine, Edit2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { getCertificateText } from '@/hooks/useSOFCertificates';
 import { SOFSignatureDialog } from './SOFSignatureDialog';
@@ -11,6 +11,17 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { SignatureCanvas } from './SignatureCanvas';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+
+// Local storage key for Ali's signature
+const ALI_SIGNATURE_KEY = 'ali-danbous-signature';
 
 interface SOFApprover {
   id: string;
@@ -34,30 +45,8 @@ interface SOFCertificateProps {
   status: string;
 }
 
-// SVG signature for Ali Danbous - bold angular style like Trump's signature
-const AliSignatureSVG = () => (
-  <svg width="150" height="40" viewBox="0 0 150 40" className="max-h-10">
-    {/* Bold angular signature - sharp peaks and valleys */}
-    <path
-      d="M5 30 L12 8 L19 30 M9 22 L15 22
-       M25 30 L25 12 L32 30 L32 12
-       M40 8 L40 30 M40 20 L52 20 M52 8 L52 30
-       M60 30 L60 8 L72 8 L72 14 L64 14 L64 22 L70 22 L70 30 L60 30
-       M80 8 L80 30 L92 30 L92 24 L84 24
-       M100 8 L100 30 M100 8 L112 8
-       M118 30 C118 20, 118 12, 126 8 C134 4, 140 12, 138 22 C136 32, 126 34, 118 30
-       M145 8 L145 30"
-      fill="none"
-      stroke="#1a3a5c"
-      strokeWidth="2.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
-
 // Mock approvers with Ali Danbous already signed, Paul pending, Marije locked
-const getMockApprovers = (): SOFApprover[] => [
+const getMockApprovers = (aliSignature?: string | null): SOFApprover[] => [
   {
     id: 'approver-1',
     approver_name: 'Ali Danbous',
@@ -66,7 +55,7 @@ const getMockApprovers = (): SOFApprover[] => [
     status: 'APPROVED',
     comments: 'All safety requirements have been verified. Ready for facility startup.',
     approved_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
-    signature_data: 'SVG', // Special marker to use SVG signature
+    signature_data: aliSignature || undefined,
   },
   {
     id: 'approver-2',
@@ -102,10 +91,43 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
 }) => {
   const certificateRef = useRef<HTMLDivElement>(null);
   const [signatureDialogOpen, setSignatureDialogOpen] = useState(false);
-  const [localApprovers, setLocalApprovers] = useState<SOFApprover[]>(() => {
-    // Use mock approvers with Ali already signed
-    return getMockApprovers();
+  const [aliSignatureDialogOpen, setAliSignatureDialogOpen] = useState(false);
+  const [aliSignature, setAliSignature] = useState<string | null>(() => {
+    // Load from localStorage
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem(ALI_SIGNATURE_KEY);
+    }
+    return null;
   });
+  const [tempAliSignature, setTempAliSignature] = useState<string | null>(null);
+  
+  const [localApprovers, setLocalApprovers] = useState<SOFApprover[]>(() => {
+    const saved = typeof window !== 'undefined' ? localStorage.getItem(ALI_SIGNATURE_KEY) : null;
+    return getMockApprovers(saved);
+  });
+
+  // Update approvers when Ali's signature changes
+  useEffect(() => {
+    setLocalApprovers(prev => prev.map(approver => {
+      if (approver.approver_name === 'Ali Danbous') {
+        return { ...approver, signature_data: aliSignature || undefined };
+      }
+      return approver;
+    }));
+  }, [aliSignature]);
+
+  const handleSaveAliSignature = () => {
+    if (tempAliSignature) {
+      localStorage.setItem(ALI_SIGNATURE_KEY, tempAliSignature);
+      setAliSignature(tempAliSignature);
+      setAliSignatureDialogOpen(false);
+      setTempAliSignature(null);
+      toast({
+        title: 'Signature Updated',
+        description: "Ali Danbous's signature has been updated.",
+      });
+    }
+  };
   
   // Override props with mock data for display
   const plantName = 'CS';
@@ -299,17 +321,41 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
                 >
                   {/* Signature Area */}
                   <div className={cn(
-                    "h-20 border-b border-gray-300 mb-3 flex items-center justify-center",
+                    "h-20 border-b border-gray-300 mb-3 flex items-center justify-center relative group",
                     approver.status === 'LOCKED' && "opacity-40"
                   )}>
-                    {approver.signature_data === 'SVG' ? (
-                      <AliSignatureSVG />
-                    ) : approver.signature_data ? (
-                      <img 
-                        src={approver.signature_data} 
-                        alt={`${approver.approver_name}'s signature`}
-                        className="max-h-16 max-w-full object-contain"
-                      />
+                    {approver.signature_data ? (
+                      <>
+                        <img 
+                          src={approver.signature_data} 
+                          alt={`${approver.approver_name}'s signature`}
+                          className="max-h-16 max-w-full object-contain"
+                        />
+                        {/* Edit button for Ali */}
+                        {approver.approver_name === 'Ali Danbous' && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setAliSignatureDialogOpen(true);
+                            }}
+                            className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded bg-white/80 hover:bg-white shadow-sm"
+                            title="Edit signature"
+                          >
+                            <Edit2 className="h-3 w-3 text-gray-600" />
+                          </button>
+                        )}
+                      </>
+                    ) : approver.approver_name === 'Ali Danbous' ? (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setAliSignatureDialogOpen(true);
+                        }}
+                        className="flex flex-col items-center gap-1 text-primary hover:text-primary/80 transition-colors"
+                      >
+                        <PenLine className="h-5 w-5" />
+                        <span className="text-xs font-medium">Draw signature</span>
+                      </button>
                     ) : isClickable ? (
                       <div className="flex flex-col items-center gap-1 text-primary animate-pulse">
                         <PenLine className="h-6 w-6" />
@@ -356,7 +402,7 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
         </div>
       </Card>
 
-      {/* Signature Dialog */}
+      {/* Signature Dialog for Paul */}
       {currentUserApprover && (
         <SOFSignatureDialog
           open={signatureDialogOpen}
@@ -368,6 +414,37 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
           onSaveSignature={handleSaveSignature}
         />
       )}
+
+      {/* Ali's Signature Drawing Dialog */}
+      <Dialog open={aliSignatureDialogOpen} onOpenChange={(open) => {
+        setAliSignatureDialogOpen(open);
+        if (!open) setTempAliSignature(null);
+      }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Draw Ali Danbous's Signature</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <SignatureCanvas
+              onSignatureChange={setTempAliSignature}
+              showSavedOption={false}
+              width={380}
+              height={120}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setAliSignatureDialogOpen(false);
+              setTempAliSignature(null);
+            }}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveAliSignature} disabled={!tempAliSignature}>
+              Save Signature
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Print Styles */}
       <style>{`
