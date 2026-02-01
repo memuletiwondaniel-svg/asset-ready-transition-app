@@ -420,24 +420,17 @@ export const SOFProjectOverviewPanel: React.FC<SOFProjectOverviewPanelProps> = (
                       <div className="flex items-center gap-3">
                         <MiniCircularProgress percentage={item.progress} size={36} />
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-0.5">
-                            <Badge 
-                              variant="outline" 
-                              className={cn(
-                                "text-[10px] px-1.5 py-0 font-medium",
-                                item.type === 'vcr' 
-                                  ? "bg-blue-500/10 border-blue-500/30 text-blue-700 dark:text-blue-400" 
-                                  : "bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-400"
-                              )}
-                            >
-                              {item.id}
-                            </Badge>
-                            <div className={cn(
-                              "w-1.5 h-1.5 rounded-full flex-shrink-0",
-                              item.status === 'completed' ? "bg-emerald-500" :
-                              item.status === 'in_progress' ? "bg-blue-500" : "bg-muted-foreground/40"
-                            )} />
-                          </div>
+                          <Badge 
+                            variant="outline" 
+                            className={cn(
+                              "text-[10px] px-1.5 py-0 font-medium mb-0.5",
+                              item.type === 'vcr' 
+                                ? "bg-blue-500/10 border-blue-500/30 text-blue-700 dark:text-blue-400" 
+                                : "bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-400"
+                            )}
+                          >
+                            {item.id}
+                          </Badge>
                           <p className="text-xs font-medium truncate">{item.name}</p>
                         </div>
                       </div>
