@@ -328,8 +328,7 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
                       <img 
                         src={approver.signature_data} 
                         alt={`${approver.approver_name}'s signature`}
-                        className="max-h-16 max-w-full object-contain"
-                        style={{ background: 'transparent' }}
+                        className="max-h-16 max-w-full object-contain mix-blend-multiply"
                       />
                     ) : isClickable ? (
                       <div className="flex flex-col items-center gap-1 text-primary animate-pulse">
