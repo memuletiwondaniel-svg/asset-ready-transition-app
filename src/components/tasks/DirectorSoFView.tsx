@@ -133,7 +133,7 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
               onClick={() => handleViewSoF(item.pssr_id)}
             >
               <CardContent className="p-5">
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex items-center justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 mb-2">
                       <ProjectIdBadge projectId={pssrId}>
