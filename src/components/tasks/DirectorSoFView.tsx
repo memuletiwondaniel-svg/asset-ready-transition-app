@@ -450,22 +450,35 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                     )}
                   </p>
                   {recentActivity.type === 'rejected' && recentActivity.description && (
-                    <div className="mt-0.5 max-w-[90%]">
-                      <p className={cn(
-                        "text-xs text-muted-foreground/70",
-                        !isDescriptionExpanded && "line-clamp-1"
-                      )}>
-                        {recentActivity.description}
-                      </p>
-                      {recentActivity.description.length > 50 && (
+                    <div className="mt-0.5">
+                      <div className="flex items-baseline gap-1">
+                        <p className={cn(
+                          "text-xs text-muted-foreground/70 flex-1 min-w-0",
+                          !isDescriptionExpanded && "truncate"
+                        )}>
+                          {recentActivity.description}
+                        </p>
+                        {recentActivity.description.length > 30 && !isDescriptionExpanded && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setIsDescriptionExpanded(true);
+                            }}
+                            className="text-xs text-primary/70 hover:underline shrink-0"
+                          >
+                            more
+                          </button>
+                        )}
+                      </div>
+                      {isDescriptionExpanded && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            setIsDescriptionExpanded(!isDescriptionExpanded);
+                            setIsDescriptionExpanded(false);
                           }}
                           className="text-xs text-primary/70 hover:underline mt-0.5"
                         >
-                          {isDescriptionExpanded ? 'less' : 'more'}
+                          less
                         </button>
                       )}
                     </div>
