@@ -431,22 +431,20 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-foreground flex items-center gap-1.5 flex-wrap">
+                  <p className="text-foreground">
                     {recentActivity.type === 'approved' ? (
                       <>
-                        Signed SoF for{' '}
-                        <ProjectIdBadge projectId="DP300" className="text-[10px] px-1.5 py-0">DP-300</ProjectIdBadge>
+                        Signed SoF for <span className="font-mono text-muted-foreground">DP-300:</span>{' '}
                         <span className="font-medium">{recentActivity.projectName || 'HM Additional Compressors'}</span>
                       </>
                     ) : (
                       <>
-                        Rejected SoF for{' '}
-                        <ProjectIdBadge projectId="DP300" className="text-[10px] px-1.5 py-0">DP-300</ProjectIdBadge>
+                        Rejected SoF for <span className="font-mono text-muted-foreground">DP-300:</span>{' '}
                         <span className="font-medium">{recentActivity.projectName || 'HM Additional Compressors'}</span>
                         <Badge 
                           variant="outline" 
                           className={cn(
-                            "ml-1 text-xs",
+                            "ml-2 text-xs",
                             recentActivity.priorityLevel === 'Pr1' 
                               ? "border-red-300 text-red-700" 
                               : "border-amber-300 text-amber-700"
@@ -458,14 +456,14 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                     )}
                   </p>
                   {recentActivity.type === 'rejected' && recentActivity.description && (
-                    <div className="mt-0.5">
+                    <div className="mt-1 max-w-[90%]">
                       <p className={cn(
                         "text-xs text-muted-foreground",
                         !isDescriptionExpanded && "line-clamp-1"
                       )}>
                         {recentActivity.description}
                       </p>
-                      {recentActivity.description.length > 60 && (
+                      {recentActivity.description.length > 50 && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -492,9 +490,8 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                 <FileCheck className="h-4 w-4 text-green-600" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-foreground flex items-center gap-1.5 flex-wrap">
-                  Signed SoF for{' '}
-                  <ProjectIdBadge projectId="DP280" className="text-[10px] px-1.5 py-0">DP-280</ProjectIdBadge>
+                <p className="text-foreground">
+                  Signed SoF for <span className="font-mono text-muted-foreground">DP-280:</span>{' '}
                   <span className="font-medium">CS6 Produced Water</span>
                 </p>
                 <p className="text-xs text-muted-foreground">
@@ -507,9 +504,8 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                 <FileCheck className="h-4 w-4 text-green-600" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-foreground flex items-center gap-1.5 flex-wrap">
-                  Signed SoF for{' '}
-                  <ProjectIdBadge projectId="DP255" className="text-[10px] px-1.5 py-0">DP-255</ProjectIdBadge>
+                <p className="text-foreground">
+                  Signed SoF for <span className="font-mono text-muted-foreground">DP-255:</span>{' '}
                   <span className="font-medium">MJ North Manifold</span>
                 </p>
                 <p className="text-xs text-muted-foreground">
@@ -522,9 +518,8 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                 <FileText className="h-4 w-4 text-blue-600" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-foreground flex items-center gap-1.5 flex-wrap">
-                  Reviewed VCR for{' '}
-                  <ProjectIdBadge projectId="DP230" className="text-[10px] px-1.5 py-0">DP-230</ProjectIdBadge>
+                <p className="text-foreground">
+                  Reviewed VCR for <span className="font-mono text-muted-foreground">DP-230:</span>{' '}
                   <span className="font-medium">RM Degassing Station</span>
                 </p>
                 <p className="text-xs text-muted-foreground">
