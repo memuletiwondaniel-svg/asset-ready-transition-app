@@ -15,7 +15,8 @@ interface SOFProjectOverviewPanelProps {
 
 // DP385-specific mock data
 const dp385ProjectData = {
-  title: 'DP-385',
+  projectId: 'DP-385',
+  title: 'OT2/3 Gas Feed to CS6/7',
   scope: 'BGC Gas Tie-in to CS6/7 Compressor Stations. This project involves the integration of new gas feed lines from Basra Gas Company (BGC) facilities into the existing CS6 and CS7 compressor stations at West Qurna 1 Field of Development.',
   plant: 'CS',
   station: 'West Qurna 1 (WQ1)',
@@ -43,7 +44,8 @@ const dp385ProjectData = {
 };
 
 const defaultProjectData = {
-  title: 'DP-300',
+  projectId: 'DP-300',
+  title: 'Degassing Station Expansion',
   scope: 'Degassing Station 300 Expansion Project. Installation of new gas processing equipment and associated infrastructure upgrades.',
   plant: 'CS',
   station: 'Rumaila',
@@ -98,7 +100,7 @@ export const SOFProjectOverviewPanel: React.FC<SOFProjectOverviewPanelProps> = (
     <div className="h-full flex flex-col">
       {/* Dashboard Header */}
       <div className="mb-4 flex-shrink-0">
-        <h2 className="text-xl font-bold text-foreground">{projectData.title}</h2>
+        <h2 className="text-xl font-bold text-foreground">{projectData.projectId}: {projectData.title}</h2>
         <p className="text-sm text-muted-foreground">Project Dashboard</p>
       </div>
 
