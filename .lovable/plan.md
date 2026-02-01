@@ -1,50 +1,143 @@
 
-# Fix Wasted Space Below Unassigned VCRs Section
+# Plan: Enhance PSSR Review Cards Visual Distinction
 
-## Problem Analysis
+## Overview
+The current PSSR review cards in the My Tasks dashboard lack visual differentiation, making it difficult to quickly scan and prioritize reviews. This plan introduces a multi-layered visual system that provides instant recognition of key attributes while maintaining a clean, professional appearance.
 
-The "Unassigned VCRs" section is positioned correctly at the bottom of the flex container, but there's visible empty space below it. This happens because:
+## Current Issues
+- All cards share identical `bg-background/50` styling
+- Only differentiation is the "days pending" badge color
+- No visual indication of asset/plant location
+- Item count lacks emphasis for high-volume reviews
+- Approver role has no visual distinction
 
-1. The parent containers use `flex-1` to fill available height
-2. The `PhasesTimeline` component's flex layout doesn't fully stretch to consume all available space
-3. The ScrollArea in the middle may not be properly expanding to push the unassigned section to the absolute bottom
+---
 
-## Solution
+## Visual Enhancement Strategy
 
-Ensure the unassigned VCRs section is pinned to the very bottom of the viewport by making the flex container fill 100% of available height and positioning the unassigned section at the absolute bottom using `mt-auto`.
+### 1. Asset/Plant Color-Coded Left Border
+Add a colored left border based on the asset location to instantly identify which plant/facility the PSSR belongs to:
 
-## Technical Changes
+| Asset | Color | Tailwind Classes |
+|-------|-------|------------------|
+| Hammar Mishrif (HM) | Cyan | `border-l-cyan-500` |
+| Majnoon | Purple | `border-l-purple-500` |
+| Rumaila | Blue | `border-l-blue-500` |
+| CS3/4 | Teal | `border-l-teal-500` |
+| CS6/7 | Indigo | `border-l-indigo-500` |
+| NRNGL | Pink | `border-l-pink-500` |
+| Default | Slate | `border-l-slate-400` |
 
-### 1. Update `PhasesTimeline.tsx`
+### 2. Urgency-Based Background Tinting
+Apply subtle background tints based on how long the item has been pending:
 
-**Change the wrapper for the Unassigned VCRs section:**
-- Add `mt-auto` to the unassigned section wrapper to push it to the very bottom of the flex container
-- This ensures any extra space appears above the phases (within the scrollable area) rather than below the unassigned section
+| Days Pending | Visual Treatment |
+|--------------|------------------|
+| 7+ days (Overdue) | `bg-destructive/5` with subtle red glow |
+| 3-6 days (Approaching) | `bg-amber-500/5` |
+| 0-2 days (Fresh) | Default `bg-background/50` |
 
-```tsx
-// Line 267: Update the unassigned VCRs wrapper
-<div className="flex-shrink-0 px-4 py-2 border-t border-border mt-auto">
-```
+### 3. Item Count Emphasis Badge
+Transform the item count display into a visually prominent badge for high-volume reviews:
 
-### 2. Ensure proper height inheritance
+| Item Count | Treatment |
+|------------|-----------|
+| 10+ items | Bold badge with `bg-primary/10 text-primary` |
+| 5-9 items | Subtle emphasis badge |
+| 1-4 items | Standard text display |
 
-The main container already uses `flex-1 flex flex-col overflow-hidden` which should fill the parent. The `mt-auto` on the bottom section will push it to the absolute bottom edge.
+### 4. Approver Role Icon System
+Add small icons before the approver role text for quick visual scanning:
 
-## Visual Result
+| Role Contains | Icon |
+|---------------|------|
+| "Director" | Shield icon |
+| "Technical Authority" / "TA" | Wrench icon |
+| "HSE" | AlertTriangle icon |
+| "Operations" | Settings icon |
+| Default | User icon |
+
+### 5. Asset Badge Component
+Add a small colored asset badge next to the project name for additional context:
 
 ```text
-┌─────────────────────────────────┐
-│  Milestones Header              │
-├─────────────────────────────────┤
-│                                 │
-│  ScrollArea (phases)            │
-│  - Expands to fill space        │
-│                                 │
-├─────────────────────────────────┤
-│  Unassigned VCRs (mt-auto)      │  ← Pinned to bottom
-└─────────────────────────────────┘
-                                    ← No wasted space
+PSSR-DP300-001                    [NEW]
+HM Additional Compressors  [HM]
+12 items • P&M Director SoF
 ```
 
-## Files to Modify
-- `src/components/p2a-workspace/phases/PhasesTimeline.tsx` (1 line change)
+---
+
+## Technical Implementation
+
+### Files to Create
+1. **`src/utils/assetColors.ts`** - Asset color mapping utility with functions:
+   - `getAssetColor(asset: string)` - Returns border and background classes
+   - `getAssetAbbreviation(asset: string)` - Returns short code (HM, MJ, RM, etc.)
+
+### Files to Modify
+1. **`src/components/tasks/PSSRReviewsPanel.tsx`**
+   - Import new asset color utility
+   - Add urgency background logic based on `daysPending`
+   - Add asset color border styling
+   - Enhance item count display with conditional badge
+   - Add role icon mapping
+   - Add asset abbreviation badge
+
+2. **`src/hooks/useMyTasksMockData.ts`**
+   - Ensure mock data includes varied assets for testing the color system
+
+---
+
+## Visual Mockup (Before/After)
+
+```text
+BEFORE:
+┌─────────────────────────────────────────┐
+│ PSSR-DP300-001                  [2d ago]│
+│ HM Additional Compressors               │
+│ 12 items • P&M Director SoF    [Review] │
+└─────────────────────────────────────────┘
+
+AFTER:
+┌─────────────────────────────────────────┐
+│▌PSSR-DP300-001             [NEW][2d ago]│
+│▌HM Additional Compressors      [HM]     │
+│▌🔧 12 items • 🛡️ P&M Director   [Review] │
+└─────────────────────────────────────────┘
+ ↑ Cyan border indicates Hammar Mishrif asset
+```
+
+```text
+OVERDUE EXAMPLE (8+ days):
+┌─────────────────────────────────────────┐
+│▌PSSR-DP290-001               [8d ago] ⚠ │  ← Red background tint
+│▌Rumaila Flare Gas Recovery      [RM]    │
+│▌⚡ 15 items • 🛡️ P&M Director   [Review] │  ← High item count emphasis
+└─────────────────────────────────────────┘
+ ↑ Blue border indicates Rumaila asset
+```
+
+---
+
+## Implementation Steps
+
+1. Create `src/utils/assetColors.ts` with color mapping
+2. Update `PSSRReviewsPanel.tsx`:
+   - Import utilities and icons
+   - Add `getUrgencyBackground()` helper function
+   - Add `getRoleIcon()` helper function  
+   - Modify card container classes for asset border + urgency background
+   - Add asset abbreviation badge component
+   - Enhance item count with conditional styling
+3. Verify mock data has diverse assets
+4. Test across light/dark modes
+
+---
+
+## Accessibility Considerations
+- Color is never the sole indicator; icons and text provide redundant information
+- Contrast ratios maintained for all color combinations
+- Border widths (3px) are visible to color-blind users
+- Badge text provides explicit context
+
