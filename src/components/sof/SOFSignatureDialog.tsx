@@ -238,7 +238,7 @@ export const SOFSignatureDialog: React.FC<SOFSignatureDialogProps> = ({
                 onClick={handleSubmitSignature} 
                 disabled={!canSubmit || isLoading}
               >
-                {isLoading ? 'Submitting...' : 'Submit Signature'}
+                {isLoading ? 'Submitting...' : 'Submit'}
               </Button>
             </DialogFooter>
           </>
