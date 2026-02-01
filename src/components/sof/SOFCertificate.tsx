@@ -24,6 +24,8 @@ import {
 
 // Local storage key for Ali's signature
 const ALI_SIGNATURE_KEY = 'ali-danbous-signature';
+const PAUL_SIGNATURE_KEY = 'paul-vandenhemel-signature';
+const MARIJE_SIGNATURE_KEY = 'marije-hoedemaker-signature';
 
 interface SOFApprover {
   id: string;
@@ -55,6 +57,7 @@ interface SOFCertificateProps {
   onSignComplete?: () => void;
   onRejectComplete?: () => void;
   isViewOnly?: boolean;
+  pssrId?: string;
 }
 
 // Mock approvers with Ali Danbous already signed, Paul pending, Marije locked
@@ -103,6 +106,7 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
   onSignComplete,
   onRejectComplete,
   isViewOnly = false,
+  pssrId,
 }) => {
   const certificateRef = useRef<HTMLDivElement>(null);
   const [signatureDialogOpen, setSignatureDialogOpen] = useState(false);
@@ -110,14 +114,33 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
   const [pr1DetailsOpen, setPr1DetailsOpen] = useState(false);
   const [selectedRejection, setSelectedRejection] = useState<SOFApprover | null>(null);
   const [aliSignatureDialogOpen, setAliSignatureDialogOpen] = useState(false);
+  const [paulSignatureDialogOpen, setPaulSignatureDialogOpen] = useState(false);
+  const [marijeSignatureDialogOpen, setMarijeSignatureDialogOpen] = useState(false);
+  
+  // Check if this is DP-385 for manual signature mode
+  const isDP385 = pssrId === 'mock-pssr-dp385';
+  
   const [aliSignature, setAliSignature] = useState<string | null>(() => {
-    // Load from localStorage
     if (typeof window !== 'undefined') {
       return localStorage.getItem(ALI_SIGNATURE_KEY);
     }
     return null;
   });
+  const [paulSignature, setPaulSignature] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem(PAUL_SIGNATURE_KEY);
+    }
+    return null;
+  });
+  const [marijeSignature, setMarijeSignature] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem(MARIJE_SIGNATURE_KEY);
+    }
+    return null;
+  });
   const [tempAliSignature, setTempAliSignature] = useState<string | null>(null);
+  const [tempPaulSignature, setTempPaulSignature] = useState<string | null>(null);
+  const [tempMarijeSignature, setTempMarijeSignature] = useState<string | null>(null);
   
   const [localApprovers, setLocalApprovers] = useState<SOFApprover[]>(() => {
     // In view-only mode, use the passed approvers directly (they contain the actual state)
@@ -125,19 +148,35 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
       return propApprovers;
     }
     // Otherwise use mock data
-    const saved = typeof window !== 'undefined' ? localStorage.getItem(ALI_SIGNATURE_KEY) : null;
-    return getMockApprovers(saved);
+    const savedAli = typeof window !== 'undefined' ? localStorage.getItem(ALI_SIGNATURE_KEY) : null;
+    const savedPaul = typeof window !== 'undefined' ? localStorage.getItem(PAUL_SIGNATURE_KEY) : null;
+    const savedMarije = typeof window !== 'undefined' ? localStorage.getItem(MARIJE_SIGNATURE_KEY) : null;
+    return getMockApprovers(savedAli).map(approver => {
+      if (approver.approver_name === 'Paul Van Den Hemel' && savedPaul) {
+        return { ...approver, status: 'APPROVED', signature_data: savedPaul, approved_at: new Date().toISOString() };
+      }
+      if (approver.approver_name === 'Marije Hoedemaker' && savedMarije) {
+        return { ...approver, status: 'APPROVED', signature_data: savedMarije, approved_at: new Date().toISOString() };
+      }
+      return approver;
+    });
   });
 
-  // Update approvers when Ali's signature changes
+  // Update approvers when signatures change
   useEffect(() => {
     setLocalApprovers(prev => prev.map(approver => {
       if (approver.approver_name === 'Ali Danbous') {
         return { ...approver, signature_data: aliSignature || undefined };
       }
+      if (approver.approver_name === 'Paul Van Den Hemel' && paulSignature) {
+        return { ...approver, status: 'APPROVED', signature_data: paulSignature, approved_at: approver.approved_at || new Date().toISOString() };
+      }
+      if (approver.approver_name === 'Marije Hoedemaker' && marijeSignature) {
+        return { ...approver, status: marijeSignature ? 'APPROVED' : approver.status, signature_data: marijeSignature || undefined, approved_at: approver.approved_at || new Date().toISOString() };
+      }
       return approver;
     }));
-  }, [aliSignature]);
+  }, [aliSignature, paulSignature, marijeSignature]);
 
   const handleSaveAliSignature = () => {
     if (tempAliSignature) {
@@ -148,6 +187,39 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
       toast({
         title: 'Signature Updated',
         description: "Ali Danbous's signature has been updated.",
+      });
+    }
+  };
+
+  const handleSavePaulSignature = () => {
+    if (tempPaulSignature) {
+      localStorage.setItem(PAUL_SIGNATURE_KEY, tempPaulSignature);
+      setPaulSignature(tempPaulSignature);
+      setPaulSignatureDialogOpen(false);
+      setTempPaulSignature(null);
+      // Also unlock Marije when Paul signs
+      setLocalApprovers(prev => prev.map(approver => {
+        if (approver.approver_name === 'Marije Hoedemaker' && approver.status === 'LOCKED') {
+          return { ...approver, status: 'PENDING' };
+        }
+        return approver;
+      }));
+      toast({
+        title: 'Signature Updated',
+        description: "Paul Van Den Hemel's signature has been updated.",
+      });
+    }
+  };
+
+  const handleSaveMarijeSignature = () => {
+    if (tempMarijeSignature) {
+      localStorage.setItem(MARIJE_SIGNATURE_KEY, tempMarijeSignature);
+      setMarijeSignature(tempMarijeSignature);
+      setMarijeSignatureDialogOpen(false);
+      setTempMarijeSignature(null);
+      toast({
+        title: 'Signature Updated',
+        description: "Marije Hoedemaker's signature has been updated.",
       });
     }
   };
@@ -392,9 +464,25 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {localApprovers.sort((a, b) => a.approver_level - b.approver_level).map((approver) => {
               const isPaul = approver.approver_name === 'Paul Van Den Hemel';
+              const isMarije = approver.approver_name === 'Marije Hoedemaker';
               const isPending = approver.status === 'PENDING';
-              const isClickable = isPaul && isPending;
+              const isLocked = approver.status === 'LOCKED';
               const isRejected = approver.status === 'REJECTED_PR1';
+              
+              // For DP-385, allow manual signature entry for Paul and Marije
+              const canManualSign = isDP385 && (isPaul || isMarije) && !approver.signature_data;
+              // For non-DP-385, Paul can sign when pending
+              const isClickable = (!isDP385 && isPaul && isPending) || canManualSign;
+              
+              const handleCardClick = () => {
+                if (canManualSign && isPaul) {
+                  setPaulSignatureDialogOpen(true);
+                } else if (canManualSign && isMarije) {
+                  setMarijeSignatureDialogOpen(true);
+                } else if (!isDP385 && isPaul && isPending) {
+                  handleSignClick();
+                }
+              };
               
               return (
                 <div 
@@ -410,7 +498,7 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
                       : 'border-yellow-300 bg-yellow-50',
                     isClickable && 'ring-2 ring-primary ring-offset-2 cursor-pointer hover:shadow-lg opacity-100'
                   )}
-                  onClick={isClickable ? handleSignClick : undefined}
+                  onClick={isClickable ? handleCardClick : undefined}
                 >
                   {/* Signature Area */}
                   <div className={cn(
@@ -552,6 +640,68 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
               Cancel
             </Button>
             <Button onClick={handleSaveAliSignature} disabled={!tempAliSignature}>
+              Save Signature
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Paul's Signature Drawing Dialog (DP-385) */}
+      <Dialog open={paulSignatureDialogOpen} onOpenChange={(open) => {
+        setPaulSignatureDialogOpen(open);
+        if (!open) setTempPaulSignature(null);
+      }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Draw Paul Van Den Hemel's Signature</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <SignatureCanvas
+              onSignatureChange={setTempPaulSignature}
+              showSavedOption={false}
+              width={380}
+              height={120}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setPaulSignatureDialogOpen(false);
+              setTempPaulSignature(null);
+            }}>
+              Cancel
+            </Button>
+            <Button onClick={handleSavePaulSignature} disabled={!tempPaulSignature}>
+              Save Signature
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Marije's Signature Drawing Dialog (DP-385) */}
+      <Dialog open={marijeSignatureDialogOpen} onOpenChange={(open) => {
+        setMarijeSignatureDialogOpen(open);
+        if (!open) setTempMarijeSignature(null);
+      }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Draw Marije Hoedemaker's Signature</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <SignatureCanvas
+              onSignatureChange={setTempMarijeSignature}
+              showSavedOption={false}
+              width={380}
+              height={120}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setMarijeSignatureDialogOpen(false);
+              setTempMarijeSignature(null);
+            }}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveMarijeSignature} disabled={!tempMarijeSignature}>
               Save Signature
             </Button>
           </DialogFooter>
