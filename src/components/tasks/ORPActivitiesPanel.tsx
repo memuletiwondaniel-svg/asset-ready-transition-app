@@ -31,8 +31,47 @@ export const ORPActivitiesPanel: React.FC<ORPActivitiesPanelProps> = ({
   const { activities: realActivities, stats, isLoading } = useUserORPActivities();
   const { isNewSinceLastLogin } = useUserLastLogin();
 
-  // Only show real tasks assigned to the user - no mock data
-  const rawActivities = realActivities || [];
+  // Use real data, fallback to mock for demo
+  const mockActivities = [
+    {
+      id: 'mock-1',
+      plan_id: 'mock-plan-1',
+      project_name: 'Dolphin Platform Upgrade',
+      plan_name: 'ORP Phase 1',
+      role: 'Operations Lead',
+      allocation_percentage: 50,
+      phase: 'ORP_PHASE_1',
+      deliverable_count: 12,
+      completed_deliverables: 5,
+      created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+    {
+      id: 'mock-2',
+      plan_id: 'mock-plan-2',
+      project_name: 'Kingfish Gas Compression',
+      plan_name: 'ORP Phase 2',
+      role: 'Technical Authority',
+      allocation_percentage: 30,
+      phase: 'ORP_PHASE_2',
+      deliverable_count: 8,
+      completed_deliverables: 2,
+      created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+    {
+      id: 'mock-3',
+      plan_id: 'mock-plan-3',
+      project_name: 'Tuna Field Development',
+      plan_name: 'ORP Phase 3',
+      role: 'Maintenance Lead',
+      allocation_percentage: 25,
+      phase: 'ORP_PHASE_3',
+      deliverable_count: 20,
+      completed_deliverables: 18,
+      created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+  ];
+  
+  const rawActivities = realActivities?.length ? realActivities : mockActivities;
 
   const activities = rawActivities.filter(a => {
     if (!searchQuery.trim()) return true;
@@ -46,10 +85,20 @@ export const ORPActivitiesPanel: React.FC<ORPActivitiesPanelProps> = ({
 
   const newCount = activities.filter(a => isNewSinceLastLogin(a.created_at)).length;
 
-  // Hide panel entirely when user has no tasks assigned
-  if (!isLoading && activities.length === 0) {
-    return null;
-  }
+  // Group activities by plan to avoid duplicates
+  const uniquePlans = activities.reduce((acc, activity) => {
+    if (!acc.find(a => a.plan_id === activity.plan_id)) {
+      acc.push(activity);
+    }
+    return acc;
+  }, [] as typeof activities);
+
+  // Calculate stats from actual data being displayed
+  const displayStats = {
+    totalPlans: uniquePlans.length,
+    totalDeliverables: activities.reduce((sum, a) => sum + (a.deliverable_count || 0), 0),
+    completedDeliverables: activities.reduce((sum, a) => sum + (a.completed_deliverables || 0), 0),
+  };
 
   const getPhaseColor = (phase?: string) => {
     switch (phase) {
@@ -69,22 +118,14 @@ export const ORPActivitiesPanel: React.FC<ORPActivitiesPanelProps> = ({
     return phase.replace('ORP_', '').replace('_', ' ');
   };
 
-  // Group activities by plan to avoid duplicates
-  const uniquePlans = activities.reduce((acc, activity) => {
-    if (!acc.find(a => a.plan_id === activity.plan_id)) {
-      acc.push(activity);
-    }
-    return acc;
-  }, [] as typeof activities);
-
   return (
     <MyTasksPanelCard
       title="ORA Activities"
       icon={<Activity className="h-5 w-5 text-white" />}
       iconColorClass="from-purple-500 to-purple-600"
-      primaryStat={stats.totalPlans}
+      primaryStat={displayStats.totalPlans}
       primaryLabel="active plans"
-      secondaryStat={stats.totalDeliverables - stats.completedDeliverables}
+      secondaryStat={displayStats.totalDeliverables - displayStats.completedDeliverables}
       secondaryLabel="deliverables pending"
       newCount={newCount}
       isExpanded={isExpanded}

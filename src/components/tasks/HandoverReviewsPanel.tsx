@@ -30,8 +30,38 @@ export const HandoverReviewsPanel: React.FC<HandoverReviewsPanelProps> = ({
   const { approvals: realApprovals, stats, isLoading } = useUserP2AApprovals();
   const { isNewSinceLastLogin } = useUserLastLogin();
 
-  // Only show real tasks assigned to the user - no mock data
-  const rawApprovals = realApprovals || [];
+  // Use real data, fallback to mock for demo
+  const mockApprovals = [
+    {
+      id: 'mock-1',
+      handover_id: 'mock-h1',
+      handover_name: 'System A - Electrical Distribution',
+      project_number: 'DP-300',
+      stage: 'PAC',
+      approver_name: 'Technical Authority',
+      created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+    {
+      id: 'mock-2',
+      handover_id: 'mock-h2',
+      handover_name: 'Fire & Gas Detection System',
+      project_number: 'KG-150',
+      stage: 'FAC',
+      approver_name: 'Operations Lead',
+      created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+    {
+      id: 'mock-3',
+      handover_id: 'mock-h3',
+      handover_name: 'Process Control System',
+      project_number: 'TN-200',
+      stage: 'PAC',
+      approver_name: 'Safety Engineer',
+      created_at: new Date(Date.now() - 0.5 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+  ];
+  
+  const rawApprovals = realApprovals?.length ? realApprovals : mockApprovals;
 
   const approvals = rawApprovals.filter(a => {
     if (!searchQuery.trim()) return true;
@@ -44,10 +74,12 @@ export const HandoverReviewsPanel: React.FC<HandoverReviewsPanelProps> = ({
 
   const newCount = approvals.filter(a => isNewSinceLastLogin(a.created_at)).length;
 
-  // Hide panel entirely when user has no tasks assigned
-  if (!isLoading && approvals.length === 0) {
-    return null;
-  }
+  // Calculate stats from actual data being displayed
+  const displayStats = {
+    total: approvals.length,
+    pac: approvals.filter(a => a.stage === 'PAC').length,
+    fac: approvals.filter(a => a.stage === 'FAC').length,
+  };
 
   const getStageColor = (stage: string) => {
     switch (stage) {
@@ -65,9 +97,9 @@ export const HandoverReviewsPanel: React.FC<HandoverReviewsPanelProps> = ({
       title="P2A Handover Reviews"
       icon={<RefreshCw className="h-5 w-5 text-white" />}
       iconColorClass="from-teal-500 to-teal-600"
-      primaryStat={stats.total}
+      primaryStat={displayStats.total}
       primaryLabel="pending"
-      secondaryStat={stats.pac}
+      secondaryStat={displayStats.pac}
       secondaryLabel="PAC"
       newCount={newCount}
       isExpanded={isExpanded}
