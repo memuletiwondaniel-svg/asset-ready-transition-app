@@ -313,7 +313,7 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
                     approver.status === 'APPROVED' 
                       ? 'border-green-200 bg-green-50/50 opacity-70' 
                       : approver.status === 'LOCKED'
-                      ? 'border-gray-200 bg-gray-100 opacity-50'
+                      ? 'border-gray-200 bg-gray-50 opacity-80'
                       : 'border-yellow-300 bg-yellow-50',
                     isClickable && 'ring-2 ring-primary ring-offset-2 cursor-pointer hover:shadow-lg opacity-100'
                   )}
