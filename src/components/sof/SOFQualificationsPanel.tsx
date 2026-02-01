@@ -183,7 +183,7 @@ export const SOFQualificationsPanel: React.FC<SOFQualificationsPanelProps> = ({ 
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                      <Badge variant="outline" className="text-xs font-normal">
+                      <Badge variant="outline" className="text-xs font-normal text-muted-foreground border-muted-foreground/30">
                         {deviation.category}
                       </Badge>
                       {getSeverityBadge(deviation.severity)}
