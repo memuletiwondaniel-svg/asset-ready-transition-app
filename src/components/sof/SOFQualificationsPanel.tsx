@@ -198,6 +198,28 @@ const dp385Deviations: QualificationDetail[] = [
       { name: 'Coordination_Meeting_Minutes.pdf', type: 'PDF' },
     ],
   },
+  {
+    id: 'dp385-5',
+    qualificationId: 'Q-DP385-TRN-005',
+    category: 'Training',
+    title: 'CS6/7 Operator Familiarization Training Pending',
+    description: 'Operations personnel require familiarization training on CS6/7 compressor station control systems and emergency procedures prior to independent operation.',
+    severity: 'low',
+    status: 'approved',
+    approvedBy: 'Lyle Koch',
+    approverRole: 'CS Deputy Dir.',
+    approvedAt: '2026-01-28',
+    mitigationMeasures: 'Experienced operators from sister facility providing on-site support. Buddy system in place for all shifts. Formal training scheduled for completion by Mar 1st.',
+    expiryDate: '2026-03-01',
+    riskDescription: 'Potential for operational errors or delayed emergency response due to unfamiliarity with new systems',
+    riskRating: 'Low',
+    actionOwner: 'Omar Al-Shammari',
+    actionOwnerRole: 'Training Coordinator',
+    attachments: [
+      { name: 'Training_Schedule_CS6_7.pdf', type: 'PDF' },
+      { name: 'Buddy_System_Roster.xlsx', type: 'Excel' },
+    ],
+  },
 ];
 
 export const SOFQualificationsPanel: React.FC<SOFQualificationsPanelProps> = ({ pssrId }) => {
