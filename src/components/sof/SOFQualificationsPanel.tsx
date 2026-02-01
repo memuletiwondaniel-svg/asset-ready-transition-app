@@ -42,8 +42,8 @@ const mockDeviations: QualificationDetail[] = [
     description: 'Maintenance technicians require specialized training on Waukesha gas engine overhaul procedures before performing independent maintenance. Training scheduled with vendor for Feb 25th 2026.',
     severity: 'low',
     status: 'approved',
-    approvedBy: 'Ali Danbous',
-    approverRole: 'Operations Manager',
+    approvedBy: 'Lyle Koch',
+    approverRole: 'CS Deputy Dir.',
     approvedAt: '2026-01-29',
     mitigationMeasures: 'Vendor technical support available on-call until training complete. All Waukesha engine maintenance to be performed under supervision of certified personnel.',
     expiryDate: '2026-03-15',
@@ -200,7 +200,7 @@ export const SOFQualificationsPanel: React.FC<SOFQualificationsPanelProps> = ({ 
                     </p>
                     
                     {/* Approver and Valid Until info */}
-                    <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-3 mt-3 text-xs text-muted-foreground">
                       <span>Approved by <span className="text-foreground">{deviation.approvedBy}</span>{deviation.approverRole && <span className="text-muted-foreground"> - {deviation.approverRole}</span>}</span>
                       <span>•</span>
                       <span>Valid until <span className="text-foreground">{formatDate(deviation.expiryDate)}</span></span>
