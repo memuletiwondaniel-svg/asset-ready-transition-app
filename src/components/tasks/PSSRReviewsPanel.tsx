@@ -1,12 +1,13 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ClipboardCheck } from 'lucide-react';
+import { ClipboardCheck, Shield, Wrench, AlertTriangle, Settings, User } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { MyTasksPanelCard } from './MyTasksPanelCard';
 import { usePSSRsAwaitingReview } from '@/hooks/usePSSRItemApprovals';
 import { useUserLastLogin } from '@/hooks/useUserLastLogin';
 import { generateMockPSSRReviews, MockPSSRReview } from '@/hooks/useMyTasksMockData';
+import { getAssetColor, getAssetAbbreviation, getUrgencyBackground, getUrgencyGlow } from '@/utils/assetColors';
 import { cn } from '@/lib/utils';
 
 interface PSSRReviewsPanelProps {
@@ -16,6 +17,48 @@ interface PSSRReviewsPanelProps {
   onToggleExpand: () => void;
   isFullHeight?: boolean;
   isRelocated?: boolean;
+}
+
+// Helper function to get role icon
+function getRoleIcon(role: string | undefined): React.ReactNode {
+  if (!role) return <User className="h-3 w-3" />;
+  
+  const normalizedRole = role.toLowerCase();
+  
+  if (normalizedRole.includes('director')) {
+    return <Shield className="h-3 w-3" />;
+  }
+  if (normalizedRole.includes('technical authority') || normalizedRole.includes('ta')) {
+    return <Wrench className="h-3 w-3" />;
+  }
+  if (normalizedRole.includes('hse')) {
+    return <AlertTriangle className="h-3 w-3" />;
+  }
+  if (normalizedRole.includes('operations')) {
+    return <Settings className="h-3 w-3" />;
+  }
+  
+  return <User className="h-3 w-3" />;
+}
+
+// Helper function to get item count styling
+function getItemCountStyle(count: number): { containerClass: string; textClass: string } {
+  if (count >= 10) {
+    return {
+      containerClass: 'bg-primary/10 px-1.5 py-0.5 rounded',
+      textClass: 'text-primary font-medium',
+    };
+  }
+  if (count >= 5) {
+    return {
+      containerClass: 'bg-muted/50 px-1.5 py-0.5 rounded',
+      textClass: 'text-muted-foreground',
+    };
+  }
+  return {
+    containerClass: '',
+    textClass: 'text-muted-foreground',
+  };
 }
 
 export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({ 
@@ -75,14 +118,28 @@ export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({
         );
         const pssr = item.pssr;
         const isMock = (item as MockPSSRReview).id?.startsWith('mock-');
+        
+        // Get asset-based styling
+        const assetColors = getAssetColor(pssr?.asset);
+        const assetAbbr = getAssetAbbreviation(pssr?.asset);
+        const urgencyBg = getUrgencyBackground(daysPending);
+        const urgencyGlow = getUrgencyGlow(daysPending);
+        const itemCountStyle = getItemCountStyle(item.itemCount || 0);
+        const roleIcon = getRoleIcon(item.approverRole);
 
         return (
           <div
             key={pssr?.id || item.pendingSince}
             className={cn(
-              "p-3 rounded-lg border bg-background/50 hover:bg-background/80 transition-all cursor-pointer group/item",
+              "p-3 rounded-lg border-l-[3px] border transition-all cursor-pointer group/item",
               "hover:shadow-sm hover:border-primary/20",
-              isNew && "border-l-2 border-l-primary",
+              // Asset-based left border
+              assetColors.borderClass,
+              // Urgency-based background
+              urgencyBg,
+              urgencyGlow,
+              // New item indicator (overrides left border with primary)
+              isNew && "border-l-primary",
               "animate-fade-in"
             )}
             style={{ animationDelay: `${index * 50}ms` }}
@@ -100,12 +157,34 @@ export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({
                     </Badge>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground truncate mt-0.5">
-                  {pssr?.project_name || 'Unknown Project'}
-                </p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <p className="text-xs text-muted-foreground truncate">
+                    {pssr?.project_name || 'Unknown Project'}
+                  </p>
+                  {assetAbbr && (
+                    <span 
+                      className={cn(
+                        "text-[10px] font-medium px-1.5 py-0.5 rounded",
+                        assetColors.badgeBgClass,
+                        assetColors.badgeTextClass
+                      )}
+                    >
+                      {assetAbbr}
+                    </span>
+                  )}
+                </div>
                 <div className="flex items-center gap-2 mt-1.5">
-                  <span className="text-xs text-muted-foreground">
-                    {item.itemCount || 0} items • {item.approverRole || 'Reviewer'}
+                  <span className={cn("text-xs flex items-center gap-1", itemCountStyle.containerClass)}>
+                    <span className={itemCountStyle.textClass}>
+                      {item.itemCount || 0} items
+                    </span>
+                  </span>
+                  <span className="text-xs text-muted-foreground">•</span>
+                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                    {roleIcon}
+                    <span className="truncate max-w-[120px]">
+                      {item.approverRole || 'Reviewer'}
+                    </span>
                   </span>
                 </div>
               </div>
