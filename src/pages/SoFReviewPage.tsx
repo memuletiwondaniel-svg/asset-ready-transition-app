@@ -24,18 +24,17 @@ const SoFReviewPage: React.FC = () => {
         .from('sof_certificates')
         .select('*')
         .eq('pssr_id', pssrId)
-        .single();
+        .maybeSingle();
 
       if (certError) throw certError;
+      if (!certificate) throw new Error('SoF certificate not found');
 
-      // Fetch the PSSR details
-      const { data: pssr, error: pssrError } = await supabase
+      // Fetch the PSSR details (may not exist for mock data)
+      const { data: pssr } = await supabase
         .from('pssrs')
         .select('pssr_id, project_name, asset, scope')
         .eq('id', pssrId)
-        .single();
-
-      if (pssrError) throw pssrError;
+        .maybeSingle();
 
       // Fetch approvers
       const { data: approvers, error: approversError } = await supabase
@@ -48,7 +47,7 @@ const SoFReviewPage: React.FC = () => {
 
       return {
         certificate,
-        pssr,
+        pssr, // May be null for mock data
         approvers: approvers || [],
       };
     },
