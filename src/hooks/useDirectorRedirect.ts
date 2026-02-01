@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
@@ -27,21 +27,32 @@ const PLANT_DIRECTOR_ROLES = [
  * Hook that automatically redirects directors to appropriate pages after login.
  * - P&E, P&M, HSE Directors → /my-tasks (SoF focused)
  * - Plant Directors, Deputy Plant Directors → /projects?plant={their_plant}
- * Only triggers once per session to avoid redirect loops.
+ * Returns isChecking to allow blocking render until redirect check completes.
  */
 export const useDirectorRedirect = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const hasRedirected = useRef(false);
+  const hasChecked = useRef(false);
+  const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
-    // Only run once per session and only if we have a user
-    if (!user?.id || hasRedirected.current) return;
+    // If no user, not checking
+    if (!user?.id) {
+      setIsChecking(false);
+      return;
+    }
+
+    // Already checked this session
+    if (hasChecked.current) {
+      setIsChecking(false);
+      return;
+    }
     
-    // Skip if already on target pages
+    // Already on target pages - no need to redirect
     if (location.pathname === '/my-tasks' || location.pathname === '/projects') {
-      hasRedirected.current = true;
+      hasChecked.current = true;
+      setIsChecking(false);
       return;
     }
 
@@ -54,7 +65,11 @@ export const useDirectorRedirect = () => {
           .eq('user_id', user.id)
           .single();
 
-        if (profileError || !profile?.role) return;
+        if (profileError || !profile?.role) {
+          hasChecked.current = true;
+          setIsChecking(false);
+          return;
+        }
 
         // Get the role name
         const { data: role, error: roleError } = await supabase
@@ -63,7 +78,11 @@ export const useDirectorRedirect = () => {
           .eq('id', profile.role)
           .single();
 
-        if (roleError || !role?.name) return;
+        if (roleError || !role?.name) {
+          hasChecked.current = true;
+          setIsChecking(false);
+          return;
+        }
 
         // Check if SoF Director → My Tasks
         const isSofDirector = SOF_DIRECTOR_ROLES.some(
@@ -71,8 +90,9 @@ export const useDirectorRedirect = () => {
         );
 
         if (isSofDirector) {
-          hasRedirected.current = true;
+          hasChecked.current = true;
           navigate('/my-tasks', { replace: true });
+          // Don't setIsChecking(false) - let the navigation handle it
           return;
         }
 
@@ -82,7 +102,7 @@ export const useDirectorRedirect = () => {
         );
 
         if (isPlantDirector) {
-          hasRedirected.current = true;
+          hasChecked.current = true;
           
           // Get plant name if plant exists (it's a UUID reference)
           if (profile.plant) {
@@ -100,12 +120,21 @@ export const useDirectorRedirect = () => {
           
           // Fallback to projects without filter
           navigate('/projects', { replace: true });
+          return;
         }
+
+        // Not a director - done checking
+        hasChecked.current = true;
+        setIsChecking(false);
       } catch (error) {
         console.error('Error checking director status:', error);
+        hasChecked.current = true;
+        setIsChecking(false);
       }
     };
 
     checkDirectorAndRedirect();
   }, [user?.id, navigate, location.pathname]);
+
+  return { isChecking };
 };
