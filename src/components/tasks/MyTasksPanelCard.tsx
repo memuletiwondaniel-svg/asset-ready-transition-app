@@ -164,11 +164,11 @@ export const MyTasksPanelCard: React.FC<MyTasksPanelCardProps> = ({
           ) : (
             <div className={cn(
               "space-y-2",
-              isFullHeight && "flex-1 flex flex-col min-h-0"
+              isFullHeight && "flex-1 flex flex-col min-h-0 overflow-hidden"
             )}>
               <ScrollArea className={cn(
                 "transition-all duration-300",
-                isFullHeight ? "flex-1 pr-4" : "max-h-[280px]"
+                isFullHeight ? "flex-1 h-0 min-h-0 pr-4" : "max-h-[280px]"
               )}>
                 <div className="space-y-2 pb-2">
                   {children}
