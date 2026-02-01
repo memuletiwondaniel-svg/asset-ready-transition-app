@@ -117,7 +117,7 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
         {/* Pending SoF Items */}
         <div className="space-y-4">
         {pendingItems.map((item, index) => {
-          const pssrId = item.pssr?.pssr_id || 'PSSR-DP300';
+          const pssrId = item.pssr?.pssr_id?.replace('PSSR-', '') || 'DP300';
           const projectName = item.pssr?.project_name || 'HM Additional Compressors';
           
           return (
@@ -137,6 +137,11 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                       <ProjectIdBadge size="sm" projectId={pssrId}>
                         {pssrId}
                       </ProjectIdBadge>
+                      <h3 className="font-semibold text-lg truncate">
+                        {projectName}
+                      </h3>
+                    </div>
+                    <div className="flex items-center gap-2 mb-2">
                       <Badge variant="outline" className="text-xs">
                         SoF
                       </Badge>
@@ -144,11 +149,8 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                         Pending
                       </Badge>
                     </div>
-                    <h3 className="font-semibold text-lg truncate">
-                      {projectName}
-                    </h3>
                     {item.pssr?.asset && (
-                      <p className="text-sm text-muted-foreground truncate mt-0.5">
+                      <p className="text-sm text-muted-foreground truncate">
                         {item.pssr.asset}
                       </p>
                     )}
@@ -181,7 +183,7 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                 </p>
               </div>
               {lockedItems.map((item) => {
-                const pssrId = item.pssr?.pssr_id || 'PSSR-DP300';
+                const pssrId = item.pssr?.pssr_id?.replace('PSSR-', '') || 'DP300';
                 const projectName = item.pssr?.project_name || 'HM Additional Compressors';
                 
                 return (
@@ -196,6 +198,11 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                             <ProjectIdBadge size="sm" projectId={pssrId}>
                               {pssrId}
                             </ProjectIdBadge>
+                            <h3 className="font-medium truncate">
+                              {projectName}
+                            </h3>
+                          </div>
+                          <div className="flex items-center gap-2 mb-2">
                             <Badge variant="outline" className="text-xs">
                               SoF
                             </Badge>
@@ -203,9 +210,6 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                               Awaiting Prerequisites
                             </Badge>
                           </div>
-                          <h3 className="font-medium truncate">
-                            {projectName}
-                          </h3>
                           <p className="text-xs text-muted-foreground mt-1">
                             Waiting for PSSR/VCR approvals to complete
                           </p>
