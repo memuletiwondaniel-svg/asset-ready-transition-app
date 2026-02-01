@@ -491,8 +491,8 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-foreground">
-                  Signed SoF for <span className="font-mono text-muted-foreground">DP-280:</span>{' '}
-                  <span className="font-medium">CS6 Produced Water</span>
+                  Signed SoF for <span className="font-mono text-muted-foreground">DP-385:</span>{' '}
+                  <span className="font-medium">OT2/3 Gas Feed to CS6/7</span>
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {formatDistanceToNow(new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), { addSuffix: true })}
