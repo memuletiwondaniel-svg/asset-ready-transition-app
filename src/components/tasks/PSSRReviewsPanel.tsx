@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { ClipboardCheck } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import { ProjectIdBadge } from '@/components/ui/project-id-badge';
 import { MyTasksPanelCard } from './MyTasksPanelCard';
 import { usePSSRsAwaitingReview } from '@/hooks/usePSSRItemApprovals';
@@ -103,10 +102,9 @@ export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({
         // Extract project code for badge
         const projectCode = extractProjectCode(pssr?.pssr_id);
         
-        // Calculate review progress (for mock: simulate some items reviewed)
+        // Calculate remaining items
         const totalItems = item.itemCount || 0;
-        const reviewedItems = (item as any).reviewedCount ?? Math.floor(totalItems * 0.3); // Default 30% reviewed for mock
-        const progressPercent = totalItems > 0 ? Math.round((reviewedItems / totalItems) * 100) : 0;
+        const reviewedItems = (item as any).reviewedCount ?? Math.floor(totalItems * 0.3);
         const remainingItems = totalItems - reviewedItems;
 
         return (
@@ -151,16 +149,10 @@ export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({
                   </p>
                 )}
                 
-                {/* Row 3: Review progress */}
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">
-                      {remainingItems} of {totalItems} items need your sign-off
-                    </span>
-                    <span className="font-medium text-primary">{progressPercent}%</span>
-                  </div>
-                  <Progress value={progressPercent} className="h-1.5" />
-                </div>
+                {/* Row 3: Items needing sign-off */}
+                <p className="text-xs text-muted-foreground">
+                  {remainingItems} of {totalItems} items need your sign-off
+                </p>
               </div>
               
               {/* Right side: Days in queue + action */}
