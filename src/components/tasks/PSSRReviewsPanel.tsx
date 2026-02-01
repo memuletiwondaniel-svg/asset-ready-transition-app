@@ -7,7 +7,8 @@ import { ProjectIdBadge } from '@/components/ui/project-id-badge';
 import { MyTasksPanelCard } from './MyTasksPanelCard';
 import { usePSSRsAwaitingReview } from '@/hooks/usePSSRItemApprovals';
 import { useUserLastLogin } from '@/hooks/useUserLastLogin';
-import { generateMockPSSRReviews, MockPSSRReview } from '@/hooks/useMyTasksMockData';
+import { useMockPSSRReviewsFromProjects } from '@/hooks/useMockPSSRFromProjects';
+import { MockPSSRReview } from '@/hooks/useMyTasksMockData';
 import { getUrgencyBackground, getUrgencyGlow } from '@/utils/assetColors';
 import { cn } from '@/lib/utils';
 
@@ -65,12 +66,13 @@ export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({
   isDimmed = false,
 }) => {
   const navigate = useNavigate();
-  const { data: realPssrs, isLoading } = usePSSRsAwaitingReview(userId);
+  const { data: realPssrs, isLoading: isLoadingReal } = usePSSRsAwaitingReview(userId);
+  const { reviews: mockData, isLoading: isLoadingMock } = useMockPSSRReviewsFromProjects();
   const { isNewSinceLastLogin } = useUserLastLogin();
 
-  // Use mock data if real data is empty
-  const mockData = generateMockPSSRReviews();
+  // Use real data if available, otherwise use mock data from actual projects
   const pssrs = (realPssrs && realPssrs.length > 0) ? realPssrs : mockData;
+  const isLoading = isLoadingReal || ((!realPssrs || realPssrs.length === 0) && isLoadingMock);
 
   const pendingPssrs = pssrs.filter(p => {
     if (!searchQuery.trim()) return true;
