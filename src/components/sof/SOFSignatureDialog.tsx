@@ -129,7 +129,7 @@ export const SOFSignatureDialog: React.FC<SOFSignatureDialogProps> = ({
                     Qualifications
                   </Label>
                   <p className="text-sm text-muted-foreground mt-1">
-                    I have reviewed all approved deviations and requirements that could not be fully met.
+                    I have reviewed all approved qualifications against VCR and PSSR items that cannot be fully met.
                   </p>
                 </div>
               </div>
