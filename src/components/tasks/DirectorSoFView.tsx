@@ -233,17 +233,17 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
       <div className="max-w-3xl mx-auto">
         {/* "All caught up" banner when no pending items but has recent activity */}
         {noPendingTasks && recentActivity && (
-          <div className="mb-8 relative overflow-hidden rounded-xl bg-gradient-to-br from-green-50 to-emerald-50/50 dark:from-green-950/20 dark:to-emerald-950/10 border border-green-200/60 dark:border-green-800/30">
+          <div className="mb-8 relative overflow-hidden rounded-xl bg-gradient-to-br from-violet-50 to-purple-50/50 dark:from-violet-950/20 dark:to-purple-950/10 border border-violet-200/60 dark:border-violet-800/30">
             {/* Decorative background elements */}
-            <div className="absolute top-0 right-0 w-32 h-32 bg-green-400/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-            <div className="absolute bottom-0 left-0 w-24 h-24 bg-emerald-400/10 rounded-full translate-y-1/2 -translate-x-1/2" />
+            <div className="absolute top-0 right-0 w-32 h-32 bg-violet-400/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-purple-400/10 rounded-full translate-y-1/2 -translate-x-1/2" />
             
             <div className="relative p-6">
               <div className="flex flex-col sm:flex-row items-center gap-5">
                 {/* Animated thumbs up icon */}
                 <div className="relative group cursor-default">
-                  <div className="absolute inset-0 bg-green-400/20 rounded-full blur-xl scale-150 animate-pulse" />
-                  <div className="relative h-16 w-16 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center shadow-lg shadow-green-500/25 transition-transform duration-300 hover:scale-110 hover:rotate-12">
+                  <div className="absolute inset-0 bg-violet-400/20 rounded-full blur-xl scale-150 animate-pulse" />
+                  <div className="relative h-16 w-16 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg shadow-violet-500/25 transition-transform duration-300 hover:scale-110 hover:rotate-12">
                     <ThumbsUp className="h-8 w-8 text-white transition-transform duration-300 group-hover:scale-110" />
                   </div>
                 </div>
@@ -264,7 +264,7 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                     variant="outline"
                     size="default"
                     onClick={handleExit}
-                    className="gap-2 border-green-300 hover:bg-green-100 hover:border-green-400"
+                    className="gap-2 border-violet-300 hover:bg-violet-100 hover:border-violet-400 dark:border-violet-700 dark:hover:bg-violet-900/30"
                   >
                     <LogOut className="h-4 w-4" />
                     Sign Out
