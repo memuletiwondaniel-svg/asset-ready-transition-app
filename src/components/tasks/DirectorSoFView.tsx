@@ -119,9 +119,9 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
         <div className="space-y-4">
         {pendingItems.map((item, index) => {
           // Extract project code from PSSR ID (e.g., "PSSR-DP300-001" -> "DP300")
-          const pssrIdParts = item.pssr?.pssr_id?.replace('PSSR-', '').split('-') || ['DP385'];
-          const projectCode = pssrIdParts[0] || 'DP385'; // First part is the project code
-          // Display with hyphen for readability (DP-385), use raw for color (DP385)
+          const pssrIdParts = item.pssr?.pssr_id?.replace('PSSR-', '').split('-') || ['DP217'];
+          const projectCode = pssrIdParts[0] || 'DP217'; // First part is the project code
+          // Display with hyphen for readability (DP-217), use raw for color (DP217)
           const displayId = projectCode.match(/^([A-Z]+)(\d+)$/) 
             ? `${projectCode.match(/^([A-Z]+)(\d+)$/)?.[1]}-${projectCode.match(/^([A-Z]+)(\d+)$/)?.[2]}`
             : projectCode;
@@ -191,8 +191,8 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
               </div>
               {lockedItems.map((item) => {
                 // Extract project code from PSSR ID (e.g., "PSSR-DP300-001" -> "DP300")
-                const pssrIdParts = item.pssr?.pssr_id?.replace('PSSR-', '').split('-') || ['DP385'];
-                const projectCode = pssrIdParts[0] || 'DP385';
+                const pssrIdParts = item.pssr?.pssr_id?.replace('PSSR-', '').split('-') || ['DP217'];
+                const projectCode = pssrIdParts[0] || 'DP217';
                 const displayId = projectCode.match(/^([A-Z]+)(\d+)$/) 
                   ? `${projectCode.match(/^([A-Z]+)(\d+)$/)?.[1]}-${projectCode.match(/^([A-Z]+)(\d+)$/)?.[2]}`
                   : projectCode;
