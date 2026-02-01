@@ -233,27 +233,18 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
       <div className="max-w-3xl mx-auto">
         {/* "All caught up" banner when no pending items but has recent activity */}
         {noPendingTasks && recentActivity && (
-          <div className="mb-8 relative overflow-hidden rounded-xl bg-gradient-to-br from-violet-50 to-purple-50/50 dark:from-violet-950/20 dark:to-purple-950/10 border border-violet-200/60 dark:border-violet-800/30">
-            {/* Decorative background elements */}
-            <div className="absolute top-0 right-0 w-32 h-32 bg-violet-400/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-            <div className="absolute bottom-0 left-0 w-24 h-24 bg-purple-400/10 rounded-full translate-y-1/2 -translate-x-1/2" />
+          <div className="mb-8 relative overflow-hidden rounded-xl bg-gradient-to-br from-violet-50/80 to-purple-50/40 dark:from-violet-950/20 dark:to-purple-950/10 border border-violet-200/50 dark:border-violet-800/30">
+            {/* Subtle decorative accent */}
+            <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-bl from-violet-200/20 to-transparent rounded-full -translate-y-1/2 translate-x-1/4" />
             
-            <div className="relative p-6">
-              <div className="flex flex-col sm:flex-row items-center gap-5">
-                {/* Animated thumbs up icon */}
-                <div className="relative group cursor-default">
-                  <div className="absolute inset-0 bg-violet-400/20 rounded-full blur-xl scale-150 animate-pulse" />
-                  <div className="relative h-16 w-16 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg shadow-violet-500/25 transition-transform duration-300 hover:scale-110 hover:rotate-12">
-                    <ThumbsUp className="h-8 w-8 text-white transition-transform duration-300 group-hover:scale-110" />
-                  </div>
-                </div>
-                
-                {/* Text content */}
-                <div className="flex-1 text-center sm:text-left">
-                  <h2 className="text-xl font-bold text-foreground mb-1">
+            <div className="relative px-6 py-5">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                {/* Text content - now the hero */}
+                <div className="text-center sm:text-left">
+                  <h2 className="text-xl font-bold text-foreground">
                     You're all caught up, <span className="font-extrabold">{firstName}</span>! 🎉
                   </h2>
-                  <p className="text-muted-foreground">
+                  <p className="text-muted-foreground text-sm mt-1">
                     No pending Statement of Fitness reviews at this time.
                   </p>
                 </div>
