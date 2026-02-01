@@ -15,6 +15,7 @@ interface HandoverReviewsPanelProps {
   onToggleExpand: () => void;
   isFullHeight?: boolean;
   isRelocated?: boolean;
+  isDimmed?: boolean;
 }
 
 export const HandoverReviewsPanel: React.FC<HandoverReviewsPanelProps> = ({ 
@@ -23,6 +24,7 @@ export const HandoverReviewsPanel: React.FC<HandoverReviewsPanelProps> = ({
   onToggleExpand,
   isFullHeight = false,
   isRelocated = false,
+  isDimmed = false,
 }) => {
   const navigate = useNavigate();
   const { approvals: realApprovals, stats: realStats, isLoading } = useUserP2AApprovals();
@@ -75,6 +77,7 @@ export const HandoverReviewsPanel: React.FC<HandoverReviewsPanelProps> = ({
       onToggleExpand={onToggleExpand}
       isFullHeight={isFullHeight}
       isRelocated={isRelocated}
+      isDimmed={isDimmed}
       isLoading={isLoading}
       isEmpty={approvals.length === 0}
       emptyMessage="No handover reviews pending"

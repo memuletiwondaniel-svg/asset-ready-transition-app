@@ -16,6 +16,7 @@ interface ORPActivitiesPanelProps {
   onToggleExpand: () => void;
   isFullHeight?: boolean;
   isRelocated?: boolean;
+  isDimmed?: boolean;
 }
 
 export const ORPActivitiesPanel: React.FC<ORPActivitiesPanelProps> = ({ 
@@ -24,6 +25,7 @@ export const ORPActivitiesPanel: React.FC<ORPActivitiesPanelProps> = ({
   onToggleExpand,
   isFullHeight = false,
   isRelocated = false,
+  isDimmed = false,
 }) => {
   const navigate = useNavigate();
   const { activities: realActivities, stats: realStats, isLoading } = useUserORPActivities();
@@ -93,6 +95,7 @@ export const ORPActivitiesPanel: React.FC<ORPActivitiesPanelProps> = ({
       onToggleExpand={onToggleExpand}
       isFullHeight={isFullHeight}
       isRelocated={isRelocated}
+      isDimmed={isDimmed}
       isLoading={isLoading}
       isEmpty={uniquePlans.length === 0}
       emptyMessage="No ORA activities assigned"
