@@ -34,26 +34,43 @@ interface SOFCertificateProps {
   status: string;
 }
 
-// SVG signature for Ali Danbous - professional cursive signature
+// SVG signature for Ali Danbous - stylized "A. Danbous" cursive
 const AliSignatureSVG = () => (
-  <svg width="180" height="50" viewBox="0 0 180 50" className="max-h-12">
-    {/* Main signature stroke - "A. Danbous" style */}
+  <svg width="160" height="45" viewBox="0 0 160 45" className="max-h-11">
+    {/* Capital A with flourish */}
     <path
-      d="M8 38 C12 15, 18 12, 22 18 C26 24, 20 35, 28 32 C36 29, 32 20, 38 22 L42 24 M46 18 C44 28, 52 32, 56 26 C60 20, 54 16, 50 22 C46 28, 54 34, 62 28 M68 32 C68 22, 72 18, 76 22 C80 26, 76 34, 72 36 M82 18 L82 34 M82 26 C86 22, 92 22, 92 28 C92 34, 86 36, 82 34 M98 18 C96 28, 100 34, 106 30 C112 26, 108 18, 102 20 M114 22 C110 26, 112 34, 118 32 C124 30, 126 24, 122 20 C118 16, 112 22, 116 28 M132 34 C128 30, 130 22, 136 20 C142 18, 146 24, 144 30 C142 36, 134 38, 130 34 M152 22 C148 26, 150 34, 156 32 C162 30, 164 24, 160 20 C156 16, 150 22, 154 28"
+      d="M12 35 L22 8 L32 35 M16 24 L28 24"
       fill="none"
-      stroke="#1e3a5f"
-      strokeWidth="1.8"
+      stroke="#1a3a5c"
+      strokeWidth="2.2"
       strokeLinecap="round"
       strokeLinejoin="round"
     />
-    {/* Underline flourish */}
+    {/* Period and connecting stroke */}
+    <circle cx="38" cy="33" r="1.5" fill="#1a3a5c" />
+    {/* "Danbous" in flowing cursive */}
     <path
-      d="M15 42 Q60 44, 100 41 T160 43"
+      d="M48 32 C48 18, 52 14, 58 16 C64 18, 62 32, 56 34 C50 36, 48 32, 48 32 
+       M62 26 C66 20, 72 20, 74 26 C76 32, 70 36, 66 32 
+       M78 16 L78 34 M78 24 C82 20, 88 22, 88 28 C88 34, 82 36, 78 32
+       M94 34 C94 24, 94 18, 100 16 C106 14, 108 20, 106 26 C104 32, 98 36, 94 34
+       M112 26 C116 20, 122 20, 124 26 C126 32, 120 36, 116 32
+       M130 16 L130 34 M130 28 C130 22, 136 20, 140 24 C144 28, 140 34, 134 34
+       M146 24 C142 28, 144 36, 150 34 C156 32, 154 24, 148 24 C142 24, 144 32, 150 32"
       fill="none"
-      stroke="#1e3a5f"
-      strokeWidth="1"
+      stroke="#1a3a5c"
+      strokeWidth="1.6"
       strokeLinecap="round"
-      opacity="0.6"
+      strokeLinejoin="round"
+    />
+    {/* Subtle underline */}
+    <path
+      d="M10 40 Q50 42, 90 39 Q130 36, 155 38"
+      fill="none"
+      stroke="#1a3a5c"
+      strokeWidth="0.8"
+      strokeLinecap="round"
+      opacity="0.5"
     />
   </svg>
 );
