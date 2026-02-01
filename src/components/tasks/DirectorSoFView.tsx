@@ -259,23 +259,14 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                 </div>
                 
                 {/* Actions */}
-                <div className="flex gap-2 shrink-0">
-                  <Button
-                    variant="default"
-                    size="sm"
-                    onClick={() => navigate('/dashboard')}
-                    className="gap-1.5 bg-green-600 hover:bg-green-700 text-white"
-                  >
-                    <ExternalLink className="h-3.5 w-3.5" />
-                    Dashboard
-                  </Button>
+                <div className="shrink-0">
                   <Button
                     variant="outline"
-                    size="sm"
+                    size="default"
                     onClick={handleExit}
-                    className="gap-1.5"
+                    className="gap-2 border-green-300 hover:bg-green-100 hover:border-green-400"
                   >
-                    <LogOut className="h-3.5 w-3.5" />
+                    <LogOut className="h-4 w-4" />
                     Sign Out
                   </Button>
                 </div>
