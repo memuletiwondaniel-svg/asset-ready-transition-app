@@ -5987,6 +5987,7 @@ export type Database = {
           display_order: number | null
           id: string
           is_active: boolean
+          is_director: boolean | null
           name: string
           updated_at: string
         }
@@ -5997,6 +5998,7 @@ export type Database = {
           display_order?: number | null
           id?: string
           is_active?: boolean
+          is_director?: boolean | null
           name: string
           updated_at?: string
         }
@@ -6007,6 +6009,7 @@ export type Database = {
           display_order?: number | null
           id?: string
           is_active?: boolean
+          is_director?: boolean | null
           name?: string
           updated_at?: string
         }

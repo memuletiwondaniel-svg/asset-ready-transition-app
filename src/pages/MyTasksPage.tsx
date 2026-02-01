@@ -4,28 +4,34 @@ import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PSSRReviewsPanel } from '@/components/tasks/PSSRReviewsPanel';
-import { HandoverReviewsPanel } from '@/components/tasks/HandoverReviewsPanel';
 import { ORPActivitiesPanel } from '@/components/tasks/ORPActivitiesPanel';
 import { OWLPanel } from '@/components/tasks/OWLPanel';
 import { NewTaskModal } from '@/components/tasks/NewTaskModal';
 import { AllTasksTable } from '@/components/tasks/AllTasksTable';
+import { DirectorSoFView } from '@/components/tasks/DirectorSoFView';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 import { useUserLastLogin } from '@/hooks/useUserLastLogin';
+import { useUserIsDirector } from '@/hooks/useUserIsDirector';
 import { cn } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type ViewMode = 'grid' | 'table';
-type ExpandedCard = 'pssr' | 'handover' | 'ora' | 'owl' | null;
+type ExpandedCard = 'pssr' | 'ora' | 'owl' | null;
+
+// For regular users: 3 panels (removed handover)
+const PANEL_ORDER = ['pssr', 'ora', 'owl'] as const;
 
 const MyTasksPage: React.FC = () => {
   const { user } = useAuth();
   const { updateLastLogin } = useUserLastLogin();
+  const { data: isDirector, isLoading: isDirectorLoading } = useUserIsDirector();
   const [createTaskModalOpen, setCreateTaskModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [expandedCard, setExpandedCard] = useState<ExpandedCard>(null);
-
-  // Note: Mock data is handled inside individual panels, so we don't check for empty state here
-  // The panels will show mock data when real data is empty
+  
+  // Track which panels have tasks (for auto-expand)
+  const [panelTaskCounts, setPanelTaskCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -34,43 +40,91 @@ const MyTasksPage: React.FC = () => {
     return () => clearTimeout(timer);
   }, [updateLastLogin]);
 
+  // Auto-expand logic: if only one panel has tasks, expand it
+  useEffect(() => {
+    const panelsWithTasks = Object.entries(panelTaskCounts)
+      .filter(([_, count]) => count > 0)
+      .map(([panelId]) => panelId);
+    
+    // Only auto-expand if exactly one panel has tasks and nothing is currently expanded
+    if (panelsWithTasks.length === 1 && expandedCard === null) {
+      setExpandedCard(panelsWithTasks[0] as ExpandedCard);
+    }
+  }, [panelTaskCounts, expandedCard]);
+
   const handleCardExpand = (cardId: ExpandedCard) => {
     setExpandedCard(prev => prev === cardId ? null : cardId);
+  };
+
+  // Callback for panels to report their task count
+  const handleTaskCountUpdate = (panelId: string, count: number) => {
+    setPanelTaskCounts(prev => {
+      if (prev[panelId] === count) return prev;
+      return { ...prev, [panelId]: count };
+    });
   };
 
   if (!user) {
     return null;
   }
 
-  // Determine which cards go in which column based on expanded state
-  // Expanded card always goes on the left
+  // Show loading state while checking director status
+  if (isDirectorLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="space-y-4 w-full max-w-md">
+          <Skeleton className="h-8 w-48 mx-auto" />
+          <Skeleton className="h-4 w-64 mx-auto" />
+          <Skeleton className="h-32 w-full" />
+        </div>
+      </div>
+    );
+  }
+
+  // Directors get the simplified SoF-only view
+  if (isDirector) {
+    const userName = user.user_metadata?.full_name || user.user_metadata?.first_name || user.email;
+    return <DirectorSoFView userName={userName} />;
+  }
+
+
+  // Determine column layout for 3 panels
   const getColumnLayout = () => {
-    const allCards = ['pssr', 'ora', 'handover', 'owl'] as const;
-    
     if (!expandedCard) {
+      // Default: PSSR left top, ORA left bottom, OWL right
       return {
         leftColumn: ['pssr', 'ora'] as const,
-        rightColumn: ['handover', 'owl'] as const,
+        rightColumn: ['owl'] as const,
         expandedSide: null as 'left' | 'right' | null
       };
     }
 
-    // Expanded card goes to left, all others go to right
-    const otherCards = allCards.filter(card => card !== expandedCard);
+    // Expanded card goes to left, others to right
+    const otherCards = PANEL_ORDER.filter(card => card !== expandedCard);
     
     return {
       leftColumn: [expandedCard] as const,
-      rightColumn: otherCards as readonly ('pssr' | 'ora' | 'handover' | 'owl')[],
+      rightColumn: otherCards as readonly ('pssr' | 'ora' | 'owl')[],
       expandedSide: 'left' as const
     };
   };
 
   const layout = getColumnLayout();
 
+  // Determine which cards are relocated
+  const getRelocatedCards = () => {
+    switch (expandedCard) {
+      case 'pssr': return ['ora'];
+      case 'ora': return ['pssr'];
+      case 'owl': return ['pssr', 'ora'];
+      default: return [];
+    }
+  };
+  const relocatedCards = getRelocatedCards();
+
   const renderCard = (cardId: string, isInExpandedColumn: boolean, isRelocated: boolean) => {
     const isThisCardExpanded = expandedCard === cardId;
     const isFullHeight = isInExpandedColumn && isThisCardExpanded;
-    // Dim cards when another card is expanded
     const isDimmed = expandedCard !== null && !isThisCardExpanded;
 
     const commonProps = {
@@ -88,13 +142,6 @@ const MyTasksPage: React.FC = () => {
           <PSSRReviewsPanel 
             key="pssr"
             userId={user.id} 
-            {...commonProps}
-          />
-        );
-      case 'handover':
-        return (
-          <HandoverReviewsPanel 
-            key="handover"
             {...commonProps}
           />
         );
@@ -116,18 +163,6 @@ const MyTasksPage: React.FC = () => {
         return null;
     }
   };
-
-  // Determine which cards are relocated
-  const getRelocatedCards = () => {
-    switch (expandedCard) {
-      case 'pssr': return ['ora'];
-      case 'ora': return ['pssr'];
-      case 'handover': return ['owl'];
-      case 'owl': return ['handover'];
-      default: return [];
-    }
-  };
-  const relocatedCards = getRelocatedCards();
 
   return (
     <div className="min-h-screen">
