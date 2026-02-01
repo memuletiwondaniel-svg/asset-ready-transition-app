@@ -13,7 +13,7 @@ interface SOFQualificationsPanelProps {
 const mockDeviations: QualificationDetail[] = [
   {
     id: '1',
-    qualificationId: 'Q-2026-0042',
+    qualificationId: 'Q-DP300-EQP-001',
     category: 'Equipment',
     title: 'Temporary Bypass on PSV-1234',
     description: 'Pressure Safety Valve PSV-1234 bypass installed pending replacement valve delivery. Manual monitoring procedure in place.',
@@ -36,7 +36,7 @@ const mockDeviations: QualificationDetail[] = [
   },
   {
     id: '2',
-    qualificationId: 'Q-2026-0043',
+    qualificationId: 'Q-DP300-TRN-002',
     category: 'Training',
     title: 'Waukesha Engine Maintenance Training',
     description: 'Maintenance technicians require specialized training on Waukesha gas engine overhaul procedures before performing independent maintenance. Training scheduled with vendor for Feb 25th 2026.',
@@ -58,7 +58,7 @@ const mockDeviations: QualificationDetail[] = [
   },
   {
     id: '3',
-    qualificationId: 'Q-2026-0044',
+    qualificationId: 'Q-DP300-DOC-003',
     category: 'Documentation',
     title: 'P&ID Update Pending',
     description: 'As-built P&IDs not yet updated to reflect field changes. Marked-up copies available at control room.',
@@ -77,7 +77,7 @@ const mockDeviations: QualificationDetail[] = [
   },
   {
     id: '4',
-    qualificationId: 'Q-2026-0045',
+    qualificationId: 'Q-DP300-SPR-004',
     category: 'Spares',
     title: 'Ariel Compressor & Heat Exchanger Spares Pending',
     description: 'Critical spares for Ariel compressor and Heat Exchanger are yet to be delivered.',
