@@ -40,10 +40,9 @@ const MyTasksPage: React.FC = () => {
   }
 
   // Determine which cards go in which column based on expanded state
+  // Expanded card always goes on the left
   const getColumnLayout = () => {
-    // Default layout:
-    // Left: PSSR (top), ORA (bottom)
-    // Right: Handover (top), OWL (bottom)
+    const allCards = ['pssr', 'ora', 'handover', 'owl'] as const;
     
     if (!expandedCard) {
       return {
@@ -53,42 +52,14 @@ const MyTasksPage: React.FC = () => {
       };
     }
 
-    switch (expandedCard) {
-      case 'pssr':
-        // PSSR expands, ORA moves to right
-        return {
-          leftColumn: ['pssr'] as const,
-          rightColumn: ['handover', 'owl', 'ora'] as const,
-          expandedSide: 'left' as const
-        };
-      case 'ora':
-        // ORA expands, PSSR moves to right
-        return {
-          leftColumn: ['ora'] as const,
-          rightColumn: ['handover', 'owl', 'pssr'] as const,
-          expandedSide: 'left' as const
-        };
-      case 'handover':
-        // Handover expands, OWL moves to left
-        return {
-          leftColumn: ['pssr', 'ora', 'owl'] as const,
-          rightColumn: ['handover'] as const,
-          expandedSide: 'right' as const
-        };
-      case 'owl':
-        // OWL expands, Handover moves to left
-        return {
-          leftColumn: ['pssr', 'ora', 'handover'] as const,
-          rightColumn: ['owl'] as const,
-          expandedSide: 'right' as const
-        };
-      default:
-        return {
-          leftColumn: ['pssr', 'ora'] as const,
-          rightColumn: ['handover', 'owl'] as const,
-          expandedSide: null as 'left' | 'right' | null
-        };
-    }
+    // Expanded card goes to left, all others go to right
+    const otherCards = allCards.filter(card => card !== expandedCard);
+    
+    return {
+      leftColumn: [expandedCard] as const,
+      rightColumn: otherCards as readonly ('pssr' | 'ora' | 'handover' | 'owl')[],
+      expandedSide: 'left' as const
+    };
   };
 
   const layout = getColumnLayout();
