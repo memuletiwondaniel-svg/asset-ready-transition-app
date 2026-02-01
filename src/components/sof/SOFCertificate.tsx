@@ -53,6 +53,7 @@ interface SOFCertificateProps {
   status: string;
   onSignComplete?: () => void;
   onRejectComplete?: () => void;
+  isViewOnly?: boolean;
 }
 
 // Mock approvers with Ali Danbous already signed, Paul pending, Marije locked
@@ -100,6 +101,7 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
   status,
   onSignComplete,
   onRejectComplete,
+  isViewOnly = false,
 }) => {
   const certificateRef = useRef<HTMLDivElement>(null);
   const [signatureDialogOpen, setSignatureDialogOpen] = useState(false);
@@ -164,7 +166,8 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
 
   // Find current user's approver entry (Paul in this mock)
   const currentUserApprover = localApprovers.find(a => a.approver_name === 'Paul Van Den Hemel');
-  const canSign = currentUserApprover?.status === 'PENDING';
+  // In view-only mode, disable signing
+  const canSign = !isViewOnly && currentUserApprover?.status === 'PENDING';
 
   const handlePrint = () => {
     window.print();
@@ -202,6 +205,8 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
       timestamp: new Date().toISOString(),
       comments: comments || undefined,
       pr2Action: pr2Action || undefined,
+      projectName: projectName,
+      pssrId: certificateNumber,
     };
     localStorage.setItem(SOF_REJECTION_ACTIVITY_KEY, JSON.stringify(activity));
 
@@ -245,6 +250,8 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
       description,
       linkedItemId,
       timestamp: new Date().toISOString(),
+      projectName: projectName,
+      pssrId: certificateNumber,
     };
     localStorage.setItem(SOF_REJECTION_ACTIVITY_KEY, JSON.stringify(activity));
 

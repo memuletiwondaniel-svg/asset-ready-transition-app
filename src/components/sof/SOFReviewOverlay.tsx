@@ -34,6 +34,7 @@ interface SOFReviewOverlayProps {
   approvers: SOFApprover[];
   issuedAt?: string;
   status: string;
+  isViewOnly?: boolean;
 }
 
 export const SOFReviewOverlay: React.FC<SOFReviewOverlayProps> = ({
@@ -48,6 +49,7 @@ export const SOFReviewOverlay: React.FC<SOFReviewOverlayProps> = ({
   approvers,
   issuedAt,
   status,
+  isViewOnly = false,
 }) => {
   const navigate = useNavigate();
   const { signOut } = useAuth();
@@ -88,6 +90,7 @@ export const SOFReviewOverlay: React.FC<SOFReviewOverlayProps> = ({
             status={status}
             onClose={handleClose}
             onExit={handleExit}
+            isViewOnly={isViewOnly}
           />
         </div>
       </DialogContent>
