@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { MyTasksPanelCard } from './MyTasksPanelCard';
 import { useUserOWLItems, OWLStatus } from '@/hooks/useUserOWLItems';
 import { useUserLastLogin } from '@/hooks/useUserLastLogin';
-import { generateMockOWLItems, MockOWLItem } from '@/hooks/useMyTasksMockData';
+
 import { cn } from '@/lib/utils';
 import { format, isPast, isToday } from 'date-fns';
 
@@ -28,12 +28,11 @@ export const OWLPanel: React.FC<OWLPanelProps> = ({
   isDimmed = false,
 }) => {
   const navigate = useNavigate();
-  const { items: realItems, stats: realStats, isLoading, updateStatus, isUpdatingStatus } = useUserOWLItems();
+  const { items: realItems, stats, isLoading, updateStatus, isUpdatingStatus } = useUserOWLItems();
   const { isNewSinceLastLogin } = useUserLastLogin();
 
-  // Use mock data if real data is empty
-  const mockData = generateMockOWLItems();
-  const rawItems = (realItems && realItems.length > 0) ? realItems : mockData;
+  // Only show real tasks assigned to the user - no mock data
+  const rawItems = realItems || [];
 
   const items = rawItems.filter(i => {
     if (!searchQuery.trim()) return true;
@@ -46,15 +45,11 @@ export const OWLPanel: React.FC<OWLPanelProps> = ({
   });
 
   const newCount = items.filter(i => isNewSinceLastLogin(i.created_at)).length;
-  
-  // Calculate stats
-  const stats = (realItems && realItems.length > 0) ? realStats : {
-    total: items.length,
-    open: items.filter(i => i.status === 'OPEN').length,
-    inProgress: items.filter(i => i.status === 'IN_PROGRESS').length,
-    overdue: items.filter(i => i.due_date && new Date(i.due_date) < new Date()).length,
-    priority1: items.filter(i => i.priority === 1).length,
-  };
+
+  // Hide panel entirely when user has no tasks assigned
+  if (!isLoading && items.length === 0) {
+    return null;
+  }
 
   const getSourceColor = (source: string) => {
     switch (source) {
@@ -123,7 +118,7 @@ export const OWLPanel: React.FC<OWLPanelProps> = ({
       {items.map((item, index) => {
         const isNew = isNewSinceLastLogin(item.created_at);
         const dueStatus = getDueStatus(item.due_date);
-        const isMock = (item as MockOWLItem).id?.startsWith('mock-');
+        // All items are real user tasks - no mock data
 
         return (
           <div
@@ -182,7 +177,7 @@ export const OWLPanel: React.FC<OWLPanelProps> = ({
                     size="sm"
                     variant="outline"
                     className="h-6 text-xs px-2"
-                    disabled={isUpdatingStatus || isMock}
+                    disabled={isUpdatingStatus}
                     onClick={() => handleStatusUpdate(item.id, 'IN_PROGRESS')}
                   >
                     Start
@@ -193,7 +188,7 @@ export const OWLPanel: React.FC<OWLPanelProps> = ({
                     size="sm"
                     variant="default"
                     className="h-6 text-xs px-2"
-                    disabled={isUpdatingStatus || isMock}
+                    disabled={isUpdatingStatus}
                     onClick={() => handleStatusUpdate(item.id, 'CLOSED')}
                   >
                     Complete
