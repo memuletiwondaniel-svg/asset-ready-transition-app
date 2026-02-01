@@ -102,9 +102,6 @@ export const SOFQualificationsPanel: React.FC<SOFQualificationsPanelProps> = ({ 
         </div>
         <div>
           <h2 className="text-lg font-semibold">Qualifications</h2>
-          <p className="text-sm text-muted-foreground">
-            The following qualifications against VCR or PSSR items have been reviewed, risk-assessed and approved with appropriate mitigations in place
-          </p>
         </div>
       </div>
 
