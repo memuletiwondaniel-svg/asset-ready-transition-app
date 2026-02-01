@@ -315,7 +315,7 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
             className="h-12 mx-auto mb-2"
           />
           <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-gray-800 to-transparent mb-2" />
-          <h3 className="text-3xl font-bold tracking-wide text-gray-900">STATEMENT OF FITNESS</h3>
+          <h3 className="text-2xl font-bold tracking-wide text-gray-900">STATEMENT OF FITNESS</h3>
           <p className="text-sm text-gray-600 mt-1">Certificate No: {certificateNumber}</p>
         </div>
 
