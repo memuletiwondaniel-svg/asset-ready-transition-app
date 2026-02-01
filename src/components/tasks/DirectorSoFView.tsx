@@ -193,46 +193,14 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
         {/* Header */}
         <div className="mb-6">
           <p className="text-muted-foreground">
-            {hasPr1Rejection 
-              ? 'Awaiting Pr1 action resolution before you can re-review'
-              : `${pendingItems.length} ${pendingItems.length === 1 ? 'SoF awaiting' : 'SoFs awaiting'} your approval`
+            {pendingItems.length > 0
+              ? `${pendingItems.length} ${pendingItems.length === 1 ? 'SoF awaiting' : 'SoFs awaiting'} your approval`
+              : recentActivity
+              ? 'No pending SoF reviews'
+              : 'You have no pending Statement of Fitness reviews'
             }
           </p>
         </div>
-
-        {/* Pr1 Rejection Banner - Shows when a Pr1 action is blocking */}
-        {hasPr1Rejection && recentActivity && (
-          <Card className="mb-6 border-red-300 bg-red-50/50 dark:bg-red-950/20 dark:border-red-800">
-            <CardContent className="p-5">
-              <div className="flex items-start gap-4">
-                <div className="h-10 w-10 rounded-full bg-red-500/10 flex items-center justify-center shrink-0">
-                  <XCircle className="h-5 w-5 text-red-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-red-800 dark:text-red-200 mb-1">
-                    Priority 1 Action Pending
-                  </h3>
-                  <p className="text-sm text-red-700 dark:text-red-300 mb-2">
-                    {recentActivity.description}
-                  </p>
-                  <div className="flex items-center gap-3 text-xs text-red-600 dark:text-red-400">
-                    <span>
-                      Rejected {formatDistanceToNow(new Date(recentActivity.timestamp), { addSuffix: true })}
-                    </span>
-                    {recentActivity.linkedItemId && (
-                      <Badge variant="outline" className="text-xs border-red-300 text-red-700">
-                        Linked: {recentActivity.linkedItemId}
-                      </Badge>
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-3">
-                    PSSR Lead has been notified. You will be able to re-review once the action is resolved.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
 
         {/* Pending SoF Items */}
         <div className="space-y-4">
