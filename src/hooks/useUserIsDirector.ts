@@ -2,9 +2,22 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 
+// The 8 director roles that get the simplified SoF-only view
+const DIRECTOR_ROLE_PATTERNS = [
+  'P&E Director',
+  'P&M Director', 
+  'HSSE Director',
+  'BNGL Director',
+  'CS Director',
+  'UQ Director',
+  'KAZ Director',
+  'NRNGL Director',
+];
+
 /**
  * Hook to check if the current user has a director-level role
  * Directors get a simplified SoF-only view in My Tasks
+ * Identified by role name matching known director patterns
  */
 export const useUserIsDirector = () => {
   const { user } = useAuth();
@@ -14,7 +27,7 @@ export const useUserIsDirector = () => {
     queryFn: async () => {
       if (!user?.id) return false;
 
-      // Get user's role_id from profile
+      // Get user's role from profile
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('role')
@@ -23,16 +36,19 @@ export const useUserIsDirector = () => {
 
       if (profileError || !profile?.role) return false;
 
-      // Check if the role is a director role
+      // Get the role name
       const { data: role, error: roleError } = await supabase
         .from('roles')
-        .select('is_director')
+        .select('name')
         .eq('id', profile.role)
         .single();
 
-      if (roleError) return false;
+      if (roleError || !role?.name) return false;
 
-      return role?.is_director === true;
+      // Check if role name matches any director pattern
+      return DIRECTOR_ROLE_PATTERNS.some(
+        pattern => role.name.toLowerCase() === pattern.toLowerCase()
+      );
     },
     enabled: !!user?.id,
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
