@@ -140,7 +140,7 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="font-mono text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
-                        {item.pssr?.pssr_id || 'PSSR'}
+                        SoF-{item.pssr?.pssr_id?.replace('PSSR-', '') || 'DP300'}
                       </span>
                       <Badge variant="secondary" className="text-xs bg-amber-500/10 text-amber-600 border-amber-500/20">
                         Pending Your Approval
@@ -191,7 +191,7 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <span className="font-mono text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
-                            {item.pssr?.pssr_id || 'PSSR'}
+                            SoF-{item.pssr?.pssr_id?.replace('PSSR-', '') || 'DP300'}
                           </span>
                           <Badge variant="outline" className="text-xs">
                             Awaiting Prerequisites
