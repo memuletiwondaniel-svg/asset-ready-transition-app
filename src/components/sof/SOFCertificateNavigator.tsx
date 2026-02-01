@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { FileText, MessageSquare, ClipboardList, ShieldAlert } from 'lucide-react';
+import { FileText, MessageSquare, ClipboardList, ShieldAlert, CheckCircle2, LogOut, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SOFCertificate } from './SOFCertificate';
 import { SOFCommentsPanel } from './SOFCommentsPanel';
 import { SOFQualificationsPanel } from './SOFQualificationsPanel';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
 
 interface SOFApprover {
@@ -27,6 +29,8 @@ interface SOFCertificateNavigatorProps {
   approvers: SOFApprover[];
   issuedAt?: string;
   status: string;
+  onClose?: () => void;
+  onExit?: () => void;
 }
 
 type TabId = 'sof' | 'comments' | 'qualifications' | 'checklists';
@@ -55,8 +59,57 @@ export const SOFCertificateNavigator: React.FC<SOFCertificateNavigatorProps> = (
   approvers,
   issuedAt,
   status,
+  onClose,
+  onExit,
 }) => {
   const [activeTab, setActiveTab] = useState<TabId>('sof');
+  const [showConfirmation, setShowConfirmation] = useState(false);
+
+  const handleSignComplete = () => {
+    setShowConfirmation(true);
+  };
+
+  // Show confirmation page after signing
+  if (showConfirmation) {
+    return (
+      <div className="flex items-center justify-center h-full p-6">
+        <Card className="w-full max-w-lg text-center border-green-500/30 bg-green-50/5">
+          <CardContent className="pt-10 pb-8">
+            <div className="w-20 h-20 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-6">
+              <CheckCircle2 className="h-10 w-10 text-green-500" />
+            </div>
+            <h1 className="text-2xl font-bold text-foreground mb-2">
+              Statement of Fitness Signed
+            </h1>
+            <p className="text-muted-foreground mb-2">
+              Your signature has been recorded successfully.
+            </p>
+            <p className="text-sm text-muted-foreground mb-8">
+              The PSSR Lead has been notified and the next approver can now proceed.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button
+                variant="outline"
+                onClick={onClose}
+                className="gap-2"
+              >
+                <ExternalLink className="h-4 w-4" />
+                Back to Dashboard
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={onExit}
+                className="gap-2 text-muted-foreground hover:text-foreground"
+              >
+                <LogOut className="h-4 w-4" />
+                Sign Out
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const renderContent = () => {
     switch (activeTab) {
@@ -71,6 +124,7 @@ export const SOFCertificateNavigator: React.FC<SOFCertificateNavigatorProps> = (
             approvers={approvers}
             issuedAt={issuedAt}
             status={status}
+            onSignComplete={handleSignComplete}
           />
         );
       case 'comments':

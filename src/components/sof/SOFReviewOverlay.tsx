@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
   DialogContent,
@@ -8,6 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { SOFCertificateNavigator } from './SOFCertificateNavigator';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 
 interface SOFApprover {
   id: string;
@@ -47,6 +49,21 @@ export const SOFReviewOverlay: React.FC<SOFReviewOverlayProps> = ({
   issuedAt,
   status,
 }) => {
+  const navigate = useNavigate();
+  const { signOut } = useAuth();
+
+  const handleClose = () => {
+    onOpenChange(false);
+    // Navigate back to dashboard/my-tasks
+    navigate('/my-tasks');
+  };
+
+  const handleExit = async () => {
+    onOpenChange(false);
+    await signOut();
+    navigate('/');
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-6xl h-[85vh] flex flex-col p-0">
@@ -69,6 +86,8 @@ export const SOFReviewOverlay: React.FC<SOFReviewOverlayProps> = ({
             approvers={approvers}
             issuedAt={issuedAt}
             status={status}
+            onClose={handleClose}
+            onExit={handleExit}
           />
         </div>
       </DialogContent>
