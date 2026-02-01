@@ -87,7 +87,7 @@ export const SOFRejectDialog: React.FC<SOFRejectDialogProps> = ({
             </Label>
             <Textarea
               id="rejectionDescription"
-              placeholder="Describe the issue and what specific action is required to close it..."
+              placeholder="Describe the issue and specific action required to close it..."
               value={rejectionDescription}
               onChange={(e) => setRejectionDescription(e.target.value)}
               className="resize-none"
