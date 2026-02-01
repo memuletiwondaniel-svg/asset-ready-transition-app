@@ -55,9 +55,8 @@ export const SignatureCanvas: React.FC<SignatureCanvasProps> = ({
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
 
-    // Fill with white background
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, width, height);
+    // Clear with transparent background
+    ctx.clearRect(0, 0, width, height);
   }, [width, height]);
 
   // Handle saved signature selection
@@ -154,8 +153,8 @@ export const SignatureCanvas: React.FC<SignatureCanvasProps> = ({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // Clear with transparent background
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     setHasSignature(false);
     setStrokeHistory([]);
     onSignatureChange?.(null);
