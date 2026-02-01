@@ -31,6 +31,7 @@ interface SOFCertificateNavigatorProps {
   status: string;
   onClose?: () => void;
   onExit?: () => void;
+  isViewOnly?: boolean;
 }
 
 type TabId = 'sof' | 'comments' | 'qualifications' | 'checklists';
@@ -61,6 +62,7 @@ export const SOFCertificateNavigator: React.FC<SOFCertificateNavigatorProps> = (
   status,
   onClose,
   onExit,
+  isViewOnly = false,
 }) => {
   const [activeTab, setActiveTab] = useState<TabId>('sof');
   const [confirmationState, setConfirmationState] = useState<'approved' | 'rejected' | null>(null);
@@ -148,6 +150,7 @@ export const SOFCertificateNavigator: React.FC<SOFCertificateNavigatorProps> = (
             status={status}
             onSignComplete={handleSignComplete}
             onRejectComplete={handleRejectComplete}
+            isViewOnly={isViewOnly}
           />
         );
       case 'comments':

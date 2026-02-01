@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle2, LogOut, ExternalLink, AlertCircle, Clock, FileCheck, FileText, XCircle, AlertTriangle } from 'lucide-react';
+import { CheckCircle2, LogOut, ExternalLink, AlertCircle, Clock, FileCheck, FileText, XCircle, AlertTriangle, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -27,6 +27,8 @@ interface RejectionActivity {
   linkedItemId?: string;
   timestamp: string;
   comments?: string;
+  pssrId?: string;
+  projectName?: string;
 }
 
 // Mock approvers for the overlay
@@ -71,16 +73,17 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
   // State for overlay
   const [overlayOpen, setOverlayOpen] = useState(false);
   const [selectedPssrId, setSelectedPssrId] = useState<string | null>(null);
+  const [isViewOnly, setIsViewOnly] = useState(false);
   
   // State for rejection activity (read from localStorage)
-  const [recentRejection, setRecentRejection] = useState<RejectionActivity | null>(null);
+  const [recentActivity, setRecentActivity] = useState<RejectionActivity | null>(null);
 
   // Read rejection activity from localStorage on mount
   useEffect(() => {
     const stored = localStorage.getItem(SOF_REJECTION_ACTIVITY_KEY);
     if (stored) {
       try {
-        setRecentRejection(JSON.parse(stored));
+        setRecentActivity(JSON.parse(stored));
       } catch (e) {
         console.error('Failed to parse rejection activity', e);
       }
@@ -88,21 +91,25 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
   }, [overlayOpen]); // Re-read when overlay closes
 
   // Filter out pending items if Pr1 rejection exists (pauses at Paul's stage)
-  const hasPr1Rejection = recentRejection?.type === 'rejected' && recentRejection?.priorityLevel === 'Pr1';
+  const hasPr1Rejection = recentActivity?.type === 'rejected' && recentActivity?.priorityLevel === 'Pr1';
+  // Also hide from pending if just approved
+  const hasRecentApproval = recentActivity?.type === 'approved';
 
   const pendingItems = sofItems?.filter(item => {
-    // If there's a Pr1 rejection, hide the pending SoF from the list
-    if (hasPr1Rejection) return false;
+    // If there's a Pr1 rejection or approval, hide the pending SoF from the list
+    if (hasPr1Rejection || hasRecentApproval) return false;
     return item.status === 'PENDING';
   }) || [];
   const lockedItems = sofItems?.filter(item => item.status === 'LOCKED') || [];
-  const allDone = !isLoading && pendingItems.length === 0 && !hasPr1Rejection;
+  // Show "all done" only if no pending items AND no recent activity to display
+  const allDone = !isLoading && pendingItems.length === 0 && !hasPr1Rejection && !hasRecentApproval;
 
   const firstName = userName?.split(' ')[0] || 'there';
 
-  const handleViewSoF = (pssrId: string) => {
-    // Open the overlay instead of navigating
+  const handleViewSoF = (pssrId: string, viewOnly: boolean = false) => {
+    // Open the overlay
     setSelectedPssrId(pssrId);
+    setIsViewOnly(viewOnly);
     setOverlayOpen(true);
   };
 
@@ -194,7 +201,7 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
         </div>
 
         {/* Pr1 Rejection Banner - Shows when a Pr1 action is blocking */}
-        {hasPr1Rejection && recentRejection && (
+        {hasPr1Rejection && recentActivity && (
           <Card className="mb-6 border-red-300 bg-red-50/50 dark:bg-red-950/20 dark:border-red-800">
             <CardContent className="p-5">
               <div className="flex items-start gap-4">
@@ -206,15 +213,15 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                     Priority 1 Action Pending
                   </h3>
                   <p className="text-sm text-red-700 dark:text-red-300 mb-2">
-                    {recentRejection.description}
+                    {recentActivity.description}
                   </p>
                   <div className="flex items-center gap-3 text-xs text-red-600 dark:text-red-400">
                     <span>
-                      Rejected {formatDistanceToNow(new Date(recentRejection.timestamp), { addSuffix: true })}
+                      Rejected {formatDistanceToNow(new Date(recentActivity.timestamp), { addSuffix: true })}
                     </span>
-                    {recentRejection.linkedItemId && (
+                    {recentActivity.linkedItemId && (
                       <Badge variant="outline" className="text-xs border-red-300 text-red-700">
-                        Linked: {recentRejection.linkedItemId}
+                        Linked: {recentActivity.linkedItemId}
                       </Badge>
                     )}
                   </div>
@@ -347,7 +354,7 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
           )}
         </div>
 
-        {/* Recent Activity Section */}
+        {/* Recent Activity Section - always visible */}
         <div className="mt-10 pt-6 border-t border-border/40">
           <h3 className="text-sm font-medium text-muted-foreground mb-4 flex items-center gap-2">
             <Clock className="h-4 w-4" />
@@ -355,19 +362,22 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
           </h3>
           <div className="space-y-3">
             {/* Dynamic activity from recent rejection/approval */}
-            {recentRejection && (
-              <div className="flex items-start gap-3 text-sm">
+            {recentActivity && (
+              <div 
+                className="flex items-start gap-3 text-sm p-3 -mx-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors group"
+                onClick={() => handleViewSoF('mock-pssr-id', true)}
+              >
                 <div className={cn(
                   "h-8 w-8 rounded-full flex items-center justify-center shrink-0",
-                  recentRejection.type === 'approved' 
+                  recentActivity.type === 'approved' 
                     ? "bg-green-500/10" 
-                    : recentRejection.priorityLevel === 'Pr1'
+                    : recentActivity.priorityLevel === 'Pr1'
                     ? "bg-red-500/10"
                     : "bg-amber-500/10"
                 )}>
-                  {recentRejection.type === 'approved' ? (
+                  {recentActivity.type === 'approved' ? (
                     <FileCheck className="h-4 w-4 text-green-600" />
-                  ) : recentRejection.priorityLevel === 'Pr1' ? (
+                  ) : recentActivity.priorityLevel === 'Pr1' ? (
                     <XCircle className="h-4 w-4 text-red-600" />
                   ) : (
                     <AlertTriangle className="h-4 w-4 text-amber-600" />
@@ -375,34 +385,35 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-foreground">
-                    {recentRejection.type === 'approved' ? (
-                      <>Signed SoF for <span className="font-medium">HM Additional Compressors</span></>
+                    {recentActivity.type === 'approved' ? (
+                      <>Signed SoF for <span className="font-medium">{recentActivity.projectName || 'HM Additional Compressors'}</span></>
                     ) : (
                       <>
-                        Rejected SoF for <span className="font-medium">HM Additional Compressors</span>
+                        Rejected SoF for <span className="font-medium">{recentActivity.projectName || 'HM Additional Compressors'}</span>
                         <Badge 
                           variant="outline" 
                           className={cn(
                             "ml-2 text-xs",
-                            recentRejection.priorityLevel === 'Pr1' 
+                            recentActivity.priorityLevel === 'Pr1' 
                               ? "border-red-300 text-red-700" 
                               : "border-amber-300 text-amber-700"
                           )}
                         >
-                          {recentRejection.priorityLevel}
+                          {recentActivity.priorityLevel}
                         </Badge>
                       </>
                     )}
                   </p>
-                  {recentRejection.type === 'rejected' && recentRejection.description && (
+                  {recentActivity.type === 'rejected' && recentActivity.description && (
                     <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
-                      {recentRejection.description}
+                      {recentActivity.description}
                     </p>
                   )}
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    {formatDistanceToNow(new Date(recentRejection.timestamp), { addSuffix: true })}
+                    {formatDistanceToNow(new Date(recentActivity.timestamp), { addSuffix: true })}
                   </p>
                 </div>
+                <Eye className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
             )}
 
@@ -463,7 +474,8 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
           facilityName="Hammar Mishrif"
           projectName="DP-300 HM Additional Compressors"
           approvers={getMockApproversForOverlay()}
-          status="PENDING_SIGNATURE"
+          status={isViewOnly ? 'COMPLETED' : 'PENDING_SIGNATURE'}
+          isViewOnly={isViewOnly}
         />
       )}
     </div>
