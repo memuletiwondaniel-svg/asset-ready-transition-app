@@ -486,7 +486,7 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground/60">
-                    {formatDistanceToNow(new Date(recentActivity.timestamp), { addSuffix: true })}
+                    {formatDistanceToNow(new Date(recentActivity.timestamp), { addSuffix: true }).replace('about ', '')}
                   </p>
                 </div>
                 <Eye className="h-3.5 w-3.5 text-muted-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -507,7 +507,7 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                   <span className="font-medium text-foreground/80">OT2/3 Gas Feed to CS6/7</span>
                 </p>
                 <p className="text-xs text-muted-foreground/60">
-                  {formatDistanceToNow(new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), { addSuffix: true })}
+                  {formatDistanceToNow(new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), { addSuffix: true }).replace('about ', '')}
                 </p>
               </div>
               <Eye className="h-3.5 w-3.5 text-muted-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -525,7 +525,7 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                   <span className="font-medium text-foreground/80">HM LLP Gas Capture</span>
                 </p>
                 <p className="text-xs text-muted-foreground/60">
-                  {formatDistanceToNow(new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), { addSuffix: true })}
+                  {formatDistanceToNow(new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), { addSuffix: true }).replace('about ', '')}
                 </p>
               </div>
               <Eye className="h-3.5 w-3.5 text-muted-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -539,7 +539,7 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                   Reviewed <span className="font-medium text-foreground/80">BGC P2A Heatmap</span>
                 </p>
                 <p className="text-xs text-muted-foreground/60">
-                  {formatDistanceToNow(new Date(Date.now() - 8 * 24 * 60 * 60 * 1000), { addSuffix: true })}
+                  {formatDistanceToNow(new Date(Date.now() - 8 * 24 * 60 * 60 * 1000), { addSuffix: true }).replace('about ', '')}
                 </p>
               </div>
               <Eye className="h-3.5 w-3.5 text-muted-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity" />
