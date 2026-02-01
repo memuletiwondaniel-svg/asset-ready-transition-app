@@ -431,16 +431,22 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-foreground">
+                  <p className="text-foreground flex items-center gap-1.5 flex-wrap">
                     {recentActivity.type === 'approved' ? (
-                      <>Signed SoF for <span className="font-medium">{recentActivity.projectName || 'HM Additional Compressors'}</span></>
+                      <>
+                        Signed SoF for{' '}
+                        <ProjectIdBadge projectId="DP300" className="text-[10px] px-1.5 py-0">DP-300</ProjectIdBadge>
+                        <span className="font-medium">{recentActivity.projectName || 'HM Additional Compressors'}</span>
+                      </>
                     ) : (
                       <>
-                        Rejected SoF for <span className="font-medium">{recentActivity.projectName || 'HM Additional Compressors'}</span>
+                        Rejected SoF for{' '}
+                        <ProjectIdBadge projectId="DP300" className="text-[10px] px-1.5 py-0">DP-300</ProjectIdBadge>
+                        <span className="font-medium">{recentActivity.projectName || 'HM Additional Compressors'}</span>
                         <Badge 
                           variant="outline" 
                           className={cn(
-                            "ml-2 text-xs",
+                            "ml-1 text-xs",
                             recentActivity.priorityLevel === 'Pr1' 
                               ? "border-red-300 text-red-700" 
                               : "border-amber-300 text-amber-700"
@@ -486,8 +492,10 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                 <FileCheck className="h-4 w-4 text-green-600" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-foreground">
-                  Signed SoF for <span className="font-medium">CS6 Produced Water</span>
+                <p className="text-foreground flex items-center gap-1.5 flex-wrap">
+                  Signed SoF for{' '}
+                  <ProjectIdBadge projectId="DP280" className="text-[10px] px-1.5 py-0">DP-280</ProjectIdBadge>
+                  <span className="font-medium">CS6 Produced Water</span>
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {formatDistanceToNow(new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), { addSuffix: true })}
@@ -499,8 +507,10 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                 <FileCheck className="h-4 w-4 text-green-600" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-foreground">
-                  Signed SoF for <span className="font-medium">MJ North Manifold</span>
+                <p className="text-foreground flex items-center gap-1.5 flex-wrap">
+                  Signed SoF for{' '}
+                  <ProjectIdBadge projectId="DP255" className="text-[10px] px-1.5 py-0">DP-255</ProjectIdBadge>
+                  <span className="font-medium">MJ North Manifold</span>
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {formatDistanceToNow(new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), { addSuffix: true })}
@@ -512,8 +522,10 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                 <FileText className="h-4 w-4 text-blue-600" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-foreground">
-                  Reviewed VCR for <span className="font-medium">RM Degassing Station</span>
+                <p className="text-foreground flex items-center gap-1.5 flex-wrap">
+                  Reviewed VCR for{' '}
+                  <ProjectIdBadge projectId="DP230" className="text-[10px] px-1.5 py-0">DP-230</ProjectIdBadge>
+                  <span className="font-medium">RM Degassing Station</span>
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {formatDistanceToNow(new Date(Date.now() - 8 * 24 * 60 * 60 * 1000), { addSuffix: true })}
