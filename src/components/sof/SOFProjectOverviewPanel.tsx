@@ -45,10 +45,17 @@ const dp385ProjectData = {
     { id: '4', name: 'Operating Mode Assurance Review', dateRange: 'Feb 15 - Mar 1', progress: 45, status: 'in_progress' },
     { id: '5', name: 'Pre-Startup Safety Review', dateRange: 'Mar 1 - Mar 15', progress: 0, status: 'pending' },
   ],
+  vcrsAndPssrs: [
+    { id: 'VCR-001', name: 'Utility System Handover', type: 'vcr', status: 'in_progress', progress: 75 },
+    { id: 'VCR-002', name: 'OT2 to CS7 Pipeline', type: 'vcr', status: 'in_progress', progress: 45 },
+    { id: 'VCR-003', name: 'OT3 to CS6 Pipeline', type: 'vcr', status: 'pending', progress: 20 },
+    { id: 'PSSR-002', name: 'OT2 to CS7 Pipeline Start-up', type: 'pssr', status: 'pending', progress: 0 },
+    { id: 'PSSR-003', name: 'OT3 to CS6 Pipeline Start-up', type: 'pssr', status: 'pending', progress: 0 },
+  ],
   pssrSummary: {
-    total: 1,
+    total: 5,
     completed: 0,
-    inProgress: 1,
+    inProgress: 2,
     currentPssr: 'DP-385 BGC Tie-in PSSR',
   },
 };
@@ -72,6 +79,7 @@ const defaultProjectData = {
     { id: '3', name: 'Reliability Availability Modelling', dateRange: 'Feb 1 - Mar 15', progress: 0, status: 'pending' },
     { id: '4', name: 'Operating Mode Assurance Review', dateRange: 'Feb 15 - Mar 1', progress: 0, status: 'pending' },
   ],
+  vcrsAndPssrs: [],
   pssrSummary: {
     total: 0,
     completed: 0,
@@ -341,47 +349,53 @@ export const SOFProjectOverviewPanel: React.FC<SOFProjectOverviewPanelProps> = (
               className="h-full overflow-y-auto pr-2"
               onWheel={handleWidgetScroll}
             >
-              {projectData.pssrSummary.total === 0 ? (
+              {projectData.vcrsAndPssrs.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-8 text-center">
                   <div className="p-3 rounded-full bg-muted/50 mb-3">
                     <FileText className="h-6 w-6 text-muted-foreground/50" />
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    No PSSRs found for this project
+                    No VCRs or PSSRs found for this project
                   </p>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  {/* Current PSSR */}
-                  <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                    <div className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
-                      <div>
-                        <p className="text-xs font-medium text-amber-800 dark:text-amber-200">
-                          Active PSSR
-                        </p>
-                        <p className="text-xs text-amber-700 dark:text-amber-300 mt-0.5">
-                          {projectData.pssrSummary.currentPssr}
-                        </p>
+                <div className="space-y-2">
+                  {projectData.vcrsAndPssrs.map((item) => (
+                    <div 
+                      key={item.id}
+                      className={cn(
+                        "p-2.5 rounded-lg border transition-colors cursor-pointer hover:bg-muted/40",
+                        item.type === 'vcr' 
+                          ? "bg-blue-500/5 border-blue-500/20" 
+                          : "bg-amber-500/5 border-amber-500/20"
+                      )}
+                    >
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <Badge 
+                          variant="outline" 
+                          className={cn(
+                            "text-[10px] px-1.5 py-0 font-medium",
+                            item.type === 'vcr' 
+                              ? "bg-blue-500/10 border-blue-500/30 text-blue-700 dark:text-blue-400" 
+                              : "bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-400"
+                          )}
+                        >
+                          {item.id}
+                        </Badge>
+                        <div className={cn(
+                          "w-1.5 h-1.5 rounded-full flex-shrink-0",
+                          item.status === 'completed' ? "bg-emerald-500" :
+                          item.status === 'in_progress' ? "bg-blue-500" : "bg-muted-foreground/40"
+                        )} />
                       </div>
+                      <p className="text-xs font-medium truncate">{item.name}</p>
+                      {item.progress > 0 && (
+                        <div className="mt-1.5">
+                          <Progress value={item.progress} className="h-1" />
+                        </div>
+                      )}
                     </div>
-                  </div>
-
-                  {/* Stats */}
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="p-3 rounded-lg bg-muted/30 border border-border/40 text-center">
-                      <p className="text-lg font-bold text-foreground">
-                        {projectData.pssrSummary.inProgress}
-                      </p>
-                      <p className="text-[10px] text-muted-foreground uppercase">In Progress</p>
-                    </div>
-                    <div className="p-3 rounded-lg bg-muted/30 border border-border/40 text-center">
-                      <p className="text-lg font-bold text-foreground">
-                        {projectData.pssrSummary.completed}
-                      </p>
-                      <p className="text-[10px] text-muted-foreground uppercase">Completed</p>
-                    </div>
-                  </div>
+                  ))}
                 </div>
               )}
             </div>
