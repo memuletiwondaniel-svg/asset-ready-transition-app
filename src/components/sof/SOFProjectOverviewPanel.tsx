@@ -1,19 +1,27 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Users, Target, FileText, Building, MapPin, Layers, Calendar, FolderOpen, CheckCircle2, Clock, CalendarDays, AlertTriangle, UserCircle } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { StyledWidgetIcon } from '@/components/widgets/StyledWidgetIcon';
 import { Progress } from '@/components/ui/progress';
+import { supabase } from '@/integrations/supabase/client';
 
 interface SOFProjectOverviewPanelProps {
   pssrId: string;
 }
 
-// DP385-specific mock data
+// Helper to get avatar URL from Supabase storage
+const getAvatarUrl = (avatarPath: string | null): string | null => {
+  if (!avatarPath) return null;
+  if (avatarPath.startsWith('http')) return avatarPath;
+  return supabase.storage.from('user-avatars').getPublicUrl(avatarPath).data.publicUrl;
+};
+
+// DP385-specific mock data with real user data
 const dp385ProjectData = {
   projectId: 'DP-385',
   title: 'OT2/3 Gas Feed to CS6/7',
@@ -21,12 +29,13 @@ const dp385ProjectData = {
   plant: 'CS',
   station: 'West Qurna 1 (WQ1)',
   hub: 'South Hub - BGC Integration',
-  projectImage: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800&auto=format&fit=crop&q=60',
+  projectImage: 'https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=800&auto=format&fit=crop&q=60',
   teamMembers: [
-    { name: 'Abdulaziz Abdulrahman', role: 'BOM West Qurna', isLead: true },
-    { name: 'Rashid Al-Mansour', role: 'I&C Lead Engineer', isLead: false },
-    { name: 'Ewan McConnachie', role: 'ORA Lead', isLead: false },
-    { name: 'Hassan Ibrahim', role: 'SAP Maintenance Planner', isLead: false },
+    { name: 'Mousa Al-Tarazi', role: 'Project Hub Lead', isLead: true, avatarUrl: '0e5dfc5e-070d-49f5-87e1-dd410145decd/1764587235433.jpg' },
+    { name: 'Azamat Kenzhin', role: 'Snr. ORA Engr.', isLead: false, avatarUrl: '8ce8256c-b708-4c32-878b-623a56d596ce/1768916655721.jpg' },
+    { name: 'Ahmed Salah', role: 'CSU Lead', isLead: false, avatarUrl: '3f3993ec-f7f3-4f07-990c-180ddb897761/1764587082751.png' },
+    { name: 'Ali Zachi', role: 'Construction Lead', isLead: false, avatarUrl: '08fab8c4-9ac1-4646-a823-b62761fd1c58/1764599870575.png' },
+    { name: 'Ahmed Raheem', role: 'Project Engr.', isLead: false, avatarUrl: '5f1600b1-8b23-4a5c-9a31-774d3dc7181e/1764591721491.png' },
   ],
   oraActivities: [
     { id: '1', name: 'Hazard Operability Study (HAZOP)', dateRange: 'Dec 15 - Jan 15', progress: 100, status: 'completed' },
@@ -50,11 +59,11 @@ const defaultProjectData = {
   plant: 'CS',
   station: 'Rumaila',
   hub: 'Central Hub',
-  projectImage: 'https://images.unsplash.com/photo-1587293852726-70cdb56c2866?w=800&auto=format&fit=crop&q=60',
+  projectImage: 'https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=800&auto=format&fit=crop&q=60',
   teamMembers: [
-    { name: 'Stuart Lugo', role: 'Static TA2 (P&E)', isLead: true },
-    { name: 'Victor Liew', role: 'Project Hub Lead', isLead: false },
-    { name: 'Mohamed Ali', role: 'ORA Engr.', isLead: false },
+    { name: 'Stuart Lugo', role: 'Static TA2 (P&E)', isLead: true, avatarUrl: null },
+    { name: 'Victor Liew', role: 'Project Hub Lead', isLead: false, avatarUrl: null },
+    { name: 'Mohamed Ali', role: 'ORA Engr.', isLead: false, avatarUrl: null },
   ],
   oraActivities: [
     { id: '1', name: 'Hazard Operability Study (HAZOP)', dateRange: 'Dec 15 - Jan 15', progress: 65, status: 'in_progress' },
@@ -218,6 +227,9 @@ export const SOFProjectOverviewPanel: React.FC<SOFProjectOverviewPanelProps> = (
                         "h-7 w-7 ring-1 ring-background",
                         member.isLead && "ring-primary/30"
                       )}>
+                        {member.avatarUrl ? (
+                          <AvatarImage src={getAvatarUrl(member.avatarUrl)} alt={member.name} />
+                        ) : null}
                         <AvatarFallback className="bg-primary/10 text-primary text-[10px] font-medium">
                           {getInitials(member.name)}
                         </AvatarFallback>
