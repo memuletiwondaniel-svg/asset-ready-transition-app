@@ -88,9 +88,9 @@ export const SOFCertificateNavigator: React.FC<SOFCertificateNavigatorProps> = (
   };
 
   return (
-    <div className="flex h-full min-h-[600px]">
+    <div className="flex h-full min-h-0">
       {/* Left Sidebar Navigation */}
-      <div className="w-48 flex-shrink-0 border-r border-border bg-muted/30">
+      <div className="w-48 flex-shrink-0 border-r border-border bg-muted/30 overflow-y-auto">
         <div className="p-3">
           <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
             Navigate
@@ -127,7 +127,7 @@ export const SOFCertificateNavigator: React.FC<SOFCertificateNavigatorProps> = (
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 overflow-auto p-4">
+      <div className="flex-1 overflow-y-auto p-4">
         {renderContent()}
       </div>
     </div>

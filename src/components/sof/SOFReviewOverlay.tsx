@@ -2,8 +2,12 @@ import React from 'react';
 import {
   Dialog,
   DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { SOFCertificateNavigator } from './SOFCertificateNavigator';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 
 interface SOFApprover {
   id: string;
@@ -45,18 +49,28 @@ export const SOFReviewOverlay: React.FC<SOFReviewOverlayProps> = ({
 }) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden p-0">
-        <SOFCertificateNavigator
-          pssrId={pssrId}
-          certificateNumber={certificateNumber}
-          pssrReason={pssrReason}
-          plantName={plantName}
-          facilityName={facilityName}
-          projectName={projectName}
-          approvers={approvers}
-          issuedAt={issuedAt}
-          status={status}
-        />
+      <DialogContent className="max-w-6xl h-[85vh] flex flex-col p-0">
+        <VisuallyHidden>
+          <DialogHeader>
+            <DialogTitle>Statement of Fitness Review</DialogTitle>
+            <DialogDescription>
+              Review and sign the Statement of Fitness certificate
+            </DialogDescription>
+          </DialogHeader>
+        </VisuallyHidden>
+        <div className="flex-1 overflow-hidden">
+          <SOFCertificateNavigator
+            pssrId={pssrId}
+            certificateNumber={certificateNumber}
+            pssrReason={pssrReason}
+            plantName={plantName}
+            facilityName={facilityName}
+            projectName={projectName}
+            approvers={approvers}
+            issuedAt={issuedAt}
+            status={status}
+          />
+        </div>
       </DialogContent>
     </Dialog>
   );
