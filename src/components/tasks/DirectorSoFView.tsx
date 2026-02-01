@@ -135,11 +135,11 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
               <CardContent className="p-5">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2">
-                      <ProjectIdBadge size="sm" projectId={pssrId}>
+                    <div className="flex items-center gap-3 mb-2">
+                      <ProjectIdBadge projectId={pssrId}>
                         {pssrId}
                       </ProjectIdBadge>
-                      <h3 className="font-semibold text-lg truncate">
+                      <h3 className="font-semibold text-base truncate">
                         {projectName}
                       </h3>
                     </div>
@@ -197,11 +197,11 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                     <CardContent className="p-5">
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-2">
-                            <ProjectIdBadge size="sm" projectId={pssrId}>
+                          <div className="flex items-center gap-3 mb-2">
+                            <ProjectIdBadge projectId={pssrId}>
                               {pssrId}
                             </ProjectIdBadge>
-                            <h3 className="font-medium truncate">
+                            <h3 className="font-medium text-base truncate">
                               {projectName}
                             </h3>
                           </div>
