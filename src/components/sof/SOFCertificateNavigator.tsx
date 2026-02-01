@@ -43,12 +43,15 @@ interface TabItem {
   count?: number;
 }
 
-const tabs: TabItem[] = [
-  { id: 'sof', label: 'SoF Certificate', icon: <FileText className="h-4 w-4" /> },
-  { id: 'comments', label: 'Comments', icon: <MessageSquare className="h-4 w-4" /> },
-  { id: 'qualifications', label: 'Qualifications', icon: <ShieldAlert className="h-4 w-4" />, count: 4 },
-  { id: 'checklists', label: 'Checklists', icon: <ClipboardList className="h-4 w-4" /> },
-];
+const getTabsForPssr = (pssrId: string): TabItem[] => {
+  const isDP385 = pssrId === 'mock-pssr-dp385';
+  return [
+    { id: 'sof', label: 'SoF Certificate', icon: <FileText className="h-4 w-4" /> },
+    { id: 'comments', label: 'Comments', icon: <MessageSquare className="h-4 w-4" /> },
+    { id: 'qualifications', label: 'Qualifications', icon: <ShieldAlert className="h-4 w-4" />, count: isDP385 ? 5 : 4 },
+    { id: 'checklists', label: 'Checklists', icon: <ClipboardList className="h-4 w-4" /> },
+  ];
+};
 
 export const SOFCertificateNavigator: React.FC<SOFCertificateNavigatorProps> = ({
   pssrId,
@@ -178,7 +181,7 @@ export const SOFCertificateNavigator: React.FC<SOFCertificateNavigatorProps> = (
             Navigate
           </h3>
           <nav className="space-y-1">
-            {tabs.map((tab) => (
+            {getTabsForPssr(pssrId).map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
@@ -212,7 +215,9 @@ export const SOFCertificateNavigator: React.FC<SOFCertificateNavigatorProps> = (
           <div className="text-xs text-muted-foreground space-y-2">
             <p className="font-medium text-foreground">Certificate</p>
             <p className="truncate">{certificateNumber}</p>
-            <p className="font-medium text-foreground mt-4">Reason</p>
+          </div>
+          <div className="text-xs text-muted-foreground space-y-2 mt-6">
+            <p className="font-medium text-foreground">Reason</p>
             <p className="line-clamp-2">{pssrReason}</p>
           </div>
         </div>
