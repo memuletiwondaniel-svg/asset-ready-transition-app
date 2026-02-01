@@ -146,12 +146,14 @@ export default function ProjectDetailsPage() {
 
   const visibleWidgets = widgetOrder.filter(id => !hiddenWidgets.includes(id));
 
+  const projectCode = project ? `${project.project_id_prefix}-${project.project_id_number}` : '';
+
   const renderWidget = (widgetId: string) => {
     switch (widgetId) {
       case 'orp':
         return <ORPActivityPlanWidget projectId={id || ''} />;
       case 'pssr':
-        return <PSSRSummaryWidget projectId={id || ''} />;
+        return <PSSRSummaryWidget projectId={id || ''} projectCode={projectCode} />;
       case 'p2a':
         return <P2AHandoverWidget projectId={id || ''} />;
       case 'cost':
