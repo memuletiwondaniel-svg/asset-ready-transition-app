@@ -410,15 +410,15 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
             <Clock className="h-4 w-4" />
             Recent Activity
           </h3>
-          <div className="space-y-3">
+          <div className="space-y-1">
             {/* Dynamic activity from recent rejection/approval */}
             {recentActivity && (
               <div 
-                className="flex items-start gap-3 text-sm p-3 -mx-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors group"
+                className="flex items-center gap-2.5 text-sm py-2 px-2 -mx-2 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors group"
                 onClick={() => handleViewSoF('mock-pssr-id', true)}
               >
                 <div className={cn(
-                  "h-8 w-8 rounded-full flex items-center justify-center shrink-0",
+                  "h-6 w-6 rounded-full flex items-center justify-center shrink-0",
                   recentActivity.type === 'approved' 
                     ? "bg-green-500/10" 
                     : recentActivity.priorityLevel === 'Pr1'
@@ -426,15 +426,15 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                     : "bg-amber-500/10"
                 )}>
                   {recentActivity.type === 'approved' ? (
-                    <FileCheck className="h-4 w-4 text-green-600" />
+                    <FileCheck className="h-3.5 w-3.5 text-green-600" />
                   ) : recentActivity.priorityLevel === 'Pr1' ? (
-                    <XCircle className="h-4 w-4 text-red-600" />
+                    <XCircle className="h-3.5 w-3.5 text-red-600" />
                   ) : (
-                    <AlertTriangle className="h-4 w-4 text-amber-600" />
+                    <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-foreground">
+                  <p className="text-foreground text-sm leading-snug">
                     {recentActivity.type === 'approved' ? (
                       <>
                         Signed SoF for <span className="font-mono text-muted-foreground">DP-300:</span>{' '}
@@ -489,14 +489,14 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
 
             {/* Static mock activities */}
             <div 
-              className="flex items-start gap-3 text-sm p-3 -mx-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors group"
+              className="flex items-center gap-2.5 text-sm py-2 px-2 -mx-2 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors group"
               onClick={() => handleViewSoF('mock-pssr-dp385', true)}
             >
-              <div className="h-8 w-8 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
-                <FileCheck className="h-4 w-4 text-green-600" />
+              <div className="h-6 w-6 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
+                <FileCheck className="h-3.5 w-3.5 text-green-600" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-foreground">
+                <p className="text-foreground text-sm leading-snug">
                   Signed SoF for <span className="font-mono text-muted-foreground">DP-385:</span>{' '}
                   <span className="font-medium">OT2/3 Gas Feed to CS6/7</span>
                 </p>
@@ -507,14 +507,14 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
               <Eye className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
             <div 
-              className="flex items-start gap-3 text-sm p-3 -mx-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors group"
+              className="flex items-center gap-2.5 text-sm py-2 px-2 -mx-2 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors group"
               onClick={() => handleViewSoF('mock-pssr-dp40', true)}
             >
-              <div className="h-8 w-8 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
-                <FileCheck className="h-4 w-4 text-green-600" />
+              <div className="h-6 w-6 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
+                <FileCheck className="h-3.5 w-3.5 text-green-600" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-foreground">
+                <p className="text-foreground text-sm leading-snug">
                   Signed SoF for <span className="font-mono text-muted-foreground">DP-40:</span>{' '}
                   <span className="font-medium">HM LLP Gas Capture</span>
                 </p>
@@ -524,12 +524,12 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
               </div>
               <Eye className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
-            <div className="flex items-start gap-3 text-sm p-3 -mx-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors group">
-              <div className="h-8 w-8 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0">
-                <FileText className="h-4 w-4 text-blue-600" />
+            <div className="flex items-center gap-2.5 text-sm py-2 px-2 -mx-2 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors group">
+              <div className="h-6 w-6 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0">
+                <FileText className="h-3.5 w-3.5 text-blue-600" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-foreground">
+                <p className="text-foreground text-sm leading-snug">
                   Reviewed VCR for <span className="font-mono text-muted-foreground">DP-230:</span>{' '}
                   <span className="font-medium">RM Degassing Station</span>
                 </p>
