@@ -3,11 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { ClipboardCheck, Shield, Wrench, AlertTriangle, Settings, User } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { ProjectIdBadge } from '@/components/ui/project-id-badge';
 import { MyTasksPanelCard } from './MyTasksPanelCard';
 import { usePSSRsAwaitingReview } from '@/hooks/usePSSRItemApprovals';
 import { useUserLastLogin } from '@/hooks/useUserLastLogin';
 import { generateMockPSSRReviews, MockPSSRReview } from '@/hooks/useMyTasksMockData';
-import { getAssetColor, getAssetAbbreviation, getUrgencyBackground, getUrgencyGlow } from '@/utils/assetColors';
+import { getUrgencyBackground, getUrgencyGlow } from '@/utils/assetColors';
 import { cn } from '@/lib/utils';
 
 interface PSSRReviewsPanelProps {
@@ -41,24 +42,16 @@ function getRoleIcon(role: string | undefined): React.ReactNode {
   return <User className="h-3 w-3" />;
 }
 
-// Helper function to get item count styling
-function getItemCountStyle(count: number): { containerClass: string; textClass: string } {
-  if (count >= 10) {
-    return {
-      containerClass: 'bg-primary/10 px-1.5 py-0.5 rounded',
-      textClass: 'text-primary font-medium',
-    };
+// Extract project code from project name or PSSR ID (e.g., "DP-300" from "PSSR-DP300-001")
+function extractProjectCode(pssrId?: string, projectName?: string): string | null {
+  // Try to extract from PSSR ID first (format: PSSR-DP300-001)
+  if (pssrId) {
+    const match = pssrId.match(/PSSR-([A-Z]+)(\d+)/i);
+    if (match) {
+      return `${match[1].toUpperCase()}-${match[2]}`;
+    }
   }
-  if (count >= 5) {
-    return {
-      containerClass: 'bg-muted/50 px-1.5 py-0.5 rounded',
-      textClass: 'text-muted-foreground',
-    };
-  }
-  return {
-    containerClass: '',
-    textClass: 'text-muted-foreground',
-  };
+  return null;
 }
 
 export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({ 
@@ -119,81 +112,78 @@ export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({
         const pssr = item.pssr;
         const isMock = (item as MockPSSRReview).id?.startsWith('mock-');
         
-        // Get asset-based styling
-        const assetColors = getAssetColor(pssr?.asset);
-        const assetAbbr = getAssetAbbreviation(pssr?.asset);
+        // Get urgency-based styling
         const urgencyBg = getUrgencyBackground(daysPending);
         const urgencyGlow = getUrgencyGlow(daysPending);
-        const itemCountStyle = getItemCountStyle(item.itemCount || 0);
+        
+        // Extract project code for badge
+        const projectCode = extractProjectCode(pssr?.pssr_id);
         const roleIcon = getRoleIcon(item.approverRole);
 
         return (
           <div
             key={pssr?.id || item.pendingSince}
             className={cn(
-              "p-3 rounded-lg border-l-[3px] border transition-all cursor-pointer group/item",
+              "p-3 rounded-lg border transition-all cursor-pointer group/item",
               "hover:shadow-sm hover:border-primary/20",
-              // Asset-based left border
-              assetColors.borderClass,
-              // Urgency-based background
               urgencyBg,
               urgencyGlow,
-              // New item indicator (overrides left border with primary)
-              isNew && "border-l-primary",
+              isNew && "border-l-2 border-l-primary",
               "animate-fade-in"
             )}
             style={{ animationDelay: `${index * 50}ms` }}
             onClick={() => !isMock && navigate(`/pssr/${pssr?.id}/review`)}
           >
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0 space-y-1.5">
+                {/* Row 1: Project ID (primary emphasis) + NEW badge */}
                 <div className="flex items-center gap-2">
-                  <span className="font-medium text-sm truncate">
-                    {pssr?.pssr_id || 'Unknown PSSR'}
-                  </span>
+                  {projectCode ? (
+                    <ProjectIdBadge size="sm">{projectCode}</ProjectIdBadge>
+                  ) : (
+                    <span className="text-xs text-muted-foreground font-mono">
+                      {pssr?.pssr_id || 'Unknown'}
+                    </span>
+                  )}
                   {isNew && (
                     <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-primary/10 text-primary">
                       NEW
                     </Badge>
                   )}
                 </div>
-                <div className="flex items-center gap-2 mt-0.5">
+                
+                {/* Row 2: Project Name */}
+                <p className="text-sm font-medium truncate">
+                  {pssr?.project_name || 'Unknown Project'}
+                </p>
+                
+                {/* Row 3: Location (Asset) */}
+                {pssr?.asset && (
                   <p className="text-xs text-muted-foreground truncate">
-                    {pssr?.project_name || 'Unknown Project'}
+                    {pssr.asset}
                   </p>
-                  {assetAbbr && (
-                    <span 
-                      className={cn(
-                        "text-[10px] font-medium px-1.5 py-0.5 rounded",
-                        assetColors.badgeBgClass,
-                        assetColors.badgeTextClass
-                      )}
-                    >
-                      {assetAbbr}
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-2 mt-1.5">
-                  <span className={cn("text-xs flex items-center gap-1", itemCountStyle.containerClass)}>
-                    <span className={itemCountStyle.textClass}>
-                      {item.itemCount || 0} items
-                    </span>
-                  </span>
-                  <span className="text-xs text-muted-foreground">•</span>
-                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                )}
+                
+                {/* Row 4: Item count + Role */}
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <span className="font-medium">{item.itemCount || 0} items</span>
+                  <span>•</span>
+                  <span className="flex items-center gap-1">
                     {roleIcon}
-                    <span className="truncate max-w-[120px]">
+                    <span className="truncate max-w-[100px]">
                       {item.approverRole || 'Reviewer'}
                     </span>
                   </span>
                 </div>
               </div>
-              <div className="flex flex-col items-end gap-1">
+              
+              {/* Right side: Days in queue + action */}
+              <div className="flex flex-col items-end gap-1.5 shrink-0">
                 <Badge 
                   variant="outline" 
                   className={cn("text-[10px]", getDaysPendingColor(daysPending))}
                 >
-                  {daysPending === 0 ? 'Today' : `${daysPending}d ago`}
+                  {daysPending === 0 ? 'Today' : daysPending === 1 ? '1 day' : `${daysPending} days`}
                 </Badge>
                 <Button
                   size="sm"
