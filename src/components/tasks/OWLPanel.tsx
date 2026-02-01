@@ -31,8 +31,55 @@ export const OWLPanel: React.FC<OWLPanelProps> = ({
   const { items: realItems, stats, isLoading, updateStatus, isUpdatingStatus } = useUserOWLItems();
   const { isNewSinceLastLogin } = useUserLastLogin();
 
-  // Only show real tasks assigned to the user - no mock data
-  const rawItems = realItems || [];
+  // Use real data, fallback to mock for demo
+  const mockItems = [
+    {
+      id: 'mock-1',
+      item_number: 1,
+      title: 'Replace faulty pressure gauge',
+      source: 'PSSR',
+      priority: 1,
+      status: 'OPEN' as const,
+      due_date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+      project: { name: 'Dolphin Platform Upgrade' },
+      created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+    {
+      id: 'mock-2',
+      item_number: 2,
+      title: 'Update P&ID documentation',
+      source: 'PAC',
+      priority: 2,
+      status: 'IN_PROGRESS' as const,
+      due_date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
+      project: { name: 'Kingfish Gas Compression' },
+      created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+    {
+      id: 'mock-3',
+      item_number: 3,
+      title: 'Verify emergency shutdown valve',
+      source: 'PUNCHLIST',
+      priority: 1,
+      status: 'OPEN' as const,
+      due_date: new Date(Date.now() + 0 * 24 * 60 * 60 * 1000).toISOString(),
+      project: { name: 'Tuna Field Development' },
+      created_at: new Date(Date.now() - 0.5 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+    {
+      id: 'mock-4',
+      item_number: 4,
+      title: 'Complete welding inspection report',
+      source: 'FAC',
+      priority: null,
+      status: 'OPEN' as const,
+      due_date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
+      project: { name: 'Dolphin Platform Upgrade' },
+      created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+  ];
+  
+  const rawItems = realItems?.length ? realItems : mockItems;
 
   const items = rawItems.filter(i => {
     if (!searchQuery.trim()) return true;
@@ -46,10 +93,16 @@ export const OWLPanel: React.FC<OWLPanelProps> = ({
 
   const newCount = items.filter(i => isNewSinceLastLogin(i.created_at)).length;
 
-  // Hide panel entirely when user has no tasks assigned
-  if (!isLoading && items.length === 0) {
-    return null;
-  }
+  // Calculate stats from actual data being displayed
+  const displayStats = {
+    open: items.filter(i => i.status === 'OPEN').length,
+    inProgress: items.filter(i => i.status === 'IN_PROGRESS').length,
+    overdue: items.filter(i => {
+      if (!i.due_date) return false;
+      const date = new Date(i.due_date);
+      return isPast(date) && !isToday(date);
+    }).length,
+  };
 
   const getSourceColor = (source: string) => {
     switch (source) {
@@ -101,9 +154,9 @@ export const OWLPanel: React.FC<OWLPanelProps> = ({
       title="Outstanding Work List (OWL)"
       icon={<ListTodo className="h-5 w-5 text-white" />}
       iconColorClass="from-amber-500 to-amber-600"
-      primaryStat={stats.open + stats.inProgress}
+      primaryStat={displayStats.open + displayStats.inProgress}
       primaryLabel="open"
-      secondaryStat={stats.overdue}
+      secondaryStat={displayStats.overdue}
       secondaryLabel="overdue"
       newCount={newCount}
       isExpanded={isExpanded}

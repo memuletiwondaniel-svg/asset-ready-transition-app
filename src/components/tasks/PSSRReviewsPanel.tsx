@@ -45,8 +45,29 @@ export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({
   const { data: realPssrs, isLoading } = usePSSRsAwaitingReview(userId);
   const { isNewSinceLastLogin } = useUserLastLogin();
 
-  // Only show real tasks assigned to the user - no mock data
-  const pssrs = realPssrs || [];
+  // Use real data, fallback to mock for demo
+  const mockPssrs = [
+    {
+      pendingSince: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+      itemCount: 12,
+      reviewedCount: 4,
+      pssr: { id: 'mock-1', pssr_id: 'PSSR-DP300-001', project_name: 'Dolphin Platform Upgrade', asset: 'Platform A - Level 2' }
+    },
+    {
+      pendingSince: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+      itemCount: 8,
+      reviewedCount: 6,
+      pssr: { id: 'mock-2', pssr_id: 'PSSR-KG150-003', project_name: 'Kingfish Gas Compression', asset: 'Compressor Station B' }
+    },
+    {
+      pendingSince: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+      itemCount: 15,
+      reviewedCount: 3,
+      pssr: { id: 'mock-3', pssr_id: 'PSSR-TN200-002', project_name: 'Tuna Field Development', asset: 'Wellhead Platform' }
+    },
+  ];
+  
+  const pssrs = realPssrs?.length ? realPssrs : mockPssrs;
 
   const pendingPssrs = pssrs.filter(p => {
     if (!searchQuery.trim()) return true;
@@ -59,10 +80,6 @@ export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({
 
   const newCount = pendingPssrs.filter(p => isNewSinceLastLogin(p.pendingSince)).length;
 
-  // Hide panel entirely when user has no tasks assigned
-  if (!isLoading && pendingPssrs.length === 0) {
-    return null;
-  }
 
   const getDaysPendingColor = (days: number) => {
     if (days >= 7) return 'bg-destructive/10 text-destructive border-destructive/20';
