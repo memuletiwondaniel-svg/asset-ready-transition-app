@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle2, LogOut, ExternalLink, AlertCircle, Clock, FileCheck, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,15 +10,54 @@ import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ProjectIdBadge } from '@/components/ui/project-id-badge';
 import { formatDistanceToNow } from 'date-fns';
+import { SOFReviewOverlay } from '@/components/sof/SOFReviewOverlay';
 
 interface DirectorSoFViewProps {
   userName?: string;
 }
 
+// Mock approvers for the overlay
+const getMockApproversForOverlay = () => [
+  {
+    id: 'approver-1',
+    approver_name: 'Ali Danbous',
+    approver_role: 'Operations Director',
+    approver_level: 1,
+    status: 'APPROVED',
+    comments: 'All safety requirements have been verified. Ready for facility startup.',
+    approved_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    signature_data: undefined, // Will use SVG signature in certificate
+  },
+  {
+    id: 'approver-2',
+    approver_name: 'Paul Van Den Hemel',
+    approver_role: 'P&M Director',
+    approver_level: 2,
+    status: 'PENDING',
+    comments: undefined,
+    approved_at: undefined,
+    signature_data: undefined,
+  },
+  {
+    id: 'approver-3',
+    approver_name: 'Marije de Groot',
+    approver_role: 'HSSE Director',
+    approver_level: 3,
+    status: 'LOCKED',
+    comments: undefined,
+    approved_at: undefined,
+    signature_data: undefined,
+  },
+];
+
 export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) => {
   const navigate = useNavigate();
   const { signOut } = useAuth();
   const { data: sofItems, isLoading, error } = useSOFAwaitingDirectorReview();
+  
+  // State for overlay
+  const [overlayOpen, setOverlayOpen] = useState(false);
+  const [selectedPssrId, setSelectedPssrId] = useState<string | null>(null);
 
   const pendingItems = sofItems?.filter(item => item.status === 'PENDING') || [];
   const lockedItems = sofItems?.filter(item => item.status === 'LOCKED') || [];
@@ -27,8 +66,9 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
   const firstName = userName?.split(' ')[0] || 'there';
 
   const handleViewSoF = (pssrId: string) => {
-    // Navigate to the PSSR SoF review page
-    navigate(`/pssr/${pssrId}/sof`);
+    // Open the overlay instead of navigating
+    setSelectedPssrId(pssrId);
+    setOverlayOpen(true);
   };
 
   const handleExit = async () => {
@@ -286,6 +326,22 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
         </div>
 
       </div>
+
+      {/* SoF Review Overlay */}
+      {selectedPssrId && (
+        <SOFReviewOverlay
+          open={overlayOpen}
+          onOpenChange={setOverlayOpen}
+          pssrId={selectedPssrId}
+          certificateNumber="SOF-2026-0042"
+          pssrReason="Start-up of a New Project or Facility"
+          plantName="CS"
+          facilityName="Hammar Mishrif"
+          projectName="DP-300 HM Additional Compressors"
+          approvers={getMockApproversForOverlay()}
+          status="PENDING_SIGNATURE"
+        />
+      )}
     </div>
   );
 };
