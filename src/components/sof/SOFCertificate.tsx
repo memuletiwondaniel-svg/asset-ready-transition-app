@@ -283,35 +283,35 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
         className="bg-white text-black p-8 max-w-4xl mx-auto print:shadow-none print:border-2 print:border-black"
       >
         {/* Header with Logo */}
-        <div className="text-center border-b-2 border-black pb-6 mb-6">
+        <div className="text-center border-b-2 border-black pb-4 mb-6">
           <img 
             src="/images/bgc-logo.png" 
             alt="Basrah Gas Company Logo" 
-            className="h-20 mx-auto mb-3"
+            className="h-12 mx-auto mb-2"
           />
-          <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-gray-800 to-transparent mb-3" />
+          <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-gray-800 to-transparent mb-2" />
           <h3 className="text-3xl font-bold tracking-wide text-gray-900">STATEMENT OF FITNESS</h3>
-          <p className="text-sm text-gray-600 mt-2">Certificate No: {certificateNumber}</p>
+          <p className="text-sm text-gray-600 mt-1">Certificate No: {certificateNumber}</p>
         </div>
 
         {/* Facility Information */}
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-5 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4 text-sm">
-            <div className="py-1">
-              <span className="text-gray-500 block text-xs uppercase tracking-wide mb-1">Plant</span>
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-2 text-sm">
+            <div>
+              <span className="text-gray-500 block text-xs uppercase tracking-wide">Plant</span>
               <span className="font-medium text-gray-800">{plantName}</span>
             </div>
-            <div className="py-1">
-              <span className="text-gray-500 block text-xs uppercase tracking-wide mb-1">Facility</span>
+            <div>
+              <span className="text-gray-500 block text-xs uppercase tracking-wide">Facility</span>
               <span className="font-medium text-gray-800">{facilityName}</span>
             </div>
-            <div className="py-1">
-              <span className="text-gray-500 block text-xs uppercase tracking-wide mb-1">Project</span>
+            <div className="col-span-2">
+              <span className="text-gray-500 block text-xs uppercase tracking-wide">Project</span>
               <span className="font-medium text-gray-800">{projectName}</span>
             </div>
           </div>
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <span className="text-gray-500 text-xs uppercase tracking-wide block mb-1">PSSR Reason</span>
+          <div className="mt-3 pt-3 border-t border-gray-200">
+            <span className="text-gray-500 text-xs uppercase tracking-wide block mb-0.5">PSSR Reason</span>
             <span className="font-medium text-gray-800 text-sm">{pssrReason}</span>
           </div>
         </div>
