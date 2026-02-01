@@ -241,7 +241,7 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                 {/* Text content - now the hero */}
                 <div className="text-center sm:text-left">
-                  <h2 className="text-xl font-bold text-foreground">
+                  <h2 className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
                     You're all caught up, <span className="font-extrabold">{firstName}</span>! 🎉
                   </h2>
                   <p className="text-muted-foreground text-sm mt-1">
