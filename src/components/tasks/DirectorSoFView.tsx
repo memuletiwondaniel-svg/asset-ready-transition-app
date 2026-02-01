@@ -497,7 +497,10 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
             )}
 
             {/* Static mock activities */}
-            <div className="flex items-start gap-3 text-sm">
+            <div 
+              className="flex items-start gap-3 text-sm p-3 -mx-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors group"
+              onClick={() => handleViewSoF('mock-pssr-dp385', true)}
+            >
               <div className="h-8 w-8 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
                 <FileCheck className="h-4 w-4 text-green-600" />
               </div>
@@ -510,8 +513,12 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                   {formatDistanceToNow(new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), { addSuffix: true })}
                 </p>
               </div>
+              <Eye className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
-            <div className="flex items-start gap-3 text-sm">
+            <div 
+              className="flex items-start gap-3 text-sm p-3 -mx-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors group"
+              onClick={() => handleViewSoF('mock-pssr-dp40', true)}
+            >
               <div className="h-8 w-8 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
                 <FileCheck className="h-4 w-4 text-green-600" />
               </div>
@@ -524,8 +531,9 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                   {formatDistanceToNow(new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), { addSuffix: true })}
                 </p>
               </div>
+              <Eye className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
-            <div className="flex items-start gap-3 text-sm">
+            <div className="flex items-start gap-3 text-sm p-3 -mx-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors group">
               <div className="h-8 w-8 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0">
                 <FileText className="h-4 w-4 text-blue-600" />
               </div>
@@ -538,6 +546,7 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                   {formatDistanceToNow(new Date(Date.now() - 8 * 24 * 60 * 60 * 1000), { addSuffix: true })}
                 </p>
               </div>
+              <Eye className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
           </div>
         </div>
