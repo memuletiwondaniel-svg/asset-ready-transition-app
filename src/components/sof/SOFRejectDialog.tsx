@@ -63,9 +63,6 @@ export const SOFRejectDialog: React.FC<SOFRejectDialogProps> = ({
             <XCircle className="h-5 w-5 text-destructive" />
             Reject SoF
           </DialogTitle>
-          <DialogDescription>
-            Describe the issue and specify the closure action required.
-          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-5 py-4">
