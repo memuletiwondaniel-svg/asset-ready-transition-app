@@ -332,7 +332,7 @@ export const SOFProjectOverviewPanel: React.FC<SOFProjectOverviewPanelProps> = (
                 glowFrom="from-orange-500/40"
                 glowTo="to-red-500/40"
               />
-              <h3 className="text-base font-semibold">VCR and PSSR</h3>
+              <h3 className="text-base font-semibold">VCRs and PSSRs</h3>
             </div>
           </CardHeader>
           
