@@ -2,10 +2,11 @@ import React, { useRef, useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Printer, CheckCircle2, Clock, Lock, PenLine, Edit2 } from 'lucide-react';
+import { Printer, CheckCircle2, Clock, Lock, PenLine, Edit2, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { getCertificateText } from '@/hooks/useSOFCertificates';
 import { SOFSignatureDialog } from './SOFSignatureDialog';
+import { SOFRejectDialog } from './SOFRejectDialog';
 import { useUserSignature } from '@/hooks/useUserSignature';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
@@ -98,6 +99,7 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
 }) => {
   const certificateRef = useRef<HTMLDivElement>(null);
   const [signatureDialogOpen, setSignatureDialogOpen] = useState(false);
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [aliSignatureDialogOpen, setAliSignatureDialogOpen] = useState(false);
   const [aliSignature, setAliSignature] = useState<string | null>(() => {
     // Load from localStorage
@@ -416,6 +418,22 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
                       </span>
                     )}
                   </div>
+
+                  {/* Reject button for Paul when pending */}
+                  {isClickable && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="w-full mb-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setRejectDialogOpen(true);
+                      }}
+                    >
+                      <XCircle className="h-4 w-4 mr-1" />
+                      Reject with Pr1 Action
+                    </Button>
+                  )}
                   
                   {/* Approver Details */}
                   <div className={cn(
@@ -465,10 +483,16 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
           approverRole={currentUserApprover.approver_role}
           savedSignature={savedSignature}
           onSign={handleSign}
-          onReject={handleReject}
           onSaveSignature={handleSaveSignature}
         />
       )}
+
+      {/* Reject Dialog for Paul */}
+      <SOFRejectDialog
+        open={rejectDialogOpen}
+        onOpenChange={setRejectDialogOpen}
+        onReject={(description, linkedItemId) => handleReject('Pr1', description, linkedItemId)}
+      />
 
       {/* Ali's Signature Drawing Dialog */}
       <Dialog open={aliSignatureDialogOpen} onOpenChange={(open) => {
