@@ -151,6 +151,7 @@ export const SOFCertificateNavigator: React.FC<SOFCertificateNavigatorProps> = (
             onSignComplete={handleSignComplete}
             onRejectComplete={handleRejectComplete}
             isViewOnly={isViewOnly}
+            pssrId={pssrId}
           />
         );
       case 'comments':
