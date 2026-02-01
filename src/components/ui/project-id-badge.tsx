@@ -30,21 +30,29 @@ export interface ProjectIdBadgeProps
  * Uses vibrant colors matching the Projects homepage styling.
  */
 function getProjectIdColor(id: string) {
-  // Generate unique hash from project ID
-  const str = id.replace(/-/g, ''); // Remove dashes for consistent hashing
-  let hash = 0;
+  // Use a better hash function (djb2) for more distinct distribution
+  const str = id.replace(/-/g, '').toUpperCase();
+  let hash = 5381;
   for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
-    hash = hash & hash;
+    hash = ((hash << 5) + hash) ^ str.charCodeAt(i);
   }
+  hash = Math.abs(hash);
   
-  // Generate vibrant HSL color (full hue range for variety)
-  const hue = Math.abs(hash) % 360;
-  const saturation = 25 + (Math.abs(hash >> 8) % 15); // 25-40% saturation (subtle but visible)
-  const lightness = 55 + (Math.abs(hash >> 16) % 10); // 55-65% lightness
+  // Define distinct hue anchors to ensure variety (excludes red/amber/green per memory)
+  // Cyan(180), Blue(220), Indigo(250), Purple(280), Magenta(320), Teal(165), Slate-Blue(200)
+  const hueAnchors = [165, 180, 200, 220, 250, 280, 320];
+  const anchorIndex = hash % hueAnchors.length;
+  const baseHue = hueAnchors[anchorIndex];
+  
+  // Add slight variation within the anchor range (+/- 12 degrees)
+  const hueVariation = ((hash >> 8) % 25) - 12;
+  const hue = (baseHue + hueVariation + 360) % 360;
+  
+  const saturation = 30 + ((hash >> 12) % 15); // 30-45% saturation
+  const lightness = 50 + ((hash >> 16) % 12); // 50-62% lightness
   
   const bgStart = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-  const bgEnd = `hsl(${hue}, ${saturation + 5}%, ${lightness - 8}%)`;
+  const bgEnd = `hsl(${hue}, ${saturation + 8}%, ${lightness - 10}%)`;
   
   return { bgStart, bgEnd };
 }
