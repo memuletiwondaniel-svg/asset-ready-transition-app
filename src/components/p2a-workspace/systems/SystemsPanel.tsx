@@ -107,41 +107,43 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
         {/* Systems List - fills remaining height with internal scroll */}
         <div className="flex-1 min-h-0 overflow-y-auto">
           <div className="p-3 space-y-3">
-            {/* Assigned Systems Section */}
-            <Collapsible 
-              open={expandedSections.assigned}
-              onOpenChange={() => toggleSection('assigned')}
-            >
-              <CollapsibleTrigger className="flex items-center justify-between w-full p-2 rounded-md hover:bg-muted/50 transition-colors">
-                <div className="flex items-center gap-2">
-                  {expandedSections.assigned ? (
-                    <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                  ) : (
-                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                  )}
-                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 min-w-[18px] flex items-center justify-center">
-                    {filteredAssigned.length}
-                  </Badge>
-                  <span className="text-xs text-muted-foreground">Assigned</span>
-                </div>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="pt-2">
-                {filteredAssigned.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5">
-                    {filteredAssigned.map(system => (
-                      <DraggableSystemCard
-                        key={system.id}
-                        system={system}
-                        compact
-                        onClick={() => setSelectedSystem(system)}
-                      />
-                    ))}
-                  </div>
-                )}
-              </CollapsibleContent>
-            </Collapsible>
+            {/* Assigned Systems Section - only show when there are assigned systems */}
+            {filteredAssigned.length > 0 && (
+              <>
+                <Collapsible 
+                  open={expandedSections.assigned}
+                  onOpenChange={() => toggleSection('assigned')}
+                >
+                  <CollapsibleTrigger className="flex items-center justify-between w-full p-2 rounded-md hover:bg-muted/50 transition-colors">
+                    <div className="flex items-center gap-2">
+                      {expandedSections.assigned ? (
+                        <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                      ) : (
+                        <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                      )}
+                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 min-w-[18px] flex items-center justify-center">
+                        {filteredAssigned.length}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">Assigned</span>
+                    </div>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="pt-2">
+                    <div className="flex flex-wrap gap-1.5">
+                      {filteredAssigned.map(system => (
+                        <DraggableSystemCard
+                          key={system.id}
+                          system={system}
+                          compact
+                          onClick={() => setSelectedSystem(system)}
+                        />
+                      ))}
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
 
-            <Separator />
+                <Separator />
+              </>
+            )}
 
             {/* Unassigned Systems Section */}
             <Collapsible 
