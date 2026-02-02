@@ -60,18 +60,6 @@ const CircularProgress: React.FC<{ value: number; size?: number; strokeWidth?: n
   );
 };
 
-// Mock VCRs for DP-300 (will be replaced with real data once created)
-const getMockVCRs = (projectCode: string) => {
-  if (projectCode !== 'DP-300') return [];
-  
-  return [
-    { id: 'mock-1', vcr_code: 'VCR-001', name: 'Power and Utilities', progress: 45, status: 'IN_PROGRESS' },
-    { id: 'mock-2', vcr_code: 'VCR-002', name: 'Compressor A and OSBL Facilities', progress: 30, status: 'IN_PROGRESS' },
-    { id: 'mock-3', vcr_code: 'VCR-003', name: 'Compressor B', progress: 15, status: 'PENDING' },
-    { id: 'mock-4', vcr_code: 'VCR-004', name: 'Compressor D', progress: 0, status: 'PENDING' },
-    { id: 'mock-5', vcr_code: 'VCR-005', name: 'Compressor E', progress: 0, status: 'PENDING' },
-  ];
-};
 
 export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({ 
   projectId, 
@@ -87,9 +75,8 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
 
   const isLoading = pssrsLoading || vcrsLoading;
 
-  // Combine real VCRs with mock data for DP-300
-  const mockVCRs = getMockVCRs(projectCode);
-  const allVCRs = vcrs && vcrs.length > 0 ? vcrs : mockVCRs;
+  // Use only real VCRs from database
+  const allVCRs = vcrs || [];
 
   const handlePSSRClick = (pssrId: string, displayId: string) => {
     setSelectedPSSR({ id: pssrId, displayId });
