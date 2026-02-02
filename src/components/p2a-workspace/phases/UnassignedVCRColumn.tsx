@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Plus, Inbox } from 'lucide-react';
 import { P2AHandoverPoint } from '../hooks/useP2AHandoverPoints';
 import { DraggableHandoverPointCard } from '../handover-points/HandoverPointCard';
-import { useDroppable } from '@dnd-kit/core';
+import { useDroppable, useDndContext } from '@dnd-kit/core';
 import { cn } from '@/lib/utils';
 
 interface UnassignedVCRColumnProps {
@@ -21,6 +21,9 @@ export const UnassignedVCRColumn: React.FC<UnassignedVCRColumnProps> = ({
   onOpenVCR,
   onCreateHandoverPoint,
 }) => {
+  const { active: dndActive } = useDndContext();
+  const isSystemDragging = dndActive?.data.current?.type === 'system';
+
   const { isOver, setNodeRef } = useDroppable({
     id: 'phase-unassigned',
     data: {
@@ -29,6 +32,9 @@ export const UnassignedVCRColumn: React.FC<UnassignedVCRColumnProps> = ({
     },
   });
 
+  // Only show highlight when dragging VCRs, not systems
+  const showHighlight = isOver && !isSystemDragging;
+
   const sortedPoints = [...handoverPoints].sort((a, b) => a.position_y - b.position_y);
 
   return (
@@ -36,7 +42,7 @@ export const UnassignedVCRColumn: React.FC<UnassignedVCRColumnProps> = ({
       ref={setNodeRef}
       className={cn(
         "w-full pt-2 transition-colors",
-        isOver ? 'bg-primary/5' : 'bg-card/30'
+        showHighlight ? 'bg-primary/5' : 'bg-card/30'
       )}
     >
       {/* Compact Header */}
