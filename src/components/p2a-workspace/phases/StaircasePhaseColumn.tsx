@@ -113,7 +113,7 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
       <div 
         ref={setNodeRef}
         className={cn(
-          "flex-shrink-0 w-72 flex flex-col",
+          "flex-shrink-0 w-56 flex flex-col",
           isDragging && "opacity-50 z-50"
         )}
         style={style}
