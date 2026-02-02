@@ -15,7 +15,81 @@ import { P2ASystem } from '../hooks/useP2ASystems';
 import { DraggableSystemCard } from './SystemCard';
 import { AddSystemDialog } from './AddSystemDialog';
 import { SystemDetailOverlay } from './SystemDetailOverlay';
+import { useDroppable, useDndContext } from '@dnd-kit/core';
 import { cn } from '@/lib/utils';
+
+// Unassigned Systems Drop Zone Component
+interface UnassignedSystemsDropZoneProps {
+  systems: P2ASystem[];
+  isExpanded: boolean;
+  onToggle: () => void;
+  onSystemClick: (system: P2ASystem) => void;
+}
+
+const UnassignedSystemsDropZone: React.FC<UnassignedSystemsDropZoneProps> = ({
+  systems,
+  isExpanded,
+  onToggle,
+  onSystemClick,
+}) => {
+  const { active: dndActive } = useDndContext();
+  const isSystemDragging = dndActive?.data.current?.type === 'system';
+  const draggedSystem = dndActive?.data.current?.system as P2ASystem | undefined;
+  const isAssignedSystemDragging = isSystemDragging && draggedSystem?.assigned_handover_point_id;
+
+  const { isOver, setNodeRef } = useDroppable({
+    id: 'systems-unassigned',
+    data: {
+      type: 'systems-unassigned',
+    },
+  });
+
+  const showDropHighlight = isOver && isAssignedSystemDragging;
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={cn(
+        "rounded-lg transition-colors",
+        showDropHighlight && "bg-primary/10 ring-1 ring-primary/30"
+      )}
+    >
+      <Collapsible open={isExpanded} onOpenChange={onToggle}>
+        <CollapsibleTrigger className="flex items-center justify-between w-full p-2 rounded-md hover:bg-muted/50 transition-colors">
+          <div className="flex items-center gap-2">
+            {isExpanded ? (
+              <ChevronDown className="w-4 h-4 text-muted-foreground" />
+            ) : (
+              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+            )}
+            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 min-w-[18px] flex items-center justify-center">
+              {systems.length}
+            </Badge>
+            <span className="text-xs text-muted-foreground">Unassigned</span>
+          </div>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="pt-2">
+          {systems.length > 0 ? (
+            <div className="flex flex-wrap gap-1.5">
+              {systems.map(system => (
+                <DraggableSystemCard
+                  key={system.id}
+                  system={system}
+                  compact
+                  onClick={() => onSystemClick(system)}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="text-[10px] text-muted-foreground text-center py-2">
+              {isAssignedSystemDragging ? 'Drop here to unassign' : 'No unassigned systems'}
+            </div>
+          )}
+        </CollapsibleContent>
+      </Collapsible>
+    </div>
+  );
+};
 
 interface SystemsPanelProps {
   systems: P2ASystem[];
@@ -145,39 +219,13 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
               </>
             )}
 
-            {/* Unassigned Systems Section */}
-            <Collapsible 
-              open={expandedSections.unassigned}
-              onOpenChange={() => toggleSection('unassigned')}
-            >
-              <CollapsibleTrigger className="flex items-center justify-between w-full p-2 rounded-md hover:bg-muted/50 transition-colors">
-                <div className="flex items-center gap-2">
-                  {expandedSections.unassigned ? (
-                    <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                  ) : (
-                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                  )}
-                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 min-w-[18px] flex items-center justify-center">
-                    {filteredUnassigned.length}
-                  </Badge>
-                  <span className="text-xs text-muted-foreground">Unassigned</span>
-                </div>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="pt-2">
-                {filteredUnassigned.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5">
-                    {filteredUnassigned.map(system => (
-                      <DraggableSystemCard
-                        key={system.id}
-                        system={system}
-                        compact
-                        onClick={() => setSelectedSystem(system)}
-                      />
-                    ))}
-                  </div>
-                )}
-              </CollapsibleContent>
-            </Collapsible>
+            {/* Unassigned Systems Section - Droppable */}
+            <UnassignedSystemsDropZone
+              systems={filteredUnassigned}
+              isExpanded={expandedSections.unassigned}
+              onToggle={() => toggleSection('unassigned')}
+              onSystemClick={(system) => setSelectedSystem(system)}
+            />
           </div>
         </div>
 

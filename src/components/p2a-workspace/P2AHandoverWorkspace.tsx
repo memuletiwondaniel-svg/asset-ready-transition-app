@@ -73,6 +73,7 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
     unassignedPoints,
     createHandoverPoint,
     assignSystemToPoint,
+    unassignSystemFromPoint,
     moveHandoverPointToPhase,
     reorderHandoverPoints,
     updateVCRPosition,
@@ -362,6 +363,15 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
       const systemId = active.data.current.system.id;
       const handoverPointId = over.id.toString().replace('vcr-', '');
       assignSystemToPoint({ handoverPointId, systemId });
+      return;
+    }
+
+    // Handle dropping system on unassigned zone to unassign it
+    if (active.data.current?.type === 'system' && over.id === 'systems-unassigned') {
+      const system = active.data.current.system;
+      if (system.assigned_handover_point_id) {
+        unassignSystemFromPoint({ systemId: system.id });
+      }
     }
   };
 
