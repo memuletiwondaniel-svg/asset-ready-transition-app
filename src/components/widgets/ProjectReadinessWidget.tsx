@@ -160,17 +160,6 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
                   {station.name}
                 </Badge>
               )}
-              
-              {/* Hub Badge - Full Width, No Truncation */}
-              {hub && (
-                <Badge 
-                  variant="outline" 
-                  className="w-full justify-center bg-primary/10 border-primary/20 text-primary px-3 py-2 text-xs font-medium hover:bg-primary/15 transition-colors mt-1"
-                >
-                  <Layers className="h-3.5 w-3.5 mr-2 flex-shrink-0" />
-                  <span className="text-center">{hub.name}</span>
-                </Badge>
-              )}
             </div>
           )}
         </div>
