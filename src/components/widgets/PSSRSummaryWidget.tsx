@@ -117,59 +117,46 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                 </div>
               ))}
             </div>
-          ) : hasContent ? (
+          ) : allVCRs.length > 0 ? (
             <div className="space-y-2 max-h-[280px] overflow-y-auto pr-1">
-              {/* VCRs Section */}
-              <>
-                <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-1">
-                  VCRs ({allVCRs.length})
-                </div>
-
-                {allVCRs.length === 0 ? (
-                  <div className="p-3 border rounded-lg bg-muted/20 text-xs text-muted-foreground">
-                    No VCRs yet
-                  </div>
-                ) : (
-                  allVCRs.map((vcr) => (
-                    <div 
-                      key={vcr.id} 
-                      className="flex items-center gap-3 p-2.5 border rounded-lg bg-blue-50/50 dark:bg-blue-950/20 hover:bg-blue-100/50 dark:hover:bg-blue-900/30 transition-colors cursor-pointer group/item"
-                      onClick={() => handleVCRClick(vcr.id)}
-                    >
-                      <CircularProgress value={vcr.progress} className="text-blue-600" />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-mono text-blue-600/70">{vcr.vcr_code}</span>
-                        </div>
-                        <div className="text-sm font-medium truncate">{vcr.name}</div>
-                      </div>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover/item:opacity-100 transition-opacity" />
+              {allVCRs.map((vcr) => (
+                <div 
+                  key={vcr.id} 
+                  className="flex items-center gap-3 p-2.5 border rounded-lg bg-blue-50/50 dark:bg-blue-950/20 hover:bg-blue-100/50 dark:hover:bg-blue-900/30 transition-colors cursor-pointer group/item"
+                  onClick={() => handleVCRClick(vcr.id)}
+                >
+                  <CircularProgress value={vcr.progress} className="text-blue-600" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-mono text-blue-600/70">{vcr.vcr_code}</span>
                     </div>
-                  ))
-                )}
-
-                {canCreateVCR && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full mt-2 text-xs border-dashed"
-                    onClick={() => setShowCreateVCR(true)}
-                  >
-                    <Plus className="h-3.5 w-3.5 mr-1" />
-                    New VCR
-                  </Button>
-                )}
-              </>
-            </div>
-          ) : (
-            <div className="text-center py-6 text-muted-foreground">
-              <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">No VCRs found</p>
+                    <div className="text-sm font-medium truncate">{vcr.name}</div>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover/item:opacity-100 transition-opacity" />
+                </div>
+              ))}
               {canCreateVCR && (
                 <Button
                   variant="outline"
                   size="sm"
-                  className="mt-3"
+                  className="w-full mt-2 text-xs border-dashed"
+                  onClick={() => setShowCreateVCR(true)}
+                >
+                  <Plus className="h-3.5 w-3.5 mr-1" />
+                  New VCR
+                </Button>
+              )}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <FileText className="h-10 w-10 mx-auto mb-3 opacity-40" />
+              <p className="text-sm mb-1">No VCRs created yet</p>
+              <p className="text-xs opacity-70">VCRs track verification readiness for handover points</p>
+              {canCreateVCR && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-4"
                   onClick={() => setShowCreateVCR(true)}
                 >
                   <Plus className="h-3.5 w-3.5 mr-1" />
