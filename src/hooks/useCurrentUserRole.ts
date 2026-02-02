@@ -46,16 +46,10 @@ export const useCurrentUserRole = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return { userId: null, role: null, position: null };
 
-      // Get user's profile with role - join with roles table to get role name
+      // Get user's profile
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select(`
-          role,
-          position,
-          roles:role (
-            name
-          )
-        `)
+        .select('role, position')
         .eq('user_id', user.id)
         .single();
 
@@ -64,8 +58,18 @@ export const useCurrentUserRole = () => {
         return { userId: user.id, role: null, position: null };
       }
 
-      // Get the role name from the joined roles table
-      const roleName = (profile?.roles as any)?.name || null;
+      // If role is a UUID, look up the role name from the roles table
+      let roleName: string | null = null;
+      if (profile?.role) {
+        const { data: roleData } = await supabase
+          .from('roles')
+          .select('name')
+          .eq('id', profile.role)
+          .single();
+        roleName = roleData?.name || null;
+      }
+
+      console.log('User role resolved:', { userId: user.id, role: roleName, position: profile?.position });
 
       return {
         userId: user.id,
