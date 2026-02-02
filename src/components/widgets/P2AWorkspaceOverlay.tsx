@@ -71,9 +71,6 @@ export const P2AWorkspaceOverlay: React.FC<P2AWorkspaceOverlayProps> = ({
               </div>
             </div>
             <h2 className="text-lg font-semibold">P2A Handover Plan</h2>
-            {projectNumber && (
-              <span className="text-sm text-muted-foreground font-mono">{projectNumber}</span>
-            )}
             <Badge variant="outline" className={cn("text-xs", statusConfig.className)}>
               {statusConfig.label}
             </Badge>
