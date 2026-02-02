@@ -97,7 +97,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
 
   return (
     <>
-      <Card className="h-full transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:border-red-500/20 group">
+      <Card className="h-full flex flex-col transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:border-red-500/20 group">
         <CardHeader {...dragAttributes} {...dragListeners} className="cursor-grab active:cursor-grabbing pb-3">
           <CardTitle className="text-lg flex items-center gap-3">
             <StyledWidgetIcon 
@@ -110,71 +110,73 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
             <span>VCRs & Handovers</span>
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3 pt-0">
-          {isLoading ? (
-            <div className="space-y-3">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="p-3 border rounded-lg bg-muted/30">
-                  <Skeleton className="h-4 w-32 mb-2" />
-                  <Skeleton className="h-3 w-full" />
-                </div>
-              ))}
-            </div>
-          ) : allVCRs.length > 0 ? (
-            <div className="space-y-2 max-h-[280px] overflow-y-auto pr-1">
-              {allVCRs.map((vcr) => (
-                <div 
-                  key={vcr.id} 
-                  className="flex items-center gap-3 p-2.5 border rounded-lg bg-blue-50/50 dark:bg-blue-950/20 hover:bg-blue-100/50 dark:hover:bg-blue-900/30 transition-colors cursor-pointer group/item"
-                  onClick={() => handleVCRClick(vcr.id)}
-                >
-                  <CircularProgress value={vcr.progress} className="text-blue-600" />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-mono text-blue-600/70">{vcr.vcr_code}</span>
-                    </div>
-                    <div className="text-sm font-medium truncate">{vcr.name}</div>
+        <CardContent className="flex-1 flex flex-col space-y-3 pt-0">
+          <div className="flex-1">
+            {isLoading ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="p-3 border rounded-lg bg-muted/30">
+                    <Skeleton className="h-4 w-32 mb-2" />
+                    <Skeleton className="h-3 w-full" />
                   </div>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover/item:opacity-100 transition-opacity" />
-                </div>
-              ))}
-              {canCreateVCR && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full mt-2 text-xs border-dashed"
-                  onClick={() => setShowCreateVCR(true)}
-                >
-                  <Plus className="h-3.5 w-3.5 mr-1" />
-                  New VCR
-                </Button>
-              )}
-            </div>
-          ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              <FileText className="h-10 w-10 mx-auto mb-3 opacity-40" />
-              <p className="text-sm mb-1">No VCRs created yet</p>
-              <p className="text-xs opacity-70">VCRs track verification readiness for handover points</p>
-              {canCreateVCR && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mt-4"
-                  onClick={() => setShowCreateVCR(true)}
-                >
-                  <Plus className="h-3.5 w-3.5 mr-1" />
-                  New VCR
-                </Button>
-              )}
-            </div>
-          )}
+                ))}
+              </div>
+            ) : allVCRs.length > 0 ? (
+              <div className="space-y-2 max-h-[280px] overflow-y-auto pr-1">
+                {allVCRs.map((vcr) => (
+                  <div 
+                    key={vcr.id} 
+                    className="flex items-center gap-3 p-2.5 border rounded-lg bg-blue-50/50 dark:bg-blue-950/20 hover:bg-blue-100/50 dark:hover:bg-blue-900/30 transition-colors cursor-pointer group/item"
+                    onClick={() => handleVCRClick(vcr.id)}
+                  >
+                    <CircularProgress value={vcr.progress} className="text-blue-600" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-mono text-blue-600/70">{vcr.vcr_code}</span>
+                      </div>
+                      <div className="text-sm font-medium truncate">{vcr.name}</div>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover/item:opacity-100 transition-opacity" />
+                  </div>
+                ))}
+                {canCreateVCR && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full mt-2 text-xs border-dashed"
+                    onClick={() => setShowCreateVCR(true)}
+                  >
+                    <Plus className="h-3.5 w-3.5 mr-1" />
+                    New VCR
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <FileText className="h-10 w-10 mx-auto mb-3 opacity-40" />
+                <p className="text-sm mb-1">No VCRs created yet</p>
+                <p className="text-xs opacity-70">VCRs track verification readiness for handover points</p>
+                {canCreateVCR && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-4"
+                    onClick={() => setShowCreateVCR(true)}
+                  >
+                    <Plus className="h-3.5 w-3.5 mr-1" />
+                    New VCR
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
 
-          {/* View Handover Plan Button */}
+          {/* View Handover Plan Button - Always at bottom */}
           {oraPlanId && (
             <Button
               variant="outline"
               size="sm"
-              className="w-full text-xs gap-2 mt-2"
+              className="w-full text-xs gap-2 mt-auto"
               onClick={() => setShowP2AWorkspace(true)}
             >
               <LayoutGrid className="h-3.5 w-3.5" />
