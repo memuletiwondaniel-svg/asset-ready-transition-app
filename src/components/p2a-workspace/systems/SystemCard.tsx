@@ -54,15 +54,10 @@ export const SystemCard: React.FC<SystemCardProps> = ({
       onClick={onClick}
     >
       <CardContent className="p-1.5">
-        <div className="flex items-start gap-1">
-          {/* Drag Handle - hidden by default, shown on hover */}
-          <div className="cursor-grab active:cursor-grabbing text-muted-foreground/40 hover:text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity mt-0.5">
-            <GripVertical className="w-3 h-3" />
-          </div>
-
-          {/* HC/Non-HC Indicator */}
+        <div className="flex items-start gap-1.5 relative">
+          {/* HC/Non-HC Indicator - Left edge */}
           <div className={cn(
-            'w-4 h-4 rounded flex items-center justify-center shrink-0 mt-0.5 mr-1',
+            'w-4 h-4 rounded flex items-center justify-center shrink-0 mt-0.5',
             system.is_hydrocarbon 
               ? 'bg-orange-500/10 text-orange-500' 
               : 'bg-blue-500/10 text-blue-500'
@@ -92,6 +87,11 @@ export const SystemCard: React.FC<SystemCardProps> = ({
                 {system.completion_percentage}%
               </span>
             </div>
+          </div>
+
+          {/* Drag Handle - absolute positioned, shown on hover */}
+          <div className="absolute -left-0.5 top-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing text-muted-foreground/40 hover:text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
+            <GripVertical className="w-3 h-3" />
           </div>
         </div>
       </CardContent>
