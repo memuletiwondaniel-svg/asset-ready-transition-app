@@ -108,7 +108,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                 glowFrom="from-red-500/40"
                 glowTo="to-orange-500/40"
               />
-              <span>VCRs</span>
+              <span>VCRs & Handovers</span>
             </div>
             {oraPlanId && (
               <Button
