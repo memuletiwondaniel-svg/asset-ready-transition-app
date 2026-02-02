@@ -6,7 +6,7 @@ import { P2APhase } from '../hooks/useP2APhases';
 import { P2AHandoverPoint } from '../hooks/useP2AHandoverPoints';
 import { DraggableHandoverPointCard } from '../handover-points/HandoverPointCard';
 import { DeletePhaseDialog } from './DeletePhaseDialog';
-import { useDroppable } from '@dnd-kit/core';
+import { useDroppable, useDndContext } from '@dnd-kit/core';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { cn } from '@/lib/utils';
@@ -41,6 +41,9 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const { active: dndActive } = useDndContext();
+  const isSystemDragging = dndActive?.data.current?.type === 'system';
+
   const { isOver, setNodeRef: setDroppableRef } = useDroppable({
     id: `phase-${phase.id}`,
     data: {
@@ -48,6 +51,9 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
       phase,
     },
   });
+
+  // Only show phase highlight when dragging VCRs, not systems
+  const showPhaseHighlight = isOver && !isSystemDragging;
 
   const {
     attributes,
@@ -117,7 +123,7 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
           className={cn(
             "group rounded-t-xl border border-b-0 p-3 transition-all duration-200 hover:shadow-md",
             headerColorClass,
-            isOver ? 'border-primary' : 'border-border'
+            showPhaseHighlight ? 'border-primary' : 'border-border'
           )}
         >
           <div className="flex items-center justify-between mb-1">
@@ -160,7 +166,7 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
         <div 
           className={cn(
             "flex-1 border border-t-0 rounded-b-xl p-3 min-h-[200px] overflow-y-auto transition-colors",
-            isOver ? 'border-primary bg-primary/5' : 'border-border bg-card/50'
+            showPhaseHighlight ? 'border-primary bg-primary/5' : 'border-border bg-card/50'
           )}
         >
           {sortedPoints.length === 0 ? (
