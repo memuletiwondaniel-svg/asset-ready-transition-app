@@ -114,7 +114,7 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
   return (
     <Card className="h-full flex flex-col glass-card glass-card-hover overflow-hidden group">
       {/* Hero Header */}
-      <CardHeader className="pb-5 cursor-pointer relative overflow-hidden" onClick={onViewDetails}>
+      <CardHeader className="pb-3 cursor-pointer relative overflow-hidden" onClick={onViewDetails}>
         {/* Subtle shine effect on hover */}
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 pointer-events-none" />
         
@@ -123,7 +123,7 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
         
         <div className="relative z-10">
           {/* Icon and Title Row */}
-          <div className="flex items-center gap-4 mb-5">
+          <div className="flex items-center gap-3 mb-4">
             <StyledWidgetIcon 
               Icon={FolderOpen}
               gradientFrom="from-blue-500"
@@ -131,9 +131,9 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
               glowFrom="from-blue-500/40"
               glowTo="to-cyan-500/40"
             />
-            <h2 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
+            <span className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
               Project Overview
-            </h2>
+            </span>
           </div>
           
           {/* Location Badges */}
