@@ -104,8 +104,8 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
           </div>
         </div>
 
-        {/* Systems List - fills remaining height with internal scroll */}
-        <div className="flex-1 min-h-0 overflow-y-auto">
+        {/* Systems List - fills remaining height with internal scroll (vertical only) */}
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
           <div className="p-3 space-y-3">
             {/* Assigned Systems Section - only show when there are assigned systems */}
             {filteredAssigned.length > 0 && (
