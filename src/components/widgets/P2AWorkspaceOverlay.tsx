@@ -1,8 +1,11 @@
 import React from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { X, Key } from 'lucide-react';
 import { P2AHandoverWorkspace } from '@/components/p2a-workspace/P2AHandoverWorkspace';
+import { useP2AHandoverPlan } from '@/components/p2a-workspace/hooks/useP2AHandoverPlan';
+import { cn } from '@/lib/utils';
 
 interface P2AWorkspaceOverlayProps {
   open: boolean;
@@ -12,6 +15,38 @@ interface P2AWorkspaceOverlayProps {
   projectNumber?: string;
 }
 
+const getStatusConfig = (status?: string) => {
+  switch (status) {
+    case 'DRAFT':
+      return {
+        label: 'Draft',
+        className: 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30',
+      };
+    case 'ACTIVE':
+    case 'IN_PROGRESS':
+      return {
+        label: 'In Review',
+        className: 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/30',
+      };
+    case 'COMPLETED':
+    case 'APPROVED':
+      return {
+        label: 'Approved',
+        className: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30',
+      };
+    case 'ARCHIVED':
+      return {
+        label: 'Archived',
+        className: 'bg-muted text-muted-foreground border-border',
+      };
+    default:
+      return {
+        label: 'Draft',
+        className: 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30',
+      };
+  }
+};
+
 export const P2AWorkspaceOverlay: React.FC<P2AWorkspaceOverlayProps> = ({
   open,
   onOpenChange,
@@ -19,6 +54,9 @@ export const P2AWorkspaceOverlay: React.FC<P2AWorkspaceOverlayProps> = ({
   projectName,
   projectNumber,
 }) => {
+  const { plan } = useP2AHandoverPlan(oraPlanId);
+  const statusConfig = getStatusConfig(plan?.status);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[98vw] w-full h-[95vh] p-0 gap-0 overflow-hidden [&>button]:hidden">
@@ -35,6 +73,9 @@ export const P2AWorkspaceOverlay: React.FC<P2AWorkspaceOverlayProps> = ({
             {projectNumber && (
               <span className="text-sm text-muted-foreground font-mono">{projectNumber}</span>
             )}
+            <Badge variant="outline" className={cn("text-xs", statusConfig.className)}>
+              {statusConfig.label}
+            </Badge>
           </div>
           <div className="flex items-center gap-2">
             <Button
