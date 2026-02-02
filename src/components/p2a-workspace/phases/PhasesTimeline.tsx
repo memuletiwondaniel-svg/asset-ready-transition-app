@@ -121,44 +121,26 @@ export const PhasesTimeline: React.FC<PhasesTimelineProps> = ({
     <>
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Milestones Timeline Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/30">
-          <div className="flex items-center gap-4 overflow-x-auto">
-            <span className="text-xs font-medium text-muted-foreground shrink-0">Milestones</span>
-            {sortedMilestones.length > 0 && (
-              <div className="flex items-center">
-                {sortedMilestones.map((milestone, idx) => (
-                  <React.Fragment key={milestone.id}>
-                    <MilestoneMarker 
-                      milestone={milestone} 
-                      isFirst={idx === 0}
-                      isLast={idx === sortedMilestones.length - 1}
-                    />
-                    {idx < sortedMilestones.length - 1 && (
-                      <div className="w-24 h-0.5 bg-border mx-1" />
-                    )}
-                  </React.Fragment>
-                ))}
-              </div>
-            )}
+        <div className="flex flex-col px-4 py-1.5 border-b border-border bg-muted/30">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Milestones</span>
           </div>
-          <div className="flex items-center gap-1 flex-shrink-0">
-            {/* Fullscreen Toggle */}
-            {onToggleFullscreen && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onToggleFullscreen}
-                className="h-8 w-8"
-                title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
-              >
-                {isFullscreen ? (
-                  <Minimize2 className="h-4 w-4" />
-                ) : (
-                  <Maximize2 className="h-4 w-4" />
-                )}
-              </Button>
-            )}
-          </div>
+          {sortedMilestones.length > 0 && (
+            <div className="flex items-center overflow-x-auto">
+              {sortedMilestones.map((milestone, idx) => (
+                <React.Fragment key={milestone.id}>
+                  <MilestoneMarker 
+                    milestone={milestone} 
+                    isFirst={idx === 0}
+                    isLast={idx === sortedMilestones.length - 1}
+                  />
+                  {idx < sortedMilestones.length - 1 && (
+                    <div className="w-16 h-0.5 bg-border mx-0.5" />
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Staircase Workspace - Scrollable */}
