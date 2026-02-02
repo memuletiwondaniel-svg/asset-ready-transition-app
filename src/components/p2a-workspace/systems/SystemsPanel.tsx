@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -11,9 +10,6 @@ import {
   ChevronDown, 
   ChevronRight,
   Layers,
-  Filter,
-  PanelRightClose,
-  PanelRightOpen
 } from 'lucide-react';
 import { P2ASystem } from '../hooks/useP2ASystems';
 import { DraggableSystemCard } from './SystemCard';
@@ -34,8 +30,6 @@ interface SystemsPanelProps {
   isAdding?: boolean;
   isImporting?: boolean;
   isUpdating?: boolean;
-  isCollapsed?: boolean;
-  onToggleCollapse?: () => void;
 }
 
 export const SystemsPanel: React.FC<SystemsPanelProps> = ({
@@ -51,12 +45,11 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
   isAdding,
   isImporting,
   isUpdating,
-  isCollapsed = false,
-  onToggleCollapse,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [selectedSystem, setSelectedSystem] = useState<P2ASystem | null>(null);
+  const [isHovered, setIsHovered] = useState(false);
   const [expandedSections, setExpandedSections] = useState({
     unassigned: false,
     assigned: true,
@@ -82,27 +75,13 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
   const filteredUnassigned = filterSystems(unassignedSystems);
   const filteredAssigned = filterSystems(assignedSystems);
 
-  if (isCollapsed) {
-    return (
-      <div className="w-12 h-full border-l border-border bg-card flex flex-col items-center py-4 ml-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onToggleCollapse}
-          className="mb-4"
-        >
-          <PanelRightOpen className="w-4 h-4" />
-        </Button>
-        <div className="writing-mode-vertical text-xs text-muted-foreground font-medium">
-          Systems ({systems.length})
-        </div>
-      </div>
-    );
-  }
-
   return (
     <>
-      <div className="w-48 h-full border-l border-border bg-card flex flex-col ml-4 overflow-hidden">
+      <div 
+        className="w-48 h-full border-l border-border bg-card flex flex-col ml-4 overflow-hidden"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
         {/* Header */}
         <div className="p-4 border-b border-border">
           <div className="flex items-center justify-between mb-3">
@@ -113,20 +92,13 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
                 {systems.length}
               </Badge>
             </div>
-            <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7"
-                onClick={onToggleCollapse}
-              >
-                <PanelRightClose className="w-4 h-4" />
-              </Button>
-            </div>
           </div>
 
-          {/* Search */}
-          <div className="relative">
+          {/* Search - only visible on hover */}
+          <div className={cn(
+            "relative transition-all duration-200 overflow-hidden",
+            isHovered || searchQuery ? "h-8 opacity-100" : "h-0 opacity-0"
+          )}>
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               placeholder="Search systems..."
