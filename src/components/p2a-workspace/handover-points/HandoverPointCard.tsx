@@ -71,33 +71,36 @@ export const HandoverPointCard: React.FC<HandoverPointCardProps> = ({
       onClick={onClick}
     >
       <CardContent className="p-1.5">
-        <div className="flex items-start gap-1">
-          {/* Drag Handle - hidden by default, shown on hover */}
-          <div className="cursor-grab active:cursor-grabbing text-muted-foreground/40 hover:text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity mt-0.5">
+        <div className="flex items-start gap-1.5 relative">
+          {/* Drag Handle - absolute positioned, shown on hover */}
+          <div className="absolute -left-0.5 top-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing text-muted-foreground/40 hover:text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
             <GripVertical className="w-3 h-3" />
           </div>
 
-          {/* Name & ID stacked */}
-          <div className="flex-1 min-w-0">
-            <span className="text-[8px] font-mono text-muted-foreground block leading-tight">
-              {(() => {
-                const code = handoverPoint.vcr_code || '';
-                const newMatch = code.match(/^(VCR-\d+)-DP/);
-                if (newMatch) return newMatch[1];
-                const oldMatch = code.match(/(\d+)$/);
-                if (oldMatch) return `VCR-${oldMatch[1]}`;
-                return 'VCR-???';
-              })()}
-            </span>
+          {/* Name & ID - matching SystemCard layout */}
+          <div className="flex-1 min-w-0 ml-2">
+            {/* VCR Name */}
             <span className="text-[10px] font-medium truncate block leading-tight">
               {handoverPoint.name}
             </span>
-          </div>
 
-          {/* Progress % on the right */}
-          <span className="text-[8px] font-medium text-muted-foreground shrink-0 mt-0.5">
-            {progress}%
-          </span>
+            {/* VCR ID + Progress */}
+            <div className="flex items-center justify-between gap-1">
+              <span className="text-[8px] text-muted-foreground font-mono truncate">
+                {(() => {
+                  const code = handoverPoint.vcr_code || '';
+                  const newMatch = code.match(/^(VCR-\d+)-DP/);
+                  if (newMatch) return newMatch[1];
+                  const oldMatch = code.match(/(\d+)$/);
+                  if (oldMatch) return `VCR-${oldMatch[1]}`;
+                  return 'VCR-???';
+                })()}
+              </span>
+              <span className="text-[8px] font-medium text-muted-foreground shrink-0">
+                {progress}%
+              </span>
+            </div>
+          </div>
         </div>
       </CardContent>
     </Card>
