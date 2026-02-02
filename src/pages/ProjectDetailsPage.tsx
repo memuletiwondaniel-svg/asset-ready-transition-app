@@ -203,7 +203,7 @@ export default function ProjectDetailsPage() {
   }
 
   const getProjectId = () => {
-    return `${project.project_id_prefix}${project.project_id_number}`;
+    return `${project.project_id_prefix}-${project.project_id_number}`;
   };
 
   return (
@@ -216,7 +216,7 @@ export default function ProjectDetailsPage() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
             <div className="min-w-0">
               <h1 className="text-2xl font-bold text-foreground">
-                {getProjectId()} - {project.project_title}
+                {getProjectId()}: {project.project_title}
               </h1>
               <p className="text-sm text-muted-foreground mt-1">Project Dashboard</p>
             </div>
