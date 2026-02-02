@@ -102,10 +102,10 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
           <CardTitle className="text-lg flex items-center gap-3">
             <StyledWidgetIcon 
               Icon={KeyRound}
-              gradientFrom="from-amber-500"
-              gradientTo="to-yellow-500"
-              glowFrom="from-amber-500/40"
-              glowTo="to-yellow-500/40"
+              gradientFrom="from-red-500"
+              gradientTo="to-orange-500"
+              glowFrom="from-red-500/40"
+              glowTo="to-orange-500/40"
             />
             <span>VCRs & Handovers</span>
           </CardTitle>
