@@ -177,7 +177,7 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
         </div>
 
         {/* Systems List - fills remaining height with vertical scroll only */}
-        <ScrollArea className="flex-1 min-h-0">
+        <ScrollArea className="flex-1 min-h-0 overflow-hidden">
           <div className="p-3 space-y-3">
             {/* Assigned Systems Section - only show when there are assigned systems */}
             {filteredAssigned.length > 0 && (
@@ -228,7 +228,7 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
         </ScrollArea>
 
         {/* Add System Button - Fixed at bottom */}
-        <div className="p-3 border-t border-border">
+        <div className="shrink-0 p-3 border-t border-border bg-card">
           <Button 
             variant="ghost"
             className="w-full gap-1 text-xs border border-dashed border-border/50 hover:border-primary/50" 
