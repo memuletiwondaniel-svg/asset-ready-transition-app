@@ -170,7 +170,7 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
               placeholder="Search..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-6 h-6 text-xs"
+              className="pl-6 h-6 text-[10px]"
             />
           </div>
         </div>
