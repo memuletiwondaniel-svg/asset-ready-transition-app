@@ -143,9 +143,9 @@ export const PhasesTimeline: React.FC<PhasesTimelineProps> = ({
           )}
         </div>
 
-        {/* Staircase Workspace - Scrollable */}
-        <ScrollArea className="flex-1">
-          <div className="relative p-4 h-full min-h-[400px]">
+        {/* Staircase Workspace - Scrollable, constrained to leave room for unassigned */}
+        <ScrollArea className="flex-1 min-h-0">
+          <div className="relative p-4">
             {/* Staircase Flow Line */}
             <svg 
               className="absolute inset-0 pointer-events-none z-0"
@@ -189,7 +189,7 @@ export const PhasesTimeline: React.FC<PhasesTimelineProps> = ({
             </svg>
 
             {/* Phase Columns in Staircase Layout */}
-            <div className="flex gap-4 relative z-10 h-full">
+            <div className="flex gap-4 relative z-10">
               <SortableContext items={phases.map(p => p.id)} strategy={horizontalListSortingStrategy}>
                 {phases.map((phase, idx) => (
                   <StaircasePhaseColumn
