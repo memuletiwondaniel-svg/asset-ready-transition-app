@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { 
   Plus, 
@@ -176,8 +177,8 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
         </div>
 
         {/* Systems List - fills remaining height with vertical scroll only */}
-        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
-          <div className="p-3 space-y-3 overflow-hidden">
+        <ScrollArea className="flex-1 min-h-0">
+          <div className="p-3 space-y-3">
             {/* Assigned Systems Section - only show when there are assigned systems */}
             {filteredAssigned.length > 0 && (
               <>
@@ -224,7 +225,7 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
               onSystemClick={(system) => setSelectedSystem(system)}
             />
           </div>
-        </div>
+        </ScrollArea>
 
         {/* Add System Button */}
         <div className="p-3 border-t border-border">
