@@ -58,9 +58,9 @@ export const HandoverPointCard: React.FC<HandoverPointCardProps> = ({
   return (
     <Card 
       className={cn(
-        'group cursor-pointer transition-all duration-200 hover:shadow-md w-[200px] border',
+        'group cursor-pointer transition-all duration-200 hover:shadow-sm w-[140px] border',
         isDropTarget && 'ring-2 ring-primary ring-offset-2',
-        isDragging && 'opacity-50 shadow-lg rotate-2'
+        isDragging && 'opacity-50 shadow-lg scale-105'
       )}
       style={{
         backgroundColor: isDropTarget ? 'hsl(var(--primary) / 0.05)' : vcrColor?.background ?? 'hsl(var(--card))',
@@ -70,16 +70,16 @@ export const HandoverPointCard: React.FC<HandoverPointCardProps> = ({
       }}
       onClick={onClick}
     >
-      <CardContent className="p-2">
-        <div className="flex items-center gap-2">
+      <CardContent className="p-1.5">
+        <div className="flex items-start gap-1">
           {/* Drag Handle - hidden by default, shown on hover */}
-          <div className="cursor-grab active:cursor-grabbing text-muted-foreground/40 hover:text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
-            <GripVertical className="w-3.5 h-3.5" />
+          <div className="cursor-grab active:cursor-grabbing text-muted-foreground/40 hover:text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity mt-0.5">
+            <GripVertical className="w-3 h-3" />
           </div>
 
           {/* Name & ID stacked */}
           <div className="flex-1 min-w-0">
-            <span className="text-[11px] font-mono text-muted-foreground block">
+            <span className="text-[8px] font-mono text-muted-foreground block leading-tight">
               {(() => {
                 const code = handoverPoint.vcr_code || '';
                 const newMatch = code.match(/^(VCR-\d+)-DP/);
@@ -89,13 +89,13 @@ export const HandoverPointCard: React.FC<HandoverPointCardProps> = ({
                 return 'VCR-???';
               })()}
             </span>
-            <span className="text-xs font-medium truncate block">
+            <span className="text-[10px] font-medium truncate block leading-tight">
               {handoverPoint.name}
             </span>
           </div>
 
           {/* Progress % on the right */}
-          <span className="text-xs font-semibold text-muted-foreground shrink-0">
+          <span className="text-[8px] font-medium text-muted-foreground shrink-0 mt-0.5">
             {progress}%
           </span>
         </div>
