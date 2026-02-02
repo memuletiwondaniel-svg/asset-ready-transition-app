@@ -224,19 +224,21 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
               onToggle={() => toggleSection('unassigned')}
               onSystemClick={(system) => setSelectedSystem(system)}
             />
-
-            {/* Add System Button */}
-            <Button 
-              variant="ghost"
-              className="w-full gap-1 text-xs border border-dashed border-border/50 hover:border-primary/50 mt-2" 
-              size="sm"
-              onClick={() => setShowAddDialog(true)}
-            >
-              <Plus className="w-3 h-3" />
-              Add Systems
-            </Button>
           </div>
         </ScrollArea>
+
+        {/* Add System Button - Fixed at bottom */}
+        <div className="p-3 border-t border-border">
+          <Button 
+            variant="ghost"
+            className="w-full gap-1 text-xs border border-dashed border-border/50 hover:border-primary/50" 
+            size="sm"
+            onClick={() => setShowAddDialog(true)}
+          >
+            <Plus className="w-3 h-3" />
+            Add Systems
+          </Button>
+        </div>
       </div>
 
       {/* Add System Dialog */}
