@@ -179,7 +179,7 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
               </div>
             </div>
           ) : (
-            <div className="flex flex-wrap gap-2 content-start">
+            <div className="flex flex-wrap gap-2 justify-center content-start">
               {sortedPoints.map((point) => (
                 <DraggableHandoverPointCard
                   key={point.id}
