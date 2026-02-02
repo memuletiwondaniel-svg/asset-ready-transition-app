@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Users, Target, FileText, UserCircle, Building, MapPin, Calendar, FolderOpen, Layers } from 'lucide-react';
+import { Users, Target, FileText, UserCircle, Building, MapPin, FolderOpen } from 'lucide-react';
 import { useProjects, useProjectTeamMembers } from '@/hooks/useProjects';
 import { usePlants } from '@/hooks/usePlants';
 import { useStations } from '@/hooks/useStations';
@@ -13,6 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { StyledWidgetIcon } from './StyledWidgetIcon';
+import { MilestonesTimeline } from './MilestonesTimeline';
 
 interface ProjectReadinessWidgetProps {
   projectId: string;
@@ -81,16 +82,6 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
 
   const loading = teamLoading || milestonesLoading;
 
-  const getMilestoneStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'bg-emerald-500/10 text-emerald-700 border-emerald-500/20 shadow-[0_0_8px_rgba(16,185,129,0.2)]';
-      case 'in_progress':
-        return 'bg-blue-500/10 text-blue-700 border-blue-500/20 shadow-[0_0_8px_rgba(59,130,246,0.2)]';
-      default:
-        return 'bg-muted text-muted-foreground border-border/40';
-    }
-  };
 
   if (loading) {
     return (
@@ -309,7 +300,7 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
               );
             })()}
 
-            {/* Milestones */}
+            {/* Milestones Timeline */}
             <div className="space-y-3">
               <h3 className="font-semibold text-sm text-muted-foreground flex items-center gap-2">
                 <div className="p-1.5 rounded-lg bg-rose-500/10">
@@ -318,55 +309,12 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
                 Milestones
                 {milestones.length > 0 && (
                   <Badge variant="secondary" className="ml-auto text-xs font-medium">
-                    {milestones.length}
+                    {milestones.filter(m => m.status === 'completed').length}/{milestones.length}
                   </Badge>
                 )}
               </h3>
-              <div className="space-y-2 pl-1">
-                {milestones.length === 0 ? (
-                  <div className="p-4 rounded-xl bg-muted/20 border border-dashed border-border/30 text-center">
-                    <p className="text-sm text-muted-foreground">No milestones defined</p>
-                  </div>
-                ) : (
-                  milestones.map((milestone) => (
-                    <div 
-                      key={milestone.id} 
-                      className="p-4 rounded-xl bg-muted/30 border border-border/40 hover:bg-muted/40 transition-colors space-y-3"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <p className="text-sm font-medium flex-1">{milestone.milestone_name}</p>
-                        <Badge 
-                          variant="outline" 
-                          className={`text-xs shrink-0 ${getMilestoneStatusColor(milestone.status)}`}
-                        >
-                          {milestone.status === 'completed' ? 'Completed' : 
-                           milestone.status === 'in_progress' ? 'In Progress' : 'Pending'}
-                        </Badge>
-                      </div>
-                      
-                      {/* Progress bar for in_progress milestones */}
-                      {milestone.status === 'in_progress' && (
-                        <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full transition-all duration-500"
-                            style={{ width: '60%' }}
-                          />
-                        </div>
-                      )}
-                      
-                      {milestone.milestone_date && (
-                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                          <Calendar className="h-3.5 w-3.5" />
-                          <span>{new Date(milestone.milestone_date).toLocaleDateString('en-US', { 
-                            month: 'short', 
-                            day: 'numeric', 
-                            year: 'numeric' 
-                          })}</span>
-                        </div>
-                      )}
-                    </div>
-                  ))
-                )}
+              <div className="pl-1">
+                <MilestonesTimeline milestones={milestones} />
               </div>
             </div>
           </div>
