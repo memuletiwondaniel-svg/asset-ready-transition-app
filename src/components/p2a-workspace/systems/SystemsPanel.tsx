@@ -92,14 +92,14 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
           {/* Search - only visible on hover */}
           <div className={cn(
             "relative transition-all duration-200 overflow-hidden",
-            isHovered || searchQuery ? "h-8 opacity-100" : "h-0 opacity-0"
+            isHovered || searchQuery ? "h-6 opacity-100" : "h-0 opacity-0"
           )}>
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
             <Input
-              placeholder="Search systems..."
+              placeholder="Search..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8 h-8 text-sm"
+              className="pl-6 h-6 text-xs"
             />
           </div>
         </div>
