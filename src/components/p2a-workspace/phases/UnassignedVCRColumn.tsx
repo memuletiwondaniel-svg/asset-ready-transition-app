@@ -47,7 +47,6 @@ export const UnassignedVCRColumn: React.FC<UnassignedVCRColumnProps> = ({
     >
       {/* Compact Header */}
       <div className="flex items-center gap-2 px-2 mb-2">
-        <Inbox className="w-4 h-4 text-muted-foreground" />
         <span className="text-xs font-medium text-muted-foreground">
           Unassigned VCRs
         </span>
