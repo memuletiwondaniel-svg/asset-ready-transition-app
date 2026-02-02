@@ -434,7 +434,7 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
     >
 
       {/* Main Content Area - Systems Panel + Timeline */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden min-h-0">
         {/* Systems Panel - LEFT Side */}
         <SystemsPanel
           systems={systems}
