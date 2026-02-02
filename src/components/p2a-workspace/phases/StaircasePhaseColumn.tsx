@@ -90,6 +90,18 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
     }
   };
 
+  // Subtle background colors for phase headers - cycle through muted palette
+  const phaseHeaderColors = [
+    'bg-gradient-to-r from-slate-100 to-slate-50 dark:from-slate-800/50 dark:to-slate-900/30',
+    'bg-gradient-to-r from-blue-50 to-slate-50 dark:from-blue-900/20 dark:to-slate-900/30',
+    'bg-gradient-to-r from-emerald-50 to-slate-50 dark:from-emerald-900/20 dark:to-slate-900/30',
+    'bg-gradient-to-r from-amber-50 to-slate-50 dark:from-amber-900/20 dark:to-slate-900/30',
+    'bg-gradient-to-r from-violet-50 to-slate-50 dark:from-violet-900/20 dark:to-slate-900/30',
+    'bg-gradient-to-r from-rose-50 to-slate-50 dark:from-rose-900/20 dark:to-slate-900/30',
+    'bg-gradient-to-r from-cyan-50 to-slate-50 dark:from-cyan-900/20 dark:to-slate-900/30',
+  ];
+  const headerColorClass = phaseHeaderColors[phaseIndex % phaseHeaderColors.length];
+
   return (
     <>
       <div 
@@ -103,13 +115,10 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
         {/* Phase Header Card */}
         <div 
           className={cn(
-            "group rounded-t-xl border border-b-0 p-3 transition-all duration-200 hover:shadow-md hover:bg-accent/50",
-            isOver ? 'border-primary bg-primary/10' : 'border-border bg-card'
+            "group rounded-t-xl border border-b-0 p-3 transition-all duration-200 hover:shadow-md",
+            headerColorClass,
+            isOver ? 'border-primary' : 'border-border'
           )}
-          style={{ 
-            borderTopColor: phase.color,
-            borderTopWidth: '3px',
-          }}
         >
           <div className="flex items-center justify-between mb-1">
             {/* Drag handle for phase reordering */}
@@ -122,12 +131,10 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
             >
               <GripVertical className="w-4 h-4 text-muted-foreground" />
             </button>
-            <div className="flex items-center gap-2 flex-1 justify-center">
-              <div 
-                className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                style={{ backgroundColor: phase.color }}
-              />
-              <h3 className="font-semibold text-sm truncate">{phase.name}</h3>
+            <div className="flex items-center gap-1 flex-1 justify-center">
+              <h3 className="font-semibold text-sm truncate">
+                Phase {phaseIndex + 1}: {phase.name}
+              </h3>
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
