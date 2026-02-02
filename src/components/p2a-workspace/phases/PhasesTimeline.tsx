@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { Plus, GitBranch, Maximize2, Minimize2 } from 'lucide-react';
+import { Plus, GitBranch } from 'lucide-react';
 import { P2APhase, P2AMilestone } from '../hooks/useP2APhases';
 import { P2AHandoverPoint } from '../hooks/useP2AHandoverPoints';
 import { StaircasePhaseColumn } from './StaircasePhaseColumn';
@@ -9,7 +9,6 @@ import { UnassignedVCRColumn } from './UnassignedVCRColumn';
 import { MilestoneMarker } from './MilestoneMarker';
 import { CreatePhaseDialog } from './CreatePhaseDialog';
 import { SortableContext, horizontalListSortingStrategy } from '@dnd-kit/sortable';
-import { cn } from '@/lib/utils';
 
 interface PhasesTimelineProps {
   phases: P2APhase[];
@@ -60,10 +59,44 @@ export const PhasesTimeline: React.FC<PhasesTimelineProps> = ({
   // Sort milestones by display order
   const sortedMilestones = [...milestones].sort((a, b) => a.display_order - b.display_order);
 
-  // All phases aligned at the same height (no staircase offset)
-  const getStaircaseOffset = (_phaseIndex: number) => {
-    return 0;
+  // Build interleaved render items: phases with milestones between them
+  const buildRenderItems = () => {
+    const items: Array<
+      | { type: 'phase'; phase: P2APhase; idx: number }
+      | { type: 'milestone'; milestone: P2AMilestone }
+    > = [];
+
+    // Track which milestones have been rendered
+    const renderedMilestoneIds = new Set<string>();
+
+    phases.forEach((phase, idx) => {
+      // Add the phase
+      items.push({ type: 'phase', phase, idx });
+
+      // Check if this phase has an end_milestone_id - render milestone after it
+      if (phase.end_milestone_id) {
+        const endMilestone = sortedMilestones.find(m => m.id === phase.end_milestone_id);
+        if (endMilestone && !renderedMilestoneIds.has(endMilestone.id)) {
+          items.push({ type: 'milestone', milestone: endMilestone });
+          renderedMilestoneIds.add(endMilestone.id);
+        }
+      } else {
+        // Fallback: use display_order correlation
+        // Milestone with display_order = idx + 1 appears after phase at index idx
+        const separatorMilestone = sortedMilestones.find(
+          m => m.display_order === idx + 1 && !renderedMilestoneIds.has(m.id)
+        );
+        if (separatorMilestone) {
+          items.push({ type: 'milestone', milestone: separatorMilestone });
+          renderedMilestoneIds.add(separatorMilestone.id);
+        }
+      }
+    });
+
+    return items;
   };
+
+  const renderItems = buildRenderItems();
 
   // Empty state - still show unassigned section
   if (phases.length === 0) {
@@ -117,79 +150,40 @@ export const PhasesTimeline: React.FC<PhasesTimelineProps> = ({
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden min-h-0">
-      {/* Milestones Timeline - Minimal inline design with vertical dividers */}
-      {sortedMilestones.length > 0 && (
-        <div className="relative flex-shrink-0 flex items-center px-4 py-1.5 border-b border-border/50 bg-gradient-to-r from-slate-500/5 to-transparent overflow-visible z-10">
-          {/* Milestone markers */}
-          <div className="flex items-center gap-6 overflow-x-auto">
-            {sortedMilestones.map((milestone, idx) => (
-              <MilestoneMarker 
-                key={milestone.id}
-                milestone={milestone} 
-                isFirst={idx === 0}
-                isLast={idx === sortedMilestones.length - 1}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Staircase Workspace - Scrollable area for phases, fixed unassigned below */}
+      {/* Staircase Workspace - Scrollable area for phases with interleaved milestones */}
       <div className="flex-1 min-h-0 relative">
         <ScrollArea className="h-full w-full">
           <div className="relative p-4 pb-8">
-            {/* Staircase Flow Line */}
-            <svg 
-              className="absolute inset-0 pointer-events-none z-0"
-              style={{ width: '100%', height: '100%' }}
-            >
-              <defs>
-                <linearGradient id="staircaseGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.3" />
-                  <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0.1" />
-                </linearGradient>
-              </defs>
-              {phases.length > 1 && phases.slice(0, -1).map((phase, idx) => {
-                const phaseWidth = 224; // w-56 = 14rem = 224px
-                const gap = 16; // gap-4 = 1rem = 16px
-                const x1 = (idx * (phaseWidth + gap)) + (phaseWidth / 2);
-                const y1 = getStaircaseOffset(idx) + 100;
-                const x2 = ((idx + 1) * (phaseWidth + gap)) + (phaseWidth / 2);
-                const y2 = getStaircaseOffset(idx + 1) + 100;
-                return (
-                  <line
-                    key={phase.id}
-                    x1={x1}
-                    y1={y1}
-                    x2={x2}
-                    y2={y2}
-                    stroke="url(#staircaseGradient)"
-                    strokeWidth="2"
-                    strokeDasharray="8 4"
-                  />
-                );
-              })}
-            </svg>
-
-            {/* Phase Columns in Staircase Layout */}
+            {/* Phase Columns with Milestones Interleaved */}
             <div className="flex gap-4 relative z-10">
               <SortableContext items={phases.map(p => p.id)} strategy={horizontalListSortingStrategy}>
-                {phases.map((phase, idx) => (
-                  <StaircasePhaseColumn
-                    key={phase.id}
-                    phase={phase}
-                    phaseIndex={idx}
-                    handoverPoints={handoverPoints.filter(p => p.phase_id === phase.id)}
-                    staircaseOffset={getStaircaseOffset(idx)}
-                    onCreateHandoverPoint={() => onCreateHandoverPoint(phase.id)}
-                    onEditPhase={() => {/* TODO */}}
-                    onDeletePhase={() => onDeletePhase(phase.id)}
-                    onOpenVCR={onOpenVCR}
-                    projectCode={projectCode}
-                    isFirstPhase={idx === 0}
-                    isLastPhase={idx === phases.length - 1}
-                  />
-                ))}
+                {renderItems.map((item, index) => {
+                  if (item.type === 'phase') {
+                    return (
+                      <StaircasePhaseColumn
+                        key={item.phase.id}
+                        phase={item.phase}
+                        phaseIndex={item.idx}
+                        handoverPoints={handoverPoints.filter(p => p.phase_id === item.phase.id)}
+                        staircaseOffset={0}
+                        onCreateHandoverPoint={() => onCreateHandoverPoint(item.phase.id)}
+                        onEditPhase={() => {/* TODO */}}
+                        onDeletePhase={() => onDeletePhase(item.phase.id)}
+                        onOpenVCR={onOpenVCR}
+                        projectCode={projectCode}
+                        isFirstPhase={item.idx === 0}
+                        isLastPhase={item.idx === phases.length - 1}
+                      />
+                    );
+                  } else {
+                    return (
+                      <MilestoneMarker
+                        key={`milestone-${item.milestone.id}`}
+                        milestone={item.milestone}
+                      />
+                    );
+                  }
+                })}
               </SortableContext>
 
               {/* Add Phase Button */}
