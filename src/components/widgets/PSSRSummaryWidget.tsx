@@ -176,11 +176,10 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
             <Button
               variant="outline"
               size="sm"
-              className="w-full text-xs gap-2 mt-auto"
+              className="w-full text-xs mt-auto"
               onClick={() => setShowP2AWorkspace(true)}
             >
-              <LayoutGrid className="h-3.5 w-3.5" />
-              View Handover Plan
+              P2A Handover Plan
             </Button>
           )}
         </CardContent>
