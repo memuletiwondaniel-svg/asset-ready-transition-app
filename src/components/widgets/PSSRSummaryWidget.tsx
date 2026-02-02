@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import { AlertTriangle, FileText, Plus, ChevronRight } from 'lucide-react';
 import { StyledWidgetIcon } from './StyledWidgetIcon';
 import { useProjectPSSRs } from '@/hooks/useProjectPSSRs';
@@ -10,6 +9,7 @@ import { PSSRQuickViewOverlay } from '@/components/pssr/PSSRQuickViewOverlay';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CreateVCRWizard } from './vcr-wizard/CreateVCRWizard';
 import { cn } from '@/lib/utils';
+import { useCanCreateVCR } from '@/hooks/useCurrentUserRole';
 
 interface PSSRSummaryWidgetProps {
   projectId: string;
@@ -70,6 +70,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
 }) => {
   const { data: pssrs, isLoading: pssrsLoading } = useProjectPSSRs(projectId);
   const { data: vcrs, isLoading: vcrsLoading } = useProjectVCRs(projectId);
+  const { canCreate: canCreateVCR, isLoading: roleLoading } = useCanCreateVCR();
   const [selectedPSSR, setSelectedPSSR] = useState<{ id: string; displayId: string } | null>(null);
   const [showCreateVCR, setShowCreateVCR] = useState(false);
 
@@ -104,18 +105,20 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
               />
               <span>VCRs and PSSRs</span>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowCreateVCR(true);
-              }}
-            >
-              <Plus className="h-3.5 w-3.5 mr-1" />
-              Create VCR
-            </Button>
+            {canCreateVCR && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowCreateVCR(true);
+                }}
+              >
+                <Plus className="h-3.5 w-3.5 mr-1" />
+                Create VCR
+              </Button>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 pt-0">
@@ -186,15 +189,17 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
             <div className="text-center py-6 text-muted-foreground">
               <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
               <p className="text-sm">No VCRs or PSSRs found</p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-3"
-                onClick={() => setShowCreateVCR(true)}
-              >
-                <Plus className="h-3.5 w-3.5 mr-1" />
-                Create VCR
-              </Button>
+              {canCreateVCR && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-3"
+                  onClick={() => setShowCreateVCR(true)}
+                >
+                  <Plus className="h-3.5 w-3.5 mr-1" />
+                  Create VCR
+                </Button>
+              )}
             </div>
           )}
         </CardContent>
