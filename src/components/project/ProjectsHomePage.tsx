@@ -122,23 +122,14 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
           ]}
         />
         
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
-          <div className="min-w-0 flex items-center gap-3">
-            <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-primary to-accent">
-              <FolderOpen className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">Projects</h1>
-              <p className="text-sm text-muted-foreground mt-1">Browse and access your assigned projects</p>
-            </div>
+        <div className="flex items-center gap-3 mt-4">
+          <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-primary to-accent">
+            <FolderOpen className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
           </div>
-          
-          {canPerformActions && (
-            <Button size="sm" onClick={() => setIsAddModalOpen(true)} className="flex-1 sm:flex-none gap-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm">
-              <Plus className="h-4 w-4" />
-              New Project
-            </Button>
-          )}
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Projects</h1>
+            <p className="text-sm text-muted-foreground mt-1">Browse and access your assigned projects</p>
+          </div>
         </div>
       </div>
 
@@ -162,9 +153,8 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
               {viewMode === 'list' && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="h-8 gap-2">
+                    <Button variant="outline" size="sm" className="h-8 w-8 p-0">
                       <Settings2 className="h-4 w-4" />
-                      <span className="hidden sm:inline">Columns</span>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">
@@ -237,6 +227,13 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                   <List className="h-4 w-4" />
                 </Button>
               </div>
+
+              {canPerformActions && (
+                <Button size="sm" onClick={() => setIsAddModalOpen(true)} className="gap-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm">
+                  <Plus className="h-4 w-4" />
+                  <span className="hidden sm:inline">New Project</span>
+                </Button>
+              )}
             </div>
           </div>
 
