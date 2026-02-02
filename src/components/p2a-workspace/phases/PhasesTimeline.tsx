@@ -120,11 +120,11 @@ export const PhasesTimeline: React.FC<PhasesTimelineProps> = ({
   return (
     <>
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Milestones Timeline Header - Compact */}
+        {/* Milestones Timeline - Minimal inline design */}
         {sortedMilestones.length > 0 && (
-          <div className="flex items-center gap-2 px-4 py-1 border-b border-border bg-muted/20">
-            <span className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider">Milestones</span>
-            <div className="flex items-center gap-1 overflow-x-auto">
+          <div className="flex items-center px-4 py-1.5 border-b border-border/50 bg-gradient-to-r from-amber-500/5 to-transparent">
+            {/* Timeline line */}
+            <div className="flex items-center gap-3 overflow-x-auto">
               {sortedMilestones.map((milestone, idx) => (
                 <React.Fragment key={milestone.id}>
                   <MilestoneMarker 
@@ -133,7 +133,7 @@ export const PhasesTimeline: React.FC<PhasesTimelineProps> = ({
                     isLast={idx === sortedMilestones.length - 1}
                   />
                   {idx < sortedMilestones.length - 1 && (
-                    <div className="w-8 h-px bg-border" />
+                    <div className="w-12 h-px bg-gradient-to-r from-amber-400/40 to-amber-400/10" />
                   )}
                 </React.Fragment>
               ))}
