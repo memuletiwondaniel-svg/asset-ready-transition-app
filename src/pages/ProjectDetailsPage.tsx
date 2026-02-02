@@ -22,7 +22,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ProjectReadinessWidget } from '@/components/widgets/ProjectReadinessWidget';
 import { ORPActivityPlanWidget } from '@/components/widgets/ORPActivityPlanWidget';
 import { PSSRSummaryWidget } from '@/components/widgets/PSSRSummaryWidget';
-import { P2AHandoverWidget } from '@/components/widgets/P2AHandoverWidget';
+
 import { OwnersCostWidget } from '@/components/widgets/OwnersCostWidget';
 import { ORMtceWidget } from '@/components/widgets/ORMtceWidget';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
@@ -78,7 +78,7 @@ export default function ProjectDetailsPage() {
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [widgetOrder, setWidgetOrder] = useState<string[]>(() => {
     const saved = localStorage.getItem(`project-widget-order-${id}`);
-    return saved ? JSON.parse(saved) : ['orp', 'pssr', 'p2a', 'cost', 'orm'];
+    return saved ? JSON.parse(saved) : ['orp', 'pssr', 'cost', 'orm'];
   });
   const [hiddenWidgets, setHiddenWidgets] = useState<string[]>(() => {
     const saved = localStorage.getItem(`project-hidden-widgets-${id}`);
@@ -154,8 +154,6 @@ export default function ProjectDetailsPage() {
         return <ORPActivityPlanWidget projectId={id || ''} />;
       case 'pssr':
         return <PSSRSummaryWidget projectId={id || ''} projectCode={projectCode} />;
-      case 'p2a':
-        return <P2AHandoverWidget projectId={id || ''} />;
       case 'cost':
         return <OwnersCostWidget projectId={id || ''} />;
       case 'orm':
