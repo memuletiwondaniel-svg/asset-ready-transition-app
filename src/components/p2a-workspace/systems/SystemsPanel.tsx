@@ -153,7 +153,7 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
   return (
     <>
       <div 
-        className="w-48 h-full border-l border-border bg-card flex flex-col ml-4 overflow-hidden"
+        className="w-48 flex flex-col border-r border-border bg-card overflow-hidden min-h-0 flex-shrink-0"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
@@ -227,11 +227,11 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
           </div>
         </ScrollArea>
 
-        {/* Add System Button - Fixed at bottom */}
-        <div className="shrink-0 p-3 border-t border-border bg-card">
+        {/* Add System Button - Fixed at bottom, aligned with Unassigned VCR row */}
+        <div className="flex-shrink-0 h-[180px] px-4 py-3 border-t border-border bg-muted/30 flex flex-col justify-start">
           <Button 
             variant="ghost"
-            className="w-full gap-1 text-xs border border-dashed border-border/50 hover:border-primary/50" 
+            className="h-7 gap-1 text-xs border border-dashed border-border/50 hover:border-primary/50 w-full" 
             size="sm"
             onClick={() => setShowAddDialog(true)}
           >
