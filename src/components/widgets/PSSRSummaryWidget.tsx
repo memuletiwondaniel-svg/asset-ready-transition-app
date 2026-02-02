@@ -99,31 +99,15 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
     <>
       <Card className="h-full transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:border-red-500/20 group">
         <CardHeader {...dragAttributes} {...dragListeners} className="cursor-grab active:cursor-grabbing pb-3">
-          <CardTitle className="text-lg flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <StyledWidgetIcon 
-                Icon={AlertTriangle}
-                gradientFrom="from-red-500"
-                gradientTo="to-orange-500"
-                glowFrom="from-red-500/40"
-                glowTo="to-orange-500/40"
-              />
-              <span>VCRs & Handovers</span>
-            </div>
-            {oraPlanId && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-xs h-7 px-2 gap-1 text-muted-foreground hover:text-foreground"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowP2AWorkspace(true);
-                }}
-              >
-                <LayoutGrid className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Handover Plan</span>
-              </Button>
-            )}
+          <CardTitle className="text-lg flex items-center gap-3">
+            <StyledWidgetIcon 
+              Icon={AlertTriangle}
+              gradientFrom="from-red-500"
+              gradientTo="to-orange-500"
+              glowFrom="from-red-500/40"
+              glowTo="to-orange-500/40"
+            />
+            <span>VCRs & Handovers</span>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 pt-0">
@@ -183,6 +167,19 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                 </Button>
               )}
             </div>
+          )}
+
+          {/* View Handover Plan Button */}
+          {oraPlanId && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full text-xs gap-2 mt-2"
+              onClick={() => setShowP2AWorkspace(true)}
+            >
+              <LayoutGrid className="h-3.5 w-3.5" />
+              View Handover Plan
+            </Button>
           )}
         </CardContent>
       </Card>
