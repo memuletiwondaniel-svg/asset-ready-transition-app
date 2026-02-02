@@ -120,13 +120,11 @@ export const PhasesTimeline: React.FC<PhasesTimelineProps> = ({
   return (
     <>
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Milestones Timeline Header */}
-        <div className="flex flex-col px-4 py-1.5 border-b border-border bg-muted/30">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Milestones</span>
-          </div>
-          {sortedMilestones.length > 0 && (
-            <div className="flex items-center overflow-x-auto">
+        {/* Milestones Timeline Header - Compact */}
+        {sortedMilestones.length > 0 && (
+          <div className="flex items-center gap-2 px-4 py-1 border-b border-border bg-muted/20">
+            <span className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider">Milestones</span>
+            <div className="flex items-center gap-1 overflow-x-auto">
               {sortedMilestones.map((milestone, idx) => (
                 <React.Fragment key={milestone.id}>
                   <MilestoneMarker 
@@ -135,13 +133,13 @@ export const PhasesTimeline: React.FC<PhasesTimelineProps> = ({
                     isLast={idx === sortedMilestones.length - 1}
                   />
                   {idx < sortedMilestones.length - 1 && (
-                    <div className="w-16 h-0.5 bg-border mx-0.5" />
+                    <div className="w-8 h-px bg-border" />
                   )}
                 </React.Fragment>
               ))}
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Staircase Workspace - Scrollable, constrained to leave room for unassigned */}
         <ScrollArea className="flex-1 min-h-0">

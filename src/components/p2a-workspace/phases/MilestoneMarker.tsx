@@ -2,6 +2,7 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import { P2AMilestone } from '../hooks/useP2APhases';
 import { format } from 'date-fns';
+import { Flag } from 'lucide-react';
 
 interface MilestoneMarkerProps {
   milestone: P2AMilestone;
@@ -16,28 +17,22 @@ export const MilestoneMarker: React.FC<MilestoneMarkerProps> = ({
 }) => {
   return (
     <div className={cn(
-      'flex flex-col items-center justify-center px-1.5',
-      isFirst && 'pl-0',
-      isLast && 'pr-0'
+      'flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20',
+      isFirst && 'ml-0',
+      isLast && 'mr-0'
     )}>
-      {/* Milestone Diamond */}
-      <div className="relative">
-        <div className="w-2.5 h-2.5 bg-primary rotate-45 rounded-[2px]" />
-        <div className="absolute inset-[2px] bg-background rotate-45 rounded-[1px]" />
-        <div className="absolute inset-[3px] bg-primary rotate-45 rounded-[1px]" />
-      </div>
+      {/* Flag Icon */}
+      <Flag className="w-2.5 h-2.5 text-primary fill-primary/30" />
 
-      {/* Milestone Info */}
-      <div className="mt-1 text-center min-w-[50px]">
-        <div className="text-[9px] font-medium text-foreground truncate max-w-[60px]">
-          {milestone.code || milestone.name}
-        </div>
-        {milestone.target_date && (
-          <div className="text-[8px] text-muted-foreground">
-            {format(new Date(milestone.target_date), 'MMM yy')}
-          </div>
-        )}
-      </div>
+      {/* Milestone Info - Inline */}
+      <span className="text-[9px] font-medium text-primary whitespace-nowrap">
+        {milestone.code || milestone.name}
+      </span>
+      {milestone.target_date && (
+        <span className="text-[8px] text-muted-foreground whitespace-nowrap">
+          {format(new Date(milestone.target_date), 'MMM yy')}
+        </span>
+      )}
     </div>
   );
 };
