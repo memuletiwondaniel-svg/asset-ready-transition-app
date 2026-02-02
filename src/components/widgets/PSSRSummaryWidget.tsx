@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, FileText, Plus, ChevronRight } from 'lucide-react';
+import { AlertTriangle, FileText, Plus, ChevronRight, LayoutGrid } from 'lucide-react';
 import { StyledWidgetIcon } from './StyledWidgetIcon';
 import { useProjectPSSRs } from '@/hooks/useProjectPSSRs';
 import { useProjectVCRs } from '@/hooks/useProjectVCRs';
+import { useProjectORPPlans } from '@/hooks/useProjectORPPlans';
 import { PSSRQuickViewOverlay } from '@/components/pssr/PSSRQuickViewOverlay';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CreateVCRWizard } from './vcr-wizard/CreateVCRWizard';
+import { P2AWorkspaceOverlay } from './P2AWorkspaceOverlay';
 import { cn } from '@/lib/utils';
 import { useCanCreateVCR } from '@/hooks/useCurrentUserRole';
-
 interface PSSRSummaryWidgetProps {
   projectId: string;
   projectCode?: string;
@@ -70,10 +71,14 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
 }) => {
   const { data: pssrs, isLoading: pssrsLoading } = useProjectPSSRs(projectId);
   const { data: vcrs, isLoading: vcrsLoading } = useProjectVCRs(projectId);
+  const { data: orpPlans, isLoading: orpLoading } = useProjectORPPlans(projectId);
   const { canCreate: canCreateVCR, isLoading: roleLoading } = useCanCreateVCR();
   const [selectedPSSR, setSelectedPSSR] = useState<{ id: string; displayId: string } | null>(null);
   const [showCreateVCR, setShowCreateVCR] = useState(false);
+  const [showP2AWorkspace, setShowP2AWorkspace] = useState(false);
 
+  // Get the first (active) ORA plan for this project
+  const oraPlanId = orpPlans?.[0]?.id || '';
   const isLoading = pssrsLoading || vcrsLoading;
 
   // Use only real VCRs from database
@@ -105,6 +110,20 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
               />
               <span>VCRs</span>
             </div>
+            {oraPlanId && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs h-7 px-2 gap-1 text-muted-foreground hover:text-foreground"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowP2AWorkspace(true);
+                }}
+              >
+                <LayoutGrid className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Handover Plan</span>
+              </Button>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 pt-0">
@@ -184,6 +203,15 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
         onOpenChange={setShowCreateVCR}
         projectId={projectId}
         projectCode={projectCode}
+      />
+
+      {/* P2A Handover Workspace Overlay */}
+      <P2AWorkspaceOverlay
+        open={showP2AWorkspace}
+        onOpenChange={setShowP2AWorkspace}
+        oraPlanId={oraPlanId}
+        projectName={projectCode}
+        projectNumber={projectCode}
       />
     </>
   );
