@@ -21,7 +21,7 @@ export const P2AWorkspaceOverlay: React.FC<P2AWorkspaceOverlayProps> = ({
 }) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[98vw] w-full h-[95vh] p-0 gap-0 overflow-hidden">
+      <DialogContent className="max-w-[98vw] w-full h-[95vh] p-0 gap-0 overflow-hidden [&>button]:hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b bg-gradient-to-br from-primary/5 via-accent/5 to-transparent">
           <div className="flex items-center gap-3">
