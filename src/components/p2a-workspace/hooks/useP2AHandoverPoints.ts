@@ -194,12 +194,45 @@ export const useP2AHandoverPoints = (handoverPlanId: string) => {
       if (error) throw error;
       return data;
     },
+    onMutate: async ({ handoverPointId, systemId }) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['p2a-systems', handoverPlanId] });
+
+      // Snapshot the previous value
+      const previousSystems = queryClient.getQueryData(['p2a-systems', handoverPlanId]);
+      const previousHandoverPoints = queryClient.getQueryData(['p2a-handover-points', handoverPlanId]);
+
+      // Get the target VCR's code
+      const handoverPoints = previousHandoverPoints as P2AHandoverPoint[] | undefined;
+      const targetVcr = handoverPoints?.find(hp => hp.id === handoverPointId);
+
+      // Optimistically update the systems cache
+      queryClient.setQueryData(['p2a-systems', handoverPlanId], (old: any[]) => {
+        if (!old) return old;
+        return old.map(system => {
+          if (system.id === systemId) {
+            return {
+              ...system,
+              assigned_handover_point_id: handoverPointId,
+              assigned_vcr_code: targetVcr?.vcr_code,
+            };
+          }
+          return system;
+        });
+      });
+
+      return { previousSystems, previousHandoverPoints };
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['p2a-handover-points', handoverPlanId] });
       queryClient.invalidateQueries({ queryKey: ['p2a-systems'] });
       toast({ title: 'Success', description: 'System assigned to handover point' });
     },
-    onError: (error) => {
+    onError: (error, _variables, context) => {
+      // Rollback on error
+      if (context?.previousSystems) {
+        queryClient.setQueryData(['p2a-systems', handoverPlanId], context.previousSystems);
+      }
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     },
   });
@@ -213,9 +246,39 @@ export const useP2AHandoverPoints = (handoverPlanId: string) => {
 
       if (error) throw error;
     },
+    onMutate: async ({ systemId }) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['p2a-systems', handoverPlanId] });
+
+      // Snapshot the previous value
+      const previousSystems = queryClient.getQueryData(['p2a-systems', handoverPlanId]);
+
+      // Optimistically update the systems cache
+      queryClient.setQueryData(['p2a-systems', handoverPlanId], (old: any[]) => {
+        if (!old) return old;
+        return old.map(system => {
+          if (system.id === systemId) {
+            return {
+              ...system,
+              assigned_handover_point_id: undefined,
+              assigned_vcr_code: undefined,
+            };
+          }
+          return system;
+        });
+      });
+
+      return { previousSystems };
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['p2a-handover-points', handoverPlanId] });
       queryClient.invalidateQueries({ queryKey: ['p2a-systems'] });
+    },
+    onError: (_error, _variables, context) => {
+      // Rollback on error
+      if (context?.previousSystems) {
+        queryClient.setQueryData(['p2a-systems', handoverPlanId], context.previousSystems);
+      }
     },
   });
 
