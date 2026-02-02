@@ -60,12 +60,24 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const queryClient = useQueryClient();
 
-  // Filter projects based on search query
-  const filteredProjects = projects?.filter(project => 
+  // Filter and sort projects - DP-300 pinned to top, then favorites, then rest
+  const filteredProjects = (projects?.filter(project => 
     project.project_title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     `${project.project_id_prefix}${project.project_id_number}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
     project.plant_name?.toLowerCase().includes(searchQuery.toLowerCase())
-  ) || [];
+  ) || []).sort((a, b) => {
+    // Pin DP-300 to the top
+    const aIsDP300 = a.project_id_prefix === 'DP' && a.project_id_number === '300';
+    const bIsDP300 = b.project_id_prefix === 'DP' && b.project_id_number === '300';
+    if (aIsDP300 && !bIsDP300) return -1;
+    if (!aIsDP300 && bIsDP300) return 1;
+    
+    // Then sort by favorites
+    if (a.is_favorite && !b.is_favorite) return -1;
+    if (!a.is_favorite && b.is_favorite) return 1;
+    
+    return 0;
+  });
 
   const handleProjectClick = (projectId: string) => {
     navigate(`/project/${projectId}`);
