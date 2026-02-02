@@ -122,19 +122,24 @@ export const PhasesTimeline: React.FC<PhasesTimelineProps> = ({
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Milestones Timeline Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/30">
-          <div className="flex items-center overflow-x-auto">
-            {sortedMilestones.length > 0 && sortedMilestones.map((milestone, idx) => (
-              <React.Fragment key={milestone.id}>
-                <MilestoneMarker 
-                  milestone={milestone} 
-                  isFirst={idx === 0}
-                  isLast={idx === sortedMilestones.length - 1}
-                />
-                {idx < sortedMilestones.length - 1 && (
-                  <div className="w-24 h-0.5 bg-border mx-1" />
-                )}
-              </React.Fragment>
-            ))}
+          <div className="flex items-center gap-4 overflow-x-auto">
+            <span className="text-xs font-medium text-muted-foreground shrink-0">Milestones</span>
+            {sortedMilestones.length > 0 && (
+              <div className="flex items-center">
+                {sortedMilestones.map((milestone, idx) => (
+                  <React.Fragment key={milestone.id}>
+                    <MilestoneMarker 
+                      milestone={milestone} 
+                      isFirst={idx === 0}
+                      isLast={idx === sortedMilestones.length - 1}
+                    />
+                    {idx < sortedMilestones.length - 1 && (
+                      <div className="w-24 h-0.5 bg-border mx-1" />
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-1 flex-shrink-0">
             {/* Fullscreen Toggle */}
