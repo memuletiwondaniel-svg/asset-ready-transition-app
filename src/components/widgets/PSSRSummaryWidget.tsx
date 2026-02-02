@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeftRight, FileText, Plus, ChevronRight, LayoutGrid } from 'lucide-react';
+import { KeyRound, FileText, Plus, ChevronRight, LayoutGrid } from 'lucide-react';
 import { StyledWidgetIcon } from './StyledWidgetIcon';
 import { useProjectPSSRs } from '@/hooks/useProjectPSSRs';
 import { useProjectVCRs } from '@/hooks/useProjectVCRs';
@@ -101,7 +101,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
         <CardHeader {...dragAttributes} {...dragListeners} className="cursor-grab active:cursor-grabbing pb-3">
           <CardTitle className="text-lg flex items-center gap-3">
             <StyledWidgetIcon 
-              Icon={ArrowLeftRight}
+              Icon={KeyRound}
               gradientFrom="from-cyan-500"
               gradientTo="to-blue-500"
               glowFrom="from-cyan-500/40"
