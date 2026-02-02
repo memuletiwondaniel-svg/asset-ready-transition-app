@@ -68,7 +68,7 @@ export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({
 
   return (
     <MyTasksPanelCard
-      title="PSSR & VCR Reviews"
+      title="VCR & Handover Reviews"
       icon={<ClipboardCheck className="h-5 w-5 text-white" />}
       iconColorClass="from-blue-500 to-blue-600"
       primaryStat={pendingPssrs.length}
@@ -81,7 +81,7 @@ export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({
       isDimmed={isDimmed}
       isLoading={isLoading}
       isEmpty={pendingPssrs.length === 0}
-      emptyMessage="No PSSR reviews pending"
+      emptyMessage="No VCR reviews pending"
       onViewAll={() => navigate('/pssr-reviews')}
     >
       {pendingPssrs.map((item, index) => {
