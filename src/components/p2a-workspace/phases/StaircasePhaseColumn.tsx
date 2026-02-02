@@ -162,10 +162,10 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
           </div>
         </div>
 
-        {/* VCRs Container - Horizontal row layout, dynamic height */}
+        {/* VCRs Container - Auto-expanding height based on content */}
         <div 
           className={cn(
-            "border border-t-0 rounded-b-xl p-3 min-h-[320px] max-h-[580px] overflow-y-auto transition-colors",
+            "border border-t-0 rounded-b-xl p-3 min-h-[200px] transition-colors",
             showPhaseHighlight ? 'border-primary bg-primary/5' : 'border-border bg-card/50'
           )}
         >
