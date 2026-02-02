@@ -68,9 +68,9 @@ const UnassignedSystemsDropZone: React.FC<UnassignedSystemsDropZoneProps> = ({
             <span className="text-xs text-muted-foreground">Unassigned</span>
           </div>
         </CollapsibleTrigger>
-        <CollapsibleContent className="pt-2">
+        <CollapsibleContent className="pt-2 overflow-hidden">
           {systems.length > 0 ? (
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-1.5 overflow-hidden">
               {systems.map(system => (
                 <DraggableSystemCard
                   key={system.id}
@@ -178,9 +178,9 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
           </div>
         </div>
 
-        {/* Systems List - fills remaining height with internal scroll (vertical only) */}
+        {/* Systems List - fills remaining height with vertical scroll only */}
         <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
-          <div className="p-3 space-y-3">
+          <div className="p-3 space-y-3 overflow-hidden">
             {/* Assigned Systems Section - only show when there are assigned systems */}
             {filteredAssigned.length > 0 && (
               <>
@@ -201,8 +201,8 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
                       <span className="text-xs text-muted-foreground">Assigned</span>
                     </div>
                   </CollapsibleTrigger>
-                  <CollapsibleContent className="pt-2">
-                    <div className="flex flex-wrap gap-1.5">
+                  <CollapsibleContent className="pt-2 overflow-hidden">
+                    <div className="flex flex-wrap gap-1.5 overflow-hidden">
                       {filteredAssigned.map(system => (
                         <DraggableSystemCard
                           key={system.id}
