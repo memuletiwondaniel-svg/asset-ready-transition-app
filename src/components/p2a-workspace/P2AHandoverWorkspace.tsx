@@ -481,20 +481,20 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
         />
       </div>
 
-      {/* Drag Overlay */}
-      <DragOverlay>
+      {/* Drag Overlay - shows the dragged item preview */}
+      <DragOverlay dropAnimation={null}>
         {activeDragItem?.type === 'system' && (
-          <div className="opacity-80">
+          <div className="shadow-lg cursor-grabbing">
             <SystemCard system={activeDragItem.data} compact />
           </div>
         )}
         {activeDragItem?.type === 'vcr' && (
-          <div className="opacity-80 rotate-2">
+          <div className="shadow-lg cursor-grabbing rotate-1">
             <HandoverPointCard handoverPoint={activeDragItem.data} />
           </div>
         )}
         {activeDragItem?.type === 'phase' && (
-          <div className="opacity-80 rotate-1 bg-card border-2 border-primary rounded-lg px-4 py-2 shadow-lg">
+          <div className="bg-card border-2 border-primary rounded-lg px-4 py-2 shadow-lg cursor-grabbing">
             <span className="font-medium">{activeDragItem.data?.name || 'Phase'}</span>
           </div>
         )}

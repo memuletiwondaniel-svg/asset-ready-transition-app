@@ -43,12 +43,22 @@ export const SystemCard: React.FC<SystemCardProps> = ({
     isComplete(system) ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-border bg-card'
   ) : '';
 
+  // When dragging, hide the original card completely (DragOverlay shows the preview)
+  if (isDragging) {
+    return (
+      <Card className="w-[140px] border border-dashed border-muted-foreground/30 bg-muted/20 opacity-40">
+        <CardContent className="p-1.5">
+          <div className="h-[34px]" /> {/* Placeholder to maintain layout */}
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card 
       className={cn(
         'group cursor-pointer transition-all duration-200 hover:shadow-sm w-[140px] border',
-        defaultClasses,
-        isDragging && 'opacity-50 shadow-lg scale-105'
+        defaultClasses
       )}
       style={cardStyle}
       onClick={onClick}
