@@ -105,20 +105,6 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
               />
               <span>VCRs</span>
             </div>
-            {canCreateVCR && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 px-2 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowCreateVCR(true);
-                }}
-              >
-                <Plus className="h-3.5 w-3.5 mr-1" />
-                Create VCR
-              </Button>
-            )}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 pt-0">
@@ -155,6 +141,17 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                       <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover/item:opacity-100 transition-opacity" />
                     </div>
                   ))}
+                  {canCreateVCR && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full mt-2 text-xs border-dashed"
+                      onClick={() => setShowCreateVCR(true)}
+                    >
+                      <Plus className="h-3.5 w-3.5 mr-1" />
+                      New VCR
+                    </Button>
+                  )}
                 </>
               )}
 
@@ -197,7 +194,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                   onClick={() => setShowCreateVCR(true)}
                 >
                   <Plus className="h-3.5 w-3.5 mr-1" />
-                  Create VCR
+                  New VCR
                 </Button>
               )}
             </div>
