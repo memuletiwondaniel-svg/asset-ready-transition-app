@@ -24,10 +24,10 @@ export const MilestoneMarker: React.FC<MilestoneMarkerProps> = ({
             isFirst && 'ml-0',
             isLast && 'mr-0'
           )}>
-            {/* Diamond marker */}
+            {/* Circular marker */}
             <div className="relative flex items-center justify-center">
-              <div className="w-3 h-3 rotate-45 bg-amber-500 rounded-[2px] shadow-sm" />
-              <div className="absolute w-1.5 h-1.5 rotate-45 bg-amber-200 rounded-[1px]" />
+              <div className="w-3 h-3 rounded-full bg-amber-500 shadow-sm ring-2 ring-amber-200/50" />
+              <div className="absolute w-1.5 h-1.5 rounded-full bg-white/80" />
             </div>
             
             {/* Code/Name */}
