@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { WidgetCard } from './WidgetCard';
 import { Plus, Settings, MessageSquare } from 'lucide-react';
 import { ORSHChatDialog } from './ORSHChatDialog';
+import { useCanPerformActions } from '@/hooks/useCurrentUserRole';
 
 interface PSSRQuickActionsWidgetProps {
   onCreatePSSR: () => void;
@@ -27,31 +28,41 @@ export const PSSRQuickActionsWidget: React.FC<PSSRQuickActionsWidgetProps> = ({
   dragListeners
 }) => {
   const [chatOpen, setChatOpen] = useState(false);
+  const { canPerformActions } = useCanPerformActions();
 
   const handleChatClick = () => {
     setChatOpen(true);
   };
 
-  const actions = [
+  // Filter actions based on user permissions
+  const allActions = [
     {
       label: 'Create PSSR',
       icon: Plus,
       onClick: onCreatePSSR,
       color: 'primary',
+      requiresAction: true, // Directors can't do this
     },
     {
       label: 'Manage Checklist',
       icon: Settings,
       onClick: onManageChecklist,
       color: 'secondary',
+      requiresAction: true, // Directors can't do this
     },
     {
       label: 'Ask ORSH AI',
       icon: MessageSquare,
       onClick: handleChatClick,
       color: 'tertiary',
+      requiresAction: false, // Everyone can use AI
     },
   ];
+
+  // Filter out actions that directors can't perform
+  const actions = allActions.filter(action => 
+    !action.requiresAction || canPerformActions
+  );
 
   const getColorClasses = (color: string) => {
     switch (color) {

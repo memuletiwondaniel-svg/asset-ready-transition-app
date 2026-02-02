@@ -22,6 +22,22 @@ const VCR_CREATOR_ROLES = [
   'Senior ORA Engineer',
 ];
 
+// Director roles that should only have SOF access (no project creation, etc.)
+const SOF_ONLY_DIRECTOR_ROLES = [
+  'P&E Director',
+  'P&M Director',
+  'HSE Director',
+  'HSSE Director',
+  'BNGL Director',
+  'CS Director',
+  'UQ Director',
+  'KAZ Director',
+  'NRNGL Director',
+  'Plant Director',
+  'Dep. Plant Director',
+  'Deputy Plant Director',
+];
+
 export const useCurrentUserRole = () => {
   return useQuery({
     queryKey: ['current-user-role'],
@@ -75,4 +91,29 @@ export const useCanCreateVCR = () => {
   );
 
   return { canCreate, isLoading };
+};
+
+/**
+ * Check if the current user is a director (SOF-only access)
+ * Directors should not be able to create projects, VCRs, PSSRs, etc.
+ */
+export const useIsDirector = () => {
+  const { data, isLoading } = useCurrentUserRole();
+  
+  const isDirector = !isLoading && data?.role && SOF_ONLY_DIRECTOR_ROLES.some(
+    directorRole => data.role?.toLowerCase() === directorRole.toLowerCase() ||
+                    data.role?.toLowerCase().includes(directorRole.toLowerCase())
+  );
+
+  return { isDirector, isLoading, role: data?.role };
+};
+
+/**
+ * Check if user can perform general actions (create projects, PSSRs, etc.)
+ * Directors are excluded from these actions
+ */
+export const useCanPerformActions = () => {
+  const { isDirector, isLoading } = useIsDirector();
+  
+  return { canPerformActions: !isLoading && !isDirector, isLoading };
 };

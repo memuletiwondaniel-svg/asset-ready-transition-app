@@ -14,6 +14,7 @@ import { AddProjectWizard } from '@/components/project/AddProjectWizard';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { useCanPerformActions } from '@/hooks/useCurrentUserRole';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,6 +46,7 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
   const navigate = useNavigate();
   const { translations: t } = useLanguage();
   const { projects, isLoading } = useProjects();
+  const { canPerformActions } = useCanPerformActions();
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [columnVisibility, setColumnVisibility] = useState<ColumnVisibility>({
@@ -131,10 +133,12 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
             </div>
           </div>
           
-          <Button size="sm" onClick={() => setIsAddModalOpen(true)} className="flex-1 sm:flex-none gap-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm">
-            <Plus className="h-4 w-4" />
-            New Project
-          </Button>
+          {canPerformActions && (
+            <Button size="sm" onClick={() => setIsAddModalOpen(true)} className="flex-1 sm:flex-none gap-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm">
+              <Plus className="h-4 w-4" />
+              New Project
+            </Button>
+          )}
         </div>
       </div>
 
