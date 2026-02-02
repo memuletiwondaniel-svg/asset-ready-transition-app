@@ -68,35 +68,33 @@ export const PhasesTimeline: React.FC<PhasesTimelineProps> = ({
   // Empty state - still show unassigned section
   if (phases.length === 0) {
     return (
-      <>
-        <div className="flex-1 flex flex-col">
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center max-w-md">
-              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500/10 to-cyan-500/10 flex items-center justify-center mx-auto mb-4">
-                <GitBranch className="w-10 h-10 text-blue-500" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2">Get Started with Your Handover Plan</h3>
-              <p className="text-sm text-muted-foreground mb-6">
-                Create phases to organize your timeline. VCRs will be arranged in a staircase 
-                pattern showing the handover progression from top to bottom.
-              </p>
-              <div className="flex gap-3 justify-center">
-                <Button onClick={() => setShowCreateDialog(true)} className="gap-2">
-                  <Plus className="w-4 h-4" />
-                  Create First Phase
-                </Button>
-              </div>
+      <div className="flex-1 flex flex-col min-h-0">
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center max-w-md">
+            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500/10 to-cyan-500/10 flex items-center justify-center mx-auto mb-4">
+              <GitBranch className="w-10 h-10 text-blue-500" />
+            </div>
+            <h3 className="text-lg font-semibold mb-2">Get Started with Your Handover Plan</h3>
+            <p className="text-sm text-muted-foreground mb-6">
+              Create phases to organize your timeline. VCRs will be arranged in a staircase 
+              pattern showing the handover progression from top to bottom.
+            </p>
+            <div className="flex gap-3 justify-center">
+              <Button onClick={() => setShowCreateDialog(true)} className="gap-2">
+                <Plus className="w-4 h-4" />
+                Create First Phase
+              </Button>
             </div>
           </div>
+        </div>
 
-          {/* Unassigned VCRs - always visible */}
-          <div className="px-4 pb-4">
-            <UnassignedVCRColumn
-              handoverPoints={unassignedPoints}
-              onOpenVCR={onOpenVCR}
-              onCreateHandoverPoint={() => onCreateHandoverPoint(null)}
-            />
-          </div>
+        {/* Unassigned VCRs - always visible */}
+        <div className="flex-shrink-0 min-h-[100px] px-4 py-3 border-t border-border bg-muted/30">
+          <UnassignedVCRColumn
+            handoverPoints={unassignedPoints}
+            onOpenVCR={onOpenVCR}
+            onCreateHandoverPoint={() => onCreateHandoverPoint(null)}
+          />
         </div>
 
         <CreatePhaseDialog
@@ -113,36 +111,36 @@ export const PhasesTimeline: React.FC<PhasesTimelineProps> = ({
           existingPhasesCount={phases.length}
           isCreating={isCreatingPhase}
         />
-      </>
+      </div>
     );
   }
 
   return (
-    <>
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Milestones Timeline - Minimal inline design */}
-        {sortedMilestones.length > 0 && (
-          <div className="flex items-center px-4 py-1.5 border-b border-border/50 bg-gradient-to-r from-amber-500/5 to-transparent">
-            {/* Timeline line */}
-            <div className="flex items-center gap-3 overflow-x-auto">
-              {sortedMilestones.map((milestone, idx) => (
-                <React.Fragment key={milestone.id}>
-                  <MilestoneMarker 
-                    milestone={milestone} 
-                    isFirst={idx === 0}
-                    isLast={idx === sortedMilestones.length - 1}
-                  />
-                  {idx < sortedMilestones.length - 1 && (
-                    <div className="w-12 h-px bg-gradient-to-r from-amber-400/40 to-amber-400/10" />
-                  )}
-                </React.Fragment>
-              ))}
-            </div>
+    <div className="flex-1 flex flex-col overflow-hidden min-h-0">
+      {/* Milestones Timeline - Minimal inline design */}
+      {sortedMilestones.length > 0 && (
+        <div className="flex-shrink-0 flex items-center px-4 py-1.5 border-b border-border/50 bg-gradient-to-r from-amber-500/5 to-transparent">
+          {/* Timeline line */}
+          <div className="flex items-center gap-3 overflow-x-auto">
+            {sortedMilestones.map((milestone, idx) => (
+              <React.Fragment key={milestone.id}>
+                <MilestoneMarker 
+                  milestone={milestone} 
+                  isFirst={idx === 0}
+                  isLast={idx === sortedMilestones.length - 1}
+                />
+                {idx < sortedMilestones.length - 1 && (
+                  <div className="w-12 h-px bg-gradient-to-r from-amber-400/40 to-amber-400/10" />
+                )}
+              </React.Fragment>
+            ))}
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Staircase Workspace - Scrollable, constrained to leave room for unassigned */}
-        <ScrollArea className="flex-1 min-h-0">
+      {/* Staircase Workspace - Scrollable with constrained height to leave room for unassigned */}
+      <div className="flex-1 min-h-0 overflow-hidden">
+        <ScrollArea className="h-full">
           <div className="relative p-4">
             {/* Staircase Flow Line */}
             <svg 
@@ -223,15 +221,15 @@ export const PhasesTimeline: React.FC<PhasesTimelineProps> = ({
           <ScrollBar orientation="horizontal" />
           <ScrollBar orientation="vertical" />
         </ScrollArea>
+      </div>
 
-        {/* Unassigned VCRs - Fixed at bottom, always visible */}
-        <div className="flex-shrink-0 min-h-[100px] px-4 py-3 border-t border-border bg-muted/30">
-          <UnassignedVCRColumn
-            handoverPoints={unassignedPoints}
-            onOpenVCR={onOpenVCR}
-            onCreateHandoverPoint={() => onCreateHandoverPoint(null)}
-          />
-        </div>
+      {/* Unassigned VCRs - Fixed at bottom, always visible */}
+      <div className="flex-shrink-0 min-h-[100px] px-4 py-3 border-t border-border bg-muted/30">
+        <UnassignedVCRColumn
+          handoverPoints={unassignedPoints}
+          onOpenVCR={onOpenVCR}
+          onCreateHandoverPoint={() => onCreateHandoverPoint(null)}
+        />
       </div>
 
       <CreatePhaseDialog
@@ -248,6 +246,6 @@ export const PhasesTimeline: React.FC<PhasesTimelineProps> = ({
         existingPhasesCount={phases.length}
         isCreating={isCreatingPhase}
       />
-    </>
+    </div>
   );
 };
