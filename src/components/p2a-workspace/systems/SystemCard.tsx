@@ -62,7 +62,7 @@ export const SystemCard: React.FC<SystemCardProps> = ({
 
           {/* HC/Non-HC Indicator */}
           <div className={cn(
-            'w-4 h-4 rounded flex items-center justify-center shrink-0 mt-0.5',
+            'w-4 h-4 rounded flex items-center justify-center shrink-0 mt-0.5 mr-1',
             system.is_hydrocarbon 
               ? 'bg-orange-500/10 text-orange-500' 
               : 'bg-blue-500/10 text-blue-500'
