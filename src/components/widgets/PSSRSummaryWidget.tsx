@@ -160,38 +160,11 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                   </Button>
                 )}
               </>
-
-              {/* PSSRs Section */}
-              {pssrs && pssrs.length > 0 && (
-                <>
-                  <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-1 mt-3">
-                    PSSRs ({pssrs.length})
-                  </div>
-                  {pssrs.map((pssr) => (
-                    <div 
-                      key={pssr.id} 
-                      className="flex items-center gap-3 p-2.5 border rounded-lg bg-amber-50/50 dark:bg-amber-950/20 hover:bg-amber-100/50 dark:hover:bg-amber-900/30 transition-colors cursor-pointer group/item"
-                      onClick={() => handlePSSRClick(pssr.id, pssr.pssr_id)}
-                    >
-                      <CircularProgress value={pssr.progress || 0} className="text-amber-600" />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-mono text-amber-600/70">{pssr.pssr_id}</span>
-                        </div>
-                        <div className="text-sm font-medium truncate">
-                          {pssr.scope || pssr.reason || 'PSSR'}
-                        </div>
-                      </div>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover/item:opacity-100 transition-opacity" />
-                    </div>
-                  ))}
-                </>
-              )}
             </div>
           ) : (
             <div className="text-center py-6 text-muted-foreground">
               <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">No VCRs or PSSRs found</p>
+              <p className="text-sm">No VCRs found</p>
               {canCreateVCR && (
                 <Button
                   variant="outline"
