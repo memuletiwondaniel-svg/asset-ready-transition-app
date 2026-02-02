@@ -117,22 +117,18 @@ export const PhasesTimeline: React.FC<PhasesTimelineProps> = ({
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden min-h-0">
-      {/* Milestones Timeline - Minimal inline design */}
+      {/* Milestones Timeline - Minimal inline design with vertical dividers */}
       {sortedMilestones.length > 0 && (
-        <div className="flex-shrink-0 flex items-center px-4 py-1.5 border-b border-border/50 bg-gradient-to-r from-amber-500/5 to-transparent">
-          {/* Timeline line */}
-          <div className="flex items-center gap-3 overflow-x-auto">
+        <div className="relative flex-shrink-0 flex items-center px-4 py-1.5 border-b border-border/50 bg-gradient-to-r from-slate-500/5 to-transparent overflow-visible z-10">
+          {/* Milestone markers */}
+          <div className="flex items-center gap-6 overflow-x-auto">
             {sortedMilestones.map((milestone, idx) => (
-              <React.Fragment key={milestone.id}>
-                <MilestoneMarker 
-                  milestone={milestone} 
-                  isFirst={idx === 0}
-                  isLast={idx === sortedMilestones.length - 1}
-                />
-                {idx < sortedMilestones.length - 1 && (
-                  <div className="w-12 h-px bg-gradient-to-r from-amber-400/40 to-amber-400/10" />
-                )}
-              </React.Fragment>
+              <MilestoneMarker 
+                key={milestone.id}
+                milestone={milestone} 
+                isFirst={idx === 0}
+                isLast={idx === sortedMilestones.length - 1}
+              />
             ))}
           </div>
         </div>
