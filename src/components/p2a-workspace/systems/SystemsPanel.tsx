@@ -84,14 +84,9 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
       >
         {/* Header */}
         <div className="p-4 border-b border-border">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <Layers className="w-4 h-4 text-muted-foreground" />
-              <h3 className="font-semibold text-sm">Systems</h3>
-              <Badge variant="secondary" className="text-xs">
-                {systems.length}
-              </Badge>
-            </div>
+          <div className="flex items-center gap-2 mb-3">
+            <Layers className="w-4 h-4 text-muted-foreground" />
+            <h3 className="font-semibold text-sm">Systems</h3>
           </div>
 
           {/* Search - only visible on hover */}
@@ -124,18 +119,14 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
                   ) : (
                     <ChevronRight className="w-4 h-4 text-muted-foreground" />
                   )}
+                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 min-w-[18px] flex items-center justify-center">
+                    {filteredAssigned.length}
+                  </Badge>
                   <span className="text-xs text-muted-foreground">Assigned</span>
                 </div>
-                <span className="text-[10px] text-muted-foreground">
-                  {filteredAssigned.length}
-                </span>
               </CollapsibleTrigger>
               <CollapsibleContent className="pt-2">
-                {filteredAssigned.length === 0 ? (
-                  <div className="text-xs text-muted-foreground text-center py-4">
-                    {searchQuery ? 'No matching systems' : 'No assigned systems'}
-                  </div>
-                ) : (
+                {filteredAssigned.length > 0 && (
                   <div className="flex flex-wrap gap-1.5">
                     {filteredAssigned.map(system => (
                       <DraggableSystemCard
@@ -164,27 +155,23 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
                   ) : (
                     <ChevronRight className="w-4 h-4 text-muted-foreground" />
                   )}
+                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 min-w-[18px] flex items-center justify-center">
+                    {filteredUnassigned.length}
+                  </Badge>
                   <span className="text-xs text-muted-foreground">Unassigned</span>
                 </div>
-                <span className="text-[10px] text-muted-foreground">
-                  {filteredUnassigned.length}
-                </span>
               </CollapsibleTrigger>
               <CollapsibleContent className="pt-2">
-                {filteredUnassigned.length === 0 ? (
-                  <div className="text-xs text-muted-foreground text-center py-4">
-                    {searchQuery ? 'No matching systems' : 'No unassigned systems'}
-                  </div>
-                ) : (
+                {filteredUnassigned.length > 0 && (
                   <div className="flex flex-wrap gap-1.5">
-                      {filteredUnassigned.map(system => (
-                        <DraggableSystemCard
-                          key={system.id}
-                          system={system}
-                          compact
-                          onClick={() => setSelectedSystem(system)}
-                        />
-                      ))}
+                    {filteredUnassigned.map(system => (
+                      <DraggableSystemCard
+                        key={system.id}
+                        system={system}
+                        compact
+                        onClick={() => setSelectedSystem(system)}
+                      />
+                    ))}
                   </div>
                 )}
               </CollapsibleContent>
