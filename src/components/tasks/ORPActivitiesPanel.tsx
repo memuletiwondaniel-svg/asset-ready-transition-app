@@ -31,47 +31,8 @@ export const ORPActivitiesPanel: React.FC<ORPActivitiesPanelProps> = ({
   const { activities: realActivities, stats, isLoading } = useUserORPActivities();
   const { isNewSinceLastLogin } = useUserLastLogin();
 
-  // Use real data, fallback to mock for demo
-  const mockActivities = [
-    {
-      id: 'mock-1',
-      plan_id: 'mock-plan-1',
-      project_name: 'Dolphin Platform Upgrade',
-      plan_name: 'ORP Phase 1',
-      role: 'Operations Lead',
-      allocation_percentage: 50,
-      phase: 'ORP_PHASE_1',
-      deliverable_count: 12,
-      completed_deliverables: 5,
-      created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    },
-    {
-      id: 'mock-2',
-      plan_id: 'mock-plan-2',
-      project_name: 'Kingfish Gas Compression',
-      plan_name: 'ORP Phase 2',
-      role: 'Technical Authority',
-      allocation_percentage: 30,
-      phase: 'ORP_PHASE_2',
-      deliverable_count: 8,
-      completed_deliverables: 2,
-      created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    },
-    {
-      id: 'mock-3',
-      plan_id: 'mock-plan-3',
-      project_name: 'Tuna Field Development',
-      plan_name: 'ORP Phase 3',
-      role: 'Maintenance Lead',
-      allocation_percentage: 25,
-      phase: 'ORP_PHASE_3',
-      deliverable_count: 20,
-      completed_deliverables: 18,
-      created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-    },
-  ];
-  
-  const rawActivities = realActivities?.length ? realActivities : mockActivities;
+  // Use only real data from the database
+  const rawActivities = realActivities || [];
 
   const activities = rawActivities.filter(a => {
     if (!searchQuery.trim()) return true;

@@ -31,55 +31,8 @@ export const OWLPanel: React.FC<OWLPanelProps> = ({
   const { items: realItems, stats, isLoading, updateStatus, isUpdatingStatus } = useUserOWLItems();
   const { isNewSinceLastLogin } = useUserLastLogin();
 
-  // Use real data, fallback to mock for demo
-  const mockItems = [
-    {
-      id: 'mock-1',
-      item_number: 1,
-      title: 'Replace faulty pressure gauge',
-      source: 'PSSR',
-      priority: 1,
-      status: 'OPEN' as const,
-      due_date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-      project: { name: 'Dolphin Platform Upgrade' },
-      created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-    },
-    {
-      id: 'mock-2',
-      item_number: 2,
-      title: 'Update P&ID documentation',
-      source: 'PAC',
-      priority: 2,
-      status: 'IN_PROGRESS' as const,
-      due_date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
-      project: { name: 'Kingfish Gas Compression' },
-      created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-    },
-    {
-      id: 'mock-3',
-      item_number: 3,
-      title: 'Verify emergency shutdown valve',
-      source: 'PUNCHLIST',
-      priority: 1,
-      status: 'OPEN' as const,
-      due_date: new Date(Date.now() + 0 * 24 * 60 * 60 * 1000).toISOString(),
-      project: { name: 'Tuna Field Development' },
-      created_at: new Date(Date.now() - 0.5 * 24 * 60 * 60 * 1000).toISOString(),
-    },
-    {
-      id: 'mock-4',
-      item_number: 4,
-      title: 'Complete welding inspection report',
-      source: 'FAC',
-      priority: null,
-      status: 'OPEN' as const,
-      due_date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
-      project: { name: 'Dolphin Platform Upgrade' },
-      created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    },
-  ];
-  
-  const rawItems = realItems?.length ? realItems : mockItems;
+  // Use only real data from the database
+  const rawItems = realItems || [];
 
   const items = rawItems.filter(i => {
     if (!searchQuery.trim()) return true;
@@ -143,10 +96,7 @@ export const OWLPanel: React.FC<OWLPanelProps> = ({
   };
 
   const handleStatusUpdate = (id: string, status: OWLStatus) => {
-    // Only update real items, not mock
-    if (!id.startsWith('mock-')) {
-      updateStatus({ id, status });
-    }
+    updateStatus({ id, status });
   };
 
   return (
