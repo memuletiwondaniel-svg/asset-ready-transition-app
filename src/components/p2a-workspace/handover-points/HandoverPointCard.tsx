@@ -55,12 +55,22 @@ export const HandoverPointCard: React.FC<HandoverPointCardProps> = ({
                    handoverPoint.status === 'READY' ? 90 :
                    handoverPoint.status === 'IN_PROGRESS' ? 50 : 0;
 
+  // When dragging, show a placeholder instead of the full card (DragOverlay shows the preview)
+  if (isDragging) {
+    return (
+      <Card className="w-[140px] border border-dashed border-muted-foreground/30 bg-muted/20 opacity-40">
+        <CardContent className="p-1.5">
+          <div className="h-[34px]" /> {/* Placeholder to maintain layout */}
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card 
       className={cn(
         'group cursor-pointer transition-all duration-200 hover:shadow-sm w-[140px] border',
-        isDropTarget && 'ring-2 ring-primary ring-offset-2',
-        isDragging && 'opacity-50 shadow-lg scale-105'
+        isDropTarget && 'ring-2 ring-primary ring-offset-2'
       )}
       style={{
         backgroundColor: isDropTarget ? 'hsl(var(--primary) / 0.05)' : vcrColor?.background ?? 'hsl(var(--card))',
