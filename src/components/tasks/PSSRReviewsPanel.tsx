@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ClipboardCheck } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -18,6 +18,7 @@ interface PSSRReviewsPanelProps {
   isFullHeight?: boolean;
   isRelocated?: boolean;
   isDimmed?: boolean;
+  onTaskCountUpdate?: (count: number) => void;
 }
 
 // Extract project code from project name or PSSR ID (e.g., "DP-300" from "PSSR-DP300-001")
@@ -40,6 +41,7 @@ export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({
   isFullHeight = false,
   isRelocated = false,
   isDimmed = false,
+  onTaskCountUpdate,
 }) => {
   const navigate = useNavigate();
   const { data: realPssrs, isLoading } = usePSSRsAwaitingReview(userId);
@@ -59,7 +61,10 @@ export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({
 
   const newCount = pendingPssrs.filter(p => isNewSinceLastLogin(p.pendingSince)).length;
 
-
+  // Report task count to parent
+  useEffect(() => {
+    onTaskCountUpdate?.(pssrs.length);
+  }, [pssrs.length, onTaskCountUpdate]);
   const getDaysPendingColor = (days: number) => {
     if (days >= 7) return 'bg-destructive/10 text-destructive border-destructive/20';
     if (days >= 3) return 'bg-amber-500/10 text-amber-600 border-amber-500/20';
