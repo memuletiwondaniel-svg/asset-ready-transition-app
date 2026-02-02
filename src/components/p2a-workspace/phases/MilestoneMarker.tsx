@@ -20,20 +20,29 @@ export const MilestoneMarker: React.FC<MilestoneMarkerProps> = ({
       <Tooltip>
         <TooltipTrigger asChild>
           <div className={cn(
-            'flex items-center gap-1.5 cursor-default',
+            'relative flex flex-col items-center cursor-default',
             isFirst && 'ml-0',
             isLast && 'mr-0'
           )}>
-            {/* Circular marker */}
-            <div className="relative flex items-center justify-center">
-              <div className="w-3 h-3 rounded-full bg-amber-500 shadow-sm ring-2 ring-amber-200/50" />
-              <div className="absolute w-1.5 h-1.5 rounded-full bg-white/80" />
+            {/* Marker row */}
+            <div className="flex items-center gap-1.5">
+              {/* Circular marker */}
+              <div className="relative flex items-center justify-center">
+                <div className="w-3 h-3 rounded-full bg-slate-400 dark:bg-slate-500 shadow-sm ring-2 ring-slate-300/50 dark:ring-slate-600/50" />
+                <div className="absolute w-1.5 h-1.5 rounded-full bg-white/80" />
+              </div>
+              
+              {/* Code/Name */}
+              <span className="text-[10px] font-medium text-foreground whitespace-nowrap">
+                {milestone.code || milestone.name}
+              </span>
             </div>
             
-            {/* Code/Name */}
-            <span className="text-[10px] font-medium text-foreground whitespace-nowrap">
-              {milestone.code || milestone.name}
-            </span>
+            {/* Vertical divider line extending down */}
+            <div 
+              className="absolute top-full left-1.5 w-px bg-border/30 pointer-events-none"
+              style={{ height: 'calc(100vh - 100px)' }}
+            />
           </div>
         </TooltipTrigger>
         <TooltipContent side="bottom" className="text-xs">
