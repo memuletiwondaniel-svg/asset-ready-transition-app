@@ -10,6 +10,9 @@ import { StyledWidgetIcon } from '@/components/widgets/StyledWidgetIcon';
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
 import dp385PipelineImage from '@/assets/dp385-pipeline.jpeg';
+import { useProjectVCRs } from '@/hooks/useProjectVCRs';
+import { useProjectPSSRs } from '@/hooks/useProjectPSSRs';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface SOFProjectOverviewPanelProps {
   pssrId: string;
@@ -161,30 +164,81 @@ export const SOFProjectOverviewPanel: React.FC<SOFProjectOverviewPanelProps> = (
   const baseProjectData = isDP385 ? dp385ProjectData : defaultProjectData;
   const [isScopeExpanded, setIsScopeExpanded] = useState(false);
   const [realProjectImage, setRealProjectImage] = useState<string | null>(null);
+  const [realProjectId, setRealProjectId] = useState<string | null>(projectId || null);
 
-  // Fetch real project image from database for non-DP385 projects
+  // Fetch real VCRs and PSSRs from database
+  const { data: realVCRs, isLoading: vcrsLoading } = useProjectVCRs(realProjectId || '');
+  const { data: realPSSRs, isLoading: pssrsLoading } = useProjectPSSRs(realProjectId || '');
+
+  // Fetch real project data including projectId from database for non-mock projects
   useEffect(() => {
-    const fetchProjectImage = async () => {
+    const fetchProjectData = async () => {
       if (isDP385) return; // DP385 uses imported image
       
       try {
         // For DP-300, fetch from database
         const { data, error } = await supabase
           .from('projects')
-          .select('project_scope_image_url')
+          .select('id, project_scope_image_url')
           .eq('project_id_number', '300')
           .single();
         
-        if (!error && data?.project_scope_image_url) {
-          setRealProjectImage(data.project_scope_image_url);
+        if (!error && data) {
+          if (data.project_scope_image_url) {
+            setRealProjectImage(data.project_scope_image_url);
+          }
+          if (data.id) {
+            setRealProjectId(data.id);
+          }
         }
       } catch (err) {
-        console.error('Error fetching project image:', err);
+        console.error('Error fetching project data:', err);
       }
     };
 
-    fetchProjectImage();
+    fetchProjectData();
   }, [isDP385]);
+
+  // Build VCRs and PSSRs list from real data or mock data
+  const vcrsAndPssrsList = React.useMemo(() => {
+    // For mock projects (DP-385), use the mock data
+    if (isDP385) {
+      return baseProjectData.vcrsAndPssrs;
+    }
+
+    // For real projects, use database data
+    const items: Array<{ id: string; name: string; type: 'vcr' | 'pssr'; status: string; progress: number }> = [];
+
+    // Add real VCRs
+    if (realVCRs && realVCRs.length > 0) {
+      realVCRs.forEach(vcr => {
+        items.push({
+          id: vcr.vcr_code,
+          name: vcr.name,
+          type: 'vcr',
+          status: vcr.progress === 100 ? 'completed' : vcr.progress > 0 ? 'in_progress' : 'pending',
+          progress: vcr.progress
+        });
+      });
+    }
+
+    // Add real PSSRs
+    if (realPSSRs && realPSSRs.length > 0) {
+      realPSSRs.forEach(pssr => {
+        items.push({
+          id: pssr.pssr_id,
+          name: pssr.scope || pssr.reason || 'PSSR',
+          type: 'pssr',
+          status: (pssr.progress || 0) === 100 ? 'completed' : (pssr.progress || 0) > 0 ? 'in_progress' : 'pending',
+          progress: pssr.progress || 0
+        });
+      });
+    }
+
+    return items;
+  }, [isDP385, baseProjectData.vcrsAndPssrs, realVCRs, realPSSRs]);
+
+  const isVCRPSSRLoading = !isDP385 && (vcrsLoading || pssrsLoading);
 
   // Merge real project image with mock data
   const projectData = {
@@ -435,7 +489,21 @@ export const SOFProjectOverviewPanel: React.FC<SOFProjectOverviewPanelProps> = (
               className="h-full overflow-y-auto pr-2"
               onWheel={handleWidgetScroll}
             >
-              {projectData.vcrsAndPssrs.length === 0 ? (
+              {isVCRPSSRLoading ? (
+                <div className="space-y-2">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="p-2.5 rounded-lg border bg-muted/30">
+                      <div className="flex items-center gap-3">
+                        <Skeleton className="h-9 w-9 rounded-full" />
+                        <div className="flex-1 space-y-1.5">
+                          <Skeleton className="h-3 w-16" />
+                          <Skeleton className="h-3 w-32" />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : vcrsAndPssrsList.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-8 text-center">
                   <div className="p-3 rounded-full bg-muted/50 mb-3">
                     <FileText className="h-6 w-6 text-muted-foreground/50" />
@@ -446,7 +514,7 @@ export const SOFProjectOverviewPanel: React.FC<SOFProjectOverviewPanelProps> = (
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {projectData.vcrsAndPssrs.map((item) => (
+                  {vcrsAndPssrsList.map((item) => (
                     <div 
                       key={item.id}
                       className={cn(
