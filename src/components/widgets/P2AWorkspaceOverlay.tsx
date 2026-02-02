@@ -20,13 +20,14 @@ const getStatusConfig = (status?: string) => {
     case 'DRAFT':
       return {
         label: 'Draft',
-        className: 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30',
+        className: 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/30',
       };
     case 'ACTIVE':
     case 'IN_PROGRESS':
+    case 'IN_REVIEW':
       return {
         label: 'In Review',
-        className: 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/30',
+        className: 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30',
       };
     case 'COMPLETED':
     case 'APPROVED':
@@ -42,7 +43,7 @@ const getStatusConfig = (status?: string) => {
     default:
       return {
         label: 'Draft',
-        className: 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30',
+        className: 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/30',
       };
   }
 };
