@@ -214,16 +214,11 @@ export default function ProjectDetailsPage() {
 
           {/* Header - standardized design */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
-            <div className="min-w-0 flex items-center gap-3">
-              <div className="p-2 sm:p-3 rounded-xl bg-primary/10">
-                <FolderOpen className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-foreground">
-                  {getProjectId()} - {project.project_title}
-                </h1>
-                <p className="text-sm text-muted-foreground mt-1">Project Dashboard</p>
-              </div>
+            <div className="min-w-0">
+              <h1 className="text-2xl font-bold text-foreground">
+                {getProjectId()} - {project.project_title}
+              </h1>
+              <p className="text-sm text-muted-foreground mt-1">Project Dashboard</p>
             </div>
             {hiddenWidgets.length > 0 && (
               <Button onClick={() => setHiddenWidgets([])} variant="outline" size="sm">
