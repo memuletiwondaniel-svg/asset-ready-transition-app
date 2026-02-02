@@ -139,9 +139,9 @@ export const PhasesTimeline: React.FC<PhasesTimelineProps> = ({
       )}
 
       {/* Staircase Workspace - Scrollable with constrained height to leave room for unassigned */}
-      <div className="flex-1 min-h-0 overflow-hidden">
-        <ScrollArea className="h-full">
-          <div className="relative p-4">
+      <div className="flex-1 min-h-0 overflow-auto">
+        <ScrollArea className="h-full w-full">
+          <div className="relative p-4 min-h-[300px]">
             {/* Staircase Flow Line */}
             <svg 
               className="absolute inset-0 pointer-events-none z-0"
