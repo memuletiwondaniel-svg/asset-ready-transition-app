@@ -120,12 +120,17 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
           ) : hasContent ? (
             <div className="space-y-2 max-h-[280px] overflow-y-auto pr-1">
               {/* VCRs Section */}
-              {allVCRs.length > 0 && (
-                <>
-                  <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-1">
-                    VCRs ({allVCRs.length})
+              <>
+                <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-1">
+                  VCRs ({allVCRs.length})
+                </div>
+
+                {allVCRs.length === 0 ? (
+                  <div className="p-3 border rounded-lg bg-muted/20 text-xs text-muted-foreground">
+                    No VCRs yet
                   </div>
-                  {allVCRs.map((vcr) => (
+                ) : (
+                  allVCRs.map((vcr) => (
                     <div 
                       key={vcr.id} 
                       className="flex items-center gap-3 p-2.5 border rounded-lg bg-blue-50/50 dark:bg-blue-950/20 hover:bg-blue-100/50 dark:hover:bg-blue-900/30 transition-colors cursor-pointer group/item"
@@ -140,20 +145,21 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                       </div>
                       <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover/item:opacity-100 transition-opacity" />
                     </div>
-                  ))}
-                  {canCreateVCR && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full mt-2 text-xs border-dashed"
-                      onClick={() => setShowCreateVCR(true)}
-                    >
-                      <Plus className="h-3.5 w-3.5 mr-1" />
-                      New VCR
-                    </Button>
-                  )}
-                </>
-              )}
+                  ))
+                )}
+
+                {canCreateVCR && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full mt-2 text-xs border-dashed"
+                    onClick={() => setShowCreateVCR(true)}
+                  >
+                    <Plus className="h-3.5 w-3.5 mr-1" />
+                    New VCR
+                  </Button>
+                )}
+              </>
 
               {/* PSSRs Section */}
               {pssrs && pssrs.length > 0 && (
