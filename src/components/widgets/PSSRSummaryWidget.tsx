@@ -103,7 +103,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                 glowFrom="from-red-500/40"
                 glowTo="to-orange-500/40"
               />
-              <span>VCRs and PSSRs</span>
+              <span>VCRs</span>
             </div>
             {canCreateVCR && (
               <Button
