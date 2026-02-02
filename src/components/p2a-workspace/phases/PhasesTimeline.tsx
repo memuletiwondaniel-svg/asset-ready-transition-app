@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { Plus, GitBranch, Maximize2, Minimize2, Undo2 } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Plus, GitBranch, Maximize2, Minimize2 } from 'lucide-react';
 import { P2APhase, P2AMilestone } from '../hooks/useP2APhases';
 import { P2AHandoverPoint } from '../hooks/useP2AHandoverPoints';
 import { StaircasePhaseColumn } from './StaircasePhaseColumn';
@@ -138,29 +137,6 @@ export const PhasesTimeline: React.FC<PhasesTimelineProps> = ({
             ))}
           </div>
           <div className="flex items-center gap-1 flex-shrink-0">
-            {/* Undo Button */}
-            {canUndo && onUndo && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 px-2 gap-1"
-                      onClick={onUndo}
-                      disabled={isUndoing}
-                    >
-                      <Undo2 className="h-4 w-4" />
-                      <span className="text-xs">Undo</span>
-                      <kbd className="ml-1 text-[10px] bg-muted px-1 rounded">⌘Z</kbd>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Undo: {lastActionDescription}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
             {/* Fullscreen Toggle */}
             {onToggleFullscreen && (
               <Button
