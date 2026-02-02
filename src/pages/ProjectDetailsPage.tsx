@@ -144,7 +144,9 @@ export default function ProjectDetailsPage() {
     });
   };
 
-  const visibleWidgets = widgetOrder.filter(id => !hiddenWidgets.includes(id));
+  // Valid widget IDs (p2a was removed - filter it out for users with old localStorage)
+  const validWidgetIds = ['orp', 'pssr', 'cost', 'orm'];
+  const visibleWidgets = widgetOrder.filter(id => !hiddenWidgets.includes(id) && validWidgetIds.includes(id));
 
   const projectCode = project ? `${project.project_id_prefix}-${project.project_id_number}` : '';
 
