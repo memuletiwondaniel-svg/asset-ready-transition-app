@@ -33,7 +33,6 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
   projectName,
   projectNumber,
 }) => {
-  const [systemsPanelCollapsed, setSystemsPanelCollapsed] = useState(false);
   const [activeDragItem, setActiveDragItem] = useState<{ type: 'system' | 'vcr' | 'phase'; data: any } | null>(null);
   const [showCreateVCRDialog, setShowCreateVCRDialog] = useState(false);
   const [selectedPhaseIdForVCR, setSelectedPhaseIdForVCR] = useState<string | null>(null);
@@ -440,8 +439,6 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
           isAdding={isAdding}
           isImporting={isImporting}
           isUpdating={isUpdating}
-          isCollapsed={systemsPanelCollapsed}
-          onToggleCollapse={() => setSystemsPanelCollapsed(!systemsPanelCollapsed)}
         />
 
         {/* Phases Timeline Area */}
