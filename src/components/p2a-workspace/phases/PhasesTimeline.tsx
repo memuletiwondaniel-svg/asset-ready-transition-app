@@ -161,29 +161,18 @@ export const PhasesTimeline: React.FC<PhasesTimelineProps> = ({
                 const x2 = ((idx + 1) * (phaseWidth + gap)) + (phaseWidth / 2);
                 const y2 = getStaircaseOffset(idx + 1) + 100;
                 return (
-                  <g key={phase.id}>
-                    <line
-                      x1={x1}
-                      y1={y1}
-                      x2={x2}
-                      y2={y2}
-                      stroke="url(#staircaseGradient)"
-                      strokeWidth="2"
-                      strokeDasharray="8 4"
-                    />
-                    <circle cx={x1} cy={y1} r="4" fill="hsl(var(--primary))" opacity="0.3" />
-                  </g>
+                  <line
+                    key={phase.id}
+                    x1={x1}
+                    y1={y1}
+                    x2={x2}
+                    y2={y2}
+                    stroke="url(#staircaseGradient)"
+                    strokeWidth="2"
+                    strokeDasharray="8 4"
+                  />
                 );
               })}
-              {phases.length > 0 && (
-                <circle 
-                  cx={(phases.length - 1) * 240 + 112} 
-                  cy={getStaircaseOffset(phases.length - 1) + 100} 
-                  r="4" 
-                  fill="hsl(var(--primary))" 
-                  opacity="0.3" 
-                />
-              )}
             </svg>
 
             {/* Phase Columns in Staircase Layout */}
