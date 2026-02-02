@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { ListChecks, Plus, Search, LayoutGrid, Table } from 'lucide-react';
+import React, { useEffect, useState, useCallback } from 'react';
+import { ListChecks, Plus, Search, LayoutGrid, Table, CheckCircle2 } from 'lucide-react';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,8 +30,9 @@ const MyTasksPage: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [expandedCard, setExpandedCard] = useState<ExpandedCard>(null);
   
-  // Track which panels have tasks (for auto-expand)
+  // Track which panels have tasks (for auto-expand and empty state)
   const [panelTaskCounts, setPanelTaskCounts] = useState<Record<string, number>>({});
+  const [panelsLoaded, setPanelsLoaded] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -57,12 +58,25 @@ const MyTasksPage: React.FC = () => {
   };
 
   // Callback for panels to report their task count
-  const handleTaskCountUpdate = (panelId: string, count: number) => {
-    setPanelTaskCounts(prev => {
-      if (prev[panelId] === count) return prev;
-      return { ...prev, [panelId]: count };
-    });
-  };
+  const handlePssrTaskCount = useCallback((count: number) => {
+    setPanelTaskCounts(prev => prev.pssr === count ? prev : { ...prev, pssr: count });
+    setPanelsLoaded(prev => prev.pssr ? prev : { ...prev, pssr: true });
+  }, []);
+
+  const handleOraTaskCount = useCallback((count: number) => {
+    setPanelTaskCounts(prev => prev.ora === count ? prev : { ...prev, ora: count });
+    setPanelsLoaded(prev => prev.ora ? prev : { ...prev, ora: true });
+  }, []);
+
+  const handleOwlTaskCount = useCallback((count: number) => {
+    setPanelTaskCounts(prev => prev.owl === count ? prev : { ...prev, owl: count });
+    setPanelsLoaded(prev => prev.owl ? prev : { ...prev, owl: true });
+  }, []);
+
+  // Calculate if all panels are loaded and have zero tasks
+  const allPanelsLoaded = panelsLoaded.pssr && panelsLoaded.ora && panelsLoaded.owl;
+  const totalTasks = (panelTaskCounts.pssr || 0) + (panelTaskCounts.ora || 0) + (panelTaskCounts.owl || 0);
+  const isAllCaughtUp = allPanelsLoaded && totalTasks === 0;
 
   if (!user) {
     return null;
@@ -165,6 +179,7 @@ const MyTasksPage: React.FC = () => {
             key="pssr"
             userId={user.id} 
             {...commonProps}
+            onTaskCountUpdate={handlePssrTaskCount}
           />
         );
       case 'ora':
@@ -172,6 +187,7 @@ const MyTasksPage: React.FC = () => {
           <ORPActivitiesPanel 
             key="ora"
             {...commonProps}
+            onTaskCountUpdate={handleOraTaskCount}
           />
         );
       case 'owl':
@@ -179,6 +195,7 @@ const MyTasksPage: React.FC = () => {
           <OWLPanel 
             key="owl"
             {...commonProps}
+            onTaskCountUpdate={handleOwlTaskCount}
           />
         );
       default:
@@ -256,7 +273,22 @@ const MyTasksPage: React.FC = () => {
         </div>
 
         {/* Content based on view mode */}
-        {viewMode === 'grid' ? (
+        {isAllCaughtUp ? (
+          /* All Caught Up State */
+          <div className="flex items-center justify-center py-20">
+            <div className="text-center max-w-md">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500/10 to-purple-500/10 mb-6">
+                <CheckCircle2 className="h-8 w-8 text-indigo-500" />
+              </div>
+              <h2 className="text-xl font-semibold text-foreground mb-2">
+                You're all caught up!
+              </h2>
+              <p className="text-muted-foreground">
+                You have no pending activities or reviews at the moment.
+              </p>
+            </div>
+          </div>
+        ) : viewMode === 'grid' ? (
           <div className={cn(
             "grid grid-cols-1 lg:grid-cols-2 gap-6 transition-all duration-500",
             expandedCard && "min-h-[calc(100vh-300px)]"

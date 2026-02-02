@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ListTodo, AlertCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -17,6 +17,7 @@ interface OWLPanelProps {
   isFullHeight?: boolean;
   isRelocated?: boolean;
   isDimmed?: boolean;
+  onTaskCountUpdate?: (count: number) => void;
 }
 
 export const OWLPanel: React.FC<OWLPanelProps> = ({ 
@@ -26,6 +27,7 @@ export const OWLPanel: React.FC<OWLPanelProps> = ({
   isFullHeight = false,
   isRelocated = false,
   isDimmed = false,
+  onTaskCountUpdate,
 }) => {
   const navigate = useNavigate();
   const { items: realItems, stats, isLoading, updateStatus, isUpdatingStatus } = useUserOWLItems();
@@ -45,6 +47,11 @@ export const OWLPanel: React.FC<OWLPanelProps> = ({
   });
 
   const newCount = items.filter(i => isNewSinceLastLogin(i.created_at)).length;
+
+  // Report task count to parent
+  useEffect(() => {
+    onTaskCountUpdate?.(rawItems.length);
+  }, [rawItems.length, onTaskCountUpdate]);
 
   // Calculate stats from actual data being displayed
   const displayStats = {

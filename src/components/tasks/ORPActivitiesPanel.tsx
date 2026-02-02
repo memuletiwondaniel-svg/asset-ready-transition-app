@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Activity } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -17,6 +17,7 @@ interface ORPActivitiesPanelProps {
   isFullHeight?: boolean;
   isRelocated?: boolean;
   isDimmed?: boolean;
+  onTaskCountUpdate?: (count: number) => void;
 }
 
 export const ORPActivitiesPanel: React.FC<ORPActivitiesPanelProps> = ({ 
@@ -26,6 +27,7 @@ export const ORPActivitiesPanel: React.FC<ORPActivitiesPanelProps> = ({
   isFullHeight = false,
   isRelocated = false,
   isDimmed = false,
+  onTaskCountUpdate,
 }) => {
   const navigate = useNavigate();
   const { activities: realActivities, stats, isLoading } = useUserORPActivities();
@@ -45,6 +47,11 @@ export const ORPActivitiesPanel: React.FC<ORPActivitiesPanelProps> = ({
   });
 
   const newCount = activities.filter(a => isNewSinceLastLogin(a.created_at)).length;
+
+  // Report task count to parent
+  useEffect(() => {
+    onTaskCountUpdate?.(rawActivities.length);
+  }, [rawActivities.length, onTaskCountUpdate]);
 
   // Group activities by plan to avoid duplicates
   const uniquePlans = activities.reduce((acc, activity) => {
