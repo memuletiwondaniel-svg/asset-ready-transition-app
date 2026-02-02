@@ -252,23 +252,29 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
     position: string;
     avatar_url: string;
   } | null>(null);
+  const [isProfileLoading, setIsProfileLoading] = useState(true);
 
   const fetchUserProfile = React.useCallback(async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const { data: profile } = await supabase.from('profiles').select('full_name, position, avatar_url').eq('user_id', user.id).single();
-      if (profile) {
-        let avatarUrl = profile.avatar_url;
-        if (avatarUrl && !avatarUrl.startsWith('http')) {
-          const { data: { publicUrl } } = supabase.storage.from('user-avatars').getPublicUrl(avatarUrl);
-          avatarUrl = publicUrl;
+    setIsProfileLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase.from('profiles').select('full_name, position, avatar_url').eq('user_id', user.id).single();
+        if (profile) {
+          let avatarUrl = profile.avatar_url;
+          if (avatarUrl && !avatarUrl.startsWith('http')) {
+            const { data: { publicUrl } } = supabase.storage.from('user-avatars').getPublicUrl(avatarUrl);
+            avatarUrl = publicUrl;
+          }
+          setUserProfile({
+            full_name: profile.full_name || 'User',
+            position: profile.position || 'Team Member',
+            avatar_url: avatarUrl || ''
+          });
         }
-        setUserProfile({
-          full_name: profile.full_name || 'User',
-          position: profile.position || 'Team Member',
-          avatar_url: avatarUrl || ''
-        });
       }
+    } finally {
+      setIsProfileLoading(false);
     }
   }, []);
 
@@ -576,7 +582,11 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                 <div className="flex flex-col items-center text-center max-w-2xl mx-auto">
                   {/* Greeting */}
                   <h1 className="text-2xl md:text-3xl font-bold mb-1 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                    {getGreeting()}, {userProfile?.full_name?.split(' ')[0] || 'User'}!
+                    {isProfileLoading ? (
+                      <span className="inline-block animate-pulse bg-muted rounded h-8 w-48" />
+                    ) : (
+                      <>{getGreeting()}, {userProfile?.full_name?.split(' ')[0] || 'User'}!</>
+                    )}
                   </h1>
                   <p className="text-muted-foreground mb-6">
                     {t.askBobAnything || 'Ask Bob anything about ORSH'}

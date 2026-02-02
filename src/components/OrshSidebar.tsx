@@ -47,6 +47,7 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
   onToggleSearchHistory
 }) => {
   const [currentUserId, setCurrentUserId] = useState<string | undefined>();
+  const [isUserIdLoading, setIsUserIdLoading] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
@@ -59,14 +60,21 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
 
   useEffect(() => {
     const fetchUserId = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setCurrentUserId(user?.id);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        setCurrentUserId(user?.id);
+      } finally {
+        setIsUserIdLoading(false);
+      }
     };
     fetchUserId();
   }, []);
 
   const { profile: realtimeProfile, refetch: refetchProfile } = useRealtimeProfile(currentUserId);
   const onlineUsers = useUserPresence(currentUserId);
+  
+  // Show loading skeleton until we have both userId and profile data
+  const isProfileLoading = isUserIdLoading || (!!currentUserId && !realtimeProfile);
   
   const displayName = realtimeProfile?.full_name || userName;
   const displayTitle = realtimeProfile?.position || userTitle;
@@ -120,7 +128,7 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
           <SidebarContent
             isMobile={true}
             isCollapsed={false}
-            isProfileLoading={!!currentUserId && !realtimeProfile}
+            isProfileLoading={isProfileLoading}
             displayName={displayName}
             displayTitle={displayTitle}
             displayAvatar={displayAvatar}
@@ -154,7 +162,7 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
         <SidebarContent
           isMobile={false}
           isCollapsed={isSidebarCollapsed}
-          isProfileLoading={!!currentUserId && !realtimeProfile}
+          isProfileLoading={isProfileLoading}
           displayName={displayName}
           displayTitle={displayTitle}
           displayAvatar={displayAvatar}
