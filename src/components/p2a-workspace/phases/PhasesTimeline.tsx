@@ -154,9 +154,11 @@ export const PhasesTimeline: React.FC<PhasesTimelineProps> = ({
                 </linearGradient>
               </defs>
               {phases.length > 1 && phases.slice(0, -1).map((phase, idx) => {
-                const x1 = (idx * 280) + 140;
+                const phaseWidth = 224; // w-56 = 14rem = 224px
+                const gap = 16; // gap-4 = 1rem = 16px
+                const x1 = (idx * (phaseWidth + gap)) + (phaseWidth / 2);
                 const y1 = getStaircaseOffset(idx) + 100;
-                const x2 = ((idx + 1) * 280) + 140;
+                const x2 = ((idx + 1) * (phaseWidth + gap)) + (phaseWidth / 2);
                 const y2 = getStaircaseOffset(idx + 1) + 100;
                 return (
                   <g key={phase.id}>
@@ -175,7 +177,7 @@ export const PhasesTimeline: React.FC<PhasesTimelineProps> = ({
               })}
               {phases.length > 0 && (
                 <circle 
-                  cx={(phases.length - 1) * 280 + 140} 
+                  cx={(phases.length - 1) * 240 + 112} 
                   cy={getStaircaseOffset(phases.length - 1) + 100} 
                   r="4" 
                   fill="hsl(var(--primary))" 
