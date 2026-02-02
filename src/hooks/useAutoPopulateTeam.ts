@@ -125,24 +125,27 @@ function findMatchingUser(
     return null; // No match found for region-based role
   }
   
-  // For hub-based matching, first try to find user with matching hub_id
-  if (matchType === 'hub' && hubId) {
-    for (const user of users) {
-      if (user.hub_id !== hubId) continue;
-      
-      const position = (user.position || '').toLowerCase();
-      const userRole = (user.role || '').toLowerCase();
-      
-      const matchesPattern = patterns.some(pattern => 
-        position.includes(pattern) || userRole.includes(pattern)
-      );
+  // For hub-based matching
+  if (matchType === 'hub') {
+    // First try to find user with matching hub_id (if provided)
+    if (hubId) {
+      for (const user of users) {
+        if (user.hub_id !== hubId) continue;
+        
+        const position = (user.position || '').toLowerCase();
+        const userRole = (user.role || '').toLowerCase();
+        
+        const matchesPattern = patterns.some(pattern => 
+          position.includes(pattern) || userRole.includes(pattern)
+        );
 
-      if (matchesPattern) {
-        return user;
+        if (matchesPattern) {
+          return user;
+        }
       }
     }
     
-    // Fallback: try matching by hub name in position
+    // Fallback: try matching by hub name in position (works even if hubId is null)
     if (hubName) {
       const hubNameLower = hubName.toLowerCase();
       for (const user of users) {
@@ -158,6 +161,8 @@ function findMatchingUser(
         }
       }
     }
+    
+    return null; // No match found for hub-based role
   }
 
   // For global roles, just match the pattern
@@ -191,45 +196,48 @@ function findAllMatchingUsers(
   const matchedUsers: any[] = [];
   const addedUserIds = new Set<string>();
 
-  // For hub-based matching, first find users with matching hub_id
-  if (matchType === 'hub' && hubId) {
-    for (const user of users) {
-      if (user.hub_id !== hubId) continue;
-      
-      const position = (user.position || '').toLowerCase();
-      const userRole = (user.role || '').toLowerCase();
-      
-      const matchesPattern = patterns.some(pattern => 
-        position.includes(pattern) || userRole.includes(pattern)
-      );
+  // For hub-based matching
+  if (matchType === 'hub') {
+    // First find users with matching hub_id (if provided)
+    if (hubId) {
+      for (const user of users) {
+        if (user.hub_id !== hubId) continue;
+        
+        const position = (user.position || '').toLowerCase();
+        const userRole = (user.role || '').toLowerCase();
+        
+        const matchesPattern = patterns.some(pattern => 
+          position.includes(pattern) || userRole.includes(pattern)
+        );
 
-      if (matchesPattern && !addedUserIds.has(user.user_id)) {
-        matchedUsers.push(user);
-        addedUserIds.add(user.user_id);
+        if (matchesPattern && !addedUserIds.has(user.user_id)) {
+          matchedUsers.push(user);
+          addedUserIds.add(user.user_id);
+        }
+      }
+    }
+
+    // Also find users matching by hub name in position (works even if hubId is null)
+    if (hubName) {
+      const hubNameLower = hubName.toLowerCase();
+      for (const user of users) {
+        const position = (user.position || '').toLowerCase();
+        const userRole = (user.role || '').toLowerCase();
+        
+        const matchesPattern = patterns.some(pattern => 
+          position.includes(pattern) || userRole.includes(pattern)
+        );
+        
+        if (matchesPattern && position.includes(hubNameLower) && !addedUserIds.has(user.user_id)) {
+          matchedUsers.push(user);
+          addedUserIds.add(user.user_id);
+        }
       }
     }
   }
 
-  // Also find users matching by hub name in position
-  if (hubName) {
-    const hubNameLower = hubName.toLowerCase();
-    for (const user of users) {
-      const position = (user.position || '').toLowerCase();
-      const userRole = (user.role || '').toLowerCase();
-      
-      const matchesPattern = patterns.some(pattern => 
-        position.includes(pattern) || userRole.includes(pattern)
-      );
-      
-      if (matchesPattern && position.includes(hubNameLower) && !addedUserIds.has(user.user_id)) {
-        matchedUsers.push(user);
-        addedUserIds.add(user.user_id);
-      }
-    }
-  }
-
-  // Also find users matching by region name in position
-  if (regionName) {
+  // For region-based matching, find users with region name in position
+  if (matchType === 'region' && regionName) {
     const regionLower = regionName.toLowerCase();
     for (const user of users) {
       const position = (user.position || '').toLowerCase();
