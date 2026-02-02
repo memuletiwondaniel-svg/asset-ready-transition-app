@@ -1,72 +1,124 @@
 
-Goal
-- Make the “Add Systems” button always visible in the Systems Panel, and vertically aligned with the “Add VCR” control row (the bottom fixed “Unassigned VCRs” area in the main workspace).
-- Ensure the button stays fixed even while scrolling inside the Systems Panel.
+## P2A Milestone Positioning Between Phase Columns
 
-What’s happening now (based on code)
-- The main workspace already has a fixed bottom bar for Unassigned VCRs: `PhasesTimeline.tsx` uses `div.flex-shrink-0.h-[180px] ...` (this is the “row” where “Add VCR” lives).
-- The SystemsPanel currently has its own footer (`div.shrink-0 p-3 ...`) that should be visible, but users still can’t see it—likely due to layout constraints/clipping:
-  - SystemsPanel has `h-full` + `overflow-hidden` + extra `ml-4` and `border-l` (which is also inconsistent with “LEFT Side” placement).
-  - The parent flex containers may not be giving consistent `min-h-0`/stretching, which can cause bottom content to be clipped in nested flex + overflow contexts.
+### Overview
+Reposition milestone markers from a separate header row to be positioned **between** phase columns, with faint dotted vertical lines extending from each milestone down through the workspace and stopping just above the Unassigned VCRs panel.
 
-Implementation approach
-A) Make SystemsPanel use the same “bottom row” concept as the PhasesTimeline
-1. Change the SystemsPanel layout from:
-   - Header
-   - ScrollArea (flex-1)
-   - Small footer (auto height)
-   to:
-   - Header
-   - ScrollArea (flex-1, min-h-0)
-   - Fixed bottom footer with the same height as the Unassigned VCR bar: `h-[180px] flex-shrink-0`
-2. Place the “Add Systems” button inside that fixed-height footer.
-3. Optional (recommended): also add a small “Systems actions” header line inside that footer (or keep it minimal) so the footer doesn’t look like “blank space” if the button is the only element.
+### Current State
+- Milestones render in a dedicated header bar **above** all phases
+- Each milestone has a vertical line extending down, but the positioning doesn't align with phase boundaries
+- Milestones appear as a separate row at the top, not visually connected to the phases they separate
 
-B) Fix container sizing so the footer cannot be clipped
-4. Update SystemsPanel root container classes to remove layout anomalies and improve predictability:
-   - Remove `ml-4` (unnecessary offset that can create unexpected clipping/spacing).
-   - Replace `border-l` with `border-r` because the panel sits on the left; the divider should be on the right edge between panel and workspace.
-   - Replace `h-full` with `min-h-0` and ensure it can stretch correctly in the flex parent.
-   - Keep `overflow-hidden` on the panel container so only the internal ScrollArea scrolls.
-5. Ensure the immediate flex row that contains `SystemsPanel` + `PhasesTimeline` uses `min-h-0` so children can correctly compute heights under `overflow-hidden` parents.
-   - In `P2AHandoverWorkspace.tsx`, update the “Main Content Area” wrapper from `flex-1 flex overflow-hidden` to `flex-1 flex overflow-hidden min-h-0`.
-   - This is a common fix when a nested child uses `ScrollArea` + fixed footer and content ends up clipped.
+### Proposed Changes
 
-C) Match the “row” styling with Unassigned VCRs (visual alignment)
-6. Make the SystemsPanel footer visually consistent with the Unassigned VCRs bar:
-   - Use similar background and border: `border-t border-border bg-muted/30`
-   - Similar padding: `px-4 py-2`
-7. Match button sizing and style to “Add VCR”:
-   - Use `size="sm"`, `className="h-7 px-2 ..."` to match the “Add VCR” chip-like button so they feel like the same row of actions.
+**1. Remove Dedicated Milestone Header Row**
+Remove the separate milestones header section from `PhasesTimeline.tsx`. Instead, milestones will be rendered inline within the phases flex container.
 
-Files to change
-1) src/components/p2a-workspace/systems/SystemsPanel.tsx
-- Adjust the main container classes:
-  - From: `className="w-48 h-full border-l border-border bg-card flex flex-col ml-4 overflow-hidden"`
-  - To something like: `className="w-48 flex flex-col border-r border-border bg-card overflow-hidden min-h-0 flex-shrink-0"`
-- Keep header as-is.
-- Keep `ScrollArea` as `className="flex-1 min-h-0 overflow-hidden"`.
-- Replace the current footer with a fixed-height footer:
-  - `div className="flex-shrink-0 h-[180px] px-4 py-2 border-t border-border bg-muted/30"`
-  - Put “Add Systems” button inside, matching “Add VCR” sizing (`h-7 px-2`, etc.).
+**2. Interleave Milestones Between Phase Columns**
+Rework the phases rendering logic to:
+- Render milestones **between** phase columns based on their `display_order` relationship
+- A milestone with `display_order = N` appears between phase N and phase N+1
+- First milestone (display_order = 0) could appear before the first phase if needed, or between phase 1 and 2
 
-2) src/components/p2a-workspace/P2AHandoverWorkspace.tsx
-- Update the wrapper around SystemsPanel + PhasesTimeline to include `min-h-0`:
-  - From: `<div className="flex-1 flex overflow-hidden">`
-  - To: `<div className="flex-1 flex overflow-hidden min-h-0">`
+**Logic approach:**
+- For each phase, check if there's a milestone that should appear **after** it (before the next phase)
+- Render: `[Phase 1] [Milestone SD] [Phase 2] [Milestone MC] [Phase 3]`
+- Alternatively, use the phase's `end_milestone_id` to determine which milestone appears after it
 
-How we’ll verify (manual test checklist)
-- Open the P2A Handover Plan Overlay.
-- Confirm “Add Systems” is visible immediately (no scrolling required).
-- Scroll inside the Systems Panel list: the “Add Systems” button must remain visible and fixed at the bottom.
-- Confirm the bottom of the Systems Panel aligns with the Unassigned VCR bar (the row containing “Add VCR”).
-- Test on smaller screens (reduced viewport height) to ensure the footer still appears and the systems list scrolls instead of pushing/clipping the footer.
+**3. Update MilestoneMarker Component**
+Modify `MilestoneMarker.tsx` to:
+- Display as a vertical separator between columns (narrow width, vertically oriented)
+- Show the milestone icon at the top
+- Render a **faint dotted** vertical line extending downward
+- Change `bg-border/30` to `border-dashed` or use CSS for dotted pattern
+- Limit the line height so it stops just above the Unassigned VCRs panel (not full viewport height)
 
-Edge cases / considerations
-- If the user expects “Add Systems” to literally be next to “Add VCR” in the same horizontal row across the entire overlay (single shared bottom action bar), that would require a structural refactor: moving both buttons into a shared parent “bottom bar” outside both panels. The plan above achieves the typical interpretation: aligned rows within their respective panels, fixed and visible.
-- We’ll keep pointer-events and DnD unaffected; the footer will not be droppable unless explicitly needed later.
+**4. Visual Design for Inline Milestone**
+The milestone marker between phases will be:
+- Narrow column (about `w-8` or `w-10`)
+- Centered circular icon at the top
+- Milestone code below the icon (rotated vertically or small text)
+- Faint dotted vertical line (`border-l border-dashed border-border/40`) extending down
+- Line stops at a calculated height (e.g., `calc(100% - 180px)` to avoid the unassigned section)
 
-Expected outcome
-- “Add Systems” will be permanently visible (fixed footer).
-- The Systems Panel will feel visually aligned with the workspace bottom “Unassigned VCRs” row.
-- Scrolling will only happen in the SystemsPanel ScrollArea, not on the entire overlay.
+### Technical Implementation
+
+**Files to Modify:**
+
+1. **`src/components/p2a-workspace/phases/PhasesTimeline.tsx`**
+   - Remove the dedicated milestones header section (lines 120-135)
+   - Modify the phases flex container to interleave milestones
+   - Create a combined render array: phases interleaved with milestone markers
+   - Pass the appropriate height constraint to milestone markers
+
+2. **`src/components/p2a-workspace/phases/MilestoneMarker.tsx`**
+   - Redesign as a vertical separator element
+   - Change from horizontal row layout to vertical column layout
+   - Update the vertical line to use dotted style (`border-dashed`)
+   - Accept a `height` prop or use CSS calc to stop above unassigned section
+   - Position the marker icon and label appropriately for a vertical orientation
+
+**Interleaving Logic:**
+```tsx
+// Example: Build combined render list
+const renderItems = [];
+phases.forEach((phase, idx) => {
+  renderItems.push({ type: 'phase', phase, idx });
+  
+  // Check if a milestone should appear after this phase
+  // Using end_milestone_id from the phase, or milestone display_order
+  const separatorMilestone = sortedMilestones.find(m => 
+    phase.end_milestone_id === m.id || 
+    m.display_order === idx + 1
+  );
+  
+  if (separatorMilestone) {
+    renderItems.push({ type: 'milestone', milestone: separatorMilestone });
+  }
+});
+```
+
+**Milestone Marker Visual Update:**
+```tsx
+// Vertical separator design
+<div className="flex-shrink-0 w-8 flex flex-col items-center pt-4">
+  {/* Milestone icon */}
+  <div className="relative flex items-center justify-center mb-1">
+    <div className="w-3 h-3 rounded-full bg-slate-400 ring-2 ring-slate-300/50" />
+  </div>
+  
+  {/* Milestone code - vertical or small */}
+  <span className="text-[9px] font-medium text-muted-foreground writing-vertical">
+    {milestone.code}
+  </span>
+  
+  {/* Dotted vertical line */}
+  <div 
+    className="flex-1 w-px border-l border-dashed border-border/40 mt-2"
+    style={{ minHeight: '200px' }}
+  />
+</div>
+```
+
+### Visual Result
+```text
++-------+  |SD|  +-------+  |MC|  +-------+
+| Phase |   :   | Phase |   :   | Phase |
+|   1   |   :   |   2   |   :   |   3   |
++-------+   :   +-------+   :   +-------+
+            :               :
+            :               :
+            :..............:............
+                                        ^
+              Lines stop here ─────────────────
++─────────────────────────────────────────────+
+|           Unassigned VCRs                   |
++─────────────────────────────────────────────+
+```
+
+### Considerations
+- If milestones aren't linked to phases via `end_milestone_id`, use `display_order` correlation
+- The dotted line uses CSS `border-dashed` for the dotted effect
+- Lines are `pointer-events-none` to not interfere with drag-and-drop
+- Milestone tooltips remain functional on hover
+- The interleaving should sync with horizontal scrolling of the phases area
