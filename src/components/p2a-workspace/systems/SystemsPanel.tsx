@@ -163,11 +163,8 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
             <h3 className="font-semibold text-sm">Systems</h3>
           </div>
 
-          {/* Search - only visible on hover */}
-          <div className={cn(
-            "relative transition-all duration-200 overflow-hidden",
-            isHovered || searchQuery ? "h-6 opacity-100" : "h-0 opacity-0"
-          )}>
+          {/* Search - always visible */}
+          <div className="relative">
             <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
             <Input
               placeholder="Search..."
