@@ -60,17 +60,28 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const queryClient = useQueryClient();
 
-  // Filter and sort projects - DP-300 pinned to top, then favorites, then rest
+  // Define pinned project order: DP-300, DP-354, DP-385, DP-217, then rest
+  const pinnedOrder = ['DP-300', 'DP-354', 'DP-385', 'DP-217'];
+  
+  const getProjectCode = (project: any) => `${project.project_id_prefix}-${project.project_id_number}`;
+  
+  // Filter and sort projects with custom pinned order
   const filteredProjects = (projects?.filter(project => 
     project.project_title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     `${project.project_id_prefix}${project.project_id_number}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
     project.plant_name?.toLowerCase().includes(searchQuery.toLowerCase())
   ) || []).sort((a, b) => {
-    // Pin DP-300 to the top
-    const aIsDP300 = a.project_id_prefix === 'DP' && a.project_id_number === '300';
-    const bIsDP300 = b.project_id_prefix === 'DP' && b.project_id_number === '300';
-    if (aIsDP300 && !bIsDP300) return -1;
-    if (!aIsDP300 && bIsDP300) return 1;
+    const aCode = getProjectCode(a);
+    const bCode = getProjectCode(b);
+    const aIndex = pinnedOrder.indexOf(aCode);
+    const bIndex = pinnedOrder.indexOf(bCode);
+    
+    // If both are pinned, sort by pinned order
+    if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+    // If only a is pinned, a comes first
+    if (aIndex !== -1) return -1;
+    // If only b is pinned, b comes first
+    if (bIndex !== -1) return 1;
     
     // Then sort by favorites
     if (a.is_favorite && !b.is_favorite) return -1;
