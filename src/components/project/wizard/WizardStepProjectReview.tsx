@@ -87,8 +87,7 @@ const WizardStepProjectReview: React.FC<WizardStepProjectReviewProps> = ({
           {/* Project Information */}
           <Card>
             <CardHeader className="py-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <FileText className="h-4 w-4" />
+              <CardTitle className="text-base">
                 Project Information
               </CardTitle>
             </CardHeader>
