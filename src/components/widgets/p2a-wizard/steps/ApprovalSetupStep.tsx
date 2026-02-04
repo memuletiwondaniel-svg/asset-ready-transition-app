@@ -79,31 +79,39 @@ export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
       
       setIsLoading(true);
       try {
-        const { data, error } = await (supabase as any)
+        // First fetch team members
+        const { data: teamData, error: teamError } = await supabase
           .from('project_team_members')
-          .select(`
-            id,
-            user_id,
-            role,
-            is_lead,
-            profiles:user_id (
-              full_name,
-              avatar_url
-            )
-          `)
+          .select('id, user_id, role, is_lead')
           .eq('project_id', projectId);
 
-        if (error) throw error;
+        if (teamError) throw teamError;
 
-        const members: TeamMember[] = (data || []).map((m: any) => ({
+        // Then fetch profiles for all user_ids
+        const userIds = (teamData || []).map(m => m.user_id).filter(Boolean);
+        
+        let profilesMap: Record<string, { full_name: string; avatar_url?: string }> = {};
+        
+        if (userIds.length > 0) {
+          const { data: profilesData, error: profilesError } = await supabase
+            .from('profiles')
+            .select('user_id, full_name, avatar_url')
+            .in('user_id', userIds);
+
+          if (!profilesError && profilesData) {
+            profilesMap = profilesData.reduce((acc, p) => {
+              acc[p.user_id] = { full_name: p.full_name, avatar_url: p.avatar_url };
+              return acc;
+            }, {} as Record<string, { full_name: string; avatar_url?: string }>);
+          }
+        }
+
+        const members: TeamMember[] = (teamData || []).map((m: any) => ({
           id: m.id,
           user_id: m.user_id,
           role: m.role,
           is_lead: m.is_lead,
-          profile: m.profiles ? {
-            full_name: m.profiles.full_name,
-            avatar_url: m.profiles.avatar_url,
-          } : undefined,
+          profile: profilesMap[m.user_id] || undefined,
         }));
 
         setTeamMembers(members);
