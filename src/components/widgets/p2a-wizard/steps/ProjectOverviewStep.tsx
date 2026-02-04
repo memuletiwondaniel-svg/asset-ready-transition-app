@@ -53,25 +53,25 @@ export const ProjectOverviewStep: React.FC<ProjectOverviewStepProps> = ({
       {/* Choose approach */}
       <div className="pt-4 border-t flex-1 flex flex-col">
         <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">Choose your approach</h4>
-        <div className="grid grid-cols-2 gap-4 flex-1">
+        <div className="grid grid-cols-2 gap-3">
           <button
             onClick={onChooseWizard}
-            className="flex flex-col items-center justify-center gap-3 p-6 rounded-lg border-2 border-primary bg-primary/5 hover:bg-primary/10 transition-colors"
+            className="flex flex-col items-center justify-center gap-2 p-4 rounded-lg border-2 border-primary bg-primary/5 hover:bg-primary/10 transition-colors"
           >
-            <Wand2 className="h-8 w-8 text-primary" />
+            <Wand2 className="h-6 w-6 text-primary" />
             <div className="text-center">
               <div className="text-sm font-semibold">Guided Wizard</div>
-              <div className="text-xs text-muted-foreground mt-1">Step-by-step with guidance</div>
+              <div className="text-xs text-muted-foreground mt-0.5">Step-by-step with guidance</div>
             </div>
           </button>
           <button
             onClick={onChooseWorkspace}
-            className="flex flex-col items-center justify-center gap-3 p-6 rounded-lg border-2 border-muted hover:border-primary/50 hover:bg-muted/50 transition-colors"
+            className="flex flex-col items-center justify-center gap-2 p-4 rounded-lg border-2 border-muted hover:border-primary/50 hover:bg-muted/50 transition-colors"
           >
-            <LayoutGrid className="h-8 w-8 text-muted-foreground" />
+            <LayoutGrid className="h-6 w-6 text-muted-foreground" />
             <div className="text-center">
               <div className="text-sm font-semibold">Interactive Workspace</div>
-              <div className="text-xs text-muted-foreground mt-1">Blank canvas for manual setup</div>
+              <div className="text-xs text-muted-foreground mt-0.5">Blank canvas for manual setup</div>
             </div>
           </button>
         </div>

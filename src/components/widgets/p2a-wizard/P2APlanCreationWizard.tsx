@@ -222,8 +222,8 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
           <div className="flex items-center gap-3">
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-br from-orange-500/40 to-amber-500/40 rounded-lg blur-sm" />
-              <div className="relative p-1.5 rounded-lg bg-gradient-to-br from-orange-500 to-amber-500">
-                <Key className="h-4 w-4 text-white" />
+              <div className="relative p-2 rounded-lg bg-gradient-to-br from-orange-500 to-amber-500">
+                <Key className="h-5 w-5 text-white" />
               </div>
             </div>
             <div>
