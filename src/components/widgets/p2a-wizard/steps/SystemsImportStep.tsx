@@ -16,6 +16,9 @@ import {
   X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { CMSImportModal, CMSImportConfig } from './CMSImportModal';
+import { ExcelUploadModal } from './ExcelUploadModal';
+import { useToast } from '@/components/ui/use-toast';
 
 export interface WizardSystem {
   id: string;
@@ -34,8 +37,11 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
   systems,
   onSystemsChange,
 }) => {
+  const { toast } = useToast();
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [showCMSModal, setShowCMSModal] = useState(false);
+  const [showExcelModal, setShowExcelModal] = useState(false);
   const [newSystem, setNewSystem] = useState<Partial<WizardSystem>>({
     system_id: '',
     name: '',
@@ -68,6 +74,33 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
     setEditingId(null);
   };
 
+  const handleCMSImport = (config: CMSImportConfig) => {
+    // TODO: Implement actual CMS import
+    toast({
+      title: 'CMS Import',
+      description: `Connecting to ${config.environment} environment for project ${config.projectId}...`,
+    });
+    // Mock imported systems for demo
+    const mockSystems: WizardSystem[] = [
+      { id: `cms-${Date.now()}-1`, system_id: 'SYS-CMS-001', name: 'Imported System 1', description: 'From CMS', is_hydrocarbon: false },
+      { id: `cms-${Date.now()}-2`, system_id: 'SYS-CMS-002', name: 'Imported System 2', description: 'From CMS', is_hydrocarbon: true },
+    ];
+    onSystemsChange([...systems, ...mockSystems]);
+  };
+
+  const handleExcelUpload = (file: File) => {
+    // TODO: Implement actual Excel parsing
+    toast({
+      title: 'Excel Upload',
+      description: `Processing ${file.name}...`,
+    });
+    // Mock imported systems for demo
+    const mockSystems: WizardSystem[] = [
+      { id: `excel-${Date.now()}-1`, system_id: 'SYS-XLS-001', name: 'Excel System 1', description: 'From Excel', is_hydrocarbon: false },
+    ];
+    onSystemsChange([...systems, ...mockSystems]);
+  };
+
   return (
     <div className="space-y-4 p-6">
       <div className="flex items-center justify-between">
@@ -85,24 +118,38 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
         <Button
           variant="outline"
           size="sm"
-          disabled
           className="gap-2"
+          onClick={() => setShowCMSModal(true)}
         >
           <Database className="h-4 w-4" />
-          Import from GoCompletions
-          <Badge variant="secondary" className="text-[10px]">Coming Soon</Badge>
+          Import from CMS
         </Button>
         <Button
           variant="outline"
           size="sm"
-          disabled
           className="gap-2"
+          onClick={() => setShowExcelModal(true)}
         >
           <Upload className="h-4 w-4" />
           Upload Excel
-          <Badge variant="secondary" className="text-[10px]">Coming Soon</Badge>
         </Button>
       </div>
+
+      {/* CMS Import Modal */}
+      <CMSImportModal
+        open={showCMSModal}
+        onOpenChange={setShowCMSModal}
+        onImport={handleCMSImport}
+      />
+
+      {/* Excel Upload Modal */}
+      <ExcelUploadModal
+        open={showExcelModal}
+        onOpenChange={setShowExcelModal}
+        onUpload={handleExcelUpload}
+        title="Upload Systems"
+        description="Import systems from an Excel spreadsheet"
+      />
 
       {/* Systems List */}
       <div className="border rounded-lg">
