@@ -19,6 +19,7 @@ import { useP2AHandoverPlan } from '@/components/p2a-workspace/hooks/useP2AHando
 interface PSSRSummaryWidgetProps {
   projectId: string;
   projectCode?: string;
+  projectName?: string;
   dragAttributes?: any;
   dragListeners?: any;
   onHide?: () => void;
@@ -69,6 +70,7 @@ const CircularProgress: React.FC<{ value: number; size?: number; strokeWidth?: n
 export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({ 
   projectId, 
   projectCode = '',
+  projectName,
   dragAttributes, 
   dragListeners, 
   onHide 
@@ -240,7 +242,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
         onOpenChange={setShowP2APlanWizard}
         projectId={projectId}
         projectCode={projectCode}
-        projectName={projectCode}
+        projectName={projectName}
         onSuccess={() => {
           setShowP2APlanWizard(false);
         }}
