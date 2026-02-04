@@ -85,9 +85,23 @@ export const VCRCreationStep: React.FC<VCRCreationStepProps> = ({
         <Badge variant="outline">{vcrs.length} VCRs</Badge>
       </div>
 
+      {/* Add VCR Button - Always Visible */}
+      <button
+        onClick={() => setShowAddForm(true)}
+        className="group w-full flex items-center gap-3 p-3 rounded-xl border-2 border-dashed border-muted-foreground/25 bg-gradient-to-br from-muted/50 to-muted/30 hover:border-primary/50 hover:from-primary/10 hover:to-primary/5 transition-all duration-200"
+      >
+        <div className="p-2.5 rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+          <Plus className="h-4 w-4" />
+        </div>
+        <div className="text-left">
+          <p className="font-medium text-sm">Add VCR</p>
+          <p className="text-[10px] text-muted-foreground">Create a new verification checkpoint</p>
+        </div>
+      </button>
+
       {/* VCR List */}
       <div className="border rounded-lg">
-        <ScrollArea className="h-[280px]">
+        <ScrollArea className="h-[240px]">
           <div className="p-2 space-y-2">
             {vcrs.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
@@ -187,7 +201,7 @@ export const VCRCreationStep: React.FC<VCRCreationStepProps> = ({
       </div>
 
       {/* Add Form */}
-      {showAddForm ? (
+      {showAddForm && (
         <div className="p-4 border rounded-lg bg-muted/30 space-y-3">
           <div>
             <Label className="text-xs">VCR Name *</Label>
@@ -244,15 +258,6 @@ export const VCRCreationStep: React.FC<VCRCreationStepProps> = ({
             </div>
           </div>
         </div>
-      ) : (
-        <Button
-          variant="outline"
-          className="w-full border-dashed"
-          onClick={() => setShowAddForm(true)}
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Add VCR
-        </Button>
       )}
     </div>
   );
