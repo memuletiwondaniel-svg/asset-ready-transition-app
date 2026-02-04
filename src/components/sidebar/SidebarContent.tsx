@@ -66,9 +66,9 @@ interface SidebarContentProps {
 const navigationItems: NavigationItem[] = [
   { labelKey: 'navHome', icon: Home, path: '/', section: 'home' },
   { labelKey: 'navAskBob', icon: MessageSquare, path: '/ask-orsh', section: 'ask-orsh' },
+  { labelKey: 'navProjects', icon: FolderKanban, path: '/projects', section: 'projects' },
   { labelKey: 'navPSSR', icon: AlertTriangle, path: '/pssr', section: 'pssr' },
   { labelKey: 'navMyTasks', icon: ListChecks, path: '/my-tasks', section: 'my-tasks' },
-  { labelKey: 'navProjects', icon: FolderKanban, path: '/projects', section: 'projects' },
   { labelKey: 'navORAPlans', icon: CalendarCheck, path: '/operation-readiness', section: 'operation-readiness' },
   { labelKey: 'navORMaintenance', icon: Wrench, path: '/or-maintenance', section: 'or-maintenance' },
   { labelKey: 'navP2AHandover', icon: Key, path: '/p2a-handover', section: 'p2a-handover' },
