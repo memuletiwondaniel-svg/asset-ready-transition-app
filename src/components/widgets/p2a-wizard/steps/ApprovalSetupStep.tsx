@@ -87,23 +87,40 @@ export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
 
         if (teamError) throw teamError;
 
-        // Then fetch profiles for all user_ids
-        const userIds = (teamData || []).map(m => m.user_id).filter(Boolean);
-        
-        let profilesMap: Record<string, { full_name: string; avatar_url?: string }> = {};
-        
-        if (userIds.length > 0) {
-          const { data: profilesData, error: profilesError } = await supabase
-            .from('profiles')
-            .select('user_id, full_name, avatar_url')
-            .in('user_id', userIds);
+        // Then fetch profiles for all user_ids.
+        // NOTE: Direct SELECT on `profiles` may be blocked by RLS for other users.
+        // We use the SECURITY DEFINER RPC that safely returns basic profile data.
+        const userIds = Array.from(
+          new Set((teamData || []).map((m: any) => m.user_id).filter(Boolean))
+        );
 
-          if (!profilesError && profilesData) {
-            profilesMap = profilesData.reduce((acc, p) => {
+        let profilesMap: Record<string, { full_name: string; avatar_url?: string }> = {};
+
+        if (userIds.length > 0) {
+          const results = await Promise.all(
+            userIds.map(async (userId) => {
+              // get_safe_profile_data returns: user_id, full_name, avatar_url, ...
+              const { data, error } = await (supabase as any).rpc('get_safe_profile_data', {
+                target_user_id: userId,
+              });
+
+              if (error || !data) return null;
+              const row = Array.isArray(data) ? data[0] : data;
+              if (!row?.user_id) return null;
+              return {
+                user_id: row.user_id as string,
+                full_name: row.full_name as string,
+                avatar_url: row.avatar_url as string | undefined,
+              };
+            })
+          );
+
+          profilesMap = results
+            .filter(Boolean)
+            .reduce((acc, p: any) => {
               acc[p.user_id] = { full_name: p.full_name, avatar_url: p.avatar_url };
               return acc;
             }, {} as Record<string, { full_name: string; avatar_url?: string }>);
-          }
         }
 
         const members: TeamMember[] = (teamData || []).map((m: any) => ({
