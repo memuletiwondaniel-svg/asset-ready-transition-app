@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Key, FileText, Plus, ChevronRight, Wand2 } from 'lucide-react';
+import { Key, FileText, Plus, ChevronRight } from 'lucide-react';
 import { StyledWidgetIcon } from './StyledWidgetIcon';
 import { useProjectPSSRs } from '@/hooks/useProjectPSSRs';
 import { useProjectVCRs } from '@/hooks/useProjectVCRs';
@@ -113,7 +113,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
               glowFrom="from-orange-500/40"
               glowTo="to-amber-500/40"
             />
-            <span>VCRs & Handovers</span>
+            <span>P2A Handover</span>
           </CardTitle>
         </CardHeader>
         <CardContent className="flex-1 flex flex-col space-y-3 pt-0">
@@ -161,16 +161,14 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                 )}
               </div>
             ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <Wand2 className="h-10 w-10 mx-auto mb-3 opacity-40" />
-                <p className="text-sm mb-1">No P2A Handover Plan</p>
-                <p className="text-xs opacity-70 mb-4">Set up your handover workflow with systems and VCRs</p>
+              <div className="text-center py-10 text-muted-foreground">
+                <p className="text-sm font-medium mb-1">No P2A Handover Plan</p>
+                <p className="text-xs opacity-70 mb-5">Set up your handover workflow with systems and VCRs</p>
                 {canCreateVCR && (
                   <Button
                     size="sm"
                     onClick={() => setShowP2APlanWizard(true)}
                   >
-                    <Wand2 className="h-3.5 w-3.5 mr-1" />
                     Create P2A Handover Plan
                   </Button>
                 )}
