@@ -22,14 +22,15 @@ export const WizardProgress: React.FC<WizardProgressProps> = ({
   return (
     <div className="flex items-center gap-2 px-6 py-4 border-b bg-muted/30">
       {steps.map((step, index) => {
-        const isCompleted = currentStep > step.id;
-        const isCurrent = currentStep === step.id;
+        const stepNumber = index + 1;
+        const isCompleted = currentStep > stepNumber;
+        const isCurrent = currentStep === stepNumber;
         const isClickable = onStepClick && (isCompleted || isCurrent);
 
         return (
           <React.Fragment key={step.id}>
             <button
-              onClick={() => isClickable && onStepClick?.(step.id)}
+              onClick={() => isClickable && onStepClick?.(stepNumber)}
               disabled={!isClickable}
               className={cn(
                 "flex items-center gap-2 transition-all",
@@ -45,7 +46,7 @@ export const WizardProgress: React.FC<WizardProgressProps> = ({
                   !isCompleted && !isCurrent && "bg-muted text-muted-foreground"
                 )}
               >
-                {isCompleted ? <Check className="h-3.5 w-3.5" /> : step.id}
+                {isCompleted ? <Check className="h-3.5 w-3.5" /> : stepNumber}
               </div>
               <span
                 className={cn(
@@ -61,7 +62,7 @@ export const WizardProgress: React.FC<WizardProgressProps> = ({
               <div
                 className={cn(
                   "flex-1 h-0.5 min-w-4 max-w-12 transition-colors",
-                  currentStep > step.id ? "bg-primary" : "bg-muted"
+                  isCompleted ? "bg-primary" : "bg-muted"
                 )}
               />
             )}
