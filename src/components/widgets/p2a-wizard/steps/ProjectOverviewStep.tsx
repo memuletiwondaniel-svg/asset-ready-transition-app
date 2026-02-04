@@ -26,7 +26,7 @@ export const ProjectOverviewStep: React.FC<ProjectOverviewStepProps> = ({
     : projectCode;
 
   return (
-    <div className="flex flex-col gap-4 p-5">
+    <div className="flex flex-col gap-5 p-6 h-full">
       {/* What we'll create - stacked layout */}
       <div className="space-y-2">
         <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">What you'll set up</h4>
@@ -51,27 +51,27 @@ export const ProjectOverviewStep: React.FC<ProjectOverviewStepProps> = ({
       </div>
 
       {/* Choose approach */}
-      <div className="pt-3 border-t">
-        <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Choose your approach</h4>
-        <div className="grid grid-cols-2 gap-3">
+      <div className="pt-4 border-t flex-1 flex flex-col">
+        <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">Choose your approach</h4>
+        <div className="grid grid-cols-2 gap-4 flex-1">
           <button
             onClick={onChooseWizard}
-            className="flex items-center gap-3 p-3 rounded-lg border-2 border-primary bg-primary/5 hover:bg-primary/10 transition-colors"
+            className="flex flex-col items-center justify-center gap-3 p-6 rounded-lg border-2 border-primary bg-primary/5 hover:bg-primary/10 transition-colors"
           >
-            <Wand2 className="h-5 w-5 text-primary shrink-0" />
-            <div className="text-left">
+            <Wand2 className="h-8 w-8 text-primary" />
+            <div className="text-center">
               <div className="text-sm font-semibold">Guided Wizard</div>
-              <div className="text-[10px] text-muted-foreground">Step-by-step with guidance</div>
+              <div className="text-xs text-muted-foreground mt-1">Step-by-step with guidance</div>
             </div>
           </button>
           <button
             onClick={onChooseWorkspace}
-            className="flex items-center gap-3 p-3 rounded-lg border-2 border-muted hover:border-primary/50 hover:bg-muted/50 transition-colors"
+            className="flex flex-col items-center justify-center gap-3 p-6 rounded-lg border-2 border-muted hover:border-primary/50 hover:bg-muted/50 transition-colors"
           >
-            <LayoutGrid className="h-5 w-5 text-muted-foreground shrink-0" />
-            <div className="text-left">
+            <LayoutGrid className="h-8 w-8 text-muted-foreground" />
+            <div className="text-center">
               <div className="text-sm font-semibold">Interactive Workspace</div>
-              <div className="text-[10px] text-muted-foreground">Blank canvas for manual setup</div>
+              <div className="text-xs text-muted-foreground mt-1">Blank canvas for manual setup</div>
             </div>
           </button>
         </div>
