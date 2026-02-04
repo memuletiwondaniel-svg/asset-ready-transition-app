@@ -166,7 +166,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                 <p className="text-xs opacity-70 mb-5">Set up your handover workflow with systems and VCRs</p>
                 {canCreateVCR && (
                   <Button
-                    variant="outline"
+                    variant="secondary"
                     size="sm"
                     className="text-xs"
                     onClick={() => setShowP2APlanWizard(true)}
