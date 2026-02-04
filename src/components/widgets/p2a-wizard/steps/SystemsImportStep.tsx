@@ -117,14 +117,14 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
       <div className="grid grid-cols-3 gap-3">
         <button
           onClick={() => setShowCMSModal(true)}
-          className="group relative flex flex-col items-center gap-2 p-3 rounded-xl border-2 border-dashed border-muted-foreground/25 bg-gradient-to-br from-muted/50 to-muted/30 hover:border-primary/50 hover:from-primary/10 hover:to-primary/5 transition-all duration-200"
+          className="group relative flex flex-col items-center gap-2 p-3 rounded-xl border-2 border-dashed border-muted-foreground/25 bg-gradient-to-br from-muted/50 to-muted/30 hover:border-amber-500/50 hover:from-amber-500/10 hover:to-amber-500/5 transition-all duration-200"
         >
-          <div className="p-2.5 rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+          <div className="p-2.5 rounded-lg bg-amber-500/10 text-amber-600 group-hover:bg-amber-500 group-hover:text-white transition-colors">
             <Database className="h-4 w-4" />
           </div>
           <div className="text-center">
             <p className="font-medium text-xs">CMS Import</p>
-            <p className="text-[9px] text-muted-foreground mt-0.5 leading-tight">Connect to Completions<br/>Management System</p>
+            <p className="text-[9px] text-muted-foreground mt-0.5">Connect to Completions System</p>
           </div>
         </button>
         <button
