@@ -114,48 +114,44 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
       </div>
 
       {/* Import options */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         <button
           onClick={() => setShowCMSModal(true)}
-          className="group relative flex flex-col items-center gap-3 p-4 rounded-xl border-2 border-dashed border-muted-foreground/25 bg-gradient-to-br from-muted/50 to-muted/30 hover:border-primary/50 hover:from-primary/10 hover:to-primary/5 transition-all duration-200"
+          className="group relative flex flex-col items-center gap-2 p-3 rounded-xl border-2 border-dashed border-muted-foreground/25 bg-gradient-to-br from-muted/50 to-muted/30 hover:border-primary/50 hover:from-primary/10 hover:to-primary/5 transition-all duration-200"
         >
-          <div className="p-3 rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-            <Database className="h-5 w-5" />
+          <div className="p-2.5 rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+            <Database className="h-4 w-4" />
           </div>
           <div className="text-center">
-            <p className="font-medium text-sm">Import from CMS</p>
-            <p className="text-[10px] text-muted-foreground mt-0.5">Connect to GoCompletions</p>
+            <p className="font-medium text-xs">Import from CMS</p>
+            <p className="text-[9px] text-muted-foreground mt-0.5">GoCompletions</p>
           </div>
         </button>
         <button
           onClick={() => setShowExcelModal(true)}
-          className="group relative flex flex-col items-center gap-3 p-4 rounded-xl border-2 border-dashed border-muted-foreground/25 bg-gradient-to-br from-muted/50 to-muted/30 hover:border-emerald-500/50 hover:from-emerald-500/10 hover:to-emerald-500/5 transition-all duration-200"
+          className="group relative flex flex-col items-center gap-2 p-3 rounded-xl border-2 border-dashed border-muted-foreground/25 bg-gradient-to-br from-muted/50 to-muted/30 hover:border-emerald-500/50 hover:from-emerald-500/10 hover:to-emerald-500/5 transition-all duration-200"
         >
-          <div className="p-3 rounded-lg bg-emerald-500/10 text-emerald-600 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
-            <Upload className="h-5 w-5" />
+          <div className="p-2.5 rounded-lg bg-emerald-500/10 text-emerald-600 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
+            <Upload className="h-4 w-4" />
           </div>
           <div className="text-center">
-            <p className="font-medium text-sm">Upload Excel</p>
-            <p className="text-[10px] text-muted-foreground mt-0.5">Import from spreadsheet</p>
+            <p className="font-medium text-xs">Upload Excel</p>
+            <p className="text-[9px] text-muted-foreground mt-0.5">Spreadsheet</p>
+          </div>
+        </button>
+        <button
+          onClick={() => setShowAddForm(true)}
+          className="group relative flex flex-col items-center gap-2 p-3 rounded-xl border-2 border-dashed border-muted-foreground/25 bg-gradient-to-br from-muted/50 to-muted/30 hover:border-blue-500/50 hover:from-blue-500/10 hover:to-blue-500/5 transition-all duration-200"
+        >
+          <div className="p-2.5 rounded-lg bg-blue-500/10 text-blue-600 group-hover:bg-blue-500 group-hover:text-white transition-colors">
+            <Plus className="h-4 w-4" />
+          </div>
+          <div className="text-center">
+            <p className="font-medium text-xs">Add Manually</p>
+            <p className="text-[9px] text-muted-foreground mt-0.5">Single entry</p>
           </div>
         </button>
       </div>
-
-      {/* CMS Import Modal */}
-      <CMSImportModal
-        open={showCMSModal}
-        onOpenChange={setShowCMSModal}
-        onImport={handleCMSImport}
-      />
-
-      {/* Excel Upload Modal */}
-      <ExcelUploadModal
-        open={showExcelModal}
-        onOpenChange={setShowExcelModal}
-        onUpload={handleExcelUpload}
-        title="Upload Systems"
-        description="Import systems from an Excel spreadsheet"
-      />
 
       {/* Systems List */}
       <div className="border rounded-lg">
@@ -247,8 +243,24 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
         </ScrollArea>
       </div>
 
+      {/* CMS Import Modal */}
+      <CMSImportModal
+        open={showCMSModal}
+        onOpenChange={setShowCMSModal}
+        onImport={handleCMSImport}
+      />
+
+      {/* Excel Upload Modal */}
+      <ExcelUploadModal
+        open={showExcelModal}
+        onOpenChange={setShowExcelModal}
+        onUpload={handleExcelUpload}
+        title="Upload Systems"
+        description="Import systems from an Excel spreadsheet"
+      />
+
       {/* Add Form */}
-      {showAddForm ? (
+      {showAddForm && (
         <div className="p-4 border rounded-lg bg-muted/30 space-y-3">
           <div className="flex gap-2">
             <div className="w-28">
@@ -305,15 +317,6 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
             </div>
           </div>
         </div>
-      ) : (
-        <Button
-          variant="outline"
-          className="w-full border-dashed"
-          onClick={() => setShowAddForm(true)}
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Add System Manually
-        </Button>
       )}
     </div>
   );
