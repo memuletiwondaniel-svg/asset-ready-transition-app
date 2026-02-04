@@ -56,7 +56,7 @@ export const ProjectOverviewStep: React.FC<ProjectOverviewStepProps> = ({
         <div className="grid grid-cols-2 gap-4 flex-1">
           <button
             onClick={onChooseWizard}
-            className="flex flex-col items-center justify-center gap-3 p-6 rounded-lg border-2 border-primary bg-primary/5 hover:bg-primary/10 transition-colors"
+            className="flex flex-col items-center justify-center gap-3 p-6 rounded-lg border border-primary/60 bg-primary/[0.03] hover:bg-primary/[0.06] transition-colors"
           >
             <Wand2 className="h-8 w-8 text-primary" />
             <div className="text-center">
@@ -66,7 +66,7 @@ export const ProjectOverviewStep: React.FC<ProjectOverviewStepProps> = ({
           </button>
           <button
             onClick={onChooseWorkspace}
-            className="flex flex-col items-center justify-center gap-3 p-6 rounded-lg border-2 border-muted hover:border-primary/50 hover:bg-muted/50 transition-colors"
+            className="flex flex-col items-center justify-center gap-3 p-6 rounded-lg border border-muted-foreground/20 hover:border-primary/40 hover:bg-muted/30 transition-colors"
           >
             <LayoutGrid className="h-8 w-8 text-muted-foreground" />
             <div className="text-center">
