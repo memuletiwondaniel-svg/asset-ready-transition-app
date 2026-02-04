@@ -114,25 +114,31 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
       </div>
 
       {/* Import options */}
-      <div className="flex gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-2"
+      <div className="grid grid-cols-2 gap-3">
+        <button
           onClick={() => setShowCMSModal(true)}
+          className="group relative flex flex-col items-center gap-3 p-4 rounded-xl border-2 border-dashed border-muted-foreground/25 bg-gradient-to-br from-muted/50 to-muted/30 hover:border-primary/50 hover:from-primary/10 hover:to-primary/5 transition-all duration-200"
         >
-          <Database className="h-4 w-4" />
-          Import from CMS
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-2"
+          <div className="p-3 rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+            <Database className="h-5 w-5" />
+          </div>
+          <div className="text-center">
+            <p className="font-medium text-sm">Import from CMS</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">Connect to GoCompletions</p>
+          </div>
+        </button>
+        <button
           onClick={() => setShowExcelModal(true)}
+          className="group relative flex flex-col items-center gap-3 p-4 rounded-xl border-2 border-dashed border-muted-foreground/25 bg-gradient-to-br from-muted/50 to-muted/30 hover:border-emerald-500/50 hover:from-emerald-500/10 hover:to-emerald-500/5 transition-all duration-200"
         >
-          <Upload className="h-4 w-4" />
-          Upload Excel
-        </Button>
+          <div className="p-3 rounded-lg bg-emerald-500/10 text-emerald-600 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
+            <Upload className="h-5 w-5" />
+          </div>
+          <div className="text-center">
+            <p className="font-medium text-sm">Upload Excel</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">Import from spreadsheet</p>
+          </div>
+        </button>
       </div>
 
       {/* CMS Import Modal */}
