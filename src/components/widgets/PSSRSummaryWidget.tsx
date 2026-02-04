@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Key, FileText, Plus, ChevronRight, LayoutGrid } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Key, FileText, Plus, ChevronRight, Wand2 } from 'lucide-react';
 import { StyledWidgetIcon } from './StyledWidgetIcon';
 import { useProjectPSSRs } from '@/hooks/useProjectPSSRs';
 import { useProjectVCRs } from '@/hooks/useProjectVCRs';
@@ -10,8 +11,11 @@ import { PSSRQuickViewOverlay } from '@/components/pssr/PSSRQuickViewOverlay';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CreateVCRWizard } from './vcr-wizard/CreateVCRWizard';
 import { P2AWorkspaceOverlay } from './P2AWorkspaceOverlay';
+import { P2APlanCreationWizard } from './p2a-wizard/P2APlanCreationWizard';
 import { cn } from '@/lib/utils';
 import { useCanCreateVCR } from '@/hooks/useCurrentUserRole';
+import { useP2AHandoverPlan } from '@/components/p2a-workspace/hooks/useP2AHandoverPlan';
+
 interface PSSRSummaryWidgetProps {
   projectId: string;
   projectCode?: string;
@@ -76,9 +80,11 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
   const [selectedPSSR, setSelectedPSSR] = useState<{ id: string; displayId: string } | null>(null);
   const [showCreateVCR, setShowCreateVCR] = useState(false);
   const [showP2AWorkspace, setShowP2AWorkspace] = useState(false);
+  const [showP2APlanWizard, setShowP2APlanWizard] = useState(false);
 
   // Get the first (active) ORA plan for this project
   const oraPlanId = orpPlans?.[0]?.id || '';
+  const { plan: p2aPlan } = useP2AHandoverPlan(oraPlanId);
   const isLoading = pssrsLoading || vcrsLoading;
 
   // Use only real VCRs from database
@@ -133,6 +139,9 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-mono text-blue-600/70">{vcr.vcr_code}</span>
+                        <Badge variant="outline" className="text-[9px] px-1 py-0">
+                          {vcr.status === 'PENDING' ? 'Draft' : vcr.status}
+                        </Badge>
                       </div>
                       <div className="text-sm font-medium truncate">{vcr.name}</div>
                     </div>
@@ -153,34 +162,47 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
               </div>
             ) : (
               <div className="text-center py-8 text-muted-foreground">
-                <FileText className="h-10 w-10 mx-auto mb-3 opacity-40" />
-                <p className="text-sm mb-1">No VCRs created yet</p>
-                <p className="text-xs opacity-70">VCRs track verification readiness for handover points</p>
+                <Wand2 className="h-10 w-10 mx-auto mb-3 opacity-40" />
+                <p className="text-sm mb-1">No P2A Handover Plan</p>
+                <p className="text-xs opacity-70 mb-4">Set up your handover workflow with systems and VCRs</p>
                 {canCreateVCR && (
                   <Button
-                    variant="outline"
                     size="sm"
-                    className="mt-4"
-                    onClick={() => setShowCreateVCR(true)}
+                    onClick={() => setShowP2APlanWizard(true)}
                   >
-                    <Plus className="h-3.5 w-3.5 mr-1" />
-                    New VCR
+                    <Wand2 className="h-3.5 w-3.5 mr-1" />
+                    Create P2A Handover Plan
                   </Button>
                 )}
               </div>
             )}
           </div>
 
-          {/* View Handover Plan Button - Always at bottom */}
-          {oraPlanId && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full text-xs mt-auto"
-              onClick={() => setShowP2AWorkspace(true)}
-            >
-              P2A Handover Plan
-            </Button>
+          {/* View Handover Plan Button - Show only when VCRs exist */}
+          {allVCRs.length > 0 && oraPlanId && (
+            <div className="flex items-center gap-2 mt-auto">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 text-xs"
+                onClick={() => setShowP2AWorkspace(true)}
+              >
+                P2A Handover Plan
+                {p2aPlan?.status && (
+                  <Badge 
+                    variant="outline" 
+                    className={cn(
+                      "ml-2 text-[9px] px-1.5 py-0",
+                      p2aPlan.status === 'DRAFT' && "bg-slate-100 text-slate-600 border-slate-200",
+                      p2aPlan.status === 'ACTIVE' && "bg-amber-50 text-amber-700 border-amber-200",
+                      p2aPlan.status === 'COMPLETED' && "bg-emerald-50 text-emerald-700 border-emerald-200"
+                    )}
+                  >
+                    {p2aPlan.status === 'ACTIVE' ? 'In Review' : p2aPlan.status === 'COMPLETED' ? 'Approved' : 'Draft'}
+                  </Badge>
+                )}
+              </Button>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -210,6 +232,22 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
         oraPlanId={oraPlanId}
         projectName={projectCode}
         projectNumber={projectCode}
+      />
+
+      {/* P2A Plan Creation Wizard */}
+      <P2APlanCreationWizard
+        open={showP2APlanWizard}
+        onOpenChange={setShowP2APlanWizard}
+        projectId={projectId}
+        projectCode={projectCode}
+        projectName={projectCode}
+        onSuccess={() => {
+          setShowP2APlanWizard(false);
+        }}
+        onOpenWorkspace={() => {
+          setShowP2APlanWizard(false);
+          setShowP2AWorkspace(true);
+        }}
       />
     </>
   );
