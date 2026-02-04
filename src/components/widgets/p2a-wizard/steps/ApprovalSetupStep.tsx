@@ -273,7 +273,7 @@ export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
               approvers.map((approver, index) => (
                 <div
                   key={approver.id}
-                  className="flex items-center gap-2 p-3 rounded-lg border bg-card"
+                  className="flex items-center gap-3 p-3 rounded-lg border bg-card"
                 >
                   <div className="flex flex-col gap-0.5">
                     <Button
@@ -295,36 +295,41 @@ export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
                       <ChevronDown className="h-3 w-3" />
                     </Button>
                   </div>
-                  <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold">
+                  <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold shrink-0">
                     {index + 1}
                   </div>
-                  {approver.user_id ? (
-                    <Avatar className="h-7 w-7">
-                      <AvatarImage src={approver.user_avatar} />
-                      <AvatarFallback className="text-[10px]">
-                        {getInitials(approver.user_name)}
-                      </AvatarFallback>
-                    </Avatar>
-                  ) : (
-                    <UserCheck className="h-4 w-4 text-muted-foreground" />
-                  )}
+                  <Avatar className="h-9 w-9 shrink-0">
+                    <AvatarImage src={approver.user_avatar} />
+                    <AvatarFallback className="text-xs bg-muted">
+                      {getInitials(approver.user_name)}
+                    </AvatarFallback>
+                  </Avatar>
                   <div className="flex-1 min-w-0">
-                    <span className="text-sm font-medium">{approver.role_name}</span>
-                    {approver.user_name && (
-                      <p className="text-xs text-muted-foreground truncate">
-                        {approver.user_name}
-                      </p>
+                    {approver.user_name ? (
+                      <>
+                        <span className="text-sm font-medium">{approver.user_name}</span>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {approver.role_name}
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-sm font-medium text-muted-foreground">{approver.role_name}</span>
+                        <p className="text-[10px] text-amber-600">
+                          No team member assigned
+                        </p>
+                      </>
                     )}
                   </div>
                   {approver.user_id && (
-                    <Badge variant="secondary" className="text-[10px]">
+                    <Badge variant="secondary" className="text-[10px] bg-emerald-50 text-emerald-700 border-emerald-200">
                       Assigned
                     </Badge>
                   )}
                   <Button
                     size="icon"
                     variant="ghost"
-                    className="h-7 w-7 text-destructive"
+                    className="h-7 w-7 text-destructive shrink-0"
                     onClick={() => handleRemoveApprover(approver.id)}
                     disabled={approvers.length <= 1}
                   >
