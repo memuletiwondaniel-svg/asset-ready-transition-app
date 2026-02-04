@@ -12,6 +12,7 @@ interface WizardNavigationProps {
   isSubmitting?: boolean;
   isSaving?: boolean;
   canProceed?: boolean;
+  canGoBack?: boolean;
   submitLabel?: string;
 }
 
@@ -25,9 +26,9 @@ export const WizardNavigation: React.FC<WizardNavigationProps> = ({
   isSubmitting = false,
   isSaving = false,
   canProceed = true,
+  canGoBack = true,
   submitLabel = 'Submit',
 }) => {
-  const isFirstStep = currentStep === 1;
   const isLastStep = currentStep === totalSteps;
 
   return (
@@ -37,7 +38,7 @@ export const WizardNavigation: React.FC<WizardNavigationProps> = ({
           variant="outline"
           size="sm"
           onClick={onBack}
-          disabled={isFirstStep || isSubmitting}
+          disabled={!canGoBack || isSubmitting}
         >
           <ChevronLeft className="h-4 w-4 mr-1" />
           Back
