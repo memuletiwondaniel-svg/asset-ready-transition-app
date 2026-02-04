@@ -159,7 +159,7 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
 
       {/* Systems List */}
       <div className="border rounded-lg">
-        <ScrollArea className="h-[280px]">
+        <ScrollArea className="h-[240px]">
           <div className="p-2 space-y-2">
             {systems.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
