@@ -155,7 +155,7 @@ export default function ProjectDetailsPage() {
       case 'orp':
         return <ORPActivityPlanWidget projectId={id || ''} />;
       case 'pssr':
-        return <PSSRSummaryWidget projectId={id || ''} projectCode={projectCode} />;
+        return <PSSRSummaryWidget projectId={id || ''} projectCode={projectCode} projectName={project?.project_title} />;
       case 'cost':
         return <OwnersCostWidget projectId={id || ''} />;
       case 'orm':
