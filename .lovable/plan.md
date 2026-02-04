@@ -1,124 +1,191 @@
 
-## P2A Milestone Positioning Between Phase Columns
 
-### Overview
-Reposition milestone markers from a separate header row to be positioned **between** phase columns, with faint dotted vertical lines extending from each milestone down through the workspace and stopping just above the Unassigned VCRs panel.
+# P2A Handover Plan Creation Wizard
 
-### Current State
-- Milestones render in a dedicated header bar **above** all phases
-- Each milestone has a vertical line extending down, but the positioning doesn't align with phase boundaries
-- Milestones appear as a separate row at the top, not visually connected to the phases they separate
+## Overview
+This feature enhances the VCRs & Handovers widget to provide a guided wizard experience for creating P2A Handover Plans when no VCRs exist. The wizard takes users through a step-by-step process to set up their project handover workflow, from importing systems to requesting approvals.
 
-### Proposed Changes
+## Current State
+- The `PSSRSummaryWidget` (VCRs & Handovers) shows VCRs from the database
+- When no VCRs exist, it shows "No VCRs created yet" with a "New VCR" button
+- The P2A Workspace (`P2AHandoverWorkspace.tsx`) already has sophisticated drag-and-drop functionality
+- Hooks exist for systems, phases, VCRs, and approvers management
+- A `user_tasks` table exists for task management integration
 
-**1. Remove Dedicated Milestone Header Row**
-Remove the separate milestones header section from `PhasesTimeline.tsx`. Instead, milestones will be rendered inline within the phases flex container.
+## Changes Required
 
-**2. Interleave Milestones Between Phase Columns**
-Rework the phases rendering logic to:
-- Render milestones **between** phase columns based on their `display_order` relationship
-- A milestone with `display_order = N` appears between phase N and phase N+1
-- First milestone (display_order = 0) could appear before the first phase if needed, or between phase 1 and 2
+### 1. Update VCRs & Handovers Widget (PSSRSummaryWidget.tsx)
 
-**Logic approach:**
-- For each phase, check if there's a milestone that should appear **after** it (before the next phase)
-- Render: `[Phase 1] [Milestone SD] [Phase 2] [Milestone MC] [Phase 3]`
-- Alternatively, use the phase's `end_milestone_id` to determine which milestone appears after it
+**Conditional UI Based on VCR Existence:**
+- When `allVCRs.length === 0`: Hide "New VCR" and "P2A Handover Plan" buttons; show "Create P2A Handover Plan" prompt
+- When VCRs exist: Show current behavior plus a status badge for the P2A plan (Draft/In Review/Approved)
+- Display VCRs with their current status (Draft for newly created ones)
 
-**3. Update MilestoneMarker Component**
-Modify `MilestoneMarker.tsx` to:
-- Display as a vertical separator between columns (narrow width, vertically oriented)
-- Show the milestone icon at the top
-- Render a **faint dotted** vertical line extending downward
-- Change `bg-border/30` to `border-dashed` or use CSS for dotted pattern
-- Limit the line height so it stops just above the Unassigned VCRs panel (not full viewport height)
+### 2. Create P2A Plan Creation Wizard Component
 
-**4. Visual Design for Inline Milestone**
-The milestone marker between phases will be:
-- Narrow column (about `w-8` or `w-10`)
-- Centered circular icon at the top
-- Milestone code below the icon (rotated vertically or small text)
-- Faint dotted vertical line (`border-l border-dashed border-border/40`) extending down
-- Line stops at a calculated height (e.g., `calc(100% - 180px)` to avoid the unassigned section)
+**New Component:** `src/components/widgets/p2a-wizard/P2APlanCreationWizard.tsx`
 
-### Technical Implementation
+**Wizard Steps:**
 
-**Files to Modify:**
+**Step 1: Project Overview**
+- Display project info (ID, name, milestones)
+- Show summary of what the wizard will help create
+- Option to choose: "Guided Wizard" or "Open Interactive Workspace" (blank canvas)
 
-1. **`src/components/p2a-workspace/phases/PhasesTimeline.tsx`**
-   - Remove the dedicated milestones header section (lines 120-135)
-   - Modify the phases flex container to interleave milestones
-   - Create a combined render array: phases interleaved with milestone markers
-   - Pass the appropriate height constraint to milestone markers
+**Step 2: Systems Import**
+- Import from GoCompletions (API integration placeholder)
+- Manual entry/create systems (name, description, is_hydrocarbon flag)
+- Excel import (reuse existing AddSystemDialog patterns)
+- List of added systems with ability to edit/remove
 
-2. **`src/components/p2a-workspace/phases/MilestoneMarker.tsx`**
-   - Redesign as a vertical separator element
-   - Change from horizontal row layout to vertical column layout
-   - Update the vertical line to use dotted style (`border-dashed`)
-   - Accept a `height` prop or use CSS calc to stop above unassigned section
-   - Position the marker icon and label appropriately for a vertical orientation
+**Step 3: VCR Creation**
+- Create multiple VCRs with:
+  - Name
+  - Reason/description
+  - Target milestone selection (from project milestones)
+- Auto-generated VCR codes
 
-**Interleaving Logic:**
-```tsx
-// Example: Build combined render list
-const renderItems = [];
-phases.forEach((phase, idx) => {
-  renderItems.push({ type: 'phase', phase, idx });
-  
-  // Check if a milestone should appear after this phase
-  // Using end_milestone_id from the phase, or milestone display_order
-  const separatorMilestone = sortedMilestones.find(m => 
-    phase.end_milestone_id === m.id || 
-    m.display_order === idx + 1
-  );
-  
-  if (separatorMilestone) {
-    renderItems.push({ type: 'milestone', milestone: separatorMilestone });
-  }
-});
+**Step 4: System-to-VCR Mapping**
+- Visual interface to drag systems into VCRs
+- Checklist-style UI showing which systems are mapped
+- Allow systems to be assigned to multiple or single VCRs
+
+**Step 5: VCR Sequencing/Phase Mapping**
+- Create phases or map VCRs to project milestones
+- Timeline visualization showing sequence
+- Drag-and-drop ordering
+
+**Step 6: Interactive Workspace Preview**
+- Full P2A Workspace view with visual mapping
+- Interconnecting lines between systems, VCRs, and phases
+- Edit, drag-drop, add, or delete capabilities
+- "Continue to Review" button
+
+**Step 7: Review & Approval Setup**
+- Summary of plan contents (systems, VCRs, phases)
+- Default approvers list:
+  - Project Hub Lead
+  - ORA Lead
+  - CSU Lead
+  - Construction Lead
+  - Deputy Plant Director
+- Ability to add/remove/reorder approvers
+- "Request Approval" button
+
+**Step 8: Confirmation**
+- Final review showing:
+  - Plan summary
+  - Approval workflow participants
+  - Status indication
+- "Submit for Approval" action
+- Creates tasks in approvers' My Tasks page
+
+### 3. New Supporting Components
+
+**File Structure:**
+```
+src/components/widgets/p2a-wizard/
+├── P2APlanCreationWizard.tsx (main wizard dialog)
+├── steps/
+│   ├── ProjectOverviewStep.tsx
+│   ├── SystemsImportStep.tsx
+│   ├── VCRCreationStep.tsx
+│   ├── SystemMappingStep.tsx
+│   ├── VCRSequencingStep.tsx
+│   ├── WorkspacePreviewStep.tsx
+│   ├── ApprovalSetupStep.tsx
+│   └── ConfirmationStep.tsx
+├── WizardProgress.tsx (step indicator)
+└── WizardNavigation.tsx (back/next/save buttons)
 ```
 
-**Milestone Marker Visual Update:**
-```tsx
-// Vertical separator design
-<div className="flex-shrink-0 w-8 flex flex-col items-center pt-4">
-  {/* Milestone icon */}
-  <div className="relative flex items-center justify-center mb-1">
-    <div className="w-3 h-3 rounded-full bg-slate-400 ring-2 ring-slate-300/50" />
-  </div>
-  
-  {/* Milestone code - vertical or small */}
-  <span className="text-[9px] font-medium text-muted-foreground writing-vertical">
-    {milestone.code}
-  </span>
-  
-  {/* Dotted vertical line */}
-  <div 
-    className="flex-1 w-px border-l border-dashed border-border/40 mt-2"
-    style={{ minHeight: '200px' }}
-  />
-</div>
-```
+### 4. New/Updated Hooks
 
-### Visual Result
-```text
-+-------+  |SD|  +-------+  |MC|  +-------+
-| Phase |   :   | Phase |   :   | Phase |
-|   1   |   :   |   2   |   :   |   3   |
-+-------+   :   +-------+   :   +-------+
-            :               :
-            :               :
-            :..............:............
-                                        ^
-              Lines stop here ─────────────────
-+─────────────────────────────────────────────+
-|           Unassigned VCRs                   |
-+─────────────────────────────────────────────+
-```
+**New Hook:** `src/hooks/useP2APlanWizard.ts`
+- Manages wizard state across steps
+- Save progress at any step
+- Auto-save functionality
+- Resume from saved state
 
-### Considerations
-- If milestones aren't linked to phases via `end_milestone_id`, use `display_order` correlation
-- The dotted line uses CSS `border-dashed` for the dotted effect
-- Lines are `pointer-events-none` to not interfere with drag-and-drop
-- Milestone tooltips remain functional on hover
-- The interleaving should sync with horizontal scrolling of the phases area
+**Update:** `src/hooks/useP2AHandoverApprovers.ts`
+- Update DEFAULT_APPROVERS to match new roles:
+  ```typescript
+  const DEFAULT_APPROVERS = [
+    { role_name: 'Project Hub Lead', display_order: 1 },
+    { role_name: 'ORA Lead', display_order: 2 },
+    { role_name: 'CSU Lead', display_order: 3 },
+    { role_name: 'Construction Lead', display_order: 4 },
+    { role_name: 'Deputy Plant Director', display_order: 5 },
+  ];
+  ```
+
+**New Hook:** `src/hooks/useP2AApprovalTasks.ts`
+- Create approval tasks in `user_tasks` table when approval is requested
+- Link tasks to specific approvers
+- Include metadata for navigation to approval view
+
+### 5. Database Considerations
+
+**Existing Tables (no schema changes needed):**
+- `p2a_handover_plans`: status column supports DRAFT, ACTIVE, COMPLETED, ARCHIVED
+- `p2a_handover_approvers`: stores approvers with status tracking
+- `p2a_systems`, `p2a_handover_points`, `p2a_project_phases`: existing structure works
+- `user_tasks`: can store approval tasks with metadata
+
+**New Status Values (verify enum includes):**
+- Plan status: DRAFT → IN_REVIEW → APPROVED/REJECTED
+
+### 6. Workflow Integration
+
+**When "Request Approval" is clicked:**
+1. Update plan status to 'IN_REVIEW'
+2. Create tasks in `user_tasks` for each approver with:
+   - `type: 'P2A_PLAN_APPROVAL'`
+   - `metadata: { plan_id, project_id, approver_role }`
+   - Links to approval view
+3. First approver is notified (sequential approval flow)
+
+**In My Tasks Page:**
+- Approval tasks appear for designated approvers
+- Click navigates to P2A plan approval view
+- Approve/Reject actions update status and notify next approver
+
+### 7. Widget Status Display
+
+After plan creation, the VCRs & Handovers widget shows:
+- P2A Handover Plan button with status badge (Draft/In Review/Approved)
+- VCRs listed with "Draft" status initially
+- Progress indicators where applicable
+
+---
+
+## Technical Details
+
+### Files to Create
+1. `src/components/widgets/p2a-wizard/P2APlanCreationWizard.tsx`
+2. `src/components/widgets/p2a-wizard/steps/ProjectOverviewStep.tsx`
+3. `src/components/widgets/p2a-wizard/steps/SystemsImportStep.tsx`
+4. `src/components/widgets/p2a-wizard/steps/VCRCreationStep.tsx`
+5. `src/components/widgets/p2a-wizard/steps/SystemMappingStep.tsx`
+6. `src/components/widgets/p2a-wizard/steps/VCRSequencingStep.tsx`
+7. `src/components/widgets/p2a-wizard/steps/WorkspacePreviewStep.tsx`
+8. `src/components/widgets/p2a-wizard/steps/ApprovalSetupStep.tsx`
+9. `src/components/widgets/p2a-wizard/steps/ConfirmationStep.tsx`
+10. `src/components/widgets/p2a-wizard/WizardProgress.tsx`
+11. `src/components/widgets/p2a-wizard/WizardNavigation.tsx`
+12. `src/hooks/useP2APlanWizard.ts`
+13. `src/hooks/useP2AApprovalTasks.ts`
+
+### Files to Modify
+1. `src/components/widgets/PSSRSummaryWidget.tsx` - Conditional UI and wizard integration
+2. `src/hooks/useP2AHandoverApprovers.ts` - Update default approvers list
+3. `src/components/p2a-workspace/hooks/useP2AHandoverPlan.ts` - Add project_id linking and status updates
+
+### UI/UX Patterns
+- Match existing wizard design from `CreateVCRWizard.tsx`
+- Progress indicator with step names and numbers
+- Sticky navigation footer (Back/Next/Save buttons)
+- Save progress at any point functionality
+- Smooth transitions between steps
+- Grouped sections with `bg-muted/30` backgrounds per project conventions
+
