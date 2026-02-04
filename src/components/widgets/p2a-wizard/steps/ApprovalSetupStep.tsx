@@ -1,25 +1,54 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
   Plus, 
   Trash2, 
-  GripVertical,
   Users,
   UserCheck,
   ChevronUp,
-  ChevronDown
+  ChevronDown,
+  Loader2,
+  RefreshCw
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface WizardApprover {
   id: string;
   role_name: string;
   display_order: number;
+  user_id?: string;
+  user_name?: string;
+  user_avatar?: string;
 }
 
+interface TeamMember {
+  id: string;
+  user_id: string;
+  role: string;
+  is_lead: boolean;
+  profile?: {
+    full_name: string;
+    avatar_url?: string;
+  };
+}
+
+// Roles that should be included as approvers (in order)
+const APPROVER_ROLE_PRIORITY = [
+  'Project Hub Lead',
+  'Hub Lead',
+  'ORA Lead',
+  'CSU Lead',
+  'Commissioning Lead',
+  'Construction Lead',
+  'Deputy Plant Director',
+  'Plant Director',
+];
+
+// Fallback defaults if no team members found
 const DEFAULT_APPROVERS: WizardApprover[] = [
   { id: 'approver-1', role_name: 'Project Hub Lead', display_order: 1 },
   { id: 'approver-2', role_name: 'ORA Lead', display_order: 2 },
@@ -30,21 +59,119 @@ const DEFAULT_APPROVERS: WizardApprover[] = [
 
 interface ApprovalSetupStepProps {
   approvers: WizardApprover[];
+  projectId: string;
   onApproversChange: (approvers: WizardApprover[]) => void;
 }
 
 export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
   approvers,
+  projectId,
   onApproversChange,
 }) => {
   const [newRoleName, setNewRoleName] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
 
-  // Initialize with defaults if empty
-  React.useEffect(() => {
-    if (approvers.length === 0) {
-      onApproversChange(DEFAULT_APPROVERS);
+  // Fetch team members and auto-populate approvers
+  useEffect(() => {
+    const fetchTeamMembers = async () => {
+      if (!projectId) return;
+      
+      setIsLoading(true);
+      try {
+        const { data, error } = await (supabase as any)
+          .from('project_team_members')
+          .select(`
+            id,
+            user_id,
+            role,
+            is_lead,
+            profiles:user_id (
+              full_name,
+              avatar_url
+            )
+          `)
+          .eq('project_id', projectId);
+
+        if (error) throw error;
+
+        const members: TeamMember[] = (data || []).map((m: any) => ({
+          id: m.id,
+          user_id: m.user_id,
+          role: m.role,
+          is_lead: m.is_lead,
+          profile: m.profiles ? {
+            full_name: m.profiles.full_name,
+            avatar_url: m.profiles.avatar_url,
+          } : undefined,
+        }));
+
+        setTeamMembers(members);
+
+        // Auto-populate approvers if empty
+        if (approvers.length === 0 && members.length > 0) {
+          populateApproversFromTeam(members);
+        }
+      } catch (error) {
+        console.error('Error fetching team members:', error);
+        // Fall back to defaults
+        if (approvers.length === 0) {
+          onApproversChange(DEFAULT_APPROVERS);
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTeamMembers();
+  }, [projectId]);
+
+  const populateApproversFromTeam = (members: TeamMember[]) => {
+    const approverList: WizardApprover[] = [];
+    let order = 1;
+
+    // First, add members matching priority roles
+    for (const priorityRole of APPROVER_ROLE_PRIORITY) {
+      const matchingMember = members.find(m => 
+        m.role?.toLowerCase().includes(priorityRole.toLowerCase()) ||
+        priorityRole.toLowerCase().includes(m.role?.toLowerCase() || '')
+      );
+
+      if (matchingMember) {
+        approverList.push({
+          id: `approver-${matchingMember.id}`,
+          role_name: matchingMember.role || priorityRole,
+          display_order: order++,
+          user_id: matchingMember.user_id,
+          user_name: matchingMember.profile?.full_name,
+          user_avatar: matchingMember.profile?.avatar_url,
+        });
+      }
     }
-  }, [approvers.length, onApproversChange]);
+
+    // Add any lead members not already included
+    const leadMembers = members.filter(m => 
+      m.is_lead && !approverList.some(a => a.user_id === m.user_id)
+    );
+
+    for (const leadMember of leadMembers) {
+      approverList.push({
+        id: `approver-${leadMember.id}`,
+        role_name: leadMember.role || 'Lead',
+        display_order: order++,
+        user_id: leadMember.user_id,
+        user_name: leadMember.profile?.full_name,
+        user_avatar: leadMember.profile?.avatar_url,
+      });
+    }
+
+    // If no approvers found, use defaults
+    if (approverList.length === 0) {
+      onApproversChange(DEFAULT_APPROVERS);
+    } else {
+      onApproversChange(approverList);
+    }
+  };
 
   const handleAddApprover = () => {
     if (!newRoleName.trim()) return;
@@ -80,8 +207,17 @@ export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
     onApproversChange(updated.map((a, i) => ({ ...a, display_order: i + 1 })));
   };
 
-  const handleResetToDefault = () => {
-    onApproversChange(DEFAULT_APPROVERS);
+  const handleRefreshFromTeam = () => {
+    if (teamMembers.length > 0) {
+      populateApproversFromTeam(teamMembers);
+    } else {
+      onApproversChange(DEFAULT_APPROVERS);
+    }
+  };
+
+  const getInitials = (name?: string) => {
+    if (!name) return '?';
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
   return (
@@ -90,16 +226,22 @@ export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
         <div>
           <h3 className="text-sm font-medium">Approval Workflow</h3>
           <p className="text-xs text-muted-foreground">
-            Configure the approval chain for this P2A Plan
+            Auto-populated from project team members
           </p>
         </div>
         <Button
           variant="ghost"
           size="sm"
-          onClick={handleResetToDefault}
-          className="text-xs"
+          onClick={handleRefreshFromTeam}
+          className="text-xs gap-1"
+          disabled={isLoading}
         >
-          Reset to Default
+          {isLoading ? (
+            <Loader2 className="h-3 w-3 animate-spin" />
+          ) : (
+            <RefreshCw className="h-3 w-3" />
+          )}
+          Refresh from Team
         </Button>
       </div>
 
@@ -117,47 +259,80 @@ export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
       <div className="border rounded-lg">
         <ScrollArea className="h-[280px]">
           <div className="p-2 space-y-2">
-            {approvers.map((approver, index) => (
-              <div
-                key={approver.id}
-                className="flex items-center gap-2 p-3 rounded-lg border bg-card"
-              >
-                <div className="flex flex-col gap-0.5">
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-5 w-5"
-                    disabled={index === 0}
-                    onClick={() => handleMoveUp(index)}
-                  >
-                    <ChevronUp className="h-3 w-3" />
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-5 w-5"
-                    disabled={index === approvers.length - 1}
-                    onClick={() => handleMoveDown(index)}
-                  >
-                    <ChevronDown className="h-3 w-3" />
-                  </Button>
-                </div>
-                <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold">
-                  {index + 1}
-                </div>
-                <UserCheck className="h-4 w-4 text-muted-foreground" />
-                <span className="flex-1 text-sm font-medium">{approver.role_name}</span>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-7 w-7 text-destructive"
-                  onClick={() => handleRemoveApprover(approver.id)}
-                  disabled={approvers.length <= 1}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
+            {isLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               </div>
-            ))}
+            ) : approvers.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <UserCheck className="h-10 w-10 mx-auto mb-3 opacity-40" />
+                <p className="text-sm">No approvers configured</p>
+                <p className="text-xs mt-1">Add approvers manually or refresh from team</p>
+              </div>
+            ) : (
+              approvers.map((approver, index) => (
+                <div
+                  key={approver.id}
+                  className="flex items-center gap-2 p-3 rounded-lg border bg-card"
+                >
+                  <div className="flex flex-col gap-0.5">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-5 w-5"
+                      disabled={index === 0}
+                      onClick={() => handleMoveUp(index)}
+                    >
+                      <ChevronUp className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-5 w-5"
+                      disabled={index === approvers.length - 1}
+                      onClick={() => handleMoveDown(index)}
+                    >
+                      <ChevronDown className="h-3 w-3" />
+                    </Button>
+                  </div>
+                  <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold">
+                    {index + 1}
+                  </div>
+                  {approver.user_id ? (
+                    <Avatar className="h-7 w-7">
+                      <AvatarImage src={approver.user_avatar} />
+                      <AvatarFallback className="text-[10px]">
+                        {getInitials(approver.user_name)}
+                      </AvatarFallback>
+                    </Avatar>
+                  ) : (
+                    <UserCheck className="h-4 w-4 text-muted-foreground" />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <span className="text-sm font-medium">{approver.role_name}</span>
+                    {approver.user_name && (
+                      <p className="text-xs text-muted-foreground truncate">
+                        {approver.user_name}
+                      </p>
+                    )}
+                  </div>
+                  {approver.user_id && (
+                    <Badge variant="secondary" className="text-[10px]">
+                      Assigned
+                    </Badge>
+                  )}
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-7 w-7 text-destructive"
+                    onClick={() => handleRemoveApprover(approver.id)}
+                    disabled={approvers.length <= 1}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              ))
+            )}
           </div>
         </ScrollArea>
       </div>
