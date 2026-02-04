@@ -1,8 +1,5 @@
 import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Calendar, MapPin, Wand2, LayoutGrid, Building2, Milestone } from 'lucide-react';
-import { format } from 'date-fns';
+import { Wand2, LayoutGrid } from 'lucide-react';
 
 interface ProjectOverviewStepProps {
   projectId: string;
@@ -23,57 +20,13 @@ export const ProjectOverviewStep: React.FC<ProjectOverviewStepProps> = ({
   onChooseWizard,
   onChooseWorkspace,
 }) => {
+  // Format display name as "DP-300: Project Name"
+  const displayName = projectName && projectName !== projectCode 
+    ? `${projectCode}: ${projectName}` 
+    : projectCode;
+
   return (
     <div className="space-y-6 p-6">
-      {/* Project Info Card */}
-      <div className="p-4 rounded-lg bg-muted/30 border">
-        <div className="flex items-start justify-between mb-4">
-          <div>
-            <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">
-              Project
-            </div>
-            <h3 className="text-lg font-semibold">{projectName || projectCode}</h3>
-            <div className="flex items-center gap-2 mt-1">
-              <Badge variant="outline" className="text-xs font-mono">
-                {projectCode}
-              </Badge>
-            </div>
-          </div>
-          <Building2 className="h-8 w-8 text-muted-foreground/50" />
-        </div>
-
-        {plantName && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <MapPin className="h-4 w-4" />
-            <span>{plantName}</span>
-          </div>
-        )}
-
-        {milestones.length > 0 && (
-          <div className="mt-4 pt-4 border-t">
-            <div className="text-xs text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-2">
-              <Milestone className="h-3.5 w-3.5" />
-              Key Milestones
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {milestones.slice(0, 5).map((milestone) => (
-                <div
-                  key={milestone.id}
-                  className="flex items-center gap-2 text-xs px-2 py-1 bg-background rounded border"
-                >
-                  <span className="font-medium">{milestone.name}</span>
-                  {milestone.target_date && (
-                    <span className="text-muted-foreground">
-                      {format(new Date(milestone.target_date), 'MMM yyyy')}
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-
       {/* What we'll create */}
       <div className="space-y-3">
         <h4 className="text-sm font-medium">What you'll set up:</h4>
