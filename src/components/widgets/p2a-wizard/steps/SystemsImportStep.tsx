@@ -123,8 +123,8 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
             <Database className="h-4 w-4" />
           </div>
           <div className="text-center">
-            <p className="font-medium text-xs">Import from CMS</p>
-            <p className="text-[9px] text-muted-foreground mt-0.5">GoCompletions</p>
+            <p className="font-medium text-xs">CMS Import</p>
+            <p className="text-[9px] text-muted-foreground mt-0.5 leading-tight">Connect to Completions<br/>Management System</p>
           </div>
         </button>
         <button
