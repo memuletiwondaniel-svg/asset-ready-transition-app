@@ -8,7 +8,7 @@ interface AnimatedBackgroundProps {
 
 export const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({ children, className }) => {
   return (
-    <div className={cn('h-full bg-background relative overflow-hidden', className)}>
+    <div className={cn('h-full bg-background relative', className)}>
       {/* Dynamic Multicolor Animated Background - Full screen movement */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {/* Primary orb - Purple/Magenta - Starts top-left */}
@@ -112,7 +112,7 @@ export const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({ children
         />
       </div>
       
-      <div className="relative z-10 h-full">
+      <div className="relative z-10 h-full flex flex-col">
         {children}
       </div>
     </div>
