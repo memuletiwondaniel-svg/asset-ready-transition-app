@@ -6,16 +6,40 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// GoHub API base URL for BGC instance
-const GOHUB_BASE_URL = "https://goc.gotechnology.online/BGC";
+// GoHub OAuth2 Token Endpoint (GoTechnology Identity Provider)
 const GOHUB_TOKEN_URL = "https://id.qedi.co.uk/connect/token";
 
-interface GoHubSystem {
+// BGC instance - try multiple URL patterns since the API root may vary
+const GOHUB_API_BASES = [
+  "https://goc.gotechnology.online/BGC/api",
+  "https://goc.gotechnology.online/api",
+];
+
+// Maximum page size per GoTechnology API docs
+const MAX_PAGE_SIZE = 100;
+
+interface GoHubRecord {
+  ID?: string;
   Name: string;
   Description?: string;
+  System?: { Name?: string; Description?: string };
+  Phase?: { Name?: string };
+  Priority?: { Name?: string };
   [key: string]: unknown;
 }
 
+interface GoHubPagedResponse {
+  Items?: GoHubRecord[];
+  TotalItems?: number;
+  PageSize?: number;
+  PageNumber?: number;
+  TotalPages?: number;
+}
+
+/**
+ * Authenticate with GoTechnology Identity Provider using OAuth2 Client Credentials flow.
+ * See: https://github.com/GoTechnology/GoTechnology.github.io/wiki/API-Authentication
+ */
 async function getAccessToken(clientId: string, clientSecret: string): Promise<string> {
   const credentials = btoa(`${clientId}:${clientSecret}`);
 
@@ -30,39 +54,158 @@ async function getAccessToken(clientId: string, clientSecret: string): Promise<s
 
   if (!response.ok) {
     const errorText = await response.text();
+    console.error(`GoHub OAuth2 token request failed [${response.status}]:`, errorText);
     throw new Error(
-      `GoHub authentication failed [${response.status}]: ${errorText}`
+      `GoHub authentication failed (${response.status}). Check your Client ID and Client Secret. ` +
+      `If you haven't registered your app yet, email GoTechnology.Support@woodplc.com.`
     );
   }
 
   const data = await response.json();
+  if (!data.access_token) {
+    throw new Error("GoHub authentication returned no access token");
+  }
+  
+  console.log(`GoHub OAuth2: Token obtained, expires in ${data.expires_in}s`);
   return data.access_token;
 }
 
-async function fetchGoHubResource(
+/**
+ * Try fetching from multiple API base URLs to find the correct one.
+ * GoHub instances may have different URL structures.
+ */
+async function findWorkingApiBase(
   accessToken: string,
   levelId: string,
   resource: string
-): Promise<unknown[]> {
-  const url = `${GOHUB_BASE_URL}/api/${resource}`;
+): Promise<{ baseUrl: string; data: GoHubRecord[] }> {
+  const errors: string[] = [];
 
-  const response = await fetch(url, {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      Accept: "application/json",
-      "X-GoTechnology-Level": levelId,
-    },
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      `GoHub API request failed for ${resource} [${response.status}]: ${errorText}`
-    );
+  for (const baseUrl of GOHUB_API_BASES) {
+    try {
+      console.log(`GoHub API: Trying ${baseUrl}/${resource}...`);
+      const data = await fetchAllPages(accessToken, levelId, baseUrl, resource);
+      console.log(`GoHub API: Success with ${baseUrl}, got ${data.length} records`);
+      return { baseUrl, data };
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error);
+      console.warn(`GoHub API: ${baseUrl} failed: ${msg}`);
+      errors.push(`${baseUrl}: ${msg}`);
+    }
   }
 
-  return await response.json();
+  throw new Error(
+    `Could not connect to GoHub API. Tried:\n${errors.join("\n")}\n\n` +
+    `Make sure your GOHUB_LEVEL_ID is correct. Find it in GoHub at Admin > Level E.`
+  );
+}
+
+/**
+ * Fetch all pages of a resource. GoHub API returns max 100 records per page.
+ * See: https://github.com/GoTechnology/GoTechnology.github.io/wiki/Getting-Resources
+ */
+async function fetchAllPages(
+  accessToken: string,
+  levelId: string,
+  baseUrl: string,
+  resource: string
+): Promise<GoHubRecord[]> {
+  const allRecords: GoHubRecord[] = [];
+  let page = 1;
+  let totalPages = 1;
+
+  do {
+    const url = `${baseUrl}/${resource}?ps=${MAX_PAGE_SIZE}&p=${page}`;
+    
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: "application/json",
+        "X-GoTechnology-Level": levelId,
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      
+      if (response.status === 401) {
+        throw new Error("Authentication expired or invalid. The access token may have expired.");
+      }
+      if (response.status === 403) {
+        throw new Error(
+          `Access denied for ${resource}. Your API client may not have permission to read this resource. ` +
+          `Contact GoTechnology Support to verify permissions.`
+        );
+      }
+      if (response.status === 404) {
+        throw new Error(`Resource '${resource}' not found at this API endpoint.`);
+      }
+      
+      throw new Error(`API request failed [${response.status}]: ${errorText}`);
+    }
+
+    const responseData = await response.json();
+
+    // GoHub API may return either a paged response object or a plain array
+    if (Array.isArray(responseData)) {
+      allRecords.push(...responseData);
+      break; // Plain arrays aren't paged
+    } else if (responseData.Items && Array.isArray(responseData.Items)) {
+      const pagedData = responseData as GoHubPagedResponse;
+      allRecords.push(...(pagedData.Items || []));
+      totalPages = pagedData.TotalPages || 1;
+      console.log(`GoHub API: Page ${page}/${totalPages}, got ${pagedData.Items?.length || 0} records`);
+    } else {
+      // Single record response
+      allRecords.push(responseData as GoHubRecord);
+      break;
+    }
+
+    page++;
+  } while (page <= totalPages);
+
+  return allRecords;
+}
+
+/**
+ * Transform GoHub records into our WizardSystem format.
+ * Maps System/SubSystem data with appropriate field mapping.
+ */
+function transformToSystems(records: GoHubRecord[], resource: string) {
+  return records.map((item, index) => {
+    const systemId = item.Name || `${resource}-${index + 1}`;
+    const name = item.Description || item.Name || `${resource} ${index + 1}`;
+    
+    // For SubSystems, include parent System info in description
+    let description = "";
+    if (resource === "SubSystem" && item.System) {
+      const systemName = typeof item.System === "object" ? item.System.Name : item.System;
+      description = systemName ? `System: ${systemName}` : "";
+    } else {
+      description = `Imported from GoHub (${resource})`;
+    }
+
+    // Check phase info for hydrocarbon classification hint
+    let isHydrocarbon = false;
+    if (item.Phase) {
+      const phaseName = typeof item.Phase === "object" ? item.Phase.Name : String(item.Phase);
+      // Common hydrocarbon-related phases
+      if (phaseName && /rfsu|hydrocarbon|hc|gas|oil/i.test(phaseName)) {
+        isHydrocarbon = true;
+      }
+    }
+
+    return {
+      id: `gohub-${Date.now()}-${index}`,
+      system_id: systemId,
+      name: name,
+      description: description,
+      is_hydrocarbon: isHydrocarbon,
+      source: "gohub",
+      gohub_id: item.ID || null,
+    };
+  });
 }
 
 Deno.serve(async (req) => {
@@ -71,7 +214,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Validate auth
+    // Validate user authentication
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -101,13 +244,17 @@ Deno.serve(async (req) => {
     if (!clientId) {
       return new Response(
         JSON.stringify({
+          success: false,
           error: "GoHub Client ID not configured",
           setup_required: true,
           message:
-            "Please configure GOHUB_CLIENT_ID secret. Contact GoTechnology Support (GoTechnology.Support@woodplc.com) to register your app and get API credentials.",
+            "GOHUB_CLIENT_ID secret is not set. To get API credentials:\n" +
+            "1. Email GoTechnology.Support@woodplc.com to register a Machine App\n" +
+            "2. They will provide a Client ID and Client Secret\n" +
+            "3. Add them as project secrets in Lovable",
         }),
         {
-          status: 500,
+          status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         }
       );
@@ -117,13 +264,13 @@ Deno.serve(async (req) => {
     if (!clientSecret) {
       return new Response(
         JSON.stringify({
+          success: false,
           error: "GoHub Client Secret not configured",
           setup_required: true,
-          message:
-            "Please configure GOHUB_CLIENT_SECRET secret. Contact GoTechnology Support to get your API credentials.",
+          message: "GOHUB_CLIENT_SECRET secret is not set. Contact GoTechnology Support for your API credentials.",
         }),
         {
-          status: 500,
+          status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         }
       );
@@ -133,13 +280,18 @@ Deno.serve(async (req) => {
     if (!levelId) {
       return new Response(
         JSON.stringify({
+          success: false,
           error: "GoHub Level ID not configured",
           setup_required: true,
           message:
-            "Please configure GOHUB_LEVEL_ID secret. Find it in GoHub at Admin > Level E, then click your desired level — the GUID is in the page URL.",
+            "GOHUB_LEVEL_ID secret is not set. To find your Level ID:\n" +
+            "1. Log in to GoHub web application\n" +
+            "2. Navigate to Admin > Level E\n" +
+            "3. Click your desired level/scope\n" +
+            "4. Copy the GUID from the page URL (e.g., dcf8dfb9-731f-4b35-b51a-1813d76bd54e)",
         }),
         {
-          status: 500,
+          status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         }
       );
@@ -149,28 +301,45 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { resource = "SubSystem" } = body;
 
-    console.log(`GoHub import: Authenticating...`);
+    // Valid GoHub resources for systems import
+    const validResources = [
+      "System",
+      "SubSystem",
+      "Discipline",
+      "Area",
+      "CertificationGrouping",
+      "Phase",
+      "Priority",
+    ];
 
-    // Get OAuth2 access token
+    if (!validResources.includes(resource)) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: `Invalid resource '${resource}'. Valid options: ${validResources.join(", ")}`,
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    console.log(`GoHub import: Starting import for ${resource}...`);
+
+    // Step 1: Authenticate via OAuth2 Client Credentials
+    console.log("GoHub import: Authenticating with GoTechnology Identity Provider...");
     const accessToken = await getAccessToken(clientId, clientSecret);
-    console.log(`GoHub import: Authenticated successfully`);
 
-    // Fetch the requested resource
-    console.log(`GoHub import: Fetching ${resource}...`);
-    const data = await fetchGoHubResource(accessToken, levelId, resource);
-    console.log(`GoHub import: Retrieved ${Array.isArray(data) ? data.length : 0} records`);
+    // Step 2: Find working API endpoint and fetch all data with pagination
+    console.log(`GoHub import: Fetching ${resource} data...`);
+    const { baseUrl, data: records } = await findWorkingApiBase(accessToken, levelId, resource);
 
-    // Transform GoHub data to our system format
-    const systems = (Array.isArray(data) ? data : []).map(
-      (item: GoHubSystem, index: number) => ({
-        id: `gohub-${Date.now()}-${index}`,
-        system_id: item.Name || `SYS-${index + 1}`,
-        name: item.Name || `System ${index + 1}`,
-        description: item.Description || `Imported from GoHub (${resource})`,
-        is_hydrocarbon: false,
-        source: "gohub",
-        raw_data: item,
-      })
+    // Step 3: Transform to our system format
+    const systems = transformToSystems(records, resource);
+
+    console.log(
+      `GoHub import: Successfully imported ${systems.length} records from ${resource} via ${baseUrl}`
     );
 
     return new Response(
@@ -179,6 +348,7 @@ Deno.serve(async (req) => {
         systems,
         total: systems.length,
         resource,
+        api_base: baseUrl,
       }),
       {
         status: 200,
@@ -196,7 +366,7 @@ Deno.serve(async (req) => {
         error: errorMessage,
       }),
       {
-        status: 500,
+        status: 200, // Return 200 with error in body so frontend can handle gracefully
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );

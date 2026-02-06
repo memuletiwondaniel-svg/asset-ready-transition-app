@@ -151,15 +151,18 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="SubSystem">Sub Systems</SelectItem>
-                <SelectItem value="System">Systems</SelectItem>
-                <SelectItem value="Discipline">Disciplines</SelectItem>
-                <SelectItem value="Area">Areas</SelectItem>
+                <SelectItem value="SubSystem">Sub Systems (Level C)</SelectItem>
+                <SelectItem value="System">Systems (Level C)</SelectItem>
                 <SelectItem value="CertificationGrouping">Certification Groupings</SelectItem>
+                <SelectItem value="Discipline">Disciplines (Level B)</SelectItem>
+                <SelectItem value="Phase">Phases (Level C)</SelectItem>
+                <SelectItem value="Priority">Priorities (Level C)</SelectItem>
+                <SelectItem value="Area">Areas (Level C)</SelectItem>
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
-              Select the type of data to import from GoHub
+              Data is scoped to the Level configured via GOHUB_LEVEL_ID.
+              Systems and Sub Systems are at Level C (Facility).
             </p>
           </div>
 
