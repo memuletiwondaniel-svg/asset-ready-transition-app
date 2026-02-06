@@ -39,25 +39,61 @@ interface GoHubPagedResponse {
 /**
  * Authenticate with GoTechnology Identity Provider using OAuth2 Client Credentials flow.
  * See: https://github.com/GoTechnology/GoTechnology.github.io/wiki/API-Authentication
+ *
+ * GoHub expects client_id and client_secret as form-encoded body parameters
+ * (not Basic Auth header). The scope must be "hub2_api".
  */
 async function getAccessToken(clientId: string, clientSecret: string): Promise<string> {
-  const credentials = btoa(`${clientId}:${clientSecret}`);
+  // Try form-body params first (preferred by GoHub), then Basic Auth as fallback
+  const formBody = new URLSearchParams({
+    grant_type: "client_credentials",
+    scope: "hub2_api",
+    client_id: clientId,
+    client_secret: clientSecret,
+  });
 
-  const response = await fetch(GOHUB_TOKEN_URL, {
+  console.log("GoHub OAuth2: Attempting token request with form-body credentials...");
+
+  let response = await fetch(GOHUB_TOKEN_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
-      Authorization: `Basic ${credentials}`,
     },
-    body: "grant_type=client_credentials&scope=hub2_api",
+    body: formBody.toString(),
   });
+
+  // If form-body fails, try Basic Auth as fallback
+  if (!response.ok) {
+    const firstErrorText = await response.text();
+    console.warn(`GoHub OAuth2: Form-body auth failed [${response.status}]: ${firstErrorText}`);
+    console.log("GoHub OAuth2: Retrying with Basic Auth header...");
+
+    const credentials = btoa(`${clientId}:${clientSecret}`);
+    response = await fetch(GOHUB_TOKEN_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        Authorization: `Basic ${credentials}`,
+      },
+      body: "grant_type=client_credentials&scope=hub2_api",
+    });
+  }
 
   if (!response.ok) {
     const errorText = await response.text();
     console.error(`GoHub OAuth2 token request failed [${response.status}]:`, errorText);
+
+    let hint = "";
+    if (errorText.includes("invalid_client")) {
+      hint =
+        "The Client ID or Client Secret is incorrect, or the app has not been registered. " +
+        "To register a Machine App, email GoTechnology.Support@woodplc.com with your instance name (BGC).";
+    } else if (errorText.includes("invalid_scope")) {
+      hint = "The requested scope 'hub2_api' is not valid for this client.";
+    }
+
     throw new Error(
-      `GoHub authentication failed (${response.status}). Check your Client ID and Client Secret. ` +
-      `If you haven't registered your app yet, email GoTechnology.Support@woodplc.com.`
+      `GoHub authentication failed (${response.status}). ${hint || errorText}`
     );
   }
 
@@ -65,8 +101,8 @@ async function getAccessToken(clientId: string, clientSecret: string): Promise<s
   if (!data.access_token) {
     throw new Error("GoHub authentication returned no access token");
   }
-  
-  console.log(`GoHub OAuth2: Token obtained, expires in ${data.expires_in}s`);
+
+  console.log(`GoHub OAuth2: Token obtained successfully, expires in ${data.expires_in}s`);
   return data.access_token;
 }
 
@@ -229,10 +265,8 @@ Deno.serve(async (req) => {
       global: { headers: { Authorization: authHeader } },
     });
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } =
-      await supabase.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    if (userError || !userData?.user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
