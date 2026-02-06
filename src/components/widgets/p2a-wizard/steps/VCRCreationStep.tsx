@@ -34,7 +34,8 @@ export const VCRCreationStep: React.FC<VCRCreationStepProps> = ({
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const generateVCRCode = (index: number) => {
-    return `VCR-${projectCode}-${String(index + 1).padStart(3, '0')}`;
+    const cleanCode = projectCode.replace(/-/g, '');
+    return `VCR-${cleanCode}-${String(index + 1).padStart(3, '0')}`;
   };
 
   const handleAddVCR = (vcr: WizardVCR) => {
@@ -136,10 +137,9 @@ export const VCRCreationStep: React.FC<VCRCreationStepProps> = ({
                     </div>
                   ) : (
                     <div className="flex items-start gap-3">
-                      <Key className="h-4 w-4 text-primary mt-0.5 shrink-0" />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-medium text-sm">{vcr.name}</span>
+                          <span className="font-semibold text-sm">{vcr.name}</span>
                           <span className="text-[10px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
                             {vcr.code}
                           </span>
