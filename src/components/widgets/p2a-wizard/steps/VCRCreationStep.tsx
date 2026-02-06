@@ -9,6 +9,18 @@ import { Plus, Trash2, Edit2, Check, Key } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AddVCRModal } from './AddVCRModal';
 
+// Subtle pastel hues for VCR ID badges (avoids red/amber/green status colors)
+const VCR_ID_HUES = [210, 260, 180, 320, 195, 280, 170, 300]; // blue, purple, teal, magenta, cyan, violet, sea, pink
+
+const getVCRIdStyle = (index: number) => {
+  const hue = VCR_ID_HUES[index % VCR_ID_HUES.length];
+  return {
+    backgroundColor: `hsl(${hue}, 40%, 94%)`,
+    color: `hsl(${hue}, 50%, 35%)`,
+    borderColor: `hsl(${hue}, 35%, 88%)`,
+  };
+};
+
 export interface WizardVCR {
   id: string;
   name: string;
@@ -140,7 +152,10 @@ export const VCRCreationStep: React.FC<VCRCreationStepProps> = ({
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-semibold text-sm">{vcr.name}</span>
-                          <span className="text-[10px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                          <span
+                            className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded border"
+                            style={getVCRIdStyle(vcrs.indexOf(vcr))}
+                          >
                             {vcr.code}
                           </span>
                         </div>
