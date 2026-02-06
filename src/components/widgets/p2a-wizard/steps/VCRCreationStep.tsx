@@ -34,7 +34,7 @@ export const VCRCreationStep: React.FC<VCRCreationStepProps> = ({
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const generateVCRCode = (index: number) => {
-    return `VCR-${String(index + 1).padStart(3, '0')}-${projectCode}`;
+    return `VCR-${projectCode}-${String(index + 1).padStart(3, '0')}`;
   };
 
   const handleAddVCR = (vcr: WizardVCR) => {
