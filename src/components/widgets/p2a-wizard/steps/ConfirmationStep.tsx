@@ -49,7 +49,7 @@ export const ConfirmationStep: React.FC<ConfirmationStepProps> = ({
   const hasIssues = issues.length > 0;
 
   return (
-    <div className="space-y-4 p-6">
+    <div className="space-y-3 p-4">
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-sm font-medium">Review & Confirm</h3>
@@ -96,7 +96,7 @@ export const ConfirmationStep: React.FC<ConfirmationStepProps> = ({
         </div>
       )}
 
-      <ScrollArea className="h-[260px]">
+      <ScrollArea className="h-[220px]">
         <div className="space-y-4">
           {/* Summary Cards */}
           <div className="grid grid-cols-2 gap-3">
@@ -105,7 +105,7 @@ export const ConfirmationStep: React.FC<ConfirmationStepProps> = ({
                 <Box className="h-4 w-4 text-blue-500" />
                 <span className="text-xs font-medium">Systems</span>
               </div>
-              <div className="text-2xl font-bold">{systems.length}</div>
+              <div className="text-xl font-bold">{systems.length}</div>
               <div className="text-xs text-muted-foreground">
                 {assignedSystemsCount} mapped to VCRs
               </div>
@@ -115,7 +115,7 @@ export const ConfirmationStep: React.FC<ConfirmationStepProps> = ({
                 <Key className="h-4 w-4 text-primary" />
                 <span className="text-xs font-medium">VCRs</span>
               </div>
-              <div className="text-2xl font-bold">{vcrs.length}</div>
+              <div className="text-xl font-bold">{vcrs.length}</div>
               <div className="text-xs text-muted-foreground">
                 {assignedVCRsCount} assigned to phases
               </div>

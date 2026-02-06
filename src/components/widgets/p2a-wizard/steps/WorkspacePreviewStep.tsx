@@ -37,7 +37,7 @@ export const WorkspacePreviewStep: React.FC<WorkspacePreviewStepProps> = ({
   const unassignedVCRs = vcrs.filter(vcr => !vcrPhaseAssignments[vcr.id]);
 
   return (
-    <div className="space-y-4 p-6">
+    <div className="space-y-3 p-4">
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-sm font-medium">Handover Plan Preview</h3>
@@ -53,7 +53,7 @@ export const WorkspacePreviewStep: React.FC<WorkspacePreviewStepProps> = ({
         )}
       </div>
 
-      <ScrollArea className="h-[360px] border rounded-lg">
+      <ScrollArea className="h-[300px] border rounded-lg">
         <div className="p-4">
           {/* Phase-based timeline visualization */}
           <div className="space-y-6">
@@ -156,8 +156,8 @@ export const WorkspacePreviewStep: React.FC<WorkspacePreviewStepProps> = ({
           </div>
 
           {vcrs.length === 0 && (
-            <div className="text-center py-12 text-muted-foreground">
-              <Milestone className="h-10 w-10 mx-auto mb-3 opacity-40" />
+            <div className="text-center py-8 text-muted-foreground">
+              <Milestone className="h-8 w-8 mx-auto mb-2 opacity-40" />
               <p className="text-sm">No VCRs created yet</p>
               <p className="text-xs mt-1">Go back to add systems and VCRs</p>
             </div>
@@ -166,17 +166,17 @@ export const WorkspacePreviewStep: React.FC<WorkspacePreviewStepProps> = ({
       </ScrollArea>
 
       {/* Summary Stats */}
-      <div className="grid grid-cols-3 gap-4">
-        <div className="p-3 rounded-lg bg-muted/30 text-center">
-          <div className="text-2xl font-bold text-primary">{systems.length}</div>
+      <div className="grid grid-cols-3 gap-3">
+        <div className="p-2 rounded-lg bg-muted/30 text-center">
+          <div className="text-lg font-bold text-primary">{systems.length}</div>
           <div className="text-xs text-muted-foreground">Systems</div>
         </div>
-        <div className="p-3 rounded-lg bg-muted/30 text-center">
-          <div className="text-2xl font-bold text-primary">{vcrs.length}</div>
+        <div className="p-2 rounded-lg bg-muted/30 text-center">
+          <div className="text-lg font-bold text-primary">{vcrs.length}</div>
           <div className="text-xs text-muted-foreground">VCRs</div>
         </div>
-        <div className="p-3 rounded-lg bg-muted/30 text-center">
-          <div className="text-2xl font-bold text-primary">
+        <div className="p-2 rounded-lg bg-muted/30 text-center">
+          <div className="text-lg font-bold text-primary">
             {phases.filter(p => getPhaseVCRs(p.id).length > 0).length}
           </div>
           <div className="text-xs text-muted-foreground">Active Phases</div>

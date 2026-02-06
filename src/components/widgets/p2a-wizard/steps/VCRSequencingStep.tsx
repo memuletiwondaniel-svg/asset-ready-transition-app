@@ -68,9 +68,9 @@ export const VCRSequencingStep: React.FC<VCRSequencingStepProps> = ({
 
   if (vcrs.length === 0) {
     return (
-      <div className="p-6 text-center">
-        <div className="py-12 text-muted-foreground">
-          <Milestone className="h-10 w-10 mx-auto mb-3 opacity-40" />
+      <div className="p-4 text-center">
+        <div className="py-8 text-muted-foreground">
+          <Milestone className="h-8 w-8 mx-auto mb-2 opacity-40" />
           <p className="text-sm">Create VCRs first to sequence them</p>
         </div>
       </div>
@@ -80,7 +80,7 @@ export const VCRSequencingStep: React.FC<VCRSequencingStepProps> = ({
   const displayPhases = phases.length > 0 ? phases : DEFAULT_PHASES;
 
   return (
-    <div className="space-y-4 p-6">
+    <div className="space-y-3 p-4">
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-sm font-medium">Sequence VCRs by Phase</h3>
@@ -95,7 +95,7 @@ export const VCRSequencingStep: React.FC<VCRSequencingStepProps> = ({
         </Badge>
       </div>
 
-      <ScrollArea className="h-[340px]">
+      <ScrollArea className="h-[280px]">
         <div className="space-y-3">
           {/* Phase Timeline */}
           {displayPhases.map((phase, index) => {
@@ -143,8 +143,8 @@ export const VCRSequencingStep: React.FC<VCRSequencingStepProps> = ({
       </ScrollArea>
 
       {/* VCR Assignment */}
-      <div className="border rounded-lg p-4 bg-muted/30">
-        <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
+      <div className="border rounded-lg p-3 bg-muted/30">
+        <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
           Assign VCRs to Phases
         </div>
         <div className="space-y-2">
