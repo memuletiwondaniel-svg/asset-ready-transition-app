@@ -16,7 +16,7 @@ import {
   X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { CMSImportModal, CMSImportConfig } from './CMSImportModal';
+import { CMSImportModal } from './CMSImportModal';
 import { ExcelUploadModal } from './ExcelUploadModal';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -74,18 +74,12 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
     setEditingId(null);
   };
 
-  const handleCMSImport = (config: CMSImportConfig) => {
-    // TODO: Implement actual CMS import
+  const handleCMSImport = (importedSystems: WizardSystem[]) => {
+    onSystemsChange([...systems, ...importedSystems]);
     toast({
-      title: 'CMS Import',
-      description: `Connecting to ${config.environment} environment for project ${config.projectId}...`,
+      title: 'GoHub Import',
+      description: `Successfully imported ${importedSystems.length} systems from GoHub`,
     });
-    // Mock imported systems for demo
-    const mockSystems: WizardSystem[] = [
-      { id: `cms-${Date.now()}-1`, system_id: 'SYS-CMS-001', name: 'Imported System 1', description: 'From CMS', is_hydrocarbon: false },
-      { id: `cms-${Date.now()}-2`, system_id: 'SYS-CMS-002', name: 'Imported System 2', description: 'From CMS', is_hydrocarbon: true },
-    ];
-    onSystemsChange([...systems, ...mockSystems]);
   };
 
   const handleExcelUpload = (file: File) => {
