@@ -1,191 +1,118 @@
 
+# Fix GoHub CMS Import: Web Login, Credential Persistence, and Completions Grid Scraping
 
-# P2A Handover Plan Creation Wizard
+## Problem Summary
 
-## Overview
-This feature enhances the VCRs & Handovers widget to provide a guided wizard experience for creating P2A Handover Plans when no VCRs exist. The wizard takes users through a step-by-step process to set up their project handover workflow, from importing systems to requesting approvals.
+There are several issues with the current GoHub CMS Import:
 
-## Current State
-- The `PSSRSummaryWidget` (VCRs & Handovers) shows VCRs from the database
-- When no VCRs exist, it shows "No VCRs created yet" with a "New VCR" button
-- The P2A Workspace (`P2AHandoverWorkspace.tsx`) already has sophisticated drag-and-drop functionality
-- Hooks exist for systems, phases, VCRs, and approvers management
-- A `user_tasks` table exists for task management integration
+1. **Dialog closes immediately** when clicking "Import from GoHub" -- the CMS Import modal (a nested Radix Dialog) conflicts with the parent wizard Dialog, causing the parent to close
+2. **Credentials are not remembered** -- users must re-enter Portal URL, Username, and Password every time
+3. **Wrong data source** -- the edge function tries to fetch from the REST API (`/api/SubSystem`), but what you actually need is the **Completions Grid** page data showing System Name, System ID, and Progress %
+4. **No DP300 filtering** -- the import needs to filter systems where the System ID contains "DP300"
+5. **No progress field** -- the `WizardSystem` interface does not include a `progress` field
 
-## Changes Required
+## Solution Overview
 
-### 1. Update VCRs & Handovers Widget (PSSRSummaryWidget.tsx)
+### 1. Fix the Nested Dialog Bug
 
-**Conditional UI Based on VCR Existence:**
-- When `allVCRs.length === 0`: Hide "New VCR" and "P2A Handover Plan" buttons; show "Create P2A Handover Plan" prompt
-- When VCRs exist: Show current behavior plus a status badge for the P2A plan (Draft/In Review/Approved)
-- Display VCRs with their current status (Draft for newly created ones)
+The CMS Import modal is a Radix `Dialog` nested inside the wizard `Dialog`. When the inner dialog opens, Radix's focus management can cause the outer dialog to close.
 
-### 2. Create P2A Plan Creation Wizard Component
+**Fix:** Replace the CMS Import `Dialog` with a Radix `AlertDialog` (which does not dismiss on outside click) or use the `modal={false}` prop and manually prevent propagation. The cleanest approach is to use a portal-based approach with `onOpenAutoFocus` and `onInteractOutside` event prevention on the inner dialog.
 
-**New Component:** `src/components/widgets/p2a-wizard/P2APlanCreationWizard.tsx`
+### 2. Credential Persistence via localStorage
 
-**Wizard Steps:**
+Store the GoHub credentials in localStorage under a key like `gohub-credentials`. When the CMS Import modal opens, pre-populate the fields. When the user clicks Import, save the credentials.
 
-**Step 1: Project Overview**
-- Display project info (ID, name, milestones)
-- Show summary of what the wizard will help create
-- Option to choose: "Guided Wizard" or "Open Interactive Workspace" (blank canvas)
+- Key: `gohub-credentials`
+- Value: `{ portalUrl, username, password }` (JSON)
+- Pre-populate on modal open
+- Save on successful import
 
-**Step 2: Systems Import**
-- Import from GoCompletions (API integration placeholder)
-- Manual entry/create systems (name, description, is_hydrocarbon flag)
-- Excel import (reuse existing AddSystemDialog patterns)
-- List of added systems with ability to edit/remove
+### 3. Rewrite Edge Function: Scrape Completions Grid
 
-**Step 3: VCR Creation**
-- Create multiple VCRs with:
-  - Name
-  - Reason/description
-  - Target milestone selection (from project milestones)
-- Auto-generated VCR codes
+Based on your screenshots, the flow in the GoHub web interface is:
 
-**Step 4: System-to-VCR Mapping**
-- Visual interface to drag systems into VCRs
-- Checklist-style UI showing which systems are mapped
-- Allow systems to be assigned to multiple or single VCRs
-
-**Step 5: VCR Sequencing/Phase Mapping**
-- Create phases or map VCRs to project milestones
-- Timeline visualization showing sequence
-- Drag-and-drop ordering
-
-**Step 6: Interactive Workspace Preview**
-- Full P2A Workspace view with visual mapping
-- Interconnecting lines between systems, VCRs, and phases
-- Edit, drag-drop, add, or delete capabilities
-- "Continue to Review" button
-
-**Step 7: Review & Approval Setup**
-- Summary of plan contents (systems, VCRs, phases)
-- Default approvers list:
-  - Project Hub Lead
-  - ORA Lead
-  - CSU Lead
-  - Construction Lead
-  - Deputy Plant Director
-- Ability to add/remove/reorder approvers
-- "Request Approval" button
-
-**Step 8: Confirmation**
-- Final review showing:
-  - Plan summary
-  - Approval workflow participants
-  - Status indication
-- "Submit for Approval" action
-- Creates tasks in approvers' My Tasks page
-
-### 3. New Supporting Components
-
-**File Structure:**
-```
-src/components/widgets/p2a-wizard/
-├── P2APlanCreationWizard.tsx (main wizard dialog)
-├── steps/
-│   ├── ProjectOverviewStep.tsx
-│   ├── SystemsImportStep.tsx
-│   ├── VCRCreationStep.tsx
-│   ├── SystemMappingStep.tsx
-│   ├── VCRSequencingStep.tsx
-│   ├── WorkspacePreviewStep.tsx
-│   ├── ApprovalSetupStep.tsx
-│   └── ConfirmationStep.tsx
-├── WizardProgress.tsx (step indicator)
-└── WizardNavigation.tsx (back/next/save buttons)
+```text
+Login --> Select Project (ZUBAIR/ZB) --> Completions Menu --> Completions Grid
 ```
 
-### 4. New/Updated Hooks
+The Completions Grid shows cards with: **System ID** (e.g., C017-DP300-100), **System Name** (e.g., GAS), and **Progress %** (e.g., 100.00%).
 
-**New Hook:** `src/hooks/useP2APlanWizard.ts`
-- Manages wizard state across steps
-- Save progress at any step
-- Auto-save functionality
-- Resume from saved state
+The edge function will be rewritten to:
 
-**Update:** `src/hooks/useP2AHandoverApprovers.ts`
-- Update DEFAULT_APPROVERS to match new roles:
-  ```typescript
-  const DEFAULT_APPROVERS = [
-    { role_name: 'Project Hub Lead', display_order: 1 },
-    { role_name: 'ORA Lead', display_order: 2 },
-    { role_name: 'CSU Lead', display_order: 3 },
-    { role_name: 'Construction Lead', display_order: 4 },
-    { role_name: 'Deputy Plant Director', display_order: 5 },
-  ];
-  ```
+1. **Login** via the ASP.NET web form at `/BGC/Login.aspx` (existing logic, mostly working)
+2. **Select the Zubair project** by navigating to the project selection page and clicking the ZB project link
+3. **Navigate to the Completions Grid** page at the appropriate URL (e.g., `/BGC/GoCompletions/SystemCompletion.aspx`)
+4. **Scrape the HTML** to extract System ID, System Name, and Progress %
+5. **Filter for DP300** -- only return systems where the System ID contains "DP300"
+6. **Also try the REST API** as a fallback -- attempt `/BGC/api/SubSystem?ps=100&Name:con=DP300` with session cookies, using the `X-Pagination` header for pagination metadata (not response body)
 
-**New Hook:** `src/hooks/useP2AApprovalTasks.ts`
-- Create approval tasks in `user_tasks` table when approval is requested
-- Link tasks to specific approvers
-- Include metadata for navigation to approval view
+### 4. Add `progress` Field to WizardSystem
 
-### 5. Database Considerations
-
-**Existing Tables (no schema changes needed):**
-- `p2a_handover_plans`: status column supports DRAFT, ACTIVE, COMPLETED, ARCHIVED
-- `p2a_handover_approvers`: stores approvers with status tracking
-- `p2a_systems`, `p2a_handover_points`, `p2a_project_phases`: existing structure works
-- `user_tasks`: can store approval tasks with metadata
-
-**New Status Values (verify enum includes):**
-- Plan status: DRAFT → IN_REVIEW → APPROVED/REJECTED
-
-### 6. Workflow Integration
-
-**When "Request Approval" is clicked:**
-1. Update plan status to 'IN_REVIEW'
-2. Create tasks in `user_tasks` for each approver with:
-   - `type: 'P2A_PLAN_APPROVAL'`
-   - `metadata: { plan_id, project_id, approver_role }`
-   - Links to approval view
-3. First approver is notified (sequential approval flow)
-
-**In My Tasks Page:**
-- Approval tasks appear for designated approvers
-- Click navigates to P2A plan approval view
-- Approve/Reject actions update status and notify next approver
-
-### 7. Widget Status Display
-
-After plan creation, the VCRs & Handovers widget shows:
-- P2A Handover Plan button with status badge (Draft/In Review/Approved)
-- VCRs listed with "Draft" status initially
-- Progress indicators where applicable
+Update the `WizardSystem` interface to include an optional `progress` number field, and display it in the systems list with a colored progress bar (matching the GoHub color scheme: green for 100%, red for 0%, etc.).
 
 ---
 
 ## Technical Details
 
-### Files to Create
-1. `src/components/widgets/p2a-wizard/P2APlanCreationWizard.tsx`
-2. `src/components/widgets/p2a-wizard/steps/ProjectOverviewStep.tsx`
-3. `src/components/widgets/p2a-wizard/steps/SystemsImportStep.tsx`
-4. `src/components/widgets/p2a-wizard/steps/VCRCreationStep.tsx`
-5. `src/components/widgets/p2a-wizard/steps/SystemMappingStep.tsx`
-6. `src/components/widgets/p2a-wizard/steps/VCRSequencingStep.tsx`
-7. `src/components/widgets/p2a-wizard/steps/WorkspacePreviewStep.tsx`
-8. `src/components/widgets/p2a-wizard/steps/ApprovalSetupStep.tsx`
-9. `src/components/widgets/p2a-wizard/steps/ConfirmationStep.tsx`
-10. `src/components/widgets/p2a-wizard/WizardProgress.tsx`
-11. `src/components/widgets/p2a-wizard/WizardNavigation.tsx`
-12. `src/hooks/useP2APlanWizard.ts`
-13. `src/hooks/useP2AApprovalTasks.ts`
-
 ### Files to Modify
-1. `src/components/widgets/PSSRSummaryWidget.tsx` - Conditional UI and wizard integration
-2. `src/hooks/useP2AHandoverApprovers.ts` - Update default approvers list
-3. `src/components/p2a-workspace/hooks/useP2AHandoverPlan.ts` - Add project_id linking and status updates
 
-### UI/UX Patterns
-- Match existing wizard design from `CreateVCRWizard.tsx`
-- Progress indicator with step names and numbers
-- Sticky navigation footer (Back/Next/Save buttons)
-- Save progress at any point functionality
-- Smooth transitions between steps
-- Grouped sections with `bg-muted/30` backgrounds per project conventions
+#### `src/components/widgets/p2a-wizard/steps/CMSImportModal.tsx`
+- Replace `Dialog` with a nested-safe approach (prevent `onInteractOutside` and `onPointerDownOutside` from closing the parent)
+- Load credentials from `localStorage` on mount
+- Save credentials to `localStorage` on import
+- Remove the "Resource to Import" dropdown (no longer needed -- we always fetch the Completions Grid data)
+- Add a "Remember credentials" toggle (checked by default)
+- Show progress data in the success message
 
+#### `src/components/widgets/p2a-wizard/steps/SystemsImportStep.tsx`
+- Update `WizardSystem` interface to add optional `progress?: number`
+- Show progress percentage next to each system in the list (color-coded bar)
+- Display System ID prominently alongside the system name
+
+#### `supabase/functions/gohub-import/index.ts`
+Major rewrite to implement:
+- **Web login** (keep existing ASP.NET form submission logic)
+- **Project selection** -- after login, navigate to select the Zubair (ZB) project by following the appropriate link
+- **Completions Grid scraping** -- fetch the SystemCompletion.aspx page and parse the HTML to extract:
+  - System ID (e.g., "C017-DP300-100")
+  - System Name (e.g., "GAS")
+  - Progress percentage (e.g., 100.00)
+- **DP300 filtering** -- filter results server-side where System ID contains "DP300"
+- **API fallback** -- if scraping fails, try the REST API with `Name:con=DP300` filter and `X-Pagination` header for pagination (instead of checking response body for `Items`/`TotalPages`)
+- Accept `portalUrl`, `username`, `password`, and optional `projectFilter` (default: "DP300") from request body
+- Return systems with `progress` field included
+
+#### No changes needed to `supabase/config.toml`
+The `[functions.gohub-import]` entry with `verify_jwt = false` already exists.
+
+### Data Flow
+
+```text
+User clicks "CMS Import"
+  --> Modal opens (credentials pre-filled from localStorage)
+  --> User clicks "Import from GoHub"
+  --> Frontend calls edge function with credentials + project filter
+  --> Edge function:
+      1. POST login form to /BGC/Login.aspx
+      2. Follow redirects, capture session cookies
+      3. GET project selection page, click Zubair (ZB)
+      4. GET Completions Grid page
+      5. Parse HTML for system cards
+      6. Filter for DP300 systems
+      7. Return [{system_id, name, progress}, ...]
+  --> Frontend receives systems with progress
+  --> Systems populate the wizard Step 1 list
+  --> Credentials saved to localStorage
+```
+
+### System List Display Enhancement
+
+Each system card in the wizard will show:
+- **System ID** (e.g., C017-DP300-100) in monospace font
+- **System Name** (e.g., GAS)
+- **Progress bar** with percentage, color-coded:
+  - Green (100%)
+  - Yellow-green (60-99%)
+  - Red (0%)
+- HC badge where applicable
