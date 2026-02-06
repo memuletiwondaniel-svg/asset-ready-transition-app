@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2, Edit2, Check, X, Key } from 'lucide-react';
+import { Plus, Trash2, Edit2, Check, Key } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { AddVCRModal } from './AddVCRModal';
 
 export interface WizardVCR {
   id: string;
@@ -30,37 +30,19 @@ export const VCRCreationStep: React.FC<VCRCreationStepProps> = ({
   projectCode,
   onVCRsChange,
 }) => {
-  const [showAddForm, setShowAddForm] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [newVCR, setNewVCR] = useState<Partial<WizardVCR>>({
-    name: '',
-    reason: '',
-    targetMilestone: '',
-  });
 
   const generateVCRCode = (index: number) => {
     return `VCR-${String(index + 1).padStart(3, '0')}-${projectCode}`;
   };
 
-  const handleAddVCR = () => {
-    if (!newVCR.name?.trim()) return;
-
-    const vcr: WizardVCR = {
-      id: `temp-${Date.now()}`,
-      name: newVCR.name.trim(),
-      reason: newVCR.reason?.trim() || '',
-      targetMilestone: newVCR.targetMilestone || '',
-      code: generateVCRCode(vcrs.length),
-    };
-
+  const handleAddVCR = (vcr: WizardVCR) => {
     onVCRsChange([...vcrs, vcr]);
-    setNewVCR({ name: '', reason: '', targetMilestone: '' });
-    setShowAddForm(false);
   };
 
   const handleRemoveVCR = (id: string) => {
     const updated = vcrs.filter(v => v.id !== id);
-    // Regenerate codes
     onVCRsChange(updated.map((v, i) => ({ ...v, code: generateVCRCode(i) })));
   };
 
@@ -85,9 +67,9 @@ export const VCRCreationStep: React.FC<VCRCreationStepProps> = ({
         <Badge variant="outline">{vcrs.length} VCRs</Badge>
       </div>
 
-      {/* Add VCR Button - Always Visible */}
+      {/* Add VCR Button */}
       <button
-        onClick={() => setShowAddForm(true)}
+        onClick={() => setShowAddModal(true)}
         className="group w-full flex items-center gap-3 p-3 rounded-xl border-2 border-dashed border-muted-foreground/25 bg-gradient-to-br from-muted/50 to-muted/30 hover:border-primary/50 hover:from-primary/10 hover:to-primary/5 transition-all duration-200"
       >
         <div className="p-2.5 rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
@@ -129,7 +111,7 @@ export const VCRCreationStep: React.FC<VCRCreationStepProps> = ({
                       <Textarea
                         value={vcr.reason}
                         onChange={(e) => handleUpdateVCR(vcr.id, { reason: e.target.value })}
-                        placeholder="Reason for VCR..."
+                        placeholder="Description..."
                         rows={2}
                         className="text-sm"
                       />
@@ -200,65 +182,13 @@ export const VCRCreationStep: React.FC<VCRCreationStepProps> = ({
         </ScrollArea>
       </div>
 
-      {/* Add Form */}
-      {showAddForm && (
-        <div className="p-4 border rounded-lg bg-muted/30 space-y-3">
-          <div>
-            <Label className="text-xs">VCR Name *</Label>
-            <Input
-              value={newVCR.name || ''}
-              onChange={(e) => setNewVCR(prev => ({ ...prev, name: e.target.value }))}
-              placeholder="e.g., Power and Utilities Handover"
-              className="h-8 text-sm"
-            />
-          </div>
-          <div>
-            <Label className="text-xs">Reason / Description</Label>
-            <Textarea
-              value={newVCR.reason || ''}
-              onChange={(e) => setNewVCR(prev => ({ ...prev, reason: e.target.value }))}
-              placeholder="Why is this VCR needed? What systems does it cover?"
-              rows={2}
-              className="text-sm"
-            />
-          </div>
-          <div>
-            <Label className="text-xs">Target Milestone</Label>
-            <Select
-              value={newVCR.targetMilestone || ''}
-              onValueChange={(value) => setNewVCR(prev => ({ ...prev, targetMilestone: value }))}
-            >
-              <SelectTrigger className="h-8 text-sm">
-                <SelectValue placeholder="Select milestone..." />
-              </SelectTrigger>
-              <SelectContent>
-                {milestones.map((m) => (
-                  <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex items-center justify-between pt-2">
-            <div className="text-xs text-muted-foreground">
-              Code: <span className="font-mono">{generateVCRCode(vcrs.length)}</span>
-            </div>
-            <div className="flex gap-2">
-              <Button size="sm" variant="ghost" onClick={() => setShowAddForm(false)}>
-                <X className="h-4 w-4 mr-1" />
-                Cancel
-              </Button>
-              <Button 
-                size="sm" 
-                onClick={handleAddVCR}
-                disabled={!newVCR.name?.trim()}
-              >
-                <Plus className="h-4 w-4 mr-1" />
-                Add VCR
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Add VCR Modal */}
+      <AddVCRModal
+        open={showAddModal}
+        onOpenChange={setShowAddModal}
+        onAdd={handleAddVCR}
+        generatedCode={generateVCRCode(vcrs.length)}
+      />
     </div>
   );
 };
