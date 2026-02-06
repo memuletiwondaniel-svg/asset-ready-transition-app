@@ -62,20 +62,32 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
         },
       });
 
+      // supabase.functions.invoke sets response.error for non-2xx status codes
+      // but our edge function returns 200 with error in body for graceful handling
       if (response.error) {
-        throw new Error(response.error.message || 'Import failed');
+        // Try to parse the error context from the response data
+        const errorData = response.data;
+        if (errorData?.setup_required) {
+          setSetupRequired(true);
+          setErrorMessage(errorData.message || 'API credentials not configured');
+          setStatus('error');
+          return;
+        }
+        // If response.data has an error message, use it; otherwise use the generic error
+        const msg = errorData?.error || response.error.message || 'Import failed';
+        throw new Error(msg);
       }
 
       const data = response.data;
 
-      if (!data.success) {
-        if (data.setup_required) {
+      if (!data?.success) {
+        if (data?.setup_required) {
           setSetupRequired(true);
           setErrorMessage(data.message || 'API credentials not configured');
           setStatus('error');
           return;
         }
-        throw new Error(data.error || 'Import failed');
+        throw new Error(data?.error || 'Import failed');
       }
 
       const systems: WizardSystem[] = (data.systems || []).map((s: WizardSystem & { source?: string; raw_data?: unknown }) => ({
