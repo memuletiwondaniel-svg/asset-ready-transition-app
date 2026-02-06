@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -9,8 +9,8 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Database, Loader2, CheckCircle2, AlertTriangle, ExternalLink, Lock, User, Globe } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { WizardSystem } from './SystemsImportStep';
@@ -23,7 +23,22 @@ interface CMSImportModalProps {
 
 type ImportStatus = 'idle' | 'connecting' | 'success' | 'error';
 
+const STORAGE_KEY = 'gohub-credentials';
 const DEFAULT_PORTAL_URL = 'https://goc.gotechnology.online/BGC/GoHub/Home.aspx';
+
+function loadSavedCredentials() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) return JSON.parse(saved) as { portalUrl: string; username: string; password: string };
+  } catch (_) { /* ignore */ }
+  return null;
+}
+
+function saveCredentials(portalUrl: string, username: string, password: string) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ portalUrl, username, password }));
+  } catch (_) { /* ignore */ }
+}
 
 export const CMSImportModal: React.FC<CMSImportModalProps> = ({
   open,
@@ -33,13 +48,25 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [status, setStatus] = useState<ImportStatus>('idle');
   const [errorMessage, setErrorMessage] = useState('');
-  const [resource, setResource] = useState('SubSystem');
   const [importedCount, setImportedCount] = useState(0);
+  const [rememberCreds, setRememberCreds] = useState(true);
 
-  // Credential fields
+  // Credential fields - initialised from localStorage
   const [portalUrl, setPortalUrl] = useState(DEFAULT_PORTAL_URL);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+
+  // Load saved credentials on mount / when dialog opens
+  useEffect(() => {
+    if (open) {
+      const saved = loadSavedCredentials();
+      if (saved) {
+        setPortalUrl(saved.portalUrl || DEFAULT_PORTAL_URL);
+        setUsername(saved.username || '');
+        setPassword(saved.password || '');
+      }
+    }
+  }, [open]);
 
   const handleImport = async () => {
     if (!username || !password) {
@@ -62,7 +89,6 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
 
       const response = await supabase.functions.invoke('gohub-import', {
         body: {
-          resource,
           portalUrl: portalUrl || DEFAULT_PORTAL_URL,
           username,
           password,
@@ -72,10 +98,8 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
         },
       });
 
-      // Handle non-2xx status codes
       if (response.error) {
-        const errorData = response.data;
-        const msg = errorData?.error || response.error.message || 'Import failed';
+        const msg = response.data?.error || response.error.message || 'Import failed';
         throw new Error(msg);
       }
 
@@ -90,6 +114,11 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
         throw new Error(data?.error || 'Import failed');
       }
 
+      // Persist credentials on success
+      if (rememberCreds) {
+        saveCredentials(portalUrl, username, password);
+      }
+
       const systems: WizardSystem[] = (data.systems || []).map(
         (s: WizardSystem & { source?: string }) => ({
           id: s.id,
@@ -97,6 +126,7 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
           name: s.name,
           description: s.description,
           is_hydrocarbon: s.is_hydrocarbon,
+          progress: typeof s.progress === 'number' ? s.progress : undefined,
         })
       );
 
@@ -126,7 +156,11 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={resetAndClose}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent
+        className="sm:max-w-lg"
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onInteractOutside={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-500/20">
@@ -137,7 +171,7 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
                 Import from GoHub
               </DialogTitle>
               <DialogDescription>
-                Login to GoTechnology® Hub and import system data
+                Login to GoTechnology® Hub and import Completions Grid data
               </DialogDescription>
             </div>
           </div>
@@ -189,23 +223,16 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
             />
           </div>
 
-          {/* Resource Selection */}
-          <div className="space-y-2">
-            <Label className="text-sm">Resource to Import</Label>
-            <Select value={resource} onValueChange={setResource}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="SubSystem">Sub Systems</SelectItem>
-                <SelectItem value="System">Systems</SelectItem>
-                <SelectItem value="CertificationGrouping">Certification Groupings</SelectItem>
-                <SelectItem value="Discipline">Disciplines</SelectItem>
-                <SelectItem value="Phase">Phases</SelectItem>
-                <SelectItem value="Priority">Priorities</SelectItem>
-                <SelectItem value="Area">Areas</SelectItem>
-              </SelectContent>
-            </Select>
+          {/* Remember credentials */}
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="remember-creds"
+              checked={rememberCreds}
+              onCheckedChange={(checked) => setRememberCreds(checked as boolean)}
+            />
+            <Label htmlFor="remember-creds" className="text-xs text-muted-foreground cursor-pointer">
+              Remember credentials for next time
+            </Label>
           </div>
 
           {/* Status Messages */}
@@ -217,7 +244,7 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
                   Connecting to GoHub...
                 </p>
                 <p className="text-xs text-blue-600/70 dark:text-blue-500/70">
-                  Logging in and fetching {resource} data
+                  Logging in and fetching Completions Grid
                 </p>
               </div>
             </div>
@@ -228,7 +255,7 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
               <CheckCircle2 className="h-4 w-4 text-emerald-600" />
               <div>
                 <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
-                  Successfully imported {importedCount} records
+                  Successfully imported {importedCount} systems
                 </p>
                 <p className="text-xs text-emerald-600/70 dark:text-emerald-500/70">
                   Adding to your systems list...

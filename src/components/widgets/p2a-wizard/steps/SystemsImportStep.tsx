@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import { 
   Plus, 
   Trash2, 
@@ -26,11 +27,26 @@ export interface WizardSystem {
   name: string;
   description: string;
   is_hydrocarbon: boolean;
+  progress?: number;
 }
 
 interface SystemsImportStepProps {
   systems: WizardSystem[];
   onSystemsChange: (systems: WizardSystem[]) => void;
+}
+
+function getProgressColor(progress: number): string {
+  if (progress >= 100) return 'bg-emerald-500';
+  if (progress >= 60) return 'bg-yellow-500';
+  if (progress >= 30) return 'bg-orange-500';
+  return 'bg-red-500';
+}
+
+function getProgressTextColor(progress: number): string {
+  if (progress >= 100) return 'text-emerald-600';
+  if (progress >= 60) return 'text-yellow-600';
+  if (progress >= 30) return 'text-orange-600';
+  return 'text-red-600';
 }
 
 export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
@@ -83,12 +99,10 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
   };
 
   const handleExcelUpload = (file: File) => {
-    // TODO: Implement actual Excel parsing
     toast({
       title: 'Excel Upload',
       description: `Processing ${file.name}...`,
     });
-    // Mock imported systems for demo
     const mockSystems: WizardSystem[] = [
       { id: `excel-${Date.now()}-1`, system_id: 'SYS-XLS-001', name: 'Excel System 1', description: 'From Excel', is_hydrocarbon: false },
     ];
@@ -159,78 +173,15 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
               </div>
             ) : (
               systems.map((system) => (
-                <div
+                <SystemListItem
                   key={system.id}
-                  className={cn(
-                    "flex items-center gap-3 p-3 rounded-lg border bg-card transition-colors",
-                    editingId === system.id && "ring-2 ring-primary"
-                  )}
-                >
-                  {editingId === system.id ? (
-                    <div className="flex-1 space-y-2">
-                      <div className="flex gap-2">
-                        <Input
-                          value={system.system_id}
-                          onChange={(e) => handleUpdateSystem(system.id, { system_id: e.target.value })}
-                          placeholder="System ID"
-                          className="h-8 text-sm w-24"
-                        />
-                        <Input
-                          value={system.name}
-                          onChange={(e) => handleUpdateSystem(system.id, { name: e.target.value })}
-                          placeholder="System Name"
-                          className="h-8 text-sm flex-1"
-                        />
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Checkbox
-                          checked={system.is_hydrocarbon}
-                          onCheckedChange={(checked) => 
-                            handleUpdateSystem(system.id, { is_hydrocarbon: checked as boolean })
-                          }
-                        />
-                        <Label className="text-xs">Hydrocarbon System</Label>
-                        <div className="flex-1" />
-                        <Button size="sm" variant="ghost" onClick={() => setEditingId(null)}>
-                          <Check className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <Box className="h-4 w-4 text-muted-foreground shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-sm">{system.name}</span>
-                          {system.is_hydrocarbon && (
-                            <Badge variant="outline" className="text-[10px] bg-orange-50 text-orange-700 border-orange-200">
-                              HC
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="text-xs text-muted-foreground font-mono">
-                          {system.system_id}
-                        </div>
-                      </div>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-7 w-7 shrink-0"
-                        onClick={() => setEditingId(system.id)}
-                      >
-                        <Edit2 className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-7 w-7 text-destructive shrink-0"
-                        onClick={() => handleRemoveSystem(system.id)}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </>
-                  )}
-                </div>
+                  system={system}
+                  isEditing={editingId === system.id}
+                  onEdit={() => setEditingId(system.id)}
+                  onCancelEdit={() => setEditingId(null)}
+                  onUpdate={(updates) => handleUpdateSystem(system.id, updates)}
+                  onRemove={() => handleRemoveSystem(system.id)}
+                />
               ))
             )}
           </div>
@@ -312,6 +263,111 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
           </div>
         </div>
       )}
+    </div>
+  );
+};
+
+// ─── Extracted System List Item ──────────────────────────────
+
+interface SystemListItemProps {
+  system: WizardSystem;
+  isEditing: boolean;
+  onEdit: () => void;
+  onCancelEdit: () => void;
+  onUpdate: (updates: Partial<WizardSystem>) => void;
+  onRemove: () => void;
+}
+
+const SystemListItem: React.FC<SystemListItemProps> = ({
+  system,
+  isEditing,
+  onEdit,
+  onCancelEdit,
+  onUpdate,
+  onRemove,
+}) => {
+  if (isEditing) {
+    return (
+      <div className={cn("flex items-center gap-3 p-3 rounded-lg border bg-card ring-2 ring-primary")}>
+        <div className="flex-1 space-y-2">
+          <div className="flex gap-2">
+            <Input
+              value={system.system_id}
+              onChange={(e) => onUpdate({ system_id: e.target.value })}
+              placeholder="System ID"
+              className="h-8 text-sm w-24"
+            />
+            <Input
+              value={system.name}
+              onChange={(e) => onUpdate({ name: e.target.value })}
+              placeholder="System Name"
+              className="h-8 text-sm flex-1"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <Checkbox
+              checked={system.is_hydrocarbon}
+              onCheckedChange={(checked) => 
+                onUpdate({ is_hydrocarbon: checked as boolean })
+              }
+            />
+            <Label className="text-xs">Hydrocarbon System</Label>
+            <div className="flex-1" />
+            <Button size="sm" variant="ghost" onClick={onCancelEdit}>
+              <Check className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const hasProgress = typeof system.progress === 'number';
+
+  return (
+    <div className="flex items-center gap-3 p-3 rounded-lg border bg-card transition-colors">
+      <Box className="h-4 w-4 text-muted-foreground shrink-0" />
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="font-medium text-sm truncate">{system.name}</span>
+          {system.is_hydrocarbon && (
+            <Badge variant="outline" className="text-[10px] bg-orange-50 text-orange-700 border-orange-200 shrink-0">
+              HC
+            </Badge>
+          )}
+        </div>
+        <div className="text-xs text-muted-foreground font-mono">
+          {system.system_id}
+        </div>
+        {hasProgress && (
+          <div className="flex items-center gap-2 mt-1.5">
+            <Progress
+              value={system.progress}
+              className="h-1.5 flex-1"
+              indicatorClassName={getProgressColor(system.progress!)}
+            />
+            <span className={cn("text-[10px] font-semibold tabular-nums shrink-0", getProgressTextColor(system.progress!))}>
+              {system.progress!.toFixed(1)}%
+            </span>
+          </div>
+        )}
+      </div>
+      <Button
+        size="icon"
+        variant="ghost"
+        className="h-7 w-7 shrink-0"
+        onClick={onEdit}
+      >
+        <Edit2 className="h-3.5 w-3.5" />
+      </Button>
+      <Button
+        size="icon"
+        variant="ghost"
+        className="h-7 w-7 text-destructive shrink-0"
+        onClick={onRemove}
+      >
+        <Trash2 className="h-3.5 w-3.5" />
+      </Button>
     </div>
   );
 };
