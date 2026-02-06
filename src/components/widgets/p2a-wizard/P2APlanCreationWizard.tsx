@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { X, Key } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { WizardProgress, WizardStep } from './WizardProgress';
@@ -217,7 +216,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl p-0 gap-0 h-[80vh] flex flex-col overflow-hidden [&>button]:hidden">
+      <DialogContent className="max-w-2xl p-0 gap-0 h-[min(80vh,640px)] flex flex-col overflow-hidden [&>button]:hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-2.5 border-b shrink-0">
           <div className="flex items-center gap-2.5">
@@ -255,10 +254,10 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
           />
         )}
 
-        {/* Content */}
-        <ScrollArea className="flex-1">
+        {/* Content - use flex-1 + min-h-0 to fill remaining space */}
+        <div className="flex-1 min-h-0 overflow-auto">
           {renderStepContent()}
-        </ScrollArea>
+        </div>
 
         {/* Navigation - show only after choosing wizard and not on overview */}
         {useWizard && currentStep > 1 && (
