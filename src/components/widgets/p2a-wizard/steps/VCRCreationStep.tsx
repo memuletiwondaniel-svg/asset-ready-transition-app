@@ -64,6 +64,9 @@ export const VCRCreationStep: React.FC<VCRCreationStepProps> = ({
     setEditingId(null);
   };
 
+  // Always regenerate codes to ensure consistent format
+  const vcrsByCode = vcrs.map((v, i) => ({ ...v, code: generateVCRCode(i) }));
+
   const getMilestoneName = (id: string) => {
     return milestones.find(m => m.id === id)?.name || '';
   };
@@ -105,7 +108,7 @@ export const VCRCreationStep: React.FC<VCRCreationStepProps> = ({
                 <p className="text-xs mt-0.5">Add a VCR above to get started</p>
               </div>
             ) : (
-              vcrs.map((vcr) => (
+              vcrsByCode.map((vcr, index) => (
                 <div
                   key={vcr.id}
                   className={cn(
@@ -154,7 +157,7 @@ export const VCRCreationStep: React.FC<VCRCreationStepProps> = ({
                           <span className="font-semibold text-sm">{vcr.name}</span>
                           <span
                             className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded border"
-                            style={getVCRIdStyle(vcrs.indexOf(vcr))}
+                            style={getVCRIdStyle(index)}
                           >
                             {vcr.code}
                           </span>
