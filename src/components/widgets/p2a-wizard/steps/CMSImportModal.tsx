@@ -8,9 +8,10 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Database, Loader2, CheckCircle2, AlertTriangle, ExternalLink } from 'lucide-react';
+import { Database, Loader2, CheckCircle2, AlertTriangle, ExternalLink, Lock, User, Globe } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { WizardSystem } from './SystemsImportStep';
 
@@ -20,14 +21,9 @@ interface CMSImportModalProps {
   onImport: (systems: WizardSystem[]) => void;
 }
 
-export interface CMSImportConfig {
-  environment: string;
-  projectId: string;
-  apiEndpoint: string;
-  apiKey: string;
-}
-
 type ImportStatus = 'idle' | 'connecting' | 'success' | 'error';
+
+const DEFAULT_PORTAL_URL = 'https://goc.gotechnology.online/BGC/GoHub/Home.aspx';
 
 export const CMSImportModal: React.FC<CMSImportModalProps> = ({
   open,
@@ -37,15 +33,24 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [status, setStatus] = useState<ImportStatus>('idle');
   const [errorMessage, setErrorMessage] = useState('');
-  const [setupRequired, setSetupRequired] = useState(false);
   const [resource, setResource] = useState('SubSystem');
   const [importedCount, setImportedCount] = useState(0);
 
+  // Credential fields
+  const [portalUrl, setPortalUrl] = useState(DEFAULT_PORTAL_URL);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+
   const handleImport = async () => {
+    if (!username || !password) {
+      setErrorMessage('Please enter your GoHub username and password');
+      setStatus('error');
+      return;
+    }
+
     setIsLoading(true);
     setStatus('connecting');
     setErrorMessage('');
-    setSetupRequired(false);
 
     try {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -56,24 +61,20 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
       }
 
       const response = await supabase.functions.invoke('gohub-import', {
-        body: { resource },
+        body: {
+          resource,
+          portalUrl: portalUrl || DEFAULT_PORTAL_URL,
+          username,
+          password,
+        },
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
       });
 
-      // supabase.functions.invoke sets response.error for non-2xx status codes
-      // but our edge function returns 200 with error in body for graceful handling
+      // Handle non-2xx status codes
       if (response.error) {
-        // Try to parse the error context from the response data
         const errorData = response.data;
-        if (errorData?.setup_required) {
-          setSetupRequired(true);
-          setErrorMessage(errorData.message || 'API credentials not configured');
-          setStatus('error');
-          return;
-        }
-        // If response.data has an error message, use it; otherwise use the generic error
         const msg = errorData?.error || response.error.message || 'Import failed';
         throw new Error(msg);
       }
@@ -82,26 +83,26 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
 
       if (!data?.success) {
         if (data?.setup_required) {
-          setSetupRequired(true);
-          setErrorMessage(data.message || 'API credentials not configured');
+          setErrorMessage(data.message || 'Credentials required');
           setStatus('error');
           return;
         }
         throw new Error(data?.error || 'Import failed');
       }
 
-      const systems: WizardSystem[] = (data.systems || []).map((s: WizardSystem & { source?: string; raw_data?: unknown }) => ({
-        id: s.id,
-        system_id: s.system_id,
-        name: s.name,
-        description: s.description,
-        is_hydrocarbon: s.is_hydrocarbon,
-      }));
+      const systems: WizardSystem[] = (data.systems || []).map(
+        (s: WizardSystem & { source?: string }) => ({
+          id: s.id,
+          system_id: s.system_id,
+          name: s.name,
+          description: s.description,
+          is_hydrocarbon: s.is_hydrocarbon,
+        })
+      );
 
       setImportedCount(systems.length);
       setStatus('success');
 
-      // Auto-close after brief success display
       setTimeout(() => {
         onImport(systems);
         resetAndClose();
@@ -119,14 +120,13 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
   const resetAndClose = () => {
     setStatus('idle');
     setErrorMessage('');
-    setSetupRequired(false);
     setImportedCount(0);
     onOpenChange(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={resetAndClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-500/20">
@@ -137,22 +137,56 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
                 Import from GoHub
               </DialogTitle>
               <DialogDescription>
-                Connect to GoTechnology® Completions System
+                Login to GoTechnology® Hub and import system data
               </DialogDescription>
             </div>
           </div>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          {/* Connection Info */}
-          <div className="rounded-lg border bg-muted/30 p-3">
-            <div className="flex items-center gap-2 text-sm">
-              <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="font-medium">BGC Instance</span>
-            </div>
-            <p className="text-xs text-muted-foreground mt-1 font-mono">
-              goc.gotechnology.online/BGC
-            </p>
+          {/* Portal URL */}
+          <div className="space-y-2">
+            <Label className="text-sm flex items-center gap-1.5">
+              <Globe className="h-3.5 w-3.5 text-muted-foreground" />
+              Portal URL
+            </Label>
+            <Input
+              type="url"
+              value={portalUrl}
+              onChange={(e) => setPortalUrl(e.target.value)}
+              placeholder={DEFAULT_PORTAL_URL}
+              className="font-mono text-xs"
+            />
+          </div>
+
+          {/* Username */}
+          <div className="space-y-2">
+            <Label className="text-sm flex items-center gap-1.5">
+              <User className="h-3.5 w-3.5 text-muted-foreground" />
+              Username
+            </Label>
+            <Input
+              type="email"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="user@company.com"
+              autoComplete="off"
+            />
+          </div>
+
+          {/* Password */}
+          <div className="space-y-2">
+            <Label className="text-sm flex items-center gap-1.5">
+              <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+              Password
+            </Label>
+            <Input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              autoComplete="off"
+            />
           </div>
 
           {/* Resource Selection */}
@@ -163,19 +197,15 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="SubSystem">Sub Systems (Level C)</SelectItem>
-                <SelectItem value="System">Systems (Level C)</SelectItem>
+                <SelectItem value="SubSystem">Sub Systems</SelectItem>
+                <SelectItem value="System">Systems</SelectItem>
                 <SelectItem value="CertificationGrouping">Certification Groupings</SelectItem>
-                <SelectItem value="Discipline">Disciplines (Level B)</SelectItem>
-                <SelectItem value="Phase">Phases (Level C)</SelectItem>
-                <SelectItem value="Priority">Priorities (Level C)</SelectItem>
-                <SelectItem value="Area">Areas (Level C)</SelectItem>
+                <SelectItem value="Discipline">Disciplines</SelectItem>
+                <SelectItem value="Phase">Phases</SelectItem>
+                <SelectItem value="Priority">Priorities</SelectItem>
+                <SelectItem value="Area">Areas</SelectItem>
               </SelectContent>
             </Select>
-            <p className="text-xs text-muted-foreground">
-              Data is scoped to the Level configured via GOHUB_LEVEL_ID.
-              Systems and Sub Systems are at Level C (Facility).
-            </p>
           </div>
 
           {/* Status Messages */}
@@ -187,7 +217,7 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
                   Connecting to GoHub...
                 </p>
                 <p className="text-xs text-blue-600/70 dark:text-blue-500/70">
-                  Authenticating via OAuth2 and fetching {resource} data
+                  Logging in and fetching {resource} data
                 </p>
               </div>
             </div>
@@ -208,57 +238,24 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
           )}
 
           {status === 'error' && (
-            <div className="space-y-2">
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200/50 dark:border-red-800/30">
-                <AlertTriangle className="h-4 w-4 text-red-600 mt-0.5 shrink-0" />
-                <div>
-                  <p className="text-sm font-medium text-red-700 dark:text-red-400">
-                    {setupRequired ? 'API Setup Required' : 'Import Failed'}
-                  </p>
-                  <p className="text-xs text-red-600/70 dark:text-red-500/70 mt-1">
-                    {errorMessage}
-                  </p>
-                </div>
+            <div className="flex items-start gap-3 p-3 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200/50 dark:border-red-800/30">
+              <AlertTriangle className="h-4 w-4 text-red-600 mt-0.5 shrink-0" />
+              <div>
+                <p className="text-sm font-medium text-red-700 dark:text-red-400">
+                  Import Failed
+                </p>
+                <p className="text-xs text-red-600/70 dark:text-red-500/70 mt-1 whitespace-pre-wrap">
+                  {errorMessage}
+                </p>
               </div>
-
-              {setupRequired && (
-                <div className="rounded-lg border bg-amber-50/50 dark:bg-amber-950/20 p-3 space-y-2">
-                  <p className="text-xs font-medium text-amber-800 dark:text-amber-300">
-                    To complete GoHub setup:
-                  </p>
-                  <ol className="text-xs text-amber-700/80 dark:text-amber-400/80 space-y-1 list-decimal list-inside">
-                    <li>
-                      Add <strong>GOHUB_USERNAME</strong> (your GoHub email) as a project secret
-                    </li>
-                    <li>
-                      Add <strong>GOHUB_PASSWORD</strong> (your GoHub password) as a project secret
-                    </li>
-                    <li>
-                      Add <strong>GOHUB_LEVEL_ID</strong> — find it at{' '}
-                      <strong>Admin → Level E</strong> in GoHub (the GUID in the URL)
-                    </li>
-                  </ol>
-                  <a
-                    href="https://goc.gotechnology.online/BGC/GoHub/Home.aspx"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-700 dark:text-amber-300 hover:underline mt-1"
-                  >
-                    <ExternalLink className="h-3 w-3" />
-                    Open GoHub
-                  </a>
-                </div>
-              )}
             </div>
           )}
 
           {/* GoHub branding footer */}
           <div className="flex items-center justify-between pt-2 border-t">
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] text-muted-foreground">
-                Powered by GoTechnology® Hub2 REST API
-              </span>
-            </div>
+            <span className="text-[10px] text-muted-foreground">
+              Powered by GoTechnology® Hub
+            </span>
             <a
               href="https://goc.gotechnology.online/BGC/GoHub/Home.aspx"
               target="_blank"
@@ -266,7 +263,7 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
               className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1"
             >
               <ExternalLink className="h-2.5 w-2.5" />
-              GoHub
+              Open GoHub
             </a>
           </div>
         </div>
@@ -277,7 +274,7 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
           </Button>
           <Button
             onClick={handleImport}
-            disabled={isLoading || status === 'success'}
+            disabled={isLoading || status === 'success' || !username || !password}
             className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
           >
             {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}

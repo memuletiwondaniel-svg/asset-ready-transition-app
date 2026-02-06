@@ -6,16 +6,6 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// GoHub OAuth2 Token Endpoint (GoTechnology Identity Provider)
-const GOHUB_TOKEN_URL = "https://id.qedi.co.uk/connect/token";
-
-// BGC instance URLs
-const GOHUB_INSTANCE = "https://goc.gotechnology.online/BGC";
-const GOHUB_API_BASES = [
-  `${GOHUB_INSTANCE}/api`,
-  "https://goc.gotechnology.online/api",
-];
-
 const MAX_PAGE_SIZE = 100;
 
 // ─── Types ───────────────────────────────────────────────────
@@ -49,44 +39,31 @@ function parseCookiesFromResponse(
   existing: Record<string, string> = {}
 ): Record<string, string> {
   const cookies = { ...existing };
-
   try {
-    // Modern Deno: getSetCookie returns all Set-Cookie headers
     const setCookies =
       typeof response.headers.getSetCookie === "function"
         ? response.headers.getSetCookie()
         : [];
-
-    if (setCookies.length > 0) {
-      for (const header of setCookies) {
-        parseSingleSetCookie(header, cookies);
+    for (const header of setCookies) {
+      const [nameValue] = header.split(";");
+      const eqIndex = nameValue.indexOf("=");
+      if (eqIndex > 0) {
+        cookies[nameValue.substring(0, eqIndex).trim()] =
+          nameValue.substring(eqIndex + 1).trim();
       }
-      return cookies;
     }
   } catch (_) {
-    // Fall through
+    const combined = response.headers.get("set-cookie");
+    if (combined) {
+      const [nameValue] = combined.split(";");
+      const eqIndex = nameValue.indexOf("=");
+      if (eqIndex > 0) {
+        cookies[nameValue.substring(0, eqIndex).trim()] =
+          nameValue.substring(eqIndex + 1).trim();
+      }
+    }
   }
-
-  // Fallback: get combined header (may lose multiple Set-Cookie values)
-  const combined = response.headers.get("set-cookie");
-  if (combined) {
-    parseSingleSetCookie(combined, cookies);
-  }
-
   return cookies;
-}
-
-function parseSingleSetCookie(
-  header: string,
-  cookies: Record<string, string>
-) {
-  const [nameValue] = header.split(";");
-  const eqIndex = nameValue.indexOf("=");
-  if (eqIndex > 0) {
-    const name = nameValue.substring(0, eqIndex).trim();
-    const value = nameValue.substring(eqIndex + 1).trim();
-    if (value) cookies[name] = value;
-  }
 }
 
 function formatCookies(cookies: Record<string, string>): string {
@@ -97,21 +74,6 @@ function formatCookies(cookies: Record<string, string>): string {
 }
 
 // ─── HTML Parsing Utilities ──────────────────────────────────
-
-function extractFormAction(html: string, pageUrl: string): string {
-  const match =
-    html.match(
-      /<form[^>]*method=["']post["'][^>]*action=["']([^"']*?)["'][^>]*>/i
-    ) ||
-    html.match(
-      /<form[^>]*action=["']([^"']*?)["'][^>]*method=["']post["'][^>]*>/i
-    ) ||
-    html.match(/<form[^>]*action=["']([^"']*?)["'][^>]*>/i);
-
-  if (!match || !match[1]) return pageUrl;
-  const action = match[1].replace(/&amp;/g, "&");
-  return new URL(action, pageUrl).toString();
-}
 
 function extractHiddenFields(html: string): Record<string, string> {
   const fields: Record<string, string> = {};
@@ -130,167 +92,38 @@ function extractHiddenFields(html: string): Record<string, string> {
   return fields;
 }
 
-function findFieldName(html: string, candidates: string[]): string {
-  for (const name of candidates) {
-    if (html.includes(`name="${name}"`) || html.includes(`name='${name}'`)) {
-      return name;
-    }
-  }
-  return candidates[0];
-}
-
-// ─── Auth: Client Credentials Flow ──────────────────────────
-
-async function authClientCredentials(
-  clientId: string,
-  clientSecret: string
-): Promise<string> {
-  console.log("GoHub Auth: Trying Client Credentials flow...");
-
-  const formBody = new URLSearchParams({
-    grant_type: "client_credentials",
-    scope: "hub2_api",
-    client_id: clientId,
-    client_secret: clientSecret,
-  });
-
-  let response = await fetch(GOHUB_TOKEN_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: formBody.toString(),
-  });
-
-  if (!response.ok) {
-    const err1 = await response.text();
-    console.warn("GoHub Auth: Form-body client credentials failed:", err1);
-
-    const credentials = btoa(`${clientId}:${clientSecret}`);
-    response = await fetch(GOHUB_TOKEN_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        Authorization: `Basic ${credentials}`,
-      },
-      body: "grant_type=client_credentials&scope=hub2_api",
-    });
-  }
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      `Client credentials failed (${response.status}): ${errorText}`
-    );
-  }
-
-  const data = await response.json();
-  if (!data.access_token) throw new Error("No access token in response");
-
-  console.log(
-    `GoHub Auth: Client credentials succeeded, expires in ${data.expires_in}s`
-  );
-  return data.access_token;
-}
-
-// ─── Auth: ROPC (Resource Owner Password Credentials) ───────
-
-async function discoverWebClientId(): Promise<string | null> {
-  console.log("GoHub Auth: Discovering web app client_id...");
-
-  let url = `${GOHUB_INSTANCE}/GoHub/Home.aspx`;
-
-  for (let i = 0; i < 10; i++) {
-    try {
-      const response = await fetch(url, { redirect: "manual" });
-      const location = response.headers.get("location");
-      await response.text();
-
-      if (!location) break;
-
-      const nextUrl = new URL(location, url);
-
-      if (
-        nextUrl.hostname.includes("id.qedi.co.uk") ||
-        nextUrl.pathname.includes("/connect/authorize")
-      ) {
-        const clientId = nextUrl.searchParams.get("client_id");
-        if (clientId) {
-          console.log(`GoHub Auth: Discovered client_id: ${clientId}`);
-          return clientId;
-        }
-      }
-
-      url = nextUrl.toString();
-    } catch (e) {
-      console.warn(`GoHub Auth: Redirect discovery error at step ${i}:`, e);
-      break;
-    }
-  }
-
-  return null;
-}
-
-async function tryROPC(
-  username: string,
-  password: string,
-  clientId: string
-): Promise<string> {
-  console.log(`GoHub Auth: Trying ROPC with client_id=${clientId}...`);
-
-  const formBody = new URLSearchParams({
-    grant_type: "password",
-    username,
-    password,
-    scope: "openid hub2_api offline_access",
-    client_id: clientId,
-  });
-
-  const response = await fetch(GOHUB_TOKEN_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: formBody.toString(),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`ROPC failed (${response.status}): ${errorText}`);
-  }
-
-  const data = await response.json();
-  if (!data.access_token) throw new Error("No access token in ROPC response");
-
-  console.log(`GoHub Auth: ROPC succeeded, expires in ${data.expires_in}s`);
-  return data.access_token;
-}
-
-// ─── Auth: Web Login Simulation ─────────────────────────────
+// ─── Auth: GoHub ASP.NET Web Login ──────────────────────────
+// GoHub uses a classic ASP.NET WebForms login page at /BGC/Login.aspx
+// Form fields (discovered from page HTML):
+//   - ApplicationLogin$UserName
+//   - ApplicationLogin$Password
+//   - ApplicationLogin$LoginButton (submit button, value="Log In")
+//   - ASP.NET hidden fields: __VIEWSTATE, __EVENTVALIDATION, etc.
 
 async function authWebLogin(
+  portalUrl: string,
   username: string,
   password: string
 ): Promise<Record<string, string>> {
-  console.log("GoHub Auth: Starting web login simulation...");
+  console.log("GoHub Auth: Starting web login...");
   let cookies: Record<string, string> = {};
 
-  // Step 1: Navigate to GoHub → follow redirects to IdP login page
-  let url = `${GOHUB_INSTANCE}/GoHub/Home.aspx`;
+  // Step 1: Navigate to portal → follow redirects to Login.aspx
+  let url = portalUrl;
   let loginPageHtml = "";
   let loginPageUrl = "";
 
-  for (let i = 0; i < 15; i++) {
-    console.log(
-      `GoHub Auth: Redirect ${i + 1}: ${url.substring(0, 120)}...`
-    );
-
+  for (let i = 0; i < 10; i++) {
+    console.log(`GoHub Auth: Step ${i + 1}: GET ${url.substring(0, 120)}`);
     const response = await fetch(url, {
       redirect: "manual",
       headers: {
         Cookie: formatCookies(cookies),
-        Accept: "text/html,application/xhtml+xml",
+        Accept: "text/html",
         "User-Agent":
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
       },
     });
-
     cookies = parseCookiesFromResponse(response, cookies);
     const location = response.headers.get("location");
 
@@ -299,80 +132,74 @@ async function authWebLogin(
       url = new URL(location, url).toString();
       continue;
     }
-
     loginPageHtml = await response.text();
     loginPageUrl = url;
     break;
   }
 
   if (!loginPageHtml) {
-    throw new Error("Could not reach the GoHub login page after redirects");
+    throw new Error("Could not reach the GoHub login page");
   }
 
   console.log(
-    `GoHub Auth: Login page reached at: ${loginPageUrl.substring(0, 80)}...`
-  );
-  console.log(
-    `GoHub Auth: Page size: ${loginPageHtml.length} chars, cookies: ${Object.keys(cookies).length}`
+    `GoHub Auth: Login page at ${loginPageUrl.substring(0, 80)}, size=${loginPageHtml.length}`
   );
 
-  // Step 2: Parse the login form
-  const formAction = extractFormAction(loginPageHtml, loginPageUrl);
+  // Step 2: Parse ASP.NET hidden fields (__VIEWSTATE, etc.)
   const hiddenFields = extractHiddenFields(loginPageHtml);
-
-  const usernameField = findFieldName(loginPageHtml, [
-    "Input.Username",
-    "Username",
-    "Email",
-    "Input.Email",
-    "username",
-    "email",
-    "login",
-  ]);
-  const passwordField = findFieldName(loginPageHtml, [
-    "Input.Password",
-    "Password",
-    "Input.password",
-    "password",
-  ]);
-
   console.log(
-    `GoHub Auth: Form action: ${formAction.substring(0, 100)}`
-  );
-  console.log(
-    `GoHub Auth: Fields: username=${usernameField}, password=${passwordField}, hidden=${Object.keys(hiddenFields).join(",")}`
+    `GoHub Auth: Hidden fields: ${Object.keys(hiddenFields).join(", ")}`
   );
 
-  // Step 3: Submit the login form
+  // Step 3: Detect form field names from the actual HTML
+  // GoHub uses ASP.NET names like "ApplicationLogin$UserName"
+  let userField = "ApplicationLogin$UserName";
+  let passField = "ApplicationLogin$Password";
+  let buttonField = "ApplicationLogin$LoginButton";
+  let buttonValue = "Log In";
+
+  // Try to auto-detect from HTML if different
+  const userInputMatch = loginPageHtml.match(
+    /name=["']([\w$]+UserName[\w$]*)["']/i
+  );
+  const passInputMatch = loginPageHtml.match(
+    /name=["']([\w$]+Password[\w$]*)["']/i
+  );
+  const buttonMatch = loginPageHtml.match(
+    /name=["']([\w$]+Login\w*Button[\w$]*)["'][^>]*value=["']([^"']*)["']/i
+  );
+
+  if (userInputMatch) userField = userInputMatch[1];
+  if (passInputMatch) passField = passInputMatch[1];
+  if (buttonMatch) {
+    buttonField = buttonMatch[1];
+    buttonValue = buttonMatch[2];
+  }
+
+  console.log(
+    `GoHub Auth: Fields: user=${userField}, pass=${passField}, btn=${buttonField}`
+  );
+
+  // Extract form action URL
+  const actionMatch = loginPageHtml.match(
+    /<form[^>]*action=["']([^"']*?)["'][^>]*>/i
+  );
+  const formAction = actionMatch
+    ? new URL(
+        actionMatch[1].replace(/&amp;/g, "&"),
+        loginPageUrl
+      ).toString()
+    : loginPageUrl;
+
+  // Step 4: Submit the login form
   const formData: Record<string, string> = {
     ...hiddenFields,
-    [usernameField]: username,
-    [passwordField]: password,
+    [userField]: username,
+    [passField]: password,
+    [buttonField]: buttonValue,
   };
 
-  // Add button/remember fields if present
-  const buttonField = findFieldName(loginPageHtml, [
-    "Input.Button",
-    "button",
-    "Button",
-  ]);
-  if (
-    loginPageHtml.includes(`name="${buttonField}"`) &&
-    buttonField !== "Input.Button"
-  ) {
-    formData[buttonField] = "login";
-  }
-
-  const rememberField = findFieldName(loginPageHtml, [
-    "Input.RememberLogin",
-    "RememberLogin",
-    "RememberMe",
-  ]);
-  if (loginPageHtml.includes(`name="${rememberField}"`)) {
-    formData[rememberField] = "false";
-  }
-
-  console.log("GoHub Auth: Submitting login form...");
+  console.log(`GoHub Auth: Submitting to ${formAction.substring(0, 100)}`);
 
   const loginResponse = await fetch(formAction, {
     method: "POST",
@@ -389,152 +216,80 @@ async function authWebLogin(
   });
 
   cookies = parseCookiesFromResponse(loginResponse, cookies);
-
   const postLocation = loginResponse.headers.get("location");
+
   if (!postLocation) {
+    // No redirect after login → likely failed
     const responseHtml = await loginResponse.text();
 
-    // Check for error indicators
-    if (
-      responseHtml.includes("Invalid") ||
-      responseHtml.includes("invalid") ||
-      responseHtml.includes("incorrect") ||
-      responseHtml.includes("error")
-    ) {
-      // Try to extract specific error message
-      const errorMatch = responseHtml.match(
-        /class=["'][^"']*error[^"']*["'][^>]*>([^<]+)</i
+    // Check for error message in ASP.NET page
+    const errorMsgMatch = responseHtml.match(
+      /class=["']ErrorMessage["'][^>]*>\s*([^<]+)/i
+    );
+    if (errorMsgMatch && errorMsgMatch[1].trim()) {
+      throw new Error(
+        `Login failed: ${errorMsgMatch[1].trim()}`
       );
-      const errorMsg = errorMatch
-        ? errorMatch[1].trim()
-        : "Invalid username or password";
-      throw new Error(`GoHub login failed: ${errorMsg}`);
     }
 
-    throw new Error(
-      `GoHub login: No redirect after form submission (status ${loginResponse.status})`
+    // Check if we're still on the login page
+    if (
+      responseHtml.includes("ApplicationLogin") ||
+      responseHtml.includes("Login to")
+    ) {
+      throw new Error(
+        "Login failed: Invalid username or password. Check your GoHub credentials."
+      );
+    }
+
+    // Might have logged in without redirect (unlikely for ASP.NET)
+    console.log(
+      "GoHub Auth: No redirect after login, but no error detected either"
     );
+  } else {
+    await loginResponse.text();
   }
 
-  await loginResponse.text();
-
-  // Step 4: Follow redirect chain back to GoHub
-  url = new URL(postLocation, formAction).toString();
-
-  for (let i = 0; i < 15; i++) {
-    console.log(
-      `GoHub Auth: Post-login redirect ${i + 1}: ${url.substring(0, 120)}...`
-    );
-
-    const response = await fetch(url, {
-      redirect: "manual",
-      headers: {
-        Cookie: formatCookies(cookies),
-        Accept: "text/html,application/xhtml+xml",
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-      },
-    });
-
-    cookies = parseCookiesFromResponse(response, cookies);
-    const location = response.headers.get("location");
-    await response.text();
-
-    if (!location) {
-      console.log("GoHub Auth: Web login completed (no more redirects)");
-      break;
+  // Step 5: Follow redirect chain back to GoHub
+  if (postLocation) {
+    url = new URL(postLocation, formAction).toString();
+    for (let i = 0; i < 10; i++) {
+      console.log(
+        `GoHub Auth: Post-login redirect ${i + 1}: ${url.substring(0, 120)}`
+      );
+      const response = await fetch(url, {
+        redirect: "manual",
+        headers: {
+          Cookie: formatCookies(cookies),
+          Accept: "text/html",
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        },
+      });
+      cookies = parseCookiesFromResponse(response, cookies);
+      const location = response.headers.get("location");
+      await response.text();
+      if (!location) break;
+      url = new URL(location, url).toString();
     }
-
-    url = new URL(location, url).toString();
   }
 
   console.log(
-    `GoHub Auth: Web login successful, captured ${Object.keys(cookies).length} cookies`
+    `GoHub Auth: Login complete, ${Object.keys(cookies).length} cookies captured`
   );
   return cookies;
 }
 
-// ─── Main Authentication ─────────────────────────────────────
-
-async function authenticate(): Promise<AuthResult> {
-  const username = Deno.env.get("GOHUB_USERNAME");
-  const password = Deno.env.get("GOHUB_PASSWORD");
-  const clientId = Deno.env.get("GOHUB_CLIENT_ID");
-  const clientSecret = Deno.env.get("GOHUB_CLIENT_SECRET");
-
-  const errors: string[] = [];
-
-  // Method 1: User credentials (try ROPC first, then web login)
-  if (username && password) {
-    // Try ROPC with discovered client_id
-    try {
-      const webClientId = await discoverWebClientId();
-      if (webClientId) {
-        const token = await tryROPC(username, password, webClientId);
-        return { type: "token", token };
-      }
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      console.warn("GoHub Auth: ROPC with discovered client_id failed:", msg);
-      errors.push(`ROPC (discovered): ${msg}`);
-    }
-
-    // Try ROPC with common client_ids
-    for (const tryId of ["hub2", "bgc_hub2", "gohub", "BGC", "hub2_web"]) {
-      try {
-        const token = await tryROPC(username, password, tryId);
-        return { type: "token", token };
-      } catch (_) {
-        // Continue
-      }
-    }
-
-    // Fall back to web login simulation
-    try {
-      console.log(
-        "GoHub Auth: ROPC not available, falling back to web login simulation..."
-      );
-      const sessionCookies = await authWebLogin(username, password);
-      return { type: "cookies", cookies: sessionCookies };
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      console.error("GoHub Auth: Web login failed:", msg);
-      errors.push(`Web login: ${msg}`);
-    }
-  }
-
-  // Method 2: Client credentials (Machine App)
-  if (clientId && clientSecret) {
-    try {
-      const token = await authClientCredentials(clientId, clientSecret);
-      return { type: "token", token };
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      console.error("GoHub Auth: Client credentials failed:", msg);
-      errors.push(`Client credentials: ${msg}`);
-    }
-  }
-
-  if (errors.length > 0) {
-    throw new Error(
-      `All GoHub authentication methods failed:\n${errors.join("\n")}`
-    );
-  }
-
-  throw new Error(
-    "No GoHub credentials configured. Set GOHUB_USERNAME + GOHUB_PASSWORD, " +
-      "or GOHUB_CLIENT_ID + GOHUB_CLIENT_SECRET in project secrets."
-  );
-}
-
 // ─── Data Fetching ───────────────────────────────────────────
 
-function buildHeaders(
+function buildApiHeaders(
   auth: AuthResult,
   levelId: string | null
 ): Record<string, string> {
   const headers: Record<string, string> = {
     Accept: "application/json",
+    "User-Agent":
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
   };
 
   if (auth.type === "token") {
@@ -562,35 +317,26 @@ async function fetchAllPages(
 
   do {
     const url = `${baseUrl}/${resource}?ps=${MAX_PAGE_SIZE}&p=${page}`;
-    const headers = buildHeaders(auth, levelId);
+    const headers = buildApiHeaders(auth, levelId);
 
+    console.log(`GoHub API: Fetching ${url}`);
     const response = await fetch(url, { method: "GET", headers });
 
     if (!response.ok) {
       const errorText = await response.text();
-      if (response.status === 401)
-        throw new Error("Authentication expired or invalid");
-      if (response.status === 403)
-        throw new Error(`Access denied for ${resource}`);
-      if (response.status === 404)
-        throw new Error(`Resource '${resource}' not found`);
-      throw new Error(
-        `API request failed [${response.status}]: ${errorText.substring(0, 200)}`
-      );
+      if (response.status === 401) throw new Error("Session expired or unauthorized");
+      if (response.status === 403) throw new Error(`Access denied for ${resource}`);
+      if (response.status === 404) throw new Error(`Resource '${resource}' not found at this endpoint`);
+      throw new Error(`API error [${response.status}]: ${errorText.substring(0, 200)}`);
     }
 
     const contentType = response.headers.get("content-type") || "";
     if (!contentType.includes("json")) {
       const text = await response.text();
-      // If we got HTML back, the session might not be valid for API access
-      if (text.includes("<html") || text.includes("<!DOCTYPE")) {
-        throw new Error(
-          "API returned HTML instead of JSON — the session may not have API access"
-        );
+      if (text.includes("<html") || text.includes("<!DOCTYPE") || text.includes("Login")) {
+        throw new Error("API returned HTML (login page) — session may not be authenticated for API access");
       }
-      throw new Error(
-        `Expected JSON but got ${contentType}: ${text.substring(0, 100)}`
-      );
+      throw new Error(`Expected JSON, got ${contentType}: ${text.substring(0, 100)}`);
     }
 
     const responseData = await response.json();
@@ -602,14 +348,11 @@ async function fetchAllPages(
       const pagedData = responseData as GoHubPagedResponse;
       allRecords.push(...(pagedData.Items || []));
       totalPages = pagedData.TotalPages || 1;
-      console.log(
-        `GoHub API: Page ${page}/${totalPages}, got ${pagedData.Items?.length || 0} records`
-      );
+      console.log(`GoHub API: Page ${page}/${totalPages}, ${pagedData.Items?.length || 0} records`);
     } else {
       allRecords.push(responseData as GoHubRecord);
       break;
     }
-
     page++;
   } while (page <= totalPages);
 
@@ -618,18 +361,26 @@ async function fetchAllPages(
 
 async function findWorkingApiBase(
   auth: AuthResult,
+  instanceUrl: string,
   levelId: string | null,
   resource: string
 ): Promise<{ baseUrl: string; data: GoHubRecord[] }> {
-  const errors: string[] = [];
+  // Derive API bases from the instance URL
+  const parsed = new URL(instanceUrl);
+  const pathParts = parsed.pathname.split("/").filter(Boolean);
+  const instanceName = pathParts[0] || "BGC"; // e.g. "BGC"
 
-  for (const baseUrl of GOHUB_API_BASES) {
+  const apiBases = [
+    `${parsed.origin}/${instanceName}/api`,
+    `${parsed.origin}/api`,
+  ];
+
+  const errors: string[] = [];
+  for (const baseUrl of apiBases) {
     try {
       console.log(`GoHub API: Trying ${baseUrl}/${resource}...`);
       const data = await fetchAllPages(auth, baseUrl, resource, levelId);
-      console.log(
-        `GoHub API: Success with ${baseUrl}, got ${data.length} records`
-      );
+      console.log(`GoHub API: Success! ${data.length} records from ${baseUrl}`);
       return { baseUrl, data };
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : String(error);
@@ -638,9 +389,7 @@ async function findWorkingApiBase(
     }
   }
 
-  throw new Error(
-    `Could not fetch ${resource} from GoHub API:\n${errors.join("\n")}`
-  );
+  throw new Error(`Could not fetch ${resource}:\n${errors.join("\n")}`);
 }
 
 // ─── Data Transformation ─────────────────────────────────────
@@ -652,8 +401,7 @@ function transformToSystems(records: GoHubRecord[], resource: string) {
 
     let description = "";
     if (resource === "SubSystem" && item.System) {
-      const systemName =
-        typeof item.System === "object" ? item.System.Name : item.System;
+      const systemName = typeof item.System === "object" ? item.System.Name : item.System;
       description = systemName ? `System: ${systemName}` : "";
     } else {
       description = `Imported from GoHub (${resource})`;
@@ -661,8 +409,7 @@ function transformToSystems(records: GoHubRecord[], resource: string) {
 
     let isHydrocarbon = false;
     if (item.Phase) {
-      const phaseName =
-        typeof item.Phase === "object" ? item.Phase.Name : String(item.Phase);
+      const phaseName = typeof item.Phase === "object" ? item.Phase.Name : String(item.Phase);
       if (phaseName && /rfsu|hydrocarbon|hc|gas|oil/i.test(phaseName)) {
         isHydrocarbon = true;
       }
@@ -688,7 +435,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Validate Supabase user auth
+    // Validate Supabase user
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -711,27 +458,33 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Check if any GoHub credentials are configured
-    const hasUserCreds =
-      Deno.env.get("GOHUB_USERNAME") && Deno.env.get("GOHUB_PASSWORD");
-    const hasClientCreds =
-      Deno.env.get("GOHUB_CLIENT_ID") && Deno.env.get("GOHUB_CLIENT_SECRET");
+    // Parse request body — credentials come from the frontend
+    const body = await req.json();
+    const {
+      resource = "SubSystem",
+      portalUrl,
+      username,
+      password,
+      levelId: bodyLevelId,
+    } = body;
 
-    if (!hasUserCreds && !hasClientCreds) {
+    // Use request body credentials, fall back to secrets
+    const finalPortalUrl =
+      portalUrl ||
+      Deno.env.get("GOHUB_PORTAL_URL") ||
+      "https://goc.gotechnology.online/BGC/GoHub/Home.aspx";
+    const finalUsername = username || Deno.env.get("GOHUB_USERNAME");
+    const finalPassword = password || Deno.env.get("GOHUB_PASSWORD");
+    const finalLevelId = bodyLevelId || Deno.env.get("GOHUB_LEVEL_ID") || null;
+
+    if (!finalUsername || !finalPassword) {
       return new Response(
         JSON.stringify({
           success: false,
-          error: "GoHub credentials not configured",
+          error: "GoHub credentials required",
           setup_required: true,
           message:
-            "No GoHub credentials found. Configure one of:\n\n" +
-            "Option A — User Login (recommended):\n" +
-            "  1. Add GOHUB_USERNAME (your GoHub email)\n" +
-            "  2. Add GOHUB_PASSWORD (your GoHub password)\n\n" +
-            "Option B — API Credentials:\n" +
-            "  1. Register a Machine App with GoTechnology Support\n" +
-            "  2. Add GOHUB_CLIENT_ID and GOHUB_CLIENT_SECRET\n\n" +
-            "Also add GOHUB_LEVEL_ID (find at Admin → Level E in GoHub)",
+            "Please enter your GoHub username and password in the import dialog.",
         }),
         {
           status: 200,
@@ -740,74 +493,44 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Parse request body
-    const body = await req.json();
-    const { resource = "SubSystem" } = body;
-
+    // Validate resource
     const validResources = [
-      "System",
-      "SubSystem",
-      "Discipline",
-      "Area",
-      "CertificationGrouping",
-      "Phase",
-      "Priority",
+      "System", "SubSystem", "Discipline", "Area",
+      "CertificationGrouping", "Phase", "Priority",
     ];
-
     if (!validResources.includes(resource)) {
       return new Response(
         JSON.stringify({
           success: false,
-          error: `Invalid resource '${resource}'. Valid: ${validResources.join(", ")}`,
+          error: `Invalid resource: ${resource}. Valid: ${validResources.join(", ")}`,
         }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log(`GoHub import: Starting import for ${resource}...`);
+    console.log(`GoHub import: ${resource} from ${finalPortalUrl}`);
 
-    // Authenticate with GoHub
-    const auth = await authenticate();
-    console.log(`GoHub import: Authenticated via ${auth.type}`);
+    // Step 1: Log in via the web interface
+    const sessionCookies = await authWebLogin(
+      finalPortalUrl,
+      finalUsername,
+      finalPassword
+    );
+    const auth: AuthResult = { type: "cookies", cookies: sessionCookies };
+    console.log("GoHub import: Login successful");
 
-    // Get level ID (required for token-based auth)
-    const levelId = Deno.env.get("GOHUB_LEVEL_ID") || null;
-    if (!levelId && auth.type === "token") {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: "GOHUB_LEVEL_ID not configured",
-          setup_required: true,
-          message:
-            "GOHUB_LEVEL_ID is required for API access. To find it:\n" +
-            "1. Log in to GoHub web application\n" +
-            "2. Navigate to Admin → Level E\n" +
-            "3. Click your facility/scope\n" +
-            "4. Copy the GUID from the page URL",
-        }),
-        {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    // Fetch data from GoHub
+    // Step 2: Fetch data from API using session cookies
     const { baseUrl, data: records } = await findWorkingApiBase(
       auth,
-      levelId,
+      finalPortalUrl,
+      finalLevelId,
       resource
     );
 
-    // Transform to our system format
+    // Step 3: Transform
     const systems = transformToSystems(records, resource);
 
-    console.log(
-      `GoHub import: Successfully imported ${systems.length} records from ${resource} via ${baseUrl} (auth: ${auth.type})`
-    );
+    console.log(`GoHub import: ${systems.length} records imported from ${resource}`);
 
     return new Response(
       JSON.stringify({
@@ -816,27 +539,16 @@ Deno.serve(async (req) => {
         total: systems.length,
         resource,
         api_base: baseUrl,
-        auth_method: auth.type,
       }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: unknown) {
     console.error("GoHub import error:", error);
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error occurred";
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
     return new Response(
-      JSON.stringify({
-        success: false,
-        error: errorMessage,
-      }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      JSON.stringify({ success: false, error: errorMessage }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
