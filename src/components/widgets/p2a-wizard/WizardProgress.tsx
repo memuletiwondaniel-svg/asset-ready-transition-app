@@ -20,7 +20,7 @@ export const WizardProgress: React.FC<WizardProgressProps> = ({
   onStepClick,
 }) => {
   return (
-    <div className="flex items-center gap-2 px-4 py-2.5 border-b bg-muted/30">
+    <div className="flex items-start justify-between px-6 py-3 border-b bg-muted/30">
       {steps.map((step, index) => {
         const stepNumber = index + 1;
         const isCompleted = currentStep > stepNumber;
@@ -33,14 +33,14 @@ export const WizardProgress: React.FC<WizardProgressProps> = ({
               onClick={() => isClickable && onStepClick?.(stepNumber)}
               disabled={!isClickable}
               className={cn(
-                "flex items-center gap-2 transition-all",
+                "flex flex-col items-center gap-1.5 transition-all min-w-0",
                 isClickable && "cursor-pointer hover:opacity-80",
                 !isClickable && "cursor-default"
               )}
             >
               <div
                 className={cn(
-                  "w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold transition-colors",
+                  "w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold transition-colors shrink-0",
                   isCompleted && "bg-primary text-primary-foreground",
                   isCurrent && "bg-primary text-primary-foreground ring-2 ring-primary/30",
                   !isCompleted && !isCurrent && "bg-muted text-muted-foreground"
@@ -50,9 +50,10 @@ export const WizardProgress: React.FC<WizardProgressProps> = ({
               </div>
               <span
                 className={cn(
-                  "text-xs font-medium hidden sm:block",
+                  "text-[10px] font-medium leading-tight text-center max-w-[60px]",
                   isCurrent && "text-foreground",
-                  !isCurrent && "text-muted-foreground"
+                  isCompleted && "text-primary",
+                  !isCurrent && !isCompleted && "text-muted-foreground"
                 )}
               >
                 {step.title}
@@ -61,7 +62,7 @@ export const WizardProgress: React.FC<WizardProgressProps> = ({
             {index < steps.length - 1 && (
               <div
                 className={cn(
-                  "flex-1 h-0.5 min-w-4 max-w-12 transition-colors",
+                  "flex-1 h-0.5 min-w-3 max-w-16 mt-3.5 transition-colors",
                   isCompleted ? "bg-primary" : "bg-muted"
                 )}
               />
