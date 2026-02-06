@@ -224,22 +224,19 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
               {setupRequired && (
                 <div className="rounded-lg border bg-amber-50/50 dark:bg-amber-950/20 p-3 space-y-2">
                   <p className="text-xs font-medium text-amber-800 dark:text-amber-300">
-                    To complete GoHub API setup:
+                    To complete GoHub setup:
                   </p>
                   <ol className="text-xs text-amber-700/80 dark:text-amber-400/80 space-y-1 list-decimal list-inside">
                     <li>
-                      Email{' '}
-                      <a
-                        href="mailto:GoTechnology.Support@woodplc.com?subject=API%20Registration%20-%20BGC%20GoHub"
-                        className="underline font-medium"
-                      >
-                        GoTechnology.Support@woodplc.com
-                      </a>{' '}
-                      to register your app
+                      Add <strong>GOHUB_USERNAME</strong> (your GoHub email) as a project secret
                     </li>
-                    <li>Request a Machine App Client ID & Secret</li>
-                    <li>Find your Level ID at Admin → Level E in GoHub</li>
-                    <li>Add the credentials as secrets in project settings</li>
+                    <li>
+                      Add <strong>GOHUB_PASSWORD</strong> (your GoHub password) as a project secret
+                    </li>
+                    <li>
+                      Add <strong>GOHUB_LEVEL_ID</strong> — find it at{' '}
+                      <strong>Admin → Level E</strong> in GoHub (the GUID in the URL)
+                    </li>
                   </ol>
                   <a
                     href="https://goc.gotechnology.online/BGC/GoHub/Home.aspx"
