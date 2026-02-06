@@ -6,32 +6,6 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const MAX_PAGE_SIZE = 100;
-
-// ─── Types ───────────────────────────────────────────────────
-
-interface GoHubRecord {
-  ID?: string;
-  Name: string;
-  Description?: string;
-  System?: { Name?: string; Description?: string };
-  Phase?: { Name?: string };
-  Priority?: { Name?: string };
-  [key: string]: unknown;
-}
-
-interface GoHubPagedResponse {
-  Items?: GoHubRecord[];
-  TotalItems?: number;
-  PageSize?: number;
-  PageNumber?: number;
-  TotalPages?: number;
-}
-
-type AuthResult =
-  | { type: "token"; token: string }
-  | { type: "cookies"; cookies: Record<string, string> };
-
 // ─── Cookie Utilities ────────────────────────────────────────
 
 function parseCookiesFromResponse(
@@ -92,15 +66,12 @@ function extractHiddenFields(html: string): Record<string, string> {
   return fields;
 }
 
-// ─── Auth: GoHub ASP.NET Web Login ──────────────────────────
-// GoHub uses a classic ASP.NET WebForms login page at /BGC/Login.aspx
-// Form fields (discovered from page HTML):
-//   - ApplicationLogin$UserName
-//   - ApplicationLogin$Password
-//   - ApplicationLogin$LoginButton (submit button, value="Log In")
-//   - ASP.NET hidden fields: __VIEWSTATE, __EVENTVALIDATION, etc.
+const BROWSER_UA =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
-async function authWebLogin(
+// ─── Step 1: ASP.NET Web Login ──────────────────────────────
+
+async function webLogin(
   portalUrl: string,
   username: string,
   password: string
@@ -108,20 +79,19 @@ async function authWebLogin(
   console.log("GoHub Auth: Starting web login...");
   let cookies: Record<string, string> = {};
 
-  // Step 1: Navigate to portal → follow redirects to Login.aspx
+  // Navigate to portal → follow redirects to Login.aspx
   let url = portalUrl;
   let loginPageHtml = "";
   let loginPageUrl = "";
 
   for (let i = 0; i < 10; i++) {
-    console.log(`GoHub Auth: Step ${i + 1}: GET ${url.substring(0, 120)}`);
+    console.log(`GoHub Auth: Redirect ${i + 1}: GET ${url.substring(0, 120)}`);
     const response = await fetch(url, {
       redirect: "manual",
       headers: {
         Cookie: formatCookies(cookies),
         Accept: "text/html",
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "User-Agent": BROWSER_UA,
       },
     });
     cookies = parseCookiesFromResponse(response, cookies);
@@ -145,20 +115,18 @@ async function authWebLogin(
     `GoHub Auth: Login page at ${loginPageUrl.substring(0, 80)}, size=${loginPageHtml.length}`
   );
 
-  // Step 2: Parse ASP.NET hidden fields (__VIEWSTATE, etc.)
+  // Parse ASP.NET hidden fields (__VIEWSTATE, etc.)
   const hiddenFields = extractHiddenFields(loginPageHtml);
   console.log(
     `GoHub Auth: Hidden fields: ${Object.keys(hiddenFields).join(", ")}`
   );
 
-  // Step 3: Detect form field names from the actual HTML
-  // GoHub uses ASP.NET names like "ApplicationLogin$UserName"
+  // Detect field names from HTML
   let userField = "ApplicationLogin$UserName";
   let passField = "ApplicationLogin$Password";
   let buttonField = "ApplicationLogin$LoginButton";
   let buttonValue = "Log In";
 
-  // Try to auto-detect from HTML if different
   const userInputMatch = loginPageHtml.match(
     /name=["']([\w$]+UserName[\w$]*)["']/i
   );
@@ -180,7 +148,6 @@ async function authWebLogin(
     `GoHub Auth: Fields: user=${userField}, pass=${passField}, btn=${buttonField}`
   );
 
-  // Extract form action URL
   const actionMatch = loginPageHtml.match(
     /<form[^>]*action=["']([^"']*?)["'][^>]*>/i
   );
@@ -191,7 +158,7 @@ async function authWebLogin(
       ).toString()
     : loginPageUrl;
 
-  // Step 4: Submit the login form
+  // Submit the login form
   const formData: Record<string, string> = {
     ...hiddenFields,
     [userField]: username,
@@ -207,8 +174,7 @@ async function authWebLogin(
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
       Cookie: formatCookies(cookies),
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+      "User-Agent": BROWSER_UA,
       Referer: loginPageUrl,
       Origin: new URL(loginPageUrl).origin,
     },
@@ -219,20 +185,13 @@ async function authWebLogin(
   const postLocation = loginResponse.headers.get("location");
 
   if (!postLocation) {
-    // No redirect after login → likely failed
     const responseHtml = await loginResponse.text();
-
-    // Check for error message in ASP.NET page
     const errorMsgMatch = responseHtml.match(
       /class=["']ErrorMessage["'][^>]*>\s*([^<]+)/i
     );
     if (errorMsgMatch && errorMsgMatch[1].trim()) {
-      throw new Error(
-        `Login failed: ${errorMsgMatch[1].trim()}`
-      );
+      throw new Error(`Login failed: ${errorMsgMatch[1].trim()}`);
     }
-
-    // Check if we're still on the login page
     if (
       responseHtml.includes("ApplicationLogin") ||
       responseHtml.includes("Login to")
@@ -241,16 +200,12 @@ async function authWebLogin(
         "Login failed: Invalid username or password. Check your GoHub credentials."
       );
     }
-
-    // Might have logged in without redirect (unlikely for ASP.NET)
-    console.log(
-      "GoHub Auth: No redirect after login, but no error detected either"
-    );
+    console.log("GoHub Auth: No redirect after login, but no error detected");
   } else {
     await loginResponse.text();
   }
 
-  // Step 5: Follow redirect chain back to GoHub
+  // Follow redirect chain after login
   if (postLocation) {
     url = new URL(postLocation, formAction).toString();
     for (let i = 0; i < 10; i++) {
@@ -262,8 +217,7 @@ async function authWebLogin(
         headers: {
           Cookie: formatCookies(cookies),
           Accept: "text/html",
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+          "User-Agent": BROWSER_UA,
         },
       });
       cookies = parseCookiesFromResponse(response, cookies);
@@ -280,151 +234,311 @@ async function authWebLogin(
   return cookies;
 }
 
-// ─── Data Fetching ───────────────────────────────────────────
+// ─── Step 2: Fetch Completions Grid data via API ─────────────
 
-function buildApiHeaders(
-  auth: AuthResult,
-  levelId: string | null
-): Record<string, string> {
-  const headers: Record<string, string> = {
-    Accept: "application/json",
-    "User-Agent":
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-  };
-
-  if (auth.type === "token") {
-    headers.Authorization = `Bearer ${auth.token}`;
-  } else {
-    headers.Cookie = formatCookies(auth.cookies);
-  }
-
-  if (levelId) {
-    headers["X-GoTechnology-Level"] = levelId;
-  }
-
-  return headers;
+interface CompletionsSystem {
+  system_id: string;
+  name: string;
+  description: string;
+  progress: number;
+  is_hydrocarbon: boolean;
 }
 
-async function fetchAllPages(
-  auth: AuthResult,
-  baseUrl: string,
-  resource: string,
-  levelId: string | null
-): Promise<GoHubRecord[]> {
-  const allRecords: GoHubRecord[] = [];
+async function fetchCompletionsData(
+  cookies: Record<string, string>,
+  portalUrl: string,
+  projectFilter: string
+): Promise<CompletionsSystem[]> {
+  const parsed = new URL(portalUrl);
+  const pathParts = parsed.pathname.split("/").filter(Boolean);
+  const instanceName = pathParts[0] || "BGC";
+  const origin = parsed.origin;
+
+  // Try API endpoints to get SubSystem data with progress
+  const apiEndpoints = [
+    `${origin}/${instanceName}/api/SubSystem`,
+    `${origin}/${instanceName}/api/System`,
+    `${origin}/api/SubSystem`,
+  ];
+
+  // Try fetching from API with session cookies
+  for (const endpoint of apiEndpoints) {
+    try {
+      console.log(`GoHub API: Trying ${endpoint}...`);
+      const systems = await fetchSubSystemsFromApi(cookies, endpoint, projectFilter);
+      if (systems.length > 0) {
+        console.log(`GoHub API: Got ${systems.length} systems from ${endpoint}`);
+        return systems;
+      }
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error);
+      console.warn(`GoHub API: ${endpoint} failed: ${msg}`);
+    }
+  }
+
+  // If API fails, try scraping the Completions Grid page
+  console.log("GoHub: API attempts failed, trying HTML scraping...");
+  try {
+    return await scrapeCompletionsGrid(cookies, origin, instanceName, projectFilter);
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
+    console.warn(`GoHub Scrape: Failed: ${msg}`);
+  }
+
+  throw new Error(
+    "Could not retrieve Completions data from GoHub. " +
+    "The API endpoints and Completions Grid page were both inaccessible. " +
+    "Please verify you have access to the Completions module in GoHub."
+  );
+}
+
+async function fetchSubSystemsFromApi(
+  cookies: Record<string, string>,
+  endpoint: string,
+  projectFilter: string
+): Promise<CompletionsSystem[]> {
+  const allSystems: CompletionsSystem[] = [];
   let page = 1;
   let totalPages = 1;
 
   do {
-    const url = `${baseUrl}/${resource}?ps=${MAX_PAGE_SIZE}&p=${page}`;
-    const headers = buildApiHeaders(auth, levelId);
+    // Use Name:con= filter to search for systems containing the project ID
+    const url = `${endpoint}?ps=100&p=${page}&Name:con=${projectFilter}`;
+    console.log(`GoHub API: GET ${url}`);
 
-    console.log(`GoHub API: Fetching ${url}`);
-    const response = await fetch(url, { method: "GET", headers });
+    const response = await fetch(url, {
+      headers: {
+        Cookie: formatCookies(cookies),
+        Accept: "application/json",
+        "User-Agent": BROWSER_UA,
+      },
+    });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      if (response.status === 401) throw new Error("Session expired or unauthorized");
-      if (response.status === 403) throw new Error(`Access denied for ${resource}`);
-      if (response.status === 404) throw new Error(`Resource '${resource}' not found at this endpoint`);
-      throw new Error(`API error [${response.status}]: ${errorText.substring(0, 200)}`);
+      const text = await response.text();
+      if (response.status === 401 || response.status === 403) {
+        throw new Error(`Access denied (${response.status})`);
+      }
+      if (response.status === 404) {
+        throw new Error(`Endpoint not found`);
+      }
+      throw new Error(`HTTP ${response.status}: ${text.substring(0, 200)}`);
     }
 
     const contentType = response.headers.get("content-type") || "";
     if (!contentType.includes("json")) {
       const text = await response.text();
-      if (text.includes("<html") || text.includes("<!DOCTYPE") || text.includes("Login")) {
-        throw new Error("API returned HTML (login page) — session may not be authenticated for API access");
+      if (text.includes("<html") || text.includes("Login")) {
+        throw new Error("Session not authenticated for API");
       }
-      throw new Error(`Expected JSON, got ${contentType}: ${text.substring(0, 100)}`);
+      throw new Error(`Non-JSON response: ${contentType}`);
     }
 
-    const responseData = await response.json();
-
-    if (Array.isArray(responseData)) {
-      allRecords.push(...responseData);
-      break;
-    } else if (responseData.Items && Array.isArray(responseData.Items)) {
-      const pagedData = responseData as GoHubPagedResponse;
-      allRecords.push(...(pagedData.Items || []));
-      totalPages = pagedData.TotalPages || 1;
-      console.log(`GoHub API: Page ${page}/${totalPages}, ${pagedData.Items?.length || 0} records`);
-    } else {
-      allRecords.push(responseData as GoHubRecord);
-      break;
+    // Check X-Pagination header for paging info
+    const paginationHeader = response.headers.get("X-Pagination");
+    if (paginationHeader) {
+      try {
+        const paginationInfo = JSON.parse(paginationHeader);
+        totalPages = paginationInfo.TotalPages || 1;
+        console.log(`GoHub API: Page ${page}/${totalPages} (from X-Pagination)`);
+      } catch (_) { /* ignore parse errors */ }
     }
+
+    const data = await response.json();
+    const records: Record<string, unknown>[] = Array.isArray(data)
+      ? data
+      : data.Items && Array.isArray(data.Items)
+        ? data.Items
+        : [data];
+
+    for (const item of records) {
+      const systemId = String(item.Name || "");
+      const name = String(item.Description || item.Name || "");
+
+      // Filter for the project
+      if (!systemId.toUpperCase().includes(projectFilter.toUpperCase())) continue;
+
+      // Extract progress - try various field names
+      let progress = 0;
+      if (typeof item.Progress === "number") {
+        progress = item.Progress;
+      } else if (typeof item.OverallProgress === "number") {
+        progress = item.OverallProgress;
+      } else if (typeof item.CompletionPercentage === "number") {
+        progress = item.CompletionPercentage;
+      } else if (typeof item.Completion === "number") {
+        progress = item.Completion;
+      }
+
+      // Detect hydrocarbon systems
+      let isHydrocarbon = false;
+      if (item.Phase) {
+        const phaseName = typeof item.Phase === "object"
+          ? (item.Phase as Record<string, unknown>).Name
+          : item.Phase;
+        if (phaseName && /rfsu|hydrocarbon|hc/i.test(String(phaseName))) {
+          isHydrocarbon = true;
+        }
+      }
+      // Also check system name for gas/oil keywords
+      if (/\b(gas|oil|fuel|hydrocarbon)\b/i.test(name)) {
+        isHydrocarbon = true;
+      }
+
+      allSystems.push({
+        system_id: systemId,
+        name,
+        description: `Imported from GoHub`,
+        progress,
+        is_hydrocarbon: isHydrocarbon,
+      });
+    }
+
+    // If no X-Pagination and response was a plain array, we're done
+    if (!paginationHeader && Array.isArray(data)) break;
+
     page++;
   } while (page <= totalPages);
 
-  return allRecords;
+  return allSystems;
 }
 
-async function findWorkingApiBase(
-  auth: AuthResult,
-  instanceUrl: string,
-  levelId: string | null,
-  resource: string
-): Promise<{ baseUrl: string; data: GoHubRecord[] }> {
-  // Derive API bases from the instance URL
-  const parsed = new URL(instanceUrl);
-  const pathParts = parsed.pathname.split("/").filter(Boolean);
-  const instanceName = pathParts[0] || "BGC"; // e.g. "BGC"
+// ─── Fallback: Scrape Completions Grid HTML ──────────────────
 
-  const apiBases = [
-    `${parsed.origin}/${instanceName}/api`,
-    `${parsed.origin}/api`,
+async function scrapeCompletionsGrid(
+  cookies: Record<string, string>,
+  origin: string,
+  instanceName: string,
+  projectFilter: string
+): Promise<CompletionsSystem[]> {
+  // Try common URLs for the Completions Grid page
+  const gridUrls = [
+    `${origin}/${instanceName}/GoCompletions/SystemCompletion.aspx`,
+    `${origin}/${instanceName}/GoCompletions/SubSystemCompletion.aspx`,
+    `${origin}/${instanceName}/GoCompletions/`,
+    `${origin}/${instanceName}/GoHub/GoCompletions/SystemCompletion.aspx`,
   ];
 
-  const errors: string[] = [];
-  for (const baseUrl of apiBases) {
+  for (const gridUrl of gridUrls) {
     try {
-      console.log(`GoHub API: Trying ${baseUrl}/${resource}...`);
-      const data = await fetchAllPages(auth, baseUrl, resource, levelId);
-      console.log(`GoHub API: Success! ${data.length} records from ${baseUrl}`);
-      return { baseUrl, data };
+      console.log(`GoHub Scrape: Trying ${gridUrl}`);
+      const response = await fetch(gridUrl, {
+        headers: {
+          Cookie: formatCookies(cookies),
+          Accept: "text/html",
+          "User-Agent": BROWSER_UA,
+        },
+      });
+
+      if (!response.ok) {
+        console.log(`GoHub Scrape: ${gridUrl} returned ${response.status}`);
+        await response.text();
+        continue;
+      }
+
+      const html = await response.text();
+
+      // Check if we got redirected to login
+      if (html.includes("ApplicationLogin") || html.includes("Login to")) {
+        console.log(`GoHub Scrape: ${gridUrl} redirected to login`);
+        continue;
+      }
+
+      console.log(`GoHub Scrape: Got page from ${gridUrl}, size=${html.length}`);
+      const systems = parseCompletionsHtml(html, projectFilter);
+      if (systems.length > 0) return systems;
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : String(error);
-      console.warn(`GoHub API: ${baseUrl} failed: ${msg}`);
-      errors.push(`${baseUrl}: ${msg}`);
+      console.warn(`GoHub Scrape: ${gridUrl} error: ${msg}`);
     }
   }
 
-  throw new Error(`Could not fetch ${resource}:\n${errors.join("\n")}`);
+  throw new Error("No Completions Grid page found");
 }
 
-// ─── Data Transformation ─────────────────────────────────────
+function parseCompletionsHtml(
+  html: string,
+  projectFilter: string
+): CompletionsSystem[] {
+  const systems: CompletionsSystem[] = [];
 
-function transformToSystems(records: GoHubRecord[], resource: string) {
-  return records.map((item, index) => {
-    const systemId = item.Name || `${resource}-${index + 1}`;
-    const name = item.Description || item.Name || `${resource} ${index + 1}`;
+  // Strategy 1: Look for card/tile elements with system data
+  // Pattern: System ID (XXXX-YYYYY-ZZZ), Name, Progress %
+  const systemIdPattern = /[A-Z]\d{3}-[A-Z]{2}\d{3}-\d{3}/g;
+  const matches = html.match(systemIdPattern) || [];
 
-    let description = "";
-    if (resource === "SubSystem" && item.System) {
-      const systemName = typeof item.System === "object" ? item.System.Name : item.System;
-      description = systemName ? `System: ${systemName}` : "";
-    } else {
-      description = `Imported from GoHub (${resource})`;
+  // Strategy 2: Parse table rows if present
+  const tableRowRegex = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
+  let trMatch;
+  while ((trMatch = tableRowRegex.exec(html)) !== null) {
+    const row = trMatch[1];
+    const cellRegex = /<td[^>]*>([\s\S]*?)<\/td>/gi;
+    const cells: string[] = [];
+    let cellMatch;
+    while ((cellMatch = cellRegex.exec(row)) !== null) {
+      cells.push(cellMatch[1].replace(/<[^>]+>/g, "").trim());
     }
 
-    let isHydrocarbon = false;
-    if (item.Phase) {
-      const phaseName = typeof item.Phase === "object" ? item.Phase.Name : String(item.Phase);
-      if (phaseName && /rfsu|hydrocarbon|hc|gas|oil/i.test(phaseName)) {
-        isHydrocarbon = true;
+    // Look for cells that contain our system ID pattern
+    for (let i = 0; i < cells.length; i++) {
+      const idMatch = cells[i].match(/([A-Z]\d{3}-[A-Z]{2}\d{3}-\d{3})/);
+      if (idMatch && idMatch[1].toUpperCase().includes(projectFilter.toUpperCase())) {
+        const systemId = idMatch[1];
+        const name = cells[i + 1] || systemId;
+
+        // Look for a percentage in remaining cells
+        let progress = 0;
+        for (let j = i + 1; j < cells.length; j++) {
+          const pctMatch = cells[j].match(/([\d.]+)\s*%?/);
+          if (pctMatch) {
+            const val = parseFloat(pctMatch[1]);
+            if (val >= 0 && val <= 100) {
+              progress = val;
+              break;
+            }
+          }
+        }
+
+        systems.push({
+          system_id: systemId,
+          name,
+          description: "Imported from GoHub (scraped)",
+          progress,
+          is_hydrocarbon: /\b(gas|oil|fuel|hydrocarbon)\b/i.test(name),
+        });
       }
     }
+  }
 
-    return {
-      id: `gohub-${Date.now()}-${index}`,
-      system_id: systemId,
-      name,
-      description,
-      is_hydrocarbon: isHydrocarbon,
-      source: "gohub",
-      gohub_id: item.ID || null,
-    };
-  });
+  // Strategy 3: Broad regex for system IDs on the page
+  if (systems.length === 0) {
+    const unique = new Set<string>();
+    for (const m of matches) {
+      if (m.toUpperCase().includes(projectFilter.toUpperCase()) && !unique.has(m)) {
+        unique.add(m);
+
+        // Try to find a label/name near the system ID
+        const idx = html.indexOf(m);
+        const context = html.substring(
+          Math.max(0, idx - 200),
+          Math.min(html.length, idx + 200)
+        );
+        const nameMatch = context.match(
+          /(?:title|alt|label|description)=["']([^"']+)["']/i
+        );
+
+        systems.push({
+          system_id: m,
+          name: nameMatch ? nameMatch[1] : m,
+          description: "Imported from GoHub (scraped)",
+          progress: 0,
+          is_hydrocarbon: false,
+        });
+      }
+    }
+  }
+
+  return systems;
 }
 
 // ─── Main Handler ────────────────────────────────────────────
@@ -458,24 +572,21 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Parse request body — credentials come from the frontend
+    // Parse request body
     const body = await req.json();
     const {
-      resource = "SubSystem",
       portalUrl,
       username,
       password,
-      levelId: bodyLevelId,
+      projectFilter = "DP300",
     } = body;
 
-    // Use request body credentials, fall back to secrets
     const finalPortalUrl =
       portalUrl ||
       Deno.env.get("GOHUB_PORTAL_URL") ||
       "https://goc.gotechnology.online/BGC/GoHub/Home.aspx";
     const finalUsername = username || Deno.env.get("GOHUB_USERNAME");
     const finalPassword = password || Deno.env.get("GOHUB_PASSWORD");
-    const finalLevelId = bodyLevelId || Deno.env.get("GOHUB_LEVEL_ID") || null;
 
     if (!finalUsername || !finalPassword) {
       return new Response(
@@ -493,62 +604,62 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Validate resource
-    const validResources = [
-      "System", "SubSystem", "Discipline", "Area",
-      "CertificationGrouping", "Phase", "Priority",
-    ];
-    if (!validResources.includes(resource)) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: `Invalid resource: ${resource}. Valid: ${validResources.join(", ")}`,
-        }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    console.log(`GoHub import: Logging in to ${finalPortalUrl}`);
+    console.log(`GoHub import: Project filter = ${projectFilter}`);
 
-    console.log(`GoHub import: ${resource} from ${finalPortalUrl}`);
-
-    // Step 1: Log in via the web interface
-    const sessionCookies = await authWebLogin(
+    // Step 1: Login
+    const sessionCookies = await webLogin(
       finalPortalUrl,
       finalUsername,
       finalPassword
     );
-    const auth: AuthResult = { type: "cookies", cookies: sessionCookies };
     console.log("GoHub import: Login successful");
 
-    // Step 2: Fetch data from API using session cookies
-    const { baseUrl, data: records } = await findWorkingApiBase(
-      auth,
+    // Step 2: Fetch Completions Grid data, filtered by project
+    const completionsSystems = await fetchCompletionsData(
+      sessionCookies,
       finalPortalUrl,
-      finalLevelId,
-      resource
+      projectFilter
     );
 
-    // Step 3: Transform
-    const systems = transformToSystems(records, resource);
+    // Step 3: Transform to wizard format
+    const systems = completionsSystems.map((sys, index) => ({
+      id: `gohub-${Date.now()}-${index}`,
+      system_id: sys.system_id,
+      name: sys.name,
+      description: sys.description,
+      is_hydrocarbon: sys.is_hydrocarbon,
+      progress: sys.progress,
+      source: "gohub",
+    }));
 
-    console.log(`GoHub import: ${systems.length} records imported from ${resource}`);
+    console.log(
+      `GoHub import: ${systems.length} DP300 systems found`
+    );
 
     return new Response(
       JSON.stringify({
         success: true,
         systems,
         total: systems.length,
-        resource,
-        api_base: baseUrl,
+        project_filter: projectFilter,
       }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
     );
   } catch (error: unknown) {
     console.error("GoHub import error:", error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
 
     return new Response(
       JSON.stringify({ success: false, error: errorMessage }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
     );
   }
 });
