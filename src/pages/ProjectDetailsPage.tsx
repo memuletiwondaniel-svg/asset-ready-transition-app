@@ -208,7 +208,7 @@ export default function ProjectDetailsPage() {
 
   return (
     <AnimatedBackground>
-      <div className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-auto min-h-0">
         <div className="container mx-auto p-6 space-y-6">
           <BreadcrumbNavigation currentPageLabel={project ? `${getProjectId()}` : 'Project'} />
 
