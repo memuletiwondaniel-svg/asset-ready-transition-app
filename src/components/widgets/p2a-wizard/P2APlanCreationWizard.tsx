@@ -218,17 +218,17 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl p-0 gap-0 h-[min(80vh,640px)] flex flex-col overflow-hidden [&>button]:hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-2.5 border-b shrink-0">
-          <div className="flex items-center gap-2.5">
+        <div className="flex items-center justify-between px-5 py-4 border-b shrink-0 bg-gradient-to-br from-primary/5 via-accent/5 to-transparent">
+          <div className="flex items-center gap-3">
             <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-orange-500/40 to-amber-500/40 rounded-lg blur-sm" />
-              <div className="relative p-1.5 rounded-lg bg-gradient-to-br from-orange-500 to-amber-500">
-                <Key className="h-4 w-4 text-white" />
+              <div className="absolute inset-0 bg-gradient-to-br from-orange-500/40 to-amber-500/40 rounded-xl blur-sm" />
+              <div className="relative p-2.5 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500">
+                <Key className="h-5 w-5 text-white" />
               </div>
             </div>
             <div>
-              <h2 className="text-sm font-semibold">Create P2A Handover Plan</h2>
-              <p className="text-[10px] text-muted-foreground">
+              <h2 className="text-lg font-semibold">Create P2A Handover Plan</h2>
+              <p className="text-xs text-muted-foreground">
                 {projectName && projectName !== projectCode 
                   ? `${projectCode}: ${projectName}` 
                   : projectCode}
@@ -238,10 +238,10 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7"
+            className="h-8 w-8"
             onClick={handleClose}
           >
-            <X className="h-3.5 w-3.5" />
+            <X className="h-4 w-4" />
           </Button>
         </div>
 
