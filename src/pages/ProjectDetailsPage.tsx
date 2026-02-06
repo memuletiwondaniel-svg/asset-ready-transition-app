@@ -231,7 +231,7 @@ export default function ProjectDetailsPage() {
           {/* Project Widgets Dashboard */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Left Column - Large Overview Widget */}
-            <div className="lg:row-span-3 h-[calc(100vh-180px)] sticky top-6">
+            <div className="lg:row-span-3 lg:h-[calc(100vh-180px)] lg:sticky lg:top-6">
               <ProjectReadinessWidget
                   projectId={id || ''} 
                   onViewDetails={() => setViewModalOpen(true)}
@@ -239,7 +239,7 @@ export default function ProjectDetailsPage() {
               </div>
               
               {/* Right Column - Draggable Widgets */}
-              <div className="lg:col-span-2 h-[calc(100vh-180px)] overflow-auto">
+              <div className="lg:col-span-2 lg:h-[calc(100vh-180px)] lg:overflow-auto">
                 <DndContext
                   sensors={sensors}
                   collisionDetection={closestCenter}
