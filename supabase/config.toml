@@ -123,3 +123,6 @@ verify_jwt = false
 
 [functions.bulk-create-users]
 verify_jwt = false
+
+[functions.gohub-import]
+verify_jwt = false
