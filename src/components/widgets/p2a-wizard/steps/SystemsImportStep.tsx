@@ -14,11 +14,11 @@ import {
   Box,
   Edit2,
   Check,
-  X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CMSImportModal } from './CMSImportModal';
 import { ExcelUploadModal } from './ExcelUploadModal';
+import { AddSystemModal } from './AddSystemModal';
 import { useToast } from '@/components/ui/use-toast';
 
 export interface WizardSystem {
@@ -54,31 +54,13 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
   onSystemsChange,
 }) => {
   const { toast } = useToast();
-  const [showAddForm, setShowAddForm] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showCMSModal, setShowCMSModal] = useState(false);
   const [showExcelModal, setShowExcelModal] = useState(false);
-  const [newSystem, setNewSystem] = useState<Partial<WizardSystem>>({
-    system_id: '',
-    name: '',
-    description: '',
-    is_hydrocarbon: false,
-  });
 
-  const handleAddSystem = () => {
-    if (!newSystem.system_id?.trim() || !newSystem.name?.trim()) return;
-
-    const system: WizardSystem = {
-      id: `temp-${Date.now()}`,
-      system_id: newSystem.system_id.trim(),
-      name: newSystem.name.trim(),
-      description: newSystem.description?.trim() || '',
-      is_hydrocarbon: newSystem.is_hydrocarbon || false,
-    };
-
+  const handleAddSystem = (system: WizardSystem) => {
     onSystemsChange([...systems, system]);
-    setNewSystem({ system_id: '', name: '', description: '', is_hydrocarbon: false });
-    setShowAddForm(false);
   };
 
   const handleRemoveSystem = (id: string) => {
@@ -148,7 +130,7 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
           </div>
         </button>
         <button
-          onClick={() => setShowAddForm(true)}
+          onClick={() => setShowAddModal(true)}
           className="group relative flex flex-col items-center gap-2 p-3 rounded-xl border-2 border-dashed border-muted-foreground/25 bg-gradient-to-br from-muted/50 to-muted/30 hover:border-blue-500/50 hover:from-blue-500/10 hover:to-blue-500/5 transition-all duration-200"
         >
           <div className="p-2.5 rounded-lg bg-blue-500/10 text-blue-600 group-hover:bg-blue-500 group-hover:text-white transition-colors">
@@ -204,65 +186,12 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
         description="Import systems from an Excel spreadsheet"
       />
 
-      {/* Add Form */}
-      {showAddForm && (
-        <div className="p-4 border rounded-lg bg-muted/30 space-y-3">
-          <div className="flex gap-2">
-            <div className="w-28">
-              <Label className="text-xs">System ID</Label>
-              <Input
-                value={newSystem.system_id || ''}
-                onChange={(e) => setNewSystem(prev => ({ ...prev, system_id: e.target.value }))}
-                placeholder="e.g., SYS-001"
-                className="h-8 text-sm"
-              />
-            </div>
-            <div className="flex-1">
-              <Label className="text-xs">System Name</Label>
-              <Input
-                value={newSystem.name || ''}
-                onChange={(e) => setNewSystem(prev => ({ ...prev, name: e.target.value }))}
-                placeholder="e.g., Power Generation System"
-                className="h-8 text-sm"
-              />
-            </div>
-          </div>
-          <div>
-            <Label className="text-xs">Description (Optional)</Label>
-            <Input
-              value={newSystem.description || ''}
-              onChange={(e) => setNewSystem(prev => ({ ...prev, description: e.target.value }))}
-              placeholder="Brief description..."
-              className="h-8 text-sm"
-            />
-          </div>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Checkbox
-                checked={newSystem.is_hydrocarbon || false}
-                onCheckedChange={(checked) => 
-                  setNewSystem(prev => ({ ...prev, is_hydrocarbon: checked as boolean }))
-                }
-              />
-              <Label className="text-xs">Hydrocarbon System (targets RFSU)</Label>
-            </div>
-            <div className="flex gap-2">
-              <Button size="sm" variant="ghost" onClick={() => setShowAddForm(false)}>
-                <X className="h-4 w-4 mr-1" />
-                Cancel
-              </Button>
-              <Button 
-                size="sm" 
-                onClick={handleAddSystem}
-                disabled={!newSystem.system_id?.trim() || !newSystem.name?.trim()}
-              >
-                <Plus className="h-4 w-4 mr-1" />
-                Add
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Add System Modal */}
+      <AddSystemModal
+        open={showAddModal}
+        onOpenChange={setShowAddModal}
+        onAdd={handleAddSystem}
+      />
     </div>
   );
 };
