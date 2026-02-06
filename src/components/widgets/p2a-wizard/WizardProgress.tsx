@@ -20,7 +20,7 @@ export const WizardProgress: React.FC<WizardProgressProps> = ({
   onStepClick,
 }) => {
   return (
-    <div className="flex items-center gap-2 px-6 py-4 border-b bg-muted/30">
+    <div className="flex items-center gap-2 px-4 py-2.5 border-b bg-muted/30">
       {steps.map((step, index) => {
         const stepNumber = index + 1;
         const isCompleted = currentStep > stepNumber;

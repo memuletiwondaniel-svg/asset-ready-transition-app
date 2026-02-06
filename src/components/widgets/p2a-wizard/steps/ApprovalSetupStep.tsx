@@ -246,7 +246,7 @@ export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
   };
 
   return (
-    <div className="space-y-4 p-6">
+    <div className="space-y-3 p-4">
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-sm font-medium">Approval Workflow</h3>
@@ -282,15 +282,15 @@ export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
 
       {/* Approvers List */}
       <div className="border rounded-lg">
-        <ScrollArea className="h-[280px]">
+        <ScrollArea className="h-[240px]">
           <div className="p-2 space-y-2">
             {isLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
               </div>
             ) : approvers.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                <UserCheck className="h-10 w-10 mx-auto mb-3 opacity-40" />
+              <div className="text-center py-8 text-muted-foreground">
+                <UserCheck className="h-8 w-8 mx-auto mb-2 opacity-40" />
                 <p className="text-sm">No approvers configured</p>
                 <p className="text-xs mt-1">Add approvers manually or refresh from team</p>
               </div>

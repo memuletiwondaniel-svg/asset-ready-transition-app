@@ -102,7 +102,7 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
   };
 
   return (
-    <div className="space-y-4 p-6">
+    <div className="space-y-3 p-4">
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-sm font-medium">Systems</h3>
@@ -155,13 +155,13 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
 
       {/* Systems List */}
       <div className="border rounded-lg">
-        <ScrollArea className="h-[240px]">
+        <ScrollArea className="h-[200px]">
           <div className="p-2 space-y-2">
             {systems.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                <Box className="h-10 w-10 mx-auto mb-3 opacity-40" />
+              <div className="text-center py-8 text-muted-foreground">
+                <Box className="h-8 w-8 mx-auto mb-2 opacity-40" />
                 <p className="text-sm">No systems added yet</p>
-                <p className="text-xs mt-1">Add systems manually or import from external sources</p>
+                <p className="text-xs mt-0.5">Import or add systems above</p>
               </div>
             ) : (
               systems.map((system) => (

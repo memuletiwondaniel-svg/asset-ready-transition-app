@@ -44,9 +44,9 @@ export const SystemMappingStep: React.FC<SystemMappingStepProps> = ({
 
   if (systems.length === 0 || vcrs.length === 0) {
     return (
-      <div className="p-6 text-center">
-        <div className="py-12 text-muted-foreground">
-          <ArrowRight className="h-10 w-10 mx-auto mb-3 opacity-40" />
+      <div className="p-4 text-center">
+        <div className="py-8 text-muted-foreground">
+          <ArrowRight className="h-8 w-8 mx-auto mb-2 opacity-40" />
           <p className="text-sm">
             {systems.length === 0 && vcrs.length === 0 
               ? "Add systems and VCRs first to create mappings"
@@ -61,7 +61,7 @@ export const SystemMappingStep: React.FC<SystemMappingStepProps> = ({
   }
 
   return (
-    <div className="space-y-4 p-6">
+    <div className="space-y-3 p-4">
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-sm font-medium">Map Systems to VCRs</h3>
@@ -76,7 +76,7 @@ export const SystemMappingStep: React.FC<SystemMappingStepProps> = ({
         </Badge>
       </div>
 
-      <ScrollArea className="h-[340px]">
+      <ScrollArea className="h-[300px]">
         <div className="space-y-4">
           {vcrs.map((vcr) => (
             <div key={vcr.id} className="border rounded-lg overflow-hidden">
