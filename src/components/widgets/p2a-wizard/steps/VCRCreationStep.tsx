@@ -68,23 +68,17 @@ export const VCRCreationStep: React.FC<VCRCreationStepProps> = ({
   return (
     <div className="flex flex-col gap-3 p-4 h-full">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
+        <div>
           <h3 className="text-sm font-medium">Verification Certificate of Readiness (VCRs)</h3>
-          {vcrs.length > 0 && (
-            <span className="text-[10px] tabular-nums text-muted-foreground/60 font-medium">{vcrs.length}</span>
-          )}
+          <p className="text-xs text-muted-foreground">Create VCRs for logical handover of Systems</p>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-xs gap-1 text-primary hover:text-primary hover:bg-primary/10 h-7 px-2.5"
-          onClick={() => setShowAddModal(true)}
-        >
-          <Plus className="h-3.5 w-3.5" />
-          Add
-        </Button>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline">{vcrs.length} VCR{vcrs.length !== 1 ? 's' : ''}</Badge>
+          <Button size="sm" className="h-7 text-xs gap-1" onClick={() => setShowAddModal(true)}>
+            <Plus className="h-3.5 w-3.5" /> Add VCR
+          </Button>
+        </div>
       </div>
-      <p className="text-xs text-muted-foreground -mt-1">Create VCRs for logical handover of Systems</p>
 
       {/* VCR List */}
       <div className="border rounded-lg flex-1 min-h-0 flex flex-col">
