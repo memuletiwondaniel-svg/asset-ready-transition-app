@@ -535,10 +535,42 @@ export function useP2APlanWizard(projectId: string, projectCode: string) {
 
   const submitForApproval = useMutation({
     mutationFn: async () => {
-      return persistPlanToDatabase(projectId, projectCode, state, 'ACTIVE');
+      const planId = await persistPlanToDatabase(projectId, projectCode, state, 'ACTIVE');
+
+      // Create user_tasks for Phase 1 approvers (display_order 1-3)
+      // Phase 2 approvers (display_order 4-5) get tasks once Phase 1 is complete
+      const phase1Approvers = state.approvers.filter(a => a.display_order <= 3 && a.user_id);
+
+      if (phase1Approvers.length > 0) {
+        const client = supabase as any;
+        const taskRecords = phase1Approvers.map(approver => ({
+          user_id: approver.user_id!,
+          title: `Review & Approve P2A Handover Plan – ${projectCode}`,
+          description: `You have been assigned as ${approver.role_name} to review and approve the P2A Handover Plan for project ${projectCode}. Please review the plan and provide your approval.`,
+          type: 'approval',
+          priority: 'high',
+          status: 'pending',
+          metadata: {
+            plan_id: planId,
+            project_id: projectId,
+            project_code: projectCode,
+            approver_role: approver.role_name,
+            approval_phase: 1,
+            source: 'p2a_handover',
+          },
+        }));
+
+        const { error: taskError } = await client.from('user_tasks').insert(taskRecords);
+        if (taskError) {
+          console.error('[P2A] Failed to create approval tasks:', taskError);
+        }
+      }
+
+      return planId;
     },
     onSuccess: () => {
       invalidateQueries();
+      queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
       toast({
         title: 'Plan submitted for approval',
         description: 'Approvers have been notified and can review the plan.',
