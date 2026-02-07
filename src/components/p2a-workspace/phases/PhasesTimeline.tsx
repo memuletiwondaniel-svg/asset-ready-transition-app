@@ -147,7 +147,7 @@ export const PhasesTimeline: React.FC<PhasesTimelineProps> = ({
 
    return (
     <div className="flex-1 flex flex-col overflow-hidden min-h-0">
-      <div className="flex-1 min-h-0 relative overflow-x-auto overflow-y-hidden">
+      <div className="flex-1 min-h-0 relative overflow-x-auto overflow-y-auto">
         <div className="relative p-4 pb-8">
           {/* Phase Columns with Milestones Interleaved */}
           <div className="flex gap-4 relative z-10">
