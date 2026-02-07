@@ -191,7 +191,6 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
         return (
           <VCRCreationStep
             vcrs={state.vcrs}
-            milestones={milestones}
             projectCode={projectCode}
             onVCRsChange={(vcrs) => updateState('vcrs', vcrs)}
           />
