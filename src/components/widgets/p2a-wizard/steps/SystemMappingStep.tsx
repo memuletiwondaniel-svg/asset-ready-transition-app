@@ -2,12 +2,33 @@ import React, { useState, useMemo } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { Key, ArrowRight, ChevronDown, ChevronRight } from 'lucide-react';
+import { ArrowRight, ChevronDown, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { WizardSystem } from './SystemsImportStep';
+import { WizardSystem, WizardSubsystem } from './SystemsImportStep';
 import { WizardVCR } from './VCRCreationStep';
 
-// Reuse the same VCR ID color palette from VCRCreationStep
+// ── Mapping key helpers ──────────────────────────────────────
+const SUB_SEP = '::sub::';
+
+export const makeSubKey = (systemId: string, subSystemId: string) =>
+  `${systemId}${SUB_SEP}${subSystemId}`;
+
+export const isSubKey = (key: string) => key.includes(SUB_SEP);
+
+export const parseSubKey = (key: string) => {
+  const [systemId, subSystemId] = key.split(SUB_SEP);
+  return { systemId, subSystemId };
+};
+
+/** For a system without subsystems → [system.id]. With subsystems → composite keys. */
+const getMappableKeys = (system: WizardSystem): string[] => {
+  if (system.subsystems && system.subsystems.length > 0) {
+    return system.subsystems.map(sub => makeSubKey(system.id, sub.system_id));
+  }
+  return [system.id];
+};
+
+// ── VCR color palette (shared with VCRCreationStep) ──────────
 const VCR_ID_HUES = [210, 260, 180, 320, 195, 280, 170, 300];
 
 const getVCRIdStyle = (index: number) => {
@@ -30,10 +51,11 @@ const getVCRHeaderStyle = (index: number, hasAssignments: boolean) => {
   return {};
 };
 
+// ── Props ────────────────────────────────────────────────────
 interface SystemMappingStepProps {
   systems: WizardSystem[];
   vcrs: WizardVCR[];
-  mappings: Record<string, string[]>; // vcrId -> systemIds[]
+  mappings: Record<string, string[]>; // vcrId -> mappingKeys[]
   onMappingsChange: (mappings: Record<string, string[]>) => void;
 }
 
@@ -43,60 +65,103 @@ export const SystemMappingStep: React.FC<SystemMappingStepProps> = ({
   mappings,
   onMappingsChange,
 }) => {
-  // Default all VCRs to collapsed
-  const [collapsedVCRs, setCollapsedVCRs] = useState<Set<string>>(() => new Set(vcrs.map(v => v.id)));
+  const [collapsedVCRs, setCollapsedVCRs] = useState<Set<string>>(
+    () => new Set(vcrs.map(v => v.id))
+  );
+  const [expandedSystems, setExpandedSystems] = useState<Set<string>>(new Set());
 
-  const toggleCollapse = (vcrId: string) => {
+  // ── VCR collapse ─────────────────────────────────────────
+  const toggleVCRCollapse = (vcrId: string) => {
     setCollapsedVCRs(prev => {
       const next = new Set(prev);
-      if (next.has(vcrId)) {
-        next.delete(vcrId);
-      } else {
-        next.add(vcrId);
-      }
+      next.has(vcrId) ? next.delete(vcrId) : next.add(vcrId);
       return next;
     });
   };
 
-  const toggleMapping = (vcrId: string, systemId: string) => {
-    const currentSystems = mappings[vcrId] || [];
-    if (currentSystems.includes(systemId)) {
-      // Unassign from this VCR
-      onMappingsChange({
-        ...mappings,
-        [vcrId]: currentSystems.filter(id => id !== systemId),
-      });
-    } else {
-      // Assign to this VCR (exclusive — remove from any other VCR first)
-      const updated = { ...mappings };
-      for (const key of Object.keys(updated)) {
-        if (key !== vcrId) {
-          updated[key] = (updated[key] || []).filter(id => id !== systemId);
-        }
-      }
-      updated[vcrId] = [...currentSystems, systemId];
-      onMappingsChange(updated);
-    }
+  // ── System expand (for subsystems) ───────────────────────
+  const toggleSystemExpand = (systemId: string) => {
+    setExpandedSystems(prev => {
+      const next = new Set(prev);
+      next.has(systemId) ? next.delete(systemId) : next.add(systemId);
+      return next;
+    });
   };
 
-  const getAssignedCount = (vcrId: string) => {
-    return (mappings[vcrId] || []).length;
-  };
+  // ── All flat mapping keys across all VCRs ────────────────
+  const allMappedKeys = useMemo(() => {
+    const set = new Set<string>();
+    Object.values(mappings).forEach(keys => keys.forEach(k => set.add(k)));
+    return set;
+  }, [mappings]);
 
-  const getSystemOwnerVCR = (systemId: string): string | null => {
-    for (const [vcrId, systemIds] of Object.entries(mappings)) {
-      if (systemIds.includes(systemId)) return vcrId;
+  // ── Owner lookup ─────────────────────────────────────────
+  const getKeyOwnerVCR = (key: string): string | null => {
+    for (const [vcrId, keys] of Object.entries(mappings)) {
+      if (keys.includes(key)) return vcrId;
     }
     return null;
   };
 
-  const isSystemAssigned = (systemId: string) => {
-    return getSystemOwnerVCR(systemId) !== null;
+  // ── Toggle a single mapping key (exclusive across VCRs) ──
+  const toggleKey = (vcrId: string, key: string) => {
+    const current = mappings[vcrId] || [];
+    if (current.includes(key)) {
+      // Unassign from this VCR
+      onMappingsChange({
+        ...mappings,
+        [vcrId]: current.filter(k => k !== key),
+      });
+    } else {
+      // Assign: remove from any other VCR first (exclusive)
+      const updated = { ...mappings };
+      for (const vid of Object.keys(updated)) {
+        if (vid !== vcrId) {
+          updated[vid] = (updated[vid] || []).filter(k => k !== key);
+        }
+      }
+      updated[vcrId] = [...current, key];
+      onMappingsChange(updated);
+    }
   };
 
-  const unassignedSystems = systems.filter(s => !isSystemAssigned(s.id));
+  // ── Toggle ALL subsystem keys for a parent system ────────
+  const toggleParentSystem = (vcrId: string, system: WizardSystem) => {
+    const subKeys = system.subsystems!.map(sub => makeSubKey(system.id, sub.system_id));
+    const current = mappings[vcrId] || [];
+    const assignedToThisVCR = subKeys.filter(k => current.includes(k));
+    const allAssigned = assignedToThisVCR.length === subKeys.length;
 
-  // Sort VCRs: those with assignments first
+    const updated = { ...mappings };
+
+    if (allAssigned) {
+      // Unassign all from this VCR
+      updated[vcrId] = current.filter(k => !subKeys.includes(k));
+    } else {
+      // Assign all: first remove from other VCRs
+      for (const vid of Object.keys(updated)) {
+        if (vid !== vcrId) {
+          updated[vid] = (updated[vid] || []).filter(k => !subKeys.includes(k));
+        }
+      }
+      // Add all missing ones to this VCR
+      const existing = new Set(updated[vcrId] || []);
+      subKeys.forEach(k => existing.add(k));
+      updated[vcrId] = Array.from(existing);
+    }
+    onMappingsChange(updated);
+  };
+
+  // ── Count helpers ────────────────────────────────────────
+  const getAssignedCount = (vcrId: string) => (mappings[vcrId] || []).length;
+
+  /** Total mappable items not assigned to any VCR */
+  const totalUnassigned = useMemo(() => {
+    const allKeys = systems.flatMap(getMappableKeys);
+    return allKeys.filter(k => !allMappedKeys.has(k)).length;
+  }, [systems, allMappedKeys]);
+
+  // ── Sort VCRs: those with assignments first ──────────────
   const sortedVCRs = useMemo(() => {
     return [...vcrs].sort((a, b) => {
       const aCount = getAssignedCount(a.id);
@@ -107,64 +172,242 @@ export const SystemMappingStep: React.FC<SystemMappingStepProps> = ({
     });
   }, [vcrs, mappings]);
 
+  // ── Empty state ──────────────────────────────────────────
   if (systems.length === 0 || vcrs.length === 0) {
     return (
       <div className="p-4 text-center">
         <div className="py-8 text-muted-foreground">
           <ArrowRight className="h-8 w-8 mx-auto mb-2 opacity-40" />
           <p className="text-sm">
-            {systems.length === 0 && vcrs.length === 0 
-              ? "Add systems and VCRs first to create mappings"
-              : systems.length === 0 
-                ? "Add systems first to map them to VCRs"
-                : "Create VCRs first to map systems to them"
-            }
+            {systems.length === 0 && vcrs.length === 0
+              ? 'Add systems and VCRs first to create mappings'
+              : systems.length === 0
+                ? 'Add systems first to map them to VCRs'
+                : 'Create VCRs first to map systems to them'}
           </p>
         </div>
       </div>
     );
   }
 
+  // ── Render helpers ───────────────────────────────────────
+  const renderSubsystemRow = (
+    system: WizardSystem,
+    sub: WizardSubsystem,
+    vcrId: string,
+    isChecked: boolean,
+  ) => {
+    const key = makeSubKey(system.id, sub.system_id);
+    return (
+      <div
+        key={key}
+        className={cn(
+          'flex items-center gap-2.5 py-1 px-2 rounded cursor-pointer transition-colors ml-5',
+          isChecked
+            ? 'bg-primary/5 border border-primary/15'
+            : 'hover:bg-muted/40',
+        )}
+        onClick={() => toggleKey(vcrId, key)}
+      >
+        <Checkbox
+          checked={isChecked}
+          onCheckedChange={() => toggleKey(vcrId, key)}
+          className="h-3.5 w-3.5"
+        />
+        <span className="text-[10px] font-mono text-muted-foreground shrink-0">
+          {sub.system_id}
+        </span>
+        <span className="text-[11px] truncate flex-1 text-muted-foreground">
+          {sub.name}
+        </span>
+      </div>
+    );
+  };
+
+  const renderSystemRow = (
+    system: WizardSystem,
+    vcrId: string,
+    vcrMappings: string[],
+  ) => {
+    const hasSubsystems = system.subsystems && system.subsystems.length > 0;
+    const isExpanded = expandedSystems.has(`${vcrId}::${system.id}`);
+
+    if (!hasSubsystems) {
+      // Simple system — direct checkbox (current behavior)
+      const isChecked = vcrMappings.includes(system.id);
+      return (
+        <div key={system.id}>
+          <div
+            className={cn(
+              'flex items-center gap-3 p-2 rounded cursor-pointer transition-colors',
+              isChecked
+                ? 'bg-primary/5 border border-primary/20'
+                : 'hover:bg-muted/50',
+            )}
+            onClick={() => toggleKey(vcrId, system.id)}
+          >
+            <Checkbox
+              checked={isChecked}
+              onCheckedChange={() => toggleKey(vcrId, system.id)}
+            />
+            <div className="flex-1 min-w-0">
+              <span className="text-sm">{system.name}</span>
+              <span className="text-xs text-muted-foreground ml-2 font-mono">
+                {system.system_id}
+              </span>
+            </div>
+            {system.is_hydrocarbon && (
+              <Badge
+                variant="outline"
+                className="text-[10px] bg-orange-50 text-orange-700 border-orange-200"
+              >
+                HC
+              </Badge>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // System with subsystems — expandable
+    const subKeys = system.subsystems!.map(sub =>
+      makeSubKey(system.id, sub.system_id),
+    );
+    const assignedHere = subKeys.filter(k => vcrMappings.includes(k));
+    const allChecked = assignedHere.length === subKeys.length;
+    const someChecked = assignedHere.length > 0 && !allChecked;
+
+    return (
+      <div key={system.id} className="space-y-0.5">
+        <div
+          className={cn(
+            'flex items-center gap-2 p-2 rounded cursor-pointer transition-colors',
+            assignedHere.length > 0
+              ? 'bg-primary/5 border border-primary/20'
+              : 'hover:bg-muted/50',
+          )}
+          onClick={() => toggleSystemExpand(`${vcrId}::${system.id}`)}
+        >
+          {isExpanded ? (
+            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+          ) : (
+            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+          )}
+          <Checkbox
+            checked={allChecked ? true : someChecked ? 'indeterminate' : false}
+            onCheckedChange={(e) => {
+              e; // consume
+              toggleParentSystem(vcrId, system);
+            }}
+            onClick={(e) => e.stopPropagation()}
+          />
+          <div className="flex-1 min-w-0">
+            <span className="text-sm">{system.name}</span>
+            <span className="text-xs text-muted-foreground ml-2 font-mono">
+              {system.system_id}
+            </span>
+          </div>
+          <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">
+            {assignedHere.length}/{system.subsystems!.length}
+          </span>
+          {system.is_hydrocarbon && (
+            <Badge
+              variant="outline"
+              className="text-[10px] bg-orange-50 text-orange-700 border-orange-200"
+            >
+              HC
+            </Badge>
+          )}
+        </div>
+
+        {/* Subsystem rows */}
+        {isExpanded && (
+          <div className="border-l-2 border-muted ml-3 pl-1 space-y-0.5 py-0.5">
+            {system.subsystems!.map(sub => {
+              const key = makeSubKey(system.id, sub.system_id);
+              const isChecked = vcrMappings.includes(key);
+              return renderSubsystemRow(system, sub, vcrId, isChecked);
+            })}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // ── Partition systems for a given VCR ────────────────────
+  const getPartitionedSystems = (vcrId: string) => {
+    const vcrMappings = mappings[vcrId] || [];
+
+    const assigned: WizardSystem[] = [];
+    const available: WizardSystem[] = [];
+
+    for (const system of systems) {
+      const keys = getMappableKeys(system);
+      const hasAnyHere = keys.some(k => vcrMappings.includes(k));
+      const hasAnyAvailable = keys.some(k => !allMappedKeys.has(k));
+
+      if (hasAnyHere) {
+        assigned.push(system);
+      }
+      // Also show in available if some subsystems are still unmapped
+      if (hasAnyAvailable && !hasAnyHere) {
+        available.push(system);
+      }
+    }
+
+    return { assigned, available, vcrMappings };
+  };
+
+  // ── Main render ──────────────────────────────────────────
   return (
     <div className="flex flex-col gap-3 p-4 h-full">
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-sm font-medium">Map Systems to VCRs</h3>
           <p className="text-xs text-muted-foreground">
-            Click on each VCR to expand and select its systems
+            Expand systems to map individual subsystems
           </p>
         </div>
-        <Badge variant="outline" className={cn(
-          unassignedSystems.length > 0 && "bg-amber-50 text-amber-700 border-amber-200"
-        )}>
-          {unassignedSystems.length} unassigned
+        <Badge
+          variant="outline"
+          className={cn(
+            totalUnassigned > 0 &&
+              'bg-amber-50 text-amber-700 border-amber-200',
+          )}
+        >
+          {totalUnassigned} unassigned
         </Badge>
       </div>
 
       <ScrollArea className="flex-1 min-h-0">
         <div className="space-y-3">
-          {sortedVCRs.map((vcr) => {
+          {sortedVCRs.map(vcr => {
             const originalIndex = vcrs.findIndex(v => v.id === vcr.id);
             const assignedCount = getAssignedCount(vcr.id);
             const hasAssignments = assignedCount > 0;
             const isCollapsed = collapsedVCRs.has(vcr.id);
+            const { assigned, available, vcrMappings } = getPartitionedSystems(vcr.id);
 
             return (
               <div
                 key={vcr.id}
                 className={cn(
-                  "border rounded-lg overflow-hidden transition-all",
-                  hasAssignments && "border-primary/20 shadow-sm"
+                  'border rounded-lg overflow-hidden transition-all',
+                  hasAssignments && 'border-primary/20 shadow-sm',
                 )}
               >
                 {/* VCR Header */}
                 <div
                   className={cn(
-                    "flex items-center gap-2 p-2.5 border-b cursor-pointer select-none transition-colors hover:bg-muted/50",
-                    !hasAssignments && "bg-muted/30"
+                    'flex items-center gap-2 p-2.5 border-b cursor-pointer select-none transition-colors hover:bg-muted/50',
+                    !hasAssignments && 'bg-muted/30',
                   )}
-                  style={hasAssignments ? getVCRHeaderStyle(originalIndex, true) : undefined}
-                  onClick={() => toggleCollapse(vcr.id)}
+                  style={
+                    hasAssignments
+                      ? getVCRHeaderStyle(originalIndex, true)
+                      : undefined
+                  }
+                  onClick={() => toggleVCRCollapse(vcr.id)}
                 >
                   {isCollapsed ? (
                     <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
@@ -181,90 +424,61 @@ export const SystemMappingStep: React.FC<SystemMappingStepProps> = ({
                   <Badge
                     variant="secondary"
                     className={cn(
-                      "ml-auto text-[10px]",
-                      hasAssignments && "bg-primary/10 text-primary"
+                      'ml-auto text-[10px]',
+                      hasAssignments && 'bg-primary/10 text-primary',
                     )}
                   >
-                    {assignedCount} systems
+                    {assignedCount} mapped
                   </Badge>
                 </div>
 
-                {/* System List - collapsible */}
-                {!isCollapsed && (() => {
-                  const vcrMappings = mappings[vcr.id] || [];
-                  const selectedSystems = systems.filter(s => vcrMappings.includes(s.id));
-                  const availableSystems = systems.filter(s => !vcrMappings.includes(s.id) && !getSystemOwnerVCR(s.id));
-
-                  const renderSystem = (system: WizardSystem, isChecked: boolean) => (
-                    <div
-                      key={system.id}
-                      className={cn(
-                        "flex items-center gap-3 p-2 rounded cursor-pointer transition-colors",
-                        isChecked 
-                          ? "bg-primary/5 border border-primary/20" 
-                          : "hover:bg-muted/50"
-                      )}
-                      onClick={() => toggleMapping(vcr.id, system.id)}
-                    >
-                      <Checkbox
-                        checked={isChecked}
-                        onCheckedChange={() => toggleMapping(vcr.id, system.id)}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <span className="text-sm">{system.name}</span>
-                        <span className="text-xs text-muted-foreground ml-2 font-mono">
-                          {system.system_id}
-                        </span>
-                      </div>
-                      {system.is_hydrocarbon && (
-                        <Badge variant="outline" className="text-[10px] bg-orange-50 text-orange-700 border-orange-200">
-                          HC
-                        </Badge>
-                      )}
-                    </div>
-                  );
-
-                  return (
-                    <div className="p-2 space-y-2">
-                      {selectedSystems.length > 0 && (
-                        <div>
-                          <p className="text-[10px] font-medium text-primary uppercase tracking-wider px-2 pb-1">
-                            Assigned ({selectedSystems.length})
-                          </p>
-                          <div className="space-y-1">
-                            {selectedSystems.map(s => renderSystem(s, true))}
-                          </div>
-                        </div>
-                      )}
-                      {availableSystems.length > 0 && (
-                        <div>
-                          {selectedSystems.length > 0 && (
-                            <div className="border-t my-2" />
+                {/* System List — collapsible */}
+                {!isCollapsed && (
+                  <div className="p-2 space-y-2">
+                    {assigned.length > 0 && (
+                      <div>
+                        <p className="text-[10px] font-medium text-primary uppercase tracking-wider px-2 pb-1">
+                          Assigned ({assigned.length})
+                        </p>
+                        <div className="space-y-1">
+                          {assigned.map(s =>
+                            renderSystemRow(s, vcr.id, vcrMappings),
                           )}
-                          <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider px-2 pb-1">
-                            Available ({availableSystems.length})
-                          </p>
-                          <div className="space-y-1">
-                            {availableSystems.map(s => renderSystem(s, false))}
-                          </div>
                         </div>
-                      )}
-                    </div>
-                  );
-                })()}
+                      </div>
+                    )}
+                    {available.length > 0 && (
+                      <div>
+                        {assigned.length > 0 && (
+                          <div className="border-t my-2" />
+                        )}
+                        <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider px-2 pb-1">
+                          Available ({available.length})
+                        </p>
+                        <div className="space-y-1">
+                          {available.map(s =>
+                            renderSystemRow(s, vcr.id, vcrMappings),
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    {assigned.length === 0 && available.length === 0 && (
+                      <p className="text-xs text-muted-foreground text-center py-2">
+                        All systems are assigned to other VCRs
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}
         </div>
       </ScrollArea>
 
-      {unassignedSystems.length > 0 && (
+      {totalUnassigned > 0 && (
         <div className="p-3 bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/50 dark:border-amber-800/50 rounded-lg shrink-0">
           <div className="text-xs text-amber-700 dark:text-amber-400">
-            <strong>Note:</strong> {unassignedSystems.length} system{unassignedSystems.length !== 1 ? 's are' : ' is'} not assigned to any VCR:
-            <span className="font-medium ml-1">
-              {unassignedSystems.map(s => s.name).join(', ')}
-            </span>
+            <strong>Note:</strong> {totalUnassigned} item{totalUnassigned !== 1 ? 's are' : ' is'} not assigned to any VCR.
           </div>
         </div>
       )}

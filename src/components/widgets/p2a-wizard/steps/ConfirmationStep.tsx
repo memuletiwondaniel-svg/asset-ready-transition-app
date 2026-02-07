@@ -130,7 +130,8 @@ export const ConfirmationStep: React.FC<ConfirmationStepProps> = ({
               </div>
               <div className="space-y-1">
                 {vcrs.map((vcr) => {
-                  const systemCount = (mappings[vcr.id] || []).length;
+                  const mappedKeys = mappings[vcr.id] || [];
+                  const systemCount = mappedKeys.length;
                   const phaseId = vcrPhaseAssignments[vcr.id];
                   const phase = phases.find(p => p.id === phaseId);
                   
