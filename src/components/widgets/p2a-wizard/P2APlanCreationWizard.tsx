@@ -139,6 +139,15 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
     }
   };
 
+  const handleSaveAndExit = async () => {
+    try {
+      await saveDraft();
+      handleClose();
+    } catch (error) {
+      // Error handled in hook
+    }
+  };
+
   const handleSubmit = async () => {
     try {
       await submitForApproval();
@@ -309,6 +318,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
             onBack={handleBack}
             onNext={handleNext}
             onSave={handleSaveDraft}
+            onSaveAndExit={handleSaveAndExit}
             onSubmit={currentStep === WIZARD_STEPS.length ? handleSubmit : undefined}
             isSubmitting={isSubmitting}
             isSaving={isSaving}

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Save, Loader2, Send } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Save, Loader2, Send, LogOut } from 'lucide-react';
 
 interface WizardNavigationProps {
   currentStep: number;
@@ -8,6 +8,7 @@ interface WizardNavigationProps {
   onBack: () => void;
   onNext: () => void;
   onSave?: () => void;
+  onSaveAndExit?: () => void;
   onSubmit?: () => void;
   isSubmitting?: boolean;
   isSaving?: boolean;
@@ -22,6 +23,7 @@ export const WizardNavigation: React.FC<WizardNavigationProps> = ({
   onBack,
   onNext,
   onSave,
+  onSaveAndExit,
   onSubmit,
   isSubmitting = false,
   isSaving = false,
@@ -55,7 +57,22 @@ export const WizardNavigation: React.FC<WizardNavigationProps> = ({
             ) : (
               <Save className="h-4 w-4 mr-1" />
             )}
-            Save Draft
+            Save
+          </Button>
+        )}
+        {onSaveAndExit && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onSaveAndExit}
+            disabled={isSaving || isSubmitting}
+          >
+            {isSaving ? (
+              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+            ) : (
+              <LogOut className="h-4 w-4 mr-1" />
+            )}
+            Save & Exit
           </Button>
         )}
       </div>

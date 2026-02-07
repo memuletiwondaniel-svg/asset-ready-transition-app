@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Key, FileText, Plus, ChevronRight } from 'lucide-react';
+import { Key, FileText, Plus, ChevronRight, Pencil } from 'lucide-react';
 import { StyledWidgetIcon } from './StyledWidgetIcon';
 import { useProjectPSSRs } from '@/hooks/useProjectPSSRs';
 import { useProjectVCRs } from '@/hooks/useProjectVCRs';
@@ -16,6 +16,7 @@ import { P2APlanCreationWizard } from './p2a-wizard/P2APlanCreationWizard';
 import { cn } from '@/lib/utils';
 import { useCanCreateVCR } from '@/hooks/useCurrentUserRole';
 import { useP2AHandoverPlan } from '@/components/p2a-workspace/hooks/useP2AHandoverPlan';
+import { useP2APlanByProject } from '@/hooks/useP2APlanByProject';
 
 interface PSSRSummaryWidgetProps {
   projectId: string;
@@ -89,7 +90,8 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
   // Get the first (active) ORA plan for this project
   const oraPlanId = orpPlans?.[0]?.id || '';
   const { plan: p2aPlan } = useP2AHandoverPlan(oraPlanId);
-  const isLoading = pssrsLoading || vcrsLoading;
+  const { data: p2aPlanByProject, isLoading: p2aPlanLoading } = useP2APlanByProject(projectId);
+  const isLoading = pssrsLoading || vcrsLoading || p2aPlanLoading;
 
   // Map project milestones to the format the wizard expects
   const wizardMilestones = (projectMilestones || []).map(m => ({
@@ -168,6 +170,34 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                   >
                     <Plus className="h-3.5 w-3.5 mr-1" />
                     New VCR
+                  </Button>
+                )}
+              </div>
+            ) : p2aPlanByProject ? (
+              // Draft plan exists but no VCRs yet — show "Continue" state
+              <div className="text-center py-10 text-muted-foreground">
+                <p className="text-sm font-medium mb-1">P2A Handover Plan</p>
+                <Badge 
+                  variant="outline" 
+                  className={cn(
+                    "mb-3 text-[10px] px-2 py-0.5",
+                    p2aPlanByProject.status === 'DRAFT' && "bg-muted text-muted-foreground border-border",
+                    p2aPlanByProject.status === 'ACTIVE' && "bg-amber-50 text-amber-700 border-amber-200",
+                    p2aPlanByProject.status === 'COMPLETED' && "bg-emerald-50 text-emerald-700 border-emerald-200"
+                  )}
+                >
+                  {p2aPlanByProject.status === 'ACTIVE' ? 'In Review' : p2aPlanByProject.status === 'COMPLETED' ? 'Approved' : 'Draft'}
+                </Badge>
+                <p className="text-xs opacity-70 mb-5">Continue setting up your handover plan</p>
+                {canCreateVCR && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="text-xs gap-1.5"
+                    onClick={() => setShowP2APlanWizard(true)}
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                    Continue Setup
                   </Button>
                 )}
               </div>
