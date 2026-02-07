@@ -8,6 +8,7 @@ import { StaircasePhaseColumn } from './StaircasePhaseColumn';
 import { UnassignedVCRColumn } from './UnassignedVCRColumn';
 import { MilestoneMarker } from './MilestoneMarker';
 import { CreatePhaseDialog } from './CreatePhaseDialog';
+import { EditPhaseDialog } from './EditPhaseDialog';
 import { SortableContext, horizontalListSortingStrategy } from '@dnd-kit/sortable';
 
 interface PhasesTimelineProps {
@@ -20,6 +21,7 @@ interface PhasesTimelineProps {
   onCreatePhase: (data: any) => void;
   onCreateMilestone: (data: any) => void;
   onDeletePhase: (id: string) => void;
+  onUpdatePhase: (data: { id: string; updates: Partial<P2APhase> }) => void;
   onCreateHandoverPoint: (phaseId?: string | null) => void;
   onOpenVCR: (point: P2AHandoverPoint) => void;
   onAssignVCRToPhase: (vcrId: string, phaseId: string | null) => void;
@@ -44,6 +46,7 @@ export const PhasesTimeline: React.FC<PhasesTimelineProps> = ({
   onCreatePhase,
   onCreateMilestone,
   onDeletePhase,
+  onUpdatePhase,
   onCreateHandoverPoint,
   onOpenVCR,
   onAssignVCRToPhase,
@@ -57,6 +60,7 @@ export const PhasesTimeline: React.FC<PhasesTimelineProps> = ({
   onUndo,
 }) => {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [editingPhase, setEditingPhase] = useState<P2APhase | null>(null);
 
   // Sort milestones by display order
   const sortedMilestones = [...milestones].sort((a, b) => a.display_order - b.display_order);
@@ -169,7 +173,7 @@ export const PhasesTimeline: React.FC<PhasesTimelineProps> = ({
                         handoverPoints={handoverPoints.filter(p => p.phase_id === item.phase.id)}
                         staircaseOffset={0}
                         onCreateHandoverPoint={() => onCreateHandoverPoint(item.phase.id)}
-                        onEditPhase={() => {/* TODO */}}
+                        onEditPhase={() => setEditingPhase(item.phase)}
                         onDeletePhase={() => onDeletePhase(item.phase.id)}
                         onOpenVCR={onOpenVCR}
                         projectCode={projectCode}
@@ -230,6 +234,15 @@ export const PhasesTimeline: React.FC<PhasesTimelineProps> = ({
         existingPhasesCount={phases.length}
         isCreating={isCreatingPhase}
       />
+
+      {editingPhase && (
+        <EditPhaseDialog
+          open={!!editingPhase}
+          onOpenChange={(open) => { if (!open) setEditingPhase(null); }}
+          phase={editingPhase}
+          onUpdatePhase={onUpdatePhase}
+        />
+      )}
     </div>
   );
 };

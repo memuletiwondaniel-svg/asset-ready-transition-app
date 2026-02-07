@@ -74,7 +74,7 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
     isUpdating,
   } = useP2ASystems(plan?.id || '');
   const { milestones, addMilestone } = useP2AMilestones(plan?.id || '');
-  const { phases, isLoading: phasesLoading, addPhase, deletePhase, reorderPhases, isAdding: isAddingPhase } = useP2APhases(plan?.id || '');
+  const { phases, isLoading: phasesLoading, addPhase, updatePhase, deletePhase, reorderPhases, isAdding: isAddingPhase } = useP2APhases(plan?.id || '');
   const { 
     handoverPoints,
     assignedPoints,
@@ -477,6 +477,7 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
           onCreatePhase={addPhase}
           onCreateMilestone={addMilestone}
           onDeletePhase={deletePhase}
+          onUpdatePhase={updatePhase}
           onCreateHandoverPoint={handleCreateHandoverPoint}
           onOpenVCR={handleOpenVCR}
           isFullscreen={isFullscreen}
