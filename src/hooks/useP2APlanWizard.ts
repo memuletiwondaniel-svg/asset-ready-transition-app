@@ -191,19 +191,22 @@ async function persistPlanToDatabase(
     planId = newPlan.id;
   }
 
-  // Save systems and track ID mapping
+  // Save systems: delete existing then re-insert to avoid upsert constraint issues
   const systemIdMap: Record<string, string> = {};
+
+  // Delete existing systems for this plan first
+  await client.from('p2a_systems').delete().eq('handover_plan_id', planId);
 
   if (state.systems.length > 0) {
     for (const system of state.systems) {
       const { data: savedSystem, error } = await client
         .from('p2a_systems')
-        .upsert({
+        .insert({
           handover_plan_id: planId,
           system_id: system.system_id,
           name: system.name,
           is_hydrocarbon: system.is_hydrocarbon,
-        }, { onConflict: 'handover_plan_id,system_id' })
+        })
         .select()
         .single();
 
