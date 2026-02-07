@@ -64,9 +64,9 @@ export const P2AWorkspaceOverlay: React.FC<P2AWorkspaceOverlayProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[98vw] w-full h-[98vh] p-0 gap-0 overflow-hidden [&>button]:hidden">
+      <DialogContent className="max-w-[99vw] w-full h-[99vh] p-0 gap-0 overflow-hidden [&>button]:hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b bg-gradient-to-br from-primary/5 via-accent/5 to-transparent">
+        <div className="flex items-center justify-between px-4 py-2 border-b bg-gradient-to-br from-primary/5 via-accent/5 to-transparent">
           <div className="flex items-center gap-3">
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-br from-orange-500/40 to-amber-500/40 rounded-lg blur-sm" />
@@ -119,7 +119,7 @@ export const P2AWorkspaceOverlay: React.FC<P2AWorkspaceOverlayProps> = ({
         </div>
 
         {/* Workspace Content */}
-        <div className="flex-1 overflow-hidden h-[calc(98vh-57px)]">
+        <div className="flex-1 overflow-hidden h-[calc(99vh-49px)]">
           <P2AHandoverWorkspace
             projectId={projectId}
             projectName={projectName}
