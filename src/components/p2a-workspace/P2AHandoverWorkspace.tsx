@@ -22,6 +22,7 @@ import { VCRRelationshipDialog } from './handover-points/VCRRelationshipDialog';
 import { cn } from '@/lib/utils';
 import { MappingOverlay } from './mapping/MappingOverlay';
 import { useMappingPositions } from './mapping/useMappingPositions';
+import { useVCRAlignment } from './mapping/useVCRAlignment';
 import { useToast } from '@/hooks/use-toast';
 
 interface P2AHandoverWorkspaceProps {
@@ -104,6 +105,9 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
 
   // Mapping overlay positions
   const { bundles } = useMappingPositions(systems, showMapping, workspaceContainerRef);
+
+  // VCR alignment targets for horizontal mapping lines
+  const vcrAlignmentTargets = useVCRAlignment(showMapping, workspaceContainerRef);
 
   const handoverPointsWithUi = useMemo(() => {
     if (!handoverPoints?.length) return [];
@@ -445,7 +449,7 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
     >
 
       {/* Main Content Area - Systems Panel + Timeline */}
-      <div className="flex-1 flex overflow-hidden min-h-0 relative" ref={workspaceContainerRef}>
+      <div className="flex-1 flex overflow-hidden min-h-0 relative" ref={workspaceContainerRef} data-workspace-container>
         {/* Mapping SVG Overlay */}
         {showMapping && <MappingOverlay bundles={bundles} />}
 
@@ -487,6 +491,7 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
           onAssignVCRToPhase={(vcrId, phaseId) => moveHandoverPointToPhase({ handoverPointId: vcrId, newPhaseId: phaseId })}
           isCreatingPhase={isAddingPhase}
           showMapping={showMapping}
+          vcrAlignmentTargets={vcrAlignmentTargets}
           canUndo={canUndo}
           isUndoing={isUndoing}
           lastActionDescription={lastActionDescription}
