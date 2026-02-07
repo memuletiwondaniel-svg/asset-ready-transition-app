@@ -112,7 +112,7 @@ export const PhaseCard: React.FC<PhaseCardProps> = ({
       {/* Card content */}
       <div className="p-3 pt-4 flex flex-col gap-2 flex-1">
         {/* Title */}
-        <h4 className="text-sm font-semibold leading-tight line-clamp-2">{phase.name}</h4>
+        <h4 className="text-sm font-semibold leading-tight line-clamp-2 text-center">{phase.name}</h4>
 
         {/* Description */}
         {phase.description && (
