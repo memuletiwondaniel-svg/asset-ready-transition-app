@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { X, Key } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
+import { X, Key, Cable } from 'lucide-react';
 import { P2AHandoverWorkspace } from '@/components/p2a-workspace/P2AHandoverWorkspace';
 import { useP2AHandoverPlan } from '@/components/p2a-workspace/hooks/useP2AHandoverPlan';
 import { cn } from '@/lib/utils';
@@ -57,6 +58,7 @@ export const P2AWorkspaceOverlay: React.FC<P2AWorkspaceOverlayProps> = ({
   projectName,
   projectNumber,
 }) => {
+  const [showMapping, setShowMapping] = useState(false);
   const { plan } = useP2AHandoverPlan(projectId, 'project_id');
   const statusConfig = getStatusConfig(plan?.status);
 
@@ -77,7 +79,30 @@ export const P2AWorkspaceOverlay: React.FC<P2AWorkspaceOverlayProps> = ({
               {statusConfig.label}
             </Badge>
           </div>
-          <div className="flex items-center">
+          <div className="flex items-center gap-1">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant={showMapping ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setShowMapping(!showMapping)}
+                    className={cn(
+                      "h-7 gap-1.5 text-xs",
+                      showMapping
+                        ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    <Cable className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Mapping</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  {showMapping ? 'Hide connection diagram' : 'Show system-to-VCR connections'}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
             <Button
               variant="ghost"
               size="icon"
@@ -99,6 +124,7 @@ export const P2AWorkspaceOverlay: React.FC<P2AWorkspaceOverlayProps> = ({
             projectId={projectId}
             projectName={projectName}
             projectNumber={projectNumber}
+            showMapping={showMapping}
           />
         </div>
       </DialogContent>

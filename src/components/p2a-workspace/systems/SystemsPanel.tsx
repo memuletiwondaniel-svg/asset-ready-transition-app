@@ -110,6 +110,7 @@ interface SystemsPanelProps {
   isAdding?: boolean;
   isImporting?: boolean;
   isUpdating?: boolean;
+  showMapping?: boolean;
 }
 
 export const SystemsPanel: React.FC<SystemsPanelProps> = ({
@@ -125,6 +126,7 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
   isAdding,
   isImporting,
   isUpdating,
+  showMapping = false,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddManualModal, setShowAddManualModal] = useState(false);
@@ -155,7 +157,16 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
   };
 
   const filteredUnassigned = filterSystems(unassignedSystems);
-  const filteredAssigned = filterSystems(assignedSystems);
+  // When mapping is active, sort assigned systems by VCR code to group them and minimize line crossings
+  const sortedAssigned = showMapping
+    ? [...filterSystems(assignedSystems)].sort((a, b) => {
+        const aVcr = a.assigned_vcr_code || '';
+        const bVcr = b.assigned_vcr_code || '';
+        if (aVcr !== bVcr) return aVcr.localeCompare(bVcr);
+        return a.name.localeCompare(b.name);
+      })
+    : filterSystems(assignedSystems);
+  const filteredAssigned = sortedAssigned;
 
   // Convert CMS-imported WizardSystems to workspace-compatible format
   const handleCMSImport = (importedSystems: WizardSystem[]) => {
@@ -226,15 +237,46 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
                     </div>
                   </CollapsibleTrigger>
                   <CollapsibleContent className="pt-2 overflow-hidden">
-                    <div className="flex flex-wrap gap-1.5 overflow-hidden">
-                      {filteredAssigned.map(system => (
-                        <DraggableSystemCard
-                          key={system.id}
-                          system={system}
-                          compact
-                          onClick={() => setSelectedSystem(system)}
-                        />
-                      ))}
+                    <div className="flex flex-col gap-1.5 overflow-hidden">
+                      {showMapping ? (
+                        // Group by VCR with labels when mapping is active
+                        (() => {
+                          const groups: Record<string, P2ASystem[]> = {};
+                          filteredAssigned.forEach(s => {
+                            const key = s.assigned_vcr_code || 'Unknown';
+                            if (!groups[key]) groups[key] = [];
+                            groups[key].push(s);
+                          });
+                          return Object.entries(groups).map(([vcrCode, groupSystems]) => (
+                            <div key={vcrCode}>
+                              <span className="text-[8px] font-semibold text-muted-foreground uppercase tracking-wider px-0.5 mb-0.5 block">
+                                {vcrCode.match(/^(VCR-\d+)/)?.[1] || vcrCode}
+                              </span>
+                              <div className="flex flex-wrap gap-1.5">
+                                {groupSystems.map(system => (
+                                  <DraggableSystemCard
+                                    key={system.id}
+                                    system={system}
+                                    compact
+                                    onClick={() => setSelectedSystem(system)}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          ));
+                        })()
+                      ) : (
+                        <div className="flex flex-wrap gap-1.5">
+                          {filteredAssigned.map(system => (
+                            <DraggableSystemCard
+                              key={system.id}
+                              system={system}
+                              compact
+                              onClick={() => setSelectedSystem(system)}
+                            />
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </CollapsibleContent>
                 </Collapsible>
@@ -244,12 +286,14 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
             )}
 
             {/* Unassigned Systems Section - Droppable */}
-            <UnassignedSystemsDropZone
-              systems={filteredUnassigned}
-              isExpanded={expandedSections.unassigned}
-              onToggle={() => toggleSection('unassigned')}
-              onSystemClick={(system) => setSelectedSystem(system)}
-            />
+            <div className={cn(showMapping && "opacity-40 transition-opacity")}>
+              <UnassignedSystemsDropZone
+                systems={filteredUnassigned}
+                isExpanded={expandedSections.unassigned}
+                onToggle={() => toggleSection('unassigned')}
+                onSystemClick={(system) => setSelectedSystem(system)}
+              />
+            </div>
           </div>
         </ScrollArea>
 

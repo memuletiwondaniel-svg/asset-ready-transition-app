@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DndContext, DragEndEvent, DragOverlay, useSensor, useSensors, PointerSensor, closestCenter, rectIntersection, CollisionDetection, pointerWithin } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -20,6 +20,8 @@ import { HandoverPointCard } from './handover-points/HandoverPointCard';
 import { VCRDetailOverlay } from './handover-points/VCRDetailOverlay';
 import { VCRRelationshipDialog } from './handover-points/VCRRelationshipDialog';
 import { cn } from '@/lib/utils';
+import { MappingOverlay } from './mapping/MappingOverlay';
+import { useMappingPositions } from './mapping/useMappingPositions';
 import { useToast } from '@/hooks/use-toast';
 
 interface P2AHandoverWorkspaceProps {
@@ -28,6 +30,7 @@ interface P2AHandoverWorkspaceProps {
   oraPlanId?: string;
   projectName?: string;
   projectNumber?: string;
+  showMapping?: boolean;
 }
 
 export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
@@ -35,7 +38,9 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
   oraPlanId,
   projectName,
   projectNumber,
+  showMapping = false,
 }) => {
+  const workspaceContainerRef = useRef<HTMLDivElement>(null);
   const [activeDragItem, setActiveDragItem] = useState<{ type: 'system' | 'vcr' | 'phase'; data: any } | null>(null);
   const [showCreateVCRDialog, setShowCreateVCRDialog] = useState(false);
   const [selectedPhaseIdForVCR, setSelectedPhaseIdForVCR] = useState<string | null>(null);
@@ -96,6 +101,9 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
   // Undo stack for workspace actions
   const { pushAction, undo, canUndo, isUndoing, lastActionDescription } = useUndoStack();
   const { toast } = useToast();
+
+  // Mapping overlay positions
+  const { connections } = useMappingPositions(systems, showMapping, workspaceContainerRef);
 
   const handoverPointsWithUi = useMemo(() => {
     if (!handoverPoints?.length) return [];
@@ -437,7 +445,10 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
     >
 
       {/* Main Content Area - Systems Panel + Timeline */}
-      <div className="flex-1 flex overflow-hidden min-h-0">
+      <div className="flex-1 flex overflow-hidden min-h-0 relative" ref={workspaceContainerRef}>
+        {/* Mapping SVG Overlay */}
+        {showMapping && <MappingOverlay connections={connections} />}
+
         {/* Systems Panel - LEFT Side */}
         <SystemsPanel
           systems={systems}
@@ -452,6 +463,7 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
           isAdding={isAdding}
           isImporting={isImporting}
           isUpdating={isUpdating}
+          showMapping={showMapping}
         />
 
         {/* Phases Timeline Area */}
