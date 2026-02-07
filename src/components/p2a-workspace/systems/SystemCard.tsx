@@ -86,7 +86,7 @@ export const SystemCard: React.FC<SystemCardProps> = ({
                 {system.system_id}
               </span>
               <span className={cn(
-                'text-[8px] font-medium shrink-0',
+                'text-[8px] font-medium shrink-0 opacity-0 group-hover:opacity-100 transition-opacity',
                 isComplete(system) ? 'text-emerald-500' : 'text-muted-foreground'
               )}>
                 {system.completion_percentage}%
