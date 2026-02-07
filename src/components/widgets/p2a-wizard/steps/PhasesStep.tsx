@@ -266,7 +266,7 @@ export const PhasesStep: React.FC<PhasesStepProps> = ({
 
         {/* Phase cards – horizontal layout */}
         <ScrollArea className="flex-1 min-h-0 w-full [&>[data-radix-scroll-area-viewport]]:overflow-visible">
-          <div className="flex gap-3 pb-2 pt-3 h-full">
+          <div className="flex gap-3 pb-2 pt-3 h-full justify-center">
             {phases.map((phase, index) => (
               <PhaseCard
                 key={phase.id}
