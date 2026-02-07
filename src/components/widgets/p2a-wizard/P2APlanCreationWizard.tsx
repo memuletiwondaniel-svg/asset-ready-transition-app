@@ -51,6 +51,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
 }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [useWizard, setUseWizard] = useState<boolean | null>(null);
+  const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
   
   const {
     state,
@@ -66,7 +67,42 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
     resetState();
     setCurrentStep(1);
     setUseWizard(null);
+    setCompletedSteps(new Set());
     onOpenChange(false);
+  };
+
+  // Check if a wizard display step (1-indexed, offset from overview) is actually completed
+  const isStepComplete = (displayStep: number): boolean => {
+    // displayStep corresponds to WIZARD_STEPS index: displayStep + 1 (since step 1 is overview)
+    switch (displayStep) {
+      case 1: // Systems
+        return state.systems.length > 0;
+      case 2: // VCRs
+        return state.vcrs.length > 0;
+      case 3: // Mapping
+        return Object.values(state.mappings).some(arr => arr.length > 0);
+      case 4: // Sequencing
+        return Object.keys(state.vcrPhaseAssignments).length > 0;
+      case 5: // Preview (always considered complete once visited)
+        return true;
+      case 6: // Approval
+        return state.approvers.length > 0;
+      case 7: // Confirm
+        return true;
+      default:
+        return false;
+    }
+  };
+
+  // Recalculate completed steps whenever navigating
+  const recalculateCompletedSteps = () => {
+    const newCompleted = new Set<number>();
+    for (let i = 1; i <= WIZARD_STEPS.length - 1; i++) {
+      if (isStepComplete(i)) {
+        newCompleted.add(i);
+      }
+    }
+    setCompletedSteps(newCompleted);
   };
 
   const handleChooseWizard = () => {
@@ -80,6 +116,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
   };
 
   const handleBack = () => {
+    recalculateCompletedSteps();
     if (currentStep === 2 && useWizard) {
       setUseWizard(null);
       setCurrentStep(1);
@@ -89,6 +126,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
   };
 
   const handleNext = () => {
+    recalculateCompletedSteps();
     setCurrentStep(prev => Math.min(prev + 1, WIZARD_STEPS.length));
   };
 
@@ -251,7 +289,11 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
           <WizardProgress
             steps={WIZARD_STEPS.slice(1)} // Skip overview step
             currentStep={currentStep - 1} // Adjust for display
-            onStepClick={(step) => setCurrentStep(step + 1)}
+            completedSteps={completedSteps}
+            onStepClick={(step) => {
+              recalculateCompletedSteps();
+              setCurrentStep(step + 1);
+            }}
           />
         )}
 
