@@ -83,7 +83,7 @@ export const PhaseCard: React.FC<PhaseCardProps> = ({
       )}
     >
       {/* Phase number badge */}
-      <div className={cn('absolute -top-2.5 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap', colors.bg, colors.border, 'border')}>
+      <div className={cn('absolute -top-2.5 left-3 px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap', colors.bg, colors.border, 'border')}>
         <span className={colors.accent}>Phase {index + 1}</span>
       </div>
 
