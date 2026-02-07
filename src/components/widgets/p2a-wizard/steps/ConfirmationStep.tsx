@@ -126,7 +126,7 @@ export const ConfirmationStep: React.FC<ConfirmationStepProps> = ({
           {vcrs.length > 0 && (
             <div>
               <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                Verification Checkpoints
+                Verification Certificate of Readiness
               </div>
               <div className="space-y-1">
                 {vcrs.map((vcr) => {

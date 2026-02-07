@@ -69,7 +69,7 @@ export const VCRCreationStep: React.FC<VCRCreationStepProps> = ({
     <div className="flex flex-col gap-3 p-4 h-full">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-medium">Verification Checkpoints (VCRs)</h3>
+          <h3 className="text-sm font-medium">Verification Certificate of Readiness (VCRs)</h3>
           <p className="text-xs text-muted-foreground">
             Define VCRs with their target milestones
           </p>
