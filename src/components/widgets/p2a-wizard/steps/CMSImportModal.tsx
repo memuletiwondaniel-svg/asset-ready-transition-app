@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Database, Loader2, CheckCircle2, AlertTriangle, ExternalLink, Lock, User, Globe, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { WizardSystem } from './SystemsImportStep';
+import { WizardSystem, WizardSubsystem } from './SystemsImportStep';
 
 interface CMSImportModalProps {
   open: boolean;
@@ -127,13 +127,14 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
       }
 
       const systems: WizardSystem[] = (data.systems || []).map(
-        (s: WizardSystem & { source?: string }) => ({
+        (s: WizardSystem & { source?: string; subsystems?: WizardSubsystem[] }) => ({
           id: s.id,
           system_id: s.system_id,
           name: s.name,
           description: s.description,
           is_hydrocarbon: s.is_hydrocarbon,
           progress: typeof s.progress === 'number' ? s.progress : undefined,
+          subsystems: Array.isArray(s.subsystems) ? s.subsystems : [],
         })
       );
 

@@ -373,6 +373,12 @@ async function navigateToCompletionsGrid(
 
 // ─── Data Types ─────────────────────────────────────────────
 
+interface CompletionsSubsystem {
+  system_id: string;
+  name: string;
+  progress: number;
+}
+
 interface CompletionsSystem {
   system_id: string;
   name: string;
@@ -380,6 +386,7 @@ interface CompletionsSystem {
   progress: number;
   is_hydrocarbon: boolean;
   source_project?: string;
+  subsystems: CompletionsSubsystem[];
 }
 
 // ─── Resolve ASMX service URL from page HTML ────────────────
@@ -534,6 +541,7 @@ function extractFromHtml(gridHtml: string): CompletionsSystem[] {
         description: "Imported from GoCompletions",
         progress: pctMatch ? parseFloat(pctMatch[1]) : 0,
         is_hydrocarbon: false,
+        subsystems: [],
       });
     }
   }
@@ -565,6 +573,7 @@ function extractFromHtml(gridHtml: string): CompletionsSystem[] {
         description: "Imported from GoCompletions",
         progress,
         is_hydrocarbon: /\b(gas|oil|fuel|hydrocarbon|flare)\b/i.test(sysId),
+        subsystems: [],
       });
     }
   }
@@ -629,14 +638,45 @@ function parsePageMethodResponse(text: string): CompletionsSystem[] {
           if (progress > 0 && progress <= 1) progress *= 100;
         }
 
-        const subSystems = item.SubSystem || item.SubSystems || item.subsystems || [];
+        const rawSubSystems = item.SubSystem || item.SubSystems || item.subsystems || item.Children || [];
+        const parsedSubsystems: CompletionsSubsystem[] = [];
+
+        if (Array.isArray(rawSubSystems)) {
+          for (const sub of rawSubSystems) {
+            const subId = String(
+              sub.Number || sub.SystemNumber || sub.Name || sub.SubSystemName ||
+              sub.SystemId || sub.system_id || sub.Id || sub.CODE || ""
+            );
+            if (!subId) continue;
+
+            const subName = String(
+              sub.Description || sub.SystemDescription || sub.SubSystemDescription ||
+              sub.Title || sub.NAME || subId
+            );
+
+            let subProgress = 0;
+            const subPctValue = sub.Complete ?? sub.Progress ?? sub.OverallProgress ??
+              sub.Percent ?? sub.CompletionPercent ?? sub.percentage ?? null;
+            if (subPctValue !== null && subPctValue !== undefined) {
+              subProgress = parseFloat(String(subPctValue)) || 0;
+              if (subProgress > 0 && subProgress <= 1) subProgress *= 100;
+            }
+
+            parsedSubsystems.push({
+              system_id: subId,
+              name: subName,
+              progress: subProgress,
+            });
+          }
+        }
 
         systems.push({
           system_id: sysId,
           name,
-          description: `Imported from GoCompletions${subSystems.length ? ` (${subSystems.length} subsystems)` : ""}`,
+          description: `Imported from GoCompletions${parsedSubsystems.length ? ` (${parsedSubsystems.length} subsystems)` : ""}`,
           progress,
           is_hydrocarbon: /\b(gas|oil|fuel|hydrocarbon|flare)\b/i.test(name + " " + sysId),
+          subsystems: parsedSubsystems,
         });
       }
       return systems;
@@ -668,6 +708,7 @@ function parsePageMethodResponse(text: string): CompletionsSystem[] {
       description: "Imported from GoCompletions",
       progress,
       is_hydrocarbon: /\b(gas|oil|fuel|hydrocarbon|flare)\b/i.test(sysId),
+      subsystems: [],
     });
   }
 
@@ -814,6 +855,7 @@ Deno.serve(async (req) => {
             description: sys.description,
             is_hydrocarbon: sys.is_hydrocarbon,
             progress: sys.progress,
+            subsystems: sys.subsystems || [],
             source: "gohub",
           }));
 
@@ -910,6 +952,7 @@ Deno.serve(async (req) => {
       description: sys.description,
       is_hydrocarbon: sys.is_hydrocarbon,
       progress: sys.progress,
+      subsystems: sys.subsystems || [],
       source: "gohub",
       source_project: sys.source_project,
     }));

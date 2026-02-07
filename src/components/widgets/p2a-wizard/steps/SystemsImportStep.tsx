@@ -13,12 +13,19 @@ import {
   Database, 
   Edit2,
   Check,
+  ChevronRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CMSImportModal } from './CMSImportModal';
 import { ExcelUploadModal } from './ExcelUploadModal';
 import { AddSystemModal } from './AddSystemModal';
 import { useToast } from '@/components/ui/use-toast';
+
+export interface WizardSubsystem {
+  system_id: string;
+  name: string;
+  progress: number;
+}
 
 export interface WizardSystem {
   id: string;
@@ -27,6 +34,7 @@ export interface WizardSystem {
   description: string;
   is_hydrocarbon: boolean;
   progress?: number;
+  subsystems?: WizardSubsystem[];
 }
 
 interface SystemsImportStepProps {
@@ -212,6 +220,9 @@ const SystemListItem: React.FC<SystemListItemProps> = ({
   onUpdate,
   onRemove,
 }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const hasSubsystems = system.subsystems && system.subsystems.length > 0;
+
   if (isEditing) {
     return (
       <div className={cn("flex items-center gap-3 p-3 rounded-lg border bg-card ring-2 ring-primary")}>
@@ -252,44 +263,101 @@ const SystemListItem: React.FC<SystemListItemProps> = ({
   const idColors = getSystemIdColor(system.system_id);
 
   return (
-    <div className="group flex items-center gap-2 py-1.5 px-2.5 rounded-md border bg-card hover:bg-muted/50 transition-colors cursor-pointer" onClick={onEdit}>
-      <div className="flex-1 min-w-0 flex items-center gap-3">
-        <span
-          className="inline-flex items-center px-1 py-0.5 rounded text-[9px] font-semibold tabular-nums tracking-wide shrink-0 leading-none border"
-          style={{ background: idColors.bg, borderColor: idColors.border, color: idColors.text }}
-        >
-          {system.system_id}
-        </span>
-        <span className="font-medium text-xs truncate">{system.name}</span>
-        {system.is_hydrocarbon && (
-          <Badge variant="outline" className="text-[9px] bg-orange-50 text-orange-700 border-orange-200 shrink-0 py-0 px-1">
-            HC
-          </Badge>
+    <div className="space-y-0">
+      <div
+        className="group flex items-center gap-2 py-1.5 px-2.5 rounded-md border bg-card hover:bg-muted/50 transition-colors cursor-pointer"
+        onClick={() => hasSubsystems ? setIsExpanded(!isExpanded) : onEdit()}
+      >
+        {/* Expand chevron — only if subsystems exist */}
+        {hasSubsystems && (
+          <ChevronRight className={cn(
+            "h-3 w-3 shrink-0 text-muted-foreground transition-transform duration-200",
+            isExpanded && "rotate-90"
+          )} />
         )}
+
+        <div className="flex-1 min-w-0 flex items-center gap-3">
+          <span
+            className="inline-flex items-center px-1 py-0.5 rounded text-[9px] font-semibold tabular-nums tracking-wide shrink-0 leading-none border"
+            style={{ background: idColors.bg, borderColor: idColors.border, color: idColors.text }}
+          >
+            {system.system_id}
+          </span>
+          <span className="font-medium text-xs truncate">{system.name}</span>
+          {system.is_hydrocarbon && (
+            <Badge variant="outline" className="text-[9px] bg-orange-50 text-orange-700 border-orange-200 shrink-0 py-0 px-1">
+              HC
+            </Badge>
+          )}
+          {hasSubsystems && (
+            <span className="text-[9px] text-muted-foreground shrink-0">
+              {system.subsystems!.length} sub
+            </span>
+          )}
+        </div>
+        {hasProgress && (
+          <span className={cn("text-[10px] font-semibold tabular-nums shrink-0", getProgressTextColor(system.progress!))}>
+            {Math.round(system.progress!)}%
+          </span>
+        )}
+        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-6 w-6 shrink-0"
+            onClick={(e) => { e.stopPropagation(); onEdit(); }}
+          >
+            <Edit2 className="h-3 w-3" />
+          </Button>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-6 w-6 text-destructive shrink-0"
+            onClick={(e) => { e.stopPropagation(); onRemove(); }}
+          >
+            <Trash2 className="h-3 w-3" />
+          </Button>
+        </div>
       </div>
-      {hasProgress && (
-        <span className={cn("text-[10px] font-semibold tabular-nums shrink-0", getProgressTextColor(system.progress!))}>
-          {Math.round(system.progress!)}%
-        </span>
+
+      {/* Subsystems panel */}
+      {isExpanded && hasSubsystems && (
+        <div className="ml-5 pl-3 border-l-2 border-muted space-y-0.5 py-1">
+          {system.subsystems!.map((sub, idx) => {
+            const subIdColors = getSystemIdColor(sub.system_id);
+            return (
+              <div
+                key={sub.system_id + idx}
+                className="flex items-center gap-2 py-1 px-2 rounded text-xs"
+              >
+                <span
+                  className="inline-flex items-center px-1 py-0.5 rounded text-[8px] font-semibold tabular-nums tracking-wide shrink-0 leading-none border"
+                  style={{ background: subIdColors.bg, borderColor: subIdColors.border, color: subIdColors.text }}
+                >
+                  {sub.system_id}
+                </span>
+                <span className="truncate flex-1 text-muted-foreground">{sub.name}</span>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <div className="w-16 h-1.5 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className={cn(
+                        "h-full rounded-full transition-all",
+                        sub.progress >= 100 ? "bg-emerald-500" :
+                        sub.progress >= 60 ? "bg-yellow-500" :
+                        sub.progress >= 30 ? "bg-orange-500" : "bg-red-500"
+                      )}
+                      style={{ width: `${Math.min(sub.progress, 100)}%` }}
+                    />
+                  </div>
+                  <span className={cn("text-[9px] font-semibold tabular-nums w-8 text-right", getProgressTextColor(sub.progress))}>
+                    {Math.round(sub.progress)}%
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       )}
-      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-        <Button
-          size="icon"
-          variant="ghost"
-          className="h-6 w-6 shrink-0"
-          onClick={onEdit}
-        >
-          <Edit2 className="h-3 w-3" />
-        </Button>
-        <Button
-          size="icon"
-          variant="ghost"
-          className="h-6 w-6 text-destructive shrink-0"
-          onClick={onRemove}
-        >
-          <Trash2 className="h-3 w-3" />
-        </Button>
-      </div>
     </div>
   );
 };
