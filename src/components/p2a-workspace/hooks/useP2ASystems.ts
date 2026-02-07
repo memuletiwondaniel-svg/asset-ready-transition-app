@@ -117,6 +117,25 @@ export const useP2ASystems = (handoverPlanId: string) => {
         }
       }
 
+      // Also fetch total subsystem counts per system (to detect "all mapped" case)
+      const systemIdsWithSubAssignments = [...new Set(
+        assignments.filter((a: any) => a.subsystem_id).map((a: any) => a.system_id)
+      )];
+      
+      let totalSubsystemCounts: Record<string, number> = {};
+      if (systemIdsWithSubAssignments.length > 0) {
+        const { data: allSubsystems } = await supabase
+          .from('p2a_subsystems')
+          .select('system_id')
+          .in('system_id', systemIdsWithSubAssignments);
+        
+        if (allSubsystems) {
+          for (const sub of allSubsystems) {
+            totalSubsystemCounts[sub.system_id] = (totalSubsystemCounts[sub.system_id] || 0) + 1;
+          }
+        }
+      }
+
       // Create maps: system_id → assignment, and system_id → subsystem assignments
       const assignmentMap = new Map<string, { handover_point_id: string; vcr_code: string }>();
       const subsystemAssignmentMap = new Map<string, P2AAssignedSubsystem[]>();
@@ -152,6 +171,21 @@ export const useP2ASystems = (handoverPlanId: string) => {
           });
         }
       });
+
+      // Smart collapsing: if ALL subsystems of a system map to the SAME VCR,
+      // treat as a full system assignment (don't show individual subsystem cards)
+      for (const [systemId, subs] of subsystemAssignmentMap.entries()) {
+        const totalCount = totalSubsystemCounts[systemId] || 0;
+        const uniqueVCRs = new Set(subs.map(s => s.assigned_handover_point_id));
+        
+        if (uniqueVCRs.size === 1 && subs.length === totalCount) {
+          // All subsystems map to same VCR → collapse to parent system card
+          const vcrId = subs[0].assigned_handover_point_id;
+          const vcrCode = subs[0].assigned_vcr_code;
+          assignmentMap.set(systemId, { handover_point_id: vcrId, vcr_code: vcrCode });
+          subsystemAssignmentMap.delete(systemId);
+        }
+      }
 
       // Merge assignment data with systems
       return (systemsData || []).map((system: any) => {
