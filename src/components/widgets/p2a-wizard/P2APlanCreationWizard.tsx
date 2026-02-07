@@ -282,6 +282,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
           <ApprovalSetupStep
             approvers={state.approvers}
             projectId={projectId}
+            plantName={plantName}
             onApproversChange={(approvers) => updateState('approvers', approvers)}
           />
         );
