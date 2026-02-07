@@ -121,7 +121,9 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
   const recalculateCompletedSteps = () => {
     const newCompleted = new Set<number>();
     for (let i = 1; i <= WIZARD_STEPS.length - 1; i++) {
-      if (isStepComplete(i)) {
+      // A step is only complete if its own validation passes AND all prior steps are complete
+      const priorStepsComplete = i === 1 || Array.from({ length: i - 1 }, (_, k) => k + 1).every(s => isStepComplete(s));
+      if (isStepComplete(i) && priorStepsComplete) {
         newCompleted.add(i);
       }
     }
