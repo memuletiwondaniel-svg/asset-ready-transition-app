@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { X, Key } from 'lucide-react';
+import { X, Key, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { WizardProgress, WizardStep } from './WizardProgress';
 import { WizardNavigation } from './WizardNavigation';
@@ -13,6 +13,7 @@ import { WorkspacePreviewStep } from './steps/WorkspacePreviewStep';
 import { ApprovalSetupStep, WizardApprover } from './steps/ApprovalSetupStep';
 import { ConfirmationStep } from './steps/ConfirmationStep';
 import { useP2APlanWizard } from '@/hooks/useP2APlanWizard';
+import { useP2APlanByProject } from '@/hooks/useP2APlanByProject';
 import { toast } from 'sonner';
 
 interface P2APlanCreationWizardProps {
@@ -52,16 +53,36 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
   const [currentStep, setCurrentStep] = useState(1);
   const [useWizard, setUseWizard] = useState<boolean | null>(null);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
+  const [isLoadingDraft, setIsLoadingDraft] = useState(false);
   
+  const { data: existingPlan } = useP2APlanByProject(projectId);
+
   const {
     state,
     updateState,
     resetState,
+    loadDraft,
+    draftLoaded,
     saveDraft,
     submitForApproval,
     isSaving,
     isSubmitting,
   } = useP2APlanWizard(projectId, projectCode);
+
+  // When the wizard opens and a draft plan exists, auto-load and resume
+  useEffect(() => {
+    if (open && existingPlan && !draftLoaded && !isLoadingDraft) {
+      setIsLoadingDraft(true);
+      loadDraft().then((hasDraft) => {
+        if (hasDraft) {
+          // Skip overview step, go directly to Systems (step 2)
+          setUseWizard(true);
+          setCurrentStep(2);
+        }
+        setIsLoadingDraft(false);
+      });
+    }
+  }, [open, existingPlan, draftLoaded, isLoadingDraft, loadDraft]);
 
   const handleClose = () => {
     resetState();
@@ -73,7 +94,6 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
 
   // Check if a wizard display step (1-indexed, offset from overview) is actually completed
   const isStepComplete = (displayStep: number): boolean => {
-    // Only mark as complete if user has actually visited past this step
     const hasVisitedPast = (currentStep - 1) > displayStep;
     switch (displayStep) {
       case 1: // Systems
@@ -84,18 +104,17 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
         return Object.values(state.mappings).some(arr => arr.length > 0);
       case 4: // Phases
         return state.phases.length > 0;
-      case 5: // Preview — complete only once user has moved past it
+      case 5: // Preview
         return hasVisitedPast;
       case 6: // Approval
         return state.approvers.length > 0;
-      case 7: // Confirm — complete only once user has moved past it
+      case 7: // Confirm
         return hasVisitedPast;
       default:
         return false;
     }
   };
 
-  // Recalculate completed steps whenever navigating
   const recalculateCompletedSteps = () => {
     const newCompleted = new Set<number>();
     for (let i = 1; i <= WIZARD_STEPS.length - 1; i++) {
@@ -105,6 +124,13 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
     }
     setCompletedSteps(newCompleted);
   };
+
+  // Recalculate completed steps when draft data is loaded
+  useEffect(() => {
+    if (draftLoaded && useWizard) {
+      recalculateCompletedSteps();
+    }
+  }, [draftLoaded, useWizard, state]);
 
   const handleChooseWizard = () => {
     setUseWizard(true);
@@ -162,10 +188,8 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
   const canProceed = () => {
     switch (currentStep) {
       case 2:
-        // Systems step - optional but show warning
         return true;
       case 3:
-        // VCRs step - at least one VCR recommended
         return true;
       default:
         return true;
@@ -173,6 +197,17 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
   };
 
   const renderStepContent = () => {
+    if (isLoadingDraft) {
+      return (
+        <div className="flex-1 flex items-center justify-center p-8">
+          <div className="flex flex-col items-center gap-3 text-muted-foreground">
+            <Loader2 className="h-8 w-8 animate-spin" />
+            <p className="text-sm">Loading your saved draft...</p>
+          </div>
+        </div>
+      );
+    }
+
     if (currentStep === 1 || useWizard === null) {
       return (
         <ProjectOverviewStep
@@ -274,7 +309,9 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
               </div>
             </div>
             <div>
-              <h2 className="text-lg font-semibold">Create P2A Handover Plan</h2>
+              <h2 className="text-lg font-semibold">
+                {existingPlan ? 'P2A Handover Plan' : 'Create P2A Handover Plan'}
+              </h2>
               <p className="text-xs text-muted-foreground">
                 {projectName && projectName !== projectCode 
                   ? `${projectCode}: ${projectName}` 
@@ -293,7 +330,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
         </div>
 
         {/* Progress Indicator - show only after choosing wizard */}
-        {useWizard && currentStep > 1 && (
+        {useWizard && currentStep > 1 && !isLoadingDraft && (
           <WizardProgress
             steps={WIZARD_STEPS.slice(1)} // Skip overview step
             currentStep={currentStep - 1} // Adjust for display
@@ -305,13 +342,13 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
           />
         )}
 
-        {/* Content - use flex-1 + min-h-0 to fill remaining space */}
+        {/* Content */}
         <div className="flex-1 min-h-0 overflow-auto">
           {renderStepContent()}
         </div>
 
-        {/* Navigation - show only after choosing wizard and not on overview */}
-        {useWizard && currentStep > 1 && (
+        {/* Navigation */}
+        {useWizard && currentStep > 1 && !isLoadingDraft && (
           <WizardNavigation
             currentStep={currentStep - 1}
             totalSteps={WIZARD_STEPS.length - 1}
