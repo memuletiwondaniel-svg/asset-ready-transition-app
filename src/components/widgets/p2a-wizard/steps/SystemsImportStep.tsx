@@ -265,8 +265,8 @@ const SystemListItem: React.FC<SystemListItemProps> = ({
   return (
     <div className="space-y-0">
       <div
-        className="group flex items-center gap-2 py-1.5 px-2.5 rounded-md border bg-card hover:bg-muted/50 transition-colors cursor-pointer"
-        onClick={() => hasSubsystems ? setIsExpanded(!isExpanded) : onEdit()}
+        className={cn("group flex items-center gap-2 py-1.5 px-2.5 rounded-md border bg-card hover:bg-muted/50 transition-colors", hasSubsystems && "cursor-pointer")}
+        onClick={() => hasSubsystems && setIsExpanded(!isExpanded)}
       >
         {/* Expand chevron — always rendered for alignment, invisible if no subsystems */}
         <ChevronRight className={cn(
