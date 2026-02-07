@@ -60,22 +60,38 @@ export const SystemMappingStep: React.FC<SystemMappingStepProps> = ({
 
   const toggleMapping = (vcrId: string, systemId: string) => {
     const currentSystems = mappings[vcrId] || [];
-    const newSystems = currentSystems.includes(systemId)
-      ? currentSystems.filter(id => id !== systemId)
-      : [...currentSystems, systemId];
-    
-    onMappingsChange({
-      ...mappings,
-      [vcrId]: newSystems,
-    });
+    if (currentSystems.includes(systemId)) {
+      // Unassign from this VCR
+      onMappingsChange({
+        ...mappings,
+        [vcrId]: currentSystems.filter(id => id !== systemId),
+      });
+    } else {
+      // Assign to this VCR (exclusive — remove from any other VCR first)
+      const updated = { ...mappings };
+      for (const key of Object.keys(updated)) {
+        if (key !== vcrId) {
+          updated[key] = (updated[key] || []).filter(id => id !== systemId);
+        }
+      }
+      updated[vcrId] = [...currentSystems, systemId];
+      onMappingsChange(updated);
+    }
   };
 
   const getAssignedCount = (vcrId: string) => {
     return (mappings[vcrId] || []).length;
   };
 
+  const getSystemOwnerVCR = (systemId: string): string | null => {
+    for (const [vcrId, systemIds] of Object.entries(mappings)) {
+      if (systemIds.includes(systemId)) return vcrId;
+    }
+    return null;
+  };
+
   const isSystemAssigned = (systemId: string) => {
-    return Object.values(mappings).some(systems => systems.includes(systemId));
+    return getSystemOwnerVCR(systemId) !== null;
   };
 
   const unassignedSystems = systems.filter(s => !isSystemAssigned(s.id));
@@ -177,7 +193,7 @@ export const SystemMappingStep: React.FC<SystemMappingStepProps> = ({
                 {!isCollapsed && (() => {
                   const vcrMappings = mappings[vcr.id] || [];
                   const selectedSystems = systems.filter(s => vcrMappings.includes(s.id));
-                  const unselectedSystems = systems.filter(s => !vcrMappings.includes(s.id));
+                  const availableSystems = systems.filter(s => !vcrMappings.includes(s.id) && !getSystemOwnerVCR(s.id));
 
                   const renderSystem = (system: WizardSystem, isChecked: boolean) => (
                     <div
@@ -220,16 +236,16 @@ export const SystemMappingStep: React.FC<SystemMappingStepProps> = ({
                           </div>
                         </div>
                       )}
-                      {unselectedSystems.length > 0 && (
+                      {availableSystems.length > 0 && (
                         <div>
                           {selectedSystems.length > 0 && (
                             <div className="border-t my-2" />
                           )}
                           <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider px-2 pb-1">
-                            Available ({unselectedSystems.length})
+                            Available ({availableSystems.length})
                           </p>
                           <div className="space-y-1">
-                            {unselectedSystems.map(s => renderSystem(s, false))}
+                            {availableSystems.map(s => renderSystem(s, false))}
                           </div>
                         </div>
                       )}
