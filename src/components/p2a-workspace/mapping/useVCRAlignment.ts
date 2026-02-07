@@ -27,27 +27,50 @@ export const useVCRAlignment = (
     const container = containerRef.current;
     const containerRect = container.getBoundingClientRect();
 
+    // Find the systems panel scroll viewport to check visibility
+    const systemsPanelViewport = container.querySelector(
+      '[data-systems-panel] [data-radix-scroll-area-viewport]'
+    ) as HTMLElement | null;
+    const viewportRect = systemsPanelViewport?.getBoundingClientRect();
+
     // Read all system card elements and group by their assigned VCR
     const systemEls = container.querySelectorAll('[data-system-id]');
     const vcrSystemYs: Record<string, number[]> = {};
+    const vcrSystemCounts: Record<string, number> = {};
+    const vcrVisibleCounts: Record<string, number> = {};
 
     systemEls.forEach((el) => {
-      // Walk up to find the parent with data-vcr-group-id OR read from the system's data attributes
       const systemEl = el as HTMLElement;
       const vcrId = systemEl.getAttribute('data-assigned-vcr-id');
       if (!vcrId) return;
 
-      const rect = systemEl.getBoundingClientRect();
-      const centerY = rect.top + rect.height / 2 - containerRect.top;
+      // Track total system count for this VCR
+      vcrSystemCounts[vcrId] = (vcrSystemCounts[vcrId] || 0) + 1;
 
-      if (!vcrSystemYs[vcrId]) vcrSystemYs[vcrId] = [];
-      vcrSystemYs[vcrId].push(centerY);
+      const rect = systemEl.getBoundingClientRect();
+
+      // Check if this system card is fully visible within the scroll viewport
+      let isVisible = true;
+      if (viewportRect) {
+        if (rect.top < viewportRect.top || rect.bottom > viewportRect.bottom) {
+          isVisible = false;
+        }
+      }
+
+      if (isVisible) {
+        vcrVisibleCounts[vcrId] = (vcrVisibleCounts[vcrId] || 0) + 1;
+        const centerY = rect.top + rect.height / 2 - containerRect.top;
+        if (!vcrSystemYs[vcrId]) vcrSystemYs[vcrId] = [];
+        vcrSystemYs[vcrId].push(centerY);
+      }
     });
 
-    // Compute center Y of each VCR's system group
+    // Only produce alignment targets for VCRs where ALL systems are visible
     const newTargets: Record<string, number> = {};
     for (const [vcrId, ys] of Object.entries(vcrSystemYs)) {
       if (ys.length === 0) continue;
+      // Skip if not all systems for this VCR are visible
+      if ((vcrVisibleCounts[vcrId] || 0) < (vcrSystemCounts[vcrId] || 0)) continue;
       const avgY = ys.reduce((sum, y) => sum + y, 0) / ys.length;
       newTargets[vcrId] = avgY;
     }
