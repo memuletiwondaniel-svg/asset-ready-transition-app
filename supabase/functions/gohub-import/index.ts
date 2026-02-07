@@ -477,6 +477,188 @@ async function tryAsmxWebMethod(
   return [];
 }
 
+// ─── Fetch subsystems for each system via ASMX GetSubSystems ─
+async function enrichSystemsWithSubsystems(
+  systems: CompletionsSystem[],
+  cookies: Record<string, string>,
+  gridPageUrl: string,
+  gridHtml: string,
+): Promise<CompletionsSystem[]> {
+  // Only enrich systems that have no subsystems yet
+  const systemsToEnrich = systems.filter(s => s.subsystems.length === 0);
+  if (systemsToEnrich.length === 0) return systems;
+
+  const asmxBaseUrl = resolveAsmxServiceUrl(gridHtml, gridPageUrl);
+  const origin = new URL(gridPageUrl).origin;
+  const parsed = new URL(gridPageUrl);
+  const pathParts = parsed.pathname.split("/").filter(Boolean);
+  const instanceName = pathParts[0] || "BGC";
+
+  // Build candidate URLs for GetSubSystems
+  const urlsToTry: string[] = [];
+  if (asmxBaseUrl) {
+    urlsToTry.push(`${asmxBaseUrl}/GetSubSystems`);
+  }
+  urlsToTry.push(
+    `${origin}/${instanceName}/Controls/CompletionsGrid.asmx/GetSubSystems`,
+    `${origin}/${instanceName}/GoCompletions/Controls/CompletionsGrid.asmx/GetSubSystems`,
+  );
+  const uniqueUrls = [...new Set(urlsToTry)];
+
+  // Try the first working URL with the first system to validate the endpoint
+  let workingUrl: string | null = null;
+  const testSystem = systemsToEnrich[0];
+
+  for (const url of uniqueUrls) {
+    try {
+      // Try different parameter formats
+      const paramVariants = [
+        { systemNumber: testSystem.system_id },
+        { systemId: testSystem.system_id },
+        { number: testSystem.system_id },
+        { System: testSystem.system_id },
+        { itrClass: "All", systemNumber: testSystem.system_id },
+      ];
+
+      for (const params of paramVariants) {
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json; charset=utf-8",
+            Cookie: formatCookies(cookies),
+            "User-Agent": BROWSER_UA,
+            "X-Requested-With": "XMLHttpRequest",
+            Accept: "application/json, text/javascript, */*; q=0.01",
+            Referer: gridPageUrl,
+            Origin: origin,
+          },
+          body: JSON.stringify(params),
+        });
+
+        const text = await response.text();
+        console.log(`GoHub: GetSubSystems test: url=${url}, params=${JSON.stringify(params)}, status=${response.status}, length=${text.length}`);
+
+        if (response.status === 200 && text.length > 10) {
+          // Try to parse and see if it looks like subsystem data
+          try {
+            let parsed = JSON.parse(text);
+            if (parsed.d !== undefined) {
+              parsed = typeof parsed.d === "string" ? JSON.parse(parsed.d) : parsed.d;
+            }
+            if (!Array.isArray(parsed)) {
+              for (const key of ["Items", "data", "results", "Systems", "systems", "Data"]) {
+                if (parsed[key] && Array.isArray(parsed[key])) {
+                  parsed = parsed[key];
+                  break;
+                }
+              }
+            }
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              console.log(`GoHub: GetSubSystems SUCCESS! Found ${parsed.length} subsystems for "${testSystem.system_id}". Keys: ${Object.keys(parsed[0]).join(", ")}`);
+              console.log(`GoHub: First subsystem RAW: ${JSON.stringify(parsed[0]).substring(0, 500)}`);
+              workingUrl = url;
+
+              // Parse subsystems for the test system
+              testSystem.subsystems = parseSubsystemsResponse(parsed);
+              break;
+            }
+          } catch (_) {
+            // Not valid JSON
+          }
+        }
+      }
+      if (workingUrl) break;
+    } catch (e) {
+      console.log(`GoHub: GetSubSystems error for ${url}: ${e}`);
+    }
+  }
+
+  if (!workingUrl) {
+    console.log("GoHub: GetSubSystems endpoint not available - subsystems will be inferred from hierarchy");
+    return systems;
+  }
+
+  // Fetch subsystems for remaining systems (skip the test system)
+  const remaining = systemsToEnrich.filter(s => s !== testSystem);
+  console.log(`GoHub: Enriching ${remaining.length} more systems with subsystems...`);
+
+  // Process in batches of 5 to avoid overwhelming the server
+  const BATCH_SIZE = 5;
+  for (let i = 0; i < remaining.length; i += BATCH_SIZE) {
+    const batch = remaining.slice(i, i + BATCH_SIZE);
+    await Promise.all(batch.map(async (system) => {
+      try {
+        const response = await fetch(workingUrl!, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json; charset=utf-8",
+            Cookie: formatCookies(cookies),
+            "User-Agent": BROWSER_UA,
+            "X-Requested-With": "XMLHttpRequest",
+            Accept: "application/json, text/javascript, */*; q=0.01",
+            Referer: gridPageUrl,
+            Origin: origin,
+          },
+          body: JSON.stringify({ systemNumber: system.system_id }),
+        });
+
+        if (response.status === 200) {
+          const text = await response.text();
+          try {
+            let parsed = JSON.parse(text);
+            if (parsed.d !== undefined) {
+              parsed = typeof parsed.d === "string" ? JSON.parse(parsed.d) : parsed.d;
+            }
+            if (!Array.isArray(parsed)) {
+              for (const key of ["Items", "data", "results", "Systems", "systems", "Data"]) {
+                if (parsed[key] && Array.isArray(parsed[key])) {
+                  parsed = parsed[key];
+                  break;
+                }
+              }
+            }
+            if (Array.isArray(parsed)) {
+              system.subsystems = parseSubsystemsResponse(parsed);
+            }
+          } catch (_) { /* skip */ }
+        }
+      } catch (_) { /* skip individual failures */ }
+    }));
+  }
+
+  const enrichedCount = systems.filter(s => s.subsystems.length > 0).length;
+  console.log(`GoHub: Subsystem enrichment complete — ${enrichedCount}/${systems.length} systems have subsystems`);
+
+  return systems;
+}
+
+function parseSubsystemsResponse(data: any[]): CompletionsSubsystem[] {
+  const subsystems: CompletionsSubsystem[] = [];
+  for (const sub of data) {
+    if (!sub || typeof sub !== "object") continue;
+    const subId = String(
+      sub.Number || sub.SystemNumber || sub.SubSystemNumber || sub.Name ||
+      sub.SubSystemName || sub.SystemId || sub.system_id || sub.Id || sub.CODE || ""
+    );
+    if (!subId) continue;
+    const subName = String(
+      sub.Description || sub.SystemDescription || sub.SubSystemDescription ||
+      sub.Title || sub.NAME || subId
+    );
+    let subProgress = 0;
+    const pctValue = sub.Complete ?? sub.Progress ?? sub.OverallProgress ??
+      sub.Percent ?? sub.CompletionPercent ?? sub.percentage ?? null;
+    if (pctValue !== null && pctValue !== undefined) {
+      const parsed = parseFloat(String(pctValue).replace("%", ""));
+      if (!isNaN(parsed)) {
+        subProgress = parsed > 0 && parsed <= 1 ? parsed * 100 : parsed;
+      }
+    }
+    subsystems.push({ system_id: subId, name: subName, progress: subProgress });
+  }
+  return subsystems;
+}
+
 // ─── Strategy 2: ASP.NET PageMethod on the ASPX page ────────
 
 async function tryPageMethod(
@@ -615,11 +797,12 @@ function parsePageMethodResponse(text: string): CompletionsSystem[] {
       console.log(`GoHub: Parsed JSON array with ${data.length} items`);
       if (data.length > 0) {
         console.log(`GoHub: First item keys: ${Object.keys(data[0]).join(", ")}`);
-        // Log diagnostic info about SubSystem and Complete fields
+        // Log raw first item to understand exact data structure
         const firstItem = data[0];
-        const subVal = firstItem.SubSystem ?? firstItem.SubSystems ?? firstItem.subsystems ?? firstItem.Children;
-        console.log(`GoHub: SubSystem field type=${typeof subVal}, isArray=${Array.isArray(subVal)}, value=${JSON.stringify(subVal)?.substring(0, 500)}`);
-        console.log(`GoHub: Complete field value=${JSON.stringify(firstItem.Complete)}, type=${typeof firstItem.Complete}`);
+        console.log(`GoHub: RAW first item: ${JSON.stringify(firstItem).substring(0, 1500)}`);
+        // Log first 5 system IDs to understand naming patterns
+        const sampleIds = data.slice(0, 5).map((d: any) => d.Number || d.SystemNumber || d.Id || 'unknown');
+        console.log(`GoHub: Sample system IDs: ${JSON.stringify(sampleIds)}`);
       }
 
       for (const item of data) {
@@ -785,6 +968,15 @@ async function searchProjectForSystems(
     }
 
     console.log(`GoHub: Project "${tile.name}" returned ${allSystems.length} total systems`);
+
+    // Enrich systems with subsystems via separate API call
+    if (allSystems.length > 0) {
+      const needsEnrichment = allSystems.some(s => s.subsystems.length === 0);
+      if (needsEnrichment) {
+        console.log(`GoHub: Attempting to enrich ${allSystems.length} systems with subsystems...`);
+        allSystems = await enrichSystemsWithSubsystems(allSystems, gridCookies, gridPageUrl, gridHtml);
+      }
+    }
 
     // Filter by project code
     if (allSystems.length > 0 && projectFilter) {
