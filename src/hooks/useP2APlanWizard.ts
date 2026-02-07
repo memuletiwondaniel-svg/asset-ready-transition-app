@@ -232,6 +232,8 @@ async function persistPlanToDatabase(
 
   // Save systems: delete existing (and their subsystems) then re-insert
   const systemIdMap: Record<string, string> = {};
+  // Maps composite wizard keys (systemId::sub::subSystemId) → DB subsystem UUID
+  const subsystemIdMap: Record<string, string> = {};
 
   // Get existing system UUIDs to delete their subsystems first
   const { data: existingSystems } = await client
@@ -264,7 +266,7 @@ async function persistPlanToDatabase(
       if (!error && savedSystem) {
         systemIdMap[system.id] = savedSystem.id;
 
-        // Insert subsystems for this system
+        // Insert subsystems for this system and build subsystemIdMap
         if (system.subsystems && system.subsystems.length > 0) {
           const subsystemRecords = system.subsystems.map((sub: any) => ({
             system_id: savedSystem.id,
@@ -272,7 +274,18 @@ async function persistPlanToDatabase(
             name: sub.name,
             completion_percentage: Math.round(sub.progress || 0),
           }));
-          await client.from('p2a_subsystems').insert(subsystemRecords);
+          const { data: savedSubs } = await client
+            .from('p2a_subsystems')
+            .insert(subsystemRecords)
+            .select();
+
+          // Build composite key → DB UUID map
+          if (savedSubs) {
+            for (const savedSub of savedSubs) {
+              const compositeKey = `${system.id}::sub::${savedSub.subsystem_id}`;
+              subsystemIdMap[compositeKey] = savedSub.id;
+            }
+          }
         }
       }
     }
@@ -349,19 +362,39 @@ async function persistPlanToDatabase(
     if (!error && savedVCR) {
       const mappedKeys = state.mappings[vcr.id] || [];
       if (mappedKeys.length > 0) {
-        const parentSystemIds = new Set<string>();
-        for (const key of mappedKeys) {
-          const parentId = key.includes('::sub::') ? key.split('::sub::')[0] : key;
-          parentSystemIds.add(parentId);
-        }
+        const systemAssignments: Array<{
+          handover_point_id: string;
+          system_id: string;
+          subsystem_id?: string;
+          assigned_by: string;
+        }> = [];
 
-        const systemAssignments = Array.from(parentSystemIds)
-          .filter(tempId => systemIdMap[tempId])
-          .map(tempId => ({
-            handover_point_id: savedVCR.id,
-            system_id: systemIdMap[tempId],
-            assigned_by: user.id,
-          }));
+        for (const key of mappedKeys) {
+          if (key.includes('::sub::')) {
+            // Subsystem-level mapping
+            const parentId = key.split('::sub::')[0];
+            const dbSystemId = systemIdMap[parentId];
+            const dbSubsystemId = subsystemIdMap[key];
+            if (dbSystemId) {
+              systemAssignments.push({
+                handover_point_id: savedVCR.id,
+                system_id: dbSystemId,
+                subsystem_id: dbSubsystemId || undefined,
+                assigned_by: user.id,
+              });
+            }
+          } else {
+            // Full system mapping
+            const dbSystemId = systemIdMap[key];
+            if (dbSystemId) {
+              systemAssignments.push({
+                handover_point_id: savedVCR.id,
+                system_id: dbSystemId,
+                assigned_by: user.id,
+              });
+            }
+          }
+        }
 
         if (systemAssignments.length > 0) {
           await client.from('p2a_handover_point_systems').insert(systemAssignments);

@@ -2929,6 +2929,7 @@ export type Database = {
           assigned_by: string | null
           handover_point_id: string
           id: string
+          subsystem_id: string | null
           system_id: string
         }
         Insert: {
@@ -2936,6 +2937,7 @@ export type Database = {
           assigned_by?: string | null
           handover_point_id: string
           id?: string
+          subsystem_id?: string | null
           system_id: string
         }
         Update: {
@@ -2943,6 +2945,7 @@ export type Database = {
           assigned_by?: string | null
           handover_point_id?: string
           id?: string
+          subsystem_id?: string | null
           system_id?: string
         }
         Relationships: [
@@ -2951,6 +2954,13 @@ export type Database = {
             columns: ["handover_point_id"]
             isOneToOne: false
             referencedRelation: "p2a_handover_points"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_handover_point_systems_subsystem_id_fkey"
+            columns: ["subsystem_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_subsystems"
             referencedColumns: ["id"]
           },
           {

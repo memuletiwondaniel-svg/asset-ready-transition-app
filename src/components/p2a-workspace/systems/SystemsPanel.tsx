@@ -27,6 +27,7 @@ import { P2ASystem } from '../hooks/useP2ASystems';
 import { P2APhase } from '../hooks/useP2APhases';
 import { P2AHandoverPoint } from '../hooks/useP2AHandoverPoints';
 import { DraggableSystemCard } from './SystemCard';
+import { SubsystemCard } from './SubsystemCard';
 import { WorkspaceAddSystemModal } from './WorkspaceAddSystemModal';
 import { WorkspaceExcelUploadModal } from './WorkspaceExcelUploadModal';
 import { CMSImportModal } from '@/components/widgets/p2a-wizard/steps/CMSImportModal';
@@ -313,30 +314,66 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
                 <div className="flex flex-col gap-1.5 overflow-hidden">
                   {showMapping ? (
                     (() => {
-                      const orderedGroups: { vcrCode: string; systems: P2ASystem[] }[] = [];
+                      // Build ordered groups including subsystem cards
+                      type DisplayItem = 
+                        | { type: 'system'; system: P2ASystem }
+                        | { type: 'subsystem'; subsystem: P2ASystem['assigned_subsystems'][0]; parentName: string };
+
+                      const orderedGroups: { vcrCode: string; items: DisplayItem[] }[] = [];
                       const seenCodes = new Set<string>();
+
                       filteredAssigned.forEach(s => {
-                        const code = s.assigned_vcr_code || 'Unknown';
-                        if (!seenCodes.has(code)) {
-                          seenCodes.add(code);
-                          orderedGroups.push({ vcrCode: code, systems: [] });
+                        // Check if this system has subsystem-level assignments
+                        if (s.assigned_subsystems && s.assigned_subsystems.length > 0) {
+                          // Show individual subsystem cards instead of the parent
+                          for (const sub of s.assigned_subsystems) {
+                            const code = sub.assigned_vcr_code || 'Unknown';
+                            if (!seenCodes.has(code)) {
+                              seenCodes.add(code);
+                              orderedGroups.push({ vcrCode: code, items: [] });
+                            }
+                            orderedGroups.find(g => g.vcrCode === code)!.items.push({
+                              type: 'subsystem',
+                              subsystem: sub,
+                              parentName: s.name,
+                            });
+                          }
+                        } else {
+                          // Full system mapping
+                          const code = s.assigned_vcr_code || 'Unknown';
+                          if (!seenCodes.has(code)) {
+                            seenCodes.add(code);
+                            orderedGroups.push({ vcrCode: code, items: [] });
+                          }
+                          orderedGroups.find(g => g.vcrCode === code)!.items.push({
+                            type: 'system',
+                            system: s,
+                          });
                         }
-                        orderedGroups.find(g => g.vcrCode === code)!.systems.push(s);
                       });
-                      return orderedGroups.map(({ vcrCode, systems: groupSystems }) => (
+
+                      return orderedGroups.map(({ vcrCode, items }) => (
                         <div key={vcrCode}>
                           <span className="text-[8px] font-semibold text-muted-foreground uppercase tracking-wider px-0.5 mb-0.5 block">
                             {vcrCode}
                           </span>
                           <div className="flex flex-wrap gap-1.5">
-                            {groupSystems.map(system => (
-                              <DraggableSystemCard
-                                key={system.id}
-                                system={system}
-                                compact
-                                onClick={() => setSelectedSystem(system)}
-                              />
-                            ))}
+                            {items.map((item, idx) => 
+                              item.type === 'system' ? (
+                                <DraggableSystemCard
+                                  key={item.system.id}
+                                  system={item.system}
+                                  compact
+                                  onClick={() => setSelectedSystem(item.system)}
+                                />
+                              ) : (
+                                <SubsystemCard
+                                  key={item.subsystem.id}
+                                  subsystem={item.subsystem}
+                                  parentSystemName={item.parentName}
+                                />
+                              )
+                            )}
                           </div>
                         </div>
                       ));
