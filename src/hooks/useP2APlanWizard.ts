@@ -124,7 +124,7 @@ async function loadDraftFromDatabase(projectId: string): Promise<{ state: P2APla
     }
   }
 
-  // Load system-VCR mappings
+  // Load system-VCR mappings and expand to UI-compatible keys
   const mappings: Record<string, string[]> = {};
   if (vcrs.length > 0) {
     const vcrIds = vcrs.map(v => v.id);
@@ -133,11 +133,25 @@ async function loadDraftFromDatabase(projectId: string): Promise<{ state: P2APla
       .select('handover_point_id, system_id')
       .in('handover_point_id', vcrIds);
 
+    // Build a lookup: system DB id -> WizardSystem (to check for subsystems)
+    const systemById = new Map(systems.map(s => [s.id, s]));
+
     for (const m of (dbMappings || [])) {
       if (!mappings[m.handover_point_id]) {
         mappings[m.handover_point_id] = [];
       }
-      mappings[m.handover_point_id].push(m.system_id);
+
+      const system = systemById.get(m.system_id);
+      if (system && system.subsystems && system.subsystems.length > 0) {
+        // Expand to composite subsystem keys to match UI format
+        for (const sub of system.subsystems) {
+          const compositeKey = `${system.id}::sub::${sub.system_id}`;
+          mappings[m.handover_point_id].push(compositeKey);
+        }
+      } else {
+        // System without subsystems — use raw ID
+        mappings[m.handover_point_id].push(m.system_id);
+      }
     }
   }
 
