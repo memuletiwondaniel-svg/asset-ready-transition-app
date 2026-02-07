@@ -88,7 +88,7 @@ const UnassignedSystemsDropZone: React.FC<UnassignedSystemsDropZoneProps> = ({
         </CollapsibleTrigger>
         <CollapsibleContent className="pt-2 overflow-hidden">
           {systems.length > 0 ? (
-            <div className="flex flex-wrap gap-1.5 overflow-hidden">
+            <div className="flex flex-wrap gap-1.5">
               {systems.map(system => (
                 <DraggableSystemCard
                   key={system.id}
@@ -311,7 +311,7 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
             {/* Assigned Systems - always visible */}
             {filteredAssigned.length > 0 && (
               <>
-                <div className="flex flex-col gap-1.5 overflow-hidden">
+                <div className="flex flex-col gap-1.5">
                   {showMapping ? (
                     (() => {
                       // Build ordered groups including subsystem cards
