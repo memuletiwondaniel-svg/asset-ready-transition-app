@@ -8,7 +8,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Milestone,
-  Key,
   X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -142,9 +141,8 @@ export const PhaseCard: React.FC<PhaseCardProps> = ({
               return (
                 <div
                   key={vcr.id}
-                  className="group/vcr flex items-center gap-1.5 p-1.5 rounded-md bg-background/80 border text-[11px] transition-colors hover:bg-background"
+                  className="group/vcr flex items-center gap-1.5 p-1.5 rounded-md bg-background/80 border text-[11px] transition-all hover:bg-background hover:shadow-sm"
                 >
-                  <Key className="h-3 w-3 text-primary shrink-0" />
                   <span className="truncate flex-1 font-medium">{vcr.name}</span>
                   <span
                     className="text-[9px] font-mono px-1 py-0.5 rounded border shrink-0"
