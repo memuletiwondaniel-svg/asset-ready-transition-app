@@ -330,7 +330,7 @@ const SystemListItem: React.FC<SystemListItemProps> = ({
               <span className="inline-flex items-center px-1 py-0.5 rounded text-[8px] font-medium tabular-nums tracking-wide shrink-0 leading-none border border-border bg-muted text-muted-foreground">
                 {sub.system_id}
               </span>
-              <span className="truncate flex-1 text-muted-foreground">{sub.name}</span>
+              <span className="truncate flex-1 text-muted-foreground text-[10px]">{sub.name}</span>
               <span className="text-[9px] font-medium tabular-nums shrink-0 text-muted-foreground">
                 {Math.round(sub.progress)}%
               </span>
