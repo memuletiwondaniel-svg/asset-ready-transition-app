@@ -73,7 +73,8 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
 
   // Check if a wizard display step (1-indexed, offset from overview) is actually completed
   const isStepComplete = (displayStep: number): boolean => {
-    // displayStep corresponds to WIZARD_STEPS index: displayStep + 1 (since step 1 is overview)
+    // Only mark as complete if user has actually visited past this step
+    const hasVisitedPast = (currentStep - 1) > displayStep;
     switch (displayStep) {
       case 1: // Systems
         return state.systems.length > 0;
@@ -83,12 +84,12 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
         return Object.values(state.mappings).some(arr => arr.length > 0);
       case 4: // Sequencing
         return Object.keys(state.vcrPhaseAssignments).length > 0;
-      case 5: // Preview (always considered complete once visited)
-        return true;
+      case 5: // Preview — complete only once user has moved past it
+        return hasVisitedPast;
       case 6: // Approval
         return state.approvers.length > 0;
-      case 7: // Confirm
-        return true;
+      case 7: // Confirm — complete only once user has moved past it
+        return hasVisitedPast;
       default:
         return false;
     }
