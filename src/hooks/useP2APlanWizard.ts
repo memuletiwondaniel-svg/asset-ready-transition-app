@@ -124,33 +124,58 @@ async function loadDraftFromDatabase(projectId: string): Promise<{ state: P2APla
     }
   }
 
-  // Load system-VCR mappings and expand to UI-compatible keys
+  // Load system-VCR mappings and convert to UI-compatible keys
   const mappings: Record<string, string[]> = {};
   if (vcrs.length > 0) {
     const vcrIds = vcrs.map(v => v.id);
     const { data: dbMappings } = await client
       .from('p2a_handover_point_systems')
-      .select('handover_point_id, system_id')
+      .select('handover_point_id, system_id, subsystem_id')
       .in('handover_point_id', vcrIds);
 
-    // Build a lookup: system DB id -> WizardSystem (to check for subsystems)
+    // Build lookups
     const systemById = new Map(systems.map(s => [s.id, s]));
+    // Build subsystem DB UUID → text ID lookup from raw DB data
+    const subsystemUUIDToTextId = new Map<string, { textId: string; parentSystemId: string }>();
+    for (const [parentDbId, subs] of Object.entries(subsystemsBySystem)) {
+      // Find the wizard system that corresponds to this DB system
+      const wizardSystem = systems.find(s => s.id === parentDbId);
+      if (wizardSystem) {
+        for (const sub of subs) {
+          subsystemUUIDToTextId.set(sub.id, { textId: sub.subsystem_id, parentSystemId: wizardSystem.id });
+        }
+      }
+    }
 
     for (const m of (dbMappings || [])) {
       if (!mappings[m.handover_point_id]) {
         mappings[m.handover_point_id] = [];
       }
 
-      const system = systemById.get(m.system_id);
-      if (system && system.subsystems && system.subsystems.length > 0) {
-        // Expand to composite subsystem keys to match UI format
-        for (const sub of system.subsystems) {
-          const compositeKey = `${system.id}::sub::${sub.system_id}`;
-          mappings[m.handover_point_id].push(compositeKey);
+      if (m.subsystem_id) {
+        // Specific subsystem mapping — create the exact composite key
+        const lookup = subsystemUUIDToTextId.get(m.subsystem_id);
+        if (lookup) {
+          const compositeKey = `${lookup.parentSystemId}::sub::${lookup.textId}`;
+          if (!mappings[m.handover_point_id].includes(compositeKey)) {
+            mappings[m.handover_point_id].push(compositeKey);
+          }
         }
       } else {
-        // System without subsystems — use raw ID
-        mappings[m.handover_point_id].push(m.system_id);
+        // Full system mapping (no subsystem)
+        const system = systemById.get(m.system_id);
+        if (system && system.subsystems && system.subsystems.length > 0) {
+          // Expand to all subsystem composite keys
+          for (const sub of system.subsystems) {
+            const compositeKey = `${system.id}::sub::${sub.system_id}`;
+            if (!mappings[m.handover_point_id].includes(compositeKey)) {
+              mappings[m.handover_point_id].push(compositeKey);
+            }
+          }
+        } else {
+          // System without subsystems — use raw ID
+          mappings[m.handover_point_id].push(m.system_id);
+        }
       }
     }
   }
