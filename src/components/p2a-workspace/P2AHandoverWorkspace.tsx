@@ -468,12 +468,87 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
   return (
     <div 
       className={cn(
-        "flex flex-col transition-all duration-300",
+        "flex flex-col transition-all duration-300 relative",
         isFullscreen 
           ? "fixed inset-0 z-50 bg-background" 
           : "flex-1 h-full"
       )}
     >
+      {/* Dynamic Multicolor Animated Background */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div 
+          className="absolute top-0 left-0 w-[600px] h-[600px] rounded-full opacity-[0.08] dark:opacity-[0.04] will-change-transform animate-journey-tl"
+          style={{ 
+            background: 'radial-gradient(circle, hsl(280, 45%, 60%), transparent 70%)',
+            filter: 'blur(100px)',
+            transform: 'translateZ(0)',
+          }}
+        />
+        <div 
+          className="absolute top-0 right-0 w-[650px] h-[650px] rounded-full opacity-[0.18] dark:opacity-[0.10] will-change-transform animate-journey-tr"
+          style={{ 
+            background: 'radial-gradient(circle, hsl(200, 70%, 60%), transparent 70%)',
+            filter: 'blur(110px)',
+            transform: 'translateZ(0)',
+          }}
+        />
+        <div 
+          className="absolute bottom-0 left-0 w-[550px] h-[550px] rounded-full opacity-[0.14] dark:opacity-[0.08] will-change-transform animate-journey-bl"
+          style={{ 
+            background: 'radial-gradient(circle, hsl(170, 55%, 60%), transparent 70%)',
+            filter: 'blur(100px)',
+            transform: 'translateZ(0)',
+          }}
+        />
+        <div 
+          className="absolute bottom-0 right-0 w-[500px] h-[500px] rounded-full opacity-[0.24] dark:opacity-[0.14] will-change-transform animate-journey-br"
+          style={{ 
+            background: 'radial-gradient(circle, hsl(45, 85%, 58%), transparent 70%)',
+            filter: 'blur(90px)',
+            transform: 'translateZ(0)',
+          }}
+        />
+        <div 
+          className="absolute top-1/2 left-1/4 w-[450px] h-[450px] rounded-full opacity-[0.16] dark:opacity-[0.09] will-change-transform animate-journey-center"
+          style={{ 
+            background: 'radial-gradient(circle, hsl(330, 60%, 65%), transparent 70%)',
+            filter: 'blur(95px)',
+            transform: 'translateZ(0)',
+          }}
+        />
+        <div 
+          className="absolute top-1/3 right-1/4 w-[480px] h-[480px] rounded-full opacity-[0.20] dark:opacity-[0.11] will-change-transform animate-journey-roam-1"
+          style={{ 
+            background: 'radial-gradient(circle, hsl(35, 80%, 55%), transparent 70%)',
+            filter: 'blur(100px)',
+            transform: 'translateZ(0)',
+          }}
+        />
+        <div 
+          className="absolute bottom-1/3 left-1/3 w-[420px] h-[420px] rounded-full opacity-[0.14] dark:opacity-[0.08] will-change-transform animate-journey-roam-2"
+          style={{ 
+            background: 'radial-gradient(circle, hsl(260, 65%, 62%), transparent 70%)',
+            filter: 'blur(95px)',
+            transform: 'translateZ(0)',
+          }}
+        />
+        <div 
+          className="absolute top-1/4 left-1/2 w-[400px] h-[400px] rounded-full opacity-[0.12] dark:opacity-[0.07] will-change-transform animate-journey-roam-3"
+          style={{ 
+            background: 'radial-gradient(circle, hsl(150, 55%, 58%), transparent 70%)',
+            filter: 'blur(90px)',
+            transform: 'translateZ(0)',
+          }}
+        />
+        <div 
+          className="absolute top-1/2 left-1/2 w-[700px] h-[700px] rounded-full opacity-[0.06] dark:opacity-[0.04] will-change-transform animate-pulse-center"
+          style={{ 
+            background: 'radial-gradient(circle, hsl(240, 45%, 70%), transparent 60%)',
+            filter: 'blur(130px)',
+            transform: 'translateZ(0)',
+          }}
+        />
+      </div>
 
     <DndContext
       sensors={sensors}
@@ -482,8 +557,8 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
       onDragEnd={handleDragEnd}
     >
 
-      {/* Main Content Area - Systems Panel + Timeline */}
-      <div className="flex-1 flex overflow-hidden min-h-0 relative" ref={workspaceContainerRef} data-workspace-container>
+      {/* Main Content Area - Systems Panel + Timeline (above background) */}
+      <div className="flex-1 flex overflow-hidden min-h-0 relative z-10" ref={workspaceContainerRef} data-workspace-container>
         {/* Mapping SVG Overlay */}
         {showMapping && <MappingOverlay bundles={bundles} />}
 
