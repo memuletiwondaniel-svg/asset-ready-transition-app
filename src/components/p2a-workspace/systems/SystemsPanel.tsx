@@ -317,7 +317,7 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
                       // Build ordered groups including subsystem cards
                       type DisplayItem = 
                         | { type: 'system'; system: P2ASystem }
-                        | { type: 'subsystem'; subsystem: P2ASystem['assigned_subsystems'][0]; parentName: string };
+                        | { type: 'subsystem'; subsystem: P2ASystem['assigned_subsystems'][0]; parentName: string; isHydrocarbon: boolean };
 
                       const orderedGroups: { vcrCode: string; items: DisplayItem[] }[] = [];
                       const seenCodes = new Set<string>();
@@ -336,6 +336,7 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
                               type: 'subsystem',
                               subsystem: sub,
                               parentName: s.name,
+                              isHydrocarbon: s.is_hydrocarbon,
                             });
                           }
                         } else {
@@ -383,6 +384,7 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
                                   key={item.subsystem.id}
                                   subsystem={item.subsystem}
                                   parentSystemName={item.parentName}
+                                  isHydrocarbon={item.isHydrocarbon}
                                 />
                               )
                             )}
