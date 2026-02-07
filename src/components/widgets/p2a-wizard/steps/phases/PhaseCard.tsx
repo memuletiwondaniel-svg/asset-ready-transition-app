@@ -146,13 +146,15 @@ export const PhaseCard: React.FC<PhaseCardProps> = ({
                   key={vcr.id}
                   className="group/vcr flex items-center gap-1.5 p-1.5 rounded-md bg-background/80 border text-[11px] transition-all hover:bg-background hover:shadow-sm"
                 >
-                  <span className="truncate flex-1 font-medium">{vcr.name}</span>
-                  <span
-                    className="text-[9px] font-mono px-1 py-0.5 rounded border shrink-0"
-                    style={getVCRIdStyle(vcrIndex >= 0 ? vcrIndex : 0)}
-                  >
-                    {vcr.code}
-                  </span>
+                  <div className="flex flex-col min-w-0 flex-1 gap-0.5">
+                    <span className="truncate font-medium">{vcr.name}</span>
+                    <span
+                      className="text-[8px] font-mono px-1 py-px rounded border shrink-0 w-fit leading-tight"
+                      style={getVCRIdStyle(vcrIndex >= 0 ? vcrIndex : 0)}
+                    >
+                      {vcr.code}
+                    </span>
+                  </div>
                   <button
                     onClick={(e) => { e.stopPropagation(); onUnassignVCR(vcr.id); }}
                     className="opacity-0 group-hover/vcr:opacity-100 transition-opacity p-0.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive shrink-0"
