@@ -81,9 +81,10 @@ export const useP2AHandoverPoints = (handoverPlanId: string) => {
       target_date?: string;
       handover_plan_id: string; // Required - direct link to plan
     }) => {
-      // Generate VCR code
+      // Generate VCR code — strip "DP-" prefix since the RPC adds "DP" itself
+      const rawCode = data.project_code.replace(/^DP-?/i, '');
       const { data: vcrCode, error: vcrError } = await supabase.rpc('generate_vcr_code', {
-        p_project_code: data.project_code,
+        p_project_code: rawCode,
       });
 
       if (vcrError) throw vcrError;
@@ -417,9 +418,10 @@ export const useP2AHandoverPoints = (handoverPlanId: string) => {
 
       if (!sourceVcr || !targetVcr) throw new Error('VCRs not found');
 
-      // 2. Generate new VCR code
+      // 2. Generate new VCR code — strip "DP-" prefix since the RPC adds "DP" itself
+      const rawCode = projectCode.replace(/^DP-?/i, '');
       const { data: vcrCode, error: vcrError } = await supabase.rpc('generate_vcr_code', {
-        p_project_code: projectCode,
+        p_project_code: rawCode,
       });
       if (vcrError) throw vcrError;
 
