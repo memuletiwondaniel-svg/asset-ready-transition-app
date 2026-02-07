@@ -21,6 +21,45 @@ export interface MappingBundle {
   systemCount: number;
 }
 
+/**
+ * Compute a mapping-friendly sort order for assigned systems.
+ *
+ * Goal: systems assigned to the same VCR sit next to each other,
+ * and VCR groups are ordered by the VCR's Y-position in the workspace
+ * so that the horizontal trunk lines are roughly aligned and minimally cross.
+ */
+export const getMappingSortOrder = (
+  systems: P2ASystem[],
+  containerEl: HTMLElement | null,
+): P2ASystem[] => {
+  if (!containerEl) return systems;
+
+  // Build a map of VCR id → Y position
+  const vcrYMap: Record<string, number> = {};
+  const vcrEls = containerEl.querySelectorAll('[data-vcr-id]');
+  vcrEls.forEach((el) => {
+    const id = el.getAttribute('data-vcr-id');
+    if (id) {
+      const rect = el.getBoundingClientRect();
+      vcrYMap[id] = rect.top + rect.height / 2;
+    }
+  });
+
+  return [...systems].sort((a, b) => {
+    const aVcr = a.assigned_handover_point_id || '';
+    const bVcr = b.assigned_handover_point_id || '';
+    // Primary: sort by VCR Y position
+    const aY = vcrYMap[aVcr] ?? Infinity;
+    const bY = vcrYMap[bVcr] ?? Infinity;
+    if (aY !== bY) return aY - bY;
+    // Secondary: group by VCR code
+    const aCode = a.assigned_vcr_code || '';
+    const bCode = b.assigned_vcr_code || '';
+    if (aCode !== bCode) return aCode.localeCompare(bCode);
+    return a.name.localeCompare(b.name);
+  });
+};
+
 export const useMappingPositions = (
   systems: P2ASystem[],
   showMapping: boolean,

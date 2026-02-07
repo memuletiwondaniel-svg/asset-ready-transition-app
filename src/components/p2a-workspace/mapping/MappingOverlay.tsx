@@ -6,27 +6,40 @@ interface MappingOverlayProps {
 }
 
 /**
- * Renders clean, bundled connections from system groups to VCR cards.
- * 
+ * Renders clean, orthogonal (horizontal + vertical only) connections
+ * from system groups to VCR cards.
+ *
  * Pattern per VCR group:
- *   1. Short horizontal stubs from each system card to a collector rail
- *   2. A vertical collector rail merging all stubs into a single trunk point
- *   3. One clean bezier trunk from the collector to the VCR card
- * 
- * This avoids spaghetti by combining N system lines into 1 trunk per VCR.
+ *   1. Short horizontal stub from each system card to a shared vertical bus
+ *   2. A vertical bus line merging all stubs
+ *   3. A horizontal trunk from the bus midpoint toward the VCR
+ *   4. A final vertical segment to align with the VCR Y
+ *   5. A short horizontal segment into the VCR card
+ *
+ * All lines are strictly horizontal or vertical — no curves.
  */
 export const MappingOverlay: React.FC<MappingOverlayProps> = ({ bundles }) => {
   if (bundles.length === 0) return null;
 
-  // Space out the collector rails so they don't overlap each other
-  const RAIL_BASE_X = 16; // distance from system card right edge to first rail
-  const RAIL_SPACING = 10; // spacing between parallel rails
+  // Space out the vertical buses so they don't overlap
+  const BUS_BASE_X = 18;
+  const BUS_SPACING = 12;
+
+  // How far from the VCR left edge we place the vertical drop
+  const VCR_APPROACH_OFFSET = 30;
 
   return (
     <svg
       className="absolute inset-0 w-full h-full pointer-events-none overflow-visible"
       style={{ zIndex: 10 }}
     >
+      <defs>
+        {/* Subtle shadow filter for trunk lines */}
+        <filter id="line-glow" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="2" />
+        </filter>
+      </defs>
+
       {bundles.map((bundle, bundleIndex) => {
         const {
           systemX,
@@ -39,72 +52,81 @@ export const MappingOverlay: React.FC<MappingOverlayProps> = ({ bundles }) => {
           systemCount,
         } = bundle;
 
-        // Position the collector rail at a staggered X to avoid overlap
-        const railX = systemX + RAIL_BASE_X + bundleIndex * RAIL_SPACING;
+        // Vertical bus X — staggered per bundle to avoid overlapping
+        const busX = systemX + BUS_BASE_X + bundleIndex * BUS_SPACING;
 
-        // Trunk: single bezier from collector midpoint to VCR
-        const trunkStartX = railX;
-        const trunkStartY = systemCenterY;
-        const trunkEndX = vcrX;
-        const trunkEndY = vcrY;
+        // Vertical drop X near the VCR side
+        const dropX = vcrX - VCR_APPROACH_OFFSET - bundleIndex * 8;
 
-        // Control points for a smooth horizontal S-curve
-        const dx = trunkEndX - trunkStartX;
-        const cpOffset = Math.max(dx * 0.4, 40);
-        const trunkPath = `M ${trunkStartX},${trunkStartY} C ${trunkStartX + cpOffset},${trunkStartY} ${trunkEndX - cpOffset},${trunkEndY} ${trunkEndX},${trunkEndY}`;
+        // Bus Y range
+        const minBusY = systemYs[0];
+        const maxBusY = systemYs[systemYs.length - 1];
 
-        // Collector rail: vertical line spanning all system Ys at railX
-        const minY = systemYs[0];
-        const maxY = systemYs[systemYs.length - 1];
+        // Trunk horizontal Y — use system center
+        const trunkY = systemCenterY;
+
+        // Build the orthogonal path:
+        // busX, trunkY → dropX, trunkY (horizontal trunk)
+        // dropX, trunkY → dropX, vcrY  (vertical drop)
+        // dropX, vcrY → vcrX, vcrY     (horizontal approach into VCR)
+        const trunkPath = [
+          `M ${busX},${trunkY}`,
+          `H ${dropX}`,
+          `V ${vcrY}`,
+          `H ${vcrX}`,
+        ].join(' ');
 
         return (
           <g key={vcrId}>
-            {/* --- Stubs: short horizontal lines from each system to the rail --- */}
+            {/* --- Stubs: horizontal lines from each system to the bus --- */}
             {systemYs.map((sy, i) => (
               <line
                 key={`stub-${i}`}
                 x1={systemX}
                 y1={sy}
-                x2={railX}
+                x2={busX}
                 y2={sy}
-                stroke={borderColor}
-                strokeWidth={1.5}
-                strokeLinecap="round"
-                opacity={0.45}
-              />
-            ))}
-
-            {/* --- Collector rail: vertical line merging stubs --- */}
-            {systemCount > 1 && (
-              <line
-                x1={railX}
-                y1={minY}
-                x2={railX}
-                y2={maxY}
                 stroke={borderColor}
                 strokeWidth={1.5}
                 strokeLinecap="round"
                 opacity={0.4}
               />
+            ))}
+
+            {/* --- Bus: vertical line merging stubs --- */}
+            {systemCount > 1 && (
+              <line
+                x1={busX}
+                y1={minBusY}
+                x2={busX}
+                y2={maxBusY}
+                stroke={borderColor}
+                strokeWidth={1.5}
+                strokeLinecap="round"
+                opacity={0.35}
+              />
             )}
 
-            {/* --- Trunk: single bezier from rail midpoint to VCR --- */}
-            {/* Glow */}
+            {/* --- Trunk: orthogonal path from bus to VCR --- */}
+            {/* Glow shadow */}
             <path
               d={trunkPath}
               fill="none"
               stroke={borderColor}
               strokeWidth={4}
               strokeLinecap="round"
-              opacity={0.1}
+              strokeLinejoin="round"
+              opacity={0.08}
+              filter="url(#line-glow)"
             />
-            {/* Main trunk */}
+            {/* Main trunk line */}
             <path
               d={trunkPath}
               fill="none"
               stroke={borderColor}
               strokeWidth={2}
               strokeLinecap="round"
+              strokeLinejoin="round"
               opacity={0.5}
             />
 
@@ -120,33 +142,60 @@ export const MappingOverlay: React.FC<MappingOverlayProps> = ({ bundles }) => {
                 opacity={0.5}
               />
             ))}
+
+            {/* Corner dot at bus-to-trunk junction */}
+            <circle
+              cx={busX}
+              cy={trunkY}
+              r={2}
+              fill={borderColor}
+              opacity={0.4}
+            />
+
+            {/* Corner dot at vertical drop */}
+            <circle
+              cx={dropX}
+              cy={trunkY}
+              r={2}
+              fill={borderColor}
+              opacity={0.4}
+            />
+            <circle
+              cx={dropX}
+              cy={vcrY}
+              r={2}
+              fill={borderColor}
+              opacity={0.4}
+            />
+
             {/* VCR-side dot */}
             <circle
-              cx={trunkEndX}
-              cy={trunkEndY}
+              cx={vcrX}
+              cy={vcrY}
               r={3.5}
               fill={borderColor}
               opacity={0.6}
             />
-            {/* Count badge at collector midpoint */}
+
+            {/* Count badge at bus midpoint */}
             {systemCount > 1 && (
               <>
                 <circle
-                  cx={railX}
+                  cx={busX}
                   cy={systemCenterY}
                   r={7}
                   fill={borderColor}
                   opacity={0.15}
                 />
                 <circle
-                  cx={railX}
+                  cx={busX}
                   cy={systemCenterY}
                   r={5}
                   fill={borderColor}
                   opacity={0.7}
                 />
                 <text
-                  x={railX}
+                  x={busX}
                   y={systemCenterY + 0.5}
                   textAnchor="middle"
                   dominantBaseline="central"

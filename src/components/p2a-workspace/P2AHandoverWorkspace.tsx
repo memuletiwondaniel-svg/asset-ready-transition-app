@@ -483,6 +483,7 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
           onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
           onAssignVCRToPhase={(vcrId, phaseId) => moveHandoverPointToPhase({ handoverPointId: vcrId, newPhaseId: phaseId })}
           isCreatingPhase={isAddingPhase}
+          showMapping={showMapping}
           canUndo={canUndo}
           isUndoing={isUndoing}
           lastActionDescription={lastActionDescription}
