@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 interface P2AWorkspaceOverlayProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onReturnToWizard?: () => void;
   projectId: string;
   projectName?: string;
   projectNumber?: string;
@@ -51,6 +52,7 @@ const getStatusConfig = (status?: string) => {
 export const P2AWorkspaceOverlay: React.FC<P2AWorkspaceOverlayProps> = ({
   open,
   onOpenChange,
+  onReturnToWizard,
   projectId,
   projectName,
   projectNumber,
@@ -88,7 +90,10 @@ export const P2AWorkspaceOverlay: React.FC<P2AWorkspaceOverlayProps> = ({
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => onOpenChange(false)}
+              onClick={() => {
+                onOpenChange(false);
+                onReturnToWizard?.();
+              }}
               className="h-7 w-7 text-muted-foreground hover:text-foreground"
               title="Close"
             >
