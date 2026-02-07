@@ -221,7 +221,7 @@ const SystemListItem: React.FC<SystemListItemProps> = ({
               value={system.system_id}
               onChange={(e) => onUpdate({ system_id: e.target.value })}
               placeholder="System ID"
-              className="h-8 text-sm w-24"
+              className="h-8 text-sm w-40"
             />
             <Input
               value={system.name}
