@@ -112,7 +112,7 @@ export const VCRCreationStep: React.FC<VCRCreationStepProps> = ({
                 <div
                   key={vcr.id}
                   className={cn(
-                    "p-3 rounded-lg border bg-card transition-colors",
+                    "group p-3 rounded-lg border bg-card transition-all hover:bg-muted/40 hover:border-primary/20",
                     editingId === vcr.id && "ring-2 ring-primary"
                   )}
                 >
@@ -173,7 +173,7 @@ export const VCRCreationStep: React.FC<VCRCreationStepProps> = ({
                           </Badge>
                         )}
                       </div>
-                      <div className="flex gap-1 shrink-0">
+                      <div className="flex gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                         <Button
                           size="icon"
                           variant="ghost"
