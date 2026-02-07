@@ -366,9 +366,6 @@ export const SystemMappingStep: React.FC<SystemMappingStepProps> = ({
               {system.system_id}
             </span>
           </div>
-          <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">
-            {assignedHere.length}/{selectableKeys.length}
-          </span>
           {system.is_hydrocarbon && (
             <Badge
               variant="outline"
@@ -377,6 +374,9 @@ export const SystemMappingStep: React.FC<SystemMappingStepProps> = ({
               HC
             </Badge>
           )}
+          <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">
+            {assignedHere.length}/{selectableKeys.length}
+          </span>
         </div>
 
         {/* Subsystem rows */}
