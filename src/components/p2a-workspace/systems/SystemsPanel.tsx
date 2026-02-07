@@ -5,6 +5,13 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { 
   Plus, 
   Search, 
@@ -13,6 +20,8 @@ import {
   Layers,
   Database,
   Upload,
+  MoreVertical,
+  X,
 } from 'lucide-react';
 import { P2ASystem } from '../hooks/useP2ASystems';
 import { P2APhase } from '../hooks/useP2APhases';
@@ -248,18 +257,47 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
                     className="pl-6 h-6 text-[10px] placeholder:text-[9px] placeholder:text-muted-foreground/50"
                   />
                 </div>
+                <button
+                  onClick={() => { setSearchQuery(''); setIsSearchOpen(false); }}
+                  className="p-1 rounded hover:bg-muted/50 transition-colors"
+                  type="button"
+                >
+                  <X className="w-3 h-3 text-muted-foreground" />
+                </button>
               </>
             ) : (
               <>
                 <Layers className="w-4 h-4 text-muted-foreground shrink-0" />
                 <h3 className="font-semibold text-sm flex-1">Systems</h3>
-                <button
-                  onClick={() => setIsSearchOpen(true)}
-                  className="p-1 rounded hover:bg-muted/50 transition-colors"
-                  type="button"
-                >
-                  <Search className="w-3.5 h-3.5 text-muted-foreground" />
-                </button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      className="p-1 rounded hover:bg-muted/50 transition-colors"
+                      type="button"
+                    >
+                      <MoreVertical className="w-3.5 h-3.5 text-muted-foreground" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-44 bg-popover z-50">
+                    <DropdownMenuItem onClick={() => setIsSearchOpen(true)}>
+                      <Search className="w-3.5 h-3.5 mr-2" />
+                      <span className="text-xs">Search</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => setShowCMSModal(true)}>
+                      <Database className="w-3.5 h-3.5 mr-2" />
+                      <span className="text-xs">CMS Import</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setShowExcelModal(true)}>
+                      <Upload className="w-3.5 h-3.5 mr-2" />
+                      <span className="text-xs">Upload Excel</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setShowAddManualModal(true)}>
+                      <Plus className="w-3.5 h-3.5 mr-2" />
+                      <span className="text-xs">Add Manually</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </>
             )}
           </div>
@@ -353,49 +391,6 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
             </div>
           </div>
         </ScrollArea>
-
-        {/* Add System Cards - Fixed at bottom, matching wizard's 3-card grid */}
-        <div className="flex-shrink-0 h-[180px] px-3 py-2 border-t border-border bg-muted/30 flex flex-col justify-start gap-1.5">
-          <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground px-0.5">
-            Add Systems
-          </span>
-          <button
-            onClick={() => setShowCMSModal(true)}
-            className="group flex items-center gap-2 p-2 rounded-lg border border-border bg-card hover:bg-accent/50 hover:border-primary/30 hover:shadow-sm transition-all duration-200"
-          >
-            <div className="w-6 h-6 rounded-md bg-amber-500/10 flex items-center justify-center group-hover:bg-amber-500/20 transition-colors shrink-0">
-              <Database className="h-3 w-3 text-amber-600" />
-            </div>
-            <div className="text-left min-w-0">
-              <span className="font-medium text-[10px] block leading-tight">CMS Import</span>
-              <span className="text-[8px] text-muted-foreground leading-tight">Sync from GoHub</span>
-            </div>
-          </button>
-          <button
-            onClick={() => setShowExcelModal(true)}
-            className="group flex items-center gap-2 p-2 rounded-lg border border-border bg-card hover:bg-accent/50 hover:border-primary/30 hover:shadow-sm transition-all duration-200"
-          >
-            <div className="w-6 h-6 rounded-md bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors shrink-0">
-              <Upload className="h-3 w-3 text-emerald-600" />
-            </div>
-            <div className="text-left min-w-0">
-              <span className="font-medium text-[10px] block leading-tight">Upload Excel</span>
-              <span className="text-[8px] text-muted-foreground leading-tight">Import spreadsheet</span>
-            </div>
-          </button>
-          <button
-            onClick={() => setShowAddManualModal(true)}
-            className="group flex items-center gap-2 p-2 rounded-lg border border-border bg-card hover:bg-accent/50 hover:border-primary/30 hover:shadow-sm transition-all duration-200"
-          >
-            <div className="w-6 h-6 rounded-md bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors shrink-0">
-              <Plus className="h-3 w-3 text-blue-600" />
-            </div>
-            <div className="text-left min-w-0">
-              <span className="font-medium text-[10px] block leading-tight">Add Manually</span>
-              <span className="text-[8px] text-muted-foreground leading-tight">Enter details</span>
-            </div>
-          </button>
-        </div>
       </div>
 
       {/* Manual Add System Modal - wizard-style */}
