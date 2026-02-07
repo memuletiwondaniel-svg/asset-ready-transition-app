@@ -107,21 +107,22 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
     setSortableRef(node);
   };
 
-  // When mapping is active, sort VCRs by vcr_code to match system panel order (minimizes crossings)
-  // Otherwise sort by position for free-form layout
-  const sortedPoints = showMapping
-    ? [...handoverPoints].sort((a, b) => (a.vcr_code || '').localeCompare(b.vcr_code || ''))
-    : [...handoverPoints].sort((a, b) => a.position_y - b.position_y);
+  // Always sort VCRs by position_y (delivery order) to maintain consistent vertical order
+  const sortedPoints = [...handoverPoints].sort((a, b) => a.position_y - b.position_y);
 
-  // Compute min-height for the container when any VCR has absolute positioning
+  // Compute min-height for the container when mapping is active
   const CARD_HEIGHT = 42;
-  const hasAnyAlignmentTarget = showMapping && sortedPoints.some(p => vcrAlignmentTargets[p.id] !== undefined);
-  const computedMinHeight = hasAnyAlignmentTarget
-    ? Math.max(400, ...sortedPoints.map((p) => {
-        const targetY = vcrAlignmentTargets[p.id];
-        if (targetY === undefined) return 0;
-        return targetY - containerTop + CARD_HEIGHT + 12;
-      }))
+  const computedMinHeight = showMapping
+    ? Math.max(400,
+        // Account for alignment targets
+        ...sortedPoints.map((p) => {
+          const targetY = vcrAlignmentTargets[p.id];
+          if (targetY === undefined) return 0;
+          return targetY - containerTop + CARD_HEIGHT + 12;
+        }),
+        // Account for fallback stacking
+        sortedPoints.length * (CARD_HEIGHT + 8)
+      )
     : undefined;
 
   const handleDeleteConfirm = async () => {
@@ -222,18 +223,25 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
             /* Hybrid layout: VCRs with alignment targets use absolute positioning,
                others stay centered in the default flow */
             <div className="flex flex-col items-center justify-center gap-2 h-full">
-              {sortedPoints.map((point) => {
+              {sortedPoints.map((point, idx) => {
                 const targetY = showMapping ? vcrAlignmentTargets[point.id] : undefined;
-                const hasTarget = targetY !== undefined;
+                const hasAlignmentTarget = targetY !== undefined;
                 const CARD_HALF_HEIGHT = 21;
-                const topOffset = hasTarget
+
+                // When mapping is active, use absolute positioning for all VCR cards:
+                // - Cards with alignment targets align to their system group center
+                // - Cards without targets use a stacked fallback based on sort order
+                const useAbsolute = showMapping;
+                const topOffset = hasAlignmentTarget
                   ? Math.max(0, targetY - containerTop - CARD_HALF_HEIGHT)
-                  : undefined;
+                  : showMapping
+                    ? idx * (CARD_HALF_HEIGHT * 2 + 8) // Stack by index with gap
+                    : undefined;
 
                 return (
                   <div
                     key={point.id}
-                    style={hasTarget ? {
+                    style={useAbsolute ? {
                       position: 'absolute',
                       top: topOffset,
                       left: '50%',
