@@ -122,28 +122,37 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
         <Badge variant="outline">{systems.length} systems</Badge>
       </div>
 
-      {/* Import options - compact */}
-      <div className="grid grid-cols-3 gap-2 shrink-0">
+      {/* Import options */}
+      <div className="grid grid-cols-3 gap-3 shrink-0">
         <button
           onClick={() => setShowCMSModal(true)}
-          className="group relative flex items-center justify-center gap-2 p-2 rounded-lg border-2 border-dashed border-muted-foreground/25 bg-muted/30 hover:border-amber-500/50 hover:bg-amber-500/5 transition-all duration-200"
+          className="group relative flex flex-col items-center gap-2 p-4 rounded-xl border border-border bg-card hover:bg-accent/50 hover:border-primary/30 hover:shadow-md transition-all duration-200"
         >
-          <Database className="h-3.5 w-3.5 text-amber-600" />
+          <div className="w-9 h-9 rounded-lg bg-amber-500/10 flex items-center justify-center group-hover:bg-amber-500/20 transition-colors">
+            <Database className="h-4 w-4 text-amber-600" />
+          </div>
           <span className="font-medium text-xs">CMS Import</span>
+          <span className="text-[10px] text-muted-foreground leading-tight text-center">Sync from GoHub</span>
         </button>
         <button
           onClick={() => setShowExcelModal(true)}
-          className="group relative flex items-center justify-center gap-2 p-2 rounded-lg border-2 border-dashed border-muted-foreground/25 bg-muted/30 hover:border-emerald-500/50 hover:bg-emerald-500/5 transition-all duration-200"
+          className="group relative flex flex-col items-center gap-2 p-4 rounded-xl border border-border bg-card hover:bg-accent/50 hover:border-primary/30 hover:shadow-md transition-all duration-200"
         >
-          <Upload className="h-3.5 w-3.5 text-emerald-600" />
+          <div className="w-9 h-9 rounded-lg bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
+            <Upload className="h-4 w-4 text-emerald-600" />
+          </div>
           <span className="font-medium text-xs">Upload Excel</span>
+          <span className="text-[10px] text-muted-foreground leading-tight text-center">Import spreadsheet</span>
         </button>
         <button
           onClick={() => setShowAddModal(true)}
-          className="group relative flex items-center justify-center gap-2 p-2 rounded-lg border-2 border-dashed border-muted-foreground/25 bg-muted/30 hover:border-blue-500/50 hover:bg-blue-500/5 transition-all duration-200"
+          className="group relative flex flex-col items-center gap-2 p-4 rounded-xl border border-border bg-card hover:bg-accent/50 hover:border-primary/30 hover:shadow-md transition-all duration-200"
         >
-          <Plus className="h-3.5 w-3.5 text-blue-600" />
+          <div className="w-9 h-9 rounded-lg bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
+            <Plus className="h-4 w-4 text-blue-600" />
+          </div>
           <span className="font-medium text-xs">Add Manually</span>
+          <span className="text-[10px] text-muted-foreground leading-tight text-center">Enter details</span>
         </button>
       </div>
 
