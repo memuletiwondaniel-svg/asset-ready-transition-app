@@ -7,6 +7,7 @@ import { StyledWidgetIcon } from './StyledWidgetIcon';
 import { useProjectPSSRs } from '@/hooks/useProjectPSSRs';
 import { useProjectVCRs } from '@/hooks/useProjectVCRs';
 import { useProjectORPPlans } from '@/hooks/useProjectORPPlans';
+import { useProjectMilestones } from '@/hooks/useProjects';
 import { PSSRQuickViewOverlay } from '@/components/pssr/PSSRQuickViewOverlay';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CreateVCRWizard } from './vcr-wizard/CreateVCRWizard';
@@ -78,6 +79,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
   const { data: pssrs, isLoading: pssrsLoading } = useProjectPSSRs(projectId);
   const { data: vcrs, isLoading: vcrsLoading } = useProjectVCRs(projectId);
   const { data: orpPlans, isLoading: orpLoading } = useProjectORPPlans(projectId);
+  const { milestones: projectMilestones } = useProjectMilestones(projectId);
   const { canCreate: canCreateVCR, isLoading: roleLoading } = useCanCreateVCR();
   const [selectedPSSR, setSelectedPSSR] = useState<{ id: string; displayId: string } | null>(null);
   const [showCreateVCR, setShowCreateVCR] = useState(false);
@@ -88,6 +90,13 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
   const oraPlanId = orpPlans?.[0]?.id || '';
   const { plan: p2aPlan } = useP2AHandoverPlan(oraPlanId);
   const isLoading = pssrsLoading || vcrsLoading;
+
+  // Map project milestones to the format the wizard expects
+  const wizardMilestones = (projectMilestones || []).map(m => ({
+    id: m.id,
+    name: m.milestone_name,
+    target_date: m.milestone_date,
+  }));
 
   // Use only real VCRs from database
   const allVCRs = vcrs || [];
@@ -243,6 +252,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
         projectId={projectId}
         projectCode={projectCode}
         projectName={projectName}
+        milestones={wizardMilestones}
         onSuccess={() => {
           setShowP2APlanWizard(false);
         }}
