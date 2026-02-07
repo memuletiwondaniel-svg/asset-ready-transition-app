@@ -210,13 +210,6 @@ export const PhasesStep: React.FC<PhasesStepProps> = ({
           </div>
         </ScrollArea>
 
-        {/* Flow indicator */}
-        {phases.length > 1 && (
-          <div className="flex items-center justify-center gap-2 text-[10px] text-muted-foreground">
-            <ArrowRight className="h-3 w-3" />
-            <span>Phases are executed left to right in sequence</span>
-          </div>
-        )}
 
         {/* Unassigned VCRs tray – shown as soon as phases exist */}
         {phases.length > 0 && vcrs.length > 0 && (
