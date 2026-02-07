@@ -33,6 +33,7 @@ interface PhaseCardProps {
   milestones: Array<{ id: string; name: string; target_date?: string }>;
   assignedVCRs: WizardVCR[];
   allVCRs: WizardVCR[];
+  isReceivingDrag?: boolean;
   onEdit: (phase: WizardPhase) => void;
   onDelete: (id: string) => void;
   onMoveLeft: () => void;
@@ -58,6 +59,7 @@ export const PhaseCard: React.FC<PhaseCardProps> = ({
   milestones,
   assignedVCRs,
   allVCRs,
+  isReceivingDrag = false,
   onEdit,
   onDelete,
   onMoveLeft,
@@ -73,10 +75,11 @@ export const PhaseCard: React.FC<PhaseCardProps> = ({
     <div
       ref={setNodeRef}
       className={cn(
-        'group relative flex flex-col rounded-lg border-2 transition-all min-w-[180px] w-[200px] overflow-visible',
+        'group relative flex flex-col rounded-lg border-2 transition-all duration-200 min-w-[180px] w-[200px] overflow-visible',
         colors.border,
         colors.bg,
-        isOver && 'ring-2 ring-primary ring-offset-1 scale-[1.02]',
+        isOver && 'ring-2 ring-primary ring-offset-1 scale-[1.02] shadow-lg',
+        !isOver && isReceivingDrag && 'border-dashed opacity-90',
       )}
     >
       {/* Phase number badge */}
@@ -162,10 +165,14 @@ export const PhaseCard: React.FC<PhaseCardProps> = ({
             })
           ) : (
             <div className={cn(
-              'flex items-center justify-center py-3 rounded-md border-2 border-dashed text-[10px] text-muted-foreground transition-colors',
-              isOver ? 'border-primary/50 bg-primary/5' : 'border-muted-foreground/20'
+              'flex items-center justify-center py-3 rounded-md border-2 border-dashed text-[10px] text-muted-foreground transition-all duration-200',
+              isOver
+                ? 'border-primary bg-primary/10 text-primary font-medium scale-[1.02]'
+                : isReceivingDrag
+                  ? 'border-primary/30 bg-primary/5 animate-pulse'
+                  : 'border-muted-foreground/20'
             )}>
-              Drop VCRs here
+              {isOver ? '↓ Release to assign' : 'Drop VCRs here'}
             </div>
           )}
         </div>
