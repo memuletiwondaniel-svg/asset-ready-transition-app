@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Plus, GitBranch } from 'lucide-react';
 import { P2APhase, P2AMilestone } from '../hooks/useP2APhases';
 import { P2AHandoverPoint } from '../hooks/useP2AHandoverPoints';
@@ -146,62 +145,57 @@ export const PhasesTimeline: React.FC<PhasesTimelineProps> = ({
     );
   }
 
-  return (
+   return (
     <div className="flex-1 flex flex-col overflow-hidden min-h-0">
-      {/* Staircase Workspace - Scrollable area for phases with interleaved milestones */}
-      <div className="flex-1 min-h-0 relative">
-        <ScrollArea className="h-full w-full">
-          <div className="relative p-4 pb-8">
-            {/* Phase Columns with Milestones Interleaved */}
-            <div className="flex gap-4 relative z-10">
-              <SortableContext items={phases.map(p => p.id)} strategy={horizontalListSortingStrategy}>
-                {renderItems.map((item, index) => {
-                  if (item.type === 'phase') {
-                    return (
-                      <StaircasePhaseColumn
-                        key={item.phase.id}
-                        phase={item.phase}
-                        phaseIndex={item.idx}
-                        handoverPoints={handoverPoints.filter(p => p.phase_id === item.phase.id)}
-                        staircaseOffset={0}
-                        onCreateHandoverPoint={() => onCreateHandoverPoint(item.phase.id)}
-                        onEditPhase={() => setEditingPhase(item.phase)}
-                        onDeletePhase={() => onDeletePhase(item.phase.id)}
-                        onOpenVCR={onOpenVCR}
-                        projectCode={projectCode}
-                        isFirstPhase={item.idx === 0}
-                        isLastPhase={item.idx === phases.length - 1}
-                        showMapping={showMapping}
-                        vcrAlignmentTargets={vcrAlignmentTargets}
-                      />
-                    );
-                  } else {
-                    return (
-                      <MilestoneMarker
-                        key={`milestone-${item.milestone.id}`}
-                        milestone={item.milestone}
-                      />
-                    );
-                  }
-                })}
-              </SortableContext>
+      <div className="flex-1 min-h-0 relative overflow-x-auto overflow-y-hidden">
+        <div className="relative p-4 pb-8">
+          {/* Phase Columns with Milestones Interleaved */}
+          <div className="flex gap-4 relative z-10">
+            <SortableContext items={phases.map(p => p.id)} strategy={horizontalListSortingStrategy}>
+              {renderItems.map((item, index) => {
+                if (item.type === 'phase') {
+                  return (
+                    <StaircasePhaseColumn
+                      key={item.phase.id}
+                      phase={item.phase}
+                      phaseIndex={item.idx}
+                      handoverPoints={handoverPoints.filter(p => p.phase_id === item.phase.id)}
+                      staircaseOffset={0}
+                      onCreateHandoverPoint={() => onCreateHandoverPoint(item.phase.id)}
+                      onEditPhase={() => setEditingPhase(item.phase)}
+                      onDeletePhase={() => onDeletePhase(item.phase.id)}
+                      onOpenVCR={onOpenVCR}
+                      projectCode={projectCode}
+                      isFirstPhase={item.idx === 0}
+                      isLastPhase={item.idx === phases.length - 1}
+                      showMapping={showMapping}
+                      vcrAlignmentTargets={vcrAlignmentTargets}
+                    />
+                  );
+                } else {
+                  return (
+                    <MilestoneMarker
+                      key={`milestone-${item.milestone.id}`}
+                      milestone={item.milestone}
+                    />
+                  );
+                }
+              })}
+            </SortableContext>
 
-              {/* Add Phase Button */}
-              <div className="flex-shrink-0 flex items-start pt-4">
-                <Button 
-                  variant="outline" 
-                  className="h-auto py-8 px-6 border-dashed flex-col gap-2"
-                  onClick={() => setShowCreateDialog(true)}
-                >
-                  <Plus className="w-5 h-5" />
-                  <span className="text-xs">Add Phase</span>
-                </Button>
-              </div>
+            {/* Add Phase Button */}
+            <div className="flex-shrink-0 flex items-start pt-4">
+              <Button 
+                variant="outline" 
+                className="h-auto py-8 px-6 border-dashed flex-col gap-2"
+                onClick={() => setShowCreateDialog(true)}
+              >
+                <Plus className="w-5 h-5" />
+                <span className="text-xs">Add Phase</span>
+              </Button>
             </div>
           </div>
-          <ScrollBar orientation="horizontal" />
-          <ScrollBar orientation="vertical" />
-        </ScrollArea>
+        </div>
       </div>
 
       <CreatePhaseDialog
