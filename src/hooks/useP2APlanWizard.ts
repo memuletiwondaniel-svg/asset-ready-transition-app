@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { WizardSystem } from '@/components/widgets/p2a-wizard/steps/SystemsImportStep';
 import { WizardVCR } from '@/components/widgets/p2a-wizard/steps/VCRCreationStep';
-import { WizardPhase } from '@/components/widgets/p2a-wizard/steps/VCRSequencingStep';
+import { WizardPhase } from '@/components/widgets/p2a-wizard/steps/PhasesStep';
 import { WizardApprover } from '@/components/widgets/p2a-wizard/steps/ApprovalSetupStep';
 
 export interface P2APlanWizardState {
@@ -100,6 +100,7 @@ export function useP2APlanWizard(projectId: string, projectCode: string) {
         const phaseRecords = state.phases.map(p => ({
           handover_plan_id: planId,
           name: p.name,
+          description: p.description || null,
           display_order: p.display_order,
         }));
 
@@ -205,6 +206,7 @@ export function useP2APlanWizard(projectId: string, projectCode: string) {
             .insert({
               handover_plan_id: planId,
               name: phase.name,
+              description: phase.description || null,
               display_order: phase.display_order,
             })
             .select()
