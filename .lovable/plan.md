@@ -1,77 +1,86 @@
 
 
-# Fix: Persist and Restore Subsystem Data in P2A Wizard
+# "Show Mapping" Connection Diagram Feature
 
-## Problem
+## Overview
+Add a toggle button to the workspace header that, when activated, renders a clean SVG connection diagram showing the relationships between Systems (left panel), VCRs, and Phases. The connections will be methodically routed using smooth bezier curves, color-coded by VCR, with anti-spaghetti measures including smart system reordering and visual separation.
 
-When importing systems from GoCompletions (CMS), the import correctly brings in subsystems and progress percentages. However, when the user saves the draft and returns later:
-- **Subsystems are lost** -- they are never written to the `p2a_subsystems` table
-- **Progress percentages are lost** -- the `completion_percentage` column is never populated in `p2a_systems`
+## How It Works
 
-This happens because the save and load functions in `useP2APlanWizard.ts` do not handle subsystem data or progress values.
+When the user clicks "Show Mapping":
+1. Systems in the left panel are automatically re-sorted by their VCR assignment (grouped by VCR), minimizing line crossings
+2. An SVG overlay appears on top of the workspace drawing smooth, color-coded bezier curves from each system card to its assigned VCR card
+3. Unassigned systems are dimmed to reduce visual noise
+4. Each connection uses the VCR's pastel color for instant identification
+5. Clicking "Show Mapping" again hides the overlay and restores normal system ordering
 
-## Root Causes
+## Visual Design
+- Connections are smooth cubic bezier curves that exit horizontally from the right edge of system cards and curve into the left edge of VCR cards
+- Lines are semi-transparent (opacity 0.6) with a slightly thicker stroke (2px) and rounded ends
+- VCR cards get a subtle glow/ring matching their color when mapping is active
+- Unassigned systems get reduced opacity (0.4) when mapping is visible
+- A small animated dot or gradient pulse along each line for polish (optional, via CSS animation on stroke-dashoffset)
 
-| Area | Issue |
-|------|-------|
-| **Save (persist)** | `persistPlanToDatabase()` inserts into `p2a_systems` but only saves `system_id`, `name`, `is_hydrocarbon`. It skips `completion_percentage` and never inserts into `p2a_subsystems`. |
-| **Load (draft)** | `loadDraftFromDatabase()` selects from `p2a_systems` but only reads `id, system_id, name, is_hydrocarbon`. It never queries `p2a_subsystems` at all, so the wizard state has empty subsystem arrays. |
+## Anti-Spaghetti Measures
+1. **System reordering**: When mapping mode is active, systems in the left panel are sorted by their assigned VCR's vertical position in the workspace, grouping all systems for the same VCR together -- this naturally aligns the connection source points
+2. **Bezier curve routing**: Curves use a horizontal offset proportional to their index within a group, preventing overlapping lines
+3. **Color coding**: Each VCR's connections use its unique pastel color from the existing `getVCRColor()` utility
+4. **Grouping labels**: Small VCR name labels appear next to system groups in the panel when mapping is active
 
-## Solution
+## Technical Details
 
-All changes are in a single file: `src/hooks/useP2APlanWizard.ts`
+### New Files
+1. **`src/components/p2a-workspace/mapping/MappingOverlay.tsx`** -- The SVG overlay component
+   - Uses `useRef` + `useEffect` + `ResizeObserver` to track DOM positions of system cards and VCR cards
+   - Renders an absolutely-positioned SVG spanning the full workspace
+   - Draws cubic bezier paths: `M startX,startY C cp1X,cp1Y cp2X,cp2Y endX,endY`
+   - Each path uses stroke color from `getVCRColor(vcrCode)`
+   - Implements a `getBezierPath()` utility that calculates control points to create smooth S-curves with enough horizontal spread to avoid overlap
 
-### 1. Update `persistPlanToDatabase()` -- Save subsystems and progress
+2. **`src/components/p2a-workspace/mapping/useMappingPositions.ts`** -- Hook to compute element positions
+   - Uses `data-system-id` and `data-vcr-id` DOM attributes to locate cards
+   - Recalculates on scroll, resize, and when mapping mode toggles
+   - Returns an array of `{ systemRect, vcrRect, vcrColor, vcrCode }` for each connection
 
-When saving each system to `p2a_systems`:
-- Include `completion_percentage` from `system.progress` (rounded to integer)
-- After saving the system and getting its new database UUID, insert any subsystems from `system.subsystems` into `p2a_subsystems`
+### Modified Files
+3. **`P2AHandoverWorkspace.tsx`** -- Add mapping state and toggle
+   - Add `const [showMapping, setShowMapping] = useState(false)`
+   - Pass `showMapping` to `SystemsPanel` (for reordering) and render `MappingOverlay` when active
+   - Add a `data-workspace-root` ref on the main container for the overlay to position against
 
+4. **`P2AWorkspaceOverlay.tsx`** -- Add "Show Mapping" button to the header bar
+   - New toggle button between the status badge and X button
+   - Uses `GitMerge` or `Cable` icon from lucide-react
+   - Active state: filled background with primary color accent
+   - Pass toggle state down to `P2AHandoverWorkspace`
+
+5. **`SystemsPanel.tsx`** -- Support mapping-mode reordering
+   - Accept `showMapping` prop
+   - When active, sort the assigned/unassigned system lists by VCR position (grouped by VCR, ordered by VCR's Y position in their phase)
+   - Add `data-system-id={system.id}` attributes to each system card wrapper for DOM position lookup
+   - Dim unassigned systems (opacity-40) when mapping is visible
+
+6. **`SystemCard.tsx`** / **`DraggableSystemCard.tsx`** -- Add data attributes
+   - Add `data-system-id` to the card root for position tracking
+
+7. **`HandoverPointCard.tsx`** / **`DraggableHandoverPointCard.tsx`** -- Add data attributes
+   - Add `data-vcr-id` to the card root for position tracking
+
+### Bezier Routing Algorithm
+```text
+For each connection (system -> VCR):
+  1. Get system card's right-center point (startX, startY)
+  2. Get VCR card's left-center point (endX, endY)
+  3. Calculate horizontal midpoint: midX = startX + (endX - startX) * 0.5
+  4. Add vertical offset based on connection index within group to stagger curves
+  5. Control point 1: (midX, startY)
+  6. Control point 2: (midX, endY)
+  7. Result: smooth S-curve that fans out horizontally and converges at VCR
 ```
-For each system in state.systems:
-  1. INSERT into p2a_systems with completion_percentage = Math.round(system.progress || 0)
-  2. If system.subsystems exists and has items:
-     - Delete existing subsystems for this system (clean slate)
-     - INSERT each subsystem into p2a_subsystems with:
-       - system_id = saved system's new UUID
-       - subsystem_id = subsystem.system_id
-       - name = subsystem.name
-       - completion_percentage = Math.round(subsystem.progress || 0)
-```
 
-Also add a bulk delete of `p2a_subsystems` at the start (before deleting systems) to avoid orphaned rows:
-- Query all system UUIDs for the plan
-- Delete subsystems where `system_id` is in those UUIDs
-- Then delete the systems themselves (existing logic)
+### Performance Considerations
+- SVG overlay uses `pointer-events: none` so it doesn't interfere with drag-and-drop or clicks
+- Position calculations are debounced on scroll/resize (100ms)
+- Only active when `showMapping` is true (zero overhead when off)
+- Uses CSS `will-change: transform` on the SVG for GPU compositing
 
-### 2. Update `loadDraftFromDatabase()` -- Load subsystems and progress
-
-When loading systems from the database:
-- Include `completion_percentage` in the SELECT from `p2a_systems`
-- After loading systems, query `p2a_subsystems` for all system UUIDs
-- Map subsystems back onto each system's `subsystems` array
-
-```
-1. SELECT id, system_id, name, is_hydrocarbon, completion_percentage FROM p2a_systems
-2. Map completion_percentage to WizardSystem.progress
-3. Query p2a_subsystems WHERE system_id IN (all loaded system UUIDs)
-4. Group subsystems by system_id
-5. Attach each group to the matching WizardSystem.subsystems array
-```
-
-### Summary of Changes
-
-**File: `src/hooks/useP2APlanWizard.ts`**
-
-- `loadDraftFromDatabase()`:
-  - Add `completion_percentage` to the systems SELECT query
-  - Map it to `progress` on each `WizardSystem`
-  - Query `p2a_subsystems` for all system IDs
-  - Attach subsystems to each system
-
-- `persistPlanToDatabase()`:
-  - Before deleting systems, delete their subsystems first
-  - Add `completion_percentage` to each system INSERT
-  - After inserting each system, INSERT its subsystems into `p2a_subsystems`
-
-No database schema changes are required -- the `p2a_systems.completion_percentage` column and the `p2a_subsystems` table already exist with the correct structure.
