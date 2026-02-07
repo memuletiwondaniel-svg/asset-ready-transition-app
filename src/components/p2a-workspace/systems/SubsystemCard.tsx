@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Flame, Snowflake } from 'lucide-react';
+import { Flame } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { P2AAssignedSubsystem } from '../hooks/useP2ASystems';
 import { getVCRColor } from '../utils/vcrColors';
@@ -50,9 +50,7 @@ export const SubsystemCard: React.FC<SubsystemCardProps> = ({
                 <Flame className="w-2.5 h-2.5" />
               </div>
             ) : (
-              <div className="w-4 h-4 rounded flex items-center justify-center shrink-0 mt-0.5 bg-sky-500/10 text-sky-500">
-                <Snowflake className="w-2.5 h-2.5" />
-              </div>
+              <div className="w-4 h-4 shrink-0" />
             )}
             <div className="flex-1 min-w-0">
               {/* Subsystem Name */}
