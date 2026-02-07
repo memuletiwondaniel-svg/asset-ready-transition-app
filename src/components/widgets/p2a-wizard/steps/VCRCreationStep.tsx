@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
 import { Plus, Trash2, Edit2, Check, Key } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AddVCRModal } from './AddVCRModal';
@@ -31,14 +31,12 @@ export interface WizardVCR {
 
 interface VCRCreationStepProps {
   vcrs: WizardVCR[];
-  milestones: Array<{ id: string; name: string }>;
   projectCode: string;
   onVCRsChange: (vcrs: WizardVCR[]) => void;
 }
 
 export const VCRCreationStep: React.FC<VCRCreationStepProps> = ({
   vcrs,
-  milestones,
   projectCode,
   onVCRsChange,
 }) => {
@@ -66,9 +64,6 @@ export const VCRCreationStep: React.FC<VCRCreationStepProps> = ({
   // Always regenerate codes to ensure consistent format
   const vcrsByCode = vcrs.map((v, i) => ({ ...v, code: generateVCRCode(i) }));
 
-  const getMilestoneName = (id: string) => {
-    return milestones.find(m => m.id === id)?.name || '';
-  };
 
   return (
     <div className="flex flex-col gap-3 p-4 h-full">
@@ -130,20 +125,7 @@ export const VCRCreationStep: React.FC<VCRCreationStepProps> = ({
                         rows={2}
                         className="text-sm"
                       />
-                      <div className="flex items-center gap-2">
-                        <Select
-                          value={vcr.targetMilestone}
-                          onValueChange={(value) => handleUpdateVCR(vcr.id, { targetMilestone: value })}
-                        >
-                          <SelectTrigger className="h-8 text-sm flex-1">
-                            <SelectValue placeholder="Target Milestone" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {milestones.map((m) => (
-                              <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                      <div className="flex justify-end">
                         <Button size="sm" variant="ghost" onClick={() => setEditingId(null)}>
                           <Check className="h-4 w-4" />
                         </Button>
@@ -165,11 +147,6 @@ export const VCRCreationStep: React.FC<VCRCreationStepProps> = ({
                           <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                             {vcr.reason}
                           </p>
-                        )}
-                        {vcr.targetMilestone && (
-                          <Badge variant="secondary" className="mt-2 text-[10px]">
-                            Target: {getMilestoneName(vcr.targetMilestone)}
-                          </Badge>
                         )}
                       </div>
                       <div className="flex gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
