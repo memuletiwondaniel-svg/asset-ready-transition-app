@@ -43,7 +43,8 @@ export const SystemMappingStep: React.FC<SystemMappingStepProps> = ({
   mappings,
   onMappingsChange,
 }) => {
-  const [collapsedVCRs, setCollapsedVCRs] = useState<Set<string>>(new Set());
+  // Default all VCRs to collapsed
+  const [collapsedVCRs, setCollapsedVCRs] = useState<Set<string>>(() => new Set(vcrs.map(v => v.id)));
 
   const toggleCollapse = (vcrId: string) => {
     setCollapsedVCRs(prev => {
@@ -114,7 +115,7 @@ export const SystemMappingStep: React.FC<SystemMappingStepProps> = ({
         <div>
           <h3 className="text-sm font-medium">Map Systems to VCRs</h3>
           <p className="text-xs text-muted-foreground">
-            Assign systems to their verification checkpoints
+            Click on each VCR to expand and select its systems
           </p>
         </div>
         <Badge variant="outline" className={cn(
