@@ -30,8 +30,11 @@ export const WorkspacePreviewStep: React.FC<WorkspacePreviewStepProps> = ({
   };
 
   const getVCRSystems = (vcrId: string) => {
-    const systemIds = mappings[vcrId] || [];
-    return systems.filter(s => systemIds.includes(s.id));
+    const keys = mappings[vcrId] || [];
+    // Match systems by direct ID or by composite subsystem key prefix
+    return systems.filter(s =>
+      keys.includes(s.id) || keys.some(k => k.startsWith(s.id + '::sub::'))
+    );
   };
 
   const unassignedVCRs = vcrs.filter(vcr => !vcrPhaseAssignments[vcr.id]);

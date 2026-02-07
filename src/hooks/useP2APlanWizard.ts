@@ -249,9 +249,17 @@ export function useP2APlanWizard(projectId: string, projectCode: string) {
           vcrIdMap[vcr.id] = savedVCR.id;
 
           // Create system mappings for this VCR
-          const mappedSystemIds = state.mappings[vcr.id] || [];
-          if (mappedSystemIds.length > 0) {
-            const systemAssignments = mappedSystemIds
+          // Keys can be direct system IDs or composite subsystem keys (systemId::sub::subsystemId)
+          const mappedKeys = state.mappings[vcr.id] || [];
+          if (mappedKeys.length > 0) {
+            // Extract unique parent system IDs from both direct and composite keys
+            const parentSystemIds = new Set<string>();
+            for (const key of mappedKeys) {
+              const parentId = key.includes('::sub::') ? key.split('::sub::')[0] : key;
+              parentSystemIds.add(parentId);
+            }
+
+            const systemAssignments = Array.from(parentSystemIds)
               .filter(tempId => systemIdMap[tempId])
               .map(tempId => ({
                 handover_point_id: savedVCR.id,
