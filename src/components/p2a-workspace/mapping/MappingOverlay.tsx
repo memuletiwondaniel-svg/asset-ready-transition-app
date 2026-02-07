@@ -18,8 +18,8 @@ interface MappingOverlayProps {
 export const MappingOverlay: React.FC<MappingOverlayProps> = ({ bundles }) => {
   if (bundles.length === 0) return null;
 
-  const BUS_BASE_X = 18;
-  const BUS_SPACING = 12;
+  // Fixed X offset for the vertical bus — same for ALL bundles so connectors align
+  const BUS_OFFSET_X = 24;
 
   return (
     <svg
@@ -38,8 +38,8 @@ export const MappingOverlay: React.FC<MappingOverlayProps> = ({ bundles }) => {
           systemCount,
         } = bundle;
 
-        // Vertical bus X — staggered per bundle
-        const busX = systemX + BUS_BASE_X + bundleIndex * BUS_SPACING;
+        // Vertical bus X — aligned for all bundles
+        const busX = systemX + BUS_OFFSET_X;
 
         // Bus Y range
         const minBusY = systemYs[0];
