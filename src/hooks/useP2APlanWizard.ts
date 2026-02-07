@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState, useCallback, useEffect } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { WizardSystem } from '@/components/widgets/p2a-wizard/steps/SystemsImportStep';
@@ -28,6 +28,123 @@ const initialState: P2APlanWizardState = {
 };
 
 /**
+ * Load saved wizard data from the database and reconstruct the wizard state.
+ */
+async function loadDraftFromDatabase(projectId: string): Promise<{ state: P2APlanWizardState; hasDraft: boolean }> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const client = supabase as any;
+
+  // Get the plan
+  const { data: plan } = await client
+    .from('p2a_handover_plans')
+    .select('id, status')
+    .eq('project_id', projectId)
+    .maybeSingle();
+
+  if (!plan) {
+    return { state: initialState, hasDraft: false };
+  }
+
+  const planId = plan.id;
+
+  // Load systems
+  const { data: dbSystems } = await client
+    .from('p2a_systems')
+    .select('id, system_id, name, is_hydrocarbon')
+    .eq('handover_plan_id', planId);
+
+  const systems: WizardSystem[] = (dbSystems || []).map((s: any) => ({
+    id: s.id,
+    system_id: s.system_id,
+    name: s.name,
+    description: '',
+    is_hydrocarbon: s.is_hydrocarbon ?? false,
+  }));
+
+  // Load phases
+  const { data: dbPhases } = await client
+    .from('p2a_project_phases')
+    .select('id, name, description, display_order')
+    .eq('handover_plan_id', planId)
+    .order('display_order', { ascending: true });
+
+  const phases: WizardPhase[] = (dbPhases || []).map((p: any) => ({
+    id: p.id,
+    name: p.name,
+    description: p.description || '',
+    display_order: p.display_order,
+    milestoneIds: [],
+  }));
+
+  // Load VCRs (handover points)
+  const { data: dbVCRs } = await client
+    .from('p2a_handover_points')
+    .select('id, vcr_code, name, description, phase_id')
+    .eq('handover_plan_id', planId)
+    .order('vcr_code', { ascending: true });
+
+  const vcrs: WizardVCR[] = (dbVCRs || []).map((v: any) => ({
+    id: v.id,
+    name: v.name,
+    reason: v.description || '',
+    targetMilestone: '',
+    code: v.vcr_code,
+  }));
+
+  // Build VCR-phase assignments
+  const vcrPhaseAssignments: Record<string, string> = {};
+  for (const v of (dbVCRs || [])) {
+    if (v.phase_id) {
+      vcrPhaseAssignments[v.id] = v.phase_id;
+    }
+  }
+
+  // Load system-VCR mappings
+  const mappings: Record<string, string[]> = {};
+  if (vcrs.length > 0) {
+    const vcrIds = vcrs.map(v => v.id);
+    const { data: dbMappings } = await client
+      .from('p2a_handover_point_systems')
+      .select('handover_point_id, system_id')
+      .in('handover_point_id', vcrIds);
+
+    for (const m of (dbMappings || [])) {
+      if (!mappings[m.handover_point_id]) {
+        mappings[m.handover_point_id] = [];
+      }
+      mappings[m.handover_point_id].push(m.system_id);
+    }
+  }
+
+  // Load approvers
+  const { data: dbApprovers } = await client
+    .from('p2a_handover_approvers')
+    .select('id, role_name, display_order, user_id')
+    .eq('handover_id', planId)
+    .order('display_order', { ascending: true });
+
+  const approvers: WizardApprover[] = (dbApprovers || []).map((a: any) => ({
+    id: a.id,
+    role_name: a.role_name,
+    display_order: a.display_order,
+    user_id: a.user_id || undefined,
+  }));
+
+  return {
+    state: {
+      systems,
+      vcrs,
+      phases,
+      approvers,
+      mappings,
+      vcrPhaseAssignments,
+      vcrOrder: vcrs.map(v => v.id),
+    },
+    hasDraft: true,
+  };
+}
+
+/**
  * Core save logic that persists the full wizard state to the database.
  * Used by both saveDraft and submitForApproval.
  */
@@ -54,13 +171,11 @@ async function persistPlanToDatabase(
 
   if (existingPlan) {
     planId = existingPlan.id;
-    // Update status
     await client
       .from('p2a_handover_plans')
       .update({ status, updated_at: new Date().toISOString() })
       .eq('id', planId);
   } else {
-    // Create new plan
     const { data: newPlan, error: planError } = await client
       .from('p2a_handover_plans')
       .insert({
@@ -102,7 +217,6 @@ async function persistPlanToDatabase(
   const phaseIdMap: Record<string, string> = {};
 
   if (state.phases.length > 0) {
-    // Delete existing phases
     await client.from('p2a_project_phases').delete().eq('handover_plan_id', planId);
 
     for (const phase of state.phases) {
@@ -123,7 +237,7 @@ async function persistPlanToDatabase(
     }
   }
 
-  // Delete existing VCRs (handover points) and their system mappings for this plan
+  // Delete existing VCRs and their system mappings
   const { data: existingVCRs } = await client
     .from('p2a_handover_points')
     .select('id')
@@ -139,13 +253,12 @@ async function persistPlanToDatabase(
       .eq('handover_plan_id', planId);
   }
 
-  // Create VCRs (handover points)
+  // Create VCRs
   for (let i = 0; i < state.vcrs.length; i++) {
     const vcr = state.vcrs[i];
     const phaseId = state.vcrPhaseAssignments[vcr.id];
     const realPhaseId = phaseId ? phaseIdMap[phaseId] : null;
 
-    // Generate VCR code
     const { data: vcrCode } = await supabase.rpc('generate_vcr_code', {
       p_project_code: projectCode,
     });
@@ -167,7 +280,6 @@ async function persistPlanToDatabase(
       .single();
 
     if (!error && savedVCR) {
-      // Create system mappings for this VCR
       const mappedKeys = state.mappings[vcr.id] || [];
       if (mappedKeys.length > 0) {
         const parentSystemIds = new Set<string>();
@@ -193,7 +305,6 @@ async function persistPlanToDatabase(
 
   // Save approvers
   if (state.approvers.length > 0) {
-    // Delete existing approvers
     await client.from('p2a_handover_approvers').delete().eq('handover_id', planId);
 
     const approverRecords = state.approvers.map(a => ({
@@ -224,6 +335,7 @@ export function useP2APlanWizard(projectId: string, projectCode: string) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [state, setState] = useState<P2APlanWizardState>(initialState);
+  const [draftLoaded, setDraftLoaded] = useState(false);
 
   const updateState = useCallback(<K extends keyof P2APlanWizardState>(
     key: K,
@@ -234,7 +346,26 @@ export function useP2APlanWizard(projectId: string, projectCode: string) {
 
   const resetState = useCallback(() => {
     setState(initialState);
+    setDraftLoaded(false);
   }, []);
+
+  /**
+   * Load a saved draft from the database into the wizard state.
+   * Returns true if a draft was found and loaded, false otherwise.
+   */
+  const loadDraft = useCallback(async (): Promise<boolean> => {
+    try {
+      const { state: loadedState, hasDraft } = await loadDraftFromDatabase(projectId);
+      if (hasDraft) {
+        setState(loadedState);
+        setDraftLoaded(true);
+      }
+      return hasDraft;
+    } catch (error) {
+      console.error('Failed to load draft:', error);
+      return false;
+    }
+  }, [projectId]);
 
   const invalidateQueries = () => {
     queryClient.invalidateQueries({ queryKey: ['p2a-handover-plan'] });
@@ -243,7 +374,6 @@ export function useP2APlanWizard(projectId: string, projectCode: string) {
     queryClient.invalidateQueries({ queryKey: ['project-orp-plans', projectId] });
   };
 
-  // Save draft (creates plan without submitting for approval)
   const saveDraft = useMutation({
     mutationFn: async () => {
       return persistPlanToDatabase(projectId, projectCode, state, 'DRAFT');
@@ -264,7 +394,6 @@ export function useP2APlanWizard(projectId: string, projectCode: string) {
     },
   });
 
-  // Submit for approval (creates plan and triggers workflow)
   const submitForApproval = useMutation({
     mutationFn: async () => {
       return persistPlanToDatabase(projectId, projectCode, state, 'ACTIVE');
@@ -289,6 +418,8 @@ export function useP2APlanWizard(projectId: string, projectCode: string) {
     state,
     updateState,
     resetState,
+    loadDraft,
+    draftLoaded,
     saveDraft: saveDraft.mutateAsync,
     submitForApproval: submitForApproval.mutateAsync,
     isSaving: saveDraft.isPending,
