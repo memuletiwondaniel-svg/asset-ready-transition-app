@@ -141,7 +141,12 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
     setCurrentStep(2);
   };
 
-  const handleChooseWorkspace = () => {
+  const handleChooseWorkspace = async () => {
+    try {
+      await saveDraft();
+    } catch (error) {
+      // Continue even if save fails — user can still view workspace
+    }
     handleClose();
     onOpenWorkspace?.();
   };
