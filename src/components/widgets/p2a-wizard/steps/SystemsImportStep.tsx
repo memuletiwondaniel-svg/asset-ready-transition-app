@@ -103,8 +103,8 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
   };
 
   return (
-    <div className="space-y-3 p-4">
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col gap-2 p-4 h-full">
+      <div className="flex items-center justify-between shrink-0">
         <div>
           <h3 className="text-sm font-medium">Systems</h3>
           <p className="text-xs text-muted-foreground">
@@ -115,7 +115,7 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
       </div>
 
       {/* Import options - compact */}
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-3 gap-2 shrink-0">
         <button
           onClick={() => setShowCMSModal(true)}
           className="group relative flex items-center justify-center gap-2 p-2 rounded-lg border-2 border-dashed border-muted-foreground/25 bg-muted/30 hover:border-amber-500/50 hover:bg-amber-500/5 transition-all duration-200"
@@ -139,9 +139,9 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
         </button>
       </div>
 
-      {/* Systems List */}
-      <div className="border rounded-lg">
-        <ScrollArea className="h-[280px]">
+      {/* Systems List - fills remaining space */}
+      <div className="border rounded-lg flex-1 min-h-0">
+        <ScrollArea className="h-full">
           <div className="p-1.5 space-y-1">
             {systems.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
