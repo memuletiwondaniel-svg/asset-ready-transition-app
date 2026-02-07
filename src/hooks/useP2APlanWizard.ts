@@ -361,6 +361,9 @@ async function persistPlanToDatabase(
 
     if (!error && savedVCR) {
       const mappedKeys = state.mappings[vcr.id] || [];
+      console.log(`[P2A-PERSIST] VCR "${vcr.name}" (wizard id: ${vcr.id}), mappedKeys:`, mappedKeys);
+      console.log(`[P2A-PERSIST] systemIdMap keys:`, Object.keys(systemIdMap));
+      console.log(`[P2A-PERSIST] subsystemIdMap keys:`, Object.keys(subsystemIdMap));
       if (mappedKeys.length > 0) {
         const systemAssignments: Array<{
           handover_point_id: string;
@@ -375,6 +378,7 @@ async function persistPlanToDatabase(
             const parentId = key.split('::sub::')[0];
             const dbSystemId = systemIdMap[parentId];
             const dbSubsystemId = subsystemIdMap[key];
+            console.log(`[P2A-PERSIST]   Subsystem key "${key}" → parentId="${parentId}" → dbSystemId="${dbSystemId}", dbSubsystemId="${dbSubsystemId}"`);
             if (dbSystemId) {
               systemAssignments.push({
                 handover_point_id: savedVCR.id,
@@ -386,18 +390,25 @@ async function persistPlanToDatabase(
           } else {
             // Full system mapping
             const dbSystemId = systemIdMap[key];
+            console.log(`[P2A-PERSIST]   System key "${key}" → dbSystemId="${dbSystemId}"`);
             if (dbSystemId) {
               systemAssignments.push({
                 handover_point_id: savedVCR.id,
                 system_id: dbSystemId,
                 assigned_by: user.id,
               });
+            } else {
+              console.warn(`[P2A-PERSIST]   ⚠️ No match in systemIdMap for key "${key}"!`);
             }
           }
         }
 
+        console.log(`[P2A-PERSIST]   Total assignments to insert: ${systemAssignments.length}`);
         if (systemAssignments.length > 0) {
-          await client.from('p2a_handover_point_systems').insert(systemAssignments);
+          const { error: assignError } = await client.from('p2a_handover_point_systems').insert(systemAssignments);
+          if (assignError) {
+            console.error(`[P2A-PERSIST]   ❌ Insert error:`, assignError);
+          }
         }
       }
     }
