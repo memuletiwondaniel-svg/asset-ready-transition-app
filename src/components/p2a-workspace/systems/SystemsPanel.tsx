@@ -221,7 +221,7 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
   return (
     <>
       <div 
-        className="w-48 flex flex-col border-r border-border bg-card overflow-hidden min-h-0 flex-shrink-0"
+        className="w-56 flex flex-col border-r border-border bg-card overflow-hidden min-h-0 flex-shrink-0"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
