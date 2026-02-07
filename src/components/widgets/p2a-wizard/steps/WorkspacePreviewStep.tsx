@@ -90,7 +90,6 @@ export const WorkspacePreviewStep: React.FC<WorkspacePreviewStepProps> = ({
                         >
                           {/* VCR Header */}
                           <div className="flex items-center gap-2 p-3 bg-primary/5 border-b">
-                            <Key className="h-4 w-4 text-primary" />
                             <span className="font-medium text-sm">{vcr.name}</span>
                             <span className="text-[10px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
                               {vcr.code}
@@ -146,7 +145,6 @@ export const WorkspacePreviewStep: React.FC<WorkspacePreviewStepProps> = ({
                       key={vcr.id}
                       className="flex items-center gap-2 p-2 rounded-lg border border-dashed bg-amber-50/50 dark:bg-amber-950/20"
                     >
-                      <Key className="h-4 w-4 text-amber-600" />
                       <span className="text-sm">{vcr.name}</span>
                       <span className="text-[10px] font-mono text-muted-foreground">
                         {vcr.code}
