@@ -306,7 +306,7 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
         </div>
 
         {/* Systems List - fills remaining height with vertical scroll only */}
-        <ScrollArea className="flex-1 min-h-0">
+        <div className="flex-1 min-h-0 overflow-y-auto">
           <div className="p-3 space-y-3">
             {/* Assigned Systems - always visible */}
             {filteredAssigned.length > 0 && (
@@ -420,7 +420,7 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
               />
             </div>
           </div>
-        </ScrollArea>
+        </div>
       </div>
 
       {/* Manual Add System Modal - wizard-style */}
