@@ -322,39 +322,20 @@ const SystemListItem: React.FC<SystemListItemProps> = ({
       {/* Subsystems panel */}
       {isExpanded && hasSubsystems && (
         <div className="ml-5 pl-3 border-l-2 border-muted space-y-0.5 py-1">
-          {system.subsystems!.map((sub, idx) => {
-            const subIdColors = getSystemIdColor(sub.system_id);
-            return (
-              <div
-                key={sub.system_id + idx}
-                className="flex items-center gap-2 py-1 px-2 rounded text-xs"
-              >
-                <span
-                  className="inline-flex items-center px-1 py-0.5 rounded text-[8px] font-semibold tabular-nums tracking-wide shrink-0 leading-none border"
-                  style={{ background: subIdColors.bg, borderColor: subIdColors.border, color: subIdColors.text }}
-                >
-                  {sub.system_id}
-                </span>
-                <span className="truncate flex-1 text-muted-foreground">{sub.name}</span>
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <div className="w-16 h-1.5 rounded-full bg-muted overflow-hidden">
-                    <div
-                      className={cn(
-                        "h-full rounded-full transition-all",
-                        sub.progress >= 100 ? "bg-emerald-500" :
-                        sub.progress >= 60 ? "bg-yellow-500" :
-                        sub.progress >= 30 ? "bg-orange-500" : "bg-red-500"
-                      )}
-                      style={{ width: `${Math.min(sub.progress, 100)}%` }}
-                    />
-                  </div>
-                  <span className={cn("text-[9px] font-semibold tabular-nums w-8 text-right", getProgressTextColor(sub.progress))}>
-                    {Math.round(sub.progress)}%
-                  </span>
-                </div>
-              </div>
-            );
-          })}
+          {system.subsystems!.map((sub, idx) => (
+            <div
+              key={sub.system_id + idx}
+              className="flex items-center gap-2 py-0.5 px-2 rounded text-xs"
+            >
+              <span className="inline-flex items-center px-1 py-0.5 rounded text-[8px] font-medium tabular-nums tracking-wide shrink-0 leading-none border border-border bg-muted text-muted-foreground">
+                {sub.system_id}
+              </span>
+              <span className="truncate flex-1 text-muted-foreground">{sub.name}</span>
+              <span className="text-[9px] font-medium tabular-nums shrink-0 text-muted-foreground">
+                {Math.round(sub.progress)}%
+              </span>
+            </div>
+          ))}
         </div>
       )}
     </div>
