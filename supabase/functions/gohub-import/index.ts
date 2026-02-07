@@ -54,6 +54,16 @@ function formatCookies(cookies: Record<string, string>): string {
 
 // ─── HTML Parsing Utilities ──────────────────────────────────
 
+function decodeHtmlEntities(str: string): string {
+  return str
+    .replace(/&amp;/g, "&")
+    .replace(/&#39;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">");
+}
+
 function extractHiddenFields(html: string): Record<string, string> {
   const fields: Record<string, string> = {};
   const regex = /<input[^>]*type=["']hidden["'][^>]*>/gi;
@@ -64,7 +74,7 @@ function extractHiddenFields(html: string): Record<string, string> {
     const valueMatch = tag.match(/value=["']([^"']*?)["']/);
     if (nameMatch) {
       fields[nameMatch[1]] = valueMatch
-        ? valueMatch[1].replace(/&amp;/g, "&")
+        ? decodeHtmlEntities(valueMatch[1])
         : "";
     }
   }
@@ -223,14 +233,16 @@ async function selectProject(
     }
   }
 
+  // Decode HTML entities first so postback patterns match
+  const decodedHtml = decodeHtmlEntities(homePageHtml);
+
   // Look for ASP.NET postback pattern: __doPostBack('ctl00$...','levelId')
-  // or href="javascript:__doPostBack('ctl00$...','guid')"
   const postbackPattern = /__doPostBack\s*\(\s*'([^']+)'\s*,\s*'([^']*)'\s*\)/g;
   const postbacks: { target: string; argument: string; context: string }[] = [];
   let pbMatch;
-  while ((pbMatch = postbackPattern.exec(homePageHtml)) !== null) {
+  while ((pbMatch = postbackPattern.exec(decodedHtml)) !== null) {
     const start = Math.max(0, pbMatch.index - 200);
-    const context = homePageHtml.substring(start, pbMatch.index + pbMatch[0].length + 200);
+    const context = decodedHtml.substring(start, pbMatch.index + pbMatch[0].length + 200);
     postbacks.push({ target: pbMatch[1], argument: pbMatch[2], context });
   }
 
@@ -281,14 +293,15 @@ async function selectProject(
   const tileLinkPattern = /<a[^>]*href=["']([^"']+)["'][^>]*>[\s\S]{0,500}?ZUBAIR/gi;
   const tileMatch = tileLinkPattern.exec(homePageHtml);
   if (tileMatch) {
-    const tileHref = tileMatch[1].replace(/&amp;/g, "&");
-    console.log(`GoHub: Found ZUBAIR tile link: ${tileHref}`);
+    const tileHref = decodeHtmlEntities(tileMatch[1]);
+    console.log(`GoHub: Found ZUBAIR tile link (decoded): ${tileHref}`);
 
     // Check if it's a postback
     if (tileHref.includes("__doPostBack") || tileHref.startsWith("javascript:")) {
       const pbExtract = tileHref.match(/__doPostBack\s*\(\s*'([^']+)'\s*,\s*'([^']*)'\s*\)/);
       if (pbExtract) {
         selectedPostback = { target: pbExtract[1], argument: pbExtract[2] };
+        console.log(`GoHub: Extracted postback: target=${pbExtract[1]}`);
       }
     } else {
       // Direct URL
