@@ -274,6 +274,9 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
       <P2AWorkspaceOverlay
         open={showP2AWorkspace}
         onOpenChange={setShowP2AWorkspace}
+        onReturnToWizard={() => {
+          setShowP2APlanWizard(true);
+        }}
         projectId={projectId}
         projectName={projectCode}
         projectNumber={projectCode}
