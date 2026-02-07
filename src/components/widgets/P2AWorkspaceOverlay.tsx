@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
 interface P2AWorkspaceOverlayProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  oraPlanId: string;
+  projectId: string;
   projectName?: string;
   projectNumber?: string;
 }
@@ -51,11 +51,11 @@ const getStatusConfig = (status?: string) => {
 export const P2AWorkspaceOverlay: React.FC<P2AWorkspaceOverlayProps> = ({
   open,
   onOpenChange,
-  oraPlanId,
+  projectId,
   projectName,
   projectNumber,
 }) => {
-  const { plan } = useP2AHandoverPlan(oraPlanId);
+  const { plan } = useP2AHandoverPlan(projectId, 'project_id');
   const statusConfig = getStatusConfig(plan?.status);
 
   return (
@@ -100,7 +100,7 @@ export const P2AWorkspaceOverlay: React.FC<P2AWorkspaceOverlayProps> = ({
         {/* Workspace Content */}
         <div className="flex-1 overflow-hidden h-[calc(98vh-57px)]">
           <P2AHandoverWorkspace
-            oraPlanId={oraPlanId}
+            projectId={projectId}
             projectName={projectName}
             projectNumber={projectNumber}
           />

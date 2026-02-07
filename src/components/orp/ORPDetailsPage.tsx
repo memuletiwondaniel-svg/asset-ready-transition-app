@@ -302,7 +302,8 @@ export const ORPDetailsPage: React.FC = () => {
 
           <TabsContent value="handover" className="flex-1 m-0 mt-0 overflow-hidden data-[state=inactive]:hidden">
             <ORAHandoverTab 
-              oraPlanId={plan.id} 
+              oraPlanId={plan.id}
+              projectId={plan.project_id}
               projectName={`${plan.project?.project_id_prefix} ${plan.project?.project_id_number}`}
               projectNumber={plan.project?.project_id_number}
             />

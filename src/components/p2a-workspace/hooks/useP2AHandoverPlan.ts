@@ -6,6 +6,7 @@ import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 export interface P2AHandoverPlan {
   id: string;
   ora_plan_id: string;
+  project_id?: string;
   name: string;
   description?: string;
   status: 'DRAFT' | 'ACTIVE' | 'COMPLETED' | 'ARCHIVED';
@@ -16,24 +17,29 @@ export interface P2AHandoverPlan {
   updated_at: string;
 }
 
-export const useP2AHandoverPlan = (oraPlanId: string) => {
+/**
+ * Fetch P2A handover plan by project_id (preferred) or ora_plan_id (legacy).
+ * Pass { projectId } for wizard-created plans, or { oraPlanId } for legacy plans.
+ */
+export const useP2AHandoverPlan = (identifier: string, identifierType: 'project_id' | 'ora_plan_id' = 'ora_plan_id') => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
   const { data: plan, isLoading, error } = useQuery({
-    queryKey: ['p2a-handover-plan', oraPlanId],
+    queryKey: ['p2a-handover-plan', identifierType, identifier],
     queryFn: async () => {
+      const column = identifierType === 'project_id' ? 'project_id' : 'ora_plan_id';
       const { data, error } = await supabase
         .from('p2a_handover_plans')
         .select('*')
-        .eq('ora_plan_id', oraPlanId)
+        .eq(column, identifier)
         .maybeSingle();
 
       if (error) throw error;
       return data as P2AHandoverPlan | null;
     },
-    enabled: !!oraPlanId,
+    enabled: !!identifier,
   });
 
   const createPlan = useMutation({
@@ -43,17 +49,25 @@ export const useP2AHandoverPlan = (oraPlanId: string) => {
       project_code?: string;
       plant_code?: string;
     }) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const insertData: any = {
+        name: planData.name,
+        description: planData.description,
+        project_code: planData.project_code,
+        plant_code: planData.plant_code,
+        created_by: user?.id,
+        status: 'DRAFT',
+      };
+
+      if (identifierType === 'project_id') {
+        insertData.project_id = identifier;
+      } else {
+        insertData.ora_plan_id = identifier;
+      }
+
       const { data, error } = await supabase
         .from('p2a_handover_plans')
-        .insert({
-          ora_plan_id: oraPlanId,
-          name: planData.name,
-          description: planData.description,
-          project_code: planData.project_code,
-          plant_code: planData.plant_code,
-          created_by: user?.id,
-          status: 'DRAFT',
-        })
+        .insert(insertData)
         .select()
         .single();
 
@@ -61,7 +75,7 @@ export const useP2AHandoverPlan = (oraPlanId: string) => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['p2a-handover-plan', oraPlanId] });
+      queryClient.invalidateQueries({ queryKey: ['p2a-handover-plan', identifierType, identifier] });
       toast({
         title: 'Success',
         description: 'P2A Handover Plan created successfully',
@@ -91,7 +105,7 @@ export const useP2AHandoverPlan = (oraPlanId: string) => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['p2a-handover-plan', oraPlanId] });
+      queryClient.invalidateQueries({ queryKey: ['p2a-handover-plan', identifierType, identifier] });
       toast({
         title: 'Success',
         description: 'Plan updated successfully',

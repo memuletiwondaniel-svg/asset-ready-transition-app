@@ -23,12 +23,15 @@ import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
 interface P2AHandoverWorkspaceProps {
-  oraPlanId: string;
+  projectId: string;
+  /** @deprecated Use projectId instead */
+  oraPlanId?: string;
   projectName?: string;
   projectNumber?: string;
 }
 
 export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
+  projectId,
   oraPlanId,
   projectName,
   projectNumber,
@@ -52,7 +55,7 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
   >({});
 
   // Hooks
-  const { plan, isLoading: planLoading, createPlan, isCreating } = useP2AHandoverPlan(oraPlanId);
+  const { plan, isLoading: planLoading, createPlan, isCreating } = useP2AHandoverPlan(projectId, 'project_id');
   const { 
     systems, 
     unassignedSystems, 

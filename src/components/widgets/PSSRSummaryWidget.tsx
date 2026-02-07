@@ -274,7 +274,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
       <P2AWorkspaceOverlay
         open={showP2AWorkspace}
         onOpenChange={setShowP2AWorkspace}
-        oraPlanId={oraPlanId}
+        projectId={projectId}
         projectName={projectCode}
         projectNumber={projectCode}
       />
