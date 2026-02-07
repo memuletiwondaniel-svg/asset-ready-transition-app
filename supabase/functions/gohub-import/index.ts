@@ -848,7 +848,27 @@ Deno.serve(async (req) => {
         const filtered = systems.filter(s => s.system_id.toUpperCase().includes(filterUpper));
 
         if (filtered.length > 0) {
-          const result = filtered.map((sys, index) => ({
+          // Infer hierarchy for direct fallback too
+          const sortedDirect = [...filtered].sort(
+            (a, b) => a.system_id.length - b.system_id.length || a.system_id.localeCompare(b.system_id)
+          );
+          const directParentMap = new Map<string, CompletionsSystem>();
+          const directChildIds = new Set<string>();
+          for (const sys of sortedDirect) {
+            let matched = false;
+            for (const [pId, parent] of directParentMap) {
+              if (sys.system_id.length > pId.length && sys.system_id.startsWith(pId) && /[-_.]/.test(sys.system_id.charAt(pId.length))) {
+                parent.subsystems.push({ system_id: sys.system_id, name: sys.name, progress: sys.progress });
+                directChildIds.add(sys.system_id);
+                matched = true;
+                break;
+              }
+            }
+            if (!matched) directParentMap.set(sys.system_id, sys);
+          }
+          const topLevel = filtered.filter(s => !directChildIds.has(s.system_id));
+
+          const result = topLevel.map((sys, index) => ({
             id: `gohub-${Date.now()}-${index}`,
             system_id: sys.system_id,
             name: sys.name,
@@ -944,8 +964,54 @@ Deno.serve(async (req) => {
       return true;
     });
 
+    // ─── Infer parent-child hierarchy from system IDs ───────────
+    // GoHub often returns a flat list. We group by detecting when one
+    // system_id is a prefix of another (e.g., C017-DP300-403 is parent
+    // of C017-DP300-403-01). Sort by ID length so parents come first.
+    const sorted = [...uniqueSystems].sort(
+      (a, b) => a.system_id.length - b.system_id.length || a.system_id.localeCompare(b.system_id)
+    );
+
+    const parentMap = new Map<string, CompletionsSystem>(); // system_id → parent system
+    const childIds = new Set<string>(); // IDs that are subsystems
+
+    for (const sys of sorted) {
+      // Check if this system's ID starts with any existing parent ID + separator
+      let foundParent = false;
+      for (const [parentId, parent] of parentMap) {
+        // Child ID must start with parent ID followed by a separator (-_ or similar)
+        if (
+          sys.system_id.length > parentId.length &&
+          sys.system_id.startsWith(parentId) &&
+          /[-_.]/.test(sys.system_id.charAt(parentId.length))
+        ) {
+          // This is a subsystem of the parent
+          parent.subsystems.push({
+            system_id: sys.system_id,
+            name: sys.name,
+            progress: sys.progress,
+          });
+          childIds.add(sys.system_id);
+          foundParent = true;
+          break;
+        }
+      }
+      // If this wasn't matched as a child, register it as a potential parent
+      if (!foundParent) {
+        // Merge any explicit subsystems it already had
+        parentMap.set(sys.system_id, sys);
+      }
+    }
+
+    // Only return top-level systems (filter out children)
+    const topLevelSystems = uniqueSystems.filter(sys => !childIds.has(sys.system_id));
+
+    console.log(
+      `GoHub: Hierarchy built — ${topLevelSystems.length} parent systems, ${childIds.size} subsystems grouped`
+    );
+
     // Transform for frontend
-    const systems = uniqueSystems.map((sys, index) => ({
+    const systems = topLevelSystems.map((sys, index) => ({
       id: `gohub-${Date.now()}-${index}`,
       system_id: sys.system_id,
       name: sys.name,
