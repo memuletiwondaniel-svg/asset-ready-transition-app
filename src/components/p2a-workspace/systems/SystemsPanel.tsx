@@ -306,75 +306,53 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
         {/* Systems List - fills remaining height with vertical scroll only */}
         <ScrollArea className="flex-1 min-h-0 overflow-hidden">
           <div className="p-3 space-y-3">
-            {/* Assigned Systems Section - only show when there are assigned systems */}
+            {/* Assigned Systems - always visible */}
             {filteredAssigned.length > 0 && (
               <>
-                <Collapsible 
-                  open={expandedSections.assigned}
-                  onOpenChange={() => toggleSection('assigned')}
-                >
-                  <CollapsibleTrigger className="flex items-center justify-between w-full p-2 rounded-md hover:bg-muted/50 transition-colors sticky top-0 z-10 bg-card">
-                    <div className="flex items-center gap-2">
-                      {expandedSections.assigned ? (
-                        <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                      ) : (
-                        <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                      )}
-                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 min-w-[18px] flex items-center justify-center">
-                        {filteredAssigned.length}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">Assigned</span>
-                    </div>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="pt-2 overflow-hidden">
-                    <div className="flex flex-col gap-1.5 overflow-hidden">
-                    {showMapping ? (
-                        // Group by VCR in delivery order when mapping is active
-                        (() => {
-                          // Build ordered groups preserving the delivery-order sort
-                          const orderedGroups: { vcrCode: string; systems: P2ASystem[] }[] = [];
-                          const seenCodes = new Set<string>();
-                          filteredAssigned.forEach(s => {
-                            const code = s.assigned_vcr_code || 'Unknown';
-                            if (!seenCodes.has(code)) {
-                              seenCodes.add(code);
-                              orderedGroups.push({ vcrCode: code, systems: [] });
-                            }
-                            orderedGroups.find(g => g.vcrCode === code)!.systems.push(s);
-                          });
-                          return orderedGroups.map(({ vcrCode, systems: groupSystems }) => (
-                            <div key={vcrCode}>
-                              <span className="text-[8px] font-semibold text-muted-foreground uppercase tracking-wider px-0.5 mb-0.5 block">
-                                {vcrCode}
-                              </span>
-                              <div className="flex flex-wrap gap-1.5">
-                                {groupSystems.map(system => (
-                                  <DraggableSystemCard
-                                    key={system.id}
-                                    system={system}
-                                    compact
-                                    onClick={() => setSelectedSystem(system)}
-                                  />
-                                ))}
-                              </div>
-                            </div>
-                          ));
-                        })()
-                      ) : (
-                        <div className="flex flex-wrap gap-1.5">
-                          {filteredAssigned.map(system => (
-                            <DraggableSystemCard
-                              key={system.id}
-                              system={system}
-                              compact
-                              onClick={() => setSelectedSystem(system)}
-                            />
-                          ))}
+                <div className="flex flex-col gap-1.5 overflow-hidden">
+                  {showMapping ? (
+                    (() => {
+                      const orderedGroups: { vcrCode: string; systems: P2ASystem[] }[] = [];
+                      const seenCodes = new Set<string>();
+                      filteredAssigned.forEach(s => {
+                        const code = s.assigned_vcr_code || 'Unknown';
+                        if (!seenCodes.has(code)) {
+                          seenCodes.add(code);
+                          orderedGroups.push({ vcrCode: code, systems: [] });
+                        }
+                        orderedGroups.find(g => g.vcrCode === code)!.systems.push(s);
+                      });
+                      return orderedGroups.map(({ vcrCode, systems: groupSystems }) => (
+                        <div key={vcrCode}>
+                          <span className="text-[8px] font-semibold text-muted-foreground uppercase tracking-wider px-0.5 mb-0.5 block">
+                            {vcrCode}
+                          </span>
+                          <div className="flex flex-wrap gap-1.5">
+                            {groupSystems.map(system => (
+                              <DraggableSystemCard
+                                key={system.id}
+                                system={system}
+                                compact
+                                onClick={() => setSelectedSystem(system)}
+                              />
+                            ))}
+                          </div>
                         </div>
-                      )}
+                      ));
+                    })()
+                  ) : (
+                    <div className="flex flex-wrap gap-1.5">
+                      {filteredAssigned.map(system => (
+                        <DraggableSystemCard
+                          key={system.id}
+                          system={system}
+                          compact
+                          onClick={() => setSelectedSystem(system)}
+                        />
+                      ))}
                     </div>
-                  </CollapsibleContent>
-                </Collapsible>
+                  )}
+                </div>
 
                 <Separator />
               </>
