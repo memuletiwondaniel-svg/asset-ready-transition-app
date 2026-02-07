@@ -174,41 +174,68 @@ export const SystemMappingStep: React.FC<SystemMappingStepProps> = ({
                 </div>
 
                 {/* System List - collapsible */}
-                {!isCollapsed && (
-                  <div className="p-2 space-y-1">
-                    {systems.map((system) => {
-                      const isChecked = (mappings[vcr.id] || []).includes(system.id);
-                      return (
-                        <div
-                          key={system.id}
-                          className={cn(
-                            "flex items-center gap-3 p-2 rounded cursor-pointer transition-colors",
-                            isChecked 
-                              ? "bg-primary/5 border border-primary/20" 
-                              : "hover:bg-muted/50"
-                          )}
-                          onClick={() => toggleMapping(vcr.id, system.id)}
-                        >
-                          <Checkbox
-                            checked={isChecked}
-                            onCheckedChange={() => toggleMapping(vcr.id, system.id)}
-                          />
-                          <div className="flex-1 min-w-0">
-                            <span className="text-sm">{system.name}</span>
-                            <span className="text-xs text-muted-foreground ml-2 font-mono">
-                              {system.system_id}
-                            </span>
+                {!isCollapsed && (() => {
+                  const vcrMappings = mappings[vcr.id] || [];
+                  const selectedSystems = systems.filter(s => vcrMappings.includes(s.id));
+                  const unselectedSystems = systems.filter(s => !vcrMappings.includes(s.id));
+
+                  const renderSystem = (system: WizardSystem, isChecked: boolean) => (
+                    <div
+                      key={system.id}
+                      className={cn(
+                        "flex items-center gap-3 p-2 rounded cursor-pointer transition-colors",
+                        isChecked 
+                          ? "bg-primary/5 border border-primary/20" 
+                          : "hover:bg-muted/50"
+                      )}
+                      onClick={() => toggleMapping(vcr.id, system.id)}
+                    >
+                      <Checkbox
+                        checked={isChecked}
+                        onCheckedChange={() => toggleMapping(vcr.id, system.id)}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <span className="text-sm">{system.name}</span>
+                        <span className="text-xs text-muted-foreground ml-2 font-mono">
+                          {system.system_id}
+                        </span>
+                      </div>
+                      {system.is_hydrocarbon && (
+                        <Badge variant="outline" className="text-[10px] bg-orange-50 text-orange-700 border-orange-200">
+                          HC
+                        </Badge>
+                      )}
+                    </div>
+                  );
+
+                  return (
+                    <div className="p-2 space-y-2">
+                      {selectedSystems.length > 0 && (
+                        <div>
+                          <p className="text-[10px] font-medium text-primary uppercase tracking-wider px-2 pb-1">
+                            Assigned ({selectedSystems.length})
+                          </p>
+                          <div className="space-y-1">
+                            {selectedSystems.map(s => renderSystem(s, true))}
                           </div>
-                          {system.is_hydrocarbon && (
-                            <Badge variant="outline" className="text-[10px] bg-orange-50 text-orange-700 border-orange-200">
-                              HC
-                            </Badge>
-                          )}
                         </div>
-                      );
-                    })}
-                  </div>
-                )}
+                      )}
+                      {unselectedSystems.length > 0 && (
+                        <div>
+                          {selectedSystems.length > 0 && (
+                            <div className="border-t my-2" />
+                          )}
+                          <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider px-2 pb-1">
+                            Available ({unselectedSystems.length})
+                          </p>
+                          <div className="space-y-1">
+                            {unselectedSystems.map(s => renderSystem(s, false))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             );
           })}
