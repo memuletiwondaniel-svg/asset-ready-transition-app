@@ -1,15 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Plus } from 'lucide-react';
-import { format } from 'date-fns';
+import { Milestone, Plus, Save } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { P2AMilestone } from '../hooks/useP2APhases';
 
@@ -55,253 +57,153 @@ export const CreatePhaseDialog: React.FC<CreatePhaseDialogProps> = ({
   existingPhasesCount,
   isCreating,
 }) => {
-  const [step, setStep] = useState<'milestone' | 'phase'>('phase');
-  const [phaseData, setPhaseData] = useState({
-    name: '',
-    description: '',
-    start_milestone_id: '',
-    end_milestone_id: '',
-    color: PHASE_COLORS[existingPhasesCount % PHASE_COLORS.length].value,
-  });
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [selectedMilestones, setSelectedMilestones] = useState<string[]>([]);
+  const [color, setColor] = useState(PHASE_COLORS[existingPhasesCount % PHASE_COLORS.length].value);
 
-  const [milestoneData, setMilestoneData] = useState({
-    name: '',
-    code: '',
-    target_date: undefined as Date | undefined,
-  });
+  useEffect(() => {
+    if (open) {
+      setName('');
+      setDescription('');
+      setSelectedMilestones([]);
+      setColor(PHASE_COLORS[existingPhasesCount % PHASE_COLORS.length].value);
+    }
+  }, [open, existingPhasesCount]);
 
-  const resetForm = () => {
-    setPhaseData({
-      name: '',
-      description: '',
-      start_milestone_id: '',
-      end_milestone_id: '',
-      color: PHASE_COLORS[existingPhasesCount % PHASE_COLORS.length].value,
-    });
-    setMilestoneData({ name: '', code: '', target_date: undefined });
-    setStep('phase');
+  const toggleMilestone = (id: string) => {
+    setSelectedMilestones(prev =>
+      prev.includes(id) ? prev.filter(m => m !== id) : [...prev, id]
+    );
   };
 
-  const handleCreatePhase = () => {
+  const handleCreate = () => {
+    if (!name.trim()) return;
+
+    // Derive start/end milestones from selection (first = start, last = end)
+    const sortedSelected = milestones
+      .filter(m => selectedMilestones.includes(m.id))
+      .sort((a, b) => a.display_order - b.display_order);
+
     onCreatePhase({
-      ...phaseData,
-      start_milestone_id: phaseData.start_milestone_id || undefined,
-      end_milestone_id: phaseData.end_milestone_id || undefined,
+      name: name.trim(),
+      description: description.trim() || undefined,
+      start_milestone_id: sortedSelected[0]?.id,
+      end_milestone_id: sortedSelected.length > 1 ? sortedSelected[sortedSelected.length - 1]?.id : undefined,
+      color,
       display_order: existingPhasesCount,
     });
-    resetForm();
+
     onOpenChange(false);
   };
 
-  const handleCreateMilestone = () => {
-    onCreateMilestone({
-      name: milestoneData.name,
-      code: milestoneData.code || undefined,
-      target_date: milestoneData.target_date ? format(milestoneData.target_date, 'yyyy-MM-dd') : undefined,
-      display_order: milestones.length,
-    });
-    setMilestoneData({ name: '', code: '', target_date: undefined });
-    setStep('phase');
-  };
-
   return (
-    <Dialog open={open} onOpenChange={(o) => { onOpenChange(o); if (!o) resetForm(); }}>
-      <DialogContent className="max-w-lg">
-        {step === 'phase' ? (
-          <>
-            <DialogHeader>
-              <DialogTitle>Create Project Phase</DialogTitle>
-              <DialogDescription>
-                Define a phase in your project timeline between key milestones
-              </DialogDescription>
-            </DialogHeader>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-base">Create Phase</DialogTitle>
+          <DialogDescription className="text-xs">
+            Define a handover phase and optionally link project milestones.
+          </DialogDescription>
+        </DialogHeader>
 
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label>Phase Name *</Label>
-                <Input
-                  value={phaseData.name}
-                  onChange={(e) => setPhaseData({ ...phaseData, name: e.target.value })}
-                  placeholder="e.g., MC to RFSU"
+        <div className="space-y-4 py-2">
+          {/* Name */}
+          <div className="rounded-lg border bg-muted/30 p-3 space-y-2">
+            <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Phase Name
+            </label>
+            <Input
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder="e.g. Pre-TAR, TAR, Post-TAR"
+              className="h-9 text-sm bg-background"
+              autoFocus
+              onKeyDown={e => e.key === 'Enter' && handleCreate()}
+            />
+          </div>
+
+          {/* Description */}
+          <div className="rounded-lg border bg-muted/30 p-3 space-y-2">
+            <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Description
+            </label>
+            <Textarea
+              value={description}
+              onChange={e => setDescription(e.target.value)}
+              placeholder="Brief description of this handover phase..."
+              className="text-sm min-h-[72px] resize-none bg-background"
+              rows={3}
+            />
+          </div>
+
+          {/* Phase Color */}
+          <div className="rounded-lg border bg-muted/30 p-3 space-y-2">
+            <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Phase Color
+            </label>
+            <div className="flex gap-2">
+              {PHASE_COLORS.map(c => (
+                <button
+                  key={c.value}
+                  type="button"
+                  onClick={() => setColor(c.value)}
+                  className={cn(
+                    'w-8 h-8 rounded-full transition-all',
+                    color === c.value && 'ring-2 ring-offset-2 ring-primary'
+                  )}
+                  style={{ backgroundColor: c.value }}
+                  title={c.label}
                 />
+              ))}
+            </div>
+          </div>
+
+          {/* Milestone selector */}
+          {milestones.length > 0 && (
+            <div className="rounded-lg border bg-muted/30 p-3 space-y-2.5">
+              <div>
+                <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Applicable Milestones
+                </label>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  Select milestones that fall within this phase
+                </p>
               </div>
-
-              <div className="space-y-2">
-                <Label>Description</Label>
-                <Textarea
-                  value={phaseData.description}
-                  onChange={(e) => setPhaseData({ ...phaseData, description: e.target.value })}
-                  placeholder="Why is this phase important for P2A handover?"
-                  rows={2}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label>Start Milestone</Label>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="h-6 text-xs"
-                      onClick={() => setStep('milestone')}
-                    >
-                      <Plus className="w-3 h-3 mr-1" />
-                      New
-                    </Button>
-                  </div>
-                  <Select 
-                    value={phaseData.start_milestone_id || "none"} 
-                    onValueChange={(v) => setPhaseData({ ...phaseData, start_milestone_id: v === "none" ? "" : v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select milestone" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">None (Project Start)</SelectItem>
-                      {milestones.map(m => (
-                        <SelectItem key={m.id} value={m.id}>
-                          {m.name} {m.target_date && `(${format(new Date(m.target_date), 'MMM yyyy')})`}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label>End Milestone</Label>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="h-6 text-xs"
-                      onClick={() => setStep('milestone')}
-                    >
-                      <Plus className="w-3 h-3 mr-1" />
-                      New
-                    </Button>
-                  </div>
-                  <Select 
-                    value={phaseData.end_milestone_id || "none"} 
-                    onValueChange={(v) => setPhaseData({ ...phaseData, end_milestone_id: v === "none" ? "" : v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select milestone" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">None (Ongoing)</SelectItem>
-                      {milestones.map(m => (
-                        <SelectItem key={m.id} value={m.id}>
-                          {m.name} {m.target_date && `(${format(new Date(m.target_date), 'MMM yyyy')})`}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Phase Color</Label>
-                <div className="flex gap-2">
-                  {PHASE_COLORS.map(color => (
-                    <button
-                      key={color.value}
-                      type="button"
-                      onClick={() => setPhaseData({ ...phaseData, color: color.value })}
+              <div className="flex flex-wrap gap-1.5">
+                {milestones.map(m => {
+                  const selected = selectedMilestones.includes(m.id);
+                  return (
+                    <Badge
+                      key={m.id}
+                      variant={selected ? 'default' : 'outline'}
                       className={cn(
-                        'w-8 h-8 rounded-full transition-all',
-                        phaseData.color === color.value && 'ring-2 ring-offset-2 ring-primary'
+                        'text-xs cursor-pointer transition-all gap-1',
+                        selected
+                          ? 'bg-primary hover:bg-primary/90'
+                          : 'hover:bg-accent bg-background'
                       )}
-                      style={{ backgroundColor: color.value }}
-                      title={color.label}
-                    />
-                  ))}
-                </div>
+                      onClick={() => toggleMilestone(m.id)}
+                    >
+                      <Milestone className="h-3 w-3" />
+                      {m.name}
+                    </Badge>
+                  );
+                })}
               </div>
             </div>
+          )}
+        </div>
 
-            <DialogFooter>
-              <Button variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleCreatePhase}
-                disabled={!phaseData.name.trim() || isCreating}
-              >
-                {isCreating ? 'Creating...' : 'Create Phase'}
-              </Button>
-            </DialogFooter>
-          </>
-        ) : (
-          <>
-            <DialogHeader>
-              <DialogTitle>Add Milestone</DialogTitle>
-              <DialogDescription>
-                Create a new project milestone to use as phase boundary
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label>Milestone Name *</Label>
-                <Input
-                  value={milestoneData.name}
-                  onChange={(e) => setMilestoneData({ ...milestoneData, name: e.target.value })}
-                  placeholder="e.g., Mechanical Completion, RFSU, 1st Gas"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Code (optional)</Label>
-                  <Input
-                    value={milestoneData.code}
-                    onChange={(e) => setMilestoneData({ ...milestoneData, code: e.target.value })}
-                    placeholder="e.g., MC, RFSU"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Target Date</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          'w-full justify-start text-left font-normal',
-                          !milestoneData.target_date && 'text-muted-foreground'
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {milestoneData.target_date ? format(milestoneData.target_date, 'PPP') : 'Pick a date'}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={milestoneData.target_date}
-                        onSelect={(date) => setMilestoneData({ ...milestoneData, target_date: date })}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-              </div>
-            </div>
-
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setStep('phase')}>
-                Back
-              </Button>
-              <Button 
-                onClick={handleCreateMilestone}
-                disabled={!milestoneData.name.trim()}
-              >
-                Add Milestone
-              </Button>
-            </DialogFooter>
-          </>
-        )}
+        <DialogFooter>
+          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button size="sm" onClick={handleCreate} disabled={!name.trim() || isCreating} className="gap-1.5">
+            <Plus className="h-3.5 w-3.5" />
+            {isCreating ? 'Creating...' : 'Create Phase'}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

@@ -11,13 +11,18 @@ import {
   ChevronDown, 
   ChevronRight,
   Layers,
+  Database,
+  Upload,
 } from 'lucide-react';
 import { P2ASystem } from '../hooks/useP2ASystems';
 import { DraggableSystemCard } from './SystemCard';
-import { AddSystemDialog } from './AddSystemDialog';
+import { WorkspaceAddSystemModal } from './WorkspaceAddSystemModal';
+import { WorkspaceExcelUploadModal } from './WorkspaceExcelUploadModal';
+import { CMSImportModal } from '@/components/widgets/p2a-wizard/steps/CMSImportModal';
 import { SystemDetailOverlay } from './SystemDetailOverlay';
 import { useDroppable, useDndContext } from '@dnd-kit/core';
 import { cn } from '@/lib/utils';
+import { WizardSystem } from '@/components/widgets/p2a-wizard/steps/SystemsImportStep';
 
 // Unassigned Systems Drop Zone Component
 interface UnassignedSystemsDropZoneProps {
@@ -122,7 +127,9 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
   isUpdating,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showAddManualModal, setShowAddManualModal] = useState(false);
+  const [showExcelModal, setShowExcelModal] = useState(false);
+  const [showCMSModal, setShowCMSModal] = useState(false);
   const [selectedSystem, setSelectedSystem] = useState<P2ASystem | null>(null);
   const [isHovered, setIsHovered] = useState(false);
   const [expandedSections, setExpandedSections] = useState({
@@ -149,6 +156,25 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
 
   const filteredUnassigned = filterSystems(unassignedSystems);
   const filteredAssigned = filterSystems(assignedSystems);
+
+  // Convert CMS-imported WizardSystems to workspace-compatible format
+  const handleCMSImport = (importedSystems: WizardSystem[]) => {
+    const converted = importedSystems.map(ws => ({
+      handover_plan_id: handoverPlanId,
+      system_id: ws.system_id,
+      name: ws.name,
+      is_hydrocarbon: ws.is_hydrocarbon,
+      completion_status: 'NOT_STARTED' as const,
+      completion_percentage: ws.progress || 0,
+      source_type: 'CMS_IMPORT' as const,
+      punchlist_a_count: 0,
+      punchlist_b_count: 0,
+      itr_a_count: 0,
+      itr_b_count: 0,
+      itr_total_count: 0,
+    }));
+    onImportSystems(converted);
+  };
 
   return (
     <>
@@ -227,31 +253,76 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
           </div>
         </ScrollArea>
 
-        {/* Add System Button - Fixed at bottom, aligned with Unassigned VCR row */}
-        <div className="flex-shrink-0 h-[180px] px-4 py-3 border-t border-border bg-muted/30 flex flex-col justify-start">
-          <Button 
-            variant="ghost"
-            className="h-7 gap-1 text-xs border border-dashed border-border/50 hover:border-primary/50 w-full" 
-            size="sm"
-            onClick={() => setShowAddDialog(true)}
-          >
-            <Plus className="w-3 h-3" />
+        {/* Add System Cards - Fixed at bottom, matching wizard's 3-card grid */}
+        <div className="flex-shrink-0 h-[180px] px-3 py-2 border-t border-border bg-muted/30 flex flex-col justify-start gap-1.5">
+          <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground px-0.5">
             Add Systems
-          </Button>
+          </span>
+          <button
+            onClick={() => setShowCMSModal(true)}
+            className="group flex items-center gap-2 p-2 rounded-lg border border-border bg-card hover:bg-accent/50 hover:border-primary/30 hover:shadow-sm transition-all duration-200"
+          >
+            <div className="w-6 h-6 rounded-md bg-amber-500/10 flex items-center justify-center group-hover:bg-amber-500/20 transition-colors shrink-0">
+              <Database className="h-3 w-3 text-amber-600" />
+            </div>
+            <div className="text-left min-w-0">
+              <span className="font-medium text-[10px] block leading-tight">CMS Import</span>
+              <span className="text-[8px] text-muted-foreground leading-tight">Sync from GoHub</span>
+            </div>
+          </button>
+          <button
+            onClick={() => setShowExcelModal(true)}
+            className="group flex items-center gap-2 p-2 rounded-lg border border-border bg-card hover:bg-accent/50 hover:border-primary/30 hover:shadow-sm transition-all duration-200"
+          >
+            <div className="w-6 h-6 rounded-md bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors shrink-0">
+              <Upload className="h-3 w-3 text-emerald-600" />
+            </div>
+            <div className="text-left min-w-0">
+              <span className="font-medium text-[10px] block leading-tight">Upload Excel</span>
+              <span className="text-[8px] text-muted-foreground leading-tight">Import spreadsheet</span>
+            </div>
+          </button>
+          <button
+            onClick={() => setShowAddManualModal(true)}
+            className="group flex items-center gap-2 p-2 rounded-lg border border-border bg-card hover:bg-accent/50 hover:border-primary/30 hover:shadow-sm transition-all duration-200"
+          >
+            <div className="w-6 h-6 rounded-md bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors shrink-0">
+              <Plus className="h-3 w-3 text-blue-600" />
+            </div>
+            <div className="text-left min-w-0">
+              <span className="font-medium text-[10px] block leading-tight">Add Manually</span>
+              <span className="text-[8px] text-muted-foreground leading-tight">Enter details</span>
+            </div>
+          </button>
         </div>
       </div>
 
-      {/* Add System Dialog */}
-      <AddSystemDialog
-        open={showAddDialog}
-        onOpenChange={setShowAddDialog}
+      {/* Manual Add System Modal - wizard-style */}
+      <WorkspaceAddSystemModal
+        open={showAddManualModal}
+        onOpenChange={setShowAddManualModal}
         onAddSystem={onAddSystem}
-        onImportSystems={onImportSystems}
         handoverPlanId={handoverPlanId}
         plantCode={plantCode}
         projectCode={projectCode}
         isAdding={isAdding}
+      />
+
+      {/* Excel Upload Modal - wizard-style */}
+      <WorkspaceExcelUploadModal
+        open={showExcelModal}
+        onOpenChange={setShowExcelModal}
+        onImportSystems={onImportSystems}
+        handoverPlanId={handoverPlanId}
         isImporting={isImporting}
+      />
+
+      {/* CMS Import Modal - reused from wizard */}
+      <CMSImportModal
+        open={showCMSModal}
+        onOpenChange={setShowCMSModal}
+        onImport={handleCMSImport}
+        projectCode={projectCode}
       />
 
       {/* System Detail Overlay */}
