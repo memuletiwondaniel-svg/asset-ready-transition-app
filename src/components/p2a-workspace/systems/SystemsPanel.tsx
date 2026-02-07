@@ -86,7 +86,7 @@ const UnassignedSystemsDropZone: React.FC<UnassignedSystemsDropZoneProps> = ({
             <span className="text-xs text-muted-foreground">Unassigned</span>
           </div>
         </CollapsibleTrigger>
-        <CollapsibleContent className="pt-2 overflow-hidden">
+        <CollapsibleContent className="pt-2">
           {systems.length > 0 ? (
             <div className="flex flex-wrap gap-1.5">
               {systems.map(system => (
@@ -306,7 +306,7 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
         </div>
 
         {/* Systems List - fills remaining height with vertical scroll only */}
-        <ScrollArea className="flex-1 min-h-0 overflow-hidden">
+        <ScrollArea className="flex-1 min-h-0">
           <div className="p-3 space-y-3">
             {/* Assigned Systems - always visible */}
             {filteredAssigned.length > 0 && (
