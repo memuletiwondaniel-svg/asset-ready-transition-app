@@ -117,35 +117,16 @@ export const useP2ASystems = (handoverPlanId: string) => {
         }
       }
 
-      // Also fetch total subsystem counts per system (to detect "all mapped" case)
-      const systemIdsWithSubAssignments = [...new Set(
-        assignments.filter((a: any) => a.subsystem_id).map((a: any) => a.system_id)
-      )];
-      
-      let totalSubsystemCounts: Record<string, number> = {};
-      if (systemIdsWithSubAssignments.length > 0) {
-        const { data: allSubsystems } = await supabase
-          .from('p2a_subsystems')
-          .select('system_id')
-          .in('system_id', systemIdsWithSubAssignments);
-        
-        if (allSubsystems) {
-          for (const sub of allSubsystems) {
-            totalSubsystemCounts[sub.system_id] = (totalSubsystemCounts[sub.system_id] || 0) + 1;
-          }
-        }
-      }
-
       // Create maps: system_id → assignment, and system_id → subsystem assignments
       const assignmentMap = new Map<string, { handover_point_id: string; vcr_code: string }>();
-      const subsystemAssignmentMap = new Map<string, P2AAssignedSubsystem[]>();
+      const rawSubsystemAssignments = new Map<string, P2AAssignedSubsystem[]>();
 
       assignments?.forEach((a: any) => {
         if (a.subsystem_id) {
           // Subsystem-level assignment
           const subDetail = subsystemDetails[a.subsystem_id];
           if (subDetail) {
-            const existing = subsystemAssignmentMap.get(a.system_id) || [];
+            const existing = rawSubsystemAssignments.get(a.system_id) || [];
             existing.push({
               id: a.subsystem_id,
               subsystem_id: subDetail.subsystem_id,
@@ -154,14 +135,7 @@ export const useP2ASystems = (handoverPlanId: string) => {
               assigned_handover_point_id: a.handover_point_id,
               assigned_vcr_code: a.p2a_handover_points.vcr_code,
             });
-            subsystemAssignmentMap.set(a.system_id, existing);
-          }
-          // Also set parent as assigned (to the first VCR found)
-          if (!assignmentMap.has(a.system_id)) {
-            assignmentMap.set(a.system_id, {
-              handover_point_id: a.handover_point_id,
-              vcr_code: a.p2a_handover_points.vcr_code,
-            });
+            rawSubsystemAssignments.set(a.system_id, existing);
           }
         } else {
           // Full system assignment
@@ -172,18 +146,28 @@ export const useP2ASystems = (handoverPlanId: string) => {
         }
       });
 
-      // Smart collapsing: if ALL subsystems of a system map to the SAME VCR,
-      // treat as a full system assignment (don't show individual subsystem cards)
-      for (const [systemId, subs] of subsystemAssignmentMap.entries()) {
-        const totalCount = totalSubsystemCounts[systemId] || 0;
+      // Smart collapsing: if all assigned subsystems of a system map to the SAME VCR,
+      // treat as a full system assignment (show parent card, not individual subsystem cards).
+      // Only show individual subsystem cards when they're split across different VCRs.
+      const subsystemAssignmentMap = new Map<string, P2AAssignedSubsystem[]>();
+
+      for (const [systemId, subs] of rawSubsystemAssignments.entries()) {
         const uniqueVCRs = new Set(subs.map(s => s.assigned_handover_point_id));
         
-        if (uniqueVCRs.size === 1 && subs.length === totalCount) {
+        if (uniqueVCRs.size === 1) {
           // All subsystems map to same VCR → collapse to parent system card
-          const vcrId = subs[0].assigned_handover_point_id;
-          const vcrCode = subs[0].assigned_vcr_code;
-          assignmentMap.set(systemId, { handover_point_id: vcrId, vcr_code: vcrCode });
-          subsystemAssignmentMap.delete(systemId);
+          assignmentMap.set(systemId, {
+            handover_point_id: subs[0].assigned_handover_point_id,
+            vcr_code: subs[0].assigned_vcr_code,
+          });
+        } else {
+          // Subsystems split across multiple VCRs → show individual cards
+          subsystemAssignmentMap.set(systemId, subs);
+          // Set parent as assigned to first VCR found
+          assignmentMap.set(systemId, {
+            handover_point_id: subs[0].assigned_handover_point_id,
+            vcr_code: subs[0].assigned_vcr_code,
+          });
         }
       }
 
