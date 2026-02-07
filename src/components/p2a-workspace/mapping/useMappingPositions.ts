@@ -2,102 +2,116 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { P2ASystem } from '../hooks/useP2ASystems';
 import { getVCRColor } from '../utils/vcrColors';
 
-export interface MappingConnection {
-  systemId: string;
+/** One bundled connection from a group of systems to a single VCR */
+export interface MappingBundle {
   vcrId: string;
   vcrCode: string;
-  startX: number;
-  startY: number;
-  endX: number;
-  endY: number;
+  /** Centroid Y of all system cards in this group */
+  systemCenterY: number;
+  /** Individual Y positions of each system card's right-center */
+  systemYs: number[];
+  /** X position: right edge of system cards (all same column) */
+  systemX: number;
+  /** VCR card left-center */
+  vcrX: number;
+  vcrY: number;
+  /** VCR color */
   color: string;
   borderColor: string;
+  systemCount: number;
 }
 
-/**
- * Hook to compute DOM positions of system cards and VCR cards
- * for the mapping overlay SVG connections.
- */
 export const useMappingPositions = (
   systems: P2ASystem[],
   showMapping: boolean,
   containerRef: React.RefObject<HTMLElement | null>,
 ) => {
-  const [connections, setConnections] = useState<MappingConnection[]>([]);
+  const [bundles, setBundles] = useState<MappingBundle[]>([]);
   const rafRef = useRef<number>(0);
 
   const recalculate = useCallback(() => {
     if (!showMapping || !containerRef.current) {
-      setConnections([]);
+      setBundles([]);
       return;
     }
 
     const container = containerRef.current;
     const containerRect = container.getBoundingClientRect();
 
-    const assignedSystems = systems.filter(s => s.assigned_handover_point_id);
-    const newConnections: MappingConnection[] = [];
+    // Group assigned systems by VCR
+    const vcrGroups: Record<string, P2ASystem[]> = {};
+    for (const system of systems) {
+      if (!system.assigned_handover_point_id) continue;
+      const key = system.assigned_handover_point_id;
+      if (!vcrGroups[key]) vcrGroups[key] = [];
+      vcrGroups[key].push(system);
+    }
 
-    for (const system of assignedSystems) {
-      const systemEl = container.querySelector(`[data-system-id="${system.id}"]`);
-      const vcrEl = container.querySelector(`[data-vcr-id="${system.assigned_handover_point_id}"]`);
+    const newBundles: MappingBundle[] = [];
 
-      if (!systemEl || !vcrEl) continue;
+    for (const [vcrId, groupSystems] of Object.entries(vcrGroups)) {
+      const vcrEl = container.querySelector(`[data-vcr-id="${vcrId}"]`);
+      if (!vcrEl) continue;
 
-      const systemRect = systemEl.getBoundingClientRect();
       const vcrRect = vcrEl.getBoundingClientRect();
+      const systemYs: number[] = [];
+      let systemX = 0;
 
-      const vcrColor = getVCRColor(system.assigned_vcr_code);
+      for (const sys of groupSystems) {
+        const el = container.querySelector(`[data-system-id="${sys.id}"]`);
+        if (!el) continue;
+        const r = el.getBoundingClientRect();
+        systemYs.push(r.top + r.height / 2 - containerRect.top);
+        systemX = r.right - containerRect.left;
+      }
 
-      newConnections.push({
-        systemId: system.id,
-        vcrId: system.assigned_handover_point_id!,
-        vcrCode: system.assigned_vcr_code || '',
-        // Start from right-center of system card
-        startX: systemRect.right - containerRect.left,
-        startY: systemRect.top + systemRect.height / 2 - containerRect.top,
-        // End at left-center of VCR card
-        endX: vcrRect.left - containerRect.left,
-        endY: vcrRect.top + vcrRect.height / 2 - containerRect.top,
+      if (systemYs.length === 0) continue;
+
+      const vcrColor = getVCRColor(groupSystems[0].assigned_vcr_code);
+      const avgY = systemYs.reduce((a, b) => a + b, 0) / systemYs.length;
+
+      newBundles.push({
+        vcrId,
+        vcrCode: groupSystems[0].assigned_vcr_code || '',
+        systemCenterY: avgY,
+        systemYs: systemYs.sort((a, b) => a - b),
+        systemX,
+        vcrX: vcrRect.left - containerRect.left,
+        vcrY: vcrRect.top + vcrRect.height / 2 - containerRect.top,
         color: vcrColor?.background || 'hsl(var(--primary))',
         borderColor: vcrColor?.border || 'hsl(var(--primary))',
+        systemCount: systemYs.length,
       });
     }
 
-    setConnections(newConnections);
+    // Sort bundles by VCR Y position for consistent layering
+    newBundles.sort((a, b) => a.vcrY - b.vcrY);
+    setBundles(newBundles);
   }, [systems, showMapping, containerRef]);
 
   useEffect(() => {
     if (!showMapping) {
-      setConnections([]);
+      setBundles([]);
       return;
     }
 
-    // Debounced recalculation
     const debouncedRecalc = () => {
       cancelAnimationFrame(rafRef.current);
       rafRef.current = requestAnimationFrame(recalculate);
     };
 
-    // Initial calculation (slight delay for DOM to settle)
-    const timer = setTimeout(debouncedRecalc, 50);
+    const timer = setTimeout(debouncedRecalc, 80);
 
-    // Observe resize
     const observer = new ResizeObserver(debouncedRecalc);
-    if (containerRef.current) {
-      observer.observe(containerRef.current);
-    }
+    if (containerRef.current) observer.observe(containerRef.current);
 
-    // Listen for scroll events on scrollable containers within
     const scrollContainers = containerRef.current?.querySelectorAll('[data-radix-scroll-area-viewport]');
     scrollContainers?.forEach(el => {
       el.addEventListener('scroll', debouncedRecalc, { passive: true });
     });
 
-    // Also listen on window resize
     window.addEventListener('resize', debouncedRecalc);
 
-    // Mutation observer for DOM changes (cards appearing/disappearing)
     const mutationObserver = new MutationObserver(debouncedRecalc);
     if (containerRef.current) {
       mutationObserver.observe(containerRef.current, {
@@ -113,12 +127,10 @@ export const useMappingPositions = (
       cancelAnimationFrame(rafRef.current);
       observer.disconnect();
       mutationObserver.disconnect();
-      scrollContainers?.forEach(el => {
-        el.removeEventListener('scroll', debouncedRecalc);
-      });
+      scrollContainers?.forEach(el => el.removeEventListener('scroll', debouncedRecalc));
       window.removeEventListener('resize', debouncedRecalc);
     };
   }, [showMapping, recalculate, containerRef]);
 
-  return { connections, recalculate };
+  return { bundles, recalculate };
 };

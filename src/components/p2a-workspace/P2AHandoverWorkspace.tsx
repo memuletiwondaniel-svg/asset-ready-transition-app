@@ -103,7 +103,7 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
   const { toast } = useToast();
 
   // Mapping overlay positions
-  const { connections } = useMappingPositions(systems, showMapping, workspaceContainerRef);
+  const { bundles } = useMappingPositions(systems, showMapping, workspaceContainerRef);
 
   const handoverPointsWithUi = useMemo(() => {
     if (!handoverPoints?.length) return [];
@@ -447,7 +447,7 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
       {/* Main Content Area - Systems Panel + Timeline */}
       <div className="flex-1 flex overflow-hidden min-h-0 relative" ref={workspaceContainerRef}>
         {/* Mapping SVG Overlay */}
-        {showMapping && <MappingOverlay connections={connections} />}
+        {showMapping && <MappingOverlay bundles={bundles} />}
 
         {/* Systems Panel - LEFT Side */}
         <SystemsPanel
