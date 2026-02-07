@@ -36,7 +36,7 @@ export const ProjectOverviewStep: React.FC<ProjectOverviewStepProps> = ({
           </div>
           <div className="flex items-center gap-3 p-3 rounded-lg bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200/30 dark:border-emerald-800/30">
             <div className="w-7 h-7 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600 text-xs font-semibold shrink-0">2</div>
-            <span><strong>VCRs</strong> — Define verification checkpoints</span>
+            <span><strong>VCRs</strong> — Define Verification Certificate of Readiness</span>
           </div>
           <div className="flex items-center gap-3 p-3 rounded-lg bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/30 dark:border-amber-800/30">
             <div className="w-7 h-7 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-600 text-xs font-semibold shrink-0">3</div>
