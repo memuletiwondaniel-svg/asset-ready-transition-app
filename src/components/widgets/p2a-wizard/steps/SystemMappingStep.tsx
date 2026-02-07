@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
@@ -69,6 +69,25 @@ export const SystemMappingStep: React.FC<SystemMappingStepProps> = ({
     () => new Set(vcrs.map(v => v.id))
   );
   const [expandedSystems, setExpandedSystems] = useState<Set<string>>(new Set());
+
+  // ── Valid mapping keys (derived from current systems) ─────
+  const validKeys = useMemo(() => {
+    return new Set(systems.flatMap(getMappableKeys));
+  }, [systems]);
+
+  // ── Auto-clean stale mapping entries on systems change ────
+  useEffect(() => {
+    let hasStale = false;
+    const cleaned: Record<string, string[]> = {};
+    for (const [vcrId, keys] of Object.entries(mappings)) {
+      const valid = keys.filter(k => validKeys.has(k));
+      cleaned[vcrId] = valid;
+      if (valid.length !== keys.length) hasStale = true;
+    }
+    if (hasStale) {
+      onMappingsChange(cleaned);
+    }
+  }, [validKeys]); // only re-run when the set of valid keys changes
 
   // ── VCR collapse ─────────────────────────────────────────
   const toggleVCRCollapse = (vcrId: string) => {
