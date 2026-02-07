@@ -50,8 +50,26 @@ async function loadDraftFromDatabase(projectId: string): Promise<{ state: P2APla
   // Load systems
   const { data: dbSystems } = await client
     .from('p2a_systems')
-    .select('id, system_id, name, is_hydrocarbon')
+    .select('id, system_id, name, is_hydrocarbon, completion_percentage')
     .eq('handover_plan_id', planId);
+
+  const systemIds = (dbSystems || []).map((s: any) => s.id);
+
+  // Load subsystems for all systems in one query
+  let subsystemsBySystem: Record<string, any[]> = {};
+  if (systemIds.length > 0) {
+    const { data: dbSubsystems } = await client
+      .from('p2a_subsystems')
+      .select('id, system_id, subsystem_id, name, completion_percentage')
+      .in('system_id', systemIds);
+
+    for (const sub of (dbSubsystems || [])) {
+      if (!subsystemsBySystem[sub.system_id]) {
+        subsystemsBySystem[sub.system_id] = [];
+      }
+      subsystemsBySystem[sub.system_id].push(sub);
+    }
+  }
 
   const systems: WizardSystem[] = (dbSystems || []).map((s: any) => ({
     id: s.id,
@@ -59,6 +77,13 @@ async function loadDraftFromDatabase(projectId: string): Promise<{ state: P2APla
     name: s.name,
     description: '',
     is_hydrocarbon: s.is_hydrocarbon ?? false,
+    progress: s.completion_percentage ?? 0,
+    subsystems: (subsystemsBySystem[s.id] || []).map((sub: any) => ({
+      id: sub.id,
+      system_id: sub.subsystem_id,
+      name: sub.name,
+      progress: sub.completion_percentage ?? 0,
+    })),
   }));
 
   // Load phases
@@ -191,10 +216,21 @@ async function persistPlanToDatabase(
     planId = newPlan.id;
   }
 
-  // Save systems: delete existing then re-insert to avoid upsert constraint issues
+  // Save systems: delete existing (and their subsystems) then re-insert
   const systemIdMap: Record<string, string> = {};
 
-  // Delete existing systems for this plan first
+  // Get existing system UUIDs to delete their subsystems first
+  const { data: existingSystems } = await client
+    .from('p2a_systems')
+    .select('id')
+    .eq('handover_plan_id', planId);
+
+  if (existingSystems && existingSystems.length > 0) {
+    const existingSystemIds = existingSystems.map((s: any) => s.id);
+    await client.from('p2a_subsystems').delete().in('system_id', existingSystemIds);
+  }
+
+  // Delete existing systems for this plan
   await client.from('p2a_systems').delete().eq('handover_plan_id', planId);
 
   if (state.systems.length > 0) {
@@ -206,12 +242,24 @@ async function persistPlanToDatabase(
           system_id: system.system_id,
           name: system.name,
           is_hydrocarbon: system.is_hydrocarbon,
+          completion_percentage: Math.round(system.progress || 0),
         })
         .select()
         .single();
 
       if (!error && savedSystem) {
         systemIdMap[system.id] = savedSystem.id;
+
+        // Insert subsystems for this system
+        if (system.subsystems && system.subsystems.length > 0) {
+          const subsystemRecords = system.subsystems.map((sub: any) => ({
+            system_id: savedSystem.id,
+            subsystem_id: sub.system_id,
+            name: sub.name,
+            completion_percentage: Math.round(sub.progress || 0),
+          }));
+          await client.from('p2a_subsystems').insert(subsystemRecords);
+        }
       }
     }
   }
