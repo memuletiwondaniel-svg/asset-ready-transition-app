@@ -1,15 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import {
   DndContext,
   DragEndEvent,
+  DragOverEvent,
   DragOverlay,
   DragStartEvent,
   PointerSensor,
   TouchSensor,
   useSensor,
   useSensors,
+  closestCenter,
 } from '@dnd-kit/core';
+import { arrayMove } from '@dnd-kit/sortable';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -54,6 +57,8 @@ export const PhasesStep: React.FC<PhasesStepProps> = ({
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingPhase, setEditingPhase] = useState<WizardPhase | null>(null);
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
+  // Track VCR ordering within each phase: phaseId -> ordered vcrId[]
+  const [phaseVcrOrder, setPhaseVcrOrder] = useState<Record<string, string[]>>({});
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -116,6 +121,20 @@ export const PhasesStep: React.FC<PhasesStepProps> = ({
     setActiveDragId(event.active.id as string);
   };
 
+  const findPhaseForVCR = useCallback((vcrId: string): string | undefined => {
+    return vcrPhaseAssignments[vcrId];
+  }, [vcrPhaseAssignments]);
+
+  const getOrderedPhaseVCRs = useCallback((phaseId: string): string[] => {
+    const assignedIds = vcrs.filter(v => vcrPhaseAssignments[v.id] === phaseId).map(v => v.id);
+    const order = phaseVcrOrder[phaseId];
+    if (!order) return assignedIds;
+    // Return ordered IDs, filtering out stale entries and appending new ones
+    const ordered = order.filter(id => assignedIds.includes(id));
+    const remaining = assignedIds.filter(id => !order.includes(id));
+    return [...ordered, ...remaining];
+  }, [vcrs, vcrPhaseAssignments, phaseVcrOrder]);
+
   const handleDragEnd = (event: DragEndEvent) => {
     setActiveDragId(null);
     const { active, over } = event;
@@ -123,14 +142,77 @@ export const PhasesStep: React.FC<PhasesStepProps> = ({
 
     const vcrId = (active.data.current as { vcrId?: string })?.vcrId;
     const overId = over.id as string;
+    if (!vcrId) return;
 
-    if (vcrId && overId.startsWith('phase-')) {
-      const phaseId = overId.replace('phase-', '');
-      onVCRPhaseAssignmentsChange({ ...vcrPhaseAssignments, [vcrId]: phaseId });
+    // Dropped onto a phase card directly
+    if (overId.startsWith('phase-')) {
+      const targetPhaseId = overId.replace('phase-', '');
+      const sourcePhaseId = findPhaseForVCR(vcrId);
+
+      // Remove from source phase order
+      if (sourcePhaseId && sourcePhaseId !== targetPhaseId) {
+        setPhaseVcrOrder(prev => ({
+          ...prev,
+          [sourcePhaseId]: (prev[sourcePhaseId] || []).filter(id => id !== vcrId),
+        }));
+      }
+
+      // Add to target phase order
+      setPhaseVcrOrder(prev => {
+        const current = prev[targetPhaseId] || [];
+        if (!current.includes(vcrId)) return { ...prev, [targetPhaseId]: [...current, vcrId] };
+        return prev;
+      });
+
+      onVCRPhaseAssignmentsChange({ ...vcrPhaseAssignments, [vcrId]: targetPhaseId });
+      return;
+    }
+
+    // Dropped onto another VCR — reorder or move
+    if (overId.startsWith('vcr-')) {
+      const overVcrId = overId.replace('vcr-', '');
+      const sourcePhaseId = findPhaseForVCR(vcrId);
+      const targetPhaseId = findPhaseForVCR(overVcrId);
+
+      if (!targetPhaseId) return;
+
+      if (sourcePhaseId === targetPhaseId) {
+        // Reorder within the same phase
+        const ordered = getOrderedPhaseVCRs(targetPhaseId);
+        const oldIndex = ordered.indexOf(vcrId);
+        const newIndex = ordered.indexOf(overVcrId);
+        if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
+          setPhaseVcrOrder(prev => ({
+            ...prev,
+            [targetPhaseId]: arrayMove(ordered, oldIndex, newIndex),
+          }));
+        }
+      } else {
+        // Move to a different phase at the drop position
+        if (sourcePhaseId) {
+          setPhaseVcrOrder(prev => ({
+            ...prev,
+            [sourcePhaseId]: (prev[sourcePhaseId] || []).filter(id => id !== vcrId),
+          }));
+        }
+        const targetOrdered = getOrderedPhaseVCRs(targetPhaseId);
+        const insertIndex = targetOrdered.indexOf(overVcrId);
+        const newOrder = [...targetOrdered];
+        newOrder.splice(insertIndex, 0, vcrId);
+        setPhaseVcrOrder(prev => ({ ...prev, [targetPhaseId]: newOrder }));
+        onVCRPhaseAssignmentsChange({ ...vcrPhaseAssignments, [vcrId]: targetPhaseId });
+      }
     }
   };
 
   const handleUnassignVCR = (vcrId: string) => {
+    const phaseId = findPhaseForVCR(vcrId);
+    if (phaseId) {
+      setPhaseVcrOrder(prev => ({
+        ...prev,
+        [phaseId]: (prev[phaseId] || []).filter(id => id !== vcrId),
+      }));
+    }
     const updated = { ...vcrPhaseAssignments };
     delete updated[vcrId];
     onVCRPhaseAssignmentsChange(updated);
@@ -138,7 +220,10 @@ export const PhasesStep: React.FC<PhasesStepProps> = ({
 
   // ── Derived data ─────────────────────────────────────────
   const unassignedVCRs = vcrs.filter(v => !vcrPhaseAssignments[v.id]);
-  const getPhaseVCRs = (phaseId: string) => vcrs.filter(v => vcrPhaseAssignments[v.id] === phaseId);
+  const getPhaseVCRs = (phaseId: string): WizardVCR[] => {
+    const orderedIds = getOrderedPhaseVCRs(phaseId);
+    return orderedIds.map(id => vcrs.find(v => v.id === id)).filter(Boolean) as WizardVCR[];
+  };
   const activeDragVCR = activeDragId
     ? vcrs.find(v => `vcr-${v.id}` === activeDragId)
     : null;
@@ -159,7 +244,7 @@ export const PhasesStep: React.FC<PhasesStepProps> = ({
   }
 
   return (
-    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div className="flex flex-col gap-3 p-4 h-full min-h-0">
         {/* Header */}
         <div className="flex items-center justify-between">

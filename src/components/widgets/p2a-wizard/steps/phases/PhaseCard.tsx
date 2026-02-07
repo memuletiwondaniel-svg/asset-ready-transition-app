@@ -1,5 +1,6 @@
 import React from 'react';
 import { useDroppable } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { AssignedVCRChip } from './AssignedVCRChip';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -127,30 +128,35 @@ export const PhaseCard: React.FC<PhaseCardProps> = ({
 
         {/* Assigned VCRs */}
         <div className="mt-1 space-y-1 min-h-[40px]">
-          {assignedVCRs.length > 0 ? (
-            assignedVCRs.map((vcr) => {
-              const vcrIndex = allVCRs.findIndex(v => v.id === vcr.id);
-              return (
-                <AssignedVCRChip
-                  key={vcr.id}
-                  vcr={vcr}
-                  vcrIndex={vcrIndex}
-                  onUnassign={onUnassignVCR}
-                />
-              );
-            })
-          ) : (
-            <div className={cn(
-              'flex items-center justify-center py-3 rounded-md border-2 border-dashed text-[10px] text-muted-foreground transition-all duration-200',
-              isOver
-                ? 'border-primary bg-primary/10 text-primary font-medium scale-[1.02]'
-                : isReceivingDrag
-                  ? 'border-primary/30 bg-primary/5'
-                  : 'border-muted-foreground/20'
-            )}>
-              {isOver ? '↓ Release to assign' : 'Drop VCRs here'}
-            </div>
-          )}
+          <SortableContext
+            items={assignedVCRs.map(v => `vcr-${v.id}`)}
+            strategy={verticalListSortingStrategy}
+          >
+            {assignedVCRs.length > 0 ? (
+              assignedVCRs.map((vcr) => {
+                const vcrIndex = allVCRs.findIndex(v => v.id === vcr.id);
+                return (
+                  <AssignedVCRChip
+                    key={vcr.id}
+                    vcr={vcr}
+                    vcrIndex={vcrIndex}
+                    onUnassign={onUnassignVCR}
+                  />
+                );
+              })
+            ) : (
+              <div className={cn(
+                'flex items-center justify-center py-3 rounded-md border-2 border-dashed text-[10px] text-muted-foreground transition-all duration-200',
+                isOver
+                  ? 'border-primary bg-primary/10 text-primary font-medium scale-[1.02]'
+                  : isReceivingDrag
+                    ? 'border-primary/30 bg-primary/5'
+                    : 'border-muted-foreground/20'
+              )}>
+                {isOver ? '↓ Release to assign' : 'Drop VCRs here'}
+              </div>
+            )}
+          </SortableContext>
         </div>
 
         {/* Footer */}

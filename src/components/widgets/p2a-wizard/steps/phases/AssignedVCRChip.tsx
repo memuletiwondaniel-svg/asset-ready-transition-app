@@ -1,5 +1,6 @@
 import React from 'react';
-import { useDraggable } from '@dnd-kit/core';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WizardVCR } from '../VCRCreationStep';
@@ -12,17 +13,30 @@ interface AssignedVCRChipProps {
 }
 
 export const AssignedVCRChip: React.FC<AssignedVCRChipProps> = ({ vcr, vcrIndex, onUnassign }) => {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
     id: `vcr-${vcr.id}`,
     data: { type: 'vcr', vcrId: vcr.id },
   });
 
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
   return (
     <div
       ref={setNodeRef}
+      style={style}
       className={cn(
-        'group/vcr flex items-center gap-1.5 p-1.5 rounded-md bg-background/80 border text-[11px] transition-all hover:bg-background hover:shadow-sm cursor-grab active:cursor-grabbing',
-        isDragging && 'opacity-30 scale-95 ring-2 ring-primary/20 shadow-inner',
+        'group/vcr flex items-center gap-1.5 p-1.5 rounded-md bg-background/80 border text-[11px] transition-colors hover:bg-background hover:shadow-sm cursor-grab active:cursor-grabbing',
+        isDragging && 'opacity-30 scale-95 ring-2 ring-primary/20 shadow-inner z-50',
       )}
     >
       <GripVertical
