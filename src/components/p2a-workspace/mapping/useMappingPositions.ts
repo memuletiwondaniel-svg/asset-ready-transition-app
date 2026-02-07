@@ -77,6 +77,13 @@ export const useMappingPositions = (
     const container = containerRef.current;
     const containerRect = container.getBoundingClientRect();
 
+    // Find the systems panel scroll viewport to check visibility
+    const systemsPanelViewport = container.querySelector(
+      '[data-systems-panel] [data-radix-scroll-area-viewport]'
+    ) as HTMLElement | null;
+
+    const viewportRect = systemsPanelViewport?.getBoundingClientRect();
+
     // Group assigned systems by VCR
     const vcrGroups: Record<string, P2ASystem[]> = {};
     for (const system of systems) {
@@ -95,16 +102,31 @@ export const useMappingPositions = (
       const vcrRect = vcrEl.getBoundingClientRect();
       const systemYs: number[] = [];
       let systemX = 0;
+      let allVisible = true;
 
       for (const sys of groupSystems) {
         const el = container.querySelector(`[data-system-id="${sys.id}"]`);
-        if (!el) continue;
+        if (!el) {
+          allVisible = false;
+          continue;
+        }
         const r = el.getBoundingClientRect();
+
+        // Check if this system card is fully visible within the scroll viewport
+        if (viewportRect) {
+          const cardTop = r.top;
+          const cardBottom = r.bottom;
+          if (cardTop < viewportRect.top || cardBottom > viewportRect.bottom) {
+            allVisible = false;
+          }
+        }
+
         systemYs.push(r.top + r.height / 2 - containerRect.top);
         systemX = r.right - containerRect.left;
       }
 
-      if (systemYs.length === 0) continue;
+      // Only show mapping lines when ALL systems for this VCR are visible
+      if (!allVisible || systemYs.length === 0) continue;
 
       const vcrColor = getVCRColor(groupSystems[0].assigned_vcr_code);
       const avgY = systemYs.reduce((a, b) => a + b, 0) / systemYs.length;
