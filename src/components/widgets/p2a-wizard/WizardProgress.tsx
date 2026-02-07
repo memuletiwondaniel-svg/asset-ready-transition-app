@@ -74,13 +74,14 @@ export const WizardProgress: React.FC<WizardProgressProps> = ({
             {index < steps.length - 1 && (() => {
               const nextStepNumber = stepNumber + 1;
               const nextIsCompleted = completedSteps.has(nextStepNumber);
+              const nextIsVisited = currentStep >= nextStepNumber;
               const connectorDone = isCompleted && nextIsCompleted;
-              const connectorPartial = isCompleted && !nextIsCompleted;
+              const connectorInProgress = isCompleted && nextIsVisited && !nextIsCompleted;
               return (
                 <div
                   className={cn(
                     "flex-1 h-0.5 min-w-3 max-w-16 mt-3.5 transition-colors",
-                    connectorDone ? "bg-emerald-500" : connectorPartial ? "bg-amber-300 dark:bg-amber-600" : "bg-muted"
+                    connectorDone ? "bg-emerald-500" : connectorInProgress ? "bg-amber-300 dark:bg-amber-600" : "bg-muted"
                   )}
                 />
               );
