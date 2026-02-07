@@ -103,6 +103,10 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
   // Use only real VCRs from database
   const allVCRs = vcrs || [];
 
+  // VCRs should only be shown in the widget after the plan is approved
+  const planIsApproved = p2aPlanByProject?.status === 'COMPLETED';
+  const showVCRList = planIsApproved && allVCRs.length > 0;
+
   const handlePSSRClick = (pssrId: string, displayId: string) => {
     setSelectedPSSR({ id: pssrId, displayId });
   };
@@ -140,7 +144,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                   </div>
                 ))}
               </div>
-            ) : allVCRs.length > 0 ? (
+            ) : showVCRList ? (
               <div className="space-y-2 max-h-[280px] overflow-y-auto pr-1">
                 {allVCRs.map((vcr) => (
                   <div 
@@ -219,8 +223,8 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
             )}
           </div>
 
-          {/* View Handover Plan Button - Show only when VCRs exist */}
-          {allVCRs.length > 0 && oraPlanId && (
+          {/* View Handover Plan Button - Show only when plan is approved and VCRs exist */}
+          {showVCRList && oraPlanId && (
             <div className="flex items-center gap-2 mt-auto">
               <Button
                 variant="outline"
