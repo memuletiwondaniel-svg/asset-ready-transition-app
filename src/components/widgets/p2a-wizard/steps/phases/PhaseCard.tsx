@@ -49,7 +49,7 @@ export const PhaseCard: React.FC<PhaseCardProps> = ({
   return (
     <div
       className={cn(
-        'group relative flex flex-col rounded-lg border-2 transition-all min-w-[160px] flex-1',
+        'group relative flex flex-col rounded-lg border-2 transition-all min-w-[160px] flex-1 overflow-visible',
         colors.border,
         colors.bg,
       )}
