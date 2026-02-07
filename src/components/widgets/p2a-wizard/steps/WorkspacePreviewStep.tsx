@@ -49,8 +49,13 @@ export const WorkspacePreviewStep: React.FC<WorkspacePreviewStepProps> = ({
           </p>
         </div>
         {onOpenFullWorkspace && (
-          <Button variant="outline" size="sm" onClick={onOpenFullWorkspace}>
-            <ExternalLink className="h-4 w-4 mr-2" />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onOpenFullWorkspace}
+            className="text-xs text-muted-foreground hover:text-foreground h-7 px-2.5 gap-1.5"
+          >
+            <ExternalLink className="h-3.5 w-3.5" />
             Open Workspace
           </Button>
         )}
