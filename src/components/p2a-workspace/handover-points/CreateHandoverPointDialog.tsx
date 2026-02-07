@@ -4,12 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CalendarIcon } from 'lucide-react';
-import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
+import { Plus, Key } from 'lucide-react';
 import { P2APhase } from '../hooks/useP2APhases';
 
 interface CreateHandoverPointDialogProps {
@@ -24,7 +19,7 @@ interface CreateHandoverPointDialogProps {
     handover_plan_id: string;
   }) => void;
   phases: P2APhase[];
-  selectedPhaseId?: string | null; // Optional - if provided, pre-selects the phase
+  selectedPhaseId?: string | null;
   projectCode: string;
   handoverPlanId: string;
   isCreating?: boolean;
@@ -40,152 +35,103 @@ export const CreateHandoverPointDialog: React.FC<CreateHandoverPointDialogProps>
   handoverPlanId,
   isCreating,
 }) => {
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    phase_id: selectedPhaseId || (phases.length > 0 ? phases[0].id : ''),
-    target_date: undefined as Date | undefined,
-  });
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
 
-  // Update phase_id when selectedPhaseId or phases change
+  // Determine the phase ID to use
+  const effectivePhaseId = selectedPhaseId || (phases.length > 0 ? phases[0].id : undefined);
+
   React.useEffect(() => {
     if (open) {
-      // Default to selected phase, or first phase if none selected
-      const defaultPhaseId = selectedPhaseId || (phases.length > 0 ? phases[0].id : '');
-      setFormData(prev => ({ ...prev, phase_id: defaultPhaseId }));
+      setName('');
+      setDescription('');
     }
-  }, [selectedPhaseId, phases, open]);
+  }, [open]);
 
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      description: '',
-      phase_id: selectedPhaseId || (phases.length > 0 ? phases[0].id : ''),
-      target_date: undefined,
-    });
-  };
+  const canSubmit = name.trim().length > 0;
 
   const handleCreate = () => {
+    if (!canSubmit) return;
+
     onCreateHandoverPoint({
-      phase_id: formData.phase_id || undefined,
-      name: formData.name,
-      description: formData.description || undefined,
+      phase_id: effectivePhaseId || undefined,
+      name: name.trim(),
+      description: description.trim() || undefined,
       project_code: projectCode,
-      target_date: formData.target_date ? format(formData.target_date, 'yyyy-MM-dd') : undefined,
       handover_plan_id: handoverPlanId,
     });
-    resetForm();
+
+    setName('');
+    setDescription('');
     onOpenChange(false);
   };
 
-  const selectedPhase = phases.find(p => p.id === formData.phase_id);
+  const handleClose = () => {
+    setName('');
+    setDescription('');
+    onOpenChange(false);
+  };
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { onOpenChange(o); if (!o) resetForm(); }}>
-      <DialogContent className="max-w-md">
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent
+        className="sm:max-w-md"
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onInteractOutside={(e) => e.preventDefault()}
+      >
         <DialogHeader>
-          <DialogTitle>Create Handover Point (VCR)</DialogTitle>
-          <DialogDescription>
-            {selectedPhase 
-              ? `Add a Verification of Readiness checkpoint in the "${selectedPhase.name}" phase`
-              : 'Create a VCR that can be assigned to a phase later'
-            }
-          </DialogDescription>
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Key className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <DialogTitle>Add VCR</DialogTitle>
+              <DialogDescription>
+                Create a new verification checkpoint
+              </DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          <div className="p-3 bg-muted/50 rounded-lg">
-            <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
-              VCR Code (Auto-generated)
-            </div>
-            <div className="font-mono text-sm font-medium">
-              VCR-{projectCode || 'XXX'}-###
-            </div>
-          </div>
-
+        <div className="space-y-4 py-2">
           <div className="space-y-2">
-            <Label>Handover Point Name *</Label>
+            <Label className="text-sm">
+              VCR Name <span className="text-destructive">*</span>
+            </Label>
             <Input
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="e.g., Critical Utilities Batch 1"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g., Power and Utilities Handover"
+              autoFocus
             />
           </div>
 
           <div className="space-y-2">
-            <Label>Phase {phases.length > 0 && <span className="text-muted-foreground font-normal">(defaults to first phase)</span>}</Label>
-            <Select 
-              value={formData.phase_id || "unassigned"} 
-              onValueChange={(v) => setFormData({ ...formData, phase_id: v === "unassigned" ? "" : v })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a phase" />
-              </SelectTrigger>
-              <SelectContent className="bg-popover z-50">
-                {phases.map((phase, idx) => (
-                  <SelectItem key={phase.id} value={phase.id}>
-                    <div className="flex items-center gap-2">
-                      <span className="w-5 h-5 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center">
-                        {idx + 1}
-                      </span>
-                      {phase.name}
-                      {idx === 0 && <span className="text-xs text-muted-foreground">(default)</span>}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground">
-              VCRs are placed in phases to show handover progression
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Description</Label>
+            <Label className="text-sm">Description</Label>
             <Textarea
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Why does this handover point exist? What systems will be grouped here?"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Why is this VCR needed? What systems does it cover?"
               rows={3}
+              className="resize-none text-sm"
             />
           </div>
 
-          <div className="space-y-2">
-            <Label>Target Date</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    'w-full justify-start text-left font-normal',
-                    !formData.target_date && 'text-muted-foreground'
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {formData.target_date ? format(formData.target_date, 'PPP') : 'Pick a date'}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={formData.target_date}
-                  onSelect={(date) => setFormData({ ...formData, target_date: date })}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
+          {/* Auto-assigned VCR ID preview */}
+          <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-muted/50 border">
+            <span className="text-xs text-muted-foreground">VCR ID:</span>
+            <span className="text-xs font-mono font-medium">VCR-{projectCode || 'XXX'}-###</span>
+            <span className="text-[10px] text-muted-foreground ml-auto">(auto-assigned)</span>
           </div>
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={handleClose}>
             Cancel
           </Button>
-          <Button 
-            onClick={handleCreate}
-            disabled={!formData.name.trim() || isCreating}
-          >
-            {isCreating ? 'Creating...' : 'Create VCR'}
+          <Button onClick={handleCreate} disabled={!canSubmit || isCreating}>
+            <Plus className="h-4 w-4 mr-1" />
+            {isCreating ? 'Creating...' : 'Add VCR'}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -4,7 +4,8 @@ export { EmptyWorkspaceState } from './EmptyWorkspaceState';
 // Systems
 export { SystemsPanel } from './systems/SystemsPanel';
 export { SystemCard, DraggableSystemCard } from './systems/SystemCard';
-export { AddSystemDialog } from './systems/AddSystemDialog';
+export { WorkspaceAddSystemModal } from './systems/WorkspaceAddSystemModal';
+export { WorkspaceExcelUploadModal } from './systems/WorkspaceExcelUploadModal';
 export { SystemDetailOverlay } from './systems/SystemDetailOverlay';
 
 // Phases
