@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { X, Key, Loader2, Trash2 } from 'lucide-react';
+import { Key, Loader2, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { WizardProgress, WizardStep } from './WizardProgress';
 import { WizardNavigation } from './WizardNavigation';
@@ -300,7 +300,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl p-0 gap-0 h-[min(85vh,720px)] flex flex-col overflow-hidden [&>button]:hidden">
+      <DialogContent className="max-w-4xl p-0 gap-0 h-[min(85vh,720px)] flex flex-col overflow-hidden [&>button]:hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b shrink-0 bg-gradient-to-br from-primary/5 via-accent/5 to-transparent">
           <div className="flex items-center gap-3">
@@ -358,14 +358,6 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
                 </AlertDialogContent>
               </AlertDialog>
             )}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={handleClose}
-            >
-              <X className="h-4 w-4" />
-            </Button>
           </div>
         </div>
 
