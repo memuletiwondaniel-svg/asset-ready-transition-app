@@ -5,7 +5,6 @@ import { Plus, GitBranch } from 'lucide-react';
 import { P2APhase, P2AMilestone } from '../hooks/useP2APhases';
 import { P2AHandoverPoint } from '../hooks/useP2AHandoverPoints';
 import { StaircasePhaseColumn } from './StaircasePhaseColumn';
-import { UnassignedVCRColumn } from './UnassignedVCRColumn';
 import { MilestoneMarker } from './MilestoneMarker';
 import { CreatePhaseDialog } from './CreatePhaseDialog';
 import { EditPhaseDialog } from './EditPhaseDialog';
@@ -106,7 +105,7 @@ export const PhasesTimeline: React.FC<PhasesTimelineProps> = ({
 
   const renderItems = buildRenderItems();
 
-  // Empty state - still show unassigned section
+  // Empty state
   if (phases.length === 0) {
     return (
       <div className="flex-1 flex flex-col min-h-0">
@@ -127,15 +126,6 @@ export const PhasesTimeline: React.FC<PhasesTimelineProps> = ({
               </Button>
             </div>
           </div>
-        </div>
-
-        {/* Unassigned VCRs - always visible */}
-        <div className="flex-shrink-0 min-h-[100px] px-4 py-3 border-t border-border bg-muted/30">
-          <UnassignedVCRColumn
-            handoverPoints={unassignedPoints}
-            onOpenVCR={onOpenVCR}
-            onCreateHandoverPoint={() => onCreateHandoverPoint(null)}
-          />
         </div>
 
         <CreatePhaseDialog
@@ -212,15 +202,6 @@ export const PhasesTimeline: React.FC<PhasesTimelineProps> = ({
           <ScrollBar orientation="horizontal" />
           <ScrollBar orientation="vertical" />
         </ScrollArea>
-      </div>
-
-      {/* Unassigned VCRs - Fixed at bottom, always visible */}
-      <div className="flex-shrink-0 h-[180px] px-4 py-2 border-t border-border bg-muted/30 overflow-auto">
-        <UnassignedVCRColumn
-          handoverPoints={unassignedPoints}
-          onOpenVCR={onOpenVCR}
-          onCreateHandoverPoint={() => onCreateHandoverPoint(null)}
-        />
       </div>
 
       <CreatePhaseDialog
