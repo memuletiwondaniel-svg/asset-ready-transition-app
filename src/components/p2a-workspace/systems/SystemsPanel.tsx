@@ -275,7 +275,7 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
                   open={expandedSections.assigned}
                   onOpenChange={() => toggleSection('assigned')}
                 >
-                  <CollapsibleTrigger className="flex items-center justify-between w-full p-2 rounded-md hover:bg-muted/50 transition-colors">
+                  <CollapsibleTrigger className="flex items-center justify-between w-full p-2 rounded-md hover:bg-muted/50 transition-colors sticky top-0 z-10 bg-card">
                     <div className="flex items-center gap-2">
                       {expandedSections.assigned ? (
                         <ChevronDown className="w-4 h-4 text-muted-foreground" />

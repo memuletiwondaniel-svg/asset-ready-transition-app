@@ -167,6 +167,39 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
     });
   }, [handoverPoints]);
 
+  // Sync vertical scroll between systems panel and phases timeline
+  useEffect(() => {
+    const container = workspaceContainerRef.current;
+    if (!container) return;
+
+    const viewports = container.querySelectorAll('[data-radix-scroll-area-viewport]');
+    if (viewports.length < 2) return;
+
+    // First viewport = systems panel, second = phases timeline
+    const systemsViewport = viewports[0] as HTMLElement;
+    const phasesViewport = viewports[1] as HTMLElement;
+
+    let isSyncing = false;
+
+    const syncScroll = (source: HTMLElement, target: HTMLElement) => {
+      if (isSyncing) return;
+      isSyncing = true;
+      target.scrollTop = source.scrollTop;
+      requestAnimationFrame(() => { isSyncing = false; });
+    };
+
+    const onSystemsScroll = () => syncScroll(systemsViewport, phasesViewport);
+    const onPhasesScroll = () => syncScroll(phasesViewport, systemsViewport);
+
+    systemsViewport.addEventListener('scroll', onSystemsScroll, { passive: true });
+    phasesViewport.addEventListener('scroll', onPhasesScroll, { passive: true });
+
+    return () => {
+      systemsViewport.removeEventListener('scroll', onSystemsScroll);
+      phasesViewport.removeEventListener('scroll', onPhasesScroll);
+    };
+  }, [plan]);
+
   // DnD sensors
   const sensors = useSensors(
     useSensor(PointerSensor, {
