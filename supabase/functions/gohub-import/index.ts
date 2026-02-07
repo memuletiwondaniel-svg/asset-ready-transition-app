@@ -615,6 +615,11 @@ function parsePageMethodResponse(text: string): CompletionsSystem[] {
       console.log(`GoHub: Parsed JSON array with ${data.length} items`);
       if (data.length > 0) {
         console.log(`GoHub: First item keys: ${Object.keys(data[0]).join(", ")}`);
+        // Log diagnostic info about SubSystem and Complete fields
+        const firstItem = data[0];
+        const subVal = firstItem.SubSystem ?? firstItem.SubSystems ?? firstItem.subsystems ?? firstItem.Children;
+        console.log(`GoHub: SubSystem field type=${typeof subVal}, isArray=${Array.isArray(subVal)}, value=${JSON.stringify(subVal)?.substring(0, 500)}`);
+        console.log(`GoHub: Complete field value=${JSON.stringify(firstItem.Complete)}, type=${typeof firstItem.Complete}`);
       }
 
       for (const item of data) {
@@ -634,15 +639,39 @@ function parsePageMethodResponse(text: string): CompletionsSystem[] {
         const pctValue = item.Complete ?? item.Progress ?? item.OverallProgress ??
           item.Percent ?? item.CompletionPercent ?? item.percentage ?? null;
         if (pctValue !== null && pctValue !== undefined) {
-          progress = parseFloat(String(pctValue)) || 0;
-          if (progress > 0 && progress <= 1) progress *= 100;
+          const parsed = parseFloat(String(pctValue).replace('%', ''));
+          if (!isNaN(parsed)) {
+            progress = parsed > 0 && parsed <= 1 ? parsed * 100 : parsed;
+          }
         }
 
-        const rawSubSystems = item.SubSystem || item.SubSystems || item.subsystems || item.Children || [];
+        // Parse SubSystem field - handle multiple formats
+        let rawSubSystems = item.SubSystem ?? item.SubSystems ?? item.subsystems ?? item.Children ?? [];
         const parsedSubsystems: CompletionsSubsystem[] = [];
+
+        // If it's a string, try to parse it as JSON
+        if (typeof rawSubSystems === 'string') {
+          try { rawSubSystems = JSON.parse(rawSubSystems); } catch (_) { rawSubSystems = []; }
+        }
+
+        // If it's an object with a nested array (e.g., {Items: [...]} or {d: [...]})
+        if (rawSubSystems && typeof rawSubSystems === 'object' && !Array.isArray(rawSubSystems)) {
+          for (const key of ['Items', 'data', 'results', 'd', 'SubSystems', 'Children']) {
+            if (Array.isArray(rawSubSystems[key])) {
+              rawSubSystems = rawSubSystems[key];
+              break;
+            }
+          }
+          // If still not an array, wrap single object as array
+          if (!Array.isArray(rawSubSystems) && rawSubSystems.Number) {
+            rawSubSystems = [rawSubSystems];
+          }
+        }
 
         if (Array.isArray(rawSubSystems)) {
           for (const sub of rawSubSystems) {
+            if (!sub || typeof sub !== 'object') continue;
+            
             const subId = String(
               sub.Number || sub.SystemNumber || sub.Name || sub.SubSystemName ||
               sub.SystemId || sub.system_id || sub.Id || sub.CODE || ""
@@ -658,8 +687,10 @@ function parsePageMethodResponse(text: string): CompletionsSystem[] {
             const subPctValue = sub.Complete ?? sub.Progress ?? sub.OverallProgress ??
               sub.Percent ?? sub.CompletionPercent ?? sub.percentage ?? null;
             if (subPctValue !== null && subPctValue !== undefined) {
-              subProgress = parseFloat(String(subPctValue)) || 0;
-              if (subProgress > 0 && subProgress <= 1) subProgress *= 100;
+              const parsed = parseFloat(String(subPctValue).replace('%', ''));
+              if (!isNaN(parsed)) {
+                subProgress = parsed > 0 && parsed <= 1 ? parsed * 100 : parsed;
+              }
             }
 
             parsedSubsystems.push({
@@ -668,6 +699,10 @@ function parsePageMethodResponse(text: string): CompletionsSystem[] {
               progress: subProgress,
             });
           }
+        }
+
+        if (parsedSubsystems.length > 0 && systems.length === 0) {
+          console.log(`GoHub: First system "${sysId}" has ${parsedSubsystems.length} subsystems parsed`);
         }
 
         systems.push({
