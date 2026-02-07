@@ -84,18 +84,38 @@ export const useMappingPositions = (
 
     const viewportRect = systemsPanelViewport?.getBoundingClientRect();
 
-    // Group assigned systems by VCR
-    const vcrGroups: Record<string, P2ASystem[]> = {};
+    // DOM-driven approach: scan all elements with data-system-id and data-assigned-vcr-id
+    // This picks up both full system cards AND subsystem cards
+    const systemEls = container.querySelectorAll('[data-system-id][data-assigned-vcr-id]');
+    
+    // Group by VCR ID
+    const vcrGroups: Record<string, { el: HTMLElement; id: string }[]> = {};
+    const vcrCodes: Record<string, string> = {};
+
+    systemEls.forEach((el) => {
+      const htmlEl = el as HTMLElement;
+      const vcrId = htmlEl.getAttribute('data-assigned-vcr-id');
+      if (!vcrId) return;
+      if (!vcrGroups[vcrId]) vcrGroups[vcrId] = [];
+      vcrGroups[vcrId].push({ el: htmlEl, id: htmlEl.getAttribute('data-system-id') || '' });
+    });
+
+    // Also collect VCR codes from system data for coloring
     for (const system of systems) {
-      if (!system.assigned_handover_point_id) continue;
-      const key = system.assigned_handover_point_id;
-      if (!vcrGroups[key]) vcrGroups[key] = [];
-      vcrGroups[key].push(system);
+      if (system.assigned_handover_point_id && system.assigned_vcr_code) {
+        vcrCodes[system.assigned_handover_point_id] = system.assigned_vcr_code;
+      }
+      // Also from subsystem assignments
+      if (system.assigned_subsystems) {
+        for (const sub of system.assigned_subsystems) {
+          vcrCodes[sub.assigned_handover_point_id] = sub.assigned_vcr_code;
+        }
+      }
     }
 
     const newBundles: MappingBundle[] = [];
 
-    for (const [vcrId, groupSystems] of Object.entries(vcrGroups)) {
+    for (const [vcrId, groupEls] of Object.entries(vcrGroups)) {
       const vcrEl = container.querySelector(`[data-vcr-id="${vcrId}"]`);
       if (!vcrEl) continue;
 
@@ -104,19 +124,12 @@ export const useMappingPositions = (
       let systemX = 0;
       let allVisible = true;
 
-      for (const sys of groupSystems) {
-        const el = container.querySelector(`[data-system-id="${sys.id}"]`);
-        if (!el) {
-          allVisible = false;
-          continue;
-        }
+      for (const { el } of groupEls) {
         const r = el.getBoundingClientRect();
 
-        // Check if this system card is fully visible within the scroll viewport
+        // Check if this card is fully visible within the scroll viewport
         if (viewportRect) {
-          const cardTop = r.top;
-          const cardBottom = r.bottom;
-          if (cardTop < viewportRect.top || cardBottom > viewportRect.bottom) {
+          if (r.top < viewportRect.top || r.bottom > viewportRect.bottom) {
             allVisible = false;
           }
         }
@@ -125,15 +138,16 @@ export const useMappingPositions = (
         systemX = r.right - containerRect.left;
       }
 
-      // Only show mapping lines when ALL systems for this VCR are visible
+      // Only show mapping lines when ALL cards for this VCR are visible
       if (!allVisible || systemYs.length === 0) continue;
 
-      const vcrColor = getVCRColor(groupSystems[0].assigned_vcr_code);
+      const vcrCode = vcrCodes[vcrId] || '';
+      const vcrColor = getVCRColor(vcrCode);
       const avgY = systemYs.reduce((a, b) => a + b, 0) / systemYs.length;
 
       newBundles.push({
         vcrId,
-        vcrCode: groupSystems[0].assigned_vcr_code || '',
+        vcrCode,
         systemCenterY: avgY,
         systemYs: systemYs.sort((a, b) => a - b),
         systemX,

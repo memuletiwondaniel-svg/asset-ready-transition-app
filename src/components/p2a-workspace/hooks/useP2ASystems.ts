@@ -28,6 +28,18 @@ export interface P2ASystem {
   // Joined data - which VCR this system is assigned to
   assigned_handover_point_id?: string;
   assigned_vcr_code?: string;
+  // Subsystem-level assignment data
+  assigned_subsystems?: P2AAssignedSubsystem[];
+}
+
+/** Represents a subsystem that is individually mapped to a VCR */
+export interface P2AAssignedSubsystem {
+  id: string;  // p2a_subsystems UUID
+  subsystem_id: string;  // text ID like "C017-DP300-228-A"
+  name: string;
+  completion_percentage: number;
+  assigned_handover_point_id: string;
+  assigned_vcr_code: string;
 }
 
 export interface P2ASubsystem {
@@ -75,6 +87,7 @@ export const useP2ASystems = (handoverPlanId: string) => {
           .from('p2a_handover_point_systems')
           .select(`
             system_id,
+            subsystem_id,
             handover_point_id,
             p2a_handover_points!inner (
               id,
@@ -87,22 +100,68 @@ export const useP2ASystems = (handoverPlanId: string) => {
         assignments = assignmentsData || [];
       }
 
-      // Create a map of system_id to assignment
+      // Fetch subsystem details for subsystem-level assignments
+      const subsystemIds = assignments
+        .filter((a: any) => a.subsystem_id)
+        .map((a: any) => a.subsystem_id);
+
+      let subsystemDetails: Record<string, any> = {};
+      if (subsystemIds.length > 0) {
+        const { data: subsData } = await supabase
+          .from('p2a_subsystems')
+          .select('id, subsystem_id, name, completion_percentage')
+          .in('id', subsystemIds);
+
+        if (subsData) {
+          subsystemDetails = Object.fromEntries(subsData.map((s: any) => [s.id, s]));
+        }
+      }
+
+      // Create maps: system_id → assignment, and system_id → subsystem assignments
       const assignmentMap = new Map<string, { handover_point_id: string; vcr_code: string }>();
+      const subsystemAssignmentMap = new Map<string, P2AAssignedSubsystem[]>();
+
       assignments?.forEach((a: any) => {
-        assignmentMap.set(a.system_id, {
-          handover_point_id: a.handover_point_id,
-          vcr_code: a.p2a_handover_points.vcr_code,
-        });
+        if (a.subsystem_id) {
+          // Subsystem-level assignment
+          const subDetail = subsystemDetails[a.subsystem_id];
+          if (subDetail) {
+            const existing = subsystemAssignmentMap.get(a.system_id) || [];
+            existing.push({
+              id: a.subsystem_id,
+              subsystem_id: subDetail.subsystem_id,
+              name: subDetail.name,
+              completion_percentage: subDetail.completion_percentage || 0,
+              assigned_handover_point_id: a.handover_point_id,
+              assigned_vcr_code: a.p2a_handover_points.vcr_code,
+            });
+            subsystemAssignmentMap.set(a.system_id, existing);
+          }
+          // Also set parent as assigned (to the first VCR found)
+          if (!assignmentMap.has(a.system_id)) {
+            assignmentMap.set(a.system_id, {
+              handover_point_id: a.handover_point_id,
+              vcr_code: a.p2a_handover_points.vcr_code,
+            });
+          }
+        } else {
+          // Full system assignment
+          assignmentMap.set(a.system_id, {
+            handover_point_id: a.handover_point_id,
+            vcr_code: a.p2a_handover_points.vcr_code,
+          });
+        }
       });
 
       // Merge assignment data with systems
       return (systemsData || []).map((system: any) => {
         const assignment = assignmentMap.get(system.id);
+        const subsystemAssignments = subsystemAssignmentMap.get(system.id);
         return {
           ...system,
           assigned_handover_point_id: assignment?.handover_point_id,
           assigned_vcr_code: assignment?.vcr_code,
+          assigned_subsystems: subsystemAssignments || undefined,
         };
       }) as P2ASystem[];
     },
