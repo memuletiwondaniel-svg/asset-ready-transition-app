@@ -239,13 +239,15 @@ export const SystemMappingStep: React.FC<SystemMappingStepProps> = ({
         <div key={system.id}>
           <div
             className={cn(
-              'flex items-center gap-3 p-2 rounded cursor-pointer transition-colors',
+              'flex items-center gap-2 p-2 rounded cursor-pointer transition-colors',
               isChecked
                 ? 'bg-primary/5 border border-primary/20'
                 : 'hover:bg-muted/50',
             )}
             onClick={() => toggleKey(vcrId, system.id)}
           >
+            {/* Invisible spacer matching the chevron width in expandable rows */}
+            <span className="h-3.5 w-3.5 shrink-0" />
             <Checkbox
               checked={isChecked}
               onCheckedChange={() => toggleKey(vcrId, system.id)}
