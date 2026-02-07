@@ -48,7 +48,7 @@ export const PhasesStep: React.FC<PhasesStepProps> = ({
   onPhasesChange,
   onVCRPhaseAssignmentsChange,
 }) => {
-  const [subStage, setSubStage] = useState<SubStage>(phases.length > 0 ? 'assign' : 'define');
+  const [subStage, setSubStage] = useState<SubStage>('define');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newPhase, setNewPhase] = useState({ name: '', description: '' });
   const [editDraft, setEditDraft] = useState<{ name: string; description: string }>({ name: '', description: '' });
