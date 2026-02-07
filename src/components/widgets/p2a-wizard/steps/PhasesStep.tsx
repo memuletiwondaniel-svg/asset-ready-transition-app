@@ -243,8 +243,7 @@ export const PhasesStep: React.FC<PhasesStepProps> = ({
 
             {unassignedVCRs.length > 0 ? (
               <>
-                <p className="text-[10px] text-muted-foreground flex items-center gap-1.5">
-                  <GripVertical className="h-3 w-3" />
+                <p className="text-[10px] text-muted-foreground">
                   Drag a VCR and drop it onto a phase card above
                 </p>
                 <div className="grid grid-cols-3 gap-1.5">
