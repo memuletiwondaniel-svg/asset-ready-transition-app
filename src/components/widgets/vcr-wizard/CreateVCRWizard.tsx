@@ -197,13 +197,9 @@ export const CreateVCRWizard: React.FC<CreateVCRWizardProps> = ({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
-      // Generate VCR code — strip "DP-" prefix since the RPC adds "DP" itself
-      const rawCode = projectCode.replace(/^DP-?/i, '');
-      const { data: vcrCode, error: vcrError } = await supabase.rpc('generate_vcr_code', {
-        p_project_code: rawCode,
-      });
-
-      if (vcrError) throw vcrError;
+      // Generate VCR code in wizard-compatible format: VCR-{projectCode}-{seq}
+      const { generateVCRCode } = await import('@/components/p2a-workspace/utils/generateVCRCode');
+      const vcrCode = await generateVCRCode(handoverPlanId, projectCode);
 
       // Create VCR (handover point)
       const { data: newVCR, error: createError } = await supabase

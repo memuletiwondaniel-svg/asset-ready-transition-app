@@ -81,13 +81,9 @@ export const useP2AHandoverPoints = (handoverPlanId: string) => {
       target_date?: string;
       handover_plan_id: string; // Required - direct link to plan
     }) => {
-      // Generate VCR code — strip "DP-" prefix since the RPC adds "DP" itself
-      const rawCode = data.project_code.replace(/^DP-?/i, '');
-      const { data: vcrCode, error: vcrError } = await supabase.rpc('generate_vcr_code', {
-        p_project_code: rawCode,
-      });
-
-      if (vcrError) throw vcrError;
+      // Generate VCR code in wizard-compatible format: VCR-{projectCode}-{seq}
+      const { generateVCRCode } = await import('../utils/generateVCRCode');
+      const vcrCode = await generateVCRCode(data.handover_plan_id, data.project_code);
 
       // Get current max position_y for this plan (for unassigned) or phase
       let query = supabase
@@ -418,12 +414,9 @@ export const useP2AHandoverPoints = (handoverPlanId: string) => {
 
       if (!sourceVcr || !targetVcr) throw new Error('VCRs not found');
 
-      // 2. Generate new VCR code — strip "DP-" prefix since the RPC adds "DP" itself
-      const rawCode = projectCode.replace(/^DP-?/i, '');
-      const { data: vcrCode, error: vcrError } = await supabase.rpc('generate_vcr_code', {
-        p_project_code: rawCode,
-      });
-      if (vcrError) throw vcrError;
+      // 2. Generate new VCR code in wizard-compatible format
+      const { generateVCRCode: genCode } = await import('../utils/generateVCRCode');
+      const vcrCode = await genCode(handoverPlanId, projectCode);
 
       // 3. Create new combined VCR (use target's phase if available, else source's)
       const { data: newVcr, error: createError } = await supabase
