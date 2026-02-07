@@ -268,13 +268,12 @@ const SystemListItem: React.FC<SystemListItemProps> = ({
         className="group flex items-center gap-2 py-1.5 px-2.5 rounded-md border bg-card hover:bg-muted/50 transition-colors cursor-pointer"
         onClick={() => hasSubsystems ? setIsExpanded(!isExpanded) : onEdit()}
       >
-        {/* Expand chevron — only if subsystems exist */}
-        {hasSubsystems && (
-          <ChevronRight className={cn(
-            "h-3 w-3 shrink-0 text-muted-foreground transition-transform duration-200",
-            isExpanded && "rotate-90"
-          )} />
-        )}
+        {/* Expand chevron — always rendered for alignment, invisible if no subsystems */}
+        <ChevronRight className={cn(
+          "h-3 w-3 shrink-0 transition-transform duration-200",
+          hasSubsystems ? "text-muted-foreground" : "invisible",
+          isExpanded && "rotate-90"
+        )} />
 
         <div className="flex-1 min-w-0 flex items-center gap-3">
           <span
