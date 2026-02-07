@@ -85,8 +85,11 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
     setSortableRef(node);
   };
 
-  // Sort VCRs by position for consistent ordering
-  const sortedPoints = [...handoverPoints].sort((a, b) => a.position_y - b.position_y);
+  // When mapping is active, sort VCRs by vcr_code to match system panel order (minimizes crossings)
+  // Otherwise sort by position for free-form layout
+  const sortedPoints = showMapping
+    ? [...handoverPoints].sort((a, b) => (a.vcr_code || '').localeCompare(b.vcr_code || ''))
+    : [...handoverPoints].sort((a, b) => a.position_y - b.position_y);
 
   const handleDeleteConfirm = async () => {
     setIsDeleting(true);
