@@ -156,6 +156,7 @@ export const DraggableHandoverPointCard: React.FC<HandoverPointCardProps> = (pro
       {...listeners}
       {...attributes}
       className={cn(isDragging && 'z-50')}
+      data-vcr-id={props.handoverPoint.id}
     >
       <HandoverPointCard {...props} isDropTarget={isOver} isDragging={isDragging} />
     </div>
@@ -173,7 +174,7 @@ export const DroppableHandoverPointCard: React.FC<HandoverPointCardProps> = (pro
   });
 
   return (
-    <div ref={setNodeRef}>
+    <div ref={setNodeRef} data-vcr-id={props.handoverPoint.id}>
       <HandoverPointCard {...props} isDropTarget={isOver} />
     </div>
   );
