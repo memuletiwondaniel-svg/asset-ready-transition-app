@@ -83,37 +83,45 @@ export const PhaseFormDialog: React.FC<PhaseFormDialogProps> = ({
 
         <div className="space-y-4 py-2">
           {/* Name */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium">Phase Name</label>
+          <div className="rounded-lg border bg-muted/30 p-3 space-y-2">
+            <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Phase Name
+            </label>
             <Input
               value={name}
               onChange={e => setName(e.target.value)}
               placeholder="e.g. Pre-TAR, TAR, Post-TAR"
-              className="h-9 text-sm"
+              className="h-9 text-sm bg-background"
               autoFocus
               onKeyDown={e => e.key === 'Enter' && handleSave()}
             />
           </div>
 
           {/* Description */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium">Description</label>
+          <div className="rounded-lg border bg-muted/30 p-3 space-y-2">
+            <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Description
+            </label>
             <Textarea
               value={description}
               onChange={e => setDescription(e.target.value)}
               placeholder="Brief description of this handover phase..."
-              className="text-sm min-h-[72px] resize-none"
+              className="text-sm min-h-[72px] resize-none bg-background"
               rows={3}
             />
           </div>
 
           {/* Milestone selector */}
           {milestones.length > 0 && (
-            <div className="space-y-2">
-              <label className="text-xs font-medium">Applicable Milestones</label>
-              <p className="text-[11px] text-muted-foreground -mt-1">
-                Select milestones that fall within this phase
-              </p>
+            <div className="rounded-lg border bg-muted/30 p-3 space-y-2.5">
+              <div>
+                <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Applicable Milestones
+                </label>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  Select milestones that fall within this phase
+                </p>
+              </div>
               <div className="flex flex-wrap gap-1.5">
                 {milestones.map(m => {
                   const selected = selectedMilestones.includes(m.id);
@@ -125,7 +133,7 @@ export const PhaseFormDialog: React.FC<PhaseFormDialogProps> = ({
                         'text-xs cursor-pointer transition-all gap-1',
                         selected
                           ? 'bg-primary hover:bg-primary/90'
-                          : 'hover:bg-accent'
+                          : 'hover:bg-accent bg-background'
                       )}
                       onClick={() => toggleMilestone(m.id)}
                     >
