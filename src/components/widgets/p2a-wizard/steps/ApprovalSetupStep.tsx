@@ -74,12 +74,14 @@ const matchRoleKey = (teamRole: string): string | null => {
 interface ApprovalSetupStepProps {
   approvers: WizardApprover[];
   projectId: string;
+  plantName?: string;
   onApproversChange: (approvers: WizardApprover[]) => void;
 }
 
 export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
   approvers,
   projectId,
+  plantName,
   onApproversChange,
 }) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -92,6 +94,16 @@ export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
 
       setIsLoading(true);
       try {
+        // Resolve the project's plant name if not provided
+        let resolvedPlantName = plantName;
+        if (!resolvedPlantName) {
+          const { data: projectData } = await supabase
+            .from('projects')
+            .select('plant_id, plant:plant!projects_plant_id_fkey(name)')
+            .eq('id', projectId)
+            .single();
+          resolvedPlantName = (projectData as any)?.plant?.name || null;
+        }
         const { data: teamData, error: teamError } = await supabase
           .from('project_team_members')
           .select('id, user_id, role, is_lead')
@@ -102,6 +114,24 @@ export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
         const userIds = Array.from(
           new Set((teamData || []).map((m: any) => m.user_id).filter(Boolean))
         );
+
+        // Also find Deputy Plant Director from profiles based on plant name
+        let deputyProfile: { user_id: string; full_name: string; avatar_url?: string } | null = null;
+        if (resolvedPlantName) {
+          const { data: deputies } = await supabase
+            .from('profiles')
+            .select('user_id, full_name, avatar_url')
+            .or(`position.ilike.%Dep. Plant Director - ${resolvedPlantName}%,position.ilike.%Deputy Plant Director - ${resolvedPlantName}%`)
+            .limit(1);
+
+          if (deputies && deputies.length > 0) {
+            deputyProfile = deputies[0];
+            // Add deputy user_id to the list for profile resolution
+            if (!userIds.includes(deputyProfile.user_id)) {
+              userIds.push(deputyProfile.user_id);
+            }
+          }
+        }
 
         let profilesMap: Record<string, { full_name: string; avatar_url?: string }> = {};
 
@@ -142,12 +172,16 @@ export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
 
         // Always populate from fixed roles on first load
         if (approvers.length === 0 || shouldRepopulate(approvers)) {
-          populateApproversFromTeam(members);
+          populateApproversFromTeam(members, deputyProfile ? {
+            user_id: deputyProfile.user_id,
+            full_name: profilesMap[deputyProfile.user_id]?.full_name || deputyProfile.full_name,
+            avatar_url: profilesMap[deputyProfile.user_id]?.avatar_url || deputyProfile.avatar_url,
+          } : null);
         }
       } catch (error) {
         console.error('Error fetching team members:', error);
         if (approvers.length === 0) {
-          populateApproversFromTeam([]);
+          populateApproversFromTeam([], null);
         }
       } finally {
         setIsLoading(false);
@@ -155,7 +189,7 @@ export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
     };
 
     fetchTeamMembers();
-  }, [projectId]);
+  }, [projectId, plantName]);
 
   /** Check if existing approvers look stale (e.g. have duplicate roles) */
   const shouldRepopulate = (current: WizardApprover[]): boolean => {
@@ -163,11 +197,27 @@ export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
     return new Set(roleKeys).size !== roleKeys.length; // duplicates detected
   };
 
-  const populateApproversFromTeam = (members: TeamMember[]) => {
+  const populateApproversFromTeam = (
+    members: TeamMember[],
+    deputyDirector: { user_id: string; full_name: string; avatar_url?: string } | null
+  ) => {
     // Build a map: role key → best matching team member (first match wins, no duplicates)
     const matchedUserIds = new Set<string>();
 
     const approverList: WizardApprover[] = FIXED_APPROVER_ROLES.map((role) => {
+      // For Deputy Plant Director, use the plant-based lookup instead of team member matching
+      if (role.key === 'deputy_plant_director' && deputyDirector) {
+        matchedUserIds.add(deputyDirector.user_id);
+        return {
+          id: `approver-${role.key}`,
+          role_name: role.label,
+          display_order: role.order,
+          user_id: deputyDirector.user_id,
+          user_name: deputyDirector.full_name,
+          user_avatar: deputyDirector.avatar_url,
+        };
+      }
+
       const match = members.find((m) => {
         if (matchedUserIds.has(m.user_id)) return false;
         return matchRoleKey(m.role) === role.key;
@@ -189,7 +239,8 @@ export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
   };
 
   const handleRefreshFromTeam = () => {
-    populateApproversFromTeam(teamMembers);
+    // Re-trigger the effect by clearing approvers
+    populateApproversFromTeam(teamMembers, null);
   };
 
   const getInitials = (name?: string) => {
