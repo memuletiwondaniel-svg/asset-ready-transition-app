@@ -29,7 +29,7 @@ export const WizardProgress: React.FC<WizardProgressProps> = ({
         const isCurrent = currentStep === stepNumber;
         const isPast = currentStep > stepNumber;
         const isVisitedButIncomplete = isPast && !isCompleted;
-        const isClickable = onStepClick && (isPast || isCurrent);
+        const isClickable = !!onStepClick;
 
         return (
           <React.Fragment key={step.id}>
