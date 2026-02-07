@@ -1,103 +1,75 @@
 
-# Smart Multi-Project GoHub Import
 
-## Problem
-Currently, the GoHub import is hardcoded to select only the **ZUBAIR (ZB)** project before navigating to the Completions Grid. This means if a user has a project with code like **DP-228** that exists under a different GoHub project (e.g., North Rumaila), the import will fail because it only looks in Zubair.
+# Compact Systems List in P2A Wizard
 
-## Solution
-Make the import **search across ALL GoHub projects** automatically. Instead of selecting just one project tile, ORSH will:
+## Overview
+Redesign the Systems step in the P2A Handover Plan wizard to show more systems in less space, with cleaner visuals and hover-to-reveal actions.
 
-1. Extract the project code from the current ORSH project (e.g., "DP300" from "DP-300", "DP228" from "DP-228")
-2. Log in to GoHub
-3. Loop through **all available project tiles** (BGC BNGL, BGC SANDPIT, North Rumaila, South Rumaila, Umm Qasr, West Qurna, Zubair)
-4. For each GoHub project, navigate to its Completions Grid, fetch all systems, and filter for ones matching the ORSH project code
-5. Aggregate results from all projects and return them
+## Changes
 
-This way, the user never needs to know which GoHub project their systems live under -- ORSH figures it out automatically.
+### 1. Compact Import Options (SystemsImportStep.tsx)
+- Remove the description text under each import button (e.g., "Connect to Completions System", "Spreadsheet", "Single entry")
+- Keep just the icon and label in each card
+- Reduce padding from `p-3` to `p-2`
+- This frees up vertical space for the systems list
 
-## Data Flow
+### 2. Increase Systems List Area (SystemsImportStep.tsx)
+- Increase the ScrollArea height from `h-[200px]` to `h-[280px]` to accommodate ~5 visible system cards
+- Increase the overall wizard dialog height from `h-[min(80vh,640px)]` to `h-[min(85vh,720px)]` in the parent wizard component
 
+### 3. Redesign SystemListItem (SystemsImportStep.tsx)
+- **Remove the Box icon** from the left side of each system card
+- **Multicolor System ID labels**: Use the same HSL hash-based color approach from `ProjectIdBadge` to generate unique pastel badge colors per system ID. Create a small inline `getSystemIdColor` function that derives a hue from the system_id string, then render the system ID as a small colored badge (similar to project ID badges but at `text-[10px]` size)
+- **Replace the Progress bar** with a simple colored percentage text (e.g., "78.5%" in the appropriate color -- green/yellow/orange/red)
+- **Auto-hide Edit and Delete buttons**: Wrap both buttons in a container with `opacity-0 group-hover:opacity-100 transition-opacity` so they only appear on hover
+- **Reduce card height**: Change padding from `p-3` to `py-1.5 px-2.5`, reduce gaps, use tighter typography
+- **Add hover effect**: Add `hover:bg-muted/50` class to each system row and add the `group` class for the hover-to-reveal buttons
+
+### 4. Update Wizard Dialog Height (P2APlanCreationWizard.tsx)
+- Change `h-[min(80vh,640px)]` to `h-[min(85vh,720px)]` to give more room for content
+
+## Technical Details
+
+**Files to modify:**
+1. `src/components/widgets/p2a-wizard/steps/SystemsImportStep.tsx` -- All system card and import option changes
+2. `src/components/widgets/p2a-wizard/P2APlanCreationWizard.tsx` -- Dialog height increase
+
+**System ID color generation (new helper in SystemsImportStep.tsx):**
+```typescript
+function getSystemIdColor(systemId: string) {
+  const str = systemId.replace(/-/g, '').toUpperCase();
+  let hash = 5381;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) + hash) ^ str.charCodeAt(i);
+  }
+  hash = Math.abs(hash);
+  const hueAnchors = [165, 180, 200, 220, 250, 280, 320];
+  const hue = hueAnchors[hash % hueAnchors.length] + (((hash >> 8) % 25) - 12);
+  const sat = 30 + ((hash >> 12) % 15);
+  const light = 50 + ((hash >> 16) % 12);
+  return {
+    bg: `hsl(${hue}, ${sat}%, ${light}%)`,
+    bgLight: `hsl(${hue}, ${sat}%, 94%)`,
+    border: `hsl(${hue}, ${sat}%, 80%)`,
+  };
+}
+```
+
+**Compact system card layout (non-editing mode):**
 ```text
-User clicks "Import from GoHub"
-        |
-        v
-Frontend sends projectCode (e.g. "DP300") 
-derived from the current ORSH project
-        |
-        v
-Edge Function: Login to GoHub
-        |
-        v
-Extract all project tiles from Home page
-(BGC BNGL, North Rumaila, South Rumaila, 
- Umm Qasr, West Qurna, Zubair, etc.)
-        |
-        v
-For EACH project tile:
-  1. Click/postback to select that project
-  2. Navigate to Completions Grid
-  3. Call ASMX GetSystems
-  4. Filter systems containing projectCode
-  5. Collect matching systems
-        |
-        v
-Return all matched systems to frontend
++-----------------------------------------------+
+| [SYS-001]  System Name          HC   82.5%  ...│
++-----------------------------------------------+
+         ^           ^             ^     ^      ^
+     colored ID    name         badge  progress  edit/delete
+     badge                              text    (on hover)
 ```
 
-## Changes Required
-
-### 1. Frontend: Pass projectCode to the Edge Function
-
-**Files:** `CMSImportModal.tsx`, `SystemsImportStep.tsx`, `P2APlanCreationWizard.tsx`
-
-- Add a `projectCode` prop to `CMSImportModal` (passed down from the wizard which already has it)
-- Pass `projectCode` through `SystemsImportStep` to `CMSImportModal`
-- Include `projectCode` (stripped of dashes, e.g., "DP-300" becomes "DP300") in the request body sent to the `gohub-import` edge function
-- Update the status messages to show which GoHub project is currently being searched (if feasible via streaming -- otherwise show a generic "Searching all projects..." message)
-
-### 2. Edge Function: Search All Projects
-
-**File:** `supabase/functions/gohub-import/index.ts`
-
-Major refactor of the main handler flow:
-
-- **New function: `extractAllProjectTiles(homePageHtml)`** -- Parses the home page HTML to find ALL project tiles and their postback parameters. Returns an array of `{ name: string, postbackTarget: string, postbackArgument: string }` instead of looking for just "ZUBAIR".
-
-- **Refactor `selectProject()`** -- Change it to accept a specific project tile's postback info (target + argument) rather than searching for "ZUBAIR" by name. This makes it reusable for any project.
-
-- **New loop in main handler:**
-  ```
-  for each projectTile in allTiles:
-    1. Select the project (postback)
-    2. Navigate to Completions Grid  
-    3. Call ASMX GetSystems
-    4. Filter for systems matching projectCode
-    5. Append matches to results
-    6. Navigate back to home page (re-login or re-fetch home)
-  ```
-
-- **Session handling:** After selecting each project, the session context changes. To select the next project, the function will need to navigate back to the home page. This may require re-fetching the home page (with existing cookies) to get fresh hidden fields and postback targets.
-
-- **Early exit optimization:** If systems are found in a project, still continue checking remaining projects (a project code could theoretically appear across multiple GoHub projects). But we can add a flag to stop early if the user prefers speed.
-
-- **Remove hardcoded "ZUBAIR" and "ZB" references** from `selectProject()` and the main handler.
-
-- **Update the `projectFilter` default** from `"DP300"` to being required from the frontend (no fallback).
-
-### 3. Technical Details
-
-**Extracting project tiles:**
-The home page shows tiles like "BGC BNGL (NR)", "ZUBAIR (ZB)" etc., each with a `__doPostBack` link. The new `extractAllProjectTiles` function will use a regex pattern similar to:
+**Compact import options:**
+```text
++------------------+------------------+------------------+
+|  [icon]          |  [icon]          |  [icon]          |
+|  CMS Import      |  Upload Excel    |  Add Manually    |
++------------------+------------------+------------------+
 ```
-/<a[^>]*href=["']([^"']+)["'][^>]*>[\s\S]{0,500}?<\/a>/gi
-```
-Combined with nearby text to identify the project name, then extract the postback target/argument for each.
-
-**Navigating back to home page between projects:**
-After processing one project's completions grid, the function will fetch the portal URL again using the existing session cookies. Since the user is already authenticated, this should return the home page with the project tiles, allowing selection of the next project.
-
-**Error resilience:**
-If one project fails (e.g., user doesn't have access), the function will log the error and continue to the next project rather than failing the entire import.
-
-**Performance consideration:**
-Searching 7 projects sequentially will take longer than searching just 1. The status message will be updated to inform the user that "Searching across all GoHub projects..." so they know to expect a slightly longer wait. Each project typically takes 2-3 seconds, so total time should be under 20 seconds.
+(No description lines underneath each label)
