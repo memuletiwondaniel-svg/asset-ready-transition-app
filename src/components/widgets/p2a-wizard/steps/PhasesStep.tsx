@@ -226,7 +226,6 @@ export const PhasesStep: React.FC<PhasesStepProps> = ({
           )}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Key className="h-3.5 w-3.5 text-primary" />
                 <span className="text-xs font-medium">
                   {unassignedVCRs.length > 0 ? 'Unassigned VCRs' : 'All VCRs Assigned'}
                 </span>
