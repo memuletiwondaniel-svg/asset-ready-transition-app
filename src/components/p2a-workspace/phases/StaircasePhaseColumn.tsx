@@ -165,7 +165,7 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
             headerColorClass,
             showPhaseHighlight ? 'border-primary' : 'border-border'
           )}
-          style={{ top: staircaseOffset }}
+          style={{ top: `calc(${staircaseOffset}px + 1rem)` }}
         >
           <div className="flex items-center justify-between mb-1">
             {/* Drag handle for phase reordering */}
