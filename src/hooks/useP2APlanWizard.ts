@@ -319,13 +319,16 @@ async function persistPlanToDatabase(
   }
 
   // Create VCRs
+  // Strip "DP-" or "DP" prefix from projectCode since the RPC adds "DP" itself
+  const rawProjectCode = projectCode.replace(/^DP-?/i, '');
+
   for (let i = 0; i < state.vcrs.length; i++) {
     const vcr = state.vcrs[i];
     const phaseId = state.vcrPhaseAssignments[vcr.id];
     const realPhaseId = phaseId ? phaseIdMap[phaseId] : null;
 
     const { data: vcrCode } = await supabase.rpc('generate_vcr_code', {
-      p_project_code: projectCode,
+      p_project_code: rawProjectCode,
     });
 
     const { data: savedVCR, error } = await client
@@ -333,7 +336,7 @@ async function persistPlanToDatabase(
       .insert({
         handover_plan_id: planId,
         phase_id: realPhaseId,
-        vcr_code: vcrCode || `VCR-${String(i + 1).padStart(3, '0')}-${projectCode}`,
+        vcr_code: vcrCode || `VCR-${String(i + 1).padStart(3, '0')}-DP${rawProjectCode}`,
         name: vcr.name,
         description: vcr.reason || null,
         position_x: 0,
