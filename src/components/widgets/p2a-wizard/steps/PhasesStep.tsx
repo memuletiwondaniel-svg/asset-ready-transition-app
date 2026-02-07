@@ -248,7 +248,7 @@ export const PhasesStep: React.FC<PhasesStepProps> = ({
                   <GripVertical className="h-3 w-3" />
                   Drag a VCR and drop it onto a phase card above
                 </p>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-3 gap-1.5">
                   {unassignedVCRs.map(vcr => {
                     const vcrIndex = vcrs.findIndex(v => v.id === vcr.id);
                     return (
