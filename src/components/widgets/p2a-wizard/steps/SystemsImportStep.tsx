@@ -261,17 +261,17 @@ const SystemListItem: React.FC<SystemListItemProps> = ({
           {system.system_id}
         </span>
         <span className="font-medium text-xs truncate">{system.name}</span>
-        {hasProgress && (
-          <span className={cn("text-[10px] font-semibold tabular-nums shrink-0", getProgressTextColor(system.progress!))}>
-            {Math.round(system.progress!)}%
-          </span>
-        )}
         {system.is_hydrocarbon && (
           <Badge variant="outline" className="text-[9px] bg-orange-50 text-orange-700 border-orange-200 shrink-0 py-0 px-1">
             HC
           </Badge>
         )}
       </div>
+      {hasProgress && (
+        <span className={cn("text-[10px] font-semibold tabular-nums shrink-0", getProgressTextColor(system.progress!))}>
+          {Math.round(system.progress!)}%
+        </span>
+      )}
       <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
         <Button
           size="icon"
