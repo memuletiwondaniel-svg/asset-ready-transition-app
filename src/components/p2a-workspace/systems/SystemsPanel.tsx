@@ -352,6 +352,18 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
                         }
                       });
 
+                      // Sort groups by VCR delivery order (phase order → position_y)
+                      const hpLookup = new Map(handoverPoints.map(hp => [hp.vcr_code, hp]));
+                      const phaseOrderMap = new Map(phases.map(p => [p.id, p.display_order]));
+                      orderedGroups.sort((a, b) => {
+                        const hpA = hpLookup.get(a.vcrCode);
+                        const hpB = hpLookup.get(b.vcrCode);
+                        const phaseA = hpA?.phase_id ? (phaseOrderMap.get(hpA.phase_id) ?? 9999) : 9999;
+                        const phaseB = hpB?.phase_id ? (phaseOrderMap.get(hpB.phase_id) ?? 9999) : 9999;
+                        if (phaseA !== phaseB) return phaseA - phaseB;
+                        return (hpA?.position_y ?? 0) - (hpB?.position_y ?? 0);
+                      });
+
                       return orderedGroups.map(({ vcrCode, items }) => (
                         <div key={vcrCode}>
                           <span className="text-[8px] font-semibold text-muted-foreground uppercase tracking-wider px-0.5 mb-0.5 block">
