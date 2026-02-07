@@ -1,5 +1,6 @@
 import React from 'react';
 import { useDroppable } from '@dnd-kit/core';
+import { AssignedVCRChip } from './AssignedVCRChip';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -8,23 +9,11 @@ import {
   ChevronLeft,
   ChevronRight,
   Milestone,
-  X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WizardPhase } from '../PhasesStep';
 import { WizardVCR } from '../VCRCreationStep';
 
-// Subtle pastel hues for VCR ID badges
-const VCR_ID_HUES = [210, 260, 180, 320, 195, 280, 170, 300];
-
-const getVCRIdStyle = (index: number) => {
-  const hue = VCR_ID_HUES[index % VCR_ID_HUES.length];
-  return {
-    backgroundColor: `hsl(${hue}, 40%, 94%)`,
-    color: `hsl(${hue}, 50%, 35%)`,
-    borderColor: `hsl(${hue}, 35%, 88%)`,
-  };
-};
 
 interface PhaseCardProps {
   phase: WizardPhase;
@@ -142,27 +131,12 @@ export const PhaseCard: React.FC<PhaseCardProps> = ({
             assignedVCRs.map((vcr) => {
               const vcrIndex = allVCRs.findIndex(v => v.id === vcr.id);
               return (
-                <div
+                <AssignedVCRChip
                   key={vcr.id}
-                  className="group/vcr flex items-center gap-1.5 p-1.5 rounded-md bg-background/80 border text-[11px] transition-all hover:bg-background hover:shadow-sm"
-                >
-                  <div className="flex flex-col min-w-0 flex-1 gap-0.5">
-                    <span className="truncate font-medium">{vcr.name}</span>
-                    <span
-                      className="text-[8px] font-mono px-1 py-px rounded border shrink-0 w-fit leading-tight"
-                      style={getVCRIdStyle(vcrIndex >= 0 ? vcrIndex : 0)}
-                    >
-                      {vcr.code}
-                    </span>
-                  </div>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); onUnassignVCR(vcr.id); }}
-                    className="opacity-0 group-hover/vcr:opacity-100 transition-opacity p-0.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive shrink-0"
-                    title="Unassign VCR"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </div>
+                  vcr={vcr}
+                  vcrIndex={vcrIndex}
+                  onUnassign={onUnassignVCR}
+                />
               );
             })
           ) : (
