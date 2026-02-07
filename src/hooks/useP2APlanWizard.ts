@@ -414,6 +414,59 @@ export function useP2APlanWizard(projectId: string, projectCode: string) {
     },
   });
 
+  const deleteDraft = useMutation({
+    mutationFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const client = supabase as any;
+
+      // Get the plan
+      const { data: plan } = await client
+        .from('p2a_handover_plans')
+        .select('id')
+        .eq('project_id', projectId)
+        .maybeSingle();
+
+      if (!plan) throw new Error('No draft plan found');
+
+      const planId = plan.id;
+
+      // Delete in order: system mappings -> VCRs -> phases -> systems -> approvers -> plan
+      const { data: existingVCRs } = await client
+        .from('p2a_handover_points')
+        .select('id')
+        .eq('handover_plan_id', planId);
+
+      if (existingVCRs && existingVCRs.length > 0) {
+        const vcrIds = existingVCRs.map((v: any) => v.id);
+        await client.from('p2a_handover_point_systems').delete().in('handover_point_id', vcrIds);
+        await client.from('p2a_handover_points').delete().eq('handover_plan_id', planId);
+      }
+
+      await client.from('p2a_project_phases').delete().eq('handover_plan_id', planId);
+      await client.from('p2a_systems').delete().eq('handover_plan_id', planId);
+      await client.from('p2a_handover_approvers').delete().eq('handover_id', planId);
+      await client.from('p2a_handover_plans').delete().eq('id', planId);
+
+      return planId;
+    },
+    onSuccess: () => {
+      invalidateQueries();
+      setState(initialState);
+      setDraftLoaded(false);
+      toast({
+        title: 'Draft deleted',
+        description: 'Your P2A Handover Plan draft has been deleted.',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error deleting draft',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
   return {
     state,
     updateState,
@@ -422,7 +475,9 @@ export function useP2APlanWizard(projectId: string, projectCode: string) {
     draftLoaded,
     saveDraft: saveDraft.mutateAsync,
     submitForApproval: submitForApproval.mutateAsync,
+    deleteDraft: deleteDraft.mutateAsync,
     isSaving: saveDraft.isPending,
     isSubmitting: submitForApproval.isPending,
+    isDeleting: deleteDraft.isPending,
   };
 }

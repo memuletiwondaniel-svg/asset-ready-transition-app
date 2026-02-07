@@ -1,13 +1,12 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Save, Loader2, Send, LogOut } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2, Send, LogOut } from 'lucide-react';
 
 interface WizardNavigationProps {
   currentStep: number;
   totalSteps: number;
   onBack: () => void;
   onNext: () => void;
-  onSave?: () => void;
   onSaveAndExit?: () => void;
   onSubmit?: () => void;
   isSubmitting?: boolean;
@@ -22,7 +21,6 @@ export const WizardNavigation: React.FC<WizardNavigationProps> = ({
   totalSteps,
   onBack,
   onNext,
-  onSave,
   onSaveAndExit,
   onSubmit,
   isSubmitting = false,
@@ -40,26 +38,11 @@ export const WizardNavigation: React.FC<WizardNavigationProps> = ({
           variant="outline"
           size="sm"
           onClick={onBack}
-          disabled={!canGoBack || isSubmitting}
+          disabled={!canGoBack || isSubmitting || isSaving}
         >
           <ChevronLeft className="h-4 w-4 mr-1" />
           Back
         </Button>
-        {onSave && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onSave}
-            disabled={isSaving || isSubmitting}
-          >
-            {isSaving ? (
-              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-            ) : (
-              <Save className="h-4 w-4 mr-1" />
-            )}
-            Save
-          </Button>
-        )}
         {onSaveAndExit && (
           <Button
             variant="ghost"
@@ -75,10 +58,6 @@ export const WizardNavigation: React.FC<WizardNavigationProps> = ({
             Save & Exit
           </Button>
         )}
-      </div>
-      
-      <div className="text-xs text-muted-foreground">
-        Step {currentStep} of {totalSteps}
       </div>
 
       <div>
@@ -99,8 +78,11 @@ export const WizardNavigation: React.FC<WizardNavigationProps> = ({
           <Button
             size="sm"
             onClick={onNext}
-            disabled={isSubmitting || !canProceed}
+            disabled={isSubmitting || isSaving || !canProceed}
           >
+            {isSaving ? (
+              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+            ) : null}
             Next
             <ChevronRight className="h-4 w-4 ml-1" />
           </Button>

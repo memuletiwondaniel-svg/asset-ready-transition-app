@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { X, Key, Loader2 } from 'lucide-react';
+import { X, Key, Loader2, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { WizardProgress, WizardStep } from './WizardProgress';
 import { WizardNavigation } from './WizardNavigation';
@@ -15,6 +15,17 @@ import { ConfirmationStep } from './steps/ConfirmationStep';
 import { useP2APlanWizard } from '@/hooks/useP2APlanWizard';
 import { useP2APlanByProject } from '@/hooks/useP2APlanByProject';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface P2APlanCreationWizardProps {
   open: boolean;
@@ -65,8 +76,10 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
     draftLoaded,
     saveDraft,
     submitForApproval,
+    deleteDraft,
     isSaving,
     isSubmitting,
+    isDeleting,
   } = useP2APlanWizard(projectId, projectCode);
 
   // When the wizard opens and a draft plan exists, auto-load and resume
@@ -75,7 +88,6 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
       setIsLoadingDraft(true);
       loadDraft().then((hasDraft) => {
         if (hasDraft) {
-          // Skip overview step, go directly to Systems (step 2)
           setUseWizard(true);
           setCurrentStep(2);
         }
@@ -92,26 +104,17 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
     onOpenChange(false);
   };
 
-  // Check if a wizard display step (1-indexed, offset from overview) is actually completed
   const isStepComplete = (displayStep: number): boolean => {
     const hasVisitedPast = (currentStep - 1) > displayStep;
     switch (displayStep) {
-      case 1: // Systems
-        return state.systems.length > 0;
-      case 2: // VCRs
-        return state.vcrs.length > 0;
-      case 3: // Mapping
-        return Object.values(state.mappings).some(arr => arr.length > 0);
-      case 4: // Phases
-        return state.phases.length > 0;
-      case 5: // Preview
-        return hasVisitedPast;
-      case 6: // Approval
-        return state.approvers.length > 0;
-      case 7: // Confirm
-        return hasVisitedPast;
-      default:
-        return false;
+      case 1: return state.systems.length > 0;
+      case 2: return state.vcrs.length > 0;
+      case 3: return Object.values(state.mappings).some(arr => arr.length > 0);
+      case 4: return state.phases.length > 0;
+      case 5: return hasVisitedPast;
+      case 6: return state.approvers.length > 0;
+      case 7: return hasVisitedPast;
+      default: return false;
     }
   };
 
@@ -125,7 +128,6 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
     setCompletedSteps(newCompleted);
   };
 
-  // Recalculate completed steps when draft data is loaded
   useEffect(() => {
     if (draftLoaded && useWizard) {
       recalculateCompletedSteps();
@@ -152,22 +154,29 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
     }
   };
 
-  const handleNext = () => {
+  // Auto-save when clicking Next
+  const handleNext = async () => {
     recalculateCompletedSteps();
-    setCurrentStep(prev => Math.min(prev + 1, WIZARD_STEPS.length));
-  };
-
-  const handleSaveDraft = async () => {
     try {
       await saveDraft();
     } catch (error) {
-      // Error handled in hook
+      // Continue navigation even if save fails silently
     }
+    setCurrentStep(prev => Math.min(prev + 1, WIZARD_STEPS.length));
   };
 
   const handleSaveAndExit = async () => {
     try {
       await saveDraft();
+      handleClose();
+    } catch (error) {
+      // Error handled in hook
+    }
+  };
+
+  const handleDeleteDraft = async () => {
+    try {
+      await deleteDraft();
       handleClose();
     } catch (error) {
       // Error handled in hook
@@ -185,16 +194,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
     }
   };
 
-  const canProceed = () => {
-    switch (currentStep) {
-      case 2:
-        return true;
-      case 3:
-        return true;
-      default:
-        return true;
-    }
-  };
+  const canProceed = () => true;
 
   const renderStepContent = () => {
     if (isLoadingDraft) {
@@ -319,21 +319,59 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
               </p>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={handleClose}
-          >
-            <X className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-1">
+            {/* Delete draft button - only for existing drafts */}
+            {existingPlan && existingPlan.status === 'DRAFT' && useWizard && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                    disabled={isDeleting}
+                  >
+                    {isDeleting ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4" />
+                    )}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Draft Plan?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will permanently delete the P2A Handover Plan draft including all systems, VCRs, phases, and approvers. This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDeleteDraft}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Delete Draft
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={handleClose}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
-        {/* Progress Indicator - show only after choosing wizard */}
+        {/* Progress Indicator */}
         {useWizard && currentStep > 1 && !isLoadingDraft && (
           <WizardProgress
-            steps={WIZARD_STEPS.slice(1)} // Skip overview step
-            currentStep={currentStep - 1} // Adjust for display
+            steps={WIZARD_STEPS.slice(1)}
+            currentStep={currentStep - 1}
             completedSteps={completedSteps}
             onStepClick={(step) => {
               recalculateCompletedSteps();
@@ -354,7 +392,6 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
             totalSteps={WIZARD_STEPS.length - 1}
             onBack={handleBack}
             onNext={handleNext}
-            onSave={handleSaveDraft}
             onSaveAndExit={handleSaveAndExit}
             onSubmit={currentStep === WIZARD_STEPS.length ? handleSubmit : undefined}
             isSubmitting={isSubmitting}
