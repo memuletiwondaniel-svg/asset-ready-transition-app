@@ -21,20 +21,35 @@ export const getVCRColor = (vcrCode: string | undefined) => {
       : 0;
   }
   
-  // Safe hue values spread across different color families for better distinction
-  // Index 0=cyan, 1=teal, 2=blue, 3=orange, 4=purple, 5=pink, 6=green, 7=rose, 8=indigo
-  const baseHues = [180, 165, 210, 30, 250, 330, 145, 350, 270];
+  // Well-separated hues across the color wheel for maximum distinction
+  // Each hue is ~30-40° apart to ensure clearly different colors
+  const baseHues = [
+    200,  // sky blue
+    340,  // rose/pink
+    160,  // teal
+    30,   // warm orange
+    270,  // purple
+    50,   // gold/yellow
+    130,  // green
+    300,  // magenta
+    185,  // cyan
+    15,   // coral
+    240,  // indigo
+    80,   // lime
+  ];
   const hueIndex = seqNumber % baseHues.length;
   const hue = baseHues[hueIndex];
   
-  // Softer saturation and higher lightness for a more muted, pastel look
-  const saturation = 35 + ((seqNumber * 3) % 10); // 35-45% (was 55-70%)
-  const lightness = 92 + (seqNumber % 4); // 92-96% (was 88-93%)
-  const borderLightness = 70 + ((seqNumber * 2) % 10); // 70-80% (was 55-70%)
+  // More vibrant but still tasteful pastel: clearly distinguishable at a glance
+  const saturation = 50 + ((seqNumber * 5) % 15); // 50-65%
+  const lightness = 92 + (seqNumber % 3);          // 92-94% (light bg)
+  const borderSaturation = saturation + 5;
+  const borderLightness = 60 + ((seqNumber * 3) % 10); // 60-70% (visible border)
+  const accentLightness = 80 + (seqNumber % 5);         // 80-85% (mid tone)
   
   return {
     background: `hsl(${hue}, ${saturation}%, ${lightness}%)`,
-    border: `hsl(${hue}, ${saturation}%, ${borderLightness}%)`,
-    accent: `hsl(${hue}, ${saturation + 10}%, ${lightness - 10}%)`,
+    border: `hsl(${hue}, ${borderSaturation}%, ${borderLightness}%)`,
+    accent: `hsl(${hue}, ${saturation + 10}%, ${accentLightness}%)`,
   };
 };
