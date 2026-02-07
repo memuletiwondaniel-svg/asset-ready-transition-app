@@ -81,6 +81,14 @@ function extractHiddenFields(html: string): Record<string, string> {
   return fields;
 }
 
+/** Strip large hidden field values to reveal actual page content */
+function stripHiddenFieldValues(html: string): string {
+  return html.replace(
+    /(<input[^>]*type=["']hidden["'][^>]*value=["'])[^"']{100,}(["'][^>]*>)/gi,
+    "$1[STRIPPED]$2"
+  );
+}
+
 /** Follow redirects manually, collecting cookies along the way */
 async function followRedirects(
   url: string,
@@ -120,7 +128,6 @@ async function webLogin(
   console.log("GoHub: Starting web login...");
   let cookies: Record<string, string> = {};
 
-  // Follow redirects to reach the login page
   const { html: loginPageHtml, url: loginPageUrl, cookies: loginCookies } =
     await followRedirects(portalUrl, cookies);
   cookies = loginCookies;
@@ -133,7 +140,6 @@ async function webLogin(
 
   const hiddenFields = extractHiddenFields(loginPageHtml);
 
-  // Detect form field names
   let userField = "ApplicationLogin$UserName";
   let passField = "ApplicationLogin$Password";
   let buttonField = "ApplicationLogin$LoginButton";
@@ -189,13 +195,11 @@ async function webLogin(
     if (responseHtml.includes("ApplicationLogin") || responseHtml.includes("Login to")) {
       throw new Error("Login failed: Invalid username or password.");
     }
-    // Login may have succeeded without redirect (single page)
     return { cookies, homePageHtml: responseHtml, homePageUrl: formAction };
   }
 
   await loginResponse.text();
 
-  // Follow the post-login redirect chain to reach the home page
   const { html: homeHtml, url: homeUrl, cookies: homeCookies } =
     await followRedirects(new URL(postLocation, formAction).toString(), cookies);
   cookies = homeCookies;
@@ -214,10 +218,8 @@ async function selectProject(
 ): Promise<{ cookies: Record<string, string>; responseHtml: string; responseUrl: string }> {
   console.log(`GoHub: Looking for project "${projectCode}" on home page...`);
 
-  // Decode HTML entities so postback patterns match
   const decodedHtml = decodeHtmlEntities(homePageHtml);
 
-  // Find the ZUBAIR project tile postback (most reliable method)
   let selectedPostback: { target: string; argument: string } | null = null;
 
   // Method 1: Find tile link with ZUBAIR text nearby
@@ -234,15 +236,13 @@ async function selectProject(
         console.log(`GoHub: Extracted project postback: target=${pbExtract[1]}`);
       }
     } else if (!tileHref.startsWith("javascript:")) {
-      // Direct URL link
       const projectUrl = new URL(tileHref, homePageUrl).toString();
-      console.log(`GoHub: Navigating to project URL: ${projectUrl}`);
       const result = await followRedirects(projectUrl, cookies);
       return { cookies: result.cookies, responseHtml: result.html, responseUrl: result.url };
     }
   }
 
-  // Method 2: Search all postbacks for one containing ProjectButton and near ZUBAIR
+  // Method 2: Search all postbacks for one containing ProjectButton near ZUBAIR
   if (!selectedPostback) {
     const postbackPattern = /__doPostBack\s*\(\s*'([^']+)'\s*,\s*'([^']*)'\s*\)/g;
     let pbMatch;
@@ -264,7 +264,6 @@ async function selectProject(
     return { cookies, responseHtml: homePageHtml, responseUrl: homePageUrl };
   }
 
-  // Submit the postback to select the project
   console.log(`GoHub: Submitting project selection postback: ${selectedPostback.target}`);
   const hiddenFields = extractHiddenFields(homePageHtml);
 
@@ -295,7 +294,7 @@ async function selectProject(
   const location = response.headers.get("location");
 
   if (location) {
-    const responseHtml = await response.text();
+    await response.text();
     const result = await followRedirects(
       new URL(location, formAction).toString(), cookies
     );
@@ -303,14 +302,8 @@ async function selectProject(
     return { cookies: result.cookies, responseHtml: result.html, responseUrl: result.url };
   }
 
-  // No redirect - the response IS the updated page
   const responseHtml = await response.text();
   console.log(`GoHub: Project selected (no redirect), response size=${responseHtml.length}`);
-  
-  // Check if we're now on the home page with the project selected
-  const titleMatch = responseHtml.match(/<title[^>]*>([^<]+)<\/title>/i);
-  console.log(`GoHub: Post-selection page title: ${titleMatch?.[1]?.trim() || "unknown"}`);
-
   return { cookies, responseHtml, responseUrl: formAction };
 }
 
@@ -321,20 +314,16 @@ async function navigateToCompletionsGrid(
   portalUrl: string,
   postSelectionHtml: string,
   postSelectionUrl: string
-): Promise<{ html: string; cookies: Record<string, string> }> {
+): Promise<{ html: string; url: string; cookies: Record<string, string> }> {
   const parsed = new URL(portalUrl);
   const pathParts = parsed.pathname.split("/").filter(Boolean);
   const instanceName = pathParts[0] || "BGC";
   const origin = parsed.origin;
 
-  // Step A: Try to find "Completions Grid" or "SystemCompletion" link in the post-selection page
-  const decodedPostHtml = decodeHtmlEntities(postSelectionHtml);
-  
-  // Look for direct links to SystemCompletion.aspx or CompletionsGrid
+  // Try to find "Completions Grid" link in the post-selection page
   const gridLinkPatterns = [
-    /href=["']([^"']*SystemCompletion[^"']*)["']/i,
     /href=["']([^"']*CompletionsGrid[^"']*)["']/i,
-    /href=["']([^"']*Completions\s*Grid[^"']*)["']/i,
+    /href=["']([^"']*SystemCompletion[^"']*)["']/i,
   ];
 
   for (const pattern of gridLinkPatterns) {
@@ -344,142 +333,50 @@ async function navigateToCompletionsGrid(
       console.log(`GoHub: Found Completions Grid link in page: ${linkHref}`);
       const gridUrl = new URL(linkHref, postSelectionUrl).toString();
       console.log(`GoHub: Navigating to: ${gridUrl}`);
-      
+
       const result = await followRedirects(gridUrl, cookies);
       cookies = result.cookies;
-      
+
       if (!result.html.includes("GenericErrorPage") && !result.html.includes("Contact Support")) {
         const titleMatch = result.html.match(/<title[^>]*>([^<]+)<\/title>/i);
         console.log(`GoHub: Grid page title: ${titleMatch?.[1]?.trim() || "unknown"}`);
-        return { html: result.html, cookies };
+        return { html: result.html, url: result.url, cookies };
       }
       console.log(`GoHub: Link led to error page, trying alternatives...`);
     }
   }
 
-  // Step B: Look for postback-based "Completions Grid" menu navigation
-  const completionsGridPostback = decodedPostHtml.match(
-    /__doPostBack\s*\(\s*'([^']+(?:Completions|SystemCompletion)[^']*)'\s*,\s*'([^']*)'\s*\)/i
-  );
-  if (completionsGridPostback) {
-    console.log(`GoHub: Found Completions Grid postback: ${completionsGridPostback[1]}`);
-    const hiddenFields = extractHiddenFields(postSelectionHtml);
-    const formData: Record<string, string> = {
-      ...hiddenFields,
-      __EVENTTARGET: completionsGridPostback[1],
-      __EVENTARGUMENT: completionsGridPostback[2],
-    };
-    
-    const actionMatch = postSelectionHtml.match(/<form[^>]*action=["']([^"']*?)["'][^>]*>/i);
-    const formAction = actionMatch
-      ? new URL(decodeHtmlEntities(actionMatch[1]), postSelectionUrl).toString()
-      : postSelectionUrl;
-
-    const response = await fetch(formAction, {
-      method: "POST",
-      redirect: "manual",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        Cookie: formatCookies(cookies),
-        "User-Agent": BROWSER_UA,
-        Referer: postSelectionUrl,
-        Origin: new URL(postSelectionUrl).origin,
-      },
-      body: new URLSearchParams(formData).toString(),
-    });
-    cookies = parseCookiesFromResponse(response, cookies);
-    const location = response.headers.get("location");
-    
-    if (location) {
-      await response.text();
-      const result = await followRedirects(new URL(location, formAction).toString(), cookies);
-      cookies = result.cookies;
-      if (!result.html.includes("GenericErrorPage")) {
-        return { html: result.html, cookies };
-      }
-    } else {
-      const html = await response.text();
-      if (!html.includes("GenericErrorPage")) {
-        return { html, cookies };
-      }
-    }
-  }
-
-  // Step C: Direct URL attempts with Referer from the post-selection page
+  // Direct URL attempts
   const gridUrls = [
+    `${origin}/${instanceName}/GoCompletions/Completions/CompletionsGrid.aspx`,
     `${origin}/${instanceName}/GoCompletions/SystemCompletion.aspx`,
     `${origin}/${instanceName}/GoCompletions/SubSystemCompletion.aspx`,
-    `${origin}/${instanceName}/GoHub/GoCompletions/SystemCompletion.aspx`,
-    `${origin}/${instanceName}/Completions/SystemCompletion.aspx`,
   ];
 
   for (const gridUrl of gridUrls) {
     try {
       console.log(`GoHub: Trying Completions Grid URL: ${gridUrl}`);
-      const response = await fetch(gridUrl, {
-        redirect: "manual",
-        headers: {
-          Cookie: formatCookies(cookies),
-          Accept: "text/html",
-          "User-Agent": BROWSER_UA,
-          Referer: postSelectionUrl,
-        },
-      });
-      cookies = parseCookiesFromResponse(response, cookies);
+      const result = await followRedirects(gridUrl, cookies);
+      cookies = result.cookies;
 
-      const location = response.headers.get("location");
-      if (location) {
-        await response.text();
-        const result = await followRedirects(
-          new URL(location, gridUrl).toString(), cookies
-        );
-        cookies = result.cookies;
-
-        if (result.html.includes("ApplicationLogin") || result.html.includes("Login to")) {
-          console.log(`GoHub: ${gridUrl} redirected to login page`);
-          continue;
-        }
-        if (result.html.includes("GenericErrorPage") || result.html.includes("Contact Support")) {
-          console.log(`GoHub: ${gridUrl} redirected to error page`);
-          continue;
-        }
-
-        return { html: result.html, cookies };
-      }
-
-      const html = await response.text();
-
-      if (response.status === 404) {
-        console.log(`GoHub: ${gridUrl} returned 404`);
-        continue;
-      }
-
-      if (html.includes("ApplicationLogin") || html.includes("GenericErrorPage") || html.includes("Contact Support")) {
+      if (result.html.includes("ApplicationLogin") || result.html.includes("GenericErrorPage")) {
         console.log(`GoHub: ${gridUrl} returned login/error page`);
         continue;
       }
 
-      const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+      const titleMatch = result.html.match(/<title[^>]*>([^<]+)<\/title>/i);
       console.log(`GoHub: Got page from ${gridUrl}, title: ${titleMatch?.[1]?.trim() || "unknown"}`);
-
-      return { html, cookies };
+      return { html: result.html, url: result.url, cookies };
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : String(error);
       console.log(`GoHub: ${gridUrl} error: ${msg}`);
     }
   }
 
-  // If all else failed, log the post-selection page for debugging
-  console.log(`GoHub: Post-selection page snippet: ${decodedPostHtml.substring(0, 3000)}`);
-
-  throw new Error(
-    "Could not access the Completions Grid page. " +
-    "Project was selected but navigation to the grid failed. " +
-    "Check edge function logs for the post-selection page content."
-  );
+  throw new Error("Could not access the Completions Grid page.");
 }
 
-// ─── Step 4: Parse Completions Grid HTML ─────────────────────
+// ─── Step 4: Try REST API Endpoints ──────────────────────────
 
 interface CompletionsSystem {
   system_id: string;
@@ -489,6 +386,153 @@ interface CompletionsSystem {
   is_hydrocarbon: boolean;
 }
 
+async function tryRestApi(
+  cookies: Record<string, string>,
+  origin: string,
+  instanceName: string,
+  projectFilter: string,
+  gridPageUrl: string
+): Promise<CompletionsSystem[]> {
+  const filterUpper = projectFilter.toUpperCase();
+
+  // List of API endpoints to try (GoTechnology REST API patterns)
+  const apiEndpoints = [
+    // SubSystem API with filter
+    `${origin}/${instanceName}/api/SubSystem?ps=500&Name:con=${projectFilter}`,
+    `${origin}/${instanceName}/api/SubSystem?ps=500`,
+    // CompletionsGrid API patterns
+    `${origin}/${instanceName}/GoCompletions/api/SubSystem?ps=500`,
+    `${origin}/${instanceName}/GoCompletions/api/SystemCompletion?ps=500`,
+    `${origin}/${instanceName}/GoCompletions/Completions/api/SubSystem?ps=500`,
+    // Generic completions API
+    `${origin}/${instanceName}/api/SystemCompletion?ps=500`,
+    `${origin}/${instanceName}/api/CompletionsGrid?ps=500`,
+  ];
+
+  for (const apiUrl of apiEndpoints) {
+    try {
+      console.log(`GoHub API: Trying ${apiUrl}`);
+      const response = await fetch(apiUrl, {
+        headers: {
+          Cookie: formatCookies(cookies),
+          Accept: "application/json, text/json, */*",
+          "User-Agent": BROWSER_UA,
+          "X-Requested-With": "XMLHttpRequest",
+          Referer: gridPageUrl,
+        },
+      });
+
+      if (response.status === 404 || response.status === 403 || response.status === 401) {
+        console.log(`GoHub API: ${apiUrl} returned ${response.status}`);
+        await response.text();
+        continue;
+      }
+
+      const contentType = response.headers.get("content-type") || "";
+      const responseText = await response.text();
+
+      // Check pagination header
+      const paginationHeader = response.headers.get("X-Pagination");
+      if (paginationHeader) {
+        console.log(`GoHub API: X-Pagination: ${paginationHeader}`);
+      }
+
+      // Check if it's JSON
+      if (contentType.includes("json") || responseText.trim().startsWith("[") || responseText.trim().startsWith("{")) {
+        console.log(`GoHub API: Got JSON response (${responseText.length} chars) from ${apiUrl}`);
+
+        try {
+          let data = JSON.parse(responseText);
+
+          // Handle wrapped responses { Items: [...] } or { data: [...] }
+          if (!Array.isArray(data)) {
+            if (Array.isArray(data.Items)) data = data.Items;
+            else if (Array.isArray(data.data)) data = data.data;
+            else if (Array.isArray(data.results)) data = data.results;
+            else if (Array.isArray(data.Systems)) data = data.Systems;
+            else {
+              console.log(`GoHub API: Response is object with keys: ${Object.keys(data).join(", ")}`);
+              continue;
+            }
+          }
+
+          console.log(`GoHub API: Parsed ${data.length} items from ${apiUrl}`);
+          if (data.length > 0) {
+            console.log(`GoHub API: Sample item keys: ${Object.keys(data[0]).join(", ")}`);
+            console.log(`GoHub API: Sample item: ${JSON.stringify(data[0]).substring(0, 500)}`);
+          }
+
+          const systems: CompletionsSystem[] = [];
+          const seen = new Set<string>();
+
+          for (const item of data) {
+            // Try various field name conventions
+            const sysId = String(
+              item.Name || item.SubSystemName || item.SystemId ||
+              item.System_Id || item.system_id || item.SubSystemId ||
+              item.SubSystem_Id || item.Code || ""
+            );
+            if (!sysId) continue;
+            if (seen.has(sysId)) continue;
+            if (filterUpper && !sysId.toUpperCase().includes(filterUpper)) continue;
+
+            seen.add(sysId);
+
+            const description = String(
+              item.Description || item.SubSystemDescription ||
+              item.SystemDescription || item.Desc || sysId
+            );
+
+            let progress = 0;
+            const progValue =
+              item.Progress ?? item.OverallProgress ?? item.Overall_Progress ??
+              item.CompletionPercentage ?? item.Completion ?? item.Percent;
+            if (typeof progValue === "number") {
+              progress = progValue;
+            } else if (typeof progValue === "string") {
+              const parsed = parseFloat(progValue);
+              if (!isNaN(parsed)) progress = parsed;
+            }
+
+            systems.push({
+              system_id: sysId,
+              name: description,
+              description: "Imported from GoCompletions",
+              progress,
+              is_hydrocarbon: /\b(gas|oil|fuel|hydrocarbon|flare)\b/i.test(description),
+            });
+          }
+
+          if (systems.length > 0) {
+            console.log(`GoHub API: Found ${systems.length} systems matching "${projectFilter}" from ${apiUrl}`);
+            return systems;
+          } else {
+            console.log(`GoHub API: No systems matching "${projectFilter}" in ${data.length} items from ${apiUrl}`);
+          }
+        } catch (parseErr) {
+          console.log(`GoHub API: JSON parse error for ${apiUrl}: ${parseErr}`);
+        }
+      } else {
+        // Not JSON - might be HTML redirect to login
+        if (responseText.includes("ApplicationLogin")) {
+          console.log(`GoHub API: ${apiUrl} returned login page`);
+        } else {
+          console.log(`GoHub API: ${apiUrl} returned non-JSON (${contentType}, ${responseText.length} chars)`);
+          // Log a snippet
+          console.log(`GoHub API: Response snippet: ${responseText.substring(0, 300)}`);
+        }
+      }
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error);
+      console.log(`GoHub API: ${apiUrl} error: ${msg}`);
+    }
+  }
+
+  return [];
+}
+
+// ─── Step 5: Parse Completions Grid HTML ─────────────────────
+
 function parseCompletionsGrid(
   html: string,
   projectFilter: string
@@ -497,40 +541,24 @@ function parseCompletionsGrid(
   const filterUpper = projectFilter.toUpperCase();
   const seen = new Set<string>();
 
-  // Based on the screenshot, the grid shows cards like:
-  // ┌──────────────────────────────────┬──────────────┐
-  // │ C017-DP300-100                   │   100.00%    │
-  // │ GAS                              │              │
-  // └──────────────────────────────────┴──────────────┘
-  //
-  // Each card has a System ID title, description below, and a progress bar
-
-  // Strategy 1: Look for system cards with div/table structure
-  // The system ID pattern: Letter + 3 digits + dash + letters/digits + dash + digits
+  // The system ID pattern: Letter + digits + dash + letters/digits + dash + more
   const systemIdPattern = /([A-Z]\d{2,4}-[A-Z0-9]{2,}-[A-Z0-9-]+)/g;
-  const percentPattern = /([\d.]+)\s*%/;
 
-  // Try to find card-like structures
-  // Pattern: system ID followed by description and percentage within nearby HTML
   let sysMatch;
   while ((sysMatch = systemIdPattern.exec(html)) !== null) {
     const systemId = sysMatch[1];
     if (seen.has(systemId)) continue;
     if (filterUpper && !systemId.toUpperCase().includes(filterUpper)) continue;
 
-    // Get surrounding context (500 chars before and after)
     const contextStart = Math.max(0, sysMatch.index - 300);
     const contextEnd = Math.min(html.length, sysMatch.index + systemId.length + 500);
     const context = html.substring(contextStart, contextEnd);
 
-    // Extract description/name - look for text near the system ID
-    // Usually in a <span>, <div>, <td> or similar near the ID
     const afterId = html.substring(
       sysMatch.index + systemId.length,
       sysMatch.index + systemId.length + 400
     );
 
-    // Find the first meaningful text after the system ID (the description)
     let name = systemId;
     const descMatch = afterId.match(
       /(?:<[^>]*>)*\s*(?:<(?:span|div|td|p|small|br\s*\/?)[\s>])*\s*([A-Za-z][A-Za-z0-9\s\-–—.,&()/']+)/
@@ -539,14 +567,11 @@ function parseCompletionsGrid(
       name = descMatch[1].trim().substring(0, 100);
     }
 
-    // Find progress percentage in the context
     let progress = 0;
     const pctMatch = context.match(/([\d.]+)\s*%/);
     if (pctMatch) {
       const val = parseFloat(pctMatch[1]);
-      if (val >= 0 && val <= 100) {
-        progress = val;
-      }
+      if (val >= 0 && val <= 100) progress = val;
     }
 
     seen.add(systemId);
@@ -559,9 +584,8 @@ function parseCompletionsGrid(
     });
   }
 
-  // Strategy 2: Parse table rows if the grid is a <table>
+  // Strategy 2: Parse table rows
   if (systems.length === 0) {
-    console.log("GoHub Parse: No card-based systems found, trying table parsing...");
     const tableRowRegex = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
     let trMatch;
     while ((trMatch = tableRowRegex.exec(html)) !== null) {
@@ -601,13 +625,11 @@ function parseCompletionsGrid(
     }
   }
 
-  // Strategy 3: Parse JSON data if embedded in the page
+  // Strategy 3: Parse embedded JSON
   if (systems.length === 0) {
-    console.log("GoHub Parse: Trying embedded JSON data...");
     const jsonPatterns = [
       /var\s+\w+\s*=\s*(\[[\s\S]*?\]);\s*(?:var|function|<\/script>)/g,
       /data\s*[=:]\s*(\[[\s\S]*?\])[\s;,]/g,
-      /items\s*[=:]\s*(\[[\s\S]*?\])[\s;,]/g,
     ];
 
     for (const pattern of jsonPatterns) {
@@ -640,6 +662,93 @@ function parseCompletionsGrid(
   }
 
   return systems;
+}
+
+// ─── Step 6: Try ScriptManager / UpdatePanel partial postback ─
+
+async function tryPartialPostback(
+  cookies: Record<string, string>,
+  gridHtml: string,
+  gridUrl: string
+): Promise<CompletionsSystem[]> {
+  console.log("GoHub: Trying ASP.NET UpdatePanel partial postback...");
+
+  const hiddenFields = extractHiddenFields(gridHtml);
+
+  // Look for ScriptManager ID
+  const smMatch = gridHtml.match(/Sys\.WebForms\.PageRequestManager\._initialize\s*\(\s*'([^']+)'/);
+  const scriptManagerId = smMatch ? smMatch[1] : null;
+  console.log(`GoHub: ScriptManager ID: ${scriptManagerId || "not found"}`);
+
+  // Look for UpdatePanel IDs
+  const upMatches = [...gridHtml.matchAll(/updatePanelIDs['"]*\s*[:=]\s*['"]*([^'";\]]+)/gi)];
+  const updatePanelIds = upMatches.map(m => m[1]).filter(Boolean);
+  console.log(`GoHub: UpdatePanel IDs: ${updatePanelIds.join(", ") || "none found"}`);
+
+  // Look for any __doPostBack calls that might trigger data loading
+  const decodedGrid = decodeHtmlEntities(gridHtml);
+  const postbackTargets: string[] = [];
+  const pbRegex = /__doPostBack\s*\(\s*'([^']+)'\s*,\s*'([^']*)'\s*\)/g;
+  let pbMatch;
+  while ((pbMatch = pbRegex.exec(decodedGrid)) !== null) {
+    postbackTargets.push(pbMatch[1]);
+  }
+  console.log(`GoHub: Found ${postbackTargets.length} postback targets on grid page`);
+  if (postbackTargets.length > 0) {
+    console.log(`GoHub: Postback targets: ${postbackTargets.slice(0, 10).join(", ")}`);
+  }
+
+  // Try a partial postback using ScriptManager
+  if (scriptManagerId) {
+    const actionMatch = gridHtml.match(/<form[^>]*action=["']([^"']*?)["'][^>]*>/i);
+    const formAction = actionMatch
+      ? new URL(decodeHtmlEntities(actionMatch[1]), gridUrl).toString()
+      : gridUrl;
+
+    // Try each postback target to see if one loads data
+    for (const target of postbackTargets.slice(0, 5)) {
+      try {
+        const formData: Record<string, string> = {
+          ...hiddenFields,
+          __EVENTTARGET: target,
+          __EVENTARGUMENT: "",
+          __ASYNCPOST: "true",
+          [scriptManagerId]: `${target}|${target}`,
+        };
+
+        const response = await fetch(formAction, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            Cookie: formatCookies(cookies),
+            "User-Agent": BROWSER_UA,
+            "X-MicrosoftAjax": "Delta=true",
+            "X-Requested-With": "XMLHttpRequest",
+            Referer: gridUrl,
+            Origin: new URL(gridUrl).origin,
+          },
+          body: new URLSearchParams(formData).toString(),
+        });
+
+        const text = await response.text();
+        cookies = parseCookiesFromResponse(response, cookies);
+
+        // Check if the response contains system IDs
+        if (text.includes("DP300") || text.includes("DP228") || text.includes("DP109")) {
+          console.log(`GoHub: Partial postback to "${target}" returned data with system IDs! (${text.length} chars)`);
+          // Parse the partial response for systems
+          const systems = parseCompletionsGrid(text, "DP300");
+          if (systems.length > 0) {
+            return systems;
+          }
+        }
+      } catch (_) {
+        // Continue trying other targets
+      }
+    }
+  }
+
+  return [];
 }
 
 // ─── Main Handler ────────────────────────────────────────────
@@ -707,38 +816,78 @@ Deno.serve(async (req) => {
     );
     console.log("GoHub: Login successful");
 
-    // Step 2: Select ZUBAIR (ZB) project
+    // Step 2: Select ZUBAIR project
     const { cookies: projectCookies, responseHtml: postSelectionHtml, responseUrl: postSelectionUrl } =
       await selectProject(cookies, homePageHtml, homePageUrl, "ZB");
     console.log("GoHub: Project selection complete");
 
-    // Step 3: Navigate to Completions Grid (using post-selection page for menu links)
-    const { html: gridHtml, cookies: gridCookies } = await navigateToCompletionsGrid(
+    // Step 3: Navigate to Completions Grid
+    const { html: gridHtml, url: gridPageUrl, cookies: gridCookies } = await navigateToCompletionsGrid(
       projectCookies, finalPortalUrl, postSelectionHtml, postSelectionUrl
     );
     console.log(`GoHub: Got Completions Grid HTML, size=${gridHtml.length}`);
 
-    // Log a snippet for debugging
-    const cleanGridHtml = gridHtml.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "");
-    console.log(`GoHub: Grid page snippet (first 3000 chars): ${cleanGridHtml.substring(0, 3000)}`);
+    // Diagnostics: strip hidden fields and check what's actually on the page
+    const strippedHtml = stripHiddenFieldValues(gridHtml);
+    const containsDP300 = gridHtml.includes("DP300");
+    const containsDP228 = gridHtml.includes("DP228");
+    const containsDP109 = gridHtml.includes("DP109");
+    console.log(`GoHub: HTML contains DP300=${containsDP300}, DP228=${containsDP228}, DP109=${containsDP109}`);
+    console.log(`GoHub: Stripped HTML (first 2000): ${strippedHtml.substring(0, 2000)}`);
+    console.log(`GoHub: Stripped HTML size: ${strippedHtml.length} (original: ${gridHtml.length})`);
 
-    // Step 4: Parse the grid for systems matching the filter
-    const completionsSystems = parseCompletionsGrid(gridHtml, projectFilter);
-    console.log(`GoHub: Parsed ${completionsSystems.length} systems matching "${projectFilter}"`);
+    // Log any script sources (to find AJAX endpoints)
+    const scriptSrcMatches = [...gridHtml.matchAll(/src=["']([^"']*\.js[^"']*)["']/gi)];
+    console.log(`GoHub: Script sources: ${scriptSrcMatches.map(m => m[1]).join(", ")}`);
 
+    // Log inline script content (look for API URLs)
+    const inlineScripts = [...gridHtml.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/gi)];
+    for (let i = 0; i < inlineScripts.length; i++) {
+      const content = inlineScripts[i][1].trim();
+      if (content.length > 10 && content.length < 5000) {
+        console.log(`GoHub: Inline script ${i} (${content.length} chars): ${content.substring(0, 1000)}`);
+      } else if (content.length >= 5000) {
+        console.log(`GoHub: Inline script ${i} (${content.length} chars, truncated): ${content.substring(0, 1000)}`);
+      }
+    }
+
+    // Step 4: Try HTML parsing first
+    let completionsSystems = parseCompletionsGrid(gridHtml, projectFilter);
+    console.log(`GoHub: HTML parsing found ${completionsSystems.length} systems`);
+
+    // Step 5: If no systems in HTML, try REST API endpoints
     if (completionsSystems.length === 0) {
-      // Log more of the page for debugging
-      console.log(`GoHub: Grid page body (chars 3000-6000): ${cleanGridHtml.substring(3000, 6000)}`);
-      console.log(`GoHub: Grid page body (chars 6000-9000): ${cleanGridHtml.substring(6000, 9000)}`);
+      console.log("GoHub: No systems in HTML, trying REST API endpoints...");
+      const parsedUrl = new URL(finalPortalUrl);
+      const pathParts = parsedUrl.pathname.split("/").filter(Boolean);
+      const instanceName = pathParts[0] || "BGC";
 
-      throw new Error(
-        `No systems matching "${projectFilter}" found on the Completions Grid page. ` +
-        `The page was loaded successfully (${gridHtml.length} chars) but no matching system IDs were found. ` +
-        `Check edge function logs for page content details.`
+      completionsSystems = await tryRestApi(
+        gridCookies, parsedUrl.origin, instanceName, projectFilter, gridPageUrl
       );
     }
 
-    // Step 5: Transform for frontend
+    // Step 6: If REST API also failed, try partial postback (UpdatePanel)
+    if (completionsSystems.length === 0) {
+      console.log("GoHub: REST API failed, trying partial postback...");
+      completionsSystems = await tryPartialPostback(gridCookies, gridHtml, gridPageUrl);
+    }
+
+    // Step 7: Log remaining HTML for debugging if still nothing
+    if (completionsSystems.length === 0) {
+      // Log the page content after hidden fields to help debug
+      const afterHidden = strippedHtml.replace(/<input[^>]*>/gi, "");
+      console.log(`GoHub: Page without inputs (last 3000): ${afterHidden.substring(Math.max(0, afterHidden.length - 3000))}`);
+
+      throw new Error(
+        `No systems matching "${projectFilter}" found. ` +
+        `The Completions Grid page loaded (title OK, ${gridHtml.length} chars) but the grid data appears to be loaded dynamically via JavaScript. ` +
+        `REST API endpoints were also tried but none returned matching data. ` +
+        `Check edge function logs for detailed diagnostics.`
+      );
+    }
+
+    // Transform for frontend
     const systems = completionsSystems.map((sys, index) => ({
       id: `gohub-${Date.now()}-${index}`,
       system_id: sys.system_id,
