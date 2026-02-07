@@ -318,25 +318,24 @@ async function persistPlanToDatabase(
       .eq('handover_plan_id', planId);
   }
 
-  // Create VCRs
-  // Strip "DP-" or "DP" prefix from projectCode since the RPC adds "DP" itself
-  const rawProjectCode = projectCode.replace(/^DP-?/i, '');
+  // Create VCRs using the same code format as the wizard UI
+  // Format: VCR-{projectCode}-{seq} e.g. VCR-DP300-001
+  const cleanProjectCode = projectCode.replace(/-/g, '');
 
   for (let i = 0; i < state.vcrs.length; i++) {
     const vcr = state.vcrs[i];
     const phaseId = state.vcrPhaseAssignments[vcr.id];
     const realPhaseId = phaseId ? phaseIdMap[phaseId] : null;
 
-    const { data: vcrCode } = await supabase.rpc('generate_vcr_code', {
-      p_project_code: rawProjectCode,
-    });
+    // Use the wizard-generated code if available, otherwise generate it
+    const vcrCode = vcr.code || `VCR-${cleanProjectCode}-${String(i + 1).padStart(3, '0')}`;
 
     const { data: savedVCR, error } = await client
       .from('p2a_handover_points')
       .insert({
         handover_plan_id: planId,
         phase_id: realPhaseId,
-        vcr_code: vcrCode || `VCR-${String(i + 1).padStart(3, '0')}-DP${rawProjectCode}`,
+        vcr_code: vcrCode,
         name: vcr.name,
         description: vcr.reason || null,
         position_x: 0,

@@ -30,7 +30,7 @@ export const DeleteVCRDialog: React.FC<DeleteVCRDialogProps> = ({
   isDeleting,
 }) => {
   // Extract short VCR code for display
-  const vcrShortCode = vcr.vcr_code.match(/^(VCR-\d+)/)?.[1] || vcr.vcr_code;
+  const vcrShortCode = vcr.vcr_code;
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>

@@ -258,7 +258,7 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
                           return Object.entries(groups).map(([vcrCode, groupSystems]) => (
                             <div key={vcrCode}>
                               <span className="text-[8px] font-semibold text-muted-foreground uppercase tracking-wider px-0.5 mb-0.5 block">
-                                {vcrCode.match(/^(VCR-\d+)/)?.[1] || vcrCode}
+                                {vcrCode}
                               </span>
                               <div className="flex flex-wrap gap-1.5">
                                 {groupSystems.map(system => (

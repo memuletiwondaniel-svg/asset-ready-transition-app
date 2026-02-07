@@ -97,14 +97,7 @@ export const HandoverPointCard: React.FC<HandoverPointCardProps> = ({
             {/* VCR ID + Progress */}
             <div className="flex items-center justify-between gap-1">
               <span className="text-[8px] text-muted-foreground font-mono truncate">
-                {(() => {
-                  const code = handoverPoint.vcr_code || '';
-                  const newMatch = code.match(/^(VCR-\d+)-DP/);
-                  if (newMatch) return newMatch[1];
-                  const oldMatch = code.match(/(\d+)$/);
-                  if (oldMatch) return `VCR-${oldMatch[1]}`;
-                  return 'VCR-???';
-                })()}
+                {handoverPoint.vcr_code || 'VCR-???'}
               </span>
               <span className="text-[8px] font-medium text-muted-foreground shrink-0">
                 {progress}%
