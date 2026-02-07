@@ -171,7 +171,7 @@ export const PhaseCard: React.FC<PhaseCardProps> = ({
               isOver
                 ? 'border-primary bg-primary/10 text-primary font-medium scale-[1.02]'
                 : isReceivingDrag
-                  ? 'border-primary/30 bg-primary/5 animate-pulse'
+                  ? 'border-primary/30 bg-primary/5'
                   : 'border-muted-foreground/20'
             )}>
               {isOver ? '↓ Release to assign' : 'Drop VCRs here'}
