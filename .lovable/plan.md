@@ -1,75 +1,77 @@
 
 
-# Compact Systems List in P2A Wizard
+# Fix: Persist and Restore Subsystem Data in P2A Wizard
 
-## Overview
-Redesign the Systems step in the P2A Handover Plan wizard to show more systems in less space, with cleaner visuals and hover-to-reveal actions.
+## Problem
 
-## Changes
+When importing systems from GoCompletions (CMS), the import correctly brings in subsystems and progress percentages. However, when the user saves the draft and returns later:
+- **Subsystems are lost** -- they are never written to the `p2a_subsystems` table
+- **Progress percentages are lost** -- the `completion_percentage` column is never populated in `p2a_systems`
 
-### 1. Compact Import Options (SystemsImportStep.tsx)
-- Remove the description text under each import button (e.g., "Connect to Completions System", "Spreadsheet", "Single entry")
-- Keep just the icon and label in each card
-- Reduce padding from `p-3` to `p-2`
-- This frees up vertical space for the systems list
+This happens because the save and load functions in `useP2APlanWizard.ts` do not handle subsystem data or progress values.
 
-### 2. Increase Systems List Area (SystemsImportStep.tsx)
-- Increase the ScrollArea height from `h-[200px]` to `h-[280px]` to accommodate ~5 visible system cards
-- Increase the overall wizard dialog height from `h-[min(80vh,640px)]` to `h-[min(85vh,720px)]` in the parent wizard component
+## Root Causes
 
-### 3. Redesign SystemListItem (SystemsImportStep.tsx)
-- **Remove the Box icon** from the left side of each system card
-- **Multicolor System ID labels**: Use the same HSL hash-based color approach from `ProjectIdBadge` to generate unique pastel badge colors per system ID. Create a small inline `getSystemIdColor` function that derives a hue from the system_id string, then render the system ID as a small colored badge (similar to project ID badges but at `text-[10px]` size)
-- **Replace the Progress bar** with a simple colored percentage text (e.g., "78.5%" in the appropriate color -- green/yellow/orange/red)
-- **Auto-hide Edit and Delete buttons**: Wrap both buttons in a container with `opacity-0 group-hover:opacity-100 transition-opacity` so they only appear on hover
-- **Reduce card height**: Change padding from `p-3` to `py-1.5 px-2.5`, reduce gaps, use tighter typography
-- **Add hover effect**: Add `hover:bg-muted/50` class to each system row and add the `group` class for the hover-to-reveal buttons
+| Area | Issue |
+|------|-------|
+| **Save (persist)** | `persistPlanToDatabase()` inserts into `p2a_systems` but only saves `system_id`, `name`, `is_hydrocarbon`. It skips `completion_percentage` and never inserts into `p2a_subsystems`. |
+| **Load (draft)** | `loadDraftFromDatabase()` selects from `p2a_systems` but only reads `id, system_id, name, is_hydrocarbon`. It never queries `p2a_subsystems` at all, so the wizard state has empty subsystem arrays. |
 
-### 4. Update Wizard Dialog Height (P2APlanCreationWizard.tsx)
-- Change `h-[min(80vh,640px)]` to `h-[min(85vh,720px)]` to give more room for content
+## Solution
 
-## Technical Details
+All changes are in a single file: `src/hooks/useP2APlanWizard.ts`
 
-**Files to modify:**
-1. `src/components/widgets/p2a-wizard/steps/SystemsImportStep.tsx` -- All system card and import option changes
-2. `src/components/widgets/p2a-wizard/P2APlanCreationWizard.tsx` -- Dialog height increase
+### 1. Update `persistPlanToDatabase()` -- Save subsystems and progress
 
-**System ID color generation (new helper in SystemsImportStep.tsx):**
-```typescript
-function getSystemIdColor(systemId: string) {
-  const str = systemId.replace(/-/g, '').toUpperCase();
-  let hash = 5381;
-  for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) + hash) ^ str.charCodeAt(i);
-  }
-  hash = Math.abs(hash);
-  const hueAnchors = [165, 180, 200, 220, 250, 280, 320];
-  const hue = hueAnchors[hash % hueAnchors.length] + (((hash >> 8) % 25) - 12);
-  const sat = 30 + ((hash >> 12) % 15);
-  const light = 50 + ((hash >> 16) % 12);
-  return {
-    bg: `hsl(${hue}, ${sat}%, ${light}%)`,
-    bgLight: `hsl(${hue}, ${sat}%, 94%)`,
-    border: `hsl(${hue}, ${sat}%, 80%)`,
-  };
-}
+When saving each system to `p2a_systems`:
+- Include `completion_percentage` from `system.progress` (rounded to integer)
+- After saving the system and getting its new database UUID, insert any subsystems from `system.subsystems` into `p2a_subsystems`
+
+```
+For each system in state.systems:
+  1. INSERT into p2a_systems with completion_percentage = Math.round(system.progress || 0)
+  2. If system.subsystems exists and has items:
+     - Delete existing subsystems for this system (clean slate)
+     - INSERT each subsystem into p2a_subsystems with:
+       - system_id = saved system's new UUID
+       - subsystem_id = subsystem.system_id
+       - name = subsystem.name
+       - completion_percentage = Math.round(subsystem.progress || 0)
 ```
 
-**Compact system card layout (non-editing mode):**
-```text
-+-----------------------------------------------+
-| [SYS-001]  System Name          HC   82.5%  ...│
-+-----------------------------------------------+
-         ^           ^             ^     ^      ^
-     colored ID    name         badge  progress  edit/delete
-     badge                              text    (on hover)
+Also add a bulk delete of `p2a_subsystems` at the start (before deleting systems) to avoid orphaned rows:
+- Query all system UUIDs for the plan
+- Delete subsystems where `system_id` is in those UUIDs
+- Then delete the systems themselves (existing logic)
+
+### 2. Update `loadDraftFromDatabase()` -- Load subsystems and progress
+
+When loading systems from the database:
+- Include `completion_percentage` in the SELECT from `p2a_systems`
+- After loading systems, query `p2a_subsystems` for all system UUIDs
+- Map subsystems back onto each system's `subsystems` array
+
+```
+1. SELECT id, system_id, name, is_hydrocarbon, completion_percentage FROM p2a_systems
+2. Map completion_percentage to WizardSystem.progress
+3. Query p2a_subsystems WHERE system_id IN (all loaded system UUIDs)
+4. Group subsystems by system_id
+5. Attach each group to the matching WizardSystem.subsystems array
 ```
 
-**Compact import options:**
-```text
-+------------------+------------------+------------------+
-|  [icon]          |  [icon]          |  [icon]          |
-|  CMS Import      |  Upload Excel    |  Add Manually    |
-+------------------+------------------+------------------+
-```
-(No description lines underneath each label)
+### Summary of Changes
+
+**File: `src/hooks/useP2APlanWizard.ts`**
+
+- `loadDraftFromDatabase()`:
+  - Add `completion_percentage` to the systems SELECT query
+  - Map it to `progress` on each `WizardSystem`
+  - Query `p2a_subsystems` for all system IDs
+  - Attach subsystems to each system
+
+- `persistPlanToDatabase()`:
+  - Before deleting systems, delete their subsystems first
+  - Add `completion_percentage` to each system INSERT
+  - After inserting each system, INSERT its subsystems into `p2a_subsystems`
+
+No database schema changes are required -- the `p2a_systems.completion_percentage` column and the `p2a_subsystems` table already exist with the correct structure.
