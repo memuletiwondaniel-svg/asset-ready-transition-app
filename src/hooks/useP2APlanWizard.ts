@@ -86,7 +86,6 @@ export function useP2APlanWizard(projectId: string, projectCode: string) {
           handover_plan_id: planId,
           system_id: s.system_id,
           name: s.name,
-          description: s.description || null,
           is_hydrocarbon: s.is_hydrocarbon,
         }));
 
@@ -105,8 +104,8 @@ export function useP2APlanWizard(projectId: string, projectCode: string) {
         }));
 
         // Delete existing phases and recreate
-        await client.from('p2a_phases').delete().eq('handover_plan_id', planId);
-        await client.from('p2a_phases').insert(phaseRecords);
+        await client.from('p2a_project_phases').delete().eq('handover_plan_id', planId);
+        await client.from('p2a_project_phases').insert(phaseRecords);
       }
 
       return planId;
@@ -181,7 +180,6 @@ export function useP2APlanWizard(projectId: string, projectCode: string) {
               handover_plan_id: planId,
               system_id: system.system_id,
               name: system.name,
-              description: system.description || null,
               is_hydrocarbon: system.is_hydrocarbon,
             }, { onConflict: 'handover_plan_id,system_id' })
             .select()
@@ -198,11 +196,11 @@ export function useP2APlanWizard(projectId: string, projectCode: string) {
       
       if (state.phases.length > 0) {
         // Delete existing phases
-        await client.from('p2a_phases').delete().eq('handover_plan_id', planId);
+        await client.from('p2a_project_phases').delete().eq('handover_plan_id', planId);
         
         for (const phase of state.phases) {
           const { data: savedPhase, error } = await client
-            .from('p2a_phases')
+            .from('p2a_project_phases')
             .insert({
               handover_plan_id: planId,
               name: phase.name,
