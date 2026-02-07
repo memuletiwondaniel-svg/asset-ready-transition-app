@@ -24,7 +24,7 @@ export const MappingOverlay: React.FC<MappingOverlayProps> = ({ bundles }) => {
   return (
     <svg
       className="absolute inset-0 w-full h-full pointer-events-none overflow-visible"
-      style={{ zIndex: 10 }}
+      style={{ zIndex: 20 }}
     >
       {bundles.map((bundle, bundleIndex) => {
         const {
@@ -76,13 +76,14 @@ export const MappingOverlay: React.FC<MappingOverlayProps> = ({ bundles }) => {
               />
             )}
 
-            {/* --- Trunk: single straight line from bus midpoint to VCR --- */}
+            {/* --- Trunk: horizontal line from bus midpoint to VCR --- */}
+            {/* Use systemCenterY for both ends since VCR cards align to it */}
             {/* Glow */}
             <line
               x1={busX}
               y1={systemCenterY}
               x2={vcrX}
-              y2={vcrY}
+              y2={systemCenterY}
               stroke={borderColor}
               strokeWidth={4}
               strokeLinecap="round"
@@ -93,7 +94,7 @@ export const MappingOverlay: React.FC<MappingOverlayProps> = ({ bundles }) => {
               x1={busX}
               y1={systemCenterY}
               x2={vcrX}
-              y2={vcrY}
+              y2={systemCenterY}
               stroke={borderColor}
               strokeWidth={2}
               strokeLinecap="round"
@@ -115,7 +116,7 @@ export const MappingOverlay: React.FC<MappingOverlayProps> = ({ bundles }) => {
             {/* VCR-side dot */}
             <circle
               cx={vcrX}
-              cy={vcrY}
+              cy={systemCenterY}
               r={3.5}
               fill={borderColor}
               opacity={0.6}
