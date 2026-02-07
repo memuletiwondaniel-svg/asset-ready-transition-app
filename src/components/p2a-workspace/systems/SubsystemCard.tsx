@@ -42,11 +42,6 @@ export const SubsystemCard: React.FC<SubsystemCardProps> = ({
       >
         <CardContent className="p-1.5">
           <div className="flex items-start gap-1.5">
-            {/* Subsystem indicator */}
-            <div className="w-4 h-4 rounded flex items-center justify-center shrink-0 mt-0.5 bg-muted text-muted-foreground">
-              <span className="text-[7px] font-bold">SUB</span>
-            </div>
-
             <div className="flex-1 min-w-0">
               {/* Subsystem Name */}
               <span className="text-[10px] font-medium truncate block leading-tight">
