@@ -6,7 +6,7 @@ import { Box, Key, Milestone, ArrowRight, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WizardSystem } from './SystemsImportStep';
 import { WizardVCR } from './VCRCreationStep';
-import { WizardPhase } from './VCRSequencingStep';
+import { WizardPhase } from './PhasesStep';
 
 interface WorkspacePreviewStepProps {
   systems: WizardSystem[];

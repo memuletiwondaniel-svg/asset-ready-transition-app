@@ -8,7 +8,7 @@ import { ProjectOverviewStep } from './steps/ProjectOverviewStep';
 import { SystemsImportStep, WizardSystem } from './steps/SystemsImportStep';
 import { VCRCreationStep, WizardVCR } from './steps/VCRCreationStep';
 import { SystemMappingStep } from './steps/SystemMappingStep';
-import { VCRSequencingStep, WizardPhase } from './steps/VCRSequencingStep';
+import { PhasesStep, WizardPhase } from './steps/PhasesStep';
 import { WorkspacePreviewStep } from './steps/WorkspacePreviewStep';
 import { ApprovalSetupStep, WizardApprover } from './steps/ApprovalSetupStep';
 import { ConfirmationStep } from './steps/ConfirmationStep';
@@ -32,7 +32,7 @@ const WIZARD_STEPS: WizardStep[] = [
   { id: 2, title: 'Systems', description: 'Import or create systems' },
   { id: 3, title: 'VCRs', description: 'Define verification checkpoints' },
   { id: 4, title: 'Mapping', description: 'Map systems to VCRs' },
-  { id: 5, title: 'Sequence', description: 'Assign phases to VCRs' },
+  { id: 5, title: 'Phases', description: 'Define phases & assign VCRs' },
   { id: 6, title: 'Preview', description: 'Review the plan layout' },
   { id: 7, title: 'Approval', description: 'Configure approvers' },
   { id: 8, title: 'Confirm', description: 'Submit for approval' },
@@ -82,8 +82,8 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
         return state.vcrs.length > 0;
       case 3: // Mapping
         return Object.values(state.mappings).some(arr => arr.length > 0);
-      case 4: // Sequencing
-        return Object.keys(state.vcrPhaseAssignments).length > 0;
+      case 4: // Phases
+        return state.phases.length > 0;
       case 5: // Preview — complete only once user has moved past it
         return hasVisitedPast;
       case 6: // Approval
@@ -207,14 +207,13 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
         );
       case 5:
         return (
-          <VCRSequencingStep
+          <PhasesStep
             vcrs={state.vcrs}
             phases={state.phases}
             vcrPhaseAssignments={state.vcrPhaseAssignments}
-            vcrOrder={state.vcrOrder}
+            milestones={milestones}
             onPhasesChange={(phases) => updateState('phases', phases)}
             onVCRPhaseAssignmentsChange={(assignments) => updateState('vcrPhaseAssignments', assignments)}
-            onVCROrderChange={(order) => updateState('vcrOrder', order)}
           />
         );
       case 6:

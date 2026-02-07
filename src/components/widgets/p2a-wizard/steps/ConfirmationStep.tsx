@@ -13,7 +13,7 @@ import {
 import { cn } from '@/lib/utils';
 import { WizardSystem } from './SystemsImportStep';
 import { WizardVCR } from './VCRCreationStep';
-import { WizardPhase } from './VCRSequencingStep';
+import { WizardPhase } from './PhasesStep';
 import { WizardApprover } from './ApprovalSetupStep';
 
 interface ConfirmationStepProps {
