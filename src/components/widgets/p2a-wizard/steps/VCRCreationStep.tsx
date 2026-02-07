@@ -61,7 +61,6 @@ export const VCRCreationStep: React.FC<VCRCreationStepProps> = ({
 
   const handleUpdateVCR = (id: string, updates: Partial<WizardVCR>) => {
     onVCRsChange(vcrs.map(v => v.id === id ? { ...v, ...updates } : v));
-    setEditingId(null);
   };
 
   // Always regenerate codes to ensure consistent format
