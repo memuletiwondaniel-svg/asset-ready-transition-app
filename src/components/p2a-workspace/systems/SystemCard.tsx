@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Flame, Snowflake, GripVertical } from 'lucide-react';
+import { Flame, GripVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { P2ASystem } from '../hooks/useP2ASystems';
 import { useDraggable } from '@dnd-kit/core';
@@ -65,19 +65,12 @@ export const SystemCard: React.FC<SystemCardProps> = ({
     >
       <CardContent className="p-1.5">
         <div className="flex items-start gap-1.5 relative">
-          {/* HC/Non-HC Indicator - Left edge */}
-          <div className={cn(
-            'w-4 h-4 rounded flex items-center justify-center shrink-0 mt-0.5',
-            system.is_hydrocarbon 
-              ? 'bg-orange-500/10 text-orange-500' 
-              : 'bg-blue-500/10 text-blue-500'
-          )}>
-            {system.is_hydrocarbon ? (
+          {/* HC Indicator - only show flame icon for hydrocarbon systems */}
+          {system.is_hydrocarbon && (
+            <div className="w-4 h-4 rounded flex items-center justify-center shrink-0 mt-0.5 bg-orange-500/10 text-orange-500">
               <Flame className="w-2.5 h-2.5" />
-            ) : (
-              <Snowflake className="w-2.5 h-2.5" />
-            )}
-          </div>
+            </div>
+          )}
 
           <div className="flex-1 min-w-0">
             {/* System Name */}
