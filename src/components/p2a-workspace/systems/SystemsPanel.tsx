@@ -15,6 +15,8 @@ import {
   Upload,
 } from 'lucide-react';
 import { P2ASystem } from '../hooks/useP2ASystems';
+import { P2APhase } from '../hooks/useP2APhases';
+import { P2AHandoverPoint } from '../hooks/useP2AHandoverPoints';
 import { DraggableSystemCard } from './SystemCard';
 import { WorkspaceAddSystemModal } from './WorkspaceAddSystemModal';
 import { WorkspaceExcelUploadModal } from './WorkspaceExcelUploadModal';
@@ -111,6 +113,8 @@ interface SystemsPanelProps {
   isImporting?: boolean;
   isUpdating?: boolean;
   showMapping?: boolean;
+  phases?: P2APhase[];
+  handoverPoints?: P2AHandoverPoint[];
 }
 
 export const SystemsPanel: React.FC<SystemsPanelProps> = ({
@@ -127,6 +131,8 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
   isImporting,
   isUpdating,
   showMapping = false,
+  phases = [],
+  handoverPoints = [],
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddManualModal, setShowAddManualModal] = useState(false);
@@ -157,23 +163,39 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
   };
 
   const filteredUnassigned = filterSystems(unassignedSystems);
-  // When mapping is active, sort assigned systems by VCR Y-position to align with workspace layout
-  const sortedAssigned = showMapping
-    ? (() => {
-        const filtered = filterSystems(assignedSystems);
-        // Group by VCR, order groups by VCR code (will be spatially aligned since VCRs also reorder)
-        const groups: Record<string, P2ASystem[]> = {};
-        filtered.forEach(s => {
-          const key = s.assigned_vcr_code || 'zzz';
-          if (!groups[key]) groups[key] = [];
-          groups[key].push(s);
-        });
-        // Sort group keys alphabetically, then flatten
-        return Object.keys(groups)
-          .sort()
-          .flatMap(key => groups[key].sort((a, b) => a.name.localeCompare(b.name)));
-      })()
-    : filterSystems(assignedSystems);
+
+  // Sort assigned systems by delivery order:
+  // 1. Phase display_order (Phase 1 before Phase 2, etc.)
+  // 2. VCR position_y within phase (top VCR first)
+  // 3. System name alphabetically within each VCR
+  const sortedAssigned = (() => {
+    const filtered = filterSystems(assignedSystems);
+
+    // Build lookup: handoverPointId → { phaseDisplayOrder, vcrPositionY, vcrCode }
+    const phaseOrderMap = new Map(phases.map(p => [p.id, p.display_order]));
+    const vcrInfoMap = new Map(
+      handoverPoints.map(hp => [
+        hp.id,
+        {
+          phaseOrder: hp.phase_id ? (phaseOrderMap.get(hp.phase_id) ?? 9999) : 9999,
+          positionY: hp.position_y ?? 0,
+          vcrCode: hp.vcr_code || '',
+        },
+      ])
+    );
+
+    return filtered.sort((a, b) => {
+      const aInfo = vcrInfoMap.get(a.assigned_handover_point_id || '') || { phaseOrder: 9999, positionY: 0, vcrCode: '' };
+      const bInfo = vcrInfoMap.get(b.assigned_handover_point_id || '') || { phaseOrder: 9999, positionY: 0, vcrCode: '' };
+
+      // Primary: phase order
+      if (aInfo.phaseOrder !== bInfo.phaseOrder) return aInfo.phaseOrder - bInfo.phaseOrder;
+      // Secondary: VCR position within phase
+      if (aInfo.positionY !== bInfo.positionY) return aInfo.positionY - bInfo.positionY;
+      // Tertiary: system name
+      return a.name.localeCompare(b.name);
+    });
+  })();
   const filteredAssigned = sortedAssigned;
 
   // Convert CMS-imported WizardSystems to workspace-compatible format
@@ -246,16 +268,21 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
                   </CollapsibleTrigger>
                   <CollapsibleContent className="pt-2 overflow-hidden">
                     <div className="flex flex-col gap-1.5 overflow-hidden">
-                      {showMapping ? (
-                        // Group by VCR with labels when mapping is active
+                    {showMapping ? (
+                        // Group by VCR in delivery order when mapping is active
                         (() => {
-                          const groups: Record<string, P2ASystem[]> = {};
+                          // Build ordered groups preserving the delivery-order sort
+                          const orderedGroups: { vcrCode: string; systems: P2ASystem[] }[] = [];
+                          const seenCodes = new Set<string>();
                           filteredAssigned.forEach(s => {
-                            const key = s.assigned_vcr_code || 'Unknown';
-                            if (!groups[key]) groups[key] = [];
-                            groups[key].push(s);
+                            const code = s.assigned_vcr_code || 'Unknown';
+                            if (!seenCodes.has(code)) {
+                              seenCodes.add(code);
+                              orderedGroups.push({ vcrCode: code, systems: [] });
+                            }
+                            orderedGroups.find(g => g.vcrCode === code)!.systems.push(s);
                           });
-                          return Object.entries(groups).map(([vcrCode, groupSystems]) => (
+                          return orderedGroups.map(({ vcrCode, systems: groupSystems }) => (
                             <div key={vcrCode}>
                               <span className="text-[8px] font-semibold text-muted-foreground uppercase tracking-wider px-0.5 mb-0.5 block">
                                 {vcrCode}

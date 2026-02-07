@@ -464,6 +464,8 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
           isImporting={isImporting}
           isUpdating={isUpdating}
           showMapping={showMapping}
+          phases={phases}
+          handoverPoints={[...assignedPoints, ...unassignedPoints]}
         />
 
         {/* Phases Timeline Area */}
