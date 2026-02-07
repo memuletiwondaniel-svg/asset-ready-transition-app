@@ -472,6 +472,11 @@ export function useP2APlanWizard(projectId: string, projectCode: string) {
     queryClient.invalidateQueries({ queryKey: ['p2a-plan-by-project', projectId] });
     queryClient.invalidateQueries({ queryKey: ['project-vcrs', projectId] });
     queryClient.invalidateQueries({ queryKey: ['project-orp-plans', projectId] });
+    // Invalidate workspace queries so systems/VCRs reflect wizard assignments
+    queryClient.invalidateQueries({ queryKey: ['p2a-systems'] });
+    queryClient.invalidateQueries({ queryKey: ['p2a-handover-points'] });
+    queryClient.invalidateQueries({ queryKey: ['p2a-phases'] });
+    queryClient.invalidateQueries({ queryKey: ['p2a-subsystems'] });
   };
 
   const saveDraft = useMutation({
