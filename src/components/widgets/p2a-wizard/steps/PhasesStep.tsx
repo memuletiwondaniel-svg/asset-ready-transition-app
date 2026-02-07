@@ -160,7 +160,7 @@ export const PhasesStep: React.FC<PhasesStepProps> = ({
 
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div className="flex flex-col gap-3 p-4 h-full">
+      <div className="flex flex-col gap-3 p-4 h-full min-h-0">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -180,8 +180,8 @@ export const PhasesStep: React.FC<PhasesStepProps> = ({
         </div>
 
         {/* Phase cards – horizontal layout */}
-        <ScrollArea className="w-full [&>[data-radix-scroll-area-viewport]]:overflow-visible">
-          <div className="flex gap-3 pb-2 pt-3 min-h-[180px]">
+        <ScrollArea className="flex-1 min-h-0 w-full [&>[data-radix-scroll-area-viewport]]:overflow-visible">
+          <div className="flex gap-3 pb-2 pt-3 h-full">
             {phases.map((phase, index) => (
               <PhaseCard
                 key={phase.id}
