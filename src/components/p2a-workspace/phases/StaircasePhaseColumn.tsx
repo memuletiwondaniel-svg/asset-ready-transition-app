@@ -161,11 +161,10 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
         {/* Phase Header Card - sticky at top when scrolling */}
         <div 
           className={cn(
-            "group rounded-t-xl border border-b-0 p-3 transition-all duration-200 hover:shadow-md sticky z-10",
+            "group rounded-t-xl border border-b-0 p-3 transition-all duration-200 hover:shadow-md",
             headerColorClass,
             showPhaseHighlight ? 'border-primary' : 'border-border'
           )}
-          style={{ top: `calc(${staircaseOffset}px + 1rem)` }}
         >
           <div className="flex items-center justify-between mb-1">
             {/* Drag handle for phase reordering */}
