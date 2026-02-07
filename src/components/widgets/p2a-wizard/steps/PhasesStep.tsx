@@ -1,5 +1,15 @@
 import React, { useState } from 'react';
-import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { createPortal } from 'react-dom';
+import {
+  DndContext,
+  DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -13,7 +23,7 @@ import {
 import { cn } from '@/lib/utils';
 import { WizardVCR } from './VCRCreationStep';
 import { PhaseCard } from './phases/PhaseCard';
-import { DraggableVCRChip } from './phases/DraggableVCRChip';
+import { DraggableVCRChip, VCRChipOverlay } from './phases/DraggableVCRChip';
 import { PhaseFormDialog } from './phases/PhaseFormDialog';
 
 export interface WizardPhase {
@@ -46,7 +56,8 @@ export const PhasesStep: React.FC<PhasesStepProps> = ({
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
   );
 
   // ── Phase CRUD ───────────────────────────────────────────
@@ -131,6 +142,9 @@ export const PhasesStep: React.FC<PhasesStepProps> = ({
   const activeDragVCR = activeDragId
     ? vcrs.find(v => `vcr-${v.id}` === activeDragId)
     : null;
+  const activeDragVCRIndex = activeDragVCR
+    ? vcrs.findIndex(v => v.id === activeDragVCR.id)
+    : -1;
 
   // ── No VCRs fallback ─────────────────────────────────────
   if (vcrs.length === 0 && phases.length === 0) {
@@ -177,6 +191,7 @@ export const PhasesStep: React.FC<PhasesStepProps> = ({
                 milestones={milestones}
                 assignedVCRs={getPhaseVCRs(phase.id)}
                 allVCRs={vcrs}
+                isReceivingDrag={!!activeDragId}
                 onEdit={handleStartEdit}
                 onDelete={handleDeletePhase}
                 onMoveLeft={() => movePhase(index, 'left')}
@@ -205,7 +220,10 @@ export const PhasesStep: React.FC<PhasesStepProps> = ({
 
         {/* Unassigned VCRs tray – shown as soon as phases exist */}
         {phases.length > 0 && vcrs.length > 0 && (
-          <div className="border rounded-lg bg-muted/30 p-3 space-y-2">
+          <div className={cn(
+            'border rounded-lg p-3 space-y-2 transition-colors',
+            activeDragId ? 'bg-muted/10 border-dashed border-border' : 'bg-muted/30',
+          )}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Key className="h-3.5 w-3.5 text-primary" />
@@ -248,15 +266,20 @@ export const PhasesStep: React.FC<PhasesStepProps> = ({
         )}
       </div>
 
-      {/* Drag overlay */}
-      <DragOverlay>
-        {activeDragVCR && (
-          <div className="flex items-center gap-2 px-3 py-2 rounded-lg border bg-card shadow-lg">
-            <Key className="h-3.5 w-3.5 text-primary shrink-0" />
-            <span className="text-xs font-medium">{activeDragVCR.name}</span>
-          </div>
-        )}
-      </DragOverlay>
+      {/* Drag overlay – portalled to document.body to escape Dialog transforms */}
+      {createPortal(
+        <DragOverlay
+          dropAnimation={{
+            duration: 200,
+            easing: 'cubic-bezier(0.2, 0, 0, 1)',
+          }}
+        >
+          {activeDragVCR && (
+            <VCRChipOverlay vcr={activeDragVCR} index={activeDragVCRIndex} />
+          )}
+        </DragOverlay>,
+        document.body,
+      )}
 
       <PhaseFormDialog
         open={dialogOpen}

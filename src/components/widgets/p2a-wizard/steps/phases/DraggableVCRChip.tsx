@@ -4,9 +4,9 @@ import { GripVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WizardVCR } from '../VCRCreationStep';
 
-const VCR_ID_HUES = [210, 260, 180, 320, 195, 280, 170, 300];
+export const VCR_ID_HUES = [210, 260, 180, 320, 195, 280, 170, 300];
 
-const getVCRIdStyle = (index: number) => {
+export const getVCRIdStyle = (index: number) => {
   const hue = VCR_ID_HUES[index % VCR_ID_HUES.length];
   return {
     backgroundColor: `hsl(${hue}, 40%, 94%)`,
@@ -34,7 +34,7 @@ export const DraggableVCRChip: React.FC<DraggableVCRChipProps> = ({ vcr, index }
       className={cn(
         'group flex items-center gap-2 px-3 py-2 rounded-lg border bg-card cursor-grab active:cursor-grabbing',
         'hover:border-primary/30 hover:bg-accent/50 hover:shadow-sm transition-all select-none',
-        isDragging && 'opacity-40 ring-2 ring-primary/30',
+        isDragging && 'opacity-30 scale-95 ring-2 ring-primary/20 shadow-inner',
       )}
     >
       <GripVertical className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -48,3 +48,25 @@ export const DraggableVCRChip: React.FC<DraggableVCRChipProps> = ({ vcr, index }
     </div>
   );
 };
+
+/** Static VCR chip used inside DragOverlay (no drag hooks) */
+export const VCRChipOverlay: React.FC<{ vcr: WizardVCR; index: number }> = ({ vcr, index }) => (
+  <div
+    className={cn(
+      'flex items-center gap-2 px-3 py-2 rounded-lg border bg-card',
+      'shadow-xl shadow-primary/10 ring-2 ring-primary/25',
+      'cursor-grabbing select-none pointer-events-none',
+      'animate-scale-in',
+    )}
+    style={{ minWidth: 180 }}
+  >
+    <GripVertical className="h-3.5 w-3.5 text-primary/50 shrink-0" />
+    <span className="text-xs font-medium truncate">{vcr.name}</span>
+    <span
+      className="text-[9px] font-mono px-1.5 py-0.5 rounded border shrink-0 ml-auto"
+      style={getVCRIdStyle(index)}
+    >
+      {vcr.code}
+    </span>
+  </div>
+);
