@@ -127,7 +127,7 @@ export const CreateVCRWizard: React.FC<CreateVCRWizardProps> = ({
 
       // Fetch phases
       const phasesResult = await client
-        .from('p2a_phases')
+        .from('p2a_project_phases')
         .select('id, name')
         .eq('handover_plan_id', plan.id)
         .order('display_order');

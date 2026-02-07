@@ -2869,6 +2869,7 @@ export type Database = {
           ora_plan_id: string
           plant_code: string | null
           project_code: string | null
+          project_id: string | null
           status: Database["public"]["Enums"]["p2a_plan_status"]
           updated_at: string
         }
@@ -2881,6 +2882,7 @@ export type Database = {
           ora_plan_id: string
           plant_code?: string | null
           project_code?: string | null
+          project_id?: string | null
           status?: Database["public"]["Enums"]["p2a_plan_status"]
           updated_at?: string
         }
@@ -2893,6 +2895,7 @@ export type Database = {
           ora_plan_id?: string
           plant_code?: string | null
           project_code?: string | null
+          project_id?: string | null
           status?: Database["public"]["Enums"]["p2a_plan_status"]
           updated_at?: string
         }
@@ -2902,6 +2905,20 @@ export type Database = {
             columns: ["ora_plan_id"]
             isOneToOne: false
             referencedRelation: "orp_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_handover_plans_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_handover_plans_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_enriched"
             referencedColumns: ["id"]
           },
         ]
