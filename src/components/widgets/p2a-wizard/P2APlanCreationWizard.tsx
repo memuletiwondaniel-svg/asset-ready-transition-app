@@ -318,7 +318,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
             </div>
             <div>
               <h2 className="text-lg font-semibold">
-                {existingPlan ? 'P2A Handover Plan' : 'Create P2A Handover Plan'}
+                Create P2A Plan
               </h2>
               <p className="text-xs text-muted-foreground">
                 {projectName && projectName !== projectCode 
