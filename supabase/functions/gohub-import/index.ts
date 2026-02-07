@@ -199,15 +199,18 @@ async function webLogin(
   return cookies;
 }
 
-// ─── Step 2: Discover Level ID ───────────────────────────────
+// ─── Step 2: Discover Level IDs ──────────────────────────────
 // GoHub requires X-GoTechnology-Level header for API calls.
 // After login, we need to discover available levels from the home page.
+// Returns an array of candidate level IDs (best guesses first).
 
-async function discoverLevelId(
+async function discoverLevelIds(
   cookies: Record<string, string>,
   origin: string,
   instanceName: string
-): Promise<string | null> {
+): Promise<string[]> {
+  const candidates: string[] = [];
+
   // Strategy 1: Try the Level API directly
   const levelApiUrls = [
     `${origin}/${instanceName}/api/Level`,
@@ -232,15 +235,13 @@ async function discoverLevelId(
           const data = await response.json();
           console.log(`GoHub Level: Got response from ${levelUrl}: ${JSON.stringify(data).substring(0, 500)}`);
 
-          // Try to find levels in the response
           const items = Array.isArray(data) ? data : data.Items || data.levels || [];
           if (Array.isArray(items) && items.length > 0) {
-            // Log all levels found
             for (const item of items) {
-              console.log(`GoHub Level: Found: ID=${item.ID || item.Id || item.id}, Name=${item.Name || item.name}`);
+              const id = String(item.ID || item.Id || item.id || "");
+              console.log(`GoHub Level: Found: ID=${id}, Name=${item.Name || item.name}`);
+              if (id) candidates.push(id);
             }
-            // Return the first level ID
-            return String(items[0].ID || items[0].Id || items[0].id || "");
           }
         } else {
           await response.text();
@@ -254,6 +255,8 @@ async function discoverLevelId(
       console.log(`GoHub Level: ${levelUrl} error: ${msg}`);
     }
   }
+
+  if (candidates.length > 0) return candidates;
 
   // Strategy 2: Parse the home page for level/project info
   try {
@@ -284,21 +287,27 @@ async function discoverLevelId(
 
       for (const pattern of patterns) {
         const match = html.match(pattern);
-        if (match) {
+        if (match && !candidates.includes(match[1])) {
           console.log(`GoHub Level: Found level ID in home page: ${match[1]}`);
-          return match[1];
+          candidates.push(match[1]);
         }
       }
 
-      // Log a portion of the home page for debugging
+      if (candidates.length > 0) return candidates;
+
+      // Strategy 3: Collect ALL GUIDs from the home page and try each one
       console.log(`GoHub Level: Home page snippet (first 1000 chars): ${html.substring(0, 1000)}`);
 
-      // Look for any GUID patterns that might be level IDs
       const guidPattern = /[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/gi;
       const guids = html.match(guidPattern);
       if (guids && guids.length > 0) {
         const uniqueGuids = [...new Set(guids)];
-        console.log(`GoHub Level: Found ${uniqueGuids.length} GUIDs on home page: ${uniqueGuids.slice(0, 5).join(", ")}`);
+        console.log(`GoHub Level: Found ${uniqueGuids.length} GUIDs on home page, will try each as level ID`);
+        for (const guid of uniqueGuids) {
+          if (!candidates.includes(guid)) {
+            candidates.push(guid);
+          }
+        }
       }
     } else {
       await response.text();
@@ -308,7 +317,7 @@ async function discoverLevelId(
     console.log(`GoHub Level: Home page error: ${msg}`);
   }
 
-  return null;
+  return candidates;
 }
 
 // ─── Step 3: Fetch SubSystem data via API ────────────────────
@@ -331,21 +340,19 @@ async function fetchCompletionsData(
   const instanceName = pathParts[0] || "BGC";
   const origin = parsed.origin;
 
-  // Step A: Discover the Level ID
-  const levelId = await discoverLevelId(cookies, origin, instanceName);
-  console.log(`GoHub: Discovered Level ID: ${levelId || "none"}`);
+  // Step A: Discover candidate Level IDs
+  const levelIds = await discoverLevelIds(cookies, origin, instanceName);
+  console.log(`GoHub: Discovered ${levelIds.length} candidate Level IDs`);
 
-  // Step B: Try API endpoints with and without Level header
+  // Step B: Try API endpoints with each candidate level ID, plus null
   const apiBase = `${origin}/${instanceName}/api`;
   const resources = ["SubSystem", "System"];
+  const levelOptions = [...levelIds, null]; // try all discovered IDs, then without
 
   for (const resource of resources) {
-    // Try with level header first, then without
-    const levelOptions = levelId ? [levelId, null] : [null];
-
     for (const level of levelOptions) {
       try {
-        const systems = await fetchFromApi(cookies, `${apiBase}/${resource}`, projectFilter, level);
+        const systems = await fetchFromApi(cookies, `${apiBase}/${resource}`, projectFilter, level ? String(level) : null);
         if (systems.length > 0) {
           console.log(`GoHub API: Got ${systems.length} systems from ${resource} (level=${level || "none"})`);
           return systems;
@@ -360,10 +367,9 @@ async function fetchCompletionsData(
   // Step C: Try fetching ALL subsystems without project filter, then filter client-side
   console.log("GoHub API: Trying without project filter...");
   for (const resource of resources) {
-    const levelOptions = levelId ? [levelId, null] : [null];
     for (const level of levelOptions) {
       try {
-        const systems = await fetchFromApi(cookies, `${apiBase}/${resource}`, "", level);
+        const systems = await fetchFromApi(cookies, `${apiBase}/${resource}`, "", level ? String(level) : null);
         const filtered = systems.filter(s =>
           s.system_id.toUpperCase().includes(projectFilter.toUpperCase())
         );
@@ -373,7 +379,6 @@ async function fetchCompletionsData(
         }
         if (systems.length > 0) {
           console.log(`GoHub API: Got ${systems.length} systems but none match filter '${projectFilter}'`);
-          // Log some sample IDs for debugging
           console.log(`GoHub API: Sample system IDs: ${systems.slice(0, 5).map(s => s.system_id).join(", ")}`);
         }
       } catch (_) { /* already logged */ }

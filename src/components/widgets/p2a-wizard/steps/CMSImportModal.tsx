@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Database, Loader2, CheckCircle2, AlertTriangle, ExternalLink, Lock, User, Globe } from 'lucide-react';
+import { Database, Loader2, CheckCircle2, AlertTriangle, ExternalLink, Lock, User, Globe, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { WizardSystem } from './SystemsImportStep';
 
@@ -55,6 +55,7 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
   const [portalUrl, setPortalUrl] = useState(DEFAULT_PORTAL_URL);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   // Load saved credentials on mount / when dialog opens
   useEffect(() => {
@@ -214,13 +215,24 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
               <Lock className="h-3.5 w-3.5 text-muted-foreground" />
               Password
             </Label>
-            <Input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              autoComplete="off"
-            />
+            <div className="relative">
+              <Input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                autoComplete="off"
+                className="pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
           </div>
 
           {/* Remember credentials */}
