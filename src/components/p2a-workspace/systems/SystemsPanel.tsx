@@ -135,6 +135,7 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
   handoverPoints = [],
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [showAddManualModal, setShowAddManualModal] = useState(false);
   const [showExcelModal, setShowExcelModal] = useState(false);
   const [showCMSModal, setShowCMSModal] = useState(false);
@@ -226,17 +227,41 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
       >
         <div className="p-3 pb-2 border-b border-border">
           <div className="flex items-center gap-2">
-            <Layers className="w-4 h-4 text-muted-foreground shrink-0" />
-            <h3 className="font-semibold text-sm shrink-0">Systems</h3>
-            <div className="relative flex-1 min-w-0">
-              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
-              <Input
-                placeholder="Search..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-6 h-6 text-[10px] placeholder:text-[9px] placeholder:text-muted-foreground/50"
-              />
-            </div>
+            {isSearchOpen ? (
+              <>
+                <div className="relative flex-1 min-w-0">
+                  <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+                  <Input
+                    autoFocus
+                    placeholder="Search systems..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onBlur={() => {
+                      if (!searchQuery.trim()) setIsSearchOpen(false);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Escape') {
+                        setSearchQuery('');
+                        setIsSearchOpen(false);
+                      }
+                    }}
+                    className="pl-6 h-6 text-[10px] placeholder:text-[9px] placeholder:text-muted-foreground/50"
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                <Layers className="w-4 h-4 text-muted-foreground shrink-0" />
+                <h3 className="font-semibold text-sm flex-1">Systems</h3>
+                <button
+                  onClick={() => setIsSearchOpen(true)}
+                  className="p-1 rounded hover:bg-muted/50 transition-colors"
+                  type="button"
+                >
+                  <Search className="w-3.5 h-3.5 text-muted-foreground" />
+                </button>
+              </>
+            )}
           </div>
         </div>
 
