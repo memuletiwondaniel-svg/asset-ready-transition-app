@@ -51,11 +51,11 @@ function getSystemIdColor(systemId: string) {
   hash = Math.abs(hash);
   const hueAnchors = [165, 180, 200, 220, 250, 280, 320];
   const hue = (hueAnchors[hash % hueAnchors.length] + (((hash >> 8) % 25) - 12) + 360) % 360;
-  const sat = 30 + ((hash >> 12) % 15);
-  const light = 50 + ((hash >> 16) % 12);
+  const sat = 35 + ((hash >> 12) % 10);
   return {
-    bg: `hsl(${hue}, ${sat}%, ${light}%)`,
-    bgEnd: `hsl(${hue}, ${sat + 8}%, ${light - 10}%)`,
+    bg: `hsl(${hue}, ${sat}%, 94%)`,
+    border: `hsl(${hue}, ${sat}%, 82%)`,
+    text: `hsl(${hue}, ${sat + 15}%, 35%)`,
   };
 }
 
@@ -255,8 +255,8 @@ const SystemListItem: React.FC<SystemListItemProps> = ({
     <div className="group flex items-center gap-2 py-1.5 px-2.5 rounded-md border bg-card hover:bg-muted/50 transition-colors">
       <div className="flex-1 min-w-0 flex items-center gap-2">
         <span
-          className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold text-white shrink-0 leading-none"
-          style={{ background: `linear-gradient(to right, ${idColors.bg}, ${idColors.bgEnd})` }}
+          className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold shrink-0 leading-none border"
+          style={{ background: idColors.bg, borderColor: idColors.border, color: idColors.text }}
         >
           {system.system_id}
         </span>
