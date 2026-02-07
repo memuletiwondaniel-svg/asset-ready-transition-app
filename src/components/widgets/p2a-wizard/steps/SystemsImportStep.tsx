@@ -325,17 +325,15 @@ const SystemListItem: React.FC<SystemListItemProps> = ({
           {system.subsystems!.map((sub, idx) => (
             <div
               key={sub.system_id + idx}
-              className="flex items-center gap-2 py-0.5 px-2 rounded text-xs"
+              className="grid grid-cols-[auto_1fr_auto] items-center gap-x-4 py-0.5 px-2 rounded text-xs"
             >
-              <span className="inline-flex items-center px-1 py-0.5 rounded text-[8px] font-medium tabular-nums tracking-wide shrink-0 leading-none border border-border bg-muted text-muted-foreground">
+              <span className="inline-flex items-center px-1 py-0.5 rounded text-[8px] font-medium tabular-nums tracking-wide shrink-0 leading-none border border-border bg-muted text-muted-foreground whitespace-nowrap">
                 {sub.system_id}
               </span>
-              <span className="truncate flex-1 text-muted-foreground text-[10px]">{sub.name}</span>
+              <span className="truncate text-muted-foreground text-[10px] text-left">{sub.name}</span>
               <span className="text-[9px] font-medium tabular-nums shrink-0 text-muted-foreground">
                 {Math.round(sub.progress)}%
               </span>
-              {/* Spacer matching the width of the parent's hover action buttons */}
-              <div className="w-[52px] shrink-0" />
             </div>
           ))}
         </div>
