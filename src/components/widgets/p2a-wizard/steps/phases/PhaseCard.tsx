@@ -1,0 +1,135 @@
+import React from 'react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Pencil,
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
+  Milestone,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { WizardPhase } from '../PhasesStep';
+
+interface PhaseCardProps {
+  phase: WizardPhase;
+  index: number;
+  total: number;
+  milestones: Array<{ id: string; name: string; target_date?: string }>;
+  vcrCount: number;
+  onEdit: (phase: WizardPhase) => void;
+  onDelete: (id: string) => void;
+  onMoveLeft: () => void;
+  onMoveRight: () => void;
+}
+
+const PHASE_COLORS = [
+  { bg: 'bg-slate-100 dark:bg-slate-800/50', border: 'border-slate-200 dark:border-slate-700', accent: 'text-slate-600 dark:text-slate-400' },
+  { bg: 'bg-blue-50 dark:bg-blue-900/30', border: 'border-blue-200 dark:border-blue-800', accent: 'text-blue-600 dark:text-blue-400' },
+  { bg: 'bg-emerald-50 dark:bg-emerald-900/30', border: 'border-emerald-200 dark:border-emerald-800', accent: 'text-emerald-600 dark:text-emerald-400' },
+  { bg: 'bg-amber-50 dark:bg-amber-900/30', border: 'border-amber-200 dark:border-amber-800', accent: 'text-amber-600 dark:text-amber-400' },
+  { bg: 'bg-purple-50 dark:bg-purple-900/30', border: 'border-purple-200 dark:border-purple-800', accent: 'text-purple-600 dark:text-purple-400' },
+  { bg: 'bg-rose-50 dark:bg-rose-900/30', border: 'border-rose-200 dark:border-rose-800', accent: 'text-rose-600 dark:text-rose-400' },
+];
+
+export const PhaseCard: React.FC<PhaseCardProps> = ({
+  phase,
+  index,
+  total,
+  milestones,
+  vcrCount,
+  onEdit,
+  onDelete,
+  onMoveLeft,
+  onMoveRight,
+}) => {
+  const colors = PHASE_COLORS[index % PHASE_COLORS.length];
+  const linkedMilestones = milestones.filter(m => phase.milestoneIds.includes(m.id));
+
+  return (
+    <div
+      className={cn(
+        'group relative flex flex-col rounded-lg border-2 transition-all min-w-[160px] flex-1',
+        colors.border,
+        colors.bg,
+      )}
+    >
+      {/* Phase number badge */}
+      <div className={cn('absolute -top-2.5 left-3 px-2 py-0.5 rounded-full text-[10px] font-bold', colors.bg, colors.border, 'border')}>
+        <span className={colors.accent}>Phase {index + 1}</span>
+      </div>
+
+      {/* Reorder arrows */}
+      <div className="absolute -top-2.5 right-2 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-5 w-5 rounded-full bg-background"
+          onClick={onMoveLeft}
+          disabled={index === 0}
+        >
+          <ChevronLeft className="h-3 w-3" />
+        </Button>
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-5 w-5 rounded-full bg-background"
+          onClick={onMoveRight}
+          disabled={index === total - 1}
+        >
+          <ChevronRight className="h-3 w-3" />
+        </Button>
+      </div>
+
+      {/* Card content */}
+      <div className="p-3 pt-4 flex flex-col gap-2 flex-1">
+        {/* Title */}
+        <div className="flex items-start justify-between gap-1">
+          <h4 className="text-sm font-semibold leading-tight line-clamp-2">{phase.name}</h4>
+        </div>
+
+        {/* Description */}
+        {phase.description && (
+          <p className="text-[11px] text-muted-foreground line-clamp-3 leading-relaxed">
+            {phase.description}
+          </p>
+        )}
+
+        {/* Milestones */}
+        {linkedMilestones.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-auto">
+            {linkedMilestones.map(m => (
+              <span
+                key={m.id}
+                className="inline-flex items-center gap-1 text-[9px] text-muted-foreground bg-background/60 border px-1.5 py-0.5 rounded"
+              >
+                <Milestone className="h-2.5 w-2.5" />
+                {m.name}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Footer stats */}
+        <div className="flex items-center justify-between mt-auto pt-2 border-t border-border/50">
+          <Badge variant="secondary" className="text-[10px] font-normal">
+            {vcrCount} VCR{vcrCount !== 1 ? 's' : ''}
+          </Badge>
+          <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onEdit(phase)}>
+              <Pencil className="h-3 w-3" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 text-destructive hover:text-destructive"
+              onClick={() => onDelete(phase.id)}
+            >
+              <Trash2 className="h-3 w-3" />
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
