@@ -119,9 +119,9 @@ export const DraggableSystemCard: React.FC<SystemCardProps> = (props) => {
     },
   });
 
-  const style = transform ? {
+  // Don't apply transform when isDragging — DragOverlay handles the visual preview
+  const style = (transform && !isDragging) ? {
     transform: CSS.Translate.toString(transform),
-    zIndex: isDragging ? 999 : undefined,
   } : undefined;
 
   return (

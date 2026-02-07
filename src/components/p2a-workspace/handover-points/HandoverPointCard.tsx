@@ -134,9 +134,10 @@ export const DraggableHandoverPointCard: React.FC<HandoverPointCardProps> = (pro
     },
   });
 
-  const style = transform ? {
+  // Don't apply transform when isDragging — the DragOverlay handles the visual preview.
+  // Applying transform here moves the placeholder away from its original position.
+  const style = (transform && !isDragging) ? {
     transform: CSS.Translate.toString(transform),
-    zIndex: isDragging ? 999 : undefined,
   } : undefined;
 
   return (
