@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, MoreVertical, Trash2, Edit, ArrowDown, GripVertical } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -24,6 +24,7 @@ interface StaircasePhaseColumnProps {
   isFirstPhase: boolean;
   isLastPhase: boolean;
   showMapping?: boolean;
+  vcrAlignmentTargets?: Record<string, number>;
 }
 
 export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
@@ -39,9 +40,30 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
   isFirstPhase,
   isLastPhase,
   showMapping = false,
+  vcrAlignmentTargets = {},
 }) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const vcrContainerRef = useRef<HTMLDivElement>(null);
+  const [containerTop, setContainerTop] = useState(0);
+
+  // Measure the VCR container's top position relative to the workspace
+  useEffect(() => {
+    if (!showMapping || !vcrContainerRef.current) return;
+    const measure = () => {
+      const el = vcrContainerRef.current;
+      if (!el) return;
+      // Get position relative to the workspace container (closest relative/abs parent)
+      const workspaceEl = el.closest('[data-workspace-container]') || el.offsetParent;
+      if (!workspaceEl) return;
+      const containerRect = (workspaceEl as HTMLElement).getBoundingClientRect();
+      const elRect = el.getBoundingClientRect();
+      setContainerTop(elRect.top - containerRect.top);
+    };
+    measure();
+    const raf = requestAnimationFrame(measure);
+    return () => cancelAnimationFrame(raf);
+  }, [showMapping, handoverPoints]);
 
   const { active: dndActive } = useDndContext();
   const isSystemDragging = dndActive?.data.current?.type === 'system';
@@ -90,6 +112,19 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
   const sortedPoints = showMapping
     ? [...handoverPoints].sort((a, b) => (a.vcr_code || '').localeCompare(b.vcr_code || ''))
     : [...handoverPoints].sort((a, b) => a.position_y - b.position_y);
+
+  // Check if we have alignment targets for absolute positioning
+  const hasAlignmentTargets = showMapping && Object.keys(vcrAlignmentTargets).length > 0;
+
+  // Compute min-height for the container when using absolute positioning
+  const CARD_HEIGHT = 42;
+  const computedMinHeight = hasAlignmentTargets
+    ? Math.max(400, ...sortedPoints.map((p) => {
+        const targetY = vcrAlignmentTargets[p.id];
+        if (targetY === undefined) return 0;
+        return targetY - containerTop + CARD_HEIGHT + 12; // 12px bottom padding
+      }))
+    : undefined;
 
   const handleDeleteConfirm = async () => {
     setIsDeleting(true);
@@ -169,11 +204,13 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
 
         {/* VCRs Container - Expand vertically when mapping is active */}
         <div 
+          ref={vcrContainerRef}
           className={cn(
             "border border-t-0 rounded-b-xl p-3 transition-colors",
             showMapping ? 'min-h-[400px]' : 'min-h-[200px]',
             showPhaseHighlight ? 'border-primary bg-primary/5' : 'border-border bg-card/50'
           )}
+          style={showMapping && hasAlignmentTargets ? { position: 'relative', minHeight: computedMinHeight } : undefined}
         >
           {sortedPoints.length === 0 ? (
             <div className="flex items-center justify-center h-full min-h-[100px]">
@@ -184,6 +221,38 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
                 </div>
               </div>
             </div>
+          ) : showMapping && hasAlignmentTargets ? (
+            /* Absolute positioning mode: each VCR placed at its system group's Y */
+            <>
+              {sortedPoints.map((point) => {
+                const targetY = vcrAlignmentTargets[point.id];
+                // Card height is ~42px (p-1.5 + content); estimate half-height for centering
+                const CARD_HALF_HEIGHT = 21;
+                const topOffset = targetY !== undefined
+                  ? Math.max(0, targetY - containerTop - CARD_HALF_HEIGHT)
+                  : undefined;
+
+                return (
+                  <div
+                    key={point.id}
+                    style={topOffset !== undefined ? {
+                      position: 'absolute',
+                      top: topOffset,
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      transition: 'top 0.3s ease',
+                    } : {
+                      marginBottom: 8,
+                    }}
+                  >
+                    <DraggableHandoverPointCard
+                      handoverPoint={point}
+                      onClick={() => onOpenVCR(point)}
+                    />
+                  </div>
+                );
+              })}
+            </>
           ) : (
             <div className={cn(
               "flex flex-col items-center content-start",

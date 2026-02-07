@@ -125,7 +125,7 @@ export const DraggableSystemCard: React.FC<SystemCardProps> = (props) => {
   } : undefined;
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners} data-system-id={props.system.id}>
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners} data-system-id={props.system.id} data-assigned-vcr-id={props.system.assigned_handover_point_id || undefined}>
       <SystemCard {...props} isDragging={isDragging} />
     </div>
   );
