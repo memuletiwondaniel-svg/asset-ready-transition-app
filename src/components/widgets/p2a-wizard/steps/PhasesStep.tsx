@@ -230,15 +230,6 @@ export const PhasesStep: React.FC<PhasesStepProps> = ({
                   {unassignedVCRs.length > 0 ? 'Unassigned VCRs' : 'All VCRs Assigned'}
                 </span>
               </div>
-              <Badge
-                variant="outline"
-                className={cn(
-                  'text-[10px]',
-                  unassignedVCRs.length > 0 && 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800'
-                )}
-              >
-                {vcrs.length - unassignedVCRs.length}/{vcrs.length} assigned
-              </Badge>
             </div>
 
             {unassignedVCRs.length > 0 ? (
