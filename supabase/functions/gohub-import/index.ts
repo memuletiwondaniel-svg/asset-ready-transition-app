@@ -341,146 +341,137 @@ interface CompletionsSystem {
   is_hydrocarbon: boolean;
 }
 
-// ─── Strategy 1: ASP.NET PageMethod ─────────────────────────
-// CompletionsGrid.GetSystems(itrClass, callback) in JS maps to:
-// POST CompletionsGrid.aspx/GetSystems  { "itrClass": "All" }
+// ─── Resolve ASMX service URL from page HTML ────────────────
 
-async function tryPageMethod(
+function resolveAsmxServiceUrl(gridHtml: string, gridPageUrl: string): string | null {
+  // Look for the ASMX script reference: <script src="../../Controls/CompletionsGrid.asmx/js">
+  const asmxMatch = gridHtml.match(/src=["']([^"']*CompletionsGrid\.asmx)\/js["']/i);
+  if (asmxMatch) {
+    const relativePath = asmxMatch[1];
+    // Resolve relative to the grid page's directory
+    const pageDir = gridPageUrl.replace(/\/[^/]*$/, "/");
+    const resolved = new URL(relativePath, pageDir).toString();
+    console.log(`GoHub: Resolved ASMX service URL: ${resolved} (from relative: ${relativePath})`);
+    return resolved;
+  }
+  return null;
+}
+
+// ─── Strategy 1: ASMX WebMethod (correct endpoint) ─────────
+// The JS proxy CompletionsGrid.GetSystems() maps to:
+// POST /BGC/Controls/CompletionsGrid.asmx/GetSystems
+
+async function tryAsmxWebMethod(
   cookies: Record<string, string>,
-  gridPageUrl: string
+  gridPageUrl: string,
+  gridHtml: string
 ): Promise<CompletionsSystem[]> {
-  console.log("GoHub: Trying ASP.NET PageMethod: CompletionsGrid.aspx/GetSystems");
+  // First, resolve the correct ASMX service URL from the page HTML
+  const asmxBaseUrl = resolveAsmxServiceUrl(gridHtml, gridPageUrl);
+  
+  const origin = new URL(gridPageUrl).origin;
+  const parsed = new URL(gridPageUrl);
+  const pathParts = parsed.pathname.split("/").filter(Boolean);
+  const instanceName = pathParts[0] || "BGC";
 
-  // The page URL is CompletionsGrid.aspx, so the PageMethod URL is CompletionsGrid.aspx/GetSystems
-  const pageMethodUrl = gridPageUrl.replace(/\?.*$/, "") + "/GetSystems";
-  console.log(`GoHub: PageMethod URL: ${pageMethodUrl}`);
+  // Build list of URLs to try, starting with the correctly resolved one
+  const urlsToTry: string[] = [];
+  
+  if (asmxBaseUrl) {
+    urlsToTry.push(`${asmxBaseUrl}/GetSystems`);
+  }
+  
+  // Also try common paths as fallbacks
+  urlsToTry.push(
+    `${origin}/${instanceName}/Controls/CompletionsGrid.asmx/GetSystems`,
+    `${origin}/${instanceName}/GoCompletions/Controls/CompletionsGrid.asmx/GetSystems`,
+  );
 
-  const itrClasses = ["All", "", "A", "B"];
+  // Deduplicate
+  const uniqueUrls = [...new Set(urlsToTry)];
 
-  for (const itrClass of itrClasses) {
-    try {
-      console.log(`GoHub: Trying PageMethod with itrClass="${itrClass}"`);
+  for (const url of uniqueUrls) {
+    console.log(`GoHub: Trying ASMX WebMethod: ${url}`);
+    
+    const itrClasses = ["All", ""];
+    for (const itrClass of itrClasses) {
+      try {
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json; charset=utf-8",
+            Cookie: formatCookies(cookies),
+            "User-Agent": BROWSER_UA,
+            "X-Requested-With": "XMLHttpRequest",
+            Accept: "application/json, text/javascript, */*; q=0.01",
+            Referer: gridPageUrl,
+            Origin: origin,
+          },
+          body: JSON.stringify({ itrClass }),
+        });
 
-      const response = await fetch(pageMethodUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json; charset=utf-8",
-          Cookie: formatCookies(cookies),
-          "User-Agent": BROWSER_UA,
-          "X-Requested-With": "XMLHttpRequest",
-          Accept: "application/json, text/javascript, */*; q=0.01",
-          Referer: gridPageUrl,
-          Origin: new URL(gridPageUrl).origin,
-        },
-        body: JSON.stringify({ itrClass }),
-      });
+        const status = response.status;
+        const contentType = response.headers.get("content-type") || "";
+        const text = await response.text();
+        cookies = parseCookiesFromResponse(response, cookies);
 
-      const status = response.status;
-      const contentType = response.headers.get("content-type") || "";
-      const text = await response.text();
+        console.log(`GoHub: ASMX response: url=${url}, itrClass=${itrClass}, status=${status}, type=${contentType}, length=${text.length}`);
+        console.log(`GoHub: ASMX response preview: ${text.substring(0, 3000)}`);
 
-      console.log(`GoHub: PageMethod response status=${status}, type=${contentType}, length=${text.length}`);
-      console.log(`GoHub: PageMethod response preview: ${text.substring(0, 2000)}`);
-
-      if (status === 200 && text.length > 50) {
-        const systems = parsePageMethodResponse(text);
-        if (systems.length > 0) {
-          console.log(`GoHub: PageMethod returned ${systems.length} systems!`);
-          return systems;
+        if (status === 200 && text.length > 50) {
+          const systems = parsePageMethodResponse(text);
+          if (systems.length > 0) {
+            console.log(`GoHub: ASMX WebMethod returned ${systems.length} systems!`);
+            return systems;
+          }
         }
-      }
 
-      if (status === 401 || status === 403) {
-        console.log("GoHub: PageMethod returned auth error, session may not be valid for this endpoint");
-        break;
+        // If 401/500, log details and try next
+        if (status >= 400) {
+          console.log(`GoHub: ASMX error ${status}: ${text.substring(0, 500)}`);
+        }
+      } catch (e) {
+        console.log(`GoHub: ASMX WebMethod error for ${url}: ${e}`);
       }
-    } catch (e) {
-      console.log(`GoHub: PageMethod error: ${e}`);
     }
   }
 
   return [];
 }
 
-// ─── Strategy 2: ScriptManager WebServiceProxy ──────────────
-// ASP.NET ScriptManager generates proxy calls like:
-// POST CompletionsGrid.aspx/GetSystems with content-type application/json
+// ─── Strategy 2: ASP.NET PageMethod on the ASPX page ────────
 
-async function tryScriptManagerProxy(
+async function tryPageMethod(
   cookies: Record<string, string>,
-  gridPageUrl: string,
-  gridHtml: string
+  gridPageUrl: string
 ): Promise<CompletionsSystem[]> {
-  console.log("GoHub: Trying ScriptManager WebServiceProxy patterns...");
+  const pageMethodUrl = gridPageUrl.replace(/\?.*$/, "") + "/GetSystems";
+  console.log(`GoHub: Trying PageMethod: ${pageMethodUrl}`);
 
-  // Extract the form action to build correct URLs
-  const origin = new URL(gridPageUrl).origin;
-  const basePath = gridPageUrl.replace(/\/[^/]*$/, "");
+  try {
+    const response = await fetch(pageMethodUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json; charset=utf-8",
+        Cookie: formatCookies(cookies),
+        "User-Agent": BROWSER_UA,
+        "X-Requested-With": "XMLHttpRequest",
+        Accept: "application/json, text/javascript, */*; q=0.01",
+        Referer: gridPageUrl,
+        Origin: new URL(gridPageUrl).origin,
+      },
+      body: JSON.stringify({ itrClass: "All" }),
+    });
 
-  // Look for ScriptManager script references that indicate web service paths
-  const servicePathPatterns = [
-    /Sys\.Net\.WebServiceProxy\._generateTypedConstructor\s*\(\s*["']([^"']+)["']/g,
-    /path\s*:\s*["']([^"']*CompletionsGrid[^"']*)["']/gi,
-    /serviceUrl\s*:\s*["']([^"']+)["']/gi,
-  ];
+    const text = await response.text();
+    console.log(`GoHub: PageMethod response: status=${response.status}, length=${text.length}, preview=${text.substring(0, 1000)}`);
 
-  const servicePaths: string[] = [];
-  for (const pattern of servicePathPatterns) {
-    let m;
-    while ((m = pattern.exec(gridHtml)) !== null) {
-      servicePaths.push(m[1]);
+    if (response.status === 200 && text.length > 50) {
+      const systems = parsePageMethodResponse(text);
+      if (systems.length > 0) return systems;
     }
-  }
-
-  // Also try the page's own inline script references
-  const inlineScriptMatch = gridHtml.match(
-    /CompletionsGrid\.aspx\/js/i
-  );
-  if (inlineScriptMatch) {
-    console.log("GoHub: Found ScriptManager JS proxy reference");
-  }
-
-  // Try known web method names from CompletionsGrid.js
-  const methodNames = [
-    "GetSystems",
-    "GetSystemPunchlists",
-    "GetSubSystems",
-    "GetAllSystems",
-  ];
-
-  const pageBase = gridPageUrl.replace(/\?.*$/, "");
-
-  for (const method of methodNames) {
-    const url = `${pageBase}/${method}`;
-    try {
-      console.log(`GoHub: Trying WebMethod: ${url}`);
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json; charset=utf-8",
-          Cookie: formatCookies(cookies),
-          "User-Agent": BROWSER_UA,
-          "X-Requested-With": "XMLHttpRequest",
-          Accept: "application/json, text/javascript, */*; q=0.01",
-          Referer: gridPageUrl,
-          Origin: origin,
-        },
-        body: method === "GetSystems" ? JSON.stringify({ itrClass: "All" }) : "{}",
-      });
-
-      const text = await response.text();
-      console.log(`GoHub: WebMethod ${method} response: status=${response.status}, length=${text.length}, preview=${text.substring(0, 1000)}`);
-
-      if (response.status === 200 && text.length > 50) {
-        const systems = parsePageMethodResponse(text);
-        if (systems.length > 0) {
-          console.log(`GoHub: WebMethod ${method} returned ${systems.length} systems!`);
-          return systems;
-        }
-      }
-    } catch (e) {
-      console.log(`GoHub: WebMethod ${method} error: ${e}`);
-    }
+  } catch (e) {
+    console.log(`GoHub: PageMethod error: ${e}`);
   }
 
   return [];
@@ -579,70 +570,7 @@ function extractFromHtml(gridHtml: string): CompletionsSystem[] {
   return systems;
 }
 
-// ─── Strategy 4: ASP.NET ASMX / WCF Service ────────────────
-
-async function tryAsmxService(
-  cookies: Record<string, string>,
-  gridPageUrl: string,
-  gridHtml: string
-): Promise<CompletionsSystem[]> {
-  console.log("GoHub: Trying ASMX/WCF web service endpoints...");
-
-  const origin = new URL(gridPageUrl).origin;
-  const parsed = new URL(gridPageUrl);
-  const pathParts = parsed.pathname.split("/").filter(Boolean);
-  const instanceName = pathParts[0] || "BGC";
-
-  // Look for .asmx or .svc references in the HTML
-  const servicePatterns = [
-    /src=["']([^"']*\.asmx[^"']*)["']/gi,
-    /src=["']([^"']*\.svc[^"']*)["']/gi,
-    /["']([^"']*CompletionsService[^"']*)["']/gi,
-    /["']([^"']*CompletionsGrid\.asmx[^"']*)["']/gi,
-  ];
-
-  const serviceUrls: string[] = [];
-  for (const pattern of servicePatterns) {
-    let m;
-    while ((m = pattern.exec(gridHtml)) !== null) {
-      serviceUrls.push(m[1]);
-    }
-  }
-
-  // Also try common ASMX paths
-  serviceUrls.push(
-    `/${instanceName}/GoCompletions/CompletionsGrid.asmx/GetSystems`,
-    `/${instanceName}/GoCompletions/Completions/CompletionsGrid.asmx/GetSystems`,
-    `/${instanceName}/GoCompletions/WebServices/CompletionsService.asmx/GetSystems`,
-  );
-
-  for (const svcPath of serviceUrls) {
-    try {
-      const url = new URL(svcPath, origin).toString();
-      console.log(`GoHub: Trying service: ${url}`);
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json; charset=utf-8",
-          Cookie: formatCookies(cookies),
-          "User-Agent": BROWSER_UA,
-          Accept: "application/json",
-          Referer: gridPageUrl,
-        },
-        body: JSON.stringify({ itrClass: "All" }),
-      });
-      const text = await response.text();
-      console.log(`GoHub: Service ${svcPath} response: status=${response.status}, length=${text.length}`);
-      if (response.status === 200 && text.length > 100) {
-        console.log(`GoHub: Service response preview: ${text.substring(0, 1000)}`);
-        const systems = parsePageMethodResponse(text);
-        if (systems.length > 0) return systems;
-      }
-    } catch (_) { /* continue */ }
-  }
-
-  return [];
-}
+// (Old tryAsmxService removed - functionality merged into tryAsmxWebMethod above)
 
 // ─── Response Parser ────────────────────────────────────────
 
@@ -814,23 +742,18 @@ Deno.serve(async (req) => {
 
     let completionsSystems: CompletionsSystem[] = [];
 
-    // Strategy 1: ASP.NET PageMethod (the correct approach for CompletionsGrid.GetSystems())
-    completionsSystems = await tryPageMethod(gridCookies, gridPageUrl);
-    console.log(`GoHub: PageMethod found ${completionsSystems.length} systems`);
+    // Strategy 1: ASMX WebMethod (correct endpoint from script src)
+    // The JS proxy src="../../Controls/CompletionsGrid.asmx/js" resolves to /BGC/Controls/CompletionsGrid.asmx
+    completionsSystems = await tryAsmxWebMethod(gridCookies, gridPageUrl, gridHtml);
+    console.log(`GoHub: ASMX WebMethod found ${completionsSystems.length} systems`);
 
-    // Strategy 2: ScriptManager WebServiceProxy
+    // Strategy 2: ASP.NET PageMethod on the ASPX page itself
     if (completionsSystems.length === 0) {
-      completionsSystems = await tryScriptManagerProxy(gridCookies, gridPageUrl, gridHtml);
-      console.log(`GoHub: ScriptManager found ${completionsSystems.length} systems`);
+      completionsSystems = await tryPageMethod(gridCookies, gridPageUrl);
+      console.log(`GoHub: PageMethod found ${completionsSystems.length} systems`);
     }
 
-    // Strategy 3: ASMX/WCF service endpoints
-    if (completionsSystems.length === 0) {
-      completionsSystems = await tryAsmxService(gridCookies, gridPageUrl, gridHtml);
-      console.log(`GoHub: ASMX service found ${completionsSystems.length} systems`);
-    }
-
-    // Strategy 4: Extract whatever data is visible in the HTML itself
+    // Strategy 3: Extract whatever data is visible in the HTML itself
     if (completionsSystems.length === 0) {
       completionsSystems = extractFromHtml(gridHtml);
       console.log(`GoHub: HTML extraction found ${completionsSystems.length} systems`);
