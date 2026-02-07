@@ -15,6 +15,7 @@ import { EmptyWorkspaceState } from './EmptyWorkspaceState';
 import { SystemsPanel } from './systems/SystemsPanel';
 import { SystemCard } from './systems/SystemCard';
 import { PhasesTimeline } from './phases/PhasesTimeline';
+import { UnassignedVCRPanel } from './phases/UnassignedVCRPanel';
 import { CreateHandoverPointDialog } from './handover-points/CreateHandoverPointDialog';
 import { HandoverPointCard } from './handover-points/HandoverPointCard';
 import { VCRDetailOverlay } from './handover-points/VCRDetailOverlay';
@@ -535,6 +536,13 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
             }
             return success;
           }}
+        />
+
+        {/* Unassigned VCRs Panel - RIGHT Side */}
+        <UnassignedVCRPanel
+          handoverPoints={unassignedPointsWithUi}
+          onOpenVCR={handleOpenVCR}
+          onCreateHandoverPoint={() => handleCreateHandoverPoint(null)}
         />
       </div>
 
