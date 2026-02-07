@@ -99,11 +99,20 @@ export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
         if (!resolvedPlantName) {
           const { data: projectData } = await supabase
             .from('projects')
-            .select('plant_id, plant:plant!projects_plant_id_fkey(name)')
+            .select('plant_id')
             .eq('id', projectId)
             .single();
-          resolvedPlantName = (projectData as any)?.plant?.name || null;
+          
+          if (projectData?.plant_id) {
+            const { data: plantData } = await supabase
+              .from('plant')
+              .select('name')
+              .eq('id', projectData.plant_id)
+              .single();
+            resolvedPlantName = plantData?.name || null;
+          }
         }
+        console.log('[P2A Approval] Resolved plant name:', resolvedPlantName);
         const { data: teamData, error: teamError } = await supabase
           .from('project_team_members')
           .select('id, user_id, role, is_lead')
@@ -118,11 +127,13 @@ export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
         // Also find Deputy Plant Director from profiles based on plant name
         let deputyProfile: { user_id: string; full_name: string; avatar_url?: string } | null = null;
         if (resolvedPlantName) {
-          const { data: deputies } = await supabase
+          const { data: deputies, error: deputyError } = await supabase
             .from('profiles')
             .select('user_id, full_name, avatar_url')
             .or(`position.ilike.%Dep. Plant Director - ${resolvedPlantName}%,position.ilike.%Deputy Plant Director - ${resolvedPlantName}%`)
             .limit(1);
+
+          console.log('[P2A Approval] Deputy lookup result:', { deputies, deputyError, resolvedPlantName });
 
           if (deputies && deputies.length > 0) {
             deputyProfile = deputies[0];
@@ -170,8 +181,11 @@ export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
 
         setTeamMembers(members);
 
-        // Always populate from fixed roles on first load
-        if (approvers.length === 0 || shouldRepopulate(approvers)) {
+        // Always populate from fixed roles on first load, or if there are issues
+        const deputyApprover = approvers.find(a => a.role_name === 'Deputy Plant Director');
+        const deputyNeedsUpdate = deputyApprover && !deputyApprover.user_id && deputyProfile;
+
+        if (approvers.length === 0 || shouldRepopulate(approvers) || deputyNeedsUpdate) {
           populateApproversFromTeam(members, deputyProfile ? {
             user_id: deputyProfile.user_id,
             full_name: profilesMap[deputyProfile.user_id]?.full_name || deputyProfile.full_name,
