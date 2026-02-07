@@ -113,16 +113,14 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
     ? [...handoverPoints].sort((a, b) => (a.vcr_code || '').localeCompare(b.vcr_code || ''))
     : [...handoverPoints].sort((a, b) => a.position_y - b.position_y);
 
-  // Check if we have alignment targets for absolute positioning
-  const hasAlignmentTargets = showMapping && Object.keys(vcrAlignmentTargets).length > 0;
-
-  // Compute min-height for the container when using absolute positioning
+  // Compute min-height for the container when any VCR has absolute positioning
   const CARD_HEIGHT = 42;
-  const computedMinHeight = hasAlignmentTargets
+  const hasAnyAlignmentTarget = showMapping && sortedPoints.some(p => vcrAlignmentTargets[p.id] !== undefined);
+  const computedMinHeight = hasAnyAlignmentTarget
     ? Math.max(400, ...sortedPoints.map((p) => {
         const targetY = vcrAlignmentTargets[p.id];
         if (targetY === undefined) return 0;
-        return targetY - containerTop + CARD_HEIGHT + 12; // 12px bottom padding
+        return targetY - containerTop + CARD_HEIGHT + 12;
       }))
     : undefined;
 
@@ -202,15 +200,14 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
           </div>
         </div>
 
-        {/* VCRs Container - Expand vertically when mapping is active */}
+        {/* VCRs Container */}
         <div 
           ref={vcrContainerRef}
           className={cn(
-            "border border-t-0 rounded-b-xl p-3 transition-colors",
-            showMapping ? 'min-h-[400px]' : 'min-h-[200px]',
+            "border border-t-0 rounded-b-xl p-3 transition-colors flex-1",
             showPhaseHighlight ? 'border-primary bg-primary/5' : 'border-border bg-card/50'
           )}
-          style={showMapping && hasAlignmentTargets ? { position: 'relative', minHeight: computedMinHeight } : undefined}
+          style={{ position: 'relative', minHeight: showMapping ? computedMinHeight || 200 : 200 }}
         >
           {sortedPoints.length === 0 ? (
             <div className="flex items-center justify-center h-full min-h-[100px]">
@@ -221,29 +218,28 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
                 </div>
               </div>
             </div>
-          ) : showMapping && hasAlignmentTargets ? (
-            /* Absolute positioning mode: each VCR placed at its system group's Y */
-            <>
+          ) : (
+            /* Hybrid layout: VCRs with alignment targets use absolute positioning,
+               others stay centered in the default flow */
+            <div className="flex flex-col items-center justify-center gap-2 h-full">
               {sortedPoints.map((point) => {
-                const targetY = vcrAlignmentTargets[point.id];
-                // Card height is ~42px (p-1.5 + content); estimate half-height for centering
+                const targetY = showMapping ? vcrAlignmentTargets[point.id] : undefined;
+                const hasTarget = targetY !== undefined;
                 const CARD_HALF_HEIGHT = 21;
-                const topOffset = targetY !== undefined
+                const topOffset = hasTarget
                   ? Math.max(0, targetY - containerTop - CARD_HALF_HEIGHT)
                   : undefined;
 
                 return (
                   <div
                     key={point.id}
-                    style={topOffset !== undefined ? {
+                    style={hasTarget ? {
                       position: 'absolute',
                       top: topOffset,
                       left: '50%',
                       transform: 'translateX(-50%)',
-                      transition: 'top 0.3s ease',
-                    } : {
-                      marginBottom: 8,
-                    }}
+                      transition: 'top 0.3s ease, left 0.3s ease',
+                    } : undefined}
                   >
                     <DraggableHandoverPointCard
                       handoverPoint={point}
@@ -252,20 +248,6 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
                   </div>
                 );
               })}
-            </>
-          ) : (
-            <div className={cn(
-              "flex flex-col items-center content-start",
-              showMapping ? 'gap-6' : 'gap-2',
-              !showMapping && 'flex-wrap flex-row justify-center'
-            )}>
-              {sortedPoints.map((point) => (
-                <DraggableHandoverPointCard
-                  key={point.id}
-                  handoverPoint={point}
-                  onClick={() => onOpenVCR(point)}
-                />
-              ))}
             </div>
           )}
         </div>
