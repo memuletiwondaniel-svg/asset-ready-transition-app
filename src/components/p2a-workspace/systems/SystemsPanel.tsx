@@ -232,7 +232,7 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
     <>
       <div 
         data-systems-panel
-        className="w-52 flex flex-col border-r border-border bg-card min-h-0 flex-shrink-0"
+        className="w-52 flex flex-col border-r border-border bg-card overflow-hidden min-h-0 flex-shrink-0"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
@@ -306,7 +306,7 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
         </div>
 
         {/* Systems List - fills remaining height with vertical scroll only */}
-        <div className="flex-1 min-h-0 overflow-y-auto">
+        <ScrollArea className="flex-1 min-h-0">
           <div className="p-3 space-y-3">
             {/* Assigned Systems - always visible */}
             {filteredAssigned.length > 0 && (
@@ -420,7 +420,7 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
               />
             </div>
           </div>
-        </div>
+        </ScrollArea>
       </div>
 
       {/* Manual Add System Modal - wizard-style */}
