@@ -19,6 +19,7 @@ interface CMSImportModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onImport: (systems: WizardSystem[]) => void;
+  projectCode?: string;
 }
 
 type ImportStatus = 'idle' | 'connecting' | 'success' | 'error';
@@ -44,6 +45,7 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
   open,
   onOpenChange,
   onImport,
+  projectCode,
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [status, setStatus] = useState<ImportStatus>('idle');
@@ -88,11 +90,15 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
         throw new Error('You must be logged in to import from GoHub');
       }
 
+      // Strip dashes from project code: "DP-300" -> "DP300"
+      const cleanProjectCode = projectCode?.replace(/-/g, '') || '';
+
       const response = await supabase.functions.invoke('gohub-import', {
         body: {
           portalUrl: portalUrl || DEFAULT_PORTAL_URL,
           username,
           password,
+          projectFilter: cleanProjectCode,
         },
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -252,11 +258,11 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
             <div className="flex items-center gap-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200/50 dark:border-blue-800/30">
               <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
               <div>
-                <p className="text-sm font-medium text-blue-700 dark:text-blue-400">
-                  Connecting to GoHub...
+              <p className="text-sm font-medium text-blue-700 dark:text-blue-400">
+                  Searching GoHub projects...
                 </p>
                 <p className="text-xs text-blue-600/70 dark:text-blue-500/70">
-                  Logging in and fetching Completions Grid
+                  Scanning all projects for systems matching {projectCode || 'project code'}
                 </p>
               </div>
             </div>

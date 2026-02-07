@@ -33,6 +33,7 @@ export interface WizardSystem {
 interface SystemsImportStepProps {
   systems: WizardSystem[];
   onSystemsChange: (systems: WizardSystem[]) => void;
+  projectCode?: string;
 }
 
 function getProgressColor(progress: number): string {
@@ -52,6 +53,7 @@ function getProgressTextColor(progress: number): string {
 export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
   systems,
   onSystemsChange,
+  projectCode,
 }) => {
   const { toast } = useToast();
   const [showAddModal, setShowAddModal] = useState(false);
@@ -175,6 +177,7 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
         open={showCMSModal}
         onOpenChange={setShowCMSModal}
         onImport={handleCMSImport}
+        projectCode={projectCode}
       />
 
       {/* Excel Upload Modal */}

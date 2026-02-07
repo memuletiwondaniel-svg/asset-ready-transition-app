@@ -145,6 +145,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
           <SystemsImportStep
             systems={state.systems}
             onSystemsChange={(systems) => updateState('systems', systems)}
+            projectCode={projectCode}
           />
         );
       case 3:

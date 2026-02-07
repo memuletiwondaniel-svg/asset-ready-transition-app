@@ -190,63 +190,103 @@ async function webLogin(
   return { cookies, homePageHtml: homeHtml, homePageUrl: homeUrl };
 }
 
-// ─── Step 2: Select Project (ZUBAIR / ZB) ────────────────────
+// ─── Step 2: Extract ALL project tiles from home page ────────
 
-async function selectProject(
-  cookies: Record<string, string>,
-  homePageHtml: string,
-  homePageUrl: string,
-  _projectCode: string
-): Promise<{ cookies: Record<string, string>; responseHtml: string; responseUrl: string }> {
-  console.log(`GoHub: Looking for project on home page...`);
+interface ProjectTile {
+  name: string;
+  postbackTarget: string;
+  postbackArgument: string;
+  /** Optional direct URL if it's a regular link */
+  directUrl?: string;
+}
 
-  let selectedPostback: { target: string; argument: string } | null = null;
+function extractAllProjectTiles(homePageHtml: string): ProjectTile[] {
+  const tiles: ProjectTile[] = [];
+  const decodedHtml = decodeHtmlEntities(homePageHtml);
 
-  const tileLinkPattern = /<a[^>]*href=["']([^"']+)["'][^>]*>[\s\S]{0,500}?ZUBAIR/gi;
-  const tileMatch = tileLinkPattern.exec(homePageHtml);
-  if (tileMatch) {
-    const tileHref = decodeHtmlEntities(tileMatch[1]);
-    console.log(`GoHub: Found ZUBAIR tile link (decoded): ${tileHref}`);
-    if (tileHref.includes("__doPostBack")) {
-      const pbExtract = tileHref.match(/__doPostBack\s*\(\s*'([^']+)'\s*,\s*'([^']*)'\s*\)/);
-      if (pbExtract) {
-        selectedPostback = { target: pbExtract[1], argument: pbExtract[2] };
-        console.log(`GoHub: Extracted project postback: target=${pbExtract[1]}`);
-      }
-    } else if (!tileHref.startsWith("javascript:")) {
-      const projectUrl = new URL(tileHref, homePageUrl).toString();
-      const result = await followRedirects(projectUrl, cookies);
-      return { cookies: result.cookies, responseHtml: result.html, responseUrl: result.url };
+  // Pattern 1: Look for <a> tags with __doPostBack that contain project names
+  // These tiles typically have text like "BGC BNGL (NR)", "ZUBAIR (ZB)", etc.
+  const tilePattern = /<a[^>]*href=["']javascript:__doPostBack\s*\(\s*(?:&#39;|'|\\')([^'\\&#]+)(?:&#39;|'|\\'),\s*(?:&#39;|'|\\')([^'\\&#]*)(?:&#39;|'|\\')\s*\)["'][^>]*>([\s\S]*?)<\/a>/gi;
+  let match;
+  while ((match = tilePattern.exec(decodedHtml)) !== null) {
+    const target = match[1];
+    const argument = match[2];
+    const innerHtml = match[3];
+    
+    // Extract visible text from the tile
+    const text = innerHtml.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    
+    // Only include tiles that look like project tiles (not navigation or login links)
+    if (target && text.length > 2 && text.length < 100) {
+      tiles.push({
+        name: text,
+        postbackTarget: target,
+        postbackArgument: argument,
+      });
     }
   }
 
-  if (!selectedPostback) {
-    const decodedHtml = decodeHtmlEntities(homePageHtml);
+  // Pattern 2: Look for postbacks associated with known project-like text
+  // This catches cases where the HTML structure is different
+  if (tiles.length === 0) {
     const postbackPattern = /__doPostBack\s*\(\s*'([^']+)'\s*,\s*'([^']*)'\s*\)/g;
     let pbMatch;
     while ((pbMatch = postbackPattern.exec(decodedHtml)) !== null) {
-      if (pbMatch[1].includes("ProjectButton") || pbMatch[1].includes("ProjectList")) {
-        const start = Math.max(0, pbMatch.index - 300);
-        const context = decodedHtml.substring(start, pbMatch.index + pbMatch[0].length + 300);
-        if (/ZUBAIR/i.test(context)) {
-          selectedPostback = { target: pbMatch[1], argument: pbMatch[2] };
-          break;
+      const target = pbMatch[1];
+      const argument = pbMatch[2];
+      
+      // Look for project name text near this postback
+      const contextStart = Math.max(0, pbMatch.index - 500);
+      const contextEnd = Math.min(decodedHtml.length, pbMatch.index + pbMatch[0].length + 500);
+      const context = decodedHtml.substring(contextStart, contextEnd);
+      
+      // Check if this looks like a project selector (has ProjectButton, ProjectList, etc.)
+      if (target.includes("Project") || target.includes("Repeater") || target.includes("DataList")) {
+        // Try to extract project name from nearby text
+        const namePatterns = [
+          /(?:BGC\s+)?(?:BNGL|SANDPIT|North\s+Rumaila|South\s+Rumaila|Umm\s+Qasr|West\s+Qurna|Zubair)\s*(?:\([A-Z]{2}\))?/i,
+          /\b([A-Z][A-Za-z\s]+)\s*\(([A-Z]{2})\)/,
+        ];
+        
+        for (const namePattern of namePatterns) {
+          const nameMatch = context.match(namePattern);
+          if (nameMatch) {
+            const name = nameMatch[0].trim();
+            // Avoid duplicates
+            if (!tiles.some(t => t.postbackTarget === target && t.postbackArgument === argument)) {
+              tiles.push({ name, postbackTarget: target, postbackArgument: argument });
+            }
+            break;
+          }
         }
       }
     }
   }
 
-  if (!selectedPostback) {
-    console.log("GoHub: WARNING - Could not find project selection postback");
-    return { cookies, responseHtml: homePageHtml, responseUrl: homePageUrl };
+  console.log(`GoHub: Found ${tiles.length} project tiles: ${tiles.map(t => t.name).join(", ")}`);
+  return tiles;
+}
+
+// ─── Step 2b: Select a specific project tile ────────────────
+
+async function selectProjectTile(
+  cookies: Record<string, string>,
+  homePageHtml: string,
+  homePageUrl: string,
+  tile: ProjectTile
+): Promise<{ cookies: Record<string, string>; responseHtml: string; responseUrl: string }> {
+  console.log(`GoHub: Selecting project: ${tile.name}`);
+
+  if (tile.directUrl) {
+    const result = await followRedirects(tile.directUrl, cookies);
+    return { cookies: result.cookies, responseHtml: result.html, responseUrl: result.url };
   }
 
-  console.log(`GoHub: Submitting project selection postback: ${selectedPostback.target}`);
   const hiddenFields = extractHiddenFields(homePageHtml);
   const formData: Record<string, string> = {
     ...hiddenFields,
-    __EVENTTARGET: selectedPostback.target,
-    __EVENTARGUMENT: selectedPostback.argument,
+    __EVENTTARGET: tile.postbackTarget,
+    __EVENTARGUMENT: tile.postbackArgument,
   };
 
   const actionMatch = homePageHtml.match(/<form[^>]*action=["']([^"']*?)["'][^>]*>/i);
@@ -272,7 +312,7 @@ async function selectProject(
   if (location) {
     await response.text();
     const result = await followRedirects(new URL(location, formAction).toString(), cookies);
-    console.log(`GoHub: Project selected, redirected to: ${result.url.substring(0, 100)}`);
+    console.log(`GoHub: Project "${tile.name}" selected, redirected to: ${result.url.substring(0, 100)}`);
     return { cookies: result.cookies, responseHtml: result.html, responseUrl: result.url };
   }
 
@@ -339,16 +379,15 @@ interface CompletionsSystem {
   description: string;
   progress: number;
   is_hydrocarbon: boolean;
+  source_project?: string;
 }
 
 // ─── Resolve ASMX service URL from page HTML ────────────────
 
 function resolveAsmxServiceUrl(gridHtml: string, gridPageUrl: string): string | null {
-  // Look for the ASMX script reference: <script src="../../Controls/CompletionsGrid.asmx/js">
   const asmxMatch = gridHtml.match(/src=["']([^"']*CompletionsGrid\.asmx)\/js["']/i);
   if (asmxMatch) {
     const relativePath = asmxMatch[1];
-    // Resolve relative to the grid page's directory
     const pageDir = gridPageUrl.replace(/\/[^/]*$/, "/");
     const resolved = new URL(relativePath, pageDir).toString();
     console.log(`GoHub: Resolved ASMX service URL: ${resolved} (from relative: ${relativePath})`);
@@ -358,15 +397,12 @@ function resolveAsmxServiceUrl(gridHtml: string, gridPageUrl: string): string | 
 }
 
 // ─── Strategy 1: ASMX WebMethod (correct endpoint) ─────────
-// The JS proxy CompletionsGrid.GetSystems() maps to:
-// POST /BGC/Controls/CompletionsGrid.asmx/GetSystems
 
 async function tryAsmxWebMethod(
   cookies: Record<string, string>,
   gridPageUrl: string,
   gridHtml: string
 ): Promise<CompletionsSystem[]> {
-  // First, resolve the correct ASMX service URL from the page HTML
   const asmxBaseUrl = resolveAsmxServiceUrl(gridHtml, gridPageUrl);
   
   const origin = new URL(gridPageUrl).origin;
@@ -374,20 +410,17 @@ async function tryAsmxWebMethod(
   const pathParts = parsed.pathname.split("/").filter(Boolean);
   const instanceName = pathParts[0] || "BGC";
 
-  // Build list of URLs to try, starting with the correctly resolved one
   const urlsToTry: string[] = [];
   
   if (asmxBaseUrl) {
     urlsToTry.push(`${asmxBaseUrl}/GetSystems`);
   }
   
-  // Also try common paths as fallbacks
   urlsToTry.push(
     `${origin}/${instanceName}/Controls/CompletionsGrid.asmx/GetSystems`,
     `${origin}/${instanceName}/GoCompletions/Controls/CompletionsGrid.asmx/GetSystems`,
   );
 
-  // Deduplicate
   const uniqueUrls = [...new Set(urlsToTry)];
 
   for (const url of uniqueUrls) {
@@ -416,7 +449,6 @@ async function tryAsmxWebMethod(
         cookies = parseCookiesFromResponse(response, cookies);
 
         console.log(`GoHub: ASMX response: url=${url}, itrClass=${itrClass}, status=${status}, type=${contentType}, length=${text.length}`);
-        console.log(`GoHub: ASMX response preview: ${text.substring(0, 3000)}`);
 
         if (status === 200 && text.length > 50) {
           const systems = parsePageMethodResponse(text);
@@ -426,7 +458,6 @@ async function tryAsmxWebMethod(
           }
         }
 
-        // If 401/500, log details and try next
         if (status >= 400) {
           console.log(`GoHub: ASMX error ${status}: ${text.substring(0, 500)}`);
         }
@@ -464,7 +495,7 @@ async function tryPageMethod(
     });
 
     const text = await response.text();
-    console.log(`GoHub: PageMethod response: status=${response.status}, length=${text.length}, preview=${text.substring(0, 1000)}`);
+    console.log(`GoHub: PageMethod response: status=${response.status}, length=${text.length}`);
 
     if (response.status === 200 && text.length > 50) {
       const systems = parsePageMethodResponse(text);
@@ -485,18 +516,14 @@ function extractFromHtml(gridHtml: string): CompletionsSystem[] {
   const systems: CompletionsSystem[] = [];
   const seen = new Set<string>();
 
-  // Strip massive hidden fields to see actual content
   const cleanHtml = gridHtml
     .replace(/<input[^>]*type=["']hidden["'][^>]*>/gi, "")
     .replace(/\s+/g, " ");
 
-  // Look for div elements that represent grid items (from CompletionsGrid.js pattern)
-  // The JS creates divs like: <div class='gt-item'> with system data
   const gtItemPattern = /<div[^>]*class=["'][^"']*gt-item[^"']*["'][^>]*>([\s\S]*?)<\/div>/gi;
   let itemMatch;
   while ((itemMatch = gtItemPattern.exec(cleanHtml)) !== null) {
     const content = itemMatch[1];
-    // Try to extract system ID and percentage from the content
     const sysMatch = content.match(/([A-Z0-9][\w.-]{2,30})/);
     const pctMatch = content.match(/([\d.]+)\s*%/);
     if (sysMatch && !seen.has(sysMatch[1])) {
@@ -511,8 +538,6 @@ function extractFromHtml(gridHtml: string): CompletionsSystem[] {
     }
   }
 
-  // Look for system ID patterns in any visible text
-  // Patterns like DP300-C017-001, DP228-XXX, etc.
   const sysIdPatterns = [
     /\b(DP\d{2,4}[-_][A-Z0-9]{2,}[-_][A-Z0-9-]+)\b/gi,
     /\b([A-Z]{1,4}\d{2,4}[-_][A-Z0-9]{2,}[-_]\d{2,})\b/gi,
@@ -525,7 +550,6 @@ function extractFromHtml(gridHtml: string): CompletionsSystem[] {
       if (seen.has(sysId)) continue;
       seen.add(sysId);
 
-      // Try to find a description nearby
       const afterIdx = match.index + sysId.length;
       const context = cleanHtml.substring(afterIdx, afterIdx + 300);
       let progress = 0;
@@ -549,28 +573,8 @@ function extractFromHtml(gridHtml: string): CompletionsSystem[] {
     console.log(`GoHub: Extracted ${systems.length} systems from HTML`);
   }
 
-  // Log some of the visible HTML content (not hidden fields) for debugging
-  // Extract script blocks that might contain inline data
-  const scriptBlocks = cleanHtml.match(/<script[^>]*>([\s\S]*?)<\/script>/gi) || [];
-  for (const block of scriptBlocks) {
-    if (block.includes("jsonData") || block.includes("Grid.") || block.includes("System")) {
-      console.log(`GoHub: Relevant script block (${block.length} chars): ${block.substring(0, 1500)}`);
-    }
-  }
-
-  // Log visible text content for debugging (strip all tags)
-  const visibleText = cleanHtml
-    .replace(/<script[\s\S]*?<\/script>/gi, "")
-    .replace(/<style[\s\S]*?<\/style>/gi, "")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-  console.log(`GoHub: Visible text on grid page (first 3000 chars): ${visibleText.substring(0, 3000)}`);
-
   return systems;
 }
-
-// (Old tryAsmxService removed - functionality merged into tryAsmxWebMethod above)
 
 // ─── Response Parser ────────────────────────────────────────
 
@@ -578,16 +582,13 @@ function parsePageMethodResponse(text: string): CompletionsSystem[] {
   const systems: CompletionsSystem[] = [];
   const seen = new Set<string>();
 
-  // ASP.NET PageMethod responses wrap in {"d": ...}
   try {
     let data = JSON.parse(text);
 
-    // Unwrap the "d" wrapper (ASP.NET standard)
     if (data.d !== undefined) {
       data = typeof data.d === "string" ? JSON.parse(data.d) : data.d;
     }
 
-    // If it's wrapped in another object, try common keys
     if (!Array.isArray(data)) {
       for (const key of ["Items", "data", "results", "Systems", "systems", "Data"]) {
         if (data[key] && Array.isArray(data[key])) {
@@ -597,7 +598,6 @@ function parsePageMethodResponse(text: string): CompletionsSystem[] {
       }
     }
 
-    // If still a string (double-encoded JSON), parse again
     if (typeof data === "string") {
       try { data = JSON.parse(data); } catch (_) { /* not JSON */ }
     }
@@ -606,11 +606,9 @@ function parsePageMethodResponse(text: string): CompletionsSystem[] {
       console.log(`GoHub: Parsed JSON array with ${data.length} items`);
       if (data.length > 0) {
         console.log(`GoHub: First item keys: ${Object.keys(data[0]).join(", ")}`);
-        console.log(`GoHub: First item: ${JSON.stringify(data[0]).substring(0, 500)}`);
       }
 
       for (const item of data) {
-        // Try various field name patterns from GoCompletions
         const sysId = String(
           item.Number || item.SystemNumber || item.Name || item.SubSystemName ||
           item.SystemId || item.system_id || item.Id || item.CODE || ""
@@ -623,17 +621,14 @@ function parsePageMethodResponse(text: string): CompletionsSystem[] {
           item.Title || item.NAME || sysId
         );
 
-        // Progress/completion percentage
         let progress = 0;
         const pctValue = item.Complete ?? item.Progress ?? item.OverallProgress ??
           item.Percent ?? item.CompletionPercent ?? item.percentage ?? null;
         if (pctValue !== null && pctValue !== undefined) {
           progress = parseFloat(String(pctValue)) || 0;
-          // If it's 0-1 range, convert to percentage
           if (progress > 0 && progress <= 1) progress *= 100;
         }
 
-        // SubSystem data might be nested
         const subSystems = item.SubSystem || item.SubSystems || item.subsystems || [];
 
         systems.push({
@@ -679,6 +674,64 @@ function parsePageMethodResponse(text: string): CompletionsSystem[] {
   return systems;
 }
 
+// ─── Search a single GoHub project for matching systems ─────
+
+async function searchProjectForSystems(
+  cookies: Record<string, string>,
+  homePageHtml: string,
+  homePageUrl: string,
+  portalUrl: string,
+  tile: ProjectTile,
+  projectFilter: string
+): Promise<{ systems: CompletionsSystem[]; cookies: Record<string, string> }> {
+  try {
+    // Select the project
+    const { cookies: projectCookies, responseHtml, responseUrl } =
+      await selectProjectTile(cookies, homePageHtml, homePageUrl, tile);
+
+    // Navigate to Completions Grid
+    const { html: gridHtml, url: gridPageUrl, cookies: gridCookies } =
+      await navigateToCompletionsGrid(projectCookies, portalUrl, responseHtml, responseUrl);
+
+    let allSystems: CompletionsSystem[] = [];
+
+    // Strategy 1: ASMX WebMethod
+    allSystems = await tryAsmxWebMethod(gridCookies, gridPageUrl, gridHtml);
+
+    // Strategy 2: PageMethod
+    if (allSystems.length === 0) {
+      allSystems = await tryPageMethod(gridCookies, gridPageUrl);
+    }
+
+    // Strategy 3: HTML extraction
+    if (allSystems.length === 0) {
+      allSystems = extractFromHtml(gridHtml);
+    }
+
+    console.log(`GoHub: Project "${tile.name}" returned ${allSystems.length} total systems`);
+
+    // Filter by project code
+    if (allSystems.length > 0 && projectFilter) {
+      const filterUpper = projectFilter.toUpperCase();
+      const filtered = allSystems.filter(s => s.system_id.toUpperCase().includes(filterUpper));
+      console.log(`GoHub: Filtered to ${filtered.length} systems matching "${projectFilter}" in "${tile.name}"`);
+      
+      // Tag each system with which GoHub project it came from
+      for (const sys of filtered) {
+        sys.source_project = tile.name;
+      }
+      
+      return { systems: filtered, cookies: gridCookies };
+    }
+
+    return { systems: [], cookies: gridCookies };
+  } catch (error) {
+    console.error(`GoHub: Error searching project "${tile.name}":`, error);
+    // Continue to next project rather than failing entirely
+    return { systems: [], cookies };
+  }
+}
+
 // ─── Main Handler ────────────────────────────────────────────
 
 Deno.serve(async (req) => {
@@ -710,7 +763,14 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { portalUrl, username, password, projectFilter = "DP300" } = body;
+    const { portalUrl, username, password, projectFilter } = body;
+
+    if (!projectFilter) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Project code is required for GoHub import. Ensure your ORSH project has a valid project code." }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     const finalPortalUrl = portalUrl || "https://goc.gotechnology.online/BGC/GoHub/Home.aspx";
     const finalUsername = username;
@@ -726,59 +786,124 @@ Deno.serve(async (req) => {
     console.log(`GoHub import: portal=${finalPortalUrl}, filter=${projectFilter}`);
 
     // Step 1: Login
-    const { cookies, homePageHtml, homePageUrl } = await webLogin(finalPortalUrl, finalUsername, finalPassword);
+    const { cookies: loginCookies, homePageHtml, homePageUrl } = await webLogin(finalPortalUrl, finalUsername, finalPassword);
     console.log("GoHub: Login successful");
 
-    // Step 2: Select ZUBAIR project
-    const { cookies: projectCookies, responseHtml: postSelectionHtml, responseUrl: postSelectionUrl } =
-      await selectProject(cookies, homePageHtml, homePageUrl, "ZB");
-    console.log("GoHub: Project selection complete");
+    // Step 2: Extract ALL project tiles from the home page
+    const allTiles = extractAllProjectTiles(homePageHtml);
 
-    // Step 3: Navigate to Completions Grid
-    const { html: gridHtml, url: gridPageUrl, cookies: gridCookies } = await navigateToCompletionsGrid(
-      projectCookies, finalPortalUrl, postSelectionHtml, postSelectionUrl
-    );
-    console.log(`GoHub: Got Completions Grid HTML, size=${gridHtml.length}`);
+    if (allTiles.length === 0) {
+      console.log("GoHub: No project tiles found on home page. Attempting direct grid access...");
+      // Fallback: try accessing the completions grid directly (maybe user is already in a project context)
+      try {
+        const { html: gridHtml, url: gridPageUrl, cookies: gridCookies } =
+          await navigateToCompletionsGrid(loginCookies, finalPortalUrl, homePageHtml, homePageUrl);
 
-    let completionsSystems: CompletionsSystem[] = [];
+        let systems = await tryAsmxWebMethod(gridCookies, gridPageUrl, gridHtml);
+        if (systems.length === 0) systems = await tryPageMethod(gridCookies, gridPageUrl);
+        if (systems.length === 0) systems = extractFromHtml(gridHtml);
 
-    // Strategy 1: ASMX WebMethod (correct endpoint from script src)
-    // The JS proxy src="../../Controls/CompletionsGrid.asmx/js" resolves to /BGC/Controls/CompletionsGrid.asmx
-    completionsSystems = await tryAsmxWebMethod(gridCookies, gridPageUrl, gridHtml);
-    console.log(`GoHub: ASMX WebMethod found ${completionsSystems.length} systems`);
+        const filterUpper = projectFilter.toUpperCase();
+        const filtered = systems.filter(s => s.system_id.toUpperCase().includes(filterUpper));
 
-    // Strategy 2: ASP.NET PageMethod on the ASPX page itself
-    if (completionsSystems.length === 0) {
-      completionsSystems = await tryPageMethod(gridCookies, gridPageUrl);
-      console.log(`GoHub: PageMethod found ${completionsSystems.length} systems`);
+        if (filtered.length > 0) {
+          const result = filtered.map((sys, index) => ({
+            id: `gohub-${Date.now()}-${index}`,
+            system_id: sys.system_id,
+            name: sys.name,
+            description: sys.description,
+            is_hydrocarbon: sys.is_hydrocarbon,
+            progress: sys.progress,
+            source: "gohub",
+          }));
+
+          return new Response(
+            JSON.stringify({ success: true, systems: result, total: result.length, project_filter: projectFilter, searched_projects: ["direct"] }),
+            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      } catch (e) {
+        console.log(`GoHub: Direct grid access fallback failed: ${e}`);
+      }
+
+      throw new Error("No project tiles found on the GoHub home page. Please verify you can access GoHub and see project tiles.");
     }
 
-    // Strategy 3: Extract whatever data is visible in the HTML itself
-    if (completionsSystems.length === 0) {
-      completionsSystems = extractFromHtml(gridHtml);
-      console.log(`GoHub: HTML extraction found ${completionsSystems.length} systems`);
-    }
+    // Step 3: Search ALL projects for systems matching the project code
+    console.log(`GoHub: Will search ${allTiles.length} projects for systems matching "${projectFilter}"`);
+    
+    const allMatchingSystems: CompletionsSystem[] = [];
+    const searchedProjects: string[] = [];
+    const projectsWithResults: string[] = [];
+    let currentCookies = loginCookies;
 
-    // Filter by project filter
-    if (completionsSystems.length > 0 && projectFilter) {
-      const filterUpper = projectFilter.toUpperCase();
-      const filtered = completionsSystems.filter(s => s.system_id.toUpperCase().includes(filterUpper));
-      console.log(`GoHub: Filtered to ${filtered.length} systems matching "${projectFilter}" from ${completionsSystems.length} total`);
-      if (filtered.length > 0) {
-        completionsSystems = filtered;
+    for (let i = 0; i < allTiles.length; i++) {
+      const tile = allTiles[i];
+      console.log(`GoHub: Searching project ${i + 1}/${allTiles.length}: "${tile.name}"`);
+      searchedProjects.push(tile.name);
+
+      // Re-fetch home page to get fresh hidden fields for each iteration
+      // (except for the first one, where we already have the home page)
+      let currentHomeHtml = homePageHtml;
+      let currentHomeUrl = homePageUrl;
+
+      if (i > 0) {
+        try {
+          const { html, url, cookies: refreshedCookies } = await followRedirects(finalPortalUrl, currentCookies);
+          currentCookies = refreshedCookies;
+          currentHomeHtml = html;
+          currentHomeUrl = url;
+          
+          // Re-extract tiles to get fresh postback targets
+          const refreshedTiles = extractAllProjectTiles(currentHomeHtml);
+          const matchingTile = refreshedTiles.find(t => t.name === tile.name);
+          if (matchingTile) {
+            tile.postbackTarget = matchingTile.postbackTarget;
+            tile.postbackArgument = matchingTile.postbackArgument;
+          }
+        } catch (e) {
+          console.log(`GoHub: Could not refresh home page for project ${tile.name}: ${e}`);
+        }
+      }
+
+      const { systems: matchedSystems, cookies: updatedCookies } = await searchProjectForSystems(
+        currentCookies,
+        currentHomeHtml,
+        currentHomeUrl,
+        finalPortalUrl,
+        tile,
+        projectFilter
+      );
+
+      currentCookies = updatedCookies;
+
+      if (matchedSystems.length > 0) {
+        allMatchingSystems.push(...matchedSystems);
+        projectsWithResults.push(tile.name);
+        console.log(`GoHub: Found ${matchedSystems.length} matching systems in "${tile.name}"!`);
       }
     }
 
-    if (completionsSystems.length === 0) {
+    console.log(`GoHub: Search complete. Found ${allMatchingSystems.length} total matching systems across ${projectsWithResults.length} projects`);
+
+    if (allMatchingSystems.length === 0) {
       throw new Error(
-        `No systems found despite trying PageMethod, ScriptManager, ASMX service, and HTML extraction. ` +
-        `The Completions Grid page loaded (${gridHtml.length} chars) but no data could be extracted. ` +
-        `Check edge function logs for visible page content and API response details.`
+        `No systems matching "${projectFilter}" found across ${searchedProjects.length} GoHub projects ` +
+        `(${searchedProjects.join(", ")}). ` +
+        `Verify the project code matches system IDs in GoCompletions.`
       );
     }
 
+    // Deduplicate by system_id (same system could theoretically appear in multiple projects)
+    const seen = new Set<string>();
+    const uniqueSystems = allMatchingSystems.filter(sys => {
+      if (seen.has(sys.system_id)) return false;
+      seen.add(sys.system_id);
+      return true;
+    });
+
     // Transform for frontend
-    const systems = completionsSystems.map((sys, index) => ({
+    const systems = uniqueSystems.map((sys, index) => ({
       id: `gohub-${Date.now()}-${index}`,
       system_id: sys.system_id,
       name: sys.name,
@@ -786,12 +911,20 @@ Deno.serve(async (req) => {
       is_hydrocarbon: sys.is_hydrocarbon,
       progress: sys.progress,
       source: "gohub",
+      source_project: sys.source_project,
     }));
 
-    console.log(`GoHub import: SUCCESS - ${systems.length} systems found`);
+    console.log(`GoHub import: SUCCESS - ${systems.length} unique systems found matching "${projectFilter}"`);
 
     return new Response(
-      JSON.stringify({ success: true, systems, total: systems.length, project_filter: projectFilter }),
+      JSON.stringify({
+        success: true,
+        systems,
+        total: systems.length,
+        project_filter: projectFilter,
+        searched_projects: searchedProjects,
+        projects_with_results: projectsWithResults,
+      }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: unknown) {
