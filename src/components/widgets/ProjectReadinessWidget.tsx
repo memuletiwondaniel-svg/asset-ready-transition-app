@@ -163,14 +163,11 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
             {project?.project_scope && (
               <div className="space-y-3">
                 <h3 className="font-semibold text-sm text-muted-foreground flex items-center gap-2">
-                  <div className="p-1.5 rounded-lg bg-amber-500/10">
-                    <FileText className="h-4 w-4 text-amber-600" />
-                  </div>
                   Project Scope
                 </h3>
                 <div className="pl-1 space-y-2">
                   <div className="p-4 rounded-xl bg-muted/30 border border-border/40">
-                    <p className={`text-sm text-foreground/90 leading-relaxed ${!isScopeExpanded ? 'line-clamp-4' : ''}`}>
+                    <p className={`text-xs text-foreground/90 leading-relaxed ${!isScopeExpanded ? 'line-clamp-4' : ''}`}>
                       {project.project_scope}
                     </p>
                     {project.project_scope.length > 200 && (
