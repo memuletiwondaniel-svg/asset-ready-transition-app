@@ -70,6 +70,7 @@ export const VCRCreationStep: React.FC<VCRCreationStepProps> = ({
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-sm font-medium">Verification Certificate of Readiness (VCRs)</h3>
+          <p className="text-xs text-muted-foreground">Create VCRs for logical handover of Systems</p>
         </div>
         <Badge variant="outline">{vcrs.length} VCRs</Badge>
       </div>
