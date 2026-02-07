@@ -23,6 +23,7 @@ interface StaircasePhaseColumnProps {
   projectCode?: string;
   isFirstPhase: boolean;
   isLastPhase: boolean;
+  showMapping?: boolean;
 }
 
 export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
@@ -37,6 +38,7 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
   projectCode,
   isFirstPhase,
   isLastPhase,
+  showMapping = false,
 }) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -162,10 +164,11 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
           </div>
         </div>
 
-        {/* VCRs Container - Auto-expanding height based on content */}
+        {/* VCRs Container - Expand vertically when mapping is active */}
         <div 
           className={cn(
-            "border border-t-0 rounded-b-xl p-3 min-h-[200px] transition-colors",
+            "border border-t-0 rounded-b-xl p-3 transition-colors",
+            showMapping ? 'min-h-[400px]' : 'min-h-[200px]',
             showPhaseHighlight ? 'border-primary bg-primary/5' : 'border-border bg-card/50'
           )}
         >
@@ -179,7 +182,11 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
               </div>
             </div>
           ) : (
-            <div className="flex flex-wrap gap-2 justify-center content-start">
+            <div className={cn(
+              "flex flex-col items-center content-start",
+              showMapping ? 'gap-6' : 'gap-2',
+              !showMapping && 'flex-wrap flex-row justify-center'
+            )}>
               {sortedPoints.map((point) => (
                 <DraggableHandoverPointCard
                   key={point.id}

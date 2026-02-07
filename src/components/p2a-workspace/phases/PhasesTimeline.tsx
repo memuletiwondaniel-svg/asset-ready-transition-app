@@ -26,6 +26,7 @@ interface PhasesTimelineProps {
   isCreatingPhase?: boolean;
   isFullscreen?: boolean;
   onToggleFullscreen?: () => void;
+  showMapping?: boolean;
   // Undo props
   canUndo?: boolean;
   isUndoing?: boolean;
@@ -49,6 +50,7 @@ export const PhasesTimeline: React.FC<PhasesTimelineProps> = ({
   isCreatingPhase,
   isFullscreen,
   onToggleFullscreen,
+  showMapping = false,
   canUndo,
   isUndoing,
   lastActionDescription,
@@ -173,6 +175,7 @@ export const PhasesTimeline: React.FC<PhasesTimelineProps> = ({
                         projectCode={projectCode}
                         isFirstPhase={item.idx === 0}
                         isLastPhase={item.idx === phases.length - 1}
+                        showMapping={showMapping}
                       />
                     );
                   } else {

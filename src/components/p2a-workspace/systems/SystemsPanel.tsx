@@ -157,14 +157,22 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
   };
 
   const filteredUnassigned = filterSystems(unassignedSystems);
-  // When mapping is active, sort assigned systems by VCR code to group them and minimize line crossings
+  // When mapping is active, sort assigned systems by VCR Y-position to align with workspace layout
   const sortedAssigned = showMapping
-    ? [...filterSystems(assignedSystems)].sort((a, b) => {
-        const aVcr = a.assigned_vcr_code || '';
-        const bVcr = b.assigned_vcr_code || '';
-        if (aVcr !== bVcr) return aVcr.localeCompare(bVcr);
-        return a.name.localeCompare(b.name);
-      })
+    ? (() => {
+        const filtered = filterSystems(assignedSystems);
+        // Group by VCR, order groups by VCR code (will be spatially aligned since VCRs also reorder)
+        const groups: Record<string, P2ASystem[]> = {};
+        filtered.forEach(s => {
+          const key = s.assigned_vcr_code || 'zzz';
+          if (!groups[key]) groups[key] = [];
+          groups[key].push(s);
+        });
+        // Sort group keys alphabetically, then flatten
+        return Object.keys(groups)
+          .sort()
+          .flatMap(key => groups[key].sort((a, b) => a.name.localeCompare(b.name)));
+      })()
     : filterSystems(assignedSystems);
   const filteredAssigned = sortedAssigned;
 
