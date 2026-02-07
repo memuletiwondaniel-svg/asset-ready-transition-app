@@ -255,7 +255,7 @@ const SystemListItem: React.FC<SystemListItemProps> = ({
     <div className="group flex items-center gap-2 py-1.5 px-2.5 rounded-md border bg-card hover:bg-muted/50 transition-colors">
       <div className="flex-1 min-w-0 flex items-center gap-2">
         <span
-          className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold shrink-0 leading-none border"
+          className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold tabular-nums tracking-wide shrink-0 leading-none border"
           style={{ background: idColors.bg, borderColor: idColors.border, color: idColors.text }}
         >
           {system.system_id}
