@@ -120,6 +120,16 @@ export const useMappingPositions = (
       if (!vcrEl) continue;
 
       const vcrRect = vcrEl.getBoundingClientRect();
+
+      // Check if VCR card is fully visible within its phase column's scroll viewport
+      const phaseViewport = vcrEl.closest('[data-radix-scroll-area-viewport]') as HTMLElement | null;
+      if (phaseViewport) {
+        const phaseVpRect = phaseViewport.getBoundingClientRect();
+        if (vcrRect.top < phaseVpRect.top || vcrRect.bottom > phaseVpRect.bottom) {
+          continue; // VCR card is scrolled out of its phase column
+        }
+      }
+
       const systemYs: number[] = [];
       let systemX = 0;
       let allVisible = true;
