@@ -1,6 +1,6 @@
 import React from 'react';
 import { useDraggable } from '@dnd-kit/core';
-import { Key, GripVertical } from 'lucide-react';
+import { GripVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WizardVCR } from '../VCRCreationStep';
 
@@ -33,12 +33,11 @@ export const DraggableVCRChip: React.FC<DraggableVCRChipProps> = ({ vcr, index }
       {...attributes}
       className={cn(
         'group flex items-center gap-2 px-3 py-2 rounded-lg border bg-card cursor-grab active:cursor-grabbing',
-        'hover:border-primary/30 hover:bg-muted/40 transition-all select-none',
+        'hover:border-primary/30 hover:bg-accent/50 hover:shadow-sm transition-all select-none',
         isDragging && 'opacity-40 ring-2 ring-primary/30',
       )}
     >
-      <GripVertical className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" />
-      <Key className="h-3.5 w-3.5 text-primary shrink-0" />
+      <GripVertical className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
       <span className="text-xs font-medium truncate">{vcr.name}</span>
       <span
         className="text-[9px] font-mono px-1.5 py-0.5 rounded border shrink-0 ml-auto"
