@@ -2,7 +2,7 @@ import React from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { Box, Key, ArrowRight } from 'lucide-react';
+import { Key, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WizardSystem } from './SystemsImportStep';
 import { WizardVCR } from './VCRCreationStep';
@@ -108,7 +108,7 @@ export const SystemMappingStep: React.FC<SystemMappingStepProps> = ({
                         checked={isChecked}
                         onCheckedChange={() => toggleMapping(vcr.id, system.id)}
                       />
-                      <Box className="h-3.5 w-3.5 text-muted-foreground" />
+                      
                       <div className="flex-1 min-w-0">
                         <span className="text-sm">{system.name}</span>
                         <span className="text-xs text-muted-foreground ml-2 font-mono">
