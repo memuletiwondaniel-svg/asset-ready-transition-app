@@ -2,7 +2,7 @@ import React from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { X, Key, Maximize2 } from 'lucide-react';
+import { X, Key } from 'lucide-react';
 import { P2AHandoverWorkspace } from '@/components/p2a-workspace/P2AHandoverWorkspace';
 import { useP2AHandoverPlan } from '@/components/p2a-workspace/hooks/useP2AHandoverPlan';
 import { cn } from '@/lib/utils';
@@ -78,15 +78,6 @@ export const P2AWorkspaceOverlay: React.FC<P2AWorkspaceOverlayProps> = ({
             </Badge>
           </div>
           <div className="flex items-center">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 text-muted-foreground hover:text-foreground"
-              title="Expand"
-            >
-              <Maximize2 className="h-3.5 w-3.5" />
-            </Button>
-            <div className="w-px h-4 bg-border mx-1" />
             <Button
               variant="ghost"
               size="icon"
