@@ -147,25 +147,26 @@ export const SystemMappingStep: React.FC<SystemMappingStepProps> = ({
   // ── Toggle ALL subsystem keys for a parent system ────────
   const toggleParentSystem = (vcrId: string, system: WizardSystem) => {
     const subKeys = system.subsystems!.map(sub => makeSubKey(system.id, sub.system_id));
+    // Only consider keys that are either unmapped or mapped to THIS VCR (skip owned-elsewhere)
+    const availableKeys = subKeys.filter(k => {
+      const owner = getKeyOwnerVCR(k);
+      return !owner || owner === vcrId;
+    });
+    if (availableKeys.length === 0) return;
+
     const current = mappings[vcrId] || [];
-    const assignedToThisVCR = subKeys.filter(k => current.includes(k));
-    const allAssigned = assignedToThisVCR.length === subKeys.length;
+    const assignedToThisVCR = availableKeys.filter(k => current.includes(k));
+    const allAssigned = assignedToThisVCR.length === availableKeys.length;
 
     const updated = { ...mappings };
 
     if (allAssigned) {
-      // Unassign all from this VCR
-      updated[vcrId] = current.filter(k => !subKeys.includes(k));
+      // Unassign all available from this VCR
+      updated[vcrId] = current.filter(k => !availableKeys.includes(k));
     } else {
-      // Assign all: first remove from other VCRs
-      for (const vid of Object.keys(updated)) {
-        if (vid !== vcrId) {
-          updated[vid] = (updated[vid] || []).filter(k => !subKeys.includes(k));
-        }
-      }
-      // Add all missing ones to this VCR
+      // Assign all available to this VCR
       const existing = new Set(updated[vcrId] || []);
-      subKeys.forEach(k => existing.add(k));
+      availableKeys.forEach(k => existing.add(k));
       updated[vcrId] = Array.from(existing);
     }
     onMappingsChange(updated);
@@ -210,6 +211,14 @@ export const SystemMappingStep: React.FC<SystemMappingStepProps> = ({
   }
 
   // ── Render helpers ───────────────────────────────────────
+  /** Find the VCR name/code that owns a given key (for labelling) */
+  const getOwnerVCRLabel = (key: string, excludeVcrId: string): string | null => {
+    const ownerId = getKeyOwnerVCR(key);
+    if (!ownerId || ownerId === excludeVcrId) return null;
+    const ownerVcr = vcrs.find(v => v.id === ownerId);
+    return ownerVcr ? ownerVcr.code : null;
+  };
+
   const renderSubsystemRow = (
     system: WizardSystem,
     sub: WizardSubsystem,
@@ -217,6 +226,30 @@ export const SystemMappingStep: React.FC<SystemMappingStepProps> = ({
     isChecked: boolean,
   ) => {
     const key = makeSubKey(system.id, sub.system_id);
+    const ownerLabel = getOwnerVCRLabel(key, vcrId);
+    const isOwnedElsewhere = ownerLabel !== null;
+
+    if (isOwnedElsewhere) {
+      // Read-only row: mapped to a different VCR
+      return (
+        <div
+          key={key}
+          className="flex items-center gap-2.5 py-1 px-2 rounded ml-5 opacity-50"
+        >
+          <span className="h-3.5 w-3.5 shrink-0" />
+          <span className="text-[10px] font-mono text-muted-foreground shrink-0">
+            {sub.system_id}
+          </span>
+          <span className="text-[11px] truncate flex-1 text-muted-foreground">
+            {sub.name}
+          </span>
+          <span className="text-[9px] font-mono text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded border shrink-0">
+            → {ownerLabel}
+          </span>
+        </div>
+      );
+    }
+
     return (
       <div
         key={key}
@@ -295,7 +328,12 @@ export const SystemMappingStep: React.FC<SystemMappingStepProps> = ({
       makeSubKey(system.id, sub.system_id),
     );
     const assignedHere = subKeys.filter(k => vcrMappings.includes(k));
-    const allChecked = assignedHere.length === subKeys.length;
+    // Only count keys that are selectable (unmapped or mapped here)
+    const selectableKeys = subKeys.filter(k => {
+      const owner = getKeyOwnerVCR(k);
+      return !owner || owner === vcrId;
+    });
+    const allChecked = selectableKeys.length > 0 && assignedHere.length === selectableKeys.length;
     const someChecked = assignedHere.length > 0 && !allChecked;
 
     return (
@@ -329,7 +367,7 @@ export const SystemMappingStep: React.FC<SystemMappingStepProps> = ({
             </span>
           </div>
           <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">
-            {assignedHere.length}/{system.subsystems!.length}
+            {assignedHere.length}/{selectableKeys.length}
           </span>
           {system.is_hydrocarbon && (
             <Badge
