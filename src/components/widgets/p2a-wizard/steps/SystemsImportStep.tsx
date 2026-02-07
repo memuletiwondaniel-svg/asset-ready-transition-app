@@ -252,7 +252,7 @@ const SystemListItem: React.FC<SystemListItemProps> = ({
   const idColors = getSystemIdColor(system.system_id);
 
   return (
-    <div className="group flex items-center gap-2 py-1.5 px-2.5 rounded-md border bg-card hover:bg-muted/50 transition-colors">
+    <div className="group flex items-center gap-2 py-1.5 px-2.5 rounded-md border bg-card hover:bg-muted/50 transition-colors cursor-pointer" onClick={onEdit}>
       <div className="flex-1 min-w-0 flex items-center gap-3">
         <span
           className="inline-flex items-center px-1 py-0.5 rounded text-[9px] font-semibold tabular-nums tracking-wide shrink-0 leading-none border"
