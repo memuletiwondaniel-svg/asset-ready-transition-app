@@ -269,7 +269,7 @@ const SystemListItem: React.FC<SystemListItemProps> = ({
       </div>
       {hasProgress && (
         <span className={cn("text-[10px] font-semibold tabular-nums shrink-0", getProgressTextColor(system.progress!))}>
-          {system.progress!.toFixed(1)}%
+          {Math.round(system.progress!)}%
         </span>
       )}
       <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
