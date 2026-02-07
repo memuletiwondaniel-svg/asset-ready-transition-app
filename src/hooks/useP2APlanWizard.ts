@@ -361,16 +361,16 @@ async function persistPlanToDatabase(
 
     if (!error && savedVCR) {
       const mappedKeys = state.mappings[vcr.id] || [];
-      console.log(`[P2A-PERSIST] VCR "${vcr.name}" (wizard id: ${vcr.id}), mappedKeys:`, mappedKeys);
-      console.log(`[P2A-PERSIST] systemIdMap keys:`, Object.keys(systemIdMap));
-      console.log(`[P2A-PERSIST] subsystemIdMap keys:`, Object.keys(subsystemIdMap));
+
+
       if (mappedKeys.length > 0) {
-        const systemAssignments: Array<{
+        // Use a dedup map keyed by "systemId|subsystemId" to avoid unique constraint violations
+        const dedupMap = new Map<string, {
           handover_point_id: string;
           system_id: string;
           subsystem_id?: string;
           assigned_by: string;
-        }> = [];
+        }>();
 
         for (const key of mappedKeys) {
           if (key.includes('::sub::')) {
@@ -378,9 +378,9 @@ async function persistPlanToDatabase(
             const parentId = key.split('::sub::')[0];
             const dbSystemId = systemIdMap[parentId];
             const dbSubsystemId = subsystemIdMap[key];
-            console.log(`[P2A-PERSIST]   Subsystem key "${key}" → parentId="${parentId}" → dbSystemId="${dbSystemId}", dbSubsystemId="${dbSubsystemId}"`);
             if (dbSystemId) {
-              systemAssignments.push({
+              const dedupKey = `${dbSystemId}|${dbSubsystemId || ''}`;
+              dedupMap.set(dedupKey, {
                 handover_point_id: savedVCR.id,
                 system_id: dbSystemId,
                 subsystem_id: dbSubsystemId || undefined,
@@ -390,24 +390,22 @@ async function persistPlanToDatabase(
           } else {
             // Full system mapping
             const dbSystemId = systemIdMap[key];
-            console.log(`[P2A-PERSIST]   System key "${key}" → dbSystemId="${dbSystemId}"`);
             if (dbSystemId) {
-              systemAssignments.push({
+              const dedupKey = `${dbSystemId}|`;
+              dedupMap.set(dedupKey, {
                 handover_point_id: savedVCR.id,
                 system_id: dbSystemId,
                 assigned_by: user.id,
               });
-            } else {
-              console.warn(`[P2A-PERSIST]   ⚠️ No match in systemIdMap for key "${key}"!`);
             }
           }
         }
 
-        console.log(`[P2A-PERSIST]   Total assignments to insert: ${systemAssignments.length}`);
+        const systemAssignments = Array.from(dedupMap.values());
         if (systemAssignments.length > 0) {
           const { error: assignError } = await client.from('p2a_handover_point_systems').insert(systemAssignments);
           if (assignError) {
-            console.error(`[P2A-PERSIST]   ❌ Insert error:`, assignError);
+            console.error(`[P2A-PERSIST] Insert error for VCR "${vcr.name}":`, assignError);
           }
         }
       }
