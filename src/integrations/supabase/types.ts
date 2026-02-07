@@ -2866,7 +2866,7 @@ export type Database = {
           description: string | null
           id: string
           name: string
-          ora_plan_id: string
+          ora_plan_id: string | null
           plant_code: string | null
           project_code: string | null
           project_id: string | null
@@ -2879,7 +2879,7 @@ export type Database = {
           description?: string | null
           id?: string
           name: string
-          ora_plan_id: string
+          ora_plan_id?: string | null
           plant_code?: string | null
           project_code?: string | null
           project_id?: string | null
@@ -2892,7 +2892,7 @@ export type Database = {
           description?: string | null
           id?: string
           name?: string
-          ora_plan_id?: string
+          ora_plan_id?: string | null
           plant_code?: string | null
           project_code?: string | null
           project_id?: string | null
