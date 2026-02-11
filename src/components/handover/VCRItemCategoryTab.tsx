@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Trash2, Layers, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Loader2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useVCRItemCategories } from '@/hooks/useVCRItemCategories';
 
@@ -70,10 +70,7 @@ const VCRItemCategoryTab: React.FC = () => {
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center">
-              <Layers className="h-5 w-5 text-white" />
-            </div>
+          <div>
             <div>
               <CardTitle>VCR Item Categories</CardTitle>
               <CardDescription>
