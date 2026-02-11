@@ -26,6 +26,10 @@ const VCRManagementTab: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      <div className="mb-2">
+        <h2 className="text-lg font-semibold text-foreground">Verification Certificate of Readiness (VCR)</h2>
+        <p className="text-sm text-muted-foreground mt-1">A structured approach to manage and verify the project-to-asset transition, ensuring all systems are ready for operational handover.</p>
+      </div>
       <Tabs value={activeSubTab} onValueChange={setActiveSubTab}>
         <TabsList className="h-10">
           <TabsTrigger 

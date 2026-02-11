@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Key, ClipboardList, Award, AlertTriangle, FileCheck2, CheckCircle } from 'lucide-react';
+import { Key, ClipboardList, Award, AlertTriangle, FileCheck2, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
@@ -51,14 +51,6 @@ export const ManageHandover: React.FC<ManageHandoverProps> = ({ onBack }) => {
         />
         <div className="flex items-center justify-between mt-3">
           <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onBack}
-              className="h-10 w-10"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-lg">
               <Key className="w-6 h-6 text-white" />
             </div>
@@ -67,7 +59,7 @@ export const ManageHandover: React.FC<ManageHandoverProps> = ({ onBack }) => {
                 {t.p2aHandover || 'P2A Handover'}
               </h1>
               <p className="text-sm text-muted-foreground mt-0.5">
-                {t.p2aHandoverDesc || 'Configure PAC, FAC, SoF certificates and OWL tracking'}
+                {t.p2aHandoverDesc || 'Configure the project-to-asset transition elements'}
               </p>
             </div>
           </div>
