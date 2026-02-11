@@ -35,11 +35,26 @@ export const useVCRItemCategories = () => {
     mutationFn: async ({ name, description }: { name: string; description?: string }) => {
       // Auto-generate code from first letters of each word, uppercase
       const words = name.trim().split(/\s+/);
-      let code = words.map(w => w[0]?.toUpperCase() || '').join('');
+      let baseCode = words.map(w => w[0]?.toUpperCase() || '').join('');
       
       // If single word, take first 2 chars
       if (words.length === 1) {
-        code = name.slice(0, 2).toUpperCase();
+        baseCode = name.slice(0, 2).toUpperCase();
+      }
+
+      // Check for existing codes and append suffix if needed
+      const { data: existing_codes } = await supabase
+        .from('vcr_item_categories')
+        .select('code')
+        .ilike('code', `${baseCode}%`);
+      
+      let code = baseCode;
+      if (existing_codes?.some(c => c.code === code)) {
+        let suffix = 2;
+        while (existing_codes.some(c => c.code === `${baseCode}${suffix}`)) {
+          suffix++;
+        }
+        code = `${baseCode}${suffix}`;
       }
 
       // Get next display_order
