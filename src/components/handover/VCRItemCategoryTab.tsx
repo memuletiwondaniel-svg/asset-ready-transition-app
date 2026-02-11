@@ -4,12 +4,24 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Plus, Trash2, Layers, Loader2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useVCRItemCategories } from '@/hooks/useVCRItemCategories';
+
+const getCodeColor = (code: string) => {
+  let hash = 0;
+  for (let i = 0; i < code.length; i++) {
+    hash = code.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const hue = ((hash % 360) + 360) % 360;
+  return {
+    bg: `hsl(${hue}, 45%, 94%)`,
+    text: `hsl(${hue}, 55%, 40%)`,
+    border: `hsl(${hue}, 40%, 85%)`,
+  };
+};
 
 const VCRItemCategoryTab: React.FC = () => {
   const { data: categories, isLoading, addCategory, deleteCategory } = useVCRItemCategories();
@@ -99,7 +111,7 @@ const VCRItemCategoryTab: React.FC = () => {
                     />
                     {name.trim() && (
                       <p className="text-xs text-muted-foreground">
-                        Auto-generated code: <Badge variant="secondary" className="font-mono">{getCodePreview(name)}</Badge>
+                        Auto-generated code: <span className="inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-mono font-semibold" style={{ backgroundColor: getCodeColor(getCodePreview(name)).bg, color: getCodeColor(getCodePreview(name)).text, borderColor: getCodeColor(getCodePreview(name)).border }}>{getCodePreview(name)}</span>
                       </p>
                     )}
                   </div>
@@ -140,7 +152,7 @@ const VCRItemCategoryTab: React.FC = () => {
             {categories?.map(cat => (
               <TableRow key={cat.id}>
                 <TableCell>
-                  <Badge variant="outline" className="font-mono font-semibold">{cat.code}</Badge>
+                  <span className="inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-mono font-semibold tracking-wide" style={{ backgroundColor: getCodeColor(cat.code).bg, color: getCodeColor(cat.code).text, borderColor: getCodeColor(cat.code).border }}>{cat.code}</span>
                 </TableCell>
                 <TableCell className="font-medium">{cat.name}</TableCell>
                 <TableCell className="text-sm text-muted-foreground">{cat.description || '-'}</TableCell>
