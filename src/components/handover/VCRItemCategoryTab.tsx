@@ -91,12 +91,7 @@ const VCRItemCategoryTab: React.FC = () => {
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <div>
-              <CardTitle>VCR Item Categories</CardTitle>
-              <CardDescription>
-                Manage categories used to classify VCR checklist items.
-              </CardDescription>
-            </div>
+            <CardTitle className="text-base">Categories</CardTitle>
           </div>
           <div className="flex items-center gap-3">
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
