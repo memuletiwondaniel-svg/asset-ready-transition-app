@@ -36,7 +36,7 @@ const getParentTabIconColor = (tabValue: string, isActive: boolean) => {
 
 export const ManageHandover: React.FC<ManageHandoverProps> = ({ onBack }) => {
   const { translations: t } = useLanguage();
-  const [activeTab, setActiveTab] = useState('pac');
+  const [activeTab, setActiveTab] = useState('vcr');
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
@@ -79,6 +79,16 @@ export const ManageHandover: React.FC<ManageHandoverProps> = ({ onBack }) => {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="inline-flex h-12 w-auto">
             <TabsTrigger 
+              value="vcr" 
+              className={cn(
+                "flex items-center gap-2 px-4 transition-colors duration-200",
+                activeTab !== 'vcr' && "text-muted-foreground/60"
+              )}
+            >
+              <CheckCircle className={cn("h-4 w-4 shrink-0 transition-colors duration-200", getParentTabIconColor('vcr', activeTab === 'vcr'))} />
+              <span>VCR</span>
+            </TabsTrigger>
+            <TabsTrigger 
               value="pac" 
               className={cn(
                 "flex items-center gap-2 px-4 transition-colors duration-200",
@@ -119,17 +129,6 @@ export const ManageHandover: React.FC<ManageHandoverProps> = ({ onBack }) => {
             >
               <AlertTriangle className={cn("h-4 w-4 shrink-0 transition-colors duration-200", getParentTabIconColor('owl', activeTab === 'owl'))} />
               <span>OWL</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="vcr" 
-              className={cn(
-                "flex items-center gap-2 px-4 transition-colors duration-200",
-                activeTab !== 'vcr' && "text-muted-foreground/60"
-              )}
-            >
-              <CheckCircle className={cn("h-4 w-4 shrink-0 transition-colors duration-200", getParentTabIconColor('vcr', activeTab === 'vcr'))} />
-              <span className="hidden sm:inline whitespace-nowrap">VCR Templates</span>
-              <span className="sm:hidden">VCR</span>
             </TabsTrigger>
           </TabsList>
 
