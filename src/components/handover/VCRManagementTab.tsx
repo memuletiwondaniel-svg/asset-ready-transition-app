@@ -26,9 +26,6 @@ const VCRManagementTab: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="mb-2">
-        <h2 className="text-lg font-semibold text-foreground">Verification Certificate of Readiness (VCR)</h2>
-      </div>
       <Tabs value={activeSubTab} onValueChange={setActiveSubTab}>
         <TabsList className="h-10">
           <TabsTrigger 
