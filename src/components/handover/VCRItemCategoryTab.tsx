@@ -85,7 +85,7 @@ const VCRItemCategoryTab: React.FC = () => {
             </div>
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="gap-2">
+                <Button className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm text-white gap-2" size="sm">
                   <Plus className="h-4 w-4" />
                   Add Category
                 </Button>
