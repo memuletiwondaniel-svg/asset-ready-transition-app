@@ -79,10 +79,6 @@ const VCRItemCategoryTab: React.FC = () => {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium bg-primary/10 text-primary">
-              <span className="font-semibold">{categories?.length || 0}</span>
-              <span className="text-xs opacity-70">categories</span>
-            </div>
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
                 <Button className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm text-white gap-2" size="sm">
@@ -148,12 +144,12 @@ const VCRItemCategoryTab: React.FC = () => {
           <TableBody>
             {categories?.map(cat => (
               <TableRow key={cat.id}>
-                <TableCell>
+                <TableCell className="py-2">
                   <span className="inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-mono font-semibold tracking-wide" style={{ backgroundColor: getCodeColor(cat.code).bg, color: getCodeColor(cat.code).text, borderColor: getCodeColor(cat.code).border }}>{cat.code}</span>
                 </TableCell>
-                <TableCell className="font-medium">{cat.name}</TableCell>
-                <TableCell className="text-sm text-muted-foreground">{cat.description || '-'}</TableCell>
-                <TableCell>
+                <TableCell className="py-2 font-medium">{cat.name}</TableCell>
+                <TableCell className="py-2 text-sm text-muted-foreground">{cat.description || '-'}</TableCell>
+                <TableCell className="py-2">
                   <Button
                     variant="ghost"
                     size="icon"
@@ -168,7 +164,7 @@ const VCRItemCategoryTab: React.FC = () => {
             ))}
             {(!categories || categories.length === 0) && (
               <TableRow>
-                <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={4} className="text-center text-muted-foreground py-6">
                   No categories found. Add one to get started.
                 </TableCell>
               </TableRow>
