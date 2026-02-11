@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileCheck, List, Users } from 'lucide-react';
+import { FileCheck, List, Users, Layers } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import VCRTemplatesList from './VCRTemplatesList';
 import DefaultApproversConfig from './DefaultApproversConfig';
+import VCRItemCategoryTab from './VCRItemCategoryTab';
 
 const getTabIconColor = (tabValue: string, isActive: boolean) => {
   if (!isActive) return 'text-muted-foreground/50';
   
   switch (tabValue) {
+    case 'categories':
+      return 'text-violet-500 dark:text-violet-400';
     case 'templates':
       return 'text-cyan-500 dark:text-cyan-400';
     case 'approvers':
@@ -19,12 +22,22 @@ const getTabIconColor = (tabValue: string, isActive: boolean) => {
 };
 
 const VCRManagementTab: React.FC = () => {
-  const [activeSubTab, setActiveSubTab] = useState('templates');
+  const [activeSubTab, setActiveSubTab] = useState('categories');
 
   return (
     <div className="space-y-6">
       <Tabs value={activeSubTab} onValueChange={setActiveSubTab}>
         <TabsList className="h-10">
+          <TabsTrigger 
+            value="categories" 
+            className={cn(
+              "flex items-center gap-2 transition-colors duration-200",
+              activeSubTab !== 'categories' && "text-muted-foreground/60"
+            )}
+          >
+            <Layers className={cn("h-4 w-4 transition-colors duration-200", getTabIconColor('categories', activeSubTab === 'categories'))} />
+            VCR Item Category
+          </TabsTrigger>
           <TabsTrigger 
             value="templates" 
             className={cn(
@@ -33,7 +46,7 @@ const VCRManagementTab: React.FC = () => {
             )}
           >
             <List className={cn("h-4 w-4 transition-colors duration-200", getTabIconColor('templates', activeSubTab === 'templates'))} />
-            VCR Templates
+            VCR Items
           </TabsTrigger>
           <TabsTrigger 
             value="approvers" 
@@ -46,6 +59,10 @@ const VCRManagementTab: React.FC = () => {
             Approvers
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="categories" className="mt-6">
+          <VCRItemCategoryTab />
+        </TabsContent>
 
         <TabsContent value="templates" className="mt-6">
           <VCRTemplatesList />
