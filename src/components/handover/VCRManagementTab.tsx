@@ -36,7 +36,7 @@ const VCRManagementTab: React.FC = () => {
             )}
           >
             <Layers className={cn("h-4 w-4 transition-colors duration-200", getTabIconColor('categories', activeSubTab === 'categories'))} />
-            VCR Item Category
+            Categories
           </TabsTrigger>
           <TabsTrigger 
             value="templates" 
