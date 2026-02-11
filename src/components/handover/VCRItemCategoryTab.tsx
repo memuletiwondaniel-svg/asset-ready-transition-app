@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Trash2, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Loader2, Pencil } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useVCRItemCategories } from '@/hooks/useVCRItemCategories';
 
@@ -24,8 +24,10 @@ const getCodeColor = (code: string) => {
 };
 
 const VCRItemCategoryTab: React.FC = () => {
-  const { data: categories, isLoading, addCategory, deleteCategory } = useVCRItemCategories();
+  const { data: categories, isLoading, addCategory, updateCategory, deleteCategory } = useVCRItemCategories();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<{ id: string; name: string; description: string } | null>(null);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
 
@@ -38,6 +40,24 @@ const VCRItemCategoryTab: React.FC = () => {
           setDialogOpen(false);
           setName('');
           setDescription('');
+        },
+      }
+    );
+  };
+
+  const handleEdit = (cat: { id: string; name: string; description: string | null }) => {
+    setEditingCategory({ id: cat.id, name: cat.name, description: cat.description || '' });
+    setEditDialogOpen(true);
+  };
+
+  const handleEditSubmit = () => {
+    if (!editingCategory || !editingCategory.name.trim()) return;
+    updateCategory.mutate(
+      { id: editingCategory.id, name: editingCategory.name.trim(), description: editingCategory.description.trim() || undefined },
+      {
+        onSuccess: () => {
+          setEditDialogOpen(false);
+          setEditingCategory(null);
         },
       }
     );
@@ -150,15 +170,25 @@ const VCRItemCategoryTab: React.FC = () => {
                 <TableCell className="py-2 font-medium">{cat.name}</TableCell>
                 <TableCell className="py-2 text-sm text-muted-foreground">{cat.description || '-'}</TableCell>
                 <TableCell className="py-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDelete(cat.id)}
-                    disabled={deleteCategory.isPending}
-                    className="text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleEdit(cat)}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDelete(cat.id)}
+                      disabled={deleteCategory.isPending}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
@@ -172,6 +202,44 @@ const VCRItemCategoryTab: React.FC = () => {
           </TableBody>
         </Table>
       </CardContent>
+
+      {/* Edit Category Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Category</DialogTitle>
+            <DialogDescription>Update the category name or description.</DialogDescription>
+          </DialogHeader>
+          {editingCategory && (
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-category-name">Category Name *</Label>
+                <Input
+                  id="edit-category-name"
+                  value={editingCategory.name}
+                  onChange={e => setEditingCategory({ ...editingCategory, name: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-category-desc">Description (optional)</Label>
+                <Textarea
+                  id="edit-category-desc"
+                  value={editingCategory.description}
+                  onChange={e => setEditingCategory({ ...editingCategory, description: e.target.value })}
+                  rows={3}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleEditSubmit} disabled={!editingCategory?.name.trim() || updateCategory.isPending}>
+              {updateCategory.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };

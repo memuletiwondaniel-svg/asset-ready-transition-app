@@ -75,6 +75,23 @@ export const useVCRItemCategories = () => {
     },
   });
 
+  const updateCategory = useMutation({
+    mutationFn: async ({ id, name, description }: { id: string; name: string; description?: string }) => {
+      const { error } = await supabase
+        .from('vcr_item_categories')
+        .update({ name, description: description || null, updated_at: new Date().toISOString() })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vcr-item-categories'] });
+      toast({ title: 'Success', description: 'Category updated successfully' });
+    },
+    onError: () => {
+      toast({ title: 'Error', description: 'Failed to update category', variant: 'destructive' });
+    },
+  });
+
   const deleteCategory = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
@@ -95,6 +112,7 @@ export const useVCRItemCategories = () => {
   return {
     ...query,
     addCategory,
+    updateCategory,
     deleteCategory,
   };
 };
