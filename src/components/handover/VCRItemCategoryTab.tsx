@@ -146,7 +146,7 @@ const VCRItemCategoryTab: React.FC = () => {
           </div>
         </div>
       </CardHeader>
-      <CardContent className="px-4 pb-3 pt-0">
+      <CardContent className="px-4 pb-3 pt-0 overflow-auto max-h-[60vh]">
         <Table>
           <TableHeader>
             <TableRow>
