@@ -158,7 +158,7 @@ const VCRItemCategoryTab: React.FC = () => {
           </TableHeader>
           <TableBody>
             {categories?.map(cat => (
-              <TableRow key={cat.id}>
+              <TableRow key={cat.id} className="cursor-pointer" onClick={() => handleEdit(cat)}>
                 <TableCell className="py-2">
                   <span className="inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-mono font-semibold tracking-wide" style={{ backgroundColor: getCodeColor(cat.code).bg, color: getCodeColor(cat.code).text, borderColor: getCodeColor(cat.code).border }}>{cat.code}</span>
                 </TableCell>
@@ -169,7 +169,7 @@ const VCRItemCategoryTab: React.FC = () => {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => handleEdit(cat)}
+                      onClick={(e) => { e.stopPropagation(); handleEdit(cat); }}
                       className="text-muted-foreground hover:text-foreground"
                     >
                       <Pencil className="h-3.5 w-3.5" />
@@ -177,7 +177,7 @@ const VCRItemCategoryTab: React.FC = () => {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => handleDelete(cat.id)}
+                      onClick={(e) => { e.stopPropagation(); handleDelete(cat.id); }}
                       disabled={deleteCategory.isPending}
                       className="text-destructive hover:text-destructive"
                     >
