@@ -1,22 +1,23 @@
 
 
-## Tighten VCR Item Categories Table and Remove Count Badge
+## Update P2A Handover Header and Add VCR Introduction
 
 ### Changes
 
-**1. Reduce table row padding**
-- Change `TableCell` padding from the default `p-4` to `py-2 px-4` for the category table rows only (via className overrides on each `TableCell`)
-- This keeps horizontal spacing comfortable while reducing vertical bloat
-- Rows will remain dynamic -- they grow naturally if content wraps
+**1. Remove the back arrow button (ManageHandover.tsx)**
+- Remove the `Button` with `ArrowLeft` icon (lines 54-61) from the header
+- Remove the `ArrowLeft` import from lucide-react
+- The breadcrumb navigation already provides a way back, so the arrow is redundant
 
-**2. Remove the category count badge**
-- Remove the `div` containing the count badge ("X categories") from the card header
-- The count is redundant since the table data is directly visible below
+**2. Update the P2A Handover description (ManageHandover.tsx)**
+- Change the subtitle from "Configure PAC, FAC, SoF certificates and OWL tracking" to "Configure the project-to-asset transition elements"
 
-### File to Modify
-- `src/components/handover/VCRItemCategoryTab.tsx`
-  - Remove the count badge element (the `div` with `bg-primary/10` styling)
-  - Add `py-2` className overrides to each `TableCell` in the category rows and the empty state row to reduce vertical padding
+**3. Add VCR full title and intro sentence (VCRManagementTab.tsx)**
+- Add a small header section above the sub-tabs with:
+  - Title: "Verification Certificate of Readiness (VCR)"
+  - One-line description: "A structured approach to manage and verify the project-to-asset transition, ensuring all systems are ready for operational handover."
+- This provides context when the VCR tab is selected without adding heavy visual weight
 
-### Result
-A more compact, modern table with less visual noise in the header area.
+### Files to Modify
+- `src/components/handover/ManageHandover.tsx` -- remove back arrow, update description
+- `src/components/handover/VCRManagementTab.tsx` -- add VCR title and intro text
