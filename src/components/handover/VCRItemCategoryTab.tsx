@@ -205,39 +205,80 @@ const VCRItemCategoryTab: React.FC = () => {
 
       {/* Edit Category Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Edit Category</DialogTitle>
-            <DialogDescription>Update the category name or description.</DialogDescription>
-          </DialogHeader>
+        <DialogContent className="sm:max-w-lg p-0 gap-0 overflow-hidden">
+          {/* Header with accent bar */}
+          <div className="relative px-6 pt-6 pb-4">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-cyan-500" />
+            <DialogHeader className="space-y-1.5">
+              <DialogTitle className="text-lg font-semibold tracking-tight">Edit Category</DialogTitle>
+              <DialogDescription className="text-sm text-muted-foreground/80">
+                Update the category details below.
+              </DialogDescription>
+            </DialogHeader>
+          </div>
+
           {editingCategory && (
-            <div className="space-y-4 py-4">
+            <div className="px-6 pb-2 space-y-5">
+              {/* Category Name Field */}
               <div className="space-y-2">
-                <Label htmlFor="edit-category-name">Category Name *</Label>
+                <Label htmlFor="edit-category-name" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Category Name <span className="text-destructive">*</span>
+                </Label>
                 <Input
                   id="edit-category-name"
                   value={editingCategory.name}
                   onChange={e => setEditingCategory({ ...editingCategory, name: e.target.value })}
+                  className="h-11 text-sm font-medium bg-muted/40 border-border/60 focus:bg-background focus:border-primary/50 transition-all duration-200"
+                  placeholder="Enter category name..."
                 />
+                {editingCategory.name.trim() && (
+                  <div className="flex items-center gap-2 pt-0.5">
+                    <span className="text-xs text-muted-foreground/70">Code:</span>
+                    <span
+                      className="inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-mono font-semibold"
+                      style={{
+                        backgroundColor: getCodeColor(getCodePreview(editingCategory.name)).bg,
+                        color: getCodeColor(getCodePreview(editingCategory.name)).text,
+                        borderColor: getCodeColor(getCodePreview(editingCategory.name)).border,
+                      }}
+                    >
+                      {getCodePreview(editingCategory.name)}
+                    </span>
+                  </div>
+                )}
               </div>
+
+              {/* Description Field */}
               <div className="space-y-2">
-                <Label htmlFor="edit-category-desc">Description (optional)</Label>
+                <Label htmlFor="edit-category-desc" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Description <span className="text-muted-foreground/50 font-normal normal-case">(optional)</span>
+                </Label>
                 <Textarea
                   id="edit-category-desc"
                   value={editingCategory.description}
                   onChange={e => setEditingCategory({ ...editingCategory, description: e.target.value })}
                   rows={3}
+                  className="text-sm bg-muted/40 border-border/60 focus:bg-background focus:border-primary/50 transition-all duration-200 resize-none"
+                  placeholder="Brief description of this category..."
                 />
               </div>
             </div>
           )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleEditSubmit} disabled={!editingCategory?.name.trim() || updateCategory.isPending}>
+
+          {/* Footer with separator */}
+          <div className="border-t bg-muted/30 px-6 py-4 flex items-center justify-end gap-3">
+            <Button variant="ghost" onClick={() => setEditDialogOpen(false)} className="text-muted-foreground">
+              Cancel
+            </Button>
+            <Button
+              onClick={handleEditSubmit}
+              disabled={!editingCategory?.name.trim() || updateCategory.isPending}
+              className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-sm px-5"
+            >
               {updateCategory.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Save Changes
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
     </Card>
