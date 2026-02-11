@@ -1,26 +1,22 @@
 
+## Remove Decorative Icon from VCR Item Categories Card Header
 
-## Fix: Enable Scrolling in the Systems Panel
+### Current State
+The VCR Item Categories card header currently displays a decorative icon box with the `Layers` icon (lines 74-76) that adds visual hierarchy at the card level. However, this icon is redundant since:
+- The page-level icon is the `Key` icon (for P2A Handover)
+- The tab-level icon is the `CheckCircle` icon (for VCR tab)
+- The context is already established by these parent-level indicators
 
-### Problem
-The Systems Panel clips content that extends beyond the visible area, making it impossible to scroll down to see all systems and subsystems (e.g., subsystem `C017-DP300-403-04`). The scrollbar does not appear even though a `ScrollArea` component is used.
+### Proposed Changes
+Remove the decorative icon box (lines 74-76) from the card header while keeping all other header content intact:
+- Remove the `<div className="h-10 w-10 rounded-lg bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center">` container and its child `<Layers>` icon
+- Keep the title and description
+- Keep the category count badge
+- Keep the "Add Category" button
+- Remove the `Layers` import from the lucide-react imports since it will no longer be used in this component
 
-### Root Cause
-There are CSS overflow constraints at multiple levels that prevent Radix ScrollArea from correctly detecting scrollable content and rendering a scrollbar:
+### Result
+The header will have a cleaner, more minimal appearance while maintaining clear context from the parent tab structure. This reduces visual noise and aligns with modern UI/UX practices.
 
-1. **`ScrollArea` has `overflow-hidden`** (line 309) -- this is redundant because `ScrollArea` already handles overflow internally. Adding `overflow-hidden` on the root element can interfere with Radix's scroll measurement.
-2. **`CollapsibleContent` has `overflow-hidden`** (line 89) -- the unassigned section's collapsible clips its children, preventing proper height calculation.
-
-### Fix (2 changes in `SystemsPanel.tsx`)
-
-1. **Remove `overflow-hidden` from the `ScrollArea` wrapper** (line 309)
-   - Change: `className="flex-1 min-h-0 overflow-hidden"` to `className="flex-1 min-h-0"`
-   - The `ScrollArea` component already manages overflow internally through `@radix-ui/react-scroll-area`. The extra `overflow-hidden` on the root prevents proper scroll behavior.
-
-2. **Remove `overflow-hidden` from `CollapsibleContent`** (line 89)
-   - Change: `className="pt-2 overflow-hidden"` to `className="pt-2"`
-   - This ensures the unassigned section's content isn't clipped and contributes to the correct scrollable height.
-
-### Expected Result
-After these changes, the Systems Panel will show a scrollbar when the list of systems and subsystems exceeds the visible area. You will be able to scroll down to see all items including `C017-DP300-403-04` (the Gas Compressors subsystem mapped to VCR-DP300-006).
-
+### Files to Modify
+- `src/components/handover/VCRItemCategoryTab.tsx` (remove icon container and update imports)
