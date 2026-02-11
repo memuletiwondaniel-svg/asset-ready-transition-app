@@ -88,7 +88,7 @@ const VCRItemCategoryTab: React.FC = () => {
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="px-4 py-3">
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="text-base">Categories</CardTitle>
@@ -146,7 +146,7 @@ const VCRItemCategoryTab: React.FC = () => {
           </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-4 pb-3 pt-0">
         <Table>
           <TableHeader>
             <TableRow>
