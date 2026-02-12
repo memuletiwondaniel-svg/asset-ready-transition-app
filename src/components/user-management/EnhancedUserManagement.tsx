@@ -809,9 +809,9 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
         />
 
         {/* Main Tabs for Users and Configuration */}
-        <div className="flex-1 flex flex-col overflow-auto min-h-0">
-          <div className="max-w-7xl mx-auto w-full px-6 pt-4 flex-1 flex flex-col min-h-0">
-            <Tabs value={activeMainTab} onValueChange={setActiveMainTab} className="w-full flex flex-col flex-1 min-h-0">
+        <div className="overflow-auto">
+          <div className="max-w-7xl mx-auto w-full px-6 pt-4">
+            <Tabs value={activeMainTab} onValueChange={setActiveMainTab} className="w-full">
               {/* Tabs Row (kept fixed; only the table body scrolls) */}
               <TabsList className="grid w-full grid-cols-3 max-w-xl mb-2 bg-background/95 backdrop-blur-md flex-shrink-0">
                 <TabsTrigger value="users" className="flex items-center gap-2">
