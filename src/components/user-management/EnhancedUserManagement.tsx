@@ -809,7 +809,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
         />
 
         {/* Main Tabs for Users and Configuration */}
-        <div className="flex-1 flex flex-col overflow-hidden min-h-0">
+        <div className="flex-1 flex flex-col overflow-auto min-h-0">
           <div className="max-w-7xl mx-auto w-full px-6 pt-6 flex-1 flex flex-col min-h-0">
             <Tabs value={activeMainTab} onValueChange={setActiveMainTab} className="w-full flex flex-col flex-1 min-h-0">
               {/* Tabs Row (kept fixed; only the table body scrolls) */}
@@ -828,7 +828,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="users" className="flex-1 flex flex-col space-y-4 mt-0 overflow-hidden min-h-0">
+              <TabsContent value="users" className="flex flex-col space-y-4 mt-0 overflow-auto min-h-0 flex-1">
                 {/* Search and Filters Bar (fixed) */}
                 <Card className="border-border/40 shadow-sm animate-fade-in bg-card/95 backdrop-blur-md flex-shrink-0">
                   <CardContent className="p-6">
