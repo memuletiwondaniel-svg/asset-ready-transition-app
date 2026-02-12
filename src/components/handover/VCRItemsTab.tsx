@@ -197,9 +197,8 @@ const VCRItemsTab: React.FC = () => {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <FileCheck className="h-5 w-5" />
-              VCR Checklist Items
+            <CardTitle>
+              Checklist Items
             </CardTitle>
             <Button onClick={handleOpenCreate}>
               <Plus className="h-4 w-4 mr-2" />
