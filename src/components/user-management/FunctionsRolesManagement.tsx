@@ -231,9 +231,9 @@ const FunctionsRolesManagement: React.FC = () => {
       toast({ title: 'Success', description: 'Role added successfully' });
       setAddRoleOpen(false);
       resetRoleForm();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding role:', error);
-      toast({ title: 'Error', description: 'Failed to add role', variant: 'destructive' });
+      toast({ title: 'Error', description: error?.message || 'Failed to add role', variant: 'destructive' });
     }
   };
 

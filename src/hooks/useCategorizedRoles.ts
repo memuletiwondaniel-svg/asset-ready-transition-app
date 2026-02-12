@@ -96,21 +96,35 @@ export const useCategorizedRoles = () => {
 
 export const useAddRole = () => {
   const addRole = async (name: string, description: string, categoryId: string) => {
+    // Check if a soft-deleted role with this name exists — reactivate it
+    const { data: existing } = await supabase
+      .from('roles')
+      .select('id, is_active')
+      .eq('name', name)
+      .maybeSingle();
+
+    if (existing && !existing.is_active) {
+      const { data, error } = await supabase
+        .from('roles')
+        .update({ is_active: true, description, category_id: categoryId })
+        .eq('id', existing.id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    }
+
+    if (existing && existing.is_active) {
+      throw new Error(`A role named "${name}" already exists`);
+    }
+
     const { data, error } = await supabase
       .from('roles')
-      .insert({
-        name,
-        description,
-        category_id: categoryId,
-        is_active: true,
-      })
+      .insert({ name, description, category_id: categoryId, is_active: true })
       .select()
       .single();
 
-    if (error) {
-      throw error;
-    }
-
+    if (error) throw error;
     return data;
   };
 
