@@ -357,100 +357,138 @@ const VCRItemsTab: React.FC = () => {
 
       {/* Add/Edit Dialog */}
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>{editingItem ? 'Edit VCR Item' : 'Add VCR Item'}</DialogTitle>
-            <DialogDescription>
-              {editingItem ? 'Update the VCR checklist item details.' : 'Create a new VCR checklist item.'}
+        <DialogContent className="max-w-2xl p-0 gap-0 overflow-hidden">
+          <div className="h-1 bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-500" />
+          
+          <DialogHeader className="px-6 pt-5 pb-0">
+            <DialogTitle className="text-lg font-semibold tracking-tight">
+              {editingItem ? 'Edit Checklist Item' : 'New Checklist Item'}
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground/80">
+              {editingItem ? 'Update the details for this checklist item.' : 'Define a new VCR checklist item with its category and parties.'}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
-            <div>
-              <Label>Category *</Label>
-              <Select value={formData.category_id} onValueChange={(v) => setFormData(p => ({ ...p, category_id: v }))}>
-                <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
-                <SelectContent>
-                  {categories?.map(cat => (
-                    <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+
+          <div className="px-6 py-5 space-y-5 max-h-[60vh] overflow-y-auto">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Category <span className="text-destructive">*</span>
+                </Label>
+                <Select value={formData.category_id} onValueChange={(v) => setFormData(p => ({ ...p, category_id: v }))}>
+                  <SelectTrigger className="bg-muted/30 border-border/60 focus:bg-background transition-colors">
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories?.map(cat => (
+                      <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Delivering Party
+                </Label>
+                <Select value={formData.delivering_party_role_id} onValueChange={(v) => setFormData(p => ({ ...p, delivering_party_role_id: v }))}>
+                  <SelectTrigger className="bg-muted/30 border-border/60 focus:bg-background transition-colors">
+                    <SelectValue placeholder="Select role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {groupedRoles?.map(group => (
+                      <React.Fragment key={group.category.id}>
+                        <SelectItem value={`__label_${group.category.id}`} disabled className="font-semibold text-xs uppercase tracking-wide text-muted-foreground">
+                          {group.category.name}
+                        </SelectItem>
+                        {group.roles.map(role => (
+                          <SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>
+                        ))}
+                      </React.Fragment>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <div>
-              <Label>Description *</Label>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Description <span className="text-destructive">*</span>
+              </Label>
               <Textarea
                 value={formData.vcr_item}
                 onChange={(e) => setFormData(p => ({ ...p, vcr_item: e.target.value }))}
                 placeholder="Enter VCR item description..."
                 rows={3}
+                className="bg-muted/30 border-border/60 focus:bg-background transition-colors resize-none"
               />
             </div>
-            <div>
-              <Label>Delivering Party</Label>
-              <Select value={formData.delivering_party_role_id} onValueChange={(v) => setFormData(p => ({ ...p, delivering_party_role_id: v }))}>
-                <SelectTrigger><SelectValue placeholder="Select role" /></SelectTrigger>
-                <SelectContent>
-                  {groupedRoles?.map(group => (
-                    <React.Fragment key={group.category.id}>
-                      <SelectItem value={`__label_${group.category.id}`} disabled className="font-semibold text-xs uppercase tracking-wide text-muted-foreground">
-                        {group.category.name}
-                      </SelectItem>
-                      {group.roles.map(role => (
-                        <SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>
-                      ))}
-                    </React.Fragment>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Approving Parties</Label>
-              <div className="border rounded-md p-3 max-h-48 overflow-y-auto space-y-3">
+
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Approving Parties
+                </Label>
+                {formData.approving_party_role_ids.length > 0 && (
+                  <Badge variant="secondary" className="text-xs font-medium">
+                    {formData.approving_party_role_ids.length} selected
+                  </Badge>
+                )}
+              </div>
+              <div className="border border-border/60 rounded-lg bg-muted/20 p-3 max-h-44 overflow-y-auto space-y-3">
                 {groupedRoles?.map(group => (
                   <div key={group.category.id}>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">{group.category.name}</p>
-                    <div className="grid grid-cols-2 gap-1">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70 mb-1.5 border-b border-border/30 pb-1">
+                      {group.category.name}
+                    </p>
+                    <div className="grid grid-cols-2 gap-0.5">
                       {group.roles.map(role => (
-                        <label key={role.id} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted/50 rounded px-1 py-0.5">
+                        <label key={role.id} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted/50 rounded-md px-2 py-1 transition-colors">
                           <Checkbox
                             checked={formData.approving_party_role_ids.includes(role.id)}
                             onCheckedChange={() => toggleApprover(role.id)}
                           />
-                          {role.name}
+                          <span className="text-foreground/90">{role.name}</span>
                         </label>
                       ))}
                     </div>
                   </div>
                 ))}
               </div>
-              {formData.approving_party_role_ids.length > 0 && (
-                <p className="text-xs text-muted-foreground mt-1">{formData.approving_party_role_ids.length} selected</p>
-              )}
             </div>
-            <div>
-              <Label>Supporting Evidence</Label>
-              <Textarea
-                value={formData.supporting_evidence}
-                onChange={(e) => setFormData(p => ({ ...p, supporting_evidence: e.target.value }))}
-                placeholder="e.g., DEM 1 Compliance Report"
-                rows={2}
-              />
-            </div>
-            <div>
-              <Label>Guidance Notes</Label>
-              <Textarea
-                value={formData.guidance_notes}
-                onChange={(e) => setFormData(p => ({ ...p, guidance_notes: e.target.value }))}
-                placeholder="Enter guidance notes..."
-                rows={3}
-              />
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Supporting Evidence
+                </Label>
+                <Textarea
+                  value={formData.supporting_evidence}
+                  onChange={(e) => setFormData(p => ({ ...p, supporting_evidence: e.target.value }))}
+                  placeholder="e.g., DEM 1 Compliance Report"
+                  rows={3}
+                  className="bg-muted/30 border-border/60 focus:bg-background transition-colors resize-none text-sm"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Guidance Notes
+                </Label>
+                <Textarea
+                  value={formData.guidance_notes}
+                  onChange={(e) => setFormData(p => ({ ...p, guidance_notes: e.target.value }))}
+                  placeholder="Enter guidance notes..."
+                  rows={3}
+                  className="bg-muted/30 border-border/60 focus:bg-background transition-colors resize-none text-sm"
+                />
+              </div>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsFormOpen(false)}>Cancel</Button>
-            <Button onClick={handleSubmit} disabled={!formData.category_id || !formData.vcr_item.trim() || createItem.isPending || updateItem.isPending}>
+
+          <DialogFooter className="px-6 py-4 border-t border-border/40 bg-muted/20">
+            <Button variant="outline" onClick={() => setIsFormOpen(false)} className="px-5">Cancel</Button>
+            <Button onClick={handleSubmit} disabled={!formData.category_id || !formData.vcr_item.trim() || createItem.isPending || updateItem.isPending} className="px-5">
               {(createItem.isPending || updateItem.isPending) && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              {editingItem ? 'Update' : 'Add Item'}
+              {editingItem ? 'Save Changes' : 'Add Item'}
             </Button>
           </DialogFooter>
         </DialogContent>
