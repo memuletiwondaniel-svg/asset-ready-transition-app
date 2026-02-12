@@ -33,7 +33,7 @@ export const getSidebarRoute = (section: string): string => {
  * @param currentPath - Current route path (optional, for same-route detection)
  */
 export const createSidebarNavigator = (
-  navigate: (path: string) => void,
+  navigate: (path: string, options?: any) => void,
   customHandlers?: Record<string, () => void>,
   onSameRouteNavigate?: () => void,
   currentPath?: string
@@ -52,6 +52,7 @@ export const createSidebarNavigator = (
       onSameRouteNavigate();
     }
     
-    navigate(route);
+    // Always pass a unique state key so same-route navigations trigger re-renders
+    navigate(route, { state: { navKey: Date.now() } });
   };
 };

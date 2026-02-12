@@ -12,7 +12,7 @@ import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
 
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ThemeToggle } from './admin/ThemeToggle';
 import LanguageSelector from './admin/LanguageSelector';
 import UserProfileDropdown from './admin/UserProfileDropdown';
@@ -54,9 +54,17 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   } = useBreadcrumb();
   const breadcrumbs = buildBreadcrumbsFromPath();
   const navigate = useNavigate();
+  const location = useLocation();
 
   // State management - consolidated for cleaner code
   const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'pssr-settings' | 'activity-log' | 'ora-configuration' | 'handover-management' | 'bulk-upload'>('dashboard');
+
+  // Reset to dashboard when sidebar navigation triggers a same-route click
+  useEffect(() => {
+    if ((location.state as any)?.navKey) {
+      setActiveView('dashboard');
+    }
+  }, [(location.state as any)?.navKey]);
   const [searchQuery, setSearchQuery] = useState('');
   const [favoriteTools, setFavoriteTools] = useState<string[]>([]);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
