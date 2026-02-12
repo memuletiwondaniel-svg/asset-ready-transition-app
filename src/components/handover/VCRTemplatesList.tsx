@@ -3,19 +3,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Plus, Edit2, Trash2, Search, Settings2, FileCheck } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, FileCheck, CheckSquare, Users } from 'lucide-react';
 import { useVCRTemplates, VCRTemplate } from '@/hooks/useVCRTemplates';
 import { usePACCategories } from '@/hooks/useHandoverPrerequisites';
 import { Skeleton } from '@/components/ui/skeleton';
 import VCRTemplateDialog from './VCRTemplateDialog';
-
-interface ColumnVisibility {
-  sampleEvidence: boolean;
-  deliveringParty: boolean;
-  receivingParty: boolean;
-}
 
 const VCRTemplatesList: React.FC = () => {
   const { data: templates, isLoading: isLoadingTemplates, deleteTemplate, isDeleting } = useVCRTemplates();
@@ -23,11 +15,6 @@ const VCRTemplatesList: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<VCRTemplate | null>(null);
-  const [columnVisibility, setColumnVisibility] = useState<ColumnVisibility>({
-    sampleEvidence: true,
-    deliveringParty: true,
-    receivingParty: true,
-  });
 
   const filteredTemplates = useMemo(() => {
     if (!templates) return [];
@@ -50,8 +37,9 @@ const VCRTemplatesList: React.FC = () => {
     setDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    if (window.confirm('Are you sure you want to delete this VCR template?')) {
+  const handleDelete = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    if (window.confirm('Are you sure you want to delete this template?')) {
       deleteTemplate(id);
     }
   };
@@ -80,7 +68,7 @@ const VCRTemplatesList: React.FC = () => {
               <div>
                 <CardTitle>VCR Templates</CardTitle>
                 <CardDescription>
-                  Configure baseline VCR (Verification of Completion Readiness) items. These templates are used when creating project-specific VCRs.
+                  Configure baseline VCR templates with selected items and approvers.
                 </CardDescription>
               </div>
             </div>
@@ -97,130 +85,37 @@ const VCRTemplatesList: React.FC = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-2 mb-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search VCR templates..."
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon">
-                  <Settings2 className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-popover">
-                <DropdownMenuCheckboxItem
-                  checked={columnVisibility.sampleEvidence}
-                  onCheckedChange={(checked) => setColumnVisibility(prev => ({ ...prev, sampleEvidence: checked }))}
-                >
-                  Sample Evidence
-                </DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem
-                  checked={columnVisibility.deliveringParty}
-                  onCheckedChange={(checked) => setColumnVisibility(prev => ({ ...prev, deliveringParty: checked }))}
-                >
-                  Delivering Party
-                </DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem
-                  checked={columnVisibility.receivingParty}
-                  onCheckedChange={(checked) => setColumnVisibility(prev => ({ ...prev, receivingParty: checked }))}
-                >
-                  Receiving Party
-                </DropdownMenuCheckboxItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+          {/* Search */}
+          <div className="relative mb-4">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search templates..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
           </div>
 
-          {/* Flat Table */}
-          <div className="border rounded-lg max-h-[60vh] overflow-auto">
-            <Table>
-              <TableHeader className="sticky top-0 z-10 bg-card">
-                <TableRow>
-                  <TableHead className="w-10">#</TableHead>
-                  <TableHead>Summary</TableHead>
-                  {columnVisibility.sampleEvidence && <TableHead className="min-w-48">Sample Evidence</TableHead>}
-                  {columnVisibility.deliveringParty && <TableHead>Delivering Party</TableHead>}
-                  {columnVisibility.receivingParty && <TableHead>Receiving Party</TableHead>}
-                  <TableHead className="w-24">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredTemplates.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={3 + (columnVisibility.sampleEvidence ? 1 : 0) + (columnVisibility.deliveringParty ? 1 : 0) + (columnVisibility.receivingParty ? 1 : 0)} className="text-center py-8 text-muted-foreground">
-                      {templates?.length === 0 ? 'No VCR templates yet. Click "Add VCR Template" to create one.' : 'No templates match your search.'}
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredTemplates.map((template, index) => (
-                    <TableRow
-                      key={template.id}
-                      className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleEdit(template)}
-                    >
-                      <TableCell className="font-mono text-muted-foreground">
-                        {index + 1}
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium">{template.summary}</p>
-                          {template.description && (
-                            <p className="text-sm text-muted-foreground line-clamp-1">
-                              {template.description}
-                            </p>
-                          )}
-                        </div>
-                      </TableCell>
-                      {columnVisibility.sampleEvidence && (
-                        <TableCell className="text-sm text-muted-foreground min-w-48 max-w-72">
-                          <p className="whitespace-normal break-words">{template.sample_evidence || '-'}</p>
-                        </TableCell>
-                      )}
-                      {columnVisibility.deliveringParty && (
-                        <TableCell>
-                          {template.delivering_role?.name ? (
-                            <Badge variant="outline">{template.delivering_role.name}</Badge>
-                          ) : (
-                            <span className="text-muted-foreground">-</span>
-                          )}
-                        </TableCell>
-                      )}
-                      {columnVisibility.receivingParty && (
-                        <TableCell>
-                          {template.receiving_role?.name ? (
-                            <Badge variant="outline">{template.receiving_role.name}</Badge>
-                          ) : (
-                            <span className="text-muted-foreground">-</span>
-                          )}
-                        </TableCell>
-                      )}
-                      <TableCell>
-                        <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
-                          <Button variant="ghost" size="icon" onClick={() => handleEdit(template)}>
-                            <Edit2 className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDelete(template.id)}
-                            disabled={isDeleting}
-                            className="text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+          {/* Template Cards Grid */}
+          {filteredTemplates.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              {templates?.length === 0
+                ? 'No templates yet. Click "Add Template" to create one.'
+                : 'No templates match your search.'}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {filteredTemplates.map(template => (
+                <TemplateCard
+                  key={template.id}
+                  template={template}
+                  onEdit={() => handleEdit(template)}
+                  onDelete={(e) => handleDelete(e, template.id)}
+                  isDeleting={isDeleting}
+                />
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -231,6 +126,73 @@ const VCRTemplatesList: React.FC = () => {
         template={editingTemplate}
         categories={categories || []}
       />
+    </div>
+  );
+};
+
+interface TemplateCardProps {
+  template: VCRTemplate;
+  onEdit: () => void;
+  onDelete: (e: React.MouseEvent) => void;
+  isDeleting: boolean;
+}
+
+const TemplateCard: React.FC<TemplateCardProps> = ({ template, onEdit, onDelete, isDeleting }) => {
+  const itemCount = template.template_items?.length || 0;
+  const approverCount = template.template_approvers?.length || 0;
+
+  return (
+    <div
+      onClick={onEdit}
+      className="group relative rounded-xl border border-border/60 bg-card hover:border-primary/30 hover:shadow-md transition-all cursor-pointer overflow-hidden"
+    >
+      {/* Top accent */}
+      <div className="h-1 bg-gradient-to-r from-cyan-500 to-blue-500 opacity-60 group-hover:opacity-100 transition-opacity" />
+
+      <div className="p-4 space-y-3">
+        {/* Title & Actions */}
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-sm leading-tight truncate">{template.summary}</h3>
+            {template.description && (
+              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                {template.description}
+              </p>
+            )}
+          </div>
+          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={(e) => { e.stopPropagation(); onEdit(); }}
+            >
+              <Edit2 className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-destructive hover:text-destructive"
+              onClick={onDelete}
+              disabled={isDeleting}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary" className="gap-1 text-[10px] px-2 py-0.5">
+            <CheckSquare className="h-3 w-3" />
+            {itemCount} {itemCount === 1 ? 'item' : 'items'}
+          </Badge>
+          <Badge variant="outline" className="gap-1 text-[10px] px-2 py-0.5">
+            <Users className="h-3 w-3" />
+            {approverCount} {approverCount === 1 ? 'approver' : 'approvers'}
+          </Badge>
+        </div>
+      </div>
     </div>
   );
 };

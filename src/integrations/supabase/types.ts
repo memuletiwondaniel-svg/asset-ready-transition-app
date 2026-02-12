@@ -6780,6 +6780,78 @@ export type Database = {
           },
         ]
       }
+      vcr_template_approvers: {
+        Row: {
+          created_at: string
+          id: string
+          role_id: string
+          template_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role_id: string
+          template_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role_id?: string
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vcr_template_approvers_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vcr_template_approvers_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "vcr_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vcr_template_items: {
+        Row: {
+          created_at: string
+          id: string
+          template_id: string
+          vcr_item_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          template_id: string
+          vcr_item_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          template_id?: string
+          vcr_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vcr_template_items_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "vcr_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vcr_template_items_vcr_item_id_fkey"
+            columns: ["vcr_item_id"]
+            isOneToOne: false
+            referencedRelation: "vcr_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vcr_templates: {
         Row: {
           category_id: string | null
