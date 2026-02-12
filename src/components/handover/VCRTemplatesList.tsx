@@ -91,7 +91,7 @@ const VCRTemplatesList: React.FC = () => {
               </div>
               <Button onClick={handleAdd} className="gap-2">
                 <Plus className="h-4 w-4" />
-                Add VCR Template
+                Add Template
               </Button>
             </div>
           </div>
