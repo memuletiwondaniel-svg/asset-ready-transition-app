@@ -442,9 +442,9 @@ const ChecklistItemsLibrary: React.FC = () => {
           </div>
 
           {/* Items Table */}
-          <div className="border rounded-lg overflow-hidden">
+          <div className="border rounded-lg max-h-[60vh] overflow-auto">
             <Table>
-              <TableHeader>
+              <TableHeader className="sticky top-0 z-10 bg-card">
                 <TableRow>
                   <TableHead className="w-24">ID</TableHead>
                   <TableHead className="w-32">Category</TableHead>

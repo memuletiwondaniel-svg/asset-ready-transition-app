@@ -125,9 +125,9 @@ const ItemCategoriesTab: React.FC = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="border rounded-lg overflow-hidden">
+          <div className="border rounded-lg max-h-[60vh] overflow-auto">
             <Table>
-              <TableHeader>
+              <TableHeader className="sticky top-0 z-10 bg-card">
                 <TableRow>
                   <TableHead className="w-24">Ref ID</TableHead>
                   <TableHead>Name</TableHead>
