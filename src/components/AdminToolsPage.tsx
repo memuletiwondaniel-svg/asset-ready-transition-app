@@ -205,6 +205,16 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     height: 'md:row-span-2',
     onClick: () => navigate('/project-management')
   }, {
+    id: 'handover-management',
+    title: t.p2aHandover || 'P2A Handover',
+    description: t.p2aHandoverDesc || 'Configure PAC, FAC, SoF certificates and OWL tracking',
+    icon: Key,
+    gradient: 'from-blue-500 to-cyan-500',
+    tooltip: t.manageHandoverDesc || 'Configure PAC, FAC, SoF certificates and OWL tracking',
+    stats: {},
+    height: 'md:row-span-2',
+    onClick: () => setActiveView('handover-management')
+  }, {
     id: 'pssr-settings',
     title: t.pssrConfiguration,
     description: t.pssrConfigDesc,
@@ -234,16 +244,6 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     stats: {},
     height: 'md:row-span-2',
     onClick: () => setActiveView('ora-configuration')
-  }, {
-    id: 'handover-management',
-    title: t.p2aHandover || 'P2A Handover',
-    description: t.p2aHandoverDesc || 'Configure PAC, FAC, SoF certificates and OWL tracking',
-    icon: Key,
-    gradient: 'from-blue-500 to-cyan-500',
-    tooltip: t.manageHandoverDesc || 'Configure PAC, FAC, SoF certificates and OWL tracking',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('handover-management')
   }, {
     id: 'bulk-upload',
     title: 'Bulk User Upload',
