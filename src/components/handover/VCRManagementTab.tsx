@@ -46,7 +46,7 @@ const VCRManagementTab: React.FC = () => {
             )}
           >
             <List className={cn("h-4 w-4 transition-colors duration-200", getTabIconColor('templates', activeSubTab === 'templates'))} />
-            Items
+            Templates
           </TabsTrigger>
           <TabsTrigger 
             value="approvers" 
