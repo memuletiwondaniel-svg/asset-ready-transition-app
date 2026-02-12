@@ -6723,6 +6723,63 @@ export type Database = {
         }
         Relationships: []
       }
+      vcr_items: {
+        Row: {
+          approving_party_role_ids: string[] | null
+          category_id: string | null
+          created_at: string
+          delivering_party_role_id: string | null
+          display_order: number
+          guidance_notes: string | null
+          id: string
+          is_active: boolean
+          supporting_evidence: string | null
+          updated_at: string
+          vcr_item: string
+        }
+        Insert: {
+          approving_party_role_ids?: string[] | null
+          category_id?: string | null
+          created_at?: string
+          delivering_party_role_id?: string | null
+          display_order?: number
+          guidance_notes?: string | null
+          id?: string
+          is_active?: boolean
+          supporting_evidence?: string | null
+          updated_at?: string
+          vcr_item: string
+        }
+        Update: {
+          approving_party_role_ids?: string[] | null
+          category_id?: string | null
+          created_at?: string
+          delivering_party_role_id?: string | null
+          display_order?: number
+          guidance_notes?: string | null
+          id?: string
+          is_active?: boolean
+          supporting_evidence?: string | null
+          updated_at?: string
+          vcr_item?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vcr_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "vcr_item_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vcr_items_delivering_party_role_id_fkey"
+            columns: ["delivering_party_role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vcr_templates: {
         Row: {
           category_id: string | null
