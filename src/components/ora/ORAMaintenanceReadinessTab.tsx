@@ -336,10 +336,10 @@ export const ORAMaintenanceReadinessTab: React.FC<ORAMaintenanceReadinessTabProp
                   )}
 
                   {/* Batches Table */}
-                  <div className="border rounded-lg overflow-hidden bg-card">
+                  <div className="border rounded-lg max-h-[60vh] overflow-auto bg-card">
                   {componentBatches.length > 0 ? (
                     <Table>
-                      <TableHeader>
+                      <TableHeader className="sticky top-0 z-10 bg-card">
                         <TableRow className="bg-muted/30">
                           <TableHead className="w-[120px]">Batch</TableHead>
                           <TableHead>Description</TableHead>
