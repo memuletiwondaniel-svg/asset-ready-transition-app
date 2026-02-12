@@ -309,7 +309,7 @@ const VCRItemsTab: React.FC = () => {
                         </Badge>
                       </TableCell>
                       <TableCell className="max-w-md">
-                        <p className="line-clamp-2 text-sm">{item.vcr_item}</p>
+                        <p className="line-clamp-4 text-sm whitespace-normal break-words">{item.vcr_item}</p>
                       </TableCell>
                       {visibleColumns.deliveringParty && (
                         <TableCell className="text-sm text-muted-foreground">{item.delivering_role_name || '—'}</TableCell>
