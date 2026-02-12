@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileCheck, List, Users, Layers, ClipboardList } from 'lucide-react';
+import { List, Layers, ClipboardList } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import VCRTemplatesList from './VCRTemplatesList';
-import DefaultApproversConfig from './DefaultApproversConfig';
 import VCRItemCategoryTab from './VCRItemCategoryTab';
 import VCRItemsTab from './VCRItemsTab';
 
@@ -61,16 +60,6 @@ const VCRManagementTab: React.FC = () => {
             <List className={cn("h-4 w-4 transition-colors duration-200", getTabIconColor('templates', activeSubTab === 'templates'))} />
             Templates
           </TabsTrigger>
-          <TabsTrigger 
-            value="approvers" 
-            className={cn(
-              "flex items-center gap-2 transition-colors duration-200",
-              activeSubTab !== 'approvers' && "text-muted-foreground/60"
-            )}
-          >
-            <Users className={cn("h-4 w-4 transition-colors duration-200", getTabIconColor('approvers', activeSubTab === 'approvers'))} />
-            Approvers
-          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="categories" className="mt-6">
@@ -85,9 +74,6 @@ const VCRManagementTab: React.FC = () => {
           <VCRTemplatesList />
         </TabsContent>
 
-        <TabsContent value="approvers" className="mt-6">
-          <DefaultApproversConfig certificateType="VCR" />
-        </TabsContent>
       </Tabs>
     </div>
   );
