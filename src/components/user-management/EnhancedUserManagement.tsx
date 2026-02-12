@@ -1044,12 +1044,11 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
                 </Card>
               </TabsContent>
 
-              <TabsContent value="locations" className="mt-0">
+              <TabsContent value="locations" className="flex-1 mt-0 overflow-auto min-h-0 pb-6">
                 <LocationManagement />
               </TabsContent>
 
-
-              <TabsContent value="configuration" className="mt-0">
+              <TabsContent value="configuration" className="flex-1 mt-0 overflow-auto min-h-0 pb-6">
                 <ConfigurationManagement />
               </TabsContent>
             </Tabs>
