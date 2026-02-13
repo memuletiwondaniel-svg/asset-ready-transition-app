@@ -134,7 +134,7 @@ const ChecklistItemsLibrary: React.FC = () => {
 
   // Column visibility state
   const [visibleColumns, setVisibleColumns] = useState({
-    topic: false,
+    topic: true,
     responsible: false,
     supportingEvidence: false,
     approvers: true,
@@ -151,6 +151,7 @@ const ChecklistItemsLibrary: React.FC = () => {
       const matchesSearch = 
         item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
         displayId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.topic?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.approvers?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.supporting_evidence?.toLowerCase().includes(searchTerm.toLowerCase());
       
