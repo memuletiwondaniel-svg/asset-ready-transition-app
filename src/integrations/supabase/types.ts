@@ -6734,6 +6734,7 @@ export type Database = {
           id: string
           is_active: boolean
           supporting_evidence: string | null
+          topic: string | null
           updated_at: string
           vcr_item: string
         }
@@ -6747,6 +6748,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           supporting_evidence?: string | null
+          topic?: string | null
           updated_at?: string
           vcr_item: string
         }
@@ -6760,6 +6762,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           supporting_evidence?: string | null
+          topic?: string | null
           updated_at?: string
           vcr_item?: string
         }

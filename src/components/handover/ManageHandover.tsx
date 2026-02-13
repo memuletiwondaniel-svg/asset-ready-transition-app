@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Key, ClipboardList, Award, AlertTriangle, FileCheck2, CheckCircle } from 'lucide-react';
+import { Key, ClipboardList, Award, FileCheck2, CheckCircle, ClipboardCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import PACManagementTab from './PACManagementTab';
 import FACManagementTab from './FACManagementTab';
 import SOFCertificateManagement from './SOFCertificateManagement';
-import OWLManagementTab from './OWLManagementTab';
+import PSSRManagementTab from './PSSRManagementTab';
 import VCRManagementTab from './VCRManagementTab';
 
 interface ManageHandoverProps {
@@ -19,13 +19,13 @@ const getParentTabIconColor = (tabValue: string, isActive: boolean) => {
   if (!isActive) return 'text-muted-foreground/50';
   
   switch (tabValue) {
-    case 'pac':
+     case 'pac':
       return 'text-teal-500 dark:text-teal-400';
     case 'fac':
       return 'text-emerald-500 dark:text-emerald-400';
     case 'sof':
       return 'text-blue-500 dark:text-blue-400';
-    case 'owl':
+    case 'pssr':
       return 'text-amber-500 dark:text-amber-400';
     case 'vcr':
       return 'text-cyan-500 dark:text-cyan-400';
@@ -113,14 +113,14 @@ export const ManageHandover: React.FC<ManageHandoverProps> = ({ onBack }) => {
               <span>SoF</span>
             </TabsTrigger>
             <TabsTrigger 
-              value="owl" 
+              value="pssr" 
               className={cn(
                 "flex items-center gap-2 px-4 transition-colors duration-200",
-                activeTab !== 'owl' && "text-muted-foreground/60"
+                activeTab !== 'pssr' && "text-muted-foreground/60"
               )}
             >
-              <AlertTriangle className={cn("h-4 w-4 shrink-0 transition-colors duration-200", getParentTabIconColor('owl', activeTab === 'owl'))} />
-              <span>OWL</span>
+              <ClipboardCheck className={cn("h-4 w-4 shrink-0 transition-colors duration-200", getParentTabIconColor('pssr', activeTab === 'pssr'))} />
+              <span>PSSR</span>
             </TabsTrigger>
           </TabsList>
 
@@ -136,8 +136,8 @@ export const ManageHandover: React.FC<ManageHandoverProps> = ({ onBack }) => {
             <SOFCertificateManagement />
           </TabsContent>
 
-          <TabsContent value="owl" className="mt-6">
-            <OWLManagementTab />
+          <TabsContent value="pssr" className="mt-6">
+            <PSSRManagementTab />
           </TabsContent>
 
           <TabsContent value="vcr" className="mt-6">
