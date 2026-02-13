@@ -21,7 +21,7 @@ import { createSidebarNavigator } from '@/utils/sidebarNavigation';
 
 // Lazy load heavy subview components
 const EnhancedUserManagement = lazy(() => import("@/components/user-management/EnhancedUserManagement"));
-const PSSRSettingsManagement = lazy(() => import("./PSSRSettingsManagement"));
+
 const ORAConfigurationManagement = lazy(() => import("./ora/ORAConfigurationManagement").then(m => ({ default: m.ORAConfigurationManagement })));
 const ManageHandover = lazy(() => import("./handover/ManageHandover").then(m => ({ default: m.ManageHandover })));
 const AdminHeader = lazy(() => import("./admin/AdminHeader"));
@@ -57,7 +57,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   const location = useLocation();
 
   // State management - consolidated for cleaner code
-  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'pssr-settings' | 'activity-log' | 'ora-configuration' | 'handover-management' | 'bulk-upload'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'activity-log' | 'ora-configuration' | 'handover-management' | 'bulk-upload'>('dashboard');
 
   // Reset to dashboard when sidebar navigation triggers a same-route click
   useEffect(() => {
@@ -215,16 +215,6 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     height: 'md:row-span-2',
     onClick: () => setActiveView('handover-management')
   }, {
-    id: 'pssr-settings',
-    title: t.pssrConfiguration,
-    description: t.pssrConfigDesc,
-    icon: Settings,
-    gradient: 'from-emerald-500 to-emerald-600',
-    tooltip: t.pssrConfigDesc,
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('pssr-settings')
-  }, {
     id: 'activity-log',
     title: t.activityLogTitle,
     description: t.activityLogDesc,
@@ -298,18 +288,6 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
           onClick: undefined
         });
         break;
-      case 'pssr-settings':
-        crumbs.push({
-          label: 'Admin Tools',
-          icon: Sliders,
-          onClick: () => setActiveView('dashboard')
-        });
-        crumbs.push({
-          label: 'PSSR Configuration',
-          icon: Settings,
-          onClick: undefined
-        });
-        break;
       case 'activity-log':
         crumbs.push({
           label: 'Admin Tools',
@@ -343,13 +321,6 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     return <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
         <Suspense fallback={<ViewLoadingFallback />}>
           <EnhancedUserManagement onBack={() => setActiveView('dashboard')} selectedLanguage={language} translations={t} />
-        </Suspense>
-      </div>;
-  }
-  if (activeView === 'pssr-settings') {
-    return <div className="flex-1 overflow-y-auto animate-fade-in">
-        <Suspense fallback={<ViewLoadingFallback />}>
-          <PSSRSettingsManagement onBack={() => setActiveView('dashboard')} selectedLanguage={language} translations={t} />
         </Suspense>
       </div>;
   }
