@@ -46,6 +46,7 @@ const generateDisplayId = (categoryCode: string | undefined, displayOrder: numbe
 interface ItemFormData {
   category_id: string;
   vcr_item: string;
+  topic: string;
   delivering_party_role_id: string;
   approving_party_role_ids: string[];
   supporting_evidence: string;
@@ -55,6 +56,7 @@ interface ItemFormData {
 const emptyForm: ItemFormData = {
   category_id: '',
   vcr_item: '',
+  topic: '',
   delivering_party_role_id: '',
   approving_party_role_ids: [],
   supporting_evidence: '',
@@ -78,6 +80,7 @@ const VCRItemsTab: React.FC = () => {
   const [formData, setFormData] = useState<ItemFormData>(emptyForm);
 
   const [visibleColumns, setVisibleColumns] = useState({
+    topic: true,
     deliveringParty: true,
     approvers: true,
     supportingEvidence: false,
@@ -99,6 +102,7 @@ const VCRItemsTab: React.FC = () => {
       const matchesSearch =
         item.vcr_item.toLowerCase().includes(searchTerm.toLowerCase()) ||
         displayId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.topic?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.delivering_role_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.supporting_evidence?.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCategory = categoryFilter === 'all' || item.category_id === categoryFilter;
@@ -119,6 +123,7 @@ const VCRItemsTab: React.FC = () => {
     setFormData({
       category_id: item.category_id || '',
       vcr_item: item.vcr_item,
+      topic: item.topic || '',
       delivering_party_role_id: item.delivering_party_role_id || '',
       approving_party_role_ids: item.approving_party_role_ids || [],
       supporting_evidence: item.supporting_evidence || '',
@@ -133,6 +138,7 @@ const VCRItemsTab: React.FC = () => {
     const payload = {
       category_id: formData.category_id,
       vcr_item: formData.vcr_item.trim(),
+      topic: formData.topic.trim() || null,
       delivering_party_role_id: formData.delivering_party_role_id || null,
       approving_party_role_ids: formData.approving_party_role_ids.length > 0 ? formData.approving_party_role_ids : null,
       supporting_evidence: formData.supporting_evidence.trim() || null,
@@ -158,6 +164,7 @@ const VCRItemsTab: React.FC = () => {
     const rows = filteredItems.map(item => ({
       'ID': generateDisplayId(item.category_code, item.display_order),
       'Category': item.category_name || '',
+      'Topic': item.topic || '',
       'Description': item.vcr_item,
       'Delivering Party': item.delivering_role_name || '',
       'Approvers': (item.approving_role_names || []).join(', '),
@@ -243,6 +250,7 @@ const VCRItemsTab: React.FC = () => {
               <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuLabel>Toggle Columns</DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuCheckboxItem checked={visibleColumns.topic} onCheckedChange={(c) => setVisibleColumns(p => ({ ...p, topic: !!c }))}>Topic</DropdownMenuCheckboxItem>
                 <DropdownMenuCheckboxItem checked={visibleColumns.deliveringParty} onCheckedChange={(c) => setVisibleColumns(p => ({ ...p, deliveringParty: !!c }))}>Delivering Party</DropdownMenuCheckboxItem>
                 <DropdownMenuCheckboxItem checked={visibleColumns.approvers} onCheckedChange={(c) => setVisibleColumns(p => ({ ...p, approvers: !!c }))}>Approvers</DropdownMenuCheckboxItem>
                 <DropdownMenuCheckboxItem checked={visibleColumns.supportingEvidence} onCheckedChange={(c) => setVisibleColumns(p => ({ ...p, supportingEvidence: !!c }))}>Supporting Evidence</DropdownMenuCheckboxItem>
@@ -283,6 +291,7 @@ const VCRItemsTab: React.FC = () => {
                   <TableHead className="w-24">ID</TableHead>
                   <TableHead className="w-32">Category</TableHead>
                   <TableHead>Description</TableHead>
+                  {visibleColumns.topic && <TableHead className="w-40">Topic</TableHead>}
                   {visibleColumns.deliveringParty && <TableHead className="w-40">Delivering Party</TableHead>}
                   {visibleColumns.approvers && <TableHead className="w-48">Approvers</TableHead>}
                   {visibleColumns.supportingEvidence && <TableHead className="w-48">Supporting Evidence</TableHead>}
@@ -311,6 +320,9 @@ const VCRItemsTab: React.FC = () => {
                       <TableCell className="max-w-md">
                         <p className="line-clamp-4 text-sm whitespace-normal break-words">{item.vcr_item}</p>
                       </TableCell>
+                      {visibleColumns.topic && (
+                        <TableCell className="text-sm text-muted-foreground">{item.topic || '—'}</TableCell>
+                      )}
                       {visibleColumns.deliveringParty && (
                         <TableCell className="text-sm text-muted-foreground">{item.delivering_role_name || '—'}</TableCell>
                       )}
@@ -420,6 +432,18 @@ const VCRItemsTab: React.FC = () => {
                 placeholder="Enter VCR item description..."
                 rows={3}
                 className="bg-muted/30 border-border/60 focus:bg-background transition-colors resize-none"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Topic
+              </Label>
+              <Input
+                value={formData.topic}
+                onChange={(e) => setFormData(p => ({ ...p, topic: e.target.value }))}
+                placeholder="e.g., Basis for Design"
+                className="bg-muted/30 border-border/60 focus:bg-background transition-colors"
               />
             </div>
 

@@ -6,6 +6,7 @@ export interface VCRItem {
   id: string;
   category_id: string | null;
   vcr_item: string;
+  topic: string | null;
   supporting_evidence: string | null;
   guidance_notes: string | null;
   delivering_party_role_id: string | null;
@@ -63,6 +64,7 @@ export const useVCRItems = () => {
         id: item.id,
         category_id: item.category_id,
         vcr_item: item.vcr_item,
+        topic: item.topic,
         supporting_evidence: item.supporting_evidence,
         guidance_notes: item.guidance_notes,
         delivering_party_role_id: item.delivering_party_role_id,
@@ -88,6 +90,7 @@ export const useCreateVCRItem = () => {
     mutationFn: async (data: {
       category_id: string;
       vcr_item: string;
+      topic?: string | null;
       delivering_party_role_id?: string;
       approving_party_role_ids?: string[];
       supporting_evidence?: string;
@@ -139,6 +142,7 @@ export const useUpdateVCRItem = () => {
       id: string;
       category_id?: string;
       vcr_item?: string;
+      topic?: string | null;
       delivering_party_role_id?: string | null;
       approving_party_role_ids?: string[] | null;
       supporting_evidence?: string | null;
