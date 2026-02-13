@@ -400,25 +400,14 @@ const VCRItemsTab: React.FC = () => {
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Delivering Party
+                  Topic
                 </Label>
-                <Select value={formData.delivering_party_role_id} onValueChange={(v) => setFormData(p => ({ ...p, delivering_party_role_id: v }))}>
-                  <SelectTrigger className="bg-muted/30 border-border/60 focus:bg-background transition-colors">
-                    <SelectValue placeholder="Select role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {groupedRoles?.map(group => (
-                      <React.Fragment key={group.category.id}>
-                        <SelectItem value={`__label_${group.category.id}`} disabled className="font-semibold text-xs uppercase tracking-wide text-muted-foreground">
-                          {group.category.name}
-                        </SelectItem>
-                        {group.roles.map(role => (
-                          <SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>
-                        ))}
-                      </React.Fragment>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Input
+                  value={formData.topic}
+                  onChange={(e) => setFormData(p => ({ ...p, topic: e.target.value }))}
+                  placeholder="e.g., Basis for Design"
+                  className="bg-muted/30 border-border/60 focus:bg-background transition-colors"
+                />
               </div>
             </div>
 
@@ -437,14 +426,25 @@ const VCRItemsTab: React.FC = () => {
 
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Topic
+                Delivering Party
               </Label>
-              <Input
-                value={formData.topic}
-                onChange={(e) => setFormData(p => ({ ...p, topic: e.target.value }))}
-                placeholder="e.g., Basis for Design"
-                className="bg-muted/30 border-border/60 focus:bg-background transition-colors"
-              />
+              <Select value={formData.delivering_party_role_id} onValueChange={(v) => setFormData(p => ({ ...p, delivering_party_role_id: v }))}>
+                <SelectTrigger className="bg-muted/30 border-border/60 focus:bg-background transition-colors">
+                  <SelectValue placeholder="Select role" />
+                </SelectTrigger>
+                <SelectContent>
+                  {groupedRoles?.map(group => (
+                    <React.Fragment key={group.category.id}>
+                      <SelectItem value={`__label_${group.category.id}`} disabled className="font-semibold text-xs uppercase tracking-wide text-muted-foreground">
+                        {group.category.name}
+                      </SelectItem>
+                      {group.roles.map(role => (
+                        <SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>
+                      ))}
+                    </React.Fragment>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-1.5">
