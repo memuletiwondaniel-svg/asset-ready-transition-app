@@ -1,66 +1,56 @@
 
 
-## New "Items" Tab for VCR Management
+## Plan: Add Topic Field and Import Updated VCR Data from Excel
 
 ### Overview
-Add a new "Items" tab to the VCR Management section that displays all VCR items from the `vcr_items` table. The UI will match the existing PSSR Checklist Items table layout with search, category filter, column selector, download button, and an "Add VCR Item" button.
-
-### Tab Structure (Updated)
-Categories | **Items** | Templates | Approvers
-
-The new "Items" tab will be inserted between "Categories" and "Templates".
+This plan adds a **Topic** column to the VCR items table, clears existing data, imports 58 items from the uploaded Excel sheet, and updates the UI to display and manage the Topic field.
 
 ---
 
-### UI Components (matching PSSR Checklist Items pattern)
+### Step 1: Database Migration
+- Add a `topic` column (`text`, nullable) to the `vcr_items` table.
 
-**Header Row**
-- Title: "VCR Checklist Items" with icon
-- "Add Item" button (top-right, primary style)
+### Step 2: Clear Existing VCR Items
+- Soft-delete all current `vcr_items` records (set `is_active = false`) to make way for the fresh import.
 
-**Toolbar Row**
-- Search input (left, flexible width)
-- Category filter dropdown (All Categories, Design Integrity, Technical Integrity, etc.)
-- Column visibility toggle button (grid icon)
-- Export/Download button
+### Step 3: Insert New Data from Excel
+- Insert all 58 rows from the uploaded spreadsheet into `vcr_items`, mapping:
+  - **Category** to the matching `vcr_item_categories` ID (Design Integrity, Technical Integrity, Operating Integrity, Management Systems, Health and Safety)
+  - **Topic** to the new `topic` column (e.g., "DEM 1", "HEMP", "MoCs", "SCEs", etc.)
+  - **Description** to `vcr_item`
+  - **Supporting Evidence** to `supporting_evidence`
+  - **Guidelines** to `guidance_notes`
+  - **Responsible** to `delivering_party_role_id` (matched by role name in the `roles` table)
+  - **Approver** to `approving_party_role_ids` (comma-separated list matched to role IDs)
+- Set `display_order` sequentially within each category.
 
-**Stats Row**
-- Item count badge (e.g., "58 items")
+### Step 4: Update the Data Hook (`useVCRItems.ts`)
+- Include `topic` in the `VCRItem` interface and query select.
+- Pass `topic` through create/update mutations.
 
-**Table Columns**
-- ID (display_order formatted as category_code + sequence, e.g., DI-01, TI-01)
-- Category (with colored badge)
-- Description (vcr_item text)
-- Delivering Party (role name)
-- Approvers (approving party role names, comma-separated)
-- Actions (edit, delete buttons)
-
-Optional toggleable columns: Supporting Evidence, Guidance Notes
+### Step 5: Update the UI (`VCRItemsTab.tsx`)
+- **Table**: Add a **Topic** column between ID and Description (always visible).
+- **Search**: Include topic in the search filter.
+- **Add/Edit Dialog**: Add a Topic text input field.
+- **Form Data**: Add `topic` to the `ItemFormData` interface and form state.
+- **Export**: Include Topic in the Excel export.
 
 ---
 
 ### Technical Details
 
-**New files to create:**
-1. `src/components/handover/VCRItemsTab.tsx` -- Main component with table, search, filters, column selector, and download
-2. `src/hooks/useVCRItems.ts` -- React Query hooks for fetching VCR items with joined category and role data, plus CRUD mutations
+**Migration SQL:**
+```sql
+ALTER TABLE vcr_items ADD COLUMN topic text;
+```
+
+**Role Mapping:** The "Responsible" and "Approver" fields from the Excel will be matched against the existing `roles` table names (e.g., "Project Engr" maps to role ID `88c54747-...`, "Process TA2" maps to `a71de5b4-...`, etc.). Any role not found will be skipped.
 
 **Files to modify:**
-1. `src/components/handover/VCRManagementTab.tsx` -- Add "Items" tab between Categories and Templates, with new icon color (e.g., blue) and import
+- `src/hooks/useVCRItems.ts` -- add `topic` to interface and queries
+- `src/components/handover/VCRItemsTab.tsx` -- add Topic column, search, form field, and export
 
-**Data fetching approach:**
-- Query `vcr_items` joined with `vcr_item_categories` for category name/code
-- Query `roles` table to resolve `delivering_party_role_id` and `approving_party_role_ids` into display names
-- Generate display IDs from category code + display_order (e.g., DI-01, TI-05)
-
-**Add/Edit Item Dialog:**
-- Category dropdown (from `vcr_item_categories`)
-- VCR Item text (textarea)
-- Delivering Party role (dropdown from `roles`)
-- Approving Party roles (multi-select from `roles`, grouped by category)
-- Supporting Evidence (textarea, optional)
-- Guidance Notes (textarea, optional)
-
-**Export:**
-- Excel download of all VCR items using the `xlsx` library (already installed), following the same pattern as `exportPSSRChecklistToExcel`
+**Data operations (via insert tool):**
+- UPDATE all existing `vcr_items` to `is_active = false`
+- INSERT 58 new rows with mapped category IDs, role IDs, and topics
 
