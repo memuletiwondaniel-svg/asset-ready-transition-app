@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { 
   Select, 
   SelectContent, 
@@ -13,7 +14,7 @@ import {
   SelectValue 
 } from '@/components/ui/select';
 import { Combobox } from '@/components/ui/combobox';
-import { Plus, X, AlertCircle, CheckCircle, Loader2, Mail } from 'lucide-react';
+import { Plus, X, AlertCircle, CheckCircle, Loader2, Mail, Camera, User } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useHubs } from '@/hooks/useHubs';
 import { useCategorizedRoles } from '@/hooks/useCategorizedRoles';
@@ -24,6 +25,7 @@ import {
 } from '@/utils/roleAssignmentConfig';
 import { supabase } from '@/integrations/supabase/client';
 import { useLogActivity } from '@/hooks/useActivityLogs';
+import { AvatarCropDialog } from '@/components/user-management/AvatarCropDialog';
 
 // Generate a random password
 const generatePassword = () => {
@@ -100,6 +102,15 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
 
   const { data: hubs } = useHubs();
   const { data: categorizedRoles, isLoading: rolesLoading } = useCategorizedRoles();
+
+  // Profile picture upload state
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [profileImage, setProfileImage] = useState<File | null>(null);
+  const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [showCropDialog, setShowCropDialog] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState<string | null>(null);
 
   // Database options state (name-based, matching Edit modal)
   const [plants, setPlants] = useState<Array<{value: string, label: string}>>([]);
@@ -396,6 +407,83 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
     setFormData(prev => ({ ...prev, field: value, station: '' }));
   };
 
+  // Image upload handlers
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) handleImageFile(file);
+  };
+
+  const handleImageFile = (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      toast({ title: 'Invalid File Type', description: 'Please select an image file', variant: 'destructive' });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: 'File Too Large', description: 'File size must be less than 5MB', variant: 'destructive' });
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setImageToCrop(e.target?.result as string);
+      setShowCropDialog(true);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCropComplete = (croppedBlob: Blob) => {
+    const file = new File([croppedBlob], 'avatar.png', { type: 'image/png' });
+    setProfileImage(file);
+    const reader = new FileReader();
+    reader.onload = (e) => setProfileImagePreview(e.target?.result as string);
+    reader.readAsDataURL(croppedBlob);
+    setShowCropDialog(false);
+  };
+
+  const handleCropCancel = () => {
+    setShowCropDialog(false);
+    setImageToCrop(null);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); setIsDragOver(true); };
+  const handleDragLeave = (e: React.DragEvent) => { e.preventDefault(); setIsDragOver(false); };
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    if (e.dataTransfer.files.length > 0) handleImageFile(e.dataTransfer.files[0]);
+  };
+
+  const clearImage = () => {
+    setProfileImage(null);
+    setProfileImagePreview(null);
+    setImageToCrop(null);
+  };
+
+  const uploadProfileImage = async (userId: string): Promise<string | null> => {
+    if (!profileImage) return null;
+    try {
+      setUploadingImage(true);
+      const toBase64 = (file: File) => new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      const dataUrl = await toBase64(profileImage);
+      const base64 = dataUrl.includes(',') ? dataUrl.split(',')[1] : dataUrl;
+      const fileExt = profileImage.name.split('.').pop() || 'png';
+      const { data, error } = await supabase.functions.invoke('upload-user-avatar', {
+        body: { userId, fileExt, contentType: profileImage.type, base64 }
+      });
+      if (error) { console.error('Upload function error:', error); return null; }
+      return (data as any)?.path || null;
+    } catch (error) {
+      console.error('Avatar upload error:', error);
+      return null;
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   const handleSubmit = async () => {
     if (step === 'form') {
       // Validate required fields
@@ -532,6 +620,11 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
           throw createErr;
         }
 
+        // Upload profile image if provided
+        if (profileImage && createResp?.user_id) {
+          await uploadProfileImage(createResp.user_id);
+        }
+
         // Log activity
         logActivityMutation.mutate({
           activityType: 'user_created',
@@ -609,6 +702,7 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
       authenticator: 'Daniel Memuletiwon',
     });
     setEmailError('');
+    clearImage();
     onClose();
   };
 
@@ -638,6 +732,61 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
                 onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
                 placeholder="Enter last name"
               />
+            </div>
+          </div>
+
+          {/* Profile Picture Upload */}
+          <div className="space-y-2">
+            <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Profile Picture</Label>
+            <div className="flex flex-col gap-4">
+              {profileImagePreview && (
+                <div className="flex items-center gap-4">
+                  <Avatar className="h-24 w-24">
+                    <AvatarImage src={profileImagePreview} alt="Profile preview" />
+                    <AvatarFallback>
+                      <User className="h-12 w-12" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <Button type="button" variant="outline" size="sm" onClick={clearImage} className="flex items-center gap-2">
+                    <X className="h-4 w-4" />
+                    Remove
+                  </Button>
+                </div>
+              )}
+              <div
+                className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                  isDragOver ? 'border-primary bg-primary/5' : 'border-border'
+                }`}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  id="enhanced-profile-image-upload"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
+                  disabled={uploadingImage}
+                />
+                <div className="flex flex-col items-center gap-2">
+                  <Camera className="h-8 w-8 text-muted-foreground" />
+                  <div className="text-sm">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="p-0 h-auto font-medium text-primary hover:text-primary/80"
+                      onClick={() => document.getElementById('enhanced-profile-image-upload')?.click()}
+                      disabled={uploadingImage}
+                    >
+                      Click to upload
+                    </Button>
+                    <span className="text-muted-foreground"> or drag and drop</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">PNG, JPG, GIF up to 5MB</p>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -1261,6 +1410,16 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
           </Button>
         </div>
       </DialogContent>
+
+      {/* Avatar Crop Dialog */}
+      {showCropDialog && imageToCrop && (
+        <AvatarCropDialog
+          open={showCropDialog}
+          imageSrc={imageToCrop}
+          onCropComplete={handleCropComplete}
+          onCancel={handleCropCancel}
+        />
+      )}
     </Dialog>
   );
 };
