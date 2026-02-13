@@ -1,23 +1,77 @@
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ClipboardCheck } from 'lucide-react';
+import React, { useState } from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Layers, ClipboardList, Settings } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import PSSRConfigurationMatrix from '@/components/pssr/PSSRConfigurationMatrix';
+import ChecklistItemsLibrary from '@/components/pssr/ChecklistItemsLibrary';
+import ItemCategoriesTab from '@/components/pssr/ItemCategoriesTab';
+
+const getTabIconColor = (tabValue: string, isActive: boolean) => {
+  if (!isActive) return 'text-muted-foreground/50';
+  
+  switch (tabValue) {
+    case 'categories':
+      return 'text-violet-500 dark:text-violet-400';
+    case 'checklist-items':
+      return 'text-blue-500 dark:text-blue-400';
+    case 'templates':
+      return 'text-amber-500 dark:text-amber-400';
+    default:
+      return 'text-foreground';
+  }
+};
 
 const PSSRManagementTab: React.FC = () => {
+  const [activeSubTab, setActiveSubTab] = useState('categories');
+
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <ClipboardCheck className="h-5 w-5 text-orange-500" />
-            PSSR Management
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">
-            Pre-Startup Safety Review configuration and management coming soon.
-          </p>
-        </CardContent>
-      </Card>
+      <Tabs value={activeSubTab} onValueChange={setActiveSubTab}>
+        <TabsList className="h-10">
+          <TabsTrigger 
+            value="categories" 
+            className={cn(
+              "flex items-center gap-2 transition-colors duration-200",
+              activeSubTab !== 'categories' && "text-muted-foreground/60"
+            )}
+          >
+            <Layers className={cn("h-4 w-4 transition-colors duration-200", getTabIconColor('categories', activeSubTab === 'categories'))} />
+            Item Categories
+          </TabsTrigger>
+          <TabsTrigger 
+            value="checklist-items" 
+            className={cn(
+              "flex items-center gap-2 transition-colors duration-200",
+              activeSubTab !== 'checklist-items' && "text-muted-foreground/60"
+            )}
+          >
+            <ClipboardList className={cn("h-4 w-4 transition-colors duration-200", getTabIconColor('checklist-items', activeSubTab === 'checklist-items'))} />
+            Checklist Items
+          </TabsTrigger>
+          <TabsTrigger 
+            value="templates" 
+            className={cn(
+              "flex items-center gap-2 transition-colors duration-200",
+              activeSubTab !== 'templates' && "text-muted-foreground/60"
+            )}
+          >
+            <Settings className={cn("h-4 w-4 transition-colors duration-200", getTabIconColor('templates', activeSubTab === 'templates'))} />
+            PSSR Templates
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="categories" className="mt-6">
+          <ItemCategoriesTab />
+        </TabsContent>
+
+        <TabsContent value="checklist-items" className="mt-6">
+          <ChecklistItemsLibrary />
+        </TabsContent>
+
+        <TabsContent value="templates" className="mt-6">
+          <PSSRConfigurationMatrix />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
