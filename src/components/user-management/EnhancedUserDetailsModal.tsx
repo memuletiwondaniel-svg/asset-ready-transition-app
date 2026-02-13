@@ -1356,7 +1356,6 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                       onChange={(e) => handleInputChange('functional_email_address', e.target.value)}
                       disabled={!editMode}
                       className={!editMode ? 'bg-muted' : ''}
-                      placeholder="personal@gmail.com"
                     />
                   </div>
                 )}
