@@ -1351,6 +1351,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                     <Input
                       id="functional_email_address"
                       type="email"
+                      placeholder="Personal email address"
                       value={formData.functional_email_address}
                       onChange={(e) => handleInputChange('functional_email_address', e.target.value)}
                       disabled={!editMode}
