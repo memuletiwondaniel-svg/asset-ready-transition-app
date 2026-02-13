@@ -36,7 +36,7 @@ const PSSRManagementTab: React.FC = () => {
             )}
           >
             <Layers className={cn("h-4 w-4 transition-colors duration-200", getTabIconColor('categories', activeSubTab === 'categories'))} />
-            Item Categories
+            Categories
           </TabsTrigger>
           <TabsTrigger 
             value="checklist-items" 
@@ -46,7 +46,7 @@ const PSSRManagementTab: React.FC = () => {
             )}
           >
             <ClipboardList className={cn("h-4 w-4 transition-colors duration-200", getTabIconColor('checklist-items', activeSubTab === 'checklist-items'))} />
-            Checklist Items
+            Items
           </TabsTrigger>
           <TabsTrigger 
             value="templates" 
@@ -56,7 +56,7 @@ const PSSRManagementTab: React.FC = () => {
             )}
           >
             <Settings className={cn("h-4 w-4 transition-colors duration-200", getTabIconColor('templates', activeSubTab === 'templates'))} />
-            PSSR Templates
+            Templates
           </TabsTrigger>
         </TabsList>
 
