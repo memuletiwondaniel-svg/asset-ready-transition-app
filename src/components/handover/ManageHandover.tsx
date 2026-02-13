@@ -81,6 +81,16 @@ export const ManageHandover: React.FC<ManageHandoverProps> = ({ onBack }) => {
               <span>VCR</span>
             </TabsTrigger>
             <TabsTrigger 
+              value="pssr" 
+              className={cn(
+                "flex items-center gap-2 px-4 transition-colors duration-200",
+                activeTab !== 'pssr' && "text-muted-foreground/60"
+              )}
+            >
+              <ClipboardCheck className={cn("h-4 w-4 shrink-0 transition-colors duration-200", getParentTabIconColor('pssr', activeTab === 'pssr'))} />
+              <span>PSSR</span>
+            </TabsTrigger>
+            <TabsTrigger 
               value="pac" 
               className={cn(
                 "flex items-center gap-2 px-4 transition-colors duration-200",
@@ -112,17 +122,15 @@ export const ManageHandover: React.FC<ManageHandoverProps> = ({ onBack }) => {
               <FileCheck2 className={cn("h-4 w-4 shrink-0 transition-colors duration-200", getParentTabIconColor('sof', activeTab === 'sof'))} />
               <span>SoF</span>
             </TabsTrigger>
-            <TabsTrigger 
-              value="pssr" 
-              className={cn(
-                "flex items-center gap-2 px-4 transition-colors duration-200",
-                activeTab !== 'pssr' && "text-muted-foreground/60"
-              )}
-            >
-              <ClipboardCheck className={cn("h-4 w-4 shrink-0 transition-colors duration-200", getParentTabIconColor('pssr', activeTab === 'pssr'))} />
-              <span>PSSR</span>
-            </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="vcr" className="mt-6">
+            <VCRManagementTab />
+          </TabsContent>
+
+          <TabsContent value="pssr" className="mt-6">
+            <PSSRManagementTab />
+          </TabsContent>
 
           <TabsContent value="pac" className="mt-6">
             <PACManagementTab />
@@ -134,14 +142,6 @@ export const ManageHandover: React.FC<ManageHandoverProps> = ({ onBack }) => {
 
           <TabsContent value="sof" className="mt-6">
             <SOFCertificateManagement />
-          </TabsContent>
-
-          <TabsContent value="pssr" className="mt-6">
-            <PSSRManagementTab />
-          </TabsContent>
-
-          <TabsContent value="vcr" className="mt-6">
-            <VCRManagementTab />
           </TabsContent>
         </Tabs>
       </div>
