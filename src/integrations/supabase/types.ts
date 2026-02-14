@@ -6785,18 +6785,27 @@ export type Database = {
       }
       vcr_template_approvers: {
         Row: {
+          approval_status: string
+          approved_at: string | null
+          approved_by: string | null
           created_at: string
           id: string
           role_id: string
           template_id: string
         }
         Insert: {
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           created_at?: string
           id?: string
           role_id: string
           template_id: string
         }
         Update: {
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           created_at?: string
           id?: string
           role_id?: string
@@ -6867,6 +6876,7 @@ export type Database = {
           is_active: boolean
           receiving_party_role_id: string | null
           sample_evidence: string | null
+          status: string
           summary: string
           updated_at: string
         }
@@ -6881,6 +6891,7 @@ export type Database = {
           is_active?: boolean
           receiving_party_role_id?: string | null
           sample_evidence?: string | null
+          status?: string
           summary: string
           updated_at?: string
         }
@@ -6895,6 +6906,7 @@ export type Database = {
           is_active?: boolean
           receiving_party_role_id?: string | null
           sample_evidence?: string | null
+          status?: string
           summary?: string
           updated_at?: string
         }

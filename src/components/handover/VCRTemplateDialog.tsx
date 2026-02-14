@@ -12,7 +12,7 @@ import { useVCRItems } from '@/hooks/useVCRItems';
 import { PACCategory } from '@/hooks/useHandoverPrerequisites';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Search, CheckSquare, Users } from 'lucide-react';
+import { Loader2, Search, CheckSquare, Users, Send, ShieldCheck } from 'lucide-react';
 
 interface VCRTemplateDialogProps {
   open: boolean;
@@ -112,10 +112,10 @@ const VCRTemplateDialog: React.FC<VCRTemplateDialogProps> = ({
     );
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent, submitStatus?: string) => {
     e.preventDefault();
 
-    const payload = {
+    const payload: any = {
       summary: formData.summary,
       description: formData.description || null,
       item_ids: selectedItemIds,
@@ -124,12 +124,23 @@ const VCRTemplateDialog: React.FC<VCRTemplateDialogProps> = ({
       is_active: true,
     };
 
+    if (submitStatus) {
+      payload.status = submitStatus;
+    }
+
     if (template) {
       updateTemplate({ id: template.id, ...payload });
     } else {
       createTemplate(payload);
     }
     onOpenChange(false);
+  };
+
+  const handleSubmitForReview = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!formData.summary.trim() || selectedApproverIds.length === 0) return;
+    const syntheticEvent = { preventDefault: () => {} } as React.FormEvent;
+    handleSubmit(syntheticEvent, 'under_review');
   };
 
   const isSubmitting = isCreating || isUpdating;
@@ -326,9 +337,23 @@ const VCRTemplateDialog: React.FC<VCRTemplateDialogProps> = ({
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
+            {/* Submit for Review - only for draft or new templates with approvers */}
+            {(!template || template.status === 'draft') && selectedApproverIds.length > 0 && (
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={isSubmitting || !formData.summary.trim()}
+                className="gap-2"
+                onClick={handleSubmitForReview}
+              >
+                {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+                <Send className="h-3.5 w-3.5" />
+                Submit for Review
+              </Button>
+            )}
             <Button type="submit" disabled={isSubmitting || !formData.summary.trim()} className="gap-2">
               {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-              {isSubmitting ? 'Saving...' : template ? 'Update' : 'Create'}
+              {isSubmitting ? 'Saving...' : template ? 'Update' : 'Save as Draft'}
             </Button>
           </DialogFooter>
         </form>

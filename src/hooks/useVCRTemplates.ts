@@ -3,6 +3,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from './use-toast';
 import { PACCategory } from './useHandoverPrerequisites';
 
+export type VCRTemplateStatus = 'draft' | 'under_review' | 'approved';
+
+export interface VCRTemplateApprover {
+  role_id: string;
+  approval_status: string;
+  approved_at: string | null;
+  approved_by: string | null;
+}
+
 export interface VCRTemplate {
   id: string;
   summary: string;
@@ -13,6 +22,7 @@ export interface VCRTemplate {
   category_id: string | null;
   display_order: number;
   is_active: boolean;
+  status: VCRTemplateStatus;
   created_at: string;
   updated_at: string;
   // Joined data
@@ -21,7 +31,7 @@ export interface VCRTemplate {
   receiving_role?: { id: string; name: string };
   // Junction data
   template_items?: { vcr_item_id: string }[];
-  template_approvers?: { role_id: string }[];
+  template_approvers?: VCRTemplateApprover[];
 }
 
 export function useVCRTemplates() {
@@ -39,7 +49,7 @@ export function useVCRTemplates() {
           delivering_role:roles!vcr_templates_delivering_party_role_id_fkey(id, name),
           receiving_role:roles!vcr_templates_receiving_party_role_id_fkey(id, name),
           template_items:vcr_template_items(vcr_item_id),
-          template_approvers:vcr_template_approvers(role_id)
+          template_approvers:vcr_template_approvers(role_id, approval_status, approved_at, approved_by)
         `)
         .eq('is_active', true)
         .order('display_order');
@@ -59,6 +69,7 @@ export function useVCRTemplates() {
       category_id?: string | null;
       display_order?: number;
       is_active?: boolean;
+      status?: VCRTemplateStatus;
       item_ids?: string[];
       approver_role_ids?: string[];
     }) => {
@@ -108,6 +119,7 @@ export function useVCRTemplates() {
       category_id?: string | null;
       display_order?: number;
       is_active?: boolean;
+      status?: VCRTemplateStatus;
       item_ids?: string[];
       approver_role_ids?: string[];
     }) => {

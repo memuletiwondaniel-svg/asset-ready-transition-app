@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit2, Trash2, Search, FileCheck, CheckSquare, Users } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, FileCheck, CheckSquare, Users, Clock, ShieldCheck, FileEdit } from 'lucide-react';
 import { useVCRTemplates, VCRTemplate } from '@/hooks/useVCRTemplates';
 import { usePACCategories } from '@/hooks/useHandoverPrerequisites';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -137,9 +137,29 @@ interface TemplateCardProps {
   isDeleting: boolean;
 }
 
+const statusConfig: Record<string, { label: string; icon: React.ReactNode; className: string }> = {
+  draft: {
+    label: 'Draft',
+    icon: <FileEdit className="h-3 w-3" />,
+    className: 'bg-muted text-muted-foreground border-border/60',
+  },
+  under_review: {
+    label: 'Under Review',
+    icon: <Clock className="h-3 w-3" />,
+    className: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
+  },
+  approved: {
+    label: 'Approved',
+    icon: <ShieldCheck className="h-3 w-3" />,
+    className: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
+  },
+};
+
 const TemplateCard: React.FC<TemplateCardProps> = ({ template, onEdit, onDelete, isDeleting }) => {
   const itemCount = template.template_items?.length || 0;
   const approverCount = template.template_approvers?.length || 0;
+  const approvedCount = template.template_approvers?.filter(a => a.approval_status === 'approved').length || 0;
+  const status = statusConfig[template.status] || statusConfig.draft;
 
   return (
     <div
@@ -185,6 +205,17 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onEdit, onDelete,
               <Trash2 className="h-3.5 w-3.5" />
             </Button>
           </div>
+        </div>
+
+        {/* Status badge */}
+        <div>
+          <Badge variant="outline" className={`gap-1 text-[10px] px-2 py-0.5 font-medium ${status.className}`}>
+            {status.icon}
+            {status.label}
+            {template.status === 'under_review' && approverCount > 0 && (
+              <span className="ml-0.5 opacity-70">({approvedCount}/{approverCount})</span>
+            )}
+          </Badge>
         </div>
 
         {/* Divider */}
