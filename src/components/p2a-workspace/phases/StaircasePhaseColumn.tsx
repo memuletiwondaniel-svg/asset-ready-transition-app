@@ -110,18 +110,23 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
   // Always sort VCRs by position_y (delivery order) to maintain consistent vertical order
   const sortedPoints = [...handoverPoints].sort((a, b) => a.position_y - b.position_y);
 
+  // Split VCRs into aligned (systems visible) and unaligned (systems scrolled out)
+  const alignedPoints = showMapping
+    ? sortedPoints.filter(p => vcrAlignmentTargets[p.id] !== undefined)
+    : sortedPoints;
+  const unalignedPoints = showMapping
+    ? sortedPoints.filter(p => vcrAlignmentTargets[p.id] === undefined)
+    : [];
+
   // Compute min-height for the container when mapping is active
   const CARD_HEIGHT = 42;
   const computedMinHeight = showMapping
     ? Math.max(400,
-        // Account for alignment targets
-        ...sortedPoints.map((p) => {
+        ...alignedPoints.map((p) => {
           const targetY = vcrAlignmentTargets[p.id];
           if (targetY === undefined) return 0;
           return targetY - containerTop + CARD_HEIGHT + 12;
         }),
-        // Account for fallback stacking
-        sortedPoints.length * (CARD_HEIGHT + 8)
       )
     : undefined;
 
@@ -222,40 +227,60 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
           ) : (
             /* Hybrid layout: VCRs with alignment targets use absolute positioning,
                others stay centered in the default flow */
-            <div className="flex flex-col items-center justify-center gap-2 h-full">
-              {sortedPoints.map((point, idx) => {
-                const targetY = showMapping ? vcrAlignmentTargets[point.id] : undefined;
-                const hasAlignmentTarget = targetY !== undefined;
-                const CARD_HALF_HEIGHT = 21;
+            <div className="flex flex-col items-center gap-2 h-full" style={{ position: 'relative' }}>
+              {showMapping ? (
+                <>
+                  {/* Aligned VCRs - absolute positioned to match system groups */}
+                  {alignedPoints.map((point) => {
+                    const targetY = vcrAlignmentTargets[point.id];
+                    const CARD_HALF_HEIGHT = 21;
+                    const topOffset = targetY !== undefined
+                      ? Math.max(0, targetY - containerTop - CARD_HALF_HEIGHT)
+                      : 0;
 
-                // When mapping is active, use absolute positioning for all VCR cards:
-                // - Cards with alignment targets align to their system group center
-                // - Cards without targets use a stacked fallback based on sort order
-                const useAbsolute = showMapping;
-                const topOffset = hasAlignmentTarget
-                  ? Math.max(0, targetY - containerTop - CARD_HALF_HEIGHT)
-                  : showMapping
-                    ? idx * (CARD_HALF_HEIGHT * 2 + 8) // Stack by index with gap
-                    : undefined;
+                    return (
+                      <div
+                        key={point.id}
+                        style={{
+                          position: 'absolute',
+                          top: topOffset,
+                          left: '50%',
+                          transform: 'translateX(-50%)',
+                          transition: 'top 0.3s ease',
+                        }}
+                      >
+                        <DraggableHandoverPointCard
+                          handoverPoint={point}
+                          onClick={() => onOpenVCR(point)}
+                        />
+                      </div>
+                    );
+                  })}
 
-                return (
-                  <div
+                  {/* Unaligned VCRs - normal flow at bottom, always visible */}
+                  {unalignedPoints.length > 0 && (
+                    <div className="mt-auto flex flex-col items-center gap-2 pt-2 w-full">
+                      {unalignedPoints.map((point) => (
+                        <div key={point.id} className="opacity-70">
+                          <DraggableHandoverPointCard
+                            handoverPoint={point}
+                            onClick={() => onOpenVCR(point)}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              ) : (
+                /* Non-mapping mode: normal centered flow */
+                sortedPoints.map((point) => (
+                  <DraggableHandoverPointCard
                     key={point.id}
-                    style={useAbsolute ? {
-                      position: 'absolute',
-                      top: topOffset,
-                      left: '50%',
-                      transform: 'translateX(-50%)',
-                      transition: 'top 0.3s ease, left 0.3s ease',
-                    } : undefined}
-                  >
-                    <DraggableHandoverPointCard
-                      handoverPoint={point}
-                      onClick={() => onOpenVCR(point)}
-                    />
-                  </div>
-                );
-              })}
+                    handoverPoint={point}
+                    onClick={() => onOpenVCR(point)}
+                  />
+                ))
+              )}
             </div>
           )}
         </div>
