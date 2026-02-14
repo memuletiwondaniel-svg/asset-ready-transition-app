@@ -231,7 +231,7 @@ const SOFCertificate: React.FC<SOFCertificateProps> = ({
             />
             <div className="h-1 bg-gradient-to-r from-primary/20 via-primary to-primary/20 mb-4" />
             <h1 className="text-2xl font-bold text-foreground tracking-wide mb-2">
-              STATEMENT OF FITNESS CERTIFICATE
+              STATEMENT OF FITNESS (SoF)
             </h1>
             <p className="text-muted-foreground font-medium">Certificate No: {certificateNumber}</p>
           </div>
