@@ -1,0 +1,72 @@
+import React from 'react';
+import { Plug, Bot } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { InterfaceMethod } from '@/lib/api-config-storage';
+
+interface InterfaceMethodStepProps {
+  selected: InterfaceMethod | null;
+  onSelect: (method: InterfaceMethod) => void;
+}
+
+const methods = [
+  {
+    id: 'api' as InterfaceMethod,
+    title: 'API',
+    subtitle: 'Direct Integration',
+    description: 'Connect via REST/SOAP endpoints using API keys, OAuth, or basic authentication',
+    icon: Plug,
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-500/10',
+    borderColor: 'border-blue-500/40',
+    ringColor: 'ring-blue-500/30',
+  },
+  {
+    id: 'rpa' as InterfaceMethod,
+    title: 'RPA',
+    subtitle: 'Robotic Process Automation',
+    description: 'Interface via screen-scraping or web automation using portal credentials',
+    icon: Bot,
+    color: 'text-amber-600',
+    bgColor: 'bg-amber-500/10',
+    borderColor: 'border-amber-500/40',
+    ringColor: 'ring-amber-500/30',
+  },
+];
+
+export const InterfaceMethodStep: React.FC<InterfaceMethodStepProps> = ({ selected, onSelect }) => {
+  return (
+    <div className="space-y-4 py-2">
+      <div>
+        <h3 className="text-sm font-medium text-foreground">Select Interface Method</h3>
+        <p className="text-xs text-muted-foreground mt-1">How should ORSH communicate with this application?</p>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        {methods.map((method) => {
+          const isSelected = selected === method.id;
+          const Icon = method.icon;
+          return (
+            <button
+              key={method.id}
+              onClick={() => onSelect(method.id)}
+              className={cn(
+                'flex flex-col items-center gap-3 p-6 rounded-xl border-2 transition-all duration-200 text-left',
+                isSelected
+                  ? `${method.borderColor} ${method.bgColor} ring-2 ${method.ringColor}`
+                  : 'border-border hover:border-primary/30 hover:bg-accent/50'
+              )}
+            >
+              <div className={cn('w-12 h-12 rounded-lg flex items-center justify-center', method.bgColor)}>
+                <Icon className={cn('h-6 w-6', method.color)} />
+              </div>
+              <div className="text-center">
+                <p className="font-semibold text-sm">{method.title}</p>
+                <p className="text-[10px] text-muted-foreground font-medium">{method.subtitle}</p>
+              </div>
+              <p className="text-xs text-muted-foreground text-center leading-relaxed">{method.description}</p>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};

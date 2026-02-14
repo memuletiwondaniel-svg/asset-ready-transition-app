@@ -20,6 +20,7 @@ import { CMSImportModal } from './CMSImportModal';
 import { ExcelUploadModal } from './ExcelUploadModal';
 import { AddSystemModal } from './AddSystemModal';
 import { useToast } from '@/components/ui/use-toast';
+import { isAPIConfigured } from '@/lib/api-config-storage';
 
 export interface WizardSubsystem {
   system_id: string;
@@ -125,7 +126,17 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
       {/* Import options */}
       <div className="grid grid-cols-3 gap-3 shrink-0">
         <button
-          onClick={() => setShowCMSModal(true)}
+          onClick={() => {
+            if (!isAPIConfigured('gocompletions')) {
+              toast({
+                title: 'GoCompletions not configured',
+                description: 'Please configure GoCompletions in Administration > APIs first.',
+                variant: 'destructive',
+              });
+              return;
+            }
+            setShowCMSModal(true);
+          }}
           className="group relative flex flex-col items-center gap-2 p-4 rounded-xl border border-border bg-card hover:bg-accent/50 hover:border-primary/30 hover:shadow-md transition-all duration-200"
         >
           <div className="w-9 h-9 rounded-lg bg-amber-500/10 flex items-center justify-center group-hover:bg-amber-500/20 transition-colors">

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -8,12 +8,10 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Database, Loader2, CheckCircle2, AlertTriangle, ExternalLink, Lock, User, Globe, Eye, EyeOff } from 'lucide-react';
+import { Database, Loader2, CheckCircle2, AlertTriangle, ExternalLink } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { WizardSystem, WizardSubsystem } from './SystemsImportStep';
+import { getAPIConfig } from '@/lib/api-config-storage';
 
 interface CMSImportModalProps {
   open: boolean;
@@ -24,22 +22,7 @@ interface CMSImportModalProps {
 
 type ImportStatus = 'idle' | 'connecting' | 'success' | 'error';
 
-const STORAGE_KEY = 'gohub-credentials';
 const DEFAULT_PORTAL_URL = 'https://goc.gotechnology.online/BGC/GoHub/Home.aspx';
-
-function loadSavedCredentials() {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) return JSON.parse(saved) as { portalUrl: string; username: string; password: string };
-  } catch (_) { /* ignore */ }
-  return null;
-}
-
-function saveCredentials(portalUrl: string, username: string, password: string) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ portalUrl, username, password }));
-  } catch (_) { /* ignore */ }
-}
 
 export const CMSImportModal: React.FC<CMSImportModalProps> = ({
   open,
@@ -51,29 +34,27 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
   const [status, setStatus] = useState<ImportStatus>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [importedCount, setImportedCount] = useState(0);
-  const [rememberCreds, setRememberCreds] = useState(true);
 
-  // Credential fields - initialised from localStorage
-  const [portalUrl, setPortalUrl] = useState(DEFAULT_PORTAL_URL);
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-
-  // Load saved credentials on mount / when dialog opens
-  useEffect(() => {
-    if (open) {
-      const saved = loadSavedCredentials();
-      if (saved) {
-        setPortalUrl(saved.portalUrl || DEFAULT_PORTAL_URL);
-        setUsername(saved.username || '');
-        setPassword(saved.password || '');
-      }
+  // Auto-import on open using stored credentials
+  React.useEffect(() => {
+    if (open && status === 'idle') {
+      handleImport();
     }
   }, [open]);
 
   const handleImport = async () => {
+    const config = getAPIConfig('gocompletions');
+
+    if (!config || config.status !== 'configured' || !config.rpaCredentials) {
+      setErrorMessage('GoCompletions is not configured. Please configure it in Administration > APIs first.');
+      setStatus('error');
+      return;
+    }
+
+    const { portalUrl, username, password } = config.rpaCredentials;
+
     if (!username || !password) {
-      setErrorMessage('Please enter your GoHub username and password');
+      setErrorMessage('GoCompletions credentials are incomplete. Please reconfigure in Administration > APIs.');
       setStatus('error');
       return;
     }
@@ -90,7 +71,6 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
         throw new Error('You must be logged in to import from GoHub');
       }
 
-      // Strip dashes from project code: "DP-300" -> "DP300"
       const cleanProjectCode = projectCode?.replace(/-/g, '') || '';
 
       const response = await supabase.functions.invoke('gohub-import', {
@@ -114,16 +94,11 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
 
       if (!data?.success) {
         if (data?.setup_required) {
-          setErrorMessage(data.message || 'Credentials required');
+          setErrorMessage(data.message || 'Credentials required. Please reconfigure in Administration > APIs.');
           setStatus('error');
           return;
         }
         throw new Error(data?.error || 'Import failed');
-      }
-
-      // Persist credentials on success
-      if (rememberCreds) {
-        saveCredentials(portalUrl, username, password);
       }
 
       const systems: WizardSystem[] = (data.systems || []).map(
@@ -179,87 +154,19 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
                 Import from GoHub
               </DialogTitle>
               <DialogDescription>
-                Login to GoTechnology® Hub and import Completions Grid data
+                Importing Completions Grid data from GoTechnology® Hub
               </DialogDescription>
             </div>
           </div>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          {/* Portal URL */}
-          <div className="space-y-2">
-            <Label className="text-sm flex items-center gap-1.5">
-              <Globe className="h-3.5 w-3.5 text-muted-foreground" />
-              Portal URL
-            </Label>
-            <Input
-              type="url"
-              value={portalUrl}
-              onChange={(e) => setPortalUrl(e.target.value)}
-              placeholder={DEFAULT_PORTAL_URL}
-              className="font-mono text-xs"
-            />
-          </div>
-
-          {/* Username */}
-          <div className="space-y-2">
-            <Label className="text-sm flex items-center gap-1.5">
-              <User className="h-3.5 w-3.5 text-muted-foreground" />
-              Username
-            </Label>
-            <Input
-              type="email"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="user@company.com"
-              autoComplete="off"
-            />
-          </div>
-
-          {/* Password */}
-          <div className="space-y-2">
-            <Label className="text-sm flex items-center gap-1.5">
-              <Lock className="h-3.5 w-3.5 text-muted-foreground" />
-              Password
-            </Label>
-            <div className="relative">
-              <Input
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                autoComplete="off"
-                className="pr-10"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                tabIndex={-1}
-              >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
-            </div>
-          </div>
-
-          {/* Remember credentials */}
-          <div className="flex items-center gap-2">
-            <Checkbox
-              id="remember-creds"
-              checked={rememberCreds}
-              onCheckedChange={(checked) => setRememberCreds(checked as boolean)}
-            />
-            <Label htmlFor="remember-creds" className="text-xs text-muted-foreground cursor-pointer">
-              Remember credentials for next time
-            </Label>
-          </div>
-
           {/* Status Messages */}
           {status === 'connecting' && (
             <div className="flex items-center gap-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200/50 dark:border-blue-800/30">
               <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
               <div>
-              <p className="text-sm font-medium text-blue-700 dark:text-blue-400">
+                <p className="text-sm font-medium text-blue-700 dark:text-blue-400">
                   Searching GoHub projects...
                 </p>
                 <p className="text-xs text-blue-600/70 dark:text-blue-500/70">
@@ -316,16 +223,18 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
 
         <DialogFooter>
           <Button variant="outline" onClick={resetAndClose}>
-            Cancel
+            {status === 'error' ? 'Close' : 'Cancel'}
           </Button>
-          <Button
-            onClick={handleImport}
-            disabled={isLoading || status === 'success' || !username || !password}
-            className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
-          >
-            {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            {status === 'success' ? 'Imported!' : 'Import from GoHub'}
-          </Button>
+          {status === 'error' && (
+            <Button
+              onClick={handleImport}
+              disabled={isLoading}
+              className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
+            >
+              {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Retry
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
