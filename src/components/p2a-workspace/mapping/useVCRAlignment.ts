@@ -113,7 +113,21 @@ export const useVCRAlignment = (
         childList: true,
         subtree: true,
         attributes: true,
-        attributeFilter: ['style', 'class', 'data-assigned-vcr-id'],
+        attributeFilter: ['data-assigned-vcr-id', 'data-system-id'],
+      });
+    }
+
+    // Watch for zoom changes on container style — use double-RAF to let layout settle
+    const zoomObserver = new MutationObserver(() => {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(() => {
+        requestAnimationFrame(recalculate);
+      });
+    });
+    if (containerRef.current) {
+      zoomObserver.observe(containerRef.current, {
+        attributes: true,
+        attributeFilter: ['style'],
       });
     }
 
@@ -121,6 +135,7 @@ export const useVCRAlignment = (
       cancelAnimationFrame(rafRef.current);
       observer.disconnect();
       mutationObserver.disconnect();
+      zoomObserver.disconnect();
       scrollContainers?.forEach((el) => el.removeEventListener('scroll', handleScroll));
       window.removeEventListener('resize', debouncedRecalc);
     };
