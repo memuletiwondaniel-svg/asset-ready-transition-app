@@ -125,16 +125,16 @@ export const SystemDetailSheet: React.FC<SystemDetailSheetProps> = ({
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
           <TabsList className="mx-4 mt-2 shrink-0">
-            <TabsTrigger value="details" className="text-xs gap-1">
-              <ClipboardList className="w-3 h-3" />
+            <TabsTrigger value="details" className="text-xs gap-1 data-[state=active]:text-blue-600">
+              <ClipboardList className={cn("w-3 h-3", activeTab === 'details' ? 'text-blue-600' : 'text-muted-foreground')} />
               Details
             </TabsTrigger>
-            <TabsTrigger value="statistics" className="text-xs gap-1">
-              <BarChart3 className="w-3 h-3" />
+            <TabsTrigger value="statistics" className="text-xs gap-1 data-[state=active]:text-emerald-600">
+              <BarChart3 className={cn("w-3 h-3", activeTab === 'statistics' ? 'text-emerald-600' : 'text-muted-foreground')} />
               Statistics
             </TabsTrigger>
-            <TabsTrigger value="punchlist" className="text-xs gap-1">
-              <AlertCircle className="w-3 h-3" />
+            <TabsTrigger value="punchlist" className="text-xs gap-1 data-[state=active]:text-amber-600">
+              <AlertCircle className={cn("w-3 h-3", activeTab === 'punchlist' ? 'text-amber-600' : 'text-muted-foreground')} />
               Punchlist
             </TabsTrigger>
           </TabsList>
