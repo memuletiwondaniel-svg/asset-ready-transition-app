@@ -63,6 +63,8 @@ const APIManagement: React.FC<APIManagementProps> = ({ onBack }) => {
       <AdminHeader
         title="APIs"
         description="Configure interfaces between ORSH and external applications"
+        icon={<Plug className="h-6 w-6" />}
+        iconGradient="from-blue-500 to-indigo-600"
         customBreadcrumbs={[
           { label: 'Home', path: '/', onClick: onBack },
           { label: 'Administration', path: '/admin-tools', onClick: onBack }
