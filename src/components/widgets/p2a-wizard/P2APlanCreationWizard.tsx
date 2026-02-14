@@ -261,9 +261,12 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
             vcrs={state.vcrs}
             phases={state.phases}
             vcrPhaseAssignments={state.vcrPhaseAssignments}
+            mappings={state.mappings}
             milestones={milestones}
             onPhasesChange={(phases) => updateState('phases', phases)}
             onVCRPhaseAssignmentsChange={(assignments) => updateState('vcrPhaseAssignments', assignments)}
+            onVCRsChange={(vcrs) => updateState('vcrs', vcrs)}
+            onMappingsChange={(mappings) => updateState('mappings', mappings)}
           />
         );
       case 6:
