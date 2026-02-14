@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
-import { ExternalLink, Flame, AlertCircle, ArrowRight, ChevronDown, Box, Flame as FlameIcon } from 'lucide-react';
+import { Flame, AlertCircle, ArrowRight, ChevronDown, Box } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getVCRColor } from '@/components/p2a-workspace/utils/vcrColors';
 import { WizardSystem } from './SystemsImportStep';
@@ -18,7 +17,6 @@ interface WorkspacePreviewStepProps {
   phases: WizardPhase[];
   mappings: Record<string, string[]>;
   vcrPhaseAssignments: Record<string, string>;
-  onOpenFullWorkspace?: () => void;
 }
 
 export const WorkspacePreviewStep: React.FC<WorkspacePreviewStepProps> = ({
@@ -27,7 +25,6 @@ export const WorkspacePreviewStep: React.FC<WorkspacePreviewStepProps> = ({
   phases,
   mappings,
   vcrPhaseAssignments,
-  onOpenFullWorkspace,
 }) => {
   const [unmappedOpen, setUnmappedOpen] = useState(false);
 
@@ -51,24 +48,11 @@ export const WorkspacePreviewStep: React.FC<WorkspacePreviewStepProps> = ({
   return (
     <div className="flex flex-col gap-4 p-4 h-full">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-sm font-semibold">Plan Summary</h3>
-          <p className="text-xs text-muted-foreground">
-            Review your handover plan before proceeding
-          </p>
-        </div>
-        {onOpenFullWorkspace && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onOpenFullWorkspace}
-            className="text-xs h-7 px-2.5 gap-1.5"
-          >
-            <ExternalLink className="h-3.5 w-3.5" />
-            Open Workspace
-          </Button>
-        )}
+      <div>
+        <h3 className="text-sm font-semibold">Plan Summary</h3>
+        <p className="text-xs text-muted-foreground">
+          Review your handover plan before proceeding
+        </p>
       </div>
 
       {/* Stats Row */}

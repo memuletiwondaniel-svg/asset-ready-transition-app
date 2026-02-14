@@ -268,6 +268,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
             onVCRPhaseAssignmentsChange={(assignments) => updateState('vcrPhaseAssignments', assignments)}
             onVCRsChange={(vcrs) => updateState('vcrs', vcrs)}
             onMappingsChange={(mappings) => updateState('mappings', mappings)}
+            onOpenFullWorkspace={handleChooseWorkspace}
           />
         );
       case 6:
@@ -278,7 +279,6 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
             phases={state.phases}
             mappings={state.mappings}
             vcrPhaseAssignments={state.vcrPhaseAssignments}
-            onOpenFullWorkspace={handleChooseWorkspace}
           />
         );
       case 7:
