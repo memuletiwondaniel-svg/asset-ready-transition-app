@@ -171,18 +171,23 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
   }, [handoverPoints]);
 
   // Sync vertical scroll between systems panel and phases timeline
+  // IMPORTANT: Skip the systems panel's own ScrollArea — only sync the
+  // phases-timeline viewports with each other.
   useEffect(() => {
     const container = workspaceContainerRef.current;
     if (!container) return;
 
-    const viewports = container.querySelectorAll('[data-radix-scroll-area-viewport]');
-    if (viewports.length < 2) return;
+    // The systems panel has [data-systems-panel] — skip any viewport inside it
+    const systemsPanelEl = container.querySelector('[data-systems-panel]');
+    const allViewports = Array.from(container.querySelectorAll('[data-radix-scroll-area-viewport]'));
+    const timelineViewports = allViewports.filter(
+      (vp) => !systemsPanelEl?.contains(vp)
+    ) as HTMLElement[];
 
-    // First viewport = systems panel, second = phases timeline
-    const systemsViewport = viewports[0] as HTMLElement;
-    const phasesViewport = viewports[1] as HTMLElement;
+    if (timelineViewports.length < 2) return;
 
-    let scrollSource: 'systems' | 'phases' | null = null;
+    // Sync all timeline viewports together
+    let scrollSource: HTMLElement | null = null;
     let scrollTimer: number | null = null;
 
     const clearSource = () => {
@@ -190,26 +195,23 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
       scrollTimer = window.setTimeout(() => { scrollSource = null; }, 60);
     };
 
-    const onSystemsScroll = () => {
-      if (scrollSource === 'phases') return;
-      scrollSource = 'systems';
-      phasesViewport.scrollTop = systemsViewport.scrollTop;
-      clearSource();
-    };
-
-    const onPhasesScroll = () => {
-      if (scrollSource === 'systems') return;
-      scrollSource = 'phases';
-      systemsViewport.scrollTop = phasesViewport.scrollTop;
-      clearSource();
-    };
-
-    systemsViewport.addEventListener('scroll', onSystemsScroll, { passive: true });
-    phasesViewport.addEventListener('scroll', onPhasesScroll, { passive: true });
+    const handlers = timelineViewports.map((vp) => {
+      const handler = () => {
+        if (scrollSource && scrollSource !== vp) return;
+        scrollSource = vp;
+        for (const other of timelineViewports) {
+          if (other !== vp) other.scrollTop = vp.scrollTop;
+        }
+        clearSource();
+      };
+      vp.addEventListener('scroll', handler, { passive: true });
+      return { vp, handler };
+    });
 
     return () => {
-      systemsViewport.removeEventListener('scroll', onSystemsScroll);
-      phasesViewport.removeEventListener('scroll', onPhasesScroll);
+      for (const { vp, handler } of handlers) {
+        vp.removeEventListener('scroll', handler);
+      }
       if (scrollTimer) clearTimeout(scrollTimer);
     };
   }, [plan]);
