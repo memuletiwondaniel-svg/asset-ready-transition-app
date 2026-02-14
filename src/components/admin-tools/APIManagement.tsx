@@ -81,7 +81,7 @@ const APIManagement: React.FC<APIManagementProps> = ({ onBack }) => {
                 </div>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">{api.description}</p>
+                <p className="text-sm text-muted-foreground truncate">{api.description}</p>
                 <Button variant="outline" size="sm" className="mt-4 w-full">
                   <ExternalLink className="h-3.5 w-3.5 mr-2" />
                   Configure
