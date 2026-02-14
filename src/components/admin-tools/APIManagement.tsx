@@ -73,17 +73,12 @@ const APIManagement: React.FC<APIManagementProps> = ({ onBack }) => {
           {filteredAPIs.map((api) => (
             <Card key={api.id} interactive className="border-border/40 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer group">
               <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="h-12 w-12 rounded-lg bg-white flex items-center justify-center p-1.5 border border-border/30">
-                      <img src={api.logo} alt={`${api.name} logo`} className="h-full w-full object-contain" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-base">{api.name}</CardTitle>
-                      <Badge variant="secondary" className="mt-1 text-xs">{api.category}</Badge>
-                    </div>
-                  </div>
+                <div className="flex items-center justify-between mb-3">
+                  <Badge variant="secondary" className="text-xs">{api.category}</Badge>
                   <Badge variant="outline" className="text-xs text-muted-foreground">Not configured</Badge>
+                </div>
+                <div className="h-16 flex items-center justify-center bg-white rounded-lg border border-border/30 p-3">
+                  <img src={api.logo} alt={`${api.name} logo`} className="h-full max-w-full object-contain" />
                 </div>
               </CardHeader>
               <CardContent>
