@@ -79,7 +79,7 @@ const VCRPillSelector: React.FC<{
       <PopoverTrigger asChild>
         <button
           className={cn(
-            'inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium transition-all',
+            'inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium transition-all w-[180px]',
             'border hover:shadow-sm focus:outline-none focus:ring-1 focus:ring-primary/30',
             currentVcr
               ? 'cursor-pointer'
