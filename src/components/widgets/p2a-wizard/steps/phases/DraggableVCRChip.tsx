@@ -18,9 +18,10 @@ export const getVCRIdStyle = (index: number) => {
 interface DraggableVCRChipProps {
   vcr: WizardVCR;
   index: number;
+  onVCRClick?: (vcr: WizardVCR) => void;
 }
 
-export const DraggableVCRChip: React.FC<DraggableVCRChipProps> = ({ vcr, index }) => {
+export const DraggableVCRChip: React.FC<DraggableVCRChipProps> = ({ vcr, index, onVCRClick }) => {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `vcr-${vcr.id}`,
     data: { type: 'vcr', vcrId: vcr.id },
@@ -38,7 +39,7 @@ export const DraggableVCRChip: React.FC<DraggableVCRChipProps> = ({ vcr, index }
       )}
     >
       <GripVertical className="h-3 w-3 text-muted-foreground/40 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
-      <div className="flex flex-col min-w-0 gap-0.5">
+      <div className="flex flex-col min-w-0 gap-0.5 cursor-pointer" onClick={() => onVCRClick?.(vcr)}>
         <span className="text-[11px] font-medium truncate leading-tight">{vcr.name}</span>
         <span
           className="text-[8px] font-mono px-1 py-px rounded border shrink-0 w-fit leading-tight"
