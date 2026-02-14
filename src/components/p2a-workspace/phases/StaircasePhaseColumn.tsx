@@ -217,17 +217,17 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
           </div>
         </div>
 
-        {/* VCRs Container */}
+        {/* VCRs Container - no padding so absolute children align correctly with workspace coordinates */}
         <div 
           ref={vcrContainerRef}
           className={cn(
-            "border border-t-0 rounded-b-xl p-3 transition-colors flex-1",
+            "border border-t-0 rounded-b-xl transition-colors flex-1",
             showPhaseHighlight ? 'border-primary bg-primary/5' : 'border-border bg-card/50'
           )}
           style={{ position: 'relative', minHeight: showMapping ? computedMinHeight || 200 : 200 }}
         >
           {sortedPoints.length === 0 ? (
-            <div className="flex items-center justify-center h-full min-h-[100px]">
+            <div className="flex items-center justify-center h-full min-h-[100px] p-3">
               <div className="text-center py-4">
                 <ArrowDown className="w-6 h-6 mx-auto mb-2 text-muted-foreground/30" />
                 <div className="text-xs text-muted-foreground">
@@ -281,14 +281,16 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
                   )}
                 </>
               ) : (
-                /* Non-mapping mode: normal centered flow */
-                sortedPoints.map((point) => (
-                  <DraggableHandoverPointCard
-                    key={point.id}
-                    handoverPoint={point}
-                    onClick={() => onOpenVCR(point)}
-                  />
-                ))
+                /* Non-mapping mode: normal centered flow with padding */
+                <div className="p-3 flex flex-col items-center gap-2">
+                  {sortedPoints.map((point) => (
+                    <DraggableHandoverPointCard
+                      key={point.id}
+                      handoverPoint={point}
+                      onClick={() => onOpenVCR(point)}
+                    />
+                  ))}
+                </div>
               )}
             </div>
           )}
