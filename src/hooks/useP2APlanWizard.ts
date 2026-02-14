@@ -71,20 +71,31 @@ async function loadDraftFromDatabase(projectId: string): Promise<{ state: P2APla
     }
   }
 
-  const systems: WizardSystem[] = (dbSystems || []).map((s: any) => ({
-    id: s.id,
-    system_id: s.system_id,
-    name: s.name,
-    description: '',
-    is_hydrocarbon: s.is_hydrocarbon ?? false,
-    progress: s.completion_percentage ?? 0,
-    subsystems: (subsystemsBySystem[s.id] || []).map((sub: any) => ({
-      id: sub.id,
-      system_id: sub.subsystem_id,
-      name: sub.name,
-      progress: sub.completion_percentage ?? 0,
-    })),
-  }));
+  const systems: WizardSystem[] = (dbSystems || []).map((s: any) => {
+    const rawSubs = subsystemsBySystem[s.id] || [];
+    // Deduplicate subsystems by subsystem_id
+    const seen = new Set<string>();
+    const uniqueSubs = rawSubs.filter((sub: any) => {
+      if (seen.has(sub.subsystem_id)) return false;
+      seen.add(sub.subsystem_id);
+      return true;
+    });
+    
+    return {
+      id: s.id,
+      system_id: s.system_id,
+      name: s.name,
+      description: '',
+      is_hydrocarbon: s.is_hydrocarbon ?? false,
+      progress: s.completion_percentage ?? 0,
+      subsystems: uniqueSubs.map((sub: any) => ({
+        id: sub.id,
+        system_id: sub.subsystem_id,
+        name: sub.name,
+        progress: sub.completion_percentage ?? 0,
+      })),
+    };
+  });
 
   // Load phases
   const { data: dbPhases } = await client
