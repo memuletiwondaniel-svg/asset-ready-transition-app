@@ -261,12 +261,6 @@ const SOFCertificate: React.FC<SOFCertificateProps> = ({
               <p className="text-foreground">{content.openingStatement}</p>
             )}
 
-            {/* Confirmation Header */}
-            <div className="border-t border-b border-border py-4 my-4">
-              <p className="font-semibold text-foreground text-center">
-                Based on the Pre-Startup Safety Review, it is confirmed that:
-              </p>
-            </div>
 
             {/* Confirmation Items */}
             <div>
