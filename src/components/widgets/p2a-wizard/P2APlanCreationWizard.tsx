@@ -9,7 +9,7 @@ import { SystemsImportStep, WizardSystem } from './steps/SystemsImportStep';
 import { VCRCreationStep, WizardVCR } from './steps/VCRCreationStep';
 import { SystemMappingStep } from './steps/SystemMappingStep';
 import { PhasesStep, WizardPhase } from './steps/PhasesStep';
-import { WorkspacePreviewStep } from './steps/WorkspacePreviewStep';
+
 import { ApprovalSetupStep, WizardApprover } from './steps/ApprovalSetupStep';
 import { ConfirmationStep } from './steps/ConfirmationStep';
 import { useP2APlanWizard } from '@/hooks/useP2APlanWizard';
@@ -46,8 +46,7 @@ const WIZARD_STEPS: WizardStep[] = [
   { id: 4, title: 'Assign Systems', description: 'Map systems to VCRs' },
   { id: 5, title: 'Handover Phases', description: 'Define phases & assign VCRs' },
   { id: 6, title: 'Select Approvers', description: 'Choose who approves the plan' },
-  { id: 7, title: 'Review &\nSubmit', description: 'Review the plan layout' },
-  { id: 8, title: 'Confirm', description: 'Submit for approval' },
+  { id: 7, title: 'Review &\nSubmit', description: 'Review and submit for approval' },
 ];
 
 export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
@@ -281,16 +280,6 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
           />
         );
       case 7:
-        return (
-          <WorkspacePreviewStep
-            systems={state.systems}
-            vcrs={state.vcrs}
-            phases={state.phases}
-            mappings={state.mappings}
-            vcrPhaseAssignments={state.vcrPhaseAssignments}
-          />
-        );
-      case 8:
         return (
           <ConfirmationStep
             projectCode={projectCode}
