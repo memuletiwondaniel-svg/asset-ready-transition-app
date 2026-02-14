@@ -1,17 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
-  Users,
-  UserCheck,
   Loader2,
   RefreshCw,
   Clock,
   CheckCircle2,
   XCircle,
   AlertCircle,
+  Trash2,
+  Plus,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -91,6 +90,8 @@ export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [showAddRow, setShowAddRow] = useState(false);
+  const [newRoleName, setNewRoleName] = useState('');
 
   // Fetch team members and auto-populate approvers
   useEffect(() => {
@@ -255,8 +256,26 @@ export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
   };
 
   const handleRefreshFromTeam = () => {
-    // Re-trigger the effect by clearing approvers
     populateApproversFromTeam(teamMembers, null);
+  };
+
+  const handleDeleteApprover = (id: string) => {
+    onApproversChange(approvers.filter(a => a.id !== id));
+  };
+
+
+  const handleAddApprover = () => {
+    const maxOrder = approvers.reduce((max, a) => Math.max(max, a.display_order), 0);
+    onApproversChange([
+      ...approvers,
+      {
+        id: `approver-custom-${Date.now()}`,
+        role_name: newRoleName.trim() || 'New Approver',
+        display_order: maxOrder + 1,
+      },
+    ]);
+    setNewRoleName('');
+    setShowAddRow(false);
   };
 
   const getInitials = (name?: string) => {
@@ -301,42 +320,82 @@ export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
         </div>
       ) : (
         <div className="space-y-2 ml-4">
-          {FIXED_APPROVER_ROLES.map((role) => {
-            const approver = approvers.find(a => a.role_name === role.label);
-            const hasUser = !!approver?.user_id;
+          {approvers.map((approver) => {
+            const hasUser = !!approver.user_id;
             return (
-              <div key={role.key} className="flex items-center gap-3 p-3.5 rounded-lg border bg-card hover:shadow-sm transition-shadow max-w-md">
+              <div key={approver.id} className="group flex items-center gap-3 p-3.5 rounded-lg border bg-card hover:shadow-sm transition-shadow max-w-md">
                 <Avatar className="h-9 w-9 shrink-0">
-                  <AvatarImage src={resolveAvatarUrl(approver?.user_avatar)} />
+                  <AvatarImage src={resolveAvatarUrl(approver.user_avatar)} />
                   <AvatarFallback className="text-xs bg-muted">
-                    {getInitials(approver?.user_name)}
+                    {getInitials(approver.user_name)}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
                   {hasUser ? (
                     <>
                       <span className="text-sm font-medium">{approver.user_name}</span>
-                      <p className="text-xs text-muted-foreground truncate">{role.label}</p>
+                      <p className="text-xs text-muted-foreground truncate">{approver.role_name}</p>
                     </>
                   ) : (
                     <>
-                      <span className="text-sm font-medium text-muted-foreground">{role.label}</span>
+                      <span className="text-sm font-medium text-muted-foreground">{approver.role_name}</span>
                       <p className="text-[10px] text-amber-600">Not assigned</p>
                     </>
                   )}
                 </div>
-                {!hasUser ? (
-                  <AlertCircle className="h-4 w-4 text-muted-foreground shrink-0" />
-                ) : approver.status === 'APPROVED' ? (
-                  <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                ) : approver.status === 'REJECTED' ? (
-                  <XCircle className="h-4 w-4 text-red-600 dark:text-red-400 shrink-0" />
-                ) : (
-                  <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
-                )}
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {!hasUser ? (
+                    <AlertCircle className="h-4 w-4 text-muted-foreground" />
+                  ) : approver.status === 'APPROVED' ? (
+                    <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                  ) : approver.status === 'REJECTED' ? (
+                    <XCircle className="h-4 w-4 text-destructive" />
+                  ) : (
+                    <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                  )}
+                  <button
+                    onClick={() => handleDeleteApprover(approver.id)}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+                    title="Remove approver"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
               </div>
             );
           })}
+
+          {showAddRow ? (
+            <div className="flex items-center gap-2 max-w-md">
+              <Input
+                value={newRoleName}
+                onChange={(e) => setNewRoleName(e.target.value)}
+                placeholder="Role name, e.g. Safety Lead"
+                className="h-9 text-sm"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && newRoleName.trim()) handleAddApprover();
+                  if (e.key === 'Escape') { setShowAddRow(false); setNewRoleName(''); }
+                }}
+              />
+              <Button size="sm" onClick={handleAddApprover} disabled={!newRoleName.trim()}>
+                Add
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => { setShowAddRow(false); setNewRoleName(''); }}>
+                Cancel
+              </Button>
+            </div>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 text-xs mt-1"
+              onClick={() => setShowAddRow(true)}
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Add Approver
+            </Button>
+          )}
         </div>
       )}
     </div>
