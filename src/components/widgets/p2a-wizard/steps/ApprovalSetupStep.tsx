@@ -346,7 +346,7 @@ export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
                 <div className="flex items-center shrink-0">
                   <button
                     onClick={() => handleDeleteApprover(approver.id)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-md hover:bg-destructive/10 text-destructive"
                     title="Remove approver"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
