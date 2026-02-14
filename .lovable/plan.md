@@ -1,31 +1,54 @@
 
 
-## Tone Down Completed Step Styling
+## Fix: P2A Approvers Not Showing in Summary Dialog
 
-The core UX principle: **completed steps should fade into the background**, letting the current step remain the hero. Right now, saturated emerald-500 on circles, labels, and connectors fights for attention against the active step.
+### Problem
+The approvers are not visible in the summary overlay because the `persistPlanToDatabase` function in `useP2APlanWizard.ts` does not include `user_id` when saving approver records. This means the `p2a_handover_approvers` table is empty (or records lack user assignments), so the summary dialog has nothing to display.
 
-### Changes
+### Root Cause
+In `src/hooks/useP2APlanWizard.ts` (line 455-460), the approver save logic only persists `role_name`, `display_order`, and `status` -- it omits `user_id`, `user_name`, and `user_avatar`:
 
-1. **Completed Step Circles** -- Swap from bold `bg-emerald-500 text-white` to a softer, muted treatment: `bg-emerald-100 text-emerald-600 border border-emerald-200` (dark mode: `dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-700`). Remove the green shadow glow. The check icon alone communicates "done" without needing a loud filled circle.
+```text
+const approverRecords = state.approvers.map(a => ({
+  handover_id: planId,
+  role_name: a.role_name,
+  display_order: a.display_order,
+  status: 'PENDING',
+  // user_id is MISSING here
+}));
+```
 
-2. **Completed Step Labels** -- Shift from `text-emerald-600` to a neutral `text-muted-foreground`. Once a step is done, its label doesn't need color coding -- the circle's check icon already signals completion.
+### Plan
 
-3. **Connector Lines** -- Change completed connectors from `bg-emerald-500` to a softer `bg-emerald-300 dark:bg-emerald-700`. They should read as a quiet trail, not a highway.
+**Step 1: Fix approver persistence** (`src/hooks/useP2APlanWizard.ts`)
+- Add `user_id: a.user_id || null` to the approver records map so that assigned users are saved to the database.
 
-4. **Amber connectors** -- Also soften slightly to `bg-amber-200 dark:bg-amber-700` for consistency.
+**Step 2: Always show the Approvers section** (`src/components/widgets/P2APlanSummaryDialog.tsx`)
+- Currently the section is hidden when `approvers.length === 0`. After the fix, data will be present, but as a safeguard, also add a fallback message like "No approvers configured" when the list is empty, so the user always sees the section.
 
-### Result
-
-The current step (primary ring + scale) stays the clear focal point. Completed steps feel settled and quiet. The overall progress bar reads as a calm timeline rather than a traffic light.
+**Step 3: Re-submit the plan**
+- Since the existing plan's approvers were lost, you will need to re-save or re-submit the plan to populate the approver records. Alternatively, I can add a one-time data repair to re-insert the default approvers for the current plan.
 
 ### Technical Details
 
-**File**: `src/components/widgets/p2a-wizard/WizardProgress.tsx`
+File changes:
 
-- Line 48 (completed circle): change to `bg-emerald-100 text-emerald-600 border border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-700`
-- Line 66 (completed label): change `text-emerald-600 dark:text-emerald-400` to `text-muted-foreground`
-- Line 84 (connector done): change `bg-emerald-500` to `bg-emerald-300 dark:bg-emerald-700`
-- Line 84 (connector in-progress): change `bg-amber-300 dark:bg-amber-600` to `bg-amber-200 dark:bg-amber-700`
+1. **`src/hooks/useP2APlanWizard.ts`** (line ~455-460)
+   - Change the approver record mapping to include `user_id`:
+   ```typescript
+   const approverRecords = state.approvers.map(a => ({
+     handover_id: planId,
+     role_name: a.role_name,
+     user_id: a.user_id || null,
+     display_order: a.display_order,
+     status: 'PENDING' as const,
+   }));
+   ```
 
-No new files or dependencies needed.
+2. **`src/components/widgets/P2APlanSummaryDialog.tsx`**
+   - Remove the `approvers.length > 0` guard so the "Approvers" section always renders.
+   - Show a "No approvers configured" fallback when the list is empty.
+
+3. **Data repair** -- Insert the default approvers for the existing active plan (`7da85ab4-9ed7-402a-b137-ca0dfc8859c2`) so the summary dialog works immediately without re-submitting:
+   - Insert the 5 default approver roles (Project Hub Lead, ORA Lead, CSU Lead, Construction Lead, Deputy Plant Director) with status `PENDING`.
 
