@@ -271,6 +271,28 @@ const APIConfigWizard: React.FC<APIConfigWizardProps> = ({
                       <span className="text-xs text-muted-foreground">Auth Type</span>
                       <span className="text-xs capitalize">{apiCredentials.authType.replace('_', ' ')}</span>
                     </div>
+                    {apiCredentials.authType === 'sso' && (
+                      <>
+                        {apiCredentials.username && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-muted-foreground">Username</span>
+                            <span className="text-xs truncate max-w-[200px]">{apiCredentials.username}</span>
+                          </div>
+                        )}
+                        {apiCredentials.ssoProject && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-muted-foreground">Project</span>
+                            <span className="text-xs truncate max-w-[200px]">{apiCredentials.ssoProject}</span>
+                          </div>
+                        )}
+                        {apiCredentials.ssoDatabase && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-muted-foreground">Database</span>
+                            <span className="text-xs truncate max-w-[200px]">{apiCredentials.ssoDatabase}</span>
+                          </div>
+                        )}
+                      </>
+                    )}
                   </>
                 )}
                 <div className="flex items-center justify-between pt-2 border-t">

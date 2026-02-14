@@ -1,6 +1,6 @@
 export type InterfaceMethod = 'api' | 'rpa';
 
-export type APIAuthType = 'api_key' | 'oauth' | 'basic_auth';
+export type APIAuthType = 'api_key' | 'oauth' | 'basic_auth' | 'sso';
 
 export interface RPACredentials {
   portalUrl: string;
@@ -17,6 +17,8 @@ export interface APICredentials {
   tokenUrl?: string;
   username?: string;
   password?: string;
+  ssoProject?: string;
+  ssoDatabase?: string;
 }
 
 export interface APIConfig {
