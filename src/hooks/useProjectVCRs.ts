@@ -11,6 +11,7 @@ export interface ProjectVCR {
   created_at: string;
   progress: number;
   systems_count: number;
+  has_hydrocarbon: boolean;
 }
 
 export function useProjectVCRs(projectId: string) {
@@ -56,13 +57,27 @@ export function useProjectVCRs(projectId: string) {
 
           const prereqs = prereqsResult.data || [];
 
-          // Get systems count
+          // Get systems count and hydrocarbon info
           const systemsResult = await client
             .from('p2a_handover_point_systems')
-            .select('id', { count: 'exact', head: true })
+            .select('id, system_id')
             .eq('handover_point_id', vcr.id);
 
-          const systemsCount = systemsResult.count || 0;
+          const systemMappings = systemsResult.data || [];
+          const systemsCount = systemMappings.length;
+
+          // Check if any mapped system is hydrocarbon
+          let hasHydrocarbon = false;
+          if (systemMappings.length > 0) {
+            const systemIds = systemMappings.map((m: any) => m.system_id);
+            const hcResult = await client
+              .from('p2a_systems')
+              .select('id, is_hydrocarbon')
+              .in('id', systemIds)
+              .eq('is_hydrocarbon', true)
+              .limit(1);
+            hasHydrocarbon = (hcResult.data?.length || 0) > 0;
+          }
 
           const total = prereqs.length;
           const completed = prereqs.filter(
@@ -79,6 +94,7 @@ export function useProjectVCRs(projectId: string) {
             created_at: vcr.created_at,
             progress: total > 0 ? Math.round((completed / total) * 100) : 0,
             systems_count: systemsCount,
+            has_hydrocarbon: hasHydrocarbon,
           } as ProjectVCR;
         })
       );
