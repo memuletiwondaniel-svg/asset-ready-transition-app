@@ -152,10 +152,10 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
       <div 
         ref={setNodeRef}
         className={cn(
-          "flex-shrink-0 w-56 flex flex-col",
+          "flex-shrink-0 flex flex-col",
           isDragging && "opacity-50 z-50"
         )}
-        style={style}
+        style={{ ...style, width: 'calc(224px * var(--ws-zoom, 1))' }}
       >
         {/* Phase Header Card - sticky at top when scrolling */}
         <div 

@@ -24,7 +24,7 @@ export const MappingOverlay: React.FC<MappingOverlayProps> = ({ bundles }) => {
   return (
     <svg
       className="absolute inset-0 w-full h-full pointer-events-none overflow-visible"
-      style={{ zIndex: 20 }}
+      style={{ zIndex: 20, willChange: 'transform' }}
     >
       {bundles.map((bundle, bundleIndex) => {
         const {

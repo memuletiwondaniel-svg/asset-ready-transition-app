@@ -46,9 +46,9 @@ export const SystemCard: React.FC<SystemCardProps> = ({
   // When dragging, hide the original card completely (DragOverlay shows the preview)
   if (isDragging) {
     return (
-      <Card className="w-[140px] border border-dashed border-muted-foreground/30 bg-muted/20 opacity-40">
+      <Card className="border border-dashed border-muted-foreground/30 bg-muted/20 opacity-40" style={{ width: 'calc(140px * var(--ws-zoom, 1))' }}>
         <CardContent className="p-1.5">
-          <div className="h-[34px]" /> {/* Placeholder to maintain layout */}
+          <div style={{ height: 'calc(34px * var(--ws-zoom, 1))' }} />
         </CardContent>
       </Card>
     );
@@ -57,10 +57,13 @@ export const SystemCard: React.FC<SystemCardProps> = ({
   return (
     <Card 
       className={cn(
-        'group cursor-pointer transition-all duration-200 hover:shadow-sm w-[140px] border',
+        'group cursor-pointer transition-all duration-200 hover:shadow-sm border',
         defaultClasses
       )}
-      style={cardStyle}
+      style={{
+        ...cardStyle,
+        width: 'calc(140px * var(--ws-zoom, 1))',
+      }}
       onClick={onClick}
     >
       <CardContent className="p-1.5">

@@ -180,19 +180,26 @@ export const useMappingPositions = (
       return;
     }
 
+    // Debounced recalc for resize/mutation (less frequent)
     const debouncedRecalc = () => {
       cancelAnimationFrame(rafRef.current);
       rafRef.current = requestAnimationFrame(recalculate);
     };
 
-    const timer = setTimeout(debouncedRecalc, 80);
+    // Direct recalc on scroll for instant response (scroll events are frame-synced)
+    const handleScroll = () => {
+      recalculate();
+    };
+
+    // Initial calculation — single RAF instead of setTimeout
+    rafRef.current = requestAnimationFrame(recalculate);
 
     const observer = new ResizeObserver(debouncedRecalc);
     if (containerRef.current) observer.observe(containerRef.current);
 
     const scrollContainers = containerRef.current?.querySelectorAll('[data-radix-scroll-area-viewport]');
     scrollContainers?.forEach(el => {
-      el.addEventListener('scroll', debouncedRecalc, { passive: true });
+      el.addEventListener('scroll', handleScroll, { passive: true });
     });
 
     window.addEventListener('resize', debouncedRecalc);
@@ -208,11 +215,10 @@ export const useMappingPositions = (
     }
 
     return () => {
-      clearTimeout(timer);
       cancelAnimationFrame(rafRef.current);
       observer.disconnect();
       mutationObserver.disconnect();
-      scrollContainers?.forEach(el => el.removeEventListener('scroll', debouncedRecalc));
+      scrollContainers?.forEach(el => el.removeEventListener('scroll', handleScroll));
       window.removeEventListener('resize', debouncedRecalc);
     };
   }, [showMapping, recalculate, containerRef]);

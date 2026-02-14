@@ -37,10 +37,13 @@ export const SubsystemCard: React.FC<SubsystemCardProps> = ({
     >
       <Card
         className={cn(
-          'cursor-pointer transition-all duration-200 hover:shadow-sm w-[140px] border',
+          'cursor-pointer transition-all duration-200 hover:shadow-sm border',
           !vcrColor && 'border-border bg-card'
         )}
-        style={cardStyle}
+        style={{
+          ...cardStyle,
+          width: 'calc(140px * var(--ws-zoom, 1))',
+        }}
         onClick={onClick}
       >
         <CardContent className="p-1.5">

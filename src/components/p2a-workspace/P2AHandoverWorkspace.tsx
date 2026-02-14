@@ -33,6 +33,7 @@ interface P2AHandoverWorkspaceProps {
   projectName?: string;
   projectNumber?: string;
   showMapping?: boolean;
+  zoomLevel?: number;
 }
 
 export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
@@ -41,6 +42,7 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
   projectName,
   projectNumber,
   showMapping = false,
+  zoomLevel = 1.0,
 }) => {
   const workspaceContainerRef = useRef<HTMLDivElement>(null);
   const [activeDragItem, setActiveDragItem] = useState<{ type: 'system' | 'vcr' | 'phase'; data: any } | null>(null);
@@ -592,7 +594,7 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
     >
 
       {/* Main Content Area - Systems Panel + Timeline (above background) */}
-      <div className="flex-1 flex overflow-hidden min-h-0 relative z-10" ref={workspaceContainerRef} data-workspace-container>
+      <div className="flex-1 flex overflow-hidden min-h-0 relative z-10" ref={workspaceContainerRef} data-workspace-container style={{ '--ws-zoom': zoomLevel } as React.CSSProperties}>
         {/* Mapping SVG Overlay */}
         {showMapping && <MappingOverlay bundles={bundles} />}
 

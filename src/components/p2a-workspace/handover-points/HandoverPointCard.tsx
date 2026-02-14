@@ -58,9 +58,9 @@ export const HandoverPointCard: React.FC<HandoverPointCardProps> = ({
   // When dragging, show a placeholder instead of the full card (DragOverlay shows the preview)
   if (isDragging) {
     return (
-      <Card className="w-[140px] border border-dashed border-muted-foreground/30 bg-muted/20 opacity-40">
+      <Card className="border border-dashed border-muted-foreground/30 bg-muted/20 opacity-40" style={{ width: 'calc(140px * var(--ws-zoom, 1))' }}>
         <CardContent className="p-1.5">
-          <div className="h-[34px]" /> {/* Placeholder to maintain layout */}
+          <div style={{ height: 'calc(34px * var(--ws-zoom, 1))' }} />
         </CardContent>
       </Card>
     );
@@ -69,10 +69,11 @@ export const HandoverPointCard: React.FC<HandoverPointCardProps> = ({
   return (
     <Card 
       className={cn(
-        'group cursor-pointer transition-all duration-200 hover:shadow-sm w-[140px] border',
+        'group cursor-pointer transition-all duration-200 hover:shadow-sm border',
         isDropTarget && 'ring-2 ring-primary ring-offset-2'
       )}
       style={{
+        width: 'calc(140px * var(--ws-zoom, 1))',
         backgroundColor: isDropTarget ? 'hsl(var(--primary) / 0.05)' : vcrColor?.background ?? 'hsl(var(--card))',
         borderColor: isDropTarget ? 'hsl(var(--primary))' : vcrColor?.border ?? 'hsl(var(--border))',
         borderWidth: '1px',

@@ -3,7 +3,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
-import { X, Key, Cable } from 'lucide-react';
+import { X, Key, Cable, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 import { P2AHandoverWorkspace } from '@/components/p2a-workspace/P2AHandoverWorkspace';
 import { useP2AHandoverPlan } from '@/components/p2a-workspace/hooks/useP2AHandoverPlan';
 import { cn } from '@/lib/utils';
@@ -59,8 +59,13 @@ export const P2AWorkspaceOverlay: React.FC<P2AWorkspaceOverlayProps> = ({
   projectNumber,
 }) => {
   const [showMapping, setShowMapping] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(1.0);
   const { plan } = useP2AHandoverPlan(projectId, 'project_id');
   const statusConfig = getStatusConfig(plan?.status);
+
+  const handleZoomIn = () => setZoomLevel(prev => Math.min(1.2, Math.round((prev + 0.1) * 10) / 10));
+  const handleZoomOut = () => setZoomLevel(prev => Math.max(0.6, Math.round((prev - 0.1) * 10) / 10));
+  const handleZoomReset = () => setZoomLevel(1.0);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -81,6 +86,52 @@ export const P2AWorkspaceOverlay: React.FC<P2AWorkspaceOverlayProps> = ({
           </div>
           <div className="flex items-center gap-1">
             <TooltipProvider>
+              {/* Zoom Controls */}
+              <div className="flex items-center gap-0.5 mr-2 border-r border-border pr-2">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleZoomOut}
+                      disabled={zoomLevel <= 0.6}
+                      className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                    >
+                      <ZoomOut className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">Zoom out</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleZoomReset}
+                      className="h-7 px-1.5 text-[10px] font-mono text-muted-foreground hover:text-foreground"
+                    >
+                      {Math.round(zoomLevel * 100)}%
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">Reset zoom</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleZoomIn}
+                      disabled={zoomLevel >= 1.2}
+                      className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                    >
+                      <ZoomIn className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">Zoom in</TooltipContent>
+                </Tooltip>
+              </div>
+
+              {/* Mapping Toggle */}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -125,6 +176,7 @@ export const P2AWorkspaceOverlay: React.FC<P2AWorkspaceOverlayProps> = ({
             projectName={projectName}
             projectNumber={projectNumber}
             showMapping={showMapping}
+            zoomLevel={zoomLevel}
           />
         </div>
       </DialogContent>

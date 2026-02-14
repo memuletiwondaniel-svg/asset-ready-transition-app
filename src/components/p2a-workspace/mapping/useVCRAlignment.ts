@@ -89,22 +89,24 @@ export const useVCRAlignment = (
       rafRef.current = requestAnimationFrame(recalculate);
     };
 
-    // Initial calculation with delay to let layout settle
-    const timer = setTimeout(debouncedRecalc, 100);
+    // Direct recalc on scroll for instant response
+    const handleScroll = () => {
+      recalculate();
+    };
 
-    // Observe resize
+    // Initial calculation — single RAF
+    rafRef.current = requestAnimationFrame(recalculate);
+
     const observer = new ResizeObserver(debouncedRecalc);
     if (containerRef.current) observer.observe(containerRef.current);
 
-    // Observe scroll in Radix scroll areas
     const scrollContainers = containerRef.current?.querySelectorAll('[data-radix-scroll-area-viewport]');
     scrollContainers?.forEach((el) => {
-      el.addEventListener('scroll', debouncedRecalc, { passive: true });
+      el.addEventListener('scroll', handleScroll, { passive: true });
     });
 
     window.addEventListener('resize', debouncedRecalc);
 
-    // Observe DOM mutations (system cards being added/removed/reordered)
     const mutationObserver = new MutationObserver(debouncedRecalc);
     if (containerRef.current) {
       mutationObserver.observe(containerRef.current, {
@@ -116,11 +118,10 @@ export const useVCRAlignment = (
     }
 
     return () => {
-      clearTimeout(timer);
       cancelAnimationFrame(rafRef.current);
       observer.disconnect();
       mutationObserver.disconnect();
-      scrollContainers?.forEach((el) => el.removeEventListener('scroll', debouncedRecalc));
+      scrollContainers?.forEach((el) => el.removeEventListener('scroll', handleScroll));
       window.removeEventListener('resize', debouncedRecalc);
     };
   }, [showMapping, recalculate, containerRef]);
