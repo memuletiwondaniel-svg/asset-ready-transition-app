@@ -29,19 +29,21 @@ export const useUserORPActivities = () => {
     queryFn: async () => {
       if (!user?.id) return [];
 
-      // Fetch resources assigned to user
+      // Fetch resources assigned to user with plan + project data
       const { data: resources, error: resourceError } = await supabase
         .from('orp_resources')
         .select(`
           *,
           orp_plans!inner (
             id,
-            plan_name,
-            project_name,
-            project_number,
+            project_id,
             phase,
             status,
-            is_active
+            is_active,
+            projects (
+              name,
+              project_number
+            )
           )
         `)
         .eq('user_id', user.id)
@@ -49,47 +51,49 @@ export const useUserORPActivities = () => {
 
       if (resourceError) throw resourceError;
 
-      const planIds: string[] = [...new Set((resources || []).map((r: any) => r.plan_id as string))];
+      const planIds: string[] = [...new Set((resources || []).map((r: any) => r.orp_plan_id as string))];
       
       const deliverableStats: Record<string, { total: number; completed: number }> = {};
       
       if (planIds.length > 0) {
         const { data: deliverables, error: delError } = await supabase
           .from('orp_plan_deliverables')
-          .select('plan_id, status');
+          .select('orp_plan_id, status');
 
         if (!delError && deliverables) {
-          // Filter in JS to avoid TS issues
-          const filtered = deliverables.filter((d: any) => planIds.includes(d.plan_id));
+          const filtered = deliverables.filter((d: any) => planIds.includes(d.orp_plan_id));
           filtered.forEach((d: any) => {
-            if (!deliverableStats[d.plan_id]) {
-              deliverableStats[d.plan_id] = { total: 0, completed: 0 };
+            if (!deliverableStats[d.orp_plan_id]) {
+              deliverableStats[d.orp_plan_id] = { total: 0, completed: 0 };
             }
-            deliverableStats[d.plan_id].total++;
+            deliverableStats[d.orp_plan_id].total++;
             if (d.status === 'COMPLETED') {
-              deliverableStats[d.plan_id].completed++;
+              deliverableStats[d.orp_plan_id].completed++;
             }
           });
         }
       }
 
-      return (resources || []).map((item: any) => ({
-        id: item.id,
-        plan_id: item.plan_id,
-        user_id: item.user_id,
-        role: item.role,
-        allocation_percentage: item.allocation_percentage || 0,
-        start_date: item.start_date,
-        end_date: item.end_date,
-        created_at: item.created_at,
-        plan_name: item.orp_plans?.plan_name,
-        project_name: item.orp_plans?.project_name,
-        project_number: item.orp_plans?.project_number,
-        phase: item.orp_plans?.phase,
-        plan_status: item.orp_plans?.status,
-        deliverable_count: deliverableStats[item.plan_id]?.total || 0,
-        completed_deliverables: deliverableStats[item.plan_id]?.completed || 0,
-      })) as UserORPActivity[];
+      return (resources || []).map((item: any) => {
+        const project = item.orp_plans?.projects;
+        return {
+          id: item.id,
+          plan_id: item.orp_plan_id,
+          user_id: item.user_id,
+          role: item.role_description || item.position || 'Team Member',
+          allocation_percentage: item.allocation_percentage || 0,
+          start_date: undefined,
+          end_date: undefined,
+          created_at: item.created_at,
+          plan_name: project?.name || 'ORP Plan',
+          project_name: project?.name,
+          project_number: project?.project_number,
+          phase: item.orp_plans?.phase,
+          plan_status: item.orp_plans?.status,
+          deliverable_count: deliverableStats[item.orp_plan_id]?.total || 0,
+          completed_deliverables: deliverableStats[item.orp_plan_id]?.completed || 0,
+        };
+      }) as UserORPActivity[];
     },
     enabled: !!user?.id,
     staleTime: 2 * 60 * 1000,

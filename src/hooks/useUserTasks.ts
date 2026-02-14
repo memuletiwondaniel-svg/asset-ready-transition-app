@@ -87,6 +87,215 @@ const fetchUserTasks = async (userId: string): Promise<{ tasks: UserTask[]; depe
   return { tasks: enrichedTasks, dependencies: depsData };
 };
 
+/**
+ * Core P2A approval sync logic. Extracted so it can be called from both
+ * single-task and bulk-task completion paths.
+ */
+async function syncP2AApproval(
+  meta: any,
+  taskType: string,
+  status: 'completed' | 'cancelled',
+  queryClient: ReturnType<typeof useQueryClient>,
+  userId: string
+) {
+  if (meta?.source !== 'p2a_handover' || taskType !== 'approval' || !meta?.plan_id) return;
+
+  const planId = meta.plan_id;
+  const approverRole = meta.approver_role;
+
+  if (status === 'completed') {
+    // Update the approver record to APPROVED
+    await supabase
+      .from('p2a_handover_approvers')
+      .update({
+        status: 'APPROVED',
+        approved_at: new Date().toISOString(),
+      })
+      .eq('handover_id', planId)
+      .eq('role_name', approverRole);
+
+    // If Phase 1 approver, check if all Phase 1 are done → trigger Phase 2
+    if (meta.approval_phase === 1 || meta.approval_phase === '1') {
+      const { data: allApprovers } = await supabase
+        .from('p2a_handover_approvers')
+        .select('role_name, status')
+        .eq('handover_id', planId);
+
+      if (allApprovers) {
+        const phase1 = allApprovers.filter((a: any) => a.role_name !== 'Deputy Plant Director');
+        const allPhase1Approved = phase1.every((a: any) => a.status === 'APPROVED');
+
+        if (allPhase1Approved) {
+          const { createPhase2Tasks } = await import('./useP2AApprovalTasks');
+          await createPhase2Tasks(planId, meta.project_id, meta.project_code);
+        }
+      }
+    }
+
+    // Check if ALL approvers (including Phase 2) are now approved → mark plan COMPLETED
+    const { checkAndCompletePlan } = await import('./useP2AApprovalTasks');
+    await checkAndCompletePlan(planId);
+
+  } else if (status === 'cancelled') {
+    // Rejection: sync to REJECTED status
+    await supabase
+      .from('p2a_handover_approvers')
+      .update({
+        status: 'REJECTED',
+        comments: 'Rejected by approver',
+      })
+      .eq('handover_id', planId)
+      .eq('role_name', approverRole);
+  }
+
+  // Invalidate relevant queries so UI reflects changes
+  queryClient.invalidateQueries({ queryKey: ['p2a-summary-approvers', planId] });
+  queryClient.invalidateQueries({ queryKey: ['p2a-approval-workflow', planId] });
+  queryClient.invalidateQueries({ queryKey: ['p2a-handover-approvers', planId] });
+  queryClient.invalidateQueries({ queryKey: ['p2a-handover-plan'] });
+}
+
+/**
+ * Core VCR template sync logic. Extracted for reuse.
+ */
+async function syncVCRTemplateApproval(
+  meta: any,
+  taskType: string,
+  taskTitle: string,
+  taskId: string,
+  userId: string
+) {
+  const templateId = meta?.template_id;
+  if (!templateId || taskType !== 'review' || !taskTitle?.includes('VCR Template')) return;
+
+  // Update the vcr_template_approvers record for this user's role
+  const { data: userProfile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('user_id', userId)
+    .single();
+
+  if (userProfile?.role) {
+    await supabase
+      .from('vcr_template_approvers')
+      .update({
+        approval_status: 'approved',
+        approved_at: new Date().toISOString(),
+        approved_by: userId,
+      })
+      .eq('template_id', templateId)
+      .eq('role_id', userProfile.role);
+
+    // Check if all approvers have now approved
+    const { data: allApprovers } = await supabase
+      .from('vcr_template_approvers')
+      .select('approval_status')
+      .eq('template_id', templateId);
+
+    const allApproved = allApprovers?.every(a => a.approval_status === 'approved');
+    if (allApproved) {
+      await supabase
+        .from('vcr_templates')
+        .update({ status: 'approved' })
+        .eq('id', templateId);
+    }
+  }
+
+  // Complete sibling tasks for same template
+  const { data: siblingTasks } = await supabase
+    .from('user_tasks')
+    .select('id, metadata')
+    .neq('id', taskId)
+    .eq('status', 'pending')
+    .eq('type', 'review')
+    .filter('metadata->>template_id', 'eq', templateId);
+
+  if (siblingTasks?.length) {
+    for (const sibling of siblingTasks) {
+      const existingMeta = (sibling.metadata as Record<string, any>) || {};
+      await supabase
+        .from('user_tasks')
+        .update({
+          status: 'completed',
+          metadata: { ...existingMeta, auto_completed: true, completed_by: userId },
+        })
+        .eq('id', sibling.id);
+    }
+  }
+}
+
+/**
+ * Back-to-back sync: complete matching tasks for users sharing same functional_email_address
+ */
+async function syncBackToBack(
+  meta: any,
+  taskType: string,
+  userId: string
+) {
+  const { data: currentProfile } = await supabase
+    .from('profiles')
+    .select('functional_email_address')
+    .eq('user_id', userId)
+    .single();
+
+  const funcEmail = currentProfile?.functional_email_address;
+  if (!funcEmail) return;
+
+  const { data: backToBackUsers } = await supabase
+    .from('profiles')
+    .select('user_id')
+    .eq('functional_email_address', funcEmail)
+    .neq('user_id', userId)
+    .eq('is_active', true);
+
+  if (!backToBackUsers?.length) return;
+
+  const backToBackUserIds = backToBackUsers.map(u => u.user_id);
+  const templateId = meta?.template_id;
+
+  let query = supabase
+    .from('user_tasks')
+    .update({ status: 'completed' })
+    .in('user_id', backToBackUserIds)
+    .eq('type', taskType)
+    .eq('status', 'pending');
+
+  if (templateId) {
+    query = query.filter('metadata->>template_id', 'eq', templateId);
+  }
+
+  await query;
+}
+
+/**
+ * Full post-completion handler that runs all sync logic for a single task.
+ */
+async function runPostCompletionSync(
+  taskId: string,
+  status: 'completed' | 'cancelled',
+  userId: string,
+  queryClient: ReturnType<typeof useQueryClient>
+) {
+  const { data: completedTask } = await supabase
+    .from('user_tasks')
+    .select('type, metadata, title')
+    .eq('id', taskId)
+    .single();
+
+  if (!completedTask) return;
+
+  const meta = completedTask.metadata as any;
+
+  // P2A Handover approval sync
+  await syncP2AApproval(meta, completedTask.type, status, queryClient, userId);
+
+  // VCR Template sync (only on approval/completion)
+  if (status === 'completed') {
+    await syncVCRTemplateApproval(meta, completedTask.type, completedTask.title, taskId, userId);
+    await syncBackToBack(meta, completedTask.type, userId);
+  }
+}
+
 export const useUserTasks = () => {
   const { toast } = useToast();
   const { user } = useAuth();
@@ -149,152 +358,11 @@ export const useUserTasks = () => {
         .eq('id', taskId);
       if (error) throw error;
 
-      if (status === 'completed' && user?.id) {
+      if (user?.id) {
         try {
-          // Get the completed task details
-          const { data: completedTask } = await supabase
-            .from('user_tasks')
-            .select('type, metadata, title')
-            .eq('id', taskId)
-            .single();
-
-          if (completedTask) {
-            const meta = completedTask.metadata as any;
-            const templateId = meta?.template_id;
-
-            // P2A Handover approval: sync status back to p2a_handover_approvers
-            if (meta?.source === 'p2a_handover' && completedTask.type === 'approval' && meta?.plan_id) {
-              const planId = meta.plan_id;
-              const approverRole = meta.approver_role;
-              
-              // Update the approver record to APPROVED
-              await supabase
-                .from('p2a_handover_approvers')
-                .update({ 
-                  status: 'APPROVED', 
-                  approved_at: new Date().toISOString() 
-                })
-                .eq('handover_id', planId)
-                .eq('role_name', approverRole);
-
-              // Invalidate the summary dialog's approver query so UI reflects the change
-              queryClient.invalidateQueries({ queryKey: ['p2a-summary-approvers', planId] });
-              queryClient.invalidateQueries({ queryKey: ['p2a-approval-workflow', planId] });
-
-              // Check if all Phase 1 approvers (non-Deputy) are now approved
-              const { data: allApprovers } = await supabase
-                .from('p2a_handover_approvers')
-                .select('role_name, status')
-                .eq('handover_id', planId);
-
-              if (allApprovers) {
-                const phase1 = allApprovers.filter((a: any) => a.role_name !== 'Deputy Plant Director');
-                const allPhase1Approved = phase1.every((a: any) => a.status === 'APPROVED');
-
-                if (allPhase1Approved) {
-                  // Dynamically import to avoid circular deps
-                  const { createPhase2Tasks } = await import('./useP2AApprovalTasks');
-                  await createPhase2Tasks(planId, meta.project_id, meta.project_code);
-                }
-              }
-            }
-
-            // VCR Template review: one approval per role is enough —
-            // complete ALL other users' pending tasks for the same template
-            if (templateId && completedTask.type === 'review' && completedTask.title?.includes('VCR Template')) {
-              // Update the vcr_template_approvers record for this user's role
-              const { data: userProfile } = await supabase
-                .from('profiles')
-                .select('role')
-                .eq('user_id', user.id)
-                .single();
-
-              if (userProfile?.role) {
-                await supabase
-                  .from('vcr_template_approvers')
-                  .update({
-                    approval_status: 'approved',
-                    approved_at: new Date().toISOString(),
-                    approved_by: user.id,
-                  })
-                  .eq('template_id', templateId)
-                  .eq('role_id', userProfile.role);
-
-                // Check if all approvers have now approved
-                const { data: allApprovers } = await supabase
-                  .from('vcr_template_approvers')
-                  .select('approval_status')
-                  .eq('template_id', templateId);
-
-                const allApproved = allApprovers?.every(a => a.approval_status === 'approved');
-                if (allApproved) {
-                  await supabase
-                    .from('vcr_templates')
-                    .update({ status: 'approved' })
-                    .eq('id', templateId);
-                }
-              }
-
-              // Get sibling tasks to update with auto_completed metadata
-              const { data: siblingTasks } = await supabase
-                .from('user_tasks')
-                .select('id, metadata')
-                .neq('id', taskId)
-                .eq('status', 'pending')
-                .eq('type', 'review')
-                .filter('metadata->>template_id', 'eq', templateId);
-
-              if (siblingTasks?.length) {
-                for (const sibling of siblingTasks) {
-                  const existingMeta = (sibling.metadata as Record<string, any>) || {};
-                  await supabase
-                    .from('user_tasks')
-                    .update({ 
-                      status: 'completed',
-                      metadata: { ...existingMeta, auto_completed: true, completed_by: user.id }
-                    })
-                    .eq('id', sibling.id);
-                }
-              }
-            }
-
-            // Back-to-back logic: also complete matching tasks
-            // for users sharing the same functional_email_address
-            const { data: currentProfile } = await supabase
-              .from('profiles')
-              .select('functional_email_address')
-              .eq('user_id', user.id)
-              .single();
-
-            const funcEmail = currentProfile?.functional_email_address;
-            if (funcEmail) {
-              const { data: backToBackUsers } = await supabase
-                .from('profiles')
-                .select('user_id')
-                .eq('functional_email_address', funcEmail)
-                .neq('user_id', user.id)
-                .eq('is_active', true);
-
-              if (backToBackUsers?.length) {
-                const backToBackUserIds = backToBackUsers.map(u => u.user_id);
-                
-                let query = supabase
-                  .from('user_tasks')
-                  .update({ status: 'completed' })
-                  .in('user_id', backToBackUserIds)
-                  .eq('type', completedTask.type)
-                  .eq('status', 'pending');
-
-                if (templateId) {
-                  query = query.filter('metadata->>template_id', 'eq', templateId);
-                }
-
-                await query;
-              }
-            }
-          }
+          await runPostCompletionSync(taskId, status, user.id, queryClient);
         } catch (e) {
-          console.warn('Sibling/back-to-back task completion failed:', e);
+          console.warn('Post-completion sync failed:', e);
         }
       }
     },
@@ -377,11 +445,24 @@ export const useUserTasks = () => {
 
   const bulkUpdateMutation = useMutation({
     mutationFn: async ({ taskIds, status }: { taskIds: string[]; status: 'completed' | 'cancelled' }) => {
+      // Update all tasks
       const updates = taskIds.map(id => supabase.from('user_tasks').update({ status }).eq('id', id));
       await Promise.all(updates);
+
+      // Run sync logic for each task (P2A approval, VCR template, back-to-back)
+      if (user?.id) {
+        for (const taskId of taskIds) {
+          try {
+            await runPostCompletionSync(taskId, status, user.id, queryClient);
+          } catch (e) {
+            console.warn(`Post-completion sync failed for task ${taskId}:`, e);
+          }
+        }
+      }
     },
     onSuccess: (_, { taskIds, status }) => {
       queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['completed-tasks'] });
       toast({ title: "Success", description: `${taskIds.length} task(s) ${status}` });
     },
     onError: () => {
