@@ -20,7 +20,7 @@ interface APIManagementProps {
 }
 
 const predefinedAPIs = [
-  { id: 'sap4hana', name: 'SAP S/4HANA', description: 'Enterprise resource planning and business operations', category: 'ERP', logo: sapLogo, scale: 0.8 },
+  { id: 'sap4hana', name: 'SAP S/4HANA', description: 'Enterprise resource planning and business operations', category: 'ERP', logo: sapLogo },
   { id: 'primavera-p6', name: 'Oracle Primavera P6', description: 'Project planning, scheduling and control', category: 'Project Management', logo: primaveraLogo, scale: 1.3 },
   { id: 'gocompletions', name: 'GoCompletions', description: 'Completions and commissioning management', category: 'Completions', logo: gocompletionsLogo },
   { id: 'assai', name: 'Assai', description: 'Document management and control', category: 'Document Management', logo: assaiLogo, scale: 0.79 },
