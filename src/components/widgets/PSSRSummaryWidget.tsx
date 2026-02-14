@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Key, FileText, Plus, ChevronRight, Pencil, ExternalLink } from 'lucide-react';
 import { StyledWidgetIcon } from './StyledWidgetIcon';
+import { VCRCard } from './VCRCard';
 import { useProjectPSSRs } from '@/hooks/useProjectPSSRs';
 import { useProjectVCRs } from '@/hooks/useProjectVCRs';
 import { useProjectORPPlans } from '@/hooks/useProjectORPPlans';
@@ -107,8 +108,8 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
     target_date: m.milestone_date,
   }));
 
-  // Use only real VCRs from database
-  const allVCRs = vcrs || [];
+  // Sort VCRs by vcr_code for sequential display
+  const allVCRs = [...(vcrs || [])].sort((a, b) => (a.vcr_code || '').localeCompare(b.vcr_code || ''));
 
   // VCRs should only be shown in the widget after the plan is approved
   const showVCRList = planIsApproved && allVCRs.length > 0;
@@ -151,25 +152,13 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                 ))}
               </div>
             ) : showVCRList ? (
-              <div className="space-y-2 overflow-y-auto pr-1 flex-1 min-h-0">
+              <div className="space-y-2.5 overflow-y-auto pr-1 flex-1 min-h-0">
                 {allVCRs.map((vcr) => (
-                  <div 
-                    key={vcr.id} 
-                    className="flex items-center gap-3 p-2.5 border rounded-lg bg-blue-50/50 dark:bg-blue-950/20 hover:bg-blue-100/50 dark:hover:bg-blue-900/30 transition-colors cursor-pointer group/item"
-                    onClick={() => handleVCRClick(vcr.id)}
-                  >
-                    <CircularProgress value={vcr.progress} className="text-blue-600" />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-mono text-blue-600/70">{vcr.vcr_code?.replace(/^VCR-[A-Z0-9]+-/, 'VCR-')}</span>
-                        <Badge variant="outline" className="text-[9px] px-1 py-0">
-                          {vcr.status === 'PENDING' ? 'Draft' : vcr.status}
-                        </Badge>
-                      </div>
-                      <div className="text-sm font-medium truncate">{vcr.name}</div>
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover/item:opacity-100 transition-opacity" />
-                  </div>
+                  <VCRCard
+                    key={vcr.id}
+                    vcr={vcr}
+                    onClick={handleVCRClick}
+                  />
                 ))}
                 {canCreateVCR && (
                   <Button
