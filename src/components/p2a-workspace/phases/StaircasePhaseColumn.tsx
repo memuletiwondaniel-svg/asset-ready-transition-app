@@ -224,7 +224,7 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
             "border border-t-0 rounded-b-xl transition-colors flex-1",
             showPhaseHighlight ? 'border-primary bg-primary/5' : 'border-border bg-card/50'
           )}
-          style={{ position: 'relative', minHeight: showMapping ? computedMinHeight || 200 : 200 }}
+          style={{ position: 'relative', minHeight: showMapping ? computedMinHeight || 400 : 400 }}
         >
           {sortedPoints.length === 0 ? (
             <div className="flex items-center justify-center h-full min-h-[100px] p-3">
