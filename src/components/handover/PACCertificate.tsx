@@ -6,6 +6,8 @@ import { Printer, FileDown, Edit2, Save, X } from "lucide-react";
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { toast } from "sonner";
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 interface PACApprover {
   id: string;
@@ -16,11 +18,19 @@ interface PACApprover {
   signature?: string;
 }
 
+interface VCRSystem {
+  vcrCode: string;
+  vcrName: string;
+  systemCode: string;
+  systemName: string;
+}
+
 interface PACCertificateProps {
   certificateNumber?: string;
   facilityName?: string;
   projectName?: string;
   pacDate?: string;
+  projectId?: string;
   approvers?: PACApprover[];
 }
 
@@ -43,6 +53,7 @@ const PACCertificate: React.FC<PACCertificateProps> = ({
   facilityName = "",
   projectName = "",
   pacDate = "",
+  projectId,
   approvers = [
     { id: '1', name: '', role: 'Plant Director' },
     { id: '2', name: '', role: 'Project Hub Lead' },
@@ -55,6 +66,62 @@ const PACCertificate: React.FC<PACCertificateProps> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [content, setContent] = useState(defaultContent);
   const [editContent, setEditContent] = useState(defaultContent);
+
+  // Fetch VCR systems for the associated project
+  const { data: vcrSystems = [] } = useQuery({
+    queryKey: ['pac-vcr-systems', projectId],
+    queryFn: async (): Promise<VCRSystem[]> => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const client = supabase as any;
+
+      const planResult = await client
+        .from('p2a_handover_plans')
+        .select('id')
+        .eq('project_id', projectId)
+        .maybeSingle();
+
+      if (planResult.error) throw planResult.error;
+      if (!planResult.data) return [];
+
+      const hpResult = await client
+        .from('p2a_handover_points')
+        .select('id, vcr_code, name')
+        .eq('handover_plan_id', planResult.data.id)
+        .order('vcr_code', { ascending: true });
+
+      if (hpResult.error) throw hpResult.error;
+      if (!hpResult.data || hpResult.data.length === 0) return [];
+
+      const allSystems: VCRSystem[] = [];
+      for (const hp of hpResult.data) {
+        const sysResult = await client
+          .from('p2a_handover_point_systems')
+          .select('system_id')
+          .eq('handover_point_id', hp.id);
+        
+        if (sysResult.data && sysResult.data.length > 0) {
+          const systemIds = sysResult.data.map((s: any) => s.system_id);
+          const detailsResult = await client
+            .from('p2a_systems')
+            .select('system_id, name')
+            .in('id', systemIds);
+
+          if (detailsResult.data) {
+            for (const sys of detailsResult.data) {
+              allSystems.push({
+                vcrCode: hp.vcr_code,
+                vcrName: hp.name,
+                systemCode: sys.system_id,
+                systemName: sys.name,
+              });
+            }
+          }
+        }
+      }
+      return allSystems;
+    },
+    enabled: !!projectId,
+  });
 
   const handlePrint = () => {
     window.print();
@@ -196,6 +263,42 @@ const PACCertificate: React.FC<PACCertificateProps> = ({
               <p className="text-foreground">{content.openingStatement}</p>
             )}
 
+            {/* Systems in Scope */}
+            <div>
+              <h3 className="text-base font-extrabold text-foreground mb-3">Systems in Scope:</h3>
+              {vcrSystems.length > 0 ? (
+                <div className="border border-border rounded-lg overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-muted/60">
+                        <th className="text-left px-3 py-2 font-semibold text-foreground border-b border-border">#</th>
+                        <th className="text-left px-3 py-2 font-semibold text-foreground border-b border-border">VCR</th>
+                        <th className="text-left px-3 py-2 font-semibold text-foreground border-b border-border">System Code</th>
+                        <th className="text-left px-3 py-2 font-semibold text-foreground border-b border-border">System Name</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {vcrSystems.map((sys, idx) => (
+                        <tr key={`${sys.vcrCode}-${sys.systemCode}-${idx}`} className={idx % 2 === 0 ? 'bg-background' : 'bg-muted/20'}>
+                          <td className="px-3 py-1.5 text-muted-foreground border-b border-border/50">{idx + 1}</td>
+                          <td className="px-3 py-1.5 text-foreground border-b border-border/50">
+                            <span className="font-medium">{sys.vcrCode}</span>
+                            <span className="text-muted-foreground ml-1.5">– {sys.vcrName}</span>
+                          </td>
+                          <td className="px-3 py-1.5 font-mono text-xs text-muted-foreground border-b border-border/50">{sys.systemCode}</td>
+                          <td className="px-3 py-1.5 text-foreground border-b border-border/50">{sys.systemName}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p className="text-muted-foreground italic text-xs">
+                  Systems will be auto-populated from VCRs associated with this certificate.
+                </p>
+              )}
+            </div>
+
             {/* Effective Date Section */}
             <div className="border-t border-b border-border py-4 my-4">
               <p className="font-semibold text-foreground text-center">
@@ -205,7 +308,7 @@ const PACCertificate: React.FC<PACCertificateProps> = ({
 
             {/* Asset Responsibilities */}
             <div>
-              <h3 className="text-base font-extrabold text-gray-900 mb-3">The Asset Shall:</h3>
+              <h3 className="text-base font-extrabold text-foreground mb-3">The Asset Shall:</h3>
               {isEditing ? (
                 <div className="space-y-2">
                   {editContent.assetResponsibilities.map((item, index) => (
@@ -232,7 +335,7 @@ const PACCertificate: React.FC<PACCertificateProps> = ({
 
             {/* Project Responsibilities */}
             <div>
-              <h3 className="text-base font-extrabold text-gray-900 mb-3">The Project Shall:</h3>
+              <h3 className="text-base font-extrabold text-foreground mb-3">The Project Shall:</h3>
               {isEditing ? (
                 <div className="space-y-2">
                   {editContent.projectResponsibilities.map((item, index) => (
