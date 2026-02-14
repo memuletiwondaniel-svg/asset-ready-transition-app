@@ -48,7 +48,7 @@ const FACCertificate: React.FC<FACCertificateProps> = ({
   projectId,
   approvers = [
     { id: '1', name: '', role: 'Plant Director' },
-    { id: '2', name: '', role: 'Project Manager' }
+    { id: '2', name: '', role: 'Project Hub Lead' }
   ]
 }) => {
   const certificateRef = useRef<HTMLDivElement>(null);
@@ -322,7 +322,7 @@ const FACCertificate: React.FC<FACCertificateProps> = ({
               <h3 className="font-bold text-foreground mb-4 text-center border-b border-border pb-2">
                 APPROVALS
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mt-4 max-w-2xl mx-auto">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-16 mt-4 max-w-2xl mx-auto">
                 {approvers.map((approver) => (
                   <div 
                     key={approver.id} 
