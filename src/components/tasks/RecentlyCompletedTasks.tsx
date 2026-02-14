@@ -81,9 +81,8 @@ export const RecentlyCompletedTasks: React.FC<{ searchQuery?: string }> = ({ sea
     <div className="mt-8">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <CheckCircle2 className="h-4 w-4 text-green-500" />
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-            Recently Completed
+            Recent Activities
           </h3>
           <Badge variant="outline" className="text-[10px] text-muted-foreground">
             {filtered.length}
@@ -118,7 +117,7 @@ export const RecentlyCompletedTasks: React.FC<{ searchQuery?: string }> = ({ sea
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 {getTypeBadge(task.type)}
-                <span className="text-sm text-foreground truncate line-through decoration-muted-foreground/30">
+                <span className="text-sm text-foreground truncate">
                   {task.title}
                 </span>
               </div>
