@@ -299,11 +299,8 @@ export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
             FIXED_APPROVER_ROLES.map((role, index) => {
               const approver = approvers.find(a => a.role_name === role.label);
               return (
-                <div key={role.key} className="flex items-center gap-3 p-3 rounded-lg border bg-card">
-                  <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold shrink-0">
-                    {index + 1}
-                  </div>
-                  <Avatar className="h-9 w-9 shrink-0">
+                <div key={role.key} className="flex items-center gap-3 p-2.5 rounded-lg border bg-card hover:shadow-sm transition-shadow">
+                  <Avatar className="h-8 w-8 shrink-0">
                     <AvatarImage src={approver?.user_avatar} />
                     <AvatarFallback className="text-xs bg-muted">
                       {getInitials(approver?.user_name)}
@@ -350,13 +347,6 @@ export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
         </div>
       </div>
 
-      {/* Summary */}
-      <div className="p-3 bg-muted/30 rounded-lg">
-        <div className="text-xs text-muted-foreground">
-          <strong>5</strong> approvers in 2 phases. 
-          Estimated review time: <strong>5-10 days</strong>
-        </div>
-      </div>
     </div>
   );
 };
