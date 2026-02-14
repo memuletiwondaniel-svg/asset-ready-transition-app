@@ -81,8 +81,8 @@ const VCRItemsTab: React.FC = () => {
 
   const [visibleColumns, setVisibleColumns] = useState({
     topic: true,
-    deliveringParty: true,
-    approvers: true,
+    deliveringParty: false,
+    approvers: false,
     supportingEvidence: false,
     guidanceNotes: false,
   });
