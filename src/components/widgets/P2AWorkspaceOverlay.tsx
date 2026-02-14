@@ -15,6 +15,7 @@ interface P2AWorkspaceOverlayProps {
   projectId: string;
   projectName?: string;
   projectNumber?: string;
+  readOnly?: boolean;
 }
 
 const getStatusConfig = (status?: string) => {
@@ -57,6 +58,7 @@ export const P2AWorkspaceOverlay: React.FC<P2AWorkspaceOverlayProps> = ({
   projectId,
   projectName,
   projectNumber,
+  readOnly = false,
 }) => {
   const [showMapping, setShowMapping] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1.0);
@@ -79,7 +81,7 @@ export const P2AWorkspaceOverlay: React.FC<P2AWorkspaceOverlayProps> = ({
                 <Key className="h-4 w-4 text-white" />
               </div>
             </div>
-            <h2 className="text-lg font-semibold">Create P2A Plan</h2>
+            <h2 className="text-lg font-semibold">{readOnly ? 'P2A Handover Plan' : 'Create P2A Plan'}</h2>
             <Badge variant="outline" className={cn("text-xs", statusConfig.className)}>
               {statusConfig.label}
             </Badge>
@@ -159,7 +161,9 @@ export const P2AWorkspaceOverlay: React.FC<P2AWorkspaceOverlayProps> = ({
               size="icon"
               onClick={() => {
                 onOpenChange(false);
-                onReturnToWizard?.();
+                if (!readOnly) {
+                  onReturnToWizard?.();
+                }
               }}
               className="h-7 w-7 text-muted-foreground hover:text-foreground"
               title="Close"

@@ -180,7 +180,19 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
             ) : p2aPlanByProject ? (
               // Plan exists — show different UI based on status
               <div className="text-center py-10 text-muted-foreground">
-                <p className="text-sm font-medium mb-1">P2A Handover Plan</p>
+                <p 
+                  className={cn(
+                    "text-sm font-medium mb-1",
+                    p2aPlanByProject.status !== 'DRAFT' && "cursor-pointer hover:text-foreground hover:underline transition-colors"
+                  )}
+                  onClick={() => {
+                    if (p2aPlanByProject.status !== 'DRAFT') {
+                      setShowP2AWorkspace(true);
+                    }
+                  }}
+                >
+                  P2A Handover Plan
+                </p>
                 <Badge 
                   variant="outline" 
                   className={cn(
@@ -208,18 +220,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                     )}
                   </>
                 ) : (
-                  <>
-                    <p className="text-xs opacity-70 mb-5">Your plan is awaiting approval</p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-xs gap-1.5"
-                      onClick={() => setShowP2AWorkspace(true)}
-                    >
-                      View Plan Status
-                      <ExternalLink className="h-3 w-3" />
-                    </Button>
-                  </>
+                  <p className="text-xs opacity-70 mb-5">Your plan is awaiting approval</p>
                 )}
               </div>
             ) : (
@@ -297,6 +298,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
         projectId={projectId}
         projectName={projectCode}
         projectNumber={projectCode}
+        readOnly={p2aPlanByProject?.status === 'ACTIVE'}
       />
 
       {/* P2A Plan Creation Wizard */}
