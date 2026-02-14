@@ -593,6 +593,8 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
           showMapping={showMapping}
           phases={phases}
           handoverPoints={[...assignedPoints, ...unassignedPoints]}
+          onAssignSystemToVCR={(hpId, sysId) => assignSystemToPoint({ handoverPointId: hpId, systemId: sysId })}
+          onUnassignSystemFromVCR={(sysId) => unassignSystemFromPoint({ systemId: sysId })}
         />
 
         {/* Phases Timeline Area */}

@@ -31,7 +31,7 @@ import { SubsystemCard } from './SubsystemCard';
 import { WorkspaceAddSystemModal } from './WorkspaceAddSystemModal';
 import { WorkspaceExcelUploadModal } from './WorkspaceExcelUploadModal';
 import { CMSImportModal } from '@/components/widgets/p2a-wizard/steps/CMSImportModal';
-import { SystemDetailOverlay } from './SystemDetailOverlay';
+import { SystemDetailSheet } from './SystemDetailSheet';
 import { useDroppable, useDndContext } from '@dnd-kit/core';
 import { cn } from '@/lib/utils';
 import { WizardSystem } from '@/components/widgets/p2a-wizard/steps/SystemsImportStep';
@@ -125,6 +125,8 @@ interface SystemsPanelProps {
   showMapping?: boolean;
   phases?: P2APhase[];
   handoverPoints?: P2AHandoverPoint[];
+  onAssignSystemToVCR?: (handoverPointId: string, systemId: string) => void;
+  onUnassignSystemFromVCR?: (systemId: string) => void;
 }
 
 export const SystemsPanel: React.FC<SystemsPanelProps> = ({
@@ -143,6 +145,8 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
   showMapping = false,
   phases = [],
   handoverPoints = [],
+  onAssignSystemToVCR,
+  onUnassignSystemFromVCR,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -452,14 +456,17 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
         projectCode={projectCode}
       />
 
-      {/* System Detail Overlay */}
+      {/* System Detail Sheet */}
       {selectedSystem && (
-        <SystemDetailOverlay
+        <SystemDetailSheet
           system={selectedSystem}
           open={!!selectedSystem}
           onOpenChange={(open) => !open && setSelectedSystem(null)}
           onUpdateSystem={onUpdateSystem}
           isUpdating={isUpdating}
+          handoverPoints={handoverPoints}
+          onAssignSystemToVCR={onAssignSystemToVCR}
+          onUnassignSystemFromVCR={onUnassignSystemFromVCR}
         />
       )}
     </>
