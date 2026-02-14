@@ -237,8 +237,8 @@ const MyTasksPage: React.FC = () => {
         {isAllCaughtUp ? (
           <div className="flex items-center justify-center py-20">
             <div className="text-center max-w-md">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500/10 to-purple-500/10 mb-6">
-                <CheckCircle2 className="h-8 w-8 text-indigo-500" />
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-green-500/10 to-emerald-500/10 mb-6">
+                <CheckCircle2 className="h-8 w-8 text-green-500" />
               </div>
               <h2 className="text-xl font-semibold text-foreground mb-2">You're all caught up!</h2>
               <p className="text-muted-foreground">You have no pending activities or reviews at the moment.</p>
