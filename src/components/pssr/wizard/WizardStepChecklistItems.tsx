@@ -212,7 +212,13 @@ const WizardStepChecklistItems: React.FC<WizardStepChecklistItemsProps> = ({
               {searchQuery ? 'No items match your search' : 'No checklist items available'}
             </div>
           ) : (
-            Object.entries(filteredGroupedItems).map(([categoryId, items]) => {
+            Object.entries(filteredGroupedItems)
+              .sort(([catIdA], [catIdB]) => {
+                const catA = categories.find(c => c.id === catIdA);
+                const catB = categories.find(c => c.id === catIdB);
+                return (catA?.display_order ?? 999) - (catB?.display_order ?? 999);
+              })
+              .map(([categoryId, items]) => {
               const isExpanded = expandedCategories.has(categoryId);
               const categorySelectedCount = items.filter(item => 
                 selectedItemIds.includes(item.id)
