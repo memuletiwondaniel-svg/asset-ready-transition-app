@@ -1426,115 +1426,116 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                 <Separator />
                 <h3 className="text-lg font-semibold">Company & Role Information</h3>
                 
-                <div>
-                  <Label>Company *</Label>
-                  <Select
-                    value={formData.company || ''}
-                    onValueChange={(value) => handleInputChange('company', value as 'BGC' | 'KENT')}
-                    disabled={!editMode}
-                  >
-                    <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
-                      <SelectValue placeholder="Select company" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {companies.map((company) => (
-                        <SelectItem key={company.value} value={company.value}>
-                          <div className="flex items-center gap-2">
-                            {company.logo && <img src={company.logo} alt={company.value} className="w-4 h-4" />}
-                            {company.label}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                {editMode ? (
+                  <div className="space-y-4">
+                    {/* Company, Function and Role selection - Edit Mode Only */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+                      {/* Company Field */}
+                      <div>
+                        <Label>Company *</Label>
+                        <Select
+                          value={formData.company || ''}
+                          onValueChange={(value) => handleInputChange('company', value as 'BGC' | 'KENT')}
+                          disabled={!editMode}
+                        >
+                          <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
+                            <SelectValue placeholder="Select company" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {companies.map((company) => (
+                              <SelectItem key={company.value} value={company.value}>
+                                <div className="flex items-center gap-2">
+                                  {company.logo && <img src={company.logo} alt={company.value} className="w-4 h-4" />}
+                                  {company.label}
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
 
-                {/* Role and conditional fields */}
-                <div className="space-y-4">
-                  {editMode ? (
-                    <>
-                      {/* Function and Role selection - Edit Mode Only */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-end">
-                        {/* Function (Category) Field */}
+                      {/* Function (Category) Field */}
+                      <div>
+                        <Label>Function *</Label>
+                        <Select
+                          value={formData.function}
+                          onValueChange={(value) => setFormData(prev => ({ 
+                            ...prev, 
+                            function: value,
+                            role: '' // Reset role when function changes
+                          }))}
+                          disabled={!editMode}
+                        >
+                          <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
+                            <SelectValue placeholder={rolesLoading ? "Loading..." : "Select function"} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {categorizedRoles?.map((group) => (
+                              <SelectItem key={group.category.id} value={group.category.name}>
+                                {group.category.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Role Field - Filtered by selected Function */}
+                      <div>
+                        <Label>Role *</Label>
+                        <Select
+                          value={formData.role}
+                          onValueChange={(value) => handleRoleChange(value)}
+                          disabled={!editMode || !formData.function}
+                        >
+                          <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
+                            <SelectValue placeholder={formData.function ? "Select role" : "Select function first"} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {getRolesForFunction().map((role) => (
+                              <SelectItem key={role.id} value={role.name}>
+                                {role.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    {/* Conditional fields based on role */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 items-end">
+                      {formData.role === 'Director' && (
                         <div>
-                          <Label>Function *</Label>
-                          <Select
-                            value={formData.function}
-                            onValueChange={(value) => setFormData(prev => ({ 
-                              ...prev, 
-                              function: value,
-                              role: '' // Reset role when function changes
-                            }))}
-                            disabled={!editMode}
-                          >
-                            <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
-                              <SelectValue placeholder={rolesLoading ? "Loading..." : "Select function"} />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {categorizedRoles?.map((group) => (
-                                <SelectItem key={group.category.id} value={group.category.name}>
-                                  {group.category.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <Label>Commission *</Label>
+                          <Combobox
+                            value={formData.commission}
+                            onValueChange={handleCommissionChange}
+                            options={commissions}
+                            placeholder="Select commission"
+                            searchPlaceholder="Search commissions..."
+                            emptyText="No commissions found"
+                            allowCustom={editMode}
+                            onAddCustom={handleCommissionChange}
+                            className={!editMode ? 'bg-muted pointer-events-none' : ''}
+                          />
                         </div>
+                      )}
 
-                        {/* Role Field - Filtered by selected Function */}
+                      {(formData.role === 'Plant Director' || formData.role === 'Dep. Plant Director') && (
                         <div>
-                          <Label>Role *</Label>
-                          <Select
-                            value={formData.role}
-                            onValueChange={(value) => handleRoleChange(value)}
-                            disabled={!editMode || !formData.function}
-                          >
-                            <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
-                              <SelectValue placeholder={formData.function ? "Select role" : "Select function first"} />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {getRolesForFunction().map((role) => (
-                                <SelectItem key={role.id} value={role.name}>
-                                  {role.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <Label>Plant *</Label>
+                          <Combobox
+                            value={formData.plant}
+                            onValueChange={handlePlantChange}
+                            options={plants}
+                            placeholder="Select plant"
+                            searchPlaceholder="Search plants..."
+                            emptyText="No plants found"
+                            allowCustom={editMode}
+                            onAddCustom={handlePlantChange}
+                            className={!editMode ? 'bg-muted pointer-events-none' : ''}
+                          />
                         </div>
-
-                        {/* Conditional fields based on role */}
-                        {formData.role === 'Director' && (
-                          <div>
-                            <Label>Commission *</Label>
-                            <Combobox
-                              value={formData.commission}
-                              onValueChange={handleCommissionChange}
-                              options={commissions}
-                              placeholder="Select commission"
-                              searchPlaceholder="Search commissions..."
-                              emptyText="No commissions found"
-                              allowCustom={editMode}
-                              onAddCustom={handleCommissionChange}
-                              className={!editMode ? 'bg-muted pointer-events-none' : ''}
-                            />
-                          </div>
-                        )}
-
-                        {(formData.role === 'Plant Director' || formData.role === 'Dep. Plant Director') && (
-                          <div>
-                            <Label>Plant *</Label>
-                            <Combobox
-                              value={formData.plant}
-                              onValueChange={handlePlantChange}
-                              options={plants}
-                              placeholder="Select plant"
-                              searchPlaceholder="Search plants..."
-                              emptyText="No plants found"
-                              allowCustom={editMode}
-                              onAddCustom={handlePlantChange}
-                              className={!editMode ? 'bg-muted pointer-events-none' : ''}
-                            />
-                          </div>
-                        )}
+                      )}
 
                         {roleRequiresStation(formData.role) && (
                           <div>
@@ -1833,35 +1834,40 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                           </p>
                         </div>
                       )}
-                    </>
-                  ) : (
-                    /* View Mode - Show Function, Role and Position */
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label>Function</Label>
-                          <div className="p-3 bg-muted rounded-md border">
-                            <span className="font-medium">{formData.function || 'Not specified'}</span>
-                          </div>
-                        </div>
-                        <div>
-                          <Label>Role</Label>
-                          <div className="p-3 bg-muted rounded-md border">
-                            <span className="font-medium">{formData.role || user.role || 'Not assigned'}</span>
-                          </div>
+                  </div>
+                ) : (
+                  /* View Mode - Show Company, Function, Role and Position */
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-3 gap-4">
+                      <div>
+                        <Label>Company</Label>
+                        <div className="p-3 bg-muted rounded-md border">
+                          <span className="font-medium">{formData.company || 'Not specified'}</span>
                         </div>
                       </div>
-                      {isTitleReady() && (
-                        <div>
-                          <Label>Position</Label>
-                          <div className="p-3 bg-muted rounded-md border">
-                            <span className="font-medium text-primary">{generateTitle()}</span>
-                          </div>
+                      <div>
+                        <Label>Function</Label>
+                        <div className="p-3 bg-muted rounded-md border">
+                          <span className="font-medium">{formData.function || 'Not specified'}</span>
                         </div>
-                      )}
+                      </div>
+                      <div>
+                        <Label>Role</Label>
+                        <div className="p-3 bg-muted rounded-md border">
+                          <span className="font-medium">{formData.role || user.role || 'Not assigned'}</span>
+                        </div>
+                      </div>
                     </div>
-                  )}
-                </div>
+                    {isTitleReady() && (
+                      <div>
+                        <Label>Position</Label>
+                        <div className="p-3 bg-muted rounded-md border">
+                          <span className="font-medium text-primary">{generateTitle()}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* System Role */}
                 <div>
