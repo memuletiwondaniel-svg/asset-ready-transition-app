@@ -272,19 +272,6 @@ export const SystemDetailSheet: React.FC<SystemDetailSheetProps> = ({
                   <MetricCard label="Punchlist B" value={system.punchlist_b_count} icon={<AlertCircle className="w-3.5 h-3.5 text-amber-500" />} color="amber" onClick={() => setActiveTab('punchlist')} clickable />
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Status</span>
-                  <Badge variant="outline" className="text-xs">
-                    {system.completion_status.replace('_', ' ')}
-                  </Badge>
-                </div>
-
-                {system.assigned_vcr_code && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Assigned VCR</span>
-                    <span className="text-xs font-mono text-muted-foreground">{system.assigned_vcr_code}</span>
-                  </div>
-                )}
               </div>
             </ScrollArea>
           </TabsContent>
