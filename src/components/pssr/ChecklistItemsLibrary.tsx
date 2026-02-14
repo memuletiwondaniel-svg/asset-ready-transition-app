@@ -50,6 +50,7 @@ const ROLE_GROUPS = {
     'Rotating TA2',
     'Civil TA2',
     'Tech Safety TA2',
+    'MCI TA2',
   ],
   'Operations': [
     'ORA Engr.',
@@ -57,8 +58,18 @@ const ROLE_GROUPS = {
     'Ops Coach',
     'Site Engr.',
     'Ops Team Lead',
+    'Ops HSE Adviser',
+  ],
+  'Maintenance': [
+    'Mtce Mgr. Static',
+    'Mtce Mgr. Rotating',
+    'Mtce Mgr. Instrument',
+    'Mtce Mgr. Elect',
+    'Central Mtce Lead',
   ],
   'Projects': [
+    'BFM Lead',
+    'BFM Project Engr',
     'Project Engr',
     'Project Hub Lead',
     'Project Manager',
@@ -66,11 +77,11 @@ const ROLE_GROUPS = {
     'Construction Lead',
     'Completions Engr',
     'Project Controls Lead',
+    'Pipeline Engr.',
   ],
   'HSE': [
-    'Ops HSE Adviser',
-    'Environment Engr',
     'ER Adviser',
+    'Environment Engr',
   ],
   'Other': [
     'CMMS Engr.',
@@ -80,12 +91,11 @@ const ROLE_GROUPS = {
 
 // Soft, muted category colors for visual distinction
 const categoryColors: Record<string, string> = {
+  'DI': 'bg-emerald-50 text-emerald-700/80 border-emerald-200/60 dark:bg-emerald-950/30 dark:text-emerald-300/80 dark:border-emerald-800/40',
   'TI': 'bg-blue-50 text-blue-700/80 border-blue-200/60 dark:bg-blue-950/30 dark:text-blue-300/80 dark:border-blue-800/40',
-  'PS': 'bg-rose-50 text-rose-700/80 border-rose-200/60 dark:bg-rose-950/30 dark:text-rose-300/80 dark:border-rose-800/40',
-  'ORG': 'bg-violet-50 text-violet-700/80 border-violet-200/60 dark:bg-violet-950/30 dark:text-violet-300/80 dark:border-violet-800/40',
-  'DOC': 'bg-orange-50 text-orange-700/80 border-orange-200/60 dark:bg-orange-950/30 dark:text-orange-300/80 dark:border-orange-800/40',
-  'ER': 'bg-amber-50 text-amber-700/80 border-amber-200/60 dark:bg-amber-950/30 dark:text-amber-300/80 dark:border-amber-800/40',
-  'HSE': 'bg-teal-50 text-teal-700/80 border-teal-200/60 dark:bg-teal-950/30 dark:text-teal-300/80 dark:border-teal-800/40',
+  'OI': 'bg-violet-50 text-violet-700/80 border-violet-200/60 dark:bg-violet-950/30 dark:text-violet-300/80 dark:border-violet-800/40',
+  'MS': 'bg-orange-50 text-orange-700/80 border-orange-200/60 dark:bg-orange-950/30 dark:text-orange-300/80 dark:border-orange-800/40',
+  'HS': 'bg-teal-50 text-teal-700/80 border-teal-200/60 dark:bg-teal-950/30 dark:text-teal-300/80 dark:border-teal-800/40',
 };
 
 // Shortened display names for long category names
