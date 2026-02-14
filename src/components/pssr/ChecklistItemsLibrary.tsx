@@ -467,12 +467,12 @@ const ChecklistItemsLibrary: React.FC = () => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredItems.map(item => (
-                    <TableRow 
-                      key={item.id} 
-                      className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleOpenEdit(item)}
-                    >
+                   filteredItems.map(item => (
+                     <TableRow 
+                       key={item.id} 
+                       className="group cursor-pointer hover:bg-muted/50"
+                       onClick={() => handleOpenEdit(item)}
+                     >
                       <TableCell className="font-mono text-sm font-medium">{generateDisplayId(item.categoryData?.ref_id, item.sequence_number)}</TableCell>
                       <TableCell>
                         <Badge 
@@ -506,7 +506,7 @@ const ChecklistItemsLibrary: React.FC = () => {
                         </TableCell>
                       )}
                       <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
+                        <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
                           <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleOpenEdit(item); }}>
                             <Edit2 className="h-4 w-4" />
                           </Button>
