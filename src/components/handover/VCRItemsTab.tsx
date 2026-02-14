@@ -97,18 +97,29 @@ const VCRItemsTab: React.FC = () => {
 
   const filteredItems = useMemo(() => {
     if (!items) return [];
-    return items.filter(item => {
-      const displayId = generateDisplayId(item.category_code, item.display_order);
-      const matchesSearch =
-        item.vcr_item.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        displayId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.topic?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.delivering_role_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.supporting_evidence?.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = categoryFilter === 'all' || item.category_id === categoryFilter;
-      return matchesSearch && matchesCategory;
-    });
-  }, [items, searchTerm, categoryFilter]);
+    // Build category order map for sorting
+    const categoryOrderMap: Record<string, number> = {};
+    categories?.forEach(cat => { categoryOrderMap[cat.id] = cat.display_order; });
+
+    return items
+      .filter(item => {
+        const displayId = generateDisplayId(item.category_code, item.display_order);
+        const matchesSearch =
+          item.vcr_item.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          displayId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          item.topic?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          item.delivering_role_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          item.supporting_evidence?.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesCategory = categoryFilter === 'all' || item.category_id === categoryFilter;
+        return matchesSearch && matchesCategory;
+      })
+      .sort((a, b) => {
+        const catOrderA = categoryOrderMap[a.category_id || ''] ?? 999;
+        const catOrderB = categoryOrderMap[b.category_id || ''] ?? 999;
+        if (catOrderA !== catOrderB) return catOrderA - catOrderB;
+        return a.display_order - b.display_order;
+      });
+  }, [items, searchTerm, categoryFilter, categories]);
 
   const visibleColumnCount = 3 + Object.values(visibleColumns).filter(Boolean).length;
 
