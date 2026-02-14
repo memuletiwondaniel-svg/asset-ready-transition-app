@@ -28,6 +28,7 @@ const ManageHandover = lazy(() => import("./handover/ManageHandover").then(m => 
 const AdminHeader = lazy(() => import("./admin/AdminHeader"));
 const AdminActivityLog = lazy(() => import("./AdminActivityLog"));
 const BulkUserUpload = lazy(() => import("./admin-tools/BulkUserUpload").then(m => ({ default: m.BulkUserUpload })));
+const APIManagement = lazy(() => import("./admin-tools/APIManagement"));
 
 // Loading fallback component
 const ViewLoadingFallback = () => (
@@ -58,7 +59,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   const location = useLocation();
 
   // State management - consolidated for cleaner code
-  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'activity-log' | 'ora-configuration' | 'handover-management' | 'bulk-upload'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'activity-log' | 'ora-configuration' | 'handover-management' | 'bulk-upload' | 'apis'>('dashboard');
 
   // Reset to dashboard when sidebar navigation triggers a same-route click
   useEffect(() => {
@@ -244,7 +245,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     tooltip: 'Manage Application Programming Interfaces (APIs) for integrating ORSH with external systems',
     stats: {},
     height: 'md:row-span-2',
-    onClick: () => toast.info('API configuration coming soon')
+    onClick: () => setActiveView('apis')
   }];
 
   // Filter admin tools based on search query
@@ -350,6 +351,13 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     return <div className="flex-1 overflow-hidden animate-fade-in p-6">
         <Suspense fallback={<ViewLoadingFallback />}>
           <BulkUserUpload onBack={() => setActiveView('dashboard')} />
+        </Suspense>
+      </div>;
+  }
+  if (activeView === 'apis') {
+    return <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
+        <Suspense fallback={<ViewLoadingFallback />}>
+          <APIManagement onBack={() => setActiveView('dashboard')} />
         </Suspense>
       </div>;
   }
