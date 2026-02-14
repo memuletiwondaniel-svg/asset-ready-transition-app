@@ -31,7 +31,7 @@ export const RecentlyCompletedTasks: React.FC<{ searchQuery?: string }> = ({ sea
 
       const { data, error } = await supabase
         .from('user_tasks')
-        .select('id, title, description, type, priority, status, updated_at, created_at')
+        .select('id, title, description, type, priority, status, updated_at, created_at, metadata')
         .eq('user_id', user!.id)
         .in('status', ['completed', 'cancelled'])
         .gte('updated_at', sevenDaysAgo.toISOString())
@@ -39,7 +39,13 @@ export const RecentlyCompletedTasks: React.FC<{ searchQuery?: string }> = ({ sea
         .limit(20);
 
       if (error) throw error;
-      return (data || []) as CompletedTask[];
+      // Filter out auto-completed tasks (completed by someone else)
+      return ((data || []) as any[]).filter(t => {
+        const meta = t.metadata as Record<string, any> | null;
+        return !meta?.auto_completed;
+      }) as CompletedTask[];
+
+      if (error) throw error;
     },
     enabled: !!user?.id,
     staleTime: 2 * 60 * 1000,
