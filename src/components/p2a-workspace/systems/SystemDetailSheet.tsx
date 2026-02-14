@@ -35,6 +35,12 @@ import { cn } from '@/lib/utils';
 import { P2ASystem, P2ASubsystem, useP2ASubsystems } from '../hooks/useP2ASystems';
 import { P2AHandoverPoint } from '../hooks/useP2AHandoverPoints';
 
+/** Shorten VCR code for display: "VCR-DP300-001" → "VCR-001" */
+const shortenVCR = (code: string) => {
+  const match = code.match(/^VCR-[A-Z0-9]+-(\d+)$/i);
+  return match ? `VCR-${match[1]}` : code;
+};
+
 interface SystemDetailSheetProps {
   system: P2ASystem;
   open: boolean;
@@ -174,15 +180,19 @@ export const SystemDetailSheet: React.FC<SystemDetailSheetProps> = ({
                 <div className="space-y-1.5">
                   <Label className="text-xs text-muted-foreground uppercase tracking-wider">Assigned VCR</Label>
                   <Select value={currentVCRId || 'none'} onValueChange={handleVCRChange}>
-                    <SelectTrigger className="h-9 text-sm">
-                      <SelectValue placeholder="Unassigned" />
+                    <SelectTrigger className="h-10 text-sm rounded-lg border-border/60 bg-background hover:bg-muted/40 transition-colors">
+                      <SelectValue placeholder="Select a VCR…" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">Unassigned</SelectItem>
+                      <SelectItem value="none" className="text-muted-foreground">Unassigned</SelectItem>
                       {handoverPoints.map(hp => (
                         <SelectItem key={hp.id} value={hp.id}>
-                          <span className="font-mono text-[10px] mr-1.5 text-muted-foreground">{hp.vcr_code}</span>
-                          {hp.name}
+                          <div className="flex items-center gap-2">
+                            <Badge variant="secondary" className="text-[9px] font-mono px-1.5 py-0 shrink-0">
+                              {shortenVCR(hp.vcr_code)}
+                            </Badge>
+                            <span className="truncate">{hp.name}</span>
+                          </div>
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -231,11 +241,11 @@ export const SystemDetailSheet: React.FC<SystemDetailSheetProps> = ({
                               <SelectTrigger className="h-7 w-[120px] text-[10px]">
                                 <SelectValue placeholder="VCR" />
                               </SelectTrigger>
-                              <SelectContent>
+                                <SelectContent>
                                 <SelectItem value="none">None</SelectItem>
                                 {handoverPoints.map(hp => (
                                   <SelectItem key={hp.id} value={hp.id}>
-                                    <span className="font-mono text-[9px]">{hp.vcr_code}</span>
+                                    <span className="font-mono text-[9px]">{shortenVCR(hp.vcr_code)}</span>
                                   </SelectItem>
                                 ))}
                               </SelectContent>
