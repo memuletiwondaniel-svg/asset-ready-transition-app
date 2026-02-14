@@ -107,9 +107,9 @@ export const HandoverPointCard: React.FC<HandoverPointCardProps> = ({
         {cardContent}
       </HoverCardTrigger>
       <HoverCardContent
-        side="right"
+        side="bottom"
         align="start"
-        sideOffset={8}
+        sideOffset={4}
         collisionPadding={16}
         avoidCollisions
         className="w-56 p-0 rounded-xl shadow-xl border overflow-hidden z-[100]"
