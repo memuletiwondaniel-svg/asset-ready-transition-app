@@ -306,9 +306,9 @@ export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
               const approver = approvers.find(a => a.role_name === role.label);
               return (
                 <div key={role.key} className="flex items-center gap-2.5 p-3.5 rounded-lg border bg-card hover:shadow-sm transition-shadow max-w-md">
-                  <Avatar className="h-7 w-7 shrink-0">
+                  <Avatar className="h-9 w-9 shrink-0">
                     <AvatarImage src={resolveAvatarUrl(approver?.user_avatar)} />
-                    <AvatarFallback className="text-[10px] bg-muted">
+                    <AvatarFallback className="text-xs bg-muted">
                       {getInitials(approver?.user_name)}
                     </AvatarFallback>
                   </Avatar>
