@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Key, FileText, Plus, ChevronRight, Pencil } from 'lucide-react';
+import { Key, FileText, Plus, ChevronRight, Pencil, ExternalLink } from 'lucide-react';
 import { StyledWidgetIcon } from './StyledWidgetIcon';
 import { useProjectPSSRs } from '@/hooks/useProjectPSSRs';
 import { useProjectVCRs } from '@/hooks/useProjectVCRs';
@@ -178,7 +178,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                 )}
               </div>
             ) : p2aPlanByProject ? (
-              // Draft plan exists but no VCRs yet — show "Continue" state
+              // Plan exists — show different UI based on status
               <div className="text-center py-10 text-muted-foreground">
                 <p className="text-sm font-medium mb-1">P2A Handover Plan</p>
                 <Badge 
@@ -192,17 +192,34 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                 >
                   {p2aPlanByProject.status === 'ACTIVE' ? 'In Review' : p2aPlanByProject.status === 'COMPLETED' ? 'Approved' : 'Draft'}
                 </Badge>
-                <p className="text-xs opacity-70 mb-5">Continue setting up your handover plan</p>
-                {canCreateVCR && (
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="text-xs gap-1.5"
-                    onClick={() => setShowP2APlanWizard(true)}
-                  >
-                    <Pencil className="h-3.5 w-3.5" />
-                    Continue Setup
-                  </Button>
+                {p2aPlanByProject.status === 'DRAFT' ? (
+                  <>
+                    <p className="text-xs opacity-70 mb-5">Continue setting up your handover plan</p>
+                    {canCreateVCR && (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="text-xs gap-1.5"
+                        onClick={() => setShowP2APlanWizard(true)}
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                        Continue Setup
+                      </Button>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <p className="text-xs opacity-70 mb-5">Your plan is awaiting approval</p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs gap-1.5"
+                      onClick={() => setShowP2AWorkspace(true)}
+                    >
+                      View Plan Status
+                      <ExternalLink className="h-3 w-3" />
+                    </Button>
+                  </>
                 )}
               </div>
             ) : (
