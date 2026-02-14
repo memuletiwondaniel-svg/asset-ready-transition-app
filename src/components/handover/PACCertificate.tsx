@@ -290,7 +290,7 @@ const PACCertificate: React.FC<PACCertificateProps> = ({
 
           {/* Info Box */}
           <div className="bg-muted/50 border border-border rounded-lg p-4 mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
               <div>
                 <span className="font-semibold text-foreground">Facility:</span>
                 <span className="ml-2 text-muted-foreground">{facilityName || '[Facility Name]'}</span>
@@ -298,6 +298,14 @@ const PACCertificate: React.FC<PACCertificateProps> = ({
               <div>
                 <span className="font-semibold text-foreground">Project:</span>
                 <span className="ml-2 text-muted-foreground">{projectName || '[Project Name]'}</span>
+              </div>
+              <div>
+                <span className="font-semibold text-foreground">VCR Ref:</span>
+                <span className="ml-2 text-muted-foreground">
+                  {vcrSystems.length > 0
+                    ? [...new Set(vcrSystems.map(s => s.vcrCode))].join(', ')
+                    : '[VCR Ref]'}
+                </span>
               </div>
               <div>
                 <span className="font-semibold text-foreground">PAC Date:</span>
