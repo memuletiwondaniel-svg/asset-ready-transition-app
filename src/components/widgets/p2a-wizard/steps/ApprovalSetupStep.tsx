@@ -274,7 +274,7 @@ export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
     <div className="space-y-3 p-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-medium">Approval Workflow</h3>
+          <h3 className="text-sm font-medium">Approvers</h3>
           <p className="text-xs text-muted-foreground">
             Auto-populated from project team members
           </p>
@@ -295,8 +295,8 @@ export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
         </Button>
       </div>
 
-      <div className="border rounded-lg">
-        <div className="p-2 space-y-2">
+      <div className="border rounded-lg ml-4">
+        <div className="p-2.5 space-y-2">
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
@@ -305,7 +305,7 @@ export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
             FIXED_APPROVER_ROLES.map((role, index) => {
               const approver = approvers.find(a => a.role_name === role.label);
               return (
-                <div key={role.key} className="flex items-center gap-2.5 p-2 rounded-lg border bg-card hover:shadow-sm transition-shadow max-w-md">
+                <div key={role.key} className="flex items-center gap-2.5 p-3.5 rounded-lg border bg-card hover:shadow-sm transition-shadow max-w-md">
                   <Avatar className="h-7 w-7 shrink-0">
                     <AvatarImage src={resolveAvatarUrl(approver?.user_avatar)} />
                     <AvatarFallback className="text-[10px] bg-muted">
