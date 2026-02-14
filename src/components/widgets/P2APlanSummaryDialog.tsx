@@ -65,10 +65,28 @@ function usePlanSummaryData(planId: string) {
     queryFn: async () => {
       const { data } = await client
         .from('p2a_handover_approvers')
-        .select('id, role_name, user_id, user_name, user_email, user_avatar, status, sequence_order')
+        .select('id, role_name, user_id, display_order, status, approved_at, comments')
         .eq('handover_id', planId)
-        .order('sequence_order');
-      return data || [];
+        .order('display_order');
+      
+      // Fetch profile data for assigned approvers
+      const userIds = (data || []).filter((a: any) => a.user_id).map((a: any) => a.user_id);
+      let profileMap: Record<string, any> = {};
+      if (userIds.length > 0) {
+        const { data: profiles } = await client
+          .from('profiles')
+          .select('user_id, full_name, avatar_url')
+          .in('user_id', userIds);
+        (profiles || []).forEach((p: any) => {
+          profileMap[p.user_id] = p;
+        });
+      }
+
+      return (data || []).map((a: any) => ({
+        ...a,
+        user_name: profileMap[a.user_id]?.full_name || null,
+        user_avatar: profileMap[a.user_id]?.avatar_url || null,
+      }));
     },
     enabled: !!planId,
   });
