@@ -318,42 +318,7 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
       if (overType === 'vcr' || overId.startsWith('vcr-')) {
         const targetVCR = over.data.current?.handoverPoint;
         if (targetVCR && vcr.id !== targetVCR.id) {
-          // Same phase? → Reorder by swapping position_y values
-          const samePhase = (vcr.phase_id ?? null) === (targetVCR.phase_id ?? null);
-          if (samePhase && vcr.phase_id) {
-            const sourceY = vcr.position_y;
-            const targetY = targetVCR.position_y;
-
-            // Optimistic UI updates
-            setUiVcrOverrides((prev) => ({
-              ...prev,
-              [vcr.id]: { position_x: vcr.position_x, position_y: targetY },
-              [targetVCR.id]: { position_x: targetVCR.position_x, position_y: sourceY },
-            }));
-
-            // Persist both position swaps
-            updateVCRPosition({ id: vcr.id, position_x: vcr.position_x, position_y: targetY });
-            updateVCRPosition({ id: targetVCR.id, position_x: targetVCR.position_x, position_y: sourceY });
-
-            // Push undo action
-            const vcrShortCode = vcr.vcr_code?.match(/VCR-[^-]+-\d+/)?.[0] || 'VCR';
-            pushAction({
-              type: 'vcr_move',
-              description: `Reorder ${vcrShortCode}`,
-              undo: () => {
-                setUiVcrOverrides((prev) => ({
-                  ...prev,
-                  [vcr.id]: { position_x: vcr.position_x, position_y: sourceY },
-                  [targetVCR.id]: { position_x: targetVCR.position_x, position_y: targetY },
-                }));
-                updateVCRPosition({ id: vcr.id, position_x: vcr.position_x, position_y: sourceY });
-                updateVCRPosition({ id: targetVCR.id, position_x: targetVCR.position_x, position_y: targetY });
-              },
-            });
-            return;
-          }
-
-          // Different phases → open relationship dialog
+          // Always open relationship dialog when dropping VCR on another VCR
           setVcrRelationshipContext({ source: vcr, target: targetVCR });
           setShowVCRRelationshipDialog(true);
           return;
