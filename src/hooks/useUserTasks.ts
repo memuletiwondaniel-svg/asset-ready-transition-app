@@ -164,6 +164,39 @@ export const useUserTasks = () => {
             // VCR Template review: one approval per role is enough —
             // complete ALL other users' pending tasks for the same template
             if (templateId && completedTask.type === 'review' && completedTask.title?.includes('VCR Template')) {
+              // Update the vcr_template_approvers record for this user's role
+              const { data: userProfile } = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('user_id', user.id)
+                .single();
+
+              if (userProfile?.role) {
+                await supabase
+                  .from('vcr_template_approvers')
+                  .update({
+                    approval_status: 'approved',
+                    approved_at: new Date().toISOString(),
+                    approved_by: user.id,
+                  })
+                  .eq('template_id', templateId)
+                  .eq('role_id', userProfile.role);
+
+                // Check if all approvers have now approved
+                const { data: allApprovers } = await supabase
+                  .from('vcr_template_approvers')
+                  .select('approval_status')
+                  .eq('template_id', templateId);
+
+                const allApproved = allApprovers?.every(a => a.approval_status === 'approved');
+                if (allApproved) {
+                  await supabase
+                    .from('vcr_templates')
+                    .update({ status: 'approved' })
+                    .eq('id', templateId);
+                }
+              }
+
               // Get sibling tasks to update with auto_completed metadata
               const { data: siblingTasks } = await supabase
                 .from('user_tasks')
