@@ -247,7 +247,7 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
                           top: topOffset,
                           left: '50%',
                           transform: 'translateX(-50%)',
-                          transition: 'top 0.3s ease',
+                          // No transition — instant repositioning keeps connectors aligned
                         }}
                       >
                         <DraggableHandoverPointCard
