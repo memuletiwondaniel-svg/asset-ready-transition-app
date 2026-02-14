@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { FileDown, Edit2, Save, X } from "lucide-react";
+import { Edit2, Save, X, Printer } from "lucide-react";
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { toast } from "sonner";
@@ -188,8 +188,8 @@ const FACCertificate: React.FC<FACCertificateProps> = ({
               Edit
             </Button>
             <Button variant="outline" onClick={handleExportPDF}>
-              <FileDown className="h-4 w-4 mr-2" />
-              Export PDF
+              <Printer className="h-4 w-4 mr-2" />
+              Print
             </Button>
           </>
         )}
