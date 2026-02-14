@@ -63,7 +63,7 @@ const APIManagement: React.FC<APIManagementProps> = ({ onBack }) => {
         {/* API Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredAPIs.map((api) => (
-            <Card key={api.id} className="border-border/40 hover:shadow-md transition-shadow cursor-pointer group">
+            <Card key={api.id} interactive className="border-border/40 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer group">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">

@@ -463,7 +463,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
                 {favoriteToolsList.map((tool) => {
                   const IconComponent = tool.icon;
                   const isFavorite = favoriteTools.includes(tool.id);
-                  return <Card key={tool.id} className="group relative cursor-pointer transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 border-2 border-yellow-500/20 bg-gradient-to-br from-card to-card/50 backdrop-blur overflow-hidden" onClick={tool.onClick}>
+                  return <Card key={tool.id} interactive className="group relative transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 border-2 border-yellow-500/20 bg-gradient-to-br from-card to-card/50 backdrop-blur overflow-hidden" onClick={tool.onClick}>
                       {/* Gradient Background Effect */}
                       <div className={`absolute inset-0 bg-gradient-to-br ${tool.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`} />
                       
@@ -523,7 +523,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
               {nonFavoriteToolsList.map((tool) => {
                   const IconComponent = tool.icon;
                   const isFavorite = favoriteTools.includes(tool.id);
-                  return <Card key={tool.id} className="group relative cursor-pointer transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 border-0 bg-gradient-to-br from-card to-card/50 backdrop-blur overflow-hidden" onClick={tool.onClick}>
+                  return <Card key={tool.id} interactive className="group relative transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 border-0 bg-gradient-to-br from-card to-card/50 backdrop-blur overflow-hidden" onClick={tool.onClick}>
                     {/* Gradient Background Effect */}
                     <div className={`absolute inset-0 bg-gradient-to-br ${tool.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`} />
                     
