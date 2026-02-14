@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Plug, ExternalLink } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import AdminHeader from '@/components/admin/AdminHeader';
+import APIConfigWizard from './APIConfigWizard';
+import { isAPIConfigured } from '@/lib/api-config-storage';
 
 import sapLogo from '@/assets/logos/sap4hana.png';
 import primaveraLogo from '@/assets/logos/primavera.png';
@@ -28,12 +30,33 @@ const predefinedAPIs = [
 
 const APIManagement: React.FC<APIManagementProps> = ({ onBack }) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedAPI, setSelectedAPI] = useState<typeof predefinedAPIs[0] | null>(null);
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [configuredAPIs, setConfiguredAPIs] = useState<Set<string>>(new Set());
+
+  // Check which APIs are configured on mount
+  useEffect(() => {
+    const configured = new Set<string>();
+    predefinedAPIs.forEach((api) => {
+      if (isAPIConfigured(api.id)) configured.add(api.id);
+    });
+    setConfiguredAPIs(configured);
+  }, []);
 
   const filteredAPIs = predefinedAPIs.filter(api =>
     api.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     api.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
     api.category.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const handleCardClick = (api: typeof predefinedAPIs[0]) => {
+    setSelectedAPI(api);
+    setWizardOpen(true);
+  };
+
+  const handleConfigured = (apiId: string) => {
+    setConfiguredAPIs((prev) => new Set([...prev, apiId]));
+  };
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
@@ -70,25 +93,37 @@ const APIManagement: React.FC<APIManagementProps> = ({ onBack }) => {
 
         {/* API Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredAPIs.map((api) => (
-            <Card key={api.id} interactive className="border-border/40 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer group">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-end mb-3">
-                  <Badge variant="outline" className="text-xs text-muted-foreground">Not configured</Badge>
-                </div>
-                <div className="h-16 flex items-center justify-center bg-white rounded-lg border border-border/30 p-3">
-                  <img src={api.logo} alt={`${api.name} logo`} className="h-full max-w-full object-contain" style={api.scale ? { transform: `scale(${api.scale})` } : undefined} />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground truncate">{api.description}</p>
-                <Button variant="outline" size="sm" className="mt-4 w-full">
-                  <ExternalLink className="h-3.5 w-3.5 mr-2" />
-                  Configure
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
+          {filteredAPIs.map((api) => {
+            const isConfigured = configuredAPIs.has(api.id);
+            return (
+              <Card
+                key={api.id}
+                interactive
+                className="border-border/40 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer group"
+                onClick={() => handleCardClick(api)}
+              >
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-end mb-3">
+                    {isConfigured ? (
+                      <Badge className="text-xs bg-emerald-500/10 text-emerald-600 border-emerald-200">Configured</Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-xs text-muted-foreground">Not configured</Badge>
+                    )}
+                  </div>
+                  <div className="h-16 flex items-center justify-center bg-white rounded-lg border border-border/30 p-3">
+                    <img src={api.logo} alt={`${api.name} logo`} className="h-full max-w-full object-contain" style={api.scale ? { transform: `scale(${api.scale})` } : undefined} />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground truncate">{api.description}</p>
+                  <Button variant="outline" size="sm" className="mt-4 w-full">
+                    <ExternalLink className="h-3.5 w-3.5 mr-2" />
+                    Configure
+                  </Button>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
 
         {filteredAPIs.length === 0 && (
@@ -98,6 +133,14 @@ const APIManagement: React.FC<APIManagementProps> = ({ onBack }) => {
           </div>
         )}
       </div>
+
+      {/* Config Wizard */}
+      <APIConfigWizard
+        open={wizardOpen}
+        onOpenChange={setWizardOpen}
+        api={selectedAPI}
+        onConfigured={handleConfigured}
+      />
     </div>
   );
 };
