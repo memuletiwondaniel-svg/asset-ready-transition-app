@@ -57,11 +57,36 @@ const SOFCertificate: React.FC<SOFCertificateProps> = ({
   pssrNumber = "",
   pssrReason = "",
   sourceType = "PSSR",
-  approvers = [
-    { id: '1', name: '', role: 'Plant Director' },
-    { id: '2', name: '', role: 'HSE Director' },
-  ]
+  approvers: approversProp,
 }) => {
+  // Determine approvers based on sourceType and pssrReason
+  const computedApprovers = React.useMemo(() => {
+    if (approversProp) return approversProp;
+
+    const baseApprovers: SOFApprover[] = [
+      { id: '1', name: '', role: 'Plant Director' },
+      { id: '2', name: '', role: 'HSE Director' },
+    ];
+
+    const normalizedReason = (pssrReason || '').toLowerCase();
+    const isVCR = sourceType === 'VCR';
+    const isProcessSafetyIncident = normalizedReason.includes('process safety incidence') || normalizedReason.includes('near miss');
+    const isTAR = normalizedReason.includes('turn around maintenance') || normalizedReason.includes('tar');
+
+    // P&E Director: only for VCR-based SoF
+    if (isVCR) {
+      baseApprovers.push({ id: '3', name: '', role: 'P&E Director' });
+    }
+
+    // P&M Director: VCR, or Process Safety Incident, or TAR
+    if (isVCR || isProcessSafetyIncident || isTAR) {
+      baseApprovers.push({ id: '4', name: '', role: 'P&M Director' });
+    }
+
+    return baseApprovers;
+  }, [approversProp, sourceType, pssrReason]);
+
+  const approvers = computedApprovers;
   const certificateRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
@@ -317,7 +342,7 @@ const SOFCertificate: React.FC<SOFCertificateProps> = ({
               <h3 className="font-bold text-foreground py-3 text-center border-b border-border">
                 APPROVALS
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-16 mt-4 max-w-2xl mx-auto">
+              <div className={`grid grid-cols-1 md:grid-cols-2 gap-8 mt-4 ${approvers.length <= 2 ? 'max-w-2xl' : 'max-w-3xl'} mx-auto`}>
                 {approvers.map((approver) => (
                   <div
                     key={approver.id}
