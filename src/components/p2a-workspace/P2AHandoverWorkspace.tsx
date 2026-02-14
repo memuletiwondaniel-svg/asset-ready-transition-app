@@ -559,7 +559,7 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
     >
 
       {/* Main Content Area - Systems Panel + Timeline (above background) */}
-      <div className="flex-1 flex overflow-hidden min-h-0 relative z-10" ref={workspaceContainerRef} data-workspace-container style={{ '--ws-zoom': zoomLevel } as React.CSSProperties}>
+      <div className="flex-1 flex overflow-hidden min-h-0 relative z-10" ref={workspaceContainerRef} data-workspace-container data-hide-ids={zoomLevel < 0.8 ? '' : undefined} style={{ '--ws-zoom': 1, '--ws-zoom-y': zoomLevel } as React.CSSProperties}>
         {/* Mapping SVG Overlay */}
         {showMapping && <MappingOverlay bundles={bundles} />}
 

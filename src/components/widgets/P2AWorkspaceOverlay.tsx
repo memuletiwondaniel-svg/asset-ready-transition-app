@@ -64,7 +64,7 @@ export const P2AWorkspaceOverlay: React.FC<P2AWorkspaceOverlayProps> = ({
   const statusConfig = getStatusConfig(plan?.status);
 
   const handleZoomIn = () => setZoomLevel(prev => Math.min(1.2, Math.round((prev + 0.1) * 10) / 10));
-  const handleZoomOut = () => setZoomLevel(prev => Math.max(0.6, Math.round((prev - 0.1) * 10) / 10));
+  const handleZoomOut = () => setZoomLevel(prev => Math.max(0.4, Math.round((prev - 0.1) * 10) / 10));
   const handleZoomReset = () => setZoomLevel(1.0);
 
   return (
@@ -94,7 +94,7 @@ export const P2AWorkspaceOverlay: React.FC<P2AWorkspaceOverlayProps> = ({
                       variant="ghost"
                       size="sm"
                       onClick={handleZoomOut}
-                      disabled={zoomLevel <= 0.6}
+                      disabled={zoomLevel <= 0.4}
                       className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
                     >
                       <ZoomOut className="h-3.5 w-3.5" />
