@@ -44,8 +44,6 @@ export const RecentlyCompletedTasks: React.FC<{ searchQuery?: string }> = ({ sea
         const meta = t.metadata as Record<string, any> | null;
         return !meta?.auto_completed;
       }) as CompletedTask[];
-
-      if (error) throw error;
     },
     enabled: !!user?.id,
     staleTime: 2 * 60 * 1000,
