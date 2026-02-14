@@ -95,7 +95,7 @@ const VCRPillSelector: React.FC<{
             <>
               <span
                 className="inline-flex items-center px-1 py-0.5 rounded text-[9px] font-bold shrink-0"
-                style={{ backgroundColor: color?.bg, color: color?.text, borderColor: color?.border, border: '1px solid' }}
+                style={{ backgroundColor: color?.bg, color: color?.text }}
               >
                 {shortVCRCode(currentVcr.code)}
               </span>
@@ -131,7 +131,7 @@ const VCRPillSelector: React.FC<{
             >
               <span
                 className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold shrink-0"
-                style={{ backgroundColor: c.bg, color: c.text, borderColor: c.border, border: '1px solid' }}
+                style={{ backgroundColor: c.bg, color: c.text }}
               >
                 {shortVCRCode(vcr.code)}
               </span>
