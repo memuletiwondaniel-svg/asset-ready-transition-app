@@ -8,7 +8,7 @@ const PSSR_REASON_OPTIONS = [
   'Start-up after a Process Safety Incidence or Near Miss (RAM 5A/B and RED)',
   'Start-up after a Turn Around Maintenance (TAR)',
   'Startup of a retired or idle equipment (over 6 months)',
-  'Start-up after implementing a plant modification Asset MoC',
+  'Start-up after a plant modification (Asset MoC)',
   'Other',
 ];
 
