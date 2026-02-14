@@ -81,7 +81,7 @@ export const WizardProgress: React.FC<WizardProgressProps> = ({
                 <div
                   className={cn(
                     "flex-1 h-[3px] rounded-full min-w-3 max-w-16 mt-4 transition-colors duration-200",
-                    connectorDone ? "bg-emerald-300 dark:bg-emerald-700" : connectorInProgress ? "bg-amber-200 dark:bg-amber-700" : "bg-muted"
+                    connectorDone ? "bg-emerald-600 dark:bg-emerald-400" : connectorInProgress ? "bg-amber-200 dark:bg-amber-700" : "bg-muted"
                   )}
                 />
               );
