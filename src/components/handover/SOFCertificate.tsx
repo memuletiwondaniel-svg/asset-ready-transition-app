@@ -293,23 +293,23 @@ const SOFCertificate: React.FC<SOFCertificateProps> = ({
               )}
             </div>
 
-            {/* Fitness Declaration */}
-            <div className="border-t border-border pt-6 mt-6">
+            {/* Closing Statement */}
+            <div className="mt-6">
               {isEditing ? (
                 <Textarea
                   value={editContent.closingStatement}
                   onChange={(e) => setEditContent({ ...editContent, closingStatement: e.target.value })}
-                  className="min-h-[60px] text-center font-semibold"
+                  className="min-h-[60px] font-semibold"
                 />
               ) : (
-                <p className="text-foreground font-semibold text-center text-base">
+                <p className="text-foreground font-semibold text-base">
                   {content.closingStatement}
                 </p>
               )}
             </div>
 
             {/* Approvals Section */}
-            <div className="mt-8">
+            <div className="mt-8 pt-6 border-t border-border">
               <h3 className="font-bold text-foreground mb-4 text-center border-b border-border pb-2">
                 APPROVALS
               </h3>
