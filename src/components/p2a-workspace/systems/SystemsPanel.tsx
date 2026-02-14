@@ -88,7 +88,7 @@ const UnassignedSystemsDropZone: React.FC<UnassignedSystemsDropZoneProps> = ({
         </CollapsibleTrigger>
         <CollapsibleContent className="pt-2">
           {systems.length > 0 ? (
-            <div className="flex flex-wrap" style={{ gap: 'calc(6px * var(--ws-zoom, 1))' }}>
+            <div className="flex flex-wrap" style={{ gap: 'calc(6px * var(--ws-zoom-y, 1))' }}>
               {systems.map(system => (
                 <DraggableSystemCard
                   key={system.id}
@@ -371,7 +371,7 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
                           <span className="text-[8px] font-semibold text-muted-foreground uppercase tracking-wider px-0.5 mb-0.5 block">
                             {vcrCode}
                           </span>
-                          <div className="flex flex-wrap" style={{ gap: 'calc(6px * var(--ws-zoom, 1))' }}>
+                          <div className="flex flex-wrap" style={{ gap: 'calc(6px * var(--ws-zoom-y, 1))' }}>
                             {items.map((item, idx) => 
                               item.type === 'system' ? (
                                 <DraggableSystemCard
@@ -394,7 +394,7 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
                       ));
                     })()
                   ) : (
-                    <div className="flex flex-wrap" style={{ gap: 'calc(6px * var(--ws-zoom, 1))' }}>
+                    <div className="flex flex-wrap" style={{ gap: 'calc(6px * var(--ws-zoom-y, 1))' }}>
                       {filteredAssigned.map(system => (
                         <DraggableSystemCard
                           key={system.id}

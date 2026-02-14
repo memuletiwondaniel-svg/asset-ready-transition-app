@@ -12,11 +12,6 @@ interface SubsystemCardProps {
   onClick?: () => void;
 }
 
-/**
- * A compact card for individually-mapped subsystems.
- * Displays in the systems panel when a subsystem (not the full parent)
- * is assigned to a VCR. Uses the VCR's color for visual linkage.
- */
 export const SubsystemCard: React.FC<SubsystemCardProps> = ({
   subsystem,
   parentSystemName,
@@ -46,25 +41,25 @@ export const SubsystemCard: React.FC<SubsystemCardProps> = ({
         }}
         onClick={onClick}
       >
-        <CardContent style={{ padding: 'calc(6px * var(--ws-zoom, 1))' }}>
+        <CardContent style={{ padding: 'calc(6px * var(--ws-zoom-y, 1)) calc(6px * var(--ws-zoom, 1))' }}>
           <div className="flex items-start" style={{ gap: 'calc(6px * var(--ws-zoom, 1))' }}>
             {isHydrocarbon ? (
               <div className="rounded flex items-center justify-center shrink-0 mt-0.5 bg-orange-500/10 text-orange-500"
-                style={{ width: 'calc(16px * var(--ws-zoom, 1))', height: 'calc(16px * var(--ws-zoom, 1))' }}>
-                <Flame style={{ width: 'calc(10px * var(--ws-zoom, 1))', height: 'calc(10px * var(--ws-zoom, 1))' }} />
+                style={{ width: 'calc(16px * var(--ws-zoom, 1))', height: 'calc(16px * var(--ws-zoom-y, 1))' }}>
+                <Flame style={{ width: 'calc(10px * var(--ws-zoom, 1))', height: 'calc(10px * var(--ws-zoom-y, 1))' }} />
               </div>
             ) : (
-              <div className="shrink-0" style={{ width: 'calc(16px * var(--ws-zoom, 1))', height: 'calc(16px * var(--ws-zoom, 1))' }} />
+              <div className="shrink-0" style={{ width: 'calc(16px * var(--ws-zoom, 1))', height: 'calc(16px * var(--ws-zoom-y, 1))' }} />
             )}
             <div className="flex-1 min-w-0">
-              <span className="font-medium truncate block leading-tight" style={{ fontSize: 'calc(10px * var(--ws-zoom, 1))' }}>
+              <span className="font-medium truncate block leading-tight" style={{ fontSize: 'calc(10px * var(--ws-zoom-y, 1))' }}>
                 {subsystem.name}
               </span>
-              <div className="flex items-center justify-between gap-1">
-                <span className="text-muted-foreground font-mono truncate" style={{ fontSize: 'calc(8px * var(--ws-zoom, 1))' }}>
+              <div className="flex items-center justify-between gap-1 [*[data-hide-ids]_&]:hidden">
+                <span className="text-muted-foreground font-mono truncate" style={{ fontSize: 'calc(8px * var(--ws-zoom-y, 1))' }}>
                   {subsystem.subsystem_id}
                 </span>
-                <span className="font-medium text-muted-foreground shrink-0" style={{ fontSize: 'calc(8px * var(--ws-zoom, 1))' }}>
+                <span className="font-medium text-muted-foreground shrink-0" style={{ fontSize: 'calc(8px * var(--ws-zoom-y, 1))' }}>
                   {subsystem.completion_percentage}%
                 </span>
               </div>

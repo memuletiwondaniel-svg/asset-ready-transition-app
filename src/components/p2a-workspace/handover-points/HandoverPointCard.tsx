@@ -20,22 +20,22 @@ const getStatusConfig = (status: string) => {
     case 'SIGNED':
       return { 
         label: 'Signed', 
-        borderAccent: 'hsl(152, 76%, 36%)', // Emerald
+        borderAccent: 'hsl(152, 76%, 36%)',
       };
     case 'READY':
       return { 
         label: 'Ready',
-        borderAccent: 'hsl(217, 91%, 60%)', // Blue
+        borderAccent: 'hsl(217, 91%, 60%)',
       };
     case 'IN_PROGRESS':
       return { 
         label: 'In Progress', 
-        borderAccent: 'hsl(38, 92%, 50%)', // Amber
+        borderAccent: 'hsl(38, 92%, 50%)',
       };
     default:
       return { 
         label: 'Pending', 
-        borderAccent: 'hsl(215, 14%, 58%)', // Slate
+        borderAccent: 'hsl(215, 14%, 58%)',
       };
   }
 };
@@ -50,17 +50,15 @@ export const HandoverPointCard: React.FC<HandoverPointCardProps> = ({
   const statusConfig = getStatusConfig(handoverPoint.status);
   const vcrColor = getVCRColor(handoverPoint.vcr_code);
 
-  // Calculate progress (mock for now - would be based on prerequisites)
   const progress = handoverPoint.status === 'SIGNED' ? 100 :
                    handoverPoint.status === 'READY' ? 90 :
                    handoverPoint.status === 'IN_PROGRESS' ? 50 : 0;
 
-  // When dragging, show a placeholder instead of the full card (DragOverlay shows the preview)
   if (isDragging) {
     return (
       <Card className="border border-dashed border-muted-foreground/30 bg-muted/20 opacity-40" style={{ width: 'calc(140px * var(--ws-zoom, 1))' }}>
-        <CardContent style={{ padding: 'calc(6px * var(--ws-zoom, 1))' }}>
-          <div style={{ height: 'calc(34px * var(--ws-zoom, 1))' }} />
+        <CardContent style={{ padding: 'calc(6px * var(--ws-zoom-y, 1))' }}>
+          <div style={{ height: 'calc(14px * var(--ws-zoom-y, 1))' }} />
         </CardContent>
       </Card>
     );
@@ -81,23 +79,23 @@ export const HandoverPointCard: React.FC<HandoverPointCardProps> = ({
       }}
       onClick={onClick}
     >
-      <CardContent style={{ padding: 'calc(6px * var(--ws-zoom, 1))' }}>
+      <CardContent style={{ padding: 'calc(6px * var(--ws-zoom-y, 1)) calc(6px * var(--ws-zoom, 1))' }}>
         <div className="flex items-start relative" style={{ gap: 'calc(6px * var(--ws-zoom, 1))' }}>
-          {/* Drag Handle - absolute positioned, shown on hover */}
+          {/* Drag Handle */}
           <div className="absolute -left-0.5 top-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing text-muted-foreground/40 hover:text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
-            <GripVertical style={{ width: 'calc(12px * var(--ws-zoom, 1))', height: 'calc(12px * var(--ws-zoom, 1))' }} />
+            <GripVertical style={{ width: 'calc(12px * var(--ws-zoom, 1))', height: 'calc(12px * var(--ws-zoom-y, 1))' }} />
           </div>
 
-          {/* Name & ID - matching SystemCard layout */}
+          {/* Name & ID */}
           <div className="flex-1 min-w-0 ml-2">
-            <span className="font-medium truncate block leading-tight" style={{ fontSize: 'calc(10px * var(--ws-zoom, 1))' }}>
+            <span className="font-medium truncate block leading-tight" style={{ fontSize: 'calc(10px * var(--ws-zoom-y, 1))' }}>
               {handoverPoint.name}
             </span>
-            <div className="flex items-center justify-between gap-1">
-              <span className="text-muted-foreground font-mono truncate" style={{ fontSize: 'calc(8px * var(--ws-zoom, 1))' }}>
+            <div className="flex items-center justify-between gap-1 [*[data-hide-ids]_&]:hidden">
+              <span className="text-muted-foreground font-mono truncate" style={{ fontSize: 'calc(8px * var(--ws-zoom-y, 1))' }}>
                 {handoverPoint.vcr_code || 'VCR-???'}
               </span>
-              <span className="font-medium text-muted-foreground shrink-0" style={{ fontSize: 'calc(8px * var(--ws-zoom, 1))' }}>
+              <span className="font-medium text-muted-foreground shrink-0" style={{ fontSize: 'calc(8px * var(--ws-zoom-y, 1))' }}>
                 {progress}%
               </span>
             </div>
@@ -132,8 +130,6 @@ export const DraggableHandoverPointCard: React.FC<HandoverPointCardProps> = (pro
     },
   });
 
-  // Don't apply transform when isDragging — the DragOverlay handles the visual preview.
-  // Applying transform here moves the placeholder away from its original position.
   const style = (transform && !isDragging) ? {
     transform: CSS.Translate.toString(transform),
   } : undefined;
