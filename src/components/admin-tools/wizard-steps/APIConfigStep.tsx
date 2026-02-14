@@ -57,6 +57,7 @@ export const APIConfigStep: React.FC<APIConfigStepProps> = ({ credentials, onCha
               <SelectItem value="api_key">API Key</SelectItem>
               <SelectItem value="oauth">OAuth 2.0</SelectItem>
               <SelectItem value="basic_auth">Basic Authentication</SelectItem>
+              <SelectItem value="sso">SSO (Corporate Login)</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -175,6 +176,47 @@ export const APIConfigStep: React.FC<APIConfigStepProps> = ({ credentials, onCha
                   {showSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+            </div>
+          </>
+        )}
+
+        {credentials.authType === 'sso' && (
+          <>
+            <div className="space-y-2">
+              <Label className="text-sm flex items-center gap-1.5">
+                <User className="h-3.5 w-3.5 text-muted-foreground" />
+                Username
+              </Label>
+              <Input
+                value={credentials.username || ''}
+                onChange={(e) => update('username', e.target.value)}
+                placeholder="e.g. john.doe@company.com"
+                autoComplete="off"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm flex items-center gap-1.5">
+                <Globe className="h-3.5 w-3.5 text-muted-foreground" />
+                Project
+              </Label>
+              <Input
+                value={credentials.ssoProject || ''}
+                onChange={(e) => update('ssoProject', e.target.value)}
+                placeholder="e.g. Project Alpha"
+                autoComplete="off"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm flex items-center gap-1.5">
+                <Key className="h-3.5 w-3.5 text-muted-foreground" />
+                Database
+              </Label>
+              <Input
+                value={credentials.ssoDatabase || ''}
+                onChange={(e) => update('ssoDatabase', e.target.value)}
+                placeholder="e.g. ASSAI_PROD"
+                autoComplete="off"
+              />
             </div>
           </>
         )}
