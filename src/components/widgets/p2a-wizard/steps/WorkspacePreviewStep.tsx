@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { ExternalLink, Flame, CheckCircle2, AlertCircle, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getVCRColor } from '@/components/p2a-workspace/utils/vcrColors';
 import { WizardSystem } from './SystemsImportStep';
 import { WizardVCR } from './VCRCreationStep';
 import { WizardPhase } from './PhasesStep';
@@ -141,10 +142,15 @@ export const WorkspacePreviewStep: React.FC<WorkspacePreviewStepProps> = ({
                       {phaseVCRs.map(vcr => {
                         const vcrSystems = getVCRSystems(vcr.id);
                         const hcCount = vcrSystems.filter(s => s.is_hydrocarbon).length;
+                        const vcrColor = getVCRColor(vcr.code);
                         return (
                           <div
                             key={vcr.id}
-                            className="rounded bg-muted/40 px-2 py-1 flex items-center justify-between gap-1"
+                            className="rounded-md px-2 py-1.5 flex items-center justify-between gap-1 border"
+                            style={{
+                              background: vcrColor?.background,
+                              borderColor: vcrColor?.border,
+                            }}
                           >
                             <div className="min-w-0">
                               <div className="text-[11px] font-medium truncate">{vcr.name}</div>
