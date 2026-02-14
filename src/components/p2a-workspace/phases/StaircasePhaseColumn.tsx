@@ -48,12 +48,12 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
   const [containerTop, setContainerTop] = useState(0);
 
   // Measure the VCR container's top position relative to the workspace
+  // Must re-measure on scroll, zoom, and layout changes
   useEffect(() => {
     if (!showMapping || !vcrContainerRef.current) return;
     const measure = () => {
       const el = vcrContainerRef.current;
       if (!el) return;
-      // Get position relative to the workspace container (closest relative/abs parent)
       const workspaceEl = el.closest('[data-workspace-container]') || el.offsetParent;
       if (!workspaceEl) return;
       const containerRect = (workspaceEl as HTMLElement).getBoundingClientRect();
@@ -61,8 +61,18 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
       setContainerTop(elRect.top - containerRect.top);
     };
     measure();
-    const raf = requestAnimationFrame(measure);
-    return () => cancelAnimationFrame(raf);
+    // Re-measure on scroll events (systems panel scroll changes layout)
+    const scrollContainers = vcrContainerRef.current.closest('[data-workspace-container]')?.querySelectorAll('[data-radix-scroll-area-viewport]');
+    scrollContainers?.forEach(el => el.addEventListener('scroll', measure, { passive: true }));
+    window.addEventListener('resize', measure);
+    // Re-measure on zoom via ResizeObserver
+    const ro = new ResizeObserver(measure);
+    ro.observe(vcrContainerRef.current);
+    return () => {
+      scrollContainers?.forEach(el => el.removeEventListener('scroll', measure));
+      window.removeEventListener('resize', measure);
+      ro.disconnect();
+    };
   }, [showMapping, handoverPoints]);
 
   const { active: dndActive } = useDndContext();
