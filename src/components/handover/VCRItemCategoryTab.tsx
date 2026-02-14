@@ -88,7 +88,7 @@ const VCRItemCategoryTab: React.FC = () => {
 
   return (
     <Card>
-      <CardHeader className="px-4 py-3">
+      <CardHeader>
         <div className="flex items-center justify-between">
           <div>
             <CardTitle>VCR Categories</CardTitle>
