@@ -8,6 +8,7 @@ import { ORPActivitiesPanel } from '@/components/tasks/ORPActivitiesPanel';
 import { OWLPanel } from '@/components/tasks/OWLPanel';
 import { NewTaskModal } from '@/components/tasks/NewTaskModal';
 import { AllTasksTable } from '@/components/tasks/AllTasksTable';
+import { RecentlyCompletedTasks } from '@/components/tasks/RecentlyCompletedTasks';
 import { DirectorSoFView } from '@/components/tasks/DirectorSoFView';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 import { useUserLastLogin } from '@/hooks/useUserLastLogin';
@@ -291,6 +292,8 @@ const MyTasksPage: React.FC = () => {
         ) : (
           <AllTasksTable searchQuery={searchQuery} userId={user.id} />
         )}
+
+        <RecentlyCompletedTasks searchQuery={searchQuery} />
       </div>
 
       <NewTaskModal 
