@@ -59,7 +59,7 @@ export const HandoverPointCard: React.FC<HandoverPointCardProps> = ({
   if (isDragging) {
     return (
       <Card className="border border-dashed border-muted-foreground/30 bg-muted/20 opacity-40" style={{ width: 'calc(140px * var(--ws-zoom, 1))' }}>
-        <CardContent className="p-1.5">
+        <CardContent style={{ padding: 'calc(6px * var(--ws-zoom, 1))' }}>
           <div style={{ height: 'calc(34px * var(--ws-zoom, 1))' }} />
         </CardContent>
       </Card>
@@ -81,26 +81,23 @@ export const HandoverPointCard: React.FC<HandoverPointCardProps> = ({
       }}
       onClick={onClick}
     >
-      <CardContent className="p-1.5">
-        <div className="flex items-start gap-1.5 relative">
+      <CardContent style={{ padding: 'calc(6px * var(--ws-zoom, 1))' }}>
+        <div className="flex items-start relative" style={{ gap: 'calc(6px * var(--ws-zoom, 1))' }}>
           {/* Drag Handle - absolute positioned, shown on hover */}
           <div className="absolute -left-0.5 top-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing text-muted-foreground/40 hover:text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
-            <GripVertical className="w-3 h-3" />
+            <GripVertical style={{ width: 'calc(12px * var(--ws-zoom, 1))', height: 'calc(12px * var(--ws-zoom, 1))' }} />
           </div>
 
           {/* Name & ID - matching SystemCard layout */}
           <div className="flex-1 min-w-0 ml-2">
-            {/* VCR Name */}
-            <span className="text-[10px] font-medium truncate block leading-tight">
+            <span className="font-medium truncate block leading-tight" style={{ fontSize: 'calc(10px * var(--ws-zoom, 1))' }}>
               {handoverPoint.name}
             </span>
-
-            {/* VCR ID + Progress */}
             <div className="flex items-center justify-between gap-1">
-              <span className="text-[8px] text-muted-foreground font-mono truncate">
+              <span className="text-muted-foreground font-mono truncate" style={{ fontSize: 'calc(8px * var(--ws-zoom, 1))' }}>
                 {handoverPoint.vcr_code || 'VCR-???'}
               </span>
-              <span className="text-[8px] font-medium text-muted-foreground shrink-0">
+              <span className="font-medium text-muted-foreground shrink-0" style={{ fontSize: 'calc(8px * var(--ws-zoom, 1))' }}>
                 {progress}%
               </span>
             </div>
