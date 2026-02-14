@@ -242,13 +242,12 @@ export default function ProjectDetailsPage() {
                   onDragEnd={handleDragEnd}
                 >
                   <SortableContext items={visibleWidgets} strategy={rectSortingStrategy}>
-                    <div className="grid grid-cols-1 gap-6 pb-6 h-full">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6 h-full">
                       {visibleWidgets.map((widgetId) => (
                         <SortableWidget 
                           key={widgetId} 
                           id={widgetId}
                           onHide={() => handleHideWidget(widgetId)}
-                          className="flex-1"
                         >
                           {renderWidget(widgetId)}
                         </SortableWidget>
