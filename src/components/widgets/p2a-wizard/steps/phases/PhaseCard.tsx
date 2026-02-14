@@ -29,6 +29,7 @@ interface PhaseCardProps {
   onMoveLeft: () => void;
   onMoveRight: () => void;
   onUnassignVCR: (vcrId: string) => void;
+  onVCRClick?: (vcr: WizardVCR) => void;
 }
 
 const PHASE_COLORS = [
@@ -55,6 +56,7 @@ export const PhaseCard: React.FC<PhaseCardProps> = ({
   onMoveLeft,
   onMoveRight,
   onUnassignVCR,
+  onVCRClick,
 }) => {
   const colors = PHASE_COLORS[index % PHASE_COLORS.length];
   const linkedMilestones = milestones.filter(m => phase.milestoneIds.includes(m.id));
@@ -141,6 +143,7 @@ export const PhaseCard: React.FC<PhaseCardProps> = ({
                     vcr={vcr}
                     vcrIndex={vcrIndex}
                     onUnassign={onUnassignVCR}
+                    onVCRClick={onVCRClick}
                   />
                 );
               })

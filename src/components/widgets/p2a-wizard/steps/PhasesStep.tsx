@@ -25,10 +25,12 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WizardVCR } from './VCRCreationStep';
+import { WizardSystem } from './SystemsImportStep';
 import { PhaseCard } from './phases/PhaseCard';
 import { DraggableVCRChip, VCRChipOverlay } from './phases/DraggableVCRChip';
 import { PhaseFormDialog } from './phases/PhaseFormDialog';
 import { CombineVCRDialog } from './phases/CombineVCRDialog';
+import { VCREditOverlay } from './phases/VCREditOverlay';
 
 export interface WizardPhase {
   id: string;
@@ -41,6 +43,7 @@ export interface WizardPhase {
 interface PhasesStepProps {
   vcrs: WizardVCR[];
   phases: WizardPhase[];
+  systems: WizardSystem[];
   vcrPhaseAssignments: Record<string, string>;
   mappings: Record<string, string[]>;
   milestones?: Array<{ id: string; name: string; target_date?: string }>;
@@ -53,6 +56,7 @@ interface PhasesStepProps {
 export const PhasesStep: React.FC<PhasesStepProps> = ({
   vcrs,
   phases,
+  systems,
   vcrPhaseAssignments,
   mappings,
   milestones = [],
@@ -66,6 +70,8 @@ export const PhasesStep: React.FC<PhasesStepProps> = ({
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
   const [combineDialogOpen, setCombineDialogOpen] = useState(false);
   const [combineContext, setCombineContext] = useState<{ source: WizardVCR; target: WizardVCR } | null>(null);
+  const [vcrOverlayOpen, setVcrOverlayOpen] = useState(false);
+  const [selectedVCR, setSelectedVCR] = useState<WizardVCR | null>(null);
   // Track VCR ordering within each phase: phaseId -> ordered vcrId[]
   const [phaseVcrOrder, setPhaseVcrOrder] = useState<Record<string, string[]>>({});
 
@@ -324,6 +330,7 @@ export const PhasesStep: React.FC<PhasesStepProps> = ({
                 onMoveLeft={() => movePhase(index, 'left')}
                 onMoveRight={() => movePhase(index, 'right')}
                 onUnassignVCR={handleUnassignVCR}
+                onVCRClick={(vcr) => { setSelectedVCR(vcr); setVcrOverlayOpen(true); }}
               />
             ))}
 
@@ -361,7 +368,7 @@ export const PhasesStep: React.FC<PhasesStepProps> = ({
                   {unassignedVCRs.map(vcr => {
                     const vcrIndex = vcrs.findIndex(v => v.id === vcr.id);
                     return (
-                      <DraggableVCRChip key={vcr.id} vcr={vcr} index={vcrIndex} />
+                      <DraggableVCRChip key={vcr.id} vcr={vcr} index={vcrIndex} onVCRClick={(v) => { setSelectedVCR(v); setVcrOverlayOpen(true); }} />
                     );
                   })}
                 </div>
@@ -405,6 +412,35 @@ export const PhasesStep: React.FC<PhasesStepProps> = ({
           sourceVCR={combineContext.source}
           targetVCR={combineContext.target}
           onCombine={handleCombineVCRs}
+        />
+      )}
+
+      {selectedVCR && (
+        <VCREditOverlay
+          open={vcrOverlayOpen}
+          onOpenChange={setVcrOverlayOpen}
+          vcr={selectedVCR}
+          vcrIndex={vcrs.findIndex(v => v.id === selectedVCR.id)}
+          phases={phases}
+          systems={systems}
+          mappings={mappings}
+          vcrPhaseAssignments={vcrPhaseAssignments}
+          onVCRUpdate={(id, updates) => {
+            onVCRsChange(vcrs.map(v => v.id === id ? { ...v, ...updates } : v));
+            if (updates.name && selectedVCR.id === id) {
+              setSelectedVCR({ ...selectedVCR, ...updates });
+            }
+          }}
+          onPhaseAssign={(vcrId, phaseId) => {
+            const updated = { ...vcrPhaseAssignments };
+            if (phaseId) {
+              updated[vcrId] = phaseId;
+            } else {
+              delete updated[vcrId];
+            }
+            onVCRPhaseAssignmentsChange(updated);
+          }}
+          onMappingsChange={onMappingsChange}
         />
       )}
     </DndContext>

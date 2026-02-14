@@ -10,9 +10,10 @@ interface AssignedVCRChipProps {
   vcr: WizardVCR;
   vcrIndex: number;
   onUnassign: (vcrId: string) => void;
+  onVCRClick?: (vcr: WizardVCR) => void;
 }
 
-export const AssignedVCRChip: React.FC<AssignedVCRChipProps> = ({ vcr, vcrIndex, onUnassign }) => {
+export const AssignedVCRChip: React.FC<AssignedVCRChipProps> = ({ vcr, vcrIndex, onUnassign, onVCRClick }) => {
   const {
     attributes,
     listeners,
@@ -45,9 +46,8 @@ export const AssignedVCRChip: React.FC<AssignedVCRChipProps> = ({ vcr, vcrIndex,
         {...attributes}
       />
       <div
-        className="flex flex-col min-w-0 flex-1 gap-0.5"
-        {...listeners}
-        {...attributes}
+        className="flex flex-col min-w-0 flex-1 gap-0.5 cursor-pointer"
+        onClick={(e) => { e.stopPropagation(); onVCRClick?.(vcr); }}
       >
         <span className="truncate font-medium">{vcr.name}</span>
         <span
