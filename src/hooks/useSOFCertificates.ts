@@ -50,14 +50,14 @@ const STANDARD_SOF_TEXT = `This Statement of Fitness (SoF) certificate confirms 
 
 Requirement 7 of the Asset Integrity Process Safety Management (AIPSM) Manual has been met:
 
-a. Process safety risks have been identified and documented and are either managed to ALARP or appropriately being managed to ALARP through application of HEMP.
-b. Employees or contractors executing Safety Critical Activities are competent and fit to work.
-c. Safety Critical Equipment (SCE) meets its Technical Integrity requirements.
-d. Design and construction of Asset modifications meet the design and engineering requirements
-e. The Process Safety Basic Requirements (PSBR) are met.
-f. Procedures are in place to operate Safety Critical Equipment (SCE) within its Operational Limits.
-g. Modifications, if made, are complete and have been authorized as specified by the Management of Change (MoC) Manual.
-h. A Pre-Start-Up Safety Review (PSSR) has been completed and all priority 1 actions have been completed
+01. Process safety risks have been identified and documented and are either managed to ALARP or appropriately being managed to ALARP through application of HEMP.
+02. Employees or contractors executing Safety Critical Activities are competent and fit to work.
+03. Safety Critical Equipment (SCE) meets its Technical Integrity requirements.
+04. Design and construction of Asset modifications meet the design and engineering requirements
+05. The Process Safety Basic Requirements (PSBR) are met.
+06. Procedures are in place to operate Safety Critical Equipment (SCE) within its Operational Limits.
+07. Modifications, if made, are complete and have been authorized as specified by the Management of Change (MoC) Manual.
+08. A Pre-Start-Up Safety Review (PSSR) has been completed and all priority 1 actions have been completed
 
 The Facility therefore meets the criteria necessary to (re-) introduce hydrocarbons, process fluids or hazardous energy`;
 

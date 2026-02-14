@@ -18,17 +18,22 @@ interface SOFApprover {
 interface SOFContent {
   openingStatement: string;
   confirmationItems: string[];
+  closingStatement: string;
 }
 
 const defaultContent: SOFContent = {
-  openingStatement: `This Statement of Fitness (SoF) certifies that the facility/equipment described below has been reviewed through the Pre-Startup Safety Review (PSSR) process and is deemed fit for its intended purpose and safe to operate.`,
+  openingStatement: `This Statement of Fitness (SoF) certificate confirms that for the above referenced facility:\n\nRequirement 7 of the Asset Integrity Process Safety Management (AIPSM) Manual has been met:`,
   confirmationItems: [
-    'All safety systems are functional and tested.',
-    'Operating procedures are approved and in place.',
-    'Personnel are trained and competent.',
-    'Emergency response plans are established.',
-    'All regulatory requirements are met.',
+    'Process safety risks have been identified and documented and are either managed to ALARP or appropriately being managed to ALARP through application of HEMP.',
+    'Employees or contractors executing Safety Critical Activities are competent and fit to work.',
+    'Safety Critical Equipment (SCE) meets its Technical Integrity requirements.',
+    'Design and construction of Asset modifications meet the design and engineering requirements',
+    'The Process Safety Basic Requirements (PSBR) are met.',
+    'Procedures are in place to operate Safety Critical Equipment (SCE) within its Operational Limits.',
+    'Modifications, if made, are complete and have been authorized as specified by the Management of Change (MoC) Manual.',
+    'A Pre-Start-Up Safety Review (PSSR) has been completed and all priority 1 actions have been completed',
   ],
+  closingStatement: 'The Facility therefore meets the criteria necessary to (re-) introduce hydrocarbons, process fluids or hazardous energy',
 };
 
 interface SOFCertificateProps {
@@ -82,7 +87,10 @@ const SOFCertificate: React.FC<SOFCertificateProps> = ({
       try {
         const parsed = JSON.parse(templateData.content);
         if (parsed.openingStatement && parsed.confirmationItems) {
-          setContent(parsed);
+          setContent({
+            ...defaultContent,
+            ...parsed
+          });
         }
       } catch {
         // Content is not JSON (legacy format), keep defaults
@@ -292,10 +300,18 @@ const SOFCertificate: React.FC<SOFCertificateProps> = ({
             </div>
 
             {/* Fitness Declaration */}
-            <div className="border-t border-border pt-4">
-              <p className="text-foreground font-semibold text-center text-base">
-                This facility is certified as FIT FOR OPERATION.
-              </p>
+            <div className="border-t border-border pt-6 mt-6">
+              {isEditing ? (
+                <Textarea
+                  value={editContent.closingStatement}
+                  onChange={(e) => setEditContent({ ...editContent, closingStatement: e.target.value })}
+                  className="min-h-[60px] text-center font-semibold"
+                />
+              ) : (
+                <p className="text-foreground font-semibold text-center text-base">
+                  {content.closingStatement}
+                </p>
+              )}
             </div>
 
             {/* Approvals Section */}
