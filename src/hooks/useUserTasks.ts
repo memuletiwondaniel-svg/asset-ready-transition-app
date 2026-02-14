@@ -177,6 +177,10 @@ export const useUserTasks = () => {
                 .eq('handover_id', planId)
                 .eq('role_name', approverRole);
 
+              // Invalidate the summary dialog's approver query so UI reflects the change
+              queryClient.invalidateQueries({ queryKey: ['p2a-summary-approvers', planId] });
+              queryClient.invalidateQueries({ queryKey: ['p2a-approval-workflow', planId] });
+
               // Check if all Phase 1 approvers (non-Deputy) are now approved
               const { data: allApprovers } = await supabase
                 .from('p2a_handover_approvers')
