@@ -1,8 +1,8 @@
 import React from 'react';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Box, Key, Milestone, ArrowRight, ExternalLink } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { ExternalLink, Flame, CheckCircle2, AlertCircle, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WizardSystem } from './SystemsImportStep';
 import { WizardVCR } from './VCRCreationStep';
@@ -25,35 +25,48 @@ export const WorkspacePreviewStep: React.FC<WorkspacePreviewStepProps> = ({
   vcrPhaseAssignments,
   onOpenFullWorkspace,
 }) => {
-  const getPhaseVCRs = (phaseId: string) => {
-    return vcrs.filter(vcr => vcrPhaseAssignments[vcr.id] === phaseId);
-  };
+  const getPhaseVCRs = (phaseId: string) =>
+    vcrs.filter(vcr => vcrPhaseAssignments[vcr.id] === phaseId);
 
   const getVCRSystems = (vcrId: string) => {
     const keys = mappings[vcrId] || [];
-    // Match systems by direct ID or by composite subsystem key prefix
     return systems.filter(s =>
       keys.includes(s.id) || keys.some(k => k.startsWith(s.id + '::sub::'))
     );
   };
 
+  const mappedSystemCount = new Set(
+    Object.values(mappings).flat().map(k => k.split('::sub::')[0])
+  ).size;
+  const unmappedSystemCount = systems.length - mappedSystemCount;
   const unassignedVCRs = vcrs.filter(vcr => !vcrPhaseAssignments[vcr.id]);
+  const activePhases = phases.filter(p => getPhaseVCRs(p.id).length > 0);
+
+  // Readiness checks
+  const checks = [
+    { label: 'Systems imported', ok: systems.length > 0 },
+    { label: 'VCRs created', ok: vcrs.length > 0 },
+    { label: 'All systems mapped', ok: unmappedSystemCount === 0 && systems.length > 0 },
+    { label: 'All VCRs assigned to phases', ok: unassignedVCRs.length === 0 && vcrs.length > 0 },
+  ];
+  const readyCount = checks.filter(c => c.ok).length;
 
   return (
-    <div className="space-y-3 p-4">
+    <div className="flex flex-col gap-4 p-4 h-full">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-medium">Handover Plan Preview</h3>
+          <h3 className="text-sm font-semibold">Plan Summary</h3>
           <p className="text-xs text-muted-foreground">
-            Visual overview of your P2A Handover Plan
+            Review your handover plan before proceeding
           </p>
         </div>
         {onOpenFullWorkspace && (
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
             onClick={onOpenFullWorkspace}
-            className="text-xs text-muted-foreground hover:text-foreground h-7 px-2.5 gap-1.5"
+            className="text-xs h-7 px-2.5 gap-1.5"
           >
             <ExternalLink className="h-3.5 w-3.5" />
             Open Workspace
@@ -61,132 +74,135 @@ export const WorkspacePreviewStep: React.FC<WorkspacePreviewStepProps> = ({
         )}
       </div>
 
-      <ScrollArea className="h-[300px] border rounded-lg">
-        <div className="p-4">
-          {/* Phase-based timeline visualization */}
-          <div className="space-y-6">
-            {phases.map((phase, phaseIndex) => {
+      {/* Stats Row */}
+      <div className="grid grid-cols-4 gap-2">
+        {[
+          { value: systems.length, label: 'Systems', accent: 'text-blue-600 dark:text-blue-400' },
+          { value: vcrs.length, label: 'VCRs', accent: 'text-amber-600 dark:text-amber-400' },
+          { value: activePhases.length, label: 'Phases', accent: 'text-emerald-600 dark:text-emerald-400' },
+          { value: systems.filter(s => s.is_hydrocarbon).length, label: 'HC Systems', accent: 'text-orange-600 dark:text-orange-400' },
+        ].map(stat => (
+          <div key={stat.label} className="rounded-lg border bg-card p-2.5 text-center">
+            <div className={cn('text-xl font-bold tabular-nums', stat.accent)}>{stat.value}</div>
+            <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">{stat.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Readiness Checklist */}
+      <div className="rounded-lg border bg-card p-3">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Readiness</span>
+          <Badge variant={readyCount === checks.length ? 'default' : 'secondary'} className="text-[10px] h-5">
+            {readyCount}/{checks.length}
+          </Badge>
+        </div>
+        <div className="grid grid-cols-2 gap-1.5">
+          {checks.map(check => (
+            <div key={check.label} className="flex items-center gap-1.5 text-xs">
+              {check.ok ? (
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+              ) : (
+                <AlertCircle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+              )}
+              <span className={cn(check.ok ? 'text-foreground' : 'text-muted-foreground')}>{check.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <Separator />
+
+      {/* Phase Flow — horizontal timeline */}
+      <div className="flex-1 min-h-0 overflow-y-auto">
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">
+          Delivery Sequence
+        </span>
+
+        {activePhases.length > 0 ? (
+          <div className="flex flex-wrap gap-2">
+            {activePhases.map((phase, idx) => {
               const phaseVCRs = getPhaseVCRs(phase.id);
-              if (phaseVCRs.length === 0) return null;
-
               return (
-                <div key={phase.id} className="relative">
-                  {/* Phase Header */}
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-semibold">
-                      {phaseIndex + 1}
-                    </div>
-                    <div>
-                      <div className="font-medium">{phase.name}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {phaseVCRs.length} VCR{phaseVCRs.length !== 1 ? 's' : ''}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* VCRs in this phase */}
-                  <div className="ml-10 space-y-3">
-                    {phaseVCRs.map((vcr) => {
-                      const vcrSystems = getVCRSystems(vcr.id);
-                      return (
-                        <div
-                          key={vcr.id}
-                          className="border rounded-lg overflow-hidden bg-card"
-                        >
-                          {/* VCR Header */}
-                          <div className="flex items-center gap-2 p-3 bg-primary/5 border-b">
-                            <span className="font-medium text-sm">{vcr.name}</span>
-                            <span className="text-[10px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-                              {vcr.code}
-                            </span>
-                            <Badge variant="secondary" className="ml-auto text-[10px]">
-                              {vcrSystems.length} systems
-                            </Badge>
-                          </div>
-
-                          {/* Mapped Systems */}
-                          {vcrSystems.length > 0 && (
-                            <div className="p-2 grid grid-cols-2 gap-1">
-                              {vcrSystems.map((system) => (
-                                <div
-                                  key={system.id}
-                                  className="flex items-center gap-2 p-2 rounded bg-muted/30 text-xs"
-                                >
-                                  <Box className="h-3 w-3 text-muted-foreground" />
-                                  <span className="truncate">{system.name}</span>
-                                  {system.is_hydrocarbon && (
-                                    <Badge variant="outline" className="text-[8px] px-1 py-0 bg-orange-50 text-orange-700 border-orange-200">
-                                      HC
-                                    </Badge>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Connector to next phase */}
-                  {phaseIndex < phases.length - 1 && getPhaseVCRs(phases[phaseIndex + 1]?.id).length > 0 && (
-                    <div className="flex justify-center py-2">
-                      <ArrowRight className="h-5 w-5 text-muted-foreground rotate-90" />
+                <React.Fragment key={phase.id}>
+                  {idx > 0 && (
+                    <div className="flex items-center self-stretch">
+                      <ArrowRight className="h-4 w-4 text-muted-foreground/40" />
                     </div>
                   )}
-                </div>
+                  <div className="rounded-lg border bg-card p-2.5 min-w-[140px] flex-1">
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                      <span className="text-[10px] font-bold text-muted-foreground/60">
+                        {idx + 1}
+                      </span>
+                      <span className="text-xs font-semibold truncate">{phase.name}</span>
+                    </div>
+                    <div className="space-y-1">
+                      {phaseVCRs.map(vcr => {
+                        const vcrSystems = getVCRSystems(vcr.id);
+                        const hcCount = vcrSystems.filter(s => s.is_hydrocarbon).length;
+                        return (
+                          <div
+                            key={vcr.id}
+                            className="rounded bg-muted/40 px-2 py-1 flex items-center justify-between gap-1"
+                          >
+                            <div className="min-w-0">
+                              <div className="text-[11px] font-medium truncate">{vcr.name}</div>
+                              <div className="text-[9px] text-muted-foreground font-mono">{vcr.code}</div>
+                            </div>
+                            <div className="flex items-center gap-1 shrink-0">
+                              {hcCount > 0 && (
+                                <Flame className="h-3 w-3 text-orange-500" />
+                              )}
+                              <Badge variant="secondary" className="text-[9px] px-1 py-0 h-4">
+                                {vcrSystems.length}
+                              </Badge>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </React.Fragment>
               );
             })}
-
-            {/* Unassigned VCRs */}
-            {unassignedVCRs.length > 0 && (
-              <div className="pt-4 border-t">
-                <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                  Unassigned VCRs
-                </div>
-                <div className="space-y-2">
-                  {unassignedVCRs.map((vcr) => (
-                    <div
-                      key={vcr.id}
-                      className="flex items-center gap-2 p-2 rounded-lg border border-dashed bg-amber-50/50 dark:bg-amber-950/20"
-                    >
-                      <span className="text-sm">{vcr.name}</span>
-                      <span className="text-[10px] font-mono text-muted-foreground">
-                        {vcr.code}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
+        ) : (
+          <div className="text-center py-6 text-muted-foreground">
+            <p className="text-xs">No phases with assigned VCRs yet</p>
+          </div>
+        )}
 
-          {vcrs.length === 0 && (
-            <div className="text-center py-8 text-muted-foreground">
-              <Milestone className="h-8 w-8 mx-auto mb-2 opacity-40" />
-              <p className="text-sm">No VCRs created yet</p>
-              <p className="text-xs mt-1">Go back to add systems and VCRs</p>
+        {/* Unassigned VCRs warning */}
+        {unassignedVCRs.length > 0 && (
+          <div className="mt-3 rounded-lg border border-dashed border-amber-300 dark:border-amber-700 bg-amber-50/50 dark:bg-amber-950/20 p-2.5">
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <AlertCircle className="h-3.5 w-3.5 text-amber-500" />
+              <span className="text-xs font-medium text-amber-700 dark:text-amber-400">
+                {unassignedVCRs.length} unassigned VCR{unassignedVCRs.length !== 1 ? 's' : ''}
+              </span>
             </div>
-          )}
-        </div>
-      </ScrollArea>
-
-      {/* Summary Stats */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="p-2 rounded-lg bg-muted/30 text-center">
-          <div className="text-lg font-bold text-primary">{systems.length}</div>
-          <div className="text-xs text-muted-foreground">Systems</div>
-        </div>
-        <div className="p-2 rounded-lg bg-muted/30 text-center">
-          <div className="text-lg font-bold text-primary">{vcrs.length}</div>
-          <div className="text-xs text-muted-foreground">VCRs</div>
-        </div>
-        <div className="p-2 rounded-lg bg-muted/30 text-center">
-          <div className="text-lg font-bold text-primary">
-            {phases.filter(p => getPhaseVCRs(p.id).length > 0).length}
+            <div className="flex flex-wrap gap-1">
+              {unassignedVCRs.map(vcr => (
+                <span key={vcr.id} className="text-[10px] bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 rounded px-1.5 py-0.5">
+                  {vcr.name}
+                </span>
+              ))}
+            </div>
           </div>
-          <div className="text-xs text-muted-foreground">Active Phases</div>
-        </div>
+        )}
+
+        {/* Unmapped systems warning */}
+        {unmappedSystemCount > 0 && (
+          <div className="mt-2 rounded-lg border border-dashed border-amber-300 dark:border-amber-700 bg-amber-50/50 dark:bg-amber-950/20 p-2.5">
+            <div className="flex items-center gap-1.5">
+              <AlertCircle className="h-3.5 w-3.5 text-amber-500" />
+              <span className="text-xs font-medium text-amber-700 dark:text-amber-400">
+                {unmappedSystemCount} unmapped system{unmappedSystemCount !== 1 ? 's' : ''}
+              </span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
