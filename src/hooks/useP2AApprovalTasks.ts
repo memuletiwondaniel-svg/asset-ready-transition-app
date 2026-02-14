@@ -16,6 +16,7 @@ interface CreateApprovalTasksParams {
 /**
  * Creates Phase 2 approval tasks after Phase 1 approvers have all completed.
  * Called when the last Phase 1 approver marks their task as completed.
+ * Includes duplicate prevention to avoid creating multiple tasks.
  */
 export async function createPhase2Tasks(planId: string, projectId: string, projectCode: string) {
   const client = supabase as any;
@@ -28,6 +29,20 @@ export async function createPhase2Tasks(planId: string, projectId: string, proje
     .eq('role_name', 'Deputy Plant Director');
 
   if (approverError || !approvers?.length) return;
+
+  // DUPLICATE PREVENTION: Check if Phase 2 tasks already exist for this plan
+  const { data: existingTasks } = await client
+    .from('user_tasks')
+    .select('id')
+    .eq('type', 'approval')
+    .eq('status', 'pending')
+    .filter('metadata->>plan_id', 'eq', planId)
+    .filter('metadata->>approval_phase', 'eq', '2');
+
+  if (existingTasks?.length > 0) {
+    console.log('[P2A] Phase 2 tasks already exist, skipping creation');
+    return;
+  }
 
   // Use user_id directly from the approver record (set during wizard)
   const taskRecords = approvers
@@ -55,6 +70,30 @@ export async function createPhase2Tasks(planId: string, projectId: string, proje
   if (taskRecords.length > 0) {
     await client.from('user_tasks').insert(taskRecords);
   }
+}
+
+/**
+ * Transitions the plan status to COMPLETED when all approvers have approved.
+ */
+export async function checkAndCompletePlan(planId: string) {
+  const client = supabase as any;
+
+  const { data: allApprovers } = await client
+    .from('p2a_handover_approvers')
+    .select('role_name, status')
+    .eq('handover_id', planId);
+
+  if (!allApprovers?.length) return false;
+
+  const allApproved = allApprovers.every((a: any) => a.status === 'APPROVED');
+  if (allApproved) {
+    await client
+      .from('p2a_handover_plans')
+      .update({ status: 'COMPLETED' })
+      .eq('id', planId);
+    return true;
+  }
+  return false;
 }
 
 export function useP2AApprovalTasks() {
@@ -104,6 +143,7 @@ export function useP2AApprovalTasks() {
   return {
     createApprovalTasks: createApprovalTasks.mutateAsync,
     createPhase2Tasks,
+    checkAndCompletePlan,
     isCreating: createApprovalTasks.isPending,
   };
 }
