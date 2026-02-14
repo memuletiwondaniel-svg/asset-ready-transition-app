@@ -307,8 +307,8 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
         </div>
 
         {/* Systems List - fills remaining height with vertical scroll only */}
-        <ScrollArea className="flex-1 min-h-0">
-          <div className="p-3 space-y-3">
+        <ScrollArea className="flex-1 min-h-0" type="always">
+          <div className="p-3 space-y-3" style={{ paddingBottom: '80vh' }}>
             {/* Assigned Systems - always visible */}
             {filteredAssigned.length > 0 && (
               <>
