@@ -2797,7 +2797,7 @@ export type Database = {
             foreignKeyName: "p2a_handover_approvers_handover_id_fkey"
             columns: ["handover_id"]
             isOneToOne: false
-            referencedRelation: "p2a_handovers"
+            referencedRelation: "p2a_handover_plans"
             referencedColumns: ["id"]
           },
         ]
