@@ -18,6 +18,7 @@ import { PhasesTimeline } from './phases/PhasesTimeline';
 import { UnassignedVCRPanel } from './phases/UnassignedVCRPanel';
 import { CreateHandoverPointDialog } from './handover-points/CreateHandoverPointDialog';
 import { HandoverPointCard } from './handover-points/HandoverPointCard';
+import { VCRSystemsProvider } from './contexts/VCRSystemsContext';
 import { VCRDetailSheet } from './handover-points/VCRDetailSheet';
 import { VCRRelationshipDialog } from './handover-points/VCRRelationshipDialog';
 import { cn } from '@/lib/utils';
@@ -571,6 +572,7 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
+    <VCRSystemsProvider systems={systems}>
 
       {/* Main Content Area - Systems Panel + Timeline (above background) */}
       <div className="flex-1 flex overflow-hidden min-h-0 relative z-10" ref={workspaceContainerRef} data-workspace-container data-hide-ids={zoomLevel < 0.8 ? '' : undefined} style={{ '--ws-zoom': 1, '--ws-zoom-y': zoomLevel } as React.CSSProperties}>
@@ -707,6 +709,7 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
           isCombining={isCombining}
         />
       )}
+    </VCRSystemsProvider>
     </DndContext>
     </div>
   );

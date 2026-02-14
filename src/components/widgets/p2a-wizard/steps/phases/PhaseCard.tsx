@@ -14,6 +14,7 @@ import {
 import { cn } from '@/lib/utils';
 import { WizardPhase } from '../PhasesStep';
 import { WizardVCR } from '../VCRCreationStep';
+import { WizardSystem } from '../SystemsImportStep';
 
 
 interface PhaseCardProps {
@@ -23,6 +24,8 @@ interface PhaseCardProps {
   milestones: Array<{ id: string; name: string; target_date?: string }>;
   assignedVCRs: WizardVCR[];
   allVCRs: WizardVCR[];
+  systems?: WizardSystem[];
+  mappings?: Record<string, string[]>;
   isReceivingDrag?: boolean;
   onEdit: (phase: WizardPhase) => void;
   onDelete: (id: string) => void;
@@ -50,6 +53,8 @@ export const PhaseCard: React.FC<PhaseCardProps> = ({
   milestones,
   assignedVCRs,
   allVCRs,
+  systems = [],
+  mappings = {},
   isReceivingDrag = false,
   onEdit,
   onDelete,
@@ -63,6 +68,12 @@ export const PhaseCard: React.FC<PhaseCardProps> = ({
 
   const { isOver, setNodeRef } = useDroppable({ id: `phase-${phase.id}` });
 
+  const getVCRSystems = (vcrId: string) => {
+    const keys = mappings[vcrId] || [];
+    return systems.filter(s =>
+      keys.includes(s.id) || keys.some(k => k.startsWith(s.id + '::sub::'))
+    );
+  };
   return (
     <div
       ref={setNodeRef}
@@ -144,6 +155,7 @@ export const PhaseCard: React.FC<PhaseCardProps> = ({
                     vcrIndex={vcrIndex}
                     onUnassign={onUnassignVCR}
                     onVCRClick={onVCRClick}
+                    vcrSystems={getVCRSystems(vcr.id)}
                   />
                 );
               })
