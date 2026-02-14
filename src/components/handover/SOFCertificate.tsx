@@ -299,10 +299,10 @@ const SOFCertificate: React.FC<SOFCertificateProps> = ({
                 <Textarea
                   value={editContent.closingStatement}
                   onChange={(e) => setEditContent({ ...editContent, closingStatement: e.target.value })}
-                  className="min-h-[60px] font-semibold"
+                  className="min-h-[60px]"
                 />
               ) : (
-                <p className="text-foreground font-semibold text-base">
+                <p className="text-foreground">
                   {content.closingStatement}
                 </p>
               )}
