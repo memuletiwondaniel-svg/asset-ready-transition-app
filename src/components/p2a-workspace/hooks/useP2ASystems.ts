@@ -321,11 +321,11 @@ export const useP2ASystems = (handoverPlanId: string) => {
     },
   });
 
-  // Get unassigned systems (not mapped to any VCR)
-  const unassignedSystems = systems?.filter(s => !s.assigned_handover_point_id) || [];
+  // Get unassigned systems (not mapped to any VCR and no subsystem-level assignments)
+  const unassignedSystems = systems?.filter(s => !s.assigned_handover_point_id && !s.assigned_subsystems?.length) || [];
   
-  // Get assigned systems
-  const assignedSystems = systems?.filter(s => !!s.assigned_handover_point_id) || [];
+  // Get assigned systems (mapped at system level OR has subsystem-level assignments)
+  const assignedSystems = systems?.filter(s => !!s.assigned_handover_point_id || (s.assigned_subsystems && s.assigned_subsystems.length > 0)) || [];
 
   return {
     systems: systems || [],
