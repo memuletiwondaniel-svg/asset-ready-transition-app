@@ -164,13 +164,27 @@ export const useUserTasks = () => {
             // VCR Template review: one approval per role is enough —
             // complete ALL other users' pending tasks for the same template
             if (templateId && completedTask.type === 'review' && completedTask.title?.includes('VCR Template')) {
-              await supabase
+              // Get sibling tasks to update with auto_completed metadata
+              const { data: siblingTasks } = await supabase
                 .from('user_tasks')
-                .update({ status: 'completed' })
+                .select('id, metadata')
                 .neq('id', taskId)
                 .eq('status', 'pending')
                 .eq('type', 'review')
                 .filter('metadata->>template_id', 'eq', templateId);
+
+              if (siblingTasks?.length) {
+                for (const sibling of siblingTasks) {
+                  const existingMeta = (sibling.metadata as Record<string, any>) || {};
+                  await supabase
+                    .from('user_tasks')
+                    .update({ 
+                      status: 'completed',
+                      metadata: { ...existingMeta, auto_completed: true, completed_by: user.id }
+                    })
+                    .eq('id', sibling.id);
+                }
+              }
             }
 
             // Back-to-back logic: also complete matching tasks
