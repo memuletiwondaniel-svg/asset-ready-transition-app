@@ -50,8 +50,10 @@ export const ORPActivitiesPanel: React.FC<ORPActivitiesPanelProps> = ({
 
   // Report task count to parent
   useEffect(() => {
-    onTaskCountUpdate?.(rawActivities.length);
-  }, [rawActivities.length, onTaskCountUpdate]);
+    if (!isLoading) {
+      onTaskCountUpdate?.(rawActivities.length);
+    }
+  }, [rawActivities.length, isLoading, onTaskCountUpdate]);
 
   // Group activities by plan to avoid duplicates
   const uniquePlans = activities.reduce((acc, activity) => {
