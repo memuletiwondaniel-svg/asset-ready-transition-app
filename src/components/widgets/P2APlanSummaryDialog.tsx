@@ -89,6 +89,7 @@ function usePlanSummaryData(planId: string) {
       }));
     },
     enabled: !!planId,
+    staleTime: 0,
   });
 
   const { data: mappings } = useQuery({
