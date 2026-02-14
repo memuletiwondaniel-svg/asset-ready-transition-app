@@ -76,13 +76,13 @@ export const MappingOverlay: React.FC<MappingOverlayProps> = ({ bundles }) => {
               />
             )}
 
-            {/* --- Trunk: line from bus midpoint to VCR card center --- */}
+            {/* --- Trunk: perfectly horizontal line from bus to VCR --- */}
             {/* Glow */}
             <line
               x1={busX}
               y1={systemCenterY}
               x2={vcrX}
-              y2={vcrY}
+              y2={systemCenterY}
               stroke={borderColor}
               strokeWidth={4}
               strokeLinecap="round"
@@ -93,7 +93,7 @@ export const MappingOverlay: React.FC<MappingOverlayProps> = ({ bundles }) => {
               x1={busX}
               y1={systemCenterY}
               x2={vcrX}
-              y2={vcrY}
+              y2={systemCenterY}
               stroke={borderColor}
               strokeWidth={2}
               strokeLinecap="round"
@@ -115,7 +115,7 @@ export const MappingOverlay: React.FC<MappingOverlayProps> = ({ bundles }) => {
             {/* VCR-side dot */}
             <circle
               cx={vcrX}
-              cy={vcrY}
+              cy={systemCenterY}
               r={3.5}
               fill={borderColor}
               opacity={0.6}
