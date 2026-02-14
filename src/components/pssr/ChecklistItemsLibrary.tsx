@@ -33,6 +33,7 @@ interface ItemFormData {
   topic: string;
   description: string;
   supporting_evidence: string;
+  guidance_notes: string;
   approvers: string[];
   responsible: string;
 }
@@ -128,6 +129,7 @@ const ChecklistItemsLibrary: React.FC = () => {
     topic: '',
     description: '',
     supporting_evidence: '',
+    guidance_notes: '',
     approvers: [],
     responsible: '',
   });
@@ -186,6 +188,7 @@ const ChecklistItemsLibrary: React.FC = () => {
       topic: '',
       description: '',
       supporting_evidence: '',
+      guidance_notes: '',
       approvers: [],
       responsible: '',
     });
@@ -199,6 +202,7 @@ const ChecklistItemsLibrary: React.FC = () => {
       topic: item.topic || '',
       description: item.description,
       supporting_evidence: item.supporting_evidence || '',
+      guidance_notes: (item as any).guidance_notes || '',
       approvers: item.approvers ? item.approvers.split(',').map(s => s.trim()) : [],
       responsible: item.responsible || '',
     });
@@ -265,6 +269,7 @@ const ChecklistItemsLibrary: React.FC = () => {
       topic: formData.topic.trim() || null,
       description: formData.description.trim(),
       supporting_evidence: formData.supporting_evidence.trim() || null,
+      guidance_notes: formData.guidance_notes.trim() || null,
       approvers: formData.approvers.length > 0 ? formData.approvers.join(', ') : null,
       responsible: formData.responsible.trim() || null,
       is_active: true,
@@ -527,11 +532,11 @@ const ChecklistItemsLibrary: React.FC = () => {
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingItem ? 'Edit Checklist Item' : 'Add New Checklist Item'}</DialogTitle>
+            <DialogTitle>{editingItem ? 'Edit PSSR Item' : 'Add New PSSR Item'}</DialogTitle>
             <DialogDescription>
               {editingItem 
-                ? 'Update the details of this checklist item.'
-                : 'Create a new checklist item for the PSSR library.'}
+                ? 'Update the details of this PSSR item.'
+                : 'Create a new PSSR item for the library.'}
             </DialogDescription>
           </DialogHeader>
 
@@ -597,6 +602,19 @@ const ChecklistItemsLibrary: React.FC = () => {
                 onChange={(e) => setFormData(prev => ({ ...prev, supporting_evidence: e.target.value }))}
                 placeholder="e.g., Signed-off ITR-B, Test Records"
                 className="placeholder:text-muted-foreground/60 placeholder:italic"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Guidance Notes
+              </label>
+              <Textarea
+                value={formData.guidance_notes}
+                onChange={(e) => setFormData(prev => ({ ...prev, guidance_notes: e.target.value }))}
+                placeholder="Enter guidance notes..."
+                className="placeholder:text-muted-foreground/60 placeholder:italic min-h-[80px]"
+                rows={3}
               />
             </div>
 
