@@ -18,8 +18,8 @@ interface APIManagementProps {
 }
 
 const predefinedAPIs = [
-  { id: 'sap4hana', name: 'SAP S/4HANA', description: 'Enterprise resource planning and business operations', category: 'ERP', logo: sapLogo },
-  { id: 'primavera-p6', name: 'Oracle Primavera P6', description: 'Project planning, scheduling and control', category: 'Project Management', logo: primaveraLogo },
+  { id: 'sap4hana', name: 'SAP S/4HANA', description: 'Enterprise resource planning and business operations', category: 'ERP', logo: sapLogo, logoClass: '' },
+  { id: 'primavera-p6', name: 'Oracle Primavera P6', description: 'Project planning, scheduling and control', category: 'Project Management', logo: primaveraLogo, logoClass: 'scale-130' },
   { id: 'gocompletions', name: 'GoCompletions', description: 'Completions and commissioning management', category: 'Completions', logo: gocompletionsLogo },
   { id: 'assai', name: 'Assai', description: 'Document management and control', category: 'Document Management', logo: assaiLogo },
   { id: 'sharepoint', name: 'SharePoint', description: 'Collaboration and document storage platform', category: 'Collaboration', logo: sharepointLogo },
@@ -78,7 +78,7 @@ const APIManagement: React.FC<APIManagementProps> = ({ onBack }) => {
                   <Badge variant="outline" className="text-xs text-muted-foreground">Not configured</Badge>
                 </div>
                 <div className="h-16 flex items-center justify-center bg-white rounded-lg border border-border/30 p-3">
-                  <img src={api.logo} alt={`${api.name} logo`} className="h-full max-w-full object-contain" />
+                  <img src={api.logo} alt={`${api.name} logo`} className={`h-full max-w-full object-contain ${api.logoClass || ''}`} style={api.logoClass === 'scale-130' ? { transform: 'scale(1.3)' } : undefined} />
                 </div>
               </CardHeader>
               <CardContent>
