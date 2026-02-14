@@ -411,7 +411,7 @@ const PACCertificate: React.FC<PACCertificateProps> = ({
               <h3 className="font-bold text-foreground mb-4 text-center border-b border-border pb-2">
                 APPROVALS
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+              <div className="flex flex-col md:flex-row justify-center gap-8 md:gap-24 mt-4">
                 {approvers.map((approver) => (
                   <div 
                     key={approver.id} 
