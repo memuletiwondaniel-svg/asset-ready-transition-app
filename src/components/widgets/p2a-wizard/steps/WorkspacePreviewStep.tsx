@@ -138,16 +138,8 @@ export const WorkspacePreviewStep: React.FC<WorkspacePreviewStepProps> = ({
                               sideOffset={4}
                               collisionPadding={16}
                               avoidCollisions
-                              className="w-56 p-0 rounded-xl shadow-xl border overflow-hidden z-[100]"
+                              className="w-56 p-2 rounded-xl shadow-xl border overflow-hidden z-[100] max-h-48 overflow-y-auto"
                             >
-                              <div
-                                className="px-3 py-2 border-b"
-                                style={{ background: vcrColor?.background, borderColor: vcrColor?.border }}
-                              >
-                                <div className="text-xs font-semibold truncate">{vcr.name}</div>
-                                <div className="text-[10px] text-muted-foreground font-mono">{shortVCRCode(vcr.code)}</div>
-                              </div>
-                              <div className="p-2 max-h-48 overflow-y-auto">
                                 {vcrSystems.length === 0 ? (
                                   <p className="text-[10px] text-muted-foreground text-center py-2">No systems mapped</p>
                                 ) : (
@@ -182,7 +174,6 @@ export const WorkspacePreviewStep: React.FC<WorkspacePreviewStepProps> = ({
                                     ))}
                                   </div>
                                 )}
-                              </div>
                             </HoverCardContent>
                           </HoverCard>
                           </div>
