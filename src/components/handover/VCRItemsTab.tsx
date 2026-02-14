@@ -216,9 +216,7 @@ const VCRItemsTab: React.FC = () => {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <CardTitle>
-                Checklist Items
-              </CardTitle>
+              <CardTitle>VCR Items</CardTitle>
               <Badge variant="outline" className="px-3 py-1">{filteredItems.length} items</Badge>
               {categoryFilter !== 'all' && (() => {
                 const cat = categories?.find(c => c.id === categoryFilter);
