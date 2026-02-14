@@ -127,6 +127,7 @@ interface SystemsPanelProps {
   handoverPoints?: P2AHandoverPoint[];
   onAssignSystemToVCR?: (handoverPointId: string, systemId: string) => void;
   onUnassignSystemFromVCR?: (systemId: string) => void;
+  onAssignSubsystemToVCR?: (handoverPointId: string, systemId: string, subsystemId: string) => void;
 }
 
 export const SystemsPanel: React.FC<SystemsPanelProps> = ({
@@ -147,6 +148,7 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
   handoverPoints = [],
   onAssignSystemToVCR,
   onUnassignSystemFromVCR,
+  onAssignSubsystemToVCR,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -473,6 +475,7 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
           handoverPoints={handoverPoints}
           onAssignSystemToVCR={onAssignSystemToVCR}
           onUnassignSystemFromVCR={onUnassignSystemFromVCR}
+          onAssignSubsystemToVCR={onAssignSubsystemToVCR}
         />
       )}
     </>

@@ -50,6 +50,7 @@ interface SystemDetailSheetProps {
   handoverPoints?: P2AHandoverPoint[];
   onAssignSystemToVCR?: (handoverPointId: string, systemId: string) => void;
   onUnassignSystemFromVCR?: (systemId: string) => void;
+  onAssignSubsystemToVCR?: (handoverPointId: string, systemId: string, subsystemId: string) => void;
 }
 
 export const SystemDetailSheet: React.FC<SystemDetailSheetProps> = ({
@@ -61,6 +62,7 @@ export const SystemDetailSheet: React.FC<SystemDetailSheetProps> = ({
   handoverPoints = [],
   onAssignSystemToVCR,
   onUnassignSystemFromVCR,
+  onAssignSubsystemToVCR,
 }) => {
   const [activeTab, setActiveTab] = useState('details');
   const [editIsHC, setEditIsHC] = useState(system.is_hydrocarbon);
@@ -113,7 +115,7 @@ export const SystemDetailSheet: React.FC<SystemDetailSheetProps> = ({
   };
 
   const handleSubsystemVCRChange = (subsystemId: string, value: string) => {
-    console.log('Subsystem VCR change:', subsystemId, value);
+    onAssignSubsystemToVCR?.(value, system.id, subsystemId);
   };
 
   return (

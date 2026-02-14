@@ -86,6 +86,7 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
     createHandoverPoint,
     assignSystemToPoint,
     unassignSystemFromPoint,
+    assignSubsystemToPoint,
     moveHandoverPointToPhase,
     reorderHandoverPoints,
     updateVCRPosition,
@@ -595,6 +596,7 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
           handoverPoints={[...assignedPoints, ...unassignedPoints]}
           onAssignSystemToVCR={(hpId, sysId) => assignSystemToPoint({ handoverPointId: hpId, systemId: sysId })}
           onUnassignSystemFromVCR={(sysId) => unassignSystemFromPoint({ systemId: sysId })}
+          onAssignSubsystemToVCR={(hpId, sysId, subId) => assignSubsystemToPoint({ handoverPointId: hpId, systemId: sysId, subsystemId: subId })}
         />
 
         {/* Phases Timeline Area */}

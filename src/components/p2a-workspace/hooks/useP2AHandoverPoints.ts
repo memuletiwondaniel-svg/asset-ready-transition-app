@@ -279,6 +279,41 @@ export const useP2AHandoverPoints = (handoverPlanId: string) => {
     },
   });
 
+  const assignSubsystemToPoint = useMutation({
+    mutationFn: async ({ handoverPointId, systemId, subsystemId }: { handoverPointId: string; systemId: string; subsystemId: string }) => {
+      // Remove any existing assignment for this subsystem
+      await supabase
+        .from('p2a_handover_point_systems')
+        .delete()
+        .eq('system_id', systemId)
+        .eq('subsystem_id', subsystemId);
+
+      if (handoverPointId === 'none') return null;
+
+      const { data, error } = await supabase
+        .from('p2a_handover_point_systems')
+        .insert({
+          handover_point_id: handoverPointId,
+          system_id: systemId,
+          subsystem_id: subsystemId,
+          assigned_by: user?.id,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['p2a-handover-points', handoverPlanId] });
+      queryClient.invalidateQueries({ queryKey: ['p2a-systems'] });
+      toast({ title: 'Success', description: 'Subsystem VCR assignment updated' });
+    },
+    onError: (error) => {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    },
+  });
+
   const moveHandoverPointToPhase = useMutation({
     mutationFn: async ({ handoverPointId, newPhaseId }: { handoverPointId: string; newPhaseId: string | null }) => {
       const { data, error } = await supabase
@@ -567,6 +602,7 @@ export const useP2AHandoverPoints = (handoverPlanId: string) => {
     deleteHandoverPoint: deleteHandoverPoint.mutate,
     assignSystemToPoint: assignSystemToPoint.mutate,
     unassignSystemFromPoint: unassignSystemFromPoint.mutate,
+    assignSubsystemToPoint: assignSubsystemToPoint.mutate,
     moveHandoverPointToPhase: moveHandoverPointToPhase.mutate,
     reorderHandoverPoints: reorderHandoverPoints.mutate,
     updateVCRPosition: updateVCRPosition.mutate,
