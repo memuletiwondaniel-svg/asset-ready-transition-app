@@ -126,7 +126,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
 
   return (
     <>
-      <Card className="h-full flex flex-col transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:border-red-500/20 group min-h-[420px]">
+      <Card className="h-full flex flex-col transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:border-red-500/20 group">
         <CardHeader {...dragAttributes} {...dragListeners} className="cursor-grab active:cursor-grabbing pb-3">
           <CardTitle className="text-lg flex items-center gap-3">
             <StyledWidgetIcon 
@@ -161,7 +161,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                     <CircularProgress value={vcr.progress} className="text-blue-600" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-mono text-blue-600/70">{vcr.vcr_code}</span>
+                        <span className="text-xs font-mono text-blue-600/70">{vcr.vcr_code?.replace(/^VCR-[A-Z0-9]+-/, 'VCR-')}</span>
                         <Badge variant="outline" className="text-[9px] px-1 py-0">
                           {vcr.status === 'PENDING' ? 'Draft' : vcr.status}
                         </Badge>
