@@ -28,6 +28,7 @@ import { WizardVCR } from './VCRCreationStep';
 import { PhaseCard } from './phases/PhaseCard';
 import { DraggableVCRChip, VCRChipOverlay } from './phases/DraggableVCRChip';
 import { PhaseFormDialog } from './phases/PhaseFormDialog';
+import { CombineVCRDialog } from './phases/CombineVCRDialog';
 
 export interface WizardPhase {
   id: string;
@@ -41,22 +42,30 @@ interface PhasesStepProps {
   vcrs: WizardVCR[];
   phases: WizardPhase[];
   vcrPhaseAssignments: Record<string, string>;
+  mappings: Record<string, string[]>;
   milestones?: Array<{ id: string; name: string; target_date?: string }>;
   onPhasesChange: (phases: WizardPhase[]) => void;
   onVCRPhaseAssignmentsChange: (assignments: Record<string, string>) => void;
+  onVCRsChange: (vcrs: WizardVCR[]) => void;
+  onMappingsChange: (mappings: Record<string, string[]>) => void;
 }
 
 export const PhasesStep: React.FC<PhasesStepProps> = ({
   vcrs,
   phases,
   vcrPhaseAssignments,
+  mappings,
   milestones = [],
   onPhasesChange,
   onVCRPhaseAssignmentsChange,
+  onVCRsChange,
+  onMappingsChange,
 }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingPhase, setEditingPhase] = useState<WizardPhase | null>(null);
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
+  const [combineDialogOpen, setCombineDialogOpen] = useState(false);
+  const [combineContext, setCombineContext] = useState<{ source: WizardVCR; target: WizardVCR } | null>(null);
   // Track VCR ordering within each phase: phaseId -> ordered vcrId[]
   const [phaseVcrOrder, setPhaseVcrOrder] = useState<Record<string, string[]>>({});
 
@@ -168,41 +177,74 @@ export const PhasesStep: React.FC<PhasesStepProps> = ({
       return;
     }
 
-    // Dropped onto another VCR — reorder or move
+    // Dropped onto another VCR — open combine dialog
     if (overId.startsWith('vcr-')) {
       const overVcrId = overId.replace('vcr-', '');
-      const sourcePhaseId = findPhaseForVCR(vcrId);
-      const targetPhaseId = findPhaseForVCR(overVcrId);
-
-      if (!targetPhaseId) return;
-
-      if (sourcePhaseId === targetPhaseId) {
-        // Reorder within the same phase
-        const ordered = getOrderedPhaseVCRs(targetPhaseId);
-        const oldIndex = ordered.indexOf(vcrId);
-        const newIndex = ordered.indexOf(overVcrId);
-        if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
-          setPhaseVcrOrder(prev => ({
-            ...prev,
-            [targetPhaseId]: arrayMove(ordered, oldIndex, newIndex),
-          }));
-        }
-      } else {
-        // Move to a different phase at the drop position
-        if (sourcePhaseId) {
-          setPhaseVcrOrder(prev => ({
-            ...prev,
-            [sourcePhaseId]: (prev[sourcePhaseId] || []).filter(id => id !== vcrId),
-          }));
-        }
-        const targetOrdered = getOrderedPhaseVCRs(targetPhaseId);
-        const insertIndex = targetOrdered.indexOf(overVcrId);
-        const newOrder = [...targetOrdered];
-        newOrder.splice(insertIndex, 0, vcrId);
-        setPhaseVcrOrder(prev => ({ ...prev, [targetPhaseId]: newOrder }));
-        onVCRPhaseAssignmentsChange({ ...vcrPhaseAssignments, [vcrId]: targetPhaseId });
+      const sourceVCR = vcrs.find(v => v.id === vcrId);
+      const targetVCR = vcrs.find(v => v.id === overVcrId);
+      if (sourceVCR && targetVCR && sourceVCR.id !== targetVCR.id) {
+        setCombineContext({ source: sourceVCR, target: targetVCR });
+        setCombineDialogOpen(true);
       }
     }
+  };
+
+  const handleCombineVCRs = (sourceId: string, targetId: string, newName: string) => {
+    const sourceVCR = vcrs.find(v => v.id === sourceId);
+    const targetVCR = vcrs.find(v => v.id === targetId);
+    if (!sourceVCR || !targetVCR) return;
+
+    // Create new combined VCR keeping target's position
+    const remainingVcrs = vcrs.filter(v => v.id !== sourceId && v.id !== targetId);
+    const newVCR: WizardVCR = {
+      id: `vcr-${Date.now()}`,
+      name: newName,
+      reason: [sourceVCR.reason, targetVCR.reason].filter(Boolean).join('; '),
+      targetMilestone: targetVCR.targetMilestone || sourceVCR.targetMilestone,
+    };
+    const newVcrs = [...remainingVcrs, newVCR];
+
+    // Re-generate codes
+    const projectCodeMatch = sourceVCR.code?.match(/VCR-([A-Z0-9]+)-/);
+    const prefix = projectCodeMatch ? projectCodeMatch[1] : 'XXX';
+    const codedVcrs = newVcrs.map((v, i) => ({
+      ...v,
+      code: `VCR-${prefix}-${String(i + 1).padStart(3, '0')}`,
+    }));
+    onVCRsChange(codedVcrs);
+
+    // Merge mappings: combine systems from both source VCRs
+    const sourceSystems = mappings[sourceId] || [];
+    const targetSystems = mappings[targetId] || [];
+    const mergedSystems = [...new Set([...sourceSystems, ...targetSystems])];
+    const newMappings = { ...mappings };
+    delete newMappings[sourceId];
+    delete newMappings[targetId];
+    newMappings[newVCR.id] = mergedSystems;
+    onMappingsChange(newMappings);
+
+    // Update phase assignments: use target's phase
+    const targetPhaseId = vcrPhaseAssignments[targetId] || vcrPhaseAssignments[sourceId];
+    const newAssignments = { ...vcrPhaseAssignments };
+    delete newAssignments[sourceId];
+    delete newAssignments[targetId];
+    if (targetPhaseId) {
+      newAssignments[newVCR.id] = targetPhaseId;
+    }
+    onVCRPhaseAssignmentsChange(newAssignments);
+
+    // Update phase VCR order
+    setPhaseVcrOrder(prev => {
+      const updated = { ...prev };
+      for (const phaseId of Object.keys(updated)) {
+        updated[phaseId] = updated[phaseId]
+          .filter(id => id !== sourceId && id !== targetId);
+        if (phaseId === targetPhaseId) {
+          updated[phaseId].push(newVCR.id);
+        }
+      }
+      return updated;
+    });
   };
 
   const handleUnassignVCR = (vcrId: string) => {
@@ -355,6 +397,16 @@ export const PhasesStep: React.FC<PhasesStepProps> = ({
         editingPhase={editingPhase}
         onSave={editingPhase ? handleEditPhase : handleCreatePhase}
       />
+
+      {combineContext && (
+        <CombineVCRDialog
+          open={combineDialogOpen}
+          onOpenChange={setCombineDialogOpen}
+          sourceVCR={combineContext.source}
+          targetVCR={combineContext.target}
+          onCombine={handleCombineVCRs}
+        />
+      )}
     </DndContext>
   );
 };
