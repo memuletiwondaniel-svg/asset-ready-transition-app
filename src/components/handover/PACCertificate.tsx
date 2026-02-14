@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -6,7 +6,7 @@ import { Printer, FileDown, Edit2, Save, X } from "lucide-react";
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { toast } from "sonner";
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 interface PACApprover {
@@ -25,6 +25,12 @@ interface VCRSystem {
   systemName: string;
 }
 
+interface PACContent {
+  openingStatement: string;
+  confirmationItems: string[];
+  closingStatement: string;
+}
+
 interface PACCertificateProps {
   certificateNumber?: string;
   facilityName?: string;
@@ -34,7 +40,7 @@ interface PACCertificateProps {
   approvers?: PACApprover[];
 }
 
-const defaultContent = {
+const defaultContent: PACContent = {
   openingStatement: `This Provisional Acceptance Certificate formalizes the transfer of Operational CONTROL , CUSTODY and CARE of [Facility/Pipeline Name] from the Project Team to the Asset Team. The PAC confirms that all handover prerequisites listed in the associated Verification Certificate of Readiness (VCR) has been reviewed and satisfactorily closed out or qualified with requisite approvals.`,
   confirmationItems: [
     `All commissioning activities have been completed and that the systems necessary for the safe, stable, and compliant operation and maintenance of the facilities in scope have been handed over in a state deemed fit for use.`,
@@ -62,9 +68,54 @@ const PACCertificate: React.FC<PACCertificateProps> = ({
   ]
 }) => {
   const certificateRef = useRef<HTMLDivElement>(null);
+  const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
-  const [content, setContent] = useState(defaultContent);
-  const [editContent, setEditContent] = useState(defaultContent);
+  const [content, setContent] = useState<PACContent>(defaultContent);
+  const [editContent, setEditContent] = useState<PACContent>(defaultContent);
+
+  // Fetch saved PAC template content from database
+  const { data: templateData } = useQuery({
+    queryKey: ['pac-template-content'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('handover_certificate_templates')
+        .select('id, content')
+        .eq('certificate_type', 'PAC')
+        .eq('is_default', true)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Parse stored content on load
+  useEffect(() => {
+    if (templateData?.content) {
+      try {
+        const parsed = JSON.parse(templateData.content);
+        if (parsed.openingStatement && parsed.confirmationItems && parsed.closingStatement) {
+          setContent(parsed);
+        }
+      } catch {
+        // Content is not JSON (legacy format), keep defaults
+      }
+    }
+  }, [templateData]);
+
+  // Save mutation
+  const saveMutation = useMutation({
+    mutationFn: async (newContent: PACContent) => {
+      if (!templateData?.id) throw new Error('No template found');
+      const { error } = await supabase
+        .from('handover_certificate_templates')
+        .update({ content: JSON.stringify(newContent) })
+        .eq('id', templateData.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pac-template-content'] });
+    },
+  });
 
   // Fetch VCR systems for the associated project
   const { data: vcrSystems = [] } = useQuery({
@@ -166,10 +217,16 @@ const PACCertificate: React.FC<PACCertificateProps> = ({
     setIsEditing(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setContent(editContent);
     setIsEditing(false);
-    toast.success("Certificate content saved successfully!");
+    try {
+      await saveMutation.mutateAsync(editContent);
+      toast.success("Certificate content saved successfully!");
+    } catch (error) {
+      console.error('Error saving certificate:', error);
+      toast.error("Failed to save certificate content to database");
+    }
   };
 
   const handleCancel = () => {
