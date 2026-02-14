@@ -153,7 +153,13 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
   const [showAddManualModal, setShowAddManualModal] = useState(false);
   const [showExcelModal, setShowExcelModal] = useState(false);
   const [showCMSModal, setShowCMSModal] = useState(false);
-  const [selectedSystem, setSelectedSystem] = useState<P2ASystem | null>(null);
+  const [selectedSystemId, setSelectedSystemId] = useState<string | null>(null);
+
+  // Derive selectedSystem from live data to stay in sync with optimistic updates
+  const selectedSystem = selectedSystemId
+    ? systems.find(s => s.id === selectedSystemId) ?? null
+    : null;
+  const setSelectedSystem = (sys: P2ASystem | null) => setSelectedSystemId(sys?.id ?? null);
   const [isHovered, setIsHovered] = useState(false);
   const [expandedSections, setExpandedSections] = useState({
     unassigned: false,
