@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react';
+import { useDroppable } from '@dnd-kit/core';
 import { createPortal } from 'react-dom';
 import {
   DndContext,
@@ -40,6 +41,57 @@ export interface WizardPhase {
   display_order: number;
   milestoneIds: string[];
 }
+
+// ── Unassigned VCRs tray (droppable) ───────────────────────
+const UnassignedTray: React.FC<{
+  vcrs: WizardVCR[];
+  unassignedVCRs: WizardVCR[];
+  activeDragId: string | null;
+  activeDragVCR: WizardVCR | null | undefined;
+  onVCRClick: (vcr: WizardVCR) => void;
+}> = ({ vcrs, unassignedVCRs, activeDragId, activeDragVCR, onVCRClick }) => {
+  const isAssignedDrag = activeDragVCR && vcrs.some(v => `vcr-${v.id}` === activeDragId && unassignedVCRs.every(u => u.id !== v.id));
+  const { setNodeRef, isOver } = useDroppable({ id: 'unassigned-tray' });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={cn(
+        'border rounded-lg p-3 space-y-2 transition-colors',
+        isOver && isAssignedDrag ? 'bg-amber-50/50 dark:bg-amber-950/20 border-amber-300 dark:border-amber-600 border-dashed' :
+        activeDragId && isAssignedDrag ? 'bg-muted/10 border-dashed border-muted-foreground/30' : 'bg-muted/30',
+      )}
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium">
+            {isOver && isAssignedDrag ? 'Release to unassign' : unassignedVCRs.length > 0 ? 'Unassigned VCRs' : 'All VCRs Assigned'}
+          </span>
+        </div>
+      </div>
+
+      {unassignedVCRs.length > 0 ? (
+        <>
+          <p className="text-[10px] text-muted-foreground">
+            Drag a VCR and drop it onto a phase card above
+          </p>
+          <div className="grid grid-cols-3 gap-1.5">
+            {unassignedVCRs.map(vcr => {
+              const vcrIndex = vcrs.findIndex(v => v.id === vcr.id);
+              return (
+                <DraggableVCRChip key={vcr.id} vcr={vcr} index={vcrIndex} onVCRClick={onVCRClick} />
+              );
+            })}
+          </div>
+        </>
+      ) : (
+        <p className="text-[10px] text-muted-foreground">
+          {isAssignedDrag ? 'Drop here to unassign from phase' : 'All VCRs have been assigned to phases. Drag a VCR here to unassign it.'}
+        </p>
+      )}
+    </div>
+  );
+};
 
 interface PhasesStepProps {
   vcrs: WizardVCR[];
@@ -161,6 +213,21 @@ export const PhasesStep: React.FC<PhasesStepProps> = ({
     const vcrId = (active.data.current as { vcrId?: string })?.vcrId;
     const overId = over.id as string;
     if (!vcrId) return;
+
+    // Dropped onto unassigned tray — unassign from phase
+    if (overId === 'unassigned-tray') {
+      const sourcePhaseId = findPhaseForVCR(vcrId);
+      if (sourcePhaseId) {
+        setPhaseVcrOrder(prev => ({
+          ...prev,
+          [sourcePhaseId]: (prev[sourcePhaseId] || []).filter(id => id !== vcrId),
+        }));
+        const updated = { ...vcrPhaseAssignments };
+        delete updated[vcrId];
+        onVCRPhaseAssignmentsChange(updated);
+      }
+      return;
+    }
 
     // Dropped onto a phase card directly
     if (overId.startsWith('phase-')) {
@@ -361,38 +428,13 @@ export const PhasesStep: React.FC<PhasesStepProps> = ({
 
         {/* Unassigned VCRs tray – shown as soon as phases exist */}
         {phases.length > 0 && vcrs.length > 0 && (
-          <div className={cn(
-            'border rounded-lg p-3 space-y-2 transition-colors',
-            activeDragId ? 'bg-muted/10 border-dashed border-border' : 'bg-muted/30',
-          )}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium">
-                  {unassignedVCRs.length > 0 ? 'Unassigned VCRs' : 'All VCRs Assigned'}
-                </span>
-              </div>
-            </div>
-
-            {unassignedVCRs.length > 0 ? (
-              <>
-                <p className="text-[10px] text-muted-foreground">
-                  Drag a VCR and drop it onto a phase card above
-                </p>
-                <div className="grid grid-cols-3 gap-1.5">
-                  {unassignedVCRs.map(vcr => {
-                    const vcrIndex = vcrs.findIndex(v => v.id === vcr.id);
-                    return (
-                      <DraggableVCRChip key={vcr.id} vcr={vcr} index={vcrIndex} onVCRClick={(v) => { setSelectedVCR(v); setVcrOverlayOpen(true); }} />
-                    );
-                  })}
-                </div>
-              </>
-            ) : (
-              <p className="text-[10px] text-muted-foreground">
-                All VCRs have been assigned to phases. You can unassign a VCR by clicking the × on its chip inside a phase card.
-              </p>
-            )}
-          </div>
+          <UnassignedTray
+            vcrs={vcrs}
+            unassignedVCRs={unassignedVCRs}
+            activeDragId={activeDragId}
+            activeDragVCR={activeDragVCR}
+            onVCRClick={(v) => { setSelectedVCR(v); setVcrOverlayOpen(true); }}
+          />
         )}
       </div>
 
