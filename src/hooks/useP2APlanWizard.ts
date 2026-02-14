@@ -278,13 +278,13 @@ async function persistPlanToDatabase(
     for (const system of state.systems) {
       const { data: savedSystem, error } = await client
         .from('p2a_systems')
-        .insert({
+        .upsert({
           handover_plan_id: planId,
           system_id: system.system_id,
           name: system.name,
           is_hydrocarbon: system.is_hydrocarbon,
           completion_percentage: Math.round(system.progress || 0),
-        })
+        }, { onConflict: 'system_id,handover_plan_id' })
         .select()
         .single();
 
