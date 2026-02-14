@@ -375,7 +375,6 @@ export const PhasesStep: React.FC<PhasesStepProps> = ({
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Badge variant="outline">{phases.length} phase{phases.length !== 1 ? 's' : ''}</Badge>
             {onOpenFullWorkspace && (
               <Button
                 variant="outline"
