@@ -119,7 +119,7 @@ export const WidgetCard: React.FC<WidgetCardProps> = ({
         </DropdownMenu>
         </div>
       </CardHeader>
-      <CardContent className="p-4 flex-1 min-h-0">
+      <CardContent className="p-4 flex-1 min-h-0 overflow-auto">
         {children}
       </CardContent>
     </Card>
