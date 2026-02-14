@@ -594,7 +594,7 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                 value="item-categories"
                 className="flex-shrink-0 whitespace-nowrap px-4 text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
               >
-                {t.itemCategories || 'Item Categories'}
+                {t.itemCategories || 'PSSR Categories'}
               </TabsTrigger>
               {showTieInTab && (
                 <TabsTrigger 

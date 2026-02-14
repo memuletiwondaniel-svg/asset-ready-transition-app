@@ -117,7 +117,7 @@ const ItemCategoriesTab: React.FC = () => {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>Item Categories</CardTitle>
+            <CardTitle>PSSR Categories</CardTitle>
             <Button onClick={handleOpenCreate}>
               <Plus className="h-4 w-4 mr-2" />
               Add Category
