@@ -47,7 +47,7 @@ export const SystemCard: React.FC<SystemCardProps> = ({
   if (isDragging) {
     return (
       <Card className="border border-dashed border-muted-foreground/30 bg-muted/20 opacity-40" style={{ width: 'calc(140px * var(--ws-zoom, 1))' }}>
-        <CardContent className="p-1.5">
+        <CardContent style={{ padding: 'calc(6px * var(--ws-zoom, 1))' }}>
           <div style={{ height: 'calc(34px * var(--ws-zoom, 1))' }} />
         </CardContent>
       </Card>
@@ -66,32 +66,33 @@ export const SystemCard: React.FC<SystemCardProps> = ({
       }}
       onClick={onClick}
     >
-      <CardContent className="p-1.5">
-        <div className="flex items-start gap-1.5 relative">
+      <CardContent style={{ padding: 'calc(6px * var(--ws-zoom, 1))' }}>
+        <div className="flex items-start relative" style={{ gap: 'calc(6px * var(--ws-zoom, 1))' }}>
           {/* HC Indicator or spacer for alignment */}
           {system.is_hydrocarbon ? (
-            <div className="w-4 h-4 rounded flex items-center justify-center shrink-0 mt-0.5 bg-orange-500/10 text-orange-500">
-              <Flame className="w-2.5 h-2.5" />
+            <div className="rounded flex items-center justify-center shrink-0 mt-0.5 bg-orange-500/10 text-orange-500"
+              style={{ width: 'calc(16px * var(--ws-zoom, 1))', height: 'calc(16px * var(--ws-zoom, 1))' }}>
+              <Flame style={{ width: 'calc(10px * var(--ws-zoom, 1))', height: 'calc(10px * var(--ws-zoom, 1))' }} />
             </div>
           ) : (
-            <div className="w-4 h-4 shrink-0" />
+            <div className="shrink-0" style={{ width: 'calc(16px * var(--ws-zoom, 1))', height: 'calc(16px * var(--ws-zoom, 1))' }} />
           )}
 
           <div className="flex-1 min-w-0">
             {/* System Name */}
-            <span className="text-[10px] font-medium truncate block leading-tight">
+            <span className="font-medium truncate block leading-tight" style={{ fontSize: 'calc(10px * var(--ws-zoom, 1))' }}>
               {system.name}
             </span>
 
             {/* System ID + Progress */}
             <div className="flex items-center justify-between gap-1">
-              <span className="text-[8px] text-muted-foreground font-mono truncate">
+              <span className="text-muted-foreground font-mono truncate" style={{ fontSize: 'calc(8px * var(--ws-zoom, 1))' }}>
                 {system.system_id}
               </span>
               <span className={cn(
-                'text-[8px] font-medium shrink-0 opacity-0 group-hover:opacity-100 transition-opacity',
+                'font-medium shrink-0 opacity-0 group-hover:opacity-100 transition-opacity',
                 isComplete(system) ? 'text-emerald-500' : 'text-muted-foreground'
-              )}>
+              )} style={{ fontSize: 'calc(8px * var(--ws-zoom, 1))' }}>
                 {system.completion_percentage}%
               </span>
             </div>
@@ -99,7 +100,7 @@ export const SystemCard: React.FC<SystemCardProps> = ({
 
           {/* Drag Handle - absolute positioned, shown on hover */}
           <div className="absolute -left-0.5 top-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing text-muted-foreground/40 hover:text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
-            <GripVertical className="w-3 h-3" />
+            <GripVertical style={{ width: 'calc(12px * var(--ws-zoom, 1))', height: 'calc(12px * var(--ws-zoom, 1))' }} />
           </div>
         </div>
       </CardContent>

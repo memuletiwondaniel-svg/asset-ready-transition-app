@@ -165,10 +165,11 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
         {/* Phase Header Card - sticky at top when scrolling */}
         <div 
           className={cn(
-            "group rounded-t-xl border border-b-0 p-3 transition-all duration-200 hover:shadow-md",
+            "group rounded-t-xl border border-b-0 transition-all duration-200 hover:shadow-md",
             headerColorClass,
             showPhaseHighlight ? 'border-primary' : 'border-border'
           )}
+          style={{ padding: 'calc(12px * var(--ws-zoom, 1))' }}
         >
           <div className="flex items-center justify-between mb-1">
             {/* Drag handle for phase reordering */}
@@ -182,7 +183,7 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
               <GripVertical className="w-4 h-4 text-muted-foreground" />
             </button>
             <div className="flex items-center gap-1 flex-1 justify-center">
-              <h3 className="font-semibold text-sm truncate">
+              <h3 className="font-semibold truncate" style={{ fontSize: 'calc(14px * var(--ws-zoom, 1))' }}>
                 Phase {phaseIndex + 1}: {phase.name}
               </h3>
             </div>

@@ -46,27 +46,25 @@ export const SubsystemCard: React.FC<SubsystemCardProps> = ({
         }}
         onClick={onClick}
       >
-        <CardContent className="p-1.5">
-          <div className="flex items-start gap-1.5">
+        <CardContent style={{ padding: 'calc(6px * var(--ws-zoom, 1))' }}>
+          <div className="flex items-start" style={{ gap: 'calc(6px * var(--ws-zoom, 1))' }}>
             {isHydrocarbon ? (
-              <div className="w-4 h-4 rounded flex items-center justify-center shrink-0 mt-0.5 bg-orange-500/10 text-orange-500">
-                <Flame className="w-2.5 h-2.5" />
+              <div className="rounded flex items-center justify-center shrink-0 mt-0.5 bg-orange-500/10 text-orange-500"
+                style={{ width: 'calc(16px * var(--ws-zoom, 1))', height: 'calc(16px * var(--ws-zoom, 1))' }}>
+                <Flame style={{ width: 'calc(10px * var(--ws-zoom, 1))', height: 'calc(10px * var(--ws-zoom, 1))' }} />
               </div>
             ) : (
-              <div className="w-4 h-4 shrink-0" />
+              <div className="shrink-0" style={{ width: 'calc(16px * var(--ws-zoom, 1))', height: 'calc(16px * var(--ws-zoom, 1))' }} />
             )}
             <div className="flex-1 min-w-0">
-              {/* Subsystem Name */}
-              <span className="text-[10px] font-medium truncate block leading-tight">
+              <span className="font-medium truncate block leading-tight" style={{ fontSize: 'calc(10px * var(--ws-zoom, 1))' }}>
                 {subsystem.name}
               </span>
-
-              {/* Subsystem ID + Progress */}
               <div className="flex items-center justify-between gap-1">
-                <span className="text-[8px] text-muted-foreground font-mono truncate">
+                <span className="text-muted-foreground font-mono truncate" style={{ fontSize: 'calc(8px * var(--ws-zoom, 1))' }}>
                   {subsystem.subsystem_id}
                 </span>
-                <span className="text-[8px] font-medium text-muted-foreground shrink-0">
+                <span className="font-medium text-muted-foreground shrink-0" style={{ fontSize: 'calc(8px * var(--ws-zoom, 1))' }}>
                   {subsystem.completion_percentage}%
                 </span>
               </div>
