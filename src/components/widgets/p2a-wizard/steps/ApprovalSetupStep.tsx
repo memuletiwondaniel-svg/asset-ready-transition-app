@@ -124,14 +124,11 @@ export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
           new Set((teamData || []).map((m: any) => m.user_id).filter(Boolean))
         );
 
-        // Also find Deputy Plant Director from profiles based on plant name
+        // Also find Deputy Plant Director using SECURITY DEFINER function (bypasses RLS)
         let deputyProfile: { user_id: string; full_name: string; avatar_url?: string } | null = null;
         if (resolvedPlantName) {
           const { data: deputies, error: deputyError } = await supabase
-            .from('profiles')
-            .select('user_id, full_name, avatar_url')
-            .or(`position.ilike.%Dep. Plant Director - ${resolvedPlantName}%,position.ilike.%Deputy Plant Director - ${resolvedPlantName}%`)
-            .limit(1);
+            .rpc('find_deputy_plant_director', { plant_name_param: resolvedPlantName });
 
           console.log('[P2A Approval] Deputy lookup result:', { deputies, deputyError, resolvedPlantName });
 

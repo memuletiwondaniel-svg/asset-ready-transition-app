@@ -7270,6 +7270,14 @@ export type Database = {
         Returns: string
       }
       delete_user_account: { Args: { target_user_id: string }; Returns: Json }
+      find_deputy_plant_director: {
+        Args: { plant_name_param: string }
+        Returns: {
+          avatar_url: string
+          full_name: string
+          user_id: string
+        }[]
+      }
       generate_vcr_code: { Args: { p_project_code: string }; Returns: string }
       get_active_roles: {
         Args: never
