@@ -36,14 +36,13 @@ interface PACCertificateProps {
 
 const defaultContent = {
   openingStatement: `This Provisional Acceptance Certificate signifies the HANDOVER of Operational CONTROL and CARE of [Facility/Pipeline Name] from Project to the Asset. The PAC confirms that all systems necessary for the safe, stable, and compliant operation and maintenance of the facilities in scope have been handed over in a state deemed fit for operational use.`,
-  assetResponsibilities: [
-    `Assume full responsibility for day-to-day operations of [Facility Name] utilizing competent operators and approved procedures and management systems.`,
-    `Perform preventive and corrective maintenance (PMs & CMs) using Asset resources and the Asset Maintenance Management System (e.g., SAP).`,
-    `Manage all changes through the Asset's Management of Change (MOC) system.`
-  ],
-  projectResponsibilities: [
-    `Continue closing out all punch list items and open actions from STQ, MOC, and other reviews.`,
-    `Provide technical clarifications, vendor liaison, and support resolution of warranty-related defects under agreed operational and environmental conditions.`
+  confirmationItems: [
+    `All commissioning activities have been completed and that the systems necessary for the safe, stable, and compliant operation and maintenance of the facilities in scope have been handed over in a state deemed fit for use.`,
+    `The Asset has assumed full responsibility for day-to-day operations of the new facility utilizing competent operators and approved procedures and management systems.`,
+    `The Asset is executing the required preventive and corrective maintenance using Asset resources and the Asset Maintenance Management System (e.g., SAP) and where applicable, with the support of project team (until expiry of the aftercare support period).`,
+    `The Asset would manage all changes through the Asset's Management of Change (MOC) system.`,
+    `The Project shall continue closing out all punch list items and open actions from STQ, MOC, and other reviews.`,
+    `The Project shall continue to provide technical clarifications, vendor liaison, and support resolution of warranty-related defects under agreed operational and environmental conditions.`
   ],
   closingStatement: `An updated Outstanding Work List (OWL) / PAC Exception Report will be jointly reviewed and issued monthly until full close-out is achieved.`
 };
@@ -306,19 +305,18 @@ const PACCertificate: React.FC<PACCertificateProps> = ({
               </p>
             </div>
 
-            {/* Asset Responsibilities */}
+            {/* Confirmation Items */}
             <div>
-              <h3 className="text-base font-extrabold text-foreground mb-3">The Asset Shall:</h3>
               {isEditing ? (
                 <div className="space-y-2">
-                  {editContent.assetResponsibilities.map((item, index) => (
+                  {editContent.confirmationItems.map((item, index) => (
                     <Textarea
                       key={index}
                       value={item}
                       onChange={(e) => {
-                        const newItems = [...editContent.assetResponsibilities];
+                        const newItems = [...editContent.confirmationItems];
                         newItems[index] = e.target.value;
-                        setEditContent({ ...editContent, assetResponsibilities: newItems });
+                        setEditContent({ ...editContent, confirmationItems: newItems });
                       }}
                       className="min-h-[60px]"
                     />
@@ -326,34 +324,7 @@ const PACCertificate: React.FC<PACCertificateProps> = ({
                 </div>
               ) : (
                 <ul className="list-disc list-inside space-y-2 text-foreground ml-4">
-                  {content.assetResponsibilities.map((item, index) => (
-                    <li key={index}>{item}</li>
-                  ))}
-                </ul>
-              )}
-            </div>
-
-            {/* Project Responsibilities */}
-            <div>
-              <h3 className="text-base font-extrabold text-foreground mb-3">The Project Shall:</h3>
-              {isEditing ? (
-                <div className="space-y-2">
-                  {editContent.projectResponsibilities.map((item, index) => (
-                    <Textarea
-                      key={index}
-                      value={item}
-                      onChange={(e) => {
-                        const newItems = [...editContent.projectResponsibilities];
-                        newItems[index] = e.target.value;
-                        setEditContent({ ...editContent, projectResponsibilities: newItems });
-                      }}
-                      className="min-h-[60px]"
-                    />
-                  ))}
-                </div>
-              ) : (
-                <ul className="list-disc list-inside space-y-2 text-foreground ml-4">
-                  {content.projectResponsibilities.map((item, index) => (
+                  {content.confirmationItems.map((item, index) => (
                     <li key={index}>{item}</li>
                   ))}
                 </ul>
