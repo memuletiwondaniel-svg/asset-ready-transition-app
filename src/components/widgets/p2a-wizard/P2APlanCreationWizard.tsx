@@ -44,7 +44,7 @@ const WIZARD_STEPS: WizardStep[] = [
   { id: 2, title: 'Systems', description: 'Import or create systems' },
   { id: 3, title: 'VCRs', description: 'Define Verification Certificate of Readiness' },
   { id: 4, title: 'Mapping', description: 'Map systems to VCRs' },
-  { id: 5, title: 'Phases', description: 'Define phases & assign VCRs' },
+  { id: 5, title: 'Handover Phases', description: 'Define phases & assign VCRs' },
   { id: 6, title: 'Select Approvers', description: 'Choose who approves the plan' },
   { id: 7, title: 'Preview', description: 'Review the plan layout' },
   { id: 8, title: 'Confirm', description: 'Submit for approval' },
