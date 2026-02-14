@@ -11,7 +11,9 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Plus, Edit2, Trash2, Search, Filter, X, FileText, Loader2, FolderPlus, Info, Columns, Download } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Plus, Edit2, Trash2, Search, Filter, X, FileText, Loader2, FolderPlus, Info, Columns, Download, Check, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -632,25 +634,49 @@ const ChecklistItemsLibrary: React.FC = () => {
                   </Tooltip>
                 </TooltipProvider>
               </div>
-              <Select
-                value={formData.responsible || 'none'}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, responsible: value === 'none' ? '' : value }))}
-              >
-                <SelectTrigger className="bg-background">
-                  <SelectValue placeholder="Select responsible..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">None</SelectItem>
-                  {Object.entries(ROLE_GROUPS).map(([group, groupRoles]) => (
-                    <SelectGroup key={group}>
-                      <SelectLabel>{group}</SelectLabel>
-                      {groupRoles.map(role => (
-                        <SelectItem key={role} value={role}>{role}</SelectItem>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    className="w-full justify-between bg-background font-normal"
+                  >
+                    {formData.responsible || 'Select responsible...'}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder="Search roles..." />
+                    <CommandList>
+                      <CommandEmpty>No role found.</CommandEmpty>
+                      <CommandGroup>
+                        <CommandItem
+                          value="none"
+                          onSelect={() => setFormData(prev => ({ ...prev, responsible: '' }))}
+                        >
+                          <Check className={cn("mr-2 h-4 w-4", !formData.responsible ? "opacity-100" : "opacity-0")} />
+                          None
+                        </CommandItem>
+                      </CommandGroup>
+                      {Object.entries(ROLE_GROUPS).map(([group, groupRoles]) => (
+                        <CommandGroup key={group} heading={group}>
+                          {groupRoles.map(role => (
+                            <CommandItem
+                              key={role}
+                              value={role}
+                              onSelect={() => setFormData(prev => ({ ...prev, responsible: role }))}
+                            >
+                              <Check className={cn("mr-2 h-4 w-4", formData.responsible === role ? "opacity-100" : "opacity-0")} />
+                              {role}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
                       ))}
-                    </SelectGroup>
-                  ))}
-                </SelectContent>
-              </Select>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
 
             {/* Approvers Section */}
@@ -690,31 +716,50 @@ const ChecklistItemsLibrary: React.FC = () => {
                     ))}
                   </div>
                 )}
-                <Select
-                  value=""
-                  onValueChange={(value) => {
-                    if (value && !formData.approvers.includes(value)) {
-                      setFormData(prev => ({
-                        ...prev,
-                        approvers: [...prev.approvers, value]
-                      }));
-                    }
-                  }}
-                >
-                  <SelectTrigger className="bg-background">
-                    <SelectValue placeholder="Add approver..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(ROLE_GROUPS).map(([group, groupRoles]) => (
-                      <SelectGroup key={group}>
-                        <SelectLabel>{group}</SelectLabel>
-                        {groupRoles.filter(role => !formData.approvers.includes(role)).map(role => (
-                          <SelectItem key={role} value={role}>{role}</SelectItem>
-                        ))}
-                      </SelectGroup>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      className="w-full justify-between bg-background font-normal"
+                    >
+                      Add approver...
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder="Search roles..." />
+                      <CommandList>
+                        <CommandEmpty>No role found.</CommandEmpty>
+                        {Object.entries(ROLE_GROUPS).map(([group, groupRoles]) => {
+                          const availableRoles = groupRoles.filter(role => !formData.approvers.includes(role));
+                          if (availableRoles.length === 0) return null;
+                          return (
+                            <CommandGroup key={group} heading={group}>
+                              {availableRoles.map(role => (
+                                <CommandItem
+                                  key={role}
+                                  value={role}
+                                  onSelect={() => {
+                                    if (!formData.approvers.includes(role)) {
+                                      setFormData(prev => ({
+                                        ...prev,
+                                        approvers: [...prev.approvers, role]
+                                      }));
+                                    }
+                                  }}
+                                >
+                                  {role}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          );
+                        })}
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
           </div>
