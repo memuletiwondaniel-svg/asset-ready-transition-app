@@ -1,0 +1,1 @@
+UPDATE pssr_reason_configuration SET checklist_item_ids = '{}', checklist_item_overrides = NULL WHERE checklist_item_ids IS NOT NULL AND array_length(checklist_item_ids, 1) > 0;
