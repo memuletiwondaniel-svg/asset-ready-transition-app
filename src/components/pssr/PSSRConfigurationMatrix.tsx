@@ -262,23 +262,21 @@ const PSSRConfigurationMatrix: React.FC = () => {
 
   // Initialize local configs from fetched data
   useEffect(() => {
-    if (configurations.length > 0) {
-      setLocalConfigs(configurations.map(config => ({
-        reason_id: config.reason_id,
-        reason_name: config.reason?.name || '',
-        pssr_approver_role_ids: config.pssr_approver_role_ids || [],
-        sof_approver_role_ids: config.sof_approver_role_ids || [],
-        isDirty: false,
-        is_active: config.reason?.is_active ?? true,
-        display_order: config.reason?.display_order ?? 0,
-        category_id: (config.reason as any)?.category_id || null,
-        delivery_party_id: (config.reason as any)?.delivery_party_id || null,
-        status: ((config.reason as any)?.status || 'draft') as PSSRReasonStatus,
-        reason_approver_role_ids: (config.reason as any)?.reason_approver_role_ids || [],
-        checklist_item_ids: config.checklist_item_ids || [],
-        sub_category: (config.reason as any)?.sub_category || null,
-      })));
-    }
+    setLocalConfigs(configurations.map(config => ({
+      reason_id: config.reason_id,
+      reason_name: config.reason?.name || '',
+      pssr_approver_role_ids: config.pssr_approver_role_ids || [],
+      sof_approver_role_ids: config.sof_approver_role_ids || [],
+      isDirty: false,
+      is_active: config.reason?.is_active ?? true,
+      display_order: config.reason?.display_order ?? 0,
+      category_id: (config.reason as any)?.category_id || null,
+      delivery_party_id: (config.reason as any)?.delivery_party_id || null,
+      status: ((config.reason as any)?.status || 'draft') as PSSRReasonStatus,
+      reason_approver_role_ids: (config.reason as any)?.reason_approver_role_ids || [],
+      checklist_item_ids: config.checklist_item_ids || [],
+      sub_category: (config.reason as any)?.sub_category || null,
+    })));
   }, [configurations]);
 
   const hasUnsavedChanges = useMemo(() => 
@@ -491,7 +489,8 @@ const PSSRConfigurationMatrix: React.FC = () => {
     
     setIsDeleting(true);
     try {
-      // Delete configuration first (foreign key)
+
+      // Delete configuration (foreign key)
       const { error: configError } = await supabase
         .from('pssr_reason_configuration')
         .delete()
@@ -500,12 +499,17 @@ const PSSRConfigurationMatrix: React.FC = () => {
       if (configError) throw configError;
 
       // Delete the reason
-      const { error: reasonError } = await supabase
+      const { data: deletedRows, error: reasonError } = await supabase
         .from('pssr_reasons')
         .delete()
-        .eq('id', deleteDialog.reasonId);
+        .eq('id', deleteDialog.reasonId)
+        .select();
 
       if (reasonError) throw reasonError;
+      
+      if (!deletedRows || deletedRows.length === 0) {
+        throw new Error('Delete failed - you may not have admin permissions');
+      }
 
       // Remove from local state immediately
       setLocalConfigs(prev => prev.filter(c => c.reason_id !== deleteDialog.reasonId));
