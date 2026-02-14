@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ExternalLink, Flame, CheckCircle2, AlertCircle, ArrowRight } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ExternalLink, Flame, AlertCircle, ArrowRight, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getVCRColor } from '@/components/p2a-workspace/utils/vcrColors';
 import { WizardSystem } from './SystemsImportStep';
@@ -26,6 +27,8 @@ export const WorkspacePreviewStep: React.FC<WorkspacePreviewStepProps> = ({
   vcrPhaseAssignments,
   onOpenFullWorkspace,
 }) => {
+  const [unmappedOpen, setUnmappedOpen] = useState(false);
+
   const getPhaseVCRs = (phaseId: string) =>
     vcrs.filter(vcr => vcrPhaseAssignments[vcr.id] === phaseId);
 
@@ -36,21 +39,12 @@ export const WorkspacePreviewStep: React.FC<WorkspacePreviewStepProps> = ({
     );
   };
 
-  const mappedSystemCount = new Set(
+  const mappedSystemIds = new Set(
     Object.values(mappings).flat().map(k => k.split('::sub::')[0])
-  ).size;
-  const unmappedSystemCount = systems.length - mappedSystemCount;
+  );
+  const unmappedSystems = systems.filter(s => !mappedSystemIds.has(s.id));
   const unassignedVCRs = vcrs.filter(vcr => !vcrPhaseAssignments[vcr.id]);
   const activePhases = phases.filter(p => getPhaseVCRs(p.id).length > 0);
-
-  // Readiness checks
-  const checks = [
-    { label: 'Systems imported', ok: systems.length > 0 },
-    { label: 'VCRs created', ok: vcrs.length > 0 },
-    { label: 'All systems mapped', ok: unmappedSystemCount === 0 && systems.length > 0 },
-    { label: 'All VCRs assigned to phases', ok: unassignedVCRs.length === 0 && vcrs.length > 0 },
-  ];
-  const readyCount = checks.filter(c => c.ok).length;
 
   return (
     <div className="flex flex-col gap-4 p-4 h-full">
@@ -90,28 +84,6 @@ export const WorkspacePreviewStep: React.FC<WorkspacePreviewStepProps> = ({
         ))}
       </div>
 
-      {/* Readiness Checklist */}
-      <div className="rounded-lg border bg-card p-3">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Readiness</span>
-          <Badge variant={readyCount === checks.length ? 'default' : 'secondary'} className="text-[10px] h-5">
-            {readyCount}/{checks.length}
-          </Badge>
-        </div>
-        <div className="grid grid-cols-2 gap-1.5">
-          {checks.map(check => (
-            <div key={check.label} className="flex items-center gap-1.5 text-xs">
-              {check.ok ? (
-                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-              ) : (
-                <AlertCircle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
-              )}
-              <span className={cn(check.ok ? 'text-foreground' : 'text-muted-foreground')}>{check.label}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
       <Separator />
 
       {/* Phase Flow — horizontal timeline */}
@@ -131,14 +103,14 @@ export const WorkspacePreviewStep: React.FC<WorkspacePreviewStepProps> = ({
                       <ArrowRight className="h-4 w-4 text-muted-foreground/40" />
                     </div>
                   )}
-                  <div className="rounded-lg border bg-card p-2.5 min-w-[140px] flex-1">
-                    <div className="flex items-center gap-1.5 mb-1.5">
+                  <div className="rounded-lg border bg-card p-3 min-w-[150px] min-h-[120px] flex-1">
+                    <div className="flex items-center gap-1.5 mb-2">
                       <span className="text-[10px] font-bold text-muted-foreground/60">
                         {idx + 1}
                       </span>
                       <span className="text-xs font-semibold truncate">{phase.name}</span>
                     </div>
-                    <div className="space-y-1">
+                    <div className="space-y-1.5">
                       {phaseVCRs.map(vcr => {
                         const vcrSystems = getVCRSystems(vcr.id);
                         const hcCount = vcrSystems.filter(s => s.is_hydrocarbon).length;
@@ -198,16 +170,33 @@ export const WorkspacePreviewStep: React.FC<WorkspacePreviewStepProps> = ({
           </div>
         )}
 
-        {/* Unmapped systems warning */}
-        {unmappedSystemCount > 0 && (
-          <div className="mt-2 rounded-lg border border-dashed border-amber-300 dark:border-amber-700 bg-amber-50/50 dark:bg-amber-950/20 p-2.5">
-            <div className="flex items-center gap-1.5">
-              <AlertCircle className="h-3.5 w-3.5 text-amber-500" />
-              <span className="text-xs font-medium text-amber-700 dark:text-amber-400">
-                {unmappedSystemCount} unmapped system{unmappedSystemCount !== 1 ? 's' : ''}
-              </span>
+        {/* Unmapped systems — expandable */}
+        {unmappedSystems.length > 0 && (
+          <Collapsible open={unmappedOpen} onOpenChange={setUnmappedOpen} className="mt-3">
+            <div className="rounded-lg border border-dashed border-amber-300 dark:border-amber-700 bg-amber-50/50 dark:bg-amber-950/20 p-2.5">
+              <CollapsibleTrigger className="flex items-center justify-between w-full">
+                <div className="flex items-center gap-1.5">
+                  <AlertCircle className="h-3.5 w-3.5 text-amber-500" />
+                  <span className="text-xs font-medium text-amber-700 dark:text-amber-400">
+                    {unmappedSystems.length} unmapped system{unmappedSystems.length !== 1 ? 's' : ''}
+                  </span>
+                </div>
+                <ChevronDown className={cn(
+                  "h-3.5 w-3.5 text-amber-500 transition-transform",
+                  unmappedOpen && "rotate-180"
+                )} />
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {unmappedSystems.map(sys => (
+                    <span key={sys.id} className="text-[10px] bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 rounded px-1.5 py-0.5">
+                      {sys.name}
+                    </span>
+                  ))}
+                </div>
+              </CollapsibleContent>
             </div>
-          </div>
+          </Collapsible>
         )}
       </div>
     </div>
