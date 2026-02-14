@@ -7,6 +7,11 @@ import { useDroppable, useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { getVCRColor } from '../utils/vcrColors';
 
+const shortenVCR = (code: string) => {
+  const match = code.match(/^VCR-[A-Z0-9]+-(\d+)$/i);
+  return match ? `VCR-${match[1]}` : code;
+};
+
 interface HandoverPointCardProps {
   handoverPoint: P2AHandoverPoint;
   onClick?: () => void;
@@ -93,7 +98,7 @@ export const HandoverPointCard: React.FC<HandoverPointCardProps> = ({
             </span>
             <div className="flex items-center justify-between gap-1 [*[data-hide-ids]_&]:hidden">
               <span className="text-muted-foreground font-mono truncate" style={{ fontSize: 'calc(8px * var(--ws-zoom-y, 1))' }}>
-                {handoverPoint.vcr_code || 'VCR-???'}
+                {shortenVCR(handoverPoint.vcr_code || 'VCR-???')}
               </span>
               <span className="font-medium text-muted-foreground shrink-0" style={{ fontSize: 'calc(8px * var(--ws-zoom-y, 1))' }}>
                 {progress}%
