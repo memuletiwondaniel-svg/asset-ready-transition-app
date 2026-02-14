@@ -13,6 +13,7 @@ import {
 import { cn } from '@/lib/utils';
 import { WizardSystem, WizardSubsystem } from './SystemsImportStep';
 import { WizardVCR } from './VCRCreationStep';
+import { shortVCRCode } from './phases/vcrDisplayUtils';
 import {
   Popover,
   PopoverContent,
@@ -93,9 +94,11 @@ const VCRPillSelector: React.FC<{
           {currentVcr ? (
             <>
               <span
-                className="h-1.5 w-1.5 rounded-full shrink-0"
-                style={{ backgroundColor: color?.dot }}
-              />
+                className="inline-flex items-center px-1 py-0.5 rounded text-[9px] font-bold shrink-0"
+                style={{ backgroundColor: color?.bg, color: color?.text, borderColor: color?.border, border: '1px solid' }}
+              >
+                {shortVCRCode(currentVcr.code)}
+              </span>
               <span className="truncate max-w-[100px]">{currentVcr.name}</span>
             </>
           ) : (
@@ -127,9 +130,11 @@ const VCRPillSelector: React.FC<{
               }}
             >
               <span
-                className="h-2 w-2 rounded-full shrink-0"
-                style={{ backgroundColor: c.dot }}
-              />
+                className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold shrink-0"
+                style={{ backgroundColor: c.bg, color: c.text, borderColor: c.border, border: '1px solid' }}
+              >
+                {shortVCRCode(vcr.code)}
+              </span>
               <span className="flex-1 truncate font-medium">{vcr.name}</span>
               {isSelected && <Check className="h-3 w-3 text-primary shrink-0" />}
             </button>
