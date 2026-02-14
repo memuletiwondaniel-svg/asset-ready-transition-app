@@ -142,10 +142,12 @@ export const WorkspacePreviewStep: React.FC<WorkspacePreviewStepProps> = ({
                               </div>
                             </HoverCardTrigger>
                             <HoverCardContent
-                              side="right"
-                              align="start"
+                              side="top"
+                              align="center"
                               sideOffset={8}
-                              className="w-56 p-0 rounded-xl shadow-xl border overflow-hidden"
+                              collisionPadding={16}
+                              avoidCollisions
+                              className="w-56 p-0 rounded-xl shadow-xl border overflow-hidden z-[100]"
                             >
                               <div
                                 className="px-3 py-2 border-b"
