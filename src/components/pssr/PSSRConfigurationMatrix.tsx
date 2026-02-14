@@ -839,20 +839,6 @@ const PSSRConfigurationMatrix: React.FC = () => {
                           <span className="font-medium text-foreground/80">{config.checklist_item_ids.length}</span>
                           <span className="hidden sm:inline">items</span>
                         </div>
-                        {pssrApproverNames.length > 0 && (
-                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted/60 text-xs text-muted-foreground">
-                            <Users className="h-3 w-3" />
-                            <span className="font-medium text-foreground/80">{pssrApproverNames.length}</span>
-                            <span className="hidden sm:inline">PSSR</span>
-                          </div>
-                        )}
-                        {sofApproverNames.length > 0 && (
-                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted/60 text-xs text-muted-foreground">
-                            <Users className="h-3 w-3" />
-                            <span className="font-medium text-foreground/80">{sofApproverNames.length}</span>
-                            <span className="hidden sm:inline">SoF</span>
-                          </div>
-                        )}
                       </div>
                     </div>
                   </div>
