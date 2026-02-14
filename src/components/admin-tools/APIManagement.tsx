@@ -22,7 +22,7 @@ const predefinedAPIs = [
   { id: 'primavera-p6', name: 'Oracle Primavera P6', description: 'Project planning, scheduling and control', category: 'Project Management', logo: primaveraLogo, scale: 1.3 },
   { id: 'gocompletions', name: 'GoCompletions', description: 'Completions and commissioning management', category: 'Completions', logo: gocompletionsLogo },
   { id: 'assai', name: 'Assai', description: 'Document management and control', category: 'Document Management', logo: assaiLogo },
-  { id: 'sharepoint', name: 'SharePoint', description: 'Collaboration and document storage platform', category: 'Collaboration', logo: sharepointLogo, scale: 1.5 },
+  { id: 'sharepoint', name: 'SharePoint', description: 'Collaboration and document storage platform', category: 'Collaboration', logo: sharepointLogo, scale: 1.6 },
   { id: 'teams', name: 'Microsoft Teams', description: 'Team communication and collaboration platform', category: 'Communication', logo: teamsLogo },
 ];
 
