@@ -271,12 +271,12 @@ export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
   };
 
   return (
-    <div className="space-y-3 p-4">
+    <div className="space-y-4 p-4">
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-sm font-medium">Approvers</h3>
           <p className="text-xs text-muted-foreground">
-            Auto-populated from project team members
+            Auto-populated from project team
           </p>
         </div>
         <Button
@@ -291,68 +291,54 @@ export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
           ) : (
             <RefreshCw className="h-3 w-3" />
           )}
-          Refresh from Team
+          Refresh
         </Button>
       </div>
 
-      <div className="border rounded-lg ml-4">
-        <div className="p-2.5 space-y-2">
-          {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-            </div>
-          ) : (
-            FIXED_APPROVER_ROLES.map((role, index) => {
-              const approver = approvers.find(a => a.role_name === role.label);
-              return (
-                <div key={role.key} className="flex items-center gap-2.5 p-3.5 rounded-lg border bg-card hover:shadow-sm transition-shadow max-w-md">
-                  <Avatar className="h-9 w-9 shrink-0">
-                    <AvatarImage src={resolveAvatarUrl(approver?.user_avatar)} />
-                    <AvatarFallback className="text-xs bg-muted">
-                      {getInitials(approver?.user_name)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    {approver?.user_name ? (
-                      <>
-                        <span className="text-sm font-medium">{approver.user_name}</span>
-                        <p className="text-xs text-muted-foreground truncate">{role.label}</p>
-                      </>
-                    ) : (
-                      <>
-                        <span className="text-sm font-medium text-muted-foreground">{role.label}</span>
-                        <p className="text-[10px] text-amber-600">No team member assigned</p>
-                      </>
-                    )}
-                  </div>
-                  {!approver?.user_id ? (
-                    <Badge variant="secondary" className="text-[10px] gap-1 bg-muted text-muted-foreground border-border">
-                      <AlertCircle className="h-3 w-3" />
-                      Unassigned
-                    </Badge>
-                  ) : approver.status === 'APPROVED' ? (
-                    <Badge variant="secondary" className="text-[10px] gap-1 bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800">
-                      <CheckCircle2 className="h-3 w-3" />
-                      Approved
-                    </Badge>
-                  ) : approver.status === 'REJECTED' ? (
-                    <Badge variant="secondary" className="text-[10px] gap-1 bg-red-50 text-red-700 border-red-200 dark:bg-red-950/30 dark:text-red-400 dark:border-red-800">
-                      <XCircle className="h-3 w-3" />
-                      Rejected
-                    </Badge>
+      {isLoading ? (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+        </div>
+      ) : (
+        <div className="space-y-2 ml-4">
+          {FIXED_APPROVER_ROLES.map((role) => {
+            const approver = approvers.find(a => a.role_name === role.label);
+            const hasUser = !!approver?.user_id;
+            return (
+              <div key={role.key} className="flex items-center gap-3 p-3.5 rounded-lg border bg-card hover:shadow-sm transition-shadow max-w-md">
+                <Avatar className="h-9 w-9 shrink-0">
+                  <AvatarImage src={resolveAvatarUrl(approver?.user_avatar)} />
+                  <AvatarFallback className="text-xs bg-muted">
+                    {getInitials(approver?.user_name)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  {hasUser ? (
+                    <>
+                      <span className="text-sm font-medium">{approver.user_name}</span>
+                      <p className="text-xs text-muted-foreground truncate">{role.label}</p>
+                    </>
                   ) : (
-                    <Badge variant="secondary" className="text-[10px] gap-1 bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800">
-                      <Clock className="h-3 w-3" />
-                      Pending
-                    </Badge>
+                    <>
+                      <span className="text-sm font-medium text-muted-foreground">{role.label}</span>
+                      <p className="text-[10px] text-amber-600">Not assigned</p>
+                    </>
                   )}
                 </div>
-              );
-            })
-          )}
+                {!hasUser ? (
+                  <AlertCircle className="h-4 w-4 text-muted-foreground shrink-0" />
+                ) : approver.status === 'APPROVED' ? (
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                ) : approver.status === 'REJECTED' ? (
+                  <XCircle className="h-4 w-4 text-red-600 dark:text-red-400 shrink-0" />
+                ) : (
+                  <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                )}
+              </div>
+            );
+          })}
         </div>
-      </div>
-
+      )}
     </div>
   );
 };
