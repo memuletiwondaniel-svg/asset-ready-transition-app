@@ -91,6 +91,16 @@ export const ManageHandover: React.FC<ManageHandoverProps> = ({ onBack }) => {
               <span>PSSR</span>
             </TabsTrigger>
             <TabsTrigger 
+              value="sof" 
+              className={cn(
+                "flex items-center gap-2 px-4 transition-colors duration-200",
+                activeTab !== 'sof' && "text-muted-foreground/60"
+              )}
+            >
+              <FileCheck2 className={cn("h-4 w-4 shrink-0 transition-colors duration-200", getParentTabIconColor('sof', activeTab === 'sof'))} />
+              <span>SoF</span>
+            </TabsTrigger>
+            <TabsTrigger 
               value="pac" 
               className={cn(
                 "flex items-center gap-2 px-4 transition-colors duration-200",
@@ -98,8 +108,7 @@ export const ManageHandover: React.FC<ManageHandoverProps> = ({ onBack }) => {
               )}
             >
               <ClipboardList className={cn("h-4 w-4 shrink-0 transition-colors duration-200", getParentTabIconColor('pac', activeTab === 'pac'))} />
-              <span className="hidden sm:inline whitespace-nowrap">Provisional Handover (PAC)</span>
-              <span className="sm:hidden">PAC</span>
+              <span>PAC</span>
             </TabsTrigger>
             <TabsTrigger 
               value="fac" 
@@ -109,18 +118,7 @@ export const ManageHandover: React.FC<ManageHandoverProps> = ({ onBack }) => {
               )}
             >
               <Award className={cn("h-4 w-4 shrink-0 transition-colors duration-200", getParentTabIconColor('fac', activeTab === 'fac'))} />
-              <span className="hidden sm:inline whitespace-nowrap">Final Handover (FAC)</span>
-              <span className="sm:hidden">FAC</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="sof" 
-              className={cn(
-                "flex items-center gap-2 px-4 transition-colors duration-200",
-                activeTab !== 'sof' && "text-muted-foreground/60"
-              )}
-            >
-              <FileCheck2 className={cn("h-4 w-4 shrink-0 transition-colors duration-200", getParentTabIconColor('sof', activeTab === 'sof'))} />
-              <span>SoF</span>
+              <span>FAC</span>
             </TabsTrigger>
           </TabsList>
 
@@ -132,16 +130,16 @@ export const ManageHandover: React.FC<ManageHandoverProps> = ({ onBack }) => {
             <PSSRManagementTab />
           </TabsContent>
 
+          <TabsContent value="sof" className="mt-6">
+            <SOFCertificateManagement />
+          </TabsContent>
+
           <TabsContent value="pac" className="mt-6">
             <PACManagementTab />
           </TabsContent>
 
           <TabsContent value="fac" className="mt-6">
             <FACManagementTab />
-          </TabsContent>
-
-          <TabsContent value="sof" className="mt-6">
-            <SOFCertificateManagement />
           </TabsContent>
         </Tabs>
       </div>
