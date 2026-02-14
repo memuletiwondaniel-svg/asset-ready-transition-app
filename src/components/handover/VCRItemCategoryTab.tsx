@@ -91,7 +91,7 @@ const VCRItemCategoryTab: React.FC = () => {
       <CardHeader className="px-4 py-3">
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="text-base">Categories</CardTitle>
+            <CardTitle>VCR Categories</CardTitle>
           </div>
           <div className="flex items-center gap-3">
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
