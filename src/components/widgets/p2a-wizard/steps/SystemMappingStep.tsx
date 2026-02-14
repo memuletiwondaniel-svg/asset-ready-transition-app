@@ -387,10 +387,6 @@ export const SystemMappingStep: React.FC<SystemMappingStepProps> = ({
               }}
               onClick={() => setActiveFilter(isActive ? null : vcr.id)}
             >
-              <span
-                className="h-1.5 w-1.5 rounded-full shrink-0"
-                style={{ backgroundColor: isActive ? '#fff' : c.dot }}
-              />
               {vcr.name}
               <span className="opacity-70">{count}</span>
             </button>
