@@ -8,13 +8,10 @@ import { ChevronLeft, ChevronRight, Check, Loader2, X, Save, Zap, FileText } fro
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import WizardStepCategory, { SubCategoryType } from './wizard/WizardStepCategory';
 import WizardStepReasonDetails from './wizard/WizardStepReasonDetails';
 import WizardStepApprovers from './wizard/WizardStepApprovers';
 import WizardStepChecklistItems, { ChecklistItemOverrides } from './wizard/WizardStepChecklistItems';
 import { ChecklistItemOverride } from './wizard/ChecklistItemEditDialog';
-import { useActivePSSRReasonCategories } from '@/hooks/usePSSRReasonCategories';
-import { usePSSRChecklistItems } from '@/hooks/usePSSRChecklistLibrary';
 import type { Json } from '@/integrations/supabase/types';
 import {
   AlertDialog,
@@ -34,30 +31,20 @@ interface AddPSSRReasonWizardProps {
 }
 
 interface WizardState {
-  // Step 1
-  categoryId: string | null;
-  subCategory: SubCategoryType;
   reasonName: string;
   description: string;
-  
-  // Step 2
   pssrApproverRoleIds: string[];
-  
-  // Step 3
   sofApproverRoleIds: string[];
-  
-  // Step 4
   checklistItemIds: string[];
   checklistItemOverrides: ChecklistItemOverrides;
 }
 
 const STEPS = [
-  { id: 1, title: 'Category', description: 'Select PSSR category' },
-  { id: 2, title: 'PSSR Reason', description: 'Enter reason name and description' },
-  { id: 3, title: 'PSSR Approvers', description: 'Select PSSR approver roles' },
-  { id: 4, title: 'SoF Approvers', description: 'Select Statement of Fitness approver roles' },
-  { id: 5, title: 'Checklist Items', description: 'Select applicable checklist items' },
-  { id: 6, title: 'Finalize', description: 'Review and activate template' },
+  { id: 1, title: 'PSSR Reason', description: 'Select PSSR reason' },
+  { id: 2, title: 'PSSR Approvers', description: 'Select PSSR approver roles' },
+  { id: 3, title: 'SoF Approvers', description: 'Select Statement of Fitness approver roles' },
+  { id: 4, title: 'Checklist Items', description: 'Select applicable checklist items' },
+  { id: 5, title: 'Finalize', description: 'Review and activate template' },
 ];
 
 const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenChange }) => {
@@ -66,11 +53,8 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activationChoice, setActivationChoice] = useState<'activate' | 'draft'>('draft');
   const [showActivationConfirm, setShowActivationConfirm] = useState(false);
-  const { data: categories } = useActivePSSRReasonCategories();
   
   const [wizardState, setWizardState] = useState<WizardState>({
-    categoryId: null,
-    subCategory: null,
     reasonName: '',
     description: '',
     pssrApproverRoleIds: [],
@@ -79,14 +63,10 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
     checklistItemOverrides: {},
   });
 
-  const selectedCategory = categories?.find(c => c.id === wizardState.categoryId);
-
   const resetWizard = () => {
     setCurrentStep(1);
     setActivationChoice('draft');
     setWizardState({
-      categoryId: null,
-      subCategory: null,
       reasonName: '',
       description: '',
       pssrApproverRoleIds: [],
@@ -104,34 +84,24 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
   const validateStep = (step: number): boolean => {
     switch (step) {
       case 1:
-        if (!wizardState.categoryId) {
-          toast.error('Please select a category');
+        if (!wizardState.reasonName.trim()) {
+          toast.error('Please select a PSSR reason');
           return false;
         }
         return true;
       case 2:
-        if (!wizardState.reasonName.trim()) {
-          toast.error('Please enter a reason name');
-          return false;
-        }
-        if (wizardState.reasonName.length > 100) {
-          toast.error('Reason name must be less than 100 characters');
-          return false;
-        }
-        return true;
-      case 3:
         if (wizardState.pssrApproverRoleIds.length === 0) {
           toast.error('Please select at least one PSSR approver role');
           return false;
         }
         return true;
-      case 4:
+      case 3:
         if (wizardState.sofApproverRoleIds.length === 0) {
           toast.error('Please select at least one SoF approver role');
           return false;
         }
         return true;
-      case 5:
+      case 4:
         if (wizardState.checklistItemIds.length === 0) {
           toast.error('Please select at least one checklist item');
           return false;
@@ -169,8 +139,8 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
         .insert({
           name: wizardState.reasonName.trim(),
           description: wizardState.description.trim() || null,
-          category_id: wizardState.categoryId,
-          sub_category: wizardState.subCategory,
+          category_id: null,
+          sub_category: null,
           is_active: shouldActivate,
           display_order: nextDisplayOrder,
           status: shouldActivate ? 'active' : 'draft',
@@ -282,15 +252,6 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
         {/* Step Content */}
         <div className="flex-1 overflow-y-auto py-6 px-1">
           {currentStep === 1 && (
-            <WizardStepCategory
-              categoryId={wizardState.categoryId}
-              subCategory={wizardState.subCategory}
-              onCategoryChange={(categoryId) => setWizardState(prev => ({ ...prev, categoryId }))}
-              onSubCategoryChange={(subCategory) => setWizardState(prev => ({ ...prev, subCategory }))}
-            />
-          )}
-
-          {currentStep === 2 && (
             <WizardStepReasonDetails
               reasonName={wizardState.reasonName}
               description={wizardState.description}
@@ -299,7 +260,7 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
             />
           )}
 
-          {currentStep === 3 && (
+          {currentStep === 2 && (
             <WizardStepApprovers
               type="pssr"
               selectedRoleIds={wizardState.pssrApproverRoleIds}
@@ -316,7 +277,7 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
             />
           )}
 
-          {currentStep === 4 && (
+          {currentStep === 3 && (
             <WizardStepApprovers
               type="sof"
               selectedRoleIds={wizardState.sofApproverRoleIds}
@@ -337,7 +298,7 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
             />
           )}
 
-          {currentStep === 5 && (
+          {currentStep === 4 && (
             <WizardStepChecklistItems
               selectedItemIds={wizardState.checklistItemIds}
               itemOverrides={wizardState.checklistItemOverrides}
@@ -375,8 +336,8 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
             />
           )}
 
-          {/* Step 6: Finalize - Activation Choice */}
-          {currentStep === 6 && (
+          {/* Step 5: Finalize - Activation Choice */}
+          {currentStep === 5 && (
             <div className="space-y-6 py-4">
               <div className="text-center mb-6">
                 <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
@@ -436,17 +397,9 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
                 <h4 className="text-sm font-semibold mb-3">Template Summary</h4>
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
-                    <span className="text-muted-foreground">Category:</span>{' '}
-                    <span className="font-medium">{selectedCategory?.name || '—'}</span>
+                    <span className="text-muted-foreground">Reason:</span>{' '}
+                    <span className="font-medium">{wizardState.reasonName || '—'}</span>
                   </div>
-                  {wizardState.subCategory && (
-                    <div>
-                      <span className="text-muted-foreground">Type:</span>{' '}
-                      <span className={`font-medium ${wizardState.subCategory === 'P&E' ? 'text-blue-600' : 'text-emerald-600'}`}>
-                        {wizardState.subCategory === 'P&E' ? 'Projects & Engineering' : 'Brown Field Modifications'}
-                      </span>
-                    </div>
-                  )}
                   <div>
                     <span className="text-muted-foreground">PSSR Approvers:</span>{' '}
                     <span className="font-medium">{wizardState.pssrApproverRoleIds.length}</span>

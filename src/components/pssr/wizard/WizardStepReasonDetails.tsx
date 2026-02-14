@@ -1,7 +1,17 @@
 import React from 'react';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+const PSSR_REASON_OPTIONS = [
+  'Start-up after a Process Safety Incidence or Near Miss (RAM 5A/B and RED)',
+  'Start-up after an Emergency Shutdown',
+  'Start-up after a Turnaround or Extended Shutdown',
+  'Start-up of New or Modified Facilities',
+  'Start-up after Maintenance on Critical Equipment',
+  'Start-up after a Management of Change (MOC)',
+  'Periodic PSSR Review',
+];
 
 interface WizardStepReasonDetailsProps {
   reasonName: string;
@@ -18,19 +28,21 @@ const WizardStepReasonDetails: React.FC<WizardStepReasonDetailsProps> = ({
 }) => {
   return (
     <div className="space-y-6">
-      {/* Reason Name */}
+      {/* Reason Dropdown */}
       <div className="space-y-3">
         <Label htmlFor="reason-name" className="text-base font-medium">PSSR Reason *</Label>
-        <Input
-          id="reason-name"
-          value={reasonName}
-          onChange={(e) => onReasonNameChange(e.target.value)}
-          placeholder="Enter the name for this PSSR reason..."
-          maxLength={100}
-        />
-        <p className="text-sm text-muted-foreground">
-          {reasonName.length}/100 characters
-        </p>
+        <Select value={reasonName} onValueChange={onReasonNameChange}>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Select a PSSR reason..." />
+          </SelectTrigger>
+          <SelectContent>
+            {PSSR_REASON_OPTIONS.map((option) => (
+              <SelectItem key={option} value={option}>
+                {option}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Additional Description */}
