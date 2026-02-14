@@ -14,6 +14,7 @@ export interface APICredentials {
   apiKey?: string;
   clientId?: string;
   clientSecret?: string;
+  tokenUrl?: string;
   username?: string;
   password?: string;
 }

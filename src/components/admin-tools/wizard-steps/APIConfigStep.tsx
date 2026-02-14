@@ -92,6 +92,20 @@ export const APIConfigStep: React.FC<APIConfigStepProps> = ({ credentials, onCha
         {credentials.authType === 'oauth' && (
           <>
             <div className="space-y-2">
+              <Label className="text-sm flex items-center gap-1.5">
+                <Globe className="h-3.5 w-3.5 text-muted-foreground" />
+                Token URL
+              </Label>
+              <Input
+                type="url"
+                value={credentials.tokenUrl || ''}
+                onChange={(e) => update('tokenUrl', e.target.value)}
+                placeholder="https://.../oauth/token"
+                className="font-mono text-xs"
+                autoComplete="off"
+              />
+            </div>
+            <div className="space-y-2">
               <Label className="text-sm">Client ID</Label>
               <Input
                 value={credentials.clientId || ''}
