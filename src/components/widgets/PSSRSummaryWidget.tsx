@@ -151,7 +151,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                 ))}
               </div>
             ) : showVCRList ? (
-              <div className="space-y-2 max-h-[280px] overflow-y-auto pr-1">
+              <div className="space-y-2 overflow-y-auto pr-1 flex-1 min-h-0">
                 {allVCRs.map((vcr) => (
                   <div 
                     key={vcr.id} 
