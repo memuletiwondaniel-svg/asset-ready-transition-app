@@ -560,7 +560,7 @@ export function useP2APlanWizard(projectId: string, projectCode: string) {
           title: `Review & Approve P2A Handover Plan – ${projectCode}`,
           description: `You have been assigned as ${approver.role_name} to review and approve the P2A Handover Plan for project ${projectCode}. Please review the plan and provide your approval.`,
           type: 'approval',
-          priority: 'high',
+          priority: 'High',
           status: 'pending',
           metadata: {
             plan_id: planId,
