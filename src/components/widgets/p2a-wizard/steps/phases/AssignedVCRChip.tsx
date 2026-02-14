@@ -88,27 +88,18 @@ export const AssignedVCRChip: React.FC<AssignedVCRChipProps> = ({ vcr, vcrIndex,
         sideOffset={4}
         collisionPadding={16}
         avoidCollisions
-        className="w-56 p-0 rounded-xl shadow-xl border overflow-hidden z-[100]"
+        className="w-56 p-2 rounded-xl shadow-xl border overflow-hidden z-[100] max-h-48 overflow-y-auto"
       >
-        <div
-          className="px-3 py-2 border-b"
-          style={{ background: vcrColor?.background, borderColor: vcrColor?.border }}
-        >
-          <div className="text-xs font-semibold truncate">{vcr.name}</div>
-          <div className="text-[10px] text-muted-foreground font-mono">{shortVCRCode(vcr.code)}</div>
-        </div>
-        <div className="p-2 max-h-48 overflow-y-auto">
-          <div className="space-y-0.5">
-            {vcrSystems.map(sys => (
-              <div key={sys.id} className="flex items-center gap-1.5 px-1.5 py-1 rounded-md hover:bg-muted/50">
-                <Box className="h-3 w-3 text-muted-foreground shrink-0" />
-                <span className="text-[11px] font-medium truncate flex-1">{sys.name}</span>
-                {sys.is_hydrocarbon && (
-                  <Flame className="h-3 w-3 text-orange-500 shrink-0" />
-                )}
-              </div>
-            ))}
-          </div>
+        <div className="space-y-0.5">
+          {vcrSystems.map(sys => (
+            <div key={sys.id} className="flex items-center gap-1.5 px-1.5 py-1 rounded-md hover:bg-muted/50">
+              <Box className="h-3 w-3 text-muted-foreground shrink-0" />
+              <span className="text-[11px] font-medium truncate flex-1">{sys.name}</span>
+              {sys.is_hydrocarbon && (
+                <Flame className="h-3 w-3 text-orange-500 shrink-0" />
+              )}
+            </div>
+          ))}
         </div>
       </HoverCardContent>
     </HoverCard>
