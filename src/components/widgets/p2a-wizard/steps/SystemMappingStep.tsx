@@ -280,21 +280,49 @@ export const SystemMappingStep: React.FC<SystemMappingStepProps> = ({
   };
 
   // ── Filtering ──────────────────────────────────────────────
+  // ── Sort systems by VCR group (chip order), unassigned last ──
+  const sortedSystems = useMemo(() => {
+    // Build VCR order map from vcrs array (matches chip order)
+    const vcrOrder = new Map<string, number>();
+    vcrs.forEach((v, i) => vcrOrder.set(v.id, i));
+
+    const getSystemSortKey = (system: WizardSystem): number => {
+      const keys = getMappableKeys(system);
+      // Find the first assigned VCR for this system
+      for (const k of keys) {
+        const owner = keyOwnerMap.get(k);
+        if (owner && vcrOrder.has(owner)) {
+          return vcrOrder.get(owner)!;
+        }
+      }
+      // Unassigned systems go to the end
+      return vcrs.length;
+    };
+
+    return [...systems].sort((a, b) => {
+      const aKey = getSystemSortKey(a);
+      const bKey = getSystemSortKey(b);
+      if (aKey !== bKey) return aKey - bKey;
+      // Preserve original order within same group
+      return systems.indexOf(a) - systems.indexOf(b);
+    });
+  }, [systems, vcrs, keyOwnerMap]);
+
   const filteredSystems = useMemo(() => {
-    if (!activeFilter) return systems;
+    if (!activeFilter) return sortedSystems;
     if (activeFilter === 'unassigned') {
-      return systems.filter(s => {
+      return sortedSystems.filter(s => {
         const keys = getMappableKeys(s);
         return keys.some(k => !keyOwnerMap.has(k));
       });
     }
     // Filter to systems assigned to a specific VCR
     const vcrKeys = new Set(mappings[activeFilter] || []);
-    return systems.filter(s => {
+    return sortedSystems.filter(s => {
       const keys = getMappableKeys(s);
       return keys.some(k => vcrKeys.has(k));
     });
-  }, [systems, activeFilter, keyOwnerMap, mappings]);
+  }, [sortedSystems, activeFilter, keyOwnerMap, mappings]);
 
   // ── Get system-level VCR owner (for systems without subsystems, or where all subs are same VCR) ──
   const getSystemOwner = useCallback(
