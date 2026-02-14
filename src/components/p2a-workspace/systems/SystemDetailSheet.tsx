@@ -275,6 +275,8 @@ export const SystemDetailSheet: React.FC<SystemDetailSheetProps> = ({
                   />
                 </div>
 
+                <Separator />
+
                 <div className="grid grid-cols-2 gap-3">
                   <MetricCard label="Outstanding ITR-A" value={system.itr_a_count} icon={<FileCheck className="w-3.5 h-3.5 text-blue-500" />} color="blue" />
                   <MetricCard label="Outstanding ITR-B" value={system.itr_b_count} icon={<FileCheck className="w-3.5 h-3.5 text-purple-500" />} color="purple" />
