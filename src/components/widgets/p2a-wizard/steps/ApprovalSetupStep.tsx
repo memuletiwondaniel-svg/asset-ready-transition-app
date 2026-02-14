@@ -284,16 +284,6 @@ export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
         </Button>
       </div>
 
-      <div className="p-3 bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200/50 dark:border-blue-800/50 rounded-lg">
-        <div className="flex items-start gap-2">
-          <Users className="h-4 w-4 text-blue-600 mt-0.5" />
-          <div className="text-xs text-blue-700 dark:text-blue-400">
-            <strong>Two-Phase Approval:</strong> ORA Lead, Construction Lead, and Commissioning Lead 
-            approve first. Once all three have signed off, the Project Hub Lead and Deputy Plant Director 
-            are notified to give final approval.
-          </div>
-        </div>
-      </div>
 
       {/* Phase 1 Header */}
       <div className="flex items-center gap-2 pt-1">
