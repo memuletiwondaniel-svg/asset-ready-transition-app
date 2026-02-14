@@ -318,7 +318,7 @@ const ChecklistItemsLibrary: React.FC = () => {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <FileText className="h-5 w-5" />
-                PSSR Checklist Items
+                PSSR Items
               </CardTitle>
             </div>
             <Button onClick={handleOpenCreate}>

@@ -212,7 +212,7 @@ const WizardStepReviewCustomize: React.FC<WizardStepReviewCustomizeProps> = ({
                 <ChevronRight className="h-4 w-4" />
               )}
               <FileCheck className="h-4 w-4 text-primary" />
-              <span className="font-medium">PSSR Checklist Items</span>
+              <span className="font-medium">PSSR Items</span>
               <Badge variant="secondary" className="text-xs">
                 {selectedChecklistItemIds.length} selected
               </Badge>

@@ -43,9 +43,9 @@ export const exportPSSRChecklistToExcel = (
   const wb = XLSX.utils.book_new();
 
   // Summary sheet
-  const summaryData = [
-    ['PSSR Checklist Items Export'],
-    ['Generated on', new Date().toLocaleDateString()],
+   const summaryData = [
+     ['PSSR Items Export'],
+     ['Generated on', new Date().toLocaleDateString()],
     [''],
     ['Summary by Category'],
   ];
