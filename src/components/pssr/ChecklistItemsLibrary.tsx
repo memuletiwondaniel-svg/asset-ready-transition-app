@@ -149,10 +149,13 @@ const ChecklistItemsLibrary: React.FC = () => {
 
   // Column visibility state
   const [visibleColumns, setVisibleColumns] = useState({
+    id: true,
+    category: true,
     topic: true,
+    description: true,
     responsible: false,
     supportingEvidence: false,
-    approvers: true,
+    approvers: false,
   });
 
   // Collapsed categories state - all expanded by default
