@@ -97,6 +97,9 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
   const { data: p2aPlanByProject, isLoading: p2aPlanLoading } = useP2APlanByProject(projectId);
   const isLoading = pssrsLoading || vcrsLoading || p2aPlanLoading;
 
+  // Plan is approved when status is COMPLETED
+  const planIsApproved = p2aPlanByProject?.status === 'COMPLETED';
+  const hasPlan = !!p2aPlanByProject;
   // Map project milestones to the format the wizard expects
   const wizardMilestones = (projectMilestones || []).map(m => ({
     id: m.id,
@@ -108,7 +111,6 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
   const allVCRs = vcrs || [];
 
   // VCRs should only be shown in the widget after the plan is approved
-  const planIsApproved = p2aPlanByProject?.status === 'COMPLETED';
   const showVCRList = planIsApproved && allVCRs.length > 0;
 
   const handlePSSRClick = (pssrId: string, displayId: string) => {
@@ -124,7 +126,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
 
   return (
     <>
-      <Card className="h-full flex flex-col transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:border-red-500/20 group">
+      <Card className="h-full flex flex-col transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:border-red-500/20 group min-h-[420px]">
         <CardHeader {...dragAttributes} {...dragListeners} className="cursor-grab active:cursor-grabbing pb-3">
           <CardTitle className="text-lg flex items-center gap-3">
             <StyledWidgetIcon 
@@ -245,29 +247,22 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
             )}
           </div>
 
-          {/* View Handover Plan Button - Show only when plan is approved and VCRs exist */}
-          {showVCRList && oraPlanId && (
-            <div className="flex items-center gap-2 mt-auto">
+          {/* View Handover Plan Button - Show when plan exists and is approved */}
+          {hasPlan && planIsApproved && (
+            <div className="flex items-center gap-2 mt-auto pt-2">
               <Button
                 variant="outline"
                 size="sm"
                 className="flex-1 text-xs"
-                onClick={() => setShowP2AWorkspace(true)}
+                onClick={() => setShowP2ASummary(true)}
               >
                 P2A Handover Plan
-                {p2aPlan?.status && (
-                  <Badge 
-                    variant="outline" 
-                    className={cn(
-                      "ml-2 text-[9px] px-1.5 py-0",
-                      p2aPlan.status === 'DRAFT' && "bg-slate-100 text-slate-600 border-slate-200",
-                      p2aPlan.status === 'ACTIVE' && "bg-amber-50 text-amber-700 border-amber-200",
-                      p2aPlan.status === 'COMPLETED' && "bg-emerald-50 text-emerald-700 border-emerald-200"
-                    )}
-                  >
-                    {p2aPlan.status === 'ACTIVE' ? 'In Review' : p2aPlan.status === 'COMPLETED' ? 'Approved' : 'Draft'}
-                  </Badge>
-                )}
+                <Badge 
+                  variant="outline" 
+                  className="ml-2 text-[9px] px-1.5 py-0 bg-emerald-50 text-emerald-700 border-emerald-200"
+                >
+                  Approved
+                </Badge>
               </Button>
             </div>
           )}
