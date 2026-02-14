@@ -7,7 +7,11 @@ import {
   Users,
   UserCheck,
   Loader2,
-  RefreshCw
+  RefreshCw,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -15,6 +19,7 @@ export interface WizardApprover {
   id: string;
   role_name: string;
   display_order: number;
+  status?: 'PENDING' | 'APPROVED' | 'REJECTED';
   user_id?: string;
   user_name?: string;
   user_avatar?: string;
@@ -317,13 +322,25 @@ export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
                       </>
                     )}
                   </div>
-                  {approver?.user_id ? (
-                    <Badge variant="secondary" className="text-[10px] bg-emerald-50 text-emerald-700 border-emerald-200">
-                      Assigned
+                  {!approver?.user_id ? (
+                    <Badge variant="secondary" className="text-[10px] gap-1 bg-muted text-muted-foreground border-border">
+                      <AlertCircle className="h-3 w-3" />
+                      Unassigned
+                    </Badge>
+                  ) : approver.status === 'APPROVED' ? (
+                    <Badge variant="secondary" className="text-[10px] gap-1 bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800">
+                      <CheckCircle2 className="h-3 w-3" />
+                      Approved
+                    </Badge>
+                  ) : approver.status === 'REJECTED' ? (
+                    <Badge variant="secondary" className="text-[10px] gap-1 bg-red-50 text-red-700 border-red-200 dark:bg-red-950/30 dark:text-red-400 dark:border-red-800">
+                      <XCircle className="h-3 w-3" />
+                      Rejected
                     </Badge>
                   ) : (
-                    <Badge variant="secondary" className="text-[10px] bg-amber-50 text-amber-700 border-amber-200">
-                      Unassigned
+                    <Badge variant="secondary" className="text-[10px] gap-1 bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800">
+                      <Clock className="h-3 w-3" />
+                      Pending
                     </Badge>
                   )}
                 </div>
