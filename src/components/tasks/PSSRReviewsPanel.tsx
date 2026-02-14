@@ -1,12 +1,13 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ClipboardCheck, CheckCircle, X } from 'lucide-react';
+import { ClipboardCheck } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ProjectIdBadge } from '@/components/ui/project-id-badge';
 import { MyTasksPanelCard } from './MyTasksPanelCard';
+import { TaskDetailSheet } from './TaskDetailSheet';
 import { usePSSRsAwaitingReview } from '@/hooks/usePSSRItemApprovals';
-import { useUserTasks } from '@/hooks/useUserTasks';
+import { useUserTasks, type UserTask } from '@/hooks/useUserTasks';
 import { useUserLastLogin } from '@/hooks/useUserLastLogin';
 import { getUrgencyBackground, getUrgencyGlow } from '@/utils/assetColors';
 import { cn } from '@/lib/utils';
@@ -47,6 +48,7 @@ export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({
   const { data: realPssrs, isLoading: pssrLoading } = usePSSRsAwaitingReview(userId);
   const { tasks: userTasks, loading: tasksLoading, updateTaskStatus } = useUserTasks();
   const { isNewSinceLastLogin } = useUserLastLogin();
+  const [selectedTask, setSelectedTask] = useState<UserTask | null>(null);
 
   const isLoading = pssrLoading || tasksLoading;
 
@@ -113,6 +115,7 @@ export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({
   };
 
   return (
+    <>
     <MyTasksPanelCard
       title="P2A Handover"
       icon={<ClipboardCheck className="h-5 w-5 text-white" />}
@@ -141,13 +144,14 @@ export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({
           <div
             key={task.id}
             className={cn(
-              "p-3 rounded-lg border transition-all group/item",
+              "p-3 rounded-lg border transition-all cursor-pointer",
               "hover:shadow-sm hover:border-primary/20",
               "bg-card/50",
               isNew && "border-l-2 border-l-primary",
               "animate-fade-in"
             )}
             style={{ animationDelay: `${index * 50}ms` }}
+            onClick={() => setSelectedTask(task)}
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0 space-y-1">
@@ -165,39 +169,11 @@ export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({
                 )}
               </div>
 
-              <div className="flex flex-col items-end gap-1.5 shrink-0">
-                <div className="flex items-center gap-1.5">
-                  {getPriorityBadge(task.priority)}
-                  <Badge variant="outline" className={cn("text-[10px]", getDaysPendingColor(daysPending))}>
-                    {daysPending === 0 ? 'Today' : daysPending === 1 ? '1 day' : `${daysPending} days`}
-                  </Badge>
-                </div>
-                <div className="flex items-center gap-1 opacity-0 group-hover/item:opacity-100 transition-opacity">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-6 text-xs px-2 text-green-600 hover:text-green-700 hover:bg-green-50"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      updateTaskStatus(task.id, 'completed');
-                    }}
-                  >
-                    <CheckCircle className="h-3.5 w-3.5 mr-1" />
-                    Approve
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-6 text-xs px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      updateTaskStatus(task.id, 'cancelled');
-                    }}
-                  >
-                    <X className="h-3.5 w-3.5 mr-1" />
-                    Reject
-                  </Button>
-                </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                {getPriorityBadge(task.priority)}
+                <Badge variant="outline" className={cn("text-[10px]", getDaysPendingColor(daysPending))}>
+                  {daysPending === 0 ? 'Today' : daysPending === 1 ? '1 day' : `${daysPending} days`}
+                </Badge>
               </div>
             </div>
           </div>
@@ -285,5 +261,18 @@ export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({
         );
       })}
     </MyTasksPanelCard>
+
+      <TaskDetailSheet
+        task={selectedTask}
+        open={!!selectedTask}
+        onOpenChange={(open) => { if (!open) setSelectedTask(null); }}
+        onApprove={(taskId, comment) => {
+          updateTaskStatus(taskId, 'completed');
+        }}
+        onReject={(taskId, comment) => {
+          updateTaskStatus(taskId, 'cancelled');
+        }}
+      />
+    </>
   );
 };
