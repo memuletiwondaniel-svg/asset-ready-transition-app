@@ -18,7 +18,7 @@ interface APIManagementProps {
 }
 
 const predefinedAPIs = [
-  { id: 'sap4hana', name: 'SAP S/4HANA', description: 'Enterprise resource planning and business operations', category: 'ERP', logo: sapLogo },
+  { id: 'sap4hana', name: 'SAP S/4HANA', description: 'Enterprise resource planning and business operations', category: 'ERP', logo: sapLogo, logoClass: 'h-14' },
   { id: 'primavera-p6', name: 'Oracle Primavera P6', description: 'Project planning, scheduling and control', category: 'Project Management', logo: primaveraLogo },
   { id: 'gocompletions', name: 'GoCompletions', description: 'Completions and commissioning management', category: 'Completions', logo: gocompletionsLogo },
   { id: 'assai', name: 'Assai', description: 'Document management and control', category: 'Document Management', logo: assaiLogo },
@@ -77,7 +77,7 @@ const APIManagement: React.FC<APIManagementProps> = ({ onBack }) => {
                   <Badge variant="secondary" className="text-xs">{api.category}</Badge>
                   <Badge variant="outline" className="text-xs text-muted-foreground">Not configured</Badge>
                 </div>
-                <div className="h-16 flex items-center justify-center bg-white rounded-lg border border-border/30 p-3">
+                <div className={`${(api as any).logoClass ? 'h-24' : 'h-16'} flex items-center justify-center bg-white rounded-lg border border-border/30 p-3 overflow-hidden`}>
                   <img src={api.logo} alt={`${api.name} logo`} className="h-full max-w-full object-contain" />
                 </div>
               </CardHeader>
