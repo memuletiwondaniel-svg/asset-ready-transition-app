@@ -47,7 +47,6 @@ const WIZARD_STEPS: WizardStep[] = [
   { id: 5, title: 'Handover Phases', description: 'Define phases & assign VCRs' },
   { id: 6, title: 'Selected\nApprovers', description: 'Choose who approves the plan' },
   { id: 7, title: 'Review &\nSubmit', description: 'Review the plan layout' },
-  { id: 8, title: 'Confirm', description: 'Submit for approval' },
 ];
 
 export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
@@ -113,7 +112,6 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
       case 4: return state.phases.length > 0;
       case 5: return state.approvers.length > 0;
       case 6: return hasVisitedPast;
-      case 7: return hasVisitedPast;
       default: return false;
     }
   };
@@ -289,19 +287,6 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
             mappings={state.mappings}
             vcrPhaseAssignments={state.vcrPhaseAssignments}
             approvers={state.approvers}
-          />
-        );
-      case 8:
-        return (
-          <ConfirmationStep
-            projectCode={projectCode}
-            projectName={projectName}
-            systems={state.systems}
-            vcrs={state.vcrs}
-            phases={state.phases}
-            approvers={state.approvers}
-            mappings={state.mappings}
-            vcrPhaseAssignments={state.vcrPhaseAssignments}
           />
         );
       default:
