@@ -149,48 +149,53 @@ export const useUserTasks = () => {
         .eq('id', taskId);
       if (error) throw error;
 
-      // Back-to-back logic: if completing a review task, also complete matching tasks
-      // for users sharing the same functional_email_address
+      // Back-to-back logic: if completing any task, also complete matching tasks
+      // for users sharing the same functional_email_address (applies to all task types)
       if (status === 'completed' && user?.id) {
         try {
           // Get the completed task details
           const { data: completedTask } = await supabase
             .from('user_tasks')
-            .select('type, metadata')
+            .select('type, metadata, title')
             .eq('id', taskId)
             .single();
 
-          if (completedTask?.type === 'review' && completedTask.metadata) {
-            const templateId = (completedTask.metadata as any)?.template_id;
-            if (templateId) {
-              // Get current user's functional email
-              const { data: currentProfile } = await supabase
+          if (completedTask) {
+            // Get current user's functional email
+            const { data: currentProfile } = await supabase
+              .from('profiles')
+              .select('functional_email_address')
+              .eq('user_id', user.id)
+              .single();
+
+            const funcEmail = currentProfile?.functional_email_address;
+            if (funcEmail) {
+              // Find back-to-back users (same functional email, different user)
+              const { data: backToBackUsers } = await supabase
                 .from('profiles')
-                .select('functional_email_address')
-                .eq('user_id', user.id)
-                .single();
+                .select('user_id')
+                .eq('functional_email_address', funcEmail)
+                .neq('user_id', user.id)
+                .eq('is_active', true);
 
-              const funcEmail = currentProfile?.functional_email_address;
-              if (funcEmail) {
-                // Find back-to-back users (same functional email, different user)
-                const { data: backToBackUsers } = await supabase
-                  .from('profiles')
-                  .select('user_id')
-                  .eq('functional_email_address', funcEmail)
-                  .neq('user_id', user.id)
-                  .eq('is_active', true);
+              if (backToBackUsers?.length) {
+                const backToBackUserIds = backToBackUsers.map(u => u.user_id);
+                
+                // Build filter based on task type
+                let query = supabase
+                  .from('user_tasks')
+                  .update({ status: 'completed' })
+                  .in('user_id', backToBackUserIds)
+                  .eq('type', completedTask.type)
+                  .eq('status', 'pending');
 
-                if (backToBackUsers?.length) {
-                  const backToBackUserIds = backToBackUsers.map(u => u.user_id);
-                  // Complete their matching pending review tasks for the same template
-                  await supabase
-                    .from('user_tasks')
-                    .update({ status: 'completed' })
-                    .in('user_id', backToBackUserIds)
-                    .eq('type', 'review')
-                    .eq('status', 'pending')
-                    .filter('metadata->>template_id', 'eq', templateId);
+                // If task has metadata with template_id, filter by that too
+                if (completedTask.metadata && (completedTask.metadata as any)?.template_id) {
+                  const templateId = (completedTask.metadata as any).template_id;
+                  query = query.filter('metadata->>template_id', 'eq', templateId);
                 }
+
+                await query;
               }
             }
           }
