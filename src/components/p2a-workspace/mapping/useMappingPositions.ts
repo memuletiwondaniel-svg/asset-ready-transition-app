@@ -204,13 +204,29 @@ export const useMappingPositions = (
 
     window.addEventListener('resize', debouncedRecalc);
 
+    // Watch for structural DOM changes only (not style/class which cause cascading recalcs)
     const mutationObserver = new MutationObserver(debouncedRecalc);
     if (containerRef.current) {
       mutationObserver.observe(containerRef.current, {
         childList: true,
         subtree: true,
         attributes: true,
-        attributeFilter: ['style', 'class'],
+        attributeFilter: ['data-assigned-vcr-id', 'data-vcr-id', 'data-system-id'],
+      });
+    }
+
+    // Watch for zoom changes via CSS variable on the container
+    const zoomObserver = new MutationObserver(() => {
+      // Delay slightly to let layout settle after zoom
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(() => {
+        requestAnimationFrame(recalculate);
+      });
+    });
+    if (containerRef.current) {
+      zoomObserver.observe(containerRef.current, {
+        attributes: true,
+        attributeFilter: ['style'],
       });
     }
 
@@ -218,6 +234,7 @@ export const useMappingPositions = (
       cancelAnimationFrame(rafRef.current);
       observer.disconnect();
       mutationObserver.disconnect();
+      zoomObserver.disconnect();
       scrollContainers?.forEach(el => el.removeEventListener('scroll', handleScroll));
       window.removeEventListener('resize', debouncedRecalc);
     };
