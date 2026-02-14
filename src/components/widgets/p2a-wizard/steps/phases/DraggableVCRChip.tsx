@@ -3,6 +3,7 @@ import { useDraggable } from '@dnd-kit/core';
 import { GripVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WizardVCR } from '../VCRCreationStep';
+import { shortVCRCode } from './vcrDisplayUtils';
 
 export const VCR_ID_HUES = [210, 260, 180, 320, 195, 280, 170, 300];
 
@@ -45,7 +46,7 @@ export const DraggableVCRChip: React.FC<DraggableVCRChipProps> = ({ vcr, index, 
           className="text-[8px] font-mono px-1 py-px rounded border shrink-0 w-fit leading-tight"
           style={getVCRIdStyle(index)}
         >
-          {vcr.code}
+          {shortVCRCode(vcr.code)}
         </span>
       </div>
     </div>
@@ -70,7 +71,7 @@ export const VCRChipOverlay: React.FC<{ vcr: WizardVCR; index: number }> = ({ vc
         className="text-[8px] font-mono px-1 py-px rounded border shrink-0 w-fit leading-tight"
         style={getVCRIdStyle(index)}
       >
-        {vcr.code}
+        {shortVCRCode(vcr.code)}
       </span>
     </div>
   </div>

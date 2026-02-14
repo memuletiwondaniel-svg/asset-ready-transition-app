@@ -30,6 +30,7 @@ import { WizardVCR } from '../VCRCreationStep';
 import { WizardPhase } from '../PhasesStep';
 import { WizardSystem, WizardSubsystem } from '../SystemsImportStep';
 import { getVCRIdStyle } from './DraggableVCRChip';
+import { shortVCRCode } from './vcrDisplayUtils';
 
 const SUB_SEP = '::sub::';
 const makeSubKey = (systemId: string, subSystemId: string) =>
@@ -273,7 +274,7 @@ export const VCREditOverlay: React.FC<VCREditOverlayProps> = ({
               className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded border"
               style={getVCRIdStyle(vcrIndex)}
             >
-              {vcr.code}
+              {shortVCRCode(vcr.code)}
             </span>
             <SheetTitle className="text-base sr-only">Edit VCR</SheetTitle>
           </div>

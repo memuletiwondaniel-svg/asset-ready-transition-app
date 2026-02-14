@@ -12,6 +12,7 @@ import { WizardSystem } from './SystemsImportStep';
 import { WizardVCR } from './VCRCreationStep';
 import { WizardPhase } from './PhasesStep';
 import { WizardApprover } from './ApprovalSetupStep';
+import { shortVCRCode } from './phases/vcrDisplayUtils';
 
 interface ConfirmationStepProps {
   projectCode: string;
@@ -112,7 +113,7 @@ export const ConfirmationStep: React.FC<ConfirmationStepProps> = ({
             {vcrs.map((vcr) => {
               const systemCount = (mappings[vcr.id] || []).length;
               const phase = phases.find(p => p.id === vcrPhaseAssignments[vcr.id]);
-              const shortCode = vcr.code?.replace(/^VCR-[A-Z0-9]+-/, 'VCR-') || vcr.code;
+              const shortCode = shortVCRCode(vcr.code);
               return (
                 <React.Fragment key={vcr.id}>
                   <span className="font-mono text-muted-foreground">{shortCode}</span>

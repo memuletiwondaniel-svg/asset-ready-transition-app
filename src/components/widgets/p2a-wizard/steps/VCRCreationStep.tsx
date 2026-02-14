@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, Trash2, Edit2, Check, Key } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AddVCRModal } from './AddVCRModal';
+import { shortVCRCode } from './phases/vcrDisplayUtils';
 
 // Subtle pastel hues for VCR ID badges (avoids red/amber/green status colors)
 const VCR_ID_HUES = [210, 260, 180, 320, 195, 280, 170, 300]; // blue, purple, teal, magenta, cyan, violet, sea, pink
@@ -129,7 +130,7 @@ export const VCRCreationStep: React.FC<VCRCreationStepProps> = ({
                             className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded border"
                             style={getVCRIdStyle(index)}
                           >
-                            {vcr.code}
+                            {shortVCRCode(vcr.code)}
                           </span>
                         </div>
                         {vcr.reason && (

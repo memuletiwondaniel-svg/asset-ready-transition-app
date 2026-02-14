@@ -10,6 +10,7 @@ import { getVCRColor } from '@/components/p2a-workspace/utils/vcrColors';
 import { WizardSystem } from './SystemsImportStep';
 import { WizardVCR } from './VCRCreationStep';
 import { WizardPhase } from './PhasesStep';
+import { shortVCRCode } from './phases/vcrDisplayUtils';
 
 interface WorkspacePreviewStepProps {
   systems: WizardSystem[];
@@ -130,7 +131,7 @@ export const WorkspacePreviewStep: React.FC<WorkspacePreviewStepProps> = ({
                               >
                                 <div className="min-w-0">
                                   <div className="text-[11px] font-medium truncate">{vcr.name}</div>
-                                  <div className="text-[9px] text-muted-foreground font-mono">{vcr.code}</div>
+                                  <div className="text-[9px] text-muted-foreground font-mono">{shortVCRCode(vcr.code)}</div>
                                 </div>
                                 <div className="flex items-center gap-1 shrink-0">
                                   {hcCount > 0 && (
@@ -155,7 +156,7 @@ export const WorkspacePreviewStep: React.FC<WorkspacePreviewStepProps> = ({
                                 style={{ background: vcrColor?.background, borderColor: vcrColor?.border }}
                               >
                                 <div className="text-xs font-semibold truncate">{vcr.name}</div>
-                                <div className="text-[10px] text-muted-foreground font-mono">{vcr.code}</div>
+                                <div className="text-[10px] text-muted-foreground font-mono">{shortVCRCode(vcr.code)}</div>
                               </div>
                               <div className="p-2 max-h-48 overflow-y-auto">
                                 {vcrSystems.length === 0 ? (

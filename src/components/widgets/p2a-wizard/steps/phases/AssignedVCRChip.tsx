@@ -5,6 +5,7 @@ import { GripVertical, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WizardVCR } from '../VCRCreationStep';
 import { getVCRIdStyle } from './DraggableVCRChip';
+import { shortVCRCode } from './vcrDisplayUtils';
 
 interface AssignedVCRChipProps {
   vcr: WizardVCR;
@@ -54,7 +55,7 @@ export const AssignedVCRChip: React.FC<AssignedVCRChipProps> = ({ vcr, vcrIndex,
           className="text-[8px] font-mono px-1 py-px rounded border shrink-0 w-fit leading-tight"
           style={getVCRIdStyle(vcrIndex >= 0 ? vcrIndex : 0)}
         >
-          {vcr.code}
+          {shortVCRCode(vcr.code)}
         </span>
       </div>
       <button
