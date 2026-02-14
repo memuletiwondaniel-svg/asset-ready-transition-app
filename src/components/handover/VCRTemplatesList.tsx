@@ -63,17 +63,12 @@ const VCRTemplatesList: React.FC = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <CardTitle>VCR Templates</CardTitle>
+              <Badge variant="outline" className="px-3 py-1">{totalCount} templates</Badge>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium bg-primary/10 text-primary">
-                <span className="font-semibold">{totalCount}</span>
-                <span className="text-xs opacity-70">templates</span>
-              </div>
-              <Button onClick={handleAdd} className="gap-2">
-                <Plus className="h-4 w-4" />
-                Add Template
-              </Button>
-            </div>
+            <Button onClick={handleAdd} className="gap-2">
+              <Plus className="h-4 w-4" />
+              Add Template
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
