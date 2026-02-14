@@ -222,7 +222,7 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
       is_hydrocarbon: ws.is_hydrocarbon,
       completion_status: 'NOT_STARTED' as const,
       completion_percentage: ws.progress || 0,
-      source_type: 'CMS_IMPORT' as const,
+      source_type: 'API_GOCOMPLETIONS' as const,
       punchlist_a_count: 0,
       punchlist_b_count: 0,
       itr_a_count: 0,
