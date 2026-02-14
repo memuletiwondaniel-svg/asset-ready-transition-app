@@ -215,9 +215,20 @@ const VCRItemsTab: React.FC = () => {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>
-              Checklist Items
-            </CardTitle>
+            <div className="flex items-center gap-3">
+              <CardTitle>
+                Checklist Items
+              </CardTitle>
+              <Badge variant="outline" className="px-3 py-1">{filteredItems.length} items</Badge>
+              {categoryFilter !== 'all' && (() => {
+                const cat = categories?.find(c => c.id === categoryFilter);
+                return cat ? (
+                  <Badge variant="outline" className={cn("px-3 py-1 font-medium", getCategoryColor(cat.code))}>
+                    {cat.name}
+                  </Badge>
+                ) : null;
+              })()}
+            </div>
             <Button onClick={handleOpenCreate}>
               <Plus className="h-4 w-4 mr-2" />
               Add Item
@@ -281,18 +292,6 @@ const VCRItemsTab: React.FC = () => {
             </TooltipProvider>
           </div>
 
-          {/* Stats */}
-          <div className="flex gap-4 mb-6">
-            <Badge variant="outline" className="px-3 py-1">{filteredItems.length} items</Badge>
-            {categoryFilter !== 'all' && (() => {
-              const cat = categories?.find(c => c.id === categoryFilter);
-              return cat ? (
-                <Badge variant="outline" className={cn("px-3 py-1 font-medium", getCategoryColor(cat.code))}>
-                  {cat.name}
-                </Badge>
-              ) : null;
-            })()}
-          </div>
 
           {/* Table */}
           <div className="border rounded-lg max-h-[60vh] overflow-auto">
