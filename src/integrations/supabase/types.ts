@@ -4916,6 +4916,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           description: string
+          guidance_notes: string | null
           id: string
           is_active: boolean
           responsible: string | null
@@ -4932,6 +4933,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description: string
+          guidance_notes?: string | null
           id?: string
           is_active?: boolean
           responsible?: string | null
@@ -4948,6 +4950,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string
+          guidance_notes?: string | null
           id?: string
           is_active?: boolean
           responsible?: string | null

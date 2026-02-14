@@ -1,0 +1,1 @@
+ALTER TABLE public.pssr_checklist_items ADD COLUMN guidance_notes text;
