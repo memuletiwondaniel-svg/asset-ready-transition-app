@@ -1,40 +1,27 @@
 
-## Fix: VCR Cards Always Visible in Phase Columns
 
-### Problem
-When mapping mode is active, VCR cards whose systems are scrolled out of view in the Systems Panel get awkwardly positioned using a fallback absolute stacking from the top of the container. This can push some VCRs (like Compressor D and E) out of the visible area of their phase column. The user wants all VCRs to always remain visible.
+## De-emphasize Sibling VCR Cards on Hover
 
-### Solution
-Change the rendering logic in `StaircasePhaseColumn.tsx` to use a **two-group layout**:
+A subtle "focus + context" effect that dims sibling VCR cards when hovering over one, scoped to the parent phase card.
 
-1. **VCRs WITH alignment targets** (all systems visible): Rendered with absolute positioning to align horizontally with their system group -- same as today, with mapping lines shown.
-2. **VCRs WITHOUT alignment targets** (systems scrolled out): Rendered in normal document flow at the bottom of the phase column, naturally stacking and always visible. No mapping lines shown (already handled by useMappingPositions).
+### Approach
 
-This ensures every VCR card is always visible in its phase column regardless of the systems panel scroll position.
+Use a CSS-only `group/phase` + `hover` strategy on the phase container. When any VCR card inside a phase is hovered, all sibling cards reduce opacity. No React state needed — pure Tailwind/CSS.
 
----
+### Technical Details
 
-### Technical Changes
+**File:** `src/components/widgets/p2a-wizard/steps/WorkspacePreviewStep.tsx`
 
-**File: `src/components/p2a-workspace/phases/StaircasePhaseColumn.tsx`**
+1. Add `group/phase` class to each phase card container (the `div` with `min-w-[150px]`)
+2. Add a wrapper `div` with class `group/vcr` around each VCR `HoverCard`
+3. Apply these Tailwind classes to VCR card wrappers:
+   - `transition-opacity duration-150` for smooth animation
+   - Use the CSS selector pattern: when the phase container is hovered (`group-hover/phase`), reduce all cards to `opacity-50`, but restore `opacity-100` on the individually hovered card (`hover:opacity-100`)
 
-Replace the single loop that renders all VCR cards with two sections:
-
-```text
-VCR Container (relative)
-  |
-  +-- Absolute-positioned VCRs (have alignment targets, mapping lines shown)
-  |     positioned at targetY to align with systems
-  |
-  +-- Flow-positioned VCRs (no alignment targets, no mapping lines)
-        rendered at bottom in normal flex flow, always visible
+This is achieved by adding to the VCR card's outer wrapper:
+```
+className="transition-opacity duration-150 group-hover/phase:opacity-40 hover:!opacity-100"
 ```
 
-Specific changes:
-- Split `sortedPoints` into two arrays: `alignedPoints` (have entry in `vcrAlignmentTargets`) and `unalignedPoints` (no entry).
-- Render `alignedPoints` with `position: absolute` as before.
-- Render `unalignedPoints` in a normal flex container at the bottom of the phase column (no absolute positioning).
-- Adjust `computedMinHeight` to only account for aligned VCRs, plus space for unaligned ones in flow.
-- Unaligned VCR cards get a subtle reduced opacity (e.g., 0.7) to visually indicate their mapping is not active.
+No new state, no new dependencies — just 2 class additions.
 
-No other files need changes -- `useMappingPositions` and `useVCRAlignment` already correctly skip VCRs whose systems aren't all visible.
