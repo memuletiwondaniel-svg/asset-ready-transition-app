@@ -239,11 +239,11 @@ export const P2APlanSummaryDialog: React.FC<P2APlanSummaryDialogProps> = ({
             )}
 
             {/* Approvers */}
-            {approvers.length > 0 && (
-              <div>
-                <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                  Approvers
-                </div>
+            <div>
+              <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+                Approvers
+              </div>
+              {approvers.length > 0 ? (
                 <div className="space-y-1.5">
                   {approvers.map((approver: any) => {
                     const avatarUrl = approver.user_avatar
@@ -287,8 +287,10 @@ export const P2APlanSummaryDialog: React.FC<P2APlanSummaryDialogProps> = ({
                     );
                   })}
                 </div>
-              </div>
-            )}
+              ) : (
+                <p className="text-xs text-muted-foreground py-2">No approvers configured yet.</p>
+              )}
+            </div>
 
             {/* Open Workspace Button */}
             <Button

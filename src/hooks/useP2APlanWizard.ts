@@ -455,6 +455,7 @@ async function persistPlanToDatabase(
     const approverRecords = state.approvers.map(a => ({
       handover_id: planId,
       role_name: a.role_name,
+      user_id: a.user_id || null,
       display_order: a.display_order,
       status: 'PENDING' as const,
     }));
