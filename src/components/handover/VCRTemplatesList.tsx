@@ -62,15 +62,7 @@ const VCRTemplatesList: React.FC = () => {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center">
-                <FileCheck className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                <CardTitle>VCR Templates</CardTitle>
-                <CardDescription>
-                  Configure baseline VCR templates with selected items and approvers.
-                </CardDescription>
-              </div>
+              <CardTitle>VCR Templates</CardTitle>
             </div>
             <div className="flex items-center gap-3">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium bg-primary/10 text-primary">
