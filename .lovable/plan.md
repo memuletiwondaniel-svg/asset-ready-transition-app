@@ -1,24 +1,60 @@
 
 
-## Modernize Approval Cards
+## Vertical-Only Zoom for P2A Workspace
 
-### Changes to `ApprovalSetupStep.tsx`
+### Current Behavior
+The workspace zoom (`--ws-zoom`) scales all card dimensions uniformly -- width, height, padding, and font sizes all shrink/grow together.
 
-1. **Remove numbered circles** -- Delete the `w-6 h-6 rounded-full` index indicator from each row.
+### New Behavior
+- **Width stays fixed** at 140px regardless of zoom level
+- **Height compresses** as you zoom out -- padding, vertical gaps, and font sizes shrink
+- **At low zoom levels** (e.g. below 0.8), the secondary info row (System ID + percentage, VCR code + percentage) is hidden entirely, leaving only the name visible
+- This allows fitting many more cards vertically without sacrificing horizontal readability
 
-2. **Use actual profile images** -- The avatar already uses `AvatarImage` with `approver?.user_avatar`, which pulls from the user's Supabase storage profile picture. It falls back to initials only when no image exists. The current code is correct -- profile photos will display automatically for users who have uploaded one.
+### Technical Approach
 
-3. **Remove the summary footer** -- Delete the "5 approvers in 2 phases. Estimated review time: 5-10 days" section at the bottom.
+Introduce a second CSS variable `--ws-zoom-y` alongside the existing `--ws-zoom`. The workspace container will set `--ws-zoom` to 1 (constant) for horizontal dimensions and `--ws-zoom-y` to the actual zoom level for vertical dimensions.
 
-4. **Make cards more compact and modern** -- Reduce padding from `p-3` to `p-2.5`, tighten gaps, and use a subtle hover effect for a cleaner look.
+**Files to modify:**
 
-### Technical Details
+1. **`P2AHandoverWorkspace.tsx`** -- Set two CSS variables on the workspace container:
+   - `--ws-zoom: 1` (width stays constant)
+   - `--ws-zoom-y: {zoomLevel}` (height scales)
 
-**File**: `src/components/widgets/p2a-wizard/steps/ApprovalSetupStep.tsx`
+2. **`SystemCard.tsx`** -- Change vertical-sensitive properties to use `--ws-zoom-y`:
+   - `width` keeps using `--ws-zoom` (stays fixed)
+   - `padding`, vertical `gap`, `height` (placeholder), icon sizes use `--ws-zoom-y`
+   - Font sizes use `--ws-zoom-y`
+   - Hide the system ID + percentage row when `zoomLevel < 0.8` (via a `--ws-zoom-hide-ids` CSS variable or a direct prop)
 
-- Remove the numbered circle `div` (lines with `w-6 h-6 rounded-full bg-primary/10`)
-- Remove the summary `div` at the bottom (`p-3 bg-muted/30 rounded-lg`)
-- Reduce card padding and avatar size slightly for a tighter layout
-- Add `hover:shadow-sm transition-shadow` for modern interactivity feel
-- Avatar images are already wired up via `user_avatar` field from team data -- no changes needed there
+3. **`SubsystemCard.tsx`** -- Same pattern as SystemCard
+
+4. **`HandoverPointCard.tsx`** -- Same pattern: fixed width, vertical compression, hide VCR code row at low zoom
+
+5. **`SystemsPanel.tsx`** -- Vertical gaps between cards use `--ws-zoom-y`
+
+6. **`P2AWorkspaceOverlay.tsx`** -- Extend zoom range downward (e.g. minimum 0.4 instead of 0.6) to allow more extreme compression. Also pass `zoomLevel` so components can conditionally hide IDs.
+
+### Zoom-to-Hide Logic
+
+Rather than complex CSS-only detection, the workspace container will set a data attribute `data-hide-ids` when zoomLevel drops below 0.8. Card components will check this via a prop or CSS:
+
+```text
+Zoom >= 0.8:  [Name]
+              [ID ............. %]
+
+Zoom < 0.8:   [Name]
+              (ID row hidden)
+```
+
+### Summary of Changes
+
+| File | Change |
+|------|--------|
+| `P2AWorkspaceOverlay.tsx` | Lower min zoom to 0.4, keep step at 0.1 |
+| `P2AHandoverWorkspace.tsx` | Set `--ws-zoom: 1` and `--ws-zoom-y: zoomLevel` and `data-hide-ids` attribute |
+| `SystemCard.tsx` | Width uses `--ws-zoom`, vertical dims use `--ws-zoom-y`, conditionally hide ID row |
+| `SubsystemCard.tsx` | Same vertical-only zoom pattern |
+| `HandoverPointCard.tsx` | Same vertical-only zoom pattern, hide VCR code at low zoom |
+| `SystemsPanel.tsx` | Gaps use `--ws-zoom-y` |
 
