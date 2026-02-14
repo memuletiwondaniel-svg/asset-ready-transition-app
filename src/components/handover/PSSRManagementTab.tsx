@@ -22,12 +22,22 @@ const getTabIconColor = (tabValue: string, isActive: boolean) => {
 };
 
 const PSSRManagementTab: React.FC = () => {
-  const [activeSubTab, setActiveSubTab] = useState('categories');
+  const [activeSubTab, setActiveSubTab] = useState('templates');
 
   return (
     <div className="space-y-6">
       <Tabs value={activeSubTab} onValueChange={setActiveSubTab}>
         <TabsList className="h-10">
+          <TabsTrigger 
+            value="templates" 
+            className={cn(
+              "flex items-center gap-2 transition-colors duration-200",
+              activeSubTab !== 'templates' && "text-muted-foreground/60"
+            )}
+          >
+            <Settings className={cn("h-4 w-4 transition-colors duration-200", getTabIconColor('templates', activeSubTab === 'templates'))} />
+            Templates
+          </TabsTrigger>
           <TabsTrigger 
             value="categories" 
             className={cn(
@@ -48,17 +58,11 @@ const PSSRManagementTab: React.FC = () => {
             <ClipboardList className={cn("h-4 w-4 transition-colors duration-200", getTabIconColor('checklist-items', activeSubTab === 'checklist-items'))} />
             Items
           </TabsTrigger>
-          <TabsTrigger 
-            value="templates" 
-            className={cn(
-              "flex items-center gap-2 transition-colors duration-200",
-              activeSubTab !== 'templates' && "text-muted-foreground/60"
-            )}
-          >
-            <Settings className={cn("h-4 w-4 transition-colors duration-200", getTabIconColor('templates', activeSubTab === 'templates'))} />
-            Templates
-          </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="templates" className="mt-6">
+          <PSSRConfigurationMatrix />
+        </TabsContent>
 
         <TabsContent value="categories" className="mt-6">
           <ItemCategoriesTab />
@@ -66,10 +70,6 @@ const PSSRManagementTab: React.FC = () => {
 
         <TabsContent value="checklist-items" className="mt-6">
           <ChecklistItemsLibrary />
-        </TabsContent>
-
-        <TabsContent value="templates" className="mt-6">
-          <PSSRConfigurationMatrix />
         </TabsContent>
       </Tabs>
     </div>

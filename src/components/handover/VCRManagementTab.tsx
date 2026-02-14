@@ -24,12 +24,22 @@ const getTabIconColor = (tabValue: string, isActive: boolean) => {
 };
 
 const VCRManagementTab: React.FC = () => {
-  const [activeSubTab, setActiveSubTab] = useState('categories');
+  const [activeSubTab, setActiveSubTab] = useState('templates');
 
   return (
     <div className="space-y-6">
       <Tabs value={activeSubTab} onValueChange={setActiveSubTab}>
         <TabsList className="h-10">
+          <TabsTrigger 
+            value="templates" 
+            className={cn(
+              "flex items-center gap-2 transition-colors duration-200",
+              activeSubTab !== 'templates' && "text-muted-foreground/60"
+            )}
+          >
+            <List className={cn("h-4 w-4 transition-colors duration-200", getTabIconColor('templates', activeSubTab === 'templates'))} />
+            Templates
+          </TabsTrigger>
           <TabsTrigger 
             value="categories" 
             className={cn(
@@ -50,17 +60,11 @@ const VCRManagementTab: React.FC = () => {
             <ClipboardList className={cn("h-4 w-4 transition-colors duration-200", getTabIconColor('items', activeSubTab === 'items'))} />
             Items
           </TabsTrigger>
-          <TabsTrigger 
-            value="templates" 
-            className={cn(
-              "flex items-center gap-2 transition-colors duration-200",
-              activeSubTab !== 'templates' && "text-muted-foreground/60"
-            )}
-          >
-            <List className={cn("h-4 w-4 transition-colors duration-200", getTabIconColor('templates', activeSubTab === 'templates'))} />
-            Templates
-          </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="templates" className="mt-6">
+          <VCRTemplatesList />
+        </TabsContent>
 
         <TabsContent value="categories" className="mt-6">
           <VCRItemCategoryTab />
@@ -68,10 +72,6 @@ const VCRManagementTab: React.FC = () => {
 
         <TabsContent value="items" className="mt-6">
           <VCRItemsTab />
-        </TabsContent>
-
-        <TabsContent value="templates" className="mt-6">
-          <VCRTemplatesList />
         </TabsContent>
 
       </Tabs>
