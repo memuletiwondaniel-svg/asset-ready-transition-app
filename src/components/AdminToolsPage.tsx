@@ -339,7 +339,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
       </div>;
   }
   if (activeView === 'handover-management') {
-    return <div className="flex-1 overflow-hidden animate-fade-in">
+    return <div className="flex-1 flex flex-col overflow-hidden animate-fade-in min-h-0">
         <Suspense fallback={<ViewLoadingFallback />}>
           <ManageHandover onBack={() => setActiveView('dashboard')} />
         </Suspense>
