@@ -61,10 +61,7 @@ const PACCertificate: React.FC<PACCertificateProps> = ({
   projectId,
   approvers = [
     { id: '1', name: '', role: 'Plant Director' },
-    { id: '2', name: '', role: 'Project Hub Lead' },
-    { id: '3', name: '', role: 'MTCE Team Lead' },
-    { id: '4', name: '', role: 'Central Engr. Lead' },
-    { id: '5', name: '', role: 'ORA Lead' }
+    { id: '2', name: '', role: 'Project Hub Lead' }
   ]
 }) => {
   const certificateRef = useRef<HTMLDivElement>(null);
