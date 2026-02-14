@@ -284,85 +284,53 @@ export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
         </Button>
       </div>
 
-
-      {/* Phase 1 Header */}
-      <div className="flex items-center gap-2 pt-1">
-        <Badge variant="outline" className="text-[10px] bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800">
-          Phase 1
-        </Badge>
-        <span className="text-[10px] text-muted-foreground">Technical Review</span>
-      </div>
-
-      {/* Approvers List */}
       <div className="border rounded-lg">
-        <ScrollArea className="h-[300px]">
-          <div className="p-2 space-y-2">
-            {isLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-              </div>
-            ) : (
-              <>
-                {FIXED_APPROVER_ROLES.map((role, index) => {
-                  const approver = approvers.find(a => a.role_name === role.label);
-
-                  // Insert Phase 2 header before the 4th item
-                  const showPhase2Header = index === 3;
-
-                  return (
-                    <React.Fragment key={role.key}>
-                      {showPhase2Header && (
-                        <div className="flex items-center gap-2 pt-3 pb-1 px-1">
-                          <Badge variant="outline" className="text-[10px] bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800">
-                            Phase 2
-                          </Badge>
-                          <span className="text-[10px] text-muted-foreground">Final Approval</span>
-                        </div>
-                      )}
-                      <div className="flex items-center gap-3 p-3 rounded-lg border bg-card">
-                        <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold shrink-0">
-                          {index + 1}
-                        </div>
-                        <Avatar className="h-9 w-9 shrink-0">
-                          <AvatarImage src={approver?.user_avatar} />
-                          <AvatarFallback className="text-xs bg-muted">
-                            {getInitials(approver?.user_name)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          {approver?.user_name ? (
-                            <>
-                              <span className="text-sm font-medium">{approver.user_name}</span>
-                              <p className="text-xs text-muted-foreground truncate">
-                                {role.label}
-                              </p>
-                            </>
-                          ) : (
-                            <>
-                              <span className="text-sm font-medium text-muted-foreground">{role.label}</span>
-                              <p className="text-[10px] text-amber-600">
-                                No team member assigned
-                              </p>
-                            </>
-                          )}
-                        </div>
-                        {approver?.user_id ? (
-                          <Badge variant="secondary" className="text-[10px] bg-emerald-50 text-emerald-700 border-emerald-200">
-                            Assigned
-                          </Badge>
-                        ) : (
-                          <Badge variant="secondary" className="text-[10px] bg-amber-50 text-amber-700 border-amber-200">
-                            Unassigned
-                          </Badge>
-                        )}
-                      </div>
-                    </React.Fragment>
-                  );
-                })}
-              </>
-            )}
-          </div>
-        </ScrollArea>
+        <div className="p-2 space-y-2">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            FIXED_APPROVER_ROLES.map((role, index) => {
+              const approver = approvers.find(a => a.role_name === role.label);
+              return (
+                <div key={role.key} className="flex items-center gap-3 p-3 rounded-lg border bg-card">
+                  <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold shrink-0">
+                    {index + 1}
+                  </div>
+                  <Avatar className="h-9 w-9 shrink-0">
+                    <AvatarImage src={approver?.user_avatar} />
+                    <AvatarFallback className="text-xs bg-muted">
+                      {getInitials(approver?.user_name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    {approver?.user_name ? (
+                      <>
+                        <span className="text-sm font-medium">{approver.user_name}</span>
+                        <p className="text-xs text-muted-foreground truncate">{role.label}</p>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-sm font-medium text-muted-foreground">{role.label}</span>
+                        <p className="text-[10px] text-amber-600">No team member assigned</p>
+                      </>
+                    )}
+                  </div>
+                  {approver?.user_id ? (
+                    <Badge variant="secondary" className="text-[10px] bg-emerald-50 text-emerald-700 border-emerald-200">
+                      Assigned
+                    </Badge>
+                  ) : (
+                    <Badge variant="secondary" className="text-[10px] bg-amber-50 text-amber-700 border-amber-200">
+                      Unassigned
+                    </Badge>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
       </div>
 
       {/* Summary */}
