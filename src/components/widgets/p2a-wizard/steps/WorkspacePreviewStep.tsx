@@ -3,7 +3,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ExternalLink, Flame, AlertCircle, ArrowRight, ChevronDown } from 'lucide-react';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
+import { ExternalLink, Flame, AlertCircle, ArrowRight, ChevronDown, Box, Flame as FlameIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getVCRColor } from '@/components/p2a-workspace/utils/vcrColors';
 import { WizardSystem } from './SystemsImportStep';
@@ -116,27 +117,81 @@ export const WorkspacePreviewStep: React.FC<WorkspacePreviewStepProps> = ({
                         const hcCount = vcrSystems.filter(s => s.is_hydrocarbon).length;
                         const vcrColor = getVCRColor(vcr.code);
                         return (
-                          <div
-                            key={vcr.id}
-                            className="rounded-md px-2 py-1.5 flex items-center justify-between gap-1 border"
-                            style={{
-                              background: vcrColor?.background,
-                              borderColor: vcrColor?.border,
-                            }}
-                          >
-                            <div className="min-w-0">
-                              <div className="text-[11px] font-medium truncate">{vcr.name}</div>
-                              <div className="text-[9px] text-muted-foreground font-mono">{vcr.code}</div>
-                            </div>
-                            <div className="flex items-center gap-1 shrink-0">
-                              {hcCount > 0 && (
-                                <Flame className="h-3 w-3 text-orange-500" />
-                              )}
-                              <Badge variant="secondary" className="text-[9px] px-1 py-0 h-4">
-                                {vcrSystems.length}
-                              </Badge>
-                            </div>
-                          </div>
+                          <HoverCard openDelay={200} closeDelay={100}>
+                            <HoverCardTrigger asChild>
+                              <div
+                                key={vcr.id}
+                                className="rounded-md px-2 py-1.5 flex items-center justify-between gap-1 border cursor-default transition-shadow hover:shadow-md"
+                                style={{
+                                  background: vcrColor?.background,
+                                  borderColor: vcrColor?.border,
+                                }}
+                              >
+                                <div className="min-w-0">
+                                  <div className="text-[11px] font-medium truncate">{vcr.name}</div>
+                                  <div className="text-[9px] text-muted-foreground font-mono">{vcr.code}</div>
+                                </div>
+                                <div className="flex items-center gap-1 shrink-0">
+                                  {hcCount > 0 && (
+                                    <Flame className="h-3 w-3 text-orange-500" />
+                                  )}
+                                  <Badge variant="secondary" className="text-[9px] px-1 py-0 h-4">
+                                    {vcrSystems.length}
+                                  </Badge>
+                                </div>
+                              </div>
+                            </HoverCardTrigger>
+                            <HoverCardContent
+                              side="right"
+                              align="start"
+                              sideOffset={8}
+                              className="w-56 p-0 rounded-xl shadow-xl border overflow-hidden"
+                            >
+                              <div
+                                className="px-3 py-2 border-b"
+                                style={{ background: vcrColor?.background, borderColor: vcrColor?.border }}
+                              >
+                                <div className="text-xs font-semibold truncate">{vcr.name}</div>
+                                <div className="text-[10px] text-muted-foreground font-mono">{vcr.code}</div>
+                              </div>
+                              <div className="p-2 max-h-48 overflow-y-auto">
+                                {vcrSystems.length === 0 ? (
+                                  <p className="text-[10px] text-muted-foreground text-center py-2">No systems mapped</p>
+                                ) : (
+                                  <div className="space-y-0.5">
+                                    {vcrSystems.map(sys => (
+                                      <div key={sys.id}>
+                                        <div className="flex items-center gap-1.5 px-1.5 py-1 rounded-md hover:bg-muted/50">
+                                          <Box className="h-3 w-3 text-muted-foreground shrink-0" />
+                                          <span className="text-[11px] font-medium truncate flex-1">{sys.name}</span>
+                                          {sys.is_hydrocarbon && (
+                                            <Flame className="h-3 w-3 text-orange-500 shrink-0" />
+                                          )}
+                                        </div>
+                                        {/* Show subsystems if mapped individually */}
+                                        {sys.subsystems && sys.subsystems.length > 0 && (
+                                          <div className="ml-5 space-y-0.5">
+                                            {sys.subsystems
+                                              .filter(sub => {
+                                                const keys = mappings[vcr.id] || [];
+                                                return keys.includes(`${sys.id}::sub::${sub.system_id}`);
+                                              })
+                                              .map(sub => (
+                                                <div key={sub.system_id} className="flex items-center gap-1.5 px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                                                  <span className="w-1 h-1 rounded-full bg-muted-foreground/40 shrink-0" />
+                                                  <span className="truncate">{sub.name}</span>
+                                                </div>
+                                              ))
+                                            }
+                                          </div>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </HoverCardContent>
+                          </HoverCard>
                         );
                       })}
                     </div>
