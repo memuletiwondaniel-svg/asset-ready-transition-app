@@ -319,7 +319,7 @@ const VCRItemsTab: React.FC = () => {
                   </TableRow>
                 ) : (
                   filteredItems.map(item => (
-                    <TableRow key={item.id} className="cursor-pointer hover:bg-muted/50" onClick={() => handleOpenEdit(item)}>
+                    <TableRow key={item.id} className="group cursor-pointer hover:bg-muted/50" onClick={() => handleOpenEdit(item)}>
                       <TableCell className="font-mono text-xs">
                         {generateDisplayId(item.category_code, item.display_order)}
                       </TableCell>
@@ -360,7 +360,7 @@ const VCRItemsTab: React.FC = () => {
                         </TableCell>
                       )}
                       <TableCell className="text-right">
-                        <div className="flex justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150" onClick={(e) => e.stopPropagation()}>
                           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenEdit(item)}>
                             <Edit2 className="h-3.5 w-3.5" />
                           </Button>
