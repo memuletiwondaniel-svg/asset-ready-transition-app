@@ -264,6 +264,12 @@ export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
+  const resolveAvatarUrl = (avatarUrl?: string): string | undefined => {
+    if (!avatarUrl) return undefined;
+    if (avatarUrl.startsWith('http')) return avatarUrl;
+    return supabase.storage.from('user-avatars').getPublicUrl(avatarUrl).data.publicUrl;
+  };
+
   return (
     <div className="space-y-3 p-4">
       <div className="flex items-center justify-between">
@@ -299,10 +305,10 @@ export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
             FIXED_APPROVER_ROLES.map((role, index) => {
               const approver = approvers.find(a => a.role_name === role.label);
               return (
-                <div key={role.key} className="flex items-center gap-3 p-2.5 rounded-lg border bg-card hover:shadow-sm transition-shadow">
-                  <Avatar className="h-8 w-8 shrink-0">
-                    <AvatarImage src={approver?.user_avatar} />
-                    <AvatarFallback className="text-xs bg-muted">
+                <div key={role.key} className="flex items-center gap-2.5 p-2 rounded-lg border bg-card hover:shadow-sm transition-shadow max-w-md">
+                  <Avatar className="h-7 w-7 shrink-0">
+                    <AvatarImage src={resolveAvatarUrl(approver?.user_avatar)} />
+                    <AvatarFallback className="text-[10px] bg-muted">
                       {getInitials(approver?.user_name)}
                     </AvatarFallback>
                   </Avatar>
