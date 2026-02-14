@@ -457,14 +457,12 @@ export const SystemMappingStep: React.FC<SystemMappingStepProps> = ({
                         HC
                       </span>
                     )}
+                    {hasSubsystems && (
+                      <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">
+                        {mappedCount}/{keys.length}
+                      </span>
+                    )}
                   </div>
-
-                  {/* Mapping count for systems with subsystems */}
-                  {hasSubsystems && (
-                    <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">
-                      {mappedCount}/{keys.length}
-                    </span>
-                  )}
 
                   {/* VCR Assignment – only for leaf systems or fully-assigned parent */}
                   {!hasSubsystems ? (
