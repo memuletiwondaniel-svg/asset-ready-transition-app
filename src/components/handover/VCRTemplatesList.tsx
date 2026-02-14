@@ -161,10 +161,22 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onEdit, onDelete,
   const approvedCount = template.template_approvers?.filter(a => a.approval_status === 'approved').length || 0;
   const status = statusConfig[template.status] || statusConfig.draft;
 
+  // Subtle multicolor gradient backgrounds based on template status
+  const getCardGradient = () => {
+    switch(template.status) {
+      case 'approved':
+        return 'from-[hsl(155,71%,95%)] via-[hsl(186,100%,94%)] to-[hsl(206,100%,94%)]';
+      case 'under_review':
+        return 'from-[hsl(48,100%,96%)] via-[hsl(32,98%,94%)] to-[hsl(0,93%,94%)]';
+      default:
+        return 'from-[hsl(210,40%,96%)] via-[hsl(280,67%,94%)] to-[hsl(263,80%,94%)]';
+    }
+  };
+
   return (
     <div
       onClick={onEdit}
-      className="group relative rounded-2xl border border-border/30 bg-card hover:bg-accent/30 hover:border-border/60 transition-all duration-200 cursor-pointer"
+      className={`group relative rounded-2xl border border-border/30 bg-gradient-to-br ${getCardGradient()} hover:border-border/60 transition-all duration-200 cursor-pointer`}
     >
       <div className="p-4 space-y-3">
         {/* Top row: status + actions */}
