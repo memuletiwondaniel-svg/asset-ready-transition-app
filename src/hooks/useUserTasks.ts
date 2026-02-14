@@ -262,6 +262,7 @@ export const useUserTasks = () => {
     },
     onSuccess: (_, { status }) => {
       queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['completed-tasks'] });
       toast({ title: "Success", description: `Task ${status}` });
     },
     onError: () => {
