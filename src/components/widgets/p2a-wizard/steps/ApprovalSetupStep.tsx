@@ -343,16 +343,7 @@ export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
                     </>
                   )}
                 </div>
-                <div className="flex items-center gap-1.5 shrink-0">
-                  {!hasUser ? (
-                    <AlertCircle className="h-4 w-4 text-muted-foreground" />
-                  ) : approver.status === 'APPROVED' ? (
-                    <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                  ) : approver.status === 'REJECTED' ? (
-                    <XCircle className="h-4 w-4 text-destructive" />
-                  ) : (
-                    <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                  )}
+                <div className="flex items-center shrink-0">
                   <button
                     onClick={() => handleDeleteApprover(approver.id)}
                     className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
