@@ -68,14 +68,29 @@ const VCRTemplateDialog: React.FC<VCRTemplateDialogProps> = ({
     setApproverSearch('');
   }, [template, open]);
 
+  const categoryOrder: Record<string, number> = {
+    'Design Integrity': 1,
+    'Technical Integrity': 2,
+    'Operating Integrity': 3,
+    'Management Systems': 4,
+    'Health & Safety': 5,
+  };
+
   const filteredItems = useMemo(() => {
     if (!vcrItems) return [];
-    if (!itemSearch) return vcrItems;
-    const q = itemSearch.toLowerCase();
-    return vcrItems.filter(i =>
-      i.vcr_item.toLowerCase().includes(q) ||
-      i.category_name?.toLowerCase().includes(q)
-    );
+    let result = vcrItems;
+    if (itemSearch) {
+      const q = itemSearch.toLowerCase();
+      result = result.filter(i =>
+        i.vcr_item.toLowerCase().includes(q) ||
+        i.category_name?.toLowerCase().includes(q)
+      );
+    }
+    return [...result].sort((a, b) => {
+      const orderA = categoryOrder[a.category_name || ''] ?? 999;
+      const orderB = categoryOrder[b.category_name || ''] ?? 999;
+      return orderA - orderB || (a.display_order ?? 0) - (b.display_order ?? 0);
+    });
   }, [vcrItems, itemSearch]);
 
   const filteredRoles = useMemo(() => {
@@ -185,11 +200,28 @@ const VCRTemplateDialog: React.FC<VCRTemplateDialogProps> = ({
                   <CheckSquare className="h-3.5 w-3.5" />
                   VCR Items
                 </Label>
-                {selectedItemIds.length > 0 && (
-                  <Badge variant="secondary" className="text-xs">
-                    {selectedItemIds.length} selected
-                  </Badge>
-                )}
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2 text-[10px]"
+                    onClick={() => {
+                      if (selectedItemIds.length === filteredItems.length && filteredItems.length > 0) {
+                        setSelectedItemIds([]);
+                      } else {
+                        setSelectedItemIds(filteredItems.map(i => i.id));
+                      }
+                    }}
+                  >
+                    {selectedItemIds.length === filteredItems.length && filteredItems.length > 0 ? 'Deselect All' : 'Select All'}
+                  </Button>
+                  {selectedItemIds.length > 0 && (
+                    <Badge variant="secondary" className="text-xs">
+                      {selectedItemIds.length} selected
+                    </Badge>
+                  )}
+                </div>
               </div>
               <div className="rounded-lg border border-border/60 bg-muted/20 overflow-hidden">
                 <div className="p-2 border-b border-border/40">
