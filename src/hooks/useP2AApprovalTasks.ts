@@ -17,47 +17,28 @@ interface CreateApprovalTasksParams {
  * Creates Phase 2 approval tasks after Phase 1 approvers have all completed.
  * Called when the last Phase 1 approver marks their task as completed.
  */
-async function createPhase2Tasks(planId: string, projectId: string, projectCode: string) {
+export async function createPhase2Tasks(planId: string, projectId: string, projectCode: string) {
   const client = supabase as any;
 
-  // Fetch Phase 2 approvers (display_order >= 4) from the plan
+  // Fetch Phase 2 approver (Deputy Plant Director) from the plan
   const { data: approvers, error: approverError } = await client
     .from('p2a_handover_approvers')
-    .select('role_name, display_order')
+    .select('role_name, display_order, user_id')
     .eq('handover_id', planId)
-    .gte('display_order', 4);
+    .eq('role_name', 'Deputy Plant Director');
 
   if (approverError || !approvers?.length) return;
 
-  // Look up team members for these roles
-  const { data: teamMembers } = await client
-    .from('project_team_members')
-    .select('user_id, role')
-    .eq('project_id', projectId);
-
-  if (!teamMembers) return;
-
-  const roleMap: Record<string, string> = {};
-  for (const member of teamMembers) {
-    const role = member.role?.toLowerCase() || '';
-    if (role.includes('hub lead') || role.includes('project hub lead')) {
-      roleMap['Project Hub Lead'] = member.user_id;
-    }
-    if (role.includes('deputy plant director')) {
-      roleMap['Deputy Plant Director'] = member.user_id;
-    }
-  }
-
+  // Use user_id directly from the approver record (set during wizard)
   const taskRecords = approvers
     .map((approver: any) => {
-      const userId = roleMap[approver.role_name];
-      if (!userId) return null;
+      if (!approver.user_id) return null;
       return {
-        user_id: userId,
+        user_id: approver.user_id,
         title: `Final Approval – P2A Handover Plan ${projectCode}`,
         description: `Technical review is complete. As ${approver.role_name}, please provide your final approval for the P2A Handover Plan for project ${projectCode}.`,
         type: 'approval',
-        priority: 'high',
+        priority: 'High',
         status: 'pending',
         metadata: {
           plan_id: planId,

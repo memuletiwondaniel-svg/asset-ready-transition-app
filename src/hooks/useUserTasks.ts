@@ -159,7 +159,41 @@ export const useUserTasks = () => {
             .single();
 
           if (completedTask) {
-            const templateId = (completedTask.metadata as any)?.template_id;
+            const meta = completedTask.metadata as any;
+            const templateId = meta?.template_id;
+
+            // P2A Handover approval: sync status back to p2a_handover_approvers
+            if (meta?.source === 'p2a_handover' && completedTask.type === 'approval' && meta?.plan_id) {
+              const planId = meta.plan_id;
+              const approverRole = meta.approver_role;
+              
+              // Update the approver record to APPROVED
+              await supabase
+                .from('p2a_handover_approvers')
+                .update({ 
+                  status: 'APPROVED', 
+                  approved_at: new Date().toISOString() 
+                })
+                .eq('handover_id', planId)
+                .eq('role_name', approverRole);
+
+              // Check if all Phase 1 approvers (non-Deputy) are now approved
+              const { data: allApprovers } = await supabase
+                .from('p2a_handover_approvers')
+                .select('role_name, status')
+                .eq('handover_id', planId);
+
+              if (allApprovers) {
+                const phase1 = allApprovers.filter((a: any) => a.role_name !== 'Deputy Plant Director');
+                const allPhase1Approved = phase1.every((a: any) => a.status === 'APPROVED');
+
+                if (allPhase1Approved) {
+                  // Dynamically import to avoid circular deps
+                  const { createPhase2Tasks } = await import('./useP2AApprovalTasks');
+                  await createPhase2Tasks(planId, meta.project_id, meta.project_code);
+                }
+              }
+            }
 
             // VCR Template review: one approval per role is enough —
             // complete ALL other users' pending tasks for the same template
