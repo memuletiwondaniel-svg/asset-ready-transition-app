@@ -385,11 +385,16 @@ const PACCertificate: React.FC<PACCertificateProps> = ({
                   ))}
                 </div>
               ) : (
-                <ul className="list-disc list-inside space-y-2 text-foreground ml-4">
+                <div className="space-y-4 ml-2">
                   {content.confirmationItems.map((item, index) => (
-                    <li key={index}>{item}</li>
+                    <div key={index} className="flex gap-4">
+                      <span className="text-primary font-semibold whitespace-nowrap min-w-[2.5rem]">
+                        {String(index + 1).padStart(2, '0')}.
+                      </span>
+                      <span className="text-foreground">{item}</span>
+                    </div>
                   ))}
-                </ul>
+                </div>
               )}
             </div>
 
