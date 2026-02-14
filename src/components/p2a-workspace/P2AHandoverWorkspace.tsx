@@ -18,7 +18,7 @@ import { PhasesTimeline } from './phases/PhasesTimeline';
 import { UnassignedVCRPanel } from './phases/UnassignedVCRPanel';
 import { CreateHandoverPointDialog } from './handover-points/CreateHandoverPointDialog';
 import { HandoverPointCard } from './handover-points/HandoverPointCard';
-import { VCRDetailOverlay } from './handover-points/VCRDetailOverlay';
+import { VCRDetailSheet } from './handover-points/VCRDetailSheet';
 import { VCRRelationshipDialog } from './handover-points/VCRRelationshipDialog';
 import { cn } from '@/lib/utils';
 import { MappingOverlay } from './mapping/MappingOverlay';
@@ -666,12 +666,17 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
         isCreating={isCreatingVCR}
       />
 
-      {/* VCR Detail Overlay */}
+      {/* VCR Detail Sheet */}
       {selectedVCR && (
-        <VCRDetailOverlay
+        <VCRDetailSheet
           handoverPoint={selectedVCR}
           open={!!selectedVCR}
           onOpenChange={(open) => !open && setSelectedVCR(null)}
+          phases={phases}
+          allSystems={systems}
+          onMoveToPhase={(vcrId, phaseId) => moveHandoverPointToPhase({ handoverPointId: vcrId, newPhaseId: phaseId || '' })}
+          onAssignSystem={(pointId, systemId) => assignSystemToPoint({ handoverPointId: pointId, systemId })}
+          onUnassignSystem={(pointId, systemId) => unassignSystemFromPoint({ systemId })}
           onDelete={() => {
             deleteHandoverPoint(selectedVCR.id);
             setSelectedVCR(null);
