@@ -158,14 +158,14 @@ const VCRItemCategoryTab: React.FC = () => {
           </TableHeader>
           <TableBody>
             {categories?.map(cat => (
-              <TableRow key={cat.id} className="cursor-pointer" onClick={() => handleEdit(cat)}>
+              <TableRow key={cat.id} className="group cursor-pointer" onClick={() => handleEdit(cat)}>
                 <TableCell className="py-2">
                   <span className="inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-mono font-semibold tracking-wide" style={{ backgroundColor: getCodeColor(cat.code).bg, color: getCodeColor(cat.code).text, borderColor: getCodeColor(cat.code).border }}>{cat.code}</span>
                 </TableCell>
                 <TableCell className="py-2 font-medium">{cat.name}</TableCell>
                 <TableCell className="py-2 text-sm text-muted-foreground">{cat.description || '-'}</TableCell>
                 <TableCell className="py-2">
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
                     <Button
                       variant="ghost"
                       size="icon"
