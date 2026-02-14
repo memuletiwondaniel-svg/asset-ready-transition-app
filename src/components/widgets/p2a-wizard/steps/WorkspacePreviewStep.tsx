@@ -3,12 +3,15 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
-import { Flame, AlertCircle, ArrowRight, ChevronDown, Box } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Flame, AlertCircle, ArrowRight, ChevronDown, Box, Clock, CheckCircle2, XCircle } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { getVCRColor } from '@/components/p2a-workspace/utils/vcrColors';
 import { WizardSystem } from './SystemsImportStep';
 import { WizardVCR } from './VCRCreationStep';
 import { WizardPhase } from './PhasesStep';
+import { WizardApprover } from './ApprovalSetupStep';
 import { shortVCRCode } from './phases/vcrDisplayUtils';
 
 interface WorkspacePreviewStepProps {
@@ -17,6 +20,7 @@ interface WorkspacePreviewStepProps {
   phases: WizardPhase[];
   mappings: Record<string, string[]>;
   vcrPhaseAssignments: Record<string, string>;
+  approvers?: WizardApprover[];
 }
 
 export const WorkspacePreviewStep: React.FC<WorkspacePreviewStepProps> = ({
@@ -25,6 +29,7 @@ export const WorkspacePreviewStep: React.FC<WorkspacePreviewStepProps> = ({
   phases,
   mappings,
   vcrPhaseAssignments,
+  approvers = [],
 }) => {
   const [unmappedOpen, setUnmappedOpen] = useState(false);
 
@@ -237,7 +242,60 @@ export const WorkspacePreviewStep: React.FC<WorkspacePreviewStepProps> = ({
                       {sys.name}
                     </span>
                   ))}
-                </div>
+
+        {/* Selected Approvers */}
+        {approvers.length > 0 && (
+          <>
+            <Separator className="my-3" />
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">
+              Selected Approvers
+            </span>
+            <div className="space-y-1.5">
+              {approvers.map((approver) => {
+                const avatarUrl = approver.user_avatar
+                  ? (approver.user_avatar.startsWith('http')
+                      ? approver.user_avatar
+                      : supabase.storage.from('user-avatars').getPublicUrl(approver.user_avatar).data.publicUrl)
+                  : undefined;
+                const initials = approver.user_name
+                  ? approver.user_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+                  : '?';
+                const hasUser = !!approver.user_id;
+                return (
+                  <div key={approver.id} className="flex items-center gap-2.5 p-2.5 rounded-lg border bg-card">
+                    <Avatar className="h-7 w-7 shrink-0">
+                      <AvatarImage src={avatarUrl} />
+                      <AvatarFallback className="text-[9px] bg-muted">{initials}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      {hasUser ? (
+                        <>
+                          <span className="text-xs font-medium">{approver.user_name}</span>
+                          <p className="text-[10px] text-muted-foreground truncate">{approver.role_name}</p>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-xs font-medium text-muted-foreground">{approver.role_name}</span>
+                          <p className="text-[10px] text-amber-600">Not assigned</p>
+                        </>
+                      )}
+                    </div>
+                    {!hasUser ? (
+                      <AlertCircle className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                    ) : approver.status === 'APPROVED' ? (
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                    ) : approver.status === 'REJECTED' ? (
+                      <XCircle className="h-3.5 w-3.5 text-destructive shrink-0" />
+                    ) : (
+                      <Clock className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
+      </div>
               </CollapsibleContent>
             </div>
           </Collapsible>
