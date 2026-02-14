@@ -149,8 +149,6 @@ export const useUserTasks = () => {
         .eq('id', taskId);
       if (error) throw error;
 
-      // Back-to-back logic: if completing any task, also complete matching tasks
-      // for users sharing the same functional_email_address (applies to all task types)
       if (status === 'completed' && user?.id) {
         try {
           // Get the completed task details
@@ -161,7 +159,22 @@ export const useUserTasks = () => {
             .single();
 
           if (completedTask) {
-            // Get current user's functional email
+            const templateId = (completedTask.metadata as any)?.template_id;
+
+            // VCR Template review: one approval per role is enough —
+            // complete ALL other users' pending tasks for the same template
+            if (templateId && completedTask.type === 'review' && completedTask.title?.includes('VCR Template')) {
+              await supabase
+                .from('user_tasks')
+                .update({ status: 'completed' })
+                .neq('id', taskId)
+                .eq('status', 'pending')
+                .eq('type', 'review')
+                .filter('metadata->>template_id', 'eq', templateId);
+            }
+
+            // Back-to-back logic: also complete matching tasks
+            // for users sharing the same functional_email_address
             const { data: currentProfile } = await supabase
               .from('profiles')
               .select('functional_email_address')
@@ -170,7 +183,6 @@ export const useUserTasks = () => {
 
             const funcEmail = currentProfile?.functional_email_address;
             if (funcEmail) {
-              // Find back-to-back users (same functional email, different user)
               const { data: backToBackUsers } = await supabase
                 .from('profiles')
                 .select('user_id')
@@ -181,7 +193,6 @@ export const useUserTasks = () => {
               if (backToBackUsers?.length) {
                 const backToBackUserIds = backToBackUsers.map(u => u.user_id);
                 
-                // Build filter based on task type
                 let query = supabase
                   .from('user_tasks')
                   .update({ status: 'completed' })
@@ -189,9 +200,7 @@ export const useUserTasks = () => {
                   .eq('type', completedTask.type)
                   .eq('status', 'pending');
 
-                // If task has metadata with template_id, filter by that too
-                if (completedTask.metadata && (completedTask.metadata as any)?.template_id) {
-                  const templateId = (completedTask.metadata as any).template_id;
+                if (templateId) {
                   query = query.filter('metadata->>template_id', 'eq', templateId);
                 }
 
@@ -200,8 +209,7 @@ export const useUserTasks = () => {
             }
           }
         } catch (e) {
-          // Non-critical: log but don't fail the main action
-          console.warn('Back-to-back task completion check failed:', e);
+          console.warn('Sibling/back-to-back task completion failed:', e);
         }
       }
     },
