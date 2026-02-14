@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { GitMerge, ArrowRight } from 'lucide-react';
 import { WizardVCR } from '../VCRCreationStep';
+import { shortVCRCode } from './vcrDisplayUtils';
 
 interface CombineVCRDialogProps {
   open: boolean;
@@ -59,12 +60,12 @@ export const CombineVCRDialog: React.FC<CombineVCRDialogProps> = ({
         {/* VCR preview */}
         <div className="flex items-center justify-between gap-3 py-2">
           <div className="flex-1 rounded-lg bg-muted p-3 text-center">
-            <code className="text-[10px] font-mono text-muted-foreground">{sourceVCR.code}</code>
+            <code className="text-[10px] font-mono text-muted-foreground">{shortVCRCode(sourceVCR.code)}</code>
             <p className="mt-1 text-sm font-medium truncate">{sourceVCR.name}</p>
           </div>
           <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
           <div className="flex-1 rounded-lg bg-muted p-3 text-center">
-            <code className="text-[10px] font-mono text-muted-foreground">{targetVCR.code}</code>
+            <code className="text-[10px] font-mono text-muted-foreground">{shortVCRCode(targetVCR.code)}</code>
             <p className="mt-1 text-sm font-medium truncate">{targetVCR.name}</p>
           </div>
         </div>
