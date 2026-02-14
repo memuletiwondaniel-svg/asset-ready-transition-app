@@ -168,7 +168,9 @@ export const SystemMappingStep: React.FC<SystemMappingStepProps> = ({
   onMappingsChange,
 }) => {
   const [expandedSystems, setExpandedSystems] = useState<Set<string>>(new Set());
-  const [activeFilter, setActiveFilter] = useState<string | null>(null); // null = all, 'unassigned', or vcrId
+  const [activeFilter, setActiveFilter] = useState<string | null>(null);
+  const systemRowRefs = React.useRef<Map<string, HTMLDivElement>>(new Map());
+  const prevMappedCountRef = React.useRef<number>(0);
 
   // ── Valid mapping keys ─────────────────────────────────────
   const validKeys = useMemo(
@@ -324,6 +326,29 @@ export const SystemMappingStep: React.FC<SystemMappingStepProps> = ({
     });
   }, [sortedSystems, activeFilter, keyOwnerMap, mappings]);
 
+  // ── Auto-scroll to show unassigned systems after assignment ──
+  useEffect(() => {
+    const currentMapped = keyOwnerMap.size;
+    if (currentMapped > prevMappedCountRef.current && activeFilter === null) {
+      // Find the first two unassigned systems in the sorted order
+      const unassignedSystems = sortedSystems.filter(s => {
+        const keys = getMappableKeys(s);
+        return keys.some(k => !keyOwnerMap.has(k));
+      });
+      // Scroll to show the 2nd unassigned system (so at least 2 are visible)
+      const target = unassignedSystems[Math.min(1, unassignedSystems.length - 1)];
+      if (target) {
+        const el = systemRowRefs.current.get(target.id);
+        if (el) {
+          requestAnimationFrame(() => {
+            el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          });
+        }
+      }
+    }
+    prevMappedCountRef.current = currentMapped;
+  }, [keyOwnerMap, sortedSystems, activeFilter]);
+
   // ── Get system-level VCR owner (for systems without subsystems, or where all subs are same VCR) ──
   const getSystemOwner = useCallback(
     (system: WizardSystem): string | null => {
@@ -456,7 +481,13 @@ export const SystemMappingStep: React.FC<SystemMappingStepProps> = ({
             const mappedCount = keys.filter(k => keyOwnerMap.has(k)).length;
 
             return (
-              <div key={system.id}>
+              <div
+                key={system.id}
+                ref={(el) => {
+                  if (el) systemRowRefs.current.set(system.id, el);
+                  else systemRowRefs.current.delete(system.id);
+                }}
+              >
                 {/* System Row */}
                 <div
                   className={cn(
