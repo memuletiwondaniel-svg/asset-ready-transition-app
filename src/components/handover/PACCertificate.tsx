@@ -50,7 +50,7 @@ const defaultContent: PACContent = {
     `The Project shall continue closing out all punch list items and open actions from STQ, MOC, and other reviews.`,
     `The Project shall continue to provide technical clarifications, vendor liaison, and support resolution of warranty-related defects under agreed operational and environmental conditions.`
   ],
-  closingStatement: `An updated Outstanding Work List (OWL) / PAC Exception Report will be jointly reviewed and issued monthly until full close-out is achieved.`
+  closingStatement: ""
 };
 
 const PACCertificate: React.FC<PACCertificateProps> = ({
@@ -394,17 +394,19 @@ const PACCertificate: React.FC<PACCertificateProps> = ({
             </div>
 
             {/* Closing Statement */}
-            <div className="border-t border-border pt-4">
-              {isEditing ? (
-                <Textarea
-                  value={editContent.closingStatement}
-                  onChange={(e) => setEditContent({ ...editContent, closingStatement: e.target.value })}
-                  className="min-h-[60px]"
-                />
-              ) : (
-                <p className="text-foreground italic">{content.closingStatement}</p>
-              )}
-            </div>
+            {content.closingStatement && (
+              <div className="border-t border-border pt-4">
+                {isEditing ? (
+                  <Textarea
+                    value={editContent.closingStatement}
+                    onChange={(e) => setEditContent({ ...editContent, closingStatement: e.target.value })}
+                    className="min-h-[60px]"
+                  />
+                ) : (
+                  <p className="text-foreground italic">{content.closingStatement}</p>
+                )}
+              </div>
+            )}
 
             {/* Approvals Section */}
             <div className="mt-8">
