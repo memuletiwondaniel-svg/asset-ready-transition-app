@@ -114,8 +114,26 @@ export const SystemDetailSheet: React.FC<SystemDetailSheetProps> = ({
     }
   };
 
-  const handleSubsystemVCRChange = (subsystemId: string, value: string) => {
-    onAssignSubsystemToVCR?.(value, system.id, subsystemId);
+  const handleSubsystemVCRChange = (subsystemId: string, newVcrId: string) => {
+    const oldParentVCRId = system.assigned_handover_point_id;
+    
+    // If the parent system has a system-level VCR assignment and the subsystem is diverging,
+    // we need to: 1) remove parent assignment, 2) create subsystem assignments for all OTHER
+    // subsystems with the old VCR, 3) assign this subsystem to the new VCR
+    if (oldParentVCRId && !system.assigned_subsystems?.length && newVcrId !== oldParentVCRId) {
+      // Remove parent system-level assignment first
+      onUnassignSystemFromVCR?.(system.id);
+      
+      // Create subsystem-level assignments for all OTHER subsystems with old parent VCR
+      subsystems.forEach(sub => {
+        if (sub.id !== subsystemId) {
+          onAssignSubsystemToVCR?.(oldParentVCRId, system.id, sub.id);
+        }
+      });
+    }
+    
+    // Assign the changed subsystem to new VCR (or unassign if 'none')
+    onAssignSubsystemToVCR?.(newVcrId, system.id, subsystemId);
   };
 
   return (

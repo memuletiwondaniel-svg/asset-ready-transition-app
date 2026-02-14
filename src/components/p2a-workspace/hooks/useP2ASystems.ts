@@ -163,11 +163,8 @@ export const useP2ASystems = (handoverPlanId: string) => {
         } else {
           // Subsystems split across multiple VCRs → show individual cards
           subsystemAssignmentMap.set(systemId, subs);
-          // Set parent as assigned to first VCR found
-          assignmentMap.set(systemId, {
-            handover_point_id: subs[0].assigned_handover_point_id,
-            vcr_code: subs[0].assigned_vcr_code,
-          });
+          // Parent system should NOT have an assigned VCR when subsystems diverge
+          // (don't set assignmentMap for parent — leave it unassigned)
         }
       }
 
