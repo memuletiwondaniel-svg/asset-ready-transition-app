@@ -42,7 +42,7 @@ interface P2APlanCreationWizardProps {
 const WIZARD_STEPS: WizardStep[] = [
   { id: 1, title: 'Overview', description: 'Project info and approach' },
   { id: 2, title: 'Systems', description: 'Import or create systems' },
-  { id: 3, title: 'Create VCRs', description: 'Define Verification Certificate of Readiness' },
+  { id: 3, title: 'Create\nVCRs', description: 'Define Verification Certificate of Readiness' },
   { id: 4, title: 'Assign Systems', description: 'Map systems to VCRs' },
   { id: 5, title: 'Handover Phases', description: 'Define phases & assign VCRs' },
   { id: 6, title: 'Select Approvers', description: 'Choose who approves the plan' },
