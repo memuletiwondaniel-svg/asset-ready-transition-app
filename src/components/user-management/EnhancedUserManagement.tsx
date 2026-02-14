@@ -43,7 +43,8 @@ import {
   Columns,
   Home,
   Layers,
-  MapPin
+  MapPin,
+  Upload
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/admin/ThemeToggle';
 import LanguageSelector from '@/components/admin/LanguageSelector';
@@ -63,6 +64,7 @@ import LocationManagement from './LocationManagement';
 
 interface EnhancedUserManagementProps {
   onBack: () => void;
+  onBulkUpload?: () => void;
   selectedLanguage?: string;
   translations?: any;
 }
@@ -199,7 +201,7 @@ const SortableTableHeader: React.FC<SortableTableHeaderProps> = ({ column, onRes
   );
 };
 
-const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack, selectedLanguage = 'en', translations = {} }) => {
+const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack, onBulkUpload, selectedLanguage = 'en', translations = {} }) => {
   const { user: currentUser } = useAuth();
   const { mutate: logActivity } = useLogActivity();
   const [users, setUsers] = useState<User[]>([]);
@@ -957,6 +959,17 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
                           </div>
                         </DropdownMenuContent>
                       </DropdownMenu>
+                      
+                      {/* Bulk Upload Button */}
+                      {onBulkUpload && (
+                        <Button 
+                          variant="outline"
+                          onClick={onBulkUpload}
+                        >
+                          <Upload className="h-4 w-4 mr-2" />
+                          Bulk Upload
+                        </Button>
+                      )}
                       
                       {/* Add User Button */}
                       <Button 

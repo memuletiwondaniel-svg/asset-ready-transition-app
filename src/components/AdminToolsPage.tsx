@@ -234,16 +234,6 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     stats: {},
     height: 'md:row-span-2',
     onClick: () => setActiveView('ora-configuration')
-  }, {
-    id: 'bulk-upload',
-    title: 'Bulk User Upload',
-    description: 'Upload multiple users from an Excel file',
-    icon: Upload,
-    gradient: 'from-teal-500 to-teal-600',
-    tooltip: 'Create multiple users at once by uploading an Excel spreadsheet',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('bulk-upload')
   }];
 
   // Filter admin tools based on search query
@@ -320,7 +310,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   if (activeView === 'users') {
     return <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
         <Suspense fallback={<ViewLoadingFallback />}>
-          <EnhancedUserManagement onBack={() => setActiveView('dashboard')} selectedLanguage={language} translations={t} />
+          <EnhancedUserManagement onBack={() => setActiveView('dashboard')} onBulkUpload={() => setActiveView('bulk-upload')} selectedLanguage={language} translations={t} />
         </Suspense>
       </div>;
   }
