@@ -17,7 +17,7 @@ export { CreatePhaseDialog } from './phases/CreatePhaseDialog';
 // Handover Points (VCR)
 export { HandoverPointCard, DroppableHandoverPointCard } from './handover-points/HandoverPointCard';
 export { CreateHandoverPointDialog } from './handover-points/CreateHandoverPointDialog';
-export { VCRDetailOverlay } from './handover-points/VCRDetailOverlay';
+export { VCRDetailSheet } from './handover-points/VCRDetailSheet';
 
 // Hooks
 export { useP2AHandoverPlan } from './hooks/useP2AHandoverPlan';
