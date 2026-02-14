@@ -323,7 +323,7 @@ export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
           {approvers.map((approver) => {
             const hasUser = !!approver.user_id;
             return (
-              <div key={approver.id} className="group flex items-center gap-3 p-3.5 rounded-lg border bg-card hover:shadow-sm transition-shadow max-w-md">
+              <div key={approver.id} className="group flex items-center gap-3 p-3.5 rounded-lg border bg-card hover:bg-accent/50 hover:shadow-md hover:border-primary/20 transition-all duration-200 max-w-md cursor-default">
                 <Avatar className="h-9 w-9 shrink-0">
                   <AvatarImage src={resolveAvatarUrl(approver.user_avatar)} />
                   <AvatarFallback className="text-xs bg-muted">
