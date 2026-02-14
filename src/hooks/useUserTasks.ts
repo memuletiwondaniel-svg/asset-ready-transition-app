@@ -148,6 +148,57 @@ export const useUserTasks = () => {
         .update({ status })
         .eq('id', taskId);
       if (error) throw error;
+
+      // Back-to-back logic: if completing a review task, also complete matching tasks
+      // for users sharing the same functional_email_address
+      if (status === 'completed' && user?.id) {
+        try {
+          // Get the completed task details
+          const { data: completedTask } = await supabase
+            .from('user_tasks')
+            .select('type, metadata')
+            .eq('id', taskId)
+            .single();
+
+          if (completedTask?.type === 'review' && completedTask.metadata) {
+            const templateId = (completedTask.metadata as any)?.template_id;
+            if (templateId) {
+              // Get current user's functional email
+              const { data: currentProfile } = await supabase
+                .from('profiles')
+                .select('functional_email_address')
+                .eq('user_id', user.id)
+                .single();
+
+              const funcEmail = currentProfile?.functional_email_address;
+              if (funcEmail) {
+                // Find back-to-back users (same functional email, different user)
+                const { data: backToBackUsers } = await supabase
+                  .from('profiles')
+                  .select('user_id')
+                  .eq('functional_email_address', funcEmail)
+                  .neq('user_id', user.id)
+                  .eq('is_active', true);
+
+                if (backToBackUsers?.length) {
+                  const backToBackUserIds = backToBackUsers.map(u => u.user_id);
+                  // Complete their matching pending review tasks for the same template
+                  await supabase
+                    .from('user_tasks')
+                    .update({ status: 'completed' })
+                    .in('user_id', backToBackUserIds)
+                    .eq('type', 'review')
+                    .eq('status', 'pending')
+                    .filter('metadata->>template_id', 'eq', templateId);
+                }
+              }
+            }
+          }
+        } catch (e) {
+          // Non-critical: log but don't fail the main action
+          console.warn('Back-to-back task completion check failed:', e);
+        }
+      }
     },
     onSuccess: (_, { status }) => {
       queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
