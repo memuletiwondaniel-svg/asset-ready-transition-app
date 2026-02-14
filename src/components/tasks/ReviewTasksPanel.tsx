@@ -41,8 +41,10 @@ export const ReviewTasksPanel: React.FC<ReviewTasksPanelProps> = ({
   const newCount = filteredTasks.filter(t => isNewSinceLastLogin(t.created_at)).length;
 
   useEffect(() => {
-    onTaskCountUpdate?.(tasks.length);
-  }, [tasks.length, onTaskCountUpdate]);
+    if (!loading) {
+      onTaskCountUpdate?.(tasks.length);
+    }
+  }, [tasks.length, loading, onTaskCountUpdate]);
 
   const getDaysPendingColor = (days: number) => {
     if (days >= 7) return 'bg-destructive/10 text-destructive border-destructive/20';

@@ -63,8 +63,10 @@ export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({
 
   // Report task count to parent
   useEffect(() => {
-    onTaskCountUpdate?.(pssrs.length);
-  }, [pssrs.length, onTaskCountUpdate]);
+    if (!isLoading) {
+      onTaskCountUpdate?.(pssrs.length);
+    }
+  }, [pssrs.length, isLoading, onTaskCountUpdate]);
   const getDaysPendingColor = (days: number) => {
     if (days >= 7) return 'bg-destructive/10 text-destructive border-destructive/20';
     if (days >= 3) return 'bg-amber-500/10 text-amber-600 border-amber-500/20';

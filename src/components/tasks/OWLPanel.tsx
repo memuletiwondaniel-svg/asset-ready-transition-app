@@ -50,8 +50,10 @@ export const OWLPanel: React.FC<OWLPanelProps> = ({
 
   // Report task count to parent
   useEffect(() => {
-    onTaskCountUpdate?.(rawItems.length);
-  }, [rawItems.length, onTaskCountUpdate]);
+    if (!isLoading) {
+      onTaskCountUpdate?.(rawItems.length);
+    }
+  }, [rawItems.length, isLoading, onTaskCountUpdate]);
 
   // Calculate stats from actual data being displayed
   const displayStats = {
