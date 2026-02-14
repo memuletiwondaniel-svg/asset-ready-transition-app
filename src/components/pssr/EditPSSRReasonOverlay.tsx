@@ -14,7 +14,6 @@ import { toast } from 'sonner';
 import { useRoles } from '@/hooks/useRoles';
 import { usePSSRReasonCategories, usePSSRDeliveryParties } from '@/hooks/usePSSRReasonCategories';
 import { PSSRReasonStatus } from '@/hooks/usePSSRReasons';
-import WizardStepCategory, { SubCategoryType } from './wizard/WizardStepCategory';
 import WizardStepReasonDetails from './wizard/WizardStepReasonDetails';
 import WizardStepApprovers from './wizard/WizardStepApprovers';
 import WizardStepChecklistItems, { ChecklistItemOverrides } from './wizard/WizardStepChecklistItems';
@@ -52,11 +51,10 @@ const STATUS_CONFIG: Record<PSSRReasonStatus, { label: string; icon: React.Eleme
 };
 
 const STEPS = [
-  { id: 1, title: 'Category', description: 'Select PSSR category' },
-  { id: 2, title: 'PSSR Reason', description: 'Edit reason name and description' },
-  { id: 3, title: 'PSSR Approvers', description: 'Select PSSR approver roles' },
-  { id: 4, title: 'SoF Approvers', description: 'Select Statement of Fitness approver roles' },
-  { id: 5, title: 'Checklist Items', description: 'Select applicable checklist items' },
+  { id: 1, title: 'PSSR Reason', description: 'Edit reason name and description' },
+  { id: 2, title: 'PSSR Approvers', description: 'Select PSSR approver roles' },
+  { id: 3, title: 'SoF Approvers', description: 'Select Statement of Fitness approver roles' },
+  { id: 4, title: 'Checklist Items', description: 'Select applicable checklist items' },
 ];
 
 const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
@@ -83,7 +81,7 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
   
   // Form state
   const [formCategoryId, setFormCategoryId] = useState<string | null>(initialCategoryId);
-  const [subCategory, setSubCategory] = useState<SubCategoryType>(null);
+  const [subCategory, setSubCategory] = useState<string | null>(null);
   const [formReasonName, setFormReasonName] = useState(initialReasonName);
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<PSSRReasonStatus>(initialStatus);
@@ -119,7 +117,7 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
 
         // Update form state
         setFormCategoryId(reason.category_id);
-        setSubCategory(reason.sub_category as SubCategoryType);
+        setSubCategory(reason.sub_category as string | null);
         setFormReasonName(reason.name);
         setDescription(reason.description || '');
         setStatus(reason.status as PSSRReasonStatus);
@@ -275,7 +273,6 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
       <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader className="border-b pb-4">
-            <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <DialogTitle className="text-xl font-semibold">
                   Edit PSSR Template
@@ -285,10 +282,6 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
                   {statusConfig.label}
                 </Badge>
               </div>
-              <Button variant="ghost" size="icon" onClick={handleClose}>
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
             
             {/* Progress Indicator */}
             <div className="mt-4 space-y-3">
@@ -337,15 +330,6 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
           {/* Step Content */}
           <div className="flex-1 overflow-y-auto py-6 px-1">
             {currentStep === 1 && (
-              <WizardStepCategory
-                categoryId={formCategoryId}
-                subCategory={subCategory}
-                onCategoryChange={setFormCategoryId}
-                onSubCategoryChange={setSubCategory}
-              />
-            )}
-
-            {currentStep === 2 && (
               <WizardStepReasonDetails
                 reasonName={formReasonName}
                 description={description}
@@ -354,7 +338,7 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
               />
             )}
 
-            {currentStep === 3 && (
+            {currentStep === 2 && (
               <WizardStepApprovers
                 type="pssr"
                 selectedRoleIds={pssrApproverRoleIds}
@@ -368,7 +352,7 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
               />
             )}
 
-            {currentStep === 4 && (
+            {currentStep === 3 && (
               <WizardStepApprovers
                 type="sof"
                 selectedRoleIds={sofApproverRoleIds}
@@ -382,7 +366,7 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
               />
             )}
 
-            {currentStep === 5 && (
+            {currentStep === 4 && (
               <WizardStepChecklistItems
                 selectedItemIds={checklistItemIds}
                 itemOverrides={checklistItemOverrides}
