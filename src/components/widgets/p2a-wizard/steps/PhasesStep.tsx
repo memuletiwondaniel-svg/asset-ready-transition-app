@@ -22,6 +22,7 @@ import {
   Key,
   ArrowRight,
   GripVertical,
+  ExternalLink,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WizardVCR } from './VCRCreationStep';
@@ -51,6 +52,7 @@ interface PhasesStepProps {
   onVCRPhaseAssignmentsChange: (assignments: Record<string, string>) => void;
   onVCRsChange: (vcrs: WizardVCR[]) => void;
   onMappingsChange: (mappings: Record<string, string[]>) => void;
+  onOpenFullWorkspace?: () => void;
 }
 
 export const PhasesStep: React.FC<PhasesStepProps> = ({
@@ -64,6 +66,7 @@ export const PhasesStep: React.FC<PhasesStepProps> = ({
   onVCRPhaseAssignmentsChange,
   onVCRsChange,
   onMappingsChange,
+  onOpenFullWorkspace,
 }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingPhase, setEditingPhase] = useState<WizardPhase | null>(null);
@@ -306,6 +309,17 @@ export const PhasesStep: React.FC<PhasesStepProps> = ({
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="outline">{phases.length} phase{phases.length !== 1 ? 's' : ''}</Badge>
+            {onOpenFullWorkspace && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onOpenFullWorkspace}
+                className="text-xs h-7 px-2.5 gap-1.5"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                Open Workspace
+              </Button>
+            )}
             <Button size="sm" className="h-7 text-xs gap-1" onClick={handleOpenCreate}>
               <Plus className="h-3.5 w-3.5" /> Add Phase
             </Button>
