@@ -104,7 +104,7 @@ export const WorkspacePreviewStep: React.FC<WorkspacePreviewStepProps> = ({
                       <ArrowRight className="h-4 w-4 text-muted-foreground/40" />
                     </div>
                   )}
-                  <div className="rounded-lg border bg-card p-3 min-w-[150px] min-h-[120px] flex-1">
+                  <div className="rounded-lg border bg-card p-3 min-w-[150px] min-h-[120px] flex-1 group/phase">
                     <div className="flex items-center gap-1.5 mb-2">
                       <span className="text-[10px] font-bold text-muted-foreground/60">
                         {idx + 1}
@@ -117,6 +117,7 @@ export const WorkspacePreviewStep: React.FC<WorkspacePreviewStepProps> = ({
                         const hcCount = vcrSystems.filter(s => s.is_hydrocarbon).length;
                         const vcrColor = getVCRColor(vcr.code);
                         return (
+                          <div className="transition-opacity duration-150 group-hover/phase:opacity-40 hover:!opacity-100">
                           <HoverCard openDelay={200} closeDelay={100}>
                             <HoverCardTrigger asChild>
                               <div
@@ -194,6 +195,7 @@ export const WorkspacePreviewStep: React.FC<WorkspacePreviewStepProps> = ({
                               </div>
                             </HoverCardContent>
                           </HoverCard>
+                          </div>
                         );
                       })}
                     </div>
