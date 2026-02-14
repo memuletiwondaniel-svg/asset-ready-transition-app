@@ -182,17 +182,27 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
     const systemsViewport = viewports[0] as HTMLElement;
     const phasesViewport = viewports[1] as HTMLElement;
 
-    let isSyncing = false;
+    let scrollSource: 'systems' | 'phases' | null = null;
+    let scrollTimer: number | null = null;
 
-    const syncScroll = (source: HTMLElement, target: HTMLElement) => {
-      if (isSyncing) return;
-      isSyncing = true;
-      target.scrollTop = source.scrollTop;
-      requestAnimationFrame(() => { isSyncing = false; });
+    const clearSource = () => {
+      if (scrollTimer) clearTimeout(scrollTimer);
+      scrollTimer = window.setTimeout(() => { scrollSource = null; }, 60);
     };
 
-    const onSystemsScroll = () => syncScroll(systemsViewport, phasesViewport);
-    const onPhasesScroll = () => syncScroll(phasesViewport, systemsViewport);
+    const onSystemsScroll = () => {
+      if (scrollSource === 'phases') return;
+      scrollSource = 'systems';
+      phasesViewport.scrollTop = systemsViewport.scrollTop;
+      clearSource();
+    };
+
+    const onPhasesScroll = () => {
+      if (scrollSource === 'systems') return;
+      scrollSource = 'phases';
+      systemsViewport.scrollTop = phasesViewport.scrollTop;
+      clearSource();
+    };
 
     systemsViewport.addEventListener('scroll', onSystemsScroll, { passive: true });
     phasesViewport.addEventListener('scroll', onPhasesScroll, { passive: true });
@@ -200,6 +210,7 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
     return () => {
       systemsViewport.removeEventListener('scroll', onSystemsScroll);
       phasesViewport.removeEventListener('scroll', onPhasesScroll);
+      if (scrollTimer) clearTimeout(scrollTimer);
     };
   }, [plan]);
 
