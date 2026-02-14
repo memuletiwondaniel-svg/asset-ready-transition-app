@@ -1,0 +1,1 @@
+UPDATE public.roles SET is_active = false WHERE id = '4e65fe56-694f-4428-bcad-8198e488908d';
