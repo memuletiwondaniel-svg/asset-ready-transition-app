@@ -144,27 +144,33 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onEdit, onDelete,
   return (
     <div
       onClick={onEdit}
-      className="group relative rounded-xl border border-border/60 bg-card hover:border-primary/30 hover:shadow-md transition-all cursor-pointer overflow-hidden"
+      className="group relative rounded-xl border border-border/40 bg-card hover:border-primary/40 hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden"
     >
-      {/* Top accent */}
-      <div className="h-1 bg-gradient-to-r from-cyan-500 to-blue-500 opacity-60 group-hover:opacity-100 transition-opacity" />
+      {/* Gradient accent bar */}
+      <div className="h-1.5 bg-gradient-to-r from-cyan-500 via-blue-500 to-indigo-500 opacity-50 group-hover:opacity-100 transition-opacity duration-300" />
 
-      <div className="p-4 space-y-3">
-        {/* Title & Actions */}
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-sm leading-tight truncate">{template.summary}</h3>
-            {template.description && (
-              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                {template.description}
-              </p>
-            )}
+      <div className="p-5 space-y-4">
+        {/* Header row */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start gap-3 flex-1 min-w-0">
+            <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border border-primary/10 flex items-center justify-center flex-shrink-0 group-hover:from-cyan-500/20 group-hover:to-blue-500/20 transition-colors duration-300">
+              <FileCheck className="h-4 w-4 text-primary/70" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-sm leading-snug truncate">{template.summary}</h3>
+              {template.description && (
+                <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
+                  {template.description}
+                </p>
+              )}
+            </div>
           </div>
-          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+          {/* Hover actions */}
+          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex-shrink-0">
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7"
+              className="h-7 w-7 hover:bg-accent"
               onClick={(e) => { e.stopPropagation(); onEdit(); }}
             >
               <Edit2 className="h-3.5 w-3.5" />
@@ -172,7 +178,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onEdit, onDelete,
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7 text-destructive hover:text-destructive"
+              className="h-7 w-7 text-destructive/70 hover:text-destructive hover:bg-destructive/10"
               onClick={onDelete}
               disabled={isDeleting}
             >
@@ -181,16 +187,26 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onEdit, onDelete,
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="flex items-center gap-2">
-          <Badge variant="secondary" className="gap-1 text-[10px] px-2 py-0.5">
-            <CheckSquare className="h-3 w-3" />
-            {itemCount} {itemCount === 1 ? 'item' : 'items'}
-          </Badge>
-          <Badge variant="outline" className="gap-1 text-[10px] px-2 py-0.5">
-            <Users className="h-3 w-3" />
-            {approverCount} {approverCount === 1 ? 'approver' : 'approvers'}
-          </Badge>
+        {/* Divider */}
+        <div className="h-px bg-border/50" />
+
+        {/* Stats row */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <div className="h-5 w-5 rounded-md bg-primary/8 flex items-center justify-center">
+              <CheckSquare className="h-3 w-3 text-primary/60" />
+            </div>
+            <span className="font-medium text-foreground/80">{itemCount}</span>
+            <span>{itemCount === 1 ? 'item' : 'items'}</span>
+          </div>
+          <div className="h-3.5 w-px bg-border/60" />
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <div className="h-5 w-5 rounded-md bg-primary/8 flex items-center justify-center">
+              <Users className="h-3 w-3 text-primary/60" />
+            </div>
+            <span className="font-medium text-foreground/80">{approverCount}</span>
+            <span>{approverCount === 1 ? 'approver' : 'approvers'}</span>
+          </div>
         </div>
       </div>
     </div>
