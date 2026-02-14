@@ -1,15 +1,12 @@
 import React from 'react';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { 
   Box, 
-  Key, 
-  Users, 
   CheckCircle2,
   AlertCircle,
-  FileText,
-  Send
 } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { WizardSystem } from './SystemsImportStep';
 import { WizardVCR } from './VCRCreationStep';
@@ -95,7 +92,7 @@ export const ConfirmationStep: React.FC<ConfirmationStepProps> = ({
         </div>
         <div className="p-3 rounded-lg border bg-card">
           <div className="flex items-center gap-2 mb-1">
-            <Key className="h-4 w-4 text-primary" />
+            <Box className="h-4 w-4 text-primary" />
             <span className="text-xs font-medium">VCRs</span>
           </div>
           <div className="text-xl font-bold">{vcrs.length}</div>
@@ -105,29 +102,58 @@ export const ConfirmationStep: React.FC<ConfirmationStepProps> = ({
         </div>
       </div>
 
-      {/* VCR List */}
+      {/* VCR Table */}
       {vcrs.length > 0 && (
         <div>
           <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-            Verification Certificate of Readiness
+            VCRs
           </div>
-          <ScrollArea className={vcrs.length > 4 ? "h-[160px]" : ""}>
-            <div className="space-y-1">
-              {vcrs.map((vcr) => {
-                const systemCount = (mappings[vcr.id] || []).length;
-                const phase = phases.find(p => p.id === vcrPhaseAssignments[vcr.id]);
-                return (
-                  <div key={vcr.id} className="flex items-center gap-2 p-2 rounded border bg-card">
-                    <Key className="h-3.5 w-3.5 text-primary" />
-                    <span className="text-sm flex-1">{vcr.name}</span>
-                    <span className="text-[10px] font-mono text-muted-foreground">{vcr.code}</span>
-                    <Badge variant="outline" className="text-[10px]">{systemCount} systems</Badge>
-                    {phase && <Badge variant="secondary" className="text-[10px]">{phase.name}</Badge>}
-                  </div>
-                );
-              })}
-            </div>
-          </ScrollArea>
+          <div className="grid grid-cols-[auto_1fr_auto_auto] gap-x-3 gap-y-1 text-xs items-center">
+            {vcrs.map((vcr) => {
+              const systemCount = (mappings[vcr.id] || []).length;
+              const phase = phases.find(p => p.id === vcrPhaseAssignments[vcr.id]);
+              const shortCode = vcr.code?.replace(/^VCR-[A-Z0-9]+-/, 'VCR-') || vcr.code;
+              return (
+                <React.Fragment key={vcr.id}>
+                  <span className="font-mono text-muted-foreground">{shortCode}</span>
+                  <span className="truncate">{vcr.name}</span>
+                  <span className="text-muted-foreground">{systemCount} sys</span>
+                  {phase ? (
+                    <Badge variant="secondary" className="text-[10px]">{phase.name}</Badge>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </React.Fragment>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Approvers */}
+      {approvers.length > 0 && (
+        <div>
+          <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+            Approvers
+          </div>
+          <div className="flex items-center gap-[-4px]">
+            {approvers.map((approver) => {
+              const avatarUrl = approver.user_avatar
+                ? (approver.user_avatar.startsWith('http')
+                    ? approver.user_avatar
+                    : supabase.storage.from('user-avatars').getPublicUrl(approver.user_avatar).data.publicUrl)
+                : undefined;
+              const initials = approver.user_name
+                ? approver.user_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+                : '?';
+              return (
+                <Avatar key={approver.id} className="h-7 w-7 border-2 border-background -ml-1 first:ml-0" title={`${approver.user_name || 'Unassigned'} — ${approver.role_name}`}>
+                  <AvatarImage src={avatarUrl} />
+                  <AvatarFallback className="text-[9px] bg-muted">{initials}</AvatarFallback>
+                </Avatar>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>
