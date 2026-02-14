@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { AlertTriangle, Save, X, Lock, CheckCircle2, Info, Loader2, Plus, Trash2, FileText, Clock, AlertCircle, Building2, Wrench, ChevronDown, ChevronRight, Edit2, Users, Settings2, Search, Filter, Columns, Eye, EyeOff, Rocket, Factory } from 'lucide-react';
+import { AlertTriangle, Save, X, Lock, CheckCircle2, Info, Loader2, Plus, Trash2, FileText, Clock, AlertCircle, Building2, Wrench, ChevronDown, ChevronRight, Edit2, Users, Settings2, Search, Filter, Columns, Eye, EyeOff, Rocket, Factory, ClipboardList } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { InlineEditableCell } from '@/components/ui/InlineEditableCell';
 import { usePSSRReasonConfigurations, useUpsertPSSRReasonConfiguration, ConfigurationWithDetails } from '@/hooks/usePSSRReasonConfiguration';
@@ -88,6 +88,19 @@ const STATUS_CONFIG: Record<PSSRReasonStatus, { label: string; className: string
   active: { label: 'Active', className: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' },
   inactive: { label: 'Inactive', className: 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' },
 };
+
+const cardGradients = [
+  { from: 'hsl(210,80%,96%)', via: 'hsl(240,70%,95%)', to: 'hsl(280,60%,95%)' },
+  { from: 'hsl(155,60%,95%)', via: 'hsl(180,70%,94%)', to: 'hsl(210,80%,95%)' },
+  { from: 'hsl(340,70%,96%)', via: 'hsl(0,60%,95%)',   to: 'hsl(30,80%,95%)'  },
+  { from: 'hsl(45,90%,95%)',  via: 'hsl(80,60%,94%)',  to: 'hsl(155,50%,94%)' },
+  { from: 'hsl(280,50%,95%)', via: 'hsl(320,55%,95%)', to: 'hsl(350,60%,95%)' },
+  { from: 'hsl(180,60%,94%)', via: 'hsl(200,70%,95%)', to: 'hsl(240,60%,96%)' },
+  { from: 'hsl(20,80%,95%)',  via: 'hsl(45,70%,94%)',  to: 'hsl(80,50%,94%)'  },
+  { from: 'hsl(260,60%,96%)', via: 'hsl(210,50%,95%)', to: 'hsl(180,60%,94%)' },
+  { from: 'hsl(100,50%,94%)', via: 'hsl(140,45%,94%)', to: 'hsl(180,55%,95%)' },
+  { from: 'hsl(350,55%,96%)', via: 'hsl(280,45%,95%)', to: 'hsl(240,55%,96%)' },
+];
 
 // Sortable Row Component
 interface SortableRowProps {
@@ -754,291 +767,135 @@ const PSSRConfigurationMatrix: React.FC = () => {
           )}
         </CardHeader>
 
-        <CardContent className="p-0">
-          <ScrollArea className="w-full">
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragStart={handleDragStart}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext
-                items={sortedConfigs.map(c => c.reason_id)}
-                strategy={verticalListSortingStrategy}
-              >
-                <Table className="w-full">
-                  <TableHeader>
-                    <TableRow className="border-b border-border/40 hover:bg-transparent">
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-12">
-                        #
-                      </TableHead>
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-28">
-                        Category
-                      </TableHead>
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider min-w-[300px]">
-                        Reason for PSSR
-                      </TableHead>
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-24">
-                        Status
-                      </TableHead>
-                      {visibleColumns.items && (
-                        <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-20 text-center">
-                          Items
-                        </TableHead>
-                      )}
-                      {visibleColumns.pssrApprovers && (
-                        <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-40">
-                          PSSR Approvers
-                        </TableHead>
-                      )}
-                      {visibleColumns.sofApprovers && (
-                        <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-40">
-                          SoF Approvers
-                        </TableHead>
-                      )}
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-24 text-right">
-                        Actions
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {sortedConfigs.map((config, index) => {
-                      const category = categories.find(c => c.id === config.category_id);
-                      return (
-                        <SortableRow 
-                          key={config.reason_id} 
-                          id={config.reason_id}
-                          isDirty={config.isDirty}
-                        >
-                          {/* Order Number */}
-                          <TableCell className="text-sm text-muted-foreground font-medium">
-                            {index + 1}
-                          </TableCell>
+        <CardContent className="p-6">
+          {sortedConfigs.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <Info className="h-8 w-8 mx-auto mb-3 opacity-50" />
+              {statusFilter !== 'all' ? (
+                <p className="mb-4">
+                  There are no {statusFilter} PSSR Templates
+                </p>
+              ) : (
+                <>
+                  <p className="mb-4">No PSSR templates configured yet.</p>
+                  <Button 
+                    onClick={() => setShowAddReasonWizard(true)}
+                    className="fluent-button"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Your First PSSR Template
+                  </Button>
+                </>
+              )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {sortedConfigs.map((config, index) => {
+                const category = categories.find(c => c.id === config.category_id);
+                const pssrApproverNames = roles.filter(r => config.pssr_approver_role_ids.includes(r.id)).map(r => r.name);
+                const sofApproverNames = roles.filter(r => config.sof_approver_role_ids.includes(r.id)).map(r => r.name);
+                const statusInfo = STATUS_CONFIG[config.status];
+                const gradient = cardGradients[index % cardGradients.length];
 
-                          {/* Category */}
-                          <TableCell>
-                            {category ? (
-                              <div className="flex items-start gap-1.5">
-                                <div className="shrink-0"><CategoryIcon icon={category.icon} /></div>
-                                <span className="text-sm">{category.name}</span>
-                              </div>
-                            ) : (
-                              <span className="text-sm text-muted-foreground">—</span>
-                            )}
-                          </TableCell>
-
-                          {/* Template Name - Clickable to open details with P&E/BFM indicator */}
-                          <TableCell className="font-medium">
-                            <div 
-                              className="flex items-start gap-2 cursor-pointer hover:bg-muted/50 px-2 py-1 rounded transition-colors"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setEditOverlay({ open: true, config });
-                              }}
+                return (
+                  <div
+                    key={config.reason_id}
+                    onClick={() => setEditOverlay({ open: true, config })}
+                    style={{ '--card-from': gradient.from, '--card-via': gradient.via, '--card-to': gradient.to } as React.CSSProperties}
+                    className="group relative rounded-2xl border border-border/30 bg-muted/40 hover:bg-[image:linear-gradient(to_bottom_right,var(--card-from),var(--card-via),var(--card-to))] hover:border-border/60 hover:shadow-md transition-all duration-300 cursor-pointer"
+                  >
+                    <div className="p-4 space-y-3">
+                      {/* Top row: status + sub-category + actions */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Badge 
+                            variant="outline" 
+                            className={`gap-1 text-[10px] px-2.5 py-0.5 font-medium rounded-full border ${statusInfo?.className || ''}`}
+                          >
+                            {config.status === 'active' && <CheckCircle2 className="h-3 w-3" />}
+                            {config.status === 'draft' && <FileText className="h-3 w-3" />}
+                            {config.status === 'inactive' && <AlertCircle className="h-3 w-3" />}
+                            {statusInfo?.label || config.status}
+                          </Badge>
+                          {config.sub_category && (
+                            <Badge 
+                              variant="outline"
+                              className={`text-[10px] px-2 py-0.5 font-semibold rounded-md gap-1 ${
+                                config.sub_category === 'P&E' 
+                                  ? 'bg-blue-50 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-700' 
+                                  : 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-700'
+                              }`}
                             >
-                              {/* P&E/BFM Visual Indicator with Icon - Always on same row */}
-                              {config.sub_category && (
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <div 
-                                      className={`shrink-0 flex items-center gap-1 whitespace-nowrap text-[10px] font-semibold px-1.5 py-0.5 mt-0.5 rounded-md border ${
-                                        config.sub_category === 'P&E' 
-                                          ? 'bg-blue-50 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-700' 
-                                          : 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-700'
-                                      }`}
-                                    >
-                                      {config.sub_category === 'P&E' ? (
-                                        <Rocket className="h-3 w-3" />
-                                      ) : (
-                                        <Factory className="h-3 w-3" />
-                                      )}
-                                      {config.sub_category}
-                                    </div>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    {config.sub_category === 'P&E' ? 'Projects & Engineering' : 'Brown Field Modifications'}
-                                  </TooltipContent>
-                                </Tooltip>
-                              )}
-                              <div className="flex flex-col gap-1">
-                                <span className="whitespace-normal break-words">
-                                  {config.reason_name}
-                                </span>
-                                {config.isDirty && (
-                                  <Badge variant="outline" className="text-xs bg-amber-100 text-amber-700 border-amber-300 w-fit">
-                                    Modified
-                                  </Badge>
-                                )}
-                              </div>
-                            </div>
-                          </TableCell>
-
-                          {/* Status Badge */}
-                          <TableCell>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Badge 
-                                  className={`${STATUS_CONFIG[config.status]?.className || ''} cursor-default font-medium text-xs`}
-                                >
-                                  {STATUS_CONFIG[config.status]?.label || config.status}
-                                </Badge>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>
-                                  {config.status === 'draft' && 'This template is in draft and not available for use'}
-                                  {config.status === 'active' && 'This template is active and available for creating PSSRs'}
-                                  {config.status === 'inactive' && 'This template is deactivated and not available for use'}
-                                </p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TableCell>
-
-                          {/* PSSR Items Count - Conditional */}
-                          {visibleColumns.items && (
-                            <TableCell className="text-center">
-                              <Badge variant="secondary" className="text-xs font-medium">
-                                {config.checklist_item_ids.length}
-                              </Badge>
-                            </TableCell>
+                              {config.sub_category === 'P&E' ? <Rocket className="h-3 w-3" /> : <Factory className="h-3 w-3" />}
+                              {config.sub_category}
+                            </Badge>
                           )}
+                        </div>
+                        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex-shrink-0">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 rounded-lg hover:bg-accent"
+                            onClick={(e) => { e.stopPropagation(); setEditOverlay({ open: true, config }); }}
+                          >
+                            <Edit2 className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 rounded-lg text-destructive/70 hover:text-destructive hover:bg-destructive/10"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteDialog({ open: true, reasonId: config.reason_id, reasonName: config.reason_name });
+                            }}
+                            disabled={config.status === 'active'}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </div>
 
-                          {/* PSSR Approver Roles - Conditional */}
-                          {visibleColumns.pssrApprovers && (
-                            <TableCell>
-                              <div 
-                                className="flex flex-wrap gap-1 cursor-pointer hover:bg-muted/50 px-2 py-1.5 rounded transition-colors min-h-[36px] items-center"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setEditOverlay({ open: true, config });
-                                }}
-                              >
-                                {config.pssr_approver_role_ids.length > 0 ? (
-                                  (() => {
-                                    const approverOrder = [
-                                      'ORA Lead',
-                                      'Engr. Manager (Asset)',
-                                      'Engr. Manager (P&E)',
-                                      'HSE Manager',
-                                      'TSE Manager',
-                                      'Project Manager',
-                                      'Dep. Plant Director'
-                                    ];
-                                    return [...config.pssr_approver_role_ids]
-                                      .sort((a, b) => {
-                                        const roleA = roles.find(r => r.id === a);
-                                        const roleB = roles.find(r => r.id === b);
-                                        const indexA = approverOrder.indexOf(roleA?.name || '');
-                                        const indexB = approverOrder.indexOf(roleB?.name || '');
-                                        return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB);
-                                      })
-                                      .map((roleId) => {
-                                        const role = roles.find(r => r.id === roleId);
-                                        return role ? (
-                                          <Badge key={roleId} variant="secondary" className="text-xs whitespace-nowrap">
-                                            {role.name}
-                                          </Badge>
-                                        ) : null;
-                                      });
-                                  })()
-                                ) : (
-                                  <span className="text-sm text-muted-foreground italic">Click to add...</span>
-                                )}
-                              </div>
-                            </TableCell>
-                          )}
+                      {/* Category label */}
+                      {category && (
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <CategoryIcon icon={category.icon} />
+                          <span>{category.name}</span>
+                        </div>
+                      )}
 
-                          {/* SoF Approver Roles - Conditional */}
-                          {visibleColumns.sofApprovers && (
-                            <TableCell>
-                              <div 
-                                className="flex flex-wrap gap-1 cursor-pointer hover:bg-muted/50 px-2 py-1.5 rounded transition-colors min-h-[36px] items-center"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setEditOverlay({ open: true, config });
-                                }}
-                              >
-                                {config.sof_approver_role_ids.length > 0 ? (
-                                  config.sof_approver_role_ids.map((roleId) => {
-                                    const role = roles.find(r => r.id === roleId);
-                                    return role ? (
-                                      <Badge key={roleId} variant="secondary" className="text-xs whitespace-nowrap">
-                                        {role.name}
-                                      </Badge>
-                                    ) : null;
-                                  })
-                                ) : (
-                                  <span className="text-sm text-muted-foreground italic">Click to add...</span>
-                                )}
-                              </div>
-                            </TableCell>
-                          )}
+                      {/* Title */}
+                      <div className="space-y-1">
+                        <h3 className="font-semibold text-sm leading-snug line-clamp-2">{config.reason_name}</h3>
+                      </div>
 
-                          {/* Actions Column */}
-                          <TableCell className="text-right">
-                            <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-7 w-7"
-                                    onClick={() => setEditOverlay({ open: true, config })}
-                                  >
-                                    <Edit2 className="h-3.5 w-3.5" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>Edit template</TooltipContent>
-                              </Tooltip>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                    onClick={() => setDeleteDialog({ open: true, reasonId: config.reason_id, reasonName: config.reason_name })}
-                                    disabled={config.status === 'active'}
-                                  >
-                                    <Trash2 className="h-3.5 w-3.5" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  {config.status === 'active' ? 'Deactivate template before deleting' : 'Delete template'}
-                                </TooltipContent>
-                              </Tooltip>
-                            </div>
-                          </TableCell>
-                        </SortableRow>
-                      );
-                    })}
-
-                    {sortedConfigs.length === 0 && (
-                      <TableRow>
-                        <TableCell colSpan={8} className="text-center py-12 text-muted-foreground">
-                          <Info className="h-8 w-8 mx-auto mb-3 opacity-50" />
-                          {statusFilter !== 'all' ? (
-                            <p className="mb-4">
-                              There are no {statusFilter} PSSR Templates
-                            </p>
-                          ) : (
-                            <>
-                              <p className="mb-4">No PSSR templates configured yet.</p>
-                              <Button 
-                                onClick={() => setShowAddReasonWizard(true)}
-                                className="fluent-button"
-                              >
-                                <Plus className="h-4 w-4 mr-2" />
-                                Add Your First PSSR Template
-                              </Button>
-                            </>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </SortableContext>
-            </DndContext>
-          </ScrollArea>
+                      {/* Stats pills */}
+                      <div className="flex flex-wrap items-center gap-2 pt-1">
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted/60 text-xs text-muted-foreground">
+                          <ClipboardList className="h-3 w-3" />
+                          <span className="font-medium text-foreground/80">{config.checklist_item_ids.length}</span>
+                          <span className="hidden sm:inline">items</span>
+                        </div>
+                        {pssrApproverNames.length > 0 && (
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted/60 text-xs text-muted-foreground">
+                            <Users className="h-3 w-3" />
+                            <span className="font-medium text-foreground/80">{pssrApproverNames.length}</span>
+                            <span className="hidden sm:inline">PSSR</span>
+                          </div>
+                        )}
+                        {sofApproverNames.length > 0 && (
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted/60 text-xs text-muted-foreground">
+                            <Users className="h-3 w-3" />
+                            <span className="font-medium text-foreground/80">{sofApproverNames.length}</span>
+                            <span className="hidden sm:inline">SoF</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </CardContent>
       </Card>
 
