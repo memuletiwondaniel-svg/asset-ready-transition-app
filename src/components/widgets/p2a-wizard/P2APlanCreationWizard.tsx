@@ -288,6 +288,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
             phases={state.phases}
             mappings={state.mappings}
             vcrPhaseAssignments={state.vcrPhaseAssignments}
+            approvers={state.approvers}
           />
         );
       case 8:
