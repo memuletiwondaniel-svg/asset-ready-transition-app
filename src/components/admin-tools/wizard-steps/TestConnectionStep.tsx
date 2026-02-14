@@ -57,8 +57,8 @@ export const TestConnectionStep: React.FC<TestConnectionStepProps> = ({
             <div className="w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center">
               <CheckCircle2 className="h-7 w-7 text-emerald-600" />
             </div>
-            <p className="text-sm text-emerald-600 font-medium">Connection successful!</p>
-            <p className="text-xs text-muted-foreground">The configuration is valid. Click Next to save.</p>
+            <p className="text-sm text-emerald-600 font-medium">Credentials saved</p>
+            <p className="text-xs text-muted-foreground">Your configuration has been validated and saved. Click Next to review and confirm.</p>
           </>
         )}
 
