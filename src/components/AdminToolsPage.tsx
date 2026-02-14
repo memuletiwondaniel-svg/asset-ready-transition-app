@@ -5,12 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Users, FolderOpen, Settings, ArrowLeft, ClipboardList, CheckCircle, Home, Search, X, Star, Activity, Sliders, Building2, LayoutTemplate, Key, Loader2, Upload } from 'lucide-react';
+import { Users, FolderOpen, Settings, ArrowLeft, ClipboardList, CheckCircle, Home, Search, X, Star, Activity, Sliders, Building2, LayoutTemplate, Key, Loader2, Upload, Plug } from 'lucide-react';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { toast } from 'sonner';
 
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ThemeToggle } from './admin/ThemeToggle';
@@ -234,6 +235,16 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     stats: {},
     height: 'md:row-span-2',
     onClick: () => setActiveView('ora-configuration')
+  }, {
+    id: 'apis',
+    title: 'APIs',
+    description: 'Configure interfaces between ORSH and external applications such as SAP4HANA, Primavera P6, GoCompletions, Assai, SharePoint',
+    icon: Plug,
+    gradient: 'from-emerald-500 to-teal-600',
+    tooltip: 'Manage Application Programming Interfaces (APIs) for integrating ORSH with external systems',
+    stats: {},
+    height: 'md:row-span-2',
+    onClick: () => toast.info('API configuration coming soon')
   }];
 
   // Filter admin tools based on search query
