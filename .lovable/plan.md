@@ -1,27 +1,24 @@
 
 
-## De-emphasize Sibling VCR Cards on Hover
+## Modernize Approval Cards
 
-A subtle "focus + context" effect that dims sibling VCR cards when hovering over one, scoped to the parent phase card.
+### Changes to `ApprovalSetupStep.tsx`
 
-### Approach
+1. **Remove numbered circles** -- Delete the `w-6 h-6 rounded-full` index indicator from each row.
 
-Use a CSS-only `group/phase` + `hover` strategy on the phase container. When any VCR card inside a phase is hovered, all sibling cards reduce opacity. No React state needed — pure Tailwind/CSS.
+2. **Use actual profile images** -- The avatar already uses `AvatarImage` with `approver?.user_avatar`, which pulls from the user's Supabase storage profile picture. It falls back to initials only when no image exists. The current code is correct -- profile photos will display automatically for users who have uploaded one.
+
+3. **Remove the summary footer** -- Delete the "5 approvers in 2 phases. Estimated review time: 5-10 days" section at the bottom.
+
+4. **Make cards more compact and modern** -- Reduce padding from `p-3` to `p-2.5`, tighten gaps, and use a subtle hover effect for a cleaner look.
 
 ### Technical Details
 
-**File:** `src/components/widgets/p2a-wizard/steps/WorkspacePreviewStep.tsx`
+**File**: `src/components/widgets/p2a-wizard/steps/ApprovalSetupStep.tsx`
 
-1. Add `group/phase` class to each phase card container (the `div` with `min-w-[150px]`)
-2. Add a wrapper `div` with class `group/vcr` around each VCR `HoverCard`
-3. Apply these Tailwind classes to VCR card wrappers:
-   - `transition-opacity duration-150` for smooth animation
-   - Use the CSS selector pattern: when the phase container is hovered (`group-hover/phase`), reduce all cards to `opacity-50`, but restore `opacity-100` on the individually hovered card (`hover:opacity-100`)
-
-This is achieved by adding to the VCR card's outer wrapper:
-```
-className="transition-opacity duration-150 group-hover/phase:opacity-40 hover:!opacity-100"
-```
-
-No new state, no new dependencies — just 2 class additions.
+- Remove the numbered circle `div` (lines with `w-6 h-6 rounded-full bg-primary/10`)
+- Remove the summary `div` at the bottom (`p-3 bg-muted/30 rounded-lg`)
+- Reduce card padding and avatar size slightly for a tighter layout
+- Add `hover:shadow-sm transition-shadow` for modern interactivity feel
+- Avatar images are already wired up via `user_avatar` field from team data -- no changes needed there
 
