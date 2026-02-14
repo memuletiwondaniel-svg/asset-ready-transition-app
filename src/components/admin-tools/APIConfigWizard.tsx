@@ -261,6 +261,12 @@ const APIConfigWizard: React.FC<APIConfigWizardProps> = ({
                       <span className="text-xs text-muted-foreground">Endpoint</span>
                       <span className="text-xs font-mono truncate max-w-[200px]">{apiCredentials.endpointUrl || '—'}</span>
                     </div>
+                    {apiCredentials.authType === 'oauth' && apiCredentials.tokenUrl && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-muted-foreground">Token URL</span>
+                        <span className="text-xs font-mono truncate max-w-[200px]">{apiCredentials.tokenUrl}</span>
+                      </div>
+                    )}
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">Auth Type</span>
                       <span className="text-xs capitalize">{apiCredentials.authType.replace('_', ' ')}</span>
