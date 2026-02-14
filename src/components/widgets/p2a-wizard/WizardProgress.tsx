@@ -22,7 +22,7 @@ export const WizardProgress: React.FC<WizardProgressProps> = ({
   onStepClick,
 }) => {
   return (
-    <div className="flex items-start justify-between px-6 py-3 border-b bg-muted/30">
+    <div className="flex items-start justify-between px-6 py-4 bg-muted/20 shadow-[0_1px_3px_-1px_rgba(0,0,0,0.06)]">
       {steps.map((step, index) => {
         const stepNumber = index + 1;
         const isCompleted = completedSteps.has(stepNumber);
@@ -37,18 +37,18 @@ export const WizardProgress: React.FC<WizardProgressProps> = ({
               onClick={() => isClickable && onStepClick?.(stepNumber)}
               disabled={!isClickable}
               className={cn(
-                "flex flex-col items-center gap-1.5 transition-all min-w-0",
-                isClickable && "cursor-pointer hover:opacity-80",
+                "flex flex-col items-center gap-1.5 transition-all duration-200 min-w-0",
+                isClickable && "cursor-pointer hover:scale-105",
                 !isClickable && "cursor-default"
               )}
             >
               <div
                 className={cn(
-                  "w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold transition-colors shrink-0",
-                  isCompleted && !isCurrent && "bg-emerald-500 text-white",
-                  isCurrent && "bg-primary text-primary-foreground ring-2 ring-primary/30",
-                  isVisitedButIncomplete && "bg-amber-100 text-amber-700 border border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-600",
-                  !isCompleted && !isCurrent && !isVisitedButIncomplete && "bg-muted text-muted-foreground"
+                  "w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-all duration-200 shrink-0",
+                  isCompleted && !isCurrent && "bg-emerald-500 text-white shadow-sm shadow-emerald-300/50",
+                  isCurrent && "bg-primary text-primary-foreground ring-4 ring-primary/15 shadow-sm shadow-primary/20 scale-105",
+                  isVisitedButIncomplete && "bg-amber-100 text-amber-700 border border-amber-300 shadow-sm shadow-amber-200/50 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-600",
+                  !isCompleted && !isCurrent && !isVisitedButIncomplete && "bg-muted/80 text-muted-foreground border border-border/50"
                 )}
               >
                 {isCompleted && !isCurrent ? (
@@ -61,7 +61,7 @@ export const WizardProgress: React.FC<WizardProgressProps> = ({
               </div>
               <span
                 className={cn(
-                  "text-[10px] font-medium leading-tight text-center max-w-[60px] whitespace-pre-line",
+                  "text-[11px] font-medium leading-tight text-center max-w-[72px] whitespace-pre-line transition-opacity duration-200",
                   isCurrent && "text-foreground",
                   isCompleted && !isCurrent && "text-emerald-600 dark:text-emerald-400",
                   isVisitedButIncomplete && "text-amber-600 dark:text-amber-400",
@@ -80,7 +80,7 @@ export const WizardProgress: React.FC<WizardProgressProps> = ({
               return (
                 <div
                   className={cn(
-                    "flex-1 h-0.5 min-w-3 max-w-16 mt-3.5 transition-colors",
+                    "flex-1 h-[3px] rounded-full min-w-3 max-w-16 mt-4 transition-colors duration-200",
                     connectorDone ? "bg-emerald-500" : connectorInProgress ? "bg-amber-300 dark:bg-amber-600" : "bg-muted"
                   )}
                 />
