@@ -302,7 +302,7 @@ const PACCertificate: React.FC<PACCertificateProps> = ({
             {/* Effective Date Section */}
             <div className="border-t border-b border-border py-4 my-4">
               <p className="font-semibold text-foreground text-center">
-                Effective from the PAC sign-off date:
+                For the systems listed above, this PAC confirms that:
               </p>
             </div>
 
