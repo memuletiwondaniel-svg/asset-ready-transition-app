@@ -33,19 +33,23 @@ const defaultContent: SOFContent = {
 
 interface SOFCertificateProps {
   certificateNumber?: string;
+  plantName?: string;
   facilityName?: string;
   projectName?: string;
   sofDate?: string;
   pssrNumber?: string;
+  pssrReason?: string;
   approvers?: SOFApprover[];
 }
 
 const SOFCertificate: React.FC<SOFCertificateProps> = ({
   certificateNumber = "SOF-XXXX-XXX",
+  plantName = "",
   facilityName = "",
   projectName = "",
   sofDate = "",
   pssrNumber = "",
+  pssrReason = "",
   approvers = [
     { id: '1', name: '', role: 'Plant Director' },
     { id: '2', name: '', role: 'HSE Director' },
@@ -206,7 +210,11 @@ const SOFCertificate: React.FC<SOFCertificateProps> = ({
 
           {/* Info Box */}
           <div className="bg-muted/50 border border-border rounded-lg p-4 mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+              <div>
+                <span className="font-semibold text-foreground">Plant:</span>
+                <span className="ml-2 text-muted-foreground">{plantName || '[Plant Name]'}</span>
+              </div>
               <div>
                 <span className="font-semibold text-foreground">Facility:</span>
                 <span className="ml-2 text-muted-foreground">{facilityName || '[Facility Name]'}</span>
@@ -215,9 +223,15 @@ const SOFCertificate: React.FC<SOFCertificateProps> = ({
                 <span className="font-semibold text-foreground">Project:</span>
                 <span className="ml-2 text-muted-foreground">{projectName || '[Project Name]'}</span>
               </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm mt-3 pt-3 border-t border-border/50">
               <div>
-                <span className="font-semibold text-foreground">PSSR Ref:</span>
-                <span className="ml-2 text-muted-foreground">{pssrNumber || '[PSSR Number]'}</span>
+                <span className="font-semibold text-foreground">PSSR/VCR Ref:</span>
+                <span className="ml-2 text-muted-foreground">{pssrNumber || '[PSSR/VCR Ref]'}</span>
+              </div>
+              <div>
+                <span className="font-semibold text-foreground">PSSR Reason:</span>
+                <span className="ml-2 text-muted-foreground">{pssrReason || '[PSSR Reason]'}</span>
               </div>
               <div>
                 <span className="font-semibold text-foreground">SoF Date:</span>
