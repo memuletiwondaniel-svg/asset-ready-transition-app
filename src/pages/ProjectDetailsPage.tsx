@@ -24,8 +24,6 @@ import { ProjectReadinessWidget } from '@/components/widgets/ProjectReadinessWid
 import { ORPActivityPlanWidget } from '@/components/widgets/ORPActivityPlanWidget';
 import { PSSRSummaryWidget } from '@/components/widgets/PSSRSummaryWidget';
 
-import { OwnersCostWidget } from '@/components/widgets/OwnersCostWidget';
-import { ORMtceWidget } from '@/components/widgets/ORMtceWidget';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, rectSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -147,7 +145,7 @@ export default function ProjectDetailsPage() {
   };
 
   // Valid widget IDs (p2a was removed - filter it out for users with old localStorage)
-  const validWidgetIds = ['orp', 'pssr', 'cost', 'orm'];
+  const validWidgetIds = ['orp', 'pssr'];
   const visibleWidgets = widgetOrder.filter(id => !hiddenWidgets.includes(id) && validWidgetIds.includes(id));
 
   const projectCode = project ? `${project.project_id_prefix}-${project.project_id_number}` : '';
@@ -158,10 +156,6 @@ export default function ProjectDetailsPage() {
         return <ORPActivityPlanWidget projectId={id || ''} />;
       case 'pssr':
         return <PSSRSummaryWidget projectId={id || ''} projectCode={projectCode} projectName={project?.project_title} />;
-      case 'cost':
-        return <OwnersCostWidget projectId={id || ''} />;
-      case 'orm':
-        return <ORMtceWidget projectId={id || ''} />;
       default:
         return null;
     }
@@ -248,13 +242,13 @@ export default function ProjectDetailsPage() {
                   onDragEnd={handleDragEnd}
                 >
                   <SortableContext items={visibleWidgets} strategy={rectSortingStrategy}>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6">
-                      {visibleWidgets.map((widgetId, index) => (
+                    <div className="grid grid-cols-1 gap-6 pb-6 h-full">
+                      {visibleWidgets.map((widgetId) => (
                         <SortableWidget 
                           key={widgetId} 
                           id={widgetId}
                           onHide={() => handleHideWidget(widgetId)}
-                          className={index < 2 ? 'min-h-[calc(50vh-90px)]' : undefined}
+                          className="flex-1"
                         >
                           {renderWidget(widgetId)}
                         </SortableWidget>
