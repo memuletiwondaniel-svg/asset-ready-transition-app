@@ -549,9 +549,9 @@ export function useP2APlanWizard(projectId: string, projectCode: string) {
     mutationFn: async () => {
       const planId = await persistPlanToDatabase(projectId, projectCode, state, 'ACTIVE');
 
-      // Create user_tasks for Phase 1 approvers (display_order 1-3)
-      // Phase 2 approvers (display_order 4-5) get tasks once Phase 1 is complete
-      const phase1Approvers = state.approvers.filter(a => a.display_order <= 3 && a.user_id);
+      // Create user_tasks for Phase 1 approvers (all leads except Deputy Plant Director)
+      // Phase 2 approver (Deputy Plant Director) gets task once Phase 1 is complete
+      const phase1Approvers = state.approvers.filter(a => a.role_name !== 'Deputy Plant Director' && a.user_id);
 
       if (phase1Approvers.length > 0) {
         const client = supabase as any;
