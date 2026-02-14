@@ -61,7 +61,7 @@ export const WizardProgress: React.FC<WizardProgressProps> = ({
               </div>
               <span
                 className={cn(
-                  "text-[10px] font-medium leading-tight text-center max-w-[60px]",
+                  "text-[10px] font-medium leading-tight text-center max-w-[60px] whitespace-pre-line",
                   isCurrent && "text-foreground",
                   isCompleted && !isCurrent && "text-emerald-600 dark:text-emerald-400",
                   isVisitedButIncomplete && "text-amber-600 dark:text-amber-400",
