@@ -158,8 +158,11 @@ const ChecklistItemsLibrary: React.FC = () => {
     approvers: false,
   });
 
-  // Collapsed categories state - all expanded by default
-  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
+  // Collapsed categories state - all collapsed by default
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(() => {
+    if (!categories) return new Set();
+    return new Set(categories.map(cat => cat.name));
+  });
 
   const toggleCategory = (categoryName: string) => {
     setCollapsedCategories(prev => {
