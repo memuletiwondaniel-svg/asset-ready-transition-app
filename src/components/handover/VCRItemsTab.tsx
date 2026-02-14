@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Plus, Edit2, Trash2, Search, Filter, X, FileCheck, Loader2, Columns, Download } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, Filter, X, FileCheck, Loader2, Columns, Download, ChevronsUpDown, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -87,6 +87,30 @@ const VCRItemsTab: React.FC = () => {
     guidanceNotes: false,
   });
 
+  // Collapsed categories state - all expanded by default
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
+
+  const toggleCategory = (categoryName: string) => {
+    setCollapsedCategories(prev => {
+      const next = new Set(prev);
+      if (next.has(categoryName)) {
+        next.delete(categoryName);
+      } else {
+        next.add(categoryName);
+      }
+      return next;
+    });
+  };
+
+  const toggleAllCategories = (groupedItems: Record<string, VCRItemWithRoles[]>) => {
+    const allCategoryNames = Object.keys(groupedItems);
+    if (collapsedCategories.size === allCategoryNames.length) {
+      setCollapsedCategories(new Set());
+    } else {
+      setCollapsedCategories(new Set(allCategoryNames));
+    }
+  };
+
   const isLoading = itemsLoading || categoriesLoading;
 
   // Flatten all roles for dropdowns
@@ -120,6 +144,18 @@ const VCRItemsTab: React.FC = () => {
         return a.display_order - b.display_order;
       });
   }, [items, searchTerm, categoryFilter, categories]);
+
+  const groupedItems = useMemo(() => {
+    const groups: Record<string, VCRItemWithRoles[]> = {};
+    filteredItems.forEach(item => {
+      const categoryName = item.category_name || 'Uncategorized';
+      if (!groups[categoryName]) {
+        groups[categoryName] = [];
+      }
+      groups[categoryName].push(item);
+    });
+    return groups;
+  }, [filteredItems]);
 
   const visibleColumnCount = 3 + Object.values(visibleColumns).filter(Boolean).length;
 
@@ -278,6 +314,10 @@ const VCRItemsTab: React.FC = () => {
               </DropdownMenuContent>
             </DropdownMenu>
 
+            <Button variant="outline" size="icon" onClick={() => toggleAllCategories(groupedItems)}>
+              <ChevronsUpDown className="h-4 w-4" />
+            </Button>
+
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -315,59 +355,79 @@ const VCRItemsTab: React.FC = () => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredItems.map(item => (
-                    <TableRow key={item.id} className="group cursor-pointer hover:bg-muted/50" onClick={() => handleOpenEdit(item)}>
-                      <TableCell className="font-mono text-xs">
-                        {generateDisplayId(item.category_code, item.display_order)}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className={cn("text-xs font-medium", getCategoryColor(item.category_code))}>
-                          {item.category_name}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="max-w-md">
-                        <p className="line-clamp-4 text-sm whitespace-normal break-words">{item.vcr_item}</p>
-                      </TableCell>
-                      {visibleColumns.topic && (
-                        <TableCell className="text-sm text-muted-foreground">{item.topic || '—'}</TableCell>
-                      )}
-                      {visibleColumns.deliveringParty && (
-                        <TableCell className="text-sm text-muted-foreground">{item.delivering_role_name || '—'}</TableCell>
-                      )}
-                      {visibleColumns.approvers && (
-                        <TableCell>
-                          <div className="flex flex-wrap gap-1">
-                            {(item.approving_role_names || []).slice(0, 3).map((name, i) => (
-                              <Badge key={i} variant="secondary" className="text-xs">{name}</Badge>
-                            ))}
-                            {(item.approving_role_names || []).length > 3 && (
-                              <Badge variant="secondary" className="text-xs">+{(item.approving_role_names || []).length - 3}</Badge>
+                  Object.entries(groupedItems).map(([categoryName, categoryItems]) => {
+                    const isCategoryCollapsed = collapsedCategories.has(categoryName);
+                    return (
+                      <React.Fragment key={categoryName}>
+                        {/* Category Header Row */}
+                        <TableRow className="hover:bg-muted/50 cursor-pointer bg-muted/30" onClick={() => toggleCategory(categoryName)}>
+                          <TableCell colSpan={visibleColumnCount} className="py-3 px-4">
+                            <div className="flex items-center gap-2">
+                              <ChevronRight 
+                                className={`h-4 w-4 transition-transform ${isCategoryCollapsed ? '' : 'rotate-90'}`}
+                              />
+                              <span className="font-semibold">{categoryName}</span>
+                              <Badge variant="outline" className="ml-2 text-xs">{categoryItems.length}</Badge>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                        {/* Category Items */}
+                        {!isCategoryCollapsed && categoryItems.map(item => (
+                          <TableRow key={item.id} className="group cursor-pointer hover:bg-muted/50" onClick={() => handleOpenEdit(item)}>
+                            <TableCell className="font-mono text-xs">
+                              {generateDisplayId(item.category_code, item.display_order)}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className={cn("text-xs font-medium", getCategoryColor(item.category_code))}>
+                                {item.category_name}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="max-w-md">
+                              <p className="line-clamp-4 text-sm whitespace-normal break-words">{item.vcr_item}</p>
+                            </TableCell>
+                            {visibleColumns.topic && (
+                              <TableCell className="text-sm text-muted-foreground">{item.topic || '—'}</TableCell>
                             )}
-                          </div>
-                        </TableCell>
-                      )}
-                      {visibleColumns.supportingEvidence && (
-                        <TableCell className="text-sm text-muted-foreground max-w-[200px]">
-                          <p className="line-clamp-2">{item.supporting_evidence || '—'}</p>
-                        </TableCell>
-                      )}
-                      {visibleColumns.guidanceNotes && (
-                        <TableCell className="text-sm text-muted-foreground max-w-[200px]">
-                          <p className="line-clamp-2">{item.guidance_notes || '—'}</p>
-                        </TableCell>
-                      )}
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150" onClick={(e) => e.stopPropagation()}>
-                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenEdit(item)}>
-                            <Edit2 className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteConfirmItem(item)}>
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                            {visibleColumns.deliveringParty && (
+                              <TableCell className="text-sm text-muted-foreground">{item.delivering_role_name || '—'}</TableCell>
+                            )}
+                            {visibleColumns.approvers && (
+                              <TableCell>
+                                <div className="flex flex-wrap gap-1">
+                                  {(item.approving_role_names || []).slice(0, 3).map((name, i) => (
+                                    <Badge key={i} variant="secondary" className="text-xs">{name}</Badge>
+                                  ))}
+                                  {(item.approving_role_names || []).length > 3 && (
+                                    <Badge variant="secondary" className="text-xs">+{(item.approving_role_names || []).length - 3}</Badge>
+                                  )}
+                                </div>
+                              </TableCell>
+                            )}
+                            {visibleColumns.supportingEvidence && (
+                              <TableCell className="text-sm text-muted-foreground max-w-[200px]">
+                                <p className="line-clamp-2">{item.supporting_evidence || '—'}</p>
+                              </TableCell>
+                            )}
+                            {visibleColumns.guidanceNotes && (
+                              <TableCell className="text-sm text-muted-foreground max-w-[200px]">
+                                <p className="line-clamp-2">{item.guidance_notes || '—'}</p>
+                              </TableCell>
+                            )}
+                            <TableCell className="text-right">
+                              <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150" onClick={(e) => e.stopPropagation()}>
+                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenEdit(item)}>
+                                  <Edit2 className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteConfirmItem(item)}>
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </React.Fragment>
+                    );
+                  })
                 )}
               </TableBody>
             </Table>
