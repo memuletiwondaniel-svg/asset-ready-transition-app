@@ -6,7 +6,6 @@ import { Input } from '@/components/ui/input';
 import { PSSRReviewsPanel } from '@/components/tasks/PSSRReviewsPanel';
 import { ORPActivitiesPanel } from '@/components/tasks/ORPActivitiesPanel';
 import { OWLPanel } from '@/components/tasks/OWLPanel';
-import { ReviewTasksPanel } from '@/components/tasks/ReviewTasksPanel';
 import { NewTaskModal } from '@/components/tasks/NewTaskModal';
 import { AllTasksTable } from '@/components/tasks/AllTasksTable';
 import { DirectorSoFView } from '@/components/tasks/DirectorSoFView';
@@ -17,10 +16,9 @@ import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 
 type ViewMode = 'grid' | 'table';
-type ExpandedCard = 'reviews' | 'pssr' | 'ora' | 'owl' | null;
+type ExpandedCard = 'pssr' | 'ora' | 'owl' | null;
 
-// For regular users: 4 panels
-const PANEL_ORDER = ['reviews', 'pssr', 'ora', 'owl'] as const;
+const PANEL_ORDER = ['pssr', 'ora', 'owl'] as const;
 
 const MyTasksPage: React.FC = () => {
   const { user } = useAuth();
@@ -31,7 +29,6 @@ const MyTasksPage: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [expandedCard, setExpandedCard] = useState<ExpandedCard>(null);
   
-  // Track which panels have tasks (for auto-expand and empty state)
   const [panelTaskCounts, setPanelTaskCounts] = useState<Record<string, number>>({});
   const [panelsLoaded, setPanelsLoaded] = useState<Record<string, boolean>>({});
 
@@ -48,7 +45,6 @@ const MyTasksPage: React.FC = () => {
       .filter(([_, count]) => count > 0)
       .map(([panelId]) => panelId);
     
-    // Only auto-expand if exactly one panel has tasks and nothing is currently expanded
     if (panelsWithTasks.length === 1 && expandedCard === null) {
       setExpandedCard(panelsWithTasks[0] as ExpandedCard);
     }
@@ -57,12 +53,6 @@ const MyTasksPage: React.FC = () => {
   const handleCardExpand = (cardId: ExpandedCard) => {
     setExpandedCard(prev => prev === cardId ? null : cardId);
   };
-
-  // Callback for panels to report their task count
-  const handleReviewsTaskCount = useCallback((count: number) => {
-    setPanelTaskCounts(prev => prev.reviews === count ? prev : { ...prev, reviews: count });
-    setPanelsLoaded(prev => prev.reviews ? prev : { ...prev, reviews: true });
-  }, []);
 
   const handlePssrTaskCount = useCallback((count: number) => {
     setPanelTaskCounts(prev => prev.pssr === count ? prev : { ...prev, pssr: count });
@@ -79,16 +69,14 @@ const MyTasksPage: React.FC = () => {
     setPanelsLoaded(prev => prev.owl ? prev : { ...prev, owl: true });
   }, []);
 
-  // Calculate if all panels are loaded and have zero tasks
-  const allPanelsLoaded = panelsLoaded.reviews && panelsLoaded.pssr && panelsLoaded.ora && panelsLoaded.owl;
-  const totalTasks = (panelTaskCounts.reviews || 0) + (panelTaskCounts.pssr || 0) + (panelTaskCounts.ora || 0) + (panelTaskCounts.owl || 0);
+  const allPanelsLoaded = panelsLoaded.pssr && panelsLoaded.ora && panelsLoaded.owl;
+  const totalTasks = (panelTaskCounts.pssr || 0) + (panelTaskCounts.ora || 0) + (panelTaskCounts.owl || 0);
   const isAllCaughtUp = allPanelsLoaded && totalTasks === 0;
 
   if (!user) {
     return null;
   }
 
-  // Show loading state while checking director status
   if (isDirectorLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -101,27 +89,22 @@ const MyTasksPage: React.FC = () => {
     );
   }
 
-  // Directors get the simplified SoF-only view with standard header
   if (isDirector) {
     const userName = user.user_metadata?.full_name || user.user_metadata?.first_name || user.email;
     return (
       <div className="min-h-screen">
         <div className="border-b border-border/40 bg-card/30 backdrop-blur-xl p-4 md:p-6">
           <BreadcrumbNavigation currentPageLabel="My Tasks" />
-          
           <div className="flex items-center gap-3 mt-4">
             <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500">
               <ListChecks className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-foreground">My Tasks</h1>
-              <p className="text-sm text-muted-foreground mt-1">
-                Your pending work across all modules
-              </p>
+              <p className="text-sm text-muted-foreground mt-1">Your pending work across all modules</p>
             </div>
           </div>
         </div>
-        
         <div className="max-w-7xl mx-auto px-6 py-6">
           <DirectorSoFView userName={userName} />
         </div>
@@ -129,43 +112,27 @@ const MyTasksPage: React.FC = () => {
     );
   }
 
-
-  // Determine column layout for 3 panels
+  // 3 panels layout
   const getColumnLayout = () => {
     if (!expandedCard) {
-      // Default: Reviews + PSSR left, ORA + OWL right
       return {
-        leftColumn: ['reviews', 'pssr'] as const,
+        leftColumn: ['pssr'] as const,
         rightColumn: ['ora', 'owl'] as const,
         expandedSide: null as 'left' | 'right' | null
       };
     }
 
-    // Expanded card goes to left, others to right
     const otherCards = PANEL_ORDER.filter(card => card !== expandedCard);
-    
     return {
       leftColumn: [expandedCard] as const,
-      rightColumn: otherCards as readonly ('reviews' | 'pssr' | 'ora' | 'owl')[],
+      rightColumn: otherCards as readonly ('pssr' | 'ora' | 'owl')[],
       expandedSide: 'left' as const
     };
   };
 
   const layout = getColumnLayout();
 
-  // Determine which cards are relocated
-  const getRelocatedCards = () => {
-    switch (expandedCard) {
-      case 'reviews': return ['pssr'];
-      case 'pssr': return ['reviews'];
-      case 'ora': return ['owl'];
-      case 'owl': return ['ora'];
-      default: return [];
-    }
-  };
-  const relocatedCards = getRelocatedCards();
-
-  const renderCard = (cardId: string, isInExpandedColumn: boolean, isRelocated: boolean) => {
+  const renderCard = (cardId: string, isInExpandedColumn: boolean) => {
     const isThisCardExpanded = expandedCard === cardId;
     const isFullHeight = isInExpandedColumn && isThisCardExpanded;
     const isDimmed = expandedCard !== null && !isThisCardExpanded;
@@ -174,20 +141,12 @@ const MyTasksPage: React.FC = () => {
       isExpanded: isThisCardExpanded,
       onToggleExpand: () => handleCardExpand(cardId as ExpandedCard),
       isFullHeight,
-      isRelocated,
+      isRelocated: false,
       isDimmed,
       searchQuery,
     };
 
     switch (cardId) {
-      case 'reviews':
-        return (
-          <ReviewTasksPanel
-            key="reviews"
-            {...commonProps}
-            onTaskCountUpdate={handleReviewsTaskCount}
-          />
-        );
       case 'pssr':
         return (
           <PSSRReviewsPanel 
@@ -222,22 +181,18 @@ const MyTasksPage: React.FC = () => {
     <div className="min-h-screen">
       <div className="border-b border-border/40 bg-card/30 backdrop-blur-xl p-4 md:p-6">
         <BreadcrumbNavigation currentPageLabel="My Tasks" />
-        
         <div className="flex items-center gap-3 mt-4">
           <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500">
             <ListChecks className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-foreground">My Tasks</h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Your pending work across all modules
-            </p>
+            <p className="text-sm text-muted-foreground mt-1">Your pending work across all modules</p>
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-6 py-6">
-        {/* Search and Actions Row */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 mb-6">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -248,18 +203,13 @@ const MyTasksPage: React.FC = () => {
               className="pl-10"
             />
           </div>
-          
           <div className="flex items-center gap-2">
-            {/* View Toggle */}
             <div className="flex items-center border rounded-lg p-1 bg-muted/50">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setViewMode('grid')}
-                className={cn(
-                  "h-8 w-8 p-0",
-                  viewMode === 'grid' && "bg-background shadow-sm"
-                )}
+                className={cn("h-8 w-8 p-0", viewMode === 'grid' && "bg-background shadow-sm")}
               >
                 <LayoutGrid className="h-4 w-4" />
               </Button>
@@ -267,15 +217,11 @@ const MyTasksPage: React.FC = () => {
                 variant="ghost"
                 size="sm"
                 onClick={() => setViewMode('table')}
-                className={cn(
-                  "h-8 w-8 p-0",
-                  viewMode === 'table' && "bg-background shadow-sm"
-                )}
+                className={cn("h-8 w-8 p-0", viewMode === 'table' && "bg-background shadow-sm")}
               >
                 <Table className="h-4 w-4" />
               </Button>
             </div>
-            
             <Button
               size="sm"
               onClick={() => setCreateTaskModalOpen(true)}
@@ -287,20 +233,14 @@ const MyTasksPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Content based on view mode */}
         {isAllCaughtUp ? (
-          /* All Caught Up State */
           <div className="flex items-center justify-center py-20">
             <div className="text-center max-w-md">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500/10 to-purple-500/10 mb-6">
                 <CheckCircle2 className="h-8 w-8 text-indigo-500" />
               </div>
-              <h2 className="text-xl font-semibold text-foreground mb-2">
-                You're all caught up!
-              </h2>
-              <p className="text-muted-foreground">
-                You have no pending activities or reviews at the moment.
-              </p>
+              <h2 className="text-xl font-semibold text-foreground mb-2">You're all caught up!</h2>
+              <p className="text-muted-foreground">You have no pending activities or reviews at the moment.</p>
             </div>
           </div>
         ) : viewMode === 'grid' ? (
@@ -308,15 +248,12 @@ const MyTasksPage: React.FC = () => {
             "grid grid-cols-1 lg:grid-cols-2 gap-6 transition-all duration-500",
             expandedCard && "min-h-[calc(100vh-300px)]"
           )}>
-            {/* Left Column */}
             <div className={cn(
               "flex flex-col gap-6 transition-all duration-500",
               layout.expandedSide === 'left' && "h-full"
             )}>
               {layout.leftColumn.map((cardId) => {
-                const isRelocated = relocatedCards.includes(cardId);
                 const isExpanded = expandedCard === cardId;
-                
                 return (
                   <div 
                     key={cardId}
@@ -325,21 +262,18 @@ const MyTasksPage: React.FC = () => {
                       layout.expandedSide === 'left' && isExpanded && "flex-1 min-h-0"
                     )}
                   >
-                    {renderCard(cardId, layout.expandedSide === 'left', isRelocated)}
+                    {renderCard(cardId, layout.expandedSide === 'left')}
                   </div>
                 );
               })}
             </div>
 
-            {/* Right Column */}
             <div className={cn(
               "flex flex-col gap-6 transition-all duration-500",
               layout.expandedSide === 'right' && "h-full"
             )}>
               {layout.rightColumn.map((cardId) => {
-                const isRelocated = relocatedCards.includes(cardId);
                 const isExpanded = expandedCard === cardId;
-                
                 return (
                   <div 
                     key={cardId}
@@ -348,7 +282,7 @@ const MyTasksPage: React.FC = () => {
                       layout.expandedSide === 'right' && isExpanded && "flex-1 min-h-0"
                     )}
                   >
-                    {renderCard(cardId, layout.expandedSide === 'right', isRelocated)}
+                    {renderCard(cardId, layout.expandedSide === 'right')}
                   </div>
                 );
               })}
