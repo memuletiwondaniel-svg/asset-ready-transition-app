@@ -702,48 +702,6 @@ const PSSRConfigurationMatrix: React.FC = () => {
                 New Template
               </Button>
             </div>
-            {/* Quick Stats - Clickable filters */}
-            <div className="flex items-center gap-3 text-sm">
-              <button
-                onClick={() => setStatusFilter('all')}
-                className={`transition-colors ${statusFilter === 'all' ? 'text-primary font-medium' : 'text-muted-foreground hover:text-foreground'}`}
-              >
-                {statusCounts.all} Templates{statusFilter !== 'all' && ' (click to show all)'}:
-              </button>
-              <Badge 
-                variant="outline" 
-                className={`cursor-pointer transition-all ${
-                  statusFilter === 'active' 
-                    ? 'bg-green-200 text-green-800 border-green-500 ring-2 ring-green-500/30 dark:bg-green-800/50 dark:text-green-300 dark:border-green-500' 
-                    : 'bg-green-100 text-green-700 border-green-300 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700 dark:hover:bg-green-900/50'
-                }`}
-                onClick={() => setStatusFilter(statusFilter === 'active' ? 'all' : 'active')}
-              >
-                {statusCounts.active} Active
-              </Badge>
-              <Badge 
-                variant="outline" 
-                className={`cursor-pointer transition-all ${
-                  statusFilter === 'draft' 
-                    ? 'bg-slate-200 text-slate-800 border-slate-500 ring-2 ring-slate-500/30 dark:bg-slate-700 dark:text-slate-200 dark:border-slate-500' 
-                    : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600 dark:hover:bg-slate-700'
-                }`}
-                onClick={() => setStatusFilter(statusFilter === 'draft' ? 'all' : 'draft')}
-              >
-                {statusCounts.draft} Drafts
-              </Badge>
-              <Badge 
-                variant="outline" 
-                className={`cursor-pointer transition-all ${
-                  statusFilter === 'inactive' 
-                    ? 'bg-red-200 text-red-800 border-red-500 ring-2 ring-red-500/30 dark:bg-red-800/50 dark:text-red-300 dark:border-red-500' 
-                    : 'bg-red-100 text-red-600 border-red-300 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-700 dark:hover:bg-red-900/50'
-                }`}
-                onClick={() => setStatusFilter(statusFilter === 'inactive' ? 'all' : 'inactive')}
-              >
-                {statusCounts.inactive} Inactive
-              </Badge>
-            </div>
           </div>
           
           {/* Search Input */}
