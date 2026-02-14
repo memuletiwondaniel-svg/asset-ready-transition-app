@@ -105,10 +105,11 @@ const VCRTemplatesList: React.FC = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {filteredTemplates.map(template => (
+              {filteredTemplates.map((template, index) => (
                 <TemplateCard
                   key={template.id}
                   template={template}
+                  colorIndex={index}
                   onEdit={() => handleEdit(template)}
                   onDelete={(e) => handleDelete(e, template.id)}
                   isDeleting={isDeleting}
@@ -132,6 +133,7 @@ const VCRTemplatesList: React.FC = () => {
 
 interface TemplateCardProps {
   template: VCRTemplate;
+  colorIndex: number;
   onEdit: () => void;
   onDelete: (e: React.MouseEvent) => void;
   isDeleting: boolean;
@@ -155,28 +157,30 @@ const statusConfig: Record<string, { label: string; icon: React.ReactNode; class
   },
 };
 
-const TemplateCard: React.FC<TemplateCardProps> = ({ template, onEdit, onDelete, isDeleting }) => {
+const cardGradients = [
+  'from-[hsl(210,80%,96%)] via-[hsl(240,70%,95%)] to-[hsl(280,60%,95%)]',
+  'from-[hsl(155,60%,95%)] via-[hsl(180,70%,94%)] to-[hsl(210,80%,95%)]',
+  'from-[hsl(340,70%,96%)] via-[hsl(0,60%,95%)] to-[hsl(30,80%,95%)]',
+  'from-[hsl(45,90%,95%)] via-[hsl(80,60%,94%)] to-[hsl(155,50%,94%)]',
+  'from-[hsl(280,50%,95%)] via-[hsl(320,55%,95%)] to-[hsl(350,60%,95%)]',
+  'from-[hsl(180,60%,94%)] via-[hsl(200,70%,95%)] to-[hsl(240,60%,96%)]',
+  'from-[hsl(20,80%,95%)] via-[hsl(45,70%,94%)] to-[hsl(80,50%,94%)]',
+  'from-[hsl(260,60%,96%)] via-[hsl(210,50%,95%)] to-[hsl(180,60%,94%)]',
+  'from-[hsl(100,50%,94%)] via-[hsl(140,45%,94%)] to-[hsl(180,55%,95%)]',
+  'from-[hsl(350,55%,96%)] via-[hsl(280,45%,95%)] to-[hsl(240,55%,96%)]',
+];
+
+const TemplateCard: React.FC<TemplateCardProps> = ({ template, colorIndex, onEdit, onDelete, isDeleting }) => {
   const itemCount = template.template_items?.length || 0;
   const approverCount = template.template_approvers?.length || 0;
   const approvedCount = template.template_approvers?.filter(a => a.approval_status === 'approved').length || 0;
   const status = statusConfig[template.status] || statusConfig.draft;
-
-  // Subtle multicolor gradient backgrounds based on template status
-  const getCardGradient = () => {
-    switch(template.status) {
-      case 'approved':
-        return 'from-[hsl(155,71%,95%)] via-[hsl(186,100%,94%)] to-[hsl(206,100%,94%)]';
-      case 'under_review':
-        return 'from-[hsl(48,100%,96%)] via-[hsl(32,98%,94%)] to-[hsl(0,93%,94%)]';
-      default:
-        return 'from-[hsl(210,40%,96%)] via-[hsl(280,67%,94%)] to-[hsl(263,80%,94%)]';
-    }
-  };
+  const gradient = cardGradients[colorIndex % cardGradients.length];
 
   return (
     <div
       onClick={onEdit}
-      className={`group relative rounded-2xl border border-border/30 bg-gradient-to-br ${getCardGradient()} hover:border-border/60 transition-all duration-200 cursor-pointer`}
+      className={`group relative rounded-2xl border border-border/30 bg-gradient-to-br ${gradient} hover:border-border/60 hover:shadow-md transition-all duration-200 cursor-pointer`}
     >
       <div className="p-4 space-y-3">
         {/* Top row: status + actions */}
