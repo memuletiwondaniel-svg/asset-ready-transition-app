@@ -4,6 +4,9 @@ import {
   Box, 
   CheckCircle2,
   AlertCircle,
+  Clock,
+  XCircle,
+  UserCheck,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
@@ -131,13 +134,13 @@ export const ConfirmationStep: React.FC<ConfirmationStepProps> = ({
         </div>
       )}
 
-      {/* Approvers */}
+      {/* Selected Approvers */}
       {approvers.length > 0 && (
         <div>
           <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-            Approvers
+            Selected Approvers
           </div>
-          <div className="flex items-center gap-[-4px]">
+          <div className="space-y-1.5">
             {approvers.map((approver) => {
               const avatarUrl = approver.user_avatar
                 ? (approver.user_avatar.startsWith('http')
@@ -147,11 +150,36 @@ export const ConfirmationStep: React.FC<ConfirmationStepProps> = ({
               const initials = approver.user_name
                 ? approver.user_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
                 : '?';
+              const hasUser = !!approver.user_id;
               return (
-                <Avatar key={approver.id} className="h-7 w-7 border-2 border-background -ml-1 first:ml-0" title={`${approver.user_name || 'Unassigned'} — ${approver.role_name}`}>
-                  <AvatarImage src={avatarUrl} />
-                  <AvatarFallback className="text-[9px] bg-muted">{initials}</AvatarFallback>
-                </Avatar>
+                <div key={approver.id} className="flex items-center gap-2.5 p-2.5 rounded-lg border bg-card">
+                  <Avatar className="h-7 w-7 shrink-0">
+                    <AvatarImage src={avatarUrl} />
+                    <AvatarFallback className="text-[9px] bg-muted">{initials}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    {hasUser ? (
+                      <>
+                        <span className="text-xs font-medium">{approver.user_name}</span>
+                        <p className="text-[10px] text-muted-foreground truncate">{approver.role_name}</p>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-xs font-medium text-muted-foreground">{approver.role_name}</span>
+                        <p className="text-[10px] text-amber-600">Not assigned</p>
+                      </>
+                    )}
+                  </div>
+                  {!hasUser ? (
+                    <AlertCircle className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  ) : approver.status === 'APPROVED' ? (
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  ) : approver.status === 'REJECTED' ? (
+                    <XCircle className="h-3.5 w-3.5 text-destructive shrink-0" />
+                  ) : (
+                    <Clock className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+                  )}
+                </div>
               );
             })}
           </div>
