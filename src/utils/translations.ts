@@ -501,7 +501,7 @@ export const translations = {
     pssrConfigSubtitle: 'Manage PSSR reasons and checklist items',
     pssrTemplates: 'PSSR Templates',
     checklistItems: 'Checklist Items',
-    itemCategories: 'Item Categories',
+    itemCategories: 'PSSR Categories',
     tieInScopes: 'Tie-in Scopes',
     mocScopes: 'MOC Scopes',
     addScope: 'Add Scope',
