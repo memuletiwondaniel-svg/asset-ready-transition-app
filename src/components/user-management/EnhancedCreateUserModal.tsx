@@ -1280,19 +1280,30 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
           <CardTitle className="text-base">Personal Information</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Name</span>
-              <p className="text-sm mt-1">{formData.firstName} {formData.lastName}</p>
-            </div>
-            <div>
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Email</span>
-              <p className="text-sm mt-1">{formData.email}</p>
-              {formData.isFunctionalEmail && (
-                <p className="text-xs text-gray-500">
-                  Personal: {formData.personalEmail}
-                </p>
-              )}
+          <div className="flex items-start gap-4">
+            {/* Profile Picture */}
+            <Avatar className="h-16 w-16 shrink-0 border-2 border-muted">
+              {profileImagePreview ? (
+                <AvatarImage src={profileImagePreview} alt="Profile" />
+              ) : null}
+              <AvatarFallback className="text-lg bg-primary/10 text-primary">
+                {formData.firstName?.[0]?.toUpperCase()}{formData.lastName?.[0]?.toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="grid grid-cols-2 gap-4 flex-1">
+              <div>
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Name</span>
+                <p className="text-sm mt-1">{formData.firstName} {formData.lastName}</p>
+              </div>
+              <div>
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Email</span>
+                <p className="text-sm mt-1">{formData.email}</p>
+                {formData.isFunctionalEmail && (
+                  <p className="text-xs text-gray-500">
+                    Personal: {formData.personalEmail}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
           <div>
