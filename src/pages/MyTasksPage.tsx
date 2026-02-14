@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { PSSRReviewsPanel } from '@/components/tasks/PSSRReviewsPanel';
 import { ORPActivitiesPanel } from '@/components/tasks/ORPActivitiesPanel';
 import { OWLPanel } from '@/components/tasks/OWLPanel';
+import { ReviewTasksPanel } from '@/components/tasks/ReviewTasksPanel';
 import { NewTaskModal } from '@/components/tasks/NewTaskModal';
 import { AllTasksTable } from '@/components/tasks/AllTasksTable';
 import { DirectorSoFView } from '@/components/tasks/DirectorSoFView';
@@ -16,10 +17,10 @@ import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 
 type ViewMode = 'grid' | 'table';
-type ExpandedCard = 'pssr' | 'ora' | 'owl' | null;
+type ExpandedCard = 'reviews' | 'pssr' | 'ora' | 'owl' | null;
 
-// For regular users: 3 panels (removed handover)
-const PANEL_ORDER = ['pssr', 'ora', 'owl'] as const;
+// For regular users: 4 panels
+const PANEL_ORDER = ['reviews', 'pssr', 'ora', 'owl'] as const;
 
 const MyTasksPage: React.FC = () => {
   const { user } = useAuth();
@@ -58,6 +59,11 @@ const MyTasksPage: React.FC = () => {
   };
 
   // Callback for panels to report their task count
+  const handleReviewsTaskCount = useCallback((count: number) => {
+    setPanelTaskCounts(prev => prev.reviews === count ? prev : { ...prev, reviews: count });
+    setPanelsLoaded(prev => prev.reviews ? prev : { ...prev, reviews: true });
+  }, []);
+
   const handlePssrTaskCount = useCallback((count: number) => {
     setPanelTaskCounts(prev => prev.pssr === count ? prev : { ...prev, pssr: count });
     setPanelsLoaded(prev => prev.pssr ? prev : { ...prev, pssr: true });
@@ -74,8 +80,8 @@ const MyTasksPage: React.FC = () => {
   }, []);
 
   // Calculate if all panels are loaded and have zero tasks
-  const allPanelsLoaded = panelsLoaded.pssr && panelsLoaded.ora && panelsLoaded.owl;
-  const totalTasks = (panelTaskCounts.pssr || 0) + (panelTaskCounts.ora || 0) + (panelTaskCounts.owl || 0);
+  const allPanelsLoaded = panelsLoaded.reviews && panelsLoaded.pssr && panelsLoaded.ora && panelsLoaded.owl;
+  const totalTasks = (panelTaskCounts.reviews || 0) + (panelTaskCounts.pssr || 0) + (panelTaskCounts.ora || 0) + (panelTaskCounts.owl || 0);
   const isAllCaughtUp = allPanelsLoaded && totalTasks === 0;
 
   if (!user) {
@@ -127,10 +133,10 @@ const MyTasksPage: React.FC = () => {
   // Determine column layout for 3 panels
   const getColumnLayout = () => {
     if (!expandedCard) {
-      // Default: PSSR left top, ORA left bottom, OWL right
+      // Default: Reviews + PSSR left, ORA + OWL right
       return {
-        leftColumn: ['pssr', 'ora'] as const,
-        rightColumn: ['owl'] as const,
+        leftColumn: ['reviews', 'pssr'] as const,
+        rightColumn: ['ora', 'owl'] as const,
         expandedSide: null as 'left' | 'right' | null
       };
     }
@@ -140,7 +146,7 @@ const MyTasksPage: React.FC = () => {
     
     return {
       leftColumn: [expandedCard] as const,
-      rightColumn: otherCards as readonly ('pssr' | 'ora' | 'owl')[],
+      rightColumn: otherCards as readonly ('reviews' | 'pssr' | 'ora' | 'owl')[],
       expandedSide: 'left' as const
     };
   };
@@ -150,9 +156,10 @@ const MyTasksPage: React.FC = () => {
   // Determine which cards are relocated
   const getRelocatedCards = () => {
     switch (expandedCard) {
-      case 'pssr': return ['ora'];
-      case 'ora': return ['pssr'];
-      case 'owl': return ['pssr', 'ora'];
+      case 'reviews': return ['pssr'];
+      case 'pssr': return ['reviews'];
+      case 'ora': return ['owl'];
+      case 'owl': return ['ora'];
       default: return [];
     }
   };
@@ -173,6 +180,14 @@ const MyTasksPage: React.FC = () => {
     };
 
     switch (cardId) {
+      case 'reviews':
+        return (
+          <ReviewTasksPanel
+            key="reviews"
+            {...commonProps}
+            onTaskCountUpdate={handleReviewsTaskCount}
+          />
+        );
       case 'pssr':
         return (
           <PSSRReviewsPanel 
