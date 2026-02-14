@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Printer, FileDown, Edit2, Save, X } from "lucide-react";
+import { FileDown, Edit2, Save, X } from "lucide-react";
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { toast } from "sonner";
@@ -114,9 +114,6 @@ const FACCertificate: React.FC<FACCertificateProps> = ({
     enabled: !!projectId,
   });
 
-  const handlePrint = () => {
-    window.print();
-  };
 
   const handleExportPDF = async () => {
     if (!certificateRef.current) return;
@@ -189,10 +186,6 @@ const FACCertificate: React.FC<FACCertificateProps> = ({
             <Button variant="outline" onClick={handleEdit}>
               <Edit2 className="h-4 w-4 mr-2" />
               Edit
-            </Button>
-            <Button variant="outline" onClick={handlePrint}>
-              <Printer className="h-4 w-4 mr-2" />
-              Print
             </Button>
             <Button variant="outline" onClick={handleExportPDF}>
               <FileDown className="h-4 w-4 mr-2" />
