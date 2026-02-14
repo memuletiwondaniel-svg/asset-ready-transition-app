@@ -12,6 +12,7 @@ import { PSSRQuickViewOverlay } from '@/components/pssr/PSSRQuickViewOverlay';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CreateVCRWizard } from './vcr-wizard/CreateVCRWizard';
 import { P2AWorkspaceOverlay } from './P2AWorkspaceOverlay';
+import { P2APlanSummaryDialog } from './P2APlanSummaryDialog';
 import { P2APlanCreationWizard } from './p2a-wizard/P2APlanCreationWizard';
 import { cn } from '@/lib/utils';
 import { useCanCreateVCR } from '@/hooks/useCurrentUserRole';
@@ -69,6 +70,8 @@ const CircularProgress: React.FC<{ value: number; size?: number; strokeWidth?: n
 };
 
 
+
+
 export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({ 
   projectId, 
   projectCode = '',
@@ -86,6 +89,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
   const [showCreateVCR, setShowCreateVCR] = useState(false);
   const [showP2AWorkspace, setShowP2AWorkspace] = useState(false);
   const [showP2APlanWizard, setShowP2APlanWizard] = useState(false);
+  const [showP2ASummary, setShowP2ASummary] = useState(false);
 
   // Get the first (active) ORA plan for this project
   const oraPlanId = orpPlans?.[0]?.id || '';
@@ -187,7 +191,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                   )}
                   onClick={() => {
                     if (p2aPlanByProject.status !== 'DRAFT') {
-                      setShowP2AWorkspace(true);
+                      setShowP2ASummary(true);
                     }
                   }}
                 >
@@ -300,6 +304,20 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
         projectNumber={projectCode}
         readOnly={p2aPlanByProject?.status === 'ACTIVE'}
       />
+
+      {/* P2A Plan Summary Dialog */}
+      {p2aPlanByProject && (
+        <P2APlanSummaryDialog
+          open={showP2ASummary}
+          onOpenChange={setShowP2ASummary}
+          planId={p2aPlanByProject.id}
+          planStatus={p2aPlanByProject.status}
+          onOpenWorkspace={() => {
+            setShowP2ASummary(false);
+            setShowP2AWorkspace(true);
+          }}
+        />
+      )}
 
       {/* P2A Plan Creation Wizard */}
       <P2APlanCreationWizard
