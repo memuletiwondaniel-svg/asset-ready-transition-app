@@ -39,7 +39,7 @@ export const ManageHandover: React.FC<ManageHandoverProps> = ({ onBack }) => {
   const [activeTab, setActiveTab] = useState('vcr');
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
+    <div className="flex-1 flex flex-col overflow-hidden min-h-0">
       {/* Header */}
       <div className="border-b border-border/40 bg-card/30 backdrop-blur-xl px-6 py-4 sticky top-0 z-10">
         <BreadcrumbNavigation 
@@ -67,7 +67,7 @@ export const ManageHandover: React.FC<ManageHandoverProps> = ({ onBack }) => {
       </div>
 
       {/* Main Content with Tabs */}
-      <div className="flex-1 overflow-auto p-6">
+      <div className="flex-1 overflow-auto p-6 min-h-0">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="inline-flex h-12 w-auto">
             <TabsTrigger 
