@@ -29,7 +29,6 @@ import {
   Save,
   AlertCircle,
   FileCheck,
-  BarChart3,
   ClipboardList,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -59,6 +58,8 @@ export const SystemDetailSheet: React.FC<SystemDetailSheetProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState('details');
   const [editIsHC, setEditIsHC] = useState(system.is_hydrocarbon);
+  const [editName, setEditName] = useState(system.name);
+  const [isEditingName, setIsEditingName] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [subsystemsExpanded, setSubsystemsExpanded] = useState(false);
 
@@ -67,6 +68,8 @@ export const SystemDetailSheet: React.FC<SystemDetailSheetProps> = ({
   // Reset state when system changes
   useEffect(() => {
     setEditIsHC(system.is_hydrocarbon);
+    setEditName(system.name);
+    setIsEditingName(false);
     setHasChanges(false);
     setActiveTab('details');
     setSubsystemsExpanded(false);
@@ -74,12 +77,22 @@ export const SystemDetailSheet: React.FC<SystemDetailSheetProps> = ({
 
   // Track changes
   useEffect(() => {
-    setHasChanges(editIsHC !== system.is_hydrocarbon);
-  }, [editIsHC, system.is_hydrocarbon]);
+    setHasChanges(editIsHC !== system.is_hydrocarbon || editName !== system.name);
+  }, [editIsHC, editName, system.is_hydrocarbon, system.name]);
 
   const handleSave = () => {
     if (onUpdateSystem && hasChanges) {
-      onUpdateSystem(system.id, { is_hydrocarbon: editIsHC });
+      const updates: Partial<P2ASystem> = {};
+      if (editIsHC !== system.is_hydrocarbon) updates.is_hydrocarbon = editIsHC;
+      if (editName !== system.name) updates.name = editName;
+      onUpdateSystem(system.id, updates);
+    }
+  };
+
+  const handleSaveName = () => {
+    setIsEditingName(false);
+    if (editName.trim() === '') {
+      setEditName(system.name);
     }
   };
 
@@ -94,9 +107,6 @@ export const SystemDetailSheet: React.FC<SystemDetailSheetProps> = ({
   };
 
   const handleSubsystemVCRChange = (subsystemId: string, value: string) => {
-    // For subsystem-level assignment, we'd need a dedicated mutation.
-    // For now, this is a placeholder — the existing hooks assign at system level.
-    // TODO: implement subsystem-level VCR assignment
     console.log('Subsystem VCR change:', subsystemId, value);
   };
 
@@ -115,9 +125,23 @@ export const SystemDetailSheet: React.FC<SystemDetailSheetProps> = ({
               </Badge>
             )}
           </div>
-          <SheetTitle className="text-lg font-semibold mt-1">
-            {system.name}
-          </SheetTitle>
+          {isEditingName ? (
+            <Input
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              onBlur={handleSaveName}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleSaveName(); }}
+              autoFocus
+              className="text-lg font-semibold mt-1 h-auto py-1"
+            />
+          ) : (
+            <SheetTitle
+              className="text-lg font-semibold mt-1 cursor-pointer hover:underline decoration-muted-foreground/40 underline-offset-4"
+              onClick={() => setIsEditingName(true)}
+            >
+              {editName}
+            </SheetTitle>
+          )}
         </SheetHeader>
 
         {/* Tabs */}
@@ -127,38 +151,23 @@ export const SystemDetailSheet: React.FC<SystemDetailSheetProps> = ({
               <ClipboardList className={cn("w-3 h-3", activeTab === 'details' ? 'text-blue-600' : 'text-muted-foreground')} />
               Details
             </TabsTrigger>
-            <TabsTrigger value="statistics" className="text-xs gap-1 data-[state=active]:text-emerald-600">
-              <BarChart3 className={cn("w-3 h-3", activeTab === 'statistics' ? 'text-emerald-600' : 'text-muted-foreground')} />
-              Statistics
-            </TabsTrigger>
             <TabsTrigger value="punchlist" className="text-xs gap-1 data-[state=active]:text-amber-600">
               <AlertCircle className={cn("w-3 h-3", activeTab === 'punchlist' ? 'text-amber-600' : 'text-muted-foreground')} />
               Punchlist
             </TabsTrigger>
           </TabsList>
 
-          {/* Details Tab */}
+          {/* Details Tab (merged with Statistics) */}
           <TabsContent value="details" className="flex-1 min-h-0 mt-0">
             <ScrollArea className="h-full">
               <div className="px-4 py-4 space-y-4">
-                {/* System Name (read-only — sourced from GoCompletions) */}
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">System Name</Label>
-                  <div className="h-9 px-3 flex items-center text-sm rounded-md border bg-muted/40 text-foreground">
-                    {system.name}
-                  </div>
-                </div>
-
                 {/* Hydrocarbon Toggle */}
                 <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border">
                   <div className="flex items-center gap-2">
                     <Flame className={cn('w-4 h-4', editIsHC ? 'text-orange-500' : 'text-muted-foreground')} />
                     <span className="text-sm font-medium">Hydrocarbon System</span>
                   </div>
-                  <Switch
-                    checked={editIsHC}
-                    onCheckedChange={setEditIsHC}
-                  />
+                  <Switch checked={editIsHC} onCheckedChange={setEditIsHC} />
                 </div>
 
                 {/* VCR Assignment */}
@@ -182,12 +191,7 @@ export const SystemDetailSheet: React.FC<SystemDetailSheetProps> = ({
 
                 {/* Save Button */}
                 {hasChanges && (
-                  <Button
-                    size="sm"
-                    onClick={handleSave}
-                    disabled={isUpdating}
-                    className="w-full gap-2"
-                  >
+                  <Button size="sm" onClick={handleSave} disabled={isUpdating} className="w-full gap-2">
                     <Save className="w-3.5 h-3.5" />
                     Save Changes
                   </Button>
@@ -215,12 +219,8 @@ export const SystemDetailSheet: React.FC<SystemDetailSheetProps> = ({
                     </CollapsibleTrigger>
                     <CollapsibleContent className="pt-2 space-y-1.5">
                       {subsystems.map(sub => {
-                        // Check if this subsystem has an individual VCR assignment
-                        const subAssignment = system.assigned_subsystems?.find(
-                          as => as.id === sub.id
-                        );
+                        const subAssignment = system.assigned_subsystems?.find(as => as.id === sub.id);
                         const subVCRId = subAssignment?.assigned_handover_point_id || currentVCRId || 'none';
-
                         return (
                           <div key={sub.id} className="flex items-center gap-2 p-2 rounded-md bg-muted/20 border border-border/50">
                             <div className="flex-1 min-w-0">
@@ -246,15 +246,10 @@ export const SystemDetailSheet: React.FC<SystemDetailSheetProps> = ({
                     </CollapsibleContent>
                   </Collapsible>
                 )}
-              </div>
-            </ScrollArea>
-          </TabsContent>
 
-          {/* Statistics Tab */}
-          <TabsContent value="statistics" className="flex-1 min-h-0 mt-0">
-            <ScrollArea className="h-full">
-              <div className="px-4 py-4 space-y-4">
-                {/* Overall Progress */}
+                <Separator />
+
+                {/* Statistics Section */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">Overall Progress</span>
@@ -270,43 +265,13 @@ export const SystemDetailSheet: React.FC<SystemDetailSheetProps> = ({
                   />
                 </div>
 
-                <Separator />
-
-                {/* Metrics Grid */}
                 <div className="grid grid-cols-2 gap-3">
-                  <MetricCard
-                    label="Outstanding ITR-A"
-                    value={system.itr_a_count}
-                    icon={<FileCheck className="w-3.5 h-3.5 text-blue-500" />}
-                    color="blue"
-                  />
-                  <MetricCard
-                    label="Outstanding ITR-B"
-                    value={system.itr_b_count}
-                    icon={<FileCheck className="w-3.5 h-3.5 text-purple-500" />}
-                    color="purple"
-                  />
-                  <MetricCard
-                    label="Punchlist A"
-                    value={system.punchlist_a_count}
-                    icon={<AlertCircle className="w-3.5 h-3.5 text-red-500" />}
-                    color="red"
-                    onClick={() => setActiveTab('punchlist')}
-                    clickable
-                  />
-                  <MetricCard
-                    label="Punchlist B"
-                    value={system.punchlist_b_count}
-                    icon={<AlertCircle className="w-3.5 h-3.5 text-amber-500" />}
-                    color="amber"
-                    onClick={() => setActiveTab('punchlist')}
-                    clickable
-                  />
+                  <MetricCard label="Outstanding ITR-A" value={system.itr_a_count} icon={<FileCheck className="w-3.5 h-3.5 text-blue-500" />} color="blue" />
+                  <MetricCard label="Outstanding ITR-B" value={system.itr_b_count} icon={<FileCheck className="w-3.5 h-3.5 text-purple-500" />} color="purple" />
+                  <MetricCard label="Punchlist A" value={system.punchlist_a_count} icon={<AlertCircle className="w-3.5 h-3.5 text-red-500" />} color="red" onClick={() => setActiveTab('punchlist')} clickable />
+                  <MetricCard label="Punchlist B" value={system.punchlist_b_count} icon={<AlertCircle className="w-3.5 h-3.5 text-amber-500" />} color="amber" onClick={() => setActiveTab('punchlist')} clickable />
                 </div>
 
-                <Separator />
-
-                {/* Status */}
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Status</span>
                   <Badge variant="outline" className="text-xs">
@@ -314,7 +279,6 @@ export const SystemDetailSheet: React.FC<SystemDetailSheetProps> = ({
                   </Badge>
                 </div>
 
-                {/* Assigned VCR */}
                 {system.assigned_vcr_code && (
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Assigned VCR</span>
@@ -329,7 +293,6 @@ export const SystemDetailSheet: React.FC<SystemDetailSheetProps> = ({
           <TabsContent value="punchlist" className="flex-1 min-h-0 mt-0">
             <ScrollArea className="h-full">
               <div className="px-4 py-4 space-y-4">
-                {/* Summary */}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="p-3 rounded-lg bg-red-500/5 border border-red-500/10 text-center">
                     <div className="text-2xl font-bold text-red-500">{system.punchlist_a_count}</div>
@@ -340,10 +303,7 @@ export const SystemDetailSheet: React.FC<SystemDetailSheetProps> = ({
                     <div className="text-[10px] text-muted-foreground mt-0.5">Category B</div>
                   </div>
                 </div>
-
                 <Separator />
-
-                {/* Placeholder for actual punchlist items */}
                 <div className="text-center py-8">
                   <AlertCircle className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
                   <p className="text-sm text-muted-foreground">
