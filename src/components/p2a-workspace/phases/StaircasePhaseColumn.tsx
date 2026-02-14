@@ -234,9 +234,8 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
                   {/* Aligned VCRs - absolute positioned to match system groups */}
                   {alignedPoints.map((point) => {
                     const targetY = vcrAlignmentTargets[point.id];
-                    const CARD_HALF_HEIGHT = 21;
                     const topOffset = targetY !== undefined
-                      ? Math.max(0, targetY - containerTop - CARD_HALF_HEIGHT)
+                      ? Math.max(0, targetY - containerTop)
                       : 0;
 
                     return (
@@ -246,8 +245,7 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
                           position: 'absolute',
                           top: topOffset,
                           left: '50%',
-                          transform: 'translateX(-50%)',
-                          // No transition — instant repositioning keeps connectors aligned
+                          transform: 'translate(-50%, -50%)',
                         }}
                       >
                         <DraggableHandoverPointCard
