@@ -23,12 +23,16 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
   const { roles = [], isLoading: rolesLoading } = useRoles();
   const { allowedRoleIds, sofAllowedRoleIds, isLoading: allowedLoading } = usePSSRAllowedApproverRoles();
 
-  // For PSSR approvers, filter to PSSR allowed roles
-  // For SoF approvers, filter to SoF allowed roles
+  // Hidden roles per approver type
+  const HIDDEN_PSSR_APPROVER_ROLES = ['Project Manager', 'Process TA2'];
+  const HIDDEN_SOF_APPROVER_ROLES = ['P&E Director'];
+
+  // For PSSR approvers, filter to PSSR allowed roles and exclude hidden
+  // For SoF approvers, filter to SoF allowed roles and exclude hidden
   const filteredRoles = type === 'pssr'
-    ? roles.filter(role => allowedRoleIds.includes(role.id))
+    ? roles.filter(role => allowedRoleIds.includes(role.id) && !HIDDEN_PSSR_APPROVER_ROLES.includes(role.name))
     : type === 'sof'
-    ? roles.filter(role => sofAllowedRoleIds.includes(role.id))
+    ? roles.filter(role => sofAllowedRoleIds.includes(role.id) && !HIDDEN_SOF_APPROVER_ROLES.includes(role.name))
     : roles;
 
   const config = {
