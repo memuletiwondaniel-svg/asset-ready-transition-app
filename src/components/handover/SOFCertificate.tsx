@@ -313,8 +313,8 @@ const SOFCertificate: React.FC<SOFCertificateProps> = ({
             </div>
 
             {/* Approvals Section */}
-            <div className="mt-8 pt-6 border-t border-border">
-              <h3 className="font-bold text-foreground py-4 text-center border-b border-border">
+            <div className="mt-6 border-t border-border">
+              <h3 className="font-bold text-foreground py-3 text-center border-b border-border">
                 APPROVALS
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-16 mt-4 max-w-2xl mx-auto">
