@@ -235,14 +235,14 @@ export default function ProjectDetailsPage() {
               </div>
               
               {/* Right Column - Draggable Widgets */}
-              <div className="lg:col-span-2 lg:h-[calc(100vh-180px)] lg:overflow-auto">
+              <div className="lg:col-span-2 lg:h-[calc(100vh-180px)] flex flex-col">
                 <DndContext
                   sensors={sensors}
                   collisionDetection={closestCenter}
                   onDragEnd={handleDragEnd}
                 >
                   <SortableContext items={visibleWidgets} strategy={rectSortingStrategy}>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6 h-full">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1 min-h-0">
                       {visibleWidgets.map((widgetId) => (
                         <SortableWidget 
                           key={widgetId} 
