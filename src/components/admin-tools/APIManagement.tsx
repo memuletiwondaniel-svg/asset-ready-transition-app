@@ -107,10 +107,10 @@ const APIManagement: React.FC<APIManagementProps> = ({ onBack }) => {
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-end mb-3">
                     {isConfigured ? (
-                      <Badge className="text-xs bg-emerald-500/10 text-emerald-600 border-emerald-200">Configured</Badge>
-                    ) : (
-                      <Badge variant="outline" className="text-xs text-muted-foreground">Not configured</Badge>
-                    )}
+                       <Badge className="text-xs bg-emerald-500/10 text-emerald-600 border-emerald-200">Credentials saved</Badge>
+                     ) : (
+                       <Badge variant="outline" className="text-xs text-muted-foreground">Not configured</Badge>
+                     )}
                   </div>
                   <div className="h-16 flex items-center justify-center bg-white rounded-lg border border-border/30 p-3">
                     <img src={api.logo} alt={`${api.name} logo`} className="h-full max-w-full object-contain" style={api.scale ? { transform: `scale(${api.scale})` } : undefined} />
