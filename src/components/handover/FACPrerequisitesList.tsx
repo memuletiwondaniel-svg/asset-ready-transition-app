@@ -148,7 +148,7 @@ const FACPrerequisitesList: React.FC = () => {
                 {filteredPrerequisites.map((prereq, index) => (
                   <TableRow
                     key={prereq.id}
-                    className="cursor-pointer hover:bg-muted/50"
+                    className="group cursor-pointer hover:bg-muted/50"
                     onClick={() => handleEdit(prereq)}
                   >
                     <TableCell className="font-mono text-muted-foreground">
@@ -188,7 +188,7 @@ const FACPrerequisitesList: React.FC = () => {
                       </TableCell>
                     )}
                     <TableCell>
-                      <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150" onClick={e => e.stopPropagation()}>
                         <Button
                           variant="ghost"
                           size="icon"
