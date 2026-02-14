@@ -7,6 +7,7 @@ export { SystemCard, DraggableSystemCard } from './systems/SystemCard';
 export { WorkspaceAddSystemModal } from './systems/WorkspaceAddSystemModal';
 export { WorkspaceExcelUploadModal } from './systems/WorkspaceExcelUploadModal';
 export { SystemDetailOverlay } from './systems/SystemDetailOverlay';
+export { SystemDetailSheet } from './systems/SystemDetailSheet';
 
 // Phases
 export { PhasesTimeline } from './phases/PhasesTimeline';
