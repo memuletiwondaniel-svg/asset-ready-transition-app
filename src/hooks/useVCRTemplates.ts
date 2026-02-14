@@ -59,6 +59,45 @@ export function useVCRTemplates() {
     },
   });
 
+  // Helper: create user_tasks for all users matching the approver roles
+  const createApproverTasks = async (templateId: string, templateName: string, approverRoleIds: string[]) => {
+    if (!approverRoleIds.length) return;
+
+    // Find all active users that match the approver roles
+    const { data: matchingUsers, error: usersErr } = await supabase
+      .from('profiles')
+      .select('user_id, full_name, role')
+      .in('role', approverRoleIds)
+      .eq('is_active', true)
+      .eq('account_status', 'active');
+
+    if (usersErr || !matchingUsers?.length) return;
+
+    // Remove any existing pending tasks for this template to avoid duplicates
+    await supabase
+      .from('user_tasks')
+      .delete()
+      .eq('type', 'review')
+      .eq('status', 'pending')
+      .filter('metadata->>template_id', 'eq', templateId);
+
+    // Create a task for each matching user
+    const tasks = matchingUsers.map(user => ({
+      user_id: user.user_id,
+      title: `Review VCR Template: ${templateName}`,
+      description: `A VCR template "${templateName}" has been submitted for your review and approval.`,
+      type: 'review',
+      priority: 'Medium',
+      status: 'pending',
+      metadata: {
+        template_id: templateId,
+        template_name: templateName,
+      },
+    }));
+
+    await supabase.from('user_tasks').insert(tasks);
+  };
+
   const createMutation = useMutation({
     mutationFn: async (input: {
       summary: string;
@@ -95,6 +134,11 @@ export function useVCRTemplates() {
           .from('vcr_template_approvers')
           .insert(approver_role_ids.map(role_id => ({ template_id: data.id, role_id })));
         if (appErr) throw appErr;
+      }
+
+      // Create tasks for approvers if template is under review
+      if (template.status === 'under_review' && approver_role_ids?.length) {
+        await createApproverTasks(data.id, template.summary || data.summary, approver_role_ids);
       }
 
       return data;
@@ -150,6 +194,22 @@ export function useVCRTemplates() {
             .from('vcr_template_approvers')
             .insert(approver_role_ids.map(role_id => ({ template_id: id, role_id })));
           if (appErr) throw appErr;
+        }
+      }
+
+      // Create tasks for approvers if template is (now) under review
+      if (updates.status === 'under_review') {
+        // Use the provided approver_role_ids, or fetch existing ones
+        let roleIds = approver_role_ids;
+        if (!roleIds) {
+          const { data: existing } = await supabase
+            .from('vcr_template_approvers')
+            .select('role_id')
+            .eq('template_id', id);
+          roleIds = existing?.map(a => a.role_id) || [];
+        }
+        if (roleIds.length) {
+          await createApproverTasks(id, updates.summary || data.summary, roleIds);
         }
       }
 
