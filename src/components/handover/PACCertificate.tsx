@@ -35,7 +35,7 @@ interface PACCertificateProps {
 }
 
 const defaultContent = {
-  openingStatement: `This Provisional Acceptance Certificate signifies the HANDOVER of Operational CONTROL and CARE of [Facility/Pipeline Name] from Project to the Asset. The PAC confirms that all systems necessary for the safe, stable, and compliant operation and maintenance of the facilities in scope have been handed over in a state deemed fit for operational use.`,
+  openingStatement: `This Provisional Acceptance Certificate formalizes the transfer of Operational CONTROL , CUSTODY and CARE of [Facility/Pipeline Name] from the Project Team to the Asset Team. The PAC confirms that all handover prerequisites listed in the associated Verification Certificate of Readiness (VCR) has been reviewed and satisfactorily closed out or qualified with requisite approvals.`,
   confirmationItems: [
     `All commissioning activities have been completed and that the systems necessary for the safe, stable, and compliant operation and maintenance of the facilities in scope have been handed over in a state deemed fit for use.`,
     `The Asset has assumed full responsibility for day-to-day operations of the new facility utilizing competent operators and approved procedures and management systems.`,
