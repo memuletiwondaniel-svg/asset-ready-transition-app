@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { List, Layers, ClipboardList } from 'lucide-react';
+import { Settings, Layers, ClipboardList } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import VCRTemplatesList from './VCRTemplatesList';
 import VCRItemCategoryTab from './VCRItemCategoryTab';
@@ -37,7 +37,7 @@ const VCRManagementTab: React.FC = () => {
               activeSubTab !== 'templates' && "text-muted-foreground/60"
             )}
           >
-            <List className={cn("h-4 w-4 transition-colors duration-200", getTabIconColor('templates', activeSubTab === 'templates'))} />
+            <Settings className={cn("h-4 w-4 transition-colors duration-200", getTabIconColor('templates', activeSubTab === 'templates'))} />
             Templates
           </TabsTrigger>
           <TabsTrigger 
