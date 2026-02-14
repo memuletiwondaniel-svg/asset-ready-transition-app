@@ -2,20 +2,28 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Plus, Plug, Search, ExternalLink } from 'lucide-react';
+import { Plus, Plug, ExternalLink } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import AdminHeader from '@/components/admin/AdminHeader';
+
+import sapLogo from '@/assets/logos/sap4hana.png';
+import primaveraLogo from '@/assets/logos/primavera.png';
+import gocompletionsLogo from '@/assets/logos/gocompletions.png';
+import assaiLogo from '@/assets/logos/assai.png';
+import sharepointLogo from '@/assets/logos/sharepoint.png';
+import teamsLogo from '@/assets/logos/teams.png';
 
 interface APIManagementProps {
   onBack: () => void;
 }
 
 const predefinedAPIs = [
-  { id: 'sap4hana', name: 'SAP4HANA', description: 'Enterprise resource planning and business operations', category: 'ERP' },
-  { id: 'primavera-p6', name: 'Primavera P6', description: 'Project planning, scheduling and control', category: 'Project Management' },
-  { id: 'gocompletions', name: 'GoCompletions', description: 'Completions and commissioning management', category: 'Completions' },
-  { id: 'assai', name: 'Assai', description: 'Document management and control', category: 'Document Management' },
-  { id: 'sharepoint', name: 'SharePoint', description: 'Collaboration and document storage platform', category: 'Collaboration' },
+  { id: 'sap4hana', name: 'SAP S/4HANA', description: 'Enterprise resource planning and business operations', category: 'ERP', logo: sapLogo },
+  { id: 'primavera-p6', name: 'Oracle Primavera P6', description: 'Project planning, scheduling and control', category: 'Project Management', logo: primaveraLogo },
+  { id: 'gocompletions', name: 'GoCompletions', description: 'Completions and commissioning management', category: 'Completions', logo: gocompletionsLogo },
+  { id: 'assai', name: 'Assai', description: 'Document management and control', category: 'Document Management', logo: assaiLogo },
+  { id: 'sharepoint', name: 'SharePoint', description: 'Collaboration and document storage platform', category: 'Collaboration', logo: sharepointLogo },
+  { id: 'teams', name: 'Microsoft Teams', description: 'Team communication and collaboration platform', category: 'Communication', logo: teamsLogo },
 ];
 
 const APIManagement: React.FC<APIManagementProps> = ({ onBack }) => {
@@ -67,8 +75,8 @@ const APIManagement: React.FC<APIManagementProps> = ({ onBack }) => {
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-lg bg-muted/60 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
-                      <Plug className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                    <div className="h-12 w-12 rounded-lg bg-white flex items-center justify-center p-1.5 border border-border/30">
+                      <img src={api.logo} alt={`${api.name} logo`} className="h-full w-full object-contain" />
                     </div>
                     <div>
                       <CardTitle className="text-base">{api.name}</CardTitle>
