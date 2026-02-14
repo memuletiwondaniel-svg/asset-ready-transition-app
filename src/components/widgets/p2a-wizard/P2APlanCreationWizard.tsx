@@ -45,8 +45,8 @@ const WIZARD_STEPS: WizardStep[] = [
   { id: 3, title: 'VCRs', description: 'Define Verification Certificate of Readiness' },
   { id: 4, title: 'Mapping', description: 'Map systems to VCRs' },
   { id: 5, title: 'Phases', description: 'Define phases & assign VCRs' },
-  { id: 6, title: 'Preview', description: 'Review the plan layout' },
-  { id: 7, title: 'Approval', description: 'Configure approvers' },
+  { id: 6, title: 'Approval', description: 'Configure approvers' },
+  { id: 7, title: 'Preview', description: 'Review the plan layout' },
   { id: 8, title: 'Confirm', description: 'Submit for approval' },
 ];
 
@@ -111,8 +111,8 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
       case 2: return state.vcrs.length > 0;
       case 3: return Object.values(state.mappings).some(arr => arr.length > 0);
       case 4: return state.phases.length > 0;
-      case 5: return hasVisitedPast;
-      case 6: return state.approvers.length > 0;
+      case 5: return state.approvers.length > 0;
+      case 6: return hasVisitedPast;
       case 7: return hasVisitedPast;
       default: return false;
     }
@@ -273,21 +273,21 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
         );
       case 6:
         return (
+          <ApprovalSetupStep
+            approvers={state.approvers}
+            projectId={projectId}
+            plantName={plantName}
+            onApproversChange={(approvers) => updateState('approvers', approvers)}
+          />
+        );
+      case 7:
+        return (
           <WorkspacePreviewStep
             systems={state.systems}
             vcrs={state.vcrs}
             phases={state.phases}
             mappings={state.mappings}
             vcrPhaseAssignments={state.vcrPhaseAssignments}
-          />
-        );
-      case 7:
-        return (
-          <ApprovalSetupStep
-            approvers={state.approvers}
-            projectId={projectId}
-            plantName={plantName}
-            onApproversChange={(approvers) => updateState('approvers', approvers)}
           />
         );
       case 8:
