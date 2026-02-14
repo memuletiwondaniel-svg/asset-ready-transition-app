@@ -45,7 +45,7 @@ export const WizardProgress: React.FC<WizardProgressProps> = ({
               <div
                 className={cn(
                   "w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-all duration-200 shrink-0",
-                  isCompleted && !isCurrent && "bg-emerald-100 text-emerald-600 border border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-700",
+                  isCompleted && !isCurrent && "bg-transparent text-emerald-600 border-2 border-emerald-400 dark:text-emerald-400 dark:border-emerald-500",
                   isCurrent && "bg-primary text-primary-foreground ring-4 ring-primary/15 shadow-sm shadow-primary/20 scale-105",
                   isVisitedButIncomplete && "bg-amber-100 text-amber-700 border border-amber-300 shadow-sm shadow-amber-200/50 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-600",
                   !isCompleted && !isCurrent && !isVisitedButIncomplete && "bg-muted/80 text-muted-foreground border border-border/50"
