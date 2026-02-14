@@ -145,7 +145,7 @@ const ItemCategoriesTab: React.FC = () => {
                   </TableRow>
                 ) : (
                   activeCategories.map(category => (
-                    <TableRow key={category.id}>
+                    <TableRow key={category.id} className="group">
                       <TableCell>
                         <Badge variant="outline" className="font-mono">
                           {category.ref_id}
@@ -157,7 +157,7 @@ const ItemCategoriesTab: React.FC = () => {
                       </TableCell>
                       <TableCell>{category.display_order}</TableCell>
                       <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
+                        <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <Button 
                             variant="ghost" 
                             size="icon" 
