@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { cn } from '@/lib/utils';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -35,9 +36,10 @@ interface SortableWidgetProps {
   id: string;
   children: React.ReactNode;
   onHide: () => void;
+  className?: string;
 }
 
-const SortableWidget: React.FC<SortableWidgetProps> = ({ id, children, onHide }) => {
+const SortableWidget: React.FC<SortableWidgetProps> = ({ id, children, onHide, className }) => {
   const {
     attributes,
     listeners,
@@ -54,7 +56,7 @@ const SortableWidget: React.FC<SortableWidgetProps> = ({ id, children, onHide })
   };
 
   return (
-    <div ref={setNodeRef} style={style} className="group/widget relative h-full">
+    <div ref={setNodeRef} style={style} className={cn("group/widget relative h-full", className)}>
       {React.cloneElement(children as React.ReactElement, {
         dragAttributes: attributes,
         dragListeners: listeners,
@@ -247,11 +249,12 @@ export default function ProjectDetailsPage() {
                 >
                   <SortableContext items={visibleWidgets} strategy={rectSortingStrategy}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6">
-                      {visibleWidgets.map((widgetId) => (
+                      {visibleWidgets.map((widgetId, index) => (
                         <SortableWidget 
                           key={widgetId} 
                           id={widgetId}
                           onHide={() => handleHideWidget(widgetId)}
+                          className={index < 2 ? 'min-h-[calc(50vh-90px)]' : undefined}
                         >
                           {renderWidget(widgetId)}
                         </SortableWidget>
