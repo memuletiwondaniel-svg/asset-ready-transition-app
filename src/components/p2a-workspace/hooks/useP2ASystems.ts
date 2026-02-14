@@ -215,19 +215,55 @@ export const useP2ASystems = (handoverPlanId: string) => {
 
   const addSystemsBulk = useMutation({
     mutationFn: async (systemsData: Array<Omit<P2ASystem, 'id' | 'created_at' | 'updated_at' | 'assigned_handover_point_id' | 'assigned_vcr_code'>>) => {
-      const { data, error } = await supabase
-        .from('p2a_systems')
-        .insert(systemsData)
-        .select();
+      // Use upsert to merge new data without overwriting user-configured fields.
+      // Only statistics fields (completion, ITR counts, punchlist counts) are updated.
+      // User-configured fields (is_hydrocarbon, VCR assignments) are preserved.
+      const results = [];
+      for (const system of systemsData) {
+        // Check if system already exists
+        const { data: existing } = await supabase
+          .from('p2a_systems')
+          .select('id')
+          .eq('handover_plan_id', system.handover_plan_id)
+          .eq('system_id', system.system_id)
+          .maybeSingle();
 
-      if (error) throw error;
-      return data;
+        if (existing) {
+          // Update only statistics — preserve user config
+          const { data, error } = await supabase
+            .from('p2a_systems')
+            .update({
+              completion_percentage: system.completion_percentage,
+              completion_status: system.completion_status,
+              punchlist_a_count: system.punchlist_a_count,
+              punchlist_b_count: system.punchlist_b_count,
+              itr_a_count: system.itr_a_count,
+              itr_b_count: system.itr_b_count,
+              itr_total_count: system.itr_total_count,
+            })
+            .eq('id', existing.id)
+            .select()
+            .single();
+          if (error) throw error;
+          if (data) results.push(data);
+        } else {
+          // Insert new system
+          const { data, error } = await supabase
+            .from('p2a_systems')
+            .insert(system)
+            .select()
+            .single();
+          if (error) throw error;
+          if (data) results.push(data);
+        }
+      }
+      return results;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['p2a-systems', handoverPlanId] });
       toast({
         title: 'Success',
-        description: `${data.length} systems imported successfully`,
+        description: `${data.length} systems synced successfully. User configurations preserved.`,
       });
     },
     onError: (error) => {

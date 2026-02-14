@@ -58,7 +58,6 @@ export const SystemDetailSheet: React.FC<SystemDetailSheetProps> = ({
   onUnassignSystemFromVCR,
 }) => {
   const [activeTab, setActiveTab] = useState('details');
-  const [editName, setEditName] = useState(system.name);
   const [editIsHC, setEditIsHC] = useState(system.is_hydrocarbon);
   const [hasChanges, setHasChanges] = useState(false);
   const [subsystemsExpanded, setSubsystemsExpanded] = useState(false);
@@ -67,7 +66,6 @@ export const SystemDetailSheet: React.FC<SystemDetailSheetProps> = ({
 
   // Reset state when system changes
   useEffect(() => {
-    setEditName(system.name);
     setEditIsHC(system.is_hydrocarbon);
     setHasChanges(false);
     setActiveTab('details');
@@ -76,12 +74,12 @@ export const SystemDetailSheet: React.FC<SystemDetailSheetProps> = ({
 
   // Track changes
   useEffect(() => {
-    setHasChanges(editName !== system.name || editIsHC !== system.is_hydrocarbon);
-  }, [editName, editIsHC, system.name, system.is_hydrocarbon]);
+    setHasChanges(editIsHC !== system.is_hydrocarbon);
+  }, [editIsHC, system.is_hydrocarbon]);
 
   const handleSave = () => {
     if (onUpdateSystem && hasChanges) {
-      onUpdateSystem(system.id, { name: editName, is_hydrocarbon: editIsHC });
+      onUpdateSystem(system.id, { is_hydrocarbon: editIsHC });
     }
   };
 
@@ -143,15 +141,12 @@ export const SystemDetailSheet: React.FC<SystemDetailSheetProps> = ({
           <TabsContent value="details" className="flex-1 min-h-0 mt-0">
             <ScrollArea className="h-full">
               <div className="px-4 py-4 space-y-4">
-                {/* System Name */}
+                {/* System Name (read-only — sourced from GoCompletions) */}
                 <div className="space-y-1.5">
                   <Label className="text-xs text-muted-foreground">System Name</Label>
-                  <Input
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    className="h-9 text-sm"
-                    placeholder="System name"
-                  />
+                  <div className="h-9 px-3 flex items-center text-sm rounded-md border bg-muted/40 text-foreground">
+                    {system.name}
+                  </div>
                 </div>
 
                 {/* Hydrocarbon Toggle */}
