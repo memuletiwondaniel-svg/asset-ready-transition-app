@@ -242,6 +242,11 @@ export const WorkspacePreviewStep: React.FC<WorkspacePreviewStepProps> = ({
                       {sys.name}
                     </span>
                   ))}
+                </div>
+              </CollapsibleContent>
+            </div>
+          </Collapsible>
+        )}
 
         {/* Selected Approvers */}
         {approvers.length > 0 && (
@@ -294,11 +299,6 @@ export const WorkspacePreviewStep: React.FC<WorkspacePreviewStepProps> = ({
               })}
             </div>
           </>
-        )}
-      </div>
-              </CollapsibleContent>
-            </div>
-          </Collapsible>
         )}
       </div>
     </div>
