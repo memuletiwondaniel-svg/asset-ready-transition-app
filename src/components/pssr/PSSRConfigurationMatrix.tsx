@@ -507,6 +507,8 @@ const PSSRConfigurationMatrix: React.FC = () => {
 
       if (reasonError) throw reasonError;
 
+      // Remove from local state immediately
+      setLocalConfigs(prev => prev.filter(c => c.reason_id !== deleteDialog.reasonId));
       queryClient.invalidateQueries({ queryKey: ['pssr-reason-configurations'] });
       queryClient.invalidateQueries({ queryKey: ['pssr-reasons-all'] });
       toast.success('PSSR Reason deleted successfully');
