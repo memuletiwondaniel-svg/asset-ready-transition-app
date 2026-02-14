@@ -766,7 +766,7 @@ const PSSRConfigurationMatrix: React.FC = () => {
                     key={config.reason_id}
                     onClick={() => setEditOverlay({ open: true, config })}
                     style={{ '--card-from': gradient.from, '--card-via': gradient.via, '--card-to': gradient.to } as React.CSSProperties}
-                    className="group relative rounded-2xl border border-border/30 bg-muted/40 hover:bg-[image:linear-gradient(to_bottom_right,var(--card-from),var(--card-via),var(--card-to))] hover:border-border/60 hover:shadow-md transition-all duration-300 cursor-pointer"
+                    className="group relative rounded-2xl border border-border/30 bg-muted/60 hover:bg-[image:linear-gradient(to_bottom_right,var(--card-from),var(--card-via),var(--card-to))] hover:border-border/60 hover:shadow-md transition-all duration-300 cursor-pointer"
                   >
                     <div className="p-4 space-y-3">
                       {/* Top row: status + sub-category + actions */}
