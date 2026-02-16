@@ -1,8 +1,23 @@
 import React from 'react';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PROJECT_PHASES } from './types';
-import { Target } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Search, FileCheck, ListFilter, PenLine, Rocket } from 'lucide-react';
+
+const PHASE_ICONS: Record<string, React.ReactNode> = {
+  IDENTIFY: <Search className="w-5 h-5" />,
+  ASSESS: <FileCheck className="w-5 h-5" />,
+  SELECT: <ListFilter className="w-5 h-5" />,
+  DEFINE: <PenLine className="w-5 h-5" />,
+  EXECUTE: <Rocket className="w-5 h-5" />,
+};
+
+const PHASE_DESCRIPTIONS: Record<string, string> = {
+  IDENTIFY: 'Identify hazards, risks & opportunities early in the project lifecycle',
+  ASSESS: 'Assess risk levels and evaluate mitigation options',
+  SELECT: 'Select preferred alternatives and risk treatment strategies',
+  DEFINE: 'Define detailed scope, plans and deliverables',
+  EXECUTE: 'Execute the plan and manage operational readiness activities',
+};
 
 interface Props {
   phase: string;
@@ -11,31 +26,52 @@ interface Props {
 
 export const StepPhaseSelection: React.FC<Props> = ({ phase, onPhaseChange }) => {
   return (
-    <div className="space-y-6 p-1">
-      <div className="text-center space-y-2 pb-4">
-        <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-          <Target className="w-6 h-6 text-primary" />
-        </div>
-        <h3 className="text-lg font-semibold">Select Project Phase</h3>
-        <p className="text-sm text-muted-foreground max-w-md mx-auto">
-          Choose the current phase of the project to load the relevant ORA activities and deliverables.
+    <div className="space-y-5 p-1">
+      <div className="text-center space-y-1">
+        <h3 className="text-base font-semibold">Which phase is your project in?</h3>
+        <p className="text-xs text-muted-foreground">
+          This determines which ORA activities are loaded from the catalog.
         </p>
       </div>
 
-      <div className="max-w-sm mx-auto">
-        <Label>Project Phase *</Label>
-        <Select value={phase} onValueChange={onPhaseChange}>
-          <SelectTrigger className="mt-2">
-            <SelectValue placeholder="Select a phase..." />
-          </SelectTrigger>
-          <SelectContent>
-            {PROJECT_PHASES.map(p => (
-              <SelectItem key={p.value} value={p.value}>
-                {p.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="grid gap-2">
+        {PROJECT_PHASES.map((p, i) => (
+          <button
+            key={p.value}
+            type="button"
+            onClick={() => onPhaseChange(p.value)}
+            className={cn(
+              "w-full flex items-center gap-4 px-4 py-3 rounded-lg border text-left transition-all",
+              phase === p.value
+                ? "border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20"
+                : "border-border hover:border-muted-foreground/30 hover:bg-muted/30"
+            )}
+          >
+            <div className={cn(
+              "w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-colors",
+              phase === p.value
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted/60 text-muted-foreground"
+            )}>
+              {PHASE_ICONS[p.value]}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-mono text-muted-foreground">{i + 1}.</span>
+                <span className="text-sm font-semibold">{p.label}</span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
+                {PHASE_DESCRIPTIONS[p.value]}
+              </p>
+            </div>
+            <div className={cn(
+              "w-4 h-4 rounded-full border-2 shrink-0 flex items-center justify-center",
+              phase === p.value ? "border-primary" : "border-muted-foreground/30"
+            )}>
+              {phase === p.value && <div className="w-2 h-2 rounded-full bg-primary" />}
+            </div>
+          </button>
+        ))}
       </div>
     </div>
   );
