@@ -1499,19 +1499,41 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
       const plantLower = plantName.toLowerCase();
 
       return directorRoles.map((role, idx) => {
-        const roleLower = role.toLowerCase();
         // Find the best matching profile for this director role
-        const match = allProfiles.find((p: any) => {
+        let match = allProfiles.find((p: any) => {
           const pos = (p.position || '').toLowerCase();
-          if (!pos.includes(roleLower.replace('director', '').trim()) || !pos.includes('director')) return false;
+          if (!pos.includes('director')) return false;
           if (pos.includes('dep.') || pos.includes('deputy')) return false;
-          // For Plant Director, match by plant name
+          
           if (role === 'Plant Director') {
-            return plantLower ? pos.includes(plantLower) : false;
+            return pos.includes('plant') && pos.includes('director') && (plantLower ? pos.includes(plantLower) : false);
           }
-          // P&E, P&M, HSE Directors are organization-wide
-          return true;
+          if (role === 'P&E Director') {
+            return pos.includes('p&e') && pos.includes('director');
+          }
+          if (role === 'P&M Director') {
+            return pos.includes('p&m') && pos.includes('director');
+          }
+          if (role === 'HSE Director') {
+            return pos.includes('hse') && pos.includes('director');
+          }
+          return false;
         });
+
+        // Fallback: For Plant Director, if no primary found, use Deputy Plant Director
+        if (!match && role === 'Plant Director' && plantLower) {
+          match = allProfiles.find((p: any) => {
+            const pos = (p.position || '').toLowerCase();
+            return (pos.includes('dep.') || pos.includes('deputy')) && pos.includes('plant') && pos.includes('director') && pos.includes(plantLower);
+          });
+          if (match) {
+            return {
+              id: match.user_id || `director-${idx}`,
+              name: match.full_name || '',
+              role: 'Dep. Plant Director',
+            };
+          }
+        }
 
         return {
           id: match?.user_id || `director-${idx}`,
