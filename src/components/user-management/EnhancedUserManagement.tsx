@@ -527,12 +527,19 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
   const showCreateUserRef = React.useRef(showCreateUser);
   const selectedUserRef = React.useRef(selectedUser);
   const editingUserRef = React.useRef(editingUser);
+  const pendingRefreshRef = React.useRef(false);
 
   // Keep refs in sync
   React.useEffect(() => {
     showCreateUserRef.current = showCreateUser;
     selectedUserRef.current = selectedUser;
     editingUserRef.current = editingUser;
+    
+    // If all modals are closed and there's a pending refresh, do it now
+    if (!showCreateUser && !selectedUser && !editingUser && pendingRefreshRef.current) {
+      pendingRefreshRef.current = false;
+      fetchUsers(false);
+    }
   }, [showCreateUser, selectedUser, editingUser]);
 
   useEffect(() => {
@@ -552,6 +559,9 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
           // Skip refresh if any modal is open to prevent unmounting
           if (!showCreateUserRef.current && !selectedUserRef.current && !editingUserRef.current) {
             fetchUsers(false);
+          } else {
+            // Mark that we need to refresh when modals close
+            pendingRefreshRef.current = true;
           }
         }
       )
@@ -1076,8 +1086,14 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
           onClose={() => {
             selectedUserRef.current = null;
             setSelectedUser(null);
+            // Refresh after closing view modal to catch any missed updates
+            setTimeout(() => fetchUsers(), 200);
           }}
-          onUserUpdated={fetchUsers}
+          onUserUpdated={() => {
+            selectedUserRef.current = null;
+            setSelectedUser(null);
+            setTimeout(() => fetchUsers(), 200);
+          }}
         />
       )}
 
@@ -1098,7 +1114,8 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
             selectedUserRef.current = null;
             setEditingUser(null);
             setSelectedUser(null);
-            fetchUsers();
+            // Delay fetch to ensure modal state is fully cleared and realtime subscription won't skip it
+            setTimeout(() => fetchUsers(), 200);
           }}
           initialEditMode={true}
         />
