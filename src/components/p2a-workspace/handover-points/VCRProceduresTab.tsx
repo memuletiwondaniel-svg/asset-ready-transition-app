@@ -5,6 +5,16 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { 
   Plus, 
   BookOpen, 
@@ -14,7 +24,8 @@ import {
   ChevronRight,
   Rocket,
   Settings,
-  Search
+  Search,
+  Trash2
 } from 'lucide-react';
 import { P2AHandoverPoint } from '../hooks/useP2AHandoverPoints';
 import { AddProcedureSheet } from './AddProcedureSheet';
@@ -81,6 +92,10 @@ export const VCRProceduresTab: React.FC<VCRProceduresTabProps> = ({ handoverPoin
   const handleProcedureClick = (procedure: Procedure) => {
     setSelectedProcedure(procedure);
     setDetailModalOpen(true);
+  };
+
+  const handleDeleteProcedure = (id: string) => {
+    setProcedures(prev => prev.filter(p => p.id !== id));
   };
 
   const handleStatusChange = (procedureId: string, newStatus: ProcedureStatus) => {
@@ -224,6 +239,7 @@ export const VCRProceduresTab: React.FC<VCRProceduresTabProps> = ({ handoverPoin
                           key={procedure.id} 
                           procedure={procedure}
                           onClick={() => handleProcedureClick(procedure)}
+                          onDelete={handleDeleteProcedure}
                         />
                       ))}
                     </div>
@@ -242,6 +258,7 @@ export const VCRProceduresTab: React.FC<VCRProceduresTabProps> = ({ handoverPoin
                           key={procedure.id} 
                           procedure={procedure}
                           onClick={() => handleProcedureClick(procedure)}
+                          onDelete={handleDeleteProcedure}
                         />
                       ))}
                     </div>
@@ -255,6 +272,7 @@ export const VCRProceduresTab: React.FC<VCRProceduresTabProps> = ({ handoverPoin
                     key={procedure.id} 
                     procedure={procedure}
                     onClick={() => handleProcedureClick(procedure)}
+                    onDelete={handleDeleteProcedure}
                   />
                 ))}
               </div>
@@ -289,54 +307,88 @@ export const VCRProceduresTab: React.FC<VCRProceduresTabProps> = ({ handoverPoin
 const ProcedureCard: React.FC<{ 
   procedure: Procedure; 
   onClick: () => void;
-}> = ({ procedure, onClick }) => {
+  onDelete: (id: string) => void;
+}> = ({ procedure, onClick, onDelete }) => {
   const statusInfo = STATUS_CONFIG[procedure.status];
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   return (
-    <Card 
-      className="cursor-pointer transition-all hover:border-emerald-500/50 hover:shadow-sm"
-      onClick={onClick}
-    >
-      <CardContent className="p-3">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              {procedure.type === 'startup' ? (
-                <Rocket className="w-4 h-4 text-orange-500 shrink-0" />
-              ) : (
-                <Settings className="w-4 h-4 text-blue-500 shrink-0" />
-              )}
-              <h4 className="font-medium text-sm truncate">{procedure.title}</h4>
+    <>
+      <Card 
+        className="cursor-pointer transition-all hover:border-emerald-500/50 hover:shadow-sm group relative"
+        onClick={onClick}
+      >
+        <CardContent className="p-3">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                {procedure.type === 'startup' ? (
+                  <Rocket className="w-4 h-4 text-orange-500 shrink-0" />
+                ) : (
+                  <Settings className="w-4 h-4 text-blue-500 shrink-0" />
+                )}
+                <h4 className="font-medium text-sm truncate">{procedure.title}</h4>
+              </div>
+              <p className="text-[10px] text-muted-foreground font-mono mt-1">
+                {procedure.procedureNumber}
+              </p>
+              <div className="flex flex-wrap gap-3 mt-2 text-[10px]">
+                <span className="flex items-center gap-1 text-muted-foreground">
+                  <User className="w-3 h-3" />
+                  {procedure.owner}
+                </span>
+                <span className="flex items-center gap-1 text-muted-foreground">
+                  <FileText className="w-3 h-3" />
+                  v{procedure.version}
+                </span>
+                <span className="flex items-center gap-1 text-muted-foreground">
+                  <Calendar className="w-3 h-3" />
+                  {procedure.lastUpdated}
+                </span>
+              </div>
             </div>
-            <p className="text-[10px] text-muted-foreground font-mono mt-1">
-              {procedure.procedureNumber}
-            </p>
-            <div className="flex flex-wrap gap-3 mt-2 text-[10px]">
-              <span className="flex items-center gap-1 text-muted-foreground">
-                <User className="w-3 h-3" />
-                {procedure.owner}
-              </span>
-              <span className="flex items-center gap-1 text-muted-foreground">
-                <FileText className="w-3 h-3" />
-                v{procedure.version}
-              </span>
-              <span className="flex items-center gap-1 text-muted-foreground">
-                <Calendar className="w-3 h-3" />
-                {procedure.lastUpdated}
-              </span>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setDeleteDialogOpen(true);
+                }}
+                className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md hover:bg-destructive/10 text-destructive"
+                aria-label="Delete procedure"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+              <Badge 
+                variant="outline"
+                className={cn('whitespace-nowrap text-[10px]', statusInfo.className)}
+              >
+                {statusInfo.label}
+              </Badge>
+              <ChevronRight className="w-4 h-4 text-muted-foreground" />
             </div>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <Badge 
-              variant="outline"
-              className={cn('whitespace-nowrap text-[10px]', statusInfo.className)}
+        </CardContent>
+      </Card>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Procedure</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete <span className="font-medium text-foreground">"{procedure.title}"</span>? This action cannot be undone and all associated data will be permanently removed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => onDelete(procedure.id)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {statusInfo.label}
-            </Badge>
-            <ChevronRight className="w-4 h-4 text-muted-foreground" />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
