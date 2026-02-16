@@ -6,7 +6,7 @@ import { Key, FileText, Plus, ChevronRight, Pencil, ExternalLink } from 'lucide-
 import { StyledWidgetIcon } from './StyledWidgetIcon';
 import { VCRCard } from './VCRCard';
 import { useProjectPSSRs } from '@/hooks/useProjectPSSRs';
-import { useProjectVCRs } from '@/hooks/useProjectVCRs';
+import { useProjectVCRs, ProjectVCR } from '@/hooks/useProjectVCRs';
 import { useProjectORPPlans } from '@/hooks/useProjectORPPlans';
 import { useProjectMilestones } from '@/hooks/useProjects';
 import { PSSRQuickViewOverlay } from '@/components/pssr/PSSRQuickViewOverlay';
@@ -15,6 +15,7 @@ import { CreateVCRWizard } from './vcr-wizard/CreateVCRWizard';
 import { P2AWorkspaceOverlay } from './P2AWorkspaceOverlay';
 import { P2APlanSummaryDialog } from './P2APlanSummaryDialog';
 import { P2APlanCreationWizard } from './p2a-wizard/P2APlanCreationWizard';
+import { VCRDetailOverlayWidget } from './VCRDetailOverlay';
 import { cn } from '@/lib/utils';
 import { useCanCreateVCR } from '@/hooks/useCurrentUserRole';
 import { useP2AHandoverPlan } from '@/components/p2a-workspace/hooks/useP2AHandoverPlan';
@@ -91,6 +92,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
   const [showP2AWorkspace, setShowP2AWorkspace] = useState(false);
   const [showP2APlanWizard, setShowP2APlanWizard] = useState(false);
   const [showP2ASummary, setShowP2ASummary] = useState(false);
+  const [selectedVCR, setSelectedVCR] = useState<ProjectVCR | null>(null);
 
   // Get the first (active) ORA plan for this project
   const oraPlanId = orpPlans?.[0]?.id || '';
@@ -119,8 +121,8 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
   };
 
   const handleVCRClick = (vcrId: string) => {
-    // TODO: Open VCR detail overlay
-    console.log('VCR clicked:', vcrId);
+    const found = allVCRs.find(v => v.id === vcrId);
+    if (found) setSelectedVCR(found);
   };
 
   const hasContent = (pssrs && pssrs.length > 0) || allVCRs.length > 0;
@@ -319,6 +321,14 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
           setShowP2AWorkspace(true);
         }}
       />
+
+      {selectedVCR && (
+        <VCRDetailOverlayWidget
+          open={!!selectedVCR}
+          onOpenChange={(open) => { if (!open) setSelectedVCR(null); }}
+          vcr={selectedVCR}
+        />
+      )}
     </>
   );
 };
