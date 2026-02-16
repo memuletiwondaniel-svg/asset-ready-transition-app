@@ -2,12 +2,13 @@ import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CalendarCheck, ChevronDown, Loader2, Clock, CheckCircle2 } from 'lucide-react';
+import { CalendarCheck, ChevronDown, Loader2, Clock, CheckCircle2, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { StyledWidgetIcon } from './StyledWidgetIcon';
 import { useProjectORPPlans } from '@/hooks/useProjectORPPlans';
 import { Progress } from '@/components/ui/progress';
 import { ORPGanttOverlay } from '@/components/orp/ORPGanttOverlay';
+import { ORAActivityPlanWizard } from '@/components/ora/wizard/ORAActivityPlanWizard';
 import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -26,6 +27,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
 }) => {
   const navigate = useNavigate();
   const [overlayOpen, setOverlayOpen] = useState(false);
+  const [wizardOpen, setWizardOpen] = useState(false);
   const { data: plans = [], isLoading } = useProjectORPPlans(projectId);
   
   // Get the primary plan (most recent active one)
@@ -53,10 +55,10 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
     <>
       <Card 
         className={cn(
-          "h-full transition-all duration-300 group cursor-pointer",
-          "hover:shadow-lg hover:scale-[1.02] hover:border-purple-500/20"
+          "h-full transition-all duration-300 group",
+          primaryPlan && "cursor-pointer hover:shadow-lg hover:scale-[1.02] hover:border-purple-500/20"
         )}
-        onClick={handleOpenOverlay}
+        onClick={primaryPlan ? handleOpenOverlay : undefined}
       >
         <CardHeader 
           {...dragAttributes} 
@@ -79,9 +81,19 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
         </CardHeader>
         
         <CardContent className="space-y-3">
-          <div className="text-center py-10 text-muted-foreground">
+          <div className="text-center py-8 text-muted-foreground">
             <p className="text-sm font-medium mb-1">No ORA Plan</p>
-            <p className="text-xs opacity-70">Operation Readiness activities will appear here</p>
+            <p className="text-xs opacity-70 mb-4">Operation Readiness activities will appear here</p>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                setWizardOpen(true);
+              }}
+            >
+              Create ORA Activity Plan
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -97,6 +109,13 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
           totalCount={totalDeliverables}
         />
       )}
+
+      {/* ORA Activity Plan Creation Wizard */}
+      <ORAActivityPlanWizard
+        open={wizardOpen}
+        onOpenChange={setWizardOpen}
+        projectId={projectId}
+      />
     </>
   );
 };
