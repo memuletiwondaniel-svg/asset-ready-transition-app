@@ -73,12 +73,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
                 glowFrom="from-purple-500/40"
                 glowTo="to-violet-500/40"
               />
-              <span>ORA Plan</span>
-              {totalDeliverables > 0 && (
-                <Badge variant="secondary" className="ml-1 text-xs">
-                  {completedDeliverables}/{totalDeliverables}
-                </Badge>
-              )}
+              <span>ORA Activity Plan</span>
             </div>
           </CardTitle>
         </CardHeader>
