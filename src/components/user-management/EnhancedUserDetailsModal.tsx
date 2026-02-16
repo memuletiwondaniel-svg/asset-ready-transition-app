@@ -1898,17 +1898,19 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                       </div>
 
                       {/* Position Display - Separate row in Edit Mode */}
-                      {isTitleReady() && (
-                        <div>
-                          <Label>Position</Label>
-                          <div className="p-3 bg-muted rounded-md border">
-                            <span className="font-medium text-primary">{generateTitle()}</span>
-                          </div>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            This position is automatically generated based on your role and selections above.
-                          </p>
+                      <div>
+                        <Label>Position</Label>
+                        <div className="p-3 bg-muted rounded-md border">
+                          <span className="font-medium text-primary">
+                            {isTitleReady() ? generateTitle() : (formData.position || user.position || 'Not specified')}
+                          </span>
                         </div>
-                      )}
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {isTitleReady() 
+                            ? 'This position is automatically generated based on your role and selections above.'
+                            : 'Complete the role and required fields above to auto-generate the position.'}
+                        </p>
+                      </div>
                   </div>
                 ) : (
                   /* View Mode - Show Company, Function, Role and Position */
@@ -1933,14 +1935,14 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                         </div>
                       </div>
                     </div>
-                    {isTitleReady() && (
-                      <div>
-                        <Label>Position</Label>
-                        <div className="p-3 bg-muted rounded-md border">
-                          <span className="font-medium text-primary">{generateTitle()}</span>
-                        </div>
+                    <div>
+                      <Label>Position</Label>
+                      <div className="p-3 bg-muted rounded-md border">
+                        <span className="font-medium text-primary">
+                          {isTitleReady() ? generateTitle() : (formData.position || user.position || 'Not specified')}
+                        </span>
                       </div>
-                    )}
+                    </div>
                   </div>
                 )}
 
