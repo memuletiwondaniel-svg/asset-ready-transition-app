@@ -151,41 +151,58 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
         approvingRoles = (roles as any[]) || [];
       }
 
-      // Resolve actual users from project team members
+      // Resolve actual users — try project team members first, then fall back to all active profiles with matching roles
       let teamMembers: { user_id: string; full_name: string; avatar_url: string | null; role_id: string; role_name: string }[] = [];
-      if (projectId && allRoleIds.length > 0) {
-        const { data: members } = await supabase
-          .from('project_team_members')
-          .select('user_id')
-          .eq('project_id', projectId);
+      if (allRoleIds.length > 0) {
+        let candidateProfiles: any[] = [];
 
-        if (members && members.length > 0) {
-          const userIds = members.map((m: any) => m.user_id);
+        if (projectId) {
+          // First try: project team members with matching roles
+          const { data: members } = await supabase
+            .from('project_team_members')
+            .select('user_id')
+            .eq('project_id', projectId);
+
+          if (members && members.length > 0) {
+            const userIds = members.map((m: any) => m.user_id);
+            const { data: profiles } = await supabase
+              .from('profiles')
+              .select('user_id, full_name, avatar_url, role')
+              .in('user_id', userIds)
+              .in('role', allRoleIds)
+              .eq('is_active', true);
+            candidateProfiles = profiles || [];
+          }
+        }
+
+        // Fallback: if no project team members matched, query all active profiles with matching roles
+        if (candidateProfiles.length === 0) {
           const { data: profiles } = await supabase
             .from('profiles')
             .select('user_id, full_name, avatar_url, role')
-            .in('user_id', userIds)
-            .in('role', allRoleIds);
+            .in('role', allRoleIds)
+            .eq('is_active', true);
+          candidateProfiles = profiles || [];
+        }
 
-          if (profiles) {
-            // Get role names for matched profiles
-            const matchedRoleIds = [...new Set(profiles.map((p: any) => p.role).filter(Boolean))];
-            let roleMap: Record<string, string> = {};
-            if (matchedRoleIds.length > 0) {
-              const { data: roleNames } = await supabase
-                .from('roles')
-                .select('id, name')
-                .in('id', matchedRoleIds);
-              roleNames?.forEach((r: any) => { roleMap[r.id] = r.name; });
-            }
-            teamMembers = profiles.map((p: any) => ({
-              user_id: p.user_id,
-              full_name: p.full_name,
-              avatar_url: p.avatar_url,
-              role_id: p.role,
-              role_name: roleMap[p.role] || '',
-            }));
+        if (candidateProfiles.length > 0) {
+          // Get role names for matched profiles
+          const matchedRoleIds = [...new Set(candidateProfiles.map((p: any) => p.role).filter(Boolean))];
+          let roleMap: Record<string, string> = {};
+          if (matchedRoleIds.length > 0) {
+            const { data: roleNames } = await supabase
+              .from('roles')
+              .select('id, name')
+              .in('id', matchedRoleIds);
+            roleNames?.forEach((r: any) => { roleMap[r.id] = r.name; });
           }
+          teamMembers = candidateProfiles.map((p: any) => ({
+            user_id: p.user_id,
+            full_name: p.full_name,
+            avatar_url: p.avatar_url,
+            role_id: p.role,
+            role_name: roleMap[p.role] || '',
+          }));
         }
       }
 
