@@ -395,7 +395,7 @@ const ApprovalsPanel: React.FC<ApprovalsPanelProps> = ({
         <CardHeader className="pb-2 bg-muted/40 border-b border-border/50">
           <CardTitle className="text-base font-semibold">Review and Approval</CardTitle>
         </CardHeader>
-        <CardContent className="flex-1 overflow-auto pt-2">
+        <CardContent className="flex-1 overflow-auto pt-4">
           {/* Section 1: VCR Reviewers */}
           <CollapsibleSection title="VCR Reviewers" count={approvingParties.length} defaultOpen={true}>
             <div className="space-y-0.5">
@@ -660,7 +660,7 @@ const OverviewInfoPanel: React.FC<{ vcr: ProjectVCR; projectName?: string; proje
       <CardHeader className="pb-2 bg-muted/40 border-b border-border/50">
         <CardTitle className="text-base font-semibold">Overview</CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 space-y-5 overflow-auto">
+      <CardContent className="flex-1 space-y-5 overflow-auto pt-4">
         <div>
           <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Project</div>
           <div className="text-sm font-medium text-primary">{projectCode} - {projectName}</div>
