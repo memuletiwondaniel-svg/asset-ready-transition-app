@@ -846,3 +846,42 @@
 .prose p {
   margin: 0.5rem 0;
 }
+
+/* ── VCR Card theming (light/dark adaptive) ─── */
+.vcr-card {
+  background-color: var(--vcr-bg, hsl(var(--muted) / 0.3));
+  border-color: var(--vcr-border, hsl(var(--border)));
+}
+.vcr-id-badge {
+  background-color: var(--vcr-accent, hsl(var(--muted)));
+  color: var(--vcr-text, hsl(var(--foreground)));
+}
+.vcr-progress-fill {
+  background-color: var(--vcr-text, hsl(var(--primary)));
+}
+.vcr-progress-text {
+  color: var(--vcr-text, hsl(var(--primary)));
+}
+.vcr-cert-badge {
+  background-color: var(--vcr-accent, hsl(var(--muted) / 0.6));
+  color: var(--vcr-text, hsl(var(--muted-foreground)));
+}
+
+.dark .vcr-card {
+  background-color: var(--vcr-bg-dark, hsl(var(--muted) / 0.3));
+  border-color: var(--vcr-border-dark, hsl(var(--border)));
+}
+.dark .vcr-id-badge {
+  background-color: var(--vcr-accent-dark, hsl(var(--muted)));
+  color: var(--vcr-text-dark, hsl(var(--foreground)));
+}
+.dark .vcr-progress-fill {
+  background-color: var(--vcr-text-dark, hsl(var(--primary)));
+}
+.dark .vcr-progress-text {
+  color: var(--vcr-text-dark, hsl(var(--primary)));
+}
+.dark .vcr-cert-badge {
+  background-color: var(--vcr-accent-dark, hsl(var(--muted) / 0.6));
+  color: var(--vcr-text-dark, hsl(var(--muted-foreground)));
+}
