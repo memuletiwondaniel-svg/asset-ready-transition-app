@@ -25,10 +25,11 @@ import {
   FileCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { useParams } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 
 export interface VCRItemBasic {
   id: string;
@@ -66,6 +67,43 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
   vcrId,
 }) => {
   const { projectId } = useParams<{ projectId: string }>();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const updateStatus = useMutation({
+    mutationFn: async ({ prerequisiteId, status }: { prerequisiteId: string; status: string }) => {
+      const updateData: any = { status };
+      if (status === 'READY_FOR_REVIEW') {
+        updateData.submitted_at = new Date().toISOString();
+      } else if (status === 'ACCEPTED' || status === 'REJECTED') {
+        updateData.reviewed_at = new Date().toISOString();
+      }
+      const { error } = await supabase
+        .from('p2a_vcr_prerequisites')
+        .update(updateData)
+        .eq('id', prerequisiteId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vcr-prereq-detail'] });
+      queryClient.invalidateQueries({ queryKey: ['vcr-progress-data'] });
+      queryClient.invalidateQueries({ queryKey: ['vcr-prerequisites'] });
+      queryClient.invalidateQueries({ queryKey: ['vcr-category-items'] });
+      toast({ title: 'Status updated' });
+      onOpenChange(false);
+    },
+    onError: (error) => {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  const handleStatusChange = (newStatus: string) => {
+    if (!item?.prerequisite_id) {
+      toast({ title: 'Error', description: 'No prerequisite linked to this item', variant: 'destructive' });
+      return;
+    }
+    updateStatus.mutate({ prerequisiteId: item.prerequisite_id, status: newStatus });
+  };
 
   const { data: prereqDetail } = useQuery({
     queryKey: ['vcr-prereq-detail', item?.prerequisite_id],
@@ -406,15 +444,23 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
         {/* Footer Actions */}
         <div className="border-t px-6 py-4 flex gap-2">
           {item.status === 'NOT_STARTED' && (
-            <Button className="flex-1" size="sm">Start Progress</Button>
+            <Button className="flex-1" size="sm" disabled={updateStatus.isPending} onClick={() => handleStatusChange('IN_PROGRESS')}>
+              {updateStatus.isPending ? 'Updating...' : 'Start Progress'}
+            </Button>
           )}
           {item.status === 'IN_PROGRESS' && (
-            <Button className="flex-1" size="sm">Submit for Review</Button>
+            <Button className="flex-1" size="sm" disabled={updateStatus.isPending} onClick={() => handleStatusChange('READY_FOR_REVIEW')}>
+              {updateStatus.isPending ? 'Updating...' : 'Submit for Review'}
+            </Button>
           )}
           {item.status === 'READY_FOR_REVIEW' && (
             <>
-              <Button className="flex-1" variant="outline" size="sm">Request Qualification</Button>
-              <Button className="flex-1" size="sm">Approve</Button>
+              <Button className="flex-1" variant="outline" size="sm" disabled={updateStatus.isPending} onClick={() => handleStatusChange('QUALIFICATION_REQUESTED')}>
+                Request Qualification
+              </Button>
+              <Button className="flex-1" size="sm" disabled={updateStatus.isPending} onClick={() => handleStatusChange('ACCEPTED')}>
+                Approve
+              </Button>
             </>
           )}
           <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>Close</Button>
