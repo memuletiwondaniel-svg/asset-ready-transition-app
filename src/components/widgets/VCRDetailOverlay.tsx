@@ -1232,31 +1232,9 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
         </div>
 
         {/* Body: left nav + content */}
-        <div className="flex flex-1 overflow-hidden relative">
-          {/* Dynamic multicolor animated background - only on overview */}
-          {activeNav === 'overview' && (
-            <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-              <div
-                className="absolute w-[400px] h-[400px] rounded-full blur-[100px] opacity-30 animate-[float-orb-1_8s_ease-in-out_infinite]"
-                style={{ background: c ? `hsl(${c.hue}, ${c.saturation}%, 65%)` : 'hsl(220, 70%, 65%)', top: '5%', left: '10%' }}
-              />
-              <div
-                className="absolute w-[350px] h-[350px] rounded-full blur-[100px] opacity-25 animate-[float-orb-2_10s_ease-in-out_infinite]"
-                style={{ background: c ? `hsl(${(c.hue + 60) % 360}, ${c.saturation}%, 60%)` : 'hsl(280, 70%, 60%)', top: '30%', right: '5%' }}
-              />
-              <div
-                className="absolute w-[450px] h-[450px] rounded-full blur-[120px] opacity-20 animate-[float-orb-3_12s_ease-in-out_infinite]"
-                style={{ background: c ? `hsl(${(c.hue + 120) % 360}, ${c.saturation}%, 55%)` : 'hsl(340, 70%, 55%)', bottom: '0%', left: '25%' }}
-              />
-              <div
-                className="absolute w-[300px] h-[300px] rounded-full blur-[90px] opacity-20 animate-[float-orb-4_9s_ease-in-out_infinite]"
-                style={{ background: c ? `hsl(${(c.hue + 180) % 360}, ${c.saturation}%, 70%)` : 'hsl(40, 70%, 70%)', top: '15%', left: '55%' }}
-              />
-            </div>
-          )}
-
+        <div className="flex flex-1 overflow-hidden">
           {/* Left navigation panel */}
-          <div className={cn("w-52 border-r shrink-0 flex flex-col relative z-10", activeNav === 'overview' ? 'bg-transparent' : 'bg-muted/30')}>
+          <div className="w-52 border-r bg-muted/30 shrink-0 flex flex-col relative z-10">
             <div className="px-4 pt-4 pb-2">
               <span className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">
                 Navigate
@@ -1292,12 +1270,36 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
             </ScrollArea>
           </div>
 
-          {/* Main content area */}
-          <ScrollArea className="flex-1 relative z-10">
-            <div className="p-6">
-              {renderContent()}
-            </div>
-          </ScrollArea>
+          {/* Main content area with dynamic background */}
+          <div className="flex-1 relative overflow-hidden">
+            {/* Dynamic multicolor animated background - only on overview */}
+            {activeNav === 'overview' && (
+              <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+                <div
+                  className="absolute w-[400px] h-[400px] rounded-full blur-[100px] opacity-30 animate-[float-orb-1_8s_ease-in-out_infinite]"
+                  style={{ background: c ? `hsl(${c.hue}, ${c.saturation}%, 65%)` : 'hsl(220, 70%, 65%)', top: '5%', left: '5%' }}
+                />
+                <div
+                  className="absolute w-[350px] h-[350px] rounded-full blur-[100px] opacity-25 animate-[float-orb-2_10s_ease-in-out_infinite]"
+                  style={{ background: c ? `hsl(${(c.hue + 60) % 360}, ${c.saturation}%, 60%)` : 'hsl(280, 70%, 60%)', top: '30%', right: '5%' }}
+                />
+                <div
+                  className="absolute w-[450px] h-[450px] rounded-full blur-[120px] opacity-20 animate-[float-orb-3_12s_ease-in-out_infinite]"
+                  style={{ background: c ? `hsl(${(c.hue + 120) % 360}, ${c.saturation}%, 55%)` : 'hsl(340, 70%, 55%)', bottom: '0%', left: '25%' }}
+                />
+                <div
+                  className="absolute w-[300px] h-[300px] rounded-full blur-[90px] opacity-20 animate-[float-orb-4_9s_ease-in-out_infinite]"
+                  style={{ background: c ? `hsl(${(c.hue + 180) % 360}, ${c.saturation}%, 70%)` : 'hsl(40, 70%, 70%)', top: '15%', left: '55%' }}
+                />
+              </div>
+            )}
+
+            <ScrollArea className="h-full relative z-10">
+              <div className="p-6">
+                {renderContent()}
+              </div>
+            </ScrollArea>
+          </div>
         </div>
 
         {/* Orb animation keyframes */}
