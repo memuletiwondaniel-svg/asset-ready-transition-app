@@ -49,6 +49,7 @@ import { VCRRegistersTab } from '@/components/p2a-workspace/handover-points/VCRR
 import { P2AHandoverPoint } from '@/components/p2a-workspace/hooks/useP2AHandoverPoints';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
+import { CategoryItemsSheet } from './CategoryItemsSheet';
 
 interface VCRDetailOverlayProps {
   open: boolean;
@@ -96,6 +97,7 @@ const CATEGORY_ITEMS = [
 ];
 
 const ProgressPanel: React.FC<{ vcr: ProjectVCR }> = ({ vcr }) => {
+  const [selectedCategory, setSelectedCategory] = useState<typeof CATEGORY_ITEMS[0] | null>(null);
   const progress = vcr.progress;
   const circumference = 2 * Math.PI * 44;
   const offset = circumference - (progress / 100) * circumference;
@@ -104,84 +106,102 @@ const ProgressPanel: React.FC<{ vcr: ProjectVCR }> = ({ vcr }) => {
   const itemsToGo = Math.round(totalItems * (1 - progress / 100));
 
   return (
-    <Card className="h-full flex flex-col">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base font-semibold">Progress</CardTitle>
-      </CardHeader>
-      <CardContent className="flex-1 space-y-4 overflow-auto">
-        <div className="bg-muted/30 rounded-xl p-4">
-          <div className="flex items-center gap-5">
-            <div className="relative shrink-0">
-              <svg width={108} height={108} className="transform -rotate-90">
-                <circle cx={54} cy={54} r={44} fill="none" strokeWidth={7}
-                  className="text-muted/40" stroke="currentColor" />
-                <circle cx={54} cy={54} r={44} fill="none" strokeWidth={7}
-                  strokeDasharray={circumference} strokeDashoffset={offset}
-                  strokeLinecap="round" className={progressColor} stroke="currentColor"
-                  style={{ transition: 'stroke-dashoffset 0.5s ease-out' }} />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-2xl font-bold text-foreground">{progress}%</span>
-                <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Complete</span>
+    <>
+      <Card className="h-full flex flex-col">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base font-semibold">Progress</CardTitle>
+        </CardHeader>
+        <CardContent className="flex-1 space-y-4 overflow-auto">
+          <div className="bg-muted/30 rounded-xl p-4">
+            <div className="flex items-center gap-5">
+              <div className="relative shrink-0">
+                <svg width={108} height={108} className="transform -rotate-90">
+                  <circle cx={54} cy={54} r={44} fill="none" strokeWidth={7}
+                    className="text-muted/40" stroke="currentColor" />
+                  <circle cx={54} cy={54} r={44} fill="none" strokeWidth={7}
+                    strokeDasharray={circumference} strokeDashoffset={offset}
+                    strokeLinecap="round" className={progressColor} stroke="currentColor"
+                    style={{ transition: 'stroke-dashoffset 0.5s ease-out' }} />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-2xl font-bold text-foreground">{progress}%</span>
+                  <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Complete</span>
+                </div>
+              </div>
+              <div>
+                <div className="text-sm font-medium text-foreground">{itemsToGo} items to go</div>
+                <div className="text-xs text-muted-foreground">of {totalItems} total items</div>
               </div>
             </div>
-            <div>
-              <div className="text-sm font-medium text-foreground">{itemsToGo} items to go</div>
-              <div className="text-xs text-muted-foreground">of {totalItems} total items</div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="border rounded-lg p-3 text-center">
+              <div className="text-xl font-bold text-foreground">0</div>
+              <div className="text-[10px] text-muted-foreground">Priority 1</div>
+              <div className="text-[9px] text-muted-foreground/70">Before startup</div>
+            </div>
+            <div className="border rounded-lg p-3 text-center">
+              <div className="text-xl font-bold text-foreground">0</div>
+              <div className="text-[10px] text-muted-foreground">Priority 2</div>
+              <div className="text-[9px] text-muted-foreground/70">After startup</div>
             </div>
           </div>
-        </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div className="border rounded-lg p-3 text-center">
-            <div className="text-xl font-bold text-foreground">0</div>
-            <div className="text-[10px] text-muted-foreground">Priority 1</div>
-            <div className="text-[9px] text-muted-foreground/70">Before startup</div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Badge variant="outline" className="text-xs px-3 py-1 gap-1.5 font-medium">
+              <span className="text-foreground font-bold">{vcr.systems_count}</span> Pending
+            </Badge>
+            <Badge variant="outline" className="text-xs px-3 py-1 gap-1.5 font-medium border-amber-200 text-amber-600">
+              <span className="font-bold">0</span> In Review
+            </Badge>
+            <Badge variant="outline" className="text-xs px-3 py-1 gap-1.5 font-medium border-emerald-200 text-emerald-600">
+              <span className="font-bold">0</span> Completed
+            </Badge>
           </div>
-          <div className="border rounded-lg p-3 text-center">
-            <div className="text-xl font-bold text-foreground">0</div>
-            <div className="text-[10px] text-muted-foreground">Priority 2</div>
-            <div className="text-[9px] text-muted-foreground/70">After startup</div>
-          </div>
-        </div>
 
-        <div className="flex items-center gap-2 flex-wrap">
-          <Badge variant="outline" className="text-xs px-3 py-1 gap-1.5 font-medium">
-            <span className="text-foreground font-bold">{vcr.systems_count}</span> Pending
-          </Badge>
-          <Badge variant="outline" className="text-xs px-3 py-1 gap-1.5 font-medium border-amber-200 text-amber-600">
-            <span className="font-bold">0</span> In Review
-          </Badge>
-          <Badge variant="outline" className="text-xs px-3 py-1 gap-1.5 font-medium border-emerald-200 text-emerald-600">
-            <span className="font-bold">0</span> Completed
-          </Badge>
-        </div>
-
-        <div>
-          <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-3 flex items-center gap-1.5">
-            <span className="w-1 h-1 rounded-full bg-muted-foreground" />
-            Progress by Category
-          </div>
-          <div className="space-y-3">
-            {CATEGORY_ITEMS.map((cat) => {
-              const Icon = cat.icon;
-              const catTotal = Math.max(4, Math.floor(Math.random() * 28) + 4);
-              const catDone = Math.floor(catTotal * (progress / 100));
-              return (
-                <div key={cat.label}>
-                  <div className="flex items-center gap-2 mb-1">
-                    <Icon className={cn('w-3.5 h-3.5 shrink-0', cat.color)} />
-                    <span className="text-xs text-foreground flex-1">{cat.label}</span>
-                    <span className="text-[10px] font-medium text-muted-foreground">{catDone}/{catTotal}</span>
+          <div>
+            <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-3 flex items-center gap-1.5">
+              <span className="w-1 h-1 rounded-full bg-muted-foreground" />
+              Progress by Category
+            </div>
+            <div className="space-y-3">
+              {CATEGORY_ITEMS.map((cat) => {
+                const Icon = cat.icon;
+                const catTotal = Math.max(4, Math.floor(Math.random() * 28) + 4);
+                const catDone = Math.floor(catTotal * (progress / 100));
+                return (
+                  <div
+                    key={cat.label}
+                    className="cursor-pointer rounded-md p-1.5 -mx-1.5 transition-colors hover:bg-muted/50"
+                    onClick={() => setSelectedCategory(cat)}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <Icon className={cn('w-3.5 h-3.5 shrink-0', cat.color)} />
+                      <span className="text-xs text-foreground flex-1">{cat.label}</span>
+                      <span className="text-[10px] font-medium text-muted-foreground">{catDone}/{catTotal}</span>
+                      <ChevronRight className="w-3 h-3 text-muted-foreground" />
+                    </div>
+                    <Progress value={(catDone / catTotal) * 100} className="h-1.5" indicatorClassName={cat.bg} />
                   </div>
-                  <Progress value={(catDone / catTotal) * 100} className="h-1.5" indicatorClassName={cat.bg} />
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+
+      {selectedCategory && (
+        <CategoryItemsSheet
+          open={!!selectedCategory}
+          onOpenChange={(open) => !open && setSelectedCategory(null)}
+          vcrId={vcr.id}
+          categoryLabel={selectedCategory.label}
+          categoryIcon={selectedCategory.icon}
+          categoryColor={selectedCategory.color}
+        />
+      )}
+    </>
   );
 };
 
