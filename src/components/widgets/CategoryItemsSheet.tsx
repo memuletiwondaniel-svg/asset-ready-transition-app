@@ -1,13 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CheckCircle2, Clock, XCircle, FileCheck, AlertTriangle } from 'lucide-react';
+import { CheckCircle2, Clock, XCircle, FileCheck, AlertTriangle, ChevronRight } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
+import { VCRItemDetailSheet } from './VCRItemDetailSheet';
 
 interface CategoryItemsSheetProps {
   open: boolean;
@@ -57,6 +58,7 @@ export const CategoryItemsSheet: React.FC<CategoryItemsSheetProps> = ({
   categoryIcon: CategoryIcon,
   categoryColor,
 }) => {
+  const [selectedItem, setSelectedItem] = useState<(VCRItemWithStatus & { itemCode: string }) | null>(null);
   const { data: items, isLoading } = useQuery({
     queryKey: ['vcr-category-items', vcrId, categoryLabel],
     queryFn: async () => {
@@ -113,6 +115,7 @@ export const CategoryItemsSheet: React.FC<CategoryItemsSheetProps> = ({
   const totalCount = items?.length || 0;
 
   return (
+    <>
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-lg flex flex-col h-full p-0">
         <SheetHeader className="px-6 py-4 border-b">
@@ -150,7 +153,14 @@ export const CategoryItemsSheet: React.FC<CategoryItemsSheetProps> = ({
                 const statusCfg = STATUS_CONFIG[item.status] || STATUS_CONFIG.NOT_STARTED;
                 const StatusIcon = statusCfg.icon;
                 return (
-                  <Card key={item.id} className="transition-colors hover:border-primary/30">
+                  <Card
+                    key={item.id}
+                    className="transition-colors hover:border-primary/30 cursor-pointer"
+                    onClick={() => setSelectedItem({
+                      ...item,
+                      itemCode: `${item.category_code}-${String(idx + 1).padStart(2, '0')}`,
+                    })}
+                  >
                     <CardContent className="p-4">
                       <div className="flex items-start gap-3">
                         <div className={cn(
@@ -173,6 +183,7 @@ export const CategoryItemsSheet: React.FC<CategoryItemsSheetProps> = ({
                           )}
                           <p className="text-xs text-foreground line-clamp-2">{item.vcr_item}</p>
                         </div>
+                        <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0 mt-1" />
                       </div>
                     </CardContent>
                   </Card>
@@ -183,5 +194,13 @@ export const CategoryItemsSheet: React.FC<CategoryItemsSheetProps> = ({
         </ScrollArea>
       </SheetContent>
     </Sheet>
+
+    <VCRItemDetailSheet
+      item={selectedItem}
+      open={!!selectedItem}
+      onOpenChange={(o) => !o && setSelectedItem(null)}
+      vcrId={vcrId}
+    />
+    </>
   );
 };
