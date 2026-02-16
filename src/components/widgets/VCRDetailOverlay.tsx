@@ -41,6 +41,7 @@ import { useHandoverPointSystems } from '@/components/p2a-workspace/hooks/useP2A
 import SOFCertificate from '@/components/handover/SOFCertificate';
 import PACCertificate from '@/components/handover/PACCertificate';
 import { VCRTrainingTab } from '@/components/p2a-workspace/handover-points/VCRTrainingTab';
+import { VCRProceduresTab } from '@/components/p2a-workspace/handover-points/VCRProceduresTab';
 import { P2AHandoverPoint } from '@/components/p2a-workspace/hooks/useP2AHandoverPoints';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
@@ -470,8 +471,8 @@ const VCRSystemsPanel: React.FC<{ vcrId: string }> = ({ vcrId }) => {
   );
 };
 
-// ── VCR Training Wrapper ─────────────────────────────────────────
-const VCRTrainingWrapper: React.FC<{ vcr: ProjectVCR }> = ({ vcr }) => {
+// ── VCR Handover Point Wrapper (reusable) ────────────────────────
+const VCRHandoverPointWrapper: React.FC<{ vcr: ProjectVCR; render: (hp: P2AHandoverPoint) => React.ReactNode }> = ({ vcr, render }) => {
   const { data: handoverPoint, isLoading } = useQuery({
     queryKey: ['vcr-handover-point', vcr.id],
     queryFn: async () => {
@@ -499,16 +500,16 @@ const VCRTrainingWrapper: React.FC<{ vcr: ProjectVCR }> = ({ vcr }) => {
       <div className="flex-1 flex items-center justify-center py-16">
         <div className="text-center">
           <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
-            <GraduationCap className="w-7 h-7 text-muted-foreground" />
+            <Layers className="w-7 h-7 text-muted-foreground" />
           </div>
-          <h3 className="text-lg font-semibold mb-1">Training</h3>
-          <p className="text-sm text-muted-foreground">Unable to load training data for this VCR.</p>
+          <h3 className="text-lg font-semibold mb-1">Not Available</h3>
+          <p className="text-sm text-muted-foreground">Unable to load data for this VCR.</p>
         </div>
       </div>
     );
   }
 
-  return <VCRTrainingTab handoverPoint={handoverPoint} />;
+  return <>{render(handoverPoint)}</>;
 };
 
 // ── Placeholder tab content ──────────────────────────────────────
@@ -573,9 +574,9 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
           />
         );
       case 'training':
-        return <VCRTrainingWrapper vcr={vcr} />;
+        return <VCRHandoverPointWrapper vcr={vcr} render={(hp) => <VCRTrainingTab handoverPoint={hp} />} />;
       case 'procedures':
-        return <PlaceholderContent title="Procedures" icon={BookOpen} />;
+        return <VCRHandoverPointWrapper vcr={vcr} render={(hp) => <VCRProceduresTab handoverPoint={hp} />} />;
       case 'registers':
         return <PlaceholderContent title="Operational Registers" icon={FileText} />;
       case 'documentation':
