@@ -18,7 +18,7 @@ const shortCode = (code?: string) => {
 };
 
 const ProgressWheel: React.FC<{ value: number; color?: string }> = ({ value, color }) => {
-  const size = 44;
+  const size = 48;
   const strokeWidth = 4;
   const radius = (size - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
@@ -50,7 +50,7 @@ const ProgressWheel: React.FC<{ value: number; color?: string }> = ({ value, col
           style={{ transition: 'stroke-dashoffset 0.5s ease-out' }}
         />
       </svg>
-      <span className="vcr-progress-text absolute text-[9px] font-bold tabular-nums">
+      <span className="vcr-progress-text absolute text-[11px] font-bold tabular-nums">
         {value}%
       </span>
     </div>
