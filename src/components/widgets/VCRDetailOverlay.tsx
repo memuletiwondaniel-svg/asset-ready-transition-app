@@ -31,6 +31,7 @@ import {
   AlertCircle,
   Lock,
   Users,
+  ChevronRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ProjectVCR } from '@/hooks/useProjectVCRs';
@@ -75,130 +76,96 @@ const shortCode = (code?: string) => {
   return code.replace(/^VCR-[A-Z0-9]+-/, 'VCR-');
 };
 
-// ── Overview Panel ──────────────────────────────────────────────
-const OverviewPanel: React.FC<{ vcr: ProjectVCR }> = ({ vcr }) => {
-  const vcrColor = getVCRColor(vcr.vcr_code);
-
-  return (
-    <Card className="h-full">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-sm font-medium flex items-center gap-2">
-          <Target className="w-4 h-4 text-primary" />
-          Overview
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div>
-          <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">VCR Name</div>
-          <div className="text-sm font-semibold text-foreground">{vcr.name}</div>
-        </div>
-
-        {vcr.description && (
-          <div>
-            <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Description</div>
-            <p className="text-xs text-muted-foreground leading-relaxed">{vcr.description}</p>
-          </div>
-        )}
-
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Status</div>
-            <Badge variant="outline" className="text-[10px]">
-              {vcr.status === 'PENDING' ? 'Draft' : vcr.status}
-            </Badge>
-          </div>
-          <div>
-            <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Target Date</div>
-            <div className="text-xs text-foreground">
-              {vcr.target_date ? format(new Date(vcr.target_date), 'dd MMM yyyy') : 'Not set'}
-            </div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Systems</div>
-            <div className="text-lg font-bold text-cyan-500">{vcr.systems_count}</div>
-          </div>
-          <div>
-            <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Hydrocarbon</div>
-            <div className="text-xs">
-              {vcr.has_hydrocarbon ? (
-                <Badge className="bg-amber-500/10 text-amber-600 border-amber-200 text-[10px]">Yes</Badge>
-              ) : (
-                <Badge variant="outline" className="text-[10px]">No</Badge>
-              )}
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
-
-// ── Progress Panel ──────────────────────────────────────────────
+// ── Progress Panel (Left) ───────────────────────────────────────
 const CATEGORY_ITEMS = [
   { label: 'Technical Integrity', icon: Settings2, color: 'text-blue-500', bg: 'bg-blue-500' },
   { label: 'Design Integrity', icon: Target, color: 'text-violet-500', bg: 'bg-violet-500' },
   { label: 'Operating Integrity', icon: Layers, color: 'text-cyan-500', bg: 'bg-cyan-500' },
   { label: 'Management Systems', icon: Users, color: 'text-amber-500', bg: 'bg-amber-500' },
-  { label: 'Health & Safety', icon: Shield, color: 'text-emerald-500', bg: 'bg-emerald-500' },
+  { label: 'HSE & Environment', icon: Shield, color: 'text-emerald-500', bg: 'bg-emerald-500' },
+  { label: 'Maintenance Readiness', icon: Settings2, color: 'text-rose-500', bg: 'bg-rose-500' },
 ];
 
 const ProgressPanel: React.FC<{ vcr: ProjectVCR }> = ({ vcr }) => {
   const progress = vcr.progress;
-  const circumference = 2 * Math.PI * 40;
+  const circumference = 2 * Math.PI * 44;
   const offset = circumference - (progress / 100) * circumference;
   const progressColor = progress === 100 ? 'text-emerald-500' : progress >= 50 ? 'text-amber-500' : 'text-primary';
+  const totalItems = Math.max(1, vcr.systems_count * 8);
+  const itemsToGo = Math.round(totalItems * (1 - progress / 100));
 
   return (
-    <Card className="h-full">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-sm font-medium flex items-center gap-2">
-          <BarChart3 className="w-4 h-4 text-primary" />
-          Progress
-        </CardTitle>
+    <Card className="h-full flex flex-col">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base font-semibold">Progress</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-5">
-        {/* Circular progress */}
-        <div className="flex items-center gap-4">
-          <div className="relative">
-            <svg width={96} height={96} className="transform -rotate-90">
-              <circle cx={48} cy={48} r={40} fill="none" strokeWidth={6}
-                className="text-muted/30" stroke="currentColor" />
-              <circle cx={48} cy={48} r={40} fill="none" strokeWidth={6}
-                strokeDasharray={circumference} strokeDashoffset={offset}
-                strokeLinecap="round" className={progressColor} stroke="currentColor"
-                style={{ transition: 'stroke-dashoffset 0.5s ease-out' }} />
-            </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-xl font-bold">{progress}%</span>
-              <span className="text-[9px] text-muted-foreground uppercase tracking-wide">Complete</span>
+      <CardContent className="flex-1 space-y-4 overflow-auto">
+        <div className="bg-muted/30 rounded-xl p-4">
+          <div className="flex items-center gap-5">
+            <div className="relative shrink-0">
+              <svg width={108} height={108} className="transform -rotate-90">
+                <circle cx={54} cy={54} r={44} fill="none" strokeWidth={7}
+                  className="text-muted/40" stroke="currentColor" />
+                <circle cx={54} cy={54} r={44} fill="none" strokeWidth={7}
+                  strokeDasharray={circumference} strokeDashoffset={offset}
+                  strokeLinecap="round" className={progressColor} stroke="currentColor"
+                  style={{ transition: 'stroke-dashoffset 0.5s ease-out' }} />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-2xl font-bold text-foreground">{progress}%</span>
+                <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Complete</span>
+              </div>
             </div>
-          </div>
-          <div className="text-xs text-muted-foreground">
-            <div className="font-medium text-foreground text-sm">{vcr.systems_count} Systems</div>
-            <div>mapped to this VCR</div>
+            <div>
+              <div className="text-sm font-medium text-foreground">{itemsToGo} items to go</div>
+              <div className="text-xs text-muted-foreground">of {totalItems} total items</div>
+            </div>
           </div>
         </div>
 
-        {/* Category breakdown */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="border rounded-lg p-3 text-center">
+            <div className="text-xl font-bold text-foreground">0</div>
+            <div className="text-[10px] text-muted-foreground">Priority 1</div>
+            <div className="text-[9px] text-muted-foreground/70">Before startup</div>
+          </div>
+          <div className="border rounded-lg p-3 text-center">
+            <div className="text-xl font-bold text-foreground">0</div>
+            <div className="text-[10px] text-muted-foreground">Priority 2</div>
+            <div className="text-[9px] text-muted-foreground/70">After startup</div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 flex-wrap">
+          <Badge variant="outline" className="text-xs px-3 py-1 gap-1.5 font-medium">
+            <span className="text-foreground font-bold">{vcr.systems_count}</span> Pending
+          </Badge>
+          <Badge variant="outline" className="text-xs px-3 py-1 gap-1.5 font-medium border-amber-200 text-amber-600">
+            <span className="font-bold">0</span> In Review
+          </Badge>
+          <Badge variant="outline" className="text-xs px-3 py-1 gap-1.5 font-medium border-emerald-200 text-emerald-600">
+            <span className="font-bold">0</span> Completed
+          </Badge>
+        </div>
+
         <div>
-          <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-3 flex items-center gap-1">
+          <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-3 flex items-center gap-1.5">
             <span className="w-1 h-1 rounded-full bg-muted-foreground" />
             Progress by Category
           </div>
           <div className="space-y-3">
             {CATEGORY_ITEMS.map((cat) => {
               const Icon = cat.icon;
-              // Simulated per-category values (placeholder until real data is wired)
-              const val = Math.min(100, Math.max(0, progress + Math.floor(Math.random() * 20 - 10)));
+              const catTotal = Math.max(4, Math.floor(Math.random() * 28) + 4);
+              const catDone = Math.floor(catTotal * (progress / 100));
               return (
-                <div key={cat.label} className="flex items-center gap-2">
-                  <Icon className={cn('w-3.5 h-3.5 shrink-0', cat.color)} />
-                  <span className="text-xs text-foreground w-28 truncate">{cat.label}</span>
-                  <Progress value={val} className="h-1.5 flex-1" indicatorClassName={cat.bg} />
-                  <span className="text-[10px] font-semibold text-muted-foreground w-8 text-right">{val}%</span>
+                <div key={cat.label}>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Icon className={cn('w-3.5 h-3.5 shrink-0', cat.color)} />
+                    <span className="text-xs text-foreground flex-1">{cat.label}</span>
+                    <span className="text-[10px] font-medium text-muted-foreground">{catDone}/{catTotal}</span>
+                  </div>
+                  <Progress value={(catDone / catTotal) * 100} className="h-1.5" indicatorClassName={cat.bg} />
                 </div>
               );
             })}
@@ -209,90 +176,138 @@ const ProgressPanel: React.FC<{ vcr: ProjectVCR }> = ({ vcr }) => {
   );
 };
 
-// ── Approvals Panel ──────────────────────────────────────────────
+// ── Approvals Panel (Middle) ────────────────────────────────────
 const ApprovalsPanel: React.FC<{ vcr: ProjectVCR }> = ({ vcr }) => {
-  // Placeholder approvers – will be wired to real data
   const reviewers = [
-    { name: 'VCR Reviewer', role: 'Commissioning Lead', status: 'pending' },
-    { name: 'VCR Reviewer', role: 'Operations Lead', status: 'pending' },
+    { name: 'Commissioning Lead', initials: 'CL', role: 'Commissioning - Project', status: 'pending' },
+    { name: 'Operations Lead', initials: 'OL', role: 'Operations - Asset', status: 'pending' },
+    { name: 'Technical Authority', initials: 'TA', role: 'Technical - Project', status: 'pending' },
   ];
   const approvers = [
-    { name: 'VCR Approver', role: 'Plant Manager', status: 'pending' },
-    { name: 'VCR Approver', role: 'HSE Director', status: 'pending' },
+    { name: 'Plant Manager', initials: 'PM', role: 'Plant Manager', status: 'pending' },
+    { name: 'HSE Director', initials: 'HD', role: 'HSE Director', status: 'pending' },
+  ];
+  const sofApprovers = [
+    { name: 'Plant Director', initials: 'PD', role: 'Plant Director', status: 'pending' },
+    { name: 'HSE Director', initials: 'HD', role: 'HSE Director', status: 'pending' },
+    { name: 'P&E Director', initials: 'PE', role: 'P&E Director', status: 'pending' },
   ];
 
-  const StatusDot: React.FC<{ status: string }> = ({ status }) => {
-    if (status === 'approved') return <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />;
-    if (status === 'rejected') return <AlertCircle className="w-3.5 h-3.5 text-destructive" />;
-    return <Clock className="w-3.5 h-3.5 text-muted-foreground" />;
+  const StatusIndicator: React.FC<{ status: string }> = ({ status }) => {
+    if (status === 'approved') return (
+      <div className="flex items-center gap-1">
+        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+        <span className="text-[10px] text-emerald-600 font-medium">Approved</span>
+      </div>
+    );
+    return (
+      <Badge variant="outline" className="text-[9px] text-amber-500 border-amber-200 px-1.5">pending</Badge>
+    );
+  };
+
+  const renderSection = (title: string, icon: React.ElementType, items: typeof reviewers, count: string) => {
+    const SectionIcon = icon;
+    return (
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <div className="text-[10px] uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+            <SectionIcon className="w-3 h-3" />
+            {title}
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="text-[10px] text-muted-foreground">{count}</span>
+            <ChevronRight className="w-3 h-3 text-muted-foreground" />
+          </div>
+        </div>
+        <div className="space-y-1 relative ml-3 pl-4 border-l border-border">
+          {items.map((person, i) => (
+            <div key={i} className="flex items-center gap-3 py-2">
+              <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-[10px] font-semibold text-muted-foreground shrink-0">
+                {person.initials}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-xs font-medium text-foreground truncate">{person.name}</div>
+                <div className="text-[10px] text-muted-foreground truncate">{person.role}</div>
+              </div>
+              <StatusIndicator status={person.status} />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   };
 
   return (
-    <Card className="h-full">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-sm font-medium flex items-center gap-2">
-          <Users className="w-4 h-4 text-primary" />
-          Approvals
-        </CardTitle>
+    <Card className="h-full flex flex-col">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base font-semibold">Approvals</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-5">
-        {/* VCR Review */}
+      <CardContent className="flex-1 space-y-5 overflow-auto">
+        {renderSection('VCR Review', Shield, reviewers, `0/${reviewers.length}`)}
+        {renderSection('VCR Approval', Award, approvers, `0/${approvers.length}`)}
+        {renderSection('SoF Approval', Shield, sofApprovers, `0/${sofApprovers.length}`)}
+      </CardContent>
+    </Card>
+  );
+};
+
+// ── Overview Info Panel (Right) ─────────────────────────────────
+const OverviewInfoPanel: React.FC<{ vcr: ProjectVCR; projectName?: string; projectCode?: string }> = ({ vcr, projectName, projectCode }) => {
+  return (
+    <Card className="h-full flex flex-col">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base font-semibold">Overview</CardTitle>
+      </CardHeader>
+      <CardContent className="flex-1 space-y-5 overflow-auto">
         <div>
-          <div className="flex items-center justify-between mb-2">
-            <div className="text-[10px] uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
-              <Shield className="w-3 h-3" />
-              VCR Review
+          <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Project</div>
+          <div className="text-sm font-medium text-primary">{projectCode} - {projectName}</div>
+        </div>
+
+        <div>
+          <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">VCR Name</div>
+          <div className="text-sm font-medium text-foreground">{vcr.name}</div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-px bg-border rounded-lg overflow-hidden">
+          <div className="bg-card p-3">
+            <div className="text-[9px] uppercase tracking-wide text-muted-foreground mb-1">Status</div>
+            <div className="text-xs font-medium text-foreground truncate">
+              {vcr.status === 'PENDING' ? 'Draft' : vcr.status}
             </div>
-            <span className="text-[10px] text-muted-foreground">0/{reviewers.length}</span>
           </div>
-          <div className="space-y-2 relative pl-4 before:absolute before:left-[7px] before:top-2 before:bottom-2 before:w-px before:bg-border">
-            {reviewers.map((r, i) => (
-              <div key={i} className="flex items-center gap-2.5 py-1.5">
-                <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-[10px] font-semibold relative z-10">
-                  {r.role.charAt(0)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-xs font-medium truncate">{r.role}</div>
-                </div>
-                <StatusDot status={r.status} />
-              </div>
-            ))}
+          <div className="bg-card p-3">
+            <div className="text-[9px] uppercase tracking-wide text-muted-foreground mb-1">Target Date</div>
+            <div className="text-xs font-medium text-foreground truncate">
+              {vcr.target_date ? format(new Date(vcr.target_date), 'MMM dd, yyyy') : 'Not set'}
+            </div>
+          </div>
+          <div className="bg-card p-3">
+            <div className="text-[9px] uppercase tracking-wide text-muted-foreground mb-1">Systems</div>
+            <div className="text-xs font-medium text-foreground">{vcr.systems_count}</div>
           </div>
         </div>
 
-        {/* VCR Approval */}
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <div className="text-[10px] uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
-              <Award className="w-3 h-3" />
-              VCR Approval
-            </div>
-            <span className="text-[10px] text-muted-foreground">0/{approvers.length}</span>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Hydrocarbon</div>
+            {vcr.has_hydrocarbon ? (
+              <Badge className="bg-amber-500/10 text-amber-600 border-amber-200 text-[10px]">Yes - HC Systems</Badge>
+            ) : (
+              <Badge variant="outline" className="text-[10px]">No</Badge>
+            )}
           </div>
-          <div className="space-y-2 relative pl-4 before:absolute before:left-[7px] before:top-2 before:bottom-2 before:w-px before:bg-border">
-            {approvers.map((a, i) => (
-              <div key={i} className="flex items-center gap-2.5 py-1.5">
-                <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-[10px] font-semibold relative z-10">
-                  {a.role.charAt(0)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-xs font-medium truncate">{a.role}</div>
-                </div>
-                <StatusDot status={a.status} />
-              </div>
-            ))}
+          <div>
+            <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Progress</div>
+            <div className="text-sm font-bold text-foreground">{vcr.progress}%</div>
           </div>
         </div>
 
-        {/* SoF Approval */}
         <div>
-          <div className="flex items-center justify-between mb-2">
-            <div className="text-[10px] uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
-              <Shield className="w-3 h-3" />
-              SoF Approval
-            </div>
-            <span className="text-[10px] text-muted-foreground">0/3</span>
-          </div>
+          <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">VCR Scope</div>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            {vcr.description || 'Verification Certificate of Readiness covering systems mapped to this VCR. Ensures all prerequisites including training, documentation, procedures, CMMS, and spares are completed before handover.'}
+          </p>
         </div>
       </CardContent>
     </Card>
@@ -484,9 +499,9 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
       case 'overview':
         return (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full">
-            <OverviewPanel vcr={vcr} />
             <ProgressPanel vcr={vcr} />
             <ApprovalsPanel vcr={vcr} />
+            <OverviewInfoPanel vcr={vcr} projectName={projectName} projectCode={projectCode} />
           </div>
         );
       case 'sof':
