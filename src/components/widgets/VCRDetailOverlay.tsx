@@ -403,7 +403,7 @@ const ApprovalsPanel: React.FC<ApprovalsPanelProps> = ({
           <ScrollArea className="h-full">
           <div className="p-6 pt-4">
           {/* Section 1: VCR Reviewers */}
-          <CollapsibleSection title="VCR Reviewers" count={approvingParties.length} defaultOpen={true}>
+          <CollapsibleSection title="VCR Reviewers" count={approvingParties.length} defaultOpen={false}>
             <div className="space-y-0.5">
               {approvingParties.map((person, i) => (
                 <PersonRow
