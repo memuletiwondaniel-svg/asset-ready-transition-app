@@ -111,9 +111,9 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick }) => {
         </div>
 
         {/* Right: progress wheel + cert badges stacked */}
-        <div className="flex flex-col items-center justify-between shrink-0 gap-1.5">
+        <div className="flex items-center shrink-0 gap-2">
           <ProgressWheel value={progress} color={vcrColor?.border} />
-          <div className="flex items-center gap-1">
+          <div className="flex flex-col items-center gap-0.5">
             {vcr.has_hydrocarbon && (
               <span className="vcr-cert-badge text-[8px] font-semibold px-1.5 py-0.5 rounded-full">
                 SoF
