@@ -1152,11 +1152,7 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
             ].map((panel, idx) => (
               <div
                 key={idx}
-                className="rounded-2xl border p-[2px] transition-all"
-                style={panelStyle ? {
-                  background: panelStyle.background,
-                  borderColor: panelStyle.borderColor,
-                } : undefined}
+                className="rounded-2xl"
               >
                 {panel}
               </div>
