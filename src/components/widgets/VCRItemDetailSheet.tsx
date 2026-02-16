@@ -328,7 +328,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                       {approvingRoles.map((role: any) => {
                         const membersForRole = approvingMembers.filter((m: any) => m.role_id === role.id);
                         return (
-                          <div key={role.id} className="flex items-center gap-3 py-2 first:pt-0 last:pb-0">
+                          <div key={role.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
                             <span className="text-[10px] font-medium text-muted-foreground w-20 shrink-0 truncate" title={role.name}>{role.name}</span>
                             {membersForRole.length > 0 ? (
                               <div className="flex items-center gap-3 flex-1 min-w-0">
