@@ -218,7 +218,7 @@ const ProgressPanel: React.FC<{ vcr: ProjectVCR }> = ({ vcr }) => {
                       : `${differenceInDays(new Date(vcr.target_date), new Date())} days to go`
                     : `${itemsToGo} items to go`}
                 </div>
-                <div className="text-xs text-muted-foreground">of {totalItems} total items</div>
+                {!vcr.target_date && <div className="text-xs text-muted-foreground">of {totalItems} total items</div>}
               </div>
             </div>
           </div>
