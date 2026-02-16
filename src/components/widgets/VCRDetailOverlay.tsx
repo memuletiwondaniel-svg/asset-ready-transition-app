@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { getAPIConfig } from '@/lib/api-config-storage';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { DayPicker } from 'react-day-picker';
 import {
   Dialog,
   DialogContent,
@@ -50,7 +52,7 @@ import { VCRCMMSTab } from '@/components/p2a-workspace/handover-points/VCRCMMSTa
 import { VCRRegistersTab } from '@/components/p2a-workspace/handover-points/VCRRegistersTab';
 import { P2AHandoverPoint } from '@/components/p2a-workspace/hooks/useP2AHandoverPoints';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { CategoryItemsSheet } from './CategoryItemsSheet';
 import { ApproverDetailSheet } from './ApproverDetailSheet';
 
@@ -368,6 +370,52 @@ const ApprovalsPanel: React.FC<{ vcr: ProjectVCR; checklistApprovers?: Checklist
 };
 // ── Overview Info Panel (Right) ─────────────────────────────────
 const OverviewInfoPanel: React.FC<{ vcr: ProjectVCR; projectName?: string; projectCode?: string }> = ({ vcr, projectName, projectCode }) => {
+  const [editingScope, setEditingScope] = useState(false);
+  const [scopeText, setScopeText] = useState(
+    vcr.description || 'Verification Certificate of Readiness covering systems mapped to this VCR. Ensures all prerequisites including training, documentation, procedures, CMMS, and spares are completed before handover.'
+  );
+  const [scopeImages, setScopeImages] = useState<string[]>([]);
+  const [targetDateOpen, setTargetDateOpen] = useState(false);
+  const [targetDate, setTargetDate] = useState<Date | undefined>(
+    vcr.target_date ? new Date(vcr.target_date) : undefined
+  );
+  const queryClient = useQueryClient();
+
+  const saveScope = async () => {
+    const client = supabase as any;
+    await client.from('p2a_handover_points').update({ description: scopeText }).eq('id', vcr.id);
+    queryClient.invalidateQueries({ queryKey: ['project-vcrs'] });
+    setEditingScope(false);
+  };
+
+  const saveTargetDate = async (date: Date | undefined) => {
+    setTargetDate(date);
+    setTargetDateOpen(false);
+    const client = supabase as any;
+    await client.from('p2a_handover_points').update({ target_date: date ? date.toISOString().split('T')[0] : null }).eq('id', vcr.id);
+    queryClient.invalidateQueries({ queryKey: ['project-vcrs'] });
+  };
+
+  const handleScopePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of Array.from(items)) {
+      if (item.type.startsWith('image/')) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            if (ev.target?.result) {
+              setScopeImages(prev => [...prev, ev.target!.result as string]);
+            }
+          };
+          reader.readAsDataURL(file);
+        }
+      }
+    }
+  };
+
   return (
     <Card className="h-full flex flex-col">
       <CardHeader className="pb-2">
@@ -391,38 +439,77 @@ const OverviewInfoPanel: React.FC<{ vcr: ProjectVCR; projectName?: string; proje
               {vcr.status === 'PENDING' ? 'Draft' : vcr.status}
             </div>
           </div>
-          <div className="bg-card p-3">
-            <div className="text-[9px] uppercase tracking-wide text-muted-foreground mb-1">Target Date</div>
-            <div className="text-xs font-medium text-foreground truncate">
-              {vcr.target_date ? format(new Date(vcr.target_date), 'MMM dd, yyyy') : 'Not set'}
-            </div>
-          </div>
+          <Popover open={targetDateOpen} onOpenChange={setTargetDateOpen}>
+            <PopoverTrigger asChild>
+              <div className="bg-card p-3 cursor-pointer hover:bg-muted/50 transition-colors">
+                <div className="text-[9px] uppercase tracking-wide text-muted-foreground mb-1">Target Date</div>
+                <div className="text-xs font-medium text-foreground truncate">
+                  {targetDate ? format(targetDate, 'MMM dd, yyyy') : 'Not set'}
+                </div>
+              </div>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <DayPicker
+                mode="single"
+                selected={targetDate}
+                onSelect={saveTargetDate}
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </PopoverContent>
+          </Popover>
           <div className="bg-card p-3">
             <div className="text-[9px] uppercase tracking-wide text-muted-foreground mb-1">Systems</div>
             <div className="text-xs font-medium text-foreground">{vcr.systems_count}</div>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Hydrocarbon</div>
-            {vcr.has_hydrocarbon ? (
-              <Badge className="bg-amber-500/10 text-amber-600 border-amber-200 text-[10px]">Yes - HC Systems</Badge>
-            ) : (
-              <Badge variant="outline" className="text-[10px]">No</Badge>
-            )}
-          </div>
-          <div>
-            <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Progress</div>
-            <div className="text-sm font-bold text-foreground">{vcr.progress}%</div>
-          </div>
+        <div>
+          <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Hydrocarbon</div>
+          {vcr.has_hydrocarbon ? (
+            <Badge className="bg-amber-500/10 text-amber-600 border-amber-200 text-[10px]">Yes - HC Systems</Badge>
+          ) : (
+            <Badge variant="outline" className="text-[10px]">No</Badge>
+          )}
         </div>
 
         <div>
           <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">VCR Scope</div>
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            {vcr.description || 'Verification Certificate of Readiness covering systems mapped to this VCR. Ensures all prerequisites including training, documentation, procedures, CMMS, and spares are completed before handover.'}
-          </p>
+          {editingScope ? (
+            <div className="space-y-2">
+              <textarea
+                className="w-full text-xs text-foreground leading-relaxed bg-muted/30 border border-border rounded-md p-2 min-h-[80px] resize-y focus:outline-none focus:ring-1 focus:ring-primary"
+                value={scopeText}
+                onChange={(e) => setScopeText(e.target.value)}
+                onPaste={handleScopePaste}
+                placeholder="Describe the VCR scope... (paste images with Ctrl+V)"
+                autoFocus
+              />
+              {scopeImages.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {scopeImages.map((img, i) => (
+                    <div key={i} className="relative group">
+                      <img src={img} alt={`Pasted ${i + 1}`} className="h-16 rounded border border-border" />
+                      <button
+                        onClick={() => setScopeImages(prev => prev.filter((_, idx) => idx !== i))}
+                        className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full w-4 h-4 text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      >×</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="flex gap-1.5">
+                <Button size="sm" variant="default" className="h-6 text-[10px] px-2" onClick={saveScope}>Save</Button>
+                <Button size="sm" variant="ghost" className="h-6 text-[10px] px-2" onClick={() => setEditingScope(false)}>Cancel</Button>
+              </div>
+            </div>
+          ) : (
+            <p
+              className="text-xs text-muted-foreground leading-relaxed cursor-pointer hover:bg-muted/30 rounded p-1 -m-1 transition-colors"
+              onClick={() => setEditingScope(true)}
+            >
+              {scopeText}
+            </p>
+          )}
         </div>
       </CardContent>
     </Card>
