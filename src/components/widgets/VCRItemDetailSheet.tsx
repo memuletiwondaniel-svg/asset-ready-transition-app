@@ -324,26 +324,26 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                 <CardContent className="p-3">
                   <div className="text-[10px] text-muted-foreground mb-2">Approving Parties</div>
                   {approvingRoles.length > 0 ? (
-                    <div className="space-y-3">
+                    <div className="divide-y divide-border">
                       {approvingRoles.map((role: any) => {
                         const membersForRole = approvingMembers.filter((m: any) => m.role_id === role.id);
                         return (
-                          <div key={role.id}>
-                            <Badge variant="outline" className="text-[10px] mb-1">{role.name}</Badge>
+                          <div key={role.id} className="flex items-center gap-3 py-2 first:pt-0 last:pb-0">
+                            <span className="text-[10px] font-medium text-muted-foreground w-20 shrink-0 truncate" title={role.name}>{role.name}</span>
                             {membersForRole.length > 0 ? (
-                              <div className="space-y-1.5 mt-1.5">
+                              <div className="flex items-center gap-3 flex-1 min-w-0">
                                 {membersForRole.map((member: any) => (
-                                  <div key={member.user_id} className="flex items-center gap-2">
+                                  <div key={member.user_id} className="flex flex-col items-center gap-0.5 min-w-0">
                                     <Avatar className="w-7 h-7">
                                       <AvatarImage src={getAvatarUrl(member.avatar_url)} />
                                       <AvatarFallback className="text-[10px]">{getInitials(member.full_name)}</AvatarFallback>
                                     </Avatar>
-                                    <span className="text-xs font-medium">{member.full_name}</span>
+                                    <span className="text-[10px] text-foreground truncate max-w-[80px] text-center" title={member.full_name}>{member.full_name?.split(' ')[0]}</span>
                                   </div>
                                 ))}
                               </div>
                             ) : (
-                              <p className="text-xs text-muted-foreground italic mt-0.5">No team member assigned</p>
+                              <p className="text-[10px] text-muted-foreground italic">Unassigned</p>
                             )}
                           </div>
                         );
