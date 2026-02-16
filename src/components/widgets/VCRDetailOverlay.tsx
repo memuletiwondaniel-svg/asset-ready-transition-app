@@ -540,6 +540,50 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
   const displayCode = shortCode(vcr.vcr_code);
   const isComplete = vcr.progress === 100;
 
+  // Fetch approvers for certificates
+  const { data: certificateApprovers = [] } = useQuery({
+    queryKey: ['vcr-certificate-approvers', vcr.id],
+    queryFn: async () => {
+      const client = supabase as any;
+      // Get handover_plan_id from the VCR (handover point)
+      const { data: hp } = await client
+        .from('p2a_handover_points')
+        .select('handover_plan_id')
+        .eq('id', vcr.id)
+        .maybeSingle();
+      if (!hp?.handover_plan_id) return [];
+
+      // Fetch approvers
+      const { data: approvers } = await client
+        .from('p2a_handover_approvers')
+        .select('id, role_name, user_id, display_order, status')
+        .eq('handover_id', hp.handover_plan_id)
+        .order('display_order', { ascending: true });
+      if (!approvers || approvers.length === 0) return [];
+
+      // Resolve user names from profiles
+      const userIds = approvers.filter((a: any) => a.user_id).map((a: any) => a.user_id);
+      let profileMap: Record<string, string> = {};
+      if (userIds.length > 0) {
+        const { data: profiles } = await client
+          .from('profiles')
+          .select('user_id, full_name')
+          .in('user_id', userIds);
+        if (profiles) {
+          profileMap = Object.fromEntries(profiles.map((p: any) => [p.user_id, p.full_name]));
+        }
+      }
+
+      return approvers.map((a: any) => ({
+        id: a.id,
+        name: a.user_id ? (profileMap[a.user_id] || '') : '',
+        role: a.role_name,
+        status: a.status?.toLowerCase() === 'approved' ? 'approved' as const : 'pending' as const,
+        approvedDate: '',
+      }));
+    },
+  });
+
   const renderContent = () => {
     switch (activeNav) {
       case 'overview':
@@ -561,6 +605,7 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
             sofDate={vcr.target_date ? format(new Date(vcr.target_date), 'dd MMM yyyy') : ''}
             sourceType="VCR"
             pssrReason="Start-up of a new Project or Facility"
+            approvers={certificateApprovers.length > 0 ? certificateApprovers : undefined}
           />
         );
       case 'pac':
@@ -571,6 +616,7 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
             projectName={projectName}
             projectId={projectCode}
             pacDate={vcr.target_date ? format(new Date(vcr.target_date), 'dd MMM yyyy') : ''}
+            approvers={certificateApprovers.length > 0 ? certificateApprovers : undefined}
           />
         );
       case 'training':
