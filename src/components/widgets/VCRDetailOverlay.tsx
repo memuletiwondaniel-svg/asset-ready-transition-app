@@ -101,7 +101,7 @@ const CATEGORY_META: Record<string, { icon: React.ElementType; color: string; bg
   'Health & Safety': { icon: Shield, color: 'text-emerald-500', bg: 'bg-emerald-500', order: 5 },
 };
 
-const ProgressPanel: React.FC<{ vcr: ProjectVCR }> = ({ vcr }) => {
+const ProgressPanel: React.FC<{ vcr: ProjectVCR; liveTargetDate?: Date }> = ({ vcr, liveTargetDate }) => {
   const [selectedCategory, setSelectedCategory] = useState<{ label: string; icon: React.ElementType; color: string } | null>(null);
 
   // Fetch VCR items grouped by category and their close-out status
@@ -212,13 +212,13 @@ const ProgressPanel: React.FC<{ vcr: ProjectVCR }> = ({ vcr }) => {
               </div>
               <div>
                 <div className="text-sm font-medium text-foreground">
-                  {vcr.target_date 
-                    ? differenceInDays(new Date(vcr.target_date), new Date()) < 0
-                      ? `${Math.abs(differenceInDays(new Date(vcr.target_date), new Date()))} days overdue`
-                      : `${differenceInDays(new Date(vcr.target_date), new Date())} days to go`
+                  {liveTargetDate 
+                    ? differenceInDays(liveTargetDate, new Date()) < 0
+                      ? `${Math.abs(differenceInDays(liveTargetDate, new Date()))} days overdue`
+                      : `${differenceInDays(liveTargetDate, new Date())} days to go`
                     : `${itemsToGo} items to go`}
                 </div>
-                {!vcr.target_date && <div className="text-xs text-muted-foreground">of {totalItems} total items</div>}
+                {!liveTargetDate && <div className="text-xs text-muted-foreground">of {totalItems} total items</div>}
               </div>
             </div>
           </div>
@@ -376,16 +376,14 @@ const ApprovalsPanel: React.FC<{ vcr: ProjectVCR; checklistApprovers?: Checklist
   );
 };
 // ── Overview Info Panel (Right) ─────────────────────────────────
-const OverviewInfoPanel: React.FC<{ vcr: ProjectVCR; projectName?: string; projectCode?: string }> = ({ vcr, projectName, projectCode }) => {
+const OverviewInfoPanel: React.FC<{ vcr: ProjectVCR; projectName?: string; projectCode?: string; liveTargetDate?: Date; onTargetDateChange?: (d: Date | undefined) => void }> = ({ vcr, projectName, projectCode, liveTargetDate, onTargetDateChange }) => {
   const [editingScope, setEditingScope] = useState(false);
   const [scopeText, setScopeText] = useState(
     vcr.description || 'Verification Certificate of Readiness covering systems mapped to this VCR. Ensures all prerequisites including training, documentation, procedures, CMMS, and spares are completed before handover.'
   );
   const [scopeImages, setScopeImages] = useState<string[]>([]);
   const [targetDateOpen, setTargetDateOpen] = useState(false);
-  const [targetDate, setTargetDate] = useState<Date | undefined>(
-    vcr.target_date ? new Date(vcr.target_date) : undefined
-  );
+  const targetDate = liveTargetDate;
   const queryClient = useQueryClient();
 
   const saveScope = async () => {
@@ -396,7 +394,7 @@ const OverviewInfoPanel: React.FC<{ vcr: ProjectVCR; projectName?: string; proje
   };
 
   const saveTargetDate = async (date: Date | undefined) => {
-    setTargetDate(date);
+    onTargetDateChange?.(date);
     setTargetDateOpen(false);
     const client = supabase as any;
     await client.from('p2a_handover_points').update({ target_date: date ? date.toISOString().split('T')[0] : null }).eq('id', vcr.id);
@@ -954,6 +952,9 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
   const vcrColor = getVCRColor(vcr.vcr_code);
   const displayCode = shortCode(vcr.vcr_code);
   const isComplete = vcr.progress === 100;
+  const [liveTargetDate, setLiveTargetDate] = useState<Date | undefined>(
+    vcr.target_date ? new Date(vcr.target_date) : undefined
+  );
 
   // Fetch checklist item approvers (delivering/receiving parties from prerequisites)
   const { data: checklistApprovers = [] } = useQuery({
@@ -1143,9 +1144,9 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
         return (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full">
             {[
-              <ProgressPanel key="progress" vcr={vcr} />,
+              <ProgressPanel key="progress" vcr={vcr} liveTargetDate={liveTargetDate} />,
               <ApprovalsPanel key="approvals" vcr={vcr} checklistApprovers={checklistApprovers} />,
-              <OverviewInfoPanel key="info" vcr={vcr} projectName={projectName} projectCode={projectCode} />,
+              <OverviewInfoPanel key="info" vcr={vcr} projectName={projectName} projectCode={projectCode} liveTargetDate={liveTargetDate} onTargetDateChange={setLiveTargetDate} />,
             ].map((panel, idx) => (
               <div
                 key={idx}
