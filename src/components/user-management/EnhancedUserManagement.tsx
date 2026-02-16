@@ -523,24 +523,8 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
     }
   };
 
-  // Use refs to track modal state without causing re-renders
-  const showCreateUserRef = React.useRef(showCreateUser);
-  const selectedUserRef = React.useRef(selectedUser);
-  const editingUserRef = React.useRef(editingUser);
-  const pendingRefreshRef = React.useRef(false);
-
-  // Keep refs in sync
-  React.useEffect(() => {
-    showCreateUserRef.current = showCreateUser;
-    selectedUserRef.current = selectedUser;
-    editingUserRef.current = editingUser;
-    
-    // If all modals are closed and there's a pending refresh, do it now
-    if (!showCreateUser && !selectedUser && !editingUser && pendingRefreshRef.current) {
-      pendingRefreshRef.current = false;
-      fetchUsers(false);
-    }
-  }, [showCreateUser, selectedUser, editingUser]);
+  // Ref to track if a fetch is already in-flight to debounce realtime events
+  const fetchInFlightRef = React.useRef(false);
 
   useEffect(() => {
     fetchUsers(true);
@@ -554,14 +538,10 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
           schema: 'public', 
           table: 'profiles' 
         }, 
-        (payload) => {
-          console.log('Profile changed:', payload);
-          // Skip refresh if any modal is open to prevent unmounting
-          if (!showCreateUserRef.current && !selectedUserRef.current && !editingUserRef.current) {
+        () => {
+          // Always fetch fresh data - fetchUsers already updates open modal state
+          if (!fetchInFlightRef.current) {
             fetchUsers(false);
-          } else {
-            // Mark that we need to refresh when modals close
-            pendingRefreshRef.current = true;
           }
         }
       )
@@ -577,6 +557,8 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
   }, [users, searchQuery, statusFilter, companyFilter, roleFilter, columnSort]);
 
   const fetchUsers = async (isInitialLoad = false) => {
+    if (fetchInFlightRef.current && !isInitialLoad) return;
+    fetchInFlightRef.current = true;
     try {
       if (isInitialLoad) {
         setInitialLoading(true);
@@ -592,23 +574,20 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
       setUsers(data || []);
       
       // Update selectedUser and editingUser with fresh data if they exist
-      if (selectedUser && data) {
-        const updatedUser = data.find((u: User) => u.user_id === selectedUser.user_id);
-        if (updatedUser) {
-          setSelectedUser(updatedUser);
-        }
-      }
+      setSelectedUser(prev => {
+        if (!prev || !data) return prev;
+        return data.find((u: User) => u.user_id === prev.user_id) || prev;
+      });
       
-      if (editingUser && data) {
-        const updatedUser = data.find((u: User) => u.user_id === editingUser.user_id);
-        if (updatedUser) {
-          setEditingUser(updatedUser);
-        }
-      }
+      setEditingUser(prev => {
+        if (!prev || !data) return prev;
+        return data.find((u: User) => u.user_id === prev.user_id) || prev;
+      });
     } catch (error) {
       toast.error('An error occurred while fetching users');
       console.error('Error:', error);
     } finally {
+      fetchInFlightRef.current = false;
       if (isInitialLoad) {
         setInitialLoading(false);
       }
@@ -1084,15 +1063,11 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
           user={selectedUser as any}
           isOpen={!!selectedUser}
           onClose={() => {
-            selectedUserRef.current = null;
             setSelectedUser(null);
-            // Refresh after closing view modal to catch any missed updates
-            setTimeout(() => fetchUsers(), 200);
           }}
           onUserUpdated={() => {
-            selectedUserRef.current = null;
             setSelectedUser(null);
-            setTimeout(() => fetchUsers(), 200);
+            fetchUsers();
           }}
         />
       )}
@@ -1102,20 +1077,13 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
           user={editingUser as any}
           isOpen={!!editingUser}
           onClose={() => {
-            // Prevent fetchUsers() from re-hydrating modal state from stale closures.
-            editingUserRef.current = null;
-            selectedUserRef.current = null;
             setEditingUser(null);
             setSelectedUser(null);
           }}
           onUserUpdated={() => {
-            // Close ALL modals first (and sync refs immediately), then refresh.
-            editingUserRef.current = null;
-            selectedUserRef.current = null;
             setEditingUser(null);
             setSelectedUser(null);
-            // Delay fetch to ensure modal state is fully cleared and realtime subscription won't skip it
-            setTimeout(() => fetchUsers(), 200);
+            fetchUsers();
           }}
           initialEditMode={true}
         />
