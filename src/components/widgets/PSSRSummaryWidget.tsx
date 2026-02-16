@@ -152,7 +152,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                 ))}
               </div>
             ) : showVCRList ? (
-              <div className="space-y-2.5 overflow-y-auto pr-1 flex-1 min-h-0">
+              <div className="space-y-3 overflow-y-auto pr-1 flex-1 min-h-0">
                 {allVCRs.map((vcr) => (
                   <VCRCard
                     key={vcr.id}
@@ -164,10 +164,10 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                   <Button
                     variant="outline"
                     size="sm"
-                    className="w-full mt-2 text-xs border-dashed"
+                    className="w-full mt-3 text-xs border-dashed border-foreground/10 hover:border-foreground/20 hover:bg-muted/40 transition-all rounded-xl h-9"
                     onClick={() => setShowCreateVCR(true)}
                   >
-                    <Plus className="h-3.5 w-3.5 mr-1" />
+                    <Plus className="h-3.5 w-3.5 mr-1.5" />
                     New VCR
                   </Button>
                 )}
