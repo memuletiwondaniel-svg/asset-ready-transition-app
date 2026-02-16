@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { getAPIConfig } from '@/lib/api-config-storage';
 import {
   Dialog,
   DialogContent,
@@ -320,8 +321,63 @@ const OverviewInfoPanel: React.FC<{ vcr: ProjectVCR; projectName?: string; proje
 };
 
 // ── Systems Panel ────────────────────────────────────────────────
-const VCRSystemsPanel: React.FC<{ vcrId: string }> = ({ vcrId }) => {
+const VCRSystemsPanel: React.FC<{ vcrId: string; projectCode?: string }> = ({ vcrId, projectCode }) => {
   const { systems, isLoading } = useHandoverPointSystems(vcrId);
+  const [syncing, setSyncing] = React.useState(false);
+  const [syncResult, setSyncResult] = React.useState<{ success: boolean; message: string } | null>(null);
+
+  const handleSyncFromGoCompletions = async () => {
+    const config = getAPIConfig('gocompletions');
+
+    if (!config || config.status !== 'configured' || !config.rpaCredentials) {
+      setSyncResult({ success: false, message: 'GoCompletions not configured. Go to Administration > APIs.' });
+      return;
+    }
+
+    const { portalUrl, username, password } = config.rpaCredentials;
+    if (!username || !password) {
+      setSyncResult({ success: false, message: 'GoCompletions credentials incomplete.' });
+      return;
+    }
+
+    setSyncing(true);
+    setSyncResult(null);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('Not logged in');
+
+      const systemIdList = systems.map((s: any) => s.system_id);
+      const cleanProjectCode = projectCode?.replace(/-/g, '') || '';
+
+      const { data, error } = await supabase.functions.invoke('gohub-sync-counts', {
+        body: {
+          portalUrl,
+          username,
+          password,
+          projectFilter: cleanProjectCode,
+          systemIds: systemIdList,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        setSyncResult({
+          success: true,
+          message: `Synced ${data.total_updated}/${systems.length} systems from GoCompletions`,
+        });
+        // Reload to refresh data after short delay
+        setTimeout(() => window.location.reload(), 1500);
+      } else {
+        setSyncResult({ success: false, message: data?.error || 'Sync failed' });
+      }
+    } catch (err: any) {
+      setSyncResult({ success: false, message: err.message || 'Sync failed' });
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -346,6 +402,8 @@ const VCRSystemsPanel: React.FC<{ vcrId: string }> = ({ vcrId }) => {
   }
 
   const totalITR = systems.reduce((s: number, sys: any) => s + (sys.itr_total_count || 0), 0);
+  const totalITRA = systems.reduce((s: number, sys: any) => s + (sys.itr_a_count || 0), 0);
+  const totalITRB = systems.reduce((s: number, sys: any) => s + (sys.itr_b_count || 0), 0);
   const totalPLA = systems.reduce((s: number, sys: any) => s + (sys.punchlist_a_count || 0), 0);
   const totalPLB = systems.reduce((s: number, sys: any) => s + (sys.punchlist_b_count || 0), 0);
   const avgCompletion = Math.round(systems.reduce((s: number, sys: any) => s + (sys.completion_percentage || 0), 0) / systems.length);
@@ -365,17 +423,51 @@ const VCRSystemsPanel: React.FC<{ vcrId: string }> = ({ vcrId }) => {
               <p className="text-[10px] text-muted-foreground">{hcCount > 0 ? `${hcCount} Hydrocarbon · ${systems.length - hcCount} Non-HC` : 'All Non-Hydrocarbon'}</p>
             </div>
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-3">
+            {/* Sync from GoCompletions button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSyncFromGoCompletions}
+              disabled={syncing}
+              className="text-xs gap-1.5 h-8"
+            >
+              {syncing ? (
+                <>
+                  <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                  Syncing...
+                </>
+              ) : (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+                  Sync GoCompletions
+                </>
+              )}
+            </Button>
             <div className="text-right">
               <span className="text-2xl font-bold text-foreground tabular-nums">{avgCompletion}</span>
               <span className="text-xs text-muted-foreground ml-0.5">%</span>
             </div>
-            <span className="text-[9px] text-muted-foreground">avg</span>
           </div>
         </div>
-        <div className="grid grid-cols-3 gap-3">
+
+        {/* Sync result banner */}
+        {syncResult && (
+          <div className={cn(
+            "rounded-lg px-3 py-2 mb-3 text-xs flex items-center gap-2",
+            syncResult.success
+              ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+              : "bg-rose-500/10 text-rose-700 dark:text-rose-400"
+          )}>
+            {syncResult.success ? <CheckCircle2 className="w-3.5 h-3.5" /> : <AlertCircle className="w-3.5 h-3.5" />}
+            {syncResult.message}
+          </div>
+        )}
+
+        <div className="grid grid-cols-4 gap-3">
           {[
-            { label: 'Total ITRs', value: totalITR, color: 'text-blue-600' },
+            { label: 'ITR-A', value: totalITRA, color: 'text-blue-600' },
+            { label: 'ITR-B', value: totalITRB, color: 'text-sky-600' },
             { label: 'Punchlist A', value: totalPLA, color: 'text-rose-600' },
             { label: 'Punchlist B', value: totalPLB, color: 'text-amber-600' },
           ].map(stat => (
@@ -676,7 +768,7 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
       case 'spares':
         return <PlaceholderContent title="Spares" icon={Package} />;
       case 'systems':
-        return <VCRSystemsPanel vcrId={vcr.id} />;
+        return <VCRSystemsPanel vcrId={vcr.id} projectCode={projectCode} />;
       default:
         return null;
     }

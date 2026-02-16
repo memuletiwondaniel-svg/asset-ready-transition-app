@@ -126,3 +126,6 @@ verify_jwt = false
 
 [functions.gohub-import]
 verify_jwt = false
+
+[functions.gohub-sync-counts]
+verify_jwt = false
