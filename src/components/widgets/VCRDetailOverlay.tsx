@@ -44,6 +44,8 @@ interface VCRDetailOverlayProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   vcr: ProjectVCR;
+  projectName?: string;
+  projectCode?: string;
 }
 
 type NavItem = {
@@ -469,6 +471,8 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
   open,
   onOpenChange,
   vcr,
+  projectName = '',
+  projectCode = '',
 }) => {
   const [activeNav, setActiveNav] = useState('overview');
   const vcrColor = getVCRColor(vcr.vcr_code);
@@ -489,9 +493,11 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
         return (
           <SOFCertificate
             certificateNumber={`SOF-${displayCode}`}
-            plantName=""
-            facilityName=""
-            projectName={vcr.name}
+            plantName={projectName}
+            facilityName={vcr.name}
+            projectName={projectName}
+            pssrNumber={displayCode}
+            sofDate={vcr.target_date ? format(new Date(vcr.target_date), 'dd MMM yyyy') : ''}
             sourceType="VCR"
             pssrReason="Start-up of a new Project or Facility"
           />
@@ -500,8 +506,10 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
         return (
           <PACCertificate
             certificateNumber={`PAC-${displayCode}`}
-            facilityName=""
-            projectName={vcr.name}
+            facilityName={vcr.name}
+            projectName={projectName}
+            projectId={projectCode}
+            pacDate={vcr.target_date ? format(new Date(vcr.target_date), 'dd MMM yyyy') : ''}
           />
         );
       case 'training':

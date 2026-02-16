@@ -327,6 +327,8 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
           open={!!selectedVCR}
           onOpenChange={(open) => { if (!open) setSelectedVCR(null); }}
           vcr={selectedVCR}
+          projectName={projectName}
+          projectCode={projectCode}
         />
       )}
     </>
