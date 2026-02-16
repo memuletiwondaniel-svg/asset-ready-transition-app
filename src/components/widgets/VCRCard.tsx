@@ -91,7 +91,7 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick }) => {
         {/* Left: text content */}
         <div className="flex-1 min-w-0">
           {/* ID badge + status */}
-          <div className="flex items-center gap-2 mb-1.5">
+          <div className="flex items-center gap-2 mb-3">
             <span className="vcr-id-badge text-[11px] font-extrabold font-mono tracking-wider px-2.5 py-1 rounded-lg shadow-sm">
               {displayCode}
             </span>
