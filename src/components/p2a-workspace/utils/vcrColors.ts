@@ -30,13 +30,13 @@ export const getVCRColor = (vcrCode: string | undefined) => {
   return {
     hue: finalHue,
     saturation,
-    // Light mode colors
+    // Light mode
     background: `hsl(${finalHue}, ${saturation}%, 93%)`,
     border: `hsl(${finalHue}, ${saturation + 5}%, 55%)`,
     accent: `hsl(${finalHue}, ${saturation + 10}%, 82%)`,
-    // Dark mode colors
-    backgroundDark: `hsl(${finalHue}, ${Math.round(saturation * 0.4)}%, 16%)`,
-    borderDark: `hsl(${finalHue}, ${saturation}%, 65%)`,
-    accentDark: `hsl(${finalHue}, ${Math.round(saturation * 0.5)}%, 25%)`,
+    // Dark mode
+    backgroundDark: `hsl(${finalHue}, ${Math.round(saturation * 0.35)}%, 14%)`,
+    borderDark: `hsl(${finalHue}, ${saturation}%, 70%)`,
+    accentDark: `hsl(${finalHue}, ${Math.round(saturation * 0.45)}%, 22%)`,
   };
 };
