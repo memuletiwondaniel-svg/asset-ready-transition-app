@@ -66,7 +66,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
   onOpenChange,
   vcrId,
 }) => {
-  const { projectId } = useParams<{ projectId: string }>();
+  const { id: projectId } = useParams<{ id: string }>();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
