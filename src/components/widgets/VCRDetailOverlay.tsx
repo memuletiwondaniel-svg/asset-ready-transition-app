@@ -1134,65 +1134,20 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
   const renderContent = () => {
     switch (activeNav) {
       case 'overview': {
-        const c = vcrColor;
         return (
-          <div className="relative h-full rounded-2xl overflow-hidden p-4">
-            {/* Dynamic multicolor animated background */}
-            <div className="absolute inset-0 overflow-hidden rounded-2xl">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full">
+            {[
+              <ProgressPanel key="progress" vcr={vcr} />,
+              <ApprovalsPanel key="approvals" vcr={vcr} checklistApprovers={checklistApprovers} />,
+              <OverviewInfoPanel key="info" vcr={vcr} projectName={projectName} projectCode={projectCode} />,
+            ].map((panel, idx) => (
               <div
-                className="absolute w-[300px] h-[300px] rounded-full blur-[80px] opacity-30 animate-[float-orb-1_8s_ease-in-out_infinite]"
-                style={{ background: c ? `hsl(${c.hue}, ${c.saturation}%, 65%)` : 'hsl(220, 70%, 65%)', top: '10%', left: '5%' }}
-              />
-              <div
-                className="absolute w-[250px] h-[250px] rounded-full blur-[80px] opacity-25 animate-[float-orb-2_10s_ease-in-out_infinite]"
-                style={{ background: c ? `hsl(${(c.hue + 60) % 360}, ${c.saturation}%, 60%)` : 'hsl(280, 70%, 60%)', top: '40%', right: '10%' }}
-              />
-              <div
-                className="absolute w-[350px] h-[350px] rounded-full blur-[100px] opacity-20 animate-[float-orb-3_12s_ease-in-out_infinite]"
-                style={{ background: c ? `hsl(${(c.hue + 120) % 360}, ${c.saturation}%, 55%)` : 'hsl(340, 70%, 55%)', bottom: '5%', left: '30%' }}
-              />
-              <div
-                className="absolute w-[200px] h-[200px] rounded-full blur-[70px] opacity-20 animate-[float-orb-4_9s_ease-in-out_infinite]"
-                style={{ background: c ? `hsl(${(c.hue + 180) % 360}, ${c.saturation}%, 70%)` : 'hsl(40, 70%, 70%)', top: '20%', left: '50%' }}
-              />
-            </div>
-            {/* Panels on top */}
-            <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-4 h-full">
-              {[
-                <ProgressPanel key="progress" vcr={vcr} />,
-                <ApprovalsPanel key="approvals" vcr={vcr} checklistApprovers={checklistApprovers} />,
-                <OverviewInfoPanel key="info" vcr={vcr} projectName={projectName} projectCode={projectCode} />,
-              ].map((panel, idx) => (
-                <div
-                  key={idx}
-                  className="rounded-2xl bg-card/85 backdrop-blur-sm border border-border/50 shadow-sm"
-                >
-                  {panel}
-                </div>
-              ))}
-            </div>
-            <style>{`
-              @keyframes float-orb-1 {
-                0%, 100% { transform: translate(0, 0) scale(1); }
-                33% { transform: translate(60px, -40px) scale(1.1); }
-                66% { transform: translate(-30px, 30px) scale(0.9); }
-              }
-              @keyframes float-orb-2 {
-                0%, 100% { transform: translate(0, 0) scale(1); }
-                33% { transform: translate(-50px, 50px) scale(1.15); }
-                66% { transform: translate(40px, -20px) scale(0.85); }
-              }
-              @keyframes float-orb-3 {
-                0%, 100% { transform: translate(0, 0) scale(1); }
-                33% { transform: translate(40px, -60px) scale(1.05); }
-                66% { transform: translate(-60px, 20px) scale(0.95); }
-              }
-              @keyframes float-orb-4 {
-                0%, 100% { transform: translate(0, 0) scale(1); }
-                33% { transform: translate(-40px, -30px) scale(1.1); }
-                66% { transform: translate(50px, 40px) scale(0.9); }
-              }
-            `}</style>
+                key={idx}
+                className="rounded-2xl bg-card/85 backdrop-blur-sm border border-border/50 shadow-sm"
+              >
+                {panel}
+              </div>
+            ))}
           </div>
         );
       }
@@ -1240,6 +1195,8 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
     }
   };
 
+  const c = vcrColor;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[90vw] h-[95vh] flex flex-col p-0 gap-0 overflow-hidden [&>button]:hidden">
@@ -1251,7 +1208,7 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
         </VisuallyHidden>
 
         {/* Top header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b shrink-0">
+        <div className="flex items-center justify-between px-6 py-4 border-b shrink-0 relative z-10 bg-card">
           <div className="flex items-center gap-3">
             <div
               className="w-2 h-8 rounded-full"
@@ -1275,9 +1232,31 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
         </div>
 
         {/* Body: left nav + content */}
-        <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-1 overflow-hidden relative">
+          {/* Dynamic multicolor animated background - only on overview */}
+          {activeNav === 'overview' && (
+            <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+              <div
+                className="absolute w-[400px] h-[400px] rounded-full blur-[100px] opacity-30 animate-[float-orb-1_8s_ease-in-out_infinite]"
+                style={{ background: c ? `hsl(${c.hue}, ${c.saturation}%, 65%)` : 'hsl(220, 70%, 65%)', top: '5%', left: '10%' }}
+              />
+              <div
+                className="absolute w-[350px] h-[350px] rounded-full blur-[100px] opacity-25 animate-[float-orb-2_10s_ease-in-out_infinite]"
+                style={{ background: c ? `hsl(${(c.hue + 60) % 360}, ${c.saturation}%, 60%)` : 'hsl(280, 70%, 60%)', top: '30%', right: '5%' }}
+              />
+              <div
+                className="absolute w-[450px] h-[450px] rounded-full blur-[120px] opacity-20 animate-[float-orb-3_12s_ease-in-out_infinite]"
+                style={{ background: c ? `hsl(${(c.hue + 120) % 360}, ${c.saturation}%, 55%)` : 'hsl(340, 70%, 55%)', bottom: '0%', left: '25%' }}
+              />
+              <div
+                className="absolute w-[300px] h-[300px] rounded-full blur-[90px] opacity-20 animate-[float-orb-4_9s_ease-in-out_infinite]"
+                style={{ background: c ? `hsl(${(c.hue + 180) % 360}, ${c.saturation}%, 70%)` : 'hsl(40, 70%, 70%)', top: '15%', left: '55%' }}
+              />
+            </div>
+          )}
+
           {/* Left navigation panel */}
-          <div className="w-52 border-r bg-muted/30 shrink-0 flex flex-col">
+          <div className={cn("w-52 border-r shrink-0 flex flex-col relative z-10", activeNav === 'overview' ? 'bg-transparent' : 'bg-muted/30')}>
             <div className="px-4 pt-4 pb-2">
               <span className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">
                 Navigate
@@ -1314,12 +1293,36 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
           </div>
 
           {/* Main content area */}
-          <ScrollArea className="flex-1">
+          <ScrollArea className="flex-1 relative z-10">
             <div className="p-6">
               {renderContent()}
             </div>
           </ScrollArea>
         </div>
+
+        {/* Orb animation keyframes */}
+        <style>{`
+          @keyframes float-orb-1 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(80px, -50px) scale(1.1); }
+            66% { transform: translate(-40px, 40px) scale(0.9); }
+          }
+          @keyframes float-orb-2 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(-60px, 60px) scale(1.15); }
+            66% { transform: translate(50px, -30px) scale(0.85); }
+          }
+          @keyframes float-orb-3 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(50px, -70px) scale(1.05); }
+            66% { transform: translate(-70px, 30px) scale(0.95); }
+          }
+          @keyframes float-orb-4 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(-50px, -40px) scale(1.1); }
+            66% { transform: translate(60px, 50px) scale(0.9); }
+          }
+        `}</style>
       </DialogContent>
     </Dialog>
   );
