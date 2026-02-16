@@ -40,6 +40,10 @@ import { format } from 'date-fns';
 import { useHandoverPointSystems } from '@/components/p2a-workspace/hooks/useP2AHandoverPoints';
 import SOFCertificate from '@/components/handover/SOFCertificate';
 import PACCertificate from '@/components/handover/PACCertificate';
+import { VCRTrainingTab } from '@/components/p2a-workspace/handover-points/VCRTrainingTab';
+import { P2AHandoverPoint } from '@/components/p2a-workspace/hooks/useP2AHandoverPoints';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
 
 interface VCRDetailOverlayProps {
   open: boolean;
@@ -466,6 +470,47 @@ const VCRSystemsPanel: React.FC<{ vcrId: string }> = ({ vcrId }) => {
   );
 };
 
+// ── VCR Training Wrapper ─────────────────────────────────────────
+const VCRTrainingWrapper: React.FC<{ vcr: ProjectVCR }> = ({ vcr }) => {
+  const { data: handoverPoint, isLoading } = useQuery({
+    queryKey: ['vcr-handover-point', vcr.id],
+    queryFn: async () => {
+      const client = supabase as any;
+      const { data, error } = await client
+        .from('p2a_handover_points')
+        .select('*')
+        .eq('id', vcr.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data as P2AHandoverPoint;
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        {[1, 2, 3].map(i => <Skeleton key={i} className="h-20 w-full rounded-xl" />)}
+      </div>
+    );
+  }
+
+  if (!handoverPoint) {
+    return (
+      <div className="flex-1 flex items-center justify-center py-16">
+        <div className="text-center">
+          <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
+            <GraduationCap className="w-7 h-7 text-muted-foreground" />
+          </div>
+          <h3 className="text-lg font-semibold mb-1">Training</h3>
+          <p className="text-sm text-muted-foreground">Unable to load training data for this VCR.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return <VCRTrainingTab handoverPoint={handoverPoint} />;
+};
+
 // ── Placeholder tab content ──────────────────────────────────────
 const PlaceholderContent: React.FC<{ title: string; icon: React.ElementType }> = ({ title, icon: Icon }) => (
   <div className="flex-1 flex items-center justify-center">
@@ -528,7 +573,7 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
           />
         );
       case 'training':
-        return <PlaceholderContent title="Training" icon={GraduationCap} />;
+        return <VCRTrainingWrapper vcr={vcr} />;
       case 'procedures':
         return <PlaceholderContent title="Procedures" icon={BookOpen} />;
       case 'registers':
