@@ -285,11 +285,6 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
                           </p>
                           <p className="text-xs text-muted-foreground truncate">{data.role}</p>
                         </div>
-                        {data.member?.is_lead && (
-                          <Badge className="text-xs bg-primary/10 text-primary border-primary/20 hover:bg-primary/15">
-                            Lead
-                          </Badge>
-                        )}
                       </div>
                     ))}
                   </div>
