@@ -1328,9 +1328,87 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
     },
   });
 
-  // Keep certificateApprovers for SOF/PAC certificates (P2A plan approvers)
-  const { data: certificateApprovers = [] } = useQuery({
-    queryKey: ['vcr-certificate-approvers', vcr.id],
+  // Fetch SoF director approvers (Plant Director, P&E Director, P&M Director, HSE Director)
+  const { data: sofDirectorApprovers = [] } = useQuery({
+    queryKey: ['vcr-sof-director-approvers', vcr.id],
+    queryFn: async () => {
+      const client = supabase as any;
+
+      // Get project's plant name
+      const { data: hp } = await client
+        .from('p2a_handover_points')
+        .select('handover_plan_id')
+        .eq('id', vcr.id)
+        .maybeSingle();
+      
+      let plantName = '';
+      if (hp?.handover_plan_id) {
+        const { data: plan } = await client
+          .from('p2a_handover_plans')
+          .select('project_id')
+          .eq('id', hp.handover_plan_id)
+          .maybeSingle();
+        if (plan?.project_id) {
+          const { data: project } = await client
+            .from('projects')
+            .select('plant_id')
+            .eq('id', plan.project_id)
+            .maybeSingle();
+          if (project?.plant_id) {
+            const { data: plant } = await client
+              .from('plant')
+              .select('name')
+              .eq('id', project.plant_id)
+              .maybeSingle();
+            plantName = plant?.name || '';
+          }
+        }
+      }
+
+      const getFullAvatarUrl = (avatarUrl: string | null) => {
+        if (!avatarUrl) return '';
+        if (avatarUrl.startsWith('http')) return avatarUrl;
+        const { data } = supabase.storage.from('user-avatars').getPublicUrl(avatarUrl);
+        return data.publicUrl;
+      };
+
+      // Fetch all active director profiles
+      const { data: allProfiles } = await client
+        .from('profiles')
+        .select('user_id, full_name, avatar_url, position')
+        .eq('is_active', true);
+      if (!allProfiles) return [];
+
+      const directorRoles = ['Plant Director', 'P&E Director', 'P&M Director', 'HSE Director'];
+      const plantLower = plantName.toLowerCase();
+
+      return directorRoles.map((role, idx) => {
+        const roleLower = role.toLowerCase();
+        // Find the best matching profile for this director role
+        const match = allProfiles.find((p: any) => {
+          const pos = (p.position || '').toLowerCase();
+          if (!pos.includes(roleLower.replace('director', '').trim()) || !pos.includes('director')) return false;
+          if (pos.includes('dep.') || pos.includes('deputy')) return false;
+          // For Plant Director, match by plant name
+          if (role === 'Plant Director') {
+            return plantLower ? pos.includes(plantLower) : false;
+          }
+          // P&E, P&M, HSE Directors are organization-wide
+          return true;
+        });
+
+        return {
+          id: match?.user_id || `director-${idx}`,
+          name: match?.full_name || '',
+          role,
+        };
+      });
+    },
+  });
+
+  // Keep PAC certificate approvers (P2A plan approvers)
+  const { data: pacCertificateApprovers = [] } = useQuery({
+    queryKey: ['vcr-pac-approvers', vcr.id],
     queryFn: async () => {
       const client = supabase as any;
       const { data: hp } = await client
@@ -1411,7 +1489,7 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
             sofDate={vcr.target_date ? format(new Date(vcr.target_date), 'dd MMM yyyy') : ''}
             sourceType="VCR"
             pssrReason="Start-up of a new Project or Facility"
-            approvers={certificateApprovers.length > 0 ? certificateApprovers : undefined}
+            approvers={sofDirectorApprovers.length > 0 ? sofDirectorApprovers : undefined}
           />
         );
       case 'pac':
@@ -1422,7 +1500,7 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
             projectName={projectName}
             projectId={projectCode}
             pacDate={vcr.target_date ? format(new Date(vcr.target_date), 'dd MMM yyyy') : ''}
-            approvers={certificateApprovers.length > 0 ? certificateApprovers.filter(a => ['Plant Director', 'Deputy Plant Director', 'Project Hub Lead'].includes(a.role)) : undefined}
+            approvers={pacCertificateApprovers.length > 0 ? pacCertificateApprovers.filter(a => ['Plant Director', 'Deputy Plant Director', 'Project Hub Lead'].includes(a.role)) : undefined}
           />
         );
       case 'training':
