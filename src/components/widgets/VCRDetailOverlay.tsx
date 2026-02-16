@@ -290,9 +290,53 @@ interface ChecklistApproverData {
   userId?: string;
 }
 
-const ApprovalsPanel: React.FC<{ vcr: ProjectVCR; checklistApprovers?: ChecklistApproverData[] }> = ({ vcr, checklistApprovers = [] }) => {
+interface ApprovalsPanelProps {
+  vcr: ProjectVCR;
+  checklistApprovers?: ChecklistApproverData[];
+  sofApprovers?: Array<{ id: string; name: string; role: string }>;
+  pacApprovers?: Array<{ id: string; name: string; role: string; status?: string; avatar_url?: string }>;
+  vcrApprovers?: Array<{ id: string; name: string; role: string; avatarUrl?: string }>;
+  showSof?: boolean;
+}
+
+const CollapsibleSection: React.FC<{
+  title: string;
+  count?: number;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}> = ({ title, count, defaultOpen = true, children }) => {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+  return (
+    <div>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 w-full py-2 text-left group/section"
+      >
+        <ChevronRight className={cn(
+          "w-3 h-3 text-muted-foreground transition-transform duration-200",
+          isOpen && "rotate-90"
+        )} />
+        <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium flex-1">{title}</span>
+        {count !== undefined && (
+          <span className="text-[10px] text-muted-foreground/70">{count}</span>
+        )}
+      </button>
+      {isOpen && <div className="pb-2">{children}</div>}
+    </div>
+  );
+};
+
+const ApprovalsPanel: React.FC<ApprovalsPanelProps> = ({
+  vcr,
+  checklistApprovers = [],
+  sofApprovers = [],
+  pacApprovers = [],
+  vcrApprovers = [],
+  showSof = false,
+}) => {
   const [selectedApprover, setSelectedApprover] = useState<ChecklistApproverData | null>(null);
   const getInitials = (name: string) => {
+    if (!name) return '??';
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
@@ -316,8 +360,33 @@ const ApprovalsPanel: React.FC<{ vcr: ProjectVCR; checklistApprovers?: Checklist
     );
   };
 
-  const totalItems = approvingParties.reduce((sum, i) => sum + i.itemCount, 0);
-  const totalAccepted = approvingParties.reduce((sum, i) => sum + i.acceptedCount, 0);
+  const PersonRow: React.FC<{
+    name: string;
+    subtitle?: string;
+    avatarUrl?: string;
+    onClick?: () => void;
+    trailing?: React.ReactNode;
+  }> = ({ name, subtitle, avatarUrl, onClick, trailing }) => (
+    <div
+      className={cn(
+        "flex items-center gap-3 py-2 rounded-lg px-2 -mx-2 transition-colors",
+        onClick && "cursor-pointer hover:bg-muted/50"
+      )}
+      onClick={onClick}
+    >
+      <Avatar className="w-8 h-8 shrink-0">
+        {avatarUrl && <AvatarImage src={avatarUrl} alt={name} />}
+        <AvatarFallback className="text-[10px] font-semibold bg-muted text-muted-foreground">
+          {getInitials(name)}
+        </AvatarFallback>
+      </Avatar>
+      <div className="flex-1 min-w-0">
+        <div className="text-xs font-medium text-foreground truncate">{name || 'Unassigned'}</div>
+        {subtitle && <div className="text-[10px] text-muted-foreground truncate">{subtitle}</div>}
+      </div>
+      {trailing}
+    </div>
+  );
 
   return (
     <>
@@ -325,39 +394,86 @@ const ApprovalsPanel: React.FC<{ vcr: ProjectVCR; checklistApprovers?: Checklist
         <CardHeader className="pb-2 bg-muted/40 border-b border-border/50">
           <CardTitle className="text-base font-semibold">Review and Approval</CardTitle>
         </CardHeader>
-        <CardContent className="flex-1 space-y-5 overflow-auto">
-          <div>
-            <div className="space-y-1">
+        <CardContent className="flex-1 overflow-auto pt-2">
+          {/* Section 1: VCR Reviewers */}
+          <CollapsibleSection title="VCR Reviewers" count={approvingParties.length} defaultOpen={true}>
+            <div className="space-y-0.5">
               {approvingParties.map((person, i) => (
-                <div
+                <PersonRow
                   key={`${person.name}-${i}`}
-                  className="flex items-center gap-3 py-2 cursor-pointer rounded-lg px-2 -mx-2 transition-colors hover:bg-muted/50"
+                  name={person.userName || person.name}
+                  subtitle={person.name}
+                  avatarUrl={person.avatarUrl}
                   onClick={() => setSelectedApprover(person)}
-                >
-                  <Avatar className="w-8 h-8 shrink-0">
-                    {person.avatarUrl && (
-                      <AvatarImage src={person.avatarUrl} alt={person.userName || person.name} />
-                    )}
-                    <AvatarFallback className="text-[10px] font-semibold bg-muted text-muted-foreground">
-                      {getInitials(person.userName || person.name)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-xs font-medium text-foreground truncate">
-                      {person.userName || person.name}
-                    </div>
-                    <div className="text-[10px] text-muted-foreground truncate">
-                      {person.name}
-                    </div>
-                  </div>
-                  <StatusIndicator accepted={person.acceptedCount} total={person.itemCount} />
-                </div>
+                  trailing={<StatusIndicator accepted={person.acceptedCount} total={person.itemCount} />}
+                />
               ))}
               {approvingParties.length === 0 && (
-                <div className="py-2 text-[10px] text-muted-foreground italic">No approving parties assigned</div>
+                <div className="py-2 text-[10px] text-muted-foreground italic">No reviewers assigned</div>
               )}
             </div>
-          </div>
+          </CollapsibleSection>
+
+          <div className="border-t border-border/40" />
+
+          {/* Section 2: VCR Approver */}
+          <CollapsibleSection title="VCR Approver" count={vcrApprovers.length} defaultOpen={false}>
+            <div className="space-y-0.5">
+              {vcrApprovers.map((person, i) => (
+                <PersonRow
+                  key={`vcr-approver-${i}`}
+                  name={person.name}
+                  subtitle={person.role}
+                  avatarUrl={person.avatarUrl}
+                />
+              ))}
+              {vcrApprovers.length === 0 && (
+                <div className="py-2 text-[10px] text-muted-foreground italic">No VCR approvers found</div>
+              )}
+            </div>
+          </CollapsibleSection>
+
+          {/* Section 3: SoF Approver (if applicable) */}
+          {showSof && (
+            <>
+              <div className="border-t border-border/40" />
+              <CollapsibleSection title="SoF Approver" count={sofApprovers.filter(a => a.name).length} defaultOpen={false}>
+                <div className="space-y-0.5">
+                  {sofApprovers.map((person, i) => (
+                    <PersonRow
+                      key={`sof-approver-${i}`}
+                      name={person.name}
+                      subtitle={person.role}
+                    />
+                  ))}
+                  {sofApprovers.length === 0 && (
+                    <div className="py-2 text-[10px] text-muted-foreground italic">No SoF approvers found</div>
+                  )}
+                </div>
+              </CollapsibleSection>
+            </>
+          )}
+
+          <div className="border-t border-border/40" />
+
+          {/* Section 4: PAC Approver */}
+          <CollapsibleSection title="PAC Approver" count={pacApprovers.filter(a => a.name).length} defaultOpen={false}>
+            <div className="space-y-0.5">
+              {pacApprovers
+                .filter(a => ['Plant Director', 'Deputy Plant Director', 'Project Hub Lead'].includes(a.role))
+                .map((person, i) => (
+                  <PersonRow
+                    key={`pac-approver-${i}`}
+                    name={person.name}
+                    subtitle={person.role}
+                    avatarUrl={person.avatar_url}
+                  />
+                ))}
+              {pacApprovers.filter(a => ['Plant Director', 'Deputy Plant Director', 'Project Hub Lead'].includes(a.role)).length === 0 && (
+                <div className="py-2 text-[10px] text-muted-foreground italic">No PAC approvers found</div>
+              )}
+            </div>
+          </CollapsibleSection>
         </CardContent>
       </Card>
 
@@ -1458,6 +1574,97 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
     },
   });
 
+  // Fetch VCR Approvers (Deputy Plant Director, Engr Manager - Projects, Engr Manager - Asset, Project Manager for area)
+  const { data: vcrApprovers = [] } = useQuery({
+    queryKey: ['vcr-approvers', vcr.id],
+    queryFn: async () => {
+      const client = supabase as any;
+
+      // Get project's plant name for context
+      const { data: hp } = await client
+        .from('p2a_handover_points')
+        .select('handover_plan_id')
+        .eq('id', vcr.id)
+        .maybeSingle();
+
+      let plantName = '';
+      let projectAreaHub = '';
+      if (hp?.handover_plan_id) {
+        const { data: plan } = await client
+          .from('p2a_handover_plans')
+          .select('project_id')
+          .eq('id', hp.handover_plan_id)
+          .maybeSingle();
+        if (plan?.project_id) {
+          const { data: project } = await client
+            .from('projects')
+            .select('plant_id, hub_id')
+            .eq('id', plan.project_id)
+            .maybeSingle();
+          if (project?.plant_id) {
+            const { data: plant } = await client.from('plant').select('name').eq('id', project.plant_id).maybeSingle();
+            plantName = plant?.name || '';
+          }
+          if (project?.hub_id) {
+            const { data: hub } = await client.from('hubs').select('name').eq('id', project.hub_id).maybeSingle();
+            projectAreaHub = hub?.name || '';
+          }
+        }
+      }
+
+      const getFullAvatarUrl = (avatarUrl: string | null) => {
+        if (!avatarUrl) return '';
+        if (avatarUrl.startsWith('http')) return avatarUrl;
+        const { data } = supabase.storage.from('user-avatars').getPublicUrl(avatarUrl);
+        return data.publicUrl;
+      };
+
+      const { data: allProfiles } = await client
+        .from('profiles')
+        .select('user_id, full_name, avatar_url, position')
+        .eq('is_active', true);
+      if (!allProfiles) return [];
+
+      const plantLower = plantName.toLowerCase();
+      const areaLower = projectAreaHub.toLowerCase();
+
+      const vcrApproverRoles = [
+        'Deputy Plant Director',
+        'Engineering Manager - Projects',
+        'Engineering Manager - Asset',
+        'Project Manager',
+      ];
+
+      return vcrApproverRoles.map((role, idx) => {
+        const roleLower = role.toLowerCase();
+        const match = allProfiles.find((p: any) => {
+          const pos = (p.position || '').toLowerCase();
+          
+          if (role === 'Deputy Plant Director') {
+            return (pos.includes('deputy') || pos.includes('dep.')) && pos.includes('plant') && pos.includes('director') && (plantLower ? pos.includes(plantLower) : true);
+          }
+          if (role === 'Engineering Manager - Projects') {
+            return (pos.includes('eng') && pos.includes('manager') && pos.includes('project'));
+          }
+          if (role === 'Engineering Manager - Asset') {
+            return (pos.includes('eng') && pos.includes('manager') && pos.includes('asset'));
+          }
+          if (role === 'Project Manager') {
+            return pos.includes('project manager') && (areaLower ? pos.includes(areaLower) : true);
+          }
+          return false;
+        });
+
+        return {
+          id: match?.user_id || `vcr-approver-${idx}`,
+          name: match?.full_name || '',
+          role,
+          avatarUrl: getFullAvatarUrl(match?.avatar_url || null),
+        };
+      });
+    },
+  });
+
   const renderContent = () => {
     switch (activeNav) {
       case 'overview': {
@@ -1465,7 +1672,15 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full">
             {[
               <ProgressPanel key="progress" vcr={vcr} liveTargetDate={liveTargetDate} />,
-              <ApprovalsPanel key="approvals" vcr={vcr} checklistApprovers={checklistApprovers} />,
+              <ApprovalsPanel
+                key="approvals"
+                vcr={vcr}
+                checklistApprovers={checklistApprovers}
+                sofApprovers={sofDirectorApprovers}
+                pacApprovers={pacCertificateApprovers}
+                vcrApprovers={vcrApprovers}
+                showSof={!!vcr.has_hydrocarbon}
+              />,
               <OverviewInfoPanel key="info" vcr={vcr} projectName={projectName} projectCode={projectCode} liveTargetDate={liveTargetDate} onTargetDateChange={setLiveTargetDate} />,
             ].map((panel, idx) => (
               <div
