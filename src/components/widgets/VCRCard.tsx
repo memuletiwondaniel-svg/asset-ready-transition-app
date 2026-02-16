@@ -1,6 +1,6 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
-import { ChevronRight, Shield, Flame } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { ProjectVCR } from '@/hooks/useProjectVCRs';
 import { getVCRColor } from '@/components/p2a-workspace/utils/vcrColors';
 import { cn } from '@/lib/utils';
@@ -17,9 +17,9 @@ const shortCode = (code?: string) => {
   return code.replace(/^VCR-[A-Z0-9]+-/, 'VCR-');
 };
 
-const MiniProgressWheel: React.FC<{ value: number; color?: string }> = ({ value, color }) => {
-  const size = 28;
-  const strokeWidth = 3;
+const ProgressWheel: React.FC<{ value: number; color?: string }> = ({ value, color }) => {
+  const size = 36;
+  const strokeWidth = 3.5;
   const radius = (size - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
   const offset = circumference - (value / 100) * circumference;
@@ -50,8 +50,8 @@ const MiniProgressWheel: React.FC<{ value: number; color?: string }> = ({ value,
           style={{ transition: 'stroke-dashoffset 0.5s ease-out' }}
         />
       </svg>
-      <span className="vcr-progress-text absolute text-[8px] font-bold tabular-nums">
-        {value}
+      <span className="vcr-progress-text absolute text-[9px] font-bold tabular-nums">
+        {value}%
       </span>
     </div>
   );
@@ -81,52 +81,48 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick }) => {
     <button
       onClick={() => onClick(vcr.id)}
       className={cn(
-        "vcr-card w-full text-left rounded-xl border px-3 py-2.5 transition-all duration-300",
+        "vcr-card w-full text-left rounded-2xl border p-3.5 transition-all duration-300",
         "hover:shadow-md hover:-translate-y-0.5 active:translate-y-0",
         "group/vcr cursor-pointer relative overflow-hidden"
       )}
       style={cardStyle}
     >
-      <div className="relative z-10 flex items-center gap-3">
-        {/* Progress wheel */}
-        <MiniProgressWheel value={progress} color={vcrColor?.border} />
-
-        {/* Content */}
+      <div className="relative z-10 flex gap-3">
+        {/* Left: text content */}
         <div className="flex-1 min-w-0">
-          {/* Top row: ID badge + status */}
-          <div className="flex items-center gap-1.5 mb-0.5">
-            <span className="vcr-id-badge text-[9px] font-bold font-mono tracking-widest px-1.5 py-px rounded">
+          {/* ID badge + status */}
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="vcr-id-badge text-[10px] font-bold font-mono tracking-widest px-2 py-0.5 rounded-md">
               {displayCode}
             </span>
             <Badge
               variant="outline"
-              className="text-[8px] px-1 py-0 h-3.5 border-border bg-background/60 text-muted-foreground"
+              className="text-[9px] px-1.5 py-0 h-4 border-border bg-background/60 text-muted-foreground"
             >
               {vcr.status === 'PENDING' ? 'Draft' : vcr.status}
             </Badge>
+            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground ml-auto opacity-0 group-hover/vcr:opacity-100 transition-all duration-200" />
           </div>
 
           {/* VCR Name */}
-          <div className="text-[13px] font-semibold text-foreground leading-tight truncate">
+          <div className="text-sm font-semibold text-foreground leading-snug line-clamp-2">
             {vcr.name}
           </div>
         </div>
 
-        {/* Right side: cert badges + arrow */}
-        <div className="flex items-center gap-1.5 shrink-0">
+        {/* Right: progress wheel + cert badges stacked */}
+        <div className="flex flex-col items-center justify-between shrink-0 gap-1.5">
+          <ProgressWheel value={progress} color={vcrColor?.border} />
           <div className="flex items-center gap-1">
             {vcr.has_hydrocarbon && (
-              <span className="vcr-cert-badge inline-flex items-center gap-0.5 text-[8px] font-semibold px-1.5 py-0.5 rounded-full">
-                <Flame className="h-2 w-2" />
+              <span className="vcr-cert-badge text-[8px] font-semibold px-1.5 py-0.5 rounded-full">
                 SoF
               </span>
             )}
-            <span className="vcr-cert-badge inline-flex items-center gap-0.5 text-[8px] font-semibold px-1.5 py-0.5 rounded-full">
-              <Shield className="h-2 w-2" />
+            <span className="vcr-cert-badge text-[8px] font-semibold px-1.5 py-0.5 rounded-full">
               PAC
             </span>
           </div>
-          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover/vcr:opacity-100 transition-all duration-200" />
         </div>
       </div>
     </button>
