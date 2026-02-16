@@ -78,7 +78,7 @@ export const ORPBulkActionsToolbar: React.FC<ORPBulkActionsToolbarProps> = ({
                 <SelectValue placeholder="Choose user" />
               </SelectTrigger>
               <SelectContent>
-                {users?.map((user) => (
+                {users?.filter((user) => user.user_id).map((user) => (
                   <SelectItem key={user.user_id} value={user.user_id}>
                     {user.full_name} - {user.position}
                   </SelectItem>

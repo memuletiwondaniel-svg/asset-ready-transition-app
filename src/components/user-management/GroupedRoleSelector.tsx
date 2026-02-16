@@ -49,7 +49,7 @@ export const GroupedRoleSelector: React.FC<GroupedRoleSelectorProps> = ({
               {categoryIcons[group.category.name] || <Users className="h-4 w-4 inline mr-2" />}
               {group.category.name}
             </SelectLabel>
-            {group.roles.map((role) => (
+            {group.roles.filter((role) => role.name).map((role) => (
               <SelectItem key={role.id} value={role.name} className="pl-6">
                 {role.name}
               </SelectItem>
