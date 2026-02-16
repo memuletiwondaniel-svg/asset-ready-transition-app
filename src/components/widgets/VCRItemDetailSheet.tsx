@@ -175,15 +175,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
           }
         }
 
-        // Fallback: if no project team members matched, query all active profiles with matching roles
-        if (candidateProfiles.length === 0) {
-          const { data: profiles } = await supabase
-            .from('profiles')
-            .select('user_id, full_name, avatar_url, role')
-            .in('role', allRoleIds)
-            .eq('is_active', true);
-          candidateProfiles = profiles || [];
-        }
+        // No global fallback — only project team members should appear for localized VCR items
 
         if (candidateProfiles.length > 0) {
           // Get role names for matched profiles
