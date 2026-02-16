@@ -152,36 +152,35 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
         </DialogHeader>
 
         {/* Step indicator */}
-        <div className="flex items-center gap-0 px-2">
+        <div className="flex items-center px-2">
           {STEP_LABELS.map((label, i) => {
             const stepNum = i + 1;
             const isCompleted = stepNum < step;
             const isCurrent = stepNum === step;
-            const isFuture = stepNum > step;
 
             return (
               <React.Fragment key={label}>
-                <div className="flex items-center gap-1.5">
+                <div className="flex flex-col items-center gap-0.5">
                   <div className={cn(
                     "w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold transition-all duration-300",
                     isCompleted && "border-2 border-emerald-600 text-emerald-600 bg-transparent",
-                    isCurrent && "bg-primary text-primary-foreground scale-105 ring-2 ring-primary/30 animate-pulse",
-                    isFuture && "bg-muted text-muted-foreground"
+                    isCurrent && "bg-primary text-primary-foreground ring-2 ring-primary/30",
+                    !isCompleted && !isCurrent && "bg-muted text-muted-foreground"
                   )}>
                     {stepNum}
                   </div>
                   <span className={cn(
-                    "text-[11px] hidden sm:inline transition-colors",
+                    "text-[10px] transition-colors whitespace-nowrap",
                     isCompleted && "text-muted-foreground",
                     isCurrent && "text-foreground font-semibold",
-                    isFuture && "text-muted-foreground"
+                    !isCompleted && !isCurrent && "text-muted-foreground"
                   )}>
                     {label}
                   </span>
                 </div>
                 {i < STEP_LABELS.length - 1 && (
                   <div className={cn(
-                    "flex-1 h-[3px] rounded-full mx-1 transition-colors duration-300",
+                    "flex-1 h-[3px] rounded-full mx-1 mb-4 transition-colors duration-300",
                     isCompleted ? "bg-emerald-600" : isCurrent ? "bg-amber-200" : "bg-border"
                   )} />
                 )}
