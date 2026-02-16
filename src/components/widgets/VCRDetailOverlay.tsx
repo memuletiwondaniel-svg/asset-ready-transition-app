@@ -1169,9 +1169,10 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
         }
 
         // Fallback for uncovered roles: find Project-level TA2s (exclude Asset-level)
-        const coveredRoleIds = new Set((profilesByRole || []).map((p: any) => p.role));
+        const coveredRoleIds = new Set((profilesByRole || []).map((p: any) => p.role).filter(Boolean));
         const uncoveredRoleIds = Array.from(allRoleIds).filter(rid => !coveredRoleIds.has(rid));
         if (uncoveredRoleIds.length > 0) {
+          // Try FK-based match first
           const { data: ta2Profiles } = await client
             .from('profiles')
             .select('user_id, full_name, avatar_url, role, position')
@@ -1184,6 +1185,37 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
               return true;
             });
             profilesByRole.push(...projectTA2s);
+          }
+
+          // Position-based fallback: for still-uncovered roles, match by position containing role name
+          const nowCoveredRoleIds = new Set((profilesByRole || []).map((p: any) => p.role).filter(Boolean));
+          const stillUncoveredRoleIds = uncoveredRoleIds.filter(rid => !nowCoveredRoleIds.has(rid));
+          if (stillUncoveredRoleIds.length > 0) {
+            const uncoveredRoleNames = stillUncoveredRoleIds
+              .map(rid => roleMap.get(rid))
+              .filter(Boolean) as string[];
+            if (uncoveredRoleNames.length > 0) {
+              // Query all active profiles and match by position containing the role name
+              const { data: positionProfiles } = await client
+                .from('profiles')
+                .select('user_id, full_name, avatar_url, role, position')
+                .eq('is_active', true);
+              if (positionProfiles) {
+                for (const roleName of uncoveredRoleNames) {
+                  const roleId = stillUncoveredRoleIds.find(rid => roleMap.get(rid) === roleName);
+                  const rnLower = roleName.toLowerCase();
+                  const match = positionProfiles.find((p: any) => {
+                    const pos = (p.position || '').toLowerCase();
+                    if (pos.includes('asset')) return false;
+                    return pos.includes(rnLower);
+                  });
+                  if (match && roleId) {
+                    // Attach the role ID so the roleUserMap resolution works
+                    profilesByRole.push({ ...match, role: roleId });
+                  }
+                }
+              }
+            }
           }
         }
       } else {
