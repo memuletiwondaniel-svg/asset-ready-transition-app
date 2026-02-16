@@ -849,22 +849,22 @@
 
 /* ── VCR Card theming (light/dark adaptive) ─── */
 .vcr-card {
-  background-color: var(--vcr-bg, hsl(var(--muted) / 0.3));
-  border-color: var(--vcr-border, hsl(var(--border)));
+  background-color: var(--vcr-bg-light, hsl(var(--muted) / 0.3));
+  border-color: var(--vcr-border-light, hsl(var(--border)));
 }
 .vcr-id-badge {
-  background-color: var(--vcr-accent, hsl(var(--muted)));
-  color: var(--vcr-text, hsl(var(--foreground)));
+  background-color: var(--vcr-accent-light, hsl(var(--muted)));
+  color: var(--vcr-color-light, hsl(var(--foreground)));
 }
-.vcr-progress-fill {
-  background-color: var(--vcr-text, hsl(var(--primary)));
+.vcr-progress-bar {
+  background-color: var(--vcr-bar-light, hsl(var(--primary)));
 }
 .vcr-progress-text {
-  color: var(--vcr-text, hsl(var(--primary)));
+  color: var(--vcr-color-light, hsl(var(--primary)));
 }
 .vcr-cert-badge {
-  background-color: var(--vcr-accent, hsl(var(--muted) / 0.6));
-  color: var(--vcr-text, hsl(var(--muted-foreground)));
+  background-color: var(--vcr-accent-light, hsl(var(--muted) / 0.6));
+  color: var(--vcr-color-light, hsl(var(--muted-foreground)));
 }
 
 .dark .vcr-card {
@@ -873,15 +873,15 @@
 }
 .dark .vcr-id-badge {
   background-color: var(--vcr-accent-dark, hsl(var(--muted)));
-  color: var(--vcr-text-dark, hsl(var(--foreground)));
+  color: var(--vcr-color-dark, hsl(var(--foreground)));
 }
-.dark .vcr-progress-fill {
-  background-color: var(--vcr-text-dark, hsl(var(--primary)));
+.dark .vcr-progress-bar {
+  background-color: var(--vcr-bar-dark, hsl(var(--primary)));
 }
 .dark .vcr-progress-text {
-  color: var(--vcr-text-dark, hsl(var(--primary)));
+  color: var(--vcr-color-dark, hsl(var(--primary)));
 }
 .dark .vcr-cert-badge {
   background-color: var(--vcr-accent-dark, hsl(var(--muted) / 0.6));
-  color: var(--vcr-text-dark, hsl(var(--muted-foreground)));
+  color: var(--vcr-color-dark, hsl(var(--foreground)));
 }

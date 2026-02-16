@@ -22,17 +22,18 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick }) => {
   const progress = vcr.progress;
   const displayCode = shortCode(vcr.vcr_code);
 
-  // Build CSS custom properties for light/dark mode adaptation
   const cardStyle: React.CSSProperties = vcrColor
     ? ({
-        '--vcr-bg': vcrColor.background,
+        '--vcr-bg-light': vcrColor.background,
         '--vcr-bg-dark': vcrColor.backgroundDark,
-        '--vcr-border': vcrColor.accent,
+        '--vcr-border-light': vcrColor.accent,
         '--vcr-border-dark': vcrColor.accentDark,
-        '--vcr-accent': vcrColor.accent,
+        '--vcr-accent-light': vcrColor.accent,
         '--vcr-accent-dark': vcrColor.accentDark,
-        '--vcr-text': vcrColor.border,
-        '--vcr-text-dark': vcrColor.borderDark,
+        '--vcr-color-light': vcrColor.border,
+        '--vcr-color-dark': vcrColor.borderDark,
+        '--vcr-bar-light': vcrColor.border,
+        '--vcr-bar-dark': vcrColor.borderDark,
       } as React.CSSProperties)
     : {};
 
@@ -63,16 +64,16 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick }) => {
           <ChevronRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover/vcr:opacity-100 transition-all duration-200 group-hover/vcr:translate-x-0.5" />
         </div>
 
-        {/* VCR Name */}
+        {/* VCR Name — always uses foreground for readability */}
         <div className="text-sm font-semibold text-foreground mb-3 leading-snug pr-4 line-clamp-2">
           {vcr.name}
         </div>
 
         {/* Progress bar */}
         <div className="mb-2.5">
-          <div className="h-1.5 rounded-full bg-foreground/[0.08] overflow-hidden">
+          <div className="h-1.5 rounded-full bg-foreground/[0.08] dark:bg-foreground/[0.12] overflow-hidden">
             <div
-              className="vcr-progress-fill h-full rounded-full transition-all duration-500 ease-out"
+              className="vcr-progress-bar h-full rounded-full transition-all duration-500 ease-out"
               style={{ width: `${Math.max(progress, 2)}%` }}
             />
           </div>
