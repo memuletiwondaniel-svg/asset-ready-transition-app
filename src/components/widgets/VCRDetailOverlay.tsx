@@ -1183,7 +1183,7 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
         // Filter out non-TA roles and any remaining Asset-level staff
         const taProfiles = profilesByRole.filter((p: any) => {
           const roleName = (roleMap.get(p.role) || '').toLowerCase();
-          if (roleName.includes('hub lead') || roleName.includes('ora lead')) return false;
+          if (roleName.includes('hub lead')) return false;
           const pos = (p.position || '').toLowerCase();
           if (pos.includes('asset')) return false;
           return true;
@@ -1215,7 +1215,7 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
       const excludedRoleIds = new Set<string>();
       for (const [roleId, roleName] of roleMap.entries()) {
         const rn = roleName.toLowerCase();
-        if (rn.includes('hub lead') || rn.includes('ora lead')) {
+        if (rn.includes('hub lead')) {
           excludedRoleIds.add(roleId);
         }
       }
