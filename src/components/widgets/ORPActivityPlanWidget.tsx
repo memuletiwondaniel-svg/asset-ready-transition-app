@@ -84,85 +84,10 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
         </CardHeader>
         
         <CardContent className="space-y-3">
-          {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : plans.length === 0 ? (
-            <div 
-              className="text-center py-8 text-muted-foreground"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <CalendarCheck className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p className="mb-3">No activity plans yet</p>
-              <Button size="sm" onClick={() => navigate('/operation-readiness')}>
-                Create First Plan
-              </Button>
-            </div>
-          ) : (
-            /* Collapsed View - Upcoming Activities Summary */
-            <div className="space-y-3">
-              {/* Overall Progress */}
-              <div className="p-3 bg-muted/30 rounded-lg">
-                <div className="flex items-center justify-between text-sm mb-1">
-                  <span className="text-muted-foreground">Overall Progress</span>
-                  <span className="font-medium">{overallProgress}%</span>
-                </div>
-                <Progress value={overallProgress} className="h-1.5" />
-                <div className="text-xs text-muted-foreground mt-1">
-                  {completedDeliverables} of {totalDeliverables} activities completed
-                </div>
-              </div>
-              
-              {/* Upcoming Activities List */}
-              {allUpcomingActivities.length > 0 ? (
-                <div className="space-y-1.5">
-                  <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
-                    Upcoming Activities
-                  </div>
-                  {allUpcomingActivities.slice(0, 4).map((activity) => (
-                    <div 
-                      key={activity.id} 
-                      className="flex items-center gap-2 py-1.5 px-2 rounded-md border bg-card hover:bg-muted/30 transition-colors"
-                    >
-                      <div className={cn(
-                        "w-1.5 h-1.5 rounded-full shrink-0",
-                        activity.status === 'IN_PROGRESS' ? 'bg-blue-500' : 'bg-muted-foreground/40'
-                      )} />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-xs font-medium truncate">
-                          {activity.name}
-                        </div>
-                        {activity.start_date && (
-                          <div className="text-[10px] text-muted-foreground flex items-center gap-0.5">
-                            <Clock className="h-2.5 w-2.5" />
-                            {format(parseISO(activity.start_date), 'MMM d')}
-                            {activity.end_date && ` - ${format(parseISO(activity.end_date), 'MMM d')}`}
-                          </div>
-                        )}
-                      </div>
-                      {activity.completion_percentage > 0 && (
-                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 shrink-0">
-                          {activity.completion_percentage}%
-                        </Badge>
-                      )}
-                    </div>
-                  ))}
-                  {allUpcomingActivities.length > 4 && (
-                    <div className="w-full text-center text-xs text-muted-foreground py-1 hover:text-foreground transition-colors">
-                      +{allUpcomingActivities.length - 4} more activities
-                      <ChevronDown className="h-2.5 w-2.5 ml-0.5 inline" />
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="flex items-center gap-2 p-2 bg-green-500/10 rounded-lg text-green-600">
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  <span className="text-xs">All activities completed</span>
-                </div>
-              )}
-            </div>
-          )}
+          <div className="text-center py-10 text-muted-foreground">
+            <p className="text-sm font-medium mb-1">No ORA Plan</p>
+            <p className="text-xs opacity-70">Operation Readiness activities will appear here</p>
+          </div>
         </CardContent>
       </Card>
 
