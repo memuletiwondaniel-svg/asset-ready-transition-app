@@ -1023,8 +1023,26 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
             .eq('is_active', true);
           profilesByRole = profiles || [];
         }
+
+        // Fallback for uncovered roles: find Project-level TA2s (exclude Asset-level)
+        const coveredRoleIds = new Set((profilesByRole || []).map((p: any) => p.role));
+        const uncoveredRoleIds = Array.from(allRoleIds).filter(rid => !coveredRoleIds.has(rid));
+        if (uncoveredRoleIds.length > 0) {
+          const { data: ta2Profiles } = await client
+            .from('profiles')
+            .select('user_id, full_name, avatar_url, role, position')
+            .in('role', uncoveredRoleIds)
+            .eq('is_active', true);
+          if (ta2Profiles) {
+            const projectTA2s = ta2Profiles.filter((p: any) => {
+              const pos = (p.position || '').toLowerCase();
+              if (pos.includes('asset')) return false;
+              return true;
+            });
+            profilesByRole.push(...projectTA2s);
+          }
+        }
       } else {
-        // Fallback: global lookup (shouldn't happen in practice)
         const { data: profiles } = await client
           .from('profiles')
           .select('user_id, full_name, avatar_url, role')
@@ -1033,9 +1051,23 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
         profilesByRole = profiles || [];
       }
 
+      // Build role-to-user map, preferring users WITH avatar/profile picture
       const roleUserMap = new Map<string, { full_name: string; avatar_url: string | null; user_id: string }>();
       if (profilesByRole) {
-        for (const p of profilesByRole) {
+        // Filter out non-TA roles (Hub Lead, ORA Lead, etc.) that shouldn't be approving parties
+        const taProfiles = profilesByRole.filter((p: any) => {
+          const roleName = (roleMap.get(p.role) || '').toLowerCase();
+          // Exclude hub leads, ORA leads, project leads — only TAs and advisers should approve
+          if (roleName.includes('hub lead') || roleName.includes('ora lead')) return false;
+          return true;
+        });
+        // Sort: profiles with avatars first, so they get priority
+        const sorted = [...taProfiles].sort((a: any, b: any) => {
+          const aHas = a.avatar_url ? 1 : 0;
+          const bHas = b.avatar_url ? 1 : 0;
+          return bHas - aHas;
+        });
+        for (const p of sorted) {
           if (p.role && !roleUserMap.has(p.role)) {
             roleUserMap.set(p.role, { full_name: p.full_name, avatar_url: p.avatar_url, user_id: p.user_id });
           }
