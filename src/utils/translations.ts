@@ -246,7 +246,7 @@ export const translations = {
     maintenance: 'Maintenance',
     handover: 'Handover',
     oraConfiguration: 'ORA Configuration',
-    manageORAPlans: 'Manage ORA Plans',
+    manageORAPlans: 'Manage ORA Activity Plan',
     oraConfigSubtitle: 'Configure ORA activities, templates, and milestone types',
     activityCatalog: 'Activity Catalog',
     templates: 'Templates',

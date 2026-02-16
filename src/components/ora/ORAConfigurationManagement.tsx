@@ -37,7 +37,7 @@ export const ORAConfigurationManagement: React.FC<ORAConfigurationManagementProp
             </div>
             <div>
               <h1 className="text-2xl font-bold text-foreground tracking-tight">
-                {t.manageORAPlans || "Manage ORA Plans"}
+                {t.manageORAPlans || "Manage ORA Activity Plan"}
               </h1>
               <p className="text-sm text-muted-foreground mt-0.5">
                 {t.oraConfigSubtitle || "Configure ORA activities, templates, and milestone types"}
