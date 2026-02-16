@@ -345,44 +345,50 @@ const VCRSystemsPanel: React.FC<{ vcrId: string }> = ({ vcrId }) => {
     );
   }
 
+  const totalITR = systems.reduce((s: number, sys: any) => s + (sys.itr_total_count || 0), 0);
+  const totalPLA = systems.reduce((s: number, sys: any) => s + (sys.punchlist_a_count || 0), 0);
+  const totalPLB = systems.reduce((s: number, sys: any) => s + (sys.punchlist_b_count || 0), 0);
+  const avgCompletion = Math.round(systems.reduce((s: number, sys: any) => s + (sys.completion_percentage || 0), 0) / systems.length);
+  const hcCount = systems.filter((s: any) => s.is_hydrocarbon).length;
+
   return (
-    <div className="space-y-4">
-      {/* Summary stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card>
-          <CardContent className="p-3 text-center">
-            <div className="text-xl font-bold text-foreground">{systems.length}</div>
-            <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Total Systems</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-3 text-center">
-            <div className="text-xl font-bold text-foreground">
-              {systems.reduce((s: number, sys: any) => s + (sys.itr_total_count || 0), 0)}
+    <div className="space-y-5">
+      {/* Header Stats Bar */}
+      <div className="rounded-2xl border bg-card p-4">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
+              <Layers className="w-4.5 h-4.5 text-primary" />
             </div>
-            <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Total ITRs</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-3 text-center">
-            <div className="text-xl font-bold text-foreground">
-              {systems.reduce((s: number, sys: any) => s + (sys.punchlist_a_count || 0), 0)}
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">{systems.length} Systems</h3>
+              <p className="text-[10px] text-muted-foreground">{hcCount > 0 ? `${hcCount} Hydrocarbon · ${systems.length - hcCount} Non-HC` : 'All Non-Hydrocarbon'}</p>
             </div>
-            <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Punchlist A</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-3 text-center">
-            <div className="text-xl font-bold text-foreground">
-              {systems.reduce((s: number, sys: any) => s + (sys.punchlist_b_count || 0), 0)}
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="text-right">
+              <span className="text-2xl font-bold text-foreground tabular-nums">{avgCompletion}</span>
+              <span className="text-xs text-muted-foreground ml-0.5">%</span>
             </div>
-            <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Punchlist B</div>
-          </CardContent>
-        </Card>
+            <span className="text-[9px] text-muted-foreground">avg</span>
+          </div>
+        </div>
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            { label: 'Total ITRs', value: totalITR, color: 'text-blue-600' },
+            { label: 'Punchlist A', value: totalPLA, color: 'text-rose-600' },
+            { label: 'Punchlist B', value: totalPLB, color: 'text-amber-600' },
+          ].map(stat => (
+            <div key={stat.label} className="rounded-xl bg-muted/40 px-3 py-2 text-center">
+              <div className={cn("text-lg font-bold tabular-nums", stat.color)}>{stat.value}</div>
+              <div className="text-[9px] text-muted-foreground uppercase tracking-wider">{stat.label}</div>
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* Systems list */}
-      <div className="space-y-2">
+      {/* Systems Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {systems.map((sys: any) => {
           const completion = sys.completion_percentage || 0;
           const isHC = sys.is_hydrocarbon;
@@ -392,78 +398,93 @@ const VCRSystemsPanel: React.FC<{ vcrId: string }> = ({ vcrId }) => {
           const isRFCComplete = completion >= 95;
           const isMilestoneComplete = completion === 100;
 
+          // Mini progress ring
+          const ringSize = 40;
+          const strokeWidth = 3.5;
+          const radius = (ringSize - strokeWidth) / 2;
+          const circumference = 2 * Math.PI * radius;
+          const ringOffset = circumference - (completion / 100) * circumference;
+          const ringColor = completion === 100 ? 'text-emerald-500' : completion >= 50 ? 'text-amber-500' : 'text-primary';
+
           return (
-            <Card key={sys.id} className="overflow-hidden">
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between mb-3">
+            <div
+              key={sys.id}
+              className="group rounded-2xl border bg-card hover:bg-muted/30 transition-all hover:shadow-sm overflow-hidden"
+            >
+              <div className="p-4">
+                {/* Top row: Name + Progress ring */}
+                <div className="flex items-start gap-3">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <span className="text-sm font-semibold text-foreground truncate">{sys.name}</span>
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                      <span className="font-mono text-[10px] text-muted-foreground tracking-wide">{sys.system_id}</span>
                       {isHC && (
-                        <Badge className="bg-amber-500/10 text-amber-600 border-amber-200 text-[9px] shrink-0">HC</Badge>
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-600 text-[8px] font-bold uppercase tracking-wider">
+                          HC
+                        </span>
                       )}
                     </div>
-                    <span className="text-[10px] text-muted-foreground font-mono">{sys.system_id}</span>
+                    <h4 className="text-sm font-semibold text-foreground truncate leading-tight">{sys.name}</h4>
                   </div>
-                  <div className="text-right shrink-0 ml-3">
-                    <div className="text-lg font-bold text-foreground">{completion}%</div>
-                    <div className="text-[9px] text-muted-foreground">Complete</div>
+                  <div className="relative shrink-0">
+                    <svg width={ringSize} height={ringSize} className="transform -rotate-90">
+                      <circle cx={ringSize / 2} cy={ringSize / 2} r={radius} fill="none"
+                        strokeWidth={strokeWidth} className="text-muted/40" stroke="currentColor" />
+                      <circle cx={ringSize / 2} cy={ringSize / 2} r={radius} fill="none"
+                        strokeWidth={strokeWidth} strokeDasharray={circumference} strokeDashoffset={ringOffset}
+                        strokeLinecap="round" className={ringColor} stroke="currentColor" />
+                    </svg>
+                    <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-foreground tabular-nums">
+                      {completion}
+                    </span>
                   </div>
                 </div>
 
-                <Progress value={completion} className="h-1.5 mb-3" />
-
-                {/* Milestones row */}
-                <div className="flex items-center gap-2 flex-wrap">
-                  <Badge variant="outline" className={cn(
-                    "text-[9px] gap-1",
-                    isMCComplete ? "border-emerald-300 text-emerald-600" : "text-muted-foreground"
-                  )}>
-                    {isMCComplete ? <CheckCircle2 className="w-2.5 h-2.5" /> : <Clock className="w-2.5 h-2.5" />}
-                    MC
-                  </Badge>
-                  <Badge variant="outline" className={cn(
-                    "text-[9px] gap-1",
-                    isRFCComplete ? "border-emerald-300 text-emerald-600" : "text-muted-foreground"
-                  )}>
-                    {isRFCComplete ? <CheckCircle2 className="w-2.5 h-2.5" /> : <Clock className="w-2.5 h-2.5" />}
-                    RFC
-                  </Badge>
-                  <Badge variant="outline" className={cn(
-                    "text-[9px] gap-1",
-                    isMilestoneComplete ? "border-emerald-300 text-emerald-600" : "text-muted-foreground"
-                  )}>
-                    {isMilestoneComplete ? <CheckCircle2 className="w-2.5 h-2.5" /> : <Clock className="w-2.5 h-2.5" />}
-                    {milestoneLabel}
-                  </Badge>
+                {/* Milestone badges */}
+                <div className="flex items-center gap-1.5 mt-3">
+                  {[
+                    { label: 'MC', done: isMCComplete },
+                    { label: 'RFC', done: isRFCComplete },
+                    { label: milestoneLabel, done: isMilestoneComplete },
+                  ].map(m => (
+                    <span
+                      key={m.label}
+                      className={cn(
+                        "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-medium border transition-colors",
+                        m.done
+                          ? "bg-emerald-500/10 text-emerald-600 border-emerald-200 dark:border-emerald-800"
+                          : "bg-muted/50 text-muted-foreground border-transparent"
+                      )}
+                    >
+                      {m.done ? <CheckCircle2 className="w-2.5 h-2.5" /> : <div className="w-2.5 h-2.5 rounded-full border border-current opacity-40" />}
+                      {m.label}
+                    </span>
+                  ))}
                   {milestoneDate && (
-                    <span className="text-[9px] text-muted-foreground ml-auto">
-                      Target: {format(new Date(milestoneDate), 'dd MMM yyyy')}
+                    <span className="text-[9px] text-muted-foreground ml-auto whitespace-nowrap">
+                      {format(new Date(milestoneDate), 'dd MMM yy')}
                     </span>
                   )}
                 </div>
 
-                {/* ITR & Punchlist stats */}
-                <div className="grid grid-cols-4 gap-2 mt-3 pt-3 border-t">
-                  <div className="text-center">
-                    <div className="text-xs font-semibold">{sys.itr_a_count || 0}</div>
-                    <div className="text-[9px] text-muted-foreground">ITR-A</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-xs font-semibold">{sys.itr_b_count || 0}</div>
-                    <div className="text-[9px] text-muted-foreground">ITR-B</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-xs font-semibold">{sys.punchlist_a_count || 0}</div>
-                    <div className="text-[9px] text-muted-foreground">PL-A</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-xs font-semibold">{sys.punchlist_b_count || 0}</div>
-                    <div className="text-[9px] text-muted-foreground">PL-B</div>
-                  </div>
+                {/* ITR/PL Stats */}
+                <div className="grid grid-cols-4 gap-1 mt-3 pt-3 border-t border-border/50">
+                  {[
+                    { label: 'ITR-A', value: sys.itr_a_count || 0 },
+                    { label: 'ITR-B', value: sys.itr_b_count || 0 },
+                    { label: 'PL-A', value: sys.punchlist_a_count || 0, warn: true },
+                    { label: 'PL-B', value: sys.punchlist_b_count || 0 },
+                  ].map(s => (
+                    <div key={s.label} className="text-center">
+                      <div className={cn(
+                        "text-xs font-bold tabular-nums",
+                        s.warn && s.value > 0 ? "text-rose-600" : "text-foreground"
+                      )}>{s.value}</div>
+                      <div className="text-[8px] text-muted-foreground uppercase tracking-wider">{s.label}</div>
+                    </div>
+                  ))}
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           );
         })}
       </div>
