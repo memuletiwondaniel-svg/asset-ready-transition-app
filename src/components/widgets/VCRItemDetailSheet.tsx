@@ -91,7 +91,19 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
         .eq('id', item!.id)
         .maybeSingle();
       if (error) return null;
-      return data as any;
+
+      // Fetch approving party names from role IDs
+      let approvingPartyNames: string[] = [];
+      const roleIds = (data as any)?.approving_party_role_ids;
+      if (roleIds && roleIds.length > 0) {
+        const { data: roles } = await supabase
+          .from('roles')
+          .select('name')
+          .in('id', roleIds);
+        approvingPartyNames = roles?.map((r: any) => r.name) || [];
+      }
+
+      return { ...(data as any), approving_party_names: approvingPartyNames };
     },
     enabled: open && !!item?.id,
   });
@@ -101,6 +113,9 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
   const statusCfg = STATUS_CONFIG[item.status] || STATUS_CONFIG.NOT_STARTED;
   const StatusIcon = statusCfg.icon;
   const deliveringParty = vcrItemDetail?.delivering_party?.name || 'Not assigned';
+  const approvingParties = vcrItemDetail?.approving_party_names?.length > 0
+    ? vcrItemDetail.approving_party_names.join(', ')
+    : 'Not assigned';
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -154,7 +169,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                       <User className="w-4 h-4 text-muted-foreground" />
                       <div>
                         <div className="text-[10px] text-muted-foreground">Approving Party</div>
-                        <div className="text-xs font-medium">Not assigned</div>
+                        <div className="text-xs font-medium">{approvingParties}</div>
                       </div>
                     </div>
                   </CardContent>
