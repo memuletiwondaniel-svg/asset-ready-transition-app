@@ -1,12 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -26,7 +19,7 @@ import {
   Check,
   X,
   Loader2,
-  Target
+  Send
 } from 'lucide-react';
 import { useHandoverPointSystems } from '../hooks/useP2AHandoverPoints';
 import { useVCRTraining } from '../hooks/useVCRTraining';
@@ -49,6 +42,7 @@ interface AddTrainingDialogProps {
   oraPlanId: string;
   preselectedSystemIds?: string[];
   preselectedVCRId?: string;
+  vcrName?: string;
 }
 
 export const AddTrainingDialog: React.FC<AddTrainingDialogProps> = ({
@@ -58,10 +52,9 @@ export const AddTrainingDialog: React.FC<AddTrainingDialogProps> = ({
   oraPlanId,
   preselectedSystemIds = [],
   preselectedVCRId,
+  vcrName,
 }) => {
-  // Fetch systems mapped to this VCR (if VCR ID is provided)
   const { systems: vcrSystems, isLoading: vcrSystemsLoading } = useHandoverPointSystems(preselectedVCRId || '');
-  
   const { addTrainingWithSystems, isAdding } = useVCRTraining(oraPlanId);
   const { trainingPlans } = useORATrainingPlans(oraPlanId);
 
@@ -76,11 +69,9 @@ export const AddTrainingDialog: React.FC<AddTrainingDialogProps> = ({
   const [selectedSystemIds, setSelectedSystemIds] = useState<string[]>(preselectedSystemIds);
   const [systemSearch, setSystemSearch] = useState('');
 
-  // Use VCR-mapped systems
   const availableSystems = vcrSystems || [];
   const systemsLoading = vcrSystemsLoading;
 
-  // Reset form when dialog opens
   useEffect(() => {
     if (open) {
       setTitle('');
@@ -119,12 +110,8 @@ export const AddTrainingDialog: React.FC<AddTrainingDialogProps> = ({
   const handleSubmit = async () => {
     if (!title.trim()) return;
     
-    // Get or create a training plan
     const planId = trainingPlans?.[0]?.id;
-    if (!planId) {
-      // TODO: Create a default training plan if none exists
-      return;
-    }
+    if (!planId) return;
 
     addTrainingWithSystems({
       planId,
@@ -149,132 +136,128 @@ export const AddTrainingDialog: React.FC<AddTrainingDialogProps> = ({
   const selectedSystems = availableSystems.filter((s: any) => selectedSystemIds.includes(s.id));
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
-        <DialogHeader className="shrink-0">
-          <DialogTitle className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500/20 to-purple-500/20 flex items-center justify-center">
-              <GraduationCap className="w-4 h-4 text-violet-500" />
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="w-full sm:max-w-lg flex flex-col h-full p-0">
+        <SheetHeader className="px-6 py-4 border-b bg-gradient-to-br from-violet-500/5 to-purple-500/5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-violet-500/10 flex items-center justify-center">
+              <GraduationCap className="w-5 h-5 text-violet-500" />
             </div>
-            Add Training Item
-          </DialogTitle>
-          <DialogDescription>
-            Create a training item and map it to systems in this VCR.
-          </DialogDescription>
-        </DialogHeader>
+            <div>
+              <SheetTitle>Add Training Item</SheetTitle>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {vcrName ? `For ${vcrName}` : 'Create a training item and map it to systems'}
+              </p>
+            </div>
+          </div>
+        </SheetHeader>
 
-        <ScrollArea className="flex-1 -mx-6 px-6">
-          <div className="space-y-6 pb-4">
-            {/* Training Details Section */}
+        <ScrollArea className="flex-1 px-6 py-4">
+          <div className="space-y-6">
+            {/* Training Details */}
             <div className="space-y-4">
-              <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <GraduationCap className="w-4 h-4" />
-                Training Details
-              </h3>
-              
-              <div className="grid gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="title" className="text-sm font-medium">
+                  Training Title <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="e.g., DCS Operations Training"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="overview" className="text-sm font-medium">Overview</Label>
+                <Textarea
+                  id="overview"
+                  value={overview}
+                  onChange={(e) => setOverview(e.target.value)}
+                  placeholder="Brief description of the training..."
+                  rows={3}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="provider" className="text-sm font-medium">Training Provider</Label>
+                <Input
+                  id="provider"
+                  value={trainingProvider}
+                  onChange={(e) => setTrainingProvider(e.target.value)}
+                  placeholder="e.g., Vendor name or internal"
+                />
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
                 <div className="space-y-2">
-                  <Label htmlFor="title">Title *</Label>
+                  <Label htmlFor="duration" className="text-sm font-medium">Duration (hrs)</Label>
                   <Input
-                    id="title"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    placeholder="e.g., DCS Operations Training"
-                    className="bg-muted/50"
+                    id="duration"
+                    type="number"
+                    value={durationHours || ''}
+                    onChange={(e) => setDurationHours(e.target.value ? Number(e.target.value) : undefined)}
+                    placeholder="8"
                   />
                 </div>
-
                 <div className="space-y-2">
-                  <Label htmlFor="overview">Overview</Label>
-                  <Textarea
-                    id="overview"
-                    value={overview}
-                    onChange={(e) => setOverview(e.target.value)}
-                    placeholder="Brief description of the training..."
-                    rows={2}
-                    className="bg-muted/50"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="provider">Training Provider</Label>
+                  <Label htmlFor="cost" className="text-sm font-medium">Est. Cost ($)</Label>
                   <Input
-                    id="provider"
-                    value={trainingProvider}
-                    onChange={(e) => setTrainingProvider(e.target.value)}
-                    placeholder="e.g., Vendor name or internal"
-                    className="bg-muted/50"
+                    id="cost"
+                    type="number"
+                    value={estimatedCost || ''}
+                    onChange={(e) => setEstimatedCost(e.target.value ? Number(e.target.value) : undefined)}
+                    placeholder="5000"
                   />
                 </div>
-
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="duration">Duration (hours)</Label>
-                    <Input
-                      id="duration"
-                      type="number"
-                      value={durationHours || ''}
-                      onChange={(e) => setDurationHours(e.target.value ? Number(e.target.value) : undefined)}
-                      placeholder="8"
-                      className="bg-muted/50"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="cost">Est. Cost ($)</Label>
-                    <Input
-                      id="cost"
-                      type="number"
-                      value={estimatedCost || ''}
-                      onChange={(e) => setEstimatedCost(e.target.value ? Number(e.target.value) : undefined)}
-                      placeholder="5000"
-                      className="bg-muted/50"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="date">Tentative Date</Label>
-                    <Input
-                      id="date"
-                      type="date"
-                      value={tentativeDate}
-                      onChange={(e) => setTentativeDate(e.target.value)}
-                      className="bg-muted/50"
-                    />
-                  </div>
-                </div>
-
                 <div className="space-y-2">
-                  <Label>Target Audience</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {TARGET_AUDIENCE_OPTIONS.map((audience) => (
-                      <Badge
-                        key={audience}
-                        variant={targetAudience.includes(audience) ? 'default' : 'outline'}
-                        className={cn(
-                          'cursor-pointer transition-all',
-                          targetAudience.includes(audience) 
-                            ? 'bg-violet-500 hover:bg-violet-600' 
-                            : 'hover:bg-muted'
-                        )}
-                        onClick={() => handleAudienceToggle(audience)}
-                      >
-                        {targetAudience.includes(audience) && <Check className="w-3 h-3 mr-1" />}
-                        {audience}
-                      </Badge>
-                    ))}
-                  </div>
+                  <Label htmlFor="date" className="text-sm font-medium">Tentative Date</Label>
+                  <Input
+                    id="date"
+                    type="date"
+                    value={tentativeDate}
+                    onChange={(e) => setTentativeDate(e.target.value)}
+                  />
                 </div>
               </div>
             </div>
 
             <Separator />
 
-            {/* System Mapping Section */}
-            <div className="space-y-4">
+            {/* Target Audience */}
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">Target Audience</Label>
+              <div className="flex flex-wrap gap-2">
+                {TARGET_AUDIENCE_OPTIONS.map((audience) => (
+                  <Badge
+                    key={audience}
+                    variant={targetAudience.includes(audience) ? 'default' : 'outline'}
+                    className={cn(
+                      'cursor-pointer transition-all',
+                      targetAudience.includes(audience) 
+                        ? 'bg-violet-500 hover:bg-violet-600' 
+                        : 'hover:bg-muted'
+                    )}
+                    onClick={() => handleAudienceToggle(audience)}
+                  >
+                    {targetAudience.includes(audience) && <Check className="w-3 h-3 mr-1" />}
+                    {audience}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* System Mapping */}
+            <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                  <Layers className="w-4 h-4" />
-                  Map to Systems (from this VCR)
-                </h3>
+                <div className="flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-muted-foreground" />
+                  <Label className="text-sm font-medium">
+                    Applicable Systems
+                  </Label>
+                </div>
                 {selectedSystemIds.length > 0 && (
                   <Badge variant="secondary" className="bg-violet-500/10 text-violet-500">
                     {selectedSystemIds.length} selected
@@ -286,17 +269,13 @@ export const AddTrainingDialog: React.FC<AddTrainingDialogProps> = ({
               {selectedSystems.length > 0 && (
                 <div className="flex flex-wrap gap-2 p-3 rounded-lg bg-muted/30 border border-dashed">
                   {selectedSystems.map((system: any) => (
-                    <Badge
-                      key={system.id}
-                      variant="secondary"
-                      className="gap-1 pr-1"
-                    >
+                    <Badge key={system.id} variant="secondary" className="gap-1 pr-1">
                       {system.is_hydrocarbon ? (
                         <Flame className="w-3 h-3 text-orange-500" />
                       ) : (
                         <Snowflake className="w-3 h-3 text-blue-500" />
                       )}
-                      <span className="max-w-[150px] truncate">{system.name}</span>
+                      <span className="max-w-[120px] truncate">{system.name}</span>
                       <button
                         onClick={() => handleSystemToggle(system.id)}
                         className="ml-1 p-0.5 rounded hover:bg-muted"
@@ -315,23 +294,22 @@ export const AddTrainingDialog: React.FC<AddTrainingDialogProps> = ({
                   value={systemSearch}
                   onChange={(e) => setSystemSearch(e.target.value)}
                   placeholder="Search systems..."
-                  className="pl-9 bg-muted/50"
+                  className="pl-9"
                 />
               </div>
 
               {/* System List */}
               <Card className="border-muted">
                 <CardContent className="p-0">
-                  <ScrollArea className="h-[200px]">
+                  <ScrollArea className="h-[180px]">
                     {systemsLoading ? (
                       <div className="p-4 space-y-2">
-                        <Skeleton className="h-12 w-full" />
                         <Skeleton className="h-12 w-full" />
                         <Skeleton className="h-12 w-full" />
                       </div>
                     ) : availableSystems.length === 0 ? (
                       <div className="text-center py-8 text-sm text-muted-foreground">
-                        No systems mapped to this VCR. Please add systems first.
+                        No systems mapped to this VCR.
                       </div>
                     ) : filteredSystems.length === 0 ? (
                       <div className="text-center py-8 text-sm text-muted-foreground">
@@ -374,7 +352,6 @@ export const AddTrainingDialog: React.FC<AddTrainingDialogProps> = ({
                   </ScrollArea>
                 </CardContent>
               </Card>
-
               <p className="text-xs text-muted-foreground">
                 Select systems from this VCR that this training applies to.
               </p>
@@ -382,31 +359,31 @@ export const AddTrainingDialog: React.FC<AddTrainingDialogProps> = ({
           </div>
         </ScrollArea>
 
-        <Separator className="my-4" />
-
-        <DialogFooter className="shrink-0">
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isAdding}>
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleSubmit}
-            disabled={!title.trim() || isAdding}
-            className="bg-violet-500 hover:bg-violet-600"
-          >
-            {isAdding ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Adding...
-              </>
-            ) : (
-              <>
-                <GraduationCap className="w-4 h-4 mr-2" />
-                Add Training
-              </>
-            )}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        <SheetFooter className="px-6 py-4 border-t bg-muted/30">
+          <div className="flex gap-3 w-full">
+            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isAdding} className="flex-1">
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSubmit}
+              disabled={!title.trim() || isAdding}
+              className="flex-1 gap-2 bg-violet-500 hover:bg-violet-600"
+            >
+              {isAdding ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Adding...
+                </>
+              ) : (
+                <>
+                  <GraduationCap className="w-4 h-4" />
+                  Add Training
+                </>
+              )}
+            </Button>
+          </div>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 };
