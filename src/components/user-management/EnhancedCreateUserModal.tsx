@@ -23,6 +23,14 @@ import {
   requiresHub as roleRequiresHubAssignment,
   PORTFOLIO_REGIONS 
 } from '@/utils/roleAssignmentConfig';
+import {
+  isOpsManager,
+  OPS_MANAGER_PLANTS,
+  opsManagerHasSubArea,
+  getOpsManagerSubAreas,
+  generateOpsManagerPosition,
+  isOpsManagerTitleReady,
+} from '@/utils/opsManagerConfig';
 import { supabase } from '@/integrations/supabase/client';
 import { useLogActivity } from '@/hooks/useActivityLogs';
 import { AvatarCropDialog } from '@/components/user-management/AvatarCropDialog';
@@ -61,6 +69,8 @@ interface UserFormData {
   field: string;
   station: string;
   authenticator: string;
+  ops_manager_plant: string;
+  ops_manager_sub_area: string;
 }
 
 interface EnhancedCreateUserModalProps {
@@ -98,6 +108,8 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
     field: '',
     station: '',
     authenticator: 'Daniel Memuletiwon',
+    ops_manager_plant: '',
+    ops_manager_sub_area: '',
   });
 
   const { data: hubs } = useHubs();
@@ -265,6 +277,11 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
       return `${role} - ${plant}`;
     }
     
+    // Ops Manager
+    if (isOpsManager(role)) {
+      return generateOpsManagerPosition(formData.ops_manager_plant, formData.ops_manager_sub_area);
+    }
+    
     // Site Engineer requires station directly
     if (roleRequiresStation(role) && station) {
       return `Site Engr. - ${station}`;
@@ -324,6 +341,8 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
       case 'Plant Director':
       case 'Dep. Plant Director':
         return !!plant;
+      case 'Ops Manager':
+        return isOpsManagerTitleReady(formData.ops_manager_plant, formData.ops_manager_sub_area);
       case 'Site Engr.':
       case 'Site Engineer':
         return !!station;
@@ -393,7 +412,9 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
       station: '',
       hub: '',
       portfolio: '',
-      commission: ''
+      commission: '',
+      ops_manager_plant: '',
+      ops_manager_sub_area: ''
     }));
   };
 
@@ -700,6 +721,8 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
       field: '',
       station: '',
       authenticator: 'Daniel Memuletiwon',
+      ops_manager_plant: '',
+      ops_manager_sub_area: '',
     });
     setEmailError('');
     clearImage();
@@ -1007,6 +1030,46 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
                   emptyText="No plants found"
                 />
               </div>
+            )}
+
+            {/* Ops Manager - Plant + optional Sub-Area */}
+            {isOpsManager(formData.role) && (
+              <>
+                <div>
+                  <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Plant *</Label>
+                  <Select
+                    value={formData.ops_manager_plant}
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, ops_manager_plant: value, ops_manager_sub_area: '' }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select plant" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover border shadow-lg z-50">
+                      {OPS_MANAGER_PLANTS.map(p => (
+                        <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {formData.ops_manager_plant && opsManagerHasSubArea(formData.ops_manager_plant) && (
+                  <div>
+                    <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Area *</Label>
+                    <Select
+                      value={formData.ops_manager_sub_area}
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, ops_manager_sub_area: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select area" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover border shadow-lg z-50">
+                        {getOpsManagerSubAreas(formData.ops_manager_plant).map(a => (
+                          <SelectItem key={a.value} value={a.value}>{a.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </>
             )}
 
             {/* Site Engr. - Station directly */}

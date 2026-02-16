@@ -46,6 +46,14 @@ import {
   hasNoAssignment,
   PORTFOLIO_REGIONS 
 } from '@/utils/roleAssignmentConfig';
+import {
+  isOpsManager,
+  OPS_MANAGER_PLANTS,
+  opsManagerHasSubArea,
+  getOpsManagerSubAreas,
+  generateOpsManagerPosition,
+  isOpsManagerTitleReady,
+} from '@/utils/opsManagerConfig';
 import { AvatarCropDialog } from './AvatarCropDialog';
 
 // Type definitions matching the database schema exactly
@@ -186,7 +194,9 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
     two_factor_enabled: false,
     password_change_required: false,
     functional_email: false,
-    position: ''
+    position: '',
+    ops_manager_plant: '',
+    ops_manager_sub_area: ''
   });
 
   // Use categorized roles hook for function -> role hierarchy
@@ -253,6 +263,11 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
     // Plant Director and Dep. Plant Director - stop at plant
     if (['Plant Director', 'Dep. Plant Director'].includes(role) && plant) {
       return `${role} - ${plant}`;
+    }
+    
+    // Ops Manager - uses dedicated plant/sub-area fields
+    if (isOpsManager(role)) {
+      return generateOpsManagerPosition(formData.ops_manager_plant, formData.ops_manager_sub_area);
     }
     
     // Site Engineer requires station directly
@@ -328,6 +343,8 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
       case 'Plant Director':
       case 'Dep. Plant Director':
         return !!plant;
+      case 'Ops Manager':
+        return isOpsManagerTitleReady(formData.ops_manager_plant, formData.ops_manager_sub_area);
       case 'Site Engineer':
       case 'Site Engr.':
         return !!station;
@@ -535,19 +552,33 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
         userFunction = categoryWithRole?.category.name || '';
       }
 
+      // Parse Ops Manager position to extract plant and sub-area
+      let opsPlant = '';
+      let opsSubArea = '';
+      if (baseRole === 'Ops Manager' && positionOrRole.includes(' - ')) {
+        const afterRole = positionOrRole.replace(/^Ops Manager\s*[-–]\s*/, '');
+        // Try to match known plants
+        for (const plant of ['NRNGL', 'BNGL', 'KAZ', 'CS', 'UQ']) {
+          if (afterRole.startsWith(plant)) {
+            opsPlant = plant;
+            const remainder = afterRole.replace(plant, '').replace(/^\s*[-–]\s*/, '').trim();
+            if (remainder) opsSubArea = remainder;
+            break;
+          }
+        }
+      }
+
       setFormData({
         first_name: user.first_name || '',
         last_name: user.last_name || '',
         email: user.email || '',
-        // When functional_email is true, personal_email contains the user's personal email address
-        // The field named "functional_email_address" in the form is actually used to display the personal email
         functional_email_address: user.personal_email || '',
         phone_number: user.phone_number || '',
         primary_phone: user.primary_phone || '',
         secondary_phone: user.secondary_phone || '',
         country_code: user.country_code || '+964',
         function: userFunction,
-        role: baseRole, // Use extracted base role, not full position
+        role: baseRole,
         discipline: user.ta2_discipline || '',
         commission: user.ta2_commission || '',
         portfolio: '',
@@ -562,7 +593,9 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
         two_factor_enabled: user.two_factor_enabled || false,
         password_change_required: user.password_change_required || false,
         functional_email: user.functional_email || false,
-        position: user.position || ''
+        position: user.position || '',
+        ops_manager_plant: opsPlant,
+        ops_manager_sub_area: opsSubArea
       });
       
       setSystemRole(user.roles?.[0] || 'user');
@@ -1085,7 +1118,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
         setDatabaseRoles(prev => [...prev, { value: newRole.name, label: newRole.name }]);
       }
     }
-    setFormData(prev => ({ ...prev, role: value }));
+    setFormData(prev => ({ ...prev, role: value, ops_manager_plant: '', ops_manager_sub_area: '' }));
   };
 
   const handleDisciplineChange = async (value: string) => {
@@ -1535,6 +1568,48 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                             className={!editMode ? 'bg-muted pointer-events-none' : ''}
                           />
                         </div>
+                      )}
+
+                      {/* Ops Manager - Plant + optional Sub-Area */}
+                      {isOpsManager(formData.role) && (
+                        <>
+                          <div>
+                            <Label>Plant *</Label>
+                            <Select
+                              value={formData.ops_manager_plant}
+                              onValueChange={(value) => setFormData(prev => ({ ...prev, ops_manager_plant: value, ops_manager_sub_area: '' }))}
+                              disabled={!editMode}
+                            >
+                              <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
+                                <SelectValue placeholder="Select plant" />
+                              </SelectTrigger>
+                              <SelectContent className="bg-popover border shadow-lg z-50">
+                                {OPS_MANAGER_PLANTS.map(p => (
+                                  <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          {formData.ops_manager_plant && opsManagerHasSubArea(formData.ops_manager_plant) && (
+                            <div>
+                              <Label>Area *</Label>
+                              <Select
+                                value={formData.ops_manager_sub_area}
+                                onValueChange={(value) => setFormData(prev => ({ ...prev, ops_manager_sub_area: value }))}
+                                disabled={!editMode}
+                              >
+                                <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
+                                  <SelectValue placeholder="Select area" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-popover border shadow-lg z-50">
+                                  {getOpsManagerSubAreas(formData.ops_manager_plant).map(a => (
+                                    <SelectItem key={a.value} value={a.value}>{a.label}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          )}
+                        </>
                       )}
 
                         {roleRequiresStation(formData.role) && (
