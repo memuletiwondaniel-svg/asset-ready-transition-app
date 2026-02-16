@@ -1530,7 +1530,7 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
             return {
               id: match.user_id || `director-${idx}`,
               name: match.full_name || '',
-              role: 'Dep. Plant Director',
+              role: match.position || 'Dep. Plant Director',
             };
           }
         }
@@ -1538,7 +1538,7 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
         return {
           id: match?.user_id || `director-${idx}`,
           name: match?.full_name || '',
-          role,
+          role: match?.position || role,
         };
       });
     },
@@ -1620,16 +1620,17 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
         if (plan?.project_id) {
           const { data: project } = await client
             .from('projects')
-            .select('plant_id, hub_id')
+            .select('plant_id, hub_id, region_id')
             .eq('id', plan.project_id)
             .maybeSingle();
           if (project?.plant_id) {
             const { data: plant } = await client.from('plant').select('name').eq('id', project.plant_id).maybeSingle();
             plantName = plant?.name || '';
           }
-          if (project?.hub_id) {
-            const { data: hub } = await client.from('hubs').select('name').eq('id', project.hub_id).maybeSingle();
-            projectAreaHub = hub?.name || '';
+          // Use region for area matching (Project Manager – Central/North/South)
+          if (project?.region_id) {
+            const { data: region } = await client.from('project_region').select('name').eq('id', project.region_id).maybeSingle();
+            projectAreaHub = region?.name || '';
           }
         }
       }
@@ -1658,7 +1659,6 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
       ];
 
       return vcrApproverRoles.map((role, idx) => {
-        const roleLower = role.toLowerCase();
         const match = allProfiles.find((p: any) => {
           const pos = (p.position || '').toLowerCase();
           
@@ -1672,7 +1672,9 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
             return (pos.includes('eng') && pos.includes('manager') && pos.includes('asset'));
           }
           if (role === 'Project Manager') {
-            return pos.includes('project manager') && (areaLower ? pos.includes(areaLower) : true);
+            // Match using region name (Central/North/South) - handle both regular dash and em-dash
+            const normalizedPos = pos.replace(/–/g, '-');
+            return normalizedPos.includes('project manager') && (areaLower ? normalizedPos.includes(areaLower) : true);
           }
           return false;
         });
@@ -1680,7 +1682,7 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
         return {
           id: match?.user_id || `vcr-approver-${idx}`,
           name: match?.full_name || '',
-          role,
+          role: match?.position || role,
           avatarUrl: getFullAvatarUrl(match?.avatar_url || null),
         };
       });
