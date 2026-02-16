@@ -666,9 +666,19 @@ const OverviewInfoPanel: React.FC<{ vcr: ProjectVCR; projectName?: string; proje
           <div className="text-sm font-medium text-primary">{projectCode} - {projectName}</div>
         </div>
 
-        <div>
-          <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">VCR Name</div>
-          <div className="text-sm font-medium text-foreground">{vcr.name}</div>
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">VCR Name</div>
+            <div className="text-sm font-medium text-foreground">{vcr.name}</div>
+          </div>
+          <div className="text-right">
+            <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Hydrocarbon</div>
+            {vcr.has_hydrocarbon ? (
+              <Badge className="bg-amber-500/10 text-amber-600 border-amber-200 text-[10px]">Yes - HC</Badge>
+            ) : (
+              <Badge variant="outline" className="text-[10px]">No</Badge>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-3 gap-px bg-border rounded-lg overflow-hidden">
@@ -698,15 +708,6 @@ const OverviewInfoPanel: React.FC<{ vcr: ProjectVCR; projectName?: string; proje
             <div className="text-[9px] uppercase tracking-wide text-muted-foreground mb-1">Systems</div>
             <div className="text-xs font-medium text-foreground">{vcr.systems_count}</div>
           </div>
-        </div>
-
-        <div>
-          <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Hydrocarbon</div>
-          {vcr.has_hydrocarbon ? (
-            <Badge className="bg-amber-500/10 text-amber-600 border-amber-200 text-[10px]">Yes - HC Systems</Badge>
-          ) : (
-            <Badge variant="outline" className="text-[10px]">No</Badge>
-          )}
         </div>
 
         {/* VCR Scope Section */}
