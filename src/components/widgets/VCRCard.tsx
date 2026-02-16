@@ -18,8 +18,8 @@ const shortCode = (code?: string) => {
 };
 
 const ProgressWheel: React.FC<{ value: number; color?: string }> = ({ value, color }) => {
-  const size = 36;
-  const strokeWidth = 3.5;
+  const size = 44;
+  const strokeWidth = 4;
   const radius = (size - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
   const offset = circumference - (value / 100) * circumference;
