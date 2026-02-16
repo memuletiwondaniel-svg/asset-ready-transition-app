@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { CalendarCheck, Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { StepPhaseSelection } from './StepPhaseSelection';
 import { StepProjectType } from './StepProjectType';
 import { StepActivities } from './StepActivities';
@@ -151,24 +152,42 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
         </DialogHeader>
 
         {/* Step indicator */}
-        <div className="flex items-center gap-1 px-1">
-          {STEP_LABELS.map((label, i) => (
-            <React.Fragment key={label}>
-              <div className="flex items-center gap-1.5">
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
-                  i + 1 <= step ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-                }`}>
-                  {i + 1}
+        <div className="flex items-center gap-0 px-2">
+          {STEP_LABELS.map((label, i) => {
+            const stepNum = i + 1;
+            const isCompleted = stepNum < step;
+            const isCurrent = stepNum === step;
+            const isFuture = stepNum > step;
+
+            return (
+              <React.Fragment key={label}>
+                <div className="flex items-center gap-1.5">
+                  <div className={cn(
+                    "w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold transition-all duration-300",
+                    isCompleted && "border-2 border-emerald-600 text-emerald-600 bg-transparent",
+                    isCurrent && "bg-primary text-primary-foreground scale-105 ring-2 ring-primary/30 animate-pulse",
+                    isFuture && "bg-muted text-muted-foreground"
+                  )}>
+                    {stepNum}
+                  </div>
+                  <span className={cn(
+                    "text-[11px] hidden sm:inline transition-colors",
+                    isCompleted && "text-muted-foreground",
+                    isCurrent && "text-foreground font-semibold",
+                    isFuture && "text-muted-foreground"
+                  )}>
+                    {label}
+                  </span>
                 </div>
-                <span className={`text-xs hidden sm:inline ${i + 1 <= step ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
-                  {label}
-                </span>
-              </div>
-              {i < STEP_LABELS.length - 1 && (
-                <div className={`flex-1 h-px ${i + 1 < step ? 'bg-primary' : 'bg-border'}`} />
-              )}
-            </React.Fragment>
-          ))}
+                {i < STEP_LABELS.length - 1 && (
+                  <div className={cn(
+                    "flex-1 h-[3px] rounded-full mx-1 transition-colors duration-300",
+                    isCompleted ? "bg-emerald-600" : isCurrent ? "bg-amber-200" : "bg-border"
+                  )} />
+                )}
+              </React.Fragment>
+            );
+          })}
         </div>
 
         {/* Step content */}
