@@ -48,7 +48,7 @@ export const ORAConfigurationManagement: React.FC<ORAConfigurationManagementProp
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-auto p-6">
+      <div className="flex-1 min-h-0 overflow-auto p-6">
         <div className="max-w-7xl mx-auto">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-3 max-w-xl mb-6">
