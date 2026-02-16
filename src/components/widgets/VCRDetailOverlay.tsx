@@ -36,6 +36,7 @@ import { cn } from '@/lib/utils';
 import { ProjectVCR } from '@/hooks/useProjectVCRs';
 import { getVCRColor } from '@/components/p2a-workspace/utils/vcrColors';
 import { format } from 'date-fns';
+import { useHandoverPointSystems } from '@/components/p2a-workspace/hooks/useP2AHandoverPoints';
 import SOFCertificate from '@/components/handover/SOFCertificate';
 import PACCertificate from '@/components/handover/PACCertificate';
 
@@ -296,6 +297,158 @@ const ApprovalsPanel: React.FC<{ vcr: ProjectVCR }> = ({ vcr }) => {
   );
 };
 
+// ── Systems Panel ────────────────────────────────────────────────
+const VCRSystemsPanel: React.FC<{ vcrId: string }> = ({ vcrId }) => {
+  const { systems, isLoading } = useHandoverPointSystems(vcrId);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        {[1, 2, 3].map(i => <Skeleton key={i} className="h-20 w-full rounded-xl" />)}
+      </div>
+    );
+  }
+
+  if (!systems.length) {
+    return (
+      <div className="flex-1 flex items-center justify-center py-16">
+        <div className="text-center">
+          <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
+            <Layers className="w-7 h-7 text-muted-foreground" />
+          </div>
+          <h3 className="text-lg font-semibold mb-1">No Systems</h3>
+          <p className="text-sm text-muted-foreground">No systems are mapped to this VCR yet.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Summary stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Card>
+          <CardContent className="p-3 text-center">
+            <div className="text-xl font-bold text-foreground">{systems.length}</div>
+            <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Total Systems</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-3 text-center">
+            <div className="text-xl font-bold text-foreground">
+              {systems.reduce((s: number, sys: any) => s + (sys.itr_total_count || 0), 0)}
+            </div>
+            <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Total ITRs</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-3 text-center">
+            <div className="text-xl font-bold text-foreground">
+              {systems.reduce((s: number, sys: any) => s + (sys.punchlist_a_count || 0), 0)}
+            </div>
+            <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Punchlist A</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-3 text-center">
+            <div className="text-xl font-bold text-foreground">
+              {systems.reduce((s: number, sys: any) => s + (sys.punchlist_b_count || 0), 0)}
+            </div>
+            <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Punchlist B</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Systems list */}
+      <div className="space-y-2">
+        {systems.map((sys: any) => {
+          const completion = sys.completion_percentage || 0;
+          const isHC = sys.is_hydrocarbon;
+          const milestoneLabel = isHC ? 'RFSU' : 'RFO';
+          const milestoneDate = isHC ? sys.target_rfsu_date : sys.target_rfo_date;
+          const isMCComplete = completion >= 80;
+          const isRFCComplete = completion >= 95;
+          const isMilestoneComplete = completion === 100;
+
+          return (
+            <Card key={sys.id} className="overflow-hidden">
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className="text-sm font-semibold text-foreground truncate">{sys.name}</span>
+                      {isHC && (
+                        <Badge className="bg-amber-500/10 text-amber-600 border-amber-200 text-[9px] shrink-0">HC</Badge>
+                      )}
+                    </div>
+                    <span className="text-[10px] text-muted-foreground font-mono">{sys.system_id}</span>
+                  </div>
+                  <div className="text-right shrink-0 ml-3">
+                    <div className="text-lg font-bold text-foreground">{completion}%</div>
+                    <div className="text-[9px] text-muted-foreground">Complete</div>
+                  </div>
+                </div>
+
+                <Progress value={completion} className="h-1.5 mb-3" />
+
+                {/* Milestones row */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Badge variant="outline" className={cn(
+                    "text-[9px] gap-1",
+                    isMCComplete ? "border-emerald-300 text-emerald-600" : "text-muted-foreground"
+                  )}>
+                    {isMCComplete ? <CheckCircle2 className="w-2.5 h-2.5" /> : <Clock className="w-2.5 h-2.5" />}
+                    MC
+                  </Badge>
+                  <Badge variant="outline" className={cn(
+                    "text-[9px] gap-1",
+                    isRFCComplete ? "border-emerald-300 text-emerald-600" : "text-muted-foreground"
+                  )}>
+                    {isRFCComplete ? <CheckCircle2 className="w-2.5 h-2.5" /> : <Clock className="w-2.5 h-2.5" />}
+                    RFC
+                  </Badge>
+                  <Badge variant="outline" className={cn(
+                    "text-[9px] gap-1",
+                    isMilestoneComplete ? "border-emerald-300 text-emerald-600" : "text-muted-foreground"
+                  )}>
+                    {isMilestoneComplete ? <CheckCircle2 className="w-2.5 h-2.5" /> : <Clock className="w-2.5 h-2.5" />}
+                    {milestoneLabel}
+                  </Badge>
+                  {milestoneDate && (
+                    <span className="text-[9px] text-muted-foreground ml-auto">
+                      Target: {format(new Date(milestoneDate), 'dd MMM yyyy')}
+                    </span>
+                  )}
+                </div>
+
+                {/* ITR & Punchlist stats */}
+                <div className="grid grid-cols-4 gap-2 mt-3 pt-3 border-t">
+                  <div className="text-center">
+                    <div className="text-xs font-semibold">{sys.itr_a_count || 0}</div>
+                    <div className="text-[9px] text-muted-foreground">ITR-A</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-xs font-semibold">{sys.itr_b_count || 0}</div>
+                    <div className="text-[9px] text-muted-foreground">ITR-B</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-xs font-semibold">{sys.punchlist_a_count || 0}</div>
+                    <div className="text-[9px] text-muted-foreground">PL-A</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-xs font-semibold">{sys.punchlist_b_count || 0}</div>
+                    <div className="text-[9px] text-muted-foreground">PL-B</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 // ── Placeholder tab content ──────────────────────────────────────
 const PlaceholderContent: React.FC<{ title: string; icon: React.ElementType }> = ({ title, icon: Icon }) => (
   <div className="flex-1 flex items-center justify-center">
@@ -306,20 +459,6 @@ const PlaceholderContent: React.FC<{ title: string; icon: React.ElementType }> =
       <h3 className="text-lg font-semibold mb-1">{title}</h3>
       <p className="text-sm text-muted-foreground max-w-xs">
         {title} details for this VCR will be displayed here.
-      </p>
-    </div>
-  </div>
-);
-
-const LockedContent: React.FC<{ title: string }> = ({ title }) => (
-  <div className="flex-1 flex items-center justify-center">
-    <div className="text-center">
-      <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
-        <Lock className="w-7 h-7 text-muted-foreground" />
-      </div>
-      <h3 className="text-lg font-semibold mb-1">{title}</h3>
-      <p className="text-sm text-muted-foreground max-w-xs">
-        This section is locked until all VCR prerequisites are completed.
       </p>
     </div>
   </div>
@@ -378,7 +517,7 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
       case 'spares':
         return <PlaceholderContent title="Spares" icon={Package} />;
       case 'systems':
-        return <PlaceholderContent title="Systems" icon={Layers} />;
+        return <VCRSystemsPanel vcrId={vcr.id} />;
       default:
         return null;
     }
