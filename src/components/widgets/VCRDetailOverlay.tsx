@@ -460,7 +460,7 @@ const ApprovalsPanel: React.FC<ApprovalsPanelProps> = ({
           <CollapsibleSection title="PAC Approver" count={pacApprovers.filter(a => a.name).length} defaultOpen={false}>
             <div className="space-y-0.5">
               {pacApprovers
-                .filter(a => ['Plant Director', 'Deputy Plant Director', 'Project Hub Lead'].includes(a.role))
+                .filter(a => a.name)
                 .map((person, i) => (
                   <PersonRow
                     key={`pac-approver-${i}`}
@@ -469,7 +469,7 @@ const ApprovalsPanel: React.FC<ApprovalsPanelProps> = ({
                     avatarUrl={person.avatar_url}
                   />
                 ))}
-              {pacApprovers.filter(a => ['Plant Director', 'Deputy Plant Director', 'Project Hub Lead'].includes(a.role)).length === 0 && (
+              {pacApprovers.filter(a => a.name).length === 0 && (
                 <div className="py-2 text-[10px] text-muted-foreground italic">No PAC approvers found</div>
               )}
             </div>
@@ -1544,11 +1544,12 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
     },
   });
 
-  // Keep PAC certificate approvers (P2A plan approvers)
-  const { data: pacCertificateApprovers = [] } = useQuery({
+  // PAC Approvers: always Plant Director (primary) + Project Hub Lead
+  const { data: pacCertificateApprovers = [] } = useQuery<Array<{ id: string; name: string; role: string; status?: 'pending' | 'approved' | 'rejected'; avatar_url?: string }>>({
     queryKey: ['vcr-pac-approvers', vcr.id],
     queryFn: async () => {
       const client = supabase as any;
+
       const { data: hp } = await client
         .from('p2a_handover_points')
         .select('handover_plan_id')
@@ -1556,22 +1557,21 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
         .maybeSingle();
       if (!hp?.handover_plan_id) return [];
 
-      const { data: approvers } = await client
-        .from('p2a_handover_approvers')
-        .select('id, role_name, user_id, display_order, status')
-        .eq('handover_id', hp.handover_plan_id)
-        .order('display_order', { ascending: true });
-      if (!approvers || approvers.length === 0) return [];
-
-      const userIds = approvers.filter((a: any) => a.user_id).map((a: any) => a.user_id);
-      let profileMap: Record<string, { full_name: string; avatar_url: string | null }> = {};
-      if (userIds.length > 0) {
-        const { data: profiles } = await client
-          .from('profiles')
-          .select('user_id, full_name, avatar_url')
-          .in('user_id', userIds);
-        if (profiles) {
-          profileMap = Object.fromEntries(profiles.map((p: any) => [p.user_id, { full_name: p.full_name, avatar_url: p.avatar_url }]));
+      let plantName = '';
+      const { data: plan } = await client
+        .from('p2a_handover_plans')
+        .select('project_id')
+        .eq('id', hp.handover_plan_id)
+        .maybeSingle();
+      if (plan?.project_id) {
+        const { data: project } = await client
+          .from('projects')
+          .select('plant_id, hub_id')
+          .eq('id', plan.project_id)
+          .maybeSingle();
+        if (project?.plant_id) {
+          const { data: plant } = await client.from('plant').select('name').eq('id', project.plant_id).maybeSingle();
+          plantName = plant?.name || '';
         }
       }
 
@@ -1582,17 +1582,47 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
         return data.publicUrl;
       };
 
-      return approvers.map((a: any) => {
-        const profile = a.user_id ? profileMap[a.user_id] : null;
-        return {
-          id: a.id,
-          name: profile?.full_name || '',
-          role: a.role_name,
-          status: a.status?.toLowerCase() === 'approved' ? 'approved' as const : a.status?.toLowerCase() === 'rejected' ? 'rejected' as const : 'pending' as const,
-          avatar_url: getFullAvatarUrl(profile?.avatar_url || null),
-          user_id: a.user_id,
-        };
+      const { data: allProfiles } = await client
+        .from('profiles')
+        .select('user_id, full_name, avatar_url, position')
+        .eq('is_active', true);
+      if (!allProfiles) return [];
+
+      const plantLower = plantName.toLowerCase();
+      const result: Array<{ id: string; name: string; role: string; status?: 'pending' | 'approved' | 'rejected'; avatar_url?: string }> = [];
+
+      // 1. Project Hub Lead
+      const hubLead = allProfiles.find((p: any) => {
+        const pos = (p.position || '').toLowerCase().replace(/–/g, '-');
+        return pos.includes('project hub lead') || (pos.includes('project') && pos.includes('hub') && pos.includes('lead'));
       });
+      result.push({
+        id: hubLead?.user_id || 'pac-hub-lead',
+        name: hubLead?.full_name || '',
+        role: hubLead?.position || 'Project Hub Lead',
+        avatar_url: getFullAvatarUrl(hubLead?.avatar_url || null),
+      });
+
+      // 2. Plant Director (primary, NOT deputy)
+      let plantDir = allProfiles.find((p: any) => {
+        const pos = (p.position || '').toLowerCase();
+        if (pos.includes('dep.') || pos.includes('deputy')) return false;
+        return pos.includes('plant') && pos.includes('director') && (plantLower ? pos.includes(plantLower) : false);
+      });
+      if (!plantDir && plantLower) {
+        plantDir = allProfiles.find((p: any) => {
+          const pos = (p.position || '').toLowerCase();
+          return (pos.includes('dep.') || pos.includes('deputy')) && pos.includes('plant') && pos.includes('director') && pos.includes(plantLower);
+        });
+      }
+      result.push({
+        id: plantDir?.user_id || 'pac-plant-dir',
+        name: plantDir?.full_name || '',
+        role: plantDir?.position || 'Plant Director',
+        avatar_url: getFullAvatarUrl(plantDir?.avatar_url || null),
+      });
+
+      return result;
     },
   });
 
@@ -1739,7 +1769,7 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
             projectName={projectName}
             projectId={projectCode}
             pacDate={vcr.target_date ? format(new Date(vcr.target_date), 'dd MMM yyyy') : ''}
-            approvers={pacCertificateApprovers.length > 0 ? pacCertificateApprovers.filter(a => ['Plant Director', 'Deputy Plant Director', 'Project Hub Lead'].includes(a.role)) : undefined}
+            approvers={pacCertificateApprovers.length > 0 ? pacCertificateApprovers.filter(a => a.name) : undefined}
           />
         );
       case 'training':
