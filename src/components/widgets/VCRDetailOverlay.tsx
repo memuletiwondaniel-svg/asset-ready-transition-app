@@ -1028,7 +1028,7 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[90vw] h-[95vh] flex flex-col p-0 gap-0 overflow-hidden">
+      <DialogContent className="max-w-[90vw] h-[95vh] flex flex-col p-0 gap-0 overflow-hidden [&>button]:hidden">
         <VisuallyHidden>
           <DialogHeader>
             <DialogTitle>VCR Detail</DialogTitle>
