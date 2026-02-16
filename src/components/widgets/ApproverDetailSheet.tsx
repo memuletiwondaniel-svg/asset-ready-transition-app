@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Search, CheckCircle2, Clock, AlertCircle, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
+import { VCRItemDetailSheet, VCRItemBasic } from './VCRItemDetailSheet';
 
 interface ApproverDetailSheetProps {
   open: boolean;
@@ -43,6 +44,7 @@ export const ApproverDetailSheet: React.FC<ApproverDetailSheetProps> = ({
 }) => {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterStatus>('all');
+  const [selectedItem, setSelectedItem] = useState<VCRItemBasic | null>(null);
 
   const getInitials = (name: string) =>
     name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
@@ -68,7 +70,7 @@ export const ApproverDetailSheet: React.FC<ApproverDetailSheetProps> = ({
         .from('vcr_items')
         .select(`
           id, vcr_item, supporting_evidence, display_order, topic,
-          vcr_item_categories!vcr_items_category_id_fkey (name)
+          vcr_item_categories!vcr_items_category_id_fkey (name, code)
         `)
         .eq('is_active', true)
         .contains('approving_party_role_ids', [roleId])
@@ -105,7 +107,10 @@ export const ApproverDetailSheet: React.FC<ApproverDetailSheetProps> = ({
           name: item.vcr_item,
           topic: item.topic,
           category: item.vcr_item_categories?.name || 'Other',
+          categoryCode: item.vcr_item_categories?.code || '',
           status,
+          prereqStatus: prereq?.status || 'NOT_STARTED',
+          prerequisiteId: prereq?.id || null,
           submittedAt: prereq?.submitted_at,
           reviewedAt: prereq?.reviewed_at,
           order: item.display_order || idx,
@@ -147,6 +152,7 @@ export const ApproverDetailSheet: React.FC<ApproverDetailSheetProps> = ({
   };
 
   return (
+    <>
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-[480px] sm:max-w-[480px] p-0 flex flex-col">
         <SheetHeader className="px-6 pt-6 pb-4 border-b shrink-0">
@@ -226,8 +232,18 @@ export const ApproverDetailSheet: React.FC<ApproverDetailSheetProps> = ({
                 return (
                   <div
                     key={item.id}
+                    onClick={() => setSelectedItem({
+                      id: item.id,
+                      vcr_item: item.name,
+                      topic: item.topic,
+                      category_name: item.category,
+                      category_code: item.categoryCode,
+                      status: item.prereqStatus,
+                      prerequisite_id: item.prerequisiteId,
+                      itemCode: `${item.categoryCode}-${String(item.order + 1).padStart(2, '0')}`,
+                    })}
                     className={cn(
-                      "rounded-xl border p-3 transition-colors",
+                      "rounded-xl border p-3 transition-colors cursor-pointer hover:shadow-sm",
                       sc.bg
                     )}
                   >
@@ -262,5 +278,13 @@ export const ApproverDetailSheet: React.FC<ApproverDetailSheetProps> = ({
         </ScrollArea>
       </SheetContent>
     </Sheet>
+
+    <VCRItemDetailSheet
+      item={selectedItem}
+      open={!!selectedItem}
+      onOpenChange={(open) => { if (!open) setSelectedItem(null); }}
+      vcrId={vcrId}
+    />
+    </>
   );
 };
