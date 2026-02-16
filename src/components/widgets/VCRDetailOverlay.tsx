@@ -1171,24 +1171,28 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
       } else {
         const { data: profiles } = await client
           .from('profiles')
-          .select('user_id, full_name, avatar_url, role')
+          .select('user_id, full_name, avatar_url, role, position')
           .in('role', Array.from(allRoleIds))
           .eq('is_active', true);
         profilesByRole = profiles || [];
       }
 
-      // Build role-to-user map, preferring users WITH avatar/profile picture
+      // Build role-to-user map, prioritizing Project-level staff over Asset-level
       const roleUserMap = new Map<string, { full_name: string; avatar_url: string | null; user_id: string }>();
       if (profilesByRole) {
-        // Filter out non-TA roles (Hub Lead, ORA Lead, etc.) that shouldn't be approving parties
+        // Filter out non-TA roles and any remaining Asset-level staff
         const taProfiles = profilesByRole.filter((p: any) => {
           const roleName = (roleMap.get(p.role) || '').toLowerCase();
-          // Exclude hub leads, ORA leads, project leads — only TAs and advisers should approve
           if (roleName.includes('hub lead') || roleName.includes('ora lead')) return false;
+          const pos = (p.position || '').toLowerCase();
+          if (pos.includes('asset')) return false;
           return true;
         });
-        // Sort: profiles with avatars first, so they get priority
+        // Sort: Project-level first, then by avatar presence
         const sorted = [...taProfiles].sort((a: any, b: any) => {
+          const aIsProject = (a.position || '').toLowerCase().includes('project') ? 1 : 0;
+          const bIsProject = (b.position || '').toLowerCase().includes('project') ? 1 : 0;
+          if (bIsProject !== aIsProject) return bIsProject - aIsProject;
           const aHas = a.avatar_url ? 1 : 0;
           const bHas = b.avatar_url ? 1 : 0;
           return bHas - aHas;
