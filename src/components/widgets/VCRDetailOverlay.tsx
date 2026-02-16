@@ -590,8 +590,9 @@ const OverviewInfoPanel: React.FC<{ vcr: ProjectVCR; projectName?: string; proje
           )}
         </div>
 
-        <div>
-          <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">VCR Scope</div>
+        {/* VCR Scope Section */}
+        <div className="border-t border-border/60 pt-4">
+          <div className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-2">VCR Scope</div>
           {editingScope ? (
             <div className="space-y-2">
               <textarea
@@ -630,9 +631,9 @@ const OverviewInfoPanel: React.FC<{ vcr: ProjectVCR; projectName?: string; proje
           )}
         </div>
 
-        {/* VCR Execution Plan */}
-        <div>
-          <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-2">VCR Execution Plan</div>
+        {/* VCR Execution Plan Section */}
+        <div className="border-t border-border/60 pt-4">
+          <div className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-2">VCR Execution Plan</div>
           <ExecutionPlanStatus vcrId={vcr.id} status={(vcr as any).execution_plan_status || 'DRAFT'} />
         </div>
       </CardContent>
