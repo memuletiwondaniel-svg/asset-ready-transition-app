@@ -2978,6 +2978,11 @@ export type Database = {
           created_at: string
           created_by: string | null
           description: string | null
+          execution_plan_approved_at: string | null
+          execution_plan_approved_by: string | null
+          execution_plan_status: string
+          execution_plan_submitted_at: string | null
+          execution_plan_submitted_by: string | null
           handover_plan_id: string | null
           id: string
           name: string
@@ -2994,6 +2999,11 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          execution_plan_approved_at?: string | null
+          execution_plan_approved_by?: string | null
+          execution_plan_status?: string
+          execution_plan_submitted_at?: string | null
+          execution_plan_submitted_by?: string | null
           handover_plan_id?: string | null
           id?: string
           name: string
@@ -3010,6 +3020,11 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          execution_plan_approved_at?: string | null
+          execution_plan_approved_by?: string | null
+          execution_plan_status?: string
+          execution_plan_submitted_at?: string | null
+          execution_plan_submitted_by?: string | null
           handover_plan_id?: string | null
           id?: string
           name?: string
