@@ -211,7 +211,13 @@ const ProgressPanel: React.FC<{ vcr: ProjectVCR }> = ({ vcr }) => {
                 </div>
               </div>
               <div>
-                <div className="text-sm font-medium text-foreground">{itemsToGo} items to go</div>
+                <div className="text-sm font-medium text-foreground">
+                  {vcr.target_date 
+                    ? differenceInDays(new Date(vcr.target_date), new Date()) < 0
+                      ? `${Math.abs(differenceInDays(new Date(vcr.target_date), new Date()))} days overdue`
+                      : `${differenceInDays(new Date(vcr.target_date), new Date())} days to go`
+                    : `${itemsToGo} items to go`}
+                </div>
                 <div className="text-xs text-muted-foreground">of {totalItems} total items</div>
               </div>
             </div>
@@ -447,16 +453,6 @@ const OverviewInfoPanel: React.FC<{ vcr: ProjectVCR; projectName?: string; proje
                 <div className="text-xs font-medium text-foreground truncate">
                   {targetDate ? format(targetDate, 'MMM dd, yyyy') : 'Not set'}
                 </div>
-                {targetDate && (
-                  <div className={cn("text-[9px] font-medium mt-0.5", 
-                    differenceInDays(targetDate, new Date()) < 0 ? 'text-red-500' : 
-                    differenceInDays(targetDate, new Date()) <= 7 ? 'text-amber-500' : 'text-emerald-500'
-                  )}>
-                    {differenceInDays(targetDate, new Date()) < 0 
-                      ? `${Math.abs(differenceInDays(targetDate, new Date()))} days overdue`
-                      : `${differenceInDays(targetDate, new Date())} days to go`}
-                  </div>
-                )}
               </div>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
