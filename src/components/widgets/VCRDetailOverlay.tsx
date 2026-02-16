@@ -1180,10 +1180,8 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
       // Build role-to-user map, prioritizing Project-level staff over Asset-level
       const roleUserMap = new Map<string, { full_name: string; avatar_url: string | null; user_id: string }>();
       if (profilesByRole) {
-        // Filter out non-TA roles and any remaining Asset-level staff
+        // Filter out Asset-level staff
         const taProfiles = profilesByRole.filter((p: any) => {
-          const roleName = (roleMap.get(p.role) || '').toLowerCase();
-          if (roleName.includes('hub lead')) return false;
           const pos = (p.position || '').toLowerCase();
           if (pos.includes('asset')) return false;
           return true;
@@ -1211,14 +1209,8 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
         return urlData.publicUrl;
       };
 
-      // Determine which roles should be excluded from the approvals panel
+      // No roles are excluded from the approvals panel
       const excludedRoleIds = new Set<string>();
-      for (const [roleId, roleName] of roleMap.entries()) {
-        const rn = roleName.toLowerCase();
-        if (rn.includes('hub lead')) {
-          excludedRoleIds.add(roleId);
-        }
-      }
 
       // Aggregate by approving role (excluding non-TA roles)
       const approverMap = new Map<string, { itemCount: number; acceptedCount: number; userName?: string; avatarUrl?: string; userId?: string }>();
