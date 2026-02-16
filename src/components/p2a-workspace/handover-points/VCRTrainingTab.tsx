@@ -133,6 +133,7 @@ export const VCRTrainingTab: React.FC<VCRTrainingTabProps> = ({ handoverPoint })
         handoverPlanId={handoverPlanId}
         oraPlanId={handoverPlanId}
         preselectedVCRId={handoverPoint.id}
+        vcrName={handoverPoint.name}
       />
     </div>
   );
