@@ -1177,7 +1177,18 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
         profilesByRole = profiles || [];
       }
 
-      // Build role-to-user map, prioritizing Project-level staff over Asset-level
+      // Fetch plant name for plant-aware personnel resolution
+      let currentPlantName = '';
+      if (projectId) {
+        const { data: projPlantData } = await client
+          .from('projects')
+          .select('plant_id, plant!projects_plant_id_fkey(name)')
+          .eq('id', projectId)
+          .maybeSingle();
+        currentPlantName = ((projPlantData as any)?.plant as any)?.name || '';
+      }
+
+      // Build role-to-user map, prioritizing plant-specific and Project-level staff
       const roleUserMap = new Map<string, { full_name: string; avatar_url: string | null; user_id: string }>();
       if (profilesByRole) {
         // Filter out Asset-level staff
@@ -1186,10 +1197,17 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
           if (pos.includes('asset')) return false;
           return true;
         });
-        // Sort: Project-level first, then by avatar presence
+        // Sort: plant-match first, then Project-level, then by avatar presence
+        const plantLower = currentPlantName.toLowerCase();
         const sorted = [...taProfiles].sort((a: any, b: any) => {
-          const aIsProject = (a.position || '').toLowerCase().includes('project') ? 1 : 0;
-          const bIsProject = (b.position || '').toLowerCase().includes('project') ? 1 : 0;
+          const aPos = (a.position || '').toLowerCase();
+          const bPos = (b.position || '').toLowerCase();
+          // Prioritize users whose position matches the current plant
+          const aPlantMatch = plantLower && aPos.includes(plantLower) ? 1 : 0;
+          const bPlantMatch = plantLower && bPos.includes(plantLower) ? 1 : 0;
+          if (bPlantMatch !== aPlantMatch) return bPlantMatch - aPlantMatch;
+          const aIsProject = aPos.includes('project') ? 1 : 0;
+          const bIsProject = bPos.includes('project') ? 1 : 0;
           if (bIsProject !== aIsProject) return bIsProject - aIsProject;
           const aHas = a.avatar_url ? 1 : 0;
           const bHas = b.avatar_url ? 1 : 0;
@@ -1211,19 +1229,11 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
 
       // Determine plant-specific role exclusions
       const excludedRoleIds = new Set<string>();
-      if (projectId) {
-        const { data: projectData } = await client
-          .from('projects')
-          .select('plant_id, plant!projects_plant_id_fkey(name)')
-          .eq('id', projectId)
-          .maybeSingle();
-        const plantName = ((projectData as any)?.plant as any)?.name || '';
-        // CS plant uses Ops Manager instead of Section Head
-        if (plantName.toUpperCase() === 'CS') {
-          for (const [roleId, roleName] of roleMap.entries()) {
-            if (roleName.toLowerCase().includes('section head')) {
-              excludedRoleIds.add(roleId);
-            }
+      // CS plant uses Ops Manager instead of Section Head
+      if (currentPlantName.toUpperCase() === 'CS') {
+        for (const [roleId, roleName] of roleMap.entries()) {
+          if (roleName.toLowerCase().includes('section head')) {
+            excludedRoleIds.add(roleId);
           }
         }
       }
