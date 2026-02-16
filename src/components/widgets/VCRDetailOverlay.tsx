@@ -212,6 +212,9 @@ interface ChecklistApproverData {
   role: 'delivering' | 'receiving';
   itemCount: number;
   acceptedCount: number;
+  userName?: string;
+  avatarUrl?: string;
+  userId?: string;
 }
 
 const ApprovalsPanel: React.FC<{ vcr: ProjectVCR; checklistApprovers?: ChecklistApproverData[] }> = ({ vcr, checklistApprovers = [] }) => {
@@ -263,16 +266,19 @@ const ApprovalsPanel: React.FC<{ vcr: ProjectVCR; checklistApprovers?: Checklist
             {approvingParties.map((person, i) => (
               <div key={`${person.name}-${i}`} className="flex items-center gap-3 py-2">
                 <Avatar className="w-8 h-8 shrink-0">
+                  {person.avatarUrl && (
+                    <AvatarImage src={person.avatarUrl} alt={person.userName || person.name} />
+                  )}
                   <AvatarFallback className="text-[10px] font-semibold bg-muted text-muted-foreground">
-                    {getInitials(person.name)}
+                    {getInitials(person.userName || person.name)}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
                   <div className="text-xs font-medium text-foreground truncate">
-                    {person.name}
+                    {person.userName || person.name}
                   </div>
                   <div className="text-[10px] text-muted-foreground truncate">
-                    Approving Party
+                    {person.name}
                   </div>
                 </div>
                 <StatusIndicator accepted={person.acceptedCount} total={person.itemCount} />
@@ -831,8 +837,31 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
 
       const acceptedStatuses = ['ACCEPTED', 'QUALIFICATION_APPROVED'];
 
+      // Fetch profiles matched to approving roles via profiles.role (which stores role UUID)
+      const { data: profilesByRole } = await client
+        .from('profiles')
+        .select('user_id, full_name, avatar_url, role')
+        .in('role', Array.from(allRoleIds))
+        .eq('is_active', true);
+
+      const roleUserMap = new Map<string, { full_name: string; avatar_url: string | null; user_id: string }>();
+      if (profilesByRole) {
+        for (const p of profilesByRole) {
+          if (p.role && !roleUserMap.has(p.role)) {
+            roleUserMap.set(p.role, { full_name: p.full_name, avatar_url: p.avatar_url, user_id: p.user_id });
+          }
+        }
+      }
+
+      const getFullAvatarUrl = (avatarUrl: string | null) => {
+        if (!avatarUrl) return '';
+        if (avatarUrl.startsWith('http')) return avatarUrl;
+        const { data: urlData } = supabase.storage.from('user-avatars').getPublicUrl(avatarUrl);
+        return urlData.publicUrl;
+      };
+
       // Aggregate by approving role
-      const approverMap = new Map<string, { itemCount: number; acceptedCount: number }>();
+      const approverMap = new Map<string, { itemCount: number; acceptedCount: number; userName?: string; avatarUrl?: string; userId?: string }>();
 
       for (const item of vcrItems) {
         if (!item.approving_party_role_ids) continue;
@@ -846,6 +875,15 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
           const existing = approverMap.get(roleName) || { itemCount: 0, acceptedCount: 0 };
           existing.itemCount++;
           if (isAccepted) existing.acceptedCount++;
+
+          // Attach user info if available
+          const userProfile = roleUserMap.get(roleId);
+          if (userProfile) {
+            existing.userName = userProfile.full_name;
+            existing.avatarUrl = getFullAvatarUrl(userProfile.avatar_url);
+            existing.userId = userProfile.user_id;
+          }
+
           approverMap.set(roleName, existing);
         }
       }
