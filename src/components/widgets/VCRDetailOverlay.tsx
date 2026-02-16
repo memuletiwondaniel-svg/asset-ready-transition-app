@@ -356,6 +356,7 @@ const VCRSystemsPanel: React.FC<{ vcrId: string; projectCode?: string }> = ({ vc
   const [syncing, setSyncing] = React.useState(false);
   const [syncResult, setSyncResult] = React.useState<{ success: boolean; message: string } | null>(null);
   const [selectedSystem, setSelectedSystem] = React.useState<any | null>(null);
+  const [viewMode, setViewMode] = React.useState<'card' | 'table'>('card');
 
   const handleSyncFromGoCompletions = async () => {
     const config = getAPIConfig('gocompletions');
@@ -454,7 +455,28 @@ const VCRSystemsPanel: React.FC<{ vcrId: string; projectCode?: string }> = ({ vc
               <p className="text-[10px] text-muted-foreground">{hcCount > 0 ? `${hcCount} Hydrocarbon · ${systems.length - hcCount} Non-HC` : 'All Non-Hydrocarbon'}</p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            {/* View toggle */}
+            <div className="flex items-center rounded-lg border bg-muted/40 p-0.5">
+              <button
+                onClick={() => setViewMode('card')}
+                className={cn(
+                  "px-2 py-1 rounded-md text-[10px] font-medium transition-colors",
+                  viewMode === 'card' ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
+              </button>
+              <button
+                onClick={() => setViewMode('table')}
+                className={cn(
+                  "px-2 py-1 rounded-md text-[10px] font-medium transition-colors",
+                  viewMode === 'table' ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg>
+              </button>
+            </div>
             {/* Sync from GoCompletions button */}
             <Button
               variant="outline"
@@ -510,108 +532,177 @@ const VCRSystemsPanel: React.FC<{ vcrId: string; projectCode?: string }> = ({ vc
         </div>
       </div>
 
-      {/* Systems Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        {systems.map((sys: any) => {
-          const completion = sys.completion_percentage || 0;
-          const isHC = sys.is_hydrocarbon;
-          const milestoneLabel = isHC ? 'RFSU' : 'RFO';
-          const milestoneDate = isHC ? sys.target_rfsu_date : sys.target_rfo_date;
-          const isMCComplete = completion >= 80;
-          const isRFCComplete = completion >= 95;
-          const isMilestoneComplete = completion === 100;
+      {/* Systems Card/Table View */}
+      {viewMode === 'card' ? (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {systems.map((sys: any) => {
+            const completion = sys.completion_percentage || 0;
+            const isHC = sys.is_hydrocarbon;
+            const milestoneLabel = isHC ? 'RFSU' : 'RFO';
+            const milestoneDate = isHC ? sys.target_rfsu_date : sys.target_rfo_date;
+            const isMCComplete = completion >= 80;
+            const isRFCComplete = completion >= 95;
+            const isMilestoneComplete = completion === 100;
 
-          // Mini progress ring
-          const ringSize = 40;
-          const strokeWidth = 3.5;
-          const radius = (ringSize - strokeWidth) / 2;
-          const circumference = 2 * Math.PI * radius;
-          const ringOffset = circumference - (completion / 100) * circumference;
-          const ringColor = completion === 100 ? 'text-emerald-500' : completion >= 50 ? 'text-amber-500' : 'text-primary';
+            const ringSize = 40;
+            const strokeWidth = 3.5;
+            const radius = (ringSize - strokeWidth) / 2;
+            const circumference = 2 * Math.PI * radius;
+            const ringOffset = circumference - (completion / 100) * circumference;
+            const ringColor = completion === 100 ? 'text-emerald-500' : completion >= 50 ? 'text-amber-500' : 'text-primary';
 
-          return (
-            <div
-              key={sys.id}
-              className="group rounded-2xl border bg-card hover:bg-muted/30 transition-all hover:shadow-sm overflow-hidden cursor-pointer"
-              onClick={() => setSelectedSystem(sys)}
-            >
-              <div className="p-4">
-                {/* Top row: Name + Progress ring */}
-                <div className="flex items-start gap-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5 mb-0.5">
-                      <span className="font-mono text-[10px] text-muted-foreground tracking-wide">{sys.system_id}</span>
-                      {isHC && (
-                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-600 text-[8px] font-bold uppercase tracking-wider">
-                          HC
-                        </span>
-                      )}
+            return (
+              <div
+                key={sys.id}
+                className="group rounded-2xl border bg-card hover:bg-muted/30 hover:border-primary/30 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 overflow-hidden cursor-pointer"
+                onClick={() => setSelectedSystem(sys)}
+              >
+                <div className="p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <span className="font-mono text-[10px] text-muted-foreground tracking-wide">{sys.system_id}</span>
+                        {isHC && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-600 text-[8px] font-bold uppercase tracking-wider">
+                            HC
+                          </span>
+                        )}
+                      </div>
+                      <h4 className="text-sm font-semibold text-foreground truncate leading-tight">{sys.name}</h4>
                     </div>
-                    <h4 className="text-sm font-semibold text-foreground truncate leading-tight">{sys.name}</h4>
-                  </div>
-                  <div className="relative shrink-0">
-                    <svg width={ringSize} height={ringSize} className="transform -rotate-90">
-                      <circle cx={ringSize / 2} cy={ringSize / 2} r={radius} fill="none"
-                        strokeWidth={strokeWidth} className="text-muted/40" stroke="currentColor" />
-                      <circle cx={ringSize / 2} cy={ringSize / 2} r={radius} fill="none"
-                        strokeWidth={strokeWidth} strokeDasharray={circumference} strokeDashoffset={ringOffset}
-                        strokeLinecap="round" className={ringColor} stroke="currentColor" />
-                    </svg>
-                    <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-foreground tabular-nums">
-                      {completion}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Milestone badges */}
-                <div className="flex items-center gap-1.5 mt-3">
-                  {[
-                    { label: 'MC', done: isMCComplete },
-                    { label: 'RFC', done: isRFCComplete },
-                    { label: milestoneLabel, done: isMilestoneComplete },
-                  ].map(m => (
-                    <span
-                      key={m.label}
-                      className={cn(
-                        "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-medium border transition-colors",
-                        m.done
-                          ? "bg-emerald-500/10 text-emerald-600 border-emerald-200 dark:border-emerald-800"
-                          : "bg-muted/50 text-muted-foreground border-transparent"
-                      )}
-                    >
-                      {m.done ? <CheckCircle2 className="w-2.5 h-2.5" /> : <div className="w-2.5 h-2.5 rounded-full border border-current opacity-40" />}
-                      {m.label}
-                    </span>
-                  ))}
-                  {milestoneDate && (
-                    <span className="text-[9px] text-muted-foreground ml-auto whitespace-nowrap">
-                      {format(new Date(milestoneDate), 'dd MMM yy')}
-                    </span>
-                  )}
-                </div>
-
-                {/* ITR/PL Stats */}
-                <div className="grid grid-cols-4 gap-1 mt-3 pt-3 border-t border-border/50">
-                  {[
-                    { label: 'ITR-A', value: sys.itr_a_count || 0 },
-                    { label: 'ITR-B', value: sys.itr_b_count || 0 },
-                    { label: 'PL-A', value: sys.punchlist_a_count || 0, warn: true },
-                    { label: 'PL-B', value: sys.punchlist_b_count || 0 },
-                  ].map(s => (
-                    <div key={s.label} className="text-center">
-                      <div className={cn(
-                        "text-xs font-bold tabular-nums",
-                        s.warn && s.value > 0 ? "text-rose-600" : "text-foreground"
-                      )}>{s.value}</div>
-                      <div className="text-[8px] text-muted-foreground uppercase tracking-wider">{s.label}</div>
+                    <div className="relative shrink-0 group-hover:scale-110 transition-transform duration-200">
+                      <svg width={ringSize} height={ringSize} className="transform -rotate-90">
+                        <circle cx={ringSize / 2} cy={ringSize / 2} r={radius} fill="none"
+                          strokeWidth={strokeWidth} className="text-muted/40" stroke="currentColor" />
+                        <circle cx={ringSize / 2} cy={ringSize / 2} r={radius} fill="none"
+                          strokeWidth={strokeWidth} strokeDasharray={circumference} strokeDashoffset={ringOffset}
+                          strokeLinecap="round" className={ringColor} stroke="currentColor" />
+                      </svg>
+                      <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-foreground tabular-nums">
+                        {completion}
+                      </span>
                     </div>
-                  ))}
+                  </div>
+
+                  <div className="flex items-center gap-1.5 mt-3">
+                    {[
+                      { label: 'MC', done: isMCComplete },
+                      { label: 'RFC', done: isRFCComplete },
+                      { label: milestoneLabel, done: isMilestoneComplete },
+                    ].map(m => (
+                      <span
+                        key={m.label}
+                        className={cn(
+                          "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-medium border transition-colors",
+                          m.done
+                            ? "bg-emerald-500/10 text-emerald-600 border-emerald-200 dark:border-emerald-800"
+                            : "bg-muted/50 text-muted-foreground border-transparent"
+                        )}
+                      >
+                        {m.done ? <CheckCircle2 className="w-2.5 h-2.5" /> : <div className="w-2.5 h-2.5 rounded-full border border-current opacity-40" />}
+                        {m.label}
+                      </span>
+                    ))}
+                    {milestoneDate && (
+                      <span className="text-[9px] text-muted-foreground ml-auto whitespace-nowrap">
+                        {format(new Date(milestoneDate), 'dd MMM yy')}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-4 gap-1 mt-3 pt-3 border-t border-border/50">
+                    {[
+                      { label: 'ITR-A', value: sys.itr_a_count || 0 },
+                      { label: 'ITR-B', value: sys.itr_b_count || 0 },
+                      { label: 'PL-A', value: sys.punchlist_a_count || 0, warn: true },
+                      { label: 'PL-B', value: sys.punchlist_b_count || 0 },
+                    ].map(s => (
+                      <div key={s.label} className="text-center">
+                        <div className={cn(
+                          "text-xs font-bold tabular-nums",
+                          s.warn && s.value > 0 ? "text-rose-600" : "text-foreground"
+                        )}>{s.value}</div>
+                        <div className="text-[8px] text-muted-foreground uppercase tracking-wider">{s.label}</div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      ) : (
+        /* Table View */
+        <div className="rounded-2xl border bg-card overflow-hidden">
+          <div className="overflow-auto max-h-[60vh]">
+            <table className="w-full text-sm">
+              <thead className="sticky top-0 z-10 bg-muted/60 backdrop-blur-sm">
+                <tr className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                  <th className="text-left px-4 py-2.5 font-medium">System</th>
+                  <th className="text-center px-2 py-2.5 font-medium w-14">%</th>
+                  <th className="text-center px-2 py-2.5 font-medium w-10">MC</th>
+                  <th className="text-center px-2 py-2.5 font-medium w-10">RFC</th>
+                  <th className="text-center px-2 py-2.5 font-medium w-12">RFO</th>
+                  <th className="text-center px-2 py-2.5 font-medium w-14">ITR-A</th>
+                  <th className="text-center px-2 py-2.5 font-medium w-14">ITR-B</th>
+                  <th className="text-center px-2 py-2.5 font-medium w-14">PL-A</th>
+                  <th className="text-center px-2 py-2.5 font-medium w-14">PL-B</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/50">
+                {systems.map((sys: any) => {
+                  const completion = sys.completion_percentage || 0;
+                  const isHC = sys.is_hydrocarbon;
+                  const isMCComplete = completion >= 80;
+                  const isRFCComplete = completion >= 95;
+                  const isMilestoneComplete = completion === 100;
+
+                  return (
+                    <tr
+                      key={sys.id}
+                      className="hover:bg-muted/30 cursor-pointer transition-colors"
+                      onClick={() => setSelectedSystem(sys)}
+                    >
+                      <td className="px-4 py-2.5">
+                        <div className="flex items-center gap-2">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-mono text-[10px] text-muted-foreground">{sys.system_id}</span>
+                              {isHC && (
+                                <span className="px-1 py-0.5 rounded bg-amber-500/10 text-amber-600 text-[7px] font-bold uppercase">HC</span>
+                              )}
+                            </div>
+                            <div className="text-xs font-medium text-foreground truncate max-w-[220px]">{sys.name}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="text-center px-2 py-2.5">
+                        <span className={cn(
+                          "text-xs font-bold tabular-nums",
+                          completion === 100 ? "text-emerald-600" : completion >= 50 ? "text-amber-600" : "text-foreground"
+                        )}>{completion}%</span>
+                      </td>
+                      {[isMCComplete, isRFCComplete, isMilestoneComplete].map((done, i) => (
+                        <td key={i} className="text-center px-2 py-2.5">
+                          {done ? (
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 mx-auto" />
+                          ) : (
+                            <div className="w-3.5 h-3.5 rounded-full border border-muted-foreground/30 mx-auto" />
+                          )}
+                        </td>
+                      ))}
+                      <td className="text-center px-2 py-2.5 text-xs tabular-nums text-foreground">{sys.itr_a_count || 0}</td>
+                      <td className="text-center px-2 py-2.5 text-xs tabular-nums text-foreground">{sys.itr_b_count || 0}</td>
+                      <td className={cn("text-center px-2 py-2.5 text-xs tabular-nums font-medium", (sys.punchlist_a_count || 0) > 0 ? "text-rose-600" : "text-foreground")}>{sys.punchlist_a_count || 0}</td>
+                      <td className="text-center px-2 py-2.5 text-xs tabular-nums text-foreground">{sys.punchlist_b_count || 0}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {selectedSystem && (
         <SystemDetailSheet
@@ -623,7 +714,6 @@ const VCRSystemsPanel: React.FC<{ vcrId: string; projectCode?: string }> = ({ vc
     </div>
   );
 };
-
 // ── VCR Handover Point Wrapper (reusable) ────────────────────────
 const VCRHandoverPointWrapper: React.FC<{ vcr: ProjectVCR; render: (hp: P2AHandoverPoint) => React.ReactNode }> = ({ vcr, render }) => {
   const { data: handoverPoint, isLoading } = useQuery({
