@@ -10,7 +10,13 @@ interface VCRCardProps {
   onClick: (vcrId: string) => void;
 }
 
-const shortCode = (code?: string) => code?.replace(/^VCR-[A-Z0-9]+-/, 'VCR-') || '';
+const shortCode = (code?: string) => {
+  if (!code) return '';
+  // Strip project code and reduce 3-digit seq to 2-digit (e.g. VCR-DP300-007 → VCR-07)
+  const match = code.match(/^VCR-[A-Z0-9]+-0*(\d+)$/);
+  if (match) return `VCR-${match[1].padStart(2, '0')}`;
+  return code.replace(/^VCR-[A-Z0-9]+-/, 'VCR-');
+};
 
 export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick }) => {
   const vcrColor = getVCRColor(vcr.vcr_code);
