@@ -194,7 +194,9 @@ const ProgressPanel: React.FC<{ vcr: ProjectVCR; liveTargetDate?: Date }> = ({ v
         <CardHeader className="pb-2 bg-muted/40 border-b border-border/50">
           <CardTitle className="text-base font-semibold">Progress</CardTitle>
         </CardHeader>
-        <CardContent className="flex-1 space-y-4 overflow-auto">
+        <CardContent className="flex-1 p-0 overflow-hidden">
+          <ScrollArea className="h-full">
+          <div className="p-6 pt-4 space-y-4">
           <div className="bg-muted/30 rounded-xl p-4">
             <div className="flex items-center gap-5">
               <div className="relative shrink-0">
@@ -263,6 +265,8 @@ const ProgressPanel: React.FC<{ vcr: ProjectVCR; liveTargetDate?: Date }> = ({ v
               })}
             </div>
           </div>
+          </div>
+          </ScrollArea>
         </CardContent>
       </Card>
 
@@ -395,7 +399,9 @@ const ApprovalsPanel: React.FC<ApprovalsPanelProps> = ({
         <CardHeader className="pb-2 bg-muted/40 border-b border-border/50">
           <CardTitle className="text-base font-semibold">Review and Approval</CardTitle>
         </CardHeader>
-        <CardContent className="flex-1 overflow-auto pt-4">
+        <CardContent className="flex-1 p-0 overflow-hidden">
+          <ScrollArea className="h-full">
+          <div className="p-6 pt-4">
           {/* Section 1: VCR Reviewers */}
           <CollapsibleSection title="VCR Reviewers" count={approvingParties.length} defaultOpen={true}>
             <div className="space-y-0.5">
@@ -475,6 +481,8 @@ const ApprovalsPanel: React.FC<ApprovalsPanelProps> = ({
               )}
             </div>
           </CollapsibleSection>
+          </div>
+          </ScrollArea>
         </CardContent>
       </Card>
 
@@ -660,7 +668,9 @@ const OverviewInfoPanel: React.FC<{ vcr: ProjectVCR; projectName?: string; proje
       <CardHeader className="pb-2 bg-muted/40 border-b border-border/50">
         <CardTitle className="text-base font-semibold">Overview</CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 space-y-5 overflow-auto pt-4">
+      <CardContent className="flex-1 p-0 overflow-hidden">
+        <ScrollArea className="h-full">
+        <div className="p-6 pt-4 space-y-5">
         <div>
           <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Project</div>
           <div className="text-sm font-medium text-primary">{projectCode} - {projectName}</div>
@@ -772,6 +782,8 @@ const OverviewInfoPanel: React.FC<{ vcr: ProjectVCR; projectName?: string; proje
           vcr={vcr}
           projectCode={projectCode}
         />
+        </div>
+        </ScrollArea>
       </CardContent>
     </Card>
   );
@@ -1735,7 +1747,7 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
     switch (activeNav) {
       case 'overview': {
         return (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-[calc(95vh-8rem)]">
             {[
               <ProgressPanel key="progress" vcr={vcr} liveTargetDate={liveTargetDate} />,
               <ApprovalsPanel
