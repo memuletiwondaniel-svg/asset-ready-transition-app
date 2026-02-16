@@ -35,6 +35,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { ProjectVCR } from '@/hooks/useProjectVCRs';
 import { getVCRColor } from '@/components/p2a-workspace/utils/vcrColors';
 import { format } from 'date-fns';
@@ -183,36 +184,42 @@ const ProgressPanel: React.FC<{ vcr: ProjectVCR }> = ({ vcr }) => {
 };
 
 // ── Approvals Panel (Middle) ────────────────────────────────────
-const ApprovalsPanel: React.FC<{ vcr: ProjectVCR }> = ({ vcr }) => {
-  const reviewers = [
-    { name: 'Commissioning Lead', initials: 'CL', role: 'Commissioning - Project', status: 'pending' },
-    { name: 'Operations Lead', initials: 'OL', role: 'Operations - Asset', status: 'pending' },
-    { name: 'Technical Authority', initials: 'TA', role: 'Technical - Project', status: 'pending' },
-  ];
-  const approvers = [
-    { name: 'Plant Manager', initials: 'PM', role: 'Plant Manager', status: 'pending' },
-    { name: 'HSE Director', initials: 'HD', role: 'HSE Director', status: 'pending' },
-  ];
-  const sofApprovers = [
-    { name: 'Plant Director', initials: 'PD', role: 'Plant Director', status: 'pending' },
-    { name: 'HSE Director', initials: 'HD', role: 'HSE Director', status: 'pending' },
-    { name: 'P&E Director', initials: 'PE', role: 'P&E Director', status: 'pending' },
-  ];
+interface ApproverData {
+  id: string;
+  name: string;
+  role: string;
+  status: 'approved' | 'rejected' | 'pending';
+  avatar_url?: string;
+  user_id?: string;
+}
+
+const ApprovalsPanel: React.FC<{ vcr: ProjectVCR; approvers?: ApproverData[] }> = ({ vcr, approvers = [] }) => {
+  const getInitials = (name: string, role: string) => {
+    if (name) return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    return role.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+  };
+
+  // Group approvers into phases
+  const phase1 = approvers.filter(a => ['ORA Lead', 'CSU Lead', 'Construction Lead', 'Project Hub Lead'].includes(a.role));
+  const phase2 = approvers.filter(a => a.role === 'Deputy Plant Director');
 
   const StatusIndicator: React.FC<{ status: string }> = ({ status }) => {
     if (status === 'approved') return (
-      <div className="flex items-center gap-1">
-        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-        <span className="text-[10px] text-emerald-600 font-medium">Approved</span>
-      </div>
+      <Badge variant="outline" className="text-[9px] text-emerald-600 border-emerald-200 bg-emerald-50 px-1.5">
+        <CheckCircle2 className="w-3 h-3 mr-0.5" /> approved
+      </Badge>
+    );
+    if (status === 'rejected') return (
+      <Badge variant="outline" className="text-[9px] text-red-500 border-red-200 bg-red-50 px-1.5">rejected</Badge>
     );
     return (
       <Badge variant="outline" className="text-[9px] text-amber-500 border-amber-200 px-1.5">pending</Badge>
     );
   };
 
-  const renderSection = (title: string, icon: React.ElementType, items: typeof reviewers, count: string) => {
+  const renderSection = (title: string, icon: React.ElementType, items: ApproverData[], count: string) => {
     const SectionIcon = icon;
+    const approvedCount = items.filter(i => i.status === 'approved').length;
     return (
       <div>
         <div className="flex items-center justify-between mb-3">
@@ -221,23 +228,33 @@ const ApprovalsPanel: React.FC<{ vcr: ProjectVCR }> = ({ vcr }) => {
             {title}
           </div>
           <div className="flex items-center gap-1">
-            <span className="text-[10px] text-muted-foreground">{count}</span>
+            <span className="text-[10px] text-muted-foreground">{approvedCount}/{items.length}</span>
             <ChevronRight className="w-3 h-3 text-muted-foreground" />
           </div>
         </div>
         <div className="space-y-1 relative ml-3 pl-4 border-l border-border">
           {items.map((person, i) => (
-            <div key={i} className="flex items-center gap-3 py-2">
-              <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-[10px] font-semibold text-muted-foreground shrink-0">
-                {person.initials}
-              </div>
+            <div key={person.id || i} className="flex items-center gap-3 py-2">
+              <Avatar className="w-8 h-8 shrink-0">
+                {person.avatar_url ? (
+                  <AvatarImage src={person.avatar_url} alt={person.name || person.role} />
+                ) : null}
+                <AvatarFallback className="text-[10px] font-semibold bg-muted text-muted-foreground">
+                  {getInitials(person.name, person.role)}
+                </AvatarFallback>
+              </Avatar>
               <div className="flex-1 min-w-0">
-                <div className="text-xs font-medium text-foreground truncate">{person.name}</div>
+                <div className="text-xs font-medium text-foreground truncate">
+                  {person.name || person.role}
+                </div>
                 <div className="text-[10px] text-muted-foreground truncate">{person.role}</div>
               </div>
               <StatusIndicator status={person.status} />
             </div>
           ))}
+          {items.length === 0 && (
+            <div className="py-2 text-[10px] text-muted-foreground italic">No approvers assigned</div>
+          )}
         </div>
       </div>
     );
@@ -249,9 +266,8 @@ const ApprovalsPanel: React.FC<{ vcr: ProjectVCR }> = ({ vcr }) => {
         <CardTitle className="text-base font-semibold">Approvals</CardTitle>
       </CardHeader>
       <CardContent className="flex-1 space-y-5 overflow-auto">
-        {renderSection('VCR Review', Shield, reviewers, `0/${reviewers.length}`)}
-        {renderSection('VCR Approval', Award, approvers, `0/${approvers.length}`)}
-        {renderSection('SoF Approval', Shield, sofApprovers, `0/${sofApprovers.length}`)}
+        {renderSection('VCR Review', Shield, phase1, `${phase1.filter(a => a.status === 'approved').length}/${phase1.length}`)}
+        {renderSection('VCR Approval', Award, phase2, `${phase2.filter(a => a.status === 'approved').length}/${phase2.length}`)}
       </CardContent>
     </Card>
   );
@@ -674,26 +690,37 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
         .order('display_order', { ascending: true });
       if (!approvers || approvers.length === 0) return [];
 
-      // Resolve user names from profiles
+      // Resolve user names and avatars from profiles
       const userIds = approvers.filter((a: any) => a.user_id).map((a: any) => a.user_id);
-      let profileMap: Record<string, string> = {};
+      let profileMap: Record<string, { full_name: string; avatar_url: string | null }> = {};
       if (userIds.length > 0) {
         const { data: profiles } = await client
           .from('profiles')
-          .select('user_id, full_name')
+          .select('user_id, full_name, avatar_url')
           .in('user_id', userIds);
         if (profiles) {
-          profileMap = Object.fromEntries(profiles.map((p: any) => [p.user_id, p.full_name]));
+          profileMap = Object.fromEntries(profiles.map((p: any) => [p.user_id, { full_name: p.full_name, avatar_url: p.avatar_url }]));
         }
       }
 
-      return approvers.map((a: any) => ({
-        id: a.id,
-        name: a.user_id ? (profileMap[a.user_id] || '') : '',
-        role: a.role_name,
-        status: a.status?.toLowerCase() === 'approved' ? 'approved' as const : 'pending' as const,
-        approvedDate: '',
-      }));
+      const getFullAvatarUrl = (avatarUrl: string | null) => {
+        if (!avatarUrl) return '';
+        if (avatarUrl.startsWith('http')) return avatarUrl;
+        const { data } = supabase.storage.from('user-avatars').getPublicUrl(avatarUrl);
+        return data.publicUrl;
+      };
+
+      return approvers.map((a: any) => {
+        const profile = a.user_id ? profileMap[a.user_id] : null;
+        return {
+          id: a.id,
+          name: profile?.full_name || '',
+          role: a.role_name,
+          status: a.status?.toLowerCase() === 'approved' ? 'approved' as const : a.status?.toLowerCase() === 'rejected' ? 'rejected' as const : 'pending' as const,
+          avatar_url: getFullAvatarUrl(profile?.avatar_url || null),
+          user_id: a.user_id,
+        };
+      });
     },
   });
 
@@ -713,7 +740,7 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full">
             {[
               <ProgressPanel key="progress" vcr={vcr} />,
-              <ApprovalsPanel key="approvals" vcr={vcr} />,
+              <ApprovalsPanel key="approvals" vcr={vcr} approvers={certificateApprovers} />,
               <OverviewInfoPanel key="info" vcr={vcr} projectName={projectName} projectCode={projectCode} />,
             ].map((panel, idx) => (
               <div
