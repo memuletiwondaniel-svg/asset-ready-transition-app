@@ -1,0 +1,301 @@
+import React from 'react';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from '@/components/ui/sheet';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import {
+  FileText,
+  User,
+  ArrowRight,
+  MessageSquare,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  XCircle,
+  AlertTriangle,
+  FileCheck,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { format } from 'date-fns';
+
+export interface VCRItemBasic {
+  id: string;
+  vcr_item: string;
+  topic: string | null;
+  category_name: string;
+  category_code: string;
+  status: string;
+  prerequisite_id: string | null;
+  itemCode: string;
+}
+
+interface VCRItemDetailSheetProps {
+  item: VCRItemBasic | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  vcrId: string;
+}
+
+const STATUS_CONFIG: Record<string, { label: string; color: string; textColor: string; icon: React.ElementType }> = {
+  ACCEPTED: { label: 'Accepted', color: 'bg-emerald-50 border-emerald-200', textColor: 'text-emerald-600', icon: CheckCircle2 },
+  QUALIFICATION_APPROVED: { label: 'Qualified', color: 'bg-purple-50 border-purple-200', textColor: 'text-purple-600', icon: CheckCircle2 },
+  READY_FOR_REVIEW: { label: 'In Review', color: 'bg-blue-50 border-blue-200', textColor: 'text-blue-600', icon: Clock },
+  IN_PROGRESS: { label: 'In Progress', color: 'bg-amber-50 border-amber-200', textColor: 'text-amber-600', icon: Clock },
+  REJECTED: { label: 'Rejected', color: 'bg-red-50 border-red-200', textColor: 'text-red-600', icon: XCircle },
+  QUALIFICATION_REQUESTED: { label: 'Qualification Raised', color: 'bg-purple-50 border-purple-200', textColor: 'text-purple-500', icon: AlertTriangle },
+  NOT_STARTED: { label: 'Not Started', color: 'bg-muted border-border', textColor: 'text-muted-foreground', icon: FileCheck },
+  PENDING: { label: 'Pending', color: 'bg-muted border-border', textColor: 'text-muted-foreground', icon: FileCheck },
+};
+
+export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
+  item,
+  open,
+  onOpenChange,
+  vcrId,
+}) => {
+  const { data: prereqDetail } = useQuery({
+    queryKey: ['vcr-prereq-detail', item?.prerequisite_id],
+    queryFn: async () => {
+      if (!item?.prerequisite_id) return null;
+      const { data, error } = await supabase
+        .from('p2a_vcr_prerequisites')
+        .select('*')
+        .eq('id', item.prerequisite_id)
+        .maybeSingle();
+      if (error) return null;
+      return data;
+    },
+    enabled: open && !!item?.prerequisite_id,
+  });
+
+  const { data: vcrItemDetail } = useQuery({
+    queryKey: ['vcr-item-detail', item?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('vcr_items')
+        .select(`
+          *,
+          delivering_party:roles!vcr_items_delivering_party_role_id_fkey(name),
+          vcr_item_categories!vcr_items_category_id_fkey(name, code)
+        `)
+        .eq('id', item!.id)
+        .maybeSingle();
+      if (error) return null;
+      return data as any;
+    },
+    enabled: open && !!item?.id,
+  });
+
+  if (!item) return null;
+
+  const statusCfg = STATUS_CONFIG[item.status] || STATUS_CONFIG.NOT_STARTED;
+  const StatusIcon = statusCfg.icon;
+  const deliveringParty = vcrItemDetail?.delivering_party?.name || 'Not assigned';
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="sm:max-w-lg overflow-hidden flex flex-col p-0">
+        <SheetHeader className="px-6 pt-6 pb-4 border-b">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Badge variant="outline" className="font-mono text-[10px]">
+              {item.itemCode}
+            </Badge>
+            <Badge className={cn('text-[10px] border', statusCfg.color, statusCfg.textColor)}>
+              <StatusIcon className="w-3 h-3 mr-1" />
+              {statusCfg.label}
+            </Badge>
+          </div>
+          {item.topic && (
+            <p className="text-xs text-muted-foreground mt-1">{item.topic}</p>
+          )}
+          <SheetTitle className="text-base mt-1">{item.vcr_item}</SheetTitle>
+          <SheetDescription className="sr-only">VCR Item Detail</SheetDescription>
+        </SheetHeader>
+
+        <ScrollArea className="flex-1 px-6 py-4">
+          <div className="space-y-5">
+            {/* Category */}
+            <div>
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Category</div>
+              <Badge variant="secondary" className="text-xs">{item.category_name}</Badge>
+            </div>
+
+            <Separator />
+
+            {/* Responsible Parties */}
+            <div className="space-y-3">
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Responsible Parties</div>
+              <div className="flex items-center gap-3">
+                <Card className="flex-1">
+                  <CardContent className="p-3">
+                    <div className="flex items-center gap-2">
+                      <User className="w-4 h-4 text-muted-foreground" />
+                      <div>
+                        <div className="text-[10px] text-muted-foreground">Delivering Party</div>
+                        <div className="text-xs font-medium">{deliveringParty}</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <ArrowRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                <Card className="flex-1">
+                  <CardContent className="p-3">
+                    <div className="flex items-center gap-2">
+                      <User className="w-4 h-4 text-muted-foreground" />
+                      <div>
+                        <div className="text-[10px] text-muted-foreground">Approving Party</div>
+                        <div className="text-xs font-medium">Not assigned</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Supporting Evidence */}
+            {vcrItemDetail?.supporting_evidence && (
+              <>
+                <div className="space-y-2">
+                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Supporting Evidence Required</div>
+                  <p className="text-xs text-foreground bg-muted/50 p-3 rounded-lg">
+                    {vcrItemDetail.supporting_evidence}
+                  </p>
+                </div>
+                <Separator />
+              </>
+            )}
+
+            {/* Guidance Notes */}
+            {vcrItemDetail?.guidance_notes && (
+              <>
+                <div className="space-y-2">
+                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Guidance Notes</div>
+                  <p className="text-xs text-foreground bg-muted/50 p-3 rounded-lg">
+                    {vcrItemDetail.guidance_notes}
+                  </p>
+                </div>
+                <Separator />
+              </>
+            )}
+
+            {/* Timeline */}
+            {prereqDetail && (
+              <>
+                <div className="space-y-3">
+                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Timeline</div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-muted-foreground" />
+                      <div>
+                        <div className="text-[10px] text-muted-foreground">Created</div>
+                        <div className="text-xs">{format(new Date(prereqDetail.created_at), 'dd MMM yyyy')}</div>
+                      </div>
+                    </div>
+                    {prereqDetail.submitted_at && (
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-blue-500" />
+                        <div>
+                          <div className="text-[10px] text-muted-foreground">Submitted</div>
+                          <div className="text-xs">{format(new Date(prereqDetail.submitted_at), 'dd MMM yyyy')}</div>
+                        </div>
+                      </div>
+                    )}
+                    {prereqDetail.reviewed_at && (
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                        <div>
+                          <div className="text-[10px] text-muted-foreground">Reviewed</div>
+                          <div className="text-xs">{format(new Date(prereqDetail.reviewed_at), 'dd MMM yyyy')}</div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <Separator />
+              </>
+            )}
+
+            {/* Evidence Documents */}
+            <div className="space-y-3">
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Evidence Documents</div>
+              <Card className="border-dashed">
+                <CardContent className="py-8 text-center">
+                  <FileText className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                  <p className="text-xs text-muted-foreground">No evidence uploaded yet</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Separator />
+
+            {/* Comments */}
+            <div className="space-y-3">
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Comments</div>
+              {prereqDetail?.comments ? (
+                <Card>
+                  <CardContent className="p-3">
+                    <div className="flex items-start gap-2">
+                      <MessageSquare className="w-4 h-4 text-muted-foreground mt-0.5" />
+                      <p className="text-xs text-foreground">{prereqDetail.comments}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <p className="text-xs text-muted-foreground italic">No comments</p>
+              )}
+            </div>
+
+            {/* Qualification notice */}
+            {item.status === 'QUALIFICATION_REQUESTED' && (
+              <>
+                <Separator />
+                <Card className="border-purple-500/50 bg-purple-500/5">
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-3">
+                      <AlertTriangle className="w-5 h-5 text-purple-500 mt-0.5" />
+                      <div>
+                        <h4 className="font-medium text-purple-600 text-sm">Qualification Raised</h4>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          A qualification has been requested for this item.
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </>
+            )}
+          </div>
+        </ScrollArea>
+
+        {/* Footer Actions */}
+        <div className="border-t px-6 py-4 flex gap-2">
+          {item.status === 'NOT_STARTED' && (
+            <Button className="flex-1" size="sm">Start Progress</Button>
+          )}
+          {item.status === 'IN_PROGRESS' && (
+            <Button className="flex-1" size="sm">Submit for Review</Button>
+          )}
+          {item.status === 'READY_FOR_REVIEW' && (
+            <>
+              <Button className="flex-1" variant="outline" size="sm">Request Qualification</Button>
+              <Button className="flex-1" size="sm">Approve</Button>
+            </>
+          )}
+          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>Close</Button>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+};
