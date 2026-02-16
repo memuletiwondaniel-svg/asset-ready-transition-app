@@ -840,7 +840,7 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
             projectName={projectName}
             projectId={projectCode}
             pacDate={vcr.target_date ? format(new Date(vcr.target_date), 'dd MMM yyyy') : ''}
-            approvers={certificateApprovers.length > 0 ? certificateApprovers : undefined}
+            approvers={certificateApprovers.length > 0 ? certificateApprovers.filter(a => ['Plant Director', 'Deputy Plant Director', 'Project Hub Lead'].includes(a.role)) : undefined}
           />
         );
       case 'training':
