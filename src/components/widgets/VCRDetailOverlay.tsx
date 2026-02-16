@@ -54,7 +54,7 @@ type NavItem = {
 };
 
 const NAV_ITEMS: NavItem[] = [
-  { id: 'overview', label: 'VCR Overview', icon: BarChart3 },
+  { id: 'overview', label: 'Overview', icon: BarChart3 },
   { id: 'training', label: 'Training', icon: GraduationCap },
   { id: 'procedures', label: 'Procedures', icon: BookOpen },
   { id: 'registers', label: 'Operational Registers', icon: FileText },
