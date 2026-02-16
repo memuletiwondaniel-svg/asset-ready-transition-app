@@ -194,33 +194,44 @@ interface ApproverData {
   user_id?: string;
 }
 
-const ApprovalsPanel: React.FC<{ vcr: ProjectVCR; approvers?: ApproverData[] }> = ({ vcr, approvers = [] }) => {
-  const getInitials = (name: string, role: string) => {
-    if (name) return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-    return role.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+interface ChecklistApproverData {
+  name: string;
+  role: 'delivering' | 'receiving';
+  itemCount: number;
+  acceptedCount: number;
+}
+
+const ApprovalsPanel: React.FC<{ vcr: ProjectVCR; approvers?: ApproverData[]; checklistApprovers?: ChecklistApproverData[] }> = ({ vcr, approvers = [], checklistApprovers = [] }) => {
+  const getInitials = (name: string) => {
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
-  // Group approvers into phases
-  const phase1 = approvers.filter(a => ['ORA Lead', 'CSU Lead', 'Construction Lead', 'Project Hub Lead'].includes(a.role));
-  const phase2 = approvers.filter(a => a.role === 'Deputy Plant Director');
+  // Group checklist approvers by role
+  const deliveringParties = checklistApprovers.filter(a => a.role === 'delivering');
+  const receivingParties = checklistApprovers.filter(a => a.role === 'receiving');
 
-  const StatusIndicator: React.FC<{ status: string }> = ({ status }) => {
-    if (status === 'approved') return (
+  const StatusIndicator: React.FC<{ accepted: number; total: number }> = ({ accepted, total }) => {
+    if (accepted === total && total > 0) return (
       <Badge variant="outline" className="text-[9px] text-emerald-600 border-emerald-200 bg-emerald-50 px-1.5">
-        <CheckCircle2 className="w-3 h-3 mr-0.5" /> approved
+        <CheckCircle2 className="w-3 h-3 mr-0.5" /> {accepted}/{total}
       </Badge>
     );
-    if (status === 'rejected') return (
-      <Badge variant="outline" className="text-[9px] text-red-500 border-red-200 bg-red-50 px-1.5">rejected</Badge>
+    if (accepted > 0) return (
+      <Badge variant="outline" className="text-[9px] text-amber-500 border-amber-200 bg-amber-50 px-1.5">
+        <Clock className="w-3 h-3 mr-0.5" /> {accepted}/{total}
+      </Badge>
     );
     return (
-      <Badge variant="outline" className="text-[9px] text-amber-500 border-amber-200 px-1.5">pending</Badge>
+      <Badge variant="outline" className="text-[9px] text-muted-foreground px-1.5">
+        0/{total}
+      </Badge>
     );
   };
 
-  const renderSection = (title: string, icon: React.ElementType, items: ApproverData[], count: string) => {
+  const renderChecklistSection = (title: string, icon: React.ElementType, items: ChecklistApproverData[]) => {
     const SectionIcon = icon;
-    const approvedCount = items.filter(i => i.status === 'approved').length;
+    const totalItems = items.reduce((sum, i) => sum + i.itemCount, 0);
+    const totalAccepted = items.reduce((sum, i) => sum + i.acceptedCount, 0);
     return (
       <div>
         <div className="flex items-center justify-between mb-3">
@@ -229,32 +240,31 @@ const ApprovalsPanel: React.FC<{ vcr: ProjectVCR; approvers?: ApproverData[] }> 
             {title}
           </div>
           <div className="flex items-center gap-1">
-            <span className="text-[10px] text-muted-foreground">{approvedCount}/{items.length}</span>
+            <span className="text-[10px] text-muted-foreground">{totalAccepted}/{totalItems}</span>
             <ChevronRight className="w-3 h-3 text-muted-foreground" />
           </div>
         </div>
         <div className="space-y-1 relative ml-3 pl-4 border-l border-border">
           {items.map((person, i) => (
-            <div key={person.id || i} className="flex items-center gap-3 py-2">
+            <div key={`${person.name}-${i}`} className="flex items-center gap-3 py-2">
               <Avatar className="w-8 h-8 shrink-0">
-                {person.avatar_url ? (
-                  <AvatarImage src={person.avatar_url} alt={person.name || person.role} />
-                ) : null}
                 <AvatarFallback className="text-[10px] font-semibold bg-muted text-muted-foreground">
-                  {getInitials(person.name, person.role)}
+                  {getInitials(person.name)}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
                 <div className="text-xs font-medium text-foreground truncate">
-                  {person.name || person.role}
+                  {person.name}
                 </div>
-                <div className="text-[10px] text-muted-foreground truncate">{person.role}</div>
+                <div className="text-[10px] text-muted-foreground truncate">
+                  {person.role === 'delivering' ? 'Delivering Party' : 'Receiving Party'}
+                </div>
               </div>
-              <StatusIndicator status={person.status} />
+              <StatusIndicator accepted={person.acceptedCount} total={person.itemCount} />
             </div>
           ))}
           {items.length === 0 && (
-            <div className="py-2 text-[10px] text-muted-foreground italic">No approvers assigned</div>
+            <div className="py-2 text-[10px] text-muted-foreground italic">No parties assigned</div>
           )}
         </div>
       </div>
@@ -267,8 +277,8 @@ const ApprovalsPanel: React.FC<{ vcr: ProjectVCR; approvers?: ApproverData[] }> 
         <CardTitle className="text-base font-semibold">Approvals</CardTitle>
       </CardHeader>
       <CardContent className="flex-1 space-y-5 overflow-auto">
-        {renderSection('VCR Review', Shield, phase1, `${phase1.filter(a => a.status === 'approved').length}/${phase1.length}`)}
-        {renderSection('VCR Approval', Award, phase2, `${phase2.filter(a => a.status === 'approved').length}/${phase2.length}`)}
+        {renderChecklistSection('Delivering Parties', Shield, deliveringParties)}
+        {renderChecklistSection('Receiving / Approving Parties', Award, receivingParties)}
       </CardContent>
     </Card>
   );
@@ -670,12 +680,63 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
   const displayCode = shortCode(vcr.vcr_code);
   const isComplete = vcr.progress === 100;
 
-  // Fetch approvers for certificates
+  // Fetch checklist item approvers (delivering/receiving parties from prerequisites)
+  const { data: checklistApprovers = [] } = useQuery({
+    queryKey: ['vcr-checklist-approvers', vcr.id],
+    queryFn: async () => {
+      const client = supabase as any;
+      
+      // Get prerequisites for this VCR
+      const { data: prereqs, error } = await client
+        .from('p2a_vcr_prerequisites')
+        .select('id, delivering_party_name, receiving_party_name, status')
+        .eq('handover_point_id', vcr.id);
+
+      if (error || !prereqs?.length) return [];
+
+      const acceptedStatuses = ['ACCEPTED', 'QUALIFICATION_APPROVED'];
+
+      // Aggregate by unique delivering party names
+      const deliveringMap = new Map<string, { itemCount: number; acceptedCount: number }>();
+      const receivingMap = new Map<string, { itemCount: number; acceptedCount: number }>();
+
+      for (const p of prereqs) {
+        const isAccepted = acceptedStatuses.includes(p.status);
+        
+        if (p.delivering_party_name) {
+          const existing = deliveringMap.get(p.delivering_party_name) || { itemCount: 0, acceptedCount: 0 };
+          existing.itemCount++;
+          if (isAccepted) existing.acceptedCount++;
+          deliveringMap.set(p.delivering_party_name, existing);
+        }
+        
+        if (p.receiving_party_name) {
+          const existing = receivingMap.get(p.receiving_party_name) || { itemCount: 0, acceptedCount: 0 };
+          existing.itemCount++;
+          if (isAccepted) existing.acceptedCount++;
+          receivingMap.set(p.receiving_party_name, existing);
+        }
+      }
+
+      const result: ChecklistApproverData[] = [];
+      
+      deliveringMap.forEach((val, name) => {
+        result.push({ name, role: 'delivering', ...val });
+      });
+      
+      receivingMap.forEach((val, name) => {
+        result.push({ name, role: 'receiving', ...val });
+      });
+
+      return result;
+    },
+  });
+
+  // Keep certificateApprovers for SOF/PAC certificates (P2A plan approvers)
   const { data: certificateApprovers = [] } = useQuery({
     queryKey: ['vcr-certificate-approvers', vcr.id],
     queryFn: async () => {
       const client = supabase as any;
-      // Get handover_plan_id from the VCR (handover point)
       const { data: hp } = await client
         .from('p2a_handover_points')
         .select('handover_plan_id')
@@ -683,7 +744,6 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
         .maybeSingle();
       if (!hp?.handover_plan_id) return [];
 
-      // Fetch approvers
       const { data: approvers } = await client
         .from('p2a_handover_approvers')
         .select('id, role_name, user_id, display_order, status')
@@ -691,7 +751,6 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
         .order('display_order', { ascending: true });
       if (!approvers || approvers.length === 0) return [];
 
-      // Resolve user names and avatars from profiles
       const userIds = approvers.filter((a: any) => a.user_id).map((a: any) => a.user_id);
       let profileMap: Record<string, { full_name: string; avatar_url: string | null }> = {};
       if (userIds.length > 0) {
@@ -741,7 +800,7 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full">
             {[
               <ProgressPanel key="progress" vcr={vcr} />,
-              <ApprovalsPanel key="approvals" vcr={vcr} approvers={certificateApprovers} />,
+              <ApprovalsPanel key="approvals" vcr={vcr} checklistApprovers={checklistApprovers} />,
               <OverviewInfoPanel key="info" vcr={vcr} projectName={projectName} projectCode={projectCode} />,
             ].map((panel, idx) => (
               <div
