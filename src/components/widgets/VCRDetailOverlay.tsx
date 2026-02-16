@@ -191,7 +191,7 @@ const ProgressPanel: React.FC<{ vcr: ProjectVCR; liveTargetDate?: Date }> = ({ v
   return (
     <>
       <Card className="h-full flex flex-col">
-        <CardHeader className="pb-2">
+        <CardHeader className="pb-2 bg-muted/40 border-b border-border/50">
           <CardTitle className="text-base font-semibold">Progress</CardTitle>
         </CardHeader>
         <CardContent className="flex-1 space-y-4 overflow-auto">
@@ -322,8 +322,8 @@ const ApprovalsPanel: React.FC<{ vcr: ProjectVCR; checklistApprovers?: Checklist
   return (
     <>
       <Card className="h-full flex flex-col">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base font-semibold">Approvals</CardTitle>
+        <CardHeader className="pb-2 bg-muted/40 border-b border-border/50">
+          <CardTitle className="text-base font-semibold">Review and Approval</CardTitle>
         </CardHeader>
         <CardContent className="flex-1 space-y-5 overflow-auto">
           <div>
@@ -540,7 +540,7 @@ const OverviewInfoPanel: React.FC<{ vcr: ProjectVCR; projectName?: string; proje
 
   return (
     <Card className="h-full flex flex-col">
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-2 bg-muted/40 border-b border-border/50">
         <CardTitle className="text-base font-semibold">Overview</CardTitle>
       </CardHeader>
       <CardContent className="flex-1 space-y-5 overflow-auto">
