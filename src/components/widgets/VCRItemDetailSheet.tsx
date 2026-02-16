@@ -331,14 +331,14 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                           <div key={role.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
                             <span className="text-[10px] font-medium text-muted-foreground w-20 shrink-0 truncate" title={role.name}>{role.name}</span>
                             {membersForRole.length > 0 ? (
-                              <div className="flex items-center gap-3 flex-1 min-w-0">
+                              <div className="flex items-center gap-4 flex-1 min-w-0">
                                 {membersForRole.map((member: any) => (
-                                  <div key={member.user_id} className="flex flex-col items-center gap-0.5 min-w-0">
+                                  <div key={member.user_id} className="flex flex-col items-center gap-0.5 w-14">
                                     <Avatar className="w-7 h-7">
                                       <AvatarImage src={getAvatarUrl(member.avatar_url)} />
                                       <AvatarFallback className="text-[10px]">{getInitials(member.full_name)}</AvatarFallback>
                                     </Avatar>
-                                    <span className="text-[10px] text-foreground truncate max-w-[80px] text-center" title={member.full_name}>{member.full_name?.split(' ')[0]}</span>
+                                    <span className="text-[10px] text-foreground truncate w-full text-center" title={member.full_name}>{member.full_name?.split(' ')[0]}</span>
                                   </div>
                                 ))}
                               </div>
