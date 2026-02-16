@@ -32,7 +32,7 @@ export const getVCRColor = (vcrCode: string | undefined) => {
     saturation: sat,
     // Light mode — very subtle tint
     background: `hsl(${finalHue}, ${sat}%, 96%)`,
-    border: `hsl(${finalHue}, ${sat + 10}%, 45%)`,
+    border: `hsl(${finalHue}, ${sat + 5}%, 52%)`,
     accent: `hsl(${finalHue}, ${sat}%, 88%)`,
     // Dark mode — barely tinted dark
     backgroundDark: `hsl(${finalHue}, ${Math.round(sat * 0.25)}%, 13%)`,
