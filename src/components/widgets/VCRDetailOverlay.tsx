@@ -1747,7 +1747,7 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
     switch (activeNav) {
       case 'overview': {
         return (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-[calc(95vh-8rem)]">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full min-h-0">
             {[
               <ProgressPanel key="progress" vcr={vcr} liveTargetDate={liveTargetDate} />,
               <ApprovalsPanel
@@ -1763,7 +1763,7 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
             ].map((panel, idx) => (
               <div
                 key={idx}
-                className="rounded-2xl bg-card/85 backdrop-blur-sm border border-border/50 shadow-sm"
+                className="rounded-2xl bg-card/85 backdrop-blur-sm border border-border/50 shadow-sm min-h-0 flex flex-col overflow-hidden"
               >
                 {panel}
               </div>
@@ -1914,11 +1914,17 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
               </div>
             )}
 
-            <ScrollArea className="h-full relative z-10">
-              <div className="p-6">
+            {activeNav === 'overview' ? (
+              <div className="h-full p-6 overflow-hidden">
                 {renderContent()}
               </div>
-            </ScrollArea>
+            ) : (
+              <ScrollArea className="h-full relative z-10">
+                <div className="p-6">
+                  {renderContent()}
+                </div>
+              </ScrollArea>
+            )}
           </div>
         </div>
 
