@@ -1209,8 +1209,24 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
         return urlData.publicUrl;
       };
 
-      // No roles are excluded from the approvals panel
+      // Determine plant-specific role exclusions
       const excludedRoleIds = new Set<string>();
+      if (projectId) {
+        const { data: projectData } = await client
+          .from('projects')
+          .select('plant_id, plant!projects_plant_id_fkey(name)')
+          .eq('id', projectId)
+          .maybeSingle();
+        const plantName = ((projectData as any)?.plant as any)?.name || '';
+        // CS plant uses Ops Manager instead of Section Head
+        if (plantName.toUpperCase() === 'CS') {
+          for (const [roleId, roleName] of roleMap.entries()) {
+            if (roleName.toLowerCase().includes('section head')) {
+              excludedRoleIds.add(roleId);
+            }
+          }
+        }
+      }
 
       // Aggregate by approving role (excluding non-TA roles)
       const approverMap = new Map<string, { itemCount: number; acceptedCount: number; userName?: string; avatarUrl?: string; userId?: string }>();
