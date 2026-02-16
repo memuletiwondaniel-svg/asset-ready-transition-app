@@ -196,7 +196,7 @@ const ProgressPanel: React.FC<{ vcr: ProjectVCR }> = ({ vcr }) => {
               <div className="relative shrink-0">
                 <svg width={108} height={108} className="transform -rotate-90">
                   <circle cx={54} cy={54} r={44} fill="none" strokeWidth={7}
-                    className="text-muted/40" stroke="currentColor" />
+                    stroke="hsl(var(--muted-foreground) / 0.3)" />
                   <circle cx={54} cy={54} r={44} fill="none" strokeWidth={7}
                     strokeDasharray={circumference} strokeDashoffset={offset}
                     strokeLinecap="round" className={progressColor} stroke="currentColor"
