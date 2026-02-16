@@ -48,6 +48,7 @@ import SOFCertificate from '@/components/handover/SOFCertificate';
 import PACCertificate from '@/components/handover/PACCertificate';
 import { SystemDetailSheet } from '@/components/p2a-workspace/systems/SystemDetailSheet';
 import { VCRTrainingTab } from '@/components/p2a-workspace/handover-points/VCRTrainingTab';
+import { VCRExecutionPlanWizard } from './vcr-wizard/VCRExecutionPlanWizard';
 import { VCRProceduresTab } from '@/components/p2a-workspace/handover-points/VCRProceduresTab';
 import { VCRCMMSTab } from '@/components/p2a-workspace/handover-points/VCRCMMSTab';
 import { VCRRegistersTab } from '@/components/p2a-workspace/handover-points/VCRRegistersTab';
@@ -493,6 +494,7 @@ const ExecutionPlanStatus: React.FC<{ vcrId: string; status: string }> = ({ vcrI
 // ── Overview Info Panel (Right) ─────────────────────────────────
 const OverviewInfoPanel: React.FC<{ vcr: ProjectVCR; projectName?: string; projectCode?: string; liveTargetDate?: Date; onTargetDateChange?: (d: Date | undefined) => void }> = ({ vcr, projectName, projectCode, liveTargetDate, onTargetDateChange }) => {
   const [editingScope, setEditingScope] = useState(false);
+  const [execPlanWizardOpen, setExecPlanWizardOpen] = useState(false);
   const [scopeText, setScopeText] = useState(
     vcr.description || 'Verification Certificate of Readiness covering systems mapped to this VCR. Ensures all prerequisites including training, documentation, procedures, CMMS, and spares are completed before handover.'
   );
@@ -633,9 +635,25 @@ const OverviewInfoPanel: React.FC<{ vcr: ProjectVCR; projectName?: string; proje
 
         {/* VCR Execution Plan Section */}
         <div className="border-t border-border/60 pt-4">
-          <div className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-2">VCR Execution Plan</div>
+          <button
+            onClick={() => setExecPlanWizardOpen(true)}
+            className="w-full text-left group cursor-pointer hover:bg-muted/30 rounded-lg p-2 -m-2 transition-colors"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">VCR Execution Plan</div>
+              <ChevronRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
+            </div>
+          </button>
           <ExecutionPlanStatus vcrId={vcr.id} status={(vcr as any).execution_plan_status || 'DRAFT'} />
         </div>
+
+        {/* Execution Plan Wizard */}
+        <VCRExecutionPlanWizard
+          open={execPlanWizardOpen}
+          onOpenChange={setExecPlanWizardOpen}
+          vcr={vcr}
+          projectCode={projectCode}
+        />
       </CardContent>
     </Card>
   );

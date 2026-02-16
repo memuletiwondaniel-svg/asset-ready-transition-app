@@ -3587,6 +3587,112 @@ export type Database = {
           },
         ]
       }
+      p2a_vcr_deliverables: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          display_order: number | null
+          handover_point_id: string
+          id: string
+          responsible_person: string | null
+          status: string
+          target_date: string | null
+          tier: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_order?: number | null
+          handover_point_id: string
+          id?: string
+          responsible_person?: string | null
+          status?: string
+          target_date?: string | null
+          tier?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_order?: number | null
+          handover_point_id?: string
+          id?: string
+          responsible_person?: string | null
+          status?: string
+          target_date?: string | null
+          tier?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_vcr_deliverables_handover_point_id_fkey"
+            columns: ["handover_point_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_handover_points"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      p2a_vcr_documentation: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          display_order: number | null
+          document_type: string
+          handover_point_id: string
+          id: string
+          responsible_person: string | null
+          status: string
+          target_date: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_order?: number | null
+          document_type?: string
+          handover_point_id: string
+          id?: string
+          responsible_person?: string | null
+          status?: string
+          target_date?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_order?: number | null
+          document_type?: string
+          handover_point_id?: string
+          id?: string
+          responsible_person?: string | null
+          status?: string
+          target_date?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_vcr_documentation_handover_point_id_fkey"
+            columns: ["handover_point_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_handover_points"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       p2a_vcr_evidence: {
         Row: {
           created_at: string
@@ -3627,6 +3733,59 @@ export type Database = {
             columns: ["vcr_prerequisite_id"]
             isOneToOne: false
             referencedRelation: "p2a_vcr_prerequisites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      p2a_vcr_operational_registers: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          display_order: number | null
+          handover_point_id: string
+          id: string
+          register_type: string
+          responsible_person: string | null
+          status: string
+          target_date: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_order?: number | null
+          handover_point_id: string
+          id?: string
+          register_type?: string
+          responsible_person?: string | null
+          status?: string
+          target_date?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_order?: number | null
+          handover_point_id?: string
+          id?: string
+          register_type?: string
+          responsible_person?: string | null
+          status?: string
+          target_date?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_vcr_operational_registers_handover_point_id_fkey"
+            columns: ["handover_point_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_handover_points"
             referencedColumns: ["id"]
           },
         ]
@@ -3702,6 +3861,59 @@ export type Database = {
             columns: ["pac_prerequisite_id"]
             isOneToOne: false
             referencedRelation: "pac_prerequisites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      p2a_vcr_procedures: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          display_order: number | null
+          handover_point_id: string
+          id: string
+          procedure_type: string
+          responsible_person: string | null
+          status: string
+          target_date: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_order?: number | null
+          handover_point_id: string
+          id?: string
+          procedure_type?: string
+          responsible_person?: string | null
+          status?: string
+          target_date?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_order?: number | null
+          handover_point_id?: string
+          id?: string
+          procedure_type?: string
+          responsible_person?: string | null
+          status?: string
+          target_date?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_vcr_procedures_handover_point_id_fkey"
+            columns: ["handover_point_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_handover_points"
             referencedColumns: ["id"]
           },
         ]
@@ -3807,6 +4019,65 @@ export type Database = {
           {
             foreignKeyName: "p2a_vcr_relationships_target_vcr_id_fkey"
             columns: ["target_vcr_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_handover_points"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      p2a_vcr_training: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          display_order: number | null
+          duration_hours: number | null
+          estimated_cost: number | null
+          handover_point_id: string
+          id: string
+          status: string
+          target_audience: string[] | null
+          tentative_date: string | null
+          title: string
+          training_provider: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_order?: number | null
+          duration_hours?: number | null
+          estimated_cost?: number | null
+          handover_point_id: string
+          id?: string
+          status?: string
+          target_audience?: string[] | null
+          tentative_date?: string | null
+          title: string
+          training_provider?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_order?: number | null
+          duration_hours?: number | null
+          estimated_cost?: number | null
+          handover_point_id?: string
+          id?: string
+          status?: string
+          target_audience?: string[] | null
+          tentative_date?: string | null
+          title?: string
+          training_provider?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_vcr_training_handover_point_id_fkey"
+            columns: ["handover_point_id"]
             isOneToOne: false
             referencedRelation: "p2a_handover_points"
             referencedColumns: ["id"]
