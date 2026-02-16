@@ -45,6 +45,7 @@ import PACCertificate from '@/components/handover/PACCertificate';
 import { VCRTrainingTab } from '@/components/p2a-workspace/handover-points/VCRTrainingTab';
 import { VCRProceduresTab } from '@/components/p2a-workspace/handover-points/VCRProceduresTab';
 import { VCRCMMSTab } from '@/components/p2a-workspace/handover-points/VCRCMMSTab';
+import { VCRRegistersTab } from '@/components/p2a-workspace/handover-points/VCRRegistersTab';
 import { P2AHandoverPoint } from '@/components/p2a-workspace/hooks/useP2AHandoverPoints';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
@@ -847,7 +848,7 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
       case 'procedures':
         return <VCRHandoverPointWrapper vcr={vcr} render={(hp) => <VCRProceduresTab handoverPoint={hp} />} />;
       case 'registers':
-        return <PlaceholderContent title="Operational Registers" icon={FileText} />;
+        return <VCRHandoverPointWrapper vcr={vcr} render={(hp) => <VCRRegistersTab handoverPoint={hp} />} />;
       case 'documentation':
         return <PlaceholderContent title="Documentation" icon={FileText} />;
       case 'cmms':
