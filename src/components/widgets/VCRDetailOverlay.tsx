@@ -1557,6 +1557,7 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
       if (!hp?.handover_plan_id) return [];
 
       let plantName = '';
+      let hubName = '';
       const { data: plan } = await client
         .from('p2a_handover_plans')
         .select('project_id')
@@ -1571,6 +1572,10 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
         if (project?.plant_id) {
           const { data: plant } = await client.from('plant').select('name').eq('id', project.plant_id).maybeSingle();
           plantName = plant?.name || '';
+        }
+        if (project?.hub_id) {
+          const { data: hub } = await client.from('hubs').select('name').eq('id', project.hub_id).maybeSingle();
+          hubName = hub?.name || '';
         }
       }
 
@@ -1588,12 +1593,19 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
       if (!allProfiles) return [];
 
       const plantLower = plantName.toLowerCase();
+      const hubLower = hubName.toLowerCase();
       const result: Array<{ id: string; name: string; role: string; status?: 'pending' | 'approved' | 'rejected'; avatar_url?: string }> = [];
 
-      // 1. Project Hub Lead
+      // 1. Project Hub Lead — match by hub name in position
       const hubLead = allProfiles.find((p: any) => {
         const pos = (p.position || '').toLowerCase().replace(/–/g, '-');
-        return pos.includes('project hub lead') || (pos.includes('project') && pos.includes('hub') && pos.includes('lead'));
+        if (!pos.includes('hub lead')) return false;
+        // Must match the project's hub name
+        return hubLower ? pos.replace(/–/g, '-').includes(hubLower) : false;
+      }) || allProfiles.find((p: any) => {
+        // Fallback: any hub lead if no hub-specific match
+        const pos = (p.position || '').toLowerCase().replace(/–/g, '-');
+        return pos.includes('project hub lead');
       });
       result.push({
         id: hubLead?.user_id || 'pac-hub-lead',
