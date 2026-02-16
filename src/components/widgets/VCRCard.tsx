@@ -60,6 +60,7 @@ const ProgressWheel: React.FC<{ value: number; color?: string }> = ({ value, col
 export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick }) => {
   const vcrColor = getVCRColor(vcr.vcr_code);
   const progress = vcr.progress;
+  const isComplete = progress === 100;
   const displayCode = shortCode(vcr.vcr_code);
 
   const cardStyle: React.CSSProperties = vcrColor
@@ -115,11 +116,17 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick }) => {
           <ProgressWheel value={progress} color={vcrColor?.border} />
           <div className="flex flex-col items-center gap-1.5">
             {vcr.has_hydrocarbon && (
-              <span className="vcr-cert-badge text-[8px] font-semibold px-1.5 py-0.5 rounded-full">
+              <span className={cn(
+                "text-[8px] font-semibold px-1.5 py-0.5 rounded-full",
+                isComplete ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400" : "vcr-cert-badge"
+              )}>
                 SoF
               </span>
             )}
-            <span className="vcr-cert-badge text-[8px] font-semibold px-1.5 py-0.5 rounded-full">
+            <span className={cn(
+              "text-[8px] font-semibold px-1.5 py-0.5 rounded-full",
+              isComplete ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400" : "vcr-cert-badge"
+            )}>
               PAC
             </span>
           </div>
