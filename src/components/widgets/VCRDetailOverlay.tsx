@@ -586,14 +586,37 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
 
   const renderContent = () => {
     switch (activeNav) {
-      case 'overview':
+      case 'overview': {
+        const c = vcrColor;
+        const panelStyle = c ? {
+          background: `linear-gradient(135deg, hsl(${c.hue}, ${c.saturation}%, 96%) 0%, hsl(${(c.hue + 30) % 360}, ${c.saturation}%, 97%) 100%)`,
+          borderColor: `hsl(${c.hue}, ${c.saturation}%, 88%)`,
+        } : undefined;
+        const panelStyleDark = c ? {
+          '--panel-bg': `linear-gradient(135deg, hsl(${c.hue}, ${Math.round(c.saturation * 0.25)}%, 14%) 0%, hsl(${(c.hue + 30) % 360}, ${Math.round(c.saturation * 0.25)}%, 16%) 100%)`,
+          '--panel-border': `hsl(${c.hue}, ${c.saturation * 0.3}%, 25%)`,
+        } : undefined;
         return (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full">
-            <ProgressPanel vcr={vcr} />
-            <ApprovalsPanel vcr={vcr} />
-            <OverviewInfoPanel vcr={vcr} projectName={projectName} projectCode={projectCode} />
+            {[
+              <ProgressPanel key="progress" vcr={vcr} />,
+              <ApprovalsPanel key="approvals" vcr={vcr} />,
+              <OverviewInfoPanel key="info" vcr={vcr} projectName={projectName} projectCode={projectCode} />,
+            ].map((panel, idx) => (
+              <div
+                key={idx}
+                className="rounded-2xl border p-[2px] transition-all"
+                style={panelStyle ? {
+                  background: panelStyle.background,
+                  borderColor: panelStyle.borderColor,
+                } : undefined}
+              >
+                {panel}
+              </div>
+            ))}
           </div>
         );
+      }
       case 'sof':
         return (
           <SOFCertificate
