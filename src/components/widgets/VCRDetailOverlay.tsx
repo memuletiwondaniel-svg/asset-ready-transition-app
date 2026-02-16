@@ -75,13 +75,13 @@ type NavItem = {
 
 const NAV_ITEMS: NavItem[] = [
   { id: 'overview', label: 'Overview', icon: BarChart3 },
+  { id: 'systems', label: 'Systems', icon: Layers },
   { id: 'training', label: 'Training', icon: GraduationCap },
   { id: 'procedures', label: 'Procedures', icon: BookOpen },
   { id: 'registers', label: 'Operational Registers', icon: FileText },
   { id: 'documentation', label: 'Documentation', icon: FileText },
   { id: 'cmms', label: 'CMMS', icon: Settings2 },
   { id: 'spares', label: 'Spares', icon: Package },
-  { id: 'systems', label: 'Systems', icon: Layers },
   { id: 'sof', label: 'SoF', icon: Shield, locked: true },
   { id: 'pac', label: 'PAC', icon: Award, locked: true },
 ];
