@@ -36,6 +36,8 @@ import { cn } from '@/lib/utils';
 import { ProjectVCR } from '@/hooks/useProjectVCRs';
 import { getVCRColor } from '@/components/p2a-workspace/utils/vcrColors';
 import { format } from 'date-fns';
+import SOFCertificate from '@/components/handover/SOFCertificate';
+import PACCertificate from '@/components/handover/PACCertificate';
 
 interface VCRDetailOverlayProps {
   open: boolean;
@@ -345,9 +347,24 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
           </div>
         );
       case 'sof':
-        return <LockedContent title="Statement of Fitness" />;
+        return (
+          <SOFCertificate
+            certificateNumber={`SOF-${displayCode}`}
+            plantName=""
+            facilityName=""
+            projectName={vcr.name}
+            sourceType="VCR"
+            pssrReason="Start-up of a new Project or Facility"
+          />
+        );
       case 'pac':
-        return <LockedContent title="Provisional Acceptance Certificate" />;
+        return (
+          <PACCertificate
+            certificateNumber={`PAC-${displayCode}`}
+            facilityName=""
+            projectName={vcr.name}
+          />
+        );
       case 'training':
         return <PlaceholderContent title="Training" icon={GraduationCap} />;
       case 'procedures':
