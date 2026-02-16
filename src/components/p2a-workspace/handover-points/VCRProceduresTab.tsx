@@ -36,39 +36,8 @@ interface VCRProceduresTabProps {
   handoverPoint: P2AHandoverPoint;
 }
 
-// Mock data for procedures - in real implementation this would come from database
-const mockProcedures: Procedure[] = [
-  {
-    id: '1',
-    procedureNumber: 'BGC-ISGP-N001-OA-6523-001',
-    title: 'Gas Turbine Initial Start-up Procedure',
-    type: 'startup',
-    status: 'approved',
-    version: '2.1',
-    owner: 'John Smith',
-    lastUpdated: '2024-01-15',
-  },
-  {
-    id: '2',
-    procedureNumber: 'BGC-ISGP-N001-OA-6523-002',
-    title: 'Compressor Normal Operating Procedure',
-    type: 'normal',
-    status: 'site_validation',
-    version: '1.3',
-    owner: 'Sarah Johnson',
-    lastUpdated: '2024-01-10',
-  },
-  {
-    id: '3',
-    procedureNumber: 'BGC-ISGP-N001-OA-6523-003',
-    title: 'Emergency Shutdown Procedure',
-    type: 'startup',
-    status: 'draft',
-    version: '1.0',
-    owner: 'Mike Chen',
-    lastUpdated: '2024-01-08',
-  },
-];
+// Mock data cleared - in real implementation this would come from database
+const mockProcedures: Procedure[] = [];
 
 const STATUS_CONFIG: Record<ProcedureStatus, { label: string; className: string }> = {
   'not_started': { label: 'Not Started', className: 'bg-slate-100 text-slate-600 border-slate-300' },
