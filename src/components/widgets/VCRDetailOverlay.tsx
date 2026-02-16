@@ -42,6 +42,7 @@ import { format } from 'date-fns';
 import { useHandoverPointSystems } from '@/components/p2a-workspace/hooks/useP2AHandoverPoints';
 import SOFCertificate from '@/components/handover/SOFCertificate';
 import PACCertificate from '@/components/handover/PACCertificate';
+import { SystemDetailSheet } from '@/components/p2a-workspace/systems/SystemDetailSheet';
 import { VCRTrainingTab } from '@/components/p2a-workspace/handover-points/VCRTrainingTab';
 import { VCRProceduresTab } from '@/components/p2a-workspace/handover-points/VCRProceduresTab';
 import { VCRCMMSTab } from '@/components/p2a-workspace/handover-points/VCRCMMSTab';
@@ -373,6 +374,7 @@ const VCRSystemsPanel: React.FC<{ vcrId: string; projectCode?: string }> = ({ vc
   const { systems, isLoading } = useHandoverPointSystems(vcrId);
   const [syncing, setSyncing] = React.useState(false);
   const [syncResult, setSyncResult] = React.useState<{ success: boolean; message: string } | null>(null);
+  const [selectedSystem, setSelectedSystem] = React.useState<any | null>(null);
 
   const handleSyncFromGoCompletions = async () => {
     const config = getAPIConfig('gocompletions');
@@ -528,7 +530,7 @@ const VCRSystemsPanel: React.FC<{ vcrId: string; projectCode?: string }> = ({ vc
       </div>
 
       {/* Systems Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {systems.map((sys: any) => {
           const completion = sys.completion_percentage || 0;
           const isHC = sys.is_hydrocarbon;
@@ -549,7 +551,8 @@ const VCRSystemsPanel: React.FC<{ vcrId: string; projectCode?: string }> = ({ vc
           return (
             <div
               key={sys.id}
-              className="group rounded-2xl border bg-card hover:bg-muted/30 transition-all hover:shadow-sm overflow-hidden"
+              className="group rounded-2xl border bg-card hover:bg-muted/30 transition-all hover:shadow-sm overflow-hidden cursor-pointer"
+              onClick={() => setSelectedSystem(sys)}
             >
               <div className="p-4">
                 {/* Top row: Name + Progress ring */}
@@ -628,6 +631,14 @@ const VCRSystemsPanel: React.FC<{ vcrId: string; projectCode?: string }> = ({ vc
           );
         })}
       </div>
+
+      {selectedSystem && (
+        <SystemDetailSheet
+          system={selectedSystem}
+          open={!!selectedSystem}
+          onOpenChange={(open) => !open && setSelectedSystem(null)}
+        />
+      )}
     </div>
   );
 };
