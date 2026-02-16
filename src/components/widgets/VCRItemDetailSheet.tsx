@@ -151,13 +151,14 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
         approvingRoles = (roles as any[]) || [];
       }
 
-      // Resolve actual users — try project team members first, then fall back to all active profiles with matching roles
+      // Resolve actual users — project team members first, then Project-level TA2 fallback
       let teamMembers: { user_id: string; full_name: string; avatar_url: string | null; role_id: string; role_name: string }[] = [];
       if (allRoleIds.length > 0) {
         let candidateProfiles: any[] = [];
+        let matchedRoleIds: string[] = [];
 
         if (projectId) {
-          // First try: project team members with matching roles
+          // Step 1: Get project team members with matching roles
           const { data: members } = await supabase
             .from('project_team_members')
             .select('user_id')
@@ -175,11 +176,33 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
           }
         }
 
-        // No global fallback — only project team members should appear for localized VCR items
+        // Step 2: For roles NOT covered by project team members, find Project-level TA2s
+        const coveredRoleIds = new Set(candidateProfiles.map((p: any) => p.role));
+        const uncoveredRoleIds = allRoleIds.filter(rid => !coveredRoleIds.has(rid));
+
+        if (uncoveredRoleIds.length > 0) {
+          // Query profiles with these roles, but only "Project" positions (exclude "Asset")
+          const { data: ta2Profiles } = await supabase
+            .from('profiles')
+            .select('user_id, full_name, avatar_url, role, position')
+            .in('role', uncoveredRoleIds)
+            .eq('is_active', true);
+
+          if (ta2Profiles) {
+            // Filter: include only those whose position contains "Project" or doesn't contain "Asset"
+            const projectTA2s = ta2Profiles.filter((p: any) => {
+              const pos = (p.position || '').toLowerCase();
+              // If position distinguishes Project vs Asset, only include Project
+              if (pos.includes('- asset') || pos.includes('asset')) return false;
+              return true;
+            });
+            candidateProfiles.push(...projectTA2s);
+          }
+        }
 
         if (candidateProfiles.length > 0) {
           // Get role names for matched profiles
-          const matchedRoleIds = [...new Set(candidateProfiles.map((p: any) => p.role).filter(Boolean))];
+          matchedRoleIds = [...new Set(candidateProfiles.map((p: any) => p.role).filter(Boolean))];
           let roleMap: Record<string, string> = {};
           if (matchedRoleIds.length > 0) {
             const { data: roleNames } = await supabase
