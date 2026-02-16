@@ -223,7 +223,7 @@ export const translations = {
     oraTitle: 'Operational Readiness Assessment',
     oraOverview: 'ORA Overview',
     oraPlan: 'ORA Plan',
-    oraPlans: 'ORA Plans',
+    oraPlans: 'ORA Activity Plan',
     createOraPlan: 'Create ORA Plan',
     operationalReadiness: 'Operational Readiness',
     phase: 'Phase',
