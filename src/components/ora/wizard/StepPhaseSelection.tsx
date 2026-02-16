@@ -56,10 +56,7 @@ export const StepPhaseSelection: React.FC<Props> = ({ phase, onPhaseChange }) =>
               {PHASE_ICONS[p.value]}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-mono text-muted-foreground">{i + 1}.</span>
-                <span className="text-sm font-semibold">{p.label}</span>
-              </div>
+              <span className="text-sm font-semibold">{p.label}</span>
               <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
                 {PHASE_DESCRIPTIONS[p.value]}
               </p>
