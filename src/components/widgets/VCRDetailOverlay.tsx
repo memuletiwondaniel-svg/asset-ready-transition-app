@@ -683,7 +683,7 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
             </div>
             <ScrollArea className="flex-1">
               <div className="px-2 pb-4 space-y-0.5">
-                {NAV_ITEMS.map((item) => {
+                {NAV_ITEMS.filter(item => item.id !== 'sof' || vcr.has_hydrocarbon).map((item) => {
                   const Icon = item.icon;
                   const isActive = activeNav === item.id;
                   const isLocked = item.locked && !isComplete;
