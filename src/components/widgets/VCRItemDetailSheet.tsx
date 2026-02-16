@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   FileText,
   User,
@@ -27,6 +28,7 @@ import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
+import { useParams } from 'react-router-dom';
 
 export interface VCRItemBasic {
   id: string;
@@ -63,6 +65,8 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
   onOpenChange,
   vcrId,
 }) => {
+  const { projectId } = useParams<{ projectId: string }>();
+
   const { data: prereqDetail } = useQuery({
     queryKey: ['vcr-prereq-detail', item?.prerequisite_id],
     queryFn: async () => {
@@ -79,31 +83,79 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
   });
 
   const { data: vcrItemDetail } = useQuery({
-    queryKey: ['vcr-item-detail', item?.id],
+    queryKey: ['vcr-item-detail', item?.id, projectId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('vcr_items')
         .select(`
           *,
-          delivering_party:roles!vcr_items_delivering_party_role_id_fkey(name),
+          delivering_party:roles!vcr_items_delivering_party_role_id_fkey(id, name),
           vcr_item_categories!vcr_items_category_id_fkey(name, code)
         `)
         .eq('id', item!.id)
         .maybeSingle();
       if (error) return null;
 
-      // Fetch approving party names from role IDs
-      let approvingPartyNames: string[] = [];
-      const roleIds = (data as any)?.approving_party_role_ids;
-      if (roleIds && roleIds.length > 0) {
+      // Collect all role IDs to resolve
+      const allRoleIds: string[] = [];
+      const delRoleId = (data as any)?.delivering_party_role_id;
+      if (delRoleId) allRoleIds.push(delRoleId);
+      const appRoleIds: string[] = (data as any)?.approving_party_role_ids || [];
+      allRoleIds.push(...appRoleIds);
+
+      // Fetch approving party role names
+      let approvingRoles: { id: string; name: string }[] = [];
+      if (appRoleIds.length > 0) {
         const { data: roles } = await supabase
           .from('roles')
-          .select('name')
-          .in('id', roleIds);
-        approvingPartyNames = roles?.map((r: any) => r.name) || [];
+          .select('id, name')
+          .in('id', appRoleIds);
+        approvingRoles = (roles as any[]) || [];
       }
 
-      return { ...(data as any), approving_party_names: approvingPartyNames };
+      // Resolve actual users from project team members
+      let teamMembers: { user_id: string; full_name: string; avatar_url: string | null; role_id: string; role_name: string }[] = [];
+      if (projectId && allRoleIds.length > 0) {
+        const { data: members } = await supabase
+          .from('project_team_members')
+          .select('user_id')
+          .eq('project_id', projectId);
+
+        if (members && members.length > 0) {
+          const userIds = members.map((m: any) => m.user_id);
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('user_id, full_name, avatar_url, role')
+            .in('user_id', userIds)
+            .in('role', allRoleIds);
+
+          if (profiles) {
+            // Get role names for matched profiles
+            const matchedRoleIds = [...new Set(profiles.map((p: any) => p.role).filter(Boolean))];
+            let roleMap: Record<string, string> = {};
+            if (matchedRoleIds.length > 0) {
+              const { data: roleNames } = await supabase
+                .from('roles')
+                .select('id, name')
+                .in('id', matchedRoleIds);
+              roleNames?.forEach((r: any) => { roleMap[r.id] = r.name; });
+            }
+            teamMembers = profiles.map((p: any) => ({
+              user_id: p.user_id,
+              full_name: p.full_name,
+              avatar_url: p.avatar_url,
+              role_id: p.role,
+              role_name: roleMap[p.role] || '',
+            }));
+          }
+        }
+      }
+
+      return {
+        ...(data as any),
+        approving_roles: approvingRoles,
+        team_members: teamMembers,
+      };
     },
     enabled: open && !!item?.id,
   });
@@ -112,10 +164,27 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
 
   const statusCfg = STATUS_CONFIG[item.status] || STATUS_CONFIG.NOT_STARTED;
   const StatusIcon = statusCfg.icon;
-  const deliveringParty = vcrItemDetail?.delivering_party?.name || 'Not assigned';
-  const approvingParties = vcrItemDetail?.approving_party_names?.length > 0
-    ? vcrItemDetail.approving_party_names.join(', ')
-    : 'Not assigned';
+
+  // Resolve delivering party user(s)
+  const delRoleId = vcrItemDetail?.delivering_party_role_id;
+  const deliveringMembers = vcrItemDetail?.team_members?.filter((m: any) => m.role_id === delRoleId) || [];
+  const deliveringRoleName = vcrItemDetail?.delivering_party?.name || 'Not assigned';
+
+  // Resolve approving party users grouped by role
+  const approvingRoles: { id: string; name: string }[] = vcrItemDetail?.approving_roles || [];
+  const approvingMembers = vcrItemDetail?.team_members?.filter((m: any) =>
+    (vcrItemDetail?.approving_party_role_ids || []).includes(m.role_id)
+  ) || [];
+
+  const getAvatarUrl = (avatarPath: string | null) => {
+    if (!avatarPath) return undefined;
+    if (avatarPath.startsWith('http')) return avatarPath;
+    return `https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/${avatarPath}`;
+  };
+
+  const getInitials = (name: string) => {
+    return name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+  };
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -150,31 +219,71 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
             {/* Responsible Parties */}
             <div className="space-y-3">
               <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Responsible Parties</div>
-              <div className="flex items-center gap-3">
-                <Card className="flex-1">
-                  <CardContent className="p-3">
-                    <div className="flex items-center gap-2">
-                      <User className="w-4 h-4 text-muted-foreground" />
-                      <div>
-                        <div className="text-[10px] text-muted-foreground">Delivering Party</div>
-                        <div className="text-xs font-medium">{deliveringParty}</div>
-                      </div>
+
+              {/* Delivering Party */}
+              <Card>
+                <CardContent className="p-3">
+                  <div className="text-[10px] text-muted-foreground mb-2">Delivering Party</div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge variant="outline" className="text-[10px]">{deliveringRoleName}</Badge>
+                  </div>
+                  {deliveringMembers.length > 0 ? (
+                    <div className="space-y-2 mt-2">
+                      {deliveringMembers.map((member: any) => (
+                        <div key={member.user_id} className="flex items-center gap-2">
+                          <Avatar className="w-7 h-7">
+                            <AvatarImage src={getAvatarUrl(member.avatar_url)} />
+                            <AvatarFallback className="text-[10px]">{getInitials(member.full_name)}</AvatarFallback>
+                          </Avatar>
+                          <span className="text-xs font-medium">{member.full_name}</span>
+                        </div>
+                      ))}
                     </div>
-                  </CardContent>
-                </Card>
-                <ArrowRight className="w-4 h-4 text-muted-foreground shrink-0" />
-                <Card className="flex-1">
-                  <CardContent className="p-3">
-                    <div className="flex items-center gap-2">
-                      <User className="w-4 h-4 text-muted-foreground" />
-                      <div>
-                        <div className="text-[10px] text-muted-foreground">Approving Party</div>
-                        <div className="text-xs font-medium">{approvingParties}</div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                  ) : (
+                    <p className="text-xs text-muted-foreground italic mt-1">No team member assigned</p>
+                  )}
+                </CardContent>
+              </Card>
+
+              <div className="flex justify-center">
+                <ArrowRight className="w-4 h-4 text-muted-foreground rotate-90" />
               </div>
+
+              {/* Approving Parties */}
+              <Card>
+                <CardContent className="p-3">
+                  <div className="text-[10px] text-muted-foreground mb-2">Approving Parties</div>
+                  {approvingRoles.length > 0 ? (
+                    <div className="space-y-3">
+                      {approvingRoles.map((role: any) => {
+                        const membersForRole = approvingMembers.filter((m: any) => m.role_id === role.id);
+                        return (
+                          <div key={role.id}>
+                            <Badge variant="outline" className="text-[10px] mb-1">{role.name}</Badge>
+                            {membersForRole.length > 0 ? (
+                              <div className="space-y-1.5 mt-1.5">
+                                {membersForRole.map((member: any) => (
+                                  <div key={member.user_id} className="flex items-center gap-2">
+                                    <Avatar className="w-7 h-7">
+                                      <AvatarImage src={getAvatarUrl(member.avatar_url)} />
+                                      <AvatarFallback className="text-[10px]">{getInitials(member.full_name)}</AvatarFallback>
+                                    </Avatar>
+                                    <span className="text-xs font-medium">{member.full_name}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-xs text-muted-foreground italic mt-0.5">No team member assigned</p>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground italic">Not assigned</p>
+                  )}
+                </CardContent>
+              </Card>
             </div>
 
             <Separator />
