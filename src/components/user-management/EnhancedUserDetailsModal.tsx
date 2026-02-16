@@ -1470,7 +1470,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                             <SelectValue placeholder={rolesLoading ? "Loading..." : "Select function"} />
                           </SelectTrigger>
                           <SelectContent>
-                            {categorizedRoles?.map((group) => (
+                            {categorizedRoles?.filter((group) => group.category.name).map((group) => (
                               <SelectItem key={group.category.id} value={group.category.name}>
                                 {group.category.name}
                               </SelectItem>
@@ -1491,7 +1491,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                             <SelectValue placeholder={formData.function ? "Select role" : "Select function first"} />
                           </SelectTrigger>
                           <SelectContent>
-                            {getRolesForFunction().map((role) => (
+                            {getRolesForFunction().filter((role) => role.name).map((role) => (
                               <SelectItem key={role.id} value={role.name}>
                                 {role.name}
                               </SelectItem>

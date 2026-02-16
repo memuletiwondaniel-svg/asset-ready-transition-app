@@ -101,7 +101,7 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                     </SelectTrigger>
                     <SelectContent>
                       {selectedActivities
-                        .filter(a => a.id !== activity.id)
+                        .filter(a => a.id !== activity.id && a.id)
                         .map(a => (
                           <SelectItem key={a.id} value={a.id}>
                             {activity.predecessorIds.includes(a.id) ? '✓ ' : ''}{a.name}
