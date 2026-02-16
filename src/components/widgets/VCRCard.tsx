@@ -89,7 +89,7 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick }) => {
             {vcr.has_hydrocarbon && (
               <span className="vcr-cert-badge inline-flex items-center gap-0.5 text-[9px] font-semibold px-2 py-0.5 rounded-full">
                 <Flame className="h-2.5 w-2.5" />
-                RFSU
+                SoF
               </span>
             )}
             <span className="vcr-cert-badge inline-flex items-center gap-0.5 text-[9px] font-semibold px-2 py-0.5 rounded-full">
