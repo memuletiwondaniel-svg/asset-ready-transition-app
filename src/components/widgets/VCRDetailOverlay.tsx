@@ -298,7 +298,7 @@ interface ChecklistApproverData {
 interface ApprovalsPanelProps {
   vcr: ProjectVCR;
   checklistApprovers?: ChecklistApproverData[];
-  sofApprovers?: Array<{ id: string; name: string; role: string }>;
+  sofApprovers?: Array<{ id: string; name: string; role: string; avatarUrl?: string }>;
   pacApprovers?: Array<{ id: string; name: string; role: string; status?: string; avatar_url?: string }>;
   vcrApprovers?: Array<{ id: string; name: string; role: string; avatarUrl?: string }>;
   showSof?: boolean;
@@ -451,6 +451,7 @@ const ApprovalsPanel: React.FC<ApprovalsPanelProps> = ({
                       key={`sof-approver-${i}`}
                       name={person.name}
                       subtitle={person.role}
+                      avatarUrl={person.avatarUrl}
                     />
                   ))}
                   {sofApprovers.length === 0 && (
@@ -1544,6 +1545,7 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
               id: match.user_id || `director-${idx}`,
               name: match.full_name || '',
               role: match.position || 'Dep. Plant Director',
+              avatarUrl: getFullAvatarUrl(match.avatar_url || null),
             };
           }
         }
@@ -1552,6 +1554,7 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
           id: match?.user_id || `director-${idx}`,
           name: match?.full_name || '',
           role: match?.position || role,
+          avatarUrl: getFullAvatarUrl(match?.avatar_url || null),
         };
       });
     },
