@@ -375,6 +375,121 @@ const ApprovalsPanel: React.FC<{ vcr: ProjectVCR; checklistApprovers?: Checklist
     </>
   );
 };
+// ── Execution Plan Status Badge ─────────────────────────────────
+const ExecutionPlanStatus: React.FC<{ vcrId: string; status: string }> = ({ vcrId, status }) => {
+  const queryClient = useQueryClient();
+  const [updating, setUpdating] = useState(false);
+
+  // Fetch readiness: count training, procedures, documentation items
+  const { data: readiness } = useQuery({
+    queryKey: ['vcr-execution-readiness', vcrId],
+    queryFn: async () => {
+      const client = supabase as any;
+      const [training, procedures, documentation] = await Promise.all([
+        client.from('p2a_vcr_training').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcrId),
+        client.from('p2a_vcr_procedures').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcrId),
+        client.from('p2a_vcr_documentation').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcrId),
+      ]);
+      return {
+        training: training.count || 0,
+        procedures: procedures.count || 0,
+        documentation: documentation.count || 0,
+        isReady: (training.count || 0) > 0 && (procedures.count || 0) > 0 && (documentation.count || 0) > 0,
+      };
+    },
+  });
+
+  const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
+    DRAFT: { label: 'Draft', color: 'text-muted-foreground', bg: 'bg-muted' },
+    SUBMITTED: { label: 'Submitted for Review', color: 'text-amber-600', bg: 'bg-amber-500/10' },
+    APPROVED: { label: 'Approved', color: 'text-emerald-600', bg: 'bg-emerald-500/10' },
+    REJECTED: { label: 'Rejected', color: 'text-red-600', bg: 'bg-red-500/10' },
+  };
+
+  const cfg = statusConfig[status] || statusConfig.DRAFT;
+
+  const handleSubmit = async () => {
+    setUpdating(true);
+    const client = supabase as any;
+    await client.from('p2a_handover_points').update({
+      execution_plan_status: 'SUBMITTED',
+      execution_plan_submitted_at: new Date().toISOString(),
+    }).eq('id', vcrId);
+    queryClient.invalidateQueries({ queryKey: ['project-vcrs'] });
+    setUpdating(false);
+  };
+
+  const handleApprove = async () => {
+    setUpdating(true);
+    const client = supabase as any;
+    await client.from('p2a_handover_points').update({
+      execution_plan_status: 'APPROVED',
+      execution_plan_approved_at: new Date().toISOString(),
+    }).eq('id', vcrId);
+    queryClient.invalidateQueries({ queryKey: ['project-vcrs'] });
+    setUpdating(false);
+  };
+
+  const handleReject = async () => {
+    setUpdating(true);
+    const client = supabase as any;
+    await client.from('p2a_handover_points').update({
+      execution_plan_status: 'REJECTED',
+    }).eq('id', vcrId);
+    queryClient.invalidateQueries({ queryKey: ['project-vcrs'] });
+    setUpdating(false);
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <Badge className={cn(cfg.bg, cfg.color, 'border-0 text-[10px] font-medium')}>
+          {cfg.label}
+        </Badge>
+      </div>
+
+      {/* Mini readiness indicators */}
+      {readiness && status !== 'APPROVED' && (
+        <div className="space-y-1">
+          {[
+            { label: 'Training Plan', count: readiness.training },
+            { label: 'Procedures', count: readiness.procedures },
+            { label: 'Documentation', count: readiness.documentation },
+          ].map(item => (
+            <div key={item.label} className="flex items-center gap-1.5 text-[10px]">
+              <div className={cn("w-1.5 h-1.5 rounded-full", item.count > 0 ? "bg-emerald-500" : "bg-muted-foreground/30")} />
+              <span className="text-muted-foreground">{item.label}</span>
+              <span className={cn("ml-auto font-medium", item.count > 0 ? "text-foreground" : "text-muted-foreground/50")}>{item.count}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Actions */}
+      {status === 'DRAFT' && readiness?.isReady && (
+        <Button size="sm" className="h-6 text-[10px] px-2 w-full" onClick={handleSubmit} disabled={updating}>
+          Submit for Review
+        </Button>
+      )}
+      {status === 'SUBMITTED' && (
+        <div className="flex gap-1">
+          <Button size="sm" variant="default" className="h-6 text-[10px] px-2 flex-1" onClick={handleApprove} disabled={updating}>
+            Approve
+          </Button>
+          <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 flex-1" onClick={handleReject} disabled={updating}>
+            Reject
+          </Button>
+        </div>
+      )}
+      {status === 'REJECTED' && (
+        <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 w-full" onClick={handleSubmit} disabled={updating}>
+          Re-submit
+        </Button>
+      )}
+    </div>
+  );
+};
+
 // ── Overview Info Panel (Right) ─────────────────────────────────
 const OverviewInfoPanel: React.FC<{ vcr: ProjectVCR; projectName?: string; projectCode?: string; liveTargetDate?: Date; onTargetDateChange?: (d: Date | undefined) => void }> = ({ vcr, projectName, projectCode, liveTargetDate, onTargetDateChange }) => {
   const [editingScope, setEditingScope] = useState(false);
@@ -513,6 +628,12 @@ const OverviewInfoPanel: React.FC<{ vcr: ProjectVCR; projectName?: string; proje
               {scopeText}
             </p>
           )}
+        </div>
+
+        {/* VCR Execution Plan */}
+        <div>
+          <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-2">VCR Execution Plan</div>
+          <ExecutionPlanStatus vcrId={vcr.id} status={(vcr as any).execution_plan_status || 'DRAFT'} />
         </div>
       </CardContent>
     </Card>
