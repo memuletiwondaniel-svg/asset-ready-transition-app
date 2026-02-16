@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { getAPIConfig } from '@/lib/api-config-storage';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { DayPicker } from 'react-day-picker';
+import { MultiViewDatePicker } from '@/components/ui/multi-view-date-picker';
+
 import {
   Dialog,
   DialogContent,
@@ -449,11 +450,9 @@ const OverviewInfoPanel: React.FC<{ vcr: ProjectVCR; projectName?: string; proje
               </div>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
-              <DayPicker
-                mode="single"
+              <MultiViewDatePicker
                 selected={targetDate}
                 onSelect={saveTargetDate}
-                className={cn("p-3 pointer-events-auto")}
               />
             </PopoverContent>
           </Popover>
