@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { getAPIConfig } from '@/lib/api-config-storage';
 import {
   Dialog,
@@ -866,6 +867,7 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
   projectName = '',
   projectCode = '',
 }) => {
+  const { projectId } = useParams<{ projectId: string }>();
   const [activeNav, setActiveNav] = useState('overview');
   const vcrColor = getVCRColor(vcr.vcr_code);
   const displayCode = shortCode(vcr.vcr_code);
@@ -873,7 +875,7 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
 
   // Fetch checklist item approvers (delivering/receiving parties from prerequisites)
   const { data: checklistApprovers = [] } = useQuery({
-    queryKey: ['vcr-checklist-approvers', vcr.id],
+    queryKey: ['vcr-checklist-approvers', vcr.id, projectId],
     queryFn: async () => {
       const client = supabase as any;
 
@@ -919,12 +921,34 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
 
       const acceptedStatuses = ['ACCEPTED', 'QUALIFICATION_APPROVED'];
 
-      // Fetch profiles matched to approving roles via profiles.role (which stores role UUID)
-      const { data: profilesByRole } = await client
-        .from('profiles')
-        .select('user_id, full_name, avatar_url, role')
-        .in('role', Array.from(allRoleIds))
-        .eq('is_active', true);
+      // Fetch profiles matched to approving roles, filtered by project team members
+      let profilesByRole: any[] = [];
+      if (projectId) {
+        // First get team member user IDs for this project
+        const { data: teamMembers } = await client
+          .from('project_team_members')
+          .select('user_id')
+          .eq('project_id', projectId);
+
+        if (teamMembers?.length) {
+          const teamUserIds = teamMembers.map((m: any) => m.user_id);
+          const { data: profiles } = await client
+            .from('profiles')
+            .select('user_id, full_name, avatar_url, role')
+            .in('user_id', teamUserIds)
+            .in('role', Array.from(allRoleIds))
+            .eq('is_active', true);
+          profilesByRole = profiles || [];
+        }
+      } else {
+        // Fallback: global lookup (shouldn't happen in practice)
+        const { data: profiles } = await client
+          .from('profiles')
+          .select('user_id, full_name, avatar_url, role')
+          .in('role', Array.from(allRoleIds))
+          .eq('is_active', true);
+        profilesByRole = profiles || [];
+      }
 
       const roleUserMap = new Map<string, { full_name: string; avatar_url: string | null; user_id: string }>();
       if (profilesByRole) {
