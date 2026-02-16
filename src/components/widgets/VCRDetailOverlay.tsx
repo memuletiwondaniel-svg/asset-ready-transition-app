@@ -317,17 +317,7 @@ const ApprovalsPanel: React.FC<{ vcr: ProjectVCR; checklistApprovers?: Checklist
         </CardHeader>
         <CardContent className="flex-1 space-y-5 overflow-auto">
           <div>
-            <div className="flex items-center justify-between mb-3">
-              <div className="text-[10px] uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
-                <Award className="w-3 h-3" />
-                Approving Parties
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="text-[10px] text-muted-foreground">{totalAccepted}/{totalItems}</span>
-                <ChevronRight className="w-3 h-3 text-muted-foreground" />
-              </div>
-            </div>
-            <div className="space-y-1 relative ml-3 pl-4 border-l border-border">
+            <div className="space-y-1">
               {approvingParties.map((person, i) => (
                 <div
                   key={`${person.name}-${i}`}
