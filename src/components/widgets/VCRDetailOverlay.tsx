@@ -1139,11 +1139,15 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
           const teamUserIds = teamMembers.map((m: any) => m.user_id);
           const { data: profiles } = await client
             .from('profiles')
-            .select('user_id, full_name, avatar_url, role')
+            .select('user_id, full_name, avatar_url, role, position')
             .in('user_id', teamUserIds)
             .in('role', Array.from(allRoleIds))
             .eq('is_active', true);
-          profilesByRole = profiles || [];
+          // Filter out Asset-level staff from team members too
+          profilesByRole = (profiles || []).filter((p: any) => {
+            const pos = (p.position || '').toLowerCase();
+            return !pos.includes('asset');
+          });
         }
 
         // Fallback for uncovered roles: find Project-level TA2s (exclude Asset-level)
