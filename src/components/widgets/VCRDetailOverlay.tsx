@@ -82,7 +82,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'cmms', label: 'CMMS', icon: Settings2 },
   { id: 'spares', label: 'Spares', icon: Package },
   { id: 'systems', label: 'Systems', icon: Layers },
-  { id: 'sof', label: 'SoF Certificate', icon: Shield, locked: true },
+  { id: 'sof', label: 'SoF', icon: Shield, locked: true },
   { id: 'pac', label: 'PAC', icon: Award, locked: true },
 ];
 
