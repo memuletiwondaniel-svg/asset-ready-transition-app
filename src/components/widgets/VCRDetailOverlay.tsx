@@ -42,7 +42,7 @@ import { cn } from '@/lib/utils';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { ProjectVCR } from '@/hooks/useProjectVCRs';
 import { getVCRColor } from '@/components/p2a-workspace/utils/vcrColors';
-import { format } from 'date-fns';
+import { format, differenceInDays } from 'date-fns';
 import { useHandoverPointSystems } from '@/components/p2a-workspace/hooks/useP2AHandoverPoints';
 import SOFCertificate from '@/components/handover/SOFCertificate';
 import PACCertificate from '@/components/handover/PACCertificate';
@@ -447,6 +447,16 @@ const OverviewInfoPanel: React.FC<{ vcr: ProjectVCR; projectName?: string; proje
                 <div className="text-xs font-medium text-foreground truncate">
                   {targetDate ? format(targetDate, 'MMM dd, yyyy') : 'Not set'}
                 </div>
+                {targetDate && (
+                  <div className={cn("text-[9px] font-medium mt-0.5", 
+                    differenceInDays(targetDate, new Date()) < 0 ? 'text-red-500' : 
+                    differenceInDays(targetDate, new Date()) <= 7 ? 'text-amber-500' : 'text-emerald-500'
+                  )}>
+                    {differenceInDays(targetDate, new Date()) < 0 
+                      ? `${Math.abs(differenceInDays(targetDate, new Date()))} days overdue`
+                      : `${differenceInDays(targetDate, new Date())} days to go`}
+                  </div>
+                )}
               </div>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
