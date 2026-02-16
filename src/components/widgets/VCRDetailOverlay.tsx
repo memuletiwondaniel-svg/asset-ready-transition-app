@@ -1202,7 +1202,16 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
         return urlData.publicUrl;
       };
 
-      // Aggregate by approving role
+      // Determine which roles should be excluded from the approvals panel
+      const excludedRoleIds = new Set<string>();
+      for (const [roleId, roleName] of roleMap.entries()) {
+        const rn = roleName.toLowerCase();
+        if (rn.includes('hub lead') || rn.includes('ora lead')) {
+          excludedRoleIds.add(roleId);
+        }
+      }
+
+      // Aggregate by approving role (excluding non-TA roles)
       const approverMap = new Map<string, { itemCount: number; acceptedCount: number; userName?: string; avatarUrl?: string; userId?: string }>();
 
       for (const item of vcrItems) {
@@ -1213,6 +1222,9 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
         const isAccepted = matchedPrereq ? acceptedStatuses.includes(matchedPrereq.status) : false;
 
         for (const roleId of item.approving_party_role_ids) {
+          // Skip non-TA roles (Hub Lead, ORA Lead)
+          if (excludedRoleIds.has(roleId)) continue;
+
           const roleName = roleMap.get(roleId) || roleId;
           const existing = approverMap.get(roleName) || { itemCount: 0, acceptedCount: 0 };
           existing.itemCount++;
