@@ -1513,7 +1513,7 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
       return directorRoles.map((role, idx) => {
         // Find the best matching profile for this director role
         let match = allProfiles.find((p: any) => {
-          const pos = (p.position || '').toLowerCase();
+          const pos = (p.position || '').toLowerCase().trim();
           if (!pos.includes('director')) return false;
           if (pos.includes('dep.') || pos.includes('deputy')) return false;
           
@@ -1521,13 +1521,14 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
             return pos.includes('plant') && pos.includes('director') && (plantLower ? pos.includes(plantLower) : false);
           }
           if (role === 'P&E Director') {
-            return pos.includes('p&e') && pos.includes('director');
+            return pos === 'p&e director' || (pos.includes('p&e') && pos.includes('director'));
           }
           if (role === 'P&M Director') {
-            return pos.includes('p&m') && pos.includes('director');
+            return pos === 'p&m director' || (pos.includes('p&m') && pos.includes('director'));
           }
           if (role === 'HSE Director') {
-            return pos.includes('hse') && pos.includes('director');
+            // Strict match: position must start with 'hse' to avoid matching 'Mtce Director' etc.
+            return pos === 'hse director' || (pos.startsWith('hse') && pos.includes('director'));
           }
           return false;
         });
