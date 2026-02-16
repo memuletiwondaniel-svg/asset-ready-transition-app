@@ -207,15 +207,6 @@ const ProgressPanel: React.FC<{ vcr: ProjectVCR }> = ({ vcr }) => {
 };
 
 // ── Approvals Panel (Middle) ────────────────────────────────────
-interface ApproverData {
-  id: string;
-  name: string;
-  role: string;
-  status: 'approved' | 'rejected' | 'pending';
-  avatar_url?: string;
-  user_id?: string;
-}
-
 interface ChecklistApproverData {
   name: string;
   role: 'delivering' | 'receiving';
@@ -223,14 +214,12 @@ interface ChecklistApproverData {
   acceptedCount: number;
 }
 
-const ApprovalsPanel: React.FC<{ vcr: ProjectVCR; approvers?: ApproverData[]; checklistApprovers?: ChecklistApproverData[] }> = ({ vcr, approvers = [], checklistApprovers = [] }) => {
+const ApprovalsPanel: React.FC<{ vcr: ProjectVCR; checklistApprovers?: ChecklistApproverData[] }> = ({ vcr, checklistApprovers = [] }) => {
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
-  // Group checklist approvers by role
-  const deliveringParties = checklistApprovers.filter(a => a.role === 'delivering');
-  const receivingParties = checklistApprovers.filter(a => a.role === 'receiving');
+  const approvingParties = checklistApprovers.filter(a => a.role === 'receiving');
 
   const StatusIndicator: React.FC<{ accepted: number; total: number }> = ({ accepted, total }) => {
     if (accepted === total && total > 0) return (
@@ -250,48 +239,8 @@ const ApprovalsPanel: React.FC<{ vcr: ProjectVCR; approvers?: ApproverData[]; ch
     );
   };
 
-  const renderChecklistSection = (title: string, icon: React.ElementType, items: ChecklistApproverData[]) => {
-    const SectionIcon = icon;
-    const totalItems = items.reduce((sum, i) => sum + i.itemCount, 0);
-    const totalAccepted = items.reduce((sum, i) => sum + i.acceptedCount, 0);
-    return (
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <div className="text-[10px] uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
-            <SectionIcon className="w-3 h-3" />
-            {title}
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="text-[10px] text-muted-foreground">{totalAccepted}/{totalItems}</span>
-            <ChevronRight className="w-3 h-3 text-muted-foreground" />
-          </div>
-        </div>
-        <div className="space-y-1 relative ml-3 pl-4 border-l border-border">
-          {items.map((person, i) => (
-            <div key={`${person.name}-${i}`} className="flex items-center gap-3 py-2">
-              <Avatar className="w-8 h-8 shrink-0">
-                <AvatarFallback className="text-[10px] font-semibold bg-muted text-muted-foreground">
-                  {getInitials(person.name)}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <div className="text-xs font-medium text-foreground truncate">
-                  {person.name}
-                </div>
-                <div className="text-[10px] text-muted-foreground truncate">
-                  {person.role === 'delivering' ? 'Delivering Party' : 'Receiving Party'}
-                </div>
-              </div>
-              <StatusIndicator accepted={person.acceptedCount} total={person.itemCount} />
-            </div>
-          ))}
-          {items.length === 0 && (
-            <div className="py-2 text-[10px] text-muted-foreground italic">No parties assigned</div>
-          )}
-        </div>
-      </div>
-    );
-  };
+  const totalItems = approvingParties.reduce((sum, i) => sum + i.itemCount, 0);
+  const totalAccepted = approvingParties.reduce((sum, i) => sum + i.acceptedCount, 0);
 
   return (
     <Card className="h-full flex flex-col">
@@ -299,13 +248,45 @@ const ApprovalsPanel: React.FC<{ vcr: ProjectVCR; approvers?: ApproverData[]; ch
         <CardTitle className="text-base font-semibold">Approvals</CardTitle>
       </CardHeader>
       <CardContent className="flex-1 space-y-5 overflow-auto">
-        {renderChecklistSection('Delivering Parties', Shield, deliveringParties)}
-        {renderChecklistSection('Receiving / Approving Parties', Award, receivingParties)}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-[10px] uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+              <Award className="w-3 h-3" />
+              Approving Parties
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="text-[10px] text-muted-foreground">{totalAccepted}/{totalItems}</span>
+              <ChevronRight className="w-3 h-3 text-muted-foreground" />
+            </div>
+          </div>
+          <div className="space-y-1 relative ml-3 pl-4 border-l border-border">
+            {approvingParties.map((person, i) => (
+              <div key={`${person.name}-${i}`} className="flex items-center gap-3 py-2">
+                <Avatar className="w-8 h-8 shrink-0">
+                  <AvatarFallback className="text-[10px] font-semibold bg-muted text-muted-foreground">
+                    {getInitials(person.name)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-medium text-foreground truncate">
+                    {person.name}
+                  </div>
+                  <div className="text-[10px] text-muted-foreground truncate">
+                    Approving Party
+                  </div>
+                </div>
+                <StatusIndicator accepted={person.acceptedCount} total={person.itemCount} />
+              </div>
+            ))}
+            {approvingParties.length === 0 && (
+              <div className="py-2 text-[10px] text-muted-foreground italic">No approving parties assigned</div>
+            )}
+          </div>
+        </div>
       </CardContent>
     </Card>
   );
 };
-
 // ── Overview Info Panel (Right) ─────────────────────────────────
 const OverviewInfoPanel: React.FC<{ vcr: ProjectVCR; projectName?: string; projectCode?: string }> = ({ vcr, projectName, projectCode }) => {
   return (
@@ -717,46 +698,70 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
     queryKey: ['vcr-checklist-approvers', vcr.id],
     queryFn: async () => {
       const client = supabase as any;
-      
-      // Get prerequisites for this VCR
-      const { data: prereqs, error } = await client
-        .from('p2a_vcr_prerequisites')
-        .select('id, delivering_party_name, receiving_party_name, status')
-        .eq('handover_point_id', vcr.id);
 
-      if (error || !prereqs?.length) return [];
+      // Get VCR items with their approving party roles
+      const { data: vcrItems } = await client
+        .from('vcr_items')
+        .select(`
+          id, approving_party_role_ids,
+          vcr_item_categories!vcr_items_category_id_fkey (name)
+        `)
+        .eq('is_active', true);
+
+      if (!vcrItems?.length) return [];
+
+      // Collect all unique approving role IDs
+      const allRoleIds = new Set<string>();
+      for (const item of vcrItems) {
+        if (item.approving_party_role_ids) {
+          for (const rid of item.approving_party_role_ids) {
+            allRoleIds.add(rid);
+          }
+        }
+      }
+
+      if (allRoleIds.size === 0) return [];
+
+      // Fetch role names
+      const { data: roles } = await client
+        .from('roles')
+        .select('id, name')
+        .in('id', Array.from(allRoleIds));
+
+      const roleMap = new Map<string, string>();
+      if (roles) {
+        for (const r of roles) roleMap.set(r.id, r.name);
+      }
+
+      // Get prerequisites for status matching
+      const { data: prereqs } = await client
+        .from('p2a_vcr_prerequisites')
+        .select('id, summary, status')
+        .eq('handover_point_id', vcr.id);
 
       const acceptedStatuses = ['ACCEPTED', 'QUALIFICATION_APPROVED'];
 
-      // Aggregate by unique delivering party names
-      const deliveringMap = new Map<string, { itemCount: number; acceptedCount: number }>();
-      const receivingMap = new Map<string, { itemCount: number; acceptedCount: number }>();
+      // Aggregate by approving role
+      const approverMap = new Map<string, { itemCount: number; acceptedCount: number }>();
 
-      for (const p of prereqs) {
-        const isAccepted = acceptedStatuses.includes(p.status);
-        
-        if (p.delivering_party_name) {
-          const existing = deliveringMap.get(p.delivering_party_name) || { itemCount: 0, acceptedCount: 0 };
+      for (const item of vcrItems) {
+        if (!item.approving_party_role_ids) continue;
+        const matchedPrereq = prereqs?.find((p: any) =>
+          p.summary?.toLowerCase().trim() === item.vcr_item?.toLowerCase?.().trim?.()
+        );
+        const isAccepted = matchedPrereq ? acceptedStatuses.includes(matchedPrereq.status) : false;
+
+        for (const roleId of item.approving_party_role_ids) {
+          const roleName = roleMap.get(roleId) || roleId;
+          const existing = approverMap.get(roleName) || { itemCount: 0, acceptedCount: 0 };
           existing.itemCount++;
           if (isAccepted) existing.acceptedCount++;
-          deliveringMap.set(p.delivering_party_name, existing);
-        }
-        
-        if (p.receiving_party_name) {
-          const existing = receivingMap.get(p.receiving_party_name) || { itemCount: 0, acceptedCount: 0 };
-          existing.itemCount++;
-          if (isAccepted) existing.acceptedCount++;
-          receivingMap.set(p.receiving_party_name, existing);
+          approverMap.set(roleName, existing);
         }
       }
 
       const result: ChecklistApproverData[] = [];
-      
-      deliveringMap.forEach((val, name) => {
-        result.push({ name, role: 'delivering', ...val });
-      });
-      
-      receivingMap.forEach((val, name) => {
+      approverMap.forEach((val, name) => {
         result.push({ name, role: 'receiving', ...val });
       });
 
