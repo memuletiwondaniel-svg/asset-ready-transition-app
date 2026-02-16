@@ -88,23 +88,99 @@ const shortCode = (code?: string) => {
 };
 
 // ── Progress Panel (Left) ───────────────────────────────────────
-const CATEGORY_ITEMS = [
-  { label: 'Technical Integrity', icon: Settings2, color: 'text-blue-500', bg: 'bg-blue-500' },
-  { label: 'Design Integrity', icon: Target, color: 'text-violet-500', bg: 'bg-violet-500' },
-  { label: 'Operating Integrity', icon: Layers, color: 'text-cyan-500', bg: 'bg-cyan-500' },
-  { label: 'Management Systems', icon: Users, color: 'text-amber-500', bg: 'bg-amber-500' },
-  { label: 'HSE & Environment', icon: Shield, color: 'text-emerald-500', bg: 'bg-emerald-500' },
-  { label: 'Maintenance Readiness', icon: Settings2, color: 'text-rose-500', bg: 'bg-rose-500' },
-];
+const CATEGORY_META: Record<string, { icon: React.ElementType; color: string; bg: string; order: number }> = {
+  'Design Integrity': { icon: Target, color: 'text-violet-500', bg: 'bg-violet-500', order: 1 },
+  'Technical Integrity': { icon: Settings2, color: 'text-blue-500', bg: 'bg-blue-500', order: 2 },
+  'Operating Integrity': { icon: Layers, color: 'text-cyan-500', bg: 'bg-cyan-500', order: 3 },
+  'Management Systems': { icon: Users, color: 'text-amber-500', bg: 'bg-amber-500', order: 4 },
+  'Health & Safety': { icon: Shield, color: 'text-emerald-500', bg: 'bg-emerald-500', order: 5 },
+};
 
 const ProgressPanel: React.FC<{ vcr: ProjectVCR }> = ({ vcr }) => {
-  const [selectedCategory, setSelectedCategory] = useState<typeof CATEGORY_ITEMS[0] | null>(null);
-  const progress = vcr.progress;
+  const [selectedCategory, setSelectedCategory] = useState<{ label: string; icon: React.ElementType; color: string } | null>(null);
+
+  // Fetch VCR items grouped by category and their close-out status
+  const { data: progressData } = useQuery({
+    queryKey: ['vcr-progress-data', vcr.id],
+    queryFn: async () => {
+      const client = supabase as any;
+
+      // Get all VCR items with categories
+      const { data: items } = await client
+        .from('vcr_items')
+        .select('id, category_id, vcr_item, vcr_item_categories!vcr_items_category_id_fkey (name)')
+        .eq('is_active', true);
+
+      // Get prerequisites for this VCR (tracks close-out status)
+      const { data: prereqs } = await client
+        .from('p2a_vcr_prerequisites')
+        .select('id, summary, status')
+        .eq('handover_point_id', vcr.id);
+
+      const statusCounts = { pending: 0, in_review: 0, completed: 0 };
+      const categoryMap = new Map<string, { total: number; done: number }>();
+
+      const acceptedStatuses = ['ACCEPTED', 'QUALIFICATION_APPROVED'];
+      const reviewStatuses = ['SUBMITTED', 'IN_REVIEW', 'UNDER_REVIEW'];
+
+      // Build prereq lookup
+      const prereqMap = new Map<string, string>();
+      if (prereqs) {
+        for (const p of prereqs) {
+          prereqMap.set(p.summary?.toLowerCase().trim(), p.status);
+        }
+      }
+
+      if (items) {
+        for (const item of items) {
+          const catName = item.vcr_item_categories?.name || 'Other';
+          const existing = categoryMap.get(catName) || { total: 0, done: 0 };
+          existing.total++;
+
+          // Check if this item has a matching prereq with close-out status
+          const itemKey = item.vcr_item?.toLowerCase().trim();
+          const prereqStatus = prereqMap.get(itemKey);
+
+          if (prereqStatus) {
+            if (acceptedStatuses.includes(prereqStatus)) {
+              existing.done++;
+              statusCounts.completed++;
+            } else if (reviewStatuses.includes(prereqStatus)) {
+              statusCounts.in_review++;
+            } else {
+              statusCounts.pending++;
+            }
+          } else {
+            statusCounts.pending++;
+          }
+
+          categoryMap.set(catName, existing);
+        }
+      }
+
+      const totalItems = items?.length || 0;
+      const totalDone = Array.from(categoryMap.values()).reduce((s, c) => s + c.done, 0);
+
+      return {
+        totalItems,
+        totalDone,
+        statusCounts,
+        categories: Array.from(categoryMap.entries())
+          .map(([name, counts]) => ({ name, ...counts }))
+          .sort((a, b) => (CATEGORY_META[a.name]?.order ?? 99) - (CATEGORY_META[b.name]?.order ?? 99)),
+      };
+    },
+  });
+
+  const totalItems = progressData?.totalItems || 0;
+  const totalDone = progressData?.totalDone || 0;
+  const progress = totalItems > 0 ? Math.round((totalDone / totalItems) * 100) : 0;
+  const itemsToGo = totalItems - totalDone;
+  const statusCounts = progressData?.statusCounts || { pending: 0, in_review: 0, completed: 0 };
+
   const circumference = 2 * Math.PI * 44;
   const offset = circumference - (progress / 100) * circumference;
   const progressColor = progress === 100 ? 'text-emerald-500' : progress >= 50 ? 'text-amber-500' : 'text-primary';
-  const totalItems = Math.max(1, vcr.systems_count * 8);
-  const itemsToGo = Math.round(totalItems * (1 - progress / 100));
 
   return (
     <>
@@ -136,28 +212,15 @@ const ProgressPanel: React.FC<{ vcr: ProjectVCR }> = ({ vcr }) => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="border rounded-lg p-3 text-center">
-              <div className="text-xl font-bold text-foreground">0</div>
-              <div className="text-[10px] text-muted-foreground">Priority 1</div>
-              <div className="text-[9px] text-muted-foreground/70">Before startup</div>
-            </div>
-            <div className="border rounded-lg p-3 text-center">
-              <div className="text-xl font-bold text-foreground">0</div>
-              <div className="text-[10px] text-muted-foreground">Priority 2</div>
-              <div className="text-[9px] text-muted-foreground/70">After startup</div>
-            </div>
-          </div>
-
           <div className="flex items-center gap-2 flex-wrap">
             <Badge variant="outline" className="text-xs px-3 py-1 gap-1.5 font-medium">
-              <span className="text-foreground font-bold">{vcr.systems_count}</span> Pending
+              <span className="text-foreground font-bold">{statusCounts.pending}</span> Pending
             </Badge>
             <Badge variant="outline" className="text-xs px-3 py-1 gap-1.5 font-medium border-amber-200 text-amber-600">
-              <span className="font-bold">0</span> In Review
+              <span className="font-bold">{statusCounts.in_review}</span> In Review
             </Badge>
             <Badge variant="outline" className="text-xs px-3 py-1 gap-1.5 font-medium border-emerald-200 text-emerald-600">
-              <span className="font-bold">0</span> Completed
+              <span className="font-bold">{statusCounts.completed}</span> Completed
             </Badge>
           </div>
 
@@ -167,23 +230,22 @@ const ProgressPanel: React.FC<{ vcr: ProjectVCR }> = ({ vcr }) => {
               Progress by Category
             </div>
             <div className="space-y-3">
-              {CATEGORY_ITEMS.map((cat) => {
-                const Icon = cat.icon;
-                const catTotal = Math.max(4, Math.floor(Math.random() * 28) + 4);
-                const catDone = Math.floor(catTotal * (progress / 100));
+              {(progressData?.categories || []).map((cat) => {
+                const meta = CATEGORY_META[cat.name] || { icon: FileText, color: 'text-muted-foreground', bg: 'bg-muted-foreground', order: 99 };
+                const Icon = meta.icon;
                 return (
                   <div
-                    key={cat.label}
+                    key={cat.name}
                     className="cursor-pointer rounded-md p-1.5 -mx-1.5 transition-colors hover:bg-muted/50"
-                    onClick={() => setSelectedCategory(cat)}
+                    onClick={() => setSelectedCategory({ label: cat.name, icon: meta.icon, color: meta.color })}
                   >
                     <div className="flex items-center gap-2 mb-1">
-                      <Icon className={cn('w-3.5 h-3.5 shrink-0', cat.color)} />
-                      <span className="text-xs text-foreground flex-1">{cat.label}</span>
-                      <span className="text-[10px] font-medium text-muted-foreground">{catDone}/{catTotal}</span>
+                      <Icon className={cn('w-3.5 h-3.5 shrink-0', meta.color)} />
+                      <span className="text-xs text-foreground flex-1">{cat.name}</span>
+                      <span className="text-[10px] font-medium text-muted-foreground">{cat.done}/{cat.total}</span>
                       <ChevronRight className="w-3 h-3 text-muted-foreground" />
                     </div>
-                    <Progress value={(catDone / catTotal) * 100} className="h-1.5" indicatorClassName={cat.bg} />
+                    <Progress value={cat.total > 0 ? (cat.done / cat.total) * 100 : 0} className="h-1.5" indicatorClassName={meta.bg} />
                   </div>
                 );
               })}
@@ -205,7 +267,6 @@ const ProgressPanel: React.FC<{ vcr: ProjectVCR }> = ({ vcr }) => {
     </>
   );
 };
-
 // ── Approvals Panel (Middle) ────────────────────────────────────
 interface ChecklistApproverData {
   name: string;
