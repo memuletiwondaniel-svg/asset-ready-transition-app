@@ -140,7 +140,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
             <span>P2A Handover</span>
           </CardTitle>
         </CardHeader>
-        <CardContent className="flex-1 flex flex-col space-y-3 pt-0">
+        <CardContent className="flex-1 flex flex-col space-y-3 pt-2">
           <div className="flex-1">
             {isLoading ? (
               <div className="space-y-3">
