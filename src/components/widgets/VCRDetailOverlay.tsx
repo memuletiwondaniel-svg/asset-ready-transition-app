@@ -286,6 +286,7 @@ interface ChecklistApproverData {
   itemCount: number;
   acceptedCount: number;
   userName?: string;
+  userPosition?: string;
   avatarUrl?: string;
   userId?: string;
 }
@@ -402,7 +403,7 @@ const ApprovalsPanel: React.FC<ApprovalsPanelProps> = ({
                 <PersonRow
                   key={`${person.name}-${i}`}
                   name={person.userName || person.name}
-                  subtitle={person.name}
+                  subtitle={person.userPosition || person.name}
                   avatarUrl={person.avatarUrl}
                   onClick={() => setSelectedApprover(person)}
                   trailing={<StatusIndicator accepted={person.acceptedCount} total={person.itemCount} />}
@@ -1355,7 +1356,7 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
       }
 
       // Build role-to-user map, prioritizing plant-specific and Project-level staff
-      const roleUserMap = new Map<string, { full_name: string; avatar_url: string | null; user_id: string }>();
+      const roleUserMap = new Map<string, { full_name: string; avatar_url: string | null; user_id: string; position: string }>();
       if (profilesByRole) {
         // Filter out Asset-level staff
         const taProfiles = profilesByRole.filter((p: any) => {
@@ -1368,7 +1369,6 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
         const sorted = [...taProfiles].sort((a: any, b: any) => {
           const aPos = (a.position || '').toLowerCase();
           const bPos = (b.position || '').toLowerCase();
-          // Prioritize users whose position matches the current plant
           const aPlantMatch = plantLower && aPos.includes(plantLower) ? 1 : 0;
           const bPlantMatch = plantLower && bPos.includes(plantLower) ? 1 : 0;
           if (bPlantMatch !== aPlantMatch) return bPlantMatch - aPlantMatch;
@@ -1381,7 +1381,7 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
         });
         for (const p of sorted) {
           if (p.role && !roleUserMap.has(p.role)) {
-            roleUserMap.set(p.role, { full_name: p.full_name, avatar_url: p.avatar_url, user_id: p.user_id });
+            roleUserMap.set(p.role, { full_name: p.full_name, avatar_url: p.avatar_url, user_id: p.user_id, position: p.position || '' });
           }
         }
       }
@@ -1405,7 +1405,7 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
       }
 
       // Aggregate by approving role (excluding non-TA roles)
-      const approverMap = new Map<string, { itemCount: number; acceptedCount: number; userName?: string; avatarUrl?: string; userId?: string }>();
+      const approverMap = new Map<string, { itemCount: number; acceptedCount: number; userName?: string; userPosition?: string; avatarUrl?: string; userId?: string }>();
 
       for (const item of vcrItems) {
         if (!item.approving_party_role_ids) continue;
@@ -1415,7 +1415,6 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
         const isAccepted = matchedPrereq ? acceptedStatuses.includes(matchedPrereq.status) : false;
 
         for (const roleId of item.approving_party_role_ids) {
-          // Skip non-TA roles (Hub Lead, ORA Lead)
           if (excludedRoleIds.has(roleId)) continue;
 
           const roleName = roleMap.get(roleId) || roleId;
@@ -1423,10 +1422,10 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
           existing.itemCount++;
           if (isAccepted) existing.acceptedCount++;
 
-          // Attach user info if available
           const userProfile = roleUserMap.get(roleId);
           if (userProfile) {
             existing.userName = userProfile.full_name;
+            existing.userPosition = userProfile.position;
             existing.avatarUrl = getFullAvatarUrl(userProfile.avatar_url);
             existing.userId = userProfile.user_id;
           }
