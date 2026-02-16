@@ -25,18 +25,18 @@ export const getVCRColor = (vcrCode: string | undefined) => {
   const hueShift = (hash >> 4) % 15;
   const finalHue = (hue + hueShift) % 360;
   
-  const saturation = 50 + ((hash >> 8) % 15);
+  const sat = 40 + ((hash >> 8) % 10); // 40-50% — muted
 
   return {
     hue: finalHue,
-    saturation,
-    // Light mode
-    background: `hsl(${finalHue}, ${saturation}%, 93%)`,
-    border: `hsl(${finalHue}, ${saturation + 5}%, 55%)`,
-    accent: `hsl(${finalHue}, ${saturation + 10}%, 82%)`,
-    // Dark mode
-    backgroundDark: `hsl(${finalHue}, ${Math.round(saturation * 0.35)}%, 14%)`,
-    borderDark: `hsl(${finalHue}, ${saturation}%, 70%)`,
-    accentDark: `hsl(${finalHue}, ${Math.round(saturation * 0.45)}%, 22%)`,
+    saturation: sat,
+    // Light mode — very subtle tint
+    background: `hsl(${finalHue}, ${sat}%, 96%)`,
+    border: `hsl(${finalHue}, ${sat}%, 60%)`,
+    accent: `hsl(${finalHue}, ${sat}%, 88%)`,
+    // Dark mode — barely tinted dark
+    backgroundDark: `hsl(${finalHue}, ${Math.round(sat * 0.25)}%, 13%)`,
+    borderDark: `hsl(${finalHue}, ${sat}%, 72%)`,
+    accentDark: `hsl(${finalHue}, ${Math.round(sat * 0.3)}%, 20%)`,
   };
 };
