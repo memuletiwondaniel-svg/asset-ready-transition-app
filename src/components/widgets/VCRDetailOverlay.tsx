@@ -1135,28 +1135,64 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
     switch (activeNav) {
       case 'overview': {
         const c = vcrColor;
-        const panelStyle = c ? {
-          background: `linear-gradient(135deg, hsl(${c.hue}, ${c.saturation}%, 96%) 0%, hsl(${(c.hue + 30) % 360}, ${c.saturation}%, 97%) 100%)`,
-          borderColor: `hsl(${c.hue}, ${c.saturation}%, 88%)`,
-        } : undefined;
-        const panelStyleDark = c ? {
-          '--panel-bg': `linear-gradient(135deg, hsl(${c.hue}, ${Math.round(c.saturation * 0.25)}%, 14%) 0%, hsl(${(c.hue + 30) % 360}, ${Math.round(c.saturation * 0.25)}%, 16%) 100%)`,
-          '--panel-border': `hsl(${c.hue}, ${c.saturation * 0.3}%, 25%)`,
-        } : undefined;
         return (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full">
-            {[
-              <ProgressPanel key="progress" vcr={vcr} />,
-              <ApprovalsPanel key="approvals" vcr={vcr} checklistApprovers={checklistApprovers} />,
-              <OverviewInfoPanel key="info" vcr={vcr} projectName={projectName} projectCode={projectCode} />,
-            ].map((panel, idx) => (
+          <div className="relative h-full rounded-2xl overflow-hidden p-4">
+            {/* Dynamic multicolor animated background */}
+            <div className="absolute inset-0 overflow-hidden rounded-2xl">
               <div
-                key={idx}
-                className="rounded-2xl"
-              >
-                {panel}
-              </div>
-            ))}
+                className="absolute w-[300px] h-[300px] rounded-full blur-[80px] opacity-30 animate-[float-orb-1_8s_ease-in-out_infinite]"
+                style={{ background: c ? `hsl(${c.hue}, ${c.saturation}%, 65%)` : 'hsl(220, 70%, 65%)', top: '10%', left: '5%' }}
+              />
+              <div
+                className="absolute w-[250px] h-[250px] rounded-full blur-[80px] opacity-25 animate-[float-orb-2_10s_ease-in-out_infinite]"
+                style={{ background: c ? `hsl(${(c.hue + 60) % 360}, ${c.saturation}%, 60%)` : 'hsl(280, 70%, 60%)', top: '40%', right: '10%' }}
+              />
+              <div
+                className="absolute w-[350px] h-[350px] rounded-full blur-[100px] opacity-20 animate-[float-orb-3_12s_ease-in-out_infinite]"
+                style={{ background: c ? `hsl(${(c.hue + 120) % 360}, ${c.saturation}%, 55%)` : 'hsl(340, 70%, 55%)', bottom: '5%', left: '30%' }}
+              />
+              <div
+                className="absolute w-[200px] h-[200px] rounded-full blur-[70px] opacity-20 animate-[float-orb-4_9s_ease-in-out_infinite]"
+                style={{ background: c ? `hsl(${(c.hue + 180) % 360}, ${c.saturation}%, 70%)` : 'hsl(40, 70%, 70%)', top: '20%', left: '50%' }}
+              />
+            </div>
+            {/* Panels on top */}
+            <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-4 h-full">
+              {[
+                <ProgressPanel key="progress" vcr={vcr} />,
+                <ApprovalsPanel key="approvals" vcr={vcr} checklistApprovers={checklistApprovers} />,
+                <OverviewInfoPanel key="info" vcr={vcr} projectName={projectName} projectCode={projectCode} />,
+              ].map((panel, idx) => (
+                <div
+                  key={idx}
+                  className="rounded-2xl bg-card/85 backdrop-blur-sm border border-border/50 shadow-sm"
+                >
+                  {panel}
+                </div>
+              ))}
+            </div>
+            <style>{`
+              @keyframes float-orb-1 {
+                0%, 100% { transform: translate(0, 0) scale(1); }
+                33% { transform: translate(60px, -40px) scale(1.1); }
+                66% { transform: translate(-30px, 30px) scale(0.9); }
+              }
+              @keyframes float-orb-2 {
+                0%, 100% { transform: translate(0, 0) scale(1); }
+                33% { transform: translate(-50px, 50px) scale(1.15); }
+                66% { transform: translate(40px, -20px) scale(0.85); }
+              }
+              @keyframes float-orb-3 {
+                0%, 100% { transform: translate(0, 0) scale(1); }
+                33% { transform: translate(40px, -60px) scale(1.05); }
+                66% { transform: translate(-60px, 20px) scale(0.95); }
+              }
+              @keyframes float-orb-4 {
+                0%, 100% { transform: translate(0, 0) scale(1); }
+                33% { transform: translate(-40px, -30px) scale(1.1); }
+                66% { transform: translate(50px, 40px) scale(0.9); }
+              }
+            `}</style>
           </div>
         );
       }
