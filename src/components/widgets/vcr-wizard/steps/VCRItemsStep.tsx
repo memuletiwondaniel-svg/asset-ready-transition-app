@@ -287,7 +287,7 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
                   onClick={() => toggleCategory(cat)}
                   className="flex items-center gap-2 w-full text-left py-2 px-1 hover:bg-muted/40 rounded transition-colors"
                 >
-                  {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  {isCollapsed ? <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/50" /> : <ChevronDown className="w-3.5 h-3.5 text-muted-foreground/50" />}
                   <span className="text-sm font-semibold">{cat}</span>
                   <Badge variant="secondary" className="text-[10px] ml-auto">{catItems.length}</Badge>
                 </button>
