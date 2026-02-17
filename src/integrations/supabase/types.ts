@@ -3796,6 +3796,8 @@ export type Database = {
           guidance_notes_override: string | null
           handover_point_id: string
           id: string
+          is_na: boolean
+          na_reason: string | null
           supporting_evidence_override: string | null
           topic_override: string | null
           updated_at: string
@@ -3809,6 +3811,8 @@ export type Database = {
           guidance_notes_override?: string | null
           handover_point_id: string
           id?: string
+          is_na?: boolean
+          na_reason?: string | null
           supporting_evidence_override?: string | null
           topic_override?: string | null
           updated_at?: string
@@ -3822,6 +3826,8 @@ export type Database = {
           guidance_notes_override?: string | null
           handover_point_id?: string
           id?: string
+          is_na?: boolean
+          na_reason?: string | null
           supporting_evidence_override?: string | null
           topic_override?: string | null
           updated_at?: string
