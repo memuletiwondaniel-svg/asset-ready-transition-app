@@ -268,7 +268,7 @@ export const InspectionTestPlanStep: React.FC<InspectionTestPlanStepProps> = ({ 
               <TableRow className="bg-muted/40">
                 <TableHead className="text-[11px] h-8 w-[200px] uppercase tracking-wide">System</TableHead>
                 <TableHead className="text-[11px] h-8 uppercase tracking-wide">Activity</TableHead>
-                <TableHead className="text-[11px] h-8 w-[70px] text-center uppercase tracking-wide">Type</TableHead>
+                <TableHead className="text-[11px] h-8 w-[44px] uppercase tracking-wide">Type</TableHead>
                 <TableHead className="text-[11px] h-8 w-[80px] text-right uppercase tracking-wide">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -321,7 +321,7 @@ export const InspectionTestPlanStep: React.FC<InspectionTestPlanStepProps> = ({ 
                       </TableCell>
 
                       {/* Type */}
-                      <TableCell className="py-1.5 text-center">
+                      <TableCell className="py-1.5 px-1">
                         {isEditing ? (
                           <ToggleGroup
                             type="single"
@@ -335,7 +335,7 @@ export const InspectionTestPlanStep: React.FC<InspectionTestPlanStepProps> = ({ 
                         ) : (
                           <Badge
                             className={cn(
-                              'text-[10px] font-bold px-2 py-0',
+                              'text-[9px] font-bold px-1.5 py-0',
                               row.inspection_type === 'WITNESS'
                                 ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-700'
                                 : 'bg-red-500/15 text-red-700 dark:text-red-400 border-red-300 dark:border-red-700',
