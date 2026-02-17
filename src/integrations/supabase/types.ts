@@ -899,6 +899,7 @@ export type Database = {
           actual_cost: number | null
           completion_date: string | null
           created_at: string
+          delivery_method: string[] | null
           detailed_description: string | null
           display_order: number | null
           duration_hours: number | null
@@ -929,6 +930,7 @@ export type Database = {
           actual_cost?: number | null
           completion_date?: string | null
           created_at?: string
+          delivery_method?: string[] | null
           detailed_description?: string | null
           display_order?: number | null
           duration_hours?: number | null
@@ -959,6 +961,7 @@ export type Database = {
           actual_cost?: number | null
           completion_date?: string | null
           created_at?: string
+          delivery_method?: string[] | null
           detailed_description?: string | null
           display_order?: number | null
           duration_hours?: number | null
