@@ -289,7 +289,7 @@ export const InspectionTestPlanStep: React.FC<InspectionTestPlanStepProps> = ({ 
                         'group',
                         idx < activities.length - 1 && 'border-b-0',
                         isFirst && sysIdx > 0 && 'border-t-8 border-t-muted/60',
-                        sysIdx % 2 === 1 && 'bg-muted/30',
+                        sysIdx % 2 === 1 && 'bg-muted/50',
                       )}
                     >
                       {/* System cell – only rendered on first row, spans all activities */}
@@ -308,7 +308,7 @@ export const InspectionTestPlanStep: React.FC<InspectionTestPlanStepProps> = ({ 
                       )}
 
                       {/* Type */}
-                      <TableCell className="py-1.5 px-1 text-center">
+                      <TableCell className="py-0.5 px-1 text-center">
                         {isEditing ? (
                           <ToggleGroup
                             type="single"
@@ -334,7 +334,7 @@ export const InspectionTestPlanStep: React.FC<InspectionTestPlanStepProps> = ({ 
                       </TableCell>
 
                       {/* Activity */}
-                      <TableCell className="py-1.5 text-xs">
+                      <TableCell className="py-0.5 text-xs">
                         {isEditing ? (
                           <Input
                             value={editName}
@@ -349,7 +349,7 @@ export const InspectionTestPlanStep: React.FC<InspectionTestPlanStepProps> = ({ 
                       </TableCell>
 
                       {/* Actions */}
-                      <TableCell className="py-1.5 text-right">
+                      <TableCell className="py-0.5 text-right">
                         {isEditing ? (
                           <div className="flex items-center justify-end gap-1">
                             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={confirmEdit}><Check className="w-3.5 h-3.5 text-green-600" /></Button>
