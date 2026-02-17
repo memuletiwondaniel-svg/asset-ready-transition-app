@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Sheet,
   SheetContent,
@@ -29,6 +29,8 @@ import {
   X,
   Plus,
   Check,
+  Layers,
+  Save,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -66,6 +68,7 @@ interface TrainingDetailSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   item: any | null;
+  systems?: any[];
 }
 
 const formatDate = (dateStr: string) => {
@@ -104,88 +107,117 @@ export const TrainingDetailSheet: React.FC<TrainingDetailSheetProps> = ({
   open,
   onOpenChange,
   item,
+  systems = [],
 }) => {
   const queryClient = useQueryClient();
+  const [saving, setSaving] = useState(false);
 
-  // Editing state per field
+  // Local editable state - initialized from item
+  const [description, setDescription] = useState('');
+  const [provider, setProvider] = useState('');
+  const [durationDays, setDurationDays] = useState('');
+  const [tentativeDate, setTentativeDate] = useState('');
+  const [deliveryMethod, setDeliveryMethod] = useState<string[]>([]);
+  const [targetAudience, setTargetAudience] = useState<string[]>([]);
+
+  // UI state
   const [editingField, setEditingField] = useState<string | null>(null);
-  const [editDescription, setEditDescription] = useState('');
-  const [editProvider, setEditProvider] = useState('');
-  const [editDuration, setEditDuration] = useState('');
-  const [editDate, setEditDate] = useState<Date | undefined>();
-  const [editDelivery, setEditDelivery] = useState<string[]>([]);
-  const [editAudience, setEditAudience] = useState<string[]>([]);
   const [showAddAudience, setShowAddAudience] = useState(false);
   const [customAudience, setCustomAudience] = useState('');
 
+  // Initialize local state from item
   useEffect(() => {
     if (item) {
+      setDescription(item.description || '');
+      setProvider(item.training_provider || '');
+      const days = item.duration_hours ? Math.round(item.duration_hours / 8) : '';
+      setDurationDays(days.toString());
+      setTentativeDate(item.tentative_date || '');
+      setDeliveryMethod(item.delivery_method || []);
+      setTargetAudience(item.target_audience || []);
       setEditingField(null);
       setShowAddAudience(false);
+      setCustomAudience('');
     }
-  }, [item?.id]);
+  }, [item?.id, open]);
+
+  // Compute dirty state
+  const isDirty = useMemo(() => {
+    if (!item) return false;
+    const origDesc = item.description || '';
+    const origProvider = item.training_provider || '';
+    const origDays = item.duration_hours ? Math.round(item.duration_hours / 8).toString() : '';
+    const origDate = item.tentative_date || '';
+    const origDelivery = item.delivery_method || [];
+    const origAudience = item.target_audience || [];
+
+    return (
+      description !== origDesc ||
+      provider !== origProvider ||
+      durationDays !== origDays ||
+      tentativeDate !== origDate ||
+      JSON.stringify(deliveryMethod) !== JSON.stringify(origDelivery) ||
+      JSON.stringify(targetAudience) !== JSON.stringify(origAudience)
+    );
+  }, [item, description, provider, durationDays, tentativeDate, deliveryMethod, targetAudience]);
+
+  const saveAllChanges = useCallback(async () => {
+    if (!item) return;
+    setSaving(true);
+    try {
+      const update: any = {
+        description: description.trim() || null,
+        training_provider: provider.trim() || null,
+        duration_hours: durationDays ? parseFloat(durationDays) * 8 : null,
+        tentative_date: tentativeDate || null,
+        delivery_method: deliveryMethod.length > 0 ? deliveryMethod : null,
+        target_audience: targetAudience,
+      };
+      const { error } = await (supabase as any)
+        .from('p2a_vcr_training')
+        .update(update)
+        .eq('id', item.id);
+      if (error) throw error;
+      Object.assign(item, update);
+      queryClient.invalidateQueries({ queryKey: ['vcr-exec-training'] });
+      setEditingField(null);
+      toast.success('Changes saved');
+    } catch (e: any) {
+      console.error('Update failed:', e);
+      toast.error('Failed to save changes');
+    } finally {
+      setSaving(false);
+    }
+  }, [item, description, provider, durationDays, tentativeDate, deliveryMethod, targetAudience, queryClient]);
 
   if (!item) return null;
 
-  const durationDays = item.duration_hours ? Math.round(item.duration_hours / 8) : null;
-
-  const saveField = async (field: string, value: any) => {
-    try {
-      const { error } = await (supabase as any)
-        .from('p2a_vcr_training')
-        .update(value)
-        .eq('id', item.id);
-      if (error) throw error;
-      // Merge locally so sheet reflects change immediately
-      Object.assign(item, value);
-      queryClient.invalidateQueries({ queryKey: ['vcr-exec-training'] });
-      setEditingField(null);
-      toast.success('Updated');
-    } catch (e: any) {
-      console.error('Update failed:', e);
-      toast.error('Failed to update');
-    }
-  };
-
-  const startEdit = (field: string) => {
-    if (field === 'description') {
-      setEditDescription(item.description || '');
-    } else if (field === 'provider') {
-      setEditProvider(item.training_provider || '');
-    } else if (field === 'duration') {
-      setEditDuration(durationDays?.toString() || '');
-    } else if (field === 'delivery') {
-      setEditDelivery(item.delivery_method || []);
-    }
-    setEditingField(field);
-  };
-
   const toggleDelivery = (id: string) => {
-    setEditDelivery(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+    setDeliveryMethod(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   };
 
-  const removeAudience = async (a: string) => {
-    const updated = (item.target_audience || []).filter((x: string) => x !== a);
-    await saveField('target_audience', { target_audience: updated });
+  const removeAudience = (a: string) => {
+    setTargetAudience(prev => prev.filter(x => x !== a));
   };
 
-  const addAudienceItem = async (a: string) => {
-    if (!a.trim() || (item.target_audience || []).includes(a.trim())) return;
-    const updated = [...(item.target_audience || []), a.trim()];
-    await saveField('target_audience', { target_audience: updated });
+  const addAudienceItem = (a: string) => {
+    if (!a.trim() || targetAudience.includes(a.trim())) return;
+    setTargetAudience(prev => [...prev, a.trim()]);
     setCustomAudience('');
     setShowAddAudience(false);
   };
+
+  const currentDurationDays = durationDays ? parseInt(durationDays) : null;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="sm:max-w-[480px] p-0 flex flex-col">
         {/* Header */}
-        <div className="px-6 pt-6 pb-4 bg-gradient-to-br from-blue-500/5 via-violet-500/5 to-transparent border-b">
+        <div className="px-6 pt-6 pb-4 bg-gradient-to-br from-primary/5 via-secondary/5 to-transparent border-b">
           <SheetHeader className="space-y-1">
             <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
-                <GraduationCap className="w-5 h-5 text-blue-500" />
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <GraduationCap className="w-5 h-5 text-primary" />
               </div>
               <div className="flex-1 min-w-0">
                 <SheetTitle className="text-base font-semibold truncate">{item.title}</SheetTitle>
@@ -201,27 +233,22 @@ export const TrainingDetailSheet: React.FC<TrainingDetailSheetProps> = ({
             icon={FileText}
             label="Objective & Justification"
             clickable={editingField !== 'description'}
-            onClick={() => editingField !== 'description' && startEdit('description')}
+            onClick={() => editingField !== 'description' && setEditingField('description')}
           >
             {editingField === 'description' ? (
               <div className="space-y-2 mt-1">
                 <Textarea
-                  value={editDescription}
-                  onChange={(e) => setEditDescription(e.target.value)}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
                   rows={4}
                   className="text-sm resize-none border-foreground/20"
                   autoFocus
+                  onBlur={() => setEditingField(null)}
                 />
-                <div className="flex gap-1.5 justify-end">
-                  <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setEditingField(null)}>Cancel</Button>
-                  <Button size="sm" className="h-7 text-xs gap-1" onClick={() => saveField('description', { description: editDescription.trim() || null })}>
-                    <Check className="w-3 h-3" /> Save
-                  </Button>
-                </div>
               </div>
             ) : (
               <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                {item.description || <span className="italic text-muted-foreground/60">Click to add objective...</span>}
+                {description || <span className="italic text-muted-foreground/60">Click to add objective...</span>}
               </p>
             )}
           </DetailRow>
@@ -232,22 +259,21 @@ export const TrainingDetailSheet: React.FC<TrainingDetailSheetProps> = ({
             icon={Building}
             label="Training Provider"
             clickable={editingField !== 'provider'}
-            onClick={() => editingField !== 'provider' && startEdit('provider')}
+            onClick={() => editingField !== 'provider' && setEditingField('provider')}
           >
             {editingField === 'provider' ? (
               <div className="flex gap-1.5 items-center mt-1">
                 <Input
-                  value={editProvider}
-                  onChange={(e) => setEditProvider(e.target.value)}
+                  value={provider}
+                  onChange={(e) => setProvider(e.target.value)}
                   className="text-sm h-8 border-foreground/20 flex-1"
                   autoFocus
-                  onKeyDown={(e) => e.key === 'Enter' && saveField('provider', { training_provider: editProvider.trim() || null })}
+                  onBlur={() => setEditingField(null)}
+                  onKeyDown={(e) => e.key === 'Enter' && setEditingField(null)}
                 />
-                <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => setEditingField(null)}><X className="w-3.5 h-3.5" /></Button>
-                <Button size="sm" className="h-8 w-8 p-0" onClick={() => saveField('provider', { training_provider: editProvider.trim() || null })}><Check className="w-3.5 h-3.5" /></Button>
               </div>
             ) : (
-              <span>{item.training_provider || <span className="italic text-muted-foreground/60">Click to add provider...</span>}</span>
+              <span>{provider || <span className="italic text-muted-foreground/60">Click to add provider...</span>}</span>
             )}
           </DetailRow>
 
@@ -256,27 +282,26 @@ export const TrainingDetailSheet: React.FC<TrainingDetailSheetProps> = ({
             icon={Clock}
             label="Duration"
             clickable={editingField !== 'duration'}
-            onClick={() => editingField !== 'duration' && startEdit('duration')}
+            onClick={() => editingField !== 'duration' && setEditingField('duration')}
           >
             {editingField === 'duration' ? (
               <div className="flex gap-1.5 items-center mt-1">
                 <Input
                   type="number"
-                  value={editDuration}
-                  onChange={(e) => setEditDuration(e.target.value)}
+                  value={durationDays}
+                  onChange={(e) => setDurationDays(e.target.value)}
                   className="text-sm h-8 border-foreground/20 w-24"
                   autoFocus
                   min={1}
-                  onKeyDown={(e) => e.key === 'Enter' && saveField('duration', { duration_hours: editDuration ? parseFloat(editDuration) * 8 : null })}
+                  onBlur={() => setEditingField(null)}
+                  onKeyDown={(e) => e.key === 'Enter' && setEditingField(null)}
                 />
                 <span className="text-xs text-muted-foreground">days</span>
-                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 ml-auto" onClick={() => setEditingField(null)}><X className="w-3.5 h-3.5" /></Button>
-                <Button size="sm" className="h-8 w-8 p-0" onClick={() => saveField('duration', { duration_hours: editDuration ? parseFloat(editDuration) * 8 : null })}><Check className="w-3.5 h-3.5" /></Button>
               </div>
             ) : (
               <span>
-                {durationDays
-                  ? `${durationDays} day${durationDays !== 1 ? 's' : ''}`
+                {currentDurationDays
+                  ? `${currentDurationDays} day${currentDurationDays !== 1 ? 's' : ''}`
                   : <span className="italic text-muted-foreground/60">Click to set duration...</span>
                 }
               </span>
@@ -288,8 +313,8 @@ export const TrainingDetailSheet: React.FC<TrainingDetailSheetProps> = ({
             <Popover>
               <PopoverTrigger asChild>
                 <button className="text-sm hover:text-primary transition-colors text-left">
-                  {item.tentative_date
-                    ? formatDate(item.tentative_date)
+                  {tentativeDate
+                    ? formatDate(tentativeDate)
                     : <span className="italic text-muted-foreground/60">Click to pick a date...</span>
                   }
                 </button>
@@ -297,11 +322,10 @@ export const TrainingDetailSheet: React.FC<TrainingDetailSheetProps> = ({
               <PopoverContent className="w-auto p-0" align="start">
                 <Calendar
                   mode="single"
-                  selected={item.tentative_date ? new Date(item.tentative_date) : undefined}
+                  selected={tentativeDate ? new Date(tentativeDate) : undefined}
                   onSelect={(date) => {
                     if (date) {
-                      const dateStr = format(date, 'yyyy-MM-dd');
-                      saveField('tentative_date', { tentative_date: dateStr });
+                      setTentativeDate(format(date, 'yyyy-MM-dd'));
                     }
                   }}
                   initialFocus
@@ -317,14 +341,14 @@ export const TrainingDetailSheet: React.FC<TrainingDetailSheetProps> = ({
             icon={MapPin}
             label="Delivery Format"
             clickable={editingField !== 'delivery'}
-            onClick={() => editingField !== 'delivery' && startEdit('delivery')}
+            onClick={() => editingField !== 'delivery' && setEditingField('delivery')}
           >
             {editingField === 'delivery' ? (
               <div className="space-y-2 mt-1">
                 <div className="flex flex-wrap gap-2">
                   {DELIVERY_METHODS_OPTIONS.map((dm) => {
                     const Icon = dm.icon;
-                    const isSelected = editDelivery.includes(dm.id);
+                    const isSelected = deliveryMethod.includes(dm.id);
                     return (
                       <button
                         key={dm.id}
@@ -332,7 +356,7 @@ export const TrainingDetailSheet: React.FC<TrainingDetailSheetProps> = ({
                         className={cn(
                           'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all',
                           isSelected
-                            ? 'border-blue-500/50 bg-blue-500/10 text-blue-600 dark:text-blue-400'
+                            ? 'border-primary/50 bg-primary/10 text-primary'
                             : 'border-border hover:bg-accent/50 text-muted-foreground'
                         )}
                       >
@@ -342,16 +366,11 @@ export const TrainingDetailSheet: React.FC<TrainingDetailSheetProps> = ({
                     );
                   })}
                 </div>
-                <div className="flex gap-1.5 justify-end">
-                  <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setEditingField(null)}>Cancel</Button>
-                  <Button size="sm" className="h-7 text-xs gap-1" onClick={() => saveField('delivery', { delivery_method: editDelivery.length > 0 ? editDelivery : null })}>
-                    <Check className="w-3 h-3" /> Save
-                  </Button>
-                </div>
+                <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setEditingField(null)}>Done</Button>
               </div>
             ) : (
               <div className="flex flex-wrap gap-2 mt-1">
-                {item.delivery_method?.length > 0 ? item.delivery_method.map((dm: string) => {
+                {deliveryMethod.length > 0 ? deliveryMethod.map((dm: string) => {
                   const Icon = DELIVERY_ICONS[dm] || MapPin;
                   return (
                     <div key={dm} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-muted/50 text-xs font-medium">
@@ -370,7 +389,7 @@ export const TrainingDetailSheet: React.FC<TrainingDetailSheetProps> = ({
           <Separator />
           <DetailRow icon={Users} label="Target Audience">
             <div className="flex flex-wrap gap-1.5 mt-1 group/audience">
-              {(item.target_audience || []).map((a: string) => (
+              {targetAudience.map((a: string) => (
                 <div key={a} className="relative group/chip">
                   <Badge variant="secondary" className="text-[11px] pr-2 transition-all group-hover/chip:pr-6">
                     {a}
@@ -399,7 +418,7 @@ export const TrainingDetailSheet: React.FC<TrainingDetailSheetProps> = ({
                     </PopoverTrigger>
                     <PopoverContent className="w-56 p-1 max-h-48 overflow-auto" align="start">
                       {SUGGESTED_AUDIENCES
-                        .filter(a => !(item.target_audience || []).includes(a))
+                        .filter(a => !targetAudience.includes(a))
                         .filter(a => !customAudience || a.toLowerCase().includes(customAudience.toLowerCase()))
                         .map(a => (
                           <button
@@ -426,7 +445,58 @@ export const TrainingDetailSheet: React.FC<TrainingDetailSheetProps> = ({
               )}
             </div>
           </DetailRow>
+
+          {/* Applicable Systems */}
+          {systems.length > 0 && (
+            <>
+              <Separator />
+              <DetailRow icon={Layers} label="Applicable Systems">
+                <div className="flex flex-wrap gap-1.5 mt-1">
+                  {systems.map((sys: any) => (
+                    <Badge key={sys.id} variant="outline" className="text-[11px] font-normal gap-1">
+                      <Layers className="w-3 h-3 text-muted-foreground" />
+                      {sys.name}
+                    </Badge>
+                  ))}
+                </div>
+              </DetailRow>
+            </>
+          )}
         </div>
+
+        {/* Save Footer - only shown when dirty */}
+        {isDirty && (
+          <div className="px-6 py-3 border-t bg-muted/30 flex items-center justify-end gap-2 animate-in slide-in-from-bottom-2 duration-200">
+            <Button
+              size="sm"
+              variant="ghost"
+              className="text-xs"
+              onClick={() => {
+                // Reset to original
+                if (item) {
+                  setDescription(item.description || '');
+                  setProvider(item.training_provider || '');
+                  const days = item.duration_hours ? Math.round(item.duration_hours / 8) : '';
+                  setDurationDays(days.toString());
+                  setTentativeDate(item.tentative_date || '');
+                  setDeliveryMethod(item.delivery_method || []);
+                  setTargetAudience(item.target_audience || []);
+                }
+              }}
+            >
+              Discard
+            </Button>
+            <Button
+              size="sm"
+              className="gap-1.5 text-xs"
+              onClick={saveAllChanges}
+              disabled={saving}
+            >
+              <Save className="w-3.5 h-3.5" />
+              {saving ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </div>
+        )}
       </SheetContent>
     </Sheet>
   );
