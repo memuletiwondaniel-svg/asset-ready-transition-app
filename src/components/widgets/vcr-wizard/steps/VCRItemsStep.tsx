@@ -41,12 +41,13 @@ import {
 import {
   Plus,
   Pencil,
-  Trash2,
   Search,
   ChevronDown,
   ChevronRight,
   Users,
   X,
+  Ban,
+  Undo2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -77,6 +78,8 @@ interface VCRItemOverride {
   delivering_party_role_id_override: string | null;
   approving_party_role_ids_override: string[] | null;
   guidance_notes_override: string | null;
+  is_na: boolean;
+  na_reason: string | null;
 }
 
 interface MergedVCRItem extends VCRItem {
@@ -88,6 +91,7 @@ interface MergedVCRItem extends VCRItem {
   effective_guidance_notes: string | null;
   has_overrides: boolean;
   override_id?: string;
+  is_na: boolean;
 }
 
 interface Role {
@@ -103,7 +107,7 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
   const [editingItem, setEditingItem] = useState<MergedVCRItem | null>(null);
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const [addSheetOpen, setAddSheetOpen] = useState(false);
-  const [deleteItem, setDeleteItem] = useState<MergedVCRItem | null>(null);
+  const [naItem, setNaItem] = useState<MergedVCRItem | null>(null);
 
   // Fetch VCR items with categories
   const { data: items = [], isLoading } = useQuery({
@@ -147,6 +151,7 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
       effective_guidance_notes: override?.guidance_notes_override !== undefined ? override.guidance_notes_override : item.guidance_notes,
       has_overrides: !!override,
       override_id: override?.id,
+      is_na: override?.is_na || false,
     };
   });
 
@@ -201,19 +206,22 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
     },
   });
 
-  // Soft delete mutation (still on master for now - or could be a local exclusion)
-  const softDeleteItem = useMutation({
-    mutationFn: async (id: string) => {
+  // Toggle N/A mutation (marks item as not applicable for this VCR)
+  const toggleNAItem = useMutation({
+    mutationFn: async ({ item, markNA }: { item: MergedVCRItem; markNA: boolean }) => {
       const { error } = await supabase
-        .from('vcr_items')
-        .update({ is_active: false })
-        .eq('id', id);
+        .from('p2a_vcr_item_overrides')
+        .upsert({
+          handover_point_id: vcrId,
+          vcr_item_id: item.id,
+          is_na: markNA,
+        }, { onConflict: 'handover_point_id,vcr_item_id' });
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['vcr-exec-items'] });
-      toast.success('Item removed');
-      setDeleteItem(null);
+    onSuccess: (_, { markNA }) => {
+      queryClient.invalidateQueries({ queryKey: ['vcr-item-overrides', vcrId] });
+      toast.success(markNA ? 'Item marked as N/A' : 'Item restored');
+      setNaItem(null);
     },
   });
 
@@ -355,47 +363,68 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
                       const catColor = CATEGORY_COLORS[item.category?.name || ''] || { bg: 'bg-muted', text: 'text-muted-foreground', border: 'border-border' };
 
                       return (
-                        <Card key={item.id} className="group hover:border-primary/40 transition-colors cursor-pointer" onClick={() => { setEditingItem(item); setEditSheetOpen(true); }}>
+                        <Card key={item.id} className={cn("group transition-colors cursor-pointer", item.is_na ? "opacity-50 border-dashed" : "hover:border-primary/40")} onClick={() => { if (!item.is_na) { setEditingItem(item); setEditSheetOpen(true); } }}>
                           <CardContent className="p-3">
                             <div className="flex items-start gap-3">
-                              <Badge variant="outline" className={cn("text-[10px] font-mono font-semibold shrink-0 mt-0.5 border", catColor.bg, catColor.text, catColor.border)}>
+                              <Badge variant="outline" className={cn("text-[10px] font-mono font-semibold shrink-0 mt-0.5 border", item.is_na ? "bg-muted text-muted-foreground border-border line-through" : cn(catColor.bg, catColor.text, catColor.border))}>
                                 {itemId}
                               </Badge>
-                              <div className="flex-1 min-w-0">
+                              <div className={cn("flex-1 min-w-0", item.is_na && "line-through text-muted-foreground")}>
                                 <p className="text-sm leading-snug">{item.effective_vcr_item}</p>
                                 {item.effective_topic && (
                                   <p className="text-[10px] text-muted-foreground mt-1">Topic: {item.effective_topic}</p>
                                 )}
                                 <div className="flex items-center gap-3 mt-1.5 text-[10px] text-muted-foreground">
-                                  <span>Delivering: <span className="text-foreground font-medium">{getRoleName(item.effective_delivering_party_role_id)}</span></span>
-                                  {item.effective_approving_party_role_ids && item.effective_approving_party_role_ids.length > 0 && (
-                                    <span className="flex items-center gap-1">
-                                      <Users className="w-3 h-3" />
-                                      {item.effective_approving_party_role_ids.length} approvers
-                                    </span>
-                                  )}
-                                  {item.has_overrides && (
-                                    <Badge variant="outline" className="text-[9px] h-4 border-accent text-accent-foreground">Customized</Badge>
+                                  {item.is_na ? (
+                                    <Badge variant="outline" className="text-[9px] h-4 border-orange-300 dark:border-orange-700 text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/30">N/A</Badge>
+                                  ) : (
+                                    <>
+                                      <span>Delivering: <span className="text-foreground font-medium">{getRoleName(item.effective_delivering_party_role_id)}</span></span>
+                                      {item.effective_approving_party_role_ids && item.effective_approving_party_role_ids.length > 0 && (
+                                        <span className="flex items-center gap-1">
+                                          <Users className="w-3 h-3" />
+                                          {item.effective_approving_party_role_ids.length} approvers
+                                        </span>
+                                      )}
+                                      {item.has_overrides && (
+                                        <Badge variant="outline" className="text-[9px] h-4 border-accent text-accent-foreground">Customized</Badge>
+                                      )}
+                                    </>
                                   )}
                                 </div>
                               </div>
                               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7"
-                                  onClick={(e) => { e.stopPropagation(); setEditingItem(item); setEditSheetOpen(true); }}
-                                >
-                                  <Pencil className="w-3.5 h-3.5" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7 text-destructive hover:text-destructive"
-                                  onClick={(e) => { e.stopPropagation(); setDeleteItem(item); }}
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </Button>
+                                {item.is_na ? (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 text-green-600 hover:text-green-700"
+                                    onClick={(e) => { e.stopPropagation(); toggleNAItem.mutate({ item, markNA: false }); }}
+                                    title="Restore item"
+                                  >
+                                    <Undo2 className="w-3.5 h-3.5" />
+                                  </Button>
+                                ) : (
+                                  <>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-7 w-7"
+                                      onClick={(e) => { e.stopPropagation(); setEditingItem(item); setEditSheetOpen(true); }}
+                                    >
+                                      <Pencil className="w-3.5 h-3.5" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-7 w-7 text-orange-500 hover:text-orange-600"
+                                      onClick={(e) => { e.stopPropagation(); setNaItem(item); }}
+                                      title="Mark as N/A"
+                                    >
+                                      <Ban className="w-3.5 h-3.5" />
+                                    </Button>
+                                  </>
+                                )}
                               </div>
                             </div>
                           </CardContent>
@@ -459,22 +488,22 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
         </SheetContent>
       </Sheet>
 
-      {/* Delete Confirmation */}
-      <AlertDialog open={!!deleteItem} onOpenChange={() => setDeleteItem(null)}>
+      {/* N/A Confirmation */}
+      <AlertDialog open={!!naItem} onOpenChange={() => setNaItem(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remove VCR Item</AlertDialogTitle>
+            <AlertDialogTitle>Mark as Not Applicable</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to remove this item? It can be restored later from management.
+              This will mark the item as N/A for this VCR. The item will remain visible but greyed out for audit trail purposes. You can restore it at any time.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => deleteItem && softDeleteItem.mutate(deleteItem.id)}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => naItem && toggleNAItem.mutate({ item: naItem, markNA: true })}
+              className="bg-orange-500 text-white hover:bg-orange-600"
             >
-              Remove
+              Mark N/A
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
