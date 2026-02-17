@@ -300,7 +300,7 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
                       const catColor = CATEGORY_COLORS[item.category?.name || ''] || { bg: 'bg-muted', text: 'text-muted-foreground', border: 'border-border' };
 
                       return (
-                        <Card key={item.id} className="group hover:border-primary/40 transition-colors">
+                        <Card key={item.id} className="group hover:border-primary/40 transition-colors cursor-pointer" onClick={() => { setEditingItem(item); setEditSheetOpen(true); }}>
                           <CardContent className="p-3">
                             <div className="flex items-start gap-3">
                               <Badge variant="outline" className={cn("text-[10px] font-mono font-semibold shrink-0 mt-0.5 border", catColor.bg, catColor.text, catColor.border)}>
@@ -329,7 +329,7 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
                                   variant="ghost"
                                   size="icon"
                                   className="h-7 w-7"
-                                  onClick={() => { setEditingItem(item); setEditSheetOpen(true); }}
+                                  onClick={(e) => { e.stopPropagation(); setEditingItem(item); setEditSheetOpen(true); }}
                                 >
                                   <Pencil className="w-3.5 h-3.5" />
                                 </Button>
@@ -337,7 +337,7 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
                                   variant="ghost"
                                   size="icon"
                                   className="h-7 w-7 text-destructive hover:text-destructive"
-                                  onClick={() => setDeleteItem(item)}
+                                  onClick={(e) => { e.stopPropagation(); setDeleteItem(item); }}
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
                                 </Button>
