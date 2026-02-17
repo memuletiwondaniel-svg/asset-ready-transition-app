@@ -3737,6 +3737,70 @@ export type Database = {
           },
         ]
       }
+      p2a_vcr_item_overrides: {
+        Row: {
+          approving_party_role_ids_override: string[] | null
+          created_at: string
+          delivering_party_role_id_override: string | null
+          guidance_notes_override: string | null
+          handover_point_id: string
+          id: string
+          supporting_evidence_override: string | null
+          topic_override: string | null
+          updated_at: string
+          vcr_item_id: string
+          vcr_item_override: string | null
+        }
+        Insert: {
+          approving_party_role_ids_override?: string[] | null
+          created_at?: string
+          delivering_party_role_id_override?: string | null
+          guidance_notes_override?: string | null
+          handover_point_id: string
+          id?: string
+          supporting_evidence_override?: string | null
+          topic_override?: string | null
+          updated_at?: string
+          vcr_item_id: string
+          vcr_item_override?: string | null
+        }
+        Update: {
+          approving_party_role_ids_override?: string[] | null
+          created_at?: string
+          delivering_party_role_id_override?: string | null
+          guidance_notes_override?: string | null
+          handover_point_id?: string
+          id?: string
+          supporting_evidence_override?: string | null
+          topic_override?: string | null
+          updated_at?: string
+          vcr_item_id?: string
+          vcr_item_override?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_vcr_item_overrides_delivering_party_role_id_override_fkey"
+            columns: ["delivering_party_role_id_override"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_vcr_item_overrides_handover_point_id_fkey"
+            columns: ["handover_point_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_handover_points"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_vcr_item_overrides_vcr_item_id_fkey"
+            columns: ["vcr_item_id"]
+            isOneToOne: false
+            referencedRelation: "vcr_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       p2a_vcr_operational_registers: {
         Row: {
           created_at: string
