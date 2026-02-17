@@ -359,7 +359,22 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
       <Sheet open={editSheetOpen} onOpenChange={setEditSheetOpen}>
         <SheetContent className="w-[480px] sm:max-w-[480px]">
           <SheetHeader>
-            <SheetTitle>Edit VCR Item</SheetTitle>
+            <SheetTitle className="flex items-center gap-2">
+              Edit VCR Item
+              {editingItem && (() => {
+                const catName = editingItem.category?.name || '';
+                const catCode = editingItem.category?.code || '??';
+                const catItems = grouped[catName] || [];
+                const idx = catItems.findIndex(i => i.id === editingItem.id);
+                const badgeId = `${catCode}-${String(idx + 1).padStart(2, '0')}`;
+                const colors = CATEGORY_COLORS[catName] || { bg: 'bg-muted', text: 'text-muted-foreground', border: 'border-border' };
+                return (
+                  <Badge variant="outline" className={cn("text-[10px] font-mono font-semibold border", colors.bg, colors.text, colors.border)}>
+                    {badgeId}
+                  </Badge>
+                );
+              })()}
+            </SheetTitle>
           </SheetHeader>
           {editingItem && (
             <EditItemForm
@@ -507,25 +522,25 @@ const EditItemForm: React.FC<{
   return (
     <ScrollArea className="h-[calc(100vh-100px)]">
       <div className="space-y-5 mt-4 pr-4 pb-4">
-        <div>
-          <Label>VCR Item Description *</Label>
+        <div className="space-y-1.5">
+          <Label className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">VCR Item Description *</Label>
           <Textarea
             value={vcrItem}
             onChange={(e) => setVcrItem(e.target.value)}
-            className="mt-1"
+            className="text-sm"
             rows={3}
           />
         </div>
-        <div>
-          <Label>Topic</Label>
-          <Input value={topic} onChange={(e) => setTopic(e.target.value)} className="mt-1" />
+        <div className="space-y-1.5">
+          <Label className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">Topic</Label>
+          <Input value={topic} onChange={(e) => setTopic(e.target.value)} className="text-sm" />
         </div>
 
         {/* Delivering Party */}
-        <div>
-          <Label>Delivering Party</Label>
+        <div className="space-y-1.5">
+          <Label className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">Delivering Party</Label>
           <Select value={deliveringParty} onValueChange={setDeliveringParty}>
-            <SelectTrigger className="mt-1">
+            <SelectTrigger className="text-sm">
               <SelectValue placeholder="Select role" />
             </SelectTrigger>
             <SelectContent>
@@ -554,9 +569,9 @@ const EditItemForm: React.FC<{
         </div>
 
         {/* Approving Parties */}
-        <div>
-          <div className="flex items-center justify-between mb-1">
-            <Label>Approving Parties ({approvingParties.length})</Label>
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <Label className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">Approving Parties ({approvingParties.length})</Label>
             <Popover open={addApproverOpen} onOpenChange={setAddApproverOpen}>
               <PopoverTrigger asChild>
                 <Button variant="outline" size="sm" className="h-7 text-xs gap-1">
@@ -636,12 +651,12 @@ const EditItemForm: React.FC<{
           )}
         </div>
 
-        <div>
-          <Label>Guidance Notes</Label>
+        <div className="space-y-1.5">
+          <Label className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">Guidance Notes</Label>
           <Textarea
             value={guidanceNotes}
             onChange={(e) => setGuidanceNotes(e.target.value)}
-            className="mt-1"
+            className="text-sm"
             rows={2}
           />
         </div>
