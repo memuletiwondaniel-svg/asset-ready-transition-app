@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Sheet,
   SheetContent,
@@ -33,6 +34,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
   Plus,
   Pencil,
   Trash2,
@@ -40,9 +46,11 @@ import {
   ChevronDown,
   ChevronRight,
   Users,
+  X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useParams } from 'react-router-dom';
 
 interface VCRItemsStepProps {
   vcrId: string;
@@ -67,6 +75,7 @@ interface Role {
 }
 
 export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
+  const { id: projectId } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
@@ -280,6 +289,7 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
             <EditItemForm
               item={editingItem}
               roles={roles}
+              projectId={projectId}
               onSave={(updated) => updateItem.mutate(updated)}
               isSaving={updateItem.isPending}
             />
@@ -312,96 +322,259 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
 };
 
 // Edit Form Component
+const AVATAR_BASE = 'https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/';
+const getAvatarUrl = (path: string | null) => {
+  if (!path) return undefined;
+  if (path.startsWith('http')) return path;
+  return `${AVATAR_BASE}${path}`;
+};
+const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+
+interface ResolvedUser {
+  user_id: string;
+  full_name: string;
+  avatar_url: string | null;
+  role_id: string;
+}
+
 const EditItemForm: React.FC<{
   item: VCRItem;
   roles: Role[];
+  projectId?: string;
   onSave: (item: Partial<VCRItem> & { id: string }) => void;
   isSaving: boolean;
-}> = ({ item, roles, onSave, isSaving }) => {
+}> = ({ item, roles, projectId, onSave, isSaving }) => {
   const [vcrItem, setVcrItem] = useState(item.vcr_item);
   const [topic, setTopic] = useState(item.topic || '');
   const [deliveringParty, setDeliveringParty] = useState(item.delivering_party_role_id || '');
   const [approvingParties, setApprovingParties] = useState<string[]>(item.approving_party_role_ids || []);
   const [guidanceNotes, setGuidanceNotes] = useState(item.guidance_notes || '');
+  const [addApproverOpen, setAddApproverOpen] = useState(false);
+  const [approverSearch, setApproverSearch] = useState('');
 
-  const toggleApprover = (roleId: string) => {
-    setApprovingParties(prev =>
-      prev.includes(roleId) ? prev.filter(r => r !== roleId) : [...prev, roleId]
-    );
+  // Resolve actual users for all assigned role IDs
+  const allRoleIds = [...new Set([deliveringParty, ...approvingParties].filter(Boolean))];
+
+  const { data: resolvedUsers = [] } = useQuery({
+    queryKey: ['edit-form-users', allRoleIds.sort().join(','), projectId],
+    queryFn: async () => {
+      if (allRoleIds.length === 0) return [];
+      let candidates: any[] = [];
+
+      if (projectId) {
+        const { data: members } = await supabase
+          .from('project_team_members')
+          .select('user_id')
+          .eq('project_id', projectId);
+        if (members && members.length > 0) {
+          const userIds = members.map((m: any) => m.user_id);
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('user_id, full_name, avatar_url, role')
+            .in('user_id', userIds)
+            .in('role', allRoleIds)
+            .eq('is_active', true);
+          candidates = profiles || [];
+        }
+      }
+
+      // Fallback for uncovered roles
+      const coveredRoles = new Set(candidates.map((p: any) => p.role));
+      const uncovered = allRoleIds.filter(r => !coveredRoles.has(r));
+      if (uncovered.length > 0) {
+        const { data: fallback } = await supabase
+          .from('profiles')
+          .select('user_id, full_name, avatar_url, role, position')
+          .in('role', uncovered)
+          .eq('is_active', true);
+        if (fallback) {
+          const filtered = fallback.filter((p: any) => {
+            const pos = (p.position || '').toLowerCase();
+            return !pos.includes('asset');
+          });
+          candidates.push(...filtered);
+        }
+      }
+
+      return candidates.map((p: any) => ({
+        user_id: p.user_id,
+        full_name: p.full_name,
+        avatar_url: p.avatar_url,
+        role_id: p.role,
+      })) as ResolvedUser[];
+    },
+    enabled: allRoleIds.length > 0,
+  });
+
+  const getUsersForRole = (roleId: string) => resolvedUsers.filter(u => u.role_id === roleId);
+  const getRoleName = (roleId: string) => roles.find(r => r.id === roleId)?.name || 'Unknown';
+
+  const removeApprover = (roleId: string) => {
+    setApprovingParties(prev => prev.filter(r => r !== roleId));
   };
 
+  const availableRolesToAdd = roles.filter(r =>
+    !approvingParties.includes(r.id) &&
+    r.id !== deliveringParty &&
+    (approverSearch === '' || r.name.toLowerCase().includes(approverSearch.toLowerCase()))
+  );
+
   return (
-    <div className="space-y-4 mt-4">
-      <div>
-        <Label>VCR Item Description *</Label>
-        <Textarea
-          value={vcrItem}
-          onChange={(e) => setVcrItem(e.target.value)}
-          className="mt-1"
-          rows={3}
-        />
-      </div>
-      <div>
-        <Label>Topic</Label>
-        <Input value={topic} onChange={(e) => setTopic(e.target.value)} className="mt-1" />
-      </div>
-      <div>
-        <Label>Delivering Party</Label>
-        <Select value={deliveringParty} onValueChange={setDeliveringParty}>
-          <SelectTrigger className="mt-1">
-            <SelectValue placeholder="Select role" />
-          </SelectTrigger>
-          <SelectContent>
-            {roles.map(r => (
-              <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div>
-        <Label>Approving Parties ({approvingParties.length} selected)</Label>
-        <ScrollArea className="h-40 mt-1 border rounded-md p-2">
-          <div className="space-y-1">
-            {roles.map(r => (
-              <button
-                key={r.id}
-                onClick={() => toggleApprover(r.id)}
-                className={cn(
-                  'w-full text-left text-sm px-2 py-1.5 rounded transition-colors',
-                  approvingParties.includes(r.id)
-                    ? 'bg-primary/10 text-primary font-medium'
-                    : 'hover:bg-muted/50 text-muted-foreground'
-                )}
-              >
-                {r.name}
-              </button>
-            ))}
+    <ScrollArea className="h-[calc(100vh-100px)]">
+      <div className="space-y-5 mt-4 pr-4 pb-4">
+        <div>
+          <Label>VCR Item Description *</Label>
+          <Textarea
+            value={vcrItem}
+            onChange={(e) => setVcrItem(e.target.value)}
+            className="mt-1"
+            rows={3}
+          />
+        </div>
+        <div>
+          <Label>Topic</Label>
+          <Input value={topic} onChange={(e) => setTopic(e.target.value)} className="mt-1" />
+        </div>
+
+        {/* Delivering Party */}
+        <div>
+          <Label>Delivering Party</Label>
+          <Select value={deliveringParty} onValueChange={setDeliveringParty}>
+            <SelectTrigger className="mt-1">
+              <SelectValue placeholder="Select role" />
+            </SelectTrigger>
+            <SelectContent>
+              {roles.map(r => (
+                <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {deliveringParty && (
+            <div className="mt-2 flex items-center gap-2 flex-wrap">
+              {getUsersForRole(deliveringParty).length > 0 ? (
+                getUsersForRole(deliveringParty).map(user => (
+                  <div key={user.user_id} className="flex items-center gap-2 bg-muted/50 rounded-full pl-1 pr-3 py-1">
+                    <Avatar className="w-6 h-6">
+                      <AvatarImage src={getAvatarUrl(user.avatar_url)} />
+                      <AvatarFallback className="text-[9px]">{getInitials(user.full_name)}</AvatarFallback>
+                    </Avatar>
+                    <span className="text-xs">{user.full_name}</span>
+                  </div>
+                ))
+              ) : (
+                <p className="text-xs text-muted-foreground italic">No users assigned to this role</p>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Approving Parties */}
+        <div>
+          <div className="flex items-center justify-between mb-1">
+            <Label>Approving Parties ({approvingParties.length})</Label>
+            <Popover open={addApproverOpen} onOpenChange={setAddApproverOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="h-7 text-xs gap-1">
+                  <Plus className="w-3 h-3" /> Add
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64 p-2" align="end">
+                <Input
+                  placeholder="Search roles..."
+                  value={approverSearch}
+                  onChange={(e) => setApproverSearch(e.target.value)}
+                  className="h-8 text-xs mb-2"
+                />
+                <ScrollArea className="h-48">
+                  <div className="space-y-0.5">
+                    {availableRolesToAdd.map(r => (
+                      <button
+                        key={r.id}
+                        onClick={() => {
+                          setApprovingParties(prev => [...prev, r.id]);
+                          setApproverSearch('');
+                        }}
+                        className="w-full text-left text-xs px-2 py-1.5 rounded hover:bg-muted/60 transition-colors"
+                      >
+                        {r.name}
+                      </button>
+                    ))}
+                    {availableRolesToAdd.length === 0 && (
+                      <p className="text-xs text-muted-foreground text-center py-4">No more roles available</p>
+                    )}
+                  </div>
+                </ScrollArea>
+              </PopoverContent>
+            </Popover>
           </div>
-        </ScrollArea>
+
+          {approvingParties.length > 0 ? (
+            <div className="space-y-2">
+              {approvingParties.map(roleId => {
+                const users = getUsersForRole(roleId);
+                return (
+                  <div key={roleId} className="border rounded-lg p-2.5 group/approver hover:border-primary/30 transition-colors">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-xs font-medium text-muted-foreground">{getRoleName(roleId)}</span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-5 w-5 opacity-0 group-hover/approver:opacity-100 transition-opacity text-destructive hover:text-destructive"
+                        onClick={() => removeApprover(roleId)}
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </div>
+                    {users.length > 0 ? (
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {users.map(user => (
+                          <div key={user.user_id} className="flex items-center gap-2 bg-muted/50 rounded-full pl-1 pr-3 py-1">
+                            <Avatar className="w-6 h-6">
+                              <AvatarImage src={getAvatarUrl(user.avatar_url)} />
+                              <AvatarFallback className="text-[9px]">{getInitials(user.full_name)}</AvatarFallback>
+                            </Avatar>
+                            <span className="text-xs">{user.full_name}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-[10px] text-muted-foreground italic">No users assigned</p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="border border-dashed rounded-lg p-4 text-center">
+              <p className="text-xs text-muted-foreground">No approving parties assigned</p>
+            </div>
+          )}
+        </div>
+
+        <div>
+          <Label>Guidance Notes</Label>
+          <Textarea
+            value={guidanceNotes}
+            onChange={(e) => setGuidanceNotes(e.target.value)}
+            className="mt-1"
+            rows={2}
+          />
+        </div>
+        <Button
+          onClick={() => onSave({
+            id: item.id,
+            vcr_item: vcrItem,
+            topic: topic || null,
+            delivering_party_role_id: deliveringParty || null,
+            approving_party_role_ids: approvingParties.length > 0 ? approvingParties : null,
+            guidance_notes: guidanceNotes || null,
+          })}
+          disabled={!vcrItem || isSaving}
+          className="w-full"
+        >
+          {isSaving ? 'Saving...' : 'Save Changes'}
+        </Button>
       </div>
-      <div>
-        <Label>Guidance Notes</Label>
-        <Textarea
-          value={guidanceNotes}
-          onChange={(e) => setGuidanceNotes(e.target.value)}
-          className="mt-1"
-          rows={2}
-        />
-      </div>
-      <Button
-        onClick={() => onSave({
-          id: item.id,
-          vcr_item: vcrItem,
-          topic: topic || null,
-          delivering_party_role_id: deliveringParty || null,
-          approving_party_role_ids: approvingParties.length > 0 ? approvingParties : null,
-          guidance_notes: guidanceNotes || null,
-        })}
-        disabled={!vcrItem || isSaving}
-        className="w-full"
-      >
-        {isSaving ? 'Saving...' : 'Save Changes'}
-      </Button>
-    </div>
+    </ScrollArea>
   );
 };
