@@ -300,14 +300,25 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
     },
   });
 
-  // Filter items using effective (overridden) values
-  const filtered = mergedItems.filter(item =>
+  // Separate N/A items from active items
+  const naItems = mergedItems.filter(item => item.is_na);
+  const activeItems = mergedItems.filter(item => !item.is_na);
+
+  // Filter active items using effective (overridden) values
+  const filtered = activeItems.filter(item =>
     !searchQuery ||
     item.effective_vcr_item.toLowerCase().includes(searchQuery.toLowerCase()) ||
     item.effective_topic?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Group by category
+  // Also filter N/A items by search
+  const filteredNaItems = naItems.filter(item =>
+    !searchQuery ||
+    item.effective_vcr_item.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.effective_topic?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Group active items by category
   const grouped = filtered.reduce<Record<string, MergedVCRItem[]>>((acc, item) => {
     const cat = item.category?.name || 'Uncategorized';
     if (!acc[cat]) acc[cat] = [];
@@ -377,7 +388,10 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
             className="pl-9"
           />
         </div>
-        <Badge variant="outline" className="shrink-0">{mergedItems.length} items</Badge>
+        <Badge variant="outline" className="shrink-0">{activeItems.length} items</Badge>
+        {naItems.length > 0 && (
+          <Badge variant="outline" className="shrink-0 border-orange-300 dark:border-orange-700 text-orange-600 dark:text-orange-400">{naItems.length} N/A</Badge>
+        )}
         <Button
           variant="outline"
           size="sm"
@@ -491,7 +505,75 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
         </div>
       </ScrollArea>
 
-      {/* Edit Sheet */}
+      {/* N/A Items Section */}
+      {naItems.length > 0 && (
+        <div className="border-t border-border pt-3">
+          <button
+            onClick={() => setCollapsedCategories(prev => {
+              const next = new Set(prev ?? []);
+              next.has('__NA__') ? next.delete('__NA__') : next.add('__NA__');
+              return next;
+            })}
+            className="flex items-center gap-2 w-full text-left py-2 px-1 hover:bg-muted/40 rounded transition-colors"
+          >
+            {effectiveCollapsed.has('__NA__') ? <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/50" /> : <ChevronDown className="w-3.5 h-3.5 text-muted-foreground/50" />}
+            <Ban className="w-3.5 h-3.5 text-orange-500" />
+            <span className="text-sm font-semibold text-orange-600 dark:text-orange-400">Not Applicable Items</span>
+            <Badge variant="outline" className="text-[10px] ml-auto border-orange-300 dark:border-orange-700 text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/30">
+              {filteredNaItems.length}
+            </Badge>
+          </button>
+
+          {!effectiveCollapsed.has('__NA__') && (
+            <div className="space-y-1.5 ml-6 mt-1">
+              <p className="text-[11px] text-muted-foreground mb-2">
+                These items have been marked as not applicable to this VCR. Approvers can review this list during the approval process.
+              </p>
+              {filteredNaItems.map(item => {
+                const catCode = item.category?.code || '??';
+                const catName = item.category?.name || 'Uncategorized';
+                // Find original index from all items in this category
+                const allCatItems = mergedItems.filter(i => (i.category?.name || 'Uncategorized') === catName);
+                const origIdx = allCatItems.findIndex(i => i.id === item.id);
+                const itemId = `${catCode}-${String(origIdx + 1).padStart(2, '0')}`;
+                const catColor = CATEGORY_COLORS[catName] || { bg: 'bg-muted', text: 'text-muted-foreground', border: 'border-border' };
+
+                return (
+                  <Card key={item.id} className="group border-dashed border-orange-200 dark:border-orange-900/50 bg-orange-50/30 dark:bg-orange-950/10">
+                    <CardContent className="p-3">
+                      <div className="flex items-start gap-3">
+                        <Badge variant="outline" className={cn("text-[10px] font-mono font-semibold shrink-0 mt-0.5 border line-through", catColor.bg, catColor.text, catColor.border)}>
+                          {itemId}
+                        </Badge>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm leading-snug text-muted-foreground">{item.effective_vcr_item}</p>
+                          {item.effective_topic && (
+                            <p className="text-[10px] text-muted-foreground/70 mt-1">Topic: {item.effective_topic}</p>
+                          )}
+                          <div className="flex items-center gap-2 mt-1.5">
+                            <Badge variant="outline" className="text-[9px] h-4 border-orange-300 dark:border-orange-700 text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/30">N/A</Badge>
+                            <span className="text-[10px] text-muted-foreground">{catName}</span>
+                          </div>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="shrink-0 h-7 text-xs gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => toggleNAItem.mutate({ item, markNA: false })}
+                        >
+                          <Undo2 className="w-3 h-3" />
+                          Restore
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
       <Sheet open={editSheetOpen} onOpenChange={setEditSheetOpen}>
         <SheetContent className="w-[480px] sm:max-w-[480px]">
           <SheetHeader>
