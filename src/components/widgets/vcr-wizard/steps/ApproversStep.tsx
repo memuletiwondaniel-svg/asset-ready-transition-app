@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Users, CheckCircle2 } from 'lucide-react';
+import { Users, UserCheck, AlertCircle } from 'lucide-react';
 
 interface ApproversStepProps {
   vcrId: string;
@@ -220,9 +220,11 @@ export const ApproversStep: React.FC<ApproversStepProps> = ({ vcrId }) => {
               {approver.role}
             </Badge>
 
-            {/* Resolved indicator */}
-            {approver.name && (
-              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+            {/* Resolved indicator — means person found, NOT approved */}
+            {approver.name ? (
+              <UserCheck className="w-4 h-4 text-muted-foreground/60 shrink-0" />
+            ) : (
+              <AlertCircle className="w-4 h-4 text-destructive/60 shrink-0" />
             )}
           </div>
         ))}
