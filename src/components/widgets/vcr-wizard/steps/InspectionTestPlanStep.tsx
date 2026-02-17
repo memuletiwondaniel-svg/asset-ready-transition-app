@@ -289,6 +289,7 @@ export const InspectionTestPlanStep: React.FC<InspectionTestPlanStepProps> = ({ 
                         'group',
                         idx < activities.length - 1 && 'border-b-0',
                         isFirst && sysIdx > 0 && 'border-t-8 border-t-muted/60',
+                        sysIdx % 2 === 1 && 'bg-muted/30',
                       )}
                     >
                       {/* System cell – only rendered on first row, spans all activities */}
