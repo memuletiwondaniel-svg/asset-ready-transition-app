@@ -109,13 +109,55 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
   const [addSheetOpen, setAddSheetOpen] = useState(false);
   const [naItem, setNaItem] = useState<MergedVCRItem | null>(null);
 
-  // Fetch VCR items with categories
-  const { data: items = [], isLoading } = useQuery({
-    queryKey: ['vcr-exec-items', vcrId],
+  // Determine if VCR has hydrocarbon systems
+  const { data: hasHydrocarbon, isLoading: isLoadingHydrocarbon } = useQuery({
+    queryKey: ['vcr-hydrocarbon-check', vcrId],
     queryFn: async () => {
+      // Get systems linked to this VCR
+      const { data: linkedSystems, error: lsError } = await supabase
+        .from('p2a_handover_point_systems')
+        .select('system_id')
+        .eq('handover_point_id', vcrId);
+      if (lsError) throw lsError;
+      if (!linkedSystems || linkedSystems.length === 0) return false;
+
+      const systemIds = linkedSystems.map(s => s.system_id);
+      const { data: systems, error: sError } = await supabase
+        .from('p2a_systems')
+        .select('is_hydrocarbon')
+        .in('id', systemIds)
+        .eq('is_hydrocarbon', true)
+        .limit(1);
+      if (sError) throw sError;
+      return (systems && systems.length > 0);
+    },
+  });
+
+  // Hydrocarbon template: 363a831c-edb3-4224-a97f-2e8b11fac2dc
+  // Non-Hydrocarbon template: 2ebe8392-e404-4655-b9eb-46e4e3cb39e8
+  const HYDROCARBON_TEMPLATE_ID = '363a831c-edb3-4224-a97f-2e8b11fac2dc';
+  const NON_HYDROCARBON_TEMPLATE_ID = '2ebe8392-e404-4655-b9eb-46e4e3cb39e8';
+
+  const activeTemplateId = hasHydrocarbon ? HYDROCARBON_TEMPLATE_ID : NON_HYDROCARBON_TEMPLATE_ID;
+
+  // Fetch VCR items based on the resolved template
+  const { data: items = [], isLoading } = useQuery({
+    queryKey: ['vcr-exec-items', vcrId, activeTemplateId],
+    queryFn: async () => {
+      // Get item IDs from the template
+      const { data: templateItems, error: tiError } = await supabase
+        .from('vcr_template_items')
+        .select('vcr_item_id')
+        .eq('template_id', activeTemplateId);
+      if (tiError) throw tiError;
+      if (!templateItems || templateItems.length === 0) return [];
+
+      const itemIds = templateItems.map(ti => ti.vcr_item_id);
+
       const { data, error } = await supabase
         .from('vcr_items')
         .select('*, vcr_item_categories!vcr_items_category_id_fkey(id, name, code)')
+        .in('id', itemIds)
         .eq('is_active', true)
         .order('display_order');
       if (error) throw error;
@@ -124,6 +166,7 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
         category: item.vcr_item_categories,
       })) as VCRItem[];
     },
+    enabled: hasHydrocarbon !== undefined,
   });
 
   // Fetch per-VCR overrides
@@ -308,12 +351,21 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
     return roles.find(r => r.id === id)?.name || 'Unknown';
   };
 
-  if (isLoading) {
+  if (isLoading || isLoadingHydrocarbon) {
     return <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-16" />)}</div>;
   }
 
   return (
     <div className="space-y-4">
+      {/* Template indicator */}
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <Badge variant="secondary" className="text-[10px]">
+          {hasHydrocarbon ? 'Hydrocarbon Systems' : 'Non-Hydrocarbon Systems'} Template
+        </Badge>
+        <span>•</span>
+        <span>Items loaded based on linked system types</span>
+      </div>
+
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className="relative flex-1">
