@@ -214,6 +214,7 @@ export const TrainingStep: React.FC<TrainingStepProps> = ({ vcrId }) => {
         open={!!detailItem}
         onOpenChange={(open) => !open && setDetailItem(null)}
         item={detailItem}
+        systems={systems || []}
       />
 
       {/* Delete */}
