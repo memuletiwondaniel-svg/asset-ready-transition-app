@@ -154,7 +154,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
           </DialogHeader>
         </VisuallyHidden>
 
-        <div className="flex h-full overflow-hidden">
+        <div className="flex h-full overflow-hidden gap-2">
           {/* Left Sidebar - Step Navigation */}
           <div className="w-56 shrink-0 bg-muted/30 border-r border-border/60 p-4 flex flex-col">
             <div className="mb-6">
