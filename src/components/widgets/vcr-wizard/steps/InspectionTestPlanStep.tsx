@@ -278,6 +278,7 @@ export const InspectionTestPlanStep: React.FC<InspectionTestPlanStepProps> = ({ 
                 const activities = groupedRows.get(sysId) || [];
 
                 return activities.map((row, idx) => {
+                  const sysIdx = orderedSystemIds.indexOf(sysId);
                   const isFirst = idx === 0;
                   const isEditing = editingId === row.id;
 
@@ -286,8 +287,8 @@ export const InspectionTestPlanStep: React.FC<InspectionTestPlanStepProps> = ({ 
                       key={row.id}
                       className={cn(
                         'group',
-                        // Only show bottom border on the last activity of each system group
                         idx < activities.length - 1 && 'border-b-0',
+                        isFirst && sysIdx > 0 && 'border-t-[3px] border-t-muted',
                       )}
                     >
                       {/* System cell – only rendered on first row, spans all activities */}
