@@ -20,15 +20,18 @@ import {
   Check,
   ChevronRight,
   ChevronLeft,
+  UserCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ProjectVCR } from '@/hooks/useProjectVCRs';
+import { getVCRColor } from '@/components/p2a-workspace/utils/vcrColors';
 import { VCRItemsStep } from './steps/VCRItemsStep';
 import { TrainingStep } from './steps/TrainingStep';
 import { ProceduresStep } from './steps/ProceduresStep';
 import { DeliverablesStep } from './steps/DeliverablesStep';
 import { OperationalRegistersStep } from './steps/OperationalRegistersStep';
 import { SystemsStep } from './steps/SystemsStep';
+import { ApproversStep } from './steps/ApproversStep';
 
 interface VCRExecutionPlanWizardProps {
   open: boolean;
@@ -44,6 +47,7 @@ const STEPS = [
   { id: 'deliverables', label: 'Deliverables', icon: Package, color: 'text-amber-500' },
   { id: 'registers', label: 'Log Sheets & Registers', icon: FileText, color: 'text-cyan-500' },
   { id: 'systems', label: 'Systems', icon: Layers, color: 'text-orange-500' },
+  { id: 'approvers', label: 'Approvers', icon: UserCheck, color: 'text-primary' },
 ];
 
 export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
@@ -89,10 +93,23 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
         return <OperationalRegistersStep vcrId={vcr.id} />;
       case 5:
         return <SystemsStep vcrId={vcr.id} projectCode={projectCode} />;
+      case 6:
+        return <ApproversStep vcrId={vcr.id} />;
       default:
         return null;
     }
   };
+
+  // Generate short VCR ID (e.g., VCR-01)
+  const shortVcrId = (() => {
+    const code = vcr.vcr_code;
+    if (!code) return '';
+    const match = code.match(/^VCR-[A-Z0-9]+-0*(\d+)$/);
+    if (match) return `VCR-${match[1].padStart(2, '0')}`;
+    return code.replace(/^VCR-[A-Z0-9]+-/, 'VCR-');
+  })();
+
+  const vcrColor = getVCRColor(vcr.vcr_code);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -108,8 +125,21 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
           {/* Left Sidebar - Step Navigation */}
           <div className="w-56 shrink-0 bg-muted/30 border-r border-border/60 p-4 flex flex-col">
             <div className="mb-6">
-              <h3 className="text-sm font-semibold truncate">{vcr.name}</h3>
-              <p className="text-[10px] text-muted-foreground mt-0.5">Execution Plan Setup</p>
+              <div className="flex items-center gap-2 mb-0.5">
+                {shortVcrId && (
+                  <Badge
+                    className="text-[10px] font-mono font-semibold border-0 px-1.5 py-0"
+                    style={{
+                      backgroundColor: vcrColor?.background,
+                      color: vcrColor?.border,
+                    }}
+                  >
+                    {shortVcrId}
+                  </Badge>
+                )}
+                <h3 className="text-sm font-semibold truncate">{vcr.name}</h3>
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Setup VCR Delivery Plan</p>
             </div>
 
             <div className="flex-1 space-y-1">
@@ -237,6 +267,7 @@ function getStepDescription(step: number): string {
     case 3: return 'List Tier 1 & Tier 2 deliverables';
     case 4: return 'Define operational log sheets and registers to be developed';
     case 5: return 'Review and edit systems mapped to this VCR';
+    case 6: return 'Review and confirm the default approvers for this VCR';
     default: return '';
   }
 }
