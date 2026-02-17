@@ -102,6 +102,7 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string> | null>(null);
   const [editingItem, setEditingItem] = useState<MergedVCRItem | null>(null);
   const [editSheetOpen, setEditSheetOpen] = useState(false);
+  const [addSheetOpen, setAddSheetOpen] = useState(false);
   const [deleteItem, setDeleteItem] = useState<MergedVCRItem | null>(null);
 
   // Fetch VCR items with categories
@@ -162,6 +163,19 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
     },
   });
 
+  // Fetch categories for the add form
+  const { data: categories = [] } = useQuery({
+    queryKey: ['vcr-item-categories'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('vcr_item_categories')
+        .select('id, name, code')
+        .eq('is_active', true)
+        .order('display_order');
+      return (data || []) as Array<{ id: string; name: string; code: string }>;
+    },
+  });
+
   // Save override mutation (upsert to overrides table, NOT the master vcr_items)
   const updateItem = useMutation({
     mutationFn: async (payload: { vcr_item_id: string; vcr_item_override: string | null; topic_override: string | null; delivering_party_role_id_override: string | null; approving_party_role_ids_override: string[] | null; guidance_notes_override: string | null }) => {
@@ -200,6 +214,38 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
       queryClient.invalidateQueries({ queryKey: ['vcr-exec-items'] });
       toast.success('Item removed');
       setDeleteItem(null);
+    },
+  });
+
+  // Create new VCR item mutation
+  const createItem = useMutation({
+    mutationFn: async (payload: {
+      vcr_item: string;
+      topic: string | null;
+      category_id: string | null;
+      delivering_party_role_id: string | null;
+      approving_party_role_ids: string[] | null;
+      guidance_notes: string | null;
+    }) => {
+      const maxOrder = items.reduce((max, i) => Math.max(max, i.display_order), 0);
+      const { error } = await supabase
+        .from('vcr_items')
+        .insert({
+          vcr_item: payload.vcr_item,
+          topic: payload.topic,
+          category_id: payload.category_id,
+          delivering_party_role_id: payload.delivering_party_role_id,
+          approving_party_role_ids: payload.approving_party_role_ids,
+          guidance_notes: payload.guidance_notes,
+          display_order: maxOrder + 1,
+          is_active: true,
+        });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vcr-exec-items'] });
+      toast.success('VCR item added');
+      setAddSheetOpen(false);
     },
   });
 
@@ -272,6 +318,15 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
           />
         </div>
         <Badge variant="outline" className="shrink-0">{mergedItems.length} items</Badge>
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-1.5 shrink-0"
+          onClick={() => setAddSheetOpen(true)}
+        >
+          <Plus className="w-3.5 h-3.5" />
+          Add Item
+        </Button>
       </div>
 
       {/* Items grouped by category */}
@@ -385,6 +440,22 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
               isSaving={updateItem.isPending}
             />
           )}
+        </SheetContent>
+      </Sheet>
+
+      {/* Add New Item Sheet */}
+      <Sheet open={addSheetOpen} onOpenChange={setAddSheetOpen}>
+        <SheetContent className="w-[480px] sm:max-w-[480px]">
+          <SheetHeader>
+            <SheetTitle>Add VCR Item</SheetTitle>
+          </SheetHeader>
+          <AddItemForm
+            roles={roles}
+            categories={categories}
+            projectId={projectId}
+            onSave={(payload) => createItem.mutate(payload)}
+            isSaving={createItem.isPending}
+          />
         </SheetContent>
       </Sheet>
 
@@ -673,6 +744,271 @@ const EditItemForm: React.FC<{
           className="w-full"
         >
           {isSaving ? 'Saving...' : 'Save Changes'}
+        </Button>
+      </div>
+    </ScrollArea>
+  );
+};
+
+// Add Item Form Component (mirrors EditItemForm structure)
+interface CreateItemPayload {
+  vcr_item: string;
+  topic: string | null;
+  category_id: string | null;
+  delivering_party_role_id: string | null;
+  approving_party_role_ids: string[] | null;
+  guidance_notes: string | null;
+}
+
+const AddItemForm: React.FC<{
+  roles: Role[];
+  categories: Array<{ id: string; name: string; code: string }>;
+  projectId?: string;
+  onSave: (payload: CreateItemPayload) => void;
+  isSaving: boolean;
+}> = ({ roles, categories, projectId, onSave, isSaving }) => {
+  const [vcrItem, setVcrItem] = useState('');
+  const [topic, setTopic] = useState('');
+  const [categoryId, setCategoryId] = useState('');
+  const [deliveringParty, setDeliveringParty] = useState('');
+  const [approvingParties, setApprovingParties] = useState<string[]>([]);
+  const [guidanceNotes, setGuidanceNotes] = useState('');
+  const [addApproverOpen, setAddApproverOpen] = useState(false);
+  const [approverSearch, setApproverSearch] = useState('');
+
+  const allRoleIds = [...new Set([deliveringParty, ...approvingParties].filter(Boolean))];
+
+  const { data: resolvedUsers = [] } = useQuery({
+    queryKey: ['add-form-users', allRoleIds.sort().join(','), projectId],
+    queryFn: async () => {
+      if (allRoleIds.length === 0) return [];
+      let candidates: any[] = [];
+
+      if (projectId) {
+        const { data: members } = await supabase
+          .from('project_team_members')
+          .select('user_id')
+          .eq('project_id', projectId);
+        if (members && members.length > 0) {
+          const userIds = members.map((m: any) => m.user_id);
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('user_id, full_name, avatar_url, role')
+            .in('user_id', userIds)
+            .in('role', allRoleIds)
+            .eq('is_active', true);
+          candidates = profiles || [];
+        }
+      }
+
+      const coveredRoles = new Set(candidates.map((p: any) => p.role));
+      const uncovered = allRoleIds.filter(r => !coveredRoles.has(r));
+      if (uncovered.length > 0) {
+        const { data: fallback } = await supabase
+          .from('profiles')
+          .select('user_id, full_name, avatar_url, role, position')
+          .in('role', uncovered)
+          .eq('is_active', true);
+        if (fallback) {
+          const filtered = fallback.filter((p: any) => {
+            const pos = (p.position || '').toLowerCase();
+            return !pos.includes('asset');
+          });
+          candidates.push(...filtered);
+        }
+      }
+
+      return candidates.map((p: any) => ({
+        user_id: p.user_id,
+        full_name: p.full_name,
+        avatar_url: p.avatar_url,
+        role_id: p.role,
+      })) as ResolvedUser[];
+    },
+    enabled: allRoleIds.length > 0,
+  });
+
+  const getUsersForRole = (roleId: string) => resolvedUsers.filter(u => u.role_id === roleId);
+  const getRoleName = (roleId: string) => roles.find(r => r.id === roleId)?.name || 'Unknown';
+  const removeApprover = (roleId: string) => setApprovingParties(prev => prev.filter(r => r !== roleId));
+
+  const availableRolesToAdd = roles.filter(r =>
+    !approvingParties.includes(r.id) &&
+    r.id !== deliveringParty &&
+    (approverSearch === '' || r.name.toLowerCase().includes(approverSearch.toLowerCase()))
+  );
+
+  return (
+    <ScrollArea className="h-[calc(100vh-100px)]">
+      <div className="space-y-5 mt-4 pr-4 pb-4">
+        {/* Category */}
+        <div className="space-y-1.5">
+          <Label className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">Category *</Label>
+          <Select value={categoryId} onValueChange={setCategoryId}>
+            <SelectTrigger className="text-sm">
+              <SelectValue placeholder="Select category" />
+            </SelectTrigger>
+            <SelectContent>
+              {categories.map(c => (
+                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">VCR Item Description *</Label>
+          <Textarea
+            value={vcrItem}
+            onChange={(e) => setVcrItem(e.target.value)}
+            className="text-sm"
+            rows={3}
+            placeholder="Enter the VCR item description..."
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">Topic</Label>
+          <Input value={topic} onChange={(e) => setTopic(e.target.value)} className="text-sm" placeholder="e.g., Documentation, Training" />
+        </div>
+
+        {/* Delivering Party */}
+        <div className="space-y-1.5">
+          <Label className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">Delivering Party</Label>
+          <Select value={deliveringParty} onValueChange={setDeliveringParty}>
+            <SelectTrigger className="text-sm">
+              <SelectValue placeholder="Select role" />
+            </SelectTrigger>
+            <SelectContent>
+              {roles.map(r => (
+                <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {deliveringParty && (
+            <div className="mt-2 flex items-center gap-2 flex-wrap">
+              {getUsersForRole(deliveringParty).length > 0 ? (
+                getUsersForRole(deliveringParty).map(user => (
+                  <div key={user.user_id} className="flex items-center gap-2 bg-muted/50 rounded-full pl-1 pr-3 py-1">
+                    <Avatar className="w-6 h-6">
+                      <AvatarImage src={getAvatarUrl(user.avatar_url)} />
+                      <AvatarFallback className="text-[9px]">{getInitials(user.full_name)}</AvatarFallback>
+                    </Avatar>
+                    <span className="text-xs">{user.full_name}</span>
+                  </div>
+                ))
+              ) : (
+                <p className="text-xs text-muted-foreground italic">No users assigned to this role</p>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Approving Parties */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <Label className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">Approving Parties ({approvingParties.length})</Label>
+            <Popover open={addApproverOpen} onOpenChange={setAddApproverOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="h-7 text-xs gap-1">
+                  <Plus className="w-3 h-3" /> Add
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64 p-2" align="end">
+                <Input
+                  placeholder="Search roles..."
+                  value={approverSearch}
+                  onChange={(e) => setApproverSearch(e.target.value)}
+                  className="h-8 text-xs mb-2"
+                />
+                <ScrollArea className="h-48">
+                  <div className="space-y-0.5">
+                    {availableRolesToAdd.map(r => (
+                      <button
+                        key={r.id}
+                        onClick={() => {
+                          setApprovingParties(prev => [...prev, r.id]);
+                          setApproverSearch('');
+                        }}
+                        className="w-full text-left text-xs px-2 py-1.5 rounded hover:bg-muted/60 transition-colors"
+                      >
+                        {r.name}
+                      </button>
+                    ))}
+                    {availableRolesToAdd.length === 0 && (
+                      <p className="text-xs text-muted-foreground text-center py-4">No more roles available</p>
+                    )}
+                  </div>
+                </ScrollArea>
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          {approvingParties.length > 0 ? (
+            <div className="space-y-2">
+              {approvingParties.map(roleId => {
+                const users = getUsersForRole(roleId);
+                return (
+                  <div key={roleId} className="border rounded-lg p-2.5 group/approver hover:border-primary/30 transition-colors">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-xs font-medium text-muted-foreground">{getRoleName(roleId)}</span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-5 w-5 opacity-0 group-hover/approver:opacity-100 transition-opacity text-destructive hover:text-destructive"
+                        onClick={() => removeApprover(roleId)}
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </div>
+                    {users.length > 0 ? (
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {users.map(user => (
+                          <div key={user.user_id} className="flex items-center gap-2 bg-muted/50 rounded-full pl-1 pr-3 py-1">
+                            <Avatar className="w-6 h-6">
+                              <AvatarImage src={getAvatarUrl(user.avatar_url)} />
+                              <AvatarFallback className="text-[9px]">{getInitials(user.full_name)}</AvatarFallback>
+                            </Avatar>
+                            <span className="text-xs">{user.full_name}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-[10px] text-muted-foreground italic">No users assigned</p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="border border-dashed rounded-lg p-4 text-center">
+              <p className="text-xs text-muted-foreground">No approving parties assigned</p>
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">Guidance Notes</Label>
+          <Textarea
+            value={guidanceNotes}
+            onChange={(e) => setGuidanceNotes(e.target.value)}
+            className="text-sm"
+            rows={2}
+            placeholder="Optional guidance notes..."
+          />
+        </div>
+        <Button
+          onClick={() => onSave({
+            vcr_item: vcrItem,
+            topic: topic || null,
+            category_id: categoryId || null,
+            delivering_party_role_id: deliveringParty || null,
+            approving_party_role_ids: approvingParties.length > 0 ? approvingParties : null,
+            guidance_notes: guidanceNotes || null,
+          })}
+          disabled={!vcrItem || !categoryId || isSaving}
+          className="w-full"
+        >
+          {isSaving ? 'Adding...' : 'Add Item'}
         </Button>
       </div>
     </ScrollArea>
