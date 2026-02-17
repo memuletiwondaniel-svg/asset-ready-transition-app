@@ -52,15 +52,14 @@ export const InspectionTestPlanStep: React.FC<InspectionTestPlanStepProps> = ({ 
   const [openSystems, setOpenSystems] = useState<Set<string>>(new Set());
   const [localActivities, setLocalActivities] = useState<Map<string, ITPActivity[]>>(new Map());
 
-  // Fetch mapped systems — system-level only (no subsystems)
+  // Fetch mapped systems — deduplicate to parent system level
   const { data: systems = [], isLoading: loadingSystems } = useQuery({
     queryKey: ['itp-systems', vcrId],
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from('p2a_handover_point_systems')
-        .select('id, system_id, subsystem_id, p2a_systems!inner(id, name, system_id, is_hydrocarbon)')
-        .eq('handover_point_id', vcrId)
-        .is('subsystem_id', null);
+        .select('system_id, p2a_systems!inner(id, name, system_id, is_hydrocarbon)')
+        .eq('handover_point_id', vcrId);
       if (error) throw error;
       // Deduplicate by system UUID
       const seen = new Set<string>();
