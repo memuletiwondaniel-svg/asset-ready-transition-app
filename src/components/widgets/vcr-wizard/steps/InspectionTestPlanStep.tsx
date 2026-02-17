@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
@@ -41,12 +41,9 @@ interface MappedSystem {
 export const InspectionTestPlanStep: React.FC<InspectionTestPlanStepProps> = ({ vcrId }) => {
   const queryClient = useQueryClient();
 
-  // --- Add-form state ---
   const [selectedSystem, setSelectedSystem] = useState('');
   const [activityName, setActivityName] = useState('');
   const [inspectionType, setInspectionType] = useState<'WITNESS' | 'HOLD'>('WITNESS');
-
-  // --- Inline edit state ---
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [editType, setEditType] = useState<'WITNESS' | 'HOLD'>('WITNESS');
@@ -92,6 +89,32 @@ export const InspectionTestPlanStep: React.FC<InspectionTestPlanStepProps> = ({ 
       } catch { return []; }
     },
   });
+
+  // ── Group rows by system_id ──
+  const groupedRows = useMemo(() => {
+    const map = new Map<string, ITPRow[]>();
+    for (const row of rows) {
+      const list = map.get(row.system_id) || [];
+      list.push(row);
+      map.set(row.system_id, list);
+    }
+    return map;
+  }, [rows]);
+
+  // Ordered system ids that appear in rows
+  const orderedSystemIds = useMemo(() => {
+    const seen = new Set<string>();
+    const result: string[] = [];
+    for (const row of rows) {
+      if (!seen.has(row.system_id)) {
+        seen.add(row.system_id);
+        result.push(row.system_id);
+      }
+    }
+    return result;
+  }, [rows]);
+
+  const systemLookup = useMemo(() => new Map(systems.map((s) => [s.systemId, s])), [systems]);
 
   // ── Mutations ──
   const insertRow = useMutation({
@@ -148,17 +171,13 @@ export const InspectionTestPlanStep: React.FC<InspectionTestPlanStepProps> = ({ 
 
   const cancelEdit = () => setEditingId(null);
 
-  // ── Helpers ──
-  const systemLookup = new Map(systems.map((s) => [s.systemId, s]));
   const wCount = rows.filter((r) => r.inspection_type === 'WITNESS').length;
   const hCount = rows.filter((r) => r.inspection_type === 'HOLD').length;
 
-  // ── Loading ──
   if (loadingSystems || loadingRows) {
     return <div className="space-y-3">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-10" />)}</div>;
   }
 
-  // ── No systems ──
   if (systems.length === 0) {
     return (
       <Card className="border-dashed">
@@ -175,7 +194,7 @@ export const InspectionTestPlanStep: React.FC<InspectionTestPlanStepProps> = ({ 
 
   return (
     <div className="space-y-4">
-      {/* ── Summary badges ── */}
+      {/* Summary badges */}
       <div className="flex items-center gap-2 flex-wrap">
         <Badge variant="outline" className="text-[10px] font-mono">{systems.length} systems</Badge>
         <Badge variant="outline" className="text-[10px] font-mono">{rows.length} activities</Badge>
@@ -191,13 +210,12 @@ export const InspectionTestPlanStep: React.FC<InspectionTestPlanStepProps> = ({ 
         )}
       </div>
 
-      {/* ── Add form ── */}
+      {/* Add form */}
       <Card>
         <CardContent className="p-3">
           <div className="flex items-end gap-2 flex-wrap">
-            {/* System select */}
             <div className="flex-1 min-w-[160px] space-y-1">
-              <label className="text-[11px] font-medium text-muted-foreground">System</label>
+              <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">System</label>
               <Select value={selectedSystem} onValueChange={setSelectedSystem}>
                 <SelectTrigger className="h-8 text-xs">
                   <SelectValue placeholder="Select system..." />
@@ -211,10 +229,8 @@ export const InspectionTestPlanStep: React.FC<InspectionTestPlanStepProps> = ({ 
                 </SelectContent>
               </Select>
             </div>
-
-            {/* Activity name */}
             <div className="flex-1 min-w-[160px] space-y-1">
-              <label className="text-[11px] font-medium text-muted-foreground">Activity</label>
+              <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Activity</label>
               <Input
                 value={activityName}
                 onChange={(e) => setActivityName(e.target.value)}
@@ -223,40 +239,26 @@ export const InspectionTestPlanStep: React.FC<InspectionTestPlanStepProps> = ({ 
                 onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
               />
             </div>
-
-            {/* W / H toggle */}
             <div className="space-y-1">
-              <label className="text-[11px] font-medium text-muted-foreground">Type</label>
+              <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Type</label>
               <ToggleGroup
                 type="single"
                 value={inspectionType}
                 onValueChange={(v) => v && setInspectionType(v as 'WITNESS' | 'HOLD')}
                 className="gap-0 border rounded-md"
               >
-                <ToggleGroupItem value="WITNESS" className="h-8 px-3 text-xs rounded-r-none data-[state=on]:bg-amber-500/20 data-[state=on]:text-amber-700 dark:data-[state=on]:text-amber-400">
-                  W
-                </ToggleGroupItem>
-                <ToggleGroupItem value="HOLD" className="h-8 px-3 text-xs rounded-l-none data-[state=on]:bg-red-500/20 data-[state=on]:text-red-700 dark:data-[state=on]:text-red-400">
-                  H
-                </ToggleGroupItem>
+                <ToggleGroupItem value="WITNESS" className="h-8 px-3 text-xs rounded-r-none data-[state=on]:bg-amber-500/20 data-[state=on]:text-amber-700 dark:data-[state=on]:text-amber-400">W</ToggleGroupItem>
+                <ToggleGroupItem value="HOLD" className="h-8 px-3 text-xs rounded-l-none data-[state=on]:bg-red-500/20 data-[state=on]:text-red-700 dark:data-[state=on]:text-red-400">H</ToggleGroupItem>
               </ToggleGroup>
             </div>
-
-            {/* Add button */}
-            <Button
-              size="sm"
-              className="h-8 gap-1 text-xs"
-              onClick={handleAdd}
-              disabled={!selectedSystem || !activityName.trim() || insertRow.isPending}
-            >
-              <Plus className="w-3.5 h-3.5" />
-              Add
+            <Button size="sm" className="h-8 gap-1 text-xs" onClick={handleAdd} disabled={!selectedSystem || !activityName.trim() || insertRow.isPending}>
+              <Plus className="w-3.5 h-3.5" />Add
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* ── Table ── */}
+      {/* Table – grouped by system, no repeated system name */}
       {rows.length === 0 ? (
         <p className="text-xs text-muted-foreground text-center py-6">No inspection activities added yet. Use the form above to add W (Witness) or H (Hold) points.</p>
       ) : (
@@ -264,93 +266,105 @@ export const InspectionTestPlanStep: React.FC<InspectionTestPlanStepProps> = ({ 
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/40">
-                <TableHead className="text-[11px] h-8 w-[200px]">System</TableHead>
-                <TableHead className="text-[11px] h-8">Activity</TableHead>
-                <TableHead className="text-[11px] h-8 w-[70px] text-center">Type</TableHead>
-                <TableHead className="text-[11px] h-8 w-[80px] text-right">Actions</TableHead>
+                <TableHead className="text-[11px] h-8 w-[200px] uppercase tracking-wide">System</TableHead>
+                <TableHead className="text-[11px] h-8 uppercase tracking-wide">Activity</TableHead>
+                <TableHead className="text-[11px] h-8 w-[70px] text-center uppercase tracking-wide">Type</TableHead>
+                <TableHead className="text-[11px] h-8 w-[80px] text-right uppercase tracking-wide">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rows.map((row) => {
-                const sys = systemLookup.get(row.system_id);
-                const isEditing = editingId === row.id;
+              {orderedSystemIds.map((sysId) => {
+                const sys = systemLookup.get(sysId);
+                const activities = groupedRows.get(sysId) || [];
 
-                return (
-                  <TableRow key={row.id} className="group">
-                    {/* System */}
-                    <TableCell className="py-1.5 text-xs">
-                      <div className="flex items-center gap-1.5">
-                        <span className="truncate">{sys?.name || '—'}</span>
-                        {sys?.systemCode && (
-                          <Badge variant="outline" className="text-[9px] font-mono shrink-0 px-1 py-0">{sys.systemCode}</Badge>
+                return activities.map((row, idx) => {
+                  const isFirst = idx === 0;
+                  const isEditing = editingId === row.id;
+
+                  return (
+                    <TableRow
+                      key={row.id}
+                      className={cn(
+                        'group',
+                        // Only show bottom border on the last activity of each system group
+                        idx < activities.length - 1 && 'border-b-0',
+                      )}
+                    >
+                      {/* System cell – only rendered on first row, spans all activities */}
+                      {isFirst && (
+                        <TableCell
+                          className="py-2 align-top"
+                          rowSpan={activities.length}
+                        >
+                          <div>
+                            <span className="text-xs font-medium leading-tight">{sys?.name || '—'}</span>
+                            {sys?.systemCode && (
+                              <p className="text-[10px] text-muted-foreground/60 font-mono mt-0.5">{sys.systemCode}</p>
+                            )}
+                          </div>
+                        </TableCell>
+                      )}
+
+                      {/* Activity */}
+                      <TableCell className="py-1.5 text-xs">
+                        {isEditing ? (
+                          <Input
+                            value={editName}
+                            onChange={(e) => setEditName(e.target.value)}
+                            className="h-7 text-xs"
+                            autoFocus
+                            onKeyDown={(e) => { if (e.key === 'Enter') confirmEdit(); if (e.key === 'Escape') cancelEdit(); }}
+                          />
+                        ) : (
+                          row.activity_name
                         )}
-                      </div>
-                    </TableCell>
+                      </TableCell>
 
-                    {/* Activity */}
-                    <TableCell className="py-1.5 text-xs">
-                      {isEditing ? (
-                        <Input
-                          value={editName}
-                          onChange={(e) => setEditName(e.target.value)}
-                          className="h-7 text-xs"
-                          autoFocus
-                          onKeyDown={(e) => { if (e.key === 'Enter') confirmEdit(); if (e.key === 'Escape') cancelEdit(); }}
-                        />
-                      ) : (
-                        row.activity_name
-                      )}
-                    </TableCell>
-
-                    {/* Type badge */}
-                    <TableCell className="py-1.5 text-center">
-                      {isEditing ? (
-                        <ToggleGroup
-                          type="single"
-                          value={editType}
-                          onValueChange={(v) => v && setEditType(v as 'WITNESS' | 'HOLD')}
-                          className="gap-0 border rounded-md justify-center"
-                        >
-                          <ToggleGroupItem value="WITNESS" className="h-6 px-2 text-[10px] rounded-r-none data-[state=on]:bg-amber-500/20 data-[state=on]:text-amber-700 dark:data-[state=on]:text-amber-400">W</ToggleGroupItem>
-                          <ToggleGroupItem value="HOLD" className="h-6 px-2 text-[10px] rounded-l-none data-[state=on]:bg-red-500/20 data-[state=on]:text-red-700 dark:data-[state=on]:text-red-400">H</ToggleGroupItem>
-                        </ToggleGroup>
-                      ) : (
-                        <Badge
-                          className={cn(
-                            'text-[10px] font-bold px-2 py-0',
-                            row.inspection_type === 'WITNESS'
-                              ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-700'
-                              : 'bg-red-500/15 text-red-700 dark:text-red-400 border-red-300 dark:border-red-700',
-                          )}
-                        >
-                          {row.inspection_type === 'WITNESS' ? 'W' : 'H'}
-                        </Badge>
-                      )}
-                    </TableCell>
-
-                    {/* Actions */}
-                    <TableCell className="py-1.5 text-right">
-                      {isEditing ? (
-                        <div className="flex items-center justify-end gap-1">
-                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={confirmEdit}><Check className="w-3.5 h-3.5 text-green-600" /></Button>
-                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={cancelEdit}><X className="w-3.5 h-3.5" /></Button>
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => startEdit(row)}><Pencil className="w-3 h-3" /></Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 hover:bg-destructive/10 hover:text-destructive"
-                            onClick={() => deleteRow.mutate(row.id)}
+                      {/* Type */}
+                      <TableCell className="py-1.5 text-center">
+                        {isEditing ? (
+                          <ToggleGroup
+                            type="single"
+                            value={editType}
+                            onValueChange={(v) => v && setEditType(v as 'WITNESS' | 'HOLD')}
+                            className="gap-0 border rounded-md justify-center"
                           >
-                            <Trash2 className="w-3 h-3" />
-                          </Button>
-                        </div>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                );
+                            <ToggleGroupItem value="WITNESS" className="h-6 px-2 text-[10px] rounded-r-none data-[state=on]:bg-amber-500/20 data-[state=on]:text-amber-700 dark:data-[state=on]:text-amber-400">W</ToggleGroupItem>
+                            <ToggleGroupItem value="HOLD" className="h-6 px-2 text-[10px] rounded-l-none data-[state=on]:bg-red-500/20 data-[state=on]:text-red-700 dark:data-[state=on]:text-red-400">H</ToggleGroupItem>
+                          </ToggleGroup>
+                        ) : (
+                          <Badge
+                            className={cn(
+                              'text-[10px] font-bold px-2 py-0',
+                              row.inspection_type === 'WITNESS'
+                                ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-700'
+                                : 'bg-red-500/15 text-red-700 dark:text-red-400 border-red-300 dark:border-red-700',
+                            )}
+                          >
+                            {row.inspection_type === 'WITNESS' ? 'W' : 'H'}
+                          </Badge>
+                        )}
+                      </TableCell>
+
+                      {/* Actions */}
+                      <TableCell className="py-1.5 text-right">
+                        {isEditing ? (
+                          <div className="flex items-center justify-end gap-1">
+                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={confirmEdit}><Check className="w-3.5 h-3.5 text-green-600" /></Button>
+                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={cancelEdit}><X className="w-3.5 h-3.5" /></Button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => startEdit(row)}><Pencil className="w-3 h-3" /></Button>
+                            <Button variant="ghost" size="icon" className="h-6 w-6 hover:bg-destructive/10 hover:text-destructive" onClick={() => deleteRow.mutate(row.id)}>
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                });
               })}
             </TableBody>
           </Table>
