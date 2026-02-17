@@ -61,7 +61,10 @@ export const InspectionTestPlanStep: React.FC<InspectionTestPlanStepProps> = ({ 
         .from('p2a_handover_point_systems')
         .select('system_id')
         .eq('handover_point_id', vcrId);
-      if (mapErr) throw mapErr;
+      if (mapErr) {
+        console.error('[ITP] Failed to fetch mappings:', mapErr);
+        throw mapErr;
+      }
       const uniqueIds = [...new Set((mappings || []).map((r: any) => r.system_id))] as string[];
       if (uniqueIds.length === 0) return [];
 
@@ -71,7 +74,10 @@ export const InspectionTestPlanStep: React.FC<InspectionTestPlanStepProps> = ({ 
         .select('id, name, system_id, is_hydrocarbon')
         .in('id', uniqueIds)
         .order('name');
-      if (sysErr) throw sysErr;
+      if (sysErr) {
+        console.error('[ITP] Failed to fetch systems:', sysErr);
+        throw sysErr;
+      }
       return (sysData || []).map((s: any) => ({
         systemId: s.id,
         name: s.name || 'Unknown',
@@ -81,17 +87,24 @@ export const InspectionTestPlanStep: React.FC<InspectionTestPlanStepProps> = ({ 
     },
   });
 
-  // Fetch existing ITP activities
+  // Fetch existing ITP activities (may not exist yet if table was just created)
   const { data: savedActivities = [], isLoading: loadingActivities } = useQuery({
     queryKey: ['itp-activities', vcrId],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
-        .from('p2a_itp_activities')
-        .select('*')
-        .eq('handover_point_id', vcrId)
-        .order('display_order');
-      if (error) throw error;
-      return data as ITPActivity[];
+      try {
+        const { data, error } = await (supabase as any)
+          .from('p2a_itp_activities')
+          .select('*')
+          .eq('handover_point_id', vcrId)
+          .order('display_order');
+        if (error) {
+          console.warn('[ITP] ITP activities table not ready:', error.message);
+          return [];
+        }
+        return data as ITPActivity[];
+      } catch {
+        return [];
+      }
     },
   });
 
