@@ -219,6 +219,13 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
   }, {});
 
   const CATEGORY_ORDER = ['Design Integrity', 'Technical Integrity', 'Operating Integrity', 'Management Systems', 'Health & Safety'];
+  const CATEGORY_COLORS: Record<string, { bg: string; text: string; border: string }> = {
+    'Design Integrity': { bg: 'bg-blue-50 dark:bg-blue-950/40', text: 'text-blue-700 dark:text-blue-300', border: 'border-blue-200 dark:border-blue-800' },
+    'Technical Integrity': { bg: 'bg-teal-50 dark:bg-teal-950/40', text: 'text-teal-700 dark:text-teal-300', border: 'border-teal-200 dark:border-teal-800' },
+    'Operating Integrity': { bg: 'bg-amber-50 dark:bg-amber-950/40', text: 'text-amber-700 dark:text-amber-300', border: 'border-amber-200 dark:border-amber-800' },
+    'Management Systems': { bg: 'bg-purple-50 dark:bg-purple-950/40', text: 'text-purple-700 dark:text-purple-300', border: 'border-purple-200 dark:border-purple-800' },
+    'Health & Safety': { bg: 'bg-rose-50 dark:bg-rose-950/40', text: 'text-rose-700 dark:text-rose-300', border: 'border-rose-200 dark:border-rose-800' },
+  };
   const sortedCategories = Object.keys(grouped).sort((a, b) => {
     const ai = CATEGORY_ORDER.indexOf(a);
     const bi = CATEGORY_ORDER.indexOf(b);
@@ -281,12 +288,13 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
                     {catItems.map((item, idx) => {
                       const catCode = item.category?.code || '??';
                       const itemId = `${catCode}-${String(idx + 1).padStart(2, '0')}`;
+                      const catColor = CATEGORY_COLORS[item.category?.name || ''] || { bg: 'bg-muted', text: 'text-muted-foreground', border: 'border-border' };
 
                       return (
                         <Card key={item.id} className="group hover:border-primary/40 transition-colors">
                           <CardContent className="p-3">
                             <div className="flex items-start gap-3">
-                              <Badge variant="outline" className="text-[10px] font-mono shrink-0 mt-0.5">
+                              <Badge variant="outline" className={cn("text-[10px] font-mono font-semibold shrink-0 mt-0.5 border", catColor.bg, catColor.text, catColor.border)}>
                                 {itemId}
                               </Badge>
                               <div className="flex-1 min-w-0">
