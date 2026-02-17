@@ -97,10 +97,12 @@ export const TrainingStep: React.FC<TrainingStepProps> = ({ vcrId }) => {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <Badge variant="outline">{items.length} training items</Badge>
-        <Button size="sm" onClick={() => setAddOpen(true)} className="gap-1.5">
-          <Plus className="w-4 h-4" />
-          Add Training
-        </Button>
+        {items.length > 0 && (
+          <Button size="sm" onClick={() => setAddOpen(true)} className="gap-1.5">
+            <Plus className="w-4 h-4" />
+            Add Training
+          </Button>
+        )}
       </div>
 
       {items.length === 0 ? (
