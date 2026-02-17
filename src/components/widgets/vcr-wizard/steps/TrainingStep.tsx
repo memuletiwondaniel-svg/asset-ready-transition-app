@@ -62,15 +62,24 @@ export const TrainingStep: React.FC<TrainingStepProps> = ({ vcrId }) => {
   const addItem = useMutation({
     mutationFn: async (item: any) => {
       const { system_ids, ...rest } = item;
+      const { data: { user } } = await supabase.auth.getUser();
       const { error } = await (supabase as any)
         .from('p2a_vcr_training')
-        .insert({ ...rest, handover_point_id: vcrId });
+        .insert({ 
+          ...rest, 
+          handover_point_id: vcrId,
+          created_by: user?.id || null,
+        });
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vcr-exec-training'] });
       toast.success('Training item added');
       setAddOpen(false);
+    },
+    onError: (error: any) => {
+      console.error('Failed to create training:', error);
+      toast.error('Failed to create training item');
     },
   });
 

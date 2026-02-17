@@ -1,0 +1,1 @@
+ALTER TABLE public.p2a_vcr_training ADD COLUMN delivery_method text[] DEFAULT NULL;

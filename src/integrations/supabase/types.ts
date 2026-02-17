@@ -4153,6 +4153,7 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          delivery_method: string[] | null
           description: string | null
           display_order: number | null
           duration_hours: number | null
@@ -4169,6 +4170,7 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by?: string | null
+          delivery_method?: string[] | null
           description?: string | null
           display_order?: number | null
           duration_hours?: number | null
@@ -4185,6 +4187,7 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string | null
+          delivery_method?: string[] | null
           description?: string | null
           display_order?: number | null
           duration_hours?: number | null
