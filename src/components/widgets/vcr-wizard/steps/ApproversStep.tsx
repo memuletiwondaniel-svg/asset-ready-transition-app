@@ -30,7 +30,7 @@ const getInitials = (name: string) => {
 };
 
 const DEFAULT_APPROVER_ROLES = [
-  'ORA Lead',
+  'Snr. ORA Engr.',
   'Commissioning Lead',
   'Construction Lead',
   'Project Hub Lead',
@@ -118,8 +118,8 @@ export const ApproversStep: React.FC<ApproversStepProps> = ({ vcrId }) => {
         const candidates = allProfiles.filter((p: any) => {
           const pos = (p.position || '').toLowerCase().replace(/–/g, '-').replace(/—/g, '-');
 
-          if (role === 'ORA Lead') {
-            return pos.includes('ora') && pos.includes('lead') && !pos.includes('snr') && !pos.includes('engr');
+          if (role === 'Snr. ORA Engr.') {
+            return pos.includes('ora') && (pos.includes('snr') || pos.includes('senior')) && pos.includes('engr');
           }
           if (role === 'Commissioning Lead') {
             return (pos.includes('commissioning') || pos.includes('csu')) && pos.includes('lead');
