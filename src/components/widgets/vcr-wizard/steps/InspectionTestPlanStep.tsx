@@ -267,8 +267,8 @@ export const InspectionTestPlanStep: React.FC<InspectionTestPlanStepProps> = ({ 
             <TableHeader>
               <TableRow className="bg-muted/40">
                 <TableHead className="text-[11px] h-8 w-[200px] uppercase tracking-wide">System</TableHead>
-                <TableHead className="text-[11px] h-8 uppercase tracking-wide">Activity</TableHead>
                 <TableHead className="text-[11px] h-8 w-[44px] uppercase tracking-wide">Type</TableHead>
+                <TableHead className="text-[11px] h-8 uppercase tracking-wide">Activity</TableHead>
                 <TableHead className="text-[11px] h-8 w-[80px] text-right uppercase tracking-wide">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -305,21 +305,6 @@ export const InspectionTestPlanStep: React.FC<InspectionTestPlanStepProps> = ({ 
                         </TableCell>
                       )}
 
-                      {/* Activity */}
-                      <TableCell className="py-1.5 text-xs">
-                        {isEditing ? (
-                          <Input
-                            value={editName}
-                            onChange={(e) => setEditName(e.target.value)}
-                            className="h-7 text-xs"
-                            autoFocus
-                            onKeyDown={(e) => { if (e.key === 'Enter') confirmEdit(); if (e.key === 'Escape') cancelEdit(); }}
-                          />
-                        ) : (
-                          row.activity_name
-                        )}
-                      </TableCell>
-
                       {/* Type */}
                       <TableCell className="py-1.5 px-1">
                         {isEditing ? (
@@ -343,6 +328,21 @@ export const InspectionTestPlanStep: React.FC<InspectionTestPlanStepProps> = ({ 
                           >
                             {row.inspection_type === 'WITNESS' ? 'W' : 'H'}
                           </Badge>
+                        )}
+                      </TableCell>
+
+                      {/* Activity */}
+                      <TableCell className="py-1.5 text-xs">
+                        {isEditing ? (
+                          <Input
+                            value={editName}
+                            onChange={(e) => setEditName(e.target.value)}
+                            className="h-7 text-xs"
+                            autoFocus
+                            onKeyDown={(e) => { if (e.key === 'Enter') confirmEdit(); if (e.key === 'Escape') cancelEdit(); }}
+                          />
+                        ) : (
+                          row.activity_name
                         )}
                       </TableCell>
 
