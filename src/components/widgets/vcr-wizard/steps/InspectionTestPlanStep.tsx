@@ -1,24 +1,19 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import {
-  DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors,
-  type DragEndEvent,
-} from '@dnd-kit/core';
-import {
-  SortableContext, verticalListSortingStrategy, useSortable, arrayMove,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
+  Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
+} from '@/components/ui/table';
+import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { Plus, Trash2, Eye, ShieldAlert, Pencil, Check, X, GripVertical } from 'lucide-react';
+import { Plus, Trash2, Eye, ShieldAlert, Pencil, Check, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface InspectionTestPlanStepProps {
@@ -43,193 +38,6 @@ interface MappedSystem {
   isHydrocarbon: boolean;
 }
 
-// ── Sortable activity row ──
-const SortableActivityRow: React.FC<{
-  row: ITPRow;
-  isEditing: boolean;
-  editName: string;
-  editType: 'WITNESS' | 'HOLD';
-  onStartEdit: (row: ITPRow) => void;
-  onConfirmEdit: () => void;
-  onCancelEdit: () => void;
-  onEditNameChange: (v: string) => void;
-  onEditTypeChange: (v: 'WITNESS' | 'HOLD') => void;
-  onDelete: (id: string) => void;
-}> = ({ row, isEditing, editName, editType, onStartEdit, onConfirmEdit, onCancelEdit, onEditNameChange, onEditTypeChange, onDelete }) => {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: row.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={cn(
-        'group/activity flex items-center gap-1.5 py-1 px-1 rounded-md transition-colors hover:bg-muted/50',
-        isDragging && 'opacity-50 bg-muted/30',
-      )}
-    >
-      {/* Drag handle – auto-hide */}
-      <button
-        {...attributes}
-        {...listeners}
-        className="shrink-0 w-4 h-4 flex items-center justify-center cursor-grab active:cursor-grabbing text-muted-foreground/30 opacity-0 group-hover/activity:opacity-100 transition-opacity"
-      >
-        <GripVertical className="w-3 h-3" />
-      </button>
-
-      {/* Activity name */}
-      <div className="flex-1 min-w-0">
-        {isEditing ? (
-          <Input
-            value={editName}
-            onChange={(e) => onEditNameChange(e.target.value)}
-            className="h-7 text-xs"
-            autoFocus
-            onKeyDown={(e) => { if (e.key === 'Enter') onConfirmEdit(); if (e.key === 'Escape') onCancelEdit(); }}
-          />
-        ) : (
-          <span className="text-xs">{row.activity_name}</span>
-        )}
-      </div>
-
-      {/* Type badge – tight to activity */}
-      <div className="shrink-0 ml-0.5">
-        {isEditing ? (
-          <ToggleGroup
-            type="single"
-            value={editType}
-            onValueChange={(v) => v && onEditTypeChange(v as 'WITNESS' | 'HOLD')}
-            className="gap-0 border rounded-md"
-          >
-            <ToggleGroupItem value="WITNESS" className="h-5 px-1.5 text-[9px] rounded-r-none data-[state=on]:bg-amber-500/20 data-[state=on]:text-amber-700 dark:data-[state=on]:text-amber-400">W</ToggleGroupItem>
-            <ToggleGroupItem value="HOLD" className="h-5 px-1.5 text-[9px] rounded-l-none data-[state=on]:bg-red-500/20 data-[state=on]:text-red-700 dark:data-[state=on]:text-red-400">H</ToggleGroupItem>
-          </ToggleGroup>
-        ) : (
-          <Badge
-            className={cn(
-              'text-[9px] font-bold px-1.5 py-0',
-              row.inspection_type === 'WITNESS'
-                ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-700'
-                : 'bg-red-500/15 text-red-700 dark:text-red-400 border-red-300 dark:border-red-700',
-            )}
-          >
-            {row.inspection_type === 'WITNESS' ? 'W' : 'H'}
-          </Badge>
-        )}
-      </div>
-
-      {/* Actions */}
-      <div className="shrink-0 flex items-center gap-0.5">
-        {isEditing ? (
-          <>
-            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onConfirmEdit}><Check className="w-3.5 h-3.5 text-green-600" /></Button>
-            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onCancelEdit}><X className="w-3.5 h-3.5" /></Button>
-          </>
-        ) : (
-          <div className="flex items-center gap-0.5 opacity-0 group-hover/activity:opacity-100 transition-opacity">
-            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onStartEdit(row)}><Pencil className="w-3 h-3" /></Button>
-            <Button variant="ghost" size="icon" className="h-6 w-6 hover:bg-destructive/10 hover:text-destructive" onClick={() => onDelete(row.id)}>
-              <Trash2 className="w-3 h-3" />
-            </Button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-// ── Sortable system group ──
-const SortableSystemGroup: React.FC<{
-  sysId: string;
-  sys: MappedSystem | undefined;
-  activities: ITPRow[];
-  editingId: string | null;
-  editName: string;
-  editType: 'WITNESS' | 'HOLD';
-  onStartEdit: (row: ITPRow) => void;
-  onConfirmEdit: () => void;
-  onCancelEdit: () => void;
-  onEditNameChange: (v: string) => void;
-  onEditTypeChange: (v: 'WITNESS' | 'HOLD') => void;
-  onDelete: (id: string) => void;
-  onReorderActivities: (sysId: string, oldIndex: number, newIndex: number) => void;
-}> = ({ sysId, sys, activities, editingId, editName, editType, onStartEdit, onConfirmEdit, onCancelEdit, onEditNameChange, onEditTypeChange, onDelete, onReorderActivities }) => {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: `sys-${sysId}` });
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
-
-  const handleActivityDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-    const oldIndex = activities.findIndex((a) => a.id === active.id);
-    const newIndex = activities.findIndex((a) => a.id === over.id);
-    if (oldIndex >= 0 && newIndex >= 0) {
-      onReorderActivities(sysId, oldIndex, newIndex);
-    }
-  };
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={cn(
-        'border rounded-md overflow-hidden transition-all',
-        isDragging && 'opacity-50',
-      )}
-    >
-      {/* System header */}
-      <div className="group/sys flex items-center gap-2 px-3 py-2.5 bg-muted/20">
-        <button
-          {...attributes}
-          {...listeners}
-          className="shrink-0 w-4 h-4 flex items-center justify-center cursor-grab active:cursor-grabbing text-muted-foreground/30 opacity-0 group-hover/sys:opacity-100 transition-opacity"
-        >
-          <GripVertical className="w-3.5 h-3.5" />
-        </button>
-        <div className="flex-1 min-w-0">
-          <span className="text-xs font-semibold">{sys?.name || '—'}</span>
-          {sys?.systemCode && (
-            <span className="text-[10px] text-muted-foreground/50 font-mono ml-2">{sys.systemCode}</span>
-          )}
-        </div>
-        <Badge variant="outline" className="text-[9px] font-mono px-1.5 py-0">{activities.length}</Badge>
-      </div>
-
-      {/* Activities list – indented, subtle bg */}
-      <div className="pl-6 pr-2 py-1.5 bg-background border-t border-border/40">
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleActivityDragEnd}>
-          <SortableContext items={activities.map((a) => a.id)} strategy={verticalListSortingStrategy}>
-            {activities.map((row) => (
-              <SortableActivityRow
-                key={row.id}
-                row={row}
-                isEditing={editingId === row.id}
-                editName={editName}
-                editType={editType}
-                onStartEdit={onStartEdit}
-                onConfirmEdit={onConfirmEdit}
-                onCancelEdit={onCancelEdit}
-                onEditNameChange={onEditNameChange}
-                onEditTypeChange={onEditTypeChange}
-                onDelete={onDelete}
-              />
-            ))}
-          </SortableContext>
-        </DndContext>
-      </div>
-    </div>
-  );
-};
-
-// ── Main component ──
 export const InspectionTestPlanStep: React.FC<InspectionTestPlanStepProps> = ({ vcrId }) => {
   const queryClient = useQueryClient();
 
@@ -239,8 +47,6 @@ export const InspectionTestPlanStep: React.FC<InspectionTestPlanStepProps> = ({ 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [editType, setEditType] = useState<'WITNESS' | 'HOLD'>('WITNESS');
-
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   // ── Fetch mapped systems ──
   const { data: systems = [], isLoading: loadingSystems } = useQuery({
@@ -284,18 +90,28 @@ export const InspectionTestPlanStep: React.FC<InspectionTestPlanStepProps> = ({ 
     },
   });
 
-  // ── Grouped data ──
-  const { groupedRows, orderedSystemIds } = useMemo(() => {
+  // ── Group rows by system_id ──
+  const groupedRows = useMemo(() => {
     const map = new Map<string, ITPRow[]>();
-    const order: string[] = [];
-    const seen = new Set<string>();
     for (const row of rows) {
       const list = map.get(row.system_id) || [];
       list.push(row);
       map.set(row.system_id, list);
-      if (!seen.has(row.system_id)) { seen.add(row.system_id); order.push(row.system_id); }
     }
-    return { groupedRows: map, orderedSystemIds: order };
+    return map;
+  }, [rows]);
+
+  // Ordered system ids that appear in rows
+  const orderedSystemIds = useMemo(() => {
+    const seen = new Set<string>();
+    const result: string[] = [];
+    for (const row of rows) {
+      if (!seen.has(row.system_id)) {
+        seen.add(row.system_id);
+        result.push(row.system_id);
+      }
+    }
+    return result;
   }, [rows]);
 
   const systemLookup = useMemo(() => new Map(systems.map((s) => [s.systemId, s])), [systems]);
@@ -329,16 +145,6 @@ export const InspectionTestPlanStep: React.FC<InspectionTestPlanStepProps> = ({ 
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['itp-activities', vcrId] }),
   });
 
-  const bulkUpdateOrder = useMutation({
-    mutationFn: async (updates: { id: string; display_order: number }[]) => {
-      for (const u of updates) {
-        const { error } = await (supabase as any).from('p2a_itp_activities').update({ display_order: u.display_order }).eq('id', u.id);
-        if (error) throw error;
-      }
-    },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['itp-activities', vcrId] }),
-  });
-
   // ── Handlers ──
   const handleAdd = useCallback(() => {
     if (!selectedSystem || !activityName.trim()) return;
@@ -351,59 +157,19 @@ export const InspectionTestPlanStep: React.FC<InspectionTestPlanStepProps> = ({ 
     setActivityName('');
   }, [selectedSystem, activityName, inspectionType, rows.length, insertRow]);
 
-  const startEdit = (row: ITPRow) => { setEditingId(row.id); setEditName(row.activity_name); setEditType(row.inspection_type); };
+  const startEdit = (row: ITPRow) => {
+    setEditingId(row.id);
+    setEditName(row.activity_name);
+    setEditType(row.inspection_type);
+  };
+
   const confirmEdit = () => {
     if (!editingId || !editName.trim()) return;
     updateRow.mutate({ id: editingId, activity_name: editName.trim(), inspection_type: editType });
     setEditingId(null);
   };
+
   const cancelEdit = () => setEditingId(null);
-
-  // Reorder activities within a system
-  const handleReorderActivities = useCallback((sysId: string, oldIndex: number, newIndex: number) => {
-    const activities = groupedRows.get(sysId);
-    if (!activities) return;
-    const reordered = arrayMove(activities, oldIndex, newIndex);
-    // Optimistic update via query cache
-    queryClient.setQueryData(['itp-activities', vcrId], (prev: ITPRow[] | undefined) => {
-      if (!prev) return prev;
-      const others = prev.filter((r) => r.system_id !== sysId);
-      const updated = reordered.map((a, i) => ({ ...a, display_order: i }));
-      return [...others, ...updated].sort((a, b) => a.display_order - b.display_order);
-    });
-    bulkUpdateOrder.mutate(reordered.map((a, i) => ({ id: a.id, display_order: i })));
-  }, [groupedRows, queryClient, vcrId, bulkUpdateOrder]);
-
-  // Reorder system groups
-  const handleSystemDragEnd = useCallback((event: DragEndEvent) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-    const activeId = (active.id as string).replace('sys-', '');
-    const overId = (over.id as string).replace('sys-', '');
-    const oldIdx = orderedSystemIds.indexOf(activeId);
-    const newIdx = orderedSystemIds.indexOf(overId);
-    if (oldIdx < 0 || newIdx < 0) return;
-
-    const newOrder = arrayMove(orderedSystemIds, oldIdx, newIdx);
-    // Reassign display_order globally based on new system order
-    const updates: { id: string; display_order: number }[] = [];
-    let order = 0;
-    for (const sysId of newOrder) {
-      const activities = groupedRows.get(sysId) || [];
-      for (const a of activities) {
-        updates.push({ id: a.id, display_order: order++ });
-      }
-    }
-    // Optimistic
-    queryClient.setQueryData(['itp-activities', vcrId], (prev: ITPRow[] | undefined) => {
-      if (!prev) return prev;
-      return updates.map((u) => {
-        const existing = prev.find((r) => r.id === u.id);
-        return existing ? { ...existing, display_order: u.display_order } : null;
-      }).filter(Boolean).sort((a, b) => a!.display_order - b!.display_order) as ITPRow[];
-    });
-    bulkUpdateOrder.mutate(updates);
-  }, [orderedSystemIds, groupedRows, queryClient, vcrId, bulkUpdateOrder]);
 
   const wCount = rows.filter((r) => r.inspection_type === 'WITNESS').length;
   const hCount = rows.filter((r) => r.inspection_type === 'HOLD').length;
@@ -492,34 +258,117 @@ export const InspectionTestPlanStep: React.FC<InspectionTestPlanStepProps> = ({ 
         </CardContent>
       </Card>
 
-      {/* System groups with DnD */}
+      {/* Table – grouped by system, no repeated system name */}
       {rows.length === 0 ? (
         <p className="text-xs text-muted-foreground text-center py-6">No inspection activities added yet. Use the form above to add W (Witness) or H (Hold) points.</p>
       ) : (
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSystemDragEnd}>
-          <SortableContext items={orderedSystemIds.map((id) => `sys-${id}`)} strategy={verticalListSortingStrategy}>
-            <div className="space-y-2">
-              {orderedSystemIds.map((sysId) => (
-                <SortableSystemGroup
-                  key={sysId}
-                  sysId={sysId}
-                  sys={systemLookup.get(sysId)}
-                  activities={groupedRows.get(sysId) || []}
-                  editingId={editingId}
-                  editName={editName}
-                  editType={editType}
-                  onStartEdit={startEdit}
-                  onConfirmEdit={confirmEdit}
-                  onCancelEdit={cancelEdit}
-                  onEditNameChange={setEditName}
-                  onEditTypeChange={setEditType}
-                  onDelete={(id) => deleteRow.mutate(id)}
-                  onReorderActivities={handleReorderActivities}
-                />
-              ))}
-            </div>
-          </SortableContext>
-        </DndContext>
+        <div className="rounded-md border overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/40">
+                <TableHead className="text-[11px] h-8 w-[200px] uppercase tracking-wide">System</TableHead>
+                <TableHead className="text-[11px] h-8 uppercase tracking-wide">Activity</TableHead>
+                <TableHead className="text-[11px] h-8 w-[44px] uppercase tracking-wide">Type</TableHead>
+                <TableHead className="text-[11px] h-8 w-[80px] text-right uppercase tracking-wide">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {orderedSystemIds.map((sysId) => {
+                const sys = systemLookup.get(sysId);
+                const activities = groupedRows.get(sysId) || [];
+
+                return activities.map((row, idx) => {
+                  const isFirst = idx === 0;
+                  const isEditing = editingId === row.id;
+
+                  return (
+                    <TableRow
+                      key={row.id}
+                      className={cn(
+                        'group',
+                        // Only show bottom border on the last activity of each system group
+                        idx < activities.length - 1 && 'border-b-0',
+                      )}
+                    >
+                      {/* System cell – only rendered on first row, spans all activities */}
+                      {isFirst && (
+                        <TableCell
+                          className="py-2 align-top"
+                          rowSpan={activities.length}
+                        >
+                          <div>
+                            <span className="text-xs font-medium leading-tight">{sys?.name || '—'}</span>
+                            {sys?.systemCode && (
+                              <p className="text-[10px] text-muted-foreground/60 font-mono mt-0.5">{sys.systemCode}</p>
+                            )}
+                          </div>
+                        </TableCell>
+                      )}
+
+                      {/* Activity */}
+                      <TableCell className="py-1.5 text-xs">
+                        {isEditing ? (
+                          <Input
+                            value={editName}
+                            onChange={(e) => setEditName(e.target.value)}
+                            className="h-7 text-xs"
+                            autoFocus
+                            onKeyDown={(e) => { if (e.key === 'Enter') confirmEdit(); if (e.key === 'Escape') cancelEdit(); }}
+                          />
+                        ) : (
+                          row.activity_name
+                        )}
+                      </TableCell>
+
+                      {/* Type */}
+                      <TableCell className="py-1.5 px-1">
+                        {isEditing ? (
+                          <ToggleGroup
+                            type="single"
+                            value={editType}
+                            onValueChange={(v) => v && setEditType(v as 'WITNESS' | 'HOLD')}
+                            className="gap-0 border rounded-md justify-center"
+                          >
+                            <ToggleGroupItem value="WITNESS" className="h-6 px-2 text-[10px] rounded-r-none data-[state=on]:bg-amber-500/20 data-[state=on]:text-amber-700 dark:data-[state=on]:text-amber-400">W</ToggleGroupItem>
+                            <ToggleGroupItem value="HOLD" className="h-6 px-2 text-[10px] rounded-l-none data-[state=on]:bg-red-500/20 data-[state=on]:text-red-700 dark:data-[state=on]:text-red-400">H</ToggleGroupItem>
+                          </ToggleGroup>
+                        ) : (
+                          <Badge
+                            className={cn(
+                              'text-[9px] font-bold px-1.5 py-0',
+                              row.inspection_type === 'WITNESS'
+                                ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-700'
+                                : 'bg-red-500/15 text-red-700 dark:text-red-400 border-red-300 dark:border-red-700',
+                            )}
+                          >
+                            {row.inspection_type === 'WITNESS' ? 'W' : 'H'}
+                          </Badge>
+                        )}
+                      </TableCell>
+
+                      {/* Actions */}
+                      <TableCell className="py-1.5 text-right">
+                        {isEditing ? (
+                          <div className="flex items-center justify-end gap-1">
+                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={confirmEdit}><Check className="w-3.5 h-3.5 text-green-600" /></Button>
+                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={cancelEdit}><X className="w-3.5 h-3.5" /></Button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => startEdit(row)}><Pencil className="w-3 h-3" /></Button>
+                            <Button variant="ghost" size="icon" className="h-6 w-6 hover:bg-destructive/10 hover:text-destructive" onClick={() => deleteRow.mutate(row.id)}>
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                });
+              })}
+            </TableBody>
+          </Table>
+        </div>
       )}
     </div>
   );
