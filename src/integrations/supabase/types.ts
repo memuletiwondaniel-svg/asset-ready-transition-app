@@ -3201,6 +3201,57 @@ export type Database = {
           },
         ]
       }
+      p2a_itp_activities: {
+        Row: {
+          activity_name: string
+          created_at: string
+          display_order: number
+          handover_point_id: string
+          id: string
+          inspection_type: string
+          notes: string | null
+          system_id: string
+          updated_at: string
+        }
+        Insert: {
+          activity_name: string
+          created_at?: string
+          display_order?: number
+          handover_point_id: string
+          id?: string
+          inspection_type?: string
+          notes?: string | null
+          system_id: string
+          updated_at?: string
+        }
+        Update: {
+          activity_name?: string
+          created_at?: string
+          display_order?: number
+          handover_point_id?: string
+          id?: string
+          inspection_type?: string
+          notes?: string | null
+          system_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_itp_activities_handover_point_id_fkey"
+            columns: ["handover_point_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_handover_points"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_itp_activities_system_id_fkey"
+            columns: ["system_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_systems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       p2a_notifications: {
         Row: {
           created_at: string
