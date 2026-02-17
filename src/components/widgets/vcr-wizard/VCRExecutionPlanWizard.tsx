@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import {
   Dialog,
   DialogContent,
@@ -65,6 +67,37 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
       setVisitedSteps(new Set([0]));
     }
   }, [open]);
+
+  // Query step data counts to determine real completion
+  const { data: stepCounts = {} } = useQuery({
+    queryKey: ['vcr-wizard-step-counts', vcr.id],
+    queryFn: async () => {
+      const [training, procedures, deliverables, registers] = await Promise.all([
+        (supabase as any).from('p2a_vcr_training').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
+        (supabase as any).from('p2a_vcr_procedures').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
+        (supabase as any).from('p2a_vcr_deliverables').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
+        (supabase as any).from('p2a_vcr_operational_registers').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
+      ]);
+      return {
+        1: training.count || 0,   // Training
+        3: deliverables.count || 0, // Deliverables
+        2: procedures.count || 0, // Procedures
+        4: registers.count || 0,  // Log Sheets & Registers
+      } as Record<number, number>;
+    },
+    enabled: open,
+    refetchInterval: 5000, // Refresh periodically to catch additions
+  });
+
+  // Steps that are always "complete" when visited (have content by default or no empty state concept)
+  // Step 0 (VCR Items) - always has items from template
+  // Step 5 (ITP) - has system-based default content
+  // Step 6 (Approvers) - has auto-resolved approvers
+  const isStepComplete = (idx: number): boolean => {
+    if (idx === 0 || idx === 5 || idx === 6) return visitedSteps.has(idx);
+    // Steps 1-4: require actual data
+    return (stepCounts[idx] || 0) > 0;
+  };
 
   const goToStep = (step: number) => {
     setCurrentStep(step);
@@ -146,6 +179,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
               {STEPS.map((step, idx) => {
                 const isActive = idx === currentStep;
                 const isVisited = visitedSteps.has(idx);
+                const isComplete = isStepComplete(idx);
                 const Icon = step.icon;
 
                 return (
@@ -165,11 +199,11 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
                       'w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-xs font-medium',
                       isActive
                         ? 'bg-primary-foreground/20 text-primary-foreground'
-                        : isVisited
+                        : isComplete
                           ? 'bg-emerald-500/10 text-emerald-500'
                           : 'bg-muted text-muted-foreground'
                     )}>
-                      {isVisited && !isActive ? <Check className="w-3 h-3" /> : idx + 1}
+                      {isComplete && !isActive ? <Check className="w-3 h-3" /> : idx + 1}
                     </div>
                     <span className="truncate text-xs font-medium">{step.label}</span>
                   </button>
@@ -232,7 +266,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
                       'w-2 h-2 rounded-full transition-colors cursor-pointer',
                       idx === currentStep
                         ? 'bg-primary'
-                        : visitedSteps.has(idx)
+                        : isStepComplete(idx)
                           ? 'bg-emerald-500'
                           : 'bg-muted-foreground/20'
                     )}
