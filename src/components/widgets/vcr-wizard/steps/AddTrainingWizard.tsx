@@ -641,15 +641,22 @@ const StepSchedule: React.FC<{
         <label className="text-[11px] uppercase tracking-wide font-semibold text-muted-foreground">
           Tentative Start Date
         </label>
-        <Input
-          type="date"
-          value={tentativeDate}
-          onChange={(e) => setTentativeDate(e.target.value)}
-          className="text-sm font-medium border-foreground/20"
-        />
-        {tentativeDate && (
-          <p className="text-[10px] text-foreground/70 font-medium">{formatDisplayDate(tentativeDate)}</p>
-        )}
+        <div className="relative">
+          <Input
+            type="date"
+            value={tentativeDate}
+            onChange={(e) => setTentativeDate(e.target.value)}
+            className={cn(
+              'text-sm font-medium border-foreground/20',
+              tentativeDate ? 'text-transparent' : ''
+            )}
+          />
+          {tentativeDate && (
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-foreground pointer-events-none">
+              {formatDisplayDate(tentativeDate)}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   </div>
