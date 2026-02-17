@@ -1,7 +1,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { CheckCircle2 } from 'lucide-react';
+import { Check } from 'lucide-react';
 
 interface Milestone {
   id: string;
@@ -28,45 +28,34 @@ export const MilestonesTimeline: React.FC<MilestonesTimelineProps> = ({ mileston
   });
 
   return (
-    <div className="space-y-0">
-      {sortedMilestones.map((milestone, index) => {
+    <div className="space-y-2">
+      {sortedMilestones.map((milestone) => {
         const isCompleted = milestone.status === 'completed';
-        const isLast = index === sortedMilestones.length - 1;
 
         return (
-          <div key={milestone.id} className="flex items-center gap-3 py-1.5">
-            {/* Simple dot / check */}
-            <div className="flex flex-col items-center self-stretch">
-              <div className={cn(
-                "w-5 h-5 rounded-full flex items-center justify-center shrink-0",
-                isCompleted
-                  ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
-                  : "border-2 border-border bg-background"
-              )}>
-                {isCompleted && <CheckCircle2 className="h-3.5 w-3.5" />}
-              </div>
-              {!isLast && (
-                <div className={cn(
-                  "w-px flex-1 min-h-[8px]",
-                  isCompleted ? "bg-emerald-500/30" : "bg-border"
-                )} />
-              )}
+          <div key={milestone.id} className="flex items-center gap-2.5">
+            {/* Minimal dot or check */}
+            <div className={cn(
+              "w-4 h-4 rounded-full flex items-center justify-center shrink-0",
+              isCompleted
+                ? "bg-muted-foreground/20 text-muted-foreground"
+                : "border border-border"
+            )}>
+              {isCompleted && <Check className="h-2.5 w-2.5" />}
             </div>
 
-            {/* Name + Date inline */}
-            <div className="flex items-center justify-between flex-1 min-w-0">
-              <span className={cn(
-                "text-xs truncate",
-                isCompleted ? "text-muted-foreground line-through" : "text-foreground font-medium"
-              )}>
-                {milestone.milestone_name}
+            {/* Name + Date */}
+            <span className={cn(
+              "text-xs flex-1 truncate",
+              isCompleted ? "text-muted-foreground" : "text-foreground"
+            )}>
+              {milestone.milestone_name}
+            </span>
+            {milestone.milestone_date && (
+              <span className="text-[11px] text-muted-foreground tabular-nums shrink-0">
+                {format(new Date(milestone.milestone_date), 'dd MMM yy')}
               </span>
-              {milestone.milestone_date && (
-                <span className="text-[11px] text-muted-foreground tabular-nums shrink-0 ml-2">
-                  {format(new Date(milestone.milestone_date), 'dd MMM yy')}
-                </span>
-              )}
-            </div>
+            )}
           </div>
         );
       })}
