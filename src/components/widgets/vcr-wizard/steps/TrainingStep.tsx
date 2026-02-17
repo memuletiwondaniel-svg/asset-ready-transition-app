@@ -129,7 +129,7 @@ export const TrainingStep: React.FC<TrainingStepProps> = ({ vcrId }) => {
         </Card>
       ) : (
         <ScrollArea className="h-[calc(min(90vh,780px)-280px)]">
-          <div className="space-y-2 px-1 pr-4 max-w-[90%]">
+          <div className="space-y-2 px-1 pr-4 max-w-[95%]">
             {items.map((item: any, index: number) => {
               const hueOffset = index * 137.5; // golden angle for distinct hues
               return (
