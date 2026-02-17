@@ -69,6 +69,27 @@ interface VCRItem {
   category?: { id: string; name: string; code: string };
 }
 
+interface VCRItemOverride {
+  id: string;
+  vcr_item_id: string;
+  vcr_item_override: string | null;
+  topic_override: string | null;
+  delivering_party_role_id_override: string | null;
+  approving_party_role_ids_override: string[] | null;
+  guidance_notes_override: string | null;
+}
+
+interface MergedVCRItem extends VCRItem {
+  // Effective values (override or original)
+  effective_vcr_item: string;
+  effective_topic: string | null;
+  effective_delivering_party_role_id: string | null;
+  effective_approving_party_role_ids: string[] | null;
+  effective_guidance_notes: string | null;
+  has_overrides: boolean;
+  override_id?: string;
+}
+
 interface Role {
   id: string;
   name: string;
@@ -79,9 +100,9 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
-  const [editingItem, setEditingItem] = useState<VCRItem | null>(null);
+  const [editingItem, setEditingItem] = useState<MergedVCRItem | null>(null);
   const [editSheetOpen, setEditSheetOpen] = useState(false);
-  const [deleteItem, setDeleteItem] = useState<VCRItem | null>(null);
+  const [deleteItem, setDeleteItem] = useState<MergedVCRItem | null>(null);
 
   // Fetch VCR items with categories
   const { data: items = [], isLoading } = useQuery({
@@ -100,6 +121,34 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
     },
   });
 
+  // Fetch per-VCR overrides
+  const { data: overrides = [] } = useQuery({
+    queryKey: ['vcr-item-overrides', vcrId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('p2a_vcr_item_overrides')
+        .select('*')
+        .eq('handover_point_id', vcrId);
+      if (error) throw error;
+      return (data || []) as VCRItemOverride[];
+    },
+  });
+
+  // Merge items with overrides
+  const mergedItems: MergedVCRItem[] = items.map(item => {
+    const override = overrides.find(o => o.vcr_item_id === item.id);
+    return {
+      ...item,
+      effective_vcr_item: override?.vcr_item_override ?? item.vcr_item,
+      effective_topic: override?.topic_override !== undefined ? override.topic_override : item.topic,
+      effective_delivering_party_role_id: override?.delivering_party_role_id_override !== undefined ? override.delivering_party_role_id_override : item.delivering_party_role_id,
+      effective_approving_party_role_ids: override?.approving_party_role_ids_override !== undefined ? override.approving_party_role_ids_override : item.approving_party_role_ids,
+      effective_guidance_notes: override?.guidance_notes_override !== undefined ? override.guidance_notes_override : item.guidance_notes,
+      has_overrides: !!override,
+      override_id: override?.id,
+    };
+  });
+
   // Fetch roles
   const { data: roles = [] } = useQuery({
     queryKey: ['roles-list'],
@@ -113,25 +162,32 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
     },
   });
 
-  // Update item mutation
+  // Save override mutation (upsert to overrides table, NOT the master vcr_items)
   const updateItem = useMutation({
-    mutationFn: async (item: Partial<VCRItem> & { id: string }) => {
-      const { id, category, ...updates } = item as any;
+    mutationFn: async (payload: { vcr_item_id: string; vcr_item_override: string | null; topic_override: string | null; delivering_party_role_id_override: string | null; approving_party_role_ids_override: string[] | null; guidance_notes_override: string | null }) => {
       const { error } = await supabase
-        .from('vcr_items')
-        .update(updates)
-        .eq('id', id);
+        .from('p2a_vcr_item_overrides')
+        .upsert({
+          handover_point_id: vcrId,
+          vcr_item_id: payload.vcr_item_id,
+          vcr_item_override: payload.vcr_item_override,
+          topic_override: payload.topic_override,
+          delivering_party_role_id_override: payload.delivering_party_role_id_override,
+          approving_party_role_ids_override: payload.approving_party_role_ids_override,
+          guidance_notes_override: payload.guidance_notes_override,
+        }, { onConflict: 'handover_point_id,vcr_item_id' });
       if (error) throw error;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vcr-item-overrides', vcrId] });
       queryClient.invalidateQueries({ queryKey: ['vcr-exec-items'] });
-      toast.success('Item updated');
+      toast.success('Item updated (local to this VCR)');
       setEditSheetOpen(false);
       setEditingItem(null);
     },
   });
 
-  // Soft delete mutation
+  // Soft delete mutation (still on master for now - or could be a local exclusion)
   const softDeleteItem = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
@@ -147,15 +203,15 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
     },
   });
 
-  // Filter items
-  const filtered = items.filter(item =>
+  // Filter items using effective (overridden) values
+  const filtered = mergedItems.filter(item =>
     !searchQuery ||
-    item.vcr_item.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.topic?.toLowerCase().includes(searchQuery.toLowerCase())
+    item.effective_vcr_item.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.effective_topic?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // Group by category
-  const grouped = filtered.reduce<Record<string, VCRItem[]>>((acc, item) => {
+  const grouped = filtered.reduce<Record<string, MergedVCRItem[]>>((acc, item) => {
     const cat = item.category?.name || 'Uncategorized';
     if (!acc[cat]) acc[cat] = [];
     acc[cat].push(item);
@@ -199,7 +255,7 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
             className="pl-9"
           />
         </div>
-        <Badge variant="outline" className="shrink-0">{items.length} items</Badge>
+        <Badge variant="outline" className="shrink-0">{mergedItems.length} items</Badge>
       </div>
 
       {/* Items grouped by category */}
@@ -234,17 +290,20 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
                                 {itemId}
                               </Badge>
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm leading-snug">{item.vcr_item}</p>
-                                {item.topic && (
-                                  <p className="text-[10px] text-muted-foreground mt-1">Topic: {item.topic}</p>
+                                <p className="text-sm leading-snug">{item.effective_vcr_item}</p>
+                                {item.effective_topic && (
+                                  <p className="text-[10px] text-muted-foreground mt-1">Topic: {item.effective_topic}</p>
                                 )}
                                 <div className="flex items-center gap-3 mt-1.5 text-[10px] text-muted-foreground">
-                                  <span>Delivering: <span className="text-foreground font-medium">{getRoleName(item.delivering_party_role_id)}</span></span>
-                                  {item.approving_party_role_ids && item.approving_party_role_ids.length > 0 && (
+                                  <span>Delivering: <span className="text-foreground font-medium">{getRoleName(item.effective_delivering_party_role_id)}</span></span>
+                                  {item.effective_approving_party_role_ids && item.effective_approving_party_role_ids.length > 0 && (
                                     <span className="flex items-center gap-1">
                                       <Users className="w-3 h-3" />
-                                      {item.approving_party_role_ids.length} approvers
+                                      {item.effective_approving_party_role_ids.length} approvers
                                     </span>
+                                  )}
+                                  {item.has_overrides && (
+                                    <Badge variant="outline" className="text-[9px] h-4 border-accent text-accent-foreground">Customized</Badge>
                                   )}
                                 </div>
                               </div>
@@ -290,7 +349,7 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
               item={editingItem}
               roles={roles}
               projectId={projectId}
-              onSave={(updated) => updateItem.mutate(updated)}
+              onSave={(payload) => updateItem.mutate(payload)}
               isSaving={updateItem.isPending}
             />
           )}
@@ -337,18 +396,27 @@ interface ResolvedUser {
   role_id: string;
 }
 
+interface OverridePayload {
+  vcr_item_id: string;
+  vcr_item_override: string | null;
+  topic_override: string | null;
+  delivering_party_role_id_override: string | null;
+  approving_party_role_ids_override: string[] | null;
+  guidance_notes_override: string | null;
+}
+
 const EditItemForm: React.FC<{
-  item: VCRItem;
+  item: MergedVCRItem;
   roles: Role[];
   projectId?: string;
-  onSave: (item: Partial<VCRItem> & { id: string }) => void;
+  onSave: (payload: OverridePayload) => void;
   isSaving: boolean;
 }> = ({ item, roles, projectId, onSave, isSaving }) => {
-  const [vcrItem, setVcrItem] = useState(item.vcr_item);
-  const [topic, setTopic] = useState(item.topic || '');
-  const [deliveringParty, setDeliveringParty] = useState(item.delivering_party_role_id || '');
-  const [approvingParties, setApprovingParties] = useState<string[]>(item.approving_party_role_ids || []);
-  const [guidanceNotes, setGuidanceNotes] = useState(item.guidance_notes || '');
+  const [vcrItem, setVcrItem] = useState(item.effective_vcr_item);
+  const [topic, setTopic] = useState(item.effective_topic || '');
+  const [deliveringParty, setDeliveringParty] = useState(item.effective_delivering_party_role_id || '');
+  const [approvingParties, setApprovingParties] = useState<string[]>(item.effective_approving_party_role_ids || []);
+  const [guidanceNotes, setGuidanceNotes] = useState(item.effective_guidance_notes || '');
   const [addApproverOpen, setAddApproverOpen] = useState(false);
   const [approverSearch, setApproverSearch] = useState('');
 
@@ -562,12 +630,12 @@ const EditItemForm: React.FC<{
         </div>
         <Button
           onClick={() => onSave({
-            id: item.id,
-            vcr_item: vcrItem,
-            topic: topic || null,
-            delivering_party_role_id: deliveringParty || null,
-            approving_party_role_ids: approvingParties.length > 0 ? approvingParties : null,
-            guidance_notes: guidanceNotes || null,
+            vcr_item_id: item.id,
+            vcr_item_override: vcrItem,
+            topic_override: topic || null,
+            delivering_party_role_id_override: deliveringParty || null,
+            approving_party_role_ids_override: approvingParties.length > 0 ? approvingParties : null,
+            guidance_notes_override: guidanceNotes || null,
           })}
           disabled={!vcrItem || isSaving}
           className="w-full"
