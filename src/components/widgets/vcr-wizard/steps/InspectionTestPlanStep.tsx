@@ -267,7 +267,7 @@ export const InspectionTestPlanStep: React.FC<InspectionTestPlanStepProps> = ({ 
             <TableHeader>
               <TableRow className="bg-muted/40">
                 <TableHead className="text-[11px] h-8 w-[200px] uppercase tracking-wide">System</TableHead>
-                <TableHead className="text-[11px] h-8 w-[44px] uppercase tracking-wide">Type</TableHead>
+                <TableHead className="text-[11px] h-8 w-[44px] uppercase tracking-wide text-center px-1">Type</TableHead>
                 <TableHead className="text-[11px] h-8 uppercase tracking-wide">Activity</TableHead>
                 <TableHead className="text-[11px] h-8 w-[80px] text-right uppercase tracking-wide">Actions</TableHead>
               </TableRow>
@@ -306,7 +306,7 @@ export const InspectionTestPlanStep: React.FC<InspectionTestPlanStepProps> = ({ 
                       )}
 
                       {/* Type */}
-                      <TableCell className="py-1.5 px-1">
+                      <TableCell className="py-1.5 px-1 text-center">
                         {isEditing ? (
                           <ToggleGroup
                             type="single"
