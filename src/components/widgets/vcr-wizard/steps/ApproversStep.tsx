@@ -37,6 +37,35 @@ const DEFAULT_APPROVER_ROLES = [
   'Deputy Plant Director',
 ];
 
+// Hub names don't always match region suffixes in position titles.
+// e.g. Hub "Zubair" → positions use "Central"; Hub "UQ" → "UQ", etc.
+const HUB_TO_REGION: Record<string, string[]> = {
+  zubair: ['central'],
+  north: ['north'],
+  uq: ['uq'],
+  'west qurna': ['west qurna'],
+  'nrngl, bngl & nr/sr': ['nrngl', 'bngl'],
+  kaz: ['kaz'],
+  pipelines: ['pipelines'],
+  central: ['central'],
+};
+
+/**
+ * Get the region keywords to match in position strings for a given hub name.
+ * Falls back to the hub name itself if no explicit mapping exists.
+ */
+const getRegionKeywords = (hubName: string): string[] => {
+  const lower = hubName.toLowerCase();
+  return HUB_TO_REGION[lower] || [lower];
+};
+
+/**
+ * Check if a position string contains any of the region keywords.
+ */
+const posMatchesRegion = (pos: string, regionKeywords: string[]): boolean => {
+  return regionKeywords.some(kw => pos.includes(kw));
+};
+
 export const ApproversStep: React.FC<ApproversStepProps> = ({ vcrId }) => {
   const { data: approvers, isLoading } = useQuery<ResolvedApprover[]>({
     queryKey: ['vcr-exec-plan-approvers', vcrId],
@@ -82,22 +111,25 @@ export const ApproversStep: React.FC<ApproversStepProps> = ({ vcrId }) => {
       if (!allProfiles) return [];
 
       const plantLower = plantName.toLowerCase();
-      const hubLower = hubName.toLowerCase();
+      const regionKeywords = hubName ? getRegionKeywords(hubName) : [];
 
       return DEFAULT_APPROVER_ROLES.map((role) => {
-        const match = allProfiles.find((p: any) => {
-          const pos = (p.position || '').toLowerCase().replace(/–/g, '-');
+        // Find ALL candidates, then pick the best one
+        const candidates = allProfiles.filter((p: any) => {
+          const pos = (p.position || '').toLowerCase().replace(/–/g, '-').replace(/—/g, '-');
 
           if (role === 'ORA Lead') {
-            return pos.includes('ora') && (pos.includes('lead') || pos.includes('engineer')) && (hubLower ? pos.includes(hubLower) : true);
+            return pos.includes('ora') && pos.includes('lead') && !pos.includes('snr') && !pos.includes('engr');
           }
           if (role === 'Commissioning Lead') {
-            return (pos.includes('commissioning') || pos.includes('csu')) && pos.includes('lead') && (hubLower ? pos.includes(hubLower) : true);
+            return (pos.includes('commissioning') || pos.includes('csu')) && pos.includes('lead');
           }
           if (role === 'Construction Lead') {
-            return pos.includes('construction') && pos.includes('lead') && (hubLower ? pos.includes(hubLower) : true);
+            return pos.includes('construction') && pos.includes('lead');
           }
           if (role === 'Project Hub Lead') {
+            // Hub Lead must match exact hub name (e.g. "Zubair")
+            const hubLower = hubName.toLowerCase();
             return pos.includes('project hub lead') && (hubLower ? pos.includes(hubLower) : true);
           }
           if (role === 'Deputy Plant Director') {
@@ -105,6 +137,23 @@ export const ApproversStep: React.FC<ApproversStepProps> = ({ vcrId }) => {
           }
           return false;
         });
+
+        // For roles that use region (not hub name directly), rank by region match + avatar
+        let match: any = null;
+        if (candidates.length === 1) {
+          match = candidates[0];
+        } else if (candidates.length > 1 && regionKeywords.length > 0) {
+          // Prefer candidates whose position matches the region
+          const regionMatches = candidates.filter((p: any) => {
+            const pos = (p.position || '').toLowerCase().replace(/–/g, '-').replace(/—/g, '-');
+            return posMatchesRegion(pos, regionKeywords);
+          });
+          const pool = regionMatches.length > 0 ? regionMatches : candidates;
+          // Tiebreak: prefer candidate with avatar
+          match = pool.find((p: any) => p.avatar_url) || pool[0];
+        } else if (candidates.length > 1) {
+          match = candidates.find((p: any) => p.avatar_url) || candidates[0];
+        }
 
         return {
           role,
