@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -24,13 +24,16 @@ import {
   Loader2,
   Search,
   Flame,
-  Snowflake,
   X,
   Monitor,
   MapPin,
   Globe,
   Sparkles,
+  Plus,
+  ClipboardCheck,
+  Clock,
 } from 'lucide-react';
+import { format } from 'date-fns';
 
 const DELIVERY_METHODS = [
   { id: 'Onsite', label: 'Onsite', description: 'At the project site', icon: MapPin },
@@ -55,15 +58,15 @@ const SUGGESTED_AUDIENCES = [
 interface WizardStep {
   id: number;
   title: string;
-  subtitle: string;
   icon: React.ElementType;
 }
 
 const STEPS: WizardStep[] = [
-  { id: 0, title: 'Training Overview', subtitle: 'Title & objectives', icon: BookOpen },
-  { id: 1, title: 'Provider & Delivery', subtitle: 'Who delivers & how', icon: Building2 },
-  { id: 2, title: 'Audience & Systems', subtitle: 'Who attends & scope', icon: Users },
-  { id: 3, title: 'Schedule', subtitle: 'Duration & timing', icon: CalendarDays },
+  { id: 0, title: 'Training Overview', icon: BookOpen },
+  { id: 1, title: 'Provider & Delivery', icon: Building2 },
+  { id: 2, title: 'Audience & Systems', icon: Users },
+  { id: 3, title: 'Schedule', icon: CalendarDays },
+  { id: 4, title: 'Review', icon: ClipboardCheck },
 ];
 
 interface AddTrainingWizardProps {
@@ -92,10 +95,21 @@ export const AddTrainingWizard: React.FC<AddTrainingWizardProps> = ({
   const [deliveryMethods, setDeliveryMethods] = useState<string[]>([]);
   const [targetAudience, setTargetAudience] = useState<string[]>([]);
   const [customAudience, setCustomAudience] = useState('');
+  const [showCustomInput, setShowCustomInput] = useState(false);
   const [selectedSystemIds, setSelectedSystemIds] = useState<string[]>([]);
   const [systemSearch, setSystemSearch] = useState('');
   const [durationDays, setDurationDays] = useState<string>('');
   const [tentativeDate, setTentativeDate] = useState('');
+
+  // Deduplicate systems (same system_id may appear multiple times for subsystem assignments)
+  const uniqueSystems = useMemo(() => {
+    const seen = new Set<string>();
+    return (systems || []).filter((s: any) => {
+      if (seen.has(s.id)) return false;
+      seen.add(s.id);
+      return true;
+    });
+  }, [systems]);
 
   useEffect(() => {
     if (open) {
@@ -106,6 +120,7 @@ export const AddTrainingWizard: React.FC<AddTrainingWizardProps> = ({
       setDeliveryMethods([]);
       setTargetAudience([]);
       setCustomAudience('');
+      setShowCustomInput(false);
       setSelectedSystemIds([]);
       setSystemSearch('');
       setDurationDays('');
@@ -124,20 +139,30 @@ export const AddTrainingWizard: React.FC<AddTrainingWizardProps> = ({
     if (trimmed && !targetAudience.includes(trimmed)) {
       setTargetAudience(prev => [...prev, trimmed]);
       setCustomAudience('');
+      setShowCustomInput(false);
     }
   };
 
   const toggleSystem = (id: string) =>
     setSelectedSystemIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
 
-  const filteredSystems = systems.filter((s: any) =>
+  const filteredSystems = uniqueSystems.filter((s: any) =>
     s.name?.toLowerCase().includes(systemSearch.toLowerCase()) ||
     s.system_id?.toLowerCase().includes(systemSearch.toLowerCase())
   );
 
   const canProceed = (s: number) => {
     if (s === 0) return title.trim().length > 0;
-    return true; // Other steps are optional
+    return true;
+  };
+
+  const formatDisplayDate = (dateStr: string) => {
+    if (!dateStr) return '';
+    try {
+      return format(new Date(dateStr), 'do MMM yyyy');
+    } catch {
+      return dateStr;
+    }
   };
 
   const handleSubmit = () => {
@@ -182,7 +207,7 @@ export const AddTrainingWizard: React.FC<AddTrainingWizardProps> = ({
                   <button
                     onClick={() => i <= step && setStep(i)}
                     className={cn(
-                      'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all',
+                      'flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all',
                       isActive && 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
                       isComplete && 'text-emerald-600 dark:text-emerald-400 cursor-pointer hover:bg-emerald-500/5',
                       !isActive && !isComplete && 'text-muted-foreground/50'
@@ -197,11 +222,11 @@ export const AddTrainingWizard: React.FC<AddTrainingWizardProps> = ({
                     )}>
                       {isComplete ? <Check className="w-3 h-3" /> : i + 1}
                     </div>
-                    <span className="hidden sm:inline">{s.title}</span>
+                    <span className="hidden sm:inline text-[11px]">{s.title}</span>
                   </button>
                   {i < STEPS.length - 1 && (
                     <div className={cn(
-                      'flex-1 h-px max-w-[20px]',
+                      'flex-1 h-px max-w-[12px]',
                       i < step ? 'bg-emerald-500/30' : 'bg-border'
                     )} />
                   )}
@@ -236,8 +261,10 @@ export const AddTrainingWizard: React.FC<AddTrainingWizardProps> = ({
               customAudience={customAudience}
               setCustomAudience={setCustomAudience}
               addCustomAudience={addCustomAudience}
+              showCustomInput={showCustomInput}
+              setShowCustomInput={setShowCustomInput}
               systems={filteredSystems}
-              allSystems={systems}
+              allSystems={uniqueSystems}
               systemsLoading={systemsLoading}
               selectedSystemIds={selectedSystemIds}
               toggleSystem={toggleSystem}
@@ -251,6 +278,21 @@ export const AddTrainingWizard: React.FC<AddTrainingWizardProps> = ({
               setDurationDays={setDurationDays}
               tentativeDate={tentativeDate}
               setTentativeDate={setTentativeDate}
+              formatDisplayDate={formatDisplayDate}
+            />
+          )}
+          {step === 4 && (
+            <StepReview
+              title={title}
+              overview={overview}
+              provider={provider}
+              deliveryMethods={deliveryMethods}
+              targetAudience={targetAudience}
+              selectedSystemIds={selectedSystemIds}
+              allSystems={uniqueSystems}
+              durationDays={durationDays}
+              tentativeDate={tentativeDate}
+              formatDisplayDate={formatDisplayDate}
             />
           )}
         </div>
@@ -267,7 +309,7 @@ export const AddTrainingWizard: React.FC<AddTrainingWizardProps> = ({
             {step === 0 ? 'Cancel' : 'Back'}
           </Button>
           <div className="flex items-center gap-2">
-            {!isLastStep && (
+            {!isLastStep && step < 3 && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -320,7 +362,7 @@ const StepOverview: React.FC<{
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         placeholder="e.g., DCS Operations & Configuration Training"
-        className="text-sm"
+        className="text-sm font-medium border-foreground/20"
         autoFocus
       />
     </div>
@@ -333,7 +375,7 @@ const StepOverview: React.FC<{
         onChange={(e) => setOverview(e.target.value)}
         placeholder="Describe the expected outcomes, key learning objectives, and why this training is necessary..."
         rows={5}
-        className="text-sm resize-none"
+        className="text-sm resize-none border-foreground/20"
       />
       <p className="text-[10px] text-muted-foreground">
         Include expected competencies, business need, or regulatory requirement driving this training.
@@ -347,7 +389,7 @@ const StepProviderDelivery: React.FC<{
   provider: string; setProvider: (v: string) => void;
   deliveryMethods: string[]; toggleDelivery: (id: string) => void;
 }> = ({ provider, setProvider, deliveryMethods, toggleDelivery }) => (
-  <div className="space-y-5">
+  <div className="space-y-6">
     <div>
       <p className="text-sm font-medium text-foreground mb-1">Who delivers and how?</p>
       <p className="text-xs text-muted-foreground mb-3">Specify the training provider and preferred delivery format.</p>
@@ -360,10 +402,9 @@ const StepProviderDelivery: React.FC<{
         value={provider}
         onChange={(e) => setProvider(e.target.value)}
         placeholder="e.g., Siemens, Schlumberger, Honeywell, Internal SME"
-        className="text-sm"
+        className="text-sm font-medium border-foreground/20"
         autoFocus
       />
-      <p className="text-[10px] text-muted-foreground">OEM, vendor, or internal subject matter expert responsible for delivery.</p>
     </div>
     <div className="space-y-2">
       <label className="text-[11px] uppercase tracking-wide font-semibold text-muted-foreground">
@@ -403,7 +444,6 @@ const StepProviderDelivery: React.FC<{
           );
         })}
       </div>
-      <p className="text-[10px] text-muted-foreground">Select one or more delivery formats. Multiple can be combined.</p>
     </div>
   </div>
 );
@@ -415,6 +455,8 @@ const StepAudienceSystems: React.FC<{
   customAudience: string;
   setCustomAudience: (v: string) => void;
   addCustomAudience: () => void;
+  showCustomInput: boolean;
+  setShowCustomInput: (v: boolean) => void;
   systems: any[];
   allSystems: any[];
   systemsLoading: boolean;
@@ -424,11 +466,12 @@ const StepAudienceSystems: React.FC<{
   setSystemSearch: (v: string) => void;
 }> = ({
   targetAudience, toggleAudience, customAudience, setCustomAudience, addCustomAudience,
+  showCustomInput, setShowCustomInput,
   systems, allSystems, systemsLoading, selectedSystemIds, toggleSystem, systemSearch, setSystemSearch,
 }) => (
-  <div className="space-y-5">
+  <div className="space-y-6">
     {/* Target Audience */}
-    <div className="space-y-2">
+    <div className="space-y-2.5">
       <label className="text-[11px] uppercase tracking-wide font-semibold text-muted-foreground">
         Target Audience
       </label>
@@ -464,22 +507,40 @@ const StepAudienceSystems: React.FC<{
           ))}
         </div>
       )}
-      <div className="flex gap-2">
-        <Input
-          value={customAudience}
-          onChange={(e) => setCustomAudience(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomAudience())}
-          placeholder="Add custom audience, e.g., EX Inspection candidates..."
-          className="text-xs h-8"
-        />
-        <Button size="sm" variant="outline" className="h-8 text-xs shrink-0" onClick={addCustomAudience} disabled={!customAudience.trim()}>
-          Add
-        </Button>
-      </div>
+      {/* Inline add custom audience */}
+      {showCustomInput ? (
+        <div className="flex gap-2">
+          <Input
+            value={customAudience}
+            onChange={(e) => setCustomAudience(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') { e.preventDefault(); addCustomAudience(); }
+              if (e.key === 'Escape') { setShowCustomInput(false); setCustomAudience(''); }
+            }}
+            placeholder="e.g., EX Inspection candidates"
+            className="text-xs h-8 border-foreground/20"
+            autoFocus
+          />
+          <Button size="sm" variant="outline" className="h-8 text-xs shrink-0" onClick={addCustomAudience} disabled={!customAudience.trim()}>
+            Add
+          </Button>
+          <Button size="sm" variant="ghost" className="h-8 text-xs shrink-0 px-2" onClick={() => { setShowCustomInput(false); setCustomAudience(''); }}>
+            <X className="w-3.5 h-3.5" />
+          </Button>
+        </div>
+      ) : (
+        <button
+          onClick={() => setShowCustomInput(true)}
+          className="flex items-center gap-1.5 text-[11px] text-primary hover:text-primary/80 transition-colors font-medium"
+        >
+          <Plus className="w-3.5 h-3.5" />
+          Add custom audience
+        </button>
+      )}
     </div>
 
     {/* Applicable Systems */}
-    <div className="space-y-2">
+    <div className="space-y-2.5">
       <div className="flex items-center justify-between">
         <label className="text-[11px] uppercase tracking-wide font-semibold text-muted-foreground flex items-center gap-1.5">
           <Layers className="w-3.5 h-3.5" />
@@ -498,10 +559,10 @@ const StepAudienceSystems: React.FC<{
           value={systemSearch}
           onChange={(e) => setSystemSearch(e.target.value)}
           placeholder="Search systems..."
-          className="pl-8 h-8 text-xs"
+          className="pl-8 h-8 text-xs border-foreground/20"
         />
       </div>
-      <div className="border rounded-lg overflow-hidden">
+      <div className="border rounded-lg overflow-hidden border-foreground/10">
         <ScrollArea className="h-[140px]">
           {systemsLoading ? (
             <div className="p-3 space-y-2">
@@ -513,7 +574,7 @@ const StepAudienceSystems: React.FC<{
           ) : systems.length === 0 ? (
             <div className="text-center py-6 text-xs text-muted-foreground">No systems match your search</div>
           ) : (
-            <div className="divide-y">
+            <div className="divide-y divide-border/50">
               {systems.map((sys: any) => {
                 const isSelected = selectedSystemIds.includes(sys.id);
                 return (
@@ -521,7 +582,7 @@ const StepAudienceSystems: React.FC<{
                     key={sys.id}
                     onClick={() => toggleSystem(sys.id)}
                     className={cn(
-                      'flex items-center gap-2.5 px-3 py-2 cursor-pointer transition-colors text-xs',
+                      'flex items-center gap-2.5 px-3 py-2.5 cursor-pointer transition-colors text-xs',
                       isSelected ? 'bg-blue-500/5' : 'hover:bg-accent/50'
                     )}
                   >
@@ -529,14 +590,12 @@ const StepAudienceSystems: React.FC<{
                       checked={isSelected}
                       className="data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
                     />
-                    {sys.is_hydrocarbon ? (
+                    {sys.is_hydrocarbon && (
                       <Flame className="w-3.5 h-3.5 text-orange-500 shrink-0" />
-                    ) : (
-                      <Snowflake className="w-3.5 h-3.5 text-blue-500 shrink-0" />
                     )}
                     <div className="min-w-0 flex-1">
                       <div className="font-medium truncate">{sys.name}</div>
-                      <div className="text-[10px] text-muted-foreground font-mono">{sys.system_id}</div>
+                      <div className="text-[10px] text-muted-foreground/60 font-mono">{sys.system_id}</div>
                     </div>
                   </div>
                 );
@@ -553,13 +612,14 @@ const StepAudienceSystems: React.FC<{
 const StepSchedule: React.FC<{
   durationDays: string; setDurationDays: (v: string) => void;
   tentativeDate: string; setTentativeDate: (v: string) => void;
-}> = ({ durationDays, setDurationDays, tentativeDate, setTentativeDate }) => (
-  <div className="space-y-5">
+  formatDisplayDate: (d: string) => string;
+}> = ({ durationDays, setDurationDays, tentativeDate, setTentativeDate, formatDisplayDate }) => (
+  <div className="space-y-6">
     <div>
       <p className="text-sm font-medium text-foreground mb-1">When and how long?</p>
       <p className="text-xs text-muted-foreground mb-3">Set the estimated duration and a tentative start date.</p>
     </div>
-    <div className="grid grid-cols-2 gap-4">
+    <div className="grid grid-cols-2 gap-5">
       <div className="space-y-2">
         <label className="text-[11px] uppercase tracking-wide font-semibold text-muted-foreground">
           Estimated Duration
@@ -572,11 +632,10 @@ const StepSchedule: React.FC<{
             value={durationDays}
             onChange={(e) => setDurationDays(e.target.value)}
             placeholder="e.g., 5"
-            className="text-sm pr-12"
+            className="text-sm font-medium pr-12 border-foreground/20"
           />
           <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">days</span>
         </div>
-        <p className="text-[10px] text-muted-foreground">Total training days including assessments</p>
       </div>
       <div className="space-y-2">
         <label className="text-[11px] uppercase tracking-wide font-semibold text-muted-foreground">
@@ -586,29 +645,106 @@ const StepSchedule: React.FC<{
           type="date"
           value={tentativeDate}
           onChange={(e) => setTentativeDate(e.target.value)}
-          className="text-sm"
+          className="text-sm font-medium border-foreground/20"
         />
-        <p className="text-[10px] text-muted-foreground">Estimated date for training to commence</p>
-      </div>
-    </div>
-
-    {/* Summary Preview */}
-    <div className="mt-6 p-4 rounded-xl bg-muted/40 border border-dashed space-y-2">
-      <p className="text-[11px] uppercase tracking-wide font-semibold text-muted-foreground flex items-center gap-1.5">
-        <Sparkles className="w-3.5 h-3.5" />
-        Quick Summary
-      </p>
-      <div className="text-xs text-muted-foreground space-y-1">
-        {durationDays && (
-          <p>Duration: <span className="text-foreground font-medium">{durationDays} day{parseFloat(durationDays) !== 1 ? 's' : ''}</span></p>
-        )}
         {tentativeDate && (
-          <p>Start: <span className="text-foreground font-medium">{new Date(tentativeDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span></p>
-        )}
-        {!durationDays && !tentativeDate && (
-          <p className="italic">No schedule details provided yet — these can be added later.</p>
+          <p className="text-[10px] text-foreground/70 font-medium">{formatDisplayDate(tentativeDate)}</p>
         )}
       </div>
     </div>
   </div>
 );
+
+/* ───── Step 4: Review & Confirm ───── */
+const StepReview: React.FC<{
+  title: string;
+  overview: string;
+  provider: string;
+  deliveryMethods: string[];
+  targetAudience: string[];
+  selectedSystemIds: string[];
+  allSystems: any[];
+  durationDays: string;
+  tentativeDate: string;
+  formatDisplayDate: (d: string) => string;
+}> = ({ title, overview, provider, deliveryMethods, targetAudience, selectedSystemIds, allSystems, durationDays, tentativeDate, formatDisplayDate }) => {
+  const selectedSystems = allSystems.filter(s => selectedSystemIds.includes(s.id));
+
+  const ReviewRow: React.FC<{ label: string; icon: React.ElementType; children: React.ReactNode; empty?: boolean }> = ({ label, icon: Icon, children, empty }) => (
+    <div className="flex gap-3 py-2.5">
+      <div className="w-7 h-7 rounded-lg bg-muted/60 flex items-center justify-center shrink-0 mt-0.5">
+        <Icon className="w-3.5 h-3.5 text-muted-foreground" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold mb-0.5">{label}</p>
+        {empty ? (
+          <p className="text-xs text-muted-foreground/50 italic">Not specified</p>
+        ) : (
+          <div className="text-sm text-foreground">{children}</div>
+        )}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="space-y-1">
+      <div className="mb-3">
+        <p className="text-sm font-medium text-foreground mb-1">Review your training item</p>
+        <p className="text-xs text-muted-foreground">Confirm the details below before creating.</p>
+      </div>
+
+      <ScrollArea className="h-[280px] -mx-1 px-1">
+        <div className="divide-y divide-border/40">
+          <ReviewRow label="Training Title" icon={BookOpen}>
+            <span className="font-semibold">{title}</span>
+          </ReviewRow>
+
+          <ReviewRow label="Objective & Justification" icon={BookOpen} empty={!overview}>
+            <p className="text-xs leading-relaxed line-clamp-3">{overview}</p>
+          </ReviewRow>
+
+          <ReviewRow label="Provider" icon={Building2} empty={!provider}>
+            <span className="font-medium">{provider}</span>
+          </ReviewRow>
+
+          <ReviewRow label="Delivery Format" icon={MapPin} empty={deliveryMethods.length === 0}>
+            <div className="flex flex-wrap gap-1.5">
+              {deliveryMethods.map(dm => {
+                const method = DELIVERY_METHODS.find(m => m.id === dm);
+                return (
+                  <Badge key={dm} variant="secondary" className="text-[10px]">
+                    {method?.label || dm}
+                  </Badge>
+                );
+              })}
+            </div>
+          </ReviewRow>
+
+          <ReviewRow label="Target Audience" icon={Users} empty={targetAudience.length === 0}>
+            <div className="flex flex-wrap gap-1">
+              {targetAudience.map(a => (
+                <Badge key={a} variant="outline" className="text-[10px]">{a}</Badge>
+              ))}
+            </div>
+          </ReviewRow>
+
+          <ReviewRow label="Applicable Systems" icon={Layers} empty={selectedSystems.length === 0}>
+            <div className="flex flex-wrap gap-1">
+              {selectedSystems.map(s => (
+                <Badge key={s.id} variant="secondary" className="text-[10px]">{s.name}</Badge>
+              ))}
+            </div>
+          </ReviewRow>
+
+          <ReviewRow label="Duration" icon={Clock} empty={!durationDays}>
+            <span className="font-medium">{durationDays} day{durationDays && parseFloat(durationDays) !== 1 ? 's' : ''}</span>
+          </ReviewRow>
+
+          <ReviewRow label="Tentative Start" icon={CalendarDays} empty={!tentativeDate}>
+            <span className="font-medium">{formatDisplayDate(tentativeDate)}</span>
+          </ReviewRow>
+        </div>
+      </ScrollArea>
+    </div>
+  );
+};
