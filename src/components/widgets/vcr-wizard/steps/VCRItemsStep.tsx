@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
@@ -99,7 +99,7 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
   const { id: projectId } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
-  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string> | null>(null);
   const [editingItem, setEditingItem] = useState<MergedVCRItem | null>(null);
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const [deleteItem, setDeleteItem] = useState<MergedVCRItem | null>(null);
@@ -232,9 +232,18 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
     return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
   });
 
+  // Default all categories to collapsed on first load
+  useEffect(() => {
+    if (collapsedCategories === null && sortedCategories.length > 0) {
+      setCollapsedCategories(new Set(sortedCategories));
+    }
+  }, [sortedCategories, collapsedCategories]);
+
+  const effectiveCollapsed = collapsedCategories ?? new Set<string>();
+
   const toggleCategory = (cat: string) => {
     setCollapsedCategories(prev => {
-      const next = new Set(prev);
+      const next = new Set(prev ?? []);
       next.has(cat) ? next.delete(cat) : next.add(cat);
       return next;
     });
@@ -270,7 +279,7 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
         <div className="space-y-3 pr-4">
           {sortedCategories.map(cat => {
             const catItems = grouped[cat];
-            const isCollapsed = collapsedCategories.has(cat);
+            const isCollapsed = effectiveCollapsed.has(cat);
 
             return (
               <div key={cat}>
