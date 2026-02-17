@@ -1,8 +1,7 @@
 import React from 'react';
-import { Badge } from '@/components/ui/badge';
-import { Calendar, CheckCircle2, Circle, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { format, differenceInDays, isPast, isToday } from 'date-fns';
+import { format } from 'date-fns';
+import { CheckCircle2 } from 'lucide-react';
 
 interface Milestone {
   id: string;
@@ -15,69 +14,13 @@ interface MilestonesTimelineProps {
   milestones: Milestone[];
 }
 
-// Generate milestone code from name (e.g., "RFSU" -> "SD-01", "PAC Handover" -> "SD-02")
-const getMilestoneCode = (name: string, index: number): string => {
-  const prefix = 'SD';
-  const num = String(index + 1).padStart(2, '0');
-  return `${prefix}-${num}`;
-};
-
-const getStatusIcon = (status: string) => {
-  switch (status) {
-    case 'completed':
-      return <CheckCircle2 className="h-4 w-4" />;
-    case 'in_progress':
-      return <Clock className="h-4 w-4" />;
-    default:
-      return <Circle className="h-4 w-4" />;
-  }
-};
-
-const getStatusColors = (status: string, date: string | null) => {
-  const isOverdue = date && isPast(new Date(date)) && status !== 'completed';
-  
-  if (status === 'completed') {
-    return {
-      bg: 'bg-emerald-500',
-      text: 'text-emerald-700 dark:text-emerald-400',
-      border: 'border-emerald-500',
-      badge: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-400',
-    };
-  }
-  if (isOverdue) {
-    return {
-      bg: 'bg-red-500',
-      text: 'text-red-700 dark:text-red-400',
-      border: 'border-red-500',
-      badge: 'bg-red-500/10 border-red-500/30 text-red-700 dark:text-red-400',
-    };
-  }
-  if (status === 'in_progress') {
-    return {
-      bg: 'bg-blue-500',
-      text: 'text-blue-700 dark:text-blue-400',
-      border: 'border-blue-500',
-      badge: 'bg-blue-500/10 border-blue-500/30 text-blue-700 dark:text-blue-400',
-    };
-  }
-  return {
-    bg: 'bg-muted-foreground/40',
-    text: 'text-muted-foreground',
-    border: 'border-muted-foreground/40',
-    badge: 'bg-muted border-border text-muted-foreground',
-  };
-};
-
 export const MilestonesTimeline: React.FC<MilestonesTimelineProps> = ({ milestones }) => {
   if (milestones.length === 0) {
     return (
-      <div className="p-4 rounded-xl bg-muted/20 border border-dashed border-border/30 text-center">
-        <p className="text-sm text-muted-foreground">No milestones defined</p>
-      </div>
+      <p className="text-xs text-muted-foreground text-center py-3">No milestones defined</p>
     );
   }
 
-  // Sort milestones by date
   const sortedMilestones = [...milestones].sort((a, b) => {
     if (!a.milestone_date) return 1;
     if (!b.milestone_date) return -1;
@@ -85,74 +28,43 @@ export const MilestonesTimeline: React.FC<MilestonesTimelineProps> = ({ mileston
   });
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-0">
       {sortedMilestones.map((milestone, index) => {
-        const colors = getStatusColors(milestone.status, milestone.milestone_date);
-        const code = getMilestoneCode(milestone.milestone_name, index);
+        const isCompleted = milestone.status === 'completed';
         const isLast = index === sortedMilestones.length - 1;
-        
+
         return (
-          <div key={milestone.id} className="relative flex gap-3">
-            {/* Timeline line and node */}
-            <div className="flex flex-col items-center">
-              {/* Node */}
+          <div key={milestone.id} className="flex items-center gap-3 py-1.5">
+            {/* Simple dot / check */}
+            <div className="flex flex-col items-center self-stretch">
               <div className={cn(
-                "w-8 h-8 rounded-full flex items-center justify-center text-white shrink-0 shadow-sm",
-                colors.bg
+                "w-5 h-5 rounded-full flex items-center justify-center shrink-0",
+                isCompleted
+                  ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                  : "border-2 border-border bg-background"
               )}>
-                {getStatusIcon(milestone.status)}
+                {isCompleted && <CheckCircle2 className="h-3.5 w-3.5" />}
               </div>
-              {/* Connecting line */}
               {!isLast && (
                 <div className={cn(
-                  "w-0.5 flex-1 min-h-[24px]",
-                  milestone.status === 'completed' ? 'bg-emerald-500/50' : 'bg-border'
+                  "w-px flex-1 min-h-[8px]",
+                  isCompleted ? "bg-emerald-500/30" : "bg-border"
                 )} />
               )}
             </div>
-            
-            {/* Content */}
-            <div className={cn(
-              "flex-1 pb-4",
-              isLast && "pb-0"
-            )}>
-              <div className="flex items-start justify-between gap-2">
-                <div className="space-y-1">
-                  {/* Milestone code badge */}
-                  <Badge 
-                    variant="outline" 
-                    className={cn("text-[10px] font-mono px-1.5 py-0", colors.badge)}
-                  >
-                    {code}
-                  </Badge>
-                  {/* Milestone name */}
-                  <p className="text-sm font-medium">{milestone.milestone_name}</p>
-                </div>
-                
-                {/* Date */}
-                {milestone.milestone_date && (
-                  <div className={cn(
-                    "flex items-center gap-1.5 text-xs shrink-0",
-                    colors.text
-                  )}>
-                    <Calendar className="h-3 w-3" />
-                    <span className="font-medium">
-                      {format(new Date(milestone.milestone_date), 'dd MMM yyyy')}
-                    </span>
-                  </div>
-                )}
-              </div>
-              
-              {/* Status text for non-completed */}
-              {milestone.status !== 'completed' && milestone.milestone_date && (
-                <p className={cn("text-xs mt-1", colors.text)}>
-                  {isPast(new Date(milestone.milestone_date)) 
-                    ? `Overdue by ${Math.abs(differenceInDays(new Date(), new Date(milestone.milestone_date)))} days`
-                    : isToday(new Date(milestone.milestone_date))
-                      ? 'Due today'
-                      : `${differenceInDays(new Date(milestone.milestone_date), new Date())} days remaining`
-                  }
-                </p>
+
+            {/* Name + Date inline */}
+            <div className="flex items-center justify-between flex-1 min-w-0">
+              <span className={cn(
+                "text-xs truncate",
+                isCompleted ? "text-muted-foreground line-through" : "text-foreground font-medium"
+              )}>
+                {milestone.milestone_name}
+              </span>
+              {milestone.milestone_date && (
+                <span className="text-[11px] text-muted-foreground tabular-nums shrink-0 ml-2">
+                  {format(new Date(milestone.milestone_date), 'dd MMM yy')}
+                </span>
               )}
             </div>
           </div>
