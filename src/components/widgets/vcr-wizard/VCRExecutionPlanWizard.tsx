@@ -16,7 +16,7 @@ import {
   BookOpen,
   Package,
   FileText,
-  Layers,
+  ClipboardList,
   Check,
   ChevronRight,
   ChevronLeft,
@@ -30,7 +30,7 @@ import { TrainingStep } from './steps/TrainingStep';
 import { ProceduresStep } from './steps/ProceduresStep';
 import { DeliverablesStep } from './steps/DeliverablesStep';
 import { OperationalRegistersStep } from './steps/OperationalRegistersStep';
-import { SystemsStep } from './steps/SystemsStep';
+import { InspectionTestPlanStep } from './steps/InspectionTestPlanStep';
 import { ApproversStep } from './steps/ApproversStep';
 
 interface VCRExecutionPlanWizardProps {
@@ -46,7 +46,7 @@ const STEPS = [
   { id: 'procedures', label: 'Procedures', icon: BookOpen, color: 'text-emerald-500' },
   { id: 'deliverables', label: 'Deliverables', icon: Package, color: 'text-amber-500' },
   { id: 'registers', label: 'Log Sheets & Registers', icon: FileText, color: 'text-cyan-500' },
-  { id: 'systems', label: 'Systems', icon: Layers, color: 'text-orange-500' },
+  { id: 'itp', label: 'Inspection Test Plan', icon: ClipboardList, color: 'text-orange-500' },
   { id: 'approvers', label: 'Approvers', icon: UserCheck, color: 'text-primary' },
 ];
 
@@ -92,7 +92,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
       case 4:
         return <OperationalRegistersStep vcrId={vcr.id} />;
       case 5:
-        return <SystemsStep vcrId={vcr.id} projectCode={projectCode} />;
+        return <InspectionTestPlanStep vcrId={vcr.id} projectCode={projectCode} />;
       case 6:
         return <ApproversStep vcrId={vcr.id} />;
       default:
@@ -266,7 +266,7 @@ function getStepDescription(step: number): string {
     case 2: return 'List all procedures that need to be developed';
     case 3: return 'List Tier 1 & Tier 2 deliverables';
     case 4: return 'Define operational log sheets and registers to be developed';
-    case 5: return 'Review and edit systems mapped to this VCR';
+    case 5: return 'Define witness and hold points for each system';
     case 6: return 'Review and confirm the default approvers for this VCR';
     default: return '';
   }
