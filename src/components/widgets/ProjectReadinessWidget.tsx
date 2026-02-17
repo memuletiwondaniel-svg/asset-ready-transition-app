@@ -127,31 +127,11 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
             </span>
           </div>
           
-          {/* Location Badges */}
-          {project && (
-            <div className="flex flex-wrap gap-2">
-              {/* Plant Badge */}
-              {plant && (
-                <Badge 
-                  variant="outline" 
-                  className="bg-blue-500/10 border-blue-500/20 text-blue-700 dark:text-blue-400 px-3 py-1.5 text-xs font-medium hover:bg-blue-500/15 transition-colors"
-                >
-                  <Building className="h-3.5 w-3.5 mr-1.5" />
-                  {plant.name}
-                </Badge>
-              )}
-              
-              {/* Station Badge */}
-              {station && (
-                <Badge 
-                  variant="outline" 
-                  className="bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-400 px-3 py-1.5 text-xs font-medium hover:bg-emerald-500/15 transition-colors"
-                >
-                  <MapPin className="h-3.5 w-3.5 mr-1.5" />
-                  {station.name}
-                </Badge>
-              )}
-            </div>
+          {/* Location Labels */}
+          {project && (plant || station) && (
+            <p className="text-xs text-muted-foreground">
+              {[plant?.name, station?.name].filter(Boolean).join(' · ')}
+            </p>
           )}
         </div>
       </CardHeader>
