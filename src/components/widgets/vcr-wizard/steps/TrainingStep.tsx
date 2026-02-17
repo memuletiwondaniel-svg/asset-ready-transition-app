@@ -30,6 +30,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useHandoverPointSystems } from '@/components/p2a-workspace/hooks/useP2AHandoverPoints';
 import { AddTrainingWizard } from './AddTrainingWizard';
+import { TrainingDetailSheet } from './TrainingDetailSheet';
 
 interface TrainingStepProps {
   vcrId: string;
@@ -98,6 +99,7 @@ export const TrainingStep: React.FC<TrainingStepProps> = ({ vcrId }) => {
   });
 
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [detailItem, setDetailItem] = useState<any | null>(null);
 
   return (
     <div className="space-y-4">
@@ -128,53 +130,71 @@ export const TrainingStep: React.FC<TrainingStepProps> = ({ vcrId }) => {
       ) : (
         <ScrollArea className="h-[calc(min(90vh,780px)-280px)]">
           <div className="space-y-2 pr-4">
-            {items.map((item: any) => (
-              <Card key={item.id} className="group hover:border-blue-500/40 transition-colors">
-                <CardContent className="p-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <GraduationCap className="w-4 h-4 text-blue-500 shrink-0" />
-                        <h4 className="font-medium text-sm truncate">{item.title}</h4>
-                      </div>
-                      {item.description && (
-                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{item.description}</p>
-                      )}
-                      <div className="flex flex-wrap gap-3 mt-2 text-[10px] text-muted-foreground">
-                        {item.training_provider && (
-                          <span className="flex items-center gap-1"><Building className="w-3 h-3" />{item.training_provider}</span>
-                        )}
-                        {item.duration_hours && (
-                          <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{Math.round(item.duration_hours / 8)} day{Math.round(item.duration_hours / 8) !== 1 ? 's' : ''}</span>
-                        )}
-                        {item.tentative_date && (
-                          <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{item.tentative_date}</span>
-                        )}
-                        {item.delivery_method?.map((dm: string) => {
-                          const Icon = DELIVERY_ICONS[dm] || MapPin;
-                          return (
-                            <span key={dm} className="flex items-center gap-1"><Icon className="w-3 h-3" />{dm}</span>
-                          );
-                        })}
-                      </div>
-                      {item.target_audience?.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {item.target_audience.map((a: string) => (
-                            <Badge key={a} variant="secondary" className="text-[9px]">{a}</Badge>
-                          ))}
+            {items.map((item: any, index: number) => {
+              const hueOffset = index * 137.5; // golden angle for distinct hues
+              return (
+                <Card
+                  key={item.id}
+                  className="group cursor-pointer transition-all duration-200 hover:shadow-md hover:scale-[1.01]"
+                  style={{
+                    borderColor: `hsl(${(210 + hueOffset) % 360}, 60%, 70%, 0.15)`,
+                  }}
+                  onClick={() => setDetailItem(item)}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = `hsl(${(210 + hueOffset) % 360}, 60%, 60%, 0.5)`;
+                    e.currentTarget.style.backgroundColor = `hsl(${(210 + hueOffset) % 360}, 60%, 95%, 0.3)`;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = `hsl(${(210 + hueOffset) % 360}, 60%, 70%, 0.15)`;
+                    e.currentTarget.style.backgroundColor = '';
+                  }}
+                >
+                  <CardContent className="p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <GraduationCap className="w-4 h-4 shrink-0" style={{ color: `hsl(${(210 + hueOffset) % 360}, 55%, 50%)` }} />
+                          <h4 className="font-medium text-sm truncate">{item.title}</h4>
                         </div>
-                      )}
+                        {item.description && (
+                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{item.description}</p>
+                        )}
+                        <div className="flex flex-wrap gap-3 mt-2 text-[10px] text-muted-foreground">
+                          {item.training_provider && (
+                            <span className="flex items-center gap-1"><Building className="w-3 h-3" />{item.training_provider}</span>
+                          )}
+                          {item.duration_hours && (
+                            <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{Math.round(item.duration_hours / 8)} day{Math.round(item.duration_hours / 8) !== 1 ? 's' : ''}</span>
+                          )}
+                          {item.tentative_date && (
+                            <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{item.tentative_date}</span>
+                          )}
+                          {item.delivery_method?.map((dm: string) => {
+                            const Icon = DELIVERY_ICONS[dm] || MapPin;
+                            return (
+                              <span key={dm} className="flex items-center gap-1"><Icon className="w-3 h-3" />{dm}</span>
+                            );
+                          })}
+                        </div>
+                        {item.target_audience?.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {item.target_audience.map((a: string) => (
+                              <Badge key={a} variant="secondary" className="text-[9px]">{a}</Badge>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setDeleteTarget(item.id); }}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md hover:bg-destructive/10 text-destructive shrink-0"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
-                    <button
-                      onClick={() => setDeleteTarget(item.id)}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md hover:bg-destructive/10 text-destructive shrink-0"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </ScrollArea>
       )}
@@ -187,6 +207,13 @@ export const TrainingStep: React.FC<TrainingStepProps> = ({ vcrId }) => {
         systemsLoading={systemsLoading}
         onSubmit={(item) => addItem.mutate(item)}
         isSaving={addItem.isPending}
+      />
+
+      {/* Training Detail Sheet */}
+      <TrainingDetailSheet
+        open={!!detailItem}
+        onOpenChange={(open) => !open && setDetailItem(null)}
+        item={detailItem}
       />
 
       {/* Delete */}
