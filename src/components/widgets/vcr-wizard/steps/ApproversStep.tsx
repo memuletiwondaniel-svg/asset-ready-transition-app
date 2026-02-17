@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Users, UserCheck, AlertCircle } from 'lucide-react';
+import { Users, X, Plus } from 'lucide-react';
 
 interface ApproversStepProps {
   vcrId: string;
@@ -37,8 +37,6 @@ const DEFAULT_APPROVER_ROLES = [
   'Deputy Plant Director',
 ];
 
-// Hub names don't always match region suffixes in position titles.
-// e.g. Hub "Zubair" → positions use "Central"; Hub "UQ" → "UQ", etc.
 const HUB_TO_REGION: Record<string, string[]> = {
   zubair: ['central'],
   north: ['north'],
@@ -50,29 +48,24 @@ const HUB_TO_REGION: Record<string, string[]> = {
   central: ['central'],
 };
 
-/**
- * Get the region keywords to match in position strings for a given hub name.
- * Falls back to the hub name itself if no explicit mapping exists.
- */
 const getRegionKeywords = (hubName: string): string[] => {
   const lower = hubName.toLowerCase();
   return HUB_TO_REGION[lower] || [lower];
 };
 
-/**
- * Check if a position string contains any of the region keywords.
- */
 const posMatchesRegion = (pos: string, regionKeywords: string[]): boolean => {
   return regionKeywords.some(kw => pos.includes(kw));
 };
 
 export const ApproversStep: React.FC<ApproversStepProps> = ({ vcrId }) => {
+  const [removedIndices, setRemovedIndices] = useState<Set<number>>(new Set());
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
+
   const { data: approvers, isLoading } = useQuery<ResolvedApprover[]>({
     queryKey: ['vcr-exec-plan-approvers', vcrId],
     queryFn: async () => {
       const client = supabase as any;
 
-      // Resolve project context from VCR
       const { data: hp } = await client
         .from('p2a_handover_points')
         .select('handover_plan_id')
@@ -114,7 +107,6 @@ export const ApproversStep: React.FC<ApproversStepProps> = ({ vcrId }) => {
       const regionKeywords = hubName ? getRegionKeywords(hubName) : [];
 
       return DEFAULT_APPROVER_ROLES.map((role) => {
-        // Find ALL candidates, then pick the best one
         const candidates = allProfiles.filter((p: any) => {
           const pos = (p.position || '').toLowerCase().replace(/–/g, '-').replace(/—/g, '-');
 
@@ -128,7 +120,6 @@ export const ApproversStep: React.FC<ApproversStepProps> = ({ vcrId }) => {
             return pos.includes('construction') && pos.includes('lead');
           }
           if (role === 'Project Hub Lead') {
-            // Hub Lead must match exact hub name (e.g. "Zubair")
             const hubLower = hubName.toLowerCase();
             return pos.includes('project hub lead') && (hubLower ? pos.includes(hubLower) : true);
           }
@@ -138,18 +129,15 @@ export const ApproversStep: React.FC<ApproversStepProps> = ({ vcrId }) => {
           return false;
         });
 
-        // For roles that use region (not hub name directly), rank by region match + avatar
         let match: any = null;
         if (candidates.length === 1) {
           match = candidates[0];
         } else if (candidates.length > 1 && regionKeywords.length > 0) {
-          // Prefer candidates whose position matches the region
           const regionMatches = candidates.filter((p: any) => {
             const pos = (p.position || '').toLowerCase().replace(/–/g, '-').replace(/—/g, '-');
             return posMatchesRegion(pos, regionKeywords);
           });
           const pool = regionMatches.length > 0 ? regionMatches : candidates;
-          // Tiebreak: prefer candidate with avatar
           match = pool.find((p: any) => p.avatar_url) || pool[0];
         } else if (candidates.length > 1) {
           match = candidates.find((p: any) => p.avatar_url) || candidates[0];
@@ -164,6 +152,17 @@ export const ApproversStep: React.FC<ApproversStepProps> = ({ vcrId }) => {
       });
     },
   });
+
+  const visibleApprovers = approvers?.filter((_, idx) => !removedIndices.has(idx)) || [];
+  const totalResolved = visibleApprovers.filter(a => a.name).length;
+
+  const handleRemove = (originalIdx: number) => {
+    setRemovedIndices(prev => new Set(prev).add(originalIdx));
+  };
+
+  const handleAdd = () => {
+    // TODO: open a picker to add a new approver
+  };
 
   if (isLoading) {
     return (
@@ -183,51 +182,74 @@ export const ApproversStep: React.FC<ApproversStepProps> = ({ vcrId }) => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-        <Users className="w-3.5 h-3.5" />
-        <span>{approvers?.filter(a => a.name).length || 0} of {DEFAULT_APPROVER_ROLES.length} approvers resolved</span>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Users className="w-3.5 h-3.5" />
+          <span>{totalResolved} of {visibleApprovers.length} approvers resolved</span>
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+          onClick={handleAdd}
+        >
+          <Plus className="w-3.5 h-3.5" />
+          Add
+        </Button>
       </div>
 
       <div className="space-y-1">
-        {approvers?.map((approver, idx) => (
-          <div
-            key={approver.role}
-            className="flex items-center gap-3 p-3 rounded-lg border border-border/60 bg-card hover:bg-muted/30 transition-colors"
-          >
-            {/* Sequence number */}
-            <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center shrink-0">
-              <span className="text-[10px] font-semibold text-muted-foreground">{idx + 1}</span>
-            </div>
+        {approvers?.map((approver, idx) => {
+          if (removedIndices.has(idx)) return null;
+          const seqNum = approvers.slice(0, idx + 1).filter((_, i) => !removedIndices.has(i)).length;
+          const isHovered = hoveredIdx === idx;
 
-            {/* Avatar */}
-            <Avatar className="w-9 h-9 shrink-0">
-              {approver.avatarUrl && <AvatarImage src={approver.avatarUrl} alt={approver.name} />}
-              <AvatarFallback className="text-[10px] font-semibold bg-muted text-muted-foreground">
-                {getInitials(approver.name)}
-              </AvatarFallback>
-            </Avatar>
-
-            {/* Info */}
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-medium text-foreground truncate">
-                {approver.name || <span className="italic text-muted-foreground">Unassigned</span>}
+          return (
+            <div
+              key={`${approver.role}-${idx}`}
+              className="group flex items-center gap-3 p-3 rounded-lg border border-border/60 bg-card hover:bg-muted/30 transition-colors"
+              onMouseEnter={() => setHoveredIdx(idx)}
+              onMouseLeave={() => setHoveredIdx(null)}
+            >
+              {/* Sequence number */}
+              <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center shrink-0">
+                <span className="text-[10px] font-semibold text-muted-foreground">{seqNum}</span>
               </div>
-              <div className="text-[11px] text-muted-foreground truncate">{approver.position}</div>
+
+              {/* Avatar */}
+              <Avatar className="w-9 h-9 shrink-0">
+                {approver.avatarUrl && <AvatarImage src={approver.avatarUrl} alt={approver.name} />}
+                <AvatarFallback className="text-[10px] font-semibold bg-muted text-muted-foreground">
+                  {getInitials(approver.name)}
+                </AvatarFallback>
+              </Avatar>
+
+              {/* Info */}
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium text-foreground truncate">
+                  {approver.name || <span className="italic text-muted-foreground">Unassigned</span>}
+                </div>
+                <div className="text-[11px] text-muted-foreground truncate">{approver.position}</div>
+              </div>
+
+              {/* Delete button on hover */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRemove(idx);
+                }}
+                className={`shrink-0 w-7 h-7 rounded-md flex items-center justify-center transition-all ${
+                  isHovered
+                    ? 'opacity-100 bg-destructive/10 text-destructive hover:bg-destructive/20'
+                    : 'opacity-0 pointer-events-none'
+                }`}
+                title="Remove approver"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
             </div>
-
-            {/* Role badge */}
-            <Badge variant="outline" className="text-[10px] shrink-0 font-normal">
-              {approver.role}
-            </Badge>
-
-            {/* Resolved indicator — means person found, NOT approved */}
-            {approver.name ? (
-              <UserCheck className="w-4 h-4 text-muted-foreground/60 shrink-0" />
-            ) : (
-              <AlertCircle className="w-4 h-4 text-destructive/60 shrink-0" />
-            )}
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
