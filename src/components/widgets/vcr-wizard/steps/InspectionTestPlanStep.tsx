@@ -288,7 +288,7 @@ export const InspectionTestPlanStep: React.FC<InspectionTestPlanStepProps> = ({ 
                       className={cn(
                         'group',
                         idx < activities.length - 1 && 'border-b-0',
-                        isFirst && sysIdx > 0 && 'border-t-[3px] border-t-muted',
+                        isFirst && sysIdx > 0 && 'border-t-8 border-t-muted/60',
                       )}
                     >
                       {/* System cell – only rendered on first row, spans all activities */}
@@ -321,7 +321,7 @@ export const InspectionTestPlanStep: React.FC<InspectionTestPlanStepProps> = ({ 
                         ) : (
                           <Badge
                             className={cn(
-                              'text-[9px] font-bold px-1.5 py-0',
+                              'text-[8px] font-bold px-1 py-0 leading-none',
                               row.inspection_type === 'WITNESS'
                                 ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-700'
                                 : 'bg-red-500/15 text-red-700 dark:text-red-400 border-red-300 dark:border-red-700',
