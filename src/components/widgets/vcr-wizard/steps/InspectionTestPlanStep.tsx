@@ -52,31 +52,32 @@ export const InspectionTestPlanStep: React.FC<InspectionTestPlanStepProps> = ({ 
   const [openSystems, setOpenSystems] = useState<Set<string>>(new Set());
   const [localActivities, setLocalActivities] = useState<Map<string, ITPActivity[]>>(new Map());
 
-  // Fetch mapped systems — deduplicate to parent system level
+  // Fetch mapped systems — two-step query to avoid FK ambiguity, deduplicated to system level
   const { data: systems = [], isLoading: loadingSystems } = useQuery({
     queryKey: ['itp-systems', vcrId],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
+      // Step 1: Get unique system IDs from mapping table
+      const { data: mappings, error: mapErr } = await (supabase as any)
         .from('p2a_handover_point_systems')
-        .select('system_id, p2a_systems!inner(id, name, system_id, is_hydrocarbon)')
+        .select('system_id')
         .eq('handover_point_id', vcrId);
-      if (error) throw error;
-      // Deduplicate by system UUID
-      const seen = new Set<string>();
-      const result: MappedSystem[] = [];
-      for (const row of data || []) {
-        const sysId = row.p2a_systems?.id;
-        if (sysId && !seen.has(sysId)) {
-          seen.add(sysId);
-          result.push({
-            systemId: sysId,
-            name: row.p2a_systems?.name || 'Unknown',
-            systemCode: row.p2a_systems?.system_id || '',
-            isHydrocarbon: row.p2a_systems?.is_hydrocarbon || false,
-          });
-        }
-      }
-      return result;
+      if (mapErr) throw mapErr;
+      const uniqueIds = [...new Set((mappings || []).map((r: any) => r.system_id))] as string[];
+      if (uniqueIds.length === 0) return [];
+
+      // Step 2: Fetch system details
+      const { data: sysData, error: sysErr } = await (supabase as any)
+        .from('p2a_systems')
+        .select('id, name, system_id, is_hydrocarbon')
+        .in('id', uniqueIds)
+        .order('name');
+      if (sysErr) throw sysErr;
+      return (sysData || []).map((s: any) => ({
+        systemId: s.id,
+        name: s.name || 'Unknown',
+        systemCode: s.system_id || '',
+        isHydrocarbon: s.is_hydrocarbon || false,
+      })) as MappedSystem[];
     },
   });
 
