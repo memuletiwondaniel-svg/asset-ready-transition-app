@@ -1,54 +1,73 @@
 
 
-## Fix: P2A Approvers Not Showing in Summary Dialog
+## Bug Fix + Inspection Test Plan (ITP) Implementation
 
-### Problem
-The approvers are not visible in the summary overlay because the `persistPlanToDatabase` function in `useP2APlanWizard.ts` does not include `user_id` when saving approver records. This means the `p2a_handover_approvers` table is empty (or records lack user assignments), so the summary dialog has nothing to display.
+### Bug: "No Systems Mapped" on Step 6
 
-### Root Cause
-In `src/hooks/useP2APlanWizard.ts` (line 455-460), the approver save logic only persists `role_name`, `display_order`, and `status` -- it omits `user_id`, `user_name`, and `user_avatar`:
+**Root cause**: The `SystemsStep` query requests columns `overall_completion` and `itr_completion` from `p2a_systems`, but those columns don't exist. The actual column names are `completion_percentage`, `itr_a_count`, `itr_b_count`, etc. Because the query uses an `!inner` join with invalid columns, Supabase returns an error silently, causing the empty state.
+
+**Fix**: Correct the column names in the query to match the actual schema.
+
+---
+
+### Feature: Transform Step 6 into an Inspection Test Plan (ITP)
+
+Step 6 will be renamed from "Systems" to "Inspection Test Plan" and redesigned to let the project and asset agree on **Witness (W)** and **Hold (H)** points for each system's key activities.
+
+**Definitions:**
+- **Witness (W)**: Asset wants to be notified and observe the activity (e.g., line cleaning, leak testing, FAT, SAT, cause & effect testing)
+- **Hold (H)**: Asset MUST be present to witness AND sign off (e.g., MCC Tri-party Walkdown, RFO certificate sign-off, Performance Testing, Dynamic Commissioning)
+
+### UI Design
+
+**Layout**: Each mapped system is shown as an expandable card. The card header shows the system name, code, and HC status. Expanding reveals the system's ITP activity rows.
+
+**Activity rows**: Each row represents a milestone/activity with:
+- Activity name (text input or selection from common activities)
+- A toggle group to mark it as **W** (Witness) or **H** (Hold) or **N/A**
+- The W badge uses amber styling, H badge uses red styling
+- Optional notes field
+
+**Pre-populated activities**: Common commissioning activities are suggested per system:
+- Leak Testing, Line Cleaning/Flushing, Loop Testing, Cause & Effect Testing, FAT, SAT, MCC Walkdown, RFO Walkdown, Performance Testing, Dynamic Commissioning, etc.
+
+**Header bar**: Search filter, system count badge, and summary stats (e.g., "12W / 5H across 8 systems")
+
+### Database
+
+A new table `p2a_itp_activities` will store the ITP data:
 
 ```text
-const approverRecords = state.approvers.map(a => ({
-  handover_id: planId,
-  role_name: a.role_name,
-  display_order: a.display_order,
-  status: 'PENDING',
-  // user_id is MISSING here
-}));
+p2a_itp_activities
+  id              uuid PK
+  handover_point_id uuid FK -> p2a_handover_points
+  system_id       uuid FK -> p2a_systems
+  activity_name   text
+  inspection_type text ('WITNESS' | 'HOLD' | 'NA')
+  notes           text (nullable)
+  display_order   integer
+  created_at      timestamptz
+  updated_at      timestamptz
 ```
 
-### Plan
+RLS: Authenticated users can read/write.
 
-**Step 1: Fix approver persistence** (`src/hooks/useP2APlanWizard.ts`)
-- Add `user_id: a.user_id || null` to the approver records map so that assigned users are saved to the database.
+### Technical Steps
 
-**Step 2: Always show the Approvers section** (`src/components/widgets/P2APlanSummaryDialog.tsx`)
-- Currently the section is hidden when `approvers.length === 0`. After the fix, data will be present, but as a safeguard, also add a fallback message like "No approvers configured" when the list is empty, so the user always sees the section.
+1. **Fix the SystemsStep query** -- correct `overall_completion` to `completion_percentage` and `itr_completion` to `itr_a_count/itr_b_count` so systems load correctly.
 
-**Step 3: Re-submit the plan**
-- Since the existing plan's approvers were lost, you will need to re-save or re-submit the plan to populate the approver records. Alternatively, I can add a one-time data repair to re-insert the default approvers for the current plan.
+2. **Create `p2a_itp_activities` table** via SQL migration with RLS policies.
 
-### Technical Details
+3. **Rename Step 6** from "Systems" to "Inspection Test Plan" in `VCRExecutionPlanWizard.tsx`, update icon to `ClipboardList` or `Shield`.
 
-File changes:
+4. **Rewrite `SystemsStep.tsx`** as the new ITP component:
+   - Fetch mapped systems from `p2a_handover_point_systems` (with corrected column names)
+   - Fetch existing ITP activities from `p2a_itp_activities`
+   - Render each system as a collapsible card with its activity rows
+   - Each activity row has: name, W/H/NA toggle, optional notes
+   - "Add Activity" button per system to add custom activities
+   - Pre-populate with default activities when a system has none
+   - Auto-save changes via mutations
 
-1. **`src/hooks/useP2APlanWizard.ts`** (line ~455-460)
-   - Change the approver record mapping to include `user_id`:
-   ```typescript
-   const approverRecords = state.approvers.map(a => ({
-     handover_id: planId,
-     role_name: a.role_name,
-     user_id: a.user_id || null,
-     display_order: a.display_order,
-     status: 'PENDING' as const,
-   }));
-   ```
-
-2. **`src/components/widgets/P2APlanSummaryDialog.tsx`**
-   - Remove the `approvers.length > 0` guard so the "Approvers" section always renders.
-   - Show a "No approvers configured" fallback when the list is empty.
-
-3. **Data repair** -- Insert the default approvers for the existing active plan (`7da85ab4-9ed7-402a-b137-ca0dfc8859c2`) so the summary dialog works immediately without re-submitting:
-   - Insert the 5 default approver roles (Project Hub Lead, ORA Lead, CSU Lead, Construction Lead, Deputy Plant Director) with status `PENDING`.
+5. **Update step description** in the wizard to: "Define witness and hold points for each system"
 
