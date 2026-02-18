@@ -10,7 +10,6 @@ import {
 } from '@/components/ui/dialog';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import {
   ClipboardCheck,
@@ -220,9 +219,9 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
           </div>
 
           {/* Right Content Area */}
-          <div className="flex-1 flex flex-col min-w-0">
+          <div className="flex-1 flex flex-col min-w-0 min-h-0">
             {/* Step Header */}
-            <div className="px-6 py-4 border-b border-border/60 flex items-center justify-between">
+            <div className="px-6 py-4 border-b border-border/60 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-3">
                 {React.createElement(STEPS[currentStep].icon, {
                   className: cn('w-5 h-5', STEPS[currentStep].color),
@@ -240,11 +239,11 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
             </div>
 
             {/* Step Content */}
-            <ScrollArea className="flex-1">
+            <div className="flex-1 min-h-0 overflow-y-auto">
               <div className="p-6">
                 {renderStep()}
               </div>
-            </ScrollArea>
+            </div>
 
             {/* Footer Navigation */}
             <div className="px-6 py-3 border-t border-border/60 flex items-center justify-between">

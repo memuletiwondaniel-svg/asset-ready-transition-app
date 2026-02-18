@@ -404,8 +404,8 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
       </div>
 
       {/* Items grouped by category */}
-      <ScrollArea className="h-[calc(min(90vh,780px)-240px)]">
-        <div className="space-y-3 pr-4">
+      <div className="space-y-3">
+        <div className="space-y-3 pr-1">
           {sortedCategories.map(cat => {
             const catItems = grouped[cat];
             const isCollapsed = effectiveCollapsed.has(cat);
@@ -571,7 +571,7 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
             </div>
           )}
         </div>
-      </ScrollArea>
+      </div>
 
       <Sheet open={editSheetOpen} onOpenChange={setEditSheetOpen}>
         <SheetContent className="w-[480px] sm:max-w-[480px]">
