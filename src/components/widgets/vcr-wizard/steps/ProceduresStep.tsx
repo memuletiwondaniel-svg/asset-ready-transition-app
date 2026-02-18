@@ -197,7 +197,7 @@ const AddProcedureForm: React.FC<{
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from('p2a_handover_point_systems')
-        .select('system_id, p2a_systems(id, tag, name)')
+        .select('system_id, p2a_systems(id, system_id, name)')
         .eq('handover_point_id', vcrId);
       if (error) throw error;
       // deduplicate by system_id
@@ -208,8 +208,8 @@ const AddProcedureForm: React.FC<{
         return true;
       }).map((r: any) => ({
         id: r.system_id,
-        label: r.p2a_systems.tag
-          ? `${r.p2a_systems.tag} – ${r.p2a_systems.name}`
+        label: r.p2a_systems.system_id
+          ? `${r.p2a_systems.system_id} – ${r.p2a_systems.name}`
           : r.p2a_systems.name,
       }));
     },
