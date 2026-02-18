@@ -208,6 +208,7 @@ const AddProcedureForm: React.FC<{
         return true;
       }).map((r: any) => ({
         id: r.system_id,
+        name: r.p2a_systems.name,
         label: r.p2a_systems.system_id
           ? `${r.p2a_systems.system_id} – ${r.p2a_systems.name}`
           : r.p2a_systems.name,
@@ -344,12 +345,12 @@ const AddProcedureForm: React.FC<{
               {mappedSystems
                 .filter((s: any) => selectedSystems.includes(s.id))
                 .map((s: any) => (
-                  <Badge key={s.id} variant="secondary" className="gap-1 pl-2.5 pr-1.5 py-1 text-xs">
-                    {s.label}
+                  <Badge key={s.id} variant="secondary" className="group gap-1 pl-2.5 pr-1.5 py-1 text-xs">
+                    {s.name}
                     <button
                       type="button"
                       onClick={() => removeSystem(s.id)}
-                      className="ml-0.5 rounded-full hover:text-destructive transition-colors"
+                      className="ml-0.5 rounded-full opacity-0 group-hover:opacity-100 text-destructive transition-opacity"
                     >
                       <X className="w-3 h-3" />
                     </button>
