@@ -535,7 +535,6 @@ export const TrainingDetailSheet: React.FC<TrainingDetailSheetProps> = ({
                   return (
                     <div key={sid} className="relative group/sysChip">
                       <Badge variant="outline" className="text-[11px] font-normal flex items-center gap-1 pr-1.5 transition-colors group-hover/sysChip:bg-muted">
-                        <Layers className="w-3 h-3 text-muted-foreground shrink-0" />
                         {sys.name}
                         <button
                           onClick={() => removeSystem(sid)}
