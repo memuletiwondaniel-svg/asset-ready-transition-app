@@ -107,8 +107,7 @@ export const DeliverablesStep: React.FC<DeliverablesStepProps> = ({ vcrId }) => 
           </CardContent>
         </Card>
       ) : (
-        <ScrollArea className="h-[calc(min(90vh,780px)-280px)]">
-          <div className="space-y-2 pr-4">
+        <div className="space-y-2">
             {filtered.map((item: any) => (
               <Card key={item.id} className="group hover:border-amber-500/40 transition-colors">
                 <CardContent className="p-3">
@@ -151,7 +150,6 @@ export const DeliverablesStep: React.FC<DeliverablesStepProps> = ({ vcrId }) => 
               </Card>
             ))}
           </div>
-        </ScrollArea>
       )}
 
       <Sheet open={addOpen} onOpenChange={setAddOpen}>

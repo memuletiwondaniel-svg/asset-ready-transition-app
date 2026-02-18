@@ -153,8 +153,7 @@ export const ProceduresStep: React.FC<ProceduresStepProps> = ({ vcrId }) => {
           </CardContent>
         </Card>
       ) : (
-        <ScrollArea className="h-[calc(min(90vh,780px)-280px)]">
-          <div className="space-y-2 pr-4">
+        <div className="space-y-2">
             {filteredItems.length === 0 && search ? (
               <div className="py-8 text-center text-sm text-muted-foreground">
                 No procedures match "<span className="font-medium text-foreground">{search}</span>"
@@ -205,7 +204,6 @@ export const ProceduresStep: React.FC<ProceduresStepProps> = ({ vcrId }) => {
               );
             })}
           </div>
-        </ScrollArea>
       )}
 
       {/* Add Procedure Sheet */}

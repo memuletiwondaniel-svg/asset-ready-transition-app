@@ -163,23 +163,19 @@ export const TrainingStep: React.FC<TrainingStepProps> = ({ vcrId }) => {
           </CardContent>
         </Card>
       ) : (
-        <ScrollArea className="h-[calc(min(90vh,780px)-280px)]">
-          <div className="space-y-2 px-1 pr-4 max-w-[95%]">
+        <div className="space-y-2 max-w-[95%]">
             {filteredItems.length === 0 && search ? (
               <div className="py-8 text-center text-sm text-muted-foreground">
                 No training items match "<span className="font-medium text-foreground">{search}</span>"
               </div>
             ) : null}
             {filteredItems.map((item: any, index: number) => {
-              const hueOffset = index * 137.5; // golden angle for distinct hues
+              const hueOffset = index * 137.5;
               return (
-
                 <Card
                   key={item.id}
                   className="group cursor-pointer transition-all duration-200 hover:shadow-md hover:scale-[1.01]"
-                  style={{
-                    borderColor: `hsl(${(210 + hueOffset) % 360}, 60%, 70%, 0.15)`,
-                  }}
+                  style={{ borderColor: `hsl(${(210 + hueOffset) % 360}, 60%, 70%, 0.15)` }}
                   onClick={() => setDetailItem(item)}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.borderColor = `hsl(${(210 + hueOffset) % 360}, 60%, 60%, 0.5)`;
@@ -237,7 +233,6 @@ export const TrainingStep: React.FC<TrainingStepProps> = ({ vcrId }) => {
               );
             })}
           </div>
-        </ScrollArea>
       )}
 
       {/* Add Training Wizard */}
