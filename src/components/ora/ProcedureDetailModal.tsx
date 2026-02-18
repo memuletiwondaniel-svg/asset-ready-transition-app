@@ -43,6 +43,8 @@ export interface Procedure {
   version: string;
   owner: string;
   lastUpdated: string;
+  reason?: string;
+  applicableSystems?: string[];
 }
 
 interface ProcedureDetailModalProps {

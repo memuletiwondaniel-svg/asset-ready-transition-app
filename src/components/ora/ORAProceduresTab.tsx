@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import {
   Select,
@@ -20,7 +21,9 @@ import {
   Plus,
   Download,
   MoreHorizontal,
-  ChevronDown
+  ChevronDown,
+  X,
+  Cpu
 } from 'lucide-react';
 import {
   Table,
@@ -39,6 +42,7 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ProcedureDetailModal, ProcedureStatus, Procedure } from './ProcedureDetailModal';
 import { useLanguage } from '@/contexts/LanguageContext';
+
 
 const mockProcedures: Procedure[] = [
   // Initial Start-up Procedures
@@ -75,7 +79,7 @@ export const ORAProceduresTab: React.FC<ORAProceduresTabProps> = ({ oraPlanId })
   const [modalOpen, setModalOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [addSheetOpen, setAddSheetOpen] = useState(false);
-  const [newProc, setNewProc] = useState({ title: '', type: 'startup' as 'startup' | 'normal', procedureNumber: '', owner: '', version: '0.1' });
+  const [newProc, setNewProc] = useState({ title: '', type: 'startup' as 'startup' | 'normal', reason: '', applicableSystems: [] as string[], systemInput: '' });
   const [procedures, setProcedures] = useState<Procedure[]>(mockProcedures);
 
   const getStatusBadge = (status: ProcedureStatus) => {
@@ -108,21 +112,34 @@ export const ORAProceduresTab: React.FC<ORAProceduresTabProps> = ({ oraPlanId })
     const today = new Date().toISOString().split('T')[0];
     const prefix = newProc.type === 'startup' ? 'ISU' : 'NOP';
     const existing = procedures.filter(p => p.type === newProc.type).length + 1;
-    const autoNumber = newProc.procedureNumber.trim() || `${prefix}-${String(existing).padStart(3, '0')}`;
+    const autoNumber = `${prefix}-${String(existing).padStart(3, '0')}`;
     const added: Procedure = {
       id: Date.now().toString(),
       procedureNumber: autoNumber,
       title: newProc.title.trim(),
       type: newProc.type,
       status: 'not_started',
-      version: newProc.version || '0.1',
-      owner: newProc.owner.trim() || 'TBD',
+      version: '-',
+      owner: 'TBD',
       lastUpdated: today,
+      reason: newProc.reason.trim() || undefined,
+      applicableSystems: newProc.applicableSystems.length > 0 ? newProc.applicableSystems : undefined,
     };
     setProcedures(prev => [...prev, added]);
-    setNewProc({ title: '', type: 'startup', procedureNumber: '', owner: '', version: '0.1' });
+    setNewProc({ title: '', type: 'startup', reason: '', applicableSystems: [], systemInput: '' });
     setAddSheetOpen(false);
   };
+
+  const handleAddSystem = () => {
+    const sys = newProc.systemInput.trim();
+    if (!sys || newProc.applicableSystems.includes(sys)) return;
+    setNewProc(p => ({ ...p, applicableSystems: [...p.applicableSystems, sys], systemInput: '' }));
+  };
+
+  const handleRemoveSystem = (sys: string) => {
+    setNewProc(p => ({ ...p, applicableSystems: p.applicableSystems.filter(s => s !== sys) }));
+  };
+
 
   const filteredProcedures = procedures.filter(proc => {
     const matchesSearch = 
@@ -372,64 +389,138 @@ export const ORAProceduresTab: React.FC<ORAProceduresTabProps> = ({ oraPlanId })
 
       {/* Add Procedure Sheet */}
       <Sheet open={addSheetOpen} onOpenChange={setAddSheetOpen}>
-        <SheetContent className="w-[440px] sm:max-w-[440px]">
-          <SheetHeader>
-            <SheetTitle>Add Procedure</SheetTitle>
-          </SheetHeader>
-          <div className="mt-6 space-y-4">
-            <div className="space-y-1.5">
-              <Label>Procedure Type <span className="text-destructive">*</span></Label>
-              <Select value={newProc.type} onValueChange={(v) => setNewProc(p => ({ ...p, type: v as 'startup' | 'normal' }))}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="startup">Initial Start-up Procedure</SelectItem>
-                  <SelectItem value="normal">Normal Operating Procedure</SelectItem>
-                </SelectContent>
-              </Select>
+        <SheetContent className="w-[480px] sm:max-w-[480px] flex flex-col gap-0 p-0">
+          {/* Header */}
+          <div className="px-6 pt-6 pb-4 border-b bg-muted/30">
+            <div className="flex items-center gap-3 mb-1">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <FileText className="w-5 h-5 text-primary" />
+              </div>
+              <SheetTitle className="text-lg font-semibold">New Procedure</SheetTitle>
             </div>
-            <div className="space-y-1.5">
-              <Label>Title <span className="text-destructive">*</span></Label>
+            <p className="text-sm text-muted-foreground ml-11">
+              Add a procedure to the plan. Document numbering and approval workflow will be activated once the plan is approved.
+            </p>
+          </div>
+
+          {/* Body */}
+          <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+            {/* Procedure Type */}
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Procedure Type <span className="text-destructive">*</span>
+              </Label>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { value: 'startup', label: 'Initial Start-Up', icon: Rocket, color: 'text-orange-500', activeBg: 'bg-orange-50 dark:bg-orange-900/20 border-orange-400 dark:border-orange-600' },
+                  { value: 'normal', label: 'Normal Operating', icon: Settings, color: 'text-blue-500', activeBg: 'bg-blue-50 dark:bg-blue-900/20 border-blue-400 dark:border-blue-600' },
+                ].map(({ value, label, icon: Icon, color, activeBg }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setNewProc(p => ({ ...p, type: value as 'startup' | 'normal' }))}
+                    className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all text-center
+                      ${newProc.type === value
+                        ? `${activeBg} shadow-sm`
+                        : 'border-border hover:border-muted-foreground/40 hover:bg-muted/50'
+                      }`}
+                  >
+                    <div className={`p-2 rounded-lg ${newProc.type === value ? 'bg-white/60 dark:bg-black/20' : 'bg-muted'}`}>
+                      <Icon className={`w-5 h-5 ${newProc.type === value ? color : 'text-muted-foreground'}`} />
+                    </div>
+                    <span className={`text-sm font-medium leading-tight ${newProc.type === value ? 'text-foreground' : 'text-muted-foreground'}`}>
+                      {label}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Title */}
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Procedure Title <span className="text-destructive">*</span>
+              </Label>
               <Input
-                placeholder="e.g. Gas Turbine Start-up Procedure"
+                placeholder="e.g. Gas Turbine Initial Start-up Procedure"
                 value={newProc.title}
                 onChange={(e) => setNewProc(p => ({ ...p, title: e.target.value }))}
+                className="h-10"
               />
             </div>
-            <div className="space-y-1.5">
-              <Label>Document # <span className="text-muted-foreground text-xs">(optional — auto-generated if blank)</span></Label>
-              <Input
-                placeholder={newProc.type === 'startup' ? 'ISU-001' : 'NOP-001'}
-                value={newProc.procedureNumber}
-                onChange={(e) => setNewProc(p => ({ ...p, procedureNumber: e.target.value }))}
+
+            {/* Reason */}
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Reason for Procedure
+                <span className="ml-1.5 normal-case font-normal text-muted-foreground/70">(optional)</span>
+              </Label>
+              <Textarea
+                placeholder="Describe why this procedure is needed..."
+                value={newProc.reason}
+                onChange={(e) => setNewProc(p => ({ ...p, reason: e.target.value }))}
+                rows={3}
+                className="resize-none"
               />
             </div>
-            <div className="space-y-1.5">
-              <Label>Owner <span className="text-muted-foreground text-xs">(optional)</span></Label>
-              <Input
-                placeholder="e.g. John Smith"
-                value={newProc.owner}
-                onChange={(e) => setNewProc(p => ({ ...p, owner: e.target.value }))}
-              />
+
+            {/* Applicable Systems */}
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Applicable Systems
+                <span className="ml-1.5 normal-case font-normal text-muted-foreground/70">(optional)</span>
+              </Label>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Cpu className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="e.g. Gas Turbine, HRSG..."
+                    value={newProc.systemInput}
+                    onChange={(e) => setNewProc(p => ({ ...p, systemInput: e.target.value }))}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddSystem(); } }}
+                    className="pl-9 h-10"
+                  />
+                </div>
+                <Button type="button" variant="outline" size="sm" onClick={handleAddSystem} className="h-10 px-3">
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </div>
+              {newProc.applicableSystems.length > 0 && (
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {newProc.applicableSystems.map(sys => (
+                    <Badge key={sys} variant="secondary" className="gap-1 pl-2.5 pr-1.5 py-1 text-xs">
+                      {sys}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveSystem(sys)}
+                        className="ml-0.5 rounded-full hover:text-destructive transition-colors"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
             </div>
-            <div className="space-y-1.5">
-              <Label>Version</Label>
-              <Input
-                placeholder="0.1"
-                value={newProc.version}
-                onChange={(e) => setNewProc(p => ({ ...p, version: e.target.value }))}
-              />
-            </div>
-            <div className="flex gap-2 pt-2">
-              <Button variant="outline" className="flex-1" onClick={() => setAddSheetOpen(false)}>Cancel</Button>
-              <Button className="flex-1" onClick={handleAddProcedure} disabled={!newProc.title.trim()}>
-                Add Procedure
-              </Button>
-            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="px-6 py-4 border-t bg-muted/20 flex gap-3">
+            <Button variant="outline" className="flex-1" onClick={() => setAddSheetOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              className="flex-1"
+              onClick={handleAddProcedure}
+              disabled={!newProc.title.trim() || !newProc.type}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Procedure
+            </Button>
           </div>
         </SheetContent>
       </Sheet>
     </div>
   );
 };
+
