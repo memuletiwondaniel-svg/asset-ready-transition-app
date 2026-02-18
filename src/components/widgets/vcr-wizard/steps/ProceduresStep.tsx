@@ -85,10 +85,12 @@ export const ProceduresStep: React.FC<ProceduresStepProps> = ({ vcrId }) => {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <Badge variant="outline">{items.length} procedures</Badge>
-        <Button size="sm" onClick={() => setAddOpen(true)} className="gap-1.5">
-          <Plus className="w-4 h-4" />
-          Add Procedure
-        </Button>
+        {items.length > 0 && (
+          <Button size="sm" onClick={() => setAddOpen(true)} className="gap-1.5">
+            <Plus className="w-4 h-4" />
+            Add Procedure
+          </Button>
+        )}
       </div>
 
       {items.length === 0 ? (
