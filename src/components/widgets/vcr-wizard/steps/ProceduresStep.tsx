@@ -36,11 +36,14 @@ const STATUS_OPTIONS = [
   { value: 'approved', label: 'Approved' },
 ];
 
+const SCROLL_THRESHOLD = 5;
+
 export const ProceduresStep: React.FC<ProceduresStepProps> = ({ vcrId }) => {
   const queryClient = useQueryClient();
   const [addOpen, setAddOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
+  const [search, setSearch] = useState('');
 
   const { data: items = [] } = useQuery({
     queryKey: ['vcr-exec-procedures', vcrId],
@@ -83,6 +86,14 @@ export const ProceduresStep: React.FC<ProceduresStepProps> = ({ vcrId }) => {
 
   const getTypeConfig = (type: string) => PROCEDURE_TYPES.find(t => t.value === type) || PROCEDURE_TYPES[1];
 
+  const showSearch = items.length > SCROLL_THRESHOLD;
+  const filteredItems = showSearch && search.trim()
+    ? items.filter((item: any) =>
+        item.title?.toLowerCase().includes(search.toLowerCase()) ||
+        item.description?.toLowerCase().includes(search.toLowerCase())
+      )
+    : items;
+
   // Parse system names from responsible_person (stored as comma-separated labels)
   const parseSystemNames = (responsible_person: string | null) => {
     if (!responsible_person) return [];
@@ -97,13 +108,36 @@ export const ProceduresStep: React.FC<ProceduresStepProps> = ({ vcrId }) => {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <Badge variant="outline">{items.length} procedures</Badge>
-        {items.length > 0 && (
+      {items.length > 0 && (
           <Button size="sm" onClick={() => setAddOpen(true)} className="gap-1.5">
             <Plus className="w-4 h-4" />
             Add Procedure
           </Button>
         )}
       </div>
+
+      {showSearch && (
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Search procedures..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="flex h-9 w-full rounded-md border border-input bg-background pl-9 pr-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          />
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+          {search && (
+            <button
+              onClick={() => setSearch('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+      )}
 
       {items.length === 0 ? (
         <Card className="border-dashed">
@@ -121,7 +155,12 @@ export const ProceduresStep: React.FC<ProceduresStepProps> = ({ vcrId }) => {
       ) : (
         <ScrollArea className="h-[calc(min(90vh,780px)-280px)]">
           <div className="space-y-2 pr-4">
-            {items.map((item: any) => {
+            {filteredItems.length === 0 && search ? (
+              <div className="py-8 text-center text-sm text-muted-foreground">
+                No procedures match "<span className="font-medium text-foreground">{search}</span>"
+              </div>
+            ) : null}
+            {filteredItems.map((item: any) => {
               const typeConfig = getTypeConfig(item.procedure_type);
               const TypeIcon = typeConfig.icon;
               const systemNames = parseSystemNames(item.responsible_person);
