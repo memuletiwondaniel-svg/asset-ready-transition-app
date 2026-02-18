@@ -15,10 +15,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select';
-import { Plus, BookOpen, Trash2, User, Rocket, Settings } from 'lucide-react';
+import { Plus, BookOpen, Trash2, User, Rocket, Settings, Cpu, X, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -27,10 +24,8 @@ interface ProceduresStepProps {
 }
 
 const PROCEDURE_TYPES = [
-  { value: 'startup', label: 'Initial Start-up', icon: Rocket, color: 'text-orange-500' },
-  { value: 'operating', label: 'Normal Operating', icon: Settings, color: 'text-blue-500' },
-  { value: 'emergency', label: 'Emergency', icon: BookOpen, color: 'text-red-500' },
-  { value: 'maintenance', label: 'Maintenance', icon: Settings, color: 'text-amber-500' },
+  { value: 'startup', label: 'Initial Start-Up', icon: Rocket, color: 'text-orange-500', activeBg: 'bg-orange-50 dark:bg-orange-900/20 border-orange-400 dark:border-orange-600' },
+  { value: 'operating', label: 'Normal Operating', icon: Settings, color: 'text-blue-500', activeBg: 'bg-blue-50 dark:bg-blue-900/20 border-blue-400 dark:border-blue-600' },
 ];
 
 const STATUS_OPTIONS = [
@@ -153,11 +148,11 @@ export const ProceduresStep: React.FC<ProceduresStepProps> = ({ vcrId }) => {
       )}
 
       <Sheet open={addOpen} onOpenChange={setAddOpen}>
-        <SheetContent className="w-[480px] sm:max-w-[480px]">
-          <SheetHeader><SheetTitle>Add Procedure</SheetTitle></SheetHeader>
+        <SheetContent className="w-[480px] sm:max-w-[480px] flex flex-col gap-0 p-0">
           <AddProcedureForm
             onSubmit={(item) => addItem.mutate(item)}
             isSaving={addItem.isPending}
+            onCancel={() => setAddOpen(false)}
           />
         </SheetContent>
       </Sheet>
@@ -186,57 +181,162 @@ export const ProceduresStep: React.FC<ProceduresStepProps> = ({ vcrId }) => {
 const AddProcedureForm: React.FC<{
   onSubmit: (item: any) => void;
   isSaving: boolean;
-}> = ({ onSubmit, isSaving }) => {
+  onCancel: () => void;
+}> = ({ onSubmit, isSaving, onCancel }) => {
   const [title, setTitle] = useState('');
-  const [type, setType] = useState('operating');
-  const [description, setDescription] = useState('');
-  const [responsible, setResponsible] = useState('');
-  const [targetDate, setTargetDate] = useState('');
+  const [type, setType] = useState<'startup' | 'operating'>('startup');
+  const [reason, setReason] = useState('');
+  const [systemInput, setSystemInput] = useState('');
+  const [applicableSystems, setApplicableSystems] = useState<string[]>([]);
+
+  const handleAddSystem = () => {
+    const sys = systemInput.trim();
+    if (!sys || applicableSystems.includes(sys)) return;
+    setApplicableSystems(prev => [...prev, sys]);
+    setSystemInput('');
+  };
+
+  const handleRemoveSystem = (sys: string) => {
+    setApplicableSystems(prev => prev.filter(s => s !== sys));
+  };
+
+  const handleSubmit = () => {
+    if (!title.trim()) return;
+    onSubmit({
+      title: title.trim(),
+      procedure_type: type,
+      description: reason.trim() || null,
+      responsible_person: applicableSystems.length > 0 ? applicableSystems.join(', ') : null,
+    });
+  };
 
   return (
-    <div className="space-y-4 mt-4">
-      <div>
-        <Label>Procedure Title *</Label>
-        <Input value={title} onChange={(e) => setTitle(e.target.value)} className="mt-1" />
+    <>
+      {/* Header */}
+      <div className="px-6 pt-6 pb-4 border-b bg-muted/30">
+        <div className="flex items-center gap-3 mb-1">
+          <div className="p-2 rounded-lg bg-primary/10">
+            <FileText className="w-5 h-5 text-primary" />
+          </div>
+          <SheetTitle className="text-lg font-semibold">New Procedure</SheetTitle>
+        </div>
+        <p className="text-sm text-muted-foreground ml-11">
+          Add a procedure to the plan. Document numbering and approval workflow will be activated once the plan is approved.
+        </p>
       </div>
-      <div>
-        <Label>Procedure Type</Label>
-        <Select value={type} onValueChange={setType}>
-          <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            {PROCEDURE_TYPES.map(t => (
-              <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+
+      {/* Body */}
+      <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+        {/* Procedure Type */}
+        <div className="space-y-2">
+          <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Procedure Type <span className="text-destructive">*</span>
+          </Label>
+          <div className="grid grid-cols-2 gap-3">
+            {PROCEDURE_TYPES.map(({ value, label, icon: Icon, color, activeBg }) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setType(value as 'startup' | 'operating')}
+                className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all text-center
+                  ${type === value
+                    ? `${activeBg} shadow-sm`
+                    : 'border-border hover:border-muted-foreground/40 hover:bg-muted/50'
+                  }`}
+              >
+                <div className={`p-2 rounded-lg ${type === value ? 'bg-white/60 dark:bg-black/20' : 'bg-muted'}`}>
+                  <Icon className={`w-5 h-5 ${type === value ? color : 'text-muted-foreground'}`} />
+                </div>
+                <span className={`text-sm font-medium leading-tight ${type === value ? 'text-foreground' : 'text-muted-foreground'}`}>
+                  {label}
+                </span>
+              </button>
             ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div>
-        <Label>Description</Label>
-        <Textarea value={description} onChange={(e) => setDescription(e.target.value)} className="mt-1" rows={2} />
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <Label>Responsible Person</Label>
-          <Input value={responsible} onChange={(e) => setResponsible(e.target.value)} className="mt-1" />
+          </div>
         </div>
-        <div>
-          <Label>Target Date</Label>
-          <Input type="date" value={targetDate} onChange={(e) => setTargetDate(e.target.value)} className="mt-1" />
+
+        {/* Title */}
+        <div className="space-y-2">
+          <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Procedure Title <span className="text-destructive">*</span>
+          </Label>
+          <Input
+            placeholder="e.g. Gas Turbine Initial Start-up Procedure"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="h-10"
+          />
+        </div>
+
+        {/* Reason */}
+        <div className="space-y-2">
+          <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Reason for Procedure
+            <span className="ml-1.5 normal-case font-normal text-muted-foreground/70">(optional)</span>
+          </Label>
+          <Textarea
+            placeholder="Describe why this procedure is needed..."
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            rows={3}
+            className="resize-none"
+          />
+        </div>
+
+        {/* Applicable Systems */}
+        <div className="space-y-2">
+          <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Applicable Systems
+            <span className="ml-1.5 normal-case font-normal text-muted-foreground/70">(optional)</span>
+          </Label>
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Cpu className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="e.g. Gas Turbine, HRSG..."
+                value={systemInput}
+                onChange={(e) => setSystemInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddSystem(); } }}
+                className="pl-9 h-10"
+              />
+            </div>
+            <Button type="button" variant="outline" size="sm" onClick={handleAddSystem} className="h-10 px-3">
+              <Plus className="w-4 h-4" />
+            </Button>
+          </div>
+          {applicableSystems.length > 0 && (
+            <div className="flex flex-wrap gap-2 pt-1">
+              {applicableSystems.map(sys => (
+                <Badge key={sys} variant="secondary" className="gap-1 pl-2.5 pr-1.5 py-1 text-xs">
+                  {sys}
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveSystem(sys)}
+                    className="ml-0.5 rounded-full hover:text-destructive transition-colors"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </Badge>
+              ))}
+            </div>
+          )}
         </div>
       </div>
-      <Button
-        onClick={() => onSubmit({
-          title,
-          procedure_type: type,
-          description: description || null,
-          responsible_person: responsible || null,
-          target_date: targetDate || null,
-        })}
-        disabled={!title || isSaving}
-        className="w-full"
-      >
-        {isSaving ? 'Adding...' : 'Add Procedure'}
-      </Button>
-    </div>
+
+      {/* Footer */}
+      <div className="px-6 py-4 border-t bg-muted/20 flex gap-3">
+        <Button variant="outline" className="flex-1" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button
+          className="flex-1"
+          onClick={handleSubmit}
+          disabled={!title.trim() || isSaving}
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          {isSaving ? 'Adding...' : 'Add Procedure'}
+        </Button>
+      </div>
+    </>
   );
 };
