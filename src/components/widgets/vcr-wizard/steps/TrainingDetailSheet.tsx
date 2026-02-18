@@ -453,15 +453,18 @@ export const TrainingDetailSheet: React.FC<TrainingDetailSheetProps> = ({
             <div className="flex flex-wrap gap-1.5 mt-1 group/audience">
               {targetAudience.map((a: string) => (
                 <div key={a} className="relative group/chip">
-                  <Badge variant="secondary" className="text-[11px] pr-2 transition-all group-hover/chip:pr-6">
-                    {a}
-                  </Badge>
-                  <button
-                    onClick={() => removeAudience(a)}
-                    className="absolute right-0.5 top-1/2 -translate-y-1/2 opacity-0 group-hover/chip:opacity-100 transition-opacity w-4 h-4 rounded-full bg-destructive flex items-center justify-center"
+                  <Badge
+                    variant="secondary"
+                    className="text-[11px] flex items-center gap-1 pr-1.5 transition-colors group-hover/chip:bg-muted"
                   >
-                    <X className="w-2.5 h-2.5 text-destructive-foreground" />
-                  </button>
+                    {a}
+                    <button
+                      onClick={() => removeAudience(a)}
+                      className="opacity-0 group-hover/chip:opacity-100 transition-opacity ml-0.5 rounded-sm hover:bg-destructive/10 p-0.5"
+                    >
+                      <X className="w-2.5 h-2.5 text-destructive" />
+                    </button>
+                  </Badge>
                 </div>
               ))}
 
