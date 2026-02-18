@@ -4,10 +4,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle,
 } from '@/components/ui/sheet';
@@ -15,7 +15,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, BookOpen, Trash2, User, Rocket, Settings, Cpu, X, FileText } from 'lucide-react';
+import { Plus, BookOpen, Trash2, User, Rocket, Settings, X, FileText, Layers } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -151,7 +151,8 @@ export const ProceduresStep: React.FC<ProceduresStepProps> = ({ vcrId }) => {
 
       <Sheet open={addOpen} onOpenChange={setAddOpen}>
         <SheetContent className="w-[480px] sm:max-w-[480px] flex flex-col gap-0 p-0">
-          <AddProcedureForm
+      <AddProcedureForm
+            vcrId={vcrId}
             onSubmit={(item) => addItem.mutate(item)}
             isSaving={addItem.isPending}
             onCancel={() => setAddOpen(false)}
@@ -181,34 +182,57 @@ export const ProceduresStep: React.FC<ProceduresStepProps> = ({ vcrId }) => {
 };
 
 const AddProcedureForm: React.FC<{
+  vcrId: string;
   onSubmit: (item: any) => void;
   isSaving: boolean;
   onCancel: () => void;
-}> = ({ onSubmit, isSaving, onCancel }) => {
+}> = ({ vcrId, onSubmit, isSaving, onCancel }) => {
   const [title, setTitle] = useState('');
   const [type, setType] = useState<'startup' | 'operating'>('startup');
   const [reason, setReason] = useState('');
-  const [systemInput, setSystemInput] = useState('');
-  const [applicableSystems, setApplicableSystems] = useState<string[]>([]);
+  const [selectedSystems, setSelectedSystems] = useState<string[]>([]);
 
-  const handleAddSystem = () => {
-    const sys = systemInput.trim();
-    if (!sys || applicableSystems.includes(sys)) return;
-    setApplicableSystems(prev => [...prev, sys]);
-    setSystemInput('');
+  const { data: mappedSystems = [] } = useQuery({
+    queryKey: ['vcr-mapped-systems', vcrId],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from('p2a_handover_point_systems')
+        .select('system_id, p2a_systems(id, tag, name)')
+        .eq('handover_point_id', vcrId);
+      if (error) throw error;
+      // deduplicate by system_id
+      const seen = new Set<string>();
+      return (data || []).filter((r: any) => {
+        if (!r.p2a_systems || seen.has(r.system_id)) return false;
+        seen.add(r.system_id);
+        return true;
+      }).map((r: any) => ({
+        id: r.system_id,
+        label: r.p2a_systems.tag
+          ? `${r.p2a_systems.tag} – ${r.p2a_systems.name}`
+          : r.p2a_systems.name,
+      }));
+    },
+  });
+
+  const toggleSystem = (id: string) => {
+    setSelectedSystems(prev =>
+      prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]
+    );
   };
 
-  const handleRemoveSystem = (sys: string) => {
-    setApplicableSystems(prev => prev.filter(s => s !== sys));
-  };
+  const removeSystem = (id: string) => setSelectedSystems(prev => prev.filter(s => s !== id));
 
   const handleSubmit = () => {
     if (!title.trim()) return;
+    const selectedLabels = mappedSystems
+      .filter((s: any) => selectedSystems.includes(s.id))
+      .map((s: any) => s.label);
     onSubmit({
       title: title.trim(),
       procedure_type: type,
       description: reason.trim() || null,
-      responsible_person: applicableSystems.length > 0 ? applicableSystems.join(', ') : null,
+      responsible_person: selectedLabels.length > 0 ? selectedLabels.join(', ') : null,
     });
   };
 
@@ -262,11 +286,11 @@ const AddProcedureForm: React.FC<{
           <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Procedure Title <span className="text-destructive">*</span>
           </Label>
-          <Input
+          <input
             placeholder="e.g. Gas Turbine Initial Start-up Procedure"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="h-10"
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           />
         </div>
 
@@ -291,35 +315,46 @@ const AddProcedureForm: React.FC<{
             Applicable Systems
             <span className="ml-1.5 normal-case font-normal text-muted-foreground/70">(optional)</span>
           </Label>
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Cpu className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="e.g. Gas Turbine, HRSG..."
-                value={systemInput}
-                onChange={(e) => setSystemInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddSystem(); } }}
-                className="pl-9 h-10"
-              />
-            </div>
-            <Button type="button" variant="outline" size="sm" onClick={handleAddSystem} className="h-10 px-3">
-              <Plus className="w-4 h-4" />
-            </Button>
-          </div>
-          {applicableSystems.length > 0 && (
-            <div className="flex flex-wrap gap-2 pt-1">
-              {applicableSystems.map(sys => (
-                <Badge key={sys} variant="secondary" className="gap-1 pl-2.5 pr-1.5 py-1 text-xs">
-                  {sys}
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveSystem(sys)}
-                    className="ml-0.5 rounded-full hover:text-destructive transition-colors"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </Badge>
+
+          {mappedSystems.length === 0 ? (
+            <p className="text-xs text-muted-foreground italic">No systems mapped to this VCR.</p>
+          ) : (
+            <div className="border rounded-lg divide-y">
+              {mappedSystems.map((sys: any) => (
+                <label
+                  key={sys.id}
+                  className="flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-muted/40 transition-colors"
+                >
+                  <Checkbox
+                    checked={selectedSystems.includes(sys.id)}
+                    onCheckedChange={() => toggleSystem(sys.id)}
+                  />
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Layers className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                    <span className="text-sm truncate">{sys.label}</span>
+                  </div>
+                </label>
               ))}
+            </div>
+          )}
+
+          {/* Selected tags */}
+          {selectedSystems.length > 0 && (
+            <div className="flex flex-wrap gap-2 pt-1">
+              {mappedSystems
+                .filter((s: any) => selectedSystems.includes(s.id))
+                .map((s: any) => (
+                  <Badge key={s.id} variant="secondary" className="gap-1 pl-2.5 pr-1.5 py-1 text-xs">
+                    {s.label}
+                    <button
+                      type="button"
+                      onClick={() => removeSystem(s.id)}
+                      className="ml-0.5 rounded-full hover:text-destructive transition-colors"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </Badge>
+                ))}
             </div>
           )}
         </div>
