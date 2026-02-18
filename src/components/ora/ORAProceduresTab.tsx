@@ -3,6 +3,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { 
   Search, 
   FileText, 
@@ -65,6 +74,8 @@ export const ORAProceduresTab: React.FC<ORAProceduresTabProps> = ({ oraPlanId })
   const [selectedProcedure, setSelectedProcedure] = useState<Procedure | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [addSheetOpen, setAddSheetOpen] = useState(false);
+  const [newProc, setNewProc] = useState({ title: '', type: 'startup' as 'startup' | 'normal', procedureNumber: '', owner: '', version: '0.1' });
   const [procedures, setProcedures] = useState<Procedure[]>(mockProcedures);
 
   const getStatusBadge = (status: ProcedureStatus) => {
@@ -90,6 +101,27 @@ export const ORAProceduresTab: React.FC<ORAProceduresTabProps> = ({ oraPlanId })
       p.id === procedureId ? { ...p, status: newStatus } : p
     ));
     setSelectedProcedure(prev => prev ? { ...prev, status: newStatus } : null);
+  };
+
+  const handleAddProcedure = () => {
+    if (!newProc.title.trim()) return;
+    const today = new Date().toISOString().split('T')[0];
+    const prefix = newProc.type === 'startup' ? 'ISU' : 'NOP';
+    const existing = procedures.filter(p => p.type === newProc.type).length + 1;
+    const autoNumber = newProc.procedureNumber.trim() || `${prefix}-${String(existing).padStart(3, '0')}`;
+    const added: Procedure = {
+      id: Date.now().toString(),
+      procedureNumber: autoNumber,
+      title: newProc.title.trim(),
+      type: newProc.type,
+      status: 'not_started',
+      version: newProc.version || '0.1',
+      owner: newProc.owner.trim() || 'TBD',
+      lastUpdated: today,
+    };
+    setProcedures(prev => [...prev, added]);
+    setNewProc({ title: '', type: 'startup', procedureNumber: '', owner: '', version: '0.1' });
+    setAddSheetOpen(false);
   };
 
   const filteredProcedures = procedures.filter(proc => {
@@ -294,7 +326,7 @@ export const ORAProceduresTab: React.FC<ORAProceduresTabProps> = ({ oraPlanId })
           <Download className="w-4 h-4" />
           {t.export || "Export"}
         </Button>
-        <Button className="gap-2">
+        <Button className="gap-2" onClick={() => setAddSheetOpen(true)}>
           <Plus className="w-4 h-4" />
           {t.addProcedure || "Add Procedure"}
         </Button>
@@ -337,6 +369,67 @@ export const ORAProceduresTab: React.FC<ORAProceduresTabProps> = ({ oraPlanId })
         onOpenChange={setModalOpen}
         onStatusChange={handleStatusChange}
       />
+
+      {/* Add Procedure Sheet */}
+      <Sheet open={addSheetOpen} onOpenChange={setAddSheetOpen}>
+        <SheetContent className="w-[440px] sm:max-w-[440px]">
+          <SheetHeader>
+            <SheetTitle>Add Procedure</SheetTitle>
+          </SheetHeader>
+          <div className="mt-6 space-y-4">
+            <div className="space-y-1.5">
+              <Label>Procedure Type <span className="text-destructive">*</span></Label>
+              <Select value={newProc.type} onValueChange={(v) => setNewProc(p => ({ ...p, type: v as 'startup' | 'normal' }))}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="startup">Initial Start-up Procedure</SelectItem>
+                  <SelectItem value="normal">Normal Operating Procedure</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Title <span className="text-destructive">*</span></Label>
+              <Input
+                placeholder="e.g. Gas Turbine Start-up Procedure"
+                value={newProc.title}
+                onChange={(e) => setNewProc(p => ({ ...p, title: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Document # <span className="text-muted-foreground text-xs">(optional — auto-generated if blank)</span></Label>
+              <Input
+                placeholder={newProc.type === 'startup' ? 'ISU-001' : 'NOP-001'}
+                value={newProc.procedureNumber}
+                onChange={(e) => setNewProc(p => ({ ...p, procedureNumber: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Owner <span className="text-muted-foreground text-xs">(optional)</span></Label>
+              <Input
+                placeholder="e.g. John Smith"
+                value={newProc.owner}
+                onChange={(e) => setNewProc(p => ({ ...p, owner: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Version</Label>
+              <Input
+                placeholder="0.1"
+                value={newProc.version}
+                onChange={(e) => setNewProc(p => ({ ...p, version: e.target.value }))}
+              />
+            </div>
+            <div className="flex gap-2 pt-2">
+              <Button variant="outline" className="flex-1" onClick={() => setAddSheetOpen(false)}>Cancel</Button>
+              <Button className="flex-1" onClick={handleAddProcedure} disabled={!newProc.title.trim()}>
+                Add Procedure
+              </Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 };
