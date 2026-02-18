@@ -64,28 +64,15 @@ export const TrainingStep: React.FC<TrainingStepProps> = ({ vcrId }) => {
     mutationFn: async (item: any) => {
       const { system_ids, ...rest } = item;
       const { data: { user } } = await supabase.auth.getUser();
-      const { data: inserted, error } = await (supabase as any)
+      const { error } = await (supabase as any)
         .from('p2a_vcr_training')
         .insert({ 
           ...rest, 
           handover_point_id: vcrId,
           created_by: user?.id || null,
-        })
-        .select('id')
-        .single();
+          system_ids: system_ids && system_ids.length > 0 ? system_ids : [],
+        });
       if (error) throw error;
-
-      // Save system mappings if any were selected in the wizard
-      if (inserted?.id && system_ids?.length > 0) {
-        await (supabase as any)
-          .from('ora_training_system_mappings')
-          .insert(system_ids.map((sid: string) => ({
-            training_item_id: inserted.id,
-            system_id: sid,
-            handover_point_id: vcrId,
-            created_by: user?.id || null,
-          })));
-      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vcr-exec-training'] });
