@@ -15,7 +15,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, BookOpen, Trash2, User, Rocket, Settings, X, FileText, Layers } from 'lucide-react';
+import { Plus, BookOpen, Trash2, Rocket, Settings, X, FileText, Layers, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -40,6 +40,7 @@ export const ProceduresStep: React.FC<ProceduresStepProps> = ({ vcrId }) => {
   const queryClient = useQueryClient();
   const [addOpen, setAddOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [selectedItem, setSelectedItem] = useState<any | null>(null);
 
   const { data: items = [] } = useQuery({
     queryKey: ['vcr-exec-procedures', vcrId],
@@ -75,11 +76,22 @@ export const ProceduresStep: React.FC<ProceduresStepProps> = ({ vcrId }) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vcr-exec-procedures'] });
+      setSelectedItem(null);
       toast.success('Procedure removed');
     },
   });
 
   const getTypeConfig = (type: string) => PROCEDURE_TYPES.find(t => t.value === type) || PROCEDURE_TYPES[1];
+
+  // Parse system names from responsible_person (stored as comma-separated labels)
+  const parseSystemNames = (responsible_person: string | null) => {
+    if (!responsible_person) return [];
+    return responsible_person.split(',').map((s: string) => {
+      // strip system ID prefix "SYS-001 – Name" → "Name"
+      const parts = s.trim().split('–');
+      return parts.length > 1 ? parts[parts.length - 1].trim() : s.trim();
+    }).filter(Boolean);
+  };
 
   return (
     <div className="space-y-4">
@@ -112,8 +124,13 @@ export const ProceduresStep: React.FC<ProceduresStepProps> = ({ vcrId }) => {
             {items.map((item: any) => {
               const typeConfig = getTypeConfig(item.procedure_type);
               const TypeIcon = typeConfig.icon;
+              const systemNames = parseSystemNames(item.responsible_person);
               return (
-                <Card key={item.id} className="group hover:border-emerald-500/40 transition-colors">
+                <Card
+                  key={item.id}
+                  className="group hover:border-primary/40 transition-colors cursor-pointer"
+                  onClick={() => setSelectedItem(item)}
+                >
                   <CardContent className="p-3">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
@@ -125,21 +142,24 @@ export const ProceduresStep: React.FC<ProceduresStepProps> = ({ vcrId }) => {
                         {item.description && (
                           <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{item.description}</p>
                         )}
-                        <div className="flex gap-3 mt-2 text-[10px] text-muted-foreground">
-                          {item.responsible_person && (
-                            <span className="flex items-center gap-1"><User className="w-3 h-3" />{item.responsible_person}</span>
-                          )}
+                        <div className="flex items-center gap-2 mt-2 flex-wrap">
+                          {systemNames.map((name, i) => (
+                            <Badge key={i} variant="secondary" className="text-[10px] py-0.5">{name}</Badge>
+                          ))}
                           <Badge variant="secondary" className="text-[9px]">
                             {STATUS_OPTIONS.find(s => s.value === item.status)?.label || item.status}
                           </Badge>
                         </div>
                       </div>
-                      <button
-                        onClick={() => setDeleteTarget(item.id)}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md hover:bg-destructive/10 text-destructive shrink-0"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setDeleteTarget(item.id); }}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md hover:bg-destructive/10 text-destructive"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                        <ChevronRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -149,14 +169,28 @@ export const ProceduresStep: React.FC<ProceduresStepProps> = ({ vcrId }) => {
         </ScrollArea>
       )}
 
+      {/* Add Procedure Sheet */}
       <Sheet open={addOpen} onOpenChange={setAddOpen}>
-        <SheetContent className="w-[480px] sm:max-w-[480px] flex flex-col gap-0 p-0">
-      <AddProcedureForm
+        <SheetContent className="w-[480px] sm:max-w-[480px] flex flex-col gap-0 p-0 [&>button]:hidden">
+          <AddProcedureForm
             vcrId={vcrId}
             onSubmit={(item) => addItem.mutate(item)}
             isSaving={addItem.isPending}
             onCancel={() => setAddOpen(false)}
           />
+        </SheetContent>
+      </Sheet>
+
+      {/* Procedure Detail Sheet */}
+      <Sheet open={!!selectedItem} onOpenChange={(open) => !open && setSelectedItem(null)}>
+        <SheetContent className="w-[480px] sm:max-w-[480px] flex flex-col gap-0 p-0 [&>button]:hidden">
+          {selectedItem && (
+            <ProcedureDetailPanel
+              item={selectedItem}
+              onClose={() => setSelectedItem(null)}
+              onDelete={() => setDeleteTarget(selectedItem.id)}
+            />
+          )}
         </SheetContent>
       </Sheet>
 
@@ -181,6 +215,106 @@ export const ProceduresStep: React.FC<ProceduresStepProps> = ({ vcrId }) => {
   );
 };
 
+// ─── Procedure Detail Panel ───────────────────────────────────────────────────
+
+const ProcedureDetailPanel: React.FC<{
+  item: any;
+  onClose: () => void;
+  onDelete: () => void;
+}> = ({ item, onClose, onDelete }) => {
+  const typeConfig = PROCEDURE_TYPES.find(t => t.value === item.procedure_type) || PROCEDURE_TYPES[1];
+  const TypeIcon = typeConfig.icon;
+  const statusLabel = STATUS_OPTIONS.find(s => s.value === item.status)?.label || item.status;
+
+  const systemNames = item.responsible_person
+    ? item.responsible_person.split(',').map((s: string) => {
+        const parts = s.trim().split('–');
+        return parts.length > 1 ? parts[parts.length - 1].trim() : s.trim();
+      }).filter(Boolean)
+    : [];
+
+  return (
+    <>
+      {/* Header */}
+      <div className="px-6 pt-6 pb-4 border-b bg-muted/30">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className={cn('p-2 rounded-lg', item.procedure_type === 'startup' ? 'bg-orange-500/10' : 'bg-blue-500/10')}>
+              <TypeIcon className={cn('w-5 h-5', typeConfig.color)} />
+            </div>
+            <div>
+              <SheetTitle className="text-base font-semibold leading-tight">{item.title}</SheetTitle>
+              <p className="text-xs text-muted-foreground mt-0.5">{typeConfig.label}</p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-md hover:bg-muted transition-colors text-muted-foreground"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Body */}
+      <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+        {/* Status */}
+        <div className="space-y-1.5">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Status</p>
+          <Badge variant="secondary" className="text-xs">{statusLabel}</Badge>
+        </div>
+
+        {/* Description / Reason */}
+        {item.description && (
+          <div className="space-y-1.5">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Reason for Procedure</p>
+            <p className="text-sm text-foreground leading-relaxed">{item.description}</p>
+          </div>
+        )}
+
+        {/* Applicable Systems */}
+        {systemNames.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Applicable Systems</p>
+            <div className="flex flex-wrap gap-2">
+              {systemNames.map((name: string, i: number) => (
+                <div key={i} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border bg-muted/40 text-sm">
+                  <Layers className="w-3.5 h-3.5 text-muted-foreground" />
+                  <span>{name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Planning note */}
+        <div className="rounded-lg border border-dashed p-4 bg-muted/20">
+          <p className="text-xs text-muted-foreground">
+            Document numbering, version control, and approval workflows will be activated once the VCR Delivery Plan is approved.
+          </p>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="px-6 py-4 border-t bg-muted/20 flex gap-3">
+        <Button
+          variant="outline"
+          className="gap-1.5 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+          onClick={onDelete}
+        >
+          <Trash2 className="w-4 h-4" />
+          Delete
+        </Button>
+        <Button variant="outline" className="flex-1" onClick={onClose}>
+          Close
+        </Button>
+      </div>
+    </>
+  );
+};
+
+// ─── Add Procedure Form ───────────────────────────────────────────────────────
+
 const AddProcedureForm: React.FC<{
   vcrId: string;
   onSubmit: (item: any) => void;
@@ -200,7 +334,6 @@ const AddProcedureForm: React.FC<{
         .select('system_id, p2a_systems(id, system_id, name)')
         .eq('handover_point_id', vcrId);
       if (error) throw error;
-      // deduplicate by system_id
       const seen = new Set<string>();
       return (data || []).filter((r: any) => {
         if (!r.p2a_systems || seen.has(r.system_id)) return false;
