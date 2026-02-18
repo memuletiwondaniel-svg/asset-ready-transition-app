@@ -15,7 +15,7 @@ import {
   ClipboardCheck,
   GraduationCap,
   BookOpen,
-  Package,
+  FolderOpen,
   FileText,
   ClipboardList,
   Check,
@@ -45,7 +45,7 @@ const STEPS = [
   { id: 'items', label: 'VCR Items', icon: ClipboardCheck, color: 'text-violet-500' },
   { id: 'training', label: 'Training', icon: GraduationCap, color: 'text-blue-500' },
   { id: 'procedures', label: 'Procedures', icon: BookOpen, color: 'text-emerald-500' },
-  { id: 'deliverables', label: 'Deliverables', icon: Package, color: 'text-amber-500' },
+  { id: 'deliverables', label: 'Documentation', icon: FolderOpen, color: 'text-amber-500' },
   { id: 'registers', label: 'Log Sheets & Registers', icon: FileText, color: 'text-cyan-500' },
   { id: 'itp', label: 'Inspection Test Plan', icon: ClipboardList, color: 'text-orange-500' },
   { id: 'approvers', label: 'Approvers', icon: UserCheck, color: 'text-primary' },
@@ -297,7 +297,7 @@ function getStepDescription(step: number): string {
     case 0: return 'Review, edit, add or remove VCR checklist items and assign parties';
     case 1: return 'Define training requirements for the handover';
     case 2: return 'List all procedures that need to be developed';
-    case 3: return 'List Tier 1 & Tier 2 deliverables';
+    case 3: return 'List Tier 1 & Tier 2 documentation for this VCR';
     case 4: return 'Define operational log sheets and registers to be developed';
     case 5: return 'Define witness and hold points for each system';
     case 6: return 'Review and confirm the default approvers for this VCR';

@@ -19,7 +19,7 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
-import { Plus, Package, Trash2, User, Calendar } from 'lucide-react';
+import { Plus, FolderOpen, Trash2, User, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -79,7 +79,7 @@ export const DeliverablesStep: React.FC<DeliverablesStepProps> = ({ vcrId }) => 
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Badge variant="outline">{items.length} deliverables</Badge>
+          <Badge variant="outline">{items.length} documents</Badge>
           <Tabs value={tierFilter} onValueChange={(v) => setTierFilter(v as any)}>
             <TabsList className="h-8">
               <TabsTrigger value="all" className="text-xs px-3 h-7">All</TabsTrigger>
@@ -89,7 +89,7 @@ export const DeliverablesStep: React.FC<DeliverablesStepProps> = ({ vcrId }) => 
           </Tabs>
         </div>
         <Button size="sm" onClick={() => setAddOpen(true)} className="gap-1.5">
-          <Plus className="w-4 h-4" /> Add Deliverable
+          <Plus className="w-4 h-4" /> Add Document
         </Button>
       </div>
 
@@ -97,12 +97,12 @@ export const DeliverablesStep: React.FC<DeliverablesStepProps> = ({ vcrId }) => 
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-12">
             <div className="w-14 h-14 rounded-full bg-amber-500/10 flex items-center justify-center mb-3">
-              <Package className="w-7 h-7 text-amber-500" />
+              <FolderOpen className="w-7 h-7 text-amber-500" />
             </div>
-            <h3 className="font-medium">No Deliverables</h3>
-            <p className="text-xs text-muted-foreground mt-1">Add Tier 1 and Tier 2 deliverables for this VCR.</p>
+            <h3 className="font-medium">No Documents</h3>
+            <p className="text-xs text-muted-foreground mt-1">Add Tier 1 and Tier 2 documents for this VCR.</p>
             <Button size="sm" onClick={() => setAddOpen(true)} className="mt-3 gap-1.5">
-              <Plus className="w-4 h-4" /> Add First Deliverable
+              <Plus className="w-4 h-4" /> Add First Document
             </Button>
           </CardContent>
         </Card>
@@ -114,7 +114,7 @@ export const DeliverablesStep: React.FC<DeliverablesStepProps> = ({ vcrId }) => 
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <Package className="w-4 h-4 text-amber-500 shrink-0" />
+                        <FolderOpen className="w-4 h-4 text-amber-500 shrink-0" />
                         <h4 className="font-medium text-sm truncate">{item.title}</h4>
                         <Badge
                           variant="outline"
@@ -154,7 +154,7 @@ export const DeliverablesStep: React.FC<DeliverablesStepProps> = ({ vcrId }) => 
 
       <Sheet open={addOpen} onOpenChange={setAddOpen}>
         <SheetContent className="w-[480px] sm:max-w-[480px]">
-          <SheetHeader><SheetTitle>Add Deliverable</SheetTitle></SheetHeader>
+          <SheetHeader><SheetTitle>Add Document</SheetTitle></SheetHeader>
           <AddDeliverableForm onSubmit={(item) => addItem.mutate(item)} isSaving={addItem.isPending} />
         </SheetContent>
       </Sheet>
@@ -162,7 +162,7 @@ export const DeliverablesStep: React.FC<DeliverablesStepProps> = ({ vcrId }) => 
       <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Deliverable</AlertDialogTitle>
+            <AlertDialogTitle>Delete Document</AlertDialogTitle>
             <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -228,7 +228,7 @@ const AddDeliverableForm: React.FC<{
         disabled={!title || isSaving}
         className="w-full"
       >
-        {isSaving ? 'Adding...' : 'Add Deliverable'}
+        {isSaving ? 'Adding...' : 'Add Document'}
       </Button>
     </div>
   );
