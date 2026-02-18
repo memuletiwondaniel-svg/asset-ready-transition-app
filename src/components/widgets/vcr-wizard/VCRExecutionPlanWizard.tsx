@@ -15,9 +15,9 @@ import {
   ClipboardCheck,
   GraduationCap,
   BookOpen,
-  FolderOpen,
   FileText,
   ClipboardList,
+  ScrollText,
   Check,
   ChevronRight,
   ChevronLeft,
@@ -29,8 +29,9 @@ import { getVCRColor } from '@/components/p2a-workspace/utils/vcrColors';
 import { VCRItemsStep } from './steps/VCRItemsStep';
 import { TrainingStep } from './steps/TrainingStep';
 import { ProceduresStep } from './steps/ProceduresStep';
-import { DeliverablesStep } from './steps/DeliverablesStep';
+import { CriticalDocumentsStep } from './steps/CriticalDocumentsStep';
 import { OperationalRegistersStep } from './steps/OperationalRegistersStep';
+import { LogsheetsStep } from './steps/LogsheetsStep';
 import { InspectionTestPlanStep } from './steps/InspectionTestPlanStep';
 import { ApproversStep } from './steps/ApproversStep';
 
@@ -45,8 +46,9 @@ const STEPS = [
   { id: 'items', label: 'VCR Items', icon: ClipboardCheck, color: 'text-violet-500' },
   { id: 'training', label: 'Training', icon: GraduationCap, color: 'text-blue-500' },
   { id: 'procedures', label: 'Procedures', icon: BookOpen, color: 'text-emerald-500' },
-  { id: 'deliverables', label: 'Documentation', icon: FolderOpen, color: 'text-amber-500' },
-  { id: 'registers', label: 'Log Sheets & Registers', icon: FileText, color: 'text-cyan-500' },
+  { id: 'critical-docs', label: 'Critical Documents', icon: FileText, color: 'text-amber-500' },
+  { id: 'registers', label: 'Op. Registers', icon: ClipboardList, color: 'text-cyan-500' },
+  { id: 'logsheets', label: 'Logsheets', icon: ScrollText, color: 'text-indigo-500' },
   { id: 'itp', label: 'Inspection Test Plan', icon: ClipboardList, color: 'text-orange-500' },
   { id: 'approvers', label: 'Approvers', icon: UserCheck, color: 'text-primary' },
 ];
@@ -71,30 +73,28 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   const { data: stepCounts = {} } = useQuery({
     queryKey: ['vcr-wizard-step-counts', vcr.id],
     queryFn: async () => {
-      const [training, procedures, deliverables, registers] = await Promise.all([
+      const [training, procedures, criticalDocs, registers, logsheets] = await Promise.all([
         (supabase as any).from('p2a_vcr_training').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
         (supabase as any).from('p2a_vcr_procedures').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
-        (supabase as any).from('p2a_vcr_deliverables').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
-        (supabase as any).from('p2a_vcr_operational_registers').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
+        (supabase as any).from('p2a_vcr_critical_docs').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
+        (supabase as any).from('p2a_vcr_register_selections').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
+        (supabase as any).from('p2a_vcr_logsheets').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
       ]);
       return {
-        1: training.count || 0,   // Training
-        3: deliverables.count || 0, // Deliverables
-        2: procedures.count || 0, // Procedures
-        4: registers.count || 0,  // Log Sheets & Registers
+        1: training.count || 0,       // Training
+        2: procedures.count || 0,     // Procedures
+        3: criticalDocs.count || 0,   // Critical Documents
+        4: registers.count || 0,      // Op. Registers
+        5: logsheets.count || 0,      // Logsheets
       } as Record<number, number>;
     },
     enabled: open,
-    refetchInterval: 5000, // Refresh periodically to catch additions
+    refetchInterval: 5000,
   });
 
-  // Steps that are always "complete" when visited (have content by default or no empty state concept)
-  // Step 0 (VCR Items) - always has items from template
-  // Step 5 (ITP) - has system-based default content
-  // Step 6 (Approvers) - has auto-resolved approvers
+  // Steps 0 (VCR Items), 6 (ITP), 7 (Approvers) are always complete when visited
   const isStepComplete = (idx: number): boolean => {
-    if (idx === 0 || idx === 5 || idx === 6) return visitedSteps.has(idx);
-    // Steps 1-4: require actual data
+    if (idx === 0 || idx === 6 || idx === 7) return visitedSteps.has(idx);
     return (stepCounts[idx] || 0) > 0;
   };
 
@@ -120,12 +120,14 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
       case 2:
         return <ProceduresStep vcrId={vcr.id} />;
       case 3:
-        return <DeliverablesStep vcrId={vcr.id} />;
+        return <CriticalDocumentsStep vcrId={vcr.id} />;
       case 4:
         return <OperationalRegistersStep vcrId={vcr.id} />;
       case 5:
-        return <InspectionTestPlanStep vcrId={vcr.id} projectCode={projectCode} />;
+        return <LogsheetsStep vcrId={vcr.id} />;
       case 6:
+        return <InspectionTestPlanStep vcrId={vcr.id} projectCode={projectCode} />;
+      case 7:
         return <ApproversStep vcrId={vcr.id} />;
       default:
         return null;
@@ -297,10 +299,11 @@ function getStepDescription(step: number): string {
     case 0: return 'Review, edit, add or remove VCR checklist items and assign parties';
     case 1: return 'Define training requirements for the handover';
     case 2: return 'List all procedures that need to be developed';
-    case 3: return 'List Tier 1 & Tier 2 documentation for this VCR';
-    case 4: return 'Define operational log sheets and registers to be developed';
-    case 5: return 'Define witness and hold points for each system';
-    case 6: return 'Review and confirm the default approvers for this VCR';
+    case 3: return 'Select Tier 1 & Tier 2 critical documents required for this VCR';
+    case 4: return 'Select operational registers to be developed or updated';
+    case 5: return 'Add logsheets to be newly developed or updated';
+    case 6: return 'Define witness and hold points for each system';
+    case 7: return 'Review and confirm the default approvers for this VCR';
     default: return '';
   }
 }

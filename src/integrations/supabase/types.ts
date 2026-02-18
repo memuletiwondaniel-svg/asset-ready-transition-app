@@ -3641,6 +3641,71 @@ export type Database = {
           },
         ]
       }
+      p2a_vcr_critical_docs: {
+        Row: {
+          catalog_id: string | null
+          created_at: string
+          discipline: string | null
+          display_order: number
+          doc_code: string | null
+          handover_point_id: string
+          id: string
+          notes: string | null
+          responsible_person: string | null
+          rlmu_required: boolean
+          rlmu_status: string | null
+          status: string
+          target_date: string | null
+          tier: string | null
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          catalog_id?: string | null
+          created_at?: string
+          discipline?: string | null
+          display_order?: number
+          doc_code?: string | null
+          handover_point_id: string
+          id?: string
+          notes?: string | null
+          responsible_person?: string | null
+          rlmu_required?: boolean
+          rlmu_status?: string | null
+          status?: string
+          target_date?: string | null
+          tier?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          catalog_id?: string | null
+          created_at?: string
+          discipline?: string | null
+          display_order?: number
+          doc_code?: string | null
+          handover_point_id?: string
+          id?: string
+          notes?: string | null
+          responsible_person?: string | null
+          rlmu_required?: boolean
+          rlmu_status?: string | null
+          status?: string
+          target_date?: string | null
+          tier?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_vcr_critical_docs_catalog_id_fkey"
+            columns: ["catalog_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_vcr_doc_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       p2a_vcr_deliverables: {
         Row: {
           created_at: string
@@ -3693,6 +3758,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      p2a_vcr_doc_catalog: {
+        Row: {
+          created_at: string
+          description: string | null
+          discipline: string | null
+          display_order: number
+          doc_code: string
+          id: string
+          is_active: boolean
+          rlmu_required: boolean
+          rlmu_scope: string | null
+          tier: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          discipline?: string | null
+          display_order?: number
+          doc_code: string
+          id?: string
+          is_active?: boolean
+          rlmu_required?: boolean
+          rlmu_scope?: string | null
+          tier: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          discipline?: string | null
+          display_order?: number
+          doc_code?: string
+          id?: string
+          is_active?: boolean
+          rlmu_required?: boolean
+          rlmu_scope?: string | null
+          tier?: string
+          title?: string
+        }
+        Relationships: []
       }
       p2a_vcr_documentation: {
         Row: {
@@ -3860,6 +3967,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      p2a_vcr_logsheets: {
+        Row: {
+          action_type: string
+          created_at: string
+          description: string | null
+          display_order: number
+          handover_point_id: string
+          id: string
+          notes: string | null
+          responsible_person: string | null
+          status: string
+          target_date: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          action_type?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          handover_point_id: string
+          id?: string
+          notes?: string | null
+          responsible_person?: string | null
+          status?: string
+          target_date?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          handover_point_id?: string
+          id?: string
+          notes?: string | null
+          responsible_person?: string | null
+          status?: string
+          target_date?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       p2a_vcr_operational_registers: {
         Row: {
@@ -4103,6 +4255,101 @@ export type Database = {
             columns: ["vcr_prerequisite_id"]
             isOneToOne: false
             referencedRelation: "p2a_vcr_prerequisites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      p2a_vcr_register_catalog: {
+        Row: {
+          created_at: string
+          description: string | null
+          discipline: string | null
+          display_order: number
+          id: string
+          is_active: boolean
+          name: string
+          register_code: string
+          register_type: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          discipline?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          name: string
+          register_code: string
+          register_type?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          discipline?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          register_code?: string
+          register_type?: string
+        }
+        Relationships: []
+      }
+      p2a_vcr_register_selections: {
+        Row: {
+          action_type: string
+          catalog_id: string | null
+          created_at: string
+          description: string | null
+          display_order: number
+          handover_point_id: string
+          id: string
+          name: string | null
+          notes: string | null
+          register_type: string | null
+          responsible_person: string | null
+          status: string
+          target_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          action_type?: string
+          catalog_id?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          handover_point_id: string
+          id?: string
+          name?: string | null
+          notes?: string | null
+          register_type?: string | null
+          responsible_person?: string | null
+          status?: string
+          target_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          action_type?: string
+          catalog_id?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          handover_point_id?: string
+          id?: string
+          name?: string | null
+          notes?: string | null
+          register_type?: string | null
+          responsible_person?: string | null
+          status?: string
+          target_date?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_vcr_register_selections_catalog_id_fkey"
+            columns: ["catalog_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_vcr_register_catalog"
             referencedColumns: ["id"]
           },
         ]
