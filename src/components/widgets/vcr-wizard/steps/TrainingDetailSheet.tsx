@@ -28,14 +28,13 @@ import {
   FileText,
   X,
   Plus,
-  Check,
   Layers,
   Save,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 const DELIVERY_METHODS_OPTIONS = [
@@ -68,7 +67,7 @@ interface TrainingDetailSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   item: any | null;
-  systems?: any[];
+  systems?: any[]; // all available systems for the handover point
 }
 
 const formatDate = (dateStr: string) => {
@@ -119,11 +118,28 @@ export const TrainingDetailSheet: React.FC<TrainingDetailSheetProps> = ({
   const [tentativeDate, setTentativeDate] = useState('');
   const [deliveryMethod, setDeliveryMethod] = useState<string[]>([]);
   const [targetAudience, setTargetAudience] = useState<string[]>([]);
+  const [linkedSystemIds, setLinkedSystemIds] = useState<string[]>([]);
 
   // UI state
   const [editingField, setEditingField] = useState<string | null>(null);
   const [showAddAudience, setShowAddAudience] = useState(false);
   const [customAudience, setCustomAudience] = useState('');
+  const [showAddSystem, setShowAddSystem] = useState(false);
+
+  // Fetch system mappings for this training item
+  const { data: systemMappings = [] } = useQuery({
+    queryKey: ['training-system-mappings', item?.id],
+    queryFn: async () => {
+      if (!item?.id) return [];
+      const { data, error } = await (supabase as any)
+        .from('ora_training_system_mappings')
+        .select('id, system_id')
+        .eq('training_item_id', item.id);
+      if (error) return [];
+      return data || [];
+    },
+    enabled: open && !!item?.id,
+  });
 
   // Initialize local state from item
   useEffect(() => {
@@ -137,11 +153,19 @@ export const TrainingDetailSheet: React.FC<TrainingDetailSheetProps> = ({
       setTargetAudience(item.target_audience || []);
       setEditingField(null);
       setShowAddAudience(false);
+      setShowAddSystem(false);
       setCustomAudience('');
     }
   }, [item?.id, open]);
 
+  // Sync linked system IDs from fetched mappings
+  useEffect(() => {
+    setLinkedSystemIds(systemMappings.map((m: any) => m.system_id));
+  }, [systemMappings]);
+
   // Compute dirty state
+  const origSystemIds = useMemo(() => systemMappings.map((m: any) => m.system_id).sort(), [systemMappings]);
+
   const isDirty = useMemo(() => {
     if (!item) return false;
     const origDesc = item.description || '';
@@ -157,14 +181,16 @@ export const TrainingDetailSheet: React.FC<TrainingDetailSheetProps> = ({
       durationDays !== origDays ||
       tentativeDate !== origDate ||
       JSON.stringify(deliveryMethod) !== JSON.stringify(origDelivery) ||
-      JSON.stringify(targetAudience) !== JSON.stringify(origAudience)
+      JSON.stringify(targetAudience) !== JSON.stringify(origAudience) ||
+      JSON.stringify([...linkedSystemIds].sort()) !== JSON.stringify(origSystemIds)
     );
-  }, [item, description, provider, durationDays, tentativeDate, deliveryMethod, targetAudience]);
+  }, [item, description, provider, durationDays, tentativeDate, deliveryMethod, targetAudience, linkedSystemIds, origSystemIds]);
 
   const saveAllChanges = useCallback(async () => {
     if (!item) return;
     setSaving(true);
     try {
+      // Save training fields
       const update: any = {
         description: description.trim() || null,
         training_provider: provider.trim() || null,
@@ -179,7 +205,32 @@ export const TrainingDetailSheet: React.FC<TrainingDetailSheetProps> = ({
         .eq('id', item.id);
       if (error) throw error;
       Object.assign(item, update);
+
+      // Sync system mappings: delete removed, insert added
+      const toAdd = linkedSystemIds.filter(id => !origSystemIds.includes(id));
+      const toRemove = origSystemIds.filter(id => !linkedSystemIds.includes(id));
+
+      if (toRemove.length > 0) {
+        await (supabase as any)
+          .from('ora_training_system_mappings')
+          .delete()
+          .eq('training_item_id', item.id)
+          .in('system_id', toRemove);
+      }
+      if (toAdd.length > 0) {
+        const { data: { user } } = await supabase.auth.getUser();
+        await (supabase as any)
+          .from('ora_training_system_mappings')
+          .insert(toAdd.map((sid: string) => ({
+            training_item_id: item.id,
+            system_id: sid,
+            handover_point_id: item.handover_point_id,
+            created_by: user?.id || null,
+          })));
+      }
+
       queryClient.invalidateQueries({ queryKey: ['vcr-exec-training'] });
+      queryClient.invalidateQueries({ queryKey: ['training-system-mappings', item.id] });
       setEditingField(null);
       toast.success('Changes saved');
     } catch (e: any) {
@@ -188,7 +239,7 @@ export const TrainingDetailSheet: React.FC<TrainingDetailSheetProps> = ({
     } finally {
       setSaving(false);
     }
-  }, [item, description, provider, durationDays, tentativeDate, deliveryMethod, targetAudience, queryClient]);
+  }, [item, description, provider, durationDays, tentativeDate, deliveryMethod, targetAudience, linkedSystemIds, origSystemIds, queryClient]);
 
   if (!item) return null;
 
@@ -206,6 +257,17 @@ export const TrainingDetailSheet: React.FC<TrainingDetailSheetProps> = ({
     setCustomAudience('');
     setShowAddAudience(false);
   };
+
+  const removeSystem = (sid: string) => {
+    setLinkedSystemIds(prev => prev.filter(id => id !== sid));
+  };
+
+  const addSystem = (sid: string) => {
+    if (linkedSystemIds.includes(sid)) return;
+    setLinkedSystemIds(prev => [...prev, sid]);
+    setShowAddSystem(false);
+  };
+
 
   const currentDurationDays = durationDays ? parseInt(durationDays) : null;
 
@@ -447,21 +509,69 @@ export const TrainingDetailSheet: React.FC<TrainingDetailSheetProps> = ({
           </DetailRow>
 
           {/* Applicable Systems */}
-          {systems.length > 0 && (
-            <>
-              <Separator />
-              <DetailRow icon={Layers} label="Applicable Systems">
-                <div className="flex flex-wrap gap-1.5 mt-1">
-                  {systems.map((sys: any) => (
-                    <Badge key={sys.id} variant="outline" className="text-[11px] font-normal gap-1">
-                      <Layers className="w-3 h-3 text-muted-foreground" />
-                      {sys.name}
-                    </Badge>
-                  ))}
-                </div>
-              </DetailRow>
-            </>
-          )}
+          <>
+            <Separator />
+            <DetailRow icon={Layers} label="Applicable Systems">
+              <div className="flex flex-wrap gap-1.5 mt-1">
+                {linkedSystemIds.length === 0 && (
+                  <span className="italic text-muted-foreground/60 text-sm">No systems linked</span>
+                )}
+                {linkedSystemIds.map((sid: string) => {
+                  const sys = systems.find((s: any) => s.id === sid);
+                  if (!sys) return null;
+                  return (
+                    <div key={sid} className="relative group/sysChip">
+                      <Badge variant="outline" className="text-[11px] font-normal gap-1 pr-2 transition-all group-hover/sysChip:pr-6">
+                        <Layers className="w-3 h-3 text-muted-foreground" />
+                        {sys.name}
+                      </Badge>
+                      <button
+                        onClick={() => removeSystem(sid)}
+                        className="absolute right-0.5 top-1/2 -translate-y-1/2 opacity-0 group-hover/sysChip:opacity-100 transition-opacity w-4 h-4 rounded-full bg-destructive flex items-center justify-center"
+                      >
+                        <X className="w-2.5 h-2.5 text-destructive-foreground" />
+                      </button>
+                    </div>
+                  );
+                })}
+
+                {/* Add system button */}
+                {showAddSystem ? (
+                  <Popover open={true} onOpenChange={setShowAddSystem}>
+                    <PopoverTrigger asChild>
+                      <button className="flex items-center gap-1 px-2 py-1 rounded-md border border-dashed border-muted-foreground/30 text-[11px] text-muted-foreground hover:bg-muted/40 transition-colors">
+                        <Plus className="w-3 h-3" /> Add
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-60 p-1 max-h-52 overflow-auto" align="start">
+                      {systems
+                        .filter((s: any) => !linkedSystemIds.includes(s.id))
+                        .map((s: any) => (
+                          <button
+                            key={s.id}
+                            onClick={() => addSystem(s.id)}
+                            className="w-full text-left flex items-center gap-2 text-xs px-2 py-1.5 rounded hover:bg-accent transition-colors"
+                          >
+                            <Layers className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                            <span className="truncate">{s.name}</span>
+                          </button>
+                        ))}
+                      {systems.filter((s: any) => !linkedSystemIds.includes(s.id)).length === 0 && (
+                        <p className="text-xs text-muted-foreground text-center py-2">All systems linked</p>
+                      )}
+                    </PopoverContent>
+                  </Popover>
+                ) : (
+                  <button
+                    onClick={() => setShowAddSystem(true)}
+                    className="flex items-center gap-1 px-2 py-1 rounded-md border border-dashed border-muted-foreground/30 text-[11px] text-muted-foreground hover:bg-muted/40 transition-colors"
+                  >
+                    <Plus className="w-3 h-3" /> Add
+                  </button>
+                )}
+              </div>
+            </DetailRow>
+          </>
         </div>
 
         {/* Save Footer - only shown when dirty */}
@@ -472,7 +582,6 @@ export const TrainingDetailSheet: React.FC<TrainingDetailSheetProps> = ({
               variant="ghost"
               className="text-xs"
               onClick={() => {
-                // Reset to original
                 if (item) {
                   setDescription(item.description || '');
                   setProvider(item.training_provider || '');
@@ -481,6 +590,7 @@ export const TrainingDetailSheet: React.FC<TrainingDetailSheetProps> = ({
                   setTentativeDate(item.tentative_date || '');
                   setDeliveryMethod(item.delivery_method || []);
                   setTargetAudience(item.target_audience || []);
+                  setLinkedSystemIds(systemMappings.map((m: any) => m.system_id));
                 }
               }}
             >
