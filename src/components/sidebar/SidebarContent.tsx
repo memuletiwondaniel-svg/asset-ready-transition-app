@@ -71,7 +71,6 @@ const navigationItems: NavigationItem[] = [
   { labelKey: 'navMyTasks', icon: ListChecks, path: '/my-tasks', section: 'my-tasks' },
   { labelKey: 'navORAPlans', icon: CalendarCheck, path: '/operation-readiness', section: 'operation-readiness' },
   { labelKey: 'navORMaintenance', icon: Wrench, path: '/or-maintenance', section: 'or-maintenance' },
-  { labelKey: 'navP2AHandover', icon: Key, path: '/p2a-handover', section: 'p2a-handover' },
 ];
 
 export const SidebarContent = memo<SidebarContentProps>(({
