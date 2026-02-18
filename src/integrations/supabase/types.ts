@@ -4161,6 +4161,7 @@ export type Database = {
           handover_point_id: string
           id: string
           status: string
+          system_ids: string[] | null
           target_audience: string[] | null
           tentative_date: string | null
           title: string
@@ -4178,6 +4179,7 @@ export type Database = {
           handover_point_id: string
           id?: string
           status?: string
+          system_ids?: string[] | null
           target_audience?: string[] | null
           tentative_date?: string | null
           title: string
@@ -4195,6 +4197,7 @@ export type Database = {
           handover_point_id?: string
           id?: string
           status?: string
+          system_ids?: string[] | null
           target_audience?: string[] | null
           tentative_date?: string | null
           title?: string

@@ -34,7 +34,7 @@ import {
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-import { useQueryClient, useQuery } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 const DELIVERY_METHODS_OPTIONS = [
@@ -136,22 +136,7 @@ export const TrainingDetailSheet: React.FC<TrainingDetailSheetProps> = ({
   const [customAudience, setCustomAudience] = useState('');
   const [showAddSystem, setShowAddSystem] = useState(false);
 
-  // Fetch system mappings for this training item
-  const { data: systemMappings = [] } = useQuery({
-    queryKey: ['training-system-mappings', item?.id],
-    queryFn: async () => {
-      if (!item?.id) return [];
-      const { data, error } = await (supabase as any)
-        .from('ora_training_system_mappings')
-        .select('id, system_id')
-        .eq('training_item_id', item.id);
-      if (error) return [];
-      return data || [];
-    },
-    enabled: open && !!item?.id,
-  });
-
-  // Initialize local state from item
+  // Initialize local state from item (system_ids stored directly on p2a_vcr_training)
   useEffect(() => {
     if (item) {
       setDescription(item.description || '');
@@ -161,6 +146,7 @@ export const TrainingDetailSheet: React.FC<TrainingDetailSheetProps> = ({
       setTentativeDate(item.tentative_date || '');
       setDeliveryMethod(item.delivery_method || []);
       setTargetAudience(item.target_audience || []);
+      setLinkedSystemIds(item.system_ids || []);
       setEditingField(null);
       setShowAddAudience(false);
       setShowAddSystem(false);
@@ -168,13 +154,8 @@ export const TrainingDetailSheet: React.FC<TrainingDetailSheetProps> = ({
     }
   }, [item?.id, open]);
 
-  // Sync linked system IDs from fetched mappings
-  useEffect(() => {
-    setLinkedSystemIds(systemMappings.map((m: any) => m.system_id));
-  }, [systemMappings]);
-
   // Compute dirty state
-  const origSystemIds = useMemo(() => systemMappings.map((m: any) => m.system_id).sort(), [systemMappings]);
+  const origSystemIds = useMemo(() => (item?.system_ids || []).slice().sort(), [item]);
 
   const isDirty = useMemo(() => {
     if (!item) return false;
@@ -200,7 +181,7 @@ export const TrainingDetailSheet: React.FC<TrainingDetailSheetProps> = ({
     if (!item) return;
     setSaving(true);
     try {
-      // Save training fields
+      // Save training fields + system_ids array directly on p2a_vcr_training
       const update: any = {
         description: description.trim() || null,
         training_provider: provider.trim() || null,
@@ -208,6 +189,7 @@ export const TrainingDetailSheet: React.FC<TrainingDetailSheetProps> = ({
         tentative_date: tentativeDate || null,
         delivery_method: deliveryMethod.length > 0 ? deliveryMethod : null,
         target_audience: targetAudience,
+        system_ids: linkedSystemIds,
       };
       const { error } = await (supabase as any)
         .from('p2a_vcr_training')
@@ -216,31 +198,7 @@ export const TrainingDetailSheet: React.FC<TrainingDetailSheetProps> = ({
       if (error) throw error;
       Object.assign(item, update);
 
-      // Sync system mappings: delete removed, insert added
-      const toAdd = linkedSystemIds.filter(id => !origSystemIds.includes(id));
-      const toRemove = origSystemIds.filter(id => !linkedSystemIds.includes(id));
-
-      if (toRemove.length > 0) {
-        await (supabase as any)
-          .from('ora_training_system_mappings')
-          .delete()
-          .eq('training_item_id', item.id)
-          .in('system_id', toRemove);
-      }
-      if (toAdd.length > 0) {
-        const { data: { user } } = await supabase.auth.getUser();
-        await (supabase as any)
-          .from('ora_training_system_mappings')
-          .insert(toAdd.map((sid: string) => ({
-            training_item_id: item.id,
-            system_id: sid,
-            handover_point_id: item.handover_point_id,
-            created_by: user?.id || null,
-          })));
-      }
-
       queryClient.invalidateQueries({ queryKey: ['vcr-exec-training'] });
-      queryClient.invalidateQueries({ queryKey: ['training-system-mappings', item.id] });
       setEditingField(null);
       toast.success('Changes saved');
     } catch (e: any) {
@@ -249,7 +207,7 @@ export const TrainingDetailSheet: React.FC<TrainingDetailSheetProps> = ({
     } finally {
       setSaving(false);
     }
-  }, [item, description, provider, durationDays, tentativeDate, deliveryMethod, targetAudience, linkedSystemIds, origSystemIds, queryClient]);
+  }, [item, description, provider, durationDays, tentativeDate, deliveryMethod, targetAudience, linkedSystemIds, queryClient]);
 
   if (!item) return null;
 
@@ -602,7 +560,7 @@ export const TrainingDetailSheet: React.FC<TrainingDetailSheetProps> = ({
                   setTentativeDate(item.tentative_date || '');
                   setDeliveryMethod(item.delivery_method || []);
                   setTargetAudience(item.target_audience || []);
-                  setLinkedSystemIds(systemMappings.map((m: any) => m.system_id));
+                  setLinkedSystemIds(item.system_ids || []);
                 }
               }}
             >
