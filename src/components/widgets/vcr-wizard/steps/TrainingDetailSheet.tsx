@@ -108,6 +108,16 @@ export const TrainingDetailSheet: React.FC<TrainingDetailSheetProps> = ({
   item,
   systems = [],
 }) => {
+  // Deduplicate to parent-system level (the hook returns one row per subsystem mapping)
+  const uniqueSystems = useMemo(() => {
+    const seen = new Set<string>();
+    return systems.filter((s: any) => {
+      if (seen.has(s.id)) return false;
+      seen.add(s.id);
+      return true;
+    });
+  }, [systems]);
+
   const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
 
@@ -520,20 +530,20 @@ export const TrainingDetailSheet: React.FC<TrainingDetailSheetProps> = ({
                   <span className="italic text-muted-foreground/60 text-sm">No systems linked</span>
                 )}
                 {linkedSystemIds.map((sid: string) => {
-                  const sys = systems.find((s: any) => s.id === sid);
+                  const sys = uniqueSystems.find((s: any) => s.id === sid);
                   if (!sys) return null;
                   return (
                     <div key={sid} className="relative group/sysChip">
-                      <Badge variant="outline" className="text-[11px] font-normal gap-1 pr-2 transition-all group-hover/sysChip:pr-6">
-                        <Layers className="w-3 h-3 text-muted-foreground" />
+                      <Badge variant="outline" className="text-[11px] font-normal flex items-center gap-1 pr-1.5 transition-colors group-hover/sysChip:bg-muted">
+                        <Layers className="w-3 h-3 text-muted-foreground shrink-0" />
                         {sys.name}
+                        <button
+                          onClick={() => removeSystem(sid)}
+                          className="opacity-0 group-hover/sysChip:opacity-100 transition-opacity ml-0.5 rounded-sm hover:bg-destructive/10 p-0.5"
+                        >
+                          <X className="w-2.5 h-2.5 text-destructive" />
+                        </button>
                       </Badge>
-                      <button
-                        onClick={() => removeSystem(sid)}
-                        className="absolute right-0.5 top-1/2 -translate-y-1/2 opacity-0 group-hover/sysChip:opacity-100 transition-opacity w-4 h-4 rounded-full bg-destructive flex items-center justify-center"
-                      >
-                        <X className="w-2.5 h-2.5 text-destructive-foreground" />
-                      </button>
                     </div>
                   );
                 })}
@@ -547,7 +557,7 @@ export const TrainingDetailSheet: React.FC<TrainingDetailSheetProps> = ({
                       </button>
                     </PopoverTrigger>
                     <PopoverContent className="w-60 p-1 max-h-52 overflow-auto" align="start">
-                      {systems
+                      {uniqueSystems
                         .filter((s: any) => !linkedSystemIds.includes(s.id))
                         .map((s: any) => (
                           <button
@@ -559,7 +569,7 @@ export const TrainingDetailSheet: React.FC<TrainingDetailSheetProps> = ({
                             <span className="truncate">{s.name}</span>
                           </button>
                         ))}
-                      {systems.filter((s: any) => !linkedSystemIds.includes(s.id)).length === 0 && (
+                      {uniqueSystems.filter((s: any) => !linkedSystemIds.includes(s.id)).length === 0 && (
                         <p className="text-xs text-muted-foreground text-center py-2">All systems linked</p>
                       )}
                     </PopoverContent>
