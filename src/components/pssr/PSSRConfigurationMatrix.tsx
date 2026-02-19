@@ -59,6 +59,7 @@ import { CSS } from '@dnd-kit/utilities';
 interface LocalConfiguration {
   reason_id: string;
   reason_name: string;
+  reason_description: string;
   pssr_approver_role_ids: string[];
   sof_approver_role_ids: string[];
   isDirty: boolean;
@@ -265,6 +266,7 @@ const PSSRConfigurationMatrix: React.FC = () => {
     setLocalConfigs(configurations.map(config => ({
       reason_id: config.reason_id,
       reason_name: config.reason?.name || '',
+      reason_description: (config.reason as any)?.description || '',
       pssr_approver_role_ids: config.pssr_approver_role_ids || [],
       sof_approver_role_ids: config.sof_approver_role_ids || [],
       isDirty: false,
@@ -422,6 +424,7 @@ const PSSRConfigurationMatrix: React.FC = () => {
     setLocalConfigs(configurations.map(config => ({
       reason_id: config.reason_id,
       reason_name: config.reason?.name || '',
+      reason_description: (config.reason as any)?.description || '',
       pssr_approver_role_ids: config.pssr_approver_role_ids || [],
       sof_approver_role_ids: config.sof_approver_role_ids || [],
       isDirty: false,
@@ -830,6 +833,9 @@ const PSSRConfigurationMatrix: React.FC = () => {
                       {/* Title */}
                       <div className="space-y-1">
                         <h3 className="font-semibold text-sm leading-snug line-clamp-2">{config.reason_name}</h3>
+                        {config.reason_description && (
+                          <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{config.reason_description}</p>
+                        )}
                       </div>
 
                       {/* Stats pills */}
