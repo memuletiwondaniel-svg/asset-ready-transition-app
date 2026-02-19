@@ -254,84 +254,8 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
     statFilter: 'all' as 'all' | 'under-review' | 'draft' | 'completed'
   });
 
-  // Mock PSSR data - starts empty but can be populated
-  const pssrList: PSSR[] = [{
-    id: 'PSSR-DP300-001',
-    projectId: 'DP 300',
-    projectName: 'HM Additional Compressors',
-    asset: 'Compression Station',
-    status: 'Under Review',
-    priority: 'High',
-    progress: 75,
-    created: '2024-01-15',
-    pssrLead: 'Ahmed Al-Rashid',
-    pssrLeadAvatar: 'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=150&h=150&fit=crop&crop=face',
-    teamStatus: 'green',
-    pendingApprovals: 3,
-    completedDate: null,
-    riskLevel: 'Medium',
-    nextReview: '2024-02-15',
-    teamMembers: 8,
-    lastActivity: '2 hours ago',
-    location: 'Hassi Messaoud'
-  }, {
-    id: 'PSSR-2024-002',
-    projectId: 'DP 163',
-    projectName: 'LPG Unit 12.1 Rehabilitation',
-    asset: 'KAZ',
-    status: 'Draft',
-    priority: 'Medium',
-    progress: 30,
-    created: '2024-01-20',
-    pssrLead: 'Sarah Johnson',
-    pssrLeadAvatar: 'https://images.unsplash.com/photo-1582562124811-c09040d0a901?w=150&h=150&fit=crop&crop=face',
-    teamStatus: 'red',
-    pendingApprovals: 0,
-    completedDate: null,
-    riskLevel: 'Low',
-    nextReview: '2024-02-20',
-    teamMembers: 5,
-    lastActivity: '1 day ago',
-    location: 'Kazakhstan'
-  }, {
-    id: 'PSSR-2024-003',
-    projectId: 'DP 083',
-    projectName: 'UQ Jetty 2 Export Terminal',
-    asset: 'UQ',
-    status: 'Completed',
-    priority: 'High',
-    progress: 100,
-    created: '2024-01-10',
-    pssrLead: 'Mohammed Hassan',
-    pssrLeadAvatar: 'https://images.unsplash.com/photo-1535268647677-300dbf3d78d1?w=150&h=150&fit=crop&crop=face',
-    teamStatus: 'amber',
-    pendingApprovals: 0,
-    completedDate: '2024-02-08',
-    riskLevel: 'Low',
-    nextReview: null,
-    teamMembers: 12,
-    lastActivity: 'Completed',
-    location: 'Queensland'
-  }, {
-    id: 'PSSR-2024-004',
-    projectId: 'DP 317',
-    projectName: 'Majnoon New Gas Tie-in',
-    asset: 'NRNGL',
-    status: 'Under Review',
-    priority: 'Critical',
-    progress: 45,
-    created: '2024-01-25',
-    pssrLead: 'Omar Al-Basri',
-    pssrLeadAvatar: 'https://images.unsplash.com/photo-1501286353178-1ec881214838?w=150&h=150&fit=crop&crop=face',
-    teamStatus: 'red',
-    pendingApprovals: 5,
-    completedDate: null,
-    riskLevel: 'High',
-    nextReview: '2024-02-10',
-    teamMembers: 6,
-    lastActivity: '30 minutes ago',
-    location: 'Majnoon Field'
-  }];
+  // PSSR data - populated from database when available
+  const pssrList: PSSR[] = [];
 
   // Initialize PSSR order
   React.useEffect(() => {
