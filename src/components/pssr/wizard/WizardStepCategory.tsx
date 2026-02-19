@@ -1,6 +1,5 @@
 import React from 'react';
 import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { 
   Loader2, 
   ClipboardList, 
@@ -9,52 +8,54 @@ import {
   Rocket,
   Factory,
   FileText,
+  CheckCircle2,
   type LucideIcon
 } from 'lucide-react';
 import { useActivePSSRReasonCategories } from '@/hooks/usePSSRReasonCategories';
+import { cn } from '@/lib/utils';
 
 // Export for backward compatibility with AddPSSRReasonWizard and EditPSSRReasonOverlay
 export type SubCategoryType = 'P&E' | 'BFM' | null;
 
-interface CategoryIconConfig {
+interface CategoryCardConfig {
   icon: LucideIcon;
-  colorClass: string;
-  bgClass: string;
+  hue: number;
+  label: string;
 }
 
-const categoryIconConfig: Record<string, CategoryIconConfig> = {
+const categoryCardConfig: Record<string, CategoryCardConfig> = {
   'PROJECT_STARTUP': { 
     icon: Rocket, 
-    colorClass: 'text-blue-600 dark:text-blue-400',
-    bgClass: 'bg-blue-50 dark:bg-blue-900/20'
+    hue: 220,
+    label: 'Project',
   },
   'BFM_PROJECTS': { 
     icon: Factory, 
-    colorClass: 'text-emerald-600 dark:text-emerald-400',
-    bgClass: 'bg-emerald-50 dark:bg-emerald-900/20'
+    hue: 155,
+    label: 'BFM',
   },
   'INCIDENCE': { 
     icon: AlertTriangle, 
-    colorClass: 'text-amber-500 dark:text-amber-400',
-    bgClass: 'bg-amber-50 dark:bg-amber-900/20'
+    hue: 38,
+    label: 'Incident',
   },
   'OPS_MTCE': { 
     icon: Wrench, 
-    colorClass: 'text-sky-600 dark:text-sky-400',
-    bgClass: 'bg-sky-50 dark:bg-sky-900/20'
+    hue: 200,
+    label: 'Operations',
   },
   'OTHERS': { 
     icon: FileText, 
-    colorClass: 'text-slate-500 dark:text-slate-400',
-    bgClass: 'bg-slate-50 dark:bg-slate-800/20'
+    hue: 270,
+    label: 'Other',
   },
 };
 
-const getIconConfig = (code: string): CategoryIconConfig => {
-  return categoryIconConfig[code] || { 
+const getCardConfig = (code: string): CategoryCardConfig => {
+  return categoryCardConfig[code] || { 
     icon: ClipboardList, 
-    colorClass: 'text-muted-foreground',
-    bgClass: '' 
+    hue: 0,
+    label: '',
   };
 };
 
@@ -83,9 +84,9 @@ const WizardStepCategory: React.FC<WizardStepCategoryProps> = ({
   }
 
   return (
-    <div className="space-y-6">
-      {/* Category Selection */}
-      <div className="space-y-3">
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="space-y-1">
         <div className="flex items-center gap-2">
           <ClipboardList className="h-5 w-5 text-primary" />
           <Label className="text-base font-medium">PSSR Category *</Label>
@@ -93,50 +94,103 @@ const WizardStepCategory: React.FC<WizardStepCategoryProps> = ({
         <p className="text-sm text-muted-foreground">
           Select the category that best describes the reason for this PSSR
         </p>
-        
-        <RadioGroup
-          value={categoryId || ''}
-          onValueChange={(value) => {
-            onCategoryChange(value);
-            // Reset sub-category when category changes (for backward compat)
-            if (onSubCategoryChange) {
-              const newCategory = categories?.find(c => c.id === value);
-              if (newCategory?.code !== 'PROJECT_STARTUP') {
-                onSubCategoryChange(null);
-              }
-            }
-          }}
-          className="grid gap-3"
-        >
-          {categories?.map((category) => {
-            const config = getIconConfig(category.code);
-            const IconComponent = config.icon;
-            
-            return (
-              <div
-                key={category.id}
-                className={`flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                  categoryId === category.id
-                    ? `border-primary ${config.bgClass} shadow-sm`
-                    : 'border-border hover:border-muted-foreground/30 hover:bg-muted/30'
-                }`}
-              >
-                <RadioGroupItem value={category.id} id={category.id} className="mt-0.5" />
-                <Label htmlFor={category.id} className="cursor-pointer flex-1">
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold">{category.name}</span>
-                    <IconComponent className={`h-5 w-5 ${config.colorClass}`} />
+      </div>
+      
+      {/* Card Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {categories?.map((category) => {
+          const config = getCardConfig(category.code);
+          const IconComponent = config.icon;
+          const isSelected = categoryId === category.id;
+          
+          return (
+            <button
+              key={category.id}
+              type="button"
+              onClick={() => {
+                onCategoryChange(category.id);
+                if (onSubCategoryChange) {
+                  const cat = categories?.find(c => c.id === category.id);
+                  if (cat?.code !== 'PROJECT_STARTUP') {
+                    onSubCategoryChange(null);
+                  }
+                }
+              }}
+              className={cn(
+                'group relative flex flex-col items-start p-5 rounded-xl border-2 text-left transition-all duration-300 overflow-hidden',
+                isSelected
+                  ? 'border-primary shadow-md'
+                  : 'border-border/60 hover:border-border hover:shadow-sm'
+              )}
+              style={{
+                background: isSelected
+                  ? `linear-gradient(135deg, hsl(${config.hue} 70% 97%), hsl(${config.hue} 60% 94%))`
+                  : undefined,
+              }}
+            >
+              {/* Hover gradient overlay */}
+              <div 
+                className={cn(
+                  'absolute inset-0 opacity-0 transition-opacity duration-300 pointer-events-none',
+                  !isSelected && 'group-hover:opacity-100'
+                )}
+                style={{
+                  background: `linear-gradient(135deg, hsl(${config.hue} 50% 97% / 0.7), hsl(${config.hue} 40% 95% / 0.4))`,
+                }}
+              />
+
+              {/* Content */}
+              <div className="relative z-10 w-full">
+                {/* Top row: Icon + Check */}
+                <div className="flex items-center justify-between mb-3">
+                  <div 
+                    className={cn(
+                      'p-2.5 rounded-lg transition-colors duration-300',
+                    )}
+                    style={{
+                      backgroundColor: isSelected 
+                        ? `hsl(${config.hue} 60% 90%)` 
+                        : `hsl(${config.hue} 30% 94%)`,
+                    }}
+                  >
+                    <IconComponent 
+                      className="h-5 w-5 transition-colors duration-300"
+                      style={{ 
+                        color: isSelected 
+                          ? `hsl(${config.hue} 70% 40%)` 
+                          : `hsl(${config.hue} 30% 55%)` 
+                      }}
+                    />
                   </div>
-                  {category.description && (
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {category.description}
-                    </p>
+                  
+                  {isSelected && (
+                    <CheckCircle2 
+                      className="h-5 w-5 text-primary animate-in fade-in zoom-in duration-200" 
+                    />
                   )}
-                </Label>
+                </div>
+
+                {/* Title */}
+                <h4 className={cn(
+                  'font-semibold text-sm leading-snug mb-1.5 transition-colors',
+                  isSelected ? 'text-foreground' : 'text-foreground/80 group-hover:text-foreground'
+                )}>
+                  {category.name}
+                </h4>
+
+                {/* Description */}
+                {category.description && (
+                  <p className={cn(
+                    'text-xs leading-relaxed transition-colors',
+                    isSelected ? 'text-muted-foreground' : 'text-muted-foreground/70 group-hover:text-muted-foreground'
+                  )}>
+                    {category.description}
+                  </p>
+                )}
               </div>
-            );
-          })}
-        </RadioGroup>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
