@@ -6584,6 +6584,7 @@ export type Database = {
           pssr_id: string
           pssr_lead_id: string | null
           reason: string
+          reason_id: string | null
           scope: string | null
           scope_image_url: string | null
           station_id: string | null
@@ -6609,6 +6610,7 @@ export type Database = {
           pssr_id: string
           pssr_lead_id?: string | null
           reason: string
+          reason_id?: string | null
           scope?: string | null
           scope_image_url?: string | null
           station_id?: string | null
@@ -6634,6 +6636,7 @@ export type Database = {
           pssr_id?: string
           pssr_lead_id?: string | null
           reason?: string
+          reason_id?: string | null
           scope?: string | null
           scope_image_url?: string | null
           station_id?: string | null
@@ -6656,6 +6659,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles_safe"
             referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "pssrs_reason_id_fkey"
+            columns: ["reason_id"]
+            isOneToOne: false
+            referencedRelation: "pssr_reasons"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -7958,6 +7968,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      generate_pssr_code: { Args: { plant_code: string }; Returns: string }
       generate_vcr_code: { Args: { p_project_code: string }; Returns: string }
       get_active_roles: {
         Args: never
