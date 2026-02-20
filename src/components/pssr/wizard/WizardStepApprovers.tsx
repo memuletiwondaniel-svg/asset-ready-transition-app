@@ -32,8 +32,8 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
   const HIDDEN_PSSR_APPROVER_ROLES = ['Project Manager', 'Process TA2'];
   const HIDDEN_SOF_APPROVER_ROLES = ['P&E Director'];
 
-  // Company-wide director roles that don't have plant-specific positions
-  const COMPANY_WIDE_DIRECTOR_ROLES = ['hse director', 'p&m director', 'p&e director', 'mtce director'];
+  // Company-wide roles that don't have plant-specific positions
+  const COMPANY_WIDE_ROLES = ['hse director', 'p&m director', 'p&e director', 'mtce director', 'central mtce lead'];
 
   const filteredRoles = type === 'pssr'
     ? roles.filter(role => allowedRoleIds.includes(role.id) && !HIDDEN_PSSR_APPROVER_ROLES.includes(role.name))
@@ -65,7 +65,7 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
         if (pos.includes('project')) return false;
         
         // Company-wide director roles (HSE Director, P&M Director, etc.) - no plant filter
-        if (COMPANY_WIDE_DIRECTOR_ROLES.includes(roleName)) {
+        if (COMPANY_WIDE_ROLES.includes(roleName)) {
           return true;
         }
         
