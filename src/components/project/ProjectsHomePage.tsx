@@ -139,7 +139,7 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
       {/* Header */}
       <div className="border-b border-border/40 bg-card/30 backdrop-blur-xl p-4 md:p-6">
         <BreadcrumbNavigation 
-          currentPageLabel="VCRs" 
+          currentPageLabel="P2A" 
           customBreadcrumbs={[
             { label: 'Home', path: '/', onClick: () => navigate('/') }
           ]}
@@ -150,8 +150,8 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
             <Key className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Verification Certificate of Readiness (VCRs)</h1>
-            <p className="text-sm text-muted-foreground mt-1">Browse and manage all VCRs and P2A deliverables and milestones</p>
+            <h1 className="text-2xl font-bold text-foreground">P2A Handover</h1>
+            <p className="text-sm text-muted-foreground mt-1">Browse and manage Project-to-Asset (P2A) deliverables and Verification Certificate of Readiness (VCRs)</p>
           </div>
         </div>
       </div>
