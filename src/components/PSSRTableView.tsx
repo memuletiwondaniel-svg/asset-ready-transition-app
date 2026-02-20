@@ -7,7 +7,7 @@ import {
   TableHeader, 
   TableRow 
 } from '@/components/ui/table';
-import { GripVertical, Star } from 'lucide-react';
+import { Star } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
@@ -33,6 +33,7 @@ interface PSSR {
   teamMembers: number;
   lastActivity: string;
   location: string;
+  scope?: string;
 }
 
 interface PSSRTableViewProps {
@@ -171,9 +172,11 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails, pin
           </Badge>
         );
       case 'projectName':
-        return <div className="font-semibold text-foreground truncate text-left">{pssr.projectName}</div>;
+        return <div className="font-semibold text-foreground text-left whitespace-normal break-words">{pssr.projectName}</div>;
       case 'asset':
-        return <div className="font-medium text-foreground/80 truncate text-left">{pssr.asset}</div>;
+        return <div className="font-medium text-foreground/80 text-left">{pssr.asset}</div>;
+      case 'scope':
+        return <div className="text-sm text-muted-foreground text-left whitespace-normal break-words">{(pssr as any).scope || '—'}</div>;
       case 'pssrLead':
         return (
           <div className="flex items-center gap-2.5">
@@ -246,17 +249,10 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails, pin
             {visibleColumns.map((column) => (
               <TableHead
                 key={column.id}
-                draggable
-                onDragStart={() => handleDragStart(column.id)}
-                onDragOver={(e) => handleDragOver(e, column.id)}
-                onDragEnd={handleDragEnd}
                 style={{ width: `${column.width}px`, minWidth: `${column.width}px` }}
-                className="relative group cursor-move select-none h-11 px-4 text-left"
+                className="relative select-none h-11 px-4 text-left"
               >
-                <div className="flex items-center gap-2">
-                  <GripVertical className="h-3.5 w-3.5 text-muted-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">{column.label}</span>
-                </div>
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">{column.label}</span>
                 <div
                   className="absolute right-0 top-0 h-full w-1.5 cursor-col-resize hover:bg-primary/40 active:bg-primary transition-colors"
                   onMouseDown={(e) => handleResizeStart(e, column.id)}

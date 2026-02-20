@@ -20,6 +20,8 @@ export interface WidgetCardProps {
   enableFullscreen?: boolean;
   headerAction?: React.ReactNode;
   showHeaderActionOnHover?: boolean;
+  hideDragHandle?: boolean;
+  hideOptionsMenu?: boolean;
 }
 
 export const WidgetCard: React.FC<WidgetCardProps> = ({
@@ -37,6 +39,8 @@ export const WidgetCard: React.FC<WidgetCardProps> = ({
   enableFullscreen = true,
   headerAction,
   showHeaderActionOnHover = false,
+  hideDragHandle = false,
+  hideOptionsMenu = false,
 }) => {
   const { setFullscreenWidget } = useWidgetSize();
   
@@ -58,15 +62,17 @@ export const WidgetCard: React.FC<WidgetCardProps> = ({
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
         
         <div className="flex items-center gap-3 flex-1 relative z-10">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6 cursor-grab active:cursor-grabbing hover:bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity"
-            {...dragAttributes}
-            {...dragListeners}
-          >
-            <GripVertical className="w-4 h-4 text-muted-foreground" />
-          </Button>
+          {!hideDragHandle && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 cursor-grab active:cursor-grabbing hover:bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity"
+              {...dragAttributes}
+              {...dragListeners}
+            >
+              <GripVertical className="w-4 h-4 text-muted-foreground" />
+            </Button>
+          )}
           <CardTitle className="text-lg font-bold tracking-tight bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text">{title}</CardTitle>
         </div>
         <div className="flex items-center gap-1 relative z-10">
@@ -75,48 +81,50 @@ export const WidgetCard: React.FC<WidgetCardProps> = ({
               {headerAction}
             </div>
           )}
-          <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-primary/10 relative z-10">
-              <MoreVertical className="w-4 h-4 text-muted-foreground" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="z-50 bg-background">
-            {enableFullscreen && widgetId && (
-              <DropdownMenuItem onClick={handleFullscreen}>
-                <Maximize className="w-4 h-4 mr-2" />
-                Fullscreen
-              </DropdownMenuItem>
-            )}
-            {onToggleExpand && (
-              <DropdownMenuItem onClick={onToggleExpand}>
-                {isExpanded ? (
-                  <>
-                    <Minimize2 className="w-4 h-4 mr-2" />
-                    Collapse
-                  </>
-                ) : (
-                  <>
-                    <Maximize2 className="w-4 h-4 mr-2" />
-                    Expand
-                  </>
+          {!hideOptionsMenu && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-primary/10 relative z-10">
+                  <MoreVertical className="w-4 h-4 text-muted-foreground" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="z-50 bg-background">
+                {enableFullscreen && widgetId && (
+                  <DropdownMenuItem onClick={handleFullscreen}>
+                    <Maximize className="w-4 h-4 mr-2" />
+                    Fullscreen
+                  </DropdownMenuItem>
                 )}
-              </DropdownMenuItem>
-            )}
-            {onToggleVisibility && (
-              <DropdownMenuItem onClick={onToggleVisibility}>
-                <EyeOff className="w-4 h-4 mr-2" />
-                Hide
-              </DropdownMenuItem>
-            )}
-            {onSettings && (
-              <DropdownMenuItem onClick={onSettings}>
-                <Settings className="w-4 h-4 mr-2" />
-                Settings
-              </DropdownMenuItem>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+                {onToggleExpand && (
+                  <DropdownMenuItem onClick={onToggleExpand}>
+                    {isExpanded ? (
+                      <>
+                        <Minimize2 className="w-4 h-4 mr-2" />
+                        Collapse
+                      </>
+                    ) : (
+                      <>
+                        <Maximize2 className="w-4 h-4 mr-2" />
+                        Expand
+                      </>
+                    )}
+                  </DropdownMenuItem>
+                )}
+                {onToggleVisibility && (
+                  <DropdownMenuItem onClick={onToggleVisibility}>
+                    <EyeOff className="w-4 h-4 mr-2" />
+                    Hide
+                  </DropdownMenuItem>
+                )}
+                {onSettings && (
+                  <DropdownMenuItem onClick={onSettings}>
+                    <Settings className="w-4 h-4 mr-2" />
+                    Settings
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </CardHeader>
       <CardContent className="p-4 flex-1 min-h-0 overflow-auto">
