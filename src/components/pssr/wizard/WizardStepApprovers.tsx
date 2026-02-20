@@ -32,6 +32,9 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
   const HIDDEN_PSSR_APPROVER_ROLES = ['Project Manager', 'Process TA2'];
   const HIDDEN_SOF_APPROVER_ROLES = ['P&E Director'];
 
+  // Company-wide director roles that don't have plant-specific positions
+  const COMPANY_WIDE_DIRECTOR_ROLES = ['hse director', 'p&m director', 'p&e director', 'mtce director'];
+
   const filteredRoles = type === 'pssr'
     ? roles.filter(role => allowedRoleIds.includes(role.id) && !HIDDEN_PSSR_APPROVER_ROLES.includes(role.name))
     : type === 'sof'
@@ -61,7 +64,12 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
         // Exclude "Projects" personnel from PSSR approvers (they are for VCRs only)
         if (pos.includes('project')) return false;
         
-        // Director / Deputy Director roles: strict plant match only
+        // Company-wide director roles (HSE Director, P&M Director, etc.) - no plant filter
+        if (COMPANY_WIDE_DIRECTOR_ROLES.includes(roleName)) {
+          return true;
+        }
+        
+        // Plant-specific director roles: strict plant match only
         if (roleName.includes('director')) {
           return pos.includes(plantLower);
         }
@@ -130,11 +138,6 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <span className="font-medium text-sm">{role?.name || 'Unknown'}</span>
-                    {people.length > 0 && (
-                      <Badge variant="secondary" className="text-xs">
-                        {people.length} {people.length === 1 ? 'person' : 'people'}
-                      </Badge>
-                    )}
                   </div>
                   <button
                     type="button"
@@ -162,7 +165,7 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
                         <div className="min-w-0">
                           <p className="text-xs font-medium truncate">{person.full_name}</p>
                           {person.position && (
-                            <p className="text-[10px] text-muted-foreground truncate">{person.position}</p>
+                            <p className="text-[10px] text-muted-foreground/50 truncate">{person.position}</p>
                           )}
                         </div>
                         {plantName && (person.position || '').toLowerCase().includes(plantName.toLowerCase()) && (
