@@ -13,8 +13,8 @@ import { useStations } from '@/hooks/useStations';
 import { usePSSRReasons } from '@/hooks/usePSSRReasons';
 import WizardStepCategory from './wizard/WizardStepCategory';
 import WizardStepDetails from './wizard/WizardStepDetails';
-import WizardStepReviewCustomize from './wizard/WizardStepReviewCustomize';
-import { ChecklistItemOverrides } from './wizard/WizardStepChecklistItems';
+import WizardStepChecklistItems, { ChecklistItemOverrides } from './wizard/WizardStepChecklistItems';
+import WizardStepApproversSetup from './wizard/WizardStepApproversSetup';
 import { Attachment } from '@/components/ui/RichTextEditor';
 
 interface CreatePSSRWizardProps {
@@ -37,22 +37,26 @@ interface WizardState {
   fieldId: string;
   stationId: string;
   
-  // Step 3: Review & Customize
+  // Step 3: Checklist Items
   selectedChecklistItemIds: string[];
   checklistItemOverrides: ChecklistItemOverrides;
-  selectedPssrApproverRoleIds: string[];
-  selectedSofApproverRoleIds: string[];
+  naItemIds: string[];
   templateChecklistItemIds: string[];
-  templatePssrApproverRoleIds: string[];
-  templateSofApproverRoleIds: string[];
   configLoaded: boolean;
   configLoading: boolean;
+  
+  // Step 4: Approvers
+  selectedPssrApproverRoleIds: string[];
+  selectedSofApproverRoleIds: string[];
+  templatePssrApproverRoleIds: string[];
+  templateSofApproverRoleIds: string[];
 }
 
 const STEPS = [
   { id: 1, title: 'Reason', description: 'Select PSSR reason' },
   { id: 2, title: 'Details & Location', description: 'Title, scope and location' },
-  { id: 3, title: 'Review & Customize', description: 'Review checklist & approvers' },
+  { id: 3, title: 'PSSR Items', description: 'Review checklist items' },
+  { id: 4, title: 'Approvers', description: 'PSSR & SoF approvers' },
 ];
 
 const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange, onSuccess }) => {
@@ -78,13 +82,14 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
     stationId: '',
     selectedChecklistItemIds: [],
     checklistItemOverrides: {},
-    selectedPssrApproverRoleIds: [],
-    selectedSofApproverRoleIds: [],
+    naItemIds: [],
     templateChecklistItemIds: [],
-    templatePssrApproverRoleIds: [],
-    templateSofApproverRoleIds: [],
     configLoaded: false,
     configLoading: false,
+    selectedPssrApproverRoleIds: [],
+    selectedSofApproverRoleIds: [],
+    templatePssrApproverRoleIds: [],
+    templateSofApproverRoleIds: [],
   });
 
   const selectedReason = reasons?.find(r => r.id === wizardState.reasonId);
@@ -106,13 +111,14 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
       stationId: '',
       selectedChecklistItemIds: [],
       checklistItemOverrides: {},
-      selectedPssrApproverRoleIds: [],
-      selectedSofApproverRoleIds: [],
+      naItemIds: [],
       templateChecklistItemIds: [],
-      templatePssrApproverRoleIds: [],
-      templateSofApproverRoleIds: [],
       configLoaded: false,
       configLoading: false,
+      selectedPssrApproverRoleIds: [],
+      selectedSofApproverRoleIds: [],
+      templatePssrApproverRoleIds: [],
+      templateSofApproverRoleIds: [],
     });
   };
 
@@ -344,14 +350,6 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
 
   const progressPercentage = (currentStep / STEPS.length) * 100;
 
-  const getLocationDisplay = () => {
-    return {
-      type: 'Asset Location',
-      primary: selectedPlant?.name || '',
-      secondary: [selectedField?.name, selectedStation?.name].filter(Boolean).join(' → '),
-      details: [],
-    };
-  };
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
@@ -443,21 +441,12 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
             />
           )}
 
-          {/* Step 3: Review & Customize */}
+          {/* Step 3: PSSR Items */}
           {currentStep === 3 && (
-            <WizardStepReviewCustomize
-              categoryName={selectedReason?.name || ''}
-              reasonName={selectedReason?.name || ''}
-              locationDisplay={getLocationDisplay()}
-              scopeDescription={wizardState.scopeDescription}
-              atiScopes={wizardState.selectedAtiScopeIds.map(id => {
-                const scope = atiScopes?.find(s => s.id === id);
-                return scope ? { id: scope.id, code: scope.code } : null;
-              }).filter(Boolean) as Array<{ id: string; code: string }>}
-              
-              selectedChecklistItemIds={wizardState.selectedChecklistItemIds}
-              checklistItemOverrides={wizardState.checklistItemOverrides}
-              onChecklistItemToggle={(itemId) => {
+            <WizardStepChecklistItems
+              selectedItemIds={wizardState.selectedChecklistItemIds}
+              itemOverrides={wizardState.checklistItemOverrides}
+              onItemToggle={(itemId) => {
                 setWizardState(prev => ({
                   ...prev,
                   selectedChecklistItemIds: prev.selectedChecklistItemIds.includes(itemId)
@@ -465,26 +454,46 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
                     : [...prev.selectedChecklistItemIds, itemId]
                 }));
               }}
-              onSelectAllChecklistItems={(itemIds) => {
+              onSelectAllItems={(itemIds) => {
                 setWizardState(prev => ({ ...prev, selectedChecklistItemIds: itemIds }));
               }}
-              onDeselectAllChecklistItems={() => {
+              onDeselectAll={() => {
                 setWizardState(prev => ({ ...prev, selectedChecklistItemIds: [] }));
               }}
-              onChecklistItemOverrideChange={(itemId, override) => {
+              onItemOverrideChange={(itemId, override) => {
                 setWizardState(prev => ({
                   ...prev,
                   checklistItemOverrides: { ...prev.checklistItemOverrides, [itemId]: override }
                 }));
               }}
-              onChecklistItemOverrideReset={(itemId) => {
+              onItemOverrideReset={(itemId) => {
                 setWizardState(prev => {
                   const newOverrides = { ...prev.checklistItemOverrides };
                   delete newOverrides[itemId];
                   return { ...prev, checklistItemOverrides: newOverrides };
                 });
               }}
-              
+              naItemIds={wizardState.naItemIds}
+              onMarkNA={(itemId) => {
+                setWizardState(prev => ({
+                  ...prev,
+                  naItemIds: [...prev.naItemIds, itemId],
+                  selectedChecklistItemIds: prev.selectedChecklistItemIds.filter(id => id !== itemId),
+                }));
+              }}
+              onRestoreNA={(itemId) => {
+                setWizardState(prev => ({
+                  ...prev,
+                  naItemIds: prev.naItemIds.filter(id => id !== itemId),
+                  selectedChecklistItemIds: [...prev.selectedChecklistItemIds, itemId],
+                }));
+              }}
+            />
+          )}
+
+          {/* Step 4: Approvers */}
+          {currentStep === 4 && (
+            <WizardStepApproversSetup
               selectedPssrApproverRoleIds={wizardState.selectedPssrApproverRoleIds}
               onPssrApproverToggle={(roleId) => {
                 setWizardState(prev => ({
@@ -494,7 +503,16 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
                     : [...prev.selectedPssrApproverRoleIds, roleId]
                 }));
               }}
-              
+              isPssrApproversModified={
+                JSON.stringify(wizardState.selectedPssrApproverRoleIds.sort()) !== 
+                JSON.stringify(wizardState.templatePssrApproverRoleIds.sort())
+              }
+              onResetPssrApprovers={() => {
+                setWizardState(prev => ({
+                  ...prev,
+                  selectedPssrApproverRoleIds: [...prev.templatePssrApproverRoleIds]
+                }));
+              }}
               selectedSofApproverRoleIds={wizardState.selectedSofApproverRoleIds}
               onSofApproverToggle={(roleId) => {
                 setWizardState(prev => ({
@@ -504,42 +522,16 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
                     : [...prev.selectedSofApproverRoleIds, roleId]
                 }));
               }}
-              
-              isChecklistModified={
-                JSON.stringify(wizardState.selectedChecklistItemIds.sort()) !== 
-                JSON.stringify(wizardState.templateChecklistItemIds.sort()) ||
-                Object.keys(wizardState.checklistItemOverrides).length > 0
-              }
-              isPssrApproversModified={
-                JSON.stringify(wizardState.selectedPssrApproverRoleIds.sort()) !== 
-                JSON.stringify(wizardState.templatePssrApproverRoleIds.sort())
-              }
               isSofApproversModified={
                 JSON.stringify(wizardState.selectedSofApproverRoleIds.sort()) !== 
                 JSON.stringify(wizardState.templateSofApproverRoleIds.sort())
               }
-              
-              onResetChecklist={() => {
-                setWizardState(prev => ({
-                  ...prev,
-                  selectedChecklistItemIds: [...prev.templateChecklistItemIds],
-                  checklistItemOverrides: {}
-                }));
-              }}
-              onResetPssrApprovers={() => {
-                setWizardState(prev => ({
-                  ...prev,
-                  selectedPssrApproverRoleIds: [...prev.templatePssrApproverRoleIds]
-                }));
-              }}
               onResetSofApprovers={() => {
                 setWizardState(prev => ({
                   ...prev,
                   selectedSofApproverRoleIds: [...prev.templateSofApproverRoleIds]
                 }));
               }}
-              
-              isLoading={wizardState.configLoading}
             />
           )}
         </div>

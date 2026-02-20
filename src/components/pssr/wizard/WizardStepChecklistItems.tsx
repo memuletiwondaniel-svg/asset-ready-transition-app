@@ -1,13 +1,12 @@
 import React, { useState, useMemo } from 'react';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Button } from '@/components/ui/button';
-import { Search, FileCheck, ChevronDown, ChevronRight, Edit2, Globe, Loader2 } from 'lucide-react';
+import { Search, FileCheck, ChevronDown, ChevronRight, Ban, Undo2, Edit2, Globe, Loader2 } from 'lucide-react';
 import { usePSSRChecklistItems, usePSSRChecklistCategories, ChecklistItem } from '@/hooks/usePSSRChecklistLibrary';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import ChecklistItemEditDialog, { ChecklistItemOverride } from './ChecklistItemEditDialog';
+import { ChecklistItemOverride } from './ChecklistItemEditDialog';
+import PSSRItemDetailSheet from './PSSRItemDetailSheet';
 import { useChecklistTranslation } from '@/hooks/useChecklistTranslation';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Progress } from '@/components/ui/progress';
@@ -24,6 +23,10 @@ interface WizardStepChecklistItemsProps {
   onDeselectAll: () => void;
   onItemOverrideChange: (itemId: string, override: ChecklistItemOverride) => void;
   onItemOverrideReset: (itemId: string) => void;
+  // N/A items management
+  naItemIds?: string[];
+  onMarkNA?: (itemId: string) => void;
+  onRestoreNA?: (itemId: string) => void;
 }
 
 const WizardStepChecklistItems: React.FC<WizardStepChecklistItemsProps> = ({
@@ -34,119 +37,123 @@ const WizardStepChecklistItems: React.FC<WizardStepChecklistItemsProps> = ({
   onDeselectAll,
   onItemOverrideChange,
   onItemOverrideReset,
+  naItemIds = [],
+  onMarkNA,
+  onRestoreNA,
 }) => {
   const { data: rawChecklistItems = [], isLoading: itemsLoading } = usePSSRChecklistItems();
   const { data: rawCategories = [], isLoading: categoriesLoading } = usePSSRChecklistCategories();
   const { language } = useLanguage();
-  
-  // Translate checklist items
-  const { 
-    items: checklistItems, 
-    isTranslating: isTranslatingItems, 
+
+  const {
+    items: checklistItems,
+    isTranslating: isTranslatingItems,
     translationProgress: itemsProgress,
-    isEnglish 
+    isEnglish
   } = useChecklistTranslation(rawChecklistItems, ['description', 'topic']);
-  
-  // Translate categories
-  const { 
-    items: categories, 
+
+  const {
+    items: categories,
     isTranslating: isTranslatingCategories,
-    translationProgress: categoriesProgress 
+    translationProgress: categoriesProgress
   } = useChecklistTranslation(rawCategories, ['name', 'description']);
-  
+
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [selectedItemForEdit, setSelectedItemForEdit] = useState<ChecklistItem | null>(null);
+  const [naExpanded, setNaExpanded] = useState(false);
+  const [detailSheetOpen, setDetailSheetOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<ChecklistItem | null>(null);
 
   const isLoading = itemsLoading || categoriesLoading;
   const isTranslating = isTranslatingItems || isTranslatingCategories;
   const avgProgress = Math.round((itemsProgress + categoriesProgress) / 2);
 
-  // Group items by category
+  // Active items (selected and not N/A)
+  const activeItems = useMemo(() => {
+    return checklistItems.filter(item =>
+      selectedItemIds.includes(item.id) && !naItemIds.includes(item.id)
+    );
+  }, [checklistItems, selectedItemIds, naItemIds]);
+
+  // N/A items
+  const naItems = useMemo(() => {
+    return checklistItems.filter(item => naItemIds.includes(item.id));
+  }, [checklistItems, naItemIds]);
+
+  // Group active items by category
   const groupedItems = useMemo(() => {
-    const groups: Record<string, typeof checklistItems> = {};
-    
-    checklistItems.forEach(item => {
-      if (!groups[item.category]) {
-        groups[item.category] = [];
-      }
+    const groups: Record<string, ChecklistItem[]> = {};
+    activeItems.forEach(item => {
+      if (!groups[item.category]) groups[item.category] = [];
       groups[item.category].push(item);
     });
-    
     return groups;
-  }, [checklistItems]);
+  }, [activeItems]);
 
-  // Filter items by search query
+  // Filter by search
   const filteredGroupedItems = useMemo(() => {
     if (!searchQuery.trim()) return groupedItems;
-    
     const query = searchQuery.toLowerCase();
-    const filtered: Record<string, typeof checklistItems> = {};
-    
+    const filtered: Record<string, ChecklistItem[]> = {};
     Object.entries(groupedItems).forEach(([categoryId, items]) => {
-      const matchedItems = items.filter(item => 
+      const matched = items.filter(item =>
         item.description.toLowerCase().includes(query) ||
         item.topic?.toLowerCase().includes(query)
       );
-      if (matchedItems.length > 0) {
-        filtered[categoryId] = matchedItems;
-      }
+      if (matched.length > 0) filtered[categoryId] = matched;
     });
-    
     return filtered;
   }, [groupedItems, searchQuery]);
 
   const toggleCategory = (categoryId: string) => {
     setExpandedCategories(prev => {
       const newSet = new Set(prev);
-      if (newSet.has(categoryId)) {
-        newSet.delete(categoryId);
-      } else {
-        newSet.add(categoryId);
-      }
+      if (newSet.has(categoryId)) newSet.delete(categoryId);
+      else newSet.add(categoryId);
       return newSet;
     });
   };
 
   const getCategoryName = (categoryId: string) => {
-    const category = categories.find(c => c.id === categoryId);
-    return category?.name || 'Unknown Category';
+    return categories.find(c => c.id === categoryId)?.name || 'Unknown Category';
   };
 
   const getCategoryRefId = (categoryId: string) => {
-    const category = categories.find(c => c.id === categoryId);
-    return category?.ref_id || '';
+    return categories.find(c => c.id === categoryId)?.ref_id || '';
+  };
+
+  const handleItemClick = (item: ChecklistItem) => {
+    setSelectedItem(item);
+    setDetailSheetOpen(true);
+  };
+
+  const handleMarkNA = (e: React.MouseEvent, itemId: string) => {
+    e.stopPropagation();
+    onMarkNA?.(itemId);
   };
 
   const handleEditClick = (e: React.MouseEvent, item: ChecklistItem) => {
     e.stopPropagation();
-    setSelectedItemForEdit(item);
-    setEditDialogOpen(true);
+    handleItemClick(item);
   };
 
-  const handleCheckboxChange = (e: React.MouseEvent, itemId: string) => {
-    e.stopPropagation();
-    onItemToggle(itemId);
-  };
-
-  const totalItems = checklistItems.length;
-  const selectedCount = selectedItemIds.length;
+  const totalActiveItems = activeItems.length;
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
+      {/* Header */}
       <div className="space-y-2">
         <h3 className="text-lg font-semibold flex items-center gap-2">
           <FileCheck className="h-5 w-5 text-primary" />
-          Select Applicable Checklist Items
+          PSSR Items
           {!isEnglish && (
             <Badge variant="outline" className="text-xs gap-1">
               <Globe className="h-3 w-3" />
@@ -155,11 +162,9 @@ const WizardStepChecklistItems: React.FC<WizardStepChecklistItemsProps> = ({
           )}
         </h3>
         <p className="text-sm text-muted-foreground">
-          Choose the checklist items that should be included when this PSSR reason is used. 
-          Click the edit icon to customize item attributes for this reason only.
+          Review, edit, add or remove PSSR checklist items and assign parties.
         </p>
-        
-        {/* Translation Progress */}
+
         {isTranslating && !isEnglish && (
           <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-md">
             <Loader2 className="h-4 w-4 animate-spin text-primary" />
@@ -170,43 +175,32 @@ const WizardStepChecklistItems: React.FC<WizardStepChecklistItemsProps> = ({
         )}
       </div>
 
-      {/* Search and Selection Controls */}
+      {/* Search & Counts */}
       <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
         <div className="relative flex-1 w-full sm:max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search checklist items..."
+            placeholder="Search items..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9"
           />
         </div>
-        
         <div className="flex items-center gap-2">
-          <Badge variant="secondary" className="text-sm">
-            {selectedCount} of {totalItems} selected
+          <Badge variant="outline" className="text-xs">
+            {totalActiveItems} items
           </Badge>
-          <button
-            type="button"
-            onClick={() => onSelectAllItems(checklistItems.map(item => item.id))}
-            className="text-sm text-primary hover:underline"
-          >
-            Select All
-          </button>
-          <span className="text-muted-foreground">|</span>
-          <button
-            type="button"
-            onClick={onDeselectAll}
-            className="text-sm text-primary hover:underline"
-          >
-            Deselect All
-          </button>
+          {naItemIds.length > 0 && (
+            <Badge variant="outline" className="text-xs border-amber-300 text-amber-700 dark:border-amber-700 dark:text-amber-400">
+              {naItemIds.length} N/A
+            </Badge>
+          )}
         </div>
       </div>
 
-      {/* Checklist Items by Category */}
-      <ScrollArea className="h-[400px] border rounded-lg p-2">
-        <div className="space-y-2">
+      {/* Categories List - All collapsed by default */}
+      <ScrollArea className="h-[400px] border rounded-lg">
+        <div className="divide-y divide-border">
           {Object.entries(filteredGroupedItems).length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               {searchQuery ? 'No items match your search' : 'No checklist items available'}
@@ -219,98 +213,185 @@ const WizardStepChecklistItems: React.FC<WizardStepChecklistItemsProps> = ({
                 return (catA?.display_order ?? 999) - (catB?.display_order ?? 999);
               })
               .map(([categoryId, items]) => {
-              const isExpanded = expandedCategories.has(categoryId);
-              const categorySelectedCount = items.filter(item => 
-                selectedItemIds.includes(item.id)
-              ).length;
-              
-              return (
-                <Collapsible
-                  key={categoryId}
-                  open={isExpanded}
-                  onOpenChange={() => toggleCategory(categoryId)}
-                >
-                  <CollapsibleTrigger className="w-full">
-                    <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors">
-                      <div className="flex items-center gap-2">
-                        {isExpanded ? (
-                          <ChevronDown className="h-4 w-4" />
-                        ) : (
-                          <ChevronRight className="h-4 w-4" />
-                        )}
-                        <span className="font-medium text-sm">
-                          {getCategoryRefId(categoryId)} - {getCategoryName(categoryId)}
-                        </span>
+                const isExpanded = expandedCategories.has(categoryId);
+                const refId = getCategoryRefId(categoryId);
+
+                return (
+                  <Collapsible
+                    key={categoryId}
+                    open={isExpanded}
+                    onOpenChange={() => toggleCategory(categoryId)}
+                  >
+                    <CollapsibleTrigger className="w-full">
+                      <div className="flex items-center justify-between px-4 py-3 hover:bg-muted/40 transition-colors">
+                        <div className="flex items-center gap-2">
+                          {isExpanded ? (
+                            <ChevronDown className="h-4 w-4 text-muted-foreground/60" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4 text-muted-foreground/60" />
+                          )}
+                          <span className="font-medium text-sm">{getCategoryName(categoryId)}</span>
+                        </div>
+                        <span className="text-sm text-muted-foreground">{items.length}</span>
                       </div>
-                      <Badge variant={categorySelectedCount > 0 ? 'default' : 'outline'} className="text-xs">
-                        {categorySelectedCount}/{items.length}
-                      </Badge>
-                    </div>
-                  </CollapsibleTrigger>
-                  
-                  <CollapsibleContent>
-                    <div className="ml-6 mt-2 space-y-1">
-                      {items.map((item) => {
-                        const hasOverride = itemOverrides[item.id] && Object.keys(itemOverrides[item.id]).length > 0;
-                        const isSelected = selectedItemIds.includes(item.id);
-                        
-                        // Use overridden values if available
-                        const displayTopic = itemOverrides[item.id]?.topic ?? item.topic;
-                        const displayDescription = itemOverrides[item.id]?.description ?? item.description;
-                        
-                        return (
-                          <div
-                            key={item.id}
-                            className={`flex items-start gap-3 p-2 rounded-md hover:bg-muted/30 transition-colors group ${
-                              hasOverride ? 'ring-1 ring-amber-300 dark:ring-amber-700 bg-amber-50/50 dark:bg-amber-900/10' : ''
-                            }`}
-                          >
-                            <Checkbox
-                              checked={isSelected}
-                              onCheckedChange={() => onItemToggle(item.id)}
-                              className="mt-0.5"
-                            />
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <p className="text-sm font-medium">
-                                  {item.sequence_number}. {displayTopic || 'No Topic'}
+                    </CollapsibleTrigger>
+
+                    <CollapsibleContent>
+                      <div className="divide-y divide-border/50">
+                        {items.map((item) => {
+                          const hasOverride = itemOverrides[item.id] && Object.keys(itemOverrides[item.id]).length > 0;
+                          const displayDescription = itemOverrides[item.id]?.description ?? item.description;
+                          const displayTopic = itemOverrides[item.id]?.topic ?? item.topic;
+                          const itemRefId = refId
+                            ? `${refId}-${String(item.sequence_number).padStart(2, '0')}`
+                            : `#${item.sequence_number}`;
+
+                          return (
+                            <div
+                              key={item.id}
+                              className="group flex items-start gap-3 px-6 py-3 hover:bg-muted/30 transition-colors cursor-pointer"
+                              onClick={() => handleItemClick(item)}
+                            >
+                              {/* Item ID Badge */}
+                              <Badge
+                                variant="outline"
+                                className="text-[10px] font-mono mt-0.5 shrink-0 bg-primary/5 text-primary border-primary/20"
+                              >
+                                {itemRefId}
+                              </Badge>
+
+                              {/* Content */}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm leading-snug">
+                                  {displayDescription}
                                 </p>
+                                {displayTopic && (
+                                  <span className="text-xs text-muted-foreground mt-0.5 block">{displayTopic}</span>
+                                )}
                                 {hasOverride && (
-                                  <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                                  <Badge variant="secondary" className="text-[10px] mt-1 bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
                                     Customized
                                   </Badge>
                                 )}
                               </div>
-                              <p className="text-xs text-muted-foreground line-clamp-2">
-                                {displayDescription}
-                              </p>
+
+                              {/* Hover Actions */}
+                              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleEditClick(e, item)}
+                                  className="p-1.5 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+                                  title="Edit item"
+                                >
+                                  <Edit2 className="h-3.5 w-3.5" />
+                                </button>
+                                {onMarkNA && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => handleMarkNA(e, item.id)}
+                                    className="p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                                    title="Mark as Not Applicable"
+                                  >
+                                    <Ban className="h-3.5 w-3.5" />
+                                  </button>
+                                )}
+                              </div>
                             </div>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
-                              onClick={(e) => handleEditClick(e, item)}
-                            >
-                              <Edit2 className="h-3.5 w-3.5" />
-                            </Button>
+                          );
+                        })}
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
+                );
+              })
+          )}
+
+          {/* Not Applicable Items Section */}
+          {naItems.length > 0 && (
+            <Collapsible open={naExpanded} onOpenChange={setNaExpanded}>
+              <CollapsibleTrigger className="w-full">
+                <div className="flex items-center justify-between px-4 py-3 hover:bg-muted/40 transition-colors">
+                  <div className="flex items-center gap-2">
+                    {naExpanded ? (
+                      <ChevronDown className="h-4 w-4 text-muted-foreground/60" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4 text-muted-foreground/60" />
+                    )}
+                    <Ban className="h-4 w-4 text-amber-600" />
+                    <span className="font-medium text-sm text-amber-700 dark:text-amber-400">Not Applicable Items</span>
+                  </div>
+                  <Badge variant="outline" className="text-xs border-amber-300 text-amber-700 bg-amber-50 dark:border-amber-700 dark:text-amber-400 dark:bg-amber-900/20">
+                    {naItems.length}
+                  </Badge>
+                </div>
+              </CollapsibleTrigger>
+
+              <CollapsibleContent>
+                <div className="px-6 pb-2">
+                  <p className="text-xs text-muted-foreground mb-3">
+                    These items have been marked as not applicable to this PSSR. Approvers can review this list during the approval process.
+                  </p>
+                </div>
+                <div className="divide-y divide-border/50">
+                  {naItems.map((item) => {
+                    const catRefId = getCategoryRefId(item.category);
+                    const itemRefId = catRefId
+                      ? `${catRefId}-${String(item.sequence_number).padStart(2, '0')}`
+                      : `#${item.sequence_number}`;
+
+                    return (
+                      <div
+                        key={item.id}
+                        className="group flex items-start gap-3 px-6 py-3 bg-amber-50/50 dark:bg-amber-900/5 hover:bg-amber-50 dark:hover:bg-amber-900/10 transition-colors"
+                      >
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] font-mono mt-0.5 shrink-0 border-amber-300 text-amber-700 dark:border-amber-700 dark:text-amber-400"
+                        >
+                          {itemRefId}
+                        </Badge>
+
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm leading-snug line-through text-muted-foreground">
+                            {item.description}
+                          </p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Badge variant="outline" className="text-[10px] border-amber-300 text-amber-600 dark:border-amber-700 dark:text-amber-400">
+                              N/A
+                            </Badge>
+                            <span className="text-[10px] text-muted-foreground">
+                              {getCategoryName(item.category)}
+                            </span>
                           </div>
-                        );
-                      })}
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
-              );
-            })
+                        </div>
+
+                        {onRestoreNA && (
+                          <button
+                            type="button"
+                            onClick={() => onRestoreNA(item.id)}
+                            className="p-1.5 rounded-md opacity-0 group-hover:opacity-100 hover:bg-accent text-muted-foreground hover:text-foreground transition-all"
+                            title="Restore item"
+                          >
+                            <Undo2 className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
           )}
         </div>
       </ScrollArea>
 
-      {/* Edit Dialog */}
-      <ChecklistItemEditDialog
-        open={editDialogOpen}
-        onOpenChange={setEditDialogOpen}
-        item={selectedItemForEdit}
-        currentOverride={selectedItemForEdit ? itemOverrides[selectedItemForEdit.id] : undefined}
+      {/* Item Detail Sheet */}
+      <PSSRItemDetailSheet
+        open={detailSheetOpen}
+        onOpenChange={setDetailSheetOpen}
+        item={selectedItem}
+        categoryRefId={selectedItem ? getCategoryRefId(selectedItem.category) : undefined}
+        currentOverride={selectedItem ? itemOverrides[selectedItem.id] : undefined}
         onSave={onItemOverrideChange}
         onReset={onItemOverrideReset}
       />
