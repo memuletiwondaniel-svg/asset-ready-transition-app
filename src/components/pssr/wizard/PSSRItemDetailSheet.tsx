@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Sheet,
   SheetContent,
@@ -15,7 +15,19 @@ import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { RotateCcw, Save, ArrowRight } from 'lucide-react';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { RotateCcw, Save, ArrowRight, Plus, Minus, Search } from 'lucide-react';
 import { ChecklistItem } from '@/hooks/usePSSRChecklistLibrary';
 import { ChecklistItemOverride } from './ChecklistItemEditDialog';
 import { useQuery } from '@tanstack/react-query';
@@ -39,6 +51,11 @@ interface ResolvedMember {
   role_name: string;
 }
 
+interface RoleInfo {
+  id: string;
+  name: string;
+}
+
 const getAvatarUrl = (avatarPath: string | null) => {
   if (!avatarPath) return undefined;
   if (avatarPath.startsWith('http')) return avatarPath;
@@ -59,6 +76,8 @@ const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
   onReset,
 }) => {
   const [formData, setFormData] = useState<ChecklistItemOverride>({});
+  const [addRoleOpen, setAddRoleOpen] = useState(false);
+  const [addRoleSearch, setAddRoleSearch] = useState('');
 
   useEffect(() => {
     if (item && open) {
@@ -72,31 +91,51 @@ const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
     }
   }, [item, currentOverride, open]);
 
+  // Fetch all roles for add popover
+  const { data: allRoles = [] } = useQuery({
+    queryKey: ['all-roles-list'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('roles')
+        .select('id, name')
+        .eq('is_active', true)
+        .order('name');
+      return (data || []) as RoleInfo[];
+    },
+    enabled: open,
+  });
+
+  // Parse current approving role names
+  const currentApprovingRoles = useMemo(() => {
+    const text = formData.approvers || '';
+    return text ? text.split(',').map(r => r.trim()).filter(Boolean) : [];
+  }, [formData.approvers]);
+
+  // Parse current delivering role name
+  const currentDeliveringRole = (formData.responsible || '').trim();
+
   // Resolve role names to Asset-level profiles
   const { data: resolvedParties } = useQuery({
-    queryKey: ['pssr-item-parties', item?.id, item?.responsible, item?.approvers],
+    queryKey: ['pssr-item-parties', item?.id, formData.responsible, formData.approvers],
     queryFn: async () => {
-      if (!item) return { delivering: [] as ResolvedMember[], approving: {} as Record<string, ResolvedMember[]> };
+      if (!item) return { delivering: [] as ResolvedMember[], approving: {} as Record<string, ResolvedMember[]>, roleNameToId: {} as Record<string, string> };
 
-      const responsibleText = currentOverride?.responsible ?? item.responsible ?? '';
-      const approversText = currentOverride?.approvers ?? item.approvers ?? '';
+      const responsibleText = formData.responsible || '';
+      const approversText = formData.approvers || '';
 
-      // Parse comma-separated role names
       const deliveringRoles = responsibleText ? responsibleText.split(',').map(r => r.trim()).filter(Boolean) : [];
       const approvingRoles = approversText ? approversText.split(',').map(r => r.trim()).filter(Boolean) : [];
       const allRoleNames = [...new Set([...deliveringRoles, ...approvingRoles])];
 
-      if (allRoleNames.length === 0) return { delivering: [], approving: {} };
+      if (allRoleNames.length === 0) return { delivering: [], approving: {}, roleNameToId: {} };
 
-      // Fetch roles matching these names
       const { data: roles } = await supabase
         .from('roles')
         .select('id, name')
         .eq('is_active', true);
 
-      if (!roles) return { delivering: [], approving: {} };
+      if (!roles) return { delivering: [], approving: {}, roleNameToId: {} };
 
-      // Build role name -> id map (case insensitive)
       const roleNameToId: Record<string, string> = {};
       const roleIdToName: Record<string, string> = {};
       roles.forEach(r => {
@@ -104,31 +143,27 @@ const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
         roleIdToName[r.id] = r.name;
       });
 
-      // Get all matching role IDs
       const matchedRoleIds = allRoleNames
         .map(name => roleNameToId[name.toLowerCase()])
         .filter(Boolean);
 
-      if (matchedRoleIds.length === 0) return { delivering: [], approving: {} };
+      if (matchedRoleIds.length === 0) return { delivering: [], approving: {}, roleNameToId };
 
-      // Fetch Asset-level profiles for these roles
       const { data: profiles } = await supabase
         .from('profiles')
         .select('user_id, full_name, avatar_url, role, position')
         .in('role', matchedRoleIds)
         .eq('is_active', true);
 
-      if (!profiles) return { delivering: [], approving: {} };
+      if (!profiles) return { delivering: [], approving: {}, roleNameToId };
 
       // For TA2 roles, only include Asset-level staff
       const assetProfiles = profiles.filter((p: any) => {
         const pos = (p.position || '').toLowerCase();
         const roleName = roleIdToName[p.role] || '';
-        // If it's a TA2 role, only include Asset-level
         if (roleName.toLowerCase().includes('ta2')) {
           return pos.includes('asset');
         }
-        // For non-TA2 roles, include all
         return true;
       });
 
@@ -140,7 +175,6 @@ const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
         role_name: roleIdToName[p.role] || '',
       });
 
-      // Resolve delivering party
       const deliveringRoleIds = deliveringRoles
         .map(name => roleNameToId[name.toLowerCase()])
         .filter(Boolean);
@@ -148,7 +182,6 @@ const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
         .filter((p: any) => deliveringRoleIds.includes(p.role))
         .map(toMember);
 
-      // Resolve approving parties grouped by role name
       const approving: Record<string, ResolvedMember[]> = {};
       approvingRoles.forEach(roleName => {
         const roleId = roleNameToId[roleName.toLowerCase()];
@@ -159,7 +192,7 @@ const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
         approving[roleName] = members;
       });
 
-      return { delivering, approving };
+      return { delivering, approving, roleNameToId };
     },
     enabled: open && !!item,
   });
@@ -194,9 +227,34 @@ const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
     });
   };
 
+  const handleRemoveApprover = (roleName: string) => {
+    const updated = currentApprovingRoles.filter(r => r !== roleName);
+    setFormData(prev => ({ ...prev, approvers: updated.join(', ') }));
+  };
+
+  const handleAddApprover = (roleName: string) => {
+    if (!currentApprovingRoles.some(r => r.toLowerCase() === roleName.toLowerCase())) {
+      const updated = [...currentApprovingRoles, roleName];
+      setFormData(prev => ({ ...prev, approvers: updated.join(', ') }));
+    }
+    setAddRoleOpen(false);
+    setAddRoleSearch('');
+  };
+
+  const handleChangeDelivering = (roleName: string) => {
+    setFormData(prev => ({ ...prev, responsible: roleName }));
+  };
+
   const deliveringMembers = resolvedParties?.delivering || [];
   const approvingGroups = resolvedParties?.approving || {};
-  const approvingRoleNames = Object.keys(approvingGroups);
+
+  // Filter roles not already in approving list for "Add" popover
+  const availableRoles = allRoles.filter(
+    r => !currentApprovingRoles.some(ar => ar.toLowerCase() === r.name.toLowerCase())
+  );
+  const filteredAvailableRoles = addRoleSearch
+    ? availableRoles.filter(r => r.name.toLowerCase().includes(addRoleSearch.toLowerCase()))
+    : availableRoles;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -250,18 +308,25 @@ const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
             <Separator />
 
             {/* Delivering Party */}
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <Label className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">
                 Delivering Party
               </Label>
-              <Input
-                value={formData.responsible || ''}
-                onChange={(e) => setFormData(prev => ({ ...prev, responsible: e.target.value }))}
-                placeholder="e.g., Project Engr"
-                className="text-sm"
-              />
+              <Select
+                value={currentDeliveringRole}
+                onValueChange={handleChangeDelivering}
+              >
+                <SelectTrigger className="text-sm">
+                  <SelectValue placeholder="Select delivering party..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {allRoles.map(role => (
+                    <SelectItem key={role.id} value={role.name}>{role.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               {deliveringMembers.length > 0 && (
-                <div className="flex items-center gap-3 mt-2 flex-wrap">
+                <div className="flex items-center gap-3 flex-wrap">
                   {deliveringMembers.map((member) => (
                     <div key={member.user_id} className="flex flex-col items-center gap-0.5">
                       <Avatar className="w-7 h-7">
@@ -282,26 +347,62 @@ const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
             </div>
 
             {/* Approving Parties */}
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">
-                  Approving Parties ({approvingRoleNames.length})
+                  Approving Parties ({currentApprovingRoles.length})
                 </Label>
+                <Popover open={addRoleOpen} onOpenChange={setAddRoleOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-6 gap-1 text-xs text-primary hover:text-primary">
+                      <Plus className="h-3.5 w-3.5" />
+                      Add
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-56 p-2" align="end">
+                    <div className="space-y-2">
+                      <div className="relative">
+                        <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                        <Input
+                          placeholder="Search roles..."
+                          value={addRoleSearch}
+                          onChange={(e) => setAddRoleSearch(e.target.value)}
+                          className="h-8 pl-7 text-xs"
+                        />
+                      </div>
+                      <ScrollArea className="h-[200px]">
+                        <div className="space-y-0.5">
+                          {filteredAvailableRoles.map(role => (
+                            <button
+                              key={role.id}
+                              type="button"
+                              onClick={() => handleAddApprover(role.name)}
+                              className="w-full text-left px-2 py-1.5 text-xs rounded-md hover:bg-accent transition-colors"
+                            >
+                              {role.name}
+                            </button>
+                          ))}
+                          {filteredAvailableRoles.length === 0 && (
+                            <p className="text-xs text-muted-foreground text-center py-4">No roles found</p>
+                          )}
+                        </div>
+                      </ScrollArea>
+                    </div>
+                  </PopoverContent>
+                </Popover>
               </div>
-              <Input
-                value={formData.approvers || ''}
-                onChange={(e) => setFormData(prev => ({ ...prev, approvers: e.target.value }))}
-                placeholder="e.g., Process TA2, PACO TA2"
-                className="text-sm"
-              />
-              {approvingRoleNames.length > 0 && (
-                <Card className="mt-2">
+
+              {currentApprovingRoles.length > 0 && (
+                <Card>
                   <CardContent className="p-3">
                     <div className="divide-y divide-border">
-                      {approvingRoleNames.map((roleName) => {
+                      {currentApprovingRoles.map((roleName) => {
                         const members = approvingGroups[roleName] || [];
                         return (
-                          <div key={roleName} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
+                          <div
+                            key={roleName}
+                            className="group flex items-center gap-3 py-3 first:pt-0 last:pb-0 hover:bg-muted/30 -mx-3 px-3 transition-colors"
+                          >
                             <span className="text-[10px] font-medium text-muted-foreground w-20 shrink-0 truncate" title={roleName}>
                               {roleName}
                             </span>
@@ -320,8 +421,17 @@ const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
                                 ))}
                               </div>
                             ) : (
-                              <p className="text-[10px] text-muted-foreground italic">Unassigned</p>
+                              <p className="text-[10px] text-muted-foreground italic flex-1">Unassigned</p>
                             )}
+                            {/* Delete button - visible on hover */}
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveApprover(roleName)}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-md hover:bg-destructive/10 text-destructive shrink-0"
+                              title={`Remove ${roleName}`}
+                            >
+                              <Minus className="h-3.5 w-3.5" />
+                            </button>
                           </div>
                         );
                       })}
@@ -333,7 +443,7 @@ const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
 
             <Separator />
 
-            {/* Guidance Notes / Supporting Evidence */}
+            {/* Guidance Notes */}
             <div className="space-y-1.5">
               <Label className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">
                 Guidance Notes
