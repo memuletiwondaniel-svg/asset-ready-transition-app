@@ -9,7 +9,7 @@ import {
   FileText,
   CheckCircle2,
   FlaskConical,
-  Power,
+  PowerOff,
   Settings,
   HelpCircle,
   type LucideIcon
@@ -35,7 +35,7 @@ const getReasonCardConfig = (name: string): ReasonCardConfig => {
     return { icon: Wrench, hue: 200 };
   }
   if (lower.includes('restart') || lower.includes('idle') || lower.includes('retired')) {
-    return { icon: Power, hue: 155 };
+    return { icon: PowerOff, hue: 155 };
   }
   if (lower.includes('modification') || lower.includes('moc') || lower.includes('brown field')) {
     return { icon: Settings, hue: 270 };
