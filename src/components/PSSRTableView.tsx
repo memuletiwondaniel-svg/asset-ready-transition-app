@@ -7,9 +7,20 @@ import {
   TableHeader, 
   TableRow 
 } from '@/components/ui/table';
-import { Star } from 'lucide-react';
+import { Star, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 import { getProjectColor } from '@/utils/projectColors';
 import { PSSRColumn } from '@/hooks/usePSSRColumnVisibility';
@@ -43,9 +54,11 @@ interface PSSRTableViewProps {
   onTogglePin?: (pssrId: string) => void;
   columns: PSSRColumn[];
   onColumnsChange: (columns: PSSRColumn[]) => void;
+  onDeletePSSR?: (pssrId: string) => void;
 }
 
-const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails, pinnedPSSRs = [], onTogglePin, columns, onColumnsChange }) => {
+const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails, pinnedPSSRs = [], onTogglePin, columns, onColumnsChange, onDeletePSSR }) => {
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; projectId: string } | null>(null);
   const sortedPSSRs = React.useMemo(() => {
     return [...pssrs].sort((a, b) => {
       const aIsFavorite = pinnedPSSRs.includes(a.id);
@@ -236,6 +249,25 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails, pin
           </div>
         );
       }
+      case 'actions':
+        if (pssr.status === 'Draft') {
+          return (
+            <div className="flex items-center justify-center">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setDeleteTarget({ id: pssr.id, projectId: pssr.projectId });
+                }}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          );
+        }
+        return null;
       default:
         return null;
     }
@@ -286,6 +318,31 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails, pin
           ))}
         </TableBody>
       </Table>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Draft PSSR</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete <span className="font-semibold">{deleteTarget?.projectId}</span>? This action cannot be undone and will permanently remove this draft PSSR and all associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (deleteTarget) {
+                  onDeletePSSR?.(deleteTarget.id);
+                  setDeleteTarget(null);
+                }
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

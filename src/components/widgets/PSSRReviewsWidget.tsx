@@ -54,6 +54,7 @@ interface PSSRReviewsWidgetProps {
   activeStatFilter?: 'all' | 'under-review' | 'draft' | 'completed';
   onStatFilterClick?: (filter: 'all' | 'under-review' | 'draft' | 'completed') => void;
   onCreateNew?: () => void;
+  onDeletePSSR?: (pssrId: string) => void;
 }
 
 export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
@@ -82,6 +83,7 @@ export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
   activeStatFilter,
   onStatFilterClick,
   onCreateNew,
+  onDeletePSSR,
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -209,6 +211,7 @@ export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
             onTogglePin={onTogglePin}
             columns={columns}
             onColumnsChange={setColumns}
+            onDeletePSSR={onDeletePSSR}
           />
         </div>
       </div>
