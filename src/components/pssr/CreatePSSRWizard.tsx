@@ -307,10 +307,19 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
       };
 
       if (draftPssrId) {
-        // Update existing draft
+        // Update existing draft - regenerate ID if it contains GEN and we now have a plant
+        const updatePayload: any = { ...draftPayload };
+        const { data: existingDraft } = await supabase
+          .from('pssrs')
+          .select('pssr_id')
+          .eq('id', draftPssrId)
+          .maybeSingle();
+        if (existingDraft?.pssr_id?.includes('-GEN-') && wizardState.plantId) {
+          updatePayload.pssr_id = await generatePSSRId();
+        }
         const { error: updateError } = await supabase
           .from('pssrs')
-          .update(draftPayload as any)
+          .update(updatePayload)
           .eq('id', draftPssrId);
         if (updateError) throw updateError;
 
@@ -346,11 +355,23 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
   const generatePSSRId = async (): Promise<string> => {
     // Determine the most specific location code for the PSSR ID
     // CS plant uses station name, UQ uses field (UQMT/UQST), others use plant name
-    let locationCode = selectedPlant?.name || 'GEN';
+    let plantName = selectedPlant?.name;
     
-    if (selectedPlant?.name === 'CS' && selectedStation) {
+    // If selectedPlant isn't resolved yet, fetch it directly
+    if (!plantName && wizardState.plantId) {
+      const { data: plantData } = await supabase
+        .from('plant')
+        .select('name')
+        .eq('id', wizardState.plantId)
+        .maybeSingle();
+      plantName = plantData?.name || undefined;
+    }
+    
+    let locationCode = plantName || 'GEN';
+    
+    if (plantName === 'CS' && selectedStation) {
       locationCode = selectedStation.name;
-    } else if (selectedPlant?.name === 'UQ' && selectedField) {
+    } else if (plantName === 'UQ' && selectedField) {
       // Extract short code from field name (e.g., "UQST - UQ Storage Terminal" -> "UQST")
       const fieldCode = selectedField.name.split(' - ')[0]?.trim() || selectedField.name;
       locationCode = fieldCode;
@@ -409,10 +430,19 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
       let newPSSR: any;
 
       if (draftPssrId) {
-        // Update existing draft record
+        // Update existing draft record - regenerate ID if it contains GEN
+        const updatePayload: any = { ...pssrPayload };
+        const { data: existingDraft } = await supabase
+          .from('pssrs')
+          .select('pssr_id')
+          .eq('id', draftPssrId)
+          .maybeSingle();
+        if (existingDraft?.pssr_id?.includes('-GEN-') && wizardState.plantId) {
+          updatePayload.pssr_id = await generatePSSRId();
+        }
         const { data, error } = await supabase
           .from('pssrs')
-          .update(pssrPayload as any)
+          .update(updatePayload)
           .eq('id', draftPssrId)
           .select()
           .single();
