@@ -31,7 +31,7 @@ const getReasonCardConfig = (name: string): ReasonCardConfig => {
   if (lower.includes('safety') || lower.includes('inciden')) {
     return { icon: AlertTriangle, hue: 38 };
   }
-  if (lower.includes('turn around') || lower.includes('tar') || lower.includes('maintenance')) {
+  if (lower.includes('turn around') || lower === 'tar' || lower.includes('turnaround') || (lower.includes('maintenance') && !lower.includes('idle') && !lower.includes('retired'))) {
     return { icon: Wrench, hue: 200 };
   }
   if (lower.includes('restart') || lower.includes('idle') || lower.includes('retired')) {
