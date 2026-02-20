@@ -43,7 +43,7 @@ export const ManageHandover: React.FC<ManageHandoverProps> = ({ onBack }) => {
       {/* Header */}
       <div className="border-b border-border/40 bg-card/30 backdrop-blur-xl px-6 py-4 sticky top-0 z-10">
         <BreadcrumbNavigation 
-          currentPageLabel="VCR and PSSR" 
+          currentPageLabel="VCRs and PSSRs" 
           customBreadcrumbs={[
             { label: 'Home', path: '/', onClick: () => window.location.href = '/' },
             { label: 'Administration', path: '/admin-tools', onClick: () => window.location.href = '/admin-tools' }
@@ -56,10 +56,10 @@ export const ManageHandover: React.FC<ManageHandoverProps> = ({ onBack }) => {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-foreground tracking-tight">
-                VCR and PSSR
+                VCRs and PSSRs
               </h1>
               <p className="text-sm text-muted-foreground mt-0.5">
-                Configure PAC, FAC, SoF certificates and OWL tracking
+                Configure Verification Certificate of Readiness, Pre-Startup Safety Reviews, and Certificates (SoF, PACs and FACs)
               </p>
             </div>
           </div>
