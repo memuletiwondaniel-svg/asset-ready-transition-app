@@ -7,25 +7,12 @@ import {
   TableHeader, 
   TableRow 
 } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import { 
-  DropdownMenu, 
-  DropdownMenuCheckboxItem, 
-  DropdownMenuContent, 
-  DropdownMenuTrigger 
-} from '@/components/ui/dropdown-menu';
-import { Settings, GripVertical, Star } from 'lucide-react';
+import { GripVertical, Star } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { getProjectColor } from '@/utils/projectColors';
-
-interface Column {
-  id: string;
-  label: string;
-  visible: boolean;
-  width: number;
-}
+import { PSSRColumn } from '@/hooks/usePSSRColumnVisibility';
 
 interface PSSR {
   id: string;
@@ -53,24 +40,11 @@ interface PSSRTableViewProps {
   onViewDetails: (pssrId: string) => void;
   pinnedPSSRs?: string[];
   onTogglePin?: (pssrId: string) => void;
+  columns: PSSRColumn[];
+  onColumnsChange: (columns: PSSRColumn[]) => void;
 }
 
-const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails, pinnedPSSRs = [], onTogglePin }) => {
-  const [columns, setColumns] = useState<Column[]>([
-    { id: 'sn', label: 'S/N', visible: true, width: 50 },
-    { id: 'projectId', label: 'PSSR ID', visible: true, width: 180 },
-    { id: 'projectName', label: 'PSSR Title', visible: true, width: 250 },
-    { id: 'asset', label: 'Plant', visible: true, width: 100 },
-    { id: 'pssrLead', label: 'PSSR Lead', visible: true, width: 160 },
-    { id: 'progress', label: 'Progress', visible: true, width: 140 },
-    { id: 'status', label: 'Status', visible: true, width: 110 },
-    { id: 'created', label: 'Created', visible: true, width: 100 },
-    { id: 'favorite', label: '', visible: true, width: 44 },
-  ]);
-
-  // Use CSS hover (group-hover) for the favorite icon to avoid hover state desync.
-
-  // Sort PSSRs with favorites at the top
+const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails, pinnedPSSRs = [], onTogglePin, columns, onColumnsChange }) => {
   const sortedPSSRs = React.useMemo(() => {
     return [...pssrs].sort((a, b) => {
       const aIsFavorite = pinnedPSSRs.includes(a.id);
@@ -85,12 +59,6 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails, pin
   const [resizingColumn, setResizingColumn] = useState<string | null>(null);
   const [resizeStart, setResizeStart] = useState<{ x: number; width: number } | null>(null);
 
-  const toggleColumnVisibility = (columnId: string) => {
-    setColumns(columns.map(col => 
-      col.id === columnId ? { ...col, visible: !col.visible } : col
-    ));
-  };
-
   const handleDragStart = (columnId: string) => {
     setDraggedColumn(columnId);
   };
@@ -100,12 +68,11 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails, pin
     if (draggedColumn && draggedColumn !== targetColumnId) {
       const draggedIdx = columns.findIndex(col => col.id === draggedColumn);
       const targetIdx = columns.findIndex(col => col.id === targetColumnId);
-      
       if (draggedIdx !== -1 && targetIdx !== -1) {
         const newColumns = [...columns];
         const [removed] = newColumns.splice(draggedIdx, 1);
         newColumns.splice(targetIdx, 0, removed);
-        setColumns(newColumns);
+        onColumnsChange(newColumns);
       }
     }
   };
@@ -127,7 +94,7 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails, pin
     if (resizingColumn && resizeStart) {
       const diff = e.clientX - resizeStart.x;
       const newWidth = Math.max(50, resizeStart.width + diff);
-      setColumns(columns.map(col =>
+      onColumnsChange(columns.map(col =>
         col.id === resizingColumn ? { ...col, width: newWidth } : col
       ));
     }
@@ -149,10 +116,7 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails, pin
     }
   }, [resizingColumn, resizeStart]);
 
-  // Filter visible columns, excluding 'favorite' from user toggle (always visible)
   const visibleColumns = columns.filter(col => col.visible);
-  // Columns available for user toggle (exclude favorite)
-  const toggleableColumns = columns.filter(col => col.id !== 'favorite' && col.id !== 'sn');
 
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { bg: string; text: string; border: string }> = {
@@ -172,9 +136,7 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails, pin
         border: 'border-slate-200 dark:border-slate-700/60' 
       }
     };
-    
     const config = statusConfig[status] || statusConfig['Draft'];
-    
     return (
       <Badge 
         variant="outline" 
@@ -193,7 +155,7 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails, pin
   const renderCell = (pssr: PSSR, columnId: string, rowIndex: number) => {
     switch (columnId) {
       case 'sn':
-        return <div className="text-sm font-medium text-muted-foreground">{rowIndex + 1}</div>;
+        return <div className="text-sm font-medium text-muted-foreground text-left">{rowIndex + 1}</div>;
       case 'projectId':
         const idParts = pssr.projectId.split('-');
         const plantCode = idParts.length >= 3 ? idParts[1] : idParts[0];
@@ -202,16 +164,16 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails, pin
         return (
           <Badge 
             variant="outline" 
-            className="text-xs font-semibold px-2.5 py-1 text-white border-0 inline-flex items-center justify-center leading-none whitespace-nowrap"
+            className="text-xs font-semibold px-2.5 py-1 text-white border-0 inline-flex items-center leading-none whitespace-nowrap"
             style={{ background: `linear-gradient(to right, ${projectColor.bgStart}, ${projectColor.bgEnd})` }}
           >
             {pssr.projectId}
           </Badge>
         );
       case 'projectName':
-        return <div className="font-semibold text-foreground truncate">{pssr.projectName}</div>;
+        return <div className="font-semibold text-foreground truncate text-left">{pssr.projectName}</div>;
       case 'asset':
-        return <div className="font-medium text-foreground/80 truncate">{pssr.asset}</div>;
+        return <div className="font-medium text-foreground/80 truncate text-left">{pssr.asset}</div>;
       case 'pssrLead':
         return (
           <div className="flex items-center gap-2.5">
@@ -242,12 +204,12 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails, pin
         );
       case 'status':
         return (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center">
             {getStatusBadge(pssr.status)}
           </div>
         );
       case 'created':
-        return <div className="text-sm text-muted-foreground">{new Date(pssr.created).toLocaleDateString()}</div>;
+        return <div className="text-sm text-muted-foreground text-left">{new Date(pssr.created).toLocaleDateString()}</div>;
       case 'favorite': {
         const isFavorite = pinnedPSSRs.includes(pssr.id);
         return (
@@ -277,85 +239,57 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails, pin
   };
 
   return (
-    <div className="space-y-4">
-      {/* Column Settings */}
-      <div className="flex justify-end">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-2 bg-background hover:bg-muted/50 border-border/50">
-              <Settings className="h-4 w-4" />
-              Columns
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56 bg-background/95 backdrop-blur-md border-border/50 shadow-lg z-50">
-            {toggleableColumns.map(column => (
-              <DropdownMenuCheckboxItem
+    <div className="rounded-xl border border-border/50 overflow-hidden bg-card shadow-sm min-w-full">
+      <Table className="table-fixed w-full">
+        <TableHeader className="sticky top-0 z-10">
+          <TableRow className="bg-muted/60 backdrop-blur-sm hover:bg-muted/60 border-b border-border/40">
+            {visibleColumns.map((column) => (
+              <TableHead
                 key={column.id}
-                checked={column.visible}
-                onCheckedChange={() => toggleColumnVisibility(column.id)}
-                className="cursor-pointer"
+                draggable
+                onDragStart={() => handleDragStart(column.id)}
+                onDragOver={(e) => handleDragOver(e, column.id)}
+                onDragEnd={handleDragEnd}
+                style={{ width: `${column.width}px`, minWidth: `${column.width}px` }}
+                className="relative group cursor-move select-none h-11 px-4 text-left"
               >
-                {column.label}
-              </DropdownMenuCheckboxItem>
+                <div className="flex items-center gap-2">
+                  <GripVertical className="h-3.5 w-3.5 text-muted-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">{column.label}</span>
+                </div>
+                <div
+                  className="absolute right-0 top-0 h-full w-1.5 cursor-col-resize hover:bg-primary/40 active:bg-primary transition-colors"
+                  onMouseDown={(e) => handleResizeStart(e, column.id)}
+                />
+              </TableHead>
             ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-
-      {/* Table */}
-      <div className="rounded-xl border border-border/50 overflow-hidden bg-card shadow-sm min-w-full">
-        <Table className="table-fixed w-full">
-          <TableHeader className="sticky top-0 z-10">
-            <TableRow className="bg-muted/60 backdrop-blur-sm hover:bg-muted/60 border-b border-border/40">
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {sortedPSSRs.map((pssr, index) => (
+            <TableRow
+              key={pssr.id}
+              className={cn(
+                "group cursor-pointer transition-all duration-150 border-b border-border/20 last:border-0",
+                "hover:bg-primary/5 hover:shadow-sm",
+                index % 2 === 0 ? "bg-background" : "bg-muted/10",
+                pinnedPSSRs.includes(pssr.id) && "bg-amber-50/30 dark:bg-amber-950/20"
+              )}
+              onClick={() => onViewDetails(pssr.id)}
+            >
               {visibleColumns.map((column) => (
-                <TableHead
+                <TableCell 
                   key={column.id}
-                  draggable
-                  onDragStart={() => handleDragStart(column.id)}
-                  onDragOver={(e) => handleDragOver(e, column.id)}
-                  onDragEnd={handleDragEnd}
                   style={{ width: `${column.width}px`, minWidth: `${column.width}px` }}
-                  className="relative group cursor-move select-none h-11 px-4"
+                  className="px-4 py-3 text-left"
                 >
-                  <div className="flex items-center gap-2">
-                    <GripVertical className="h-3.5 w-3.5 text-muted-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">{column.label}</span>
-                  </div>
-                  {/* Resize Handle */}
-                  <div
-                    className="absolute right-0 top-0 h-full w-1.5 cursor-col-resize hover:bg-primary/40 active:bg-primary transition-colors"
-                    onMouseDown={(e) => handleResizeStart(e, column.id)}
-                  />
-                </TableHead>
+                  {renderCell(pssr, column.id, index)}
+                </TableCell>
               ))}
             </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sortedPSSRs.map((pssr, index) => (
-              <TableRow
-                key={pssr.id}
-                className={cn(
-                  "group cursor-pointer transition-all duration-150 border-b border-border/20 last:border-0",
-                  "hover:bg-primary/5 hover:shadow-sm",
-                  index % 2 === 0 ? "bg-background" : "bg-muted/10",
-                  pinnedPSSRs.includes(pssr.id) && "bg-amber-50/30 dark:bg-amber-950/20"
-                )}
-                onClick={() => onViewDetails(pssr.id)}
-              >
-                {visibleColumns.map((column) => (
-                  <TableCell 
-                    key={column.id}
-                    style={{ width: `${column.width}px`, minWidth: `${column.width}px` }}
-                    className="px-4 py-3"
-                  >
-                    {renderCell(pssr, column.id, index)}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
 };
