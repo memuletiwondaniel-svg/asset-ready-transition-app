@@ -208,8 +208,8 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     onClick: () => navigate('/project-management')
   }, {
     id: 'handover-management',
-    title: t.p2aHandover || 'P2A Handover',
-    description: t.p2aHandoverDesc || 'Configure PAC, FAC, SoF certificates and OWL tracking',
+    title: 'VCR and PSSR',
+    description: 'Configure PAC, FAC, SoF certificates and OWL tracking',
     icon: Key,
     gradient: 'from-blue-500 to-cyan-500',
     tooltip: t.manageHandoverDesc || 'Configure PAC, FAC, SoF certificates and OWL tracking',
@@ -309,7 +309,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
           onClick: () => setActiveView('dashboard')
         });
         crumbs.push({
-          label: 'P2A Handover',
+          label: 'VCR and PSSR',
           icon: Key,
           onClick: undefined
         });
