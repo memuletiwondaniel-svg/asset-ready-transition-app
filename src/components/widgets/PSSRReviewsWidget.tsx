@@ -1,12 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { WidgetCard } from './WidgetCard';
-import { Table as TableIcon, Columns3, Plus } from 'lucide-react';
+import { Plus, Columns } from 'lucide-react';
 import PSSRAdvancedSearch from '../PSSRAdvancedSearch';
 import PSSRFilters from '../PSSRFilters';
 import PSSRTableView from '../PSSRTableView';
-import PSSRKanbanBoard from '../PSSRKanbanBoard';
 import { PSSRQuickStatsBar } from './PSSRQuickStatsBar';
 import { Button } from '@/components/ui/button';
+import { 
+  DropdownMenu, 
+  DropdownMenuCheckboxItem, 
+  DropdownMenuContent, 
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
+import { usePSSRColumnVisibility } from '@/hooks/usePSSRColumnVisibility';
 
 interface PSSRReviewsWidgetProps {
   pssrs: any[];
@@ -14,8 +20,8 @@ interface PSSRReviewsWidgetProps {
   searchTerm: string;
   onSearchChange: (value: string) => void;
   onSelectPSSR: (pssrId: string) => void;
-  viewMode: 'table' | 'kanban';
-  onViewModeChange: (mode: 'table' | 'kanban') => void;
+  viewMode?: 'table' | 'kanban';
+  onViewModeChange?: (mode: 'table' | 'kanban') => void;
   filters: any;
   onToggleFilter: (category: string, value: string) => void;
   onDateChange: (field: string, value: string) => void;
@@ -39,7 +45,6 @@ interface PSSRReviewsWidgetProps {
   onToggleVisibility?: () => void;
   dragAttributes?: any;
   dragListeners?: any;
-  // Stats bar props
   stats?: {
     total: number;
     underReview: number;
@@ -57,8 +62,6 @@ export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
   searchTerm,
   onSearchChange,
   onSelectPSSR,
-  viewMode,
-  onViewModeChange,
   filters,
   onToggleFilter,
   onDateChange,
@@ -67,15 +70,8 @@ export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
   uniqueStatuses,
   uniqueLeads,
   onViewDetails,
-  getPriorityColor,
-  getStatusIcon,
-  getTeamStatusColor,
-  getRiskLevelColor,
   pinnedPSSRs,
   onTogglePin,
-  onStatusChange,
-  onPSSROrderChange,
-  pssrOrder,
   isExpanded,
   isVisible,
   onToggleExpand,
@@ -89,6 +85,7 @@ export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const { columns, setColumns, toggleColumnVisibility, toggleableColumns } = usePSSRColumnVisibility();
 
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current;
@@ -114,7 +111,7 @@ export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
       className="flex flex-col h-[600px] w-full"
     >
       <div className="flex flex-col h-full overflow-hidden">
-        {/* Combined Controls Bar - Stats inline with Search */}
+        {/* Combined Controls Bar */}
         <div className={`sticky top-0 z-10 bg-card pb-3 border-b border-border/40 transition-shadow duration-300 ${
           isScrolled ? 'shadow-md' : ''
         }`}>
@@ -145,26 +142,6 @@ export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
               />
             </div>
 
-            {/* View Mode Selector */}
-            <div className="shrink-0 inline-flex items-center gap-0.5 p-0.5 rounded-lg bg-muted border border-border/50">
-              <button
-                onClick={() => onViewModeChange('table')}
-                className={`px-2 py-1 rounded-md text-xs font-medium transition-all ${
-                  viewMode === 'table' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                <TableIcon className="h-3.5 w-3.5" />
-              </button>
-              <button
-                onClick={() => onViewModeChange('kanban')}
-                className={`px-2 py-1 rounded-md text-xs font-medium transition-all ${
-                  viewMode === 'kanban' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                <Columns3 className="h-3.5 w-3.5" />
-              </button>
-            </div>
-
             <PSSRFilters
               filters={filters}
               onToggleFilter={onToggleFilter}
@@ -174,6 +151,29 @@ export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
               uniqueStatuses={uniqueStatuses}
               uniqueLeads={uniqueLeads}
             />
+
+            {/* Column Visibility Toggle */}
+            <div className="shrink-0">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon" className="bg-background hover:bg-muted/50 border-border/50">
+                    <Columns className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 bg-background/95 backdrop-blur-md border-border/50 shadow-lg z-50">
+                  {toggleableColumns.map(column => (
+                    <DropdownMenuCheckboxItem
+                      key={column.id}
+                      checked={column.visible}
+                      onCheckedChange={() => toggleColumnVisibility(column.id)}
+                      className="cursor-pointer"
+                    >
+                      {column.label}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
 
             {onCreateNew && (
               <div className="shrink-0">
@@ -195,31 +195,19 @@ export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
           </p>
         </div>
 
-        {/* Content Views - Scrollable Area with fixed height to prevent resizing */}
+        {/* Content - Table Only */}
         <div 
           ref={scrollContainerRef}
           className="flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent pr-1 pt-4 w-full min-w-full"
         >
-          {viewMode === 'kanban' ? (
-            <PSSRKanbanBoard
-              pssrs={filteredPSSRs}
-              onViewDetails={onViewDetails}
-              getPriorityColor={getPriorityColor}
-              getStatusIcon={getStatusIcon}
-              getTeamStatusColor={getTeamStatusColor}
-              getRiskLevelColor={getRiskLevelColor}
-              pinnedPSSRs={new Set(pinnedPSSRs)}
-              onTogglePin={onTogglePin}
-              onStatusChange={onStatusChange}
-            />
-          ) : (
-            <PSSRTableView 
-              pssrs={filteredPSSRs} 
-              onViewDetails={onViewDetails} 
-              pinnedPSSRs={pinnedPSSRs}
-              onTogglePin={onTogglePin}
-            />
-          )}
+          <PSSRTableView 
+            pssrs={filteredPSSRs} 
+            onViewDetails={onViewDetails} 
+            pinnedPSSRs={pinnedPSSRs}
+            onTogglePin={onTogglePin}
+            columns={columns}
+            onColumnsChange={setColumns}
+          />
         </div>
       </div>
     </WidgetCard>
