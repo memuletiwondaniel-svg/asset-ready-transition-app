@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Grid, List, FolderOpen, Plus, Star, Settings2 } from 'lucide-react';
+import { Search, Grid, List, Key, Plus, Star, Settings2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -139,7 +139,7 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
       {/* Header */}
       <div className="border-b border-border/40 bg-card/30 backdrop-blur-xl p-4 md:p-6">
         <BreadcrumbNavigation 
-          currentPageLabel="Projects" 
+          currentPageLabel="VCRs" 
           customBreadcrumbs={[
             { label: 'Home', path: '/', onClick: () => navigate('/') }
           ]}
@@ -147,11 +147,11 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
         
         <div className="flex items-center gap-3 mt-4">
           <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-primary to-accent">
-            <FolderOpen className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+            <Key className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Projects</h1>
-            <p className="text-sm text-muted-foreground mt-1">Browse and access your assigned projects</p>
+            <h1 className="text-2xl font-bold text-foreground">Verification Certificate of Readiness (VCRs)</h1>
+            <p className="text-sm text-muted-foreground mt-1">Browse and manage all VCRs and P2A deliverables and milestones</p>
           </div>
         </div>
       </div>
@@ -273,7 +273,7 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
           {!isLoading && filteredProjects.length === 0 && (
             <Card className="border-dashed">
               <CardContent className="flex flex-col items-center justify-center py-12">
-                <FolderOpen className="h-12 w-12 text-muted-foreground mb-4" />
+                <Key className="h-12 w-12 text-muted-foreground mb-4" />
                 <h3 className="text-lg font-semibold text-foreground mb-2">
                   {searchQuery ? 'No projects found' : 'No projects available'}
                 </h3>
