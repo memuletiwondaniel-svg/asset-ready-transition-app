@@ -45,6 +45,7 @@ const AddPSSRItemSheet: React.FC<AddPSSRItemSheetProps> = ({
 
   // Custom tab state
   const [customCategory, setCustomCategory] = useState('');
+  const [customCategoryName, setCustomCategoryName] = useState('');
   const [customDescription, setCustomDescription] = useState('');
   const [customTopic, setCustomTopic] = useState('');
   const [customEvidence, setCustomEvidence] = useState('');
@@ -98,15 +99,21 @@ const AddPSSRItemSheet: React.FC<AddPSSRItemSheetProps> = ({
   };
 
   const handleAddCustom = () => {
+    const isOther = customCategory === '__other__';
+    if (isOther && !customCategoryName.trim()) return;
     if (!customCategory || !customDescription.trim()) return;
+    
+    const categoryValue = isOther ? `other:${customCategoryName.trim()}` : customCategory;
+    
     onAddCustomItem({
-      category: customCategory,
+      category: categoryValue,
       description: customDescription.trim(),
       topic: customTopic.trim() || undefined,
       supporting_evidence: customEvidence.trim() || undefined,
     });
     // Reset
     setCustomCategory('');
+    setCustomCategoryName('');
     setCustomDescription('');
     setCustomTopic('');
     setCustomEvidence('');
@@ -250,7 +257,10 @@ const AddPSSRItemSheet: React.FC<AddPSSRItemSheetProps> = ({
                 {/* Category */}
                 <div className="space-y-1.5">
                   <Label className="text-sm">Category <span className="text-destructive">*</span></Label>
-                  <Select value={customCategory} onValueChange={setCustomCategory}>
+                  <Select value={customCategory} onValueChange={(val) => {
+                    setCustomCategory(val);
+                    if (val !== '__other__') setCustomCategoryName('');
+                  }}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
@@ -266,8 +276,22 @@ const AddPSSRItemSheet: React.FC<AddPSSRItemSheetProps> = ({
                             </div>
                           </SelectItem>
                         ))}
+                      <SelectItem value="__other__">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-[9px] font-mono">OT</Badge>
+                          Other (Custom Category)
+                        </div>
+                      </SelectItem>
                     </SelectContent>
                   </Select>
+                  {customCategory === '__other__' && (
+                    <Input
+                      value={customCategoryName}
+                      onChange={e => setCustomCategoryName(e.target.value)}
+                      placeholder="Enter custom category name..."
+                      className="mt-2"
+                    />
+                  )}
                 </div>
 
                 {/* Topic */}
@@ -307,7 +331,7 @@ const AddPSSRItemSheet: React.FC<AddPSSRItemSheetProps> = ({
               <Button
                 className="w-full"
                 onClick={handleAddCustom}
-                disabled={!customCategory || !customDescription.trim()}
+                disabled={!customCategory || !customDescription.trim() || (customCategory === '__other__' && !customCategoryName.trim())}
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Custom Item
