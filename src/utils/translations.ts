@@ -194,7 +194,7 @@ export const translations = {
     
     // PSSR Module
     pssr: 'PSSR',
-    pssrTitle: 'Pre-Startup Safety Review',
+    pssrTitle: 'Pre-Startup Safety Review (PSSR)',
     pssrOverview: 'PSSR Overview',
     createPSSR: 'Create PSSR',
     pssrNumber: 'PSSR Number',
@@ -383,7 +383,7 @@ export const translations = {
     
     // PSSR Summary Page
     pssrSummary: 'PSSR Summary',
-    pssrSubtitle: 'Manage Pre-Startup Safety Reviews',
+    pssrSubtitle: 'Manage Process Safety Risk and ensure Safe Start-up',
     totalPSSRs: 'Total PSSRs',
     underReview: 'Under Review',
     searchPSSR: 'Search PSSRs...',
