@@ -241,13 +241,12 @@ const AddPSSRItemSheet: React.FC<AddPSSRItemSheetProps> = ({
           </TabsContent>
 
           {/* Custom New Item */}
-          <TabsContent value="custom" className="flex-1 flex flex-col overflow-hidden mt-0 px-6 py-4">
+          <TabsContent value="custom" className="flex-1 overflow-auto mt-0 px-6 py-4">
             <p className="text-xs text-muted-foreground mb-4">
               Create a new custom PSSR item for this specific PSSR.
             </p>
 
-            <ScrollArea className="flex-1">
-              <div className="space-y-4 pr-2">
+              <div className="space-y-4">
                 {/* Category */}
                 <div className="space-y-1.5">
                   <Label className="text-sm">Category <span className="text-destructive">*</span></Label>
@@ -303,7 +302,6 @@ const AddPSSRItemSheet: React.FC<AddPSSRItemSheetProps> = ({
                   />
                 </div>
               </div>
-            </ScrollArea>
 
             <div className="pt-4 border-t mt-4">
               <Button
