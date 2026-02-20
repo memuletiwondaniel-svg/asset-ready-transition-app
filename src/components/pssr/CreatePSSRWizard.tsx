@@ -2,24 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Label } from '@/components/ui/label';
-import { ChevronLeft, ChevronRight, Check, Loader2, X, FileText, Target } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, Loader2, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { useActivePSSRReasonCategories, usePSSRReasonsByCategory } from '@/hooks/usePSSRReasonCategories';
+import { usePSSRTieInScopes } from '@/hooks/usePSSRAtiScopes';
 import { usePlants } from '@/hooks/usePlants';
 import { useFields } from '@/hooks/useFields';
 import { useStations } from '@/hooks/useStations';
-import { usePSSRTieInScopes } from '@/hooks/usePSSRAtiScopes';
-import { Project } from '@/hooks/useProjects';
+import { usePSSRReasons } from '@/hooks/usePSSRReasons';
 import WizardStepCategory from './wizard/WizardStepCategory';
-import WizardStepSpecificReason from './wizard/WizardStepSpecificReason';
-import WizardStepLocation from './wizard/WizardStepLocation';
+import WizardStepDetails from './wizard/WizardStepDetails';
 import WizardStepReviewCustomize from './wizard/WizardStepReviewCustomize';
 import { ChecklistItemOverrides } from './wizard/WizardStepChecklistItems';
-import { ChecklistItemOverride } from './wizard/ChecklistItemEditDialog';
-import RichTextEditor, { Attachment } from '@/components/ui/RichTextEditor';
+import { Attachment } from '@/components/ui/RichTextEditor';
 
 interface CreatePSSRWizardProps {
   open: boolean;
@@ -27,35 +23,25 @@ interface CreatePSSRWizardProps {
   onSuccess?: (pssrId: string) => void;
 }
 
-type LocationMode = 'project' | 'asset';
-
 interface WizardState {
-  // Step 1: Category
+  // Step 1: Reason (template selection)
   categoryId: string;
-  // Step 2: Specific Reason
   reasonId: string;
   selectedAtiScopeIds: string[];
   
-  // Step 3: Location/Context
-  locationMode: LocationMode;
-  // Project-based
-  projectId: string;
-  selectedProject: Project | null;
-  // Asset-based
+  // Step 2: Details & Location
+  title: string;
+  scopeDescription: string;
+  scopeAttachments: Attachment[];
   plantId: string;
   fieldId: string;
   stationId: string;
   
-  // Step 4: Scope (rich text HTML content)
-  scopeDescription: string;
-  scopeAttachments: Attachment[];
-  
-  // Step 5: Review & Customize (auto-loaded + user modifications)
+  // Step 3: Review & Customize
   selectedChecklistItemIds: string[];
   checklistItemOverrides: ChecklistItemOverrides;
   selectedPssrApproverRoleIds: string[];
   selectedSofApproverRoleIds: string[];
-  // Template defaults for tracking modifications
   templateChecklistItemIds: string[];
   templatePssrApproverRoleIds: string[];
   templateSofApproverRoleIds: string[];
@@ -65,10 +51,8 @@ interface WizardState {
 
 const STEPS = [
   { id: 1, title: 'Reason', description: 'Select PSSR reason' },
-  { id: 2, title: 'Reason', description: 'Select specific reason' },
-  { id: 3, title: 'Location', description: 'Select project or asset location' },
-  { id: 4, title: 'Scope & Details', description: 'Define the scope' },
-  { id: 5, title: 'Review & Customize', description: 'Review checklist & approvers' },
+  { id: 2, title: 'Details & Location', description: 'Title, scope and location' },
+  { id: 3, title: 'Review & Customize', description: 'Review checklist & approvers' },
 ];
 
 const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange, onSuccess }) => {
@@ -76,25 +60,22 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const { data: categories } = useActivePSSRReasonCategories();
   const { data: atiScopes } = usePSSRTieInScopes();
+  const { data: reasons } = usePSSRReasons();
   const { plants } = usePlants();
-  const { fields } = useFields();
-  const { stations } = useStations();
+  const { allFields: fields } = useFields();
+  const { allStations: stations } = useStations();
   
   const [wizardState, setWizardState] = useState<WizardState>({
     categoryId: '',
     reasonId: '',
     selectedAtiScopeIds: [],
-    locationMode: 'project',
-    projectId: '',
-    selectedProject: null,
+    title: '',
+    scopeDescription: '',
+    scopeAttachments: [],
     plantId: '',
     fieldId: '',
     stationId: '',
-    scopeDescription: '',
-    scopeAttachments: [],
-    // Step 5 fields
     selectedChecklistItemIds: [],
     checklistItemOverrides: {},
     selectedPssrApproverRoleIds: [],
@@ -106,10 +87,6 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
     configLoading: false,
   });
 
-  // Fetch reasons for selected category
-  const { data: reasons } = usePSSRReasonsByCategory(wizardState.categoryId || null);
-
-  const selectedCategory = categories?.find(c => c.id === wizardState.categoryId);
   const selectedReason = reasons?.find(r => r.id === wizardState.reasonId);
   const selectedPlant = plants?.find(p => p.id === wizardState.plantId);
   const selectedField = fields?.find(f => f.id === wizardState.fieldId);
@@ -121,14 +98,12 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
       categoryId: '',
       reasonId: '',
       selectedAtiScopeIds: [],
-      locationMode: 'project',
-      projectId: '',
-      selectedProject: null,
+      title: '',
+      scopeDescription: '',
+      scopeAttachments: [],
       plantId: '',
       fieldId: '',
       stationId: '',
-      scopeDescription: '',
-      scopeAttachments: [],
       selectedChecklistItemIds: [],
       checklistItemOverrides: {},
       selectedPssrApproverRoleIds: [],
@@ -141,10 +116,10 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
     });
   };
 
-  // Load configuration when entering Step 5
+  // Load configuration when entering Step 3
   useEffect(() => {
     const loadConfiguration = async () => {
-      if (currentStep === 5 && wizardState.reasonId && !wizardState.configLoaded && !wizardState.configLoading) {
+      if (currentStep === 3 && wizardState.reasonId && !wizardState.configLoaded && !wizardState.configLoading) {
         setWizardState(prev => ({ ...prev, configLoading: true }));
         
         try {
@@ -186,46 +161,22 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
 
   const validateStep = (step: number): boolean => {
     switch (step) {
-      case 1: // Category only
+      case 1:
         if (!wizardState.categoryId) {
-          toast.error('Please select a PSSR category');
+          toast.error('Please select a PSSR reason');
           return false;
         }
         return true;
-      case 2: // Specific Reason
-        if (!wizardState.reasonId) {
-          toast.error('Please select a specific reason');
+      case 2:
+        if (!wizardState.title.trim()) {
+          toast.error('Please enter a PSSR title');
           return false;
         }
-        // Validate ATI scopes if required
-        if (selectedReason?.requires_ati_scopes && wizardState.selectedAtiScopeIds.length === 0) {
-          toast.error('Please select at least one ATI scope');
+        if (!wizardState.plantId) {
+          toast.error('Please select a plant');
           return false;
         }
         return true;
-      case 3: // Location
-        // Determine required fields based on category and mode
-        const categoryCode = selectedCategory?.code;
-        const isProjectOnlyCategory = categoryCode === 'PROJECT_STARTUP' || categoryCode === 'BFM_PROJECTS' || categoryCode === 'PE_PROJECTS';
-        const isAssetOnlyCategory = categoryCode === 'INCIDENCE' || categoryCode === 'OPS_MTCE';
-        
-        // For project-only categories or project mode selection
-        if (isProjectOnlyCategory || (!isAssetOnlyCategory && wizardState.locationMode === 'project')) {
-          if (!wizardState.projectId) {
-            toast.error('Please select a project');
-            return false;
-          }
-        }
-        // For asset-only categories or asset mode selection
-        if (isAssetOnlyCategory || (!isProjectOnlyCategory && wizardState.locationMode === 'asset')) {
-          if (!wizardState.plantId) {
-            toast.error('Please select a plant');
-            return false;
-          }
-        }
-        return true;
-      case 4: // Scope & Details
-        return true; // Scope is optional
       default:
         return true;
     }
@@ -259,38 +210,18 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
 
       const pssrId = await generatePSSRId();
 
-      // Determine location mode
-      const categoryCode = selectedCategory?.code;
-      const isProjectMode = categoryCode === 'PROJECT_STARTUP' || categoryCode === 'BFM_PROJECTS' || categoryCode === 'PE_PROJECTS' || wizardState.locationMode === 'project';
+      const plantValue = selectedPlant?.name || '';
+      const csLocationValue = selectedStation?.name || '';
 
-      // Determine plant and location values
-      let plantValue = '';
-      let csLocationValue = '';
-      let projectIdValue: string | null = null;
-      let projectNameValue = '';
-
-      if (isProjectMode && wizardState.selectedProject) {
-        projectIdValue = wizardState.projectId;
-        projectNameValue = wizardState.selectedProject.project_title;
-        plantValue = wizardState.selectedProject.plant_name || '';
-        csLocationValue = wizardState.selectedProject.station_name || '';
-      } else {
-        plantValue = selectedPlant?.name || '';
-        csLocationValue = selectedStation?.name || '';
-      }
-
-      // Create the PSSR (scope contains HTML content)
       const { data: newPSSR, error: pssrError } = await supabase
         .from('pssrs')
         .insert({
           pssr_id: pssrId,
           reason: selectedReason?.name || '',
           scope: wizardState.scopeDescription.trim() || null,
-          asset: 'N/A',
+          asset: wizardState.title.trim(),
           status: 'DRAFT',
           user_id: user.id,
-          project_id: projectIdValue,
-          project_name: projectNameValue || null,
           plant: plantValue || null,
           cs_location: csLocationValue || null,
         })
@@ -299,7 +230,7 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
 
       if (pssrError) throw pssrError;
 
-      // Create checklist responses using wizard state (user may have modified)
+      // Create checklist responses
       if (wizardState.selectedChecklistItemIds.length > 0) {
         const checklistResponses = wizardState.selectedChecklistItemIds.map((itemId: string) => ({
           pssr_id: newPSSR.id,
@@ -312,12 +243,10 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
           .from('pssr_checklist_responses')
           .insert(checklistResponses);
 
-        if (checklistError) {
-          console.error('Error creating checklist responses:', checklistError);
-        }
+        if (checklistError) console.error('Error creating checklist responses:', checklistError);
       }
 
-      // Create PSSR approvers using wizard state (user may have modified)
+      // Create PSSR approvers
       if (wizardState.selectedPssrApproverRoleIds.length > 0) {
         const { data: roles } = await supabase
           .from('roles')
@@ -337,15 +266,12 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
             .from('pssr_approvers')
             .insert(approvers);
 
-          if (approverError) {
-            console.error('Error creating PSSR approvers:', approverError);
-          }
+          if (approverError) console.error('Error creating PSSR approvers:', approverError);
         }
       }
 
-      // Create SoF certificate with approvers using wizard state
+      // Create SoF certificate with approvers
       if (wizardState.selectedSofApproverRoleIds.length > 0) {
-        // First create the SoF certificate
         const year = new Date().getFullYear();
         const sofNumber = `SOF-${year}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`;
         const certificateText = `This Statement of Fitness certifies that all pre-startup safety review requirements have been satisfactorily completed for the ${selectedReason?.name || 'PSSR'} scope of work.`;
@@ -358,7 +284,6 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
             pssr_reason: selectedReason?.name || '',
             certificate_text: certificateText,
             plant_name: plantValue || null,
-            project_name: projectNameValue || null,
             status: 'DRAFT',
           })
           .select()
@@ -367,7 +292,6 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
         if (sofCertError) {
           console.error('Error creating SoF certificate:', sofCertError);
         } else if (sofCert) {
-          // Create SoF approvers
           const { data: roles } = await supabase
             .from('roles')
             .select('id, name')
@@ -387,14 +311,12 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
               .from('sof_approvers')
               .insert(sofApprovers);
 
-            if (sofApproverError) {
-              console.error('Error creating SoF approvers:', sofApproverError);
-            }
+            if (sofApproverError) console.error('Error creating SoF approvers:', sofApproverError);
           }
         }
       }
 
-      // Save selected ATI scopes if any
+      // Save selected ATI scopes
       if (wizardState.selectedAtiScopeIds.length > 0) {
         const atiScopeRecords = wizardState.selectedAtiScopeIds.map(scopeId => ({
           pssr_id: newPSSR.id,
@@ -405,14 +327,10 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
           .from('pssr_selected_ati_scopes')
           .insert(atiScopeRecords);
 
-        if (atiError) {
-          console.error('Error saving ATI scopes:', atiError);
-        }
+        if (atiError) console.error('Error saving ATI scopes:', atiError);
       }
 
-      // Refresh data
       queryClient.invalidateQueries({ queryKey: ['pssrs'] });
-
       toast.success(`PSSR ${pssrId} created successfully!`);
       handleClose();
       onSuccess?.(newPSSR.id);
@@ -426,23 +344,7 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
 
   const progressPercentage = (currentStep / STEPS.length) * 100;
 
-  // Get display values for review step
   const getLocationDisplay = () => {
-    const categoryCode = selectedCategory?.code;
-    const isProjectMode = categoryCode === 'PROJECT_STARTUP' || categoryCode === 'BFM_PROJECTS' || categoryCode === 'PE_PROJECTS' || wizardState.locationMode === 'project';
-    
-    if (isProjectMode && wizardState.selectedProject) {
-      return {
-        type: 'Project',
-        primary: `${wizardState.selectedProject.project_id_prefix}-${wizardState.selectedProject.project_id_number}`,
-        secondary: wizardState.selectedProject.project_title,
-        details: [
-          wizardState.selectedProject.hub_name && `Hub: ${wizardState.selectedProject.hub_name}`,
-          wizardState.selectedProject.plant_name && `Plant: ${wizardState.selectedProject.plant_name}`,
-        ].filter(Boolean),
-      };
-    }
-    
     return {
       type: 'Asset Location',
       primary: selectedPlant?.name || '',
@@ -523,64 +425,28 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
             />
           )}
 
-          {/* Step 2: Specific Reason */}
+          {/* Step 2: Details & Location */}
           {currentStep === 2 && (
-            <WizardStepSpecificReason
-              categoryId={wizardState.categoryId}
-              reasonId={wizardState.reasonId}
-              selectedAtiScopeIds={wizardState.selectedAtiScopeIds}
-              onReasonChange={(id) => setWizardState(prev => ({ ...prev, reasonId: id }))}
-              onAtiScopeChange={(scopeIds) => setWizardState(prev => ({ ...prev, selectedAtiScopeIds: scopeIds }))}
-            />
-          )}
-
-          {/* Step 3: Location */}
-          {currentStep === 3 && (
-            <WizardStepLocation
-              categoryCode={selectedCategory?.code}
-              projectId={wizardState.projectId}
-              selectedProject={wizardState.selectedProject}
-              onProjectChange={(id, project) => setWizardState(prev => ({ 
-                ...prev, 
-                projectId: id, 
-                selectedProject: project 
-              }))}
+            <WizardStepDetails
+              title={wizardState.title}
+              onTitleChange={(title) => setWizardState(prev => ({ ...prev, title }))}
+              scopeDescription={wizardState.scopeDescription}
+              scopeAttachments={wizardState.scopeAttachments}
+              onScopeChange={(html) => setWizardState(prev => ({ ...prev, scopeDescription: html }))}
+              onAttachmentsChange={(attachments) => setWizardState(prev => ({ ...prev, scopeAttachments: attachments }))}
               plantId={wizardState.plantId}
               fieldId={wizardState.fieldId}
               stationId={wizardState.stationId}
               onPlantChange={(id) => setWizardState(prev => ({ ...prev, plantId: id }))}
               onFieldChange={(id) => setWizardState(prev => ({ ...prev, fieldId: id }))}
               onStationChange={(id) => setWizardState(prev => ({ ...prev, stationId: id }))}
-              locationMode={wizardState.locationMode}
-              onLocationModeChange={(mode) => setWizardState(prev => ({ ...prev, locationMode: mode }))}
             />
           )}
 
-          {/* Step 4: Scope & Details */}
-          {currentStep === 4 && (
-            <div className="space-y-4">
-              <div className="space-y-3">
-                <Label className="text-base font-medium">PSSR Scope Detailed Description</Label>
-                <p className="text-sm text-muted-foreground">
-                  Provide a detailed description of the PSSR scope. You can paste or drag & drop images and attach supporting documents.
-                </p>
-                <RichTextEditor
-                  value={wizardState.scopeDescription}
-                  onChange={(html) => setWizardState(prev => ({ ...prev, scopeDescription: html }))}
-                  attachments={wizardState.scopeAttachments}
-                  onAttachmentsChange={(attachments) => setWizardState(prev => ({ ...prev, scopeAttachments: attachments }))}
-                  placeholder="Describe the scope of this PSSR including safety systems, process controls, emergency procedures, etc..."
-                  storageBucket="pssr-attachments"
-                  storagePath="scope"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Step 5: Review & Customize */}
-          {currentStep === 5 && (
+          {/* Step 3: Review & Customize */}
+          {currentStep === 3 && (
             <WizardStepReviewCustomize
-              categoryName={selectedCategory?.name || ''}
+              categoryName={selectedReason?.name || ''}
               reasonName={selectedReason?.name || ''}
               locationDisplay={getLocationDisplay()}
               scopeDescription={wizardState.scopeDescription}
