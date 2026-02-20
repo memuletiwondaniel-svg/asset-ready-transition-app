@@ -265,7 +265,7 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
       id: record.id,
       projectId: record.pssr_id,
       projectName: record.title || record.asset,
-      asset: record.plant || '',
+      asset: record.cs_location || record.plant || '',
       status: record.status === 'DRAFT' ? 'Draft' : record.status === 'UNDER_REVIEW' ? 'Under Review' : record.status === 'COMPLETED' ? 'Completed' : record.status,
       priority: 'Medium',
       progress: record.progress,
@@ -280,6 +280,7 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
       teamMembers: 0,
       lastActivity: record.updated_at,
       location: [record.plant, record.cs_location].filter(Boolean).join(' > '),
+      scope: record.scope || '',
     }));
   }, [pssrRecords]);
 

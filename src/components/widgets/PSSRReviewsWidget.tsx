@@ -108,6 +108,8 @@ export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
       onToggleVisibility={onToggleVisibility}
       dragAttributes={dragAttributes}
       dragListeners={dragListeners}
+      hideDragHandle
+      hideOptionsMenu
       className="flex flex-col h-[600px] w-full"
     >
       <div className="flex flex-col h-full overflow-hidden">
