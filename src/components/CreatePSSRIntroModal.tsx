@@ -17,7 +17,7 @@ const CreatePSSRIntroModal: React.FC<CreatePSSRIntroModalProps> = ({
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center text-xl font-bold text-gray-900">
             <Shield className="h-6 w-6 mr-3 text-blue-600" />
@@ -25,7 +25,7 @@ const CreatePSSRIntroModal: React.FC<CreatePSSRIntroModalProps> = ({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-6 overflow-y-auto flex-1 min-h-0 pr-1">
           {/* Safety Alert */}
           <Card className="border-l-4 border-l-orange-500 bg-orange-50">
             <CardContent className="p-4">
@@ -113,7 +113,7 @@ const CreatePSSRIntroModal: React.FC<CreatePSSRIntroModalProps> = ({
           {/* Priority System */}
           <Card className="bg-blue-50 border-blue-200">
             <CardContent className="p-4">
-              <h4 className="font-semibold text-blue-900 mb-3">Finding Priority System</h4>
+              <h4 className="font-semibold text-blue-900 mb-3">PSSR Walkdown Findings</h4>
               <div className="space-y-2">
                 <div className="flex items-center space-x-3">
                   <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">Priority A</span>
@@ -139,8 +139,8 @@ const CreatePSSRIntroModal: React.FC<CreatePSSRIntroModalProps> = ({
           </Card>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex justify-end space-x-3 pt-6 border-t">
+        {/* Action Buttons - always visible */}
+        <div className="flex justify-end space-x-3 pt-4 border-t flex-shrink-0">
           <Button 
             variant="outline" 
             onClick={onClose}
