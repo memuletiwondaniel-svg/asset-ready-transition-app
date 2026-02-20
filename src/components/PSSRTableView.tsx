@@ -252,11 +252,11 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails, pin
       case 'actions':
         if (pssr.status === 'Draft') {
           return (
-            <div className="flex items-center justify-center">
+            <div className="flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
                 onClick={(e) => {
                   e.stopPropagation();
                   setDeleteTarget({ id: pssr.id, projectId: pssr.projectId });
