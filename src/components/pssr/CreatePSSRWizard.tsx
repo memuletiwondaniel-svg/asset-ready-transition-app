@@ -529,6 +529,7 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
                   selectedSofApproverRoleIds: [...prev.templateSofApproverRoleIds]
                 }));
               }}
+              plantName={selectedPlant?.name}
             />
           )}
         </div>
