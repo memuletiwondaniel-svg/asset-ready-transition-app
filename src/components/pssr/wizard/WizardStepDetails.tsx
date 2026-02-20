@@ -65,6 +65,13 @@ const WizardStepDetails: React.FC<WizardStepDetailsProps> = ({
     return allStations.some(s => s.field_id === fieldId);
   }, [allStations, fieldId]);
 
+  // Check if the selected plant has ANY stations (via its fields)
+  const plantHasStations = useMemo(() => {
+    if (!plantId || !allFields || !allStations) return false;
+    const plantFieldIds = allFields.filter(f => f.plant_id === plantId).map(f => f.id);
+    return allStations.some(s => s.field_id && plantFieldIds.includes(s.field_id));
+  }, [plantId, allFields, allStations]);
+
   // Dynamic label for the second level based on selected plant name
   const selectedPlantName = useMemo(() => {
     if (!plantId || !plants) return '';
@@ -122,7 +129,7 @@ const WizardStepDetails: React.FC<WizardStepDetailsProps> = ({
           Select the asset location using the hierarchy below
         </p>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className={`grid grid-cols-1 ${plantHasStations ? 'sm:grid-cols-3' : 'sm:grid-cols-2'} gap-3`}>
           {/* Plant Selection */}
           <div className="space-y-1.5">
             <Label htmlFor="plant" className="flex items-center gap-2 text-sm">
@@ -185,37 +192,39 @@ const WizardStepDetails: React.FC<WizardStepDetailsProps> = ({
             </Select>
           </div>
 
-          {/* Station Selection */}
-          <div className="space-y-1.5">
-            <Label htmlFor="station" className="flex items-center gap-2 text-sm">
-              <MapPin className="h-4 w-4" />
-              Station
-            </Label>
-            <Select
-              value={stationId}
-              onValueChange={onStationChange}
-              disabled={!fieldId || !hasStations}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder={
-                  !fieldId
-                    ? `Select ${secondLevelLabel.toLowerCase()} first`
-                    : !hasStations
-                      ? "N/A"
-                      : stationsLoading
-                        ? "Loading..."
-                        : "Select station"
-                } />
-              </SelectTrigger>
-              <SelectContent>
-                {filteredStations.map((station) => (
-                  <SelectItem key={station.id} value={station.id}>
-                    {station.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {/* Station Selection - only show if plant has stations */}
+          {plantHasStations && (
+            <div className="space-y-1.5">
+              <Label htmlFor="station" className="flex items-center gap-2 text-sm">
+                <MapPin className="h-4 w-4" />
+                Station
+              </Label>
+              <Select
+                value={stationId}
+                onValueChange={onStationChange}
+                disabled={!fieldId || !hasStations}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={
+                    !fieldId
+                      ? `Select ${secondLevelLabel.toLowerCase()} first`
+                      : !hasStations
+                        ? "N/A"
+                        : stationsLoading
+                          ? "Loading..."
+                          : "Select station"
+                  } />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredStations.map((station) => (
+                    <SelectItem key={station.id} value={station.id}>
+                      {station.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
       </div>
     </div>
