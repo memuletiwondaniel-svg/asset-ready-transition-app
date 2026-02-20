@@ -285,6 +285,7 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
     }
   };
 
+  const generatePSSRId = async (): Promise<string> => {
     // Determine the most specific location code for the PSSR ID
     // CS plant uses station name, UQ uses field (UQMT/UQST), others use plant name
     let locationCode = selectedPlant?.name || 'GEN';
@@ -689,7 +690,7 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
           <Button
             variant="outline"
             onClick={currentStep === 1 ? handleClose : handleBack}
-            disabled={isSubmitting}
+            disabled={isSubmitting || isSavingDraft}
           >
             {currentStep === 1 ? (
               'Cancel'
@@ -701,27 +702,67 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
             )}
           </Button>
 
-          {currentStep < STEPS.length ? (
-            <Button onClick={handleNext}>
-              Next
-              <ChevronRight className="h-4 w-4 ml-1" />
-            </Button>
-          ) : (
-            <Button onClick={handleSubmit} disabled={isSubmitting}>
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Creating...
-                </>
-              ) : (
-                <>
-                  <Check className="h-4 w-4 mr-2" />
-                  Create PSSR
-                </>
-              )}
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            {currentStep >= 2 && wizardState.title.trim() && (
+              <Button
+                variant="outline"
+                onClick={() => setShowDraftConfirm(true)}
+                disabled={isSubmitting || isSavingDraft}
+              >
+                {isSavingDraft ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-1" />
+                    Save as Draft
+                  </>
+                )}
+              </Button>
+            )}
+
+            {currentStep < STEPS.length ? (
+              <Button onClick={handleNext} disabled={isSavingDraft}>
+                Next
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
+            ) : (
+              <Button onClick={handleSubmit} disabled={isSubmitting || isSavingDraft}>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    <Check className="h-4 w-4 mr-2" />
+                    Create PSSR
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
         </div>
+
+        {/* Save as Draft Confirmation */}
+        <AlertDialog open={showDraftConfirm} onOpenChange={setShowDraftConfirm}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Save as Draft?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will save the PSSR as a draft with the information entered so far. You can continue editing it later. Items and approvers from subsequent steps will not be included.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleSaveAsDraft}>
+                Save Draft
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </DialogContent>
     </Dialog>
   );
