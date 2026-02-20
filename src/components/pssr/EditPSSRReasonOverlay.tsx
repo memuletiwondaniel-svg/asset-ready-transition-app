@@ -89,6 +89,8 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
   const [sofApproverRoleIds, setSofApproverRoleIds] = useState<string[]>(initialSofApproverRoleIds);
   const [checklistItemIds, setChecklistItemIds] = useState<string[]>([]);
   const [checklistItemOverrides, setChecklistItemOverrides] = useState<ChecklistItemOverrides>({});
+  const [naItemIds, setNaItemIds] = useState<string[]>([]);
+  const [customItems, setCustomItems] = useState<import('@/hooks/usePSSRChecklistLibrary').ChecklistItem[]>([]);
 
   // Load full configuration including checklist items
   useEffect(() => {
@@ -395,6 +397,38 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
                     delete newOverrides[itemId];
                     return newOverrides;
                   });
+                }}
+                naItemIds={naItemIds}
+                onMarkNA={(itemId) => {
+                  setNaItemIds(prev => [...prev, itemId]);
+                  setChecklistItemIds(prev => prev.filter(id => id !== itemId));
+                }}
+                onRestoreNA={(itemId) => {
+                  setNaItemIds(prev => prev.filter(id => id !== itemId));
+                  setChecklistItemIds(prev => [...prev, itemId]);
+                }}
+                customItems={customItems}
+                onAddExistingItems={(itemIds) => {
+                  setChecklistItemIds(prev => [...new Set([...prev, ...itemIds])]);
+                }}
+                onAddCustomItem={(item) => {
+                  const customId = `custom-${Date.now()}`;
+                  const newItem = {
+                    id: customId,
+                    category: item.category,
+                    topic: item.topic || null,
+                    description: item.description,
+                    supporting_evidence: item.supporting_evidence || null,
+                    approvers: null,
+                    responsible: null,
+                    sequence_number: 999,
+                    is_active: true,
+                    version: 1,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                  };
+                  setCustomItems(prev => [...prev, newItem]);
+                  setChecklistItemIds(prev => [...prev, customId]);
                 }}
               />
             )}
