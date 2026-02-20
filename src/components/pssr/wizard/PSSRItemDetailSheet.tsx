@@ -41,6 +41,8 @@ interface PSSRItemDetailSheetProps {
   currentOverride?: ChecklistItemOverride;
   onSave: (itemId: string, override: ChecklistItemOverride) => void;
   onReset: (itemId: string) => void;
+  plantName?: string;
+  fieldName?: string;
 }
 
 interface ResolvedMember {
@@ -74,10 +76,13 @@ const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
   currentOverride,
   onSave,
   onReset,
+  plantName,
+  fieldName,
 }) => {
   const [formData, setFormData] = useState<ChecklistItemOverride>({});
   const [addRoleOpen, setAddRoleOpen] = useState(false);
   const [addRoleSearch, setAddRoleSearch] = useState('');
+  const [selectedDeliveringMemberIds, setSelectedDeliveringMemberIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (item && open) {
@@ -184,9 +189,30 @@ const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
       const deliveringRoleIds = deliveringRoles
         .map(name => roleNameToId[name.toLowerCase()])
         .filter(Boolean);
-      const delivering = assetProfiles
-        .filter((p: any) => deliveringRoleIds.includes(p.role))
-        .map(toMember);
+      
+      // Filter delivering members by PSSR location when available
+      const allDeliveringProfiles = assetProfiles.filter((p: any) => deliveringRoleIds.includes(p.role));
+      const delivering = allDeliveringProfiles.map(toMember);
+      
+      // Determine location-matched members for auto-selection
+      const locationMatched: string[] = [];
+      if (plantName) {
+        const plantLower = plantName.toLowerCase();
+        const fieldLower = fieldName?.toLowerCase() || '';
+        
+        delivering.forEach(member => {
+          const pos = member.position.toLowerCase();
+          // Match position against plant name
+          if (pos.includes(plantLower)) {
+            // If field is specified, further filter by field name
+            if (fieldLower && pos.includes(fieldLower)) {
+              locationMatched.push(member.user_id);
+            } else if (!fieldLower) {
+              locationMatched.push(member.user_id);
+            }
+          }
+        });
+      }
 
       const approving: Record<string, ResolvedMember[]> = {};
       approvingRoles.forEach(roleName => {
@@ -198,10 +224,20 @@ const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
         approving[roleName] = members;
       });
 
-      return { delivering, approving, roleNameToId };
+      return { delivering, approving, roleNameToId, locationMatched };
     },
     enabled: open && !!item,
   });
+  // Auto-select location-matched delivering members
+  useEffect(() => {
+    const matched = resolvedParties?.locationMatched;
+    if (matched && matched.length > 0) {
+      setSelectedDeliveringMemberIds(new Set(matched));
+    } else if (resolvedParties?.delivering && resolvedParties.delivering.length === 1) {
+      // If only one member, auto-select them
+      setSelectedDeliveringMemberIds(new Set([resolvedParties.delivering[0].user_id]));
+    }
+  }, [resolvedParties?.locationMatched, resolvedParties?.delivering]);
 
   if (!item) return null;
 
@@ -320,7 +356,10 @@ const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
               </Label>
               <Select
                 value={currentDeliveringRole}
-                onValueChange={handleChangeDelivering}
+                onValueChange={(roleName) => {
+                  handleChangeDelivering(roleName);
+                  setSelectedDeliveringMemberIds(new Set());
+                }}
               >
                 <SelectTrigger className="text-sm">
                   <SelectValue placeholder="Select delivering party..." />
@@ -332,18 +371,54 @@ const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
                 </SelectContent>
               </Select>
               {deliveringMembers.length > 0 && (
-                <div className="flex items-center gap-3 flex-wrap">
-                  {deliveringMembers.map((member) => (
-                    <div key={member.user_id} className="flex flex-col items-center gap-0.5">
-                      <Avatar className="w-7 h-7">
-                        <AvatarImage src={getAvatarUrl(member.avatar_url)} />
-                        <AvatarFallback className="text-[10px]">{getInitials(member.full_name)}</AvatarFallback>
-                      </Avatar>
-                      <span className="text-[10px] text-foreground truncate max-w-[80px] text-center" title={member.full_name}>
-                        {member.full_name}
-                      </span>
-                    </div>
-                  ))}
+                <div className="space-y-1.5">
+                  {deliveringMembers.length > 1 && (
+                    <p className="text-[10px] text-muted-foreground">
+                      Click to select the relevant person{plantName ? ` for ${plantName}${fieldName ? ` - ${fieldName}` : ''}` : ''}
+                    </p>
+                  )}
+                  <div className="flex items-center gap-3 flex-wrap">
+                    {deliveringMembers.map((member) => {
+                      const isSelected = selectedDeliveringMemberIds.has(member.user_id);
+                      const isLocationMatch = resolvedParties?.locationMatched?.includes(member.user_id);
+                      return (
+                        <button
+                          key={member.user_id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedDeliveringMemberIds(prev => {
+                              const next = new Set(prev);
+                              if (next.has(member.user_id)) {
+                                next.delete(member.user_id);
+                              } else {
+                                next.add(member.user_id);
+                              }
+                              return next;
+                            });
+                          }}
+                          className={`flex flex-col items-center gap-0.5 p-1.5 rounded-lg transition-all cursor-pointer ${
+                            isSelected
+                              ? 'ring-2 ring-primary bg-primary/5'
+                              : 'opacity-40 hover:opacity-70'
+                          }`}
+                          title={`${member.full_name}\n${member.position}`}
+                        >
+                          <Avatar className="w-7 h-7">
+                            <AvatarImage src={getAvatarUrl(member.avatar_url)} />
+                            <AvatarFallback className="text-[10px]">{getInitials(member.full_name)}</AvatarFallback>
+                          </Avatar>
+                          <span className="text-[10px] text-foreground truncate max-w-[80px] text-center">
+                            {member.full_name}
+                          </span>
+                          {isLocationMatch && (
+                            <Badge variant="outline" className="text-[8px] px-1 py-0 h-3.5 border-primary/30 text-primary">
+                              Location match
+                            </Badge>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </div>

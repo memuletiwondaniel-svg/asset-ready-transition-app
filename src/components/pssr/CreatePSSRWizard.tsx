@@ -483,6 +483,8 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
                   selectedChecklistItemIds: [...prev.selectedChecklistItemIds, itemId],
                 }));
               }}
+              plantName={selectedPlant?.name}
+              fieldName={selectedField?.name}
             />
           )}
 
