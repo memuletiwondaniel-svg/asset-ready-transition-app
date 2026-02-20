@@ -47,11 +47,10 @@ const PSSRFilters: React.FC<PSSRFiltersProps> = ({
     <div className="flex items-center gap-4">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline">
-            <Filter className="h-4 w-4 mr-2" />
-            Filter
+          <Button variant="outline" size="icon" className="relative">
+            <Filter className="h-4 w-4" />
             {hasActiveFilters && (
-              <span className="ml-1 bg-blue-500 text-white text-xs rounded-full px-1.5 py-0.5">
+              <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center text-[10px]">
                 {filters.plant.length + filters.status.length + filters.lead.length}
               </span>
             )}

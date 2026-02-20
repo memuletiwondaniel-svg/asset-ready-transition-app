@@ -141,7 +141,7 @@ export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
                 value={searchTerm}
                 onChange={onSearchChange}
                 onSelectPSSR={onSelectPSSR}
-                placeholder="Search by ID, project, asset, lead..."
+                placeholder="Search by PSSR ID, title, location, lead, status or date..."
                 className="w-full"
               />
             </div>
