@@ -83,7 +83,7 @@ export const translations = {
     navORAPlans: 'ORA Plans',
     navORMaintenance: 'OR Maintenance',
     navP2AHandover: 'P2A Handover',
-    navProjects: 'VCRs',
+    navProjects: 'P2A Handover',
     
     // Sidebar UI
     lightMode: 'Light Mode',
