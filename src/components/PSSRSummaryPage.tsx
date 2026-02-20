@@ -600,9 +600,9 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
               ]}
             />
             
-            <div className="flex items-center justify-between mt-4">
+            <div className="flex items-center mt-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-primary to-accent">
+                <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500">
                   <AlertTriangle className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                 </div>
                 <div>
@@ -613,23 +613,6 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
                     {t.pssrSubtitle || 'Manage Pre-Startup Safety Reviews'}
                   </p>
                 </div>
-              </div>
-              
-              {/* Settings dropdown */}
-              <div className="flex items-center gap-2">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="icon">
-                      <Settings className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => setActiveView('manage-checklist')}>
-                      <ClipboardList className="mr-2 h-4 w-4" />
-                      {t.manageChecklists || 'Manage Checklist'}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
               </div>
             </div>
           </div>
