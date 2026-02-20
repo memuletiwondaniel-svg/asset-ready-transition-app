@@ -46,6 +46,15 @@ const getReasonCardConfig = (name: string): ReasonCardConfig => {
   return { icon: ClipboardList, hue: 180 };
 };
 
+// Display name overrides
+const getDisplayName = (name: string): string => {
+  const lower = name.toLowerCase();
+  if (lower.includes('restart') || (lower.includes('idle') && lower.includes('retired'))) {
+    return 'Idle or Retired Equipment';
+  }
+  return name;
+};
+
 interface WizardStepCategoryProps {
   categoryId: string | null;
   onCategoryChange: (categoryId: string) => void;
@@ -85,12 +94,13 @@ const WizardStepCategory: React.FC<WizardStepCategoryProps> = ({
         </p>
       </div>
       
-      {/* Card Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      {/* Card Grid - compact horizontal layout */}
+      <div className="grid grid-cols-1 gap-2">
         {reasons?.map((reason) => {
           const config = getReasonCardConfig(reason.name);
           const IconComponent = config.icon;
           const isSelected = categoryId === reason.id;
+          const displayName = getDisplayName(reason.name);
           
           return (
             <button
@@ -98,75 +108,72 @@ const WizardStepCategory: React.FC<WizardStepCategoryProps> = ({
               type="button"
               onClick={() => onCategoryChange(reason.id)}
               className={cn(
-                'group relative flex flex-col items-start p-5 rounded-xl border-2 text-left transition-all duration-300 overflow-hidden',
+                'group relative flex items-center gap-3.5 px-4 py-3 rounded-xl border-2 text-left transition-all duration-200 overflow-hidden',
                 isSelected
                   ? 'border-primary shadow-md'
-                  : 'border-border/60 hover:border-border hover:shadow-sm'
+                  : 'border-border/50 hover:border-border hover:shadow-sm'
               )}
               style={{
                 background: isSelected
-                  ? `linear-gradient(135deg, hsl(${config.hue} 70% 97%), hsl(${config.hue} 60% 94%))`
+                  ? `linear-gradient(135deg, hsl(${config.hue} 75% 96%), hsl(${config.hue} 65% 93%))`
                   : undefined,
               }}
             >
-              {/* Hover gradient overlay */}
+              {/* Hover gradient overlay - stronger */}
               <div 
                 className={cn(
-                  'absolute inset-0 opacity-0 transition-opacity duration-300 pointer-events-none',
+                  'absolute inset-0 opacity-0 transition-opacity duration-200 pointer-events-none',
                   !isSelected && 'group-hover:opacity-100'
                 )}
                 style={{
-                  background: `linear-gradient(135deg, hsl(${config.hue} 50% 97% / 0.7), hsl(${config.hue} 40% 95% / 0.4))`,
+                  background: `linear-gradient(135deg, hsl(${config.hue} 60% 95% / 0.9), hsl(${config.hue} 50% 92% / 0.6))`,
                 }}
               />
 
-              {/* Content */}
-              <div className="relative z-10 w-full">
-                {/* Top row: Icon + Check */}
-                <div className="flex items-center justify-between mb-3">
-                  <div 
-                    className="p-2.5 rounded-lg transition-colors duration-300"
-                    style={{
-                      backgroundColor: isSelected 
-                        ? `hsl(${config.hue} 60% 90%)` 
-                        : `hsl(${config.hue} 30% 94%)`,
-                    }}
-                  >
-                    <IconComponent 
-                      className="h-5 w-5 transition-colors duration-300"
-                      style={{ 
-                        color: isSelected 
-                          ? `hsl(${config.hue} 70% 40%)` 
-                          : `hsl(${config.hue} 30% 55%)` 
-                      }}
-                    />
-                  </div>
-                  
-                  {isSelected && (
-                    <CheckCircle2 
-                      className="h-5 w-5 text-primary animate-in fade-in zoom-in duration-200" 
-                    />
-                  )}
-                </div>
+              {/* Icon */}
+              <div 
+                className="relative z-10 p-2 rounded-lg shrink-0 transition-colors duration-200"
+                style={{
+                  backgroundColor: isSelected 
+                    ? `hsl(${config.hue} 65% 88%)` 
+                    : `hsl(${config.hue} 40% 92%)`,
+                }}
+              >
+                <IconComponent 
+                  className="h-5 w-5 transition-colors duration-200"
+                  strokeWidth={2.25}
+                  style={{ 
+                    color: isSelected 
+                      ? `hsl(${config.hue} 80% 35%)` 
+                      : `hsl(${config.hue} 50% 42%)` 
+                  }}
+                />
+              </div>
 
-                {/* Title */}
+              {/* Text content */}
+              <div className="relative z-10 flex-1 min-w-0">
                 <h4 className={cn(
-                  'font-semibold text-sm leading-snug mb-1.5 transition-colors',
+                  'font-semibold text-sm leading-snug transition-colors',
                   isSelected ? 'text-foreground' : 'text-foreground/80 group-hover:text-foreground'
                 )}>
-                  {reason.name}
+                  {displayName}
                 </h4>
-
-                {/* Description */}
                 {reason.description && (
                   <p className={cn(
-                    'text-xs leading-relaxed transition-colors',
-                    isSelected ? 'text-muted-foreground' : 'text-muted-foreground/70 group-hover:text-muted-foreground'
+                    'text-xs leading-snug mt-0.5 line-clamp-1 transition-colors',
+                    isSelected ? 'text-muted-foreground' : 'text-muted-foreground/60 group-hover:text-muted-foreground'
                   )}>
                     {reason.description}
                   </p>
                 )}
               </div>
+
+              {/* Check indicator */}
+              {isSelected && (
+                <CheckCircle2 
+                  className="relative z-10 h-5 w-5 shrink-0 text-primary animate-in fade-in zoom-in duration-200" 
+                />
+              )}
             </button>
           );
         })}
@@ -176,56 +183,55 @@ const WizardStepCategory: React.FC<WizardStepCategoryProps> = ({
           type="button"
           onClick={() => onCategoryChange(OTHER_ID)}
           className={cn(
-            'group relative flex flex-col items-start p-5 rounded-xl border-2 text-left transition-all duration-300 overflow-hidden',
+            'group relative flex items-center gap-3.5 px-4 py-3 rounded-xl border-2 text-left transition-all duration-200 overflow-hidden',
             isOtherSelected
               ? 'border-primary shadow-md'
-              : 'border-border/60 hover:border-border hover:shadow-sm'
+              : 'border-border/50 hover:border-border hover:shadow-sm'
           )}
           style={{
             background: isOtherSelected
-              ? `linear-gradient(135deg, hsl(0 0% 95%), hsl(0 0% 92%))`
+              ? `linear-gradient(135deg, hsl(0 0% 94%), hsl(0 0% 91%))`
               : undefined,
           }}
         >
           <div 
             className={cn(
-              'absolute inset-0 opacity-0 transition-opacity duration-300 pointer-events-none',
+              'absolute inset-0 opacity-0 transition-opacity duration-200 pointer-events-none',
               !isOtherSelected && 'group-hover:opacity-100'
             )}
             style={{
-              background: `linear-gradient(135deg, hsl(0 0% 97% / 0.7), hsl(0 0% 95% / 0.4))`,
+              background: `linear-gradient(135deg, hsl(0 0% 95% / 0.9), hsl(0 0% 93% / 0.6))`,
             }}
           />
-          <div className="relative z-10 w-full">
-            <div className="flex items-center justify-between mb-3">
-              <div 
-                className="p-2.5 rounded-lg transition-colors duration-300"
-                style={{
-                  backgroundColor: isOtherSelected ? 'hsl(0 0% 88%)' : 'hsl(0 0% 94%)',
-                }}
-              >
-                <HelpCircle 
-                  className="h-5 w-5 transition-colors duration-300"
-                  style={{ color: isOtherSelected ? 'hsl(0 0% 35%)' : 'hsl(0 0% 55%)' }}
-                />
-              </div>
-              {isOtherSelected && (
-                <CheckCircle2 className="h-5 w-5 text-primary animate-in fade-in zoom-in duration-200" />
-              )}
-            </div>
+          <div 
+            className="relative z-10 p-2 rounded-lg shrink-0 transition-colors duration-200"
+            style={{
+              backgroundColor: isOtherSelected ? 'hsl(0 0% 86%)' : 'hsl(0 0% 92%)',
+            }}
+          >
+            <HelpCircle 
+              className="h-5 w-5 transition-colors duration-200"
+              strokeWidth={2.25}
+              style={{ color: isOtherSelected ? 'hsl(0 0% 30%)' : 'hsl(0 0% 45%)' }}
+            />
+          </div>
+          <div className="relative z-10 flex-1 min-w-0">
             <h4 className={cn(
-              'font-semibold text-sm leading-snug mb-1.5 transition-colors',
+              'font-semibold text-sm leading-snug transition-colors',
               isOtherSelected ? 'text-foreground' : 'text-foreground/80 group-hover:text-foreground'
             )}>
               Other
             </h4>
             <p className={cn(
-              'text-xs leading-relaxed transition-colors',
-              isOtherSelected ? 'text-muted-foreground' : 'text-muted-foreground/70 group-hover:text-muted-foreground'
+              'text-xs leading-snug mt-0.5 transition-colors',
+              isOtherSelected ? 'text-muted-foreground' : 'text-muted-foreground/60 group-hover:text-muted-foreground'
             )}>
               Other reason not listed above
             </p>
           </div>
+          {isOtherSelected && (
+            <CheckCircle2 className="relative z-10 h-5 w-5 shrink-0 text-primary animate-in fade-in zoom-in duration-200" />
+          )}
         </button>
       </div>
     </div>
