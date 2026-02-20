@@ -148,7 +148,7 @@ const WizardStepDetails: React.FC<WizardStepDetailsProps> = ({
                 <SelectValue placeholder={plantsLoading ? "Loading..." : "Select plant"} />
               </SelectTrigger>
               <SelectContent>
-                {plants?.map((plant) => (
+                {plants?.filter(plant => plant.name?.toLowerCase() !== 'pipelines').map((plant) => (
                   <SelectItem key={plant.id} value={plant.id}>
                     {plant.name}
                   </SelectItem>
