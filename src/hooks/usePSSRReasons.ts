@@ -6,6 +6,7 @@ export type PSSRReasonStatus = 'draft' | 'active' | 'inactive';
 export interface PSSRReason {
   id: string;
   name: string;
+  description: string | null;
   display_order: number;
   is_active: boolean;
   category: string | null;

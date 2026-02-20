@@ -64,7 +64,7 @@ interface WizardState {
 }
 
 const STEPS = [
-  { id: 1, title: 'Category', description: 'Select PSSR category' },
+  { id: 1, title: 'Reason', description: 'Select PSSR reason' },
   { id: 2, title: 'Reason', description: 'Select specific reason' },
   { id: 3, title: 'Location', description: 'Select project or asset location' },
   { id: 4, title: 'Scope & Details', description: 'Define the scope' },
@@ -509,15 +509,16 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
 
         {/* Step Content */}
         <div className="flex-1 overflow-y-auto py-6 px-1">
-          {/* Step 1: Category */}
+          {/* Step 1: Reason (select PSSR template) */}
           {currentStep === 1 && (
             <WizardStepCategory
               categoryId={wizardState.categoryId}
               onCategoryChange={(id) => setWizardState(prev => ({ 
                 ...prev, 
                 categoryId: id,
-                reasonId: '',
-                selectedAtiScopeIds: []
+                reasonId: id === '__other__' ? '' : id,
+                selectedAtiScopeIds: [],
+                configLoaded: false,
               }))}
             />
           )}
