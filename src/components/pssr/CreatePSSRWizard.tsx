@@ -31,6 +31,7 @@ interface CreatePSSRWizardProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: (pssrId: string) => void;
+  draftPssrId?: string;
 }
 
 interface WizardState {
@@ -69,7 +70,7 @@ const STEPS = [
   { id: 4, title: 'Approvers', description: 'PSSR & SoF approvers' },
 ];
 
-const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange, onSuccess }) => {
+const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange, onSuccess, draftPssrId }) => {
   const queryClient = useQueryClient();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -149,6 +150,45 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
       templateSofApproverRoleIds: [],
     });
   };
+
+  // Load draft PSSR data when editing an existing draft
+  useEffect(() => {
+    const loadDraft = async () => {
+      if (!open || !draftPssrId) return;
+      
+      try {
+        const { data: draft, error } = await supabase
+          .from('pssrs')
+          .select('*')
+          .eq('id', draftPssrId)
+          .maybeSingle();
+        
+        if (error || !draft) return;
+
+        // Find the reason to get its category
+        const matchedReason = reasons?.find(r => r.id === draft.reason_id);
+        const categoryId = matchedReason?.category || '';
+
+        setWizardState(prev => ({
+          ...prev,
+          categoryId,
+          reasonId: draft.reason_id || '',
+          title: draft.title || draft.asset || '',
+          scopeDescription: (draft as any).scope || '',
+          plantId: draft.plant_id || '',
+          fieldId: draft.field_id || '',
+          stationId: draft.station_id || '',
+        }));
+
+        // Start at step 2 if reason is already set, otherwise step 1
+        setCurrentStep(draft.reason_id ? 2 : 1);
+      } catch (err) {
+        console.error('Failed to load draft PSSR:', err);
+      }
+    };
+
+    loadDraft();
+  }, [open, draftPssrId, reasons]);
 
   // Load configuration when entering Step 3
   useEffect(() => {
@@ -238,7 +278,6 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
         return;
       }
 
-      const pssrId = await generatePSSRId();
       const plantValue = selectedPlant?.name || '';
       const csLocationValue = selectedStation?.name || '';
 
@@ -252,30 +291,49 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
         pssrLeadId = config?.default_pssr_lead_id || null;
       }
 
-      const { error: pssrError } = await supabase
-        .from('pssrs')
-        .insert({
-          pssr_id: pssrId,
-          reason: selectedReason?.name || '',
-          reason_id: wizardState.reasonId || null,
-          scope: wizardState.scopeDescription.trim() || null,
-          asset: wizardState.title.trim(),
-          title: wizardState.title.trim(),
-          status: 'DRAFT',
-          user_id: user.id,
-          plant: plantValue || null,
-          plant_id: wizardState.plantId || null,
-          field_id: wizardState.fieldId || null,
-          station_id: wizardState.stationId || null,
-          cs_location: csLocationValue || null,
-          pssr_lead_id: pssrLeadId,
-        } as any);
+      const draftPayload = {
+        reason: selectedReason?.name || '',
+        reason_id: wizardState.reasonId || null,
+        scope: wizardState.scopeDescription.trim() || null,
+        asset: wizardState.title.trim(),
+        title: wizardState.title.trim(),
+        status: 'DRAFT',
+        plant: plantValue || null,
+        plant_id: wizardState.plantId || null,
+        field_id: wizardState.fieldId || null,
+        station_id: wizardState.stationId || null,
+        cs_location: csLocationValue || null,
+        pssr_lead_id: pssrLeadId,
+      };
 
-      if (pssrError) throw pssrError;
+      if (draftPssrId) {
+        // Update existing draft
+        const { error: updateError } = await supabase
+          .from('pssrs')
+          .update(draftPayload as any)
+          .eq('id', draftPssrId);
+        if (updateError) throw updateError;
 
-      queryClient.invalidateQueries({ queryKey: ['pssrs'] });
-      queryClient.invalidateQueries({ queryKey: ['pssr-records'] });
-      toast.success(`Draft PSSR ${pssrId} saved successfully!`);
+        queryClient.invalidateQueries({ queryKey: ['pssrs'] });
+        queryClient.invalidateQueries({ queryKey: ['pssr-records'] });
+        toast.success('Draft PSSR updated successfully!');
+      } else {
+        // Create new draft
+        const pssrId = await generatePSSRId();
+        const { error: pssrError } = await supabase
+          .from('pssrs')
+          .insert({
+            ...draftPayload,
+            pssr_id: pssrId,
+            user_id: user.id,
+          } as any);
+        if (pssrError) throw pssrError;
+
+        queryClient.invalidateQueries({ queryKey: ['pssrs'] });
+        queryClient.invalidateQueries({ queryKey: ['pssr-records'] });
+        toast.success(`Draft PSSR ${pssrId} saved successfully!`);
+      }
+
       handleClose();
     } catch (error: any) {
       console.error('Failed to save draft PSSR:', error);
@@ -319,8 +377,6 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
-      const pssrId = await generatePSSRId();
-
       const plantValue = selectedPlant?.name || '';
       const csLocationValue = selectedStation?.name || '';
 
@@ -335,28 +391,48 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
         pssrLeadId = config?.default_pssr_lead_id || null;
       }
 
-      const { data: newPSSR, error: pssrError } = await supabase
-        .from('pssrs')
-        .insert({
-          pssr_id: pssrId,
-          reason: selectedReason?.name || '',
-          reason_id: wizardState.reasonId || null,
-          scope: wizardState.scopeDescription.trim() || null,
-          asset: wizardState.title.trim(),
-          title: wizardState.title.trim(),
-          status: 'DRAFT',
-          user_id: user.id,
-          plant: plantValue || null,
-          plant_id: wizardState.plantId || null,
-          field_id: wizardState.fieldId || null,
-          station_id: wizardState.stationId || null,
-          cs_location: csLocationValue || null,
-          pssr_lead_id: pssrLeadId,
-        } as any)
-        .select()
-        .single();
+      const pssrPayload = {
+        reason: selectedReason?.name || '',
+        reason_id: wizardState.reasonId || null,
+        scope: wizardState.scopeDescription.trim() || null,
+        asset: wizardState.title.trim(),
+        title: wizardState.title.trim(),
+        status: 'DRAFT',
+        plant: plantValue || null,
+        plant_id: wizardState.plantId || null,
+        field_id: wizardState.fieldId || null,
+        station_id: wizardState.stationId || null,
+        cs_location: csLocationValue || null,
+        pssr_lead_id: pssrLeadId,
+      };
 
-      if (pssrError) throw pssrError;
+      let newPSSR: any;
+
+      if (draftPssrId) {
+        // Update existing draft record
+        const { data, error } = await supabase
+          .from('pssrs')
+          .update(pssrPayload as any)
+          .eq('id', draftPssrId)
+          .select()
+          .single();
+        if (error) throw error;
+        newPSSR = data;
+      } else {
+        // Create new record
+        const pssrId = await generatePSSRId();
+        const { data, error } = await supabase
+          .from('pssrs')
+          .insert({
+            ...pssrPayload,
+            pssr_id: pssrId,
+            user_id: user.id,
+          } as any)
+          .select()
+          .single();
+        if (error) throw error;
+        newPSSR = data;
+      }
 
       // Create checklist responses
       if (wizardState.selectedChecklistItemIds.length > 0) {
@@ -459,7 +535,8 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
       }
 
       queryClient.invalidateQueries({ queryKey: ['pssrs'] });
-      toast.success(`PSSR ${pssrId} created successfully!`);
+      queryClient.invalidateQueries({ queryKey: ['pssr-records'] });
+      toast.success(draftPssrId ? 'PSSR updated successfully!' : `PSSR ${newPSSR.pssr_id} created successfully!`);
       handleClose();
       onSuccess?.(newPSSR.id);
     } catch (error: any) {

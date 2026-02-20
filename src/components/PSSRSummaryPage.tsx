@@ -451,7 +451,16 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
       [dateType]: value
     }));
   };
+  const [draftEditId, setDraftEditId] = useState<string | null>(null);
+
   const handleViewDetails = (pssrId: string) => {
+    // Check if the PSSR is a draft — if so, open the wizard to continue editing
+    const pssr = pssrList.find(p => p.id === pssrId);
+    if (pssr && pssr.status === 'Draft') {
+      setDraftEditId(pssrId);
+      setActiveView('create');
+      return;
+    }
     setSelectedPSSR(pssrId);
     setActiveView('details');
   };
@@ -717,11 +726,16 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
       <CreatePSSRWizard
         open={activeView === 'create'}
         onOpenChange={(open) => {
-          if (!open) setActiveView('list');
+          if (!open) {
+            setActiveView('list');
+            setDraftEditId(null);
+          }
         }}
+        draftPssrId={draftEditId || undefined}
         onSuccess={(pssrId) => {
           setSelectedPSSR(pssrId);
           setActiveView('details');
+          setDraftEditId(null);
           toast.success('PSSR created successfully');
         }}
       />
