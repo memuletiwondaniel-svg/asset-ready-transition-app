@@ -136,10 +136,12 @@ const WizardStepChecklistItems: React.FC<WizardStepChecklistItemsProps> = ({
   };
 
   const getCategoryName = (categoryId: string) => {
+    if (categoryId.startsWith('other:')) return categoryId.replace('other:', '');
     return categories.find(c => c.id === categoryId)?.name || 'Unknown Category';
   };
 
   const getCategoryRefId = (categoryId: string) => {
+    if (categoryId.startsWith('other:')) return 'OT';
     return categories.find(c => c.id === categoryId)?.ref_id || '';
   };
 
