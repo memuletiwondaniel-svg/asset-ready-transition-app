@@ -135,7 +135,7 @@ export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
             <div className="flex-1 min-w-0" />
             
             {/* Search */}
-            <div className="shrink-0 min-w-[280px]">
+            <div className="shrink-0 min-w-[400px]">
               <PSSRAdvancedSearch
                 pssrs={pssrs}
                 value={searchTerm}
