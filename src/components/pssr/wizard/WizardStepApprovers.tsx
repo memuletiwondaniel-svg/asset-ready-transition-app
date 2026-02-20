@@ -57,6 +57,9 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
         const pos = (p.position || '').toLowerCase();
         const knownPlants = ['cs', 'kaz', 'uq', 'nrngl', 'bngl'];
         const otherPlants = knownPlants.filter(pl => pl !== plantLower);
+
+        // Exclude "Projects" personnel from PSSR approvers (they are for VCRs only)
+        if (pos.includes('project')) return false;
         
         // Director / Deputy Director roles: strict plant match only
         if (roleName.includes('director')) {
