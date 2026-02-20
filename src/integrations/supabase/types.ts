@@ -6118,6 +6118,7 @@ export type Database = {
           checklist_item_overrides: Json | null
           created_at: string | null
           created_by: string | null
+          default_pssr_lead_id: string | null
           id: string
           pssr_approver_role_ids: string[] | null
           reason_id: string
@@ -6130,6 +6131,7 @@ export type Database = {
           checklist_item_overrides?: Json | null
           created_at?: string | null
           created_by?: string | null
+          default_pssr_lead_id?: string | null
           id?: string
           pssr_approver_role_ids?: string[] | null
           reason_id: string
@@ -6142,6 +6144,7 @@ export type Database = {
           checklist_item_overrides?: Json | null
           created_at?: string | null
           created_by?: string | null
+          default_pssr_lead_id?: string | null
           id?: string
           pssr_approver_role_ids?: string[] | null
           reason_id?: string
@@ -6150,6 +6153,20 @@ export type Database = {
           updated_by?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "pssr_reason_configuration_default_pssr_lead_id_fkey"
+            columns: ["default_pssr_lead_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "pssr_reason_configuration_default_pssr_lead_id_fkey"
+            columns: ["default_pssr_lead_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_safe"
+            referencedColumns: ["user_id"]
+          },
           {
             foreignKeyName: "pssr_reason_configuration_reason_id_fkey"
             columns: ["reason_id"]
