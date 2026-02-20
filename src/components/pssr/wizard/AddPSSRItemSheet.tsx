@@ -123,7 +123,7 @@ const AddPSSRItemSheet: React.FC<AddPSSRItemSheetProps> = ({
           </SheetTitle>
         </SheetHeader>
 
-        <Tabs defaultValue="database" className="flex-1 flex flex-col overflow-hidden">
+        <Tabs defaultValue="database" className="flex-1 flex flex-col overflow-hidden [&>div[role=tabpanel][data-state=inactive]]:hidden [&>div[role=tabpanel][data-state=inactive]]:!p-0 [&>div[role=tabpanel][data-state=inactive]]:!m-0">
           <div className="px-6 pt-3">
             <TabsList className="w-full">
               <TabsTrigger value="database" className="flex-1 gap-1.5">
