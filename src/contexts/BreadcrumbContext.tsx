@@ -77,7 +77,7 @@ export const BreadcrumbProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       // Special handling for project routes
       let navigationPath = currentPath;
       if (segment === 'project') {
-        navigationPath = '/projects';
+        navigationPath = '/vcrs';
       }
       
       // Get label from custom labels, route labels, metadata, or format the segment

@@ -69,6 +69,7 @@ const App = () => (
                       <Route path="/users" element={<Index />} />
                       <Route path="/manage-checklist" element={<Index />} />
                       <Route path="/admin-tools" element={<Index />} />
+                      <Route path="/vcrs" element={<Index />} />
                       <Route path="/projects" element={<Index />} />
                       <Route path="/project-management" element={<ProjectManagementPage />} />
                       <Route path="/project/:id" element={<ProjectDetailsPage />} />
