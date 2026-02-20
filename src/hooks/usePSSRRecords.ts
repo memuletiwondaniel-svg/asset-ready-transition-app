@@ -18,6 +18,8 @@ export interface PSSRRecord {
   pssr_lead_id: string | null;
   pssr_lead_name: string | null;
   pssr_lead_avatar: string | null;
+  field_name: string | null;
+  station_name: string | null;
   created_at: string;
   updated_at: string;
   progress: number;
@@ -65,6 +67,32 @@ export function usePSSRRecords() {
         }
       }
 
+      // Fetch field and station names for location display
+      const fieldIds = [...new Set(pssrs.map(p => p.field_id).filter(Boolean))] as string[];
+      const stationIds = [...new Set(pssrs.map(p => p.station_id).filter(Boolean))] as string[];
+      
+      let fieldNames: Record<string, string> = {};
+      let stationNames: Record<string, string> = {};
+      
+      if (fieldIds.length > 0) {
+        const { data: fieldsData } = await supabase
+          .from('field')
+          .select('id, name')
+          .in('id', fieldIds);
+        if (fieldsData) {
+          fieldsData.forEach(f => { fieldNames[f.id] = f.name; });
+        }
+      }
+      if (stationIds.length > 0) {
+        const { data: stationsData } = await supabase
+          .from('station')
+          .select('id, name')
+          .in('id', stationIds);
+        if (stationsData) {
+          stationsData.forEach(s => { stationNames[s.id] = s.name; });
+        }
+      }
+
       // Calculate progress for each PSSR
       const pssrIds = pssrs.map(p => p.id);
       const { data: responses } = await supabase
@@ -92,6 +120,8 @@ export function usePSSRRecords() {
         ...pssr,
         pssr_lead_name: pssr.pssr_lead_id ? leadProfiles[pssr.pssr_lead_id]?.full_name || null : null,
         pssr_lead_avatar: pssr.pssr_lead_id ? leadProfiles[pssr.pssr_lead_id]?.avatar_url || null : null,
+        field_name: pssr.field_id ? fieldNames[pssr.field_id] || null : null,
+        station_name: pssr.station_id ? stationNames[pssr.station_id] || null : null,
         progress: progressMap[pssr.id] || 0,
       })) as PSSRRecord[];
     },
