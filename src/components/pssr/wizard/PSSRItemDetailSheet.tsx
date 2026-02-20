@@ -158,11 +158,15 @@ const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
       if (!profiles) return { delivering: [], approving: {}, roleNameToId };
 
       // For TA2 roles, only include Asset-level staff
+      // Asset-level TA2s either have "asset" in their position OR do NOT have "project" in their position
+      // This ensures people like "Tech Safety TA2" (no qualifier) or "MCI TA2 - Asset" are included
+      // while "Process TA2 - Project" would be excluded
       const assetProfiles = profiles.filter((p: any) => {
         const pos = (p.position || '').toLowerCase();
         const roleName = roleIdToName[p.role] || '';
         if (roleName.toLowerCase().includes('ta2')) {
-          return pos.includes('asset');
+          // Exclude only if position explicitly contains "project"
+          return !pos.includes('project');
         }
         return true;
       });
