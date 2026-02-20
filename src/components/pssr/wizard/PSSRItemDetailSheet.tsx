@@ -190,28 +190,30 @@ const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
         .map(name => roleNameToId[name.toLowerCase()])
         .filter(Boolean);
       
-      // Filter delivering members by PSSR location when available
+      // Filter delivering members by PSSR location — only show members at the PSSR's plant/field
       const allDeliveringProfiles = assetProfiles.filter((p: any) => deliveringRoleIds.includes(p.role));
-      const delivering = allDeliveringProfiles.map(toMember);
+      const allDeliveringMembers = allDeliveringProfiles.map(toMember);
       
-      // Determine location-matched members for auto-selection
       const locationMatched: string[] = [];
+      let delivering: ResolvedMember[];
+      
       if (plantName) {
         const plantLower = plantName.toLowerCase();
         const fieldLower = fieldName?.toLowerCase() || '';
         
-        delivering.forEach(member => {
+        // Only include members whose position matches the PSSR location
+        delivering = allDeliveringMembers.filter(member => {
           const pos = member.position.toLowerCase();
-          // Match position against plant name
-          if (pos.includes(plantLower)) {
-            // If field is specified, further filter by field name
-            if (fieldLower && pos.includes(fieldLower)) {
-              locationMatched.push(member.user_id);
-            } else if (!fieldLower) {
-              locationMatched.push(member.user_id);
-            }
-          }
+          if (!pos.includes(plantLower)) return false;
+          // If field is specified, also check field match
+          if (fieldLower && !pos.includes(fieldLower)) return false;
+          return true;
         });
+        
+        // All shown members are location-matched for auto-selection
+        delivering.forEach(m => locationMatched.push(m.user_id));
+      } else {
+        delivering = allDeliveringMembers;
       }
 
       const approving: Record<string, ResolvedMember[]> = {};
