@@ -16,6 +16,9 @@ interface WizardStepApproversSetupProps {
   onSofApproverToggle: (roleId: string) => void;
   isSofApproversModified: boolean;
   onResetSofApprovers: () => void;
+
+  // Location context
+  plantName?: string;
 }
 
 const WizardStepApproversSetup: React.FC<WizardStepApproversSetupProps> = ({
@@ -27,6 +30,7 @@ const WizardStepApproversSetup: React.FC<WizardStepApproversSetupProps> = ({
   onSofApproverToggle,
   isSofApproversModified,
   onResetSofApprovers,
+  plantName,
 }) => {
   return (
     <div className="space-y-6">
@@ -75,6 +79,7 @@ const WizardStepApproversSetup: React.FC<WizardStepApproversSetupProps> = ({
           selectedRoleIds={selectedPssrApproverRoleIds}
           disabledRoleIds={selectedSofApproverRoleIds}
           onRoleToggle={onPssrApproverToggle}
+          plantName={plantName}
         />
       </div>
 
@@ -112,6 +117,7 @@ const WizardStepApproversSetup: React.FC<WizardStepApproversSetupProps> = ({
           selectedRoleIds={selectedSofApproverRoleIds}
           disabledRoleIds={selectedPssrApproverRoleIds}
           onRoleToggle={onSofApproverToggle}
+          plantName={plantName}
         />
       </div>
 
