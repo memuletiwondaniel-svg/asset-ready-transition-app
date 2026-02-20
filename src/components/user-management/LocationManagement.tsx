@@ -694,12 +694,12 @@ const LocationManagement: React.FC = () => {
             {addEditDialog.type === 'field' && (
               <div className="space-y-2">
                 <Label>Parent Plant (Optional)</Label>
-                <Select value={formParentId} onValueChange={setFormParentId}>
+                <Select value={formParentId || '__none__'} onValueChange={(v) => setFormParentId(v === '__none__' ? '' : v)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a plant" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No parent</SelectItem>
+                    <SelectItem value="__none__">No parent</SelectItem>
                     {plants.map(plant => (
                       <SelectItem key={plant.id} value={plant.id}>{plant.name}</SelectItem>
                     ))}
@@ -710,12 +710,12 @@ const LocationManagement: React.FC = () => {
             {addEditDialog.type === 'station' && (
               <div className="space-y-2">
                 <Label>Parent Field (Optional)</Label>
-                <Select value={formParentId} onValueChange={setFormParentId}>
+                <Select value={formParentId || '__none__'} onValueChange={(v) => setFormParentId(v === '__none__' ? '' : v)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a field" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No parent</SelectItem>
+                    <SelectItem value="__none__">No parent</SelectItem>
                     {fields.map(field => (
                       <SelectItem key={field.id} value={field.id}>{field.name}</SelectItem>
                     ))}
