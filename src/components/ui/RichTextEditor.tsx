@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState, useEffect } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
@@ -10,7 +10,6 @@ import {
   Italic, 
   List, 
   ListOrdered, 
-  ImageIcon, 
   Paperclip, 
   X,
   FileText,
@@ -18,6 +17,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import ImageEditorDialog from '@/components/ui/ImageEditorDialog';
 
 export interface Attachment {
   id: string;
@@ -48,13 +48,15 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [editingImageSrc, setEditingImageSrc] = useState<string | null>(null);
+  const [editingImageElement, setEditingImageElement] = useState<HTMLImageElement | null>(null);
 
   const editor = useEditor({
     extensions: [
       StarterKit,
       Image.configure({
         HTMLAttributes: {
-          class: 'max-w-full rounded-lg my-2',
+          class: 'max-w-full rounded-lg my-2 cursor-pointer hover:ring-2 hover:ring-primary/50 hover:ring-offset-2 transition-all',
         },
       }),
       Placeholder.configure({
@@ -104,6 +106,70 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
       },
     },
   });
+
+  // Attach click listener to images inside the editor
+  useEffect(() => {
+    if (!editor) return;
+
+    const editorElement = editor.view.dom;
+    
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'IMG') {
+        e.preventDefault();
+        e.stopPropagation();
+        const imgEl = target as HTMLImageElement;
+        setEditingImageSrc(imgEl.src);
+        setEditingImageElement(imgEl);
+      }
+    };
+
+    editorElement.addEventListener('click', handleClick);
+    return () => editorElement.removeEventListener('click', handleClick);
+  }, [editor]);
+
+  const handleImageEditorSave = useCallback(async (croppedDataUrl: string) => {
+    if (!editor || !editingImageElement) return;
+
+    // Upload the cropped image
+    setIsUploading(true);
+    try {
+      const response = await fetch(croppedDataUrl);
+      const blob = await response.blob();
+      const fileName = `${Date.now()}-cropped.jpg`;
+      const filePath = `${storagePath}/${fileName}`;
+
+      const { error } = await supabase.storage
+        .from(storageBucket)
+        .upload(filePath, blob, { contentType: 'image/jpeg' });
+
+      if (error) throw error;
+
+      const { data: urlData } = supabase.storage
+        .from(storageBucket)
+        .getPublicUrl(filePath);
+
+      if (urlData?.publicUrl) {
+        // Replace the old image src in editor HTML
+        const oldSrc = editingImageElement.src;
+        const currentHtml = editor.getHTML();
+        const newHtml = currentHtml.replace(
+          new RegExp(`src="${oldSrc.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"`, 'g'),
+          `src="${urlData.publicUrl}"`
+        );
+        editor.commands.setContent(newHtml);
+        onChange(editor.getHTML());
+        toast.success('Image updated');
+      }
+    } catch (error: any) {
+      console.error('Error saving cropped image:', error);
+      toast.error('Failed to save edited image');
+    } finally {
+      setIsUploading(false);
+      setEditingImageSrc(null);
+      setEditingImageElement(null);
+    }
+  }, [editor, editingImageElement, storageBucket, storagePath, onChange]);
 
   const handleImageUpload = async (file: File) => {
     if (!editor) return;
@@ -187,7 +253,6 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
       }
     }
     
-    // Reset input
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -285,7 +350,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
       
       {/* Tip */}
       <p className="text-xs text-muted-foreground">
-        Tip: You can paste or drag & drop images directly into the text area
+        Tip: You can paste or drag & drop images directly into the text area. Click on an image to crop or resize it.
       </p>
       
       {/* Attachments List */}
@@ -318,6 +383,19 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
             ))}
           </div>
         </div>
+      )}
+
+      {/* Image Editor Dialog */}
+      {editingImageSrc && (
+        <ImageEditorDialog
+          open={!!editingImageSrc}
+          onClose={() => {
+            setEditingImageSrc(null);
+            setEditingImageElement(null);
+          }}
+          imageSrc={editingImageSrc}
+          onSave={handleImageEditorSave}
+        />
       )}
     </div>
   );

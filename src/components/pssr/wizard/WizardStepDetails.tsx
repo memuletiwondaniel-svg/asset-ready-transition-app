@@ -129,7 +129,7 @@ const WizardStepDetails: React.FC<WizardStepDetailsProps> = ({
           Select the asset location using the hierarchy below
         </p>
 
-        <div className={`grid grid-cols-1 ${plantHasStations ? 'sm:grid-cols-3' : 'sm:grid-cols-2'} gap-3`}>
+        <div className={`grid grid-cols-1 ${plantHasStations ? 'sm:grid-cols-3' : hasFields ? 'sm:grid-cols-2' : 'sm:grid-cols-1'} gap-3`}>
           {/* Plant Selection */}
           <div className="space-y-1.5">
             <Label htmlFor="plant" className="flex items-center gap-2 text-sm">
@@ -157,40 +157,40 @@ const WizardStepDetails: React.FC<WizardStepDetailsProps> = ({
             </Select>
           </div>
 
-          {/* Field / Unit / Site Selection */}
-          <div className="space-y-1.5">
-            <Label htmlFor="field" className="flex items-center gap-2 text-sm">
-              <Layers className="h-4 w-4" />
-              {secondLevelLabel}
-            </Label>
-            <Select
-              value={fieldId}
-              onValueChange={(value) => {
-                onFieldChange(value);
-                onStationChange('');
-              }}
-              disabled={!plantId || !hasFields}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder={
-                  !plantId
-                    ? "Select plant first"
-                    : !hasFields
-                      ? "N/A"
+          {/* Field / Unit / Site Selection - only show if plant has fields */}
+          {hasFields && (
+            <div className="space-y-1.5">
+              <Label htmlFor="field" className="flex items-center gap-2 text-sm">
+                <Layers className="h-4 w-4" />
+                {secondLevelLabel}
+              </Label>
+              <Select
+                value={fieldId}
+                onValueChange={(value) => {
+                  onFieldChange(value);
+                  onStationChange('');
+                }}
+                disabled={!plantId}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={
+                    !plantId
+                      ? "Select plant first"
                       : fieldsLoading
                         ? "Loading..."
                         : `Select ${secondLevelLabel.toLowerCase()}`
-                } />
-              </SelectTrigger>
-              <SelectContent>
-                {filteredFields.map((field) => (
-                  <SelectItem key={field.id} value={field.id}>
-                    {field.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+                  } />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredFields.map((field) => (
+                    <SelectItem key={field.id} value={field.id}>
+                      {field.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {/* Station Selection - only show if plant has stations */}
           {plantHasStations && (
