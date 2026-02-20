@@ -62,6 +62,8 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
     checklistItemIds: [],
     checklistItemOverrides: {},
   });
+  const [naItemIds, setNaItemIds] = useState<string[]>([]);
+  const [customItems, setCustomItems] = useState<import('@/hooks/usePSSRChecklistLibrary').ChecklistItem[]>([]);
 
   const resetWizard = () => {
     setCurrentStep(1);
@@ -74,6 +76,8 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
       checklistItemIds: [],
       checklistItemOverrides: {},
     });
+    setNaItemIds([]);
+    setCustomItems([]);
   };
 
   const handleClose = () => {
@@ -327,6 +331,50 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
                   delete newOverrides[itemId];
                   return { ...prev, checklistItemOverrides: newOverrides };
                 });
+              }}
+              naItemIds={naItemIds}
+              onMarkNA={(itemId) => {
+                setNaItemIds(prev => [...prev, itemId]);
+                setWizardState(prev => ({
+                  ...prev,
+                  checklistItemIds: prev.checklistItemIds.filter(id => id !== itemId),
+                }));
+              }}
+              onRestoreNA={(itemId) => {
+                setNaItemIds(prev => prev.filter(id => id !== itemId));
+                setWizardState(prev => ({
+                  ...prev,
+                  checklistItemIds: [...prev.checklistItemIds, itemId],
+                }));
+              }}
+              customItems={customItems}
+              onAddExistingItems={(itemIds) => {
+                setWizardState(prev => ({
+                  ...prev,
+                  checklistItemIds: [...new Set([...prev.checklistItemIds, ...itemIds])],
+                }));
+              }}
+              onAddCustomItem={(item) => {
+                const customId = `custom-${Date.now()}`;
+                const newItem = {
+                  id: customId,
+                  category: item.category,
+                  topic: item.topic || null,
+                  description: item.description,
+                  supporting_evidence: item.supporting_evidence || null,
+                  approvers: null,
+                  responsible: null,
+                  sequence_number: 999,
+                  is_active: true,
+                  version: 1,
+                  created_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString(),
+                };
+                setCustomItems(prev => [...prev, newItem]);
+                setWizardState(prev => ({
+                  ...prev,
+                  checklistItemIds: [...prev.checklistItemIds, customId],
+                }));
               }}
             />
           )}
