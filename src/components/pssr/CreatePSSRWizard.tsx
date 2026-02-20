@@ -2,10 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { ChevronLeft, ChevronRight, Check, Loader2, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, Loader2, X, Save } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { usePSSRTieInScopes } from '@/hooks/usePSSRAtiScopes';
 import { usePlants } from '@/hooks/usePlants';
 import { useFields } from '@/hooks/useFields';
@@ -63,6 +73,8 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
   const queryClient = useQueryClient();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
+  const [showDraftConfirm, setShowDraftConfirm] = useState(false);
   
   const { data: atiScopes } = usePSSRTieInScopes();
   const { data: reasons } = usePSSRReasons();
@@ -213,7 +225,66 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
     setCurrentStep(prev => Math.max(prev - 1, 1));
   };
 
-  const generatePSSRId = async (): Promise<string> => {
+  const handleSaveAsDraft = async () => {
+    setShowDraftConfirm(false);
+    setIsSavingDraft(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      if (!wizardState.title.trim()) {
+        toast.error('Please enter a PSSR title before saving');
+        setIsSavingDraft(false);
+        return;
+      }
+
+      const pssrId = await generatePSSRId();
+      const plantValue = selectedPlant?.name || '';
+      const csLocationValue = selectedStation?.name || '';
+
+      let pssrLeadId: string | null = null;
+      if (wizardState.reasonId) {
+        const { data: config } = await supabase
+          .from('pssr_reason_configuration')
+          .select('default_pssr_lead_id')
+          .eq('reason_id', wizardState.reasonId)
+          .maybeSingle();
+        pssrLeadId = config?.default_pssr_lead_id || null;
+      }
+
+      const { error: pssrError } = await supabase
+        .from('pssrs')
+        .insert({
+          pssr_id: pssrId,
+          reason: selectedReason?.name || '',
+          reason_id: wizardState.reasonId || null,
+          scope: wizardState.scopeDescription.trim() || null,
+          asset: wizardState.title.trim(),
+          title: wizardState.title.trim(),
+          status: 'DRAFT',
+          user_id: user.id,
+          plant: plantValue || null,
+          plant_id: wizardState.plantId || null,
+          field_id: wizardState.fieldId || null,
+          station_id: wizardState.stationId || null,
+          cs_location: csLocationValue || null,
+          pssr_lead_id: pssrLeadId,
+        } as any);
+
+      if (pssrError) throw pssrError;
+
+      queryClient.invalidateQueries({ queryKey: ['pssrs'] });
+      queryClient.invalidateQueries({ queryKey: ['pssr-records'] });
+      toast.success(`Draft PSSR ${pssrId} saved successfully!`);
+      handleClose();
+    } catch (error: any) {
+      console.error('Failed to save draft PSSR:', error);
+      toast.error(error.message || 'Failed to save draft');
+    } finally {
+      setIsSavingDraft(false);
+    }
+  };
+
     // Determine the most specific location code for the PSSR ID
     // CS plant uses station name, UQ uses field (UQMT/UQST), others use plant name
     let locationCode = selectedPlant?.name || 'GEN';
