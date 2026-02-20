@@ -241,7 +241,7 @@ const AddPSSRItemSheet: React.FC<AddPSSRItemSheetProps> = ({
           </TabsContent>
 
           {/* Custom New Item */}
-          <TabsContent value="custom" className="flex-1 overflow-auto mt-0 px-6 py-4">
+          <TabsContent value="custom" className="overflow-auto mt-0 px-6 py-4">
             <p className="text-xs text-muted-foreground mb-4">
               Create a new custom PSSR item for this specific PSSR.
             </p>
