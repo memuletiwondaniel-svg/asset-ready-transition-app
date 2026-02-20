@@ -65,6 +65,19 @@ const WizardStepDetails: React.FC<WizardStepDetailsProps> = ({
     return allStations.some(s => s.field_id === fieldId);
   }, [allStations, fieldId]);
 
+  // Dynamic label for the second level based on selected plant name
+  const selectedPlantName = useMemo(() => {
+    if (!plantId || !plants) return '';
+    return plants.find(p => p.id === plantId)?.name || '';
+  }, [plants, plantId]);
+
+  const secondLevelLabel = useMemo(() => {
+    const upper = selectedPlantName.toUpperCase();
+    if (upper === 'KAZ') return 'Unit';
+    if (upper === 'UQ') return 'Site';
+    return 'Field';
+  }, [selectedPlantName]);
+
   return (
     <div className="space-y-6">
       {/* PSSR Title */}
@@ -109,39 +122,39 @@ const WizardStepDetails: React.FC<WizardStepDetailsProps> = ({
           Select the asset location using the hierarchy below
         </p>
 
-        {/* Plant Selection */}
-        <div className="space-y-2">
-          <Label htmlFor="plant" className="flex items-center gap-2 text-sm">
-            <Building className="h-4 w-4" />
-            Plant *
-          </Label>
-          <Select
-            value={plantId}
-            onValueChange={(value) => {
-              onPlantChange(value);
-              onFieldChange('');
-              onStationChange('');
-            }}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder={plantsLoading ? "Loading plants..." : "Select a plant"} />
-            </SelectTrigger>
-            <SelectContent>
-              {plants?.map((plant) => (
-                <SelectItem key={plant.id} value={plant.id}>
-                  {plant.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {/* Plant Selection */}
+          <div className="space-y-1.5">
+            <Label htmlFor="plant" className="flex items-center gap-2 text-sm">
+              <Building className="h-4 w-4" />
+              Plant *
+            </Label>
+            <Select
+              value={plantId}
+              onValueChange={(value) => {
+                onPlantChange(value);
+                onFieldChange('');
+                onStationChange('');
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={plantsLoading ? "Loading..." : "Select plant"} />
+              </SelectTrigger>
+              <SelectContent>
+                {plants?.map((plant) => (
+                  <SelectItem key={plant.id} value={plant.id}>
+                    {plant.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-        {/* Field Selection - only show if plant has fields */}
-        {plantId && hasFields && (
-          <div className="space-y-2">
+          {/* Field / Unit / Site Selection */}
+          <div className="space-y-1.5">
             <Label htmlFor="field" className="flex items-center gap-2 text-sm">
               <Layers className="h-4 w-4" />
-              Field
+              {secondLevelLabel}
             </Label>
             <Select
               value={fieldId}
@@ -149,9 +162,18 @@ const WizardStepDetails: React.FC<WizardStepDetailsProps> = ({
                 onFieldChange(value);
                 onStationChange('');
               }}
+              disabled={!plantId || !hasFields}
             >
               <SelectTrigger>
-                <SelectValue placeholder={fieldsLoading ? "Loading..." : "Select a field (optional)"} />
+                <SelectValue placeholder={
+                  !plantId
+                    ? "Select plant first"
+                    : !hasFields
+                      ? "N/A"
+                      : fieldsLoading
+                        ? "Loading..."
+                        : `Select ${secondLevelLabel.toLowerCase()}`
+                } />
               </SelectTrigger>
               <SelectContent>
                 {filteredFields.map((field) => (
@@ -162,11 +184,9 @@ const WizardStepDetails: React.FC<WizardStepDetailsProps> = ({
               </SelectContent>
             </Select>
           </div>
-        )}
 
-        {/* Station Selection - only show if field has stations */}
-        {fieldId && hasStations && (
-          <div className="space-y-2">
+          {/* Station Selection */}
+          <div className="space-y-1.5">
             <Label htmlFor="station" className="flex items-center gap-2 text-sm">
               <MapPin className="h-4 w-4" />
               Station
@@ -174,9 +194,18 @@ const WizardStepDetails: React.FC<WizardStepDetailsProps> = ({
             <Select
               value={stationId}
               onValueChange={onStationChange}
+              disabled={!fieldId || !hasStations}
             >
               <SelectTrigger>
-                <SelectValue placeholder={stationsLoading ? "Loading..." : "Select a station (optional)"} />
+                <SelectValue placeholder={
+                  !fieldId
+                    ? `Select ${secondLevelLabel.toLowerCase()} first`
+                    : !hasStations
+                      ? "N/A"
+                      : stationsLoading
+                        ? "Loading..."
+                        : "Select station"
+                } />
               </SelectTrigger>
               <SelectContent>
                 {filteredStations.map((station) => (
@@ -187,7 +216,7 @@ const WizardStepDetails: React.FC<WizardStepDetailsProps> = ({
               </SelectContent>
             </Select>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
