@@ -27,6 +27,9 @@ interface WizardStepChecklistItemsProps {
   naItemIds?: string[];
   onMarkNA?: (itemId: string) => void;
   onRestoreNA?: (itemId: string) => void;
+  // Location context for personnel resolution
+  plantName?: string;
+  fieldName?: string;
 }
 
 const WizardStepChecklistItems: React.FC<WizardStepChecklistItemsProps> = ({
@@ -40,6 +43,8 @@ const WizardStepChecklistItems: React.FC<WizardStepChecklistItemsProps> = ({
   naItemIds = [],
   onMarkNA,
   onRestoreNA,
+  plantName,
+  fieldName,
 }) => {
   const { data: rawChecklistItems = [], isLoading: itemsLoading } = usePSSRChecklistItems();
   const { data: rawCategories = [], isLoading: categoriesLoading } = usePSSRChecklistCategories();
@@ -394,6 +399,8 @@ const WizardStepChecklistItems: React.FC<WizardStepChecklistItemsProps> = ({
         currentOverride={selectedItem ? itemOverrides[selectedItem.id] : undefined}
         onSave={onItemOverrideChange}
         onReset={onItemOverrideReset}
+        plantName={plantName}
+        fieldName={fieldName}
       />
     </div>
   );
