@@ -157,15 +157,17 @@ const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
 
       if (!profiles) return { delivering: [], approving: {}, roleNameToId };
 
-      // For TA2 roles, only include Asset-level staff
-      // Asset-level TA2s either have "asset" in their position OR do NOT have "project" in their position
-      // This ensures people like "Tech Safety TA2" (no qualifier) or "MCI TA2 - Asset" are included
-      // while "Process TA2 - Project" would be excluded
+      // For TA2 roles, filter to Asset-level staff only for disciplines that have
+      // separate Asset/Project designations. MCI, Civil, and Tech Safety TA2s serve
+      // both Asset and Project so they are always included (no position suffix).
+      const sharedDisciplines = ['mci', 'civil', 'tech safety'];
       const assetProfiles = profiles.filter((p: any) => {
         const pos = (p.position || '').toLowerCase();
         const roleName = roleIdToName[p.role] || '';
         if (roleName.toLowerCase().includes('ta2')) {
-          // Exclude only if position explicitly contains "project"
+          const isShared = sharedDisciplines.some(d => roleName.toLowerCase().includes(d));
+          if (isShared) return true; // shared disciplines — include all
+          // For split disciplines, only include Asset-level (exclude Project)
           return !pos.includes('project');
         }
         return true;
