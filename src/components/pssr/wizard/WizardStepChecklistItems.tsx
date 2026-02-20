@@ -244,9 +244,22 @@ const WizardStepChecklistItems: React.FC<WizardStepChecklistItemsProps> = ({
                 const catB = categories.find(c => c.id === catIdB);
                 return (catA?.display_order ?? 999) - (catB?.display_order ?? 999);
               })
-              .map(([categoryId, items]) => {
+              .map(([categoryId, items], categoryIndex) => {
                 const isExpanded = expandedCategories.has(categoryId);
                 const refId = getCategoryRefId(categoryId);
+
+                // Category color palette for ID badges
+                const categoryColors = [
+                  'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-700',
+                  'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-700',
+                  'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-700',
+                  'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-900/20 dark:text-rose-300 dark:border-rose-700',
+                  'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-900/20 dark:text-indigo-300 dark:border-indigo-700',
+                  'bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-900/20 dark:text-teal-300 dark:border-teal-700',
+                  'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-700',
+                  'bg-cyan-50 text-cyan-700 border-cyan-200 dark:bg-cyan-900/20 dark:text-cyan-300 dark:border-cyan-700',
+                ];
+                const badgeColor = categoryColors[categoryIndex % categoryColors.length];
 
                 return (
                   <Collapsible
@@ -270,13 +283,14 @@ const WizardStepChecklistItems: React.FC<WizardStepChecklistItemsProps> = ({
 
                     <CollapsibleContent>
                       <div className="divide-y divide-border/50">
-                        {items.map((item) => {
+                        {items.map((item, itemIndex) => {
                           const hasOverride = itemOverrides[item.id] && Object.keys(itemOverrides[item.id]).length > 0;
                           const displayDescription = itemOverrides[item.id]?.description ?? item.description;
                           const displayTopic = itemOverrides[item.id]?.topic ?? item.topic;
+                          // Sequential numbering within the visible category (1-based)
                           const itemRefId = refId
-                            ? `${refId}-${String(item.sequence_number).padStart(2, '0')}`
-                            : `#${item.sequence_number}`;
+                            ? `${refId}-${String(itemIndex + 1).padStart(2, '0')}`
+                            : `#${itemIndex + 1}`;
 
                           return (
                             <div
@@ -284,10 +298,10 @@ const WizardStepChecklistItems: React.FC<WizardStepChecklistItemsProps> = ({
                               className="group flex items-start gap-3 px-6 py-3 hover:bg-muted/30 transition-colors cursor-pointer"
                               onClick={() => handleItemClick(item)}
                             >
-                              {/* Item ID Badge */}
+                              {/* Item ID Badge - color coded per category */}
                               <Badge
                                 variant="outline"
-                                className="text-[10px] font-mono mt-0.5 shrink-0 bg-primary/5 text-primary border-primary/20"
+                                className={`text-[10px] font-mono mt-0.5 shrink-0 ${badgeColor}`}
                               >
                                 {itemRefId}
                               </Badge>
@@ -365,11 +379,11 @@ const WizardStepChecklistItems: React.FC<WizardStepChecklistItemsProps> = ({
                   </p>
                 </div>
                 <div className="divide-y divide-border/50">
-                  {naItems.map((item) => {
+                  {naItems.map((item, naIndex) => {
                     const catRefId = getCategoryRefId(item.category);
                     const itemRefId = catRefId
-                      ? `${catRefId}-${String(item.sequence_number).padStart(2, '0')}`
-                      : `#${item.sequence_number}`;
+                      ? `${catRefId}-N${naIndex + 1}`
+                      : `#N${naIndex + 1}`;
 
                     return (
                       <div
@@ -378,7 +392,7 @@ const WizardStepChecklistItems: React.FC<WizardStepChecklistItemsProps> = ({
                       >
                         <Badge
                           variant="outline"
-                          className="text-[10px] font-mono mt-0.5 shrink-0 border-amber-300 text-amber-700 dark:border-amber-700 dark:text-amber-400"
+                          className="text-[10px] font-mono mt-0.5 shrink-0 border-amber-300 text-amber-700 bg-amber-50 dark:border-amber-700 dark:text-amber-400 dark:bg-amber-900/20"
                         >
                           {itemRefId}
                         </Badge>
