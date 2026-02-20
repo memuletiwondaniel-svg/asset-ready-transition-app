@@ -8,6 +8,7 @@ import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { usePSSRRecords } from '@/hooks/usePSSRRecords';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Plus, ClipboardList, AlertTriangle, CheckCircle, Clock, Settings, Home, FileText, FolderOpen } from 'lucide-react';
@@ -476,7 +477,22 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
   };
   const handleArchivePSSR = (pssrId: string) => {
     toast.success(`PSSR ${pssrId} archived`);
-    // In production, archive the PSSR
+  };
+
+  const queryClient = useQueryClient();
+  const handleDeletePSSR = async (pssrId: string) => {
+    try {
+      // Delete related data first, then the PSSR itself
+      await supabase.from('pssr_checklist_responses').delete().eq('pssr_id', pssrId);
+      await supabase.from('pssr_approvers').delete().eq('pssr_id', pssrId);
+      await supabase.from('sof_approvers').delete().eq('pssr_id', pssrId);
+      const { error } = await supabase.from('pssrs').delete().eq('id', pssrId);
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ['pssr-records'] });
+      toast.success('Draft PSSR deleted successfully');
+    } catch (err: any) {
+      toast.error('Failed to delete PSSR: ' + (err.message || 'Unknown error'));
+    }
   };
 
   // Generate breadcrumbs based on current view
@@ -682,6 +698,7 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
             activeStatFilter={filters.statFilter}
             onStatFilterClick={handleStatClick}
             onCreateNew={() => setShowCreateIntro(true)}
+            onDeletePSSR={handleDeletePSSR}
           />
         )}
       </main>

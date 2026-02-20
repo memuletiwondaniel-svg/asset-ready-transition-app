@@ -18,6 +18,7 @@ const DEFAULT_COLUMNS: PSSRColumn[] = [
   { id: 'scope', label: 'Scope', visible: false, width: 300 },
   { id: 'created', label: 'Created', visible: true, width: 100 },
   { id: 'favorite', label: '', visible: true, width: 44 },
+  { id: 'actions', label: '', visible: true, width: 50 },
 ];
 
 export function usePSSRColumnVisibility() {
@@ -29,7 +30,7 @@ export function usePSSRColumnVisibility() {
     ));
   };
 
-  const toggleableColumns = columns.filter(col => col.id !== 'favorite' && col.id !== 'sn');
+  const toggleableColumns = columns.filter(col => col.id !== 'favorite' && col.id !== 'sn' && col.id !== 'actions');
 
   return { columns, setColumns, toggleColumnVisibility, toggleableColumns };
 }
