@@ -92,6 +92,22 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
     templateSofApproverRoleIds: [],
   });
 
+  // Custom PSSR items created during this wizard session
+  const [customItems, setCustomItems] = useState<Array<{
+    id: string;
+    category: string;
+    topic: string | null;
+    description: string;
+    supporting_evidence: string | null;
+    approvers: string | null;
+    responsible: string | null;
+    sequence_number: number;
+    is_active: boolean;
+    version: number;
+    created_at: string;
+    updated_at: string;
+  }>>([]);
+
   const selectedReason = reasons?.find(r => r.id === wizardState.reasonId);
   const selectedPlant = plants?.find(p => p.id === wizardState.plantId);
   const selectedField = fields?.find(f => f.id === wizardState.fieldId);
@@ -485,6 +501,35 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
               }}
               plantName={selectedPlant?.name}
               fieldName={selectedField?.name}
+              customItems={customItems}
+              onAddExistingItems={(itemIds) => {
+                setWizardState(prev => ({
+                  ...prev,
+                  selectedChecklistItemIds: [...new Set([...prev.selectedChecklistItemIds, ...itemIds])],
+                }));
+              }}
+              onAddCustomItem={(item) => {
+                const customId = `custom-${Date.now()}`;
+                const newItem = {
+                  id: customId,
+                  category: item.category,
+                  topic: item.topic || null,
+                  description: item.description,
+                  supporting_evidence: item.supporting_evidence || null,
+                  approvers: null,
+                  responsible: null,
+                  sequence_number: 999,
+                  is_active: true,
+                  version: 1,
+                  created_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString(),
+                };
+                setCustomItems(prev => [...prev, newItem]);
+                setWizardState(prev => ({
+                  ...prev,
+                  selectedChecklistItemIds: [...prev.selectedChecklistItemIds, customId],
+                }));
+              }}
             />
           )}
 

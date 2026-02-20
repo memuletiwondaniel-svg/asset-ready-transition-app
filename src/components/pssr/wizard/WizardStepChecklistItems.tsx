@@ -1,12 +1,14 @@
 import React, { useState, useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Search, FileCheck, ChevronDown, ChevronRight, Ban, Undo2, Edit2, Globe, Loader2 } from 'lucide-react';
+import { Search, FileCheck, ChevronDown, ChevronRight, Ban, Undo2, Edit2, Globe, Loader2, Plus } from 'lucide-react';
 import { usePSSRChecklistItems, usePSSRChecklistCategories, ChecklistItem } from '@/hooks/usePSSRChecklistLibrary';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChecklistItemOverride } from './ChecklistItemEditDialog';
 import PSSRItemDetailSheet from './PSSRItemDetailSheet';
+import AddPSSRItemSheet from './AddPSSRItemSheet';
 import { useChecklistTranslation } from '@/hooks/useChecklistTranslation';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Progress } from '@/components/ui/progress';
@@ -30,6 +32,11 @@ interface WizardStepChecklistItemsProps {
   // Location context for personnel resolution
   plantName?: string;
   fieldName?: string;
+  // Adding items
+  onAddExistingItems?: (itemIds: string[]) => void;
+  onAddCustomItem?: (item: { category: string; description: string; topic?: string; supporting_evidence?: string }) => void;
+  /** Custom items added during this wizard session */
+  customItems?: ChecklistItem[];
 }
 
 const WizardStepChecklistItems: React.FC<WizardStepChecklistItemsProps> = ({
@@ -45,6 +52,9 @@ const WizardStepChecklistItems: React.FC<WizardStepChecklistItemsProps> = ({
   onRestoreNA,
   plantName,
   fieldName,
+  onAddExistingItems,
+  onAddCustomItem,
+  customItems = [],
 }) => {
   const { data: rawChecklistItems = [], isLoading: itemsLoading } = usePSSRChecklistItems();
   const { data: rawCategories = [], isLoading: categoriesLoading } = usePSSRChecklistCategories();
@@ -68,22 +78,28 @@ const WizardStepChecklistItems: React.FC<WizardStepChecklistItemsProps> = ({
   const [naExpanded, setNaExpanded] = useState(false);
   const [detailSheetOpen, setDetailSheetOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<ChecklistItem | null>(null);
+  const [addSheetOpen, setAddSheetOpen] = useState(false);
 
   const isLoading = itemsLoading || categoriesLoading;
   const isTranslating = isTranslatingItems || isTranslatingCategories;
   const avgProgress = Math.round((itemsProgress + categoriesProgress) / 2);
 
+  // All items including custom ones
+  const allChecklistItems = useMemo(() => {
+    return [...checklistItems, ...customItems];
+  }, [checklistItems, customItems]);
+
   // Active items (selected and not N/A)
   const activeItems = useMemo(() => {
-    return checklistItems.filter(item =>
+    return allChecklistItems.filter(item =>
       selectedItemIds.includes(item.id) && !naItemIds.includes(item.id)
     );
-  }, [checklistItems, selectedItemIds, naItemIds]);
+  }, [allChecklistItems, selectedItemIds, naItemIds]);
 
   // N/A items
   const naItems = useMemo(() => {
-    return checklistItems.filter(item => naItemIds.includes(item.id));
-  }, [checklistItems, naItemIds]);
+    return allChecklistItems.filter(item => naItemIds.includes(item.id));
+  }, [allChecklistItems, naItemIds]);
 
   // Group active items by category
   const groupedItems = useMemo(() => {
@@ -192,6 +208,17 @@ const WizardStepChecklistItems: React.FC<WizardStepChecklistItemsProps> = ({
           />
         </div>
         <div className="flex items-center gap-2">
+          {onAddExistingItems && onAddCustomItem && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs gap-1.5"
+              onClick={() => setAddSheetOpen(true)}
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Add Item
+            </Button>
+          )}
           <Badge variant="outline" className="text-xs">
             {totalActiveItems} items
           </Badge>
@@ -402,6 +429,17 @@ const WizardStepChecklistItems: React.FC<WizardStepChecklistItemsProps> = ({
         plantName={plantName}
         fieldName={fieldName}
       />
+
+      {/* Add Item Sheet */}
+      {onAddExistingItems && onAddCustomItem && (
+        <AddPSSRItemSheet
+          open={addSheetOpen}
+          onOpenChange={setAddSheetOpen}
+          selectedItemIds={selectedItemIds}
+          onAddExistingItems={onAddExistingItems}
+          onAddCustomItem={onAddCustomItem}
+        />
+      )}
     </div>
   );
 };
