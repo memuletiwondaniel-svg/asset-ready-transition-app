@@ -649,10 +649,10 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold text-foreground">
-                    {t.pssrTitle || 'Pre-Startup Safety Review'}
+                    {t.pssrTitle || 'Pre-Startup Safety Review (PSSR)'}
                   </h1>
                   <p className="text-sm text-muted-foreground mt-1">
-                    {t.pssrSubtitle || 'Manage Pre-Startup Safety Reviews'}
+                    {t.pssrSubtitle || 'Manage Process Safety Risk and ensure Safe Start-up'}
                   </p>
                 </div>
               </div>
