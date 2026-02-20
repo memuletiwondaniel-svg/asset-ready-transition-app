@@ -84,6 +84,7 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
   const [subCategory, setSubCategory] = useState<string | null>(null);
   const [formReasonName, setFormReasonName] = useState(initialReasonName);
   const [description, setDescription] = useState('');
+  const [pssrLeadId, setPssrLeadId] = useState('');
   const [status, setStatus] = useState<PSSRReasonStatus>(initialStatus);
   const [pssrApproverRoleIds, setPssrApproverRoleIds] = useState<string[]>(initialPssrApproverRoleIds);
   const [sofApproverRoleIds, setSofApproverRoleIds] = useState<string[]>(initialSofApproverRoleIds);
@@ -129,6 +130,7 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
           setSofApproverRoleIds(config.sof_approver_role_ids || []);
           setChecklistItemIds(config.checklist_item_ids || []);
           setChecklistItemOverrides((config.checklist_item_overrides as ChecklistItemOverrides) || {});
+          setPssrLeadId((config as any).default_pssr_lead_id || '');
         }
       } catch (error) {
         console.error('Failed to load configuration:', error);
@@ -191,7 +193,8 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
           sof_approver_role_ids: sofApproverRoleIds,
           checklist_item_ids: checklistItemIds,
           checklist_item_overrides: checklistItemOverrides as Json,
-        })
+          default_pssr_lead_id: pssrLeadId || null,
+        } as any)
         .eq('reason_id', reasonId);
 
       if (configError) throw configError;
@@ -335,8 +338,10 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
               <WizardStepReasonDetails
                 reasonName={formReasonName}
                 description={description}
+                pssrLeadId={pssrLeadId}
                 onReasonNameChange={setFormReasonName}
                 onDescriptionChange={setDescription}
+                onPssrLeadChange={setPssrLeadId}
               />
             )}
 

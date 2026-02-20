@@ -33,6 +33,7 @@ interface AddPSSRReasonWizardProps {
 interface WizardState {
   reasonName: string;
   description: string;
+  pssrLeadId: string;
   pssrApproverRoleIds: string[];
   sofApproverRoleIds: string[];
   checklistItemIds: string[];
@@ -57,6 +58,7 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
   const [wizardState, setWizardState] = useState<WizardState>({
     reasonName: '',
     description: '',
+    pssrLeadId: '',
     pssrApproverRoleIds: [],
     sofApproverRoleIds: [],
     checklistItemIds: [],
@@ -69,12 +71,13 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
     setCurrentStep(1);
     setActivationChoice('draft');
     setWizardState({
-      reasonName: '',
-      description: '',
-      pssrApproverRoleIds: [],
-      sofApproverRoleIds: [],
-      checklistItemIds: [],
-      checklistItemOverrides: {},
+    reasonName: '',
+    description: '',
+    pssrLeadId: '',
+    pssrApproverRoleIds: [],
+    sofApproverRoleIds: [],
+    checklistItemIds: [],
+    checklistItemOverrides: {},
     });
     setNaItemIds([]);
     setCustomItems([]);
@@ -163,7 +166,8 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
           sof_approver_role_ids: wizardState.sofApproverRoleIds,
           checklist_item_ids: wizardState.checklistItemIds,
           checklist_item_overrides: wizardState.checklistItemOverrides as Json,
-        });
+          default_pssr_lead_id: wizardState.pssrLeadId || null,
+        } as any);
 
       if (configError) throw configError;
 
@@ -254,8 +258,10 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
             <WizardStepReasonDetails
               reasonName={wizardState.reasonName}
               description={wizardState.description}
+              pssrLeadId={wizardState.pssrLeadId}
               onReasonNameChange={(reasonName) => setWizardState(prev => ({ ...prev, reasonName }))}
               onDescriptionChange={(description) => setWizardState(prev => ({ ...prev, description }))}
+              onPssrLeadChange={(pssrLeadId) => setWizardState(prev => ({ ...prev, pssrLeadId }))}
             />
           )}
 
