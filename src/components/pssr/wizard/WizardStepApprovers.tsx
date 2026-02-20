@@ -54,22 +54,20 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
         if (p.role_id !== roleId) return false;
         if (!plantLower) return true;
         
-        // Location-based filtering: check if position contains plant name
         const pos = (p.position || '').toLowerCase();
+        const knownPlants = ['cs', 'kaz', 'uq', 'nrngl', 'bngl'];
+        const otherPlants = knownPlants.filter(pl => pl !== plantLower);
         
-        // Deputy/Dep. Plant Director - match by plant
-        if (roleName.includes('dep') && roleName.includes('plant director')) {
-          return pos.includes(plantLower) || pos.includes('dep') && pos.includes('plant director');
+        // Director / Deputy Director roles: strict plant match only
+        if (roleName.includes('director')) {
+          return pos.includes(plantLower);
         }
         
         // For most roles, prefer those whose position matches the plant
         if (pos.includes(plantLower)) return true;
         
-        // For roles that are plant-wide (managers), also include if no specific plant in position
-        if (roleName.includes('manager') || roleName.includes('director') || roleName.includes('lead')) {
-          // Include if position doesn't specify a different plant
-          const plantNames = ['cs', 'kaz', 'uq', 'nrngl', 'bngl'];
-          const otherPlants = plantNames.filter(p => p !== plantLower);
+        // For managers/leads, include if position doesn't specify a different plant
+        if (roleName.includes('manager') || roleName.includes('lead')) {
           const posSpecifiesOtherPlant = otherPlants.some(op => pos.includes(op));
           if (!posSpecifiesOtherPlant) return true;
         }
