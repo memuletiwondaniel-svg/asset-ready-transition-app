@@ -7,6 +7,7 @@ import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
+import { usePSSRRecords } from '@/hooks/usePSSRRecords';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Plus, ClipboardList, AlertTriangle, CheckCircle, Clock, Settings, Home, FileText, FolderOpen } from 'lucide-react';
@@ -255,8 +256,32 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
     statFilter: 'all' as 'all' | 'under-review' | 'draft' | 'completed'
   });
 
-  // PSSR data - populated from database when available
-  const pssrList: PSSR[] = [];
+  // Fetch PSSR data from database
+  const { data: pssrRecords, isLoading: pssrLoading } = usePSSRRecords();
+  
+  const pssrList: PSSR[] = useMemo(() => {
+    if (!pssrRecords) return [];
+    return pssrRecords.map(record => ({
+      id: record.id,
+      projectId: record.pssr_id,
+      projectName: record.title || record.asset,
+      asset: record.plant || '',
+      status: record.status === 'DRAFT' ? 'Draft' : record.status === 'UNDER_REVIEW' ? 'Under Review' : record.status === 'COMPLETED' ? 'Completed' : record.status,
+      priority: 'Medium',
+      progress: record.progress,
+      created: record.created_at,
+      pssrLead: record.pssr_lead_name || 'Unassigned',
+      pssrLeadAvatar: record.pssr_lead_avatar || '',
+      teamStatus: 'grey',
+      pendingApprovals: 0,
+      completedDate: record.status === 'COMPLETED' ? record.updated_at : null,
+      riskLevel: 'Low',
+      nextReview: null,
+      teamMembers: 0,
+      lastActivity: record.updated_at,
+      location: [record.plant, record.cs_location].filter(Boolean).join(' > '),
+    }));
+  }, [pssrRecords]);
 
   // Initialize PSSR order
   React.useEffect(() => {

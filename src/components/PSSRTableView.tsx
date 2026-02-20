@@ -57,13 +57,14 @@ interface PSSRTableViewProps {
 
 const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails, pinnedPSSRs = [], onTogglePin }) => {
   const [columns, setColumns] = useState<Column[]>([
-    { id: 'projectId', label: 'Project ID', visible: true, width: 100 },
-    { id: 'projectName', label: 'Project Name', visible: true, width: 250 },
-    { id: 'asset', label: 'Plant/Asset', visible: true, width: 150 },
+    { id: 'sn', label: 'S/N', visible: true, width: 50 },
+    { id: 'projectId', label: 'PSSR ID', visible: true, width: 180 },
+    { id: 'projectName', label: 'PSSR Title', visible: true, width: 250 },
+    { id: 'asset', label: 'Plant', visible: true, width: 100 },
     { id: 'pssrLead', label: 'PSSR Lead', visible: true, width: 160 },
     { id: 'progress', label: 'Progress', visible: true, width: 140 },
     { id: 'status', label: 'Status', visible: true, width: 110 },
-    { id: 'created', label: 'Created', visible: true, width: 90 },
+    { id: 'created', label: 'Created', visible: true, width: 100 },
     { id: 'favorite', label: '', visible: true, width: 44 },
   ]);
 
@@ -151,7 +152,7 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails, pin
   // Filter visible columns, excluding 'favorite' from user toggle (always visible)
   const visibleColumns = columns.filter(col => col.visible);
   // Columns available for user toggle (exclude favorite)
-  const toggleableColumns = columns.filter(col => col.id !== 'favorite');
+  const toggleableColumns = columns.filter(col => col.id !== 'favorite' && col.id !== 'sn');
 
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { bg: string; text: string; border: string }> = {
@@ -189,23 +190,22 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails, pin
     return 'bg-slate-400';
   };
 
-  const renderCell = (pssr: PSSR, columnId: string) => {
+  const renderCell = (pssr: PSSR, columnId: string, rowIndex: number) => {
     switch (columnId) {
+      case 'sn':
+        return <div className="text-sm font-medium text-muted-foreground">{rowIndex + 1}</div>;
       case 'projectId':
-        // Parse projectId to extract prefix and number (format: "PREFIX-NUMBER" or "PREFIXNUMBER")
-        const parts = pssr.projectId.includes('-') 
-          ? pssr.projectId.split('-') 
-          : [pssr.projectId.replace(/[0-9]/g, ''), pssr.projectId.replace(/[^0-9]/g, '')];
-        const prefix = parts[0] || '';
-        const number = parts[1] || parts[0] || '';
-        const projectColor = getProjectColor(prefix, number);
+        const idParts = pssr.projectId.split('-');
+        const plantCode = idParts.length >= 3 ? idParts[1] : idParts[0];
+        const seqPart = idParts.length >= 4 ? idParts.slice(2).join('-') : idParts.slice(1).join('-');
+        const projectColor = getProjectColor(plantCode, seqPart);
         return (
           <Badge 
             variant="outline" 
-            className="text-xs font-semibold px-2.5 py-1 text-white border-0 inline-flex items-center justify-center leading-none"
+            className="text-xs font-semibold px-2.5 py-1 text-white border-0 inline-flex items-center justify-center leading-none whitespace-nowrap"
             style={{ background: `linear-gradient(to right, ${projectColor.bgStart}, ${projectColor.bgEnd})` }}
           >
-            {prefix}-{number}
+            {pssr.projectId}
           </Badge>
         );
       case 'projectName':
@@ -348,7 +348,7 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails, pin
                     style={{ width: `${column.width}px`, minWidth: `${column.width}px` }}
                     className="px-4 py-3"
                   >
-                    {renderCell(pssr, column.id)}
+                    {renderCell(pssr, column.id, index)}
                   </TableCell>
                 ))}
               </TableRow>

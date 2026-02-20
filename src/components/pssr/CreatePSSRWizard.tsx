@@ -214,14 +214,31 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
   };
 
   const generatePSSRId = async (): Promise<string> => {
-    const year = new Date().getFullYear();
-    const { count } = await supabase
-      .from('pssrs')
-      .select('*', { count: 'exact', head: true })
-      .ilike('pssr_id', `PSSR-${year}-%`);
+    // Determine the most specific location code for the PSSR ID
+    // CS plant uses station name, UQ uses field (UQMT/UQST), others use plant name
+    let locationCode = selectedPlant?.name || 'GEN';
     
-    const nextNumber = (count || 0) + 1;
-    return `PSSR-${year}-${String(nextNumber).padStart(4, '0')}`;
+    if (selectedPlant?.name === 'CS' && selectedStation) {
+      locationCode = selectedStation.name;
+    } else if (selectedPlant?.name === 'UQ' && selectedField) {
+      // Extract short code from field name (e.g., "UQST - UQ Storage Terminal" -> "UQST")
+      const fieldCode = selectedField.name.split(' - ')[0]?.trim() || selectedField.name;
+      locationCode = fieldCode;
+    }
+    
+    // Use DB function for atomic sequence generation
+    const { data, error } = await supabase.rpc('generate_pssr_code', { plant_code: locationCode });
+    if (error || !data) {
+      // Fallback: manual generation
+      const year = new Date().getFullYear();
+      const { count } = await supabase
+        .from('pssrs')
+        .select('*', { count: 'exact', head: true })
+        .ilike('pssr_id', `PSSR-${locationCode}-${year}-%`);
+      const nextNumber = (count || 0) + 1;
+      return `PSSR-${locationCode}-${year}-${String(nextNumber).padStart(3, '0')}`;
+    }
+    return data as string;
   };
 
   const handleSubmit = async () => {
@@ -235,18 +252,35 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
       const plantValue = selectedPlant?.name || '';
       const csLocationValue = selectedStation?.name || '';
 
+      // Get default PSSR lead from reason configuration
+      let pssrLeadId: string | null = null;
+      if (wizardState.reasonId) {
+        const { data: config } = await supabase
+          .from('pssr_reason_configuration')
+          .select('default_pssr_lead_id')
+          .eq('reason_id', wizardState.reasonId)
+          .maybeSingle();
+        pssrLeadId = config?.default_pssr_lead_id || null;
+      }
+
       const { data: newPSSR, error: pssrError } = await supabase
         .from('pssrs')
         .insert({
           pssr_id: pssrId,
           reason: selectedReason?.name || '',
+          reason_id: wizardState.reasonId || null,
           scope: wizardState.scopeDescription.trim() || null,
           asset: wizardState.title.trim(),
+          title: wizardState.title.trim(),
           status: 'DRAFT',
           user_id: user.id,
           plant: plantValue || null,
+          plant_id: wizardState.plantId || null,
+          field_id: wizardState.fieldId || null,
+          station_id: wizardState.stationId || null,
           cs_location: csLocationValue || null,
-        })
+          pssr_lead_id: pssrLeadId,
+        } as any)
         .select()
         .single();
 
