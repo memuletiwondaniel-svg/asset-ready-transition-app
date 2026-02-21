@@ -129,7 +129,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
           {/* Review & Edit CTA */}
           {task.metadata?.pssr_id && (
             <Button
-              className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
+              className="w-full gap-2 bg-muted hover:bg-muted/80 text-foreground font-medium border border-border"
               onClick={() => {
                 const pssrRoute = task.metadata?.pssr_code || task.metadata?.pssr_id;
                 navigate(`/pssr/${pssrRoute}`);
