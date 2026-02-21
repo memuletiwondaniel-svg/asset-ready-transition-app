@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import DOMPurify from 'dompurify';
 import { WidgetCard } from './WidgetCard';
 import { FullscreenWidgetModal } from './FullscreenWidgetModal';
 import { Button } from '@/components/ui/button';
@@ -160,7 +161,7 @@ export const PSSRInfoScopeWidget: React.FC<PSSRInfoScopeWidgetProps> = ({
           <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
             PSSR Scope
           </label>
-          <p className="text-sm text-foreground leading-relaxed">{description}</p>
+          <div className="text-sm text-foreground leading-relaxed prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(description) }} />
         </div>
 
         {/* Scope Images - Hero Layout */}
