@@ -354,6 +354,9 @@ const WizardStepChecklistItems: React.FC<WizardStepChecklistItemsProps> = ({
                           ) : (
                             <ChevronRight className="h-4 w-4 text-muted-foreground/60" />
                           )}
+                          <Badge variant="outline" className={`text-[10px] font-mono px-1.5 py-0 ${badgeColor}`}>
+                            {refId}
+                          </Badge>
                           <span className="font-medium text-sm">{getCategoryName(categoryId)}</span>
                         </div>
                         <span className="text-sm text-muted-foreground">{items.length}</span>
