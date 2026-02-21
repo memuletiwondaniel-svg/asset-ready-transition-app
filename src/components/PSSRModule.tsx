@@ -385,30 +385,29 @@ const PSSRModule: React.FC = () => {
       
       <div className="relative z-10">
       {/* Header */}
-      <div className="border-b border-border/40 bg-card/50 backdrop-blur-xl p-4 md:p-6">
+      <div className="border-b border-border/40 bg-card/50 backdrop-blur-xl p-3 sm:p-4 md:p-6">
         <BreadcrumbNavigation currentPageLabel="PSSR" />
         
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
-          <div className="min-w-0 flex items-center gap-3">
-            <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500">
-              <ClipboardList className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+        <div className="flex items-center justify-between gap-3 mt-3 sm:mt-4">
+          <div className="min-w-0 flex items-center gap-2 sm:gap-3">
+            <div className="p-2 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 shrink-0">
+              <ClipboardList className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 text-white" />
             </div>
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">
-                Pre-Start-Up Safety Review
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground truncate">
+                PSSR
               </h1>
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 hidden sm:block">
                 Manage and track all PSSR activities
               </p>
             </div>
           </div>
           
-          {/* Header Actions */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <Button 
               size="sm"
               variant="outline"
-              className="gap-2"
+              className="gap-1.5 hidden sm:flex"
             >
               <Filter className="h-4 w-4" />
               Export
@@ -416,69 +415,70 @@ const PSSRModule: React.FC = () => {
             <Button 
               size="sm"
               onClick={() => setActiveView('create')}
-              className="flex-1 sm:flex-none gap-2"
+              className="gap-1.5"
             >
               <Plus className="h-4 w-4" />
-              New PSSR
+              <span className="hidden sm:inline">New PSSR</span>
+              <span className="sm:hidden">New</span>
             </Button>
           </div>
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto px-8 py-8 space-y-8">
+      <main className="max-w-7xl mx-auto px-3 sm:px-6 md:px-8 py-4 sm:py-6 md:py-8 space-y-4 sm:space-y-6 md:space-y-8">
 
         {/* Search and Filters */}
-        <div className="fluent-card p-6 animate-fade-in" style={{ animationDelay: '0.4s' }}>
+        <div className="fluent-card p-3 sm:p-4 md:p-6 animate-fade-in" style={{ animationDelay: '0.4s' }}>
           {/* PSSR Reviews Title */}
-          <div className="mb-4">
-            <h2 className="text-xl font-semibold text-foreground">
+          <div className="mb-3 sm:mb-4">
+            <h2 className="text-base sm:text-lg md:text-xl font-semibold text-foreground">
               PSSR Reviews ({filteredPSSRs.length})
             </h2>
-            <p className="text-sm text-muted-foreground mt-1 ml-4">
+            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 sm:mt-1 ml-0 sm:ml-4">
               Showing {filteredPSSRs.length} of {stats.total} reviews
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-            <div className="relative flex-1 w-full sm:w-auto sm:max-w-xs">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          <div className="flex flex-col gap-3">
+            <div className="relative w-full">
+              <Search className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
               <Input
-                placeholder="Search PSSR by Project ID, Asset, Lead..."
+                placeholder="Search PSSR..."
                 value={searchTerm}
                 onChange={(e) => handleSearchChange(e.target.value)}
-                className="pl-12 h-12 rounded-xl border-border/50 bg-muted/20 focus:bg-background transition-colors duration-200"
+                className="pl-9 sm:pl-12 h-10 sm:h-12 rounded-xl border-border/50 bg-muted/20 focus:bg-background transition-colors duration-200"
               />
             </div>
             
-            <div className="flex items-center gap-3 flex-shrink-0">
+            <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3">
               {/* View Mode Selector */}
-              <div className="flex items-center gap-1 bg-muted border border-border/50 rounded-lg p-1 shadow-sm">
+              <div className="flex items-center gap-0.5 sm:gap-1 bg-muted border border-border/50 rounded-lg p-0.5 sm:p-1 shadow-sm">
                 <Button
                   variant={viewMode === 'cards' ? 'secondary' : 'ghost'}
                   size="sm"
                   onClick={() => setViewMode('cards')}
-                  className="h-8 px-3"
+                  className="h-7 sm:h-8 px-2 sm:px-3 text-xs"
                 >
-                  <LayoutGrid className="h-4 w-4 mr-1.5" />
-                  Cards
+                  <LayoutGrid className="h-3.5 w-3.5 sm:mr-1.5" />
+                  <span className="hidden sm:inline">Cards</span>
                 </Button>
                 <Button
                   variant={viewMode === 'kanban' ? 'secondary' : 'ghost'}
                   size="sm"
                   onClick={() => setViewMode('kanban')}
-                  className="h-8 px-3"
+                  className="h-7 sm:h-8 px-2 sm:px-3 text-xs"
                 >
-                  <Kanban className="h-4 w-4 mr-1.5" />
-                  Kanban
+                  <Kanban className="h-3.5 w-3.5 sm:mr-1.5" />
+                  <span className="hidden sm:inline">Kanban</span>
                 </Button>
                 <Button
                   variant={viewMode === 'table' ? 'secondary' : 'ghost'}
                   size="sm"
                   onClick={() => setViewMode('table')}
-                  className="h-8 px-3"
+                  className="h-7 sm:h-8 px-2 sm:px-3 text-xs"
                 >
-                  <LayoutList className="h-4 w-4 mr-1.5" />
-                  Table
+                  <LayoutList className="h-3.5 w-3.5 sm:mr-1.5" />
+                  <span className="hidden sm:inline">Table</span>
                 </Button>
               </div>
               
@@ -496,7 +496,7 @@ const PSSRModule: React.FC = () => {
         </div>
 
         {/* Enhanced PSSR List with Drag and Drop */}
-        <div className="space-y-4 animate-fade-in" style={{ animationDelay: '0.6s' }}>
+        <div className="space-y-3 sm:space-y-4 animate-fade-in" style={{ animationDelay: '0.6s' }}>
 
           <DndContext
             sensors={sensors}
