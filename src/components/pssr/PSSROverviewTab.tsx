@@ -460,7 +460,7 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
               <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-3">
                 Progress by Category
               </p>
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {(categoryProgress || []).map((cat) => {
                   const Icon = getCategoryIcon(cat.name);
                   const colors = getCategoryColor(cat.name);
