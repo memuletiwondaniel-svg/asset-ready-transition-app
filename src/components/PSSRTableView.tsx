@@ -233,7 +233,7 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails, pin
           </div>
         );
       case 'created':
-        return <div className="text-sm text-muted-foreground text-left">{new Date(pssr.created).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-')}</div>;
+        return <div className="text-sm text-foreground text-left whitespace-nowrap">{new Date(pssr.created).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-')}</div>;
       case 'favorite': {
         const isFavorite = pinnedPSSRs.includes(pssr.id);
         return (
