@@ -1,81 +1,82 @@
 
 
 ## Problem
-
-When navigating back to Step 1 of the PSSR wizard, the previously selected reason card is not highlighted and the user sees "Please select a PSSR reason" when clicking Next -- even though they already made a selection.
+PSSR and SoF Approver roles show "0 roles" on Step 4 of the PSSR creation wizard. The configuration data exists in the database (verified: TAR has 3 PSSR approver roles and 3 SoF approver roles), but it is not reaching the UI.
 
 ## Root Cause
+Two issues introduced by recent changes:
 
-The `categoryIdRef` backup mechanism (added previously) only restores state inside a `useEffect`, which runs **after** render. This means there's a window where the component renders with an empty `categoryId` and the ref restoration happens too late. Additionally, the ref itself gets reset if the component remounts (e.g., due to parent re-renders from `location.key` changes triggering `setActiveView('list')` in `PSSRSummaryPage`).
+1. **State update during render (anti-pattern)**: `validateStep(1, true)` is called during render via `isStepComplete()` in the breadcrumb loop (lines 709, 718). When `categoryId` is empty, it calls `setWizardState` to restore from the ref. This state update during render can cause React to restart the render cycle, creating race conditions with the config loading effect that populates the approver role IDs.
 
-## Fix (Two-Pronged Approach)
+2. **Config loading only triggers at step 3**: The config loading effect (line 251) only fires when `currentStep === 3`. If the render-phase state update interferes with the effect's timing, the approver IDs never get populated, and there is no fallback mechanism when reaching step 4.
 
-### 1. Synchronous ref update + render-time fallback (CreatePSSRWizard.tsx)
+## Fix
 
-- **Set the ref synchronously** inside the `onCategoryChange` handler (not just in an effect), so it's always up-to-date immediately.
-- **Pass a fallback value** to `WizardStepCategory`: use `wizardState.categoryId || categoryIdRef.current` so even if state was cleared, the ref provides the correct value at render time (no effect delay).
-- **Restore state from ref** inside `handleBack` and `handleStepClick` when navigating to step 1 -- if `wizardState.categoryId` is empty but the ref has a value, restore state synchronously before the step renders.
+### 1. Remove `setWizardState` from `validateStep` (stop render-phase state updates)
 
-### 2. Guard against accidental state loss (CreatePSSRWizard.tsx)
+Change the step 1 validation to use the ref for checking without triggering state updates:
 
-- In `handleBack` and `handleStepClick`, before setting `currentStep`, check if `categoryId` is empty but the ref has a value, and restore it in the same state update batch.
+**File: `src/components/pssr/CreatePSSRWizard.tsx`** (lines 291-306)
+```tsx
+case 1: {
+  const effectiveCategoryId = wizardState.categoryId || categoryIdRef.current;
+  if (!effectiveCategoryId) {
+    if (!silent) toast.error('Please select a PSSR reason');
+    return false;
+  }
+  return true;
+}
+```
+No more `setWizardState` call during render -- just read the ref as a fallback for validation.
 
-## Technical Details
+### 2. Ensure `reasonId` is always in sync with `categoryIdRef`
+
+Add a `reasonId` ref alongside `categoryIdRef`, or derive it from the category ref. Update `handleBack` and `handleStepClick` to also restore `reasonId` when restoring `categoryId`:
 
 **File: `src/components/pssr/CreatePSSRWizard.tsx`**
+- In `handleBack` and `handleStepClick`, when restoring from ref, also ensure `reasonId` is populated
+- In `handleNext`, when moving FROM step 2 TO step 3, ensure `reasonId` is set from the ref if missing:
 
-1. Update `onCategoryChange` handler (line 749) to also set the ref synchronously:
-   ```tsx
-   onCategoryChange={(id) => {
-     categoryIdRef.current = id;
-     setWizardState(prev => ({ 
-       ...prev, 
-       categoryId: id,
-       reasonId: id === '__other__' ? '' : id,
-       selectedAtiScopeIds: [],
-       configLoaded: false,
-     }));
-   }}
-   ```
+```tsx
+const handleNext = () => {
+  if (!validateStep(currentStep)) return;
+  const nextStep = Math.min(currentStep + 1, STEPS.length);
+  // Ensure reasonId is set before entering step 3
+  if (nextStep === 3 && !wizardState.reasonId && categoryIdRef.current) {
+    setWizardState(prev => ({
+      ...prev,
+      categoryId: categoryIdRef.current,
+      reasonId: categoryIdRef.current === '__other__' ? '' : categoryIdRef.current,
+    }));
+  }
+  setVisitedSteps(prev => new Set([...prev, nextStep]));
+  setCurrentStep(nextStep);
+};
+```
 
-2. Update line 748 to use ref as fallback:
-   ```tsx
-   categoryId={wizardState.categoryId || categoryIdRef.current}
-   ```
+### 3. Add fallback config loading at step 4
 
-3. Update `handleBack` (line 344) to restore categoryId if needed:
-   ```tsx
-   const handleBack = () => {
-     if (!wizardState.categoryId && categoryIdRef.current) {
-       setWizardState(prev => ({
-         ...prev,
-         categoryId: categoryIdRef.current,
-         reasonId: categoryIdRef.current === '__other__' ? '' : categoryIdRef.current,
-       }));
-     }
-     setCurrentStep(prev => Math.max(prev - 1, 1));
-   };
-   ```
+Expand the config loading effect condition to also trigger at step 4 if config was never loaded:
 
-4. Update `handleStepClick` (line 325) similarly to restore categoryId when navigating to step 1.
+**File: `src/components/pssr/CreatePSSRWizard.tsx`** (line 251)
+```tsx
+if ((currentStep === 3 || currentStep === 4) && wizardState.reasonId && !wizardState.configLoaded && !wizardState.configLoading) {
+```
 
-5. Update `validateStep` for step 1 (line 303) to also check the ref:
-   ```tsx
-   case 1:
-     if (!wizardState.categoryId && !categoryIdRef.current) {
-       if (!silent) toast.error('Please select a PSSR reason');
-       return false;
-     }
-     // Restore from ref if state is empty
-     if (!wizardState.categoryId && categoryIdRef.current) {
-       setWizardState(prev => ({
-         ...prev,
-         categoryId: categoryIdRef.current,
-         reasonId: categoryIdRef.current === '__other__' ? '' : categoryIdRef.current,
-       }));
-     }
-     return true;
-   ```
+This ensures that even if step 3's config load was missed due to timing, step 4 will pick it up.
 
-6. Remove debug `console.log` statements added in previous attempts.
+### 4. Update effect dependencies
+
+Update the dependency array of the config loading effect (line 284) to remain consistent with the expanded condition.
+
+## Summary of Changes
+
+All changes are in a single file: **`src/components/pssr/CreatePSSRWizard.tsx`**
+
+| Change | Lines | Description |
+|--------|-------|-------------|
+| Fix validateStep | 291-306 | Remove `setWizardState` call; use ref as read-only fallback |
+| Fix handleNext | 344-349 | Ensure `reasonId` is restored before entering step 3 |
+| Expand config loading | 251 | Also trigger at step 4 as fallback |
+| Update effect deps | 284 | Keep dependency array consistent |
 
