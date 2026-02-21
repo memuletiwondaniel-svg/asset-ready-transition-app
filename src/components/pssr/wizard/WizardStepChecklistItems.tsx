@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Search, FileCheck, ChevronDown, ChevronRight, Ban, Undo2, Edit2, Globe, Loader2, Plus } from 'lucide-react';
+import { Search, FileCheck, ChevronDown, ChevronRight, Ban, Undo2, Edit2, Globe, Loader2, Plus, User } from 'lucide-react';
 import { usePSSRChecklistItems, usePSSRChecklistCategories, ChecklistItem } from '@/hooks/usePSSRChecklistLibrary';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChecklistItemOverride } from './ChecklistItemEditDialog';
@@ -12,6 +12,8 @@ import AddPSSRItemSheet from './AddPSSRItemSheet';
 import { useChecklistTranslation } from '@/hooks/useChecklistTranslation';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Progress } from '@/components/ui/progress';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface ChecklistItemOverrides {
   [itemId: string]: ChecklistItemOverride;
@@ -83,6 +85,81 @@ const WizardStepChecklistItems: React.FC<WizardStepChecklistItemsProps> = ({
   const isLoading = itemsLoading || categoriesLoading;
   const isTranslating = isTranslatingItems || isTranslatingCategories;
   const avgProgress = Math.round((itemsProgress + categoriesProgress) / 2);
+
+  // Resolve delivering party role names to actual people
+  const { data: resolvedDeliveringParties = {} } = useQuery({
+    queryKey: ['pssr-delivering-parties', plantName, fieldName],
+    queryFn: async () => {
+      // Get all unique responsible role names from checklist items
+      const allResponsibleRoles = new Set<string>();
+      rawChecklistItems.forEach(item => {
+        if (item.responsible) {
+          item.responsible.split(',').forEach(r => {
+            const trimmed = r.trim();
+            if (trimmed) allResponsibleRoles.add(trimmed);
+          });
+        }
+      });
+
+      if (allResponsibleRoles.size === 0) return {};
+
+      // Find role IDs for these names
+      const { data: roles } = await supabase
+        .from('roles')
+        .select('id, name')
+        .eq('is_active', true);
+
+      if (!roles) return {};
+
+      const roleNameToId: Record<string, string> = {};
+      roles.forEach(r => { roleNameToId[r.name.toLowerCase()] = r.id; });
+
+      const matchedRoleIds = [...allResponsibleRoles]
+        .map(name => ({ name, id: roleNameToId[name.toLowerCase()] }))
+        .filter(r => r.id);
+
+      if (matchedRoleIds.length === 0) return {};
+
+      // Get profiles with these roles
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, avatar_url, role, position')
+        .in('role', matchedRoleIds.map(r => r.id))
+        .eq('is_active', true);
+
+      if (!profiles) return {};
+
+      // Build a map: roleName -> best matching person name
+      const result: Record<string, string> = {};
+      matchedRoleIds.forEach(({ name, id }) => {
+        let candidates = profiles.filter((p: any) => p.role === id);
+
+        // Filter by plant/field if available
+        if (plantName) {
+          const plantLower = plantName.toLowerCase();
+          const fieldLower = fieldName?.toLowerCase() || '';
+          const locationFiltered = candidates.filter((p: any) => {
+            const pos = (p.position || '').toLowerCase();
+            if (!pos.includes(plantLower)) return false;
+            if (fieldLower && !pos.includes(fieldLower)) return false;
+            return true;
+          });
+          if (locationFiltered.length > 0) candidates = locationFiltered;
+        }
+
+        if (candidates.length === 1) {
+          result[name] = candidates[0].full_name || name;
+        } else if (candidates.length > 1) {
+          // Take the first location-matched one
+          result[name] = candidates[0].full_name || name;
+        }
+        // If no candidates, leave it as role name (not added to map)
+      });
+
+      return result;
+    },
+    enabled: rawChecklistItems.length > 0,
+  });
 
   // All items including custom ones
   const allChecklistItems = useMemo(() => {
@@ -289,6 +366,8 @@ const WizardStepChecklistItems: React.FC<WizardStepChecklistItemsProps> = ({
                           const hasOverride = itemOverrides[item.id] && Object.keys(itemOverrides[item.id]).length > 0;
                           const displayDescription = itemOverrides[item.id]?.description ?? item.description;
                           const displayTopic = itemOverrides[item.id]?.topic ?? item.topic;
+                          const responsibleRole = itemOverrides[item.id]?.responsible ?? item.responsible;
+                          const resolvedName = responsibleRole ? resolvedDeliveringParties[responsibleRole] : null;
                           // Sequential numbering within the visible category (1-based)
                           const itemRefId = refId
                             ? `${refId}-${String(itemIndex + 1).padStart(2, '0')}`
@@ -313,14 +392,22 @@ const WizardStepChecklistItems: React.FC<WizardStepChecklistItemsProps> = ({
                                 <p className="text-sm leading-snug">
                                   {displayDescription}
                                 </p>
-                                {displayTopic && (
-                                  <span className="text-xs text-muted-foreground mt-0.5 block">{displayTopic}</span>
-                                )}
-                                {hasOverride && (
-                                  <Badge variant="secondary" className="text-[10px] mt-1 bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
-                                    Customized
-                                  </Badge>
-                                )}
+                                <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                  {displayTopic && (
+                                    <span className="text-xs text-muted-foreground">{displayTopic}</span>
+                                  )}
+                                  {responsibleRole && (
+                                    <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded">
+                                      <User className="h-2.5 w-2.5" />
+                                      {resolvedName || responsibleRole}
+                                    </span>
+                                  )}
+                                  {hasOverride && (
+                                    <Badge variant="secondary" className="text-[10px] bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                                      Customized
+                                    </Badge>
+                                  )}
+                                </div>
                               </div>
 
                               {/* Hover Actions */}

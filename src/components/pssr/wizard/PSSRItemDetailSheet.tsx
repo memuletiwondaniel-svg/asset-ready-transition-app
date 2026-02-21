@@ -82,7 +82,7 @@ const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
   const [formData, setFormData] = useState<ChecklistItemOverride>({});
   const [addRoleOpen, setAddRoleOpen] = useState(false);
   const [addRoleSearch, setAddRoleSearch] = useState('');
-  const [selectedDeliveringMemberIds, setSelectedDeliveringMemberIds] = useState<Set<string>>(new Set());
+  const [selectedDeliveringMemberId, setSelectedDeliveringMemberId] = useState<string | null>(null);
 
   useEffect(() => {
     if (item && open) {
@@ -230,14 +230,13 @@ const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
     },
     enabled: open && !!item,
   });
-  // Auto-select location-matched delivering members
+  // Auto-select location-matched or single delivering member
   useEffect(() => {
     const matched = resolvedParties?.locationMatched;
     if (matched && matched.length > 0) {
-      setSelectedDeliveringMemberIds(new Set(matched));
+      setSelectedDeliveringMemberId(matched[0]);
     } else if (resolvedParties?.delivering && resolvedParties.delivering.length === 1) {
-      // If only one member, auto-select them
-      setSelectedDeliveringMemberIds(new Set([resolvedParties.delivering[0].user_id]));
+      setSelectedDeliveringMemberId(resolvedParties.delivering[0].user_id);
     }
   }, [resolvedParties?.locationMatched, resolvedParties?.delivering]);
 
@@ -351,16 +350,18 @@ const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
 
             <Separator />
 
-            {/* Delivering Party */}
             <div className="space-y-2">
               <Label className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">
-                Delivering Party
+                Delivering Party <span className="text-destructive">*</span>
               </Label>
+              {!currentDeliveringRole && (
+                <p className="text-[10px] text-destructive">A delivering party is required for every PSSR item.</p>
+              )}
               <Select
                 value={currentDeliveringRole}
                 onValueChange={(roleName) => {
                   handleChangeDelivering(roleName);
-                  setSelectedDeliveringMemberIds(new Set());
+                  setSelectedDeliveringMemberId(null);
                 }}
               >
                 <SelectTrigger className="text-sm">
@@ -381,22 +382,16 @@ const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
                   )}
                   <div className="flex items-center gap-3 flex-wrap">
                     {deliveringMembers.map((member) => {
-                      const isSelected = selectedDeliveringMemberIds.has(member.user_id);
+                      const isSelected = selectedDeliveringMemberId === member.user_id;
                       const isLocationMatch = resolvedParties?.locationMatched?.includes(member.user_id);
                       return (
                         <button
                           key={member.user_id}
                           type="button"
                           onClick={() => {
-                            setSelectedDeliveringMemberIds(prev => {
-                              const next = new Set(prev);
-                              if (next.has(member.user_id)) {
-                                next.delete(member.user_id);
-                              } else {
-                                next.add(member.user_id);
-                              }
-                              return next;
-                            });
+                            setSelectedDeliveringMemberId(
+                              isSelected ? null : member.user_id
+                            );
                           }}
                           className={`flex flex-col items-center gap-0.5 p-1.5 rounded-lg transition-all cursor-pointer ${
                             isSelected
