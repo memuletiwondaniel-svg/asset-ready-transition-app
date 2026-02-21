@@ -53,6 +53,7 @@ interface PSSR {
   teamMembers: number;
   lastActivity: string;
   location: string;
+  pssrReason?: string;
 }
 const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
   onBack
@@ -282,6 +283,7 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
       lastActivity: record.updated_at,
       location: [record.plant, record.field_name, record.station_name || record.cs_location].filter(Boolean).join(' > '),
       scope: record.scope || '',
+      pssrReason: record.reason || '',
     }));
   }, [pssrRecords]);
 

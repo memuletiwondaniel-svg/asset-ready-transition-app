@@ -10,7 +10,8 @@ export interface PSSRColumn {
 const DEFAULT_COLUMNS: PSSRColumn[] = [
   
   { id: 'projectId', label: 'ID', visible: true, width: 180 },
-  { id: 'projectName', label: 'Title', visible: true, width: 300 },
+  { id: 'projectName', label: 'Title', visible: true, width: 280 },
+  { id: 'pssrReason', label: 'PSSR Reason', visible: true, width: 160 },
   { id: 'asset', label: 'Location', visible: true, width: 110 },
   { id: 'pssrLead', label: 'PSSR Lead', visible: true, width: 160 },
   { id: 'status', label: 'Status', visible: true, width: 110 },
