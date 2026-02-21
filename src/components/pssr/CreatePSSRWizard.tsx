@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { ChevronLeft, ChevronRight, Check, Loader2, X, Save } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, Loader2, X, Save, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -77,6 +77,7 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
   const [showDraftConfirm, setShowDraftConfirm] = useState(false);
+  const [visitedSteps, setVisitedSteps] = useState<Set<number>>(new Set([1]));
   
   const { data: atiScopes } = usePSSRTieInScopes();
   const { data: reasons } = usePSSRReasons();
@@ -130,6 +131,7 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
 
   const resetWizard = () => {
     setCurrentStep(1);
+    setVisitedSteps(new Set([1]));
     setWizardState({
       categoryId: '',
       reasonId: '',
@@ -217,7 +219,13 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
         }));
 
         // Start at step 2 if reason is already set, otherwise step 1
-        setCurrentStep(draft.reason_id ? 2 : 1);
+        if (draft.reason_id) {
+          setVisitedSteps(new Set([1, 2]));
+          setCurrentStep(2);
+        } else {
+          setVisitedSteps(new Set([1]));
+          setCurrentStep(1);
+        }
       } catch (err) {
         console.error('Failed to load draft PSSR:', err);
       }
@@ -269,21 +277,21 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
     onOpenChange(false);
   };
 
-  const validateStep = (step: number): boolean => {
+  const validateStep = (step: number, silent = false): boolean => {
     switch (step) {
       case 1:
         if (!wizardState.categoryId) {
-          toast.error('Please select a PSSR reason');
+          if (!silent) toast.error('Please select a PSSR reason');
           return false;
         }
         return true;
       case 2:
         if (!wizardState.title.trim()) {
-          toast.error('Please enter a PSSR title');
+          if (!silent) toast.error('Please enter a PSSR title');
           return false;
         }
         if (!wizardState.plantId) {
-          toast.error('Please select a plant');
+          if (!silent) toast.error('Please select a plant');
           return false;
         }
         return true;
@@ -292,9 +300,25 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
     }
   };
 
+  const isStepComplete = (step: number): boolean => validateStep(step, true);
+
+  const handleStepClick = (targetStep: number) => {
+    if (targetStep === currentStep) return;
+    // Allow navigating to any visited step, or one step ahead of the highest completed
+    const canNavigate = visitedSteps.has(targetStep) || targetStep <= currentStep;
+    if (!canNavigate) {
+      // Allow jumping forward only if current step validates
+      if (!validateStep(currentStep)) return;
+    }
+    setVisitedSteps(prev => new Set([...prev, targetStep]));
+    setCurrentStep(targetStep);
+  };
+
   const handleNext = () => {
     if (!validateStep(currentStep)) return;
-    setCurrentStep(prev => Math.min(prev + 1, STEPS.length));
+    const nextStep = Math.min(currentStep + 1, STEPS.length);
+    setVisitedSteps(prev => new Set([...prev, nextStep]));
+    setCurrentStep(nextStep);
   };
 
   const handleBack = () => {
@@ -643,35 +667,54 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
             
             {/* Step Indicators */}
             <div className="flex justify-between mt-2">
-              {STEPS.map((step) => (
-                <div
-                  key={step.id}
-                  className={`flex flex-col items-center flex-1 ${
-                    step.id === currentStep 
-                      ? 'text-primary' 
-                      : step.id < currentStep 
-                        ? 'text-primary/60' 
-                        : 'text-muted-foreground'
-                  }`}
-                >
-                  <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium border-2 transition-colors ${
-                      step.id === currentStep
-                        ? 'border-primary bg-primary text-primary-foreground'
-                        : step.id < currentStep
-                          ? 'border-primary bg-primary/10 text-primary'
-                          : 'border-muted-foreground/30 bg-muted/30'
+              {STEPS.map((step) => {
+                const isActive = step.id === currentStep;
+                const isVisited = visitedSteps.has(step.id);
+                const isComplete = step.id < currentStep || (isVisited && isStepComplete(step.id));
+                const isIncomplete = isVisited && !isActive && !isComplete;
+                const isClickable = isVisited || step.id <= currentStep;
+
+                return (
+                  <button
+                    key={step.id}
+                    type="button"
+                    onClick={() => handleStepClick(step.id)}
+                    disabled={!isClickable && !validateStep(currentStep, true)}
+                    className={`flex flex-col items-center flex-1 transition-colors ${
+                      isClickable ? 'cursor-pointer' : 'cursor-default'
+                    } ${
+                      isActive
+                        ? 'text-primary'
+                        : isComplete
+                          ? 'text-primary/60'
+                          : isIncomplete
+                            ? 'text-amber-600 dark:text-amber-400'
+                            : 'text-muted-foreground'
                     }`}
                   >
-                    {step.id < currentStep ? (
-                      <Check className="h-4 w-4" />
-                    ) : (
-                      step.id
-                    )}
-                  </div>
-                  <span className="text-xs mt-1 text-center hidden sm:block">{step.title}</span>
-                </div>
-              ))}
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium border-2 transition-colors ${
+                        isActive
+                          ? 'border-primary bg-primary text-primary-foreground'
+                          : isComplete
+                            ? 'border-primary bg-primary/10 text-primary'
+                            : isIncomplete
+                              ? 'border-amber-500 bg-amber-50 text-amber-600 dark:border-amber-500 dark:bg-amber-900/20 dark:text-amber-400'
+                              : 'border-muted-foreground/30 bg-muted/30'
+                      }`}
+                    >
+                      {isComplete ? (
+                        <Check className="h-4 w-4" />
+                      ) : isIncomplete ? (
+                        <AlertCircle className="h-4 w-4" />
+                      ) : (
+                        step.id
+                      )}
+                    </div>
+                    <span className="text-xs mt-1 text-center hidden sm:block">{step.title}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </DialogHeader>
