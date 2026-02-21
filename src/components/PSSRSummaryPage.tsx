@@ -749,11 +749,9 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
           }
         }}
         draftPssrId={draftEditId || undefined}
-        onSuccess={(pssrId) => {
-          setSelectedPSSR(pssrId);
-          setActiveView('details');
+        onSuccess={() => {
+          setActiveView('list');
           setDraftEditId(null);
-          toast.success('PSSR created successfully');
         }}
       />
 
