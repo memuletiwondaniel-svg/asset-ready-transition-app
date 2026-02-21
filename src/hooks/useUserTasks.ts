@@ -20,6 +20,7 @@ export interface UserTask {
   status: string;
   display_order: number;
   created_at: string;
+  metadata: any;
   blocking_tasks?: string[];
   blocked_by_tasks?: string[];
 }
@@ -27,7 +28,7 @@ export interface UserTask {
 const fetchUserTasks = async (userId: string): Promise<{ tasks: UserTask[]; dependencies: TaskDependency[] }> => {
   const { data: tasksData, error: tasksError } = await supabase
     .from('user_tasks')
-    .select('id,title,description,due_date,priority,type,status,display_order,created_at')
+    .select('id,title,description,due_date,priority,type,status,display_order,created_at,metadata')
     .eq('user_id', userId)
     .eq('status', 'pending')
     .order('display_order', { ascending: true })
