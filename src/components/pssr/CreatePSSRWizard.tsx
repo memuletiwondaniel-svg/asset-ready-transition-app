@@ -113,10 +113,12 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
 
   // Keep ref in sync with state, and restore if state gets cleared unexpectedly
   useEffect(() => {
+    console.log('[PSSR Debug] categoryId effect:', { categoryId: wizardState.categoryId, ref: categoryIdRef.current, open, currentStep });
     if (wizardState.categoryId) {
       categoryIdRef.current = wizardState.categoryId;
     } else if (categoryIdRef.current && open && currentStep === 1) {
       // State was cleared but ref still has value - restore it
+      console.log('[PSSR Debug] Restoring categoryId from ref:', categoryIdRef.current);
       setWizardState(prev => ({
         ...prev,
         categoryId: categoryIdRef.current,
@@ -340,6 +342,7 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
   };
 
   const handleBack = () => {
+    console.log('[PSSR Debug] handleBack called, current categoryId:', wizardState.categoryId, 'ref:', categoryIdRef.current);
     setCurrentStep(prev => Math.max(prev - 1, 1));
   };
 
