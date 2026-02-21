@@ -31,7 +31,8 @@ import {
   Layers,
 } from 'lucide-react';
 import { usePSSRDetails } from '@/hooks/usePSSRDetails';
-import { usePSSRCategoryProgress } from '@/hooks/usePSSRCategoryProgress';
+import { usePSSRCategoryProgress, CategoryProgress } from '@/hooks/usePSSRCategoryProgress';
+import { PSSRCategoryItemsSheet } from './PSSRCategoryItemsSheet';
 import { usePSSRApprovers } from '@/hooks/usePSSRApprovers';
 import { usePSSRPriorityActions } from '@/hooks/usePSSRPriorityActions';
 import { usePSSRKeyActivities, PSSRKeyActivity } from '@/hooks/usePSSRKeyActivities';
@@ -98,6 +99,7 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
   const { actions, stats: actionStats } = usePSSRPriorityActions(pssrId);
   const { activities, scheduleActivity } = usePSSRKeyActivities(pssrId);
   const [selectedActivity, setSelectedActivity] = useState<PSSRKeyActivity | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<CategoryProgress | null>(null);
 
   // Fetch SoF approvers
   const { data: sofApprovers } = useQuery({
@@ -469,7 +471,11 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
                   const Icon = getCategoryIcon(cat.name);
                   const colors = getCategoryColor(cat.name);
                   return (
-                    <div key={cat.id} className="flex items-center gap-2">
+                    <div
+                      key={cat.id}
+                      className="flex items-center gap-2 cursor-pointer hover:bg-muted/40 rounded-lg p-1 -mx-1 transition-colors"
+                      onClick={() => setSelectedCategory(cat)}
+                    >
                       <div className={cn('w-6 h-6 rounded flex items-center justify-center shrink-0', colors.bg)}>
                         <Icon className="h-3 w-3" />
                       </div>
@@ -482,6 +488,7 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
                           <div className={cn('h-full rounded-full', colors.bar)} style={{ width: `${cat.percentage}%` }} />
                         </div>
                       </div>
+                      <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                     </div>
                   );
                 })}
@@ -802,6 +809,18 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
         {renderApprovalsPanel()}
       </div>
       {renderUserDetailSheet()}
+      {selectedCategory && (
+        <PSSRCategoryItemsSheet
+          open={!!selectedCategory}
+          onOpenChange={(o) => !o && setSelectedCategory(null)}
+          pssrId={pssrId}
+          categoryId={selectedCategory.id}
+          categoryName={selectedCategory.name}
+          categoryRefId={selectedCategory.ref_id}
+          categoryIcon={getCategoryIcon(selectedCategory.name)}
+          categoryColor={getCategoryColor(selectedCategory.name).bg}
+        />
+      )}
     </>
   );
 };

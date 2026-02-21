@@ -48,6 +48,20 @@ export function usePSSRCategoryProgress(pssrId: string) {
 
       if (catError) throw catError;
 
+      // Fetch ALL active checklist items to get true totals per category
+      const { data: allItems, error: itemsError } = await supabase
+        .from('pssr_checklist_items')
+        .select('id, category')
+        .eq('is_active', true);
+
+      if (itemsError) throw itemsError;
+
+      // Build total items per category from checklist_items
+      const categoryItemTotals: Record<string, number> = {};
+      (allItems || []).forEach(item => {
+        categoryItemTotals[item.category] = (categoryItemTotals[item.category] || 0) + 1;
+      });
+
       // Fetch checklist responses for this PSSR
       const { data: responses, error: respError } = await supabase
         .from('pssr_checklist_responses')
@@ -56,53 +70,37 @@ export function usePSSRCategoryProgress(pssrId: string) {
 
       if (respError) throw respError;
 
-      // Fetch checklist items to get their category
+      // Map response checklist_item_id to category
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      const itemIds = [...new Set((responses || []).map(r => r.checklist_item_id).filter(id => id && uuidRegex.test(id)))];
-      let itemCategoryMap: Record<string, string> = {};
-
-      if (itemIds.length > 0) {
-        const { data: items, error: itemError } = await supabase
-          .from('pssr_checklist_items')
-          .select('id, category')
-          .in('id', itemIds);
-        if (itemError) throw itemError;
-        items?.forEach(item => {
-          itemCategoryMap[item.id] = item.category;
-        });
-      }
-
-      // Count items per category
-      const categoryStats: Record<string, { total: number; completed: number }> = {};
-      
-      // Initialize all categories by ID
-      categories?.forEach(cat => {
-        categoryStats[cat.id] = { total: 0, completed: 0 };
+      const itemCategoryMap: Record<string, string> = {};
+      (allItems || []).forEach(item => {
+        itemCategoryMap[item.id] = item.category;
       });
 
-      // Count responses by category
-      responses?.forEach((resp) => {
+      // Count completed responses per category
+      const categoryCompleted: Record<string, number> = {};
+      (responses || []).forEach((resp) => {
         const categoryId = itemCategoryMap[resp.checklist_item_id];
-        if (categoryId && categoryStats[categoryId] !== undefined) {
-          categoryStats[categoryId].total++;
+        if (categoryId) {
           if (resp.status === 'approved' || resp.response === 'YES' || resp.response === 'NA') {
-            categoryStats[categoryId].completed++;
+            categoryCompleted[categoryId] = (categoryCompleted[categoryId] || 0) + 1;
           }
         }
       });
 
-      // Build category progress array — show all categories that have items
+      // Build category progress — show ALL categories that have checklist items
       const categoryProgress: CategoryProgress[] = (categories || [])
-        .filter(cat => categoryStats[cat.id]?.total > 0)
+        .filter(cat => (categoryItemTotals[cat.id] || 0) > 0)
         .map(cat => {
-          const stats = categoryStats[cat.id];
+          const total = categoryItemTotals[cat.id] || 0;
+          const completed = categoryCompleted[cat.id] || 0;
           return {
             id: cat.id,
             name: cat.name,
             ref_id: cat.ref_id,
-            completed: stats.completed,
-            total: stats.total,
-            percentage: stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0,
+            completed,
+            total,
+            percentage: total > 0 ? Math.round((completed / total) * 100) : 0,
             display_order: cat.display_order,
           };
         })
