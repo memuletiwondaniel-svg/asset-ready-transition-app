@@ -1,50 +1,34 @@
 
+## VCR Navigate Panel Fix
 
-## Problem
-PSSR and SoF Approver roles show "0 roles" on Step 4 because the draft loading logic prematurely sets `configLoaded: true` without actually loading the approver role IDs.
+### Problem
+When clicking a VCR in the P2A Handover Workspace, the system opens `VCRDetailSheet` -- a simple side panel for system assignment. The full `VCRDetailOverlay` component (which already has the correct two-section navigation with "Navigate" and "Building Blocks") exists in the codebase but is never used by the workspace.
 
-## Root Cause
-In `CreatePSSRWizard.tsx` line 229, when loading a draft:
+### Solution
+Replace the `VCRDetailSheet` usage in `P2AHandoverWorkspace.tsx` with `VCRDetailOverlay`, which already contains the correct layout:
 
-```tsx
-configLoaded: dbItemIds.length > 0 || customItemIds.length > 0,
-```
+**Section 1 - Navigate:**
+- VCR Overview (default)
+- Qualifications
+- Comments
+- SoF Certificate
+- PAC Certificate
 
-If the draft has saved checklist items, `configLoaded` becomes `true`. This prevents the config loading effect (line 253) from ever firing, since it checks `!wizardState.configLoaded`. But the draft loading never sets `selectedPssrApproverRoleIds` or `selectedSofApproverRoleIds` -- those stay as empty arrays `[]`.
+**Section 2 - Building Blocks:**
+- Systems
+- Checklist
+- Training
+- Procedures
+- Documentation
+- CMMS
+- Spares
+- Operational Registers
 
-So the system thinks configuration is already loaded, but the approver role IDs were never fetched.
+### Technical Details
 
-## Fix
+**File: `src/components/p2a-workspace/P2AHandoverWorkspace.tsx`**
 
-**File: `src/components/pssr/CreatePSSRWizard.tsx`**
+1. Change the import from `VCRDetailSheet` to `VCRDetailOverlay`
+2. Replace the `<VCRDetailSheet .../>` component (lines 677-691) with `<VCRDetailOverlay />`, passing `handoverPoint`, `open`, `onOpenChange`, `onDelete`, and `isDeleting` props
 
-During draft loading (after line 216), also fetch the approver role IDs from `pssr_reason_configuration` and include them in the restored state:
-
-```tsx
-// After loading custom items, also load approver config
-const { data: config } = await supabase
-  .from('pssr_reason_configuration')
-  .select('pssr_approver_role_ids, sof_approver_role_ids')
-  .eq('reason_id', draft.reason_id)
-  .maybeSingle();
-
-const pssrApproverIds = config?.pssr_approver_role_ids || [];
-const sofApproverIds = config?.sof_approver_role_ids || [];
-```
-
-Then in the `setWizardState` call (lines 217-230), add:
-
-```tsx
-selectedPssrApproverRoleIds: pssrApproverIds,
-selectedSofApproverRoleIds: sofApproverIds,
-templatePssrApproverRoleIds: pssrApproverIds,
-templateSofApproverRoleIds: sofApproverIds,
-configLoaded: true,
-```
-
-This way `configLoaded: true` is justified because ALL config data (checklist IDs and approver role IDs) is fully restored.
-
-## Summary
-
-Single file change in `src/components/pssr/CreatePSSRWizard.tsx`: add approver role ID fetching to the draft loading logic so the data is available by the time the user reaches Step 4.
-
+This is a minimal change -- the `VCRDetailOverlay` component already has all the correct navigation structure, tabs, and content rendering built in.
