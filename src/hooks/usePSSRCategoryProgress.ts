@@ -48,23 +48,30 @@ export function usePSSRCategoryProgress(pssrId: string) {
 
       if (catError) throw catError;
 
-      // Fetch checklist responses with their item categories for this PSSR
+      // Fetch checklist responses for this PSSR
       const { data: responses, error: respError } = await supabase
         .from('pssr_checklist_responses')
-        .select(`
-          id,
-          status,
-          response,
-          checklist_item_id,
-          pssr_checklist_items!inner(
-            category
-          )
-        `)
+        .select('id, status, response, checklist_item_id')
         .eq('pssr_id', pssrId);
 
       if (respError) throw respError;
 
-      // Count items per category — keyed by category ID (UUID) since checklist_items.category stores UUIDs
+      // Fetch checklist items to get their category
+      const itemIds = [...new Set((responses || []).map(r => r.checklist_item_id).filter(Boolean))];
+      let itemCategoryMap: Record<string, string> = {};
+
+      if (itemIds.length > 0) {
+        const { data: items, error: itemError } = await supabase
+          .from('pssr_checklist_items')
+          .select('id, category')
+          .in('id', itemIds);
+        if (itemError) throw itemError;
+        items?.forEach(item => {
+          itemCategoryMap[item.id] = item.category;
+        });
+      }
+
+      // Count items per category
       const categoryStats: Record<string, { total: number; completed: number }> = {};
       
       // Initialize all categories by ID
@@ -72,19 +79,18 @@ export function usePSSRCategoryProgress(pssrId: string) {
         categoryStats[cat.id] = { total: 0, completed: 0 };
       });
 
-      // Count responses by category (UUID match)
-      responses?.forEach((resp: any) => {
-        const categoryId = resp.pssr_checklist_items?.category;
+      // Count responses by category
+      responses?.forEach((resp) => {
+        const categoryId = itemCategoryMap[resp.checklist_item_id];
         if (categoryId && categoryStats[categoryId] !== undefined) {
           categoryStats[categoryId].total++;
-          // Consider 'approved' or responses with 'YES'/'NA' as completed
           if (resp.status === 'approved' || resp.response === 'YES' || resp.response === 'NA') {
             categoryStats[categoryId].completed++;
           }
         }
       });
 
-      // Build category progress array
+      // Build category progress array — show all categories that have items
       const categoryProgress: CategoryProgress[] = (categories || [])
         .filter(cat => categoryStats[cat.id]?.total > 0)
         .map(cat => {
