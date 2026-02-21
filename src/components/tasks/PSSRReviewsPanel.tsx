@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ClipboardCheck } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +11,8 @@ import { useUserTasks, type UserTask } from '@/hooks/useUserTasks';
 import { useUserLastLogin } from '@/hooks/useUserLastLogin';
 import { getUrgencyBackground, getUrgencyGlow } from '@/utils/assetColors';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 
 interface PSSRReviewsPanelProps {
   userId: string;
@@ -266,10 +268,34 @@ export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({
         task={selectedTask}
         open={!!selectedTask}
         onOpenChange={(open) => { if (!open) setSelectedTask(null); }}
-        onApprove={(taskId, comment) => {
+        onApprove={async (taskId, comment) => {
+          // Update PSSR status to UNDER_REVIEW when lead approves
+          const task = userTasks.find(t => t.id === taskId);
+          const pssrId = task?.metadata?.pssr_id;
+          if (pssrId) {
+            const { error } = await supabase
+              .from('pssrs')
+              .update({ status: 'UNDER_REVIEW' })
+              .eq('id', pssrId);
+            if (error) {
+              toast({ title: 'Failed to update PSSR status', description: error.message, variant: 'destructive' });
+            }
+          }
           updateTaskStatus(taskId, 'completed');
         }}
-        onReject={(taskId, comment) => {
+        onReject={async (taskId, comment) => {
+          // Revert PSSR status to DRAFT when lead rejects
+          const task = userTasks.find(t => t.id === taskId);
+          const pssrId = task?.metadata?.pssr_id;
+          if (pssrId) {
+            const { error } = await supabase
+              .from('pssrs')
+              .update({ status: 'DRAFT' })
+              .eq('id', pssrId);
+            if (error) {
+              toast({ title: 'Failed to update PSSR status', description: error.message, variant: 'destructive' });
+            }
+          }
           updateTaskStatus(taskId, 'cancelled');
         }}
       />
