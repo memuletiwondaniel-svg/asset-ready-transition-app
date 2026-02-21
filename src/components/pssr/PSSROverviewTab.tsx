@@ -283,8 +283,9 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
 
   const renderInfoPanel = () => (
     <Card className="h-full flex flex-col">
-      <CardHeader className="border-b py-3 text-center bg-muted/50">
-        <CardTitle className="text-lg font-semibold">
+      <CardHeader className="relative overflow-hidden border-b py-3 text-center">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/8 via-purple-500/6 to-cyan-500/8" />
+        <CardTitle className="relative text-lg font-semibold">
           Overview
         </CardTitle>
       </CardHeader>
@@ -387,8 +388,9 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
 
   const renderProgressPanel = () => (
     <Card className="h-full flex flex-col">
-      <CardHeader className="border-b py-3 text-center bg-muted/50">
-        <CardTitle className="text-lg font-semibold">
+      <CardHeader className="relative overflow-hidden border-b py-3 text-center">
+        <div className="absolute inset-0 bg-gradient-to-r from-amber-500/8 via-rose-500/6 to-orange-500/8" />
+        <CardTitle className="relative text-lg font-semibold">
           Progress
         </CardTitle>
       </CardHeader>
@@ -601,8 +603,9 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
 
   const renderApprovalsPanel = () => (
     <Card className="h-full flex flex-col">
-      <CardHeader className="border-b py-3 text-center bg-muted/50">
-        <CardTitle className="text-lg font-semibold">
+      <CardHeader className="relative overflow-hidden border-b py-3 text-center">
+        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/8 via-teal-500/6 to-cyan-500/8" />
+        <CardTitle className="relative text-lg font-semibold">
           Review & Approvals
         </CardTitle>
       </CardHeader>
