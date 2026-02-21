@@ -284,7 +284,7 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
   const renderInfoPanel = () => (
     <Card className="h-full flex flex-col">
       <CardHeader className="relative overflow-hidden border-b py-3 text-center">
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/8 via-purple-500/6 to-cyan-500/8" />
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-100 via-purple-50 to-cyan-100" />
         <CardTitle className="relative text-lg font-semibold">
           Overview
         </CardTitle>
@@ -389,7 +389,7 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
   const renderProgressPanel = () => (
     <Card className="h-full flex flex-col">
       <CardHeader className="relative overflow-hidden border-b py-3 text-center">
-        <div className="absolute inset-0 bg-gradient-to-r from-amber-500/8 via-rose-500/6 to-orange-500/8" />
+        <div className="absolute inset-0 bg-gradient-to-r from-amber-100 via-rose-50 to-orange-100" />
         <CardTitle className="relative text-lg font-semibold">
           Progress
         </CardTitle>
@@ -604,7 +604,7 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
   const renderApprovalsPanel = () => (
     <Card className="h-full flex flex-col">
       <CardHeader className="relative overflow-hidden border-b py-3 text-center">
-        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/8 via-teal-500/6 to-cyan-500/8" />
+        <div className="absolute inset-0 bg-gradient-to-r from-emerald-100 via-teal-50 to-cyan-100" />
         <CardTitle className="relative text-lg font-semibold">
           Review & Approvals
         </CardTitle>
