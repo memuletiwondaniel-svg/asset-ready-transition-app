@@ -26,6 +26,9 @@ import {
   Clock,
   AlertTriangle,
   Eye,
+  Ruler,
+  FolderCog,
+  HeartPulse,
 } from 'lucide-react';
 import { usePSSRDetails } from '@/hooks/usePSSRDetails';
 import { usePSSRCategoryProgress } from '@/hooks/usePSSRCategoryProgress';
@@ -46,10 +49,14 @@ interface PSSROverviewTabProps {
 
 const getCategoryIcon = (name: string) => {
   const map: Record<string, React.ElementType> = {
+    'Design Integrity': Ruler,
     'Technical Integrity': Wrench,
+    'Operating Integrity': Settings,
+    'Management Systems': FolderCog,
+    'Health & Safety': HeartPulse,
+    // Legacy / fallback names
     'Process Safety': Shield,
     'Organization': Users,
-    'Operations': Settings,
     'HSE & Environment': Leaf,
     'Maintenance Readiness': ClipboardCheck,
     'Documentation': FileCheck,
@@ -60,7 +67,12 @@ const getCategoryIcon = (name: string) => {
 
 const getCategoryColor = (name: string) => {
   const map: Record<string, { bg: string; bar: string }> = {
+    'Design Integrity': { bg: 'bg-cyan-400/10 text-cyan-500', bar: 'bg-cyan-400/70' },
     'Technical Integrity': { bg: 'bg-blue-400/10 text-blue-500', bar: 'bg-blue-400/70' },
+    'Operating Integrity': { bg: 'bg-amber-400/10 text-amber-500', bar: 'bg-amber-400/70' },
+    'Management Systems': { bg: 'bg-purple-400/10 text-purple-500', bar: 'bg-purple-400/70' },
+    'Health & Safety': { bg: 'bg-emerald-400/10 text-emerald-500', bar: 'bg-emerald-400/70' },
+    // Legacy / fallback names
     'Process Safety': { bg: 'bg-red-400/10 text-red-500', bar: 'bg-red-400/70' },
     'Organization': { bg: 'bg-purple-400/10 text-purple-500', bar: 'bg-purple-400/70' },
     'Operations': { bg: 'bg-amber-400/10 text-amber-500', bar: 'bg-amber-400/70' },
