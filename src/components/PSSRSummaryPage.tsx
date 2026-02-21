@@ -26,6 +26,7 @@ import PSSRAdvancedSearch from './PSSRAdvancedSearch';
 import CreatePSSRIntroModal from './CreatePSSRIntroModal';
 import CreatePSSRWizard from './pssr/CreatePSSRWizard';
 import PSSRDashboard from './PSSRDashboard';
+import { PSSRDetailOverlay } from './pssr/PSSRDetailOverlay';
 
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbEllipsis } from '@/components/ui/breadcrumb';
 import { toast } from 'sonner';
@@ -454,6 +455,7 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
     }));
   };
   const [draftEditId, setDraftEditId] = useState<string | null>(null);
+  const [overlayPSSR, setOverlayPSSR] = useState<{ id: string; displayId: string; title: string; status: string } | null>(null);
 
   const handleViewDetails = (pssrId: string) => {
     // Check if the PSSR is a draft — if so, open the wizard to continue editing
@@ -461,6 +463,17 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
     if (pssr && pssr.status === 'Draft') {
       setDraftEditId(pssrId);
       setActiveView('create');
+      return;
+    }
+    // For Under Review or Completed PSSRs, open the overlay
+    if (pssr && (pssr.status === 'Under Review' || pssr.status === 'Completed')) {
+      const record = pssrRecords?.find(r => r.id === pssrId);
+      setOverlayPSSR({
+        id: pssrId,
+        displayId: record?.pssr_id || pssr.projectId || pssrId,
+        title: pssr.projectName || '',
+        status: record?.status || pssr.status,
+      });
       return;
     }
     setSelectedPSSR(pssrId);
@@ -743,6 +756,18 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
           toast.success('PSSR created successfully');
         }}
       />
+
+      {/* PSSR Detail Overlay for Under Review / Completed */}
+      {overlayPSSR && (
+        <PSSRDetailOverlay
+          open={!!overlayPSSR}
+          onOpenChange={(open) => !open && setOverlayPSSR(null)}
+          pssrId={overlayPSSR.id}
+          pssrDisplayId={overlayPSSR.displayId}
+          pssrTitle={overlayPSSR.title}
+          status={overlayPSSR.status}
+        />
+      )}
     </div>;
 };
 export default PSSRSummaryPage;
