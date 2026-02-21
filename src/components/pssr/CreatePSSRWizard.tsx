@@ -183,7 +183,7 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
 
         // Find the reason to get its category
         const matchedReason = reasons?.find(r => r.id === draft.reason_id);
-        const categoryId = matchedReason?.category || '';
+        const categoryId = draft.reason_id || '';
 
         // Load custom checklist items for this draft
         const { data: savedCustomItems } = await supabase
@@ -228,6 +228,8 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
           naItemIds: restoredNaItemIds,
           configLoaded: dbItemIds.length > 0 || customItemIds.length > 0,
         }));
+
+        categoryIdRef.current = categoryId;
 
         // Start at step 2 if reason is already set, otherwise step 1
         if (draft.reason_id) {
