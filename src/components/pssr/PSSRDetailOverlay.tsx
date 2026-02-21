@@ -305,7 +305,7 @@ export const PSSRDetailOverlay: React.FC<PSSRDetailOverlayProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] w-full h-[95vh] max-h-[95vh] md:h-[95vh] p-0 gap-0 overflow-hidden [&>button]:hidden">
+      <DialogContent className="max-w-[95vw] w-full h-[95vh] max-h-[95vh] md:h-[95vh] p-0 gap-0 overflow-hidden flex flex-col [&>button]:sr-only">
         {/* Header */}
         <div className="flex items-center justify-between px-3 sm:px-5 py-2 sm:py-2.5 border-b shrink-0 min-h-[48px] sm:min-h-[52px]">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
