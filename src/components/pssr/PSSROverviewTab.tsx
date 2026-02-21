@@ -304,7 +304,7 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
             <div>
               <span className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">Location</span>
               <p className="text-sm mt-0.5">
-                {[locationInfo?.plant, locationInfo?.field, locationInfo?.station].filter(Boolean).join(' > ') || pssr?.plant || '-'}
+                {[locationInfo?.plant, locationInfo?.field, locationInfo?.station].filter(Boolean).pop() || pssr?.plant || '-'}
               </p>
             </div>
 
