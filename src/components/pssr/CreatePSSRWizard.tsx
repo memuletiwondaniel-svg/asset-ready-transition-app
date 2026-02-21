@@ -214,6 +214,16 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
         const customItemIds = restoredCustomItems.map((ci: any) => ci.id);
         const restoredNaItemIds = (draft as any).draft_na_item_ids || [];
 
+        // Also load approver config for this reason
+        const { data: approverConfig } = await supabase
+          .from('pssr_reason_configuration')
+          .select('pssr_approver_role_ids, sof_approver_role_ids')
+          .eq('reason_id', draft.reason_id)
+          .maybeSingle();
+
+        const pssrApproverIds = approverConfig?.pssr_approver_role_ids || [];
+        const sofApproverIds = approverConfig?.sof_approver_role_ids || [];
+
         setWizardState(prev => ({
           ...prev,
           categoryId,
@@ -226,7 +236,11 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
           pssrLeadId: (draft as any).pssr_lead_id || '',
           selectedChecklistItemIds: [...dbItemIds, ...customItemIds],
           naItemIds: restoredNaItemIds,
-          configLoaded: dbItemIds.length > 0 || customItemIds.length > 0,
+          selectedPssrApproverRoleIds: pssrApproverIds,
+          selectedSofApproverRoleIds: sofApproverIds,
+          templatePssrApproverRoleIds: pssrApproverIds,
+          templateSofApproverRoleIds: sofApproverIds,
+          configLoaded: true,
         }));
 
         categoryIdRef.current = categoryId;
