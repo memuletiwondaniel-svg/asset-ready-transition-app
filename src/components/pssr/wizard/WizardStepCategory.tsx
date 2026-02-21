@@ -68,6 +68,7 @@ const WizardStepCategory: React.FC<WizardStepCategoryProps> = ({
   onCategoryChange,
 }) => {
   const { data: reasons, isLoading } = usePSSRReasons();
+  console.log('[PSSR Debug] WizardStepCategory render, categoryId:', categoryId, 'reasons count:', reasons?.length);
 
   if (isLoading) {
     return (
