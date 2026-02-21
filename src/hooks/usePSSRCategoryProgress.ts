@@ -57,7 +57,8 @@ export function usePSSRCategoryProgress(pssrId: string) {
       if (respError) throw respError;
 
       // Fetch checklist items to get their category
-      const itemIds = [...new Set((responses || []).map(r => r.checklist_item_id).filter(Boolean))];
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const itemIds = [...new Set((responses || []).map(r => r.checklist_item_id).filter(id => id && uuidRegex.test(id)))];
       let itemCategoryMap: Record<string, string> = {};
 
       if (itemIds.length > 0) {
