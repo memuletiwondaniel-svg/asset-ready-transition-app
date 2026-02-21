@@ -300,6 +300,14 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
               <p className="text-sm font-semibold text-primary mt-0.5">{pssrDisplayId}</p>
             </div>
 
+            {/* Location — moved above Title */}
+            <div>
+              <span className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">Location</span>
+              <p className="text-sm mt-0.5">
+                {[locationInfo?.plant, locationInfo?.field, locationInfo?.station].filter(Boolean).join(' > ') || pssr?.plant || '-'}
+              </p>
+            </div>
+
             {/* Title */}
             {pssr?.title && (
               <div>
@@ -363,15 +371,6 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
             )}
 
             <Separator />
-
-            {/* Location */}
-            <div className="flex items-center gap-2">
-              <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">Location</span>
-            </div>
-            <p className="text-sm">
-              {[locationInfo?.plant, locationInfo?.field, locationInfo?.station].filter(Boolean).join(' > ') || pssr?.plant || '-'}
-            </p>
 
             {/* Date */}
             <div className="flex items-center gap-2">
