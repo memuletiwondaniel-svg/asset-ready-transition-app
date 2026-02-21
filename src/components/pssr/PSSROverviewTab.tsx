@@ -236,8 +236,13 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
 
   const renderInfoPanel = () => (
     <Card className="h-full flex flex-col">
-      <CardHeader className="bg-muted/40 border-b py-3 text-center">
-        <CardTitle className="text-sm font-semibold">PSSR Overview</CardTitle>
+      <CardHeader className="relative overflow-hidden border-b py-3 text-center">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-cyan-500/8 to-blue-400/5" />
+        <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-blue-500 via-cyan-400 to-blue-300" />
+        <CardTitle className="relative text-sm font-semibold flex items-center justify-center gap-2">
+          <FileText className="h-3.5 w-3.5 text-blue-500" />
+          PSSR Overview
+        </CardTitle>
       </CardHeader>
       <CardContent className="p-0 flex-1">
         <ScrollArea className="h-full">
@@ -339,8 +344,13 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
 
   const renderProgressPanel = () => (
     <Card className="h-full flex flex-col">
-      <CardHeader className="bg-muted/40 border-b py-3 text-center">
-        <CardTitle className="text-sm font-semibold">Progress & Activities</CardTitle>
+      <CardHeader className="relative overflow-hidden border-b py-3 text-center">
+        <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 via-orange-500/8 to-amber-400/5" />
+        <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-amber-500 via-orange-400 to-yellow-300" />
+        <CardTitle className="relative text-sm font-semibold flex items-center justify-center gap-2">
+          <Zap className="h-3.5 w-3.5 text-amber-500" />
+          Progress & Activities
+        </CardTitle>
       </CardHeader>
       <CardContent className="p-0 flex-1">
         <ScrollArea className="h-full">
@@ -515,8 +525,13 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
 
   const renderApprovalsPanel = () => (
     <Card className="h-full flex flex-col">
-      <CardHeader className="bg-muted/40 border-b py-3 text-center">
-        <CardTitle className="text-sm font-semibold">Review & Approvals</CardTitle>
+      <CardHeader className="relative overflow-hidden border-b py-3 text-center">
+        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 via-teal-500/8 to-emerald-400/5" />
+        <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-emerald-500 via-teal-400 to-green-300" />
+        <CardTitle className="relative text-sm font-semibold flex items-center justify-center gap-2">
+          <Shield className="h-3.5 w-3.5 text-emerald-500" />
+          Review & Approvals
+        </CardTitle>
       </CardHeader>
       <CardContent className="p-0 flex-1">
         <ScrollArea className="h-full">
