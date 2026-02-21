@@ -26,9 +26,9 @@ import {
   ClipboardCheck,
   Leaf,
   FileCheck,
-  Ruler,
-  FolderCog,
-  HeartPulse
+  Target,
+  Settings2,
+  Layers
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { usePSSRCategoryProgress } from '@/hooks/usePSSRCategoryProgress';
@@ -58,11 +58,11 @@ const DEFAULT_CATEGORIES = [
 
 const getCategoryIcon = (categoryName: string) => {
   const iconMap: Record<string, React.ElementType> = {
-    'Design Integrity': Ruler,
-    'Technical Integrity': Wrench,
-    'Operating Integrity': Settings,
-    'Management Systems': FolderCog,
-    'Health & Safety': HeartPulse,
+    'Design Integrity': Target,
+    'Technical Integrity': Settings2,
+    'Operating Integrity': Layers,
+    'Management Systems': Users,
+    'Health & Safety': Shield,
     'Process Safety': Shield,
     'Organization': Users,
     'Operations': Settings,
@@ -80,10 +80,10 @@ const getCategoryIcon = (categoryName: string) => {
 
 const getCategoryColors = (categoryName: string) => {
   const colorMap: Record<string, { bg: string; progress: string }> = {
-    'Design Integrity': { bg: 'bg-cyan-400/10 text-cyan-500', progress: 'bg-cyan-400/70' },
+    'Design Integrity': { bg: 'bg-violet-400/10 text-violet-500', progress: 'bg-violet-400/70' },
     'Technical Integrity': { bg: 'bg-blue-400/10 text-blue-500', progress: 'bg-blue-400/70' },
-    'Operating Integrity': { bg: 'bg-amber-400/10 text-amber-500', progress: 'bg-amber-400/70' },
-    'Management Systems': { bg: 'bg-purple-400/10 text-purple-500', progress: 'bg-purple-400/70' },
+    'Operating Integrity': { bg: 'bg-cyan-400/10 text-cyan-500', progress: 'bg-cyan-400/70' },
+    'Management Systems': { bg: 'bg-amber-400/10 text-amber-500', progress: 'bg-amber-400/70' },
     'Health & Safety': { bg: 'bg-emerald-400/10 text-emerald-500', progress: 'bg-emerald-400/70' },
     'Process Safety': { bg: 'bg-red-400/10 text-red-500', progress: 'bg-red-400/70' },
     'Organization': { bg: 'bg-purple-400/10 text-purple-500', progress: 'bg-purple-400/70' },
