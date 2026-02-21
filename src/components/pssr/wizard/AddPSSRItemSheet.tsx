@@ -81,6 +81,24 @@ const AddPSSRItemSheet: React.FC<AddPSSRItemSheetProps> = ({
   const getCategoryRefId = (catId: string) =>
     categories.find(c => c.id === catId)?.ref_id || '';
 
+  // Category color palette matching WizardStepChecklistItems
+  const categoryColors = [
+    'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-700',
+    'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-700',
+    'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-700',
+    'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-900/20 dark:text-rose-300 dark:border-rose-700',
+    'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-900/20 dark:text-indigo-300 dark:border-indigo-700',
+    'bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-900/20 dark:text-teal-300 dark:border-teal-700',
+    'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-700',
+    'bg-cyan-50 text-cyan-700 border-cyan-200 dark:bg-cyan-900/20 dark:text-cyan-300 dark:border-cyan-700',
+  ];
+
+  const getCategoryColor = (catId: string) => {
+    const sortedCats = [...categories].filter(c => c.is_active).sort((a, b) => a.display_order - b.display_order);
+    const idx = sortedCats.findIndex(c => c.id === catId);
+    return categoryColors[idx >= 0 ? idx % categoryColors.length : categoryColors.length - 1];
+  };
+
   const toggleDbItem = (id: string) => {
     setDbSelectedIds(prev => {
       const next = new Set(prev);
@@ -264,21 +282,21 @@ const AddPSSRItemSheet: React.FC<AddPSSRItemSheetProps> = ({
                     <SelectTrigger>
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="z-50">
                       {categories
                         .filter(c => c.is_active)
                         .sort((a, b) => a.display_order - b.display_order)
                         .map(cat => (
                           <SelectItem key={cat.id} value={cat.id}>
                             <div className="flex items-center gap-2">
-                              <Badge variant="outline" className="text-[9px] font-mono">{cat.ref_id}</Badge>
+                              <Badge variant="outline" className={`text-[9px] font-mono ${getCategoryColor(cat.id)}`}>{cat.ref_id}</Badge>
                               {cat.name}
                             </div>
                           </SelectItem>
                         ))}
                       <SelectItem value="__other__">
                         <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="text-[9px] font-mono">OT</Badge>
+                          <Badge variant="outline" className="text-[9px] font-mono bg-gray-50 text-gray-600 border-gray-200 dark:bg-gray-900/20 dark:text-gray-400 dark:border-gray-700">OT</Badge>
                           Other (Custom Category)
                         </div>
                       </SelectItem>
