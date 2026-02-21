@@ -239,8 +239,8 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
       <CardHeader className="relative overflow-hidden border-b py-3 text-center">
         <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-cyan-500/8 to-blue-400/5" />
         <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-blue-500 via-cyan-400 to-blue-300" />
-        <CardTitle className="relative text-sm font-semibold flex items-center justify-center gap-2">
-          <FileText className="h-3.5 w-3.5 text-blue-500" />
+        <CardTitle className="relative text-base font-semibold flex items-center justify-center gap-2">
+          <FileText className="h-4 w-4 text-blue-500" />
           PSSR Overview
         </CardTitle>
       </CardHeader>
@@ -347,8 +347,8 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
       <CardHeader className="relative overflow-hidden border-b py-3 text-center">
         <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 via-orange-500/8 to-amber-400/5" />
         <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-amber-500 via-orange-400 to-yellow-300" />
-        <CardTitle className="relative text-sm font-semibold flex items-center justify-center gap-2">
-          <Zap className="h-3.5 w-3.5 text-amber-500" />
+        <CardTitle className="relative text-base font-semibold flex items-center justify-center gap-2">
+          <Zap className="h-4 w-4 text-amber-500" />
           Progress & Activities
         </CardTitle>
       </CardHeader>
@@ -528,8 +528,8 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
       <CardHeader className="relative overflow-hidden border-b py-3 text-center">
         <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 via-teal-500/8 to-emerald-400/5" />
         <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-emerald-500 via-teal-400 to-green-300" />
-        <CardTitle className="relative text-sm font-semibold flex items-center justify-center gap-2">
-          <Shield className="h-3.5 w-3.5 text-emerald-500" />
+        <CardTitle className="relative text-base font-semibold flex items-center justify-center gap-2">
+          <Shield className="h-4 w-4 text-emerald-500" />
           Review & Approvals
         </CardTitle>
       </CardHeader>
