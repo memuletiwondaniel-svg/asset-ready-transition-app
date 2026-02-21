@@ -54,6 +54,11 @@ import {
   generateOpsManagerPosition,
   isOpsManagerTitleReady,
 } from '@/utils/opsManagerConfig';
+import {
+  isMtceManager,
+  generateMtceManagerPosition,
+  isMtceManagerTitleReady,
+} from '@/utils/mtceManagerConfig';
 import { AvatarCropDialog } from './AvatarCropDialog';
 
 // Type definitions matching the database schema exactly
@@ -196,7 +201,8 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
     functional_email: false,
     position: '',
     ops_manager_plant: '',
-    ops_manager_sub_area: ''
+    ops_manager_sub_area: '',
+    mtce_manager_plant: ''
   });
 
   // Use categorized roles hook for function -> role hierarchy
@@ -268,6 +274,11 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
     // Ops Manager - uses dedicated plant/sub-area fields
     if (isOpsManager(role)) {
       return generateOpsManagerPosition(formData.ops_manager_plant, formData.ops_manager_sub_area);
+    }
+    
+    // Mtce Manager roles
+    if (isMtceManager(role)) {
+      return generateMtceManagerPosition(role, formData.mtce_manager_plant);
     }
     
     // Site Engineer requires station directly
@@ -345,6 +356,12 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
         return !!plant;
       case 'Ops Manager':
         return isOpsManagerTitleReady(formData.ops_manager_plant, formData.ops_manager_sub_area);
+      case 'Mtce Manager':
+      case 'Mtce Mgr. Elect':
+      case 'Mtce Mgr. Instrument':
+      case 'Mtce Mgr. Static':
+      case 'Mtce Mgr. Rotating':
+        return isMtceManagerTitleReady(formData.mtce_manager_plant);
       case 'Site Engineer':
       case 'Site Engr.':
         return !!station;
@@ -568,6 +585,13 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
         }
       }
 
+      // Parse Mtce Manager position to extract plant
+      let mtcePlant = '';
+      if (isMtceManager(baseRole) && positionOrRole.includes(' - ')) {
+        const afterRole = positionOrRole.replace(new RegExp(`^${baseRole.replace('.', '\\.')}\\s*[-–]\\s*`), '');
+        mtcePlant = afterRole.trim();
+      }
+
       setFormData({
         first_name: user.first_name || '',
         last_name: user.last_name || '',
@@ -595,7 +619,8 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
         functional_email: user.functional_email || false,
         position: user.position || '',
         ops_manager_plant: opsPlant,
-        ops_manager_sub_area: opsSubArea
+        ops_manager_sub_area: opsSubArea,
+        mtce_manager_plant: mtcePlant
       });
       
       setSystemRole(user.roles?.[0] || 'user');
@@ -1118,7 +1143,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
         setDatabaseRoles(prev => [...prev, { value: newRole.name, label: newRole.name }]);
       }
     }
-    setFormData(prev => ({ ...prev, role: value, ops_manager_plant: '', ops_manager_sub_area: '' }));
+    setFormData(prev => ({ ...prev, role: value, ops_manager_plant: '', ops_manager_sub_area: '', mtce_manager_plant: '' }));
   };
 
   const handleDisciplineChange = async (value: string) => {
@@ -1610,6 +1635,27 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                             </div>
                           )}
                         </>
+                      )}
+
+                      {/* Mtce Manager roles - Plant selection */}
+                      {isMtceManager(formData.role) && (
+                        <div>
+                          <Label>Plant *</Label>
+                          <Select
+                            value={formData.mtce_manager_plant}
+                            onValueChange={(value) => setFormData(prev => ({ ...prev, mtce_manager_plant: value }))}
+                            disabled={!editMode}
+                          >
+                            <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
+                              <SelectValue placeholder="Select plant" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-popover border shadow-lg z-50">
+                              {OPS_MANAGER_PLANTS.map(p => (
+                                <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
                       )}
 
                         {roleRequiresStation(formData.role) && (

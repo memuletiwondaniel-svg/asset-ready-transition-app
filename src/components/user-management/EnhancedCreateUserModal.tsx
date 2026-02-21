@@ -31,6 +31,11 @@ import {
   generateOpsManagerPosition,
   isOpsManagerTitleReady,
 } from '@/utils/opsManagerConfig';
+import {
+  isMtceManager,
+  generateMtceManagerPosition,
+  isMtceManagerTitleReady,
+} from '@/utils/mtceManagerConfig';
 import { supabase } from '@/integrations/supabase/client';
 import { useLogActivity } from '@/hooks/useActivityLogs';
 import { AvatarCropDialog } from '@/components/user-management/AvatarCropDialog';
@@ -71,6 +76,7 @@ interface UserFormData {
   authenticator: string;
   ops_manager_plant: string;
   ops_manager_sub_area: string;
+  mtce_manager_plant: string;
 }
 
 interface EnhancedCreateUserModalProps {
@@ -110,6 +116,7 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
     authenticator: 'Daniel Memuletiwon',
     ops_manager_plant: '',
     ops_manager_sub_area: '',
+    mtce_manager_plant: '',
   });
 
   const { data: hubs } = useHubs();
@@ -282,6 +289,11 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
       return generateOpsManagerPosition(formData.ops_manager_plant, formData.ops_manager_sub_area);
     }
     
+    // Mtce Manager roles
+    if (isMtceManager(role)) {
+      return generateMtceManagerPosition(role, formData.mtce_manager_plant);
+    }
+    
     // Site Engineer requires station directly
     if (roleRequiresStation(role) && station) {
       return `Site Engr. - ${station}`;
@@ -343,6 +355,12 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
         return !!plant;
       case 'Ops Manager':
         return isOpsManagerTitleReady(formData.ops_manager_plant, formData.ops_manager_sub_area);
+      case 'Mtce Manager':
+      case 'Mtce Mgr. Elect':
+      case 'Mtce Mgr. Instrument':
+      case 'Mtce Mgr. Static':
+      case 'Mtce Mgr. Rotating':
+        return isMtceManagerTitleReady(formData.mtce_manager_plant);
       case 'Site Engr.':
       case 'Site Engineer':
         return !!station;
@@ -411,6 +429,7 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
       field: '', 
       station: '',
       hub: '',
+      mtce_manager_plant: '',
       portfolio: '',
       commission: '',
       ops_manager_plant: '',
@@ -723,6 +742,7 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
       authenticator: 'Daniel Memuletiwon',
       ops_manager_plant: '',
       ops_manager_sub_area: '',
+      mtce_manager_plant: '',
     });
     setEmailError('');
     clearImage();
@@ -1068,8 +1088,28 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
                       </SelectContent>
                     </Select>
                   </div>
-                )}
+            )}
               </>
+            )}
+
+            {/* Mtce Manager roles - Plant selection */}
+            {isMtceManager(formData.role) && (
+              <div>
+                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Plant *</Label>
+                <Select
+                  value={formData.mtce_manager_plant}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, mtce_manager_plant: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select plant" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover border shadow-lg z-50">
+                    {OPS_MANAGER_PLANTS.map(p => (
+                      <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             )}
 
             {/* Site Engr. - Station directly */}
