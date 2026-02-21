@@ -13,6 +13,7 @@ import { getUrgencyBackground, getUrgencyGlow } from '@/utils/assetColors';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { usePSSRKeyActivities } from '@/hooks/usePSSRKeyActivities';
 
 interface PSSRReviewsPanelProps {
   userId: string;
@@ -273,12 +274,75 @@ export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({
           const task = userTasks.find(t => t.id === taskId);
           const pssrId = task?.metadata?.pssr_id;
           if (pssrId) {
+            // Get PSSR details for activity creation
+            const { data: pssrData } = await supabase
+              .from('pssrs')
+              .select('id, title, user_id')
+              .eq('id', pssrId)
+              .single();
+
             const { error } = await supabase
               .from('pssrs')
               .update({ status: 'UNDER_REVIEW' })
               .eq('id', pssrId);
             if (error) {
               toast({ title: 'Failed to update PSSR status', description: error.message, variant: 'destructive' });
+            }
+
+            // Initialize key activities and schedule tasks for PSSR Lead
+            if (pssrData) {
+              const DEFAULT_ACTIVITIES = [
+                { activity_type: 'kickoff', label: 'PSSR Kick-off', display_order: 1 },
+                { activity_type: 'walkdown', label: 'PSSR Walkdown', display_order: 2 },
+                { activity_type: 'sof_meeting', label: 'SoF Meeting', display_order: 3 },
+              ];
+
+              // Check if activities already exist
+              const { data: existing } = await supabase
+                .from('pssr_key_activities')
+                .select('id')
+                .eq('pssr_id', pssrId)
+                .limit(1);
+
+              if (!existing || existing.length === 0) {
+                const { data: inserted } = await supabase
+                  .from('pssr_key_activities')
+                  .insert(DEFAULT_ACTIVITIES.map(a => ({ pssr_id: pssrId, ...a })))
+                  .select('id, label, activity_type');
+
+                // Create schedule tasks for the PSSR Lead (the user who created the PSSR)
+                if (inserted && pssrData.user_id) {
+                  const tasks = inserted.map(act => ({
+                    user_id: pssrData.user_id,
+                    title: `Schedule ${act.label}`,
+                    description: `Schedule the ${act.label} for PSSR: ${pssrData.title}`,
+                    priority: 'High',
+                    type: 'action',
+                    status: 'pending',
+                    metadata: {
+                      pssr_id: pssrId,
+                      activity_id: act.id,
+                      activity_type: act.activity_type,
+                      module: 'pssr',
+                    },
+                  }));
+
+                  const { data: taskData } = await supabase
+                    .from('user_tasks')
+                    .insert(tasks)
+                    .select('id, metadata');
+
+                  if (taskData) {
+                    await Promise.all(taskData.map(t => {
+                      const meta = t.metadata as Record<string, any>;
+                      return supabase
+                        .from('pssr_key_activities')
+                        .update({ task_id: t.id })
+                        .eq('id', meta.activity_id);
+                    }));
+                  }
+                }
+              }
             }
           }
           updateTaskStatus(taskId, 'completed');

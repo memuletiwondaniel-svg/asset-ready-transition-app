@@ -5919,6 +5919,71 @@ export type Database = {
           },
         ]
       }
+      pssr_key_activities: {
+        Row: {
+          activity_type: string
+          completed_at: string | null
+          created_at: string
+          display_order: number
+          id: string
+          label: string
+          location: string | null
+          notes: string | null
+          outlook_event_id: string | null
+          pssr_id: string
+          scheduled_by: string | null
+          scheduled_date: string | null
+          scheduled_end_date: string | null
+          status: string
+          task_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          activity_type: string
+          completed_at?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          label: string
+          location?: string | null
+          notes?: string | null
+          outlook_event_id?: string | null
+          pssr_id: string
+          scheduled_by?: string | null
+          scheduled_date?: string | null
+          scheduled_end_date?: string | null
+          status?: string
+          task_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          activity_type?: string
+          completed_at?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          label?: string
+          location?: string | null
+          notes?: string | null
+          outlook_event_id?: string | null
+          pssr_id?: string
+          scheduled_by?: string | null
+          scheduled_date?: string | null
+          scheduled_end_date?: string | null
+          status?: string
+          task_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pssr_key_activities_pssr_id_fkey"
+            columns: ["pssr_id"]
+            isOneToOne: false
+            referencedRelation: "pssrs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pssr_links: {
         Row: {
           created_at: string

@@ -34,6 +34,8 @@ import { usePSSRDetails } from '@/hooks/usePSSRDetails';
 import { usePSSRCategoryProgress } from '@/hooks/usePSSRCategoryProgress';
 import { usePSSRApprovers } from '@/hooks/usePSSRApprovers';
 import { usePSSRPriorityActions } from '@/hooks/usePSSRPriorityActions';
+import { usePSSRKeyActivities, PSSRKeyActivity } from '@/hooks/usePSSRKeyActivities';
+import { ScheduleActivitySheet } from './ScheduleActivitySheet';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
@@ -94,6 +96,8 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
   const { data: categoryProgress, isLoading: catLoading } = usePSSRCategoryProgress(pssrId);
   const { approvers: pssrApprovers, isLoading: approversLoading } = usePSSRApprovers(pssrId);
   const { actions, stats: actionStats } = usePSSRPriorityActions(pssrId);
+  const { activities, scheduleActivity } = usePSSRKeyActivities(pssrId);
+  const [selectedActivity, setSelectedActivity] = useState<PSSRKeyActivity | null>(null);
 
   // Fetch SoF approvers
   const { data: sofApprovers } = useQuery({
@@ -495,35 +499,66 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
                 Key Activities
               </p>
               <div className="space-y-2">
-                {[
-                  { label: 'PSSR Kick-off', icon: FileText, done: !!pssr?.created_at, date: pssr?.created_at },
-                  { label: 'PSSR Walkdown', icon: Eye, done: pssr?.status === 'UNDER_REVIEW' || pssr?.status === 'COMPLETED', date: null },
-                  { label: 'SoF Meeting', icon: CheckCircle2, done: pssr?.status === 'COMPLETED', date: null },
-                ].map((activity, idx) => (
-                  <div key={idx} className="flex items-center gap-2 p-2 rounded-lg bg-muted/20">
-                    <div className={cn(
-                      'w-6 h-6 rounded-full flex items-center justify-center',
-                      activity.done ? 'bg-emerald-500/10' : 'bg-muted'
-                    )}>
-                      {activity.done ? (
-                        <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+                {activities.length > 0 ? (
+                  activities.map((activity) => (
+                    <div
+                      key={activity.id}
+                      className="flex items-center gap-2 p-2 rounded-lg bg-muted/20 cursor-pointer hover:bg-muted/40 transition-colors"
+                      onClick={() => setSelectedActivity(activity)}
+                    >
+                      <div className={cn(
+                        'w-6 h-6 rounded-full flex items-center justify-center',
+                        activity.status === 'scheduled' || activity.status === 'completed'
+                          ? 'bg-emerald-500/10'
+                          : 'bg-muted'
+                      )}>
+                        {activity.status === 'scheduled' || activity.status === 'completed' ? (
+                          <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+                        ) : (
+                          <Clock className="h-3 w-3 text-muted-foreground" />
+                        )}
+                      </div>
+                      <span className="text-xs font-medium flex-1">{activity.label}</span>
+                      {activity.scheduled_date ? (
+                        <span className="text-[10px] text-muted-foreground">
+                          {format(new Date(activity.scheduled_date), 'dd MMM yyyy')}
+                        </span>
                       ) : (
-                        <Clock className="h-3 w-3 text-muted-foreground" />
+                        <span className="text-[10px] text-muted-foreground/60 italic">Not scheduled</span>
                       )}
                     </div>
-                    <span className="text-xs font-medium flex-1">{activity.label}</span>
-                    {activity.date && (
-                      <span className="text-[10px] text-muted-foreground">
-                        {format(new Date(activity.date), 'dd MMM yyyy')}
-                      </span>
-                    )}
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  // Fallback for PSSRs without activities yet (pre-UNDER_REVIEW)
+                  [
+                    { label: 'PSSR Kick-off', done: false },
+                    { label: 'PSSR Walkdown', done: false },
+                    { label: 'SoF Meeting', done: false },
+                  ].map((activity, idx) => (
+                    <div key={idx} className="flex items-center gap-2 p-2 rounded-lg bg-muted/20">
+                      <div className="w-6 h-6 rounded-full flex items-center justify-center bg-muted">
+                        <Clock className="h-3 w-3 text-muted-foreground" />
+                      </div>
+                      <span className="text-xs font-medium flex-1 text-muted-foreground">{activity.label}</span>
+                      <span className="text-[10px] text-muted-foreground/60 italic">Pending</span>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>
         </ScrollArea>
       </CardContent>
+
+      <ScheduleActivitySheet
+        open={!!selectedActivity}
+        onOpenChange={(open) => !open && setSelectedActivity(null)}
+        activity={selectedActivity}
+        pssrTitle={pssr?.title}
+        onSchedule={async (data) => {
+          await scheduleActivity.mutateAsync(data);
+        }}
+      />
     </Card>
   );
 
