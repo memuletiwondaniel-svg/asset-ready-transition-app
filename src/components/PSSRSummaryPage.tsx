@@ -268,7 +268,7 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
       projectId: record.pssr_id,
       projectName: record.title || record.asset,
       asset: record.station_name || record.field_name || record.cs_location || record.plant || '',
-      status: record.status === 'DRAFT' ? 'Draft' : record.status === 'UNDER_REVIEW' ? 'Under Review' : record.status === 'COMPLETED' ? 'Completed' : record.status,
+      status: record.status === 'DRAFT' ? 'Draft' : record.status === 'PENDING_LEAD_REVIEW' ? 'Pending Lead Review' : record.status === 'UNDER_REVIEW' ? 'Under Review' : record.status === 'COMPLETED' ? 'Completed' : record.status,
       priority: 'Medium',
       progress: record.progress,
       created: record.created_at,
@@ -589,6 +589,8 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
         return <CheckCircle className="h-4 w-4 text-success" />;
       case 'Under Review':
         return <Clock className="h-4 w-4 text-warning" />;
+      case 'Pending Lead Review':
+        return <Clock className="h-4 w-4 text-blue-500" />;
       case 'Draft':
         return <AlertTriangle className="h-4 w-4 text-muted-foreground" />;
       default:
