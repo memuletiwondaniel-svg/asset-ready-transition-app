@@ -97,6 +97,71 @@ export const PSSRDetailOverlay: React.FC<PSSRDetailOverlayProps> = ({
     enabled: !!pssrData?.plant_id,
   });
 
+  // Fetch PSSR approvers
+  const { data: pssrApprovers } = useQuery({
+    queryKey: ['pssr-approvers', pssrId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('pssr_approvers')
+        .select('*')
+        .eq('pssr_id', pssrId)
+        .order('approver_level', { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!pssrId,
+  });
+
+  // Auto-populate PSSR approvers if they have null user_ids
+  const autoPopulatePssrApprovers = useMutation({
+    mutationFn: async () => {
+      const unresolved = pssrApprovers?.filter(a => !a.user_id) || [];
+      if (unresolved.length === 0) return;
+
+      const plantName = plantData?.name || '';
+
+      for (const approver of unresolved) {
+        const role = approver.approver_role || '';
+        let matched: any = null;
+
+        // Try plant-specific position match first
+        if (plantName) {
+          const { data } = await supabase
+            .from('profiles')
+            .select('user_id, full_name, avatar_url')
+            .eq('is_active', true)
+            .ilike('position', `%${role}%${plantName}%`)
+            .limit(1);
+          if (data && data.length > 0) matched = data[0];
+        }
+
+        // Fallback: match role keyword, prefer Asset over Projects
+        if (!matched) {
+          const { data } = await supabase
+            .from('profiles')
+            .select('user_id, full_name, avatar_url, position')
+            .eq('is_active', true)
+            .ilike('position', `%${role}%`)
+            .limit(10);
+          if (data && data.length > 0) {
+            // Prefer Asset positions over Projects
+            matched = data.find(p => p.position?.includes('Asset')) || data[0];
+          }
+        }
+
+        if (matched) {
+          await supabase
+            .from('pssr_approvers')
+            .update({ user_id: matched.user_id, approver_name: matched.full_name })
+            .eq('id', approver.id);
+        }
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pssr-approvers', pssrId] });
+    },
+  });
+
   // Auto-populate SoF approvers if certificate exists but approvers are empty
   const autoPopulateSofApprovers = useMutation({
     mutationFn: async () => {
@@ -174,6 +239,13 @@ export const PSSRDetailOverlay: React.FC<PSSRDetailOverlayProps> = ({
       autoPopulateSofApprovers.mutate();
     }
   }, [certificate, sofApprovers, sofLoading, sofApproversLoading]);
+
+  // Trigger auto-populate for PSSR approvers with null user_ids
+  useEffect(() => {
+    if (pssrApprovers && pssrApprovers.some(a => !a.user_id) && plantData) {
+      autoPopulatePssrApprovers.mutate();
+    }
+  }, [pssrApprovers, plantData]);
 
   const renderContent = () => {
     switch (activeTab) {
