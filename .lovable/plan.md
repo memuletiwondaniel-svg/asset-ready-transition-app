@@ -1,45 +1,50 @@
 
 
 ## Problem
-When reopening a saved draft PSSR and navigating back to Step 1:
-1. The previously selected PSSR reason card is not highlighted
-2. Clicking "Next" shows "Please select a PSSR reason" even though one was already selected
+PSSR and SoF Approver roles show "0 roles" on Step 4 because the draft loading logic prematurely sets `configLoaded: true` without actually loading the approver role IDs.
 
 ## Root Cause
-In the draft loading logic (line 186 of `CreatePSSRWizard.tsx`):
+In `CreatePSSRWizard.tsx` line 229, when loading a draft:
+
 ```tsx
-const categoryId = matchedReason?.category || '';
+configLoaded: dbItemIds.length > 0 || customItemIds.length > 0,
 ```
 
-The `category` column in the `pssr_reasons` table is always `null`, so this resolves to an empty string `''`. But the reason cards use the reason's UUID (`reason.id`) for selection matching. So the wizard state ends up with `categoryId: ''` instead of the actual reason ID, and the ref (`categoryIdRef`) also gets set to empty.
+If the draft has saved checklist items, `configLoaded` becomes `true`. This prevents the config loading effect (line 253) from ever firing, since it checks `!wizardState.configLoaded`. But the draft loading never sets `selectedPssrApproverRoleIds` or `selectedSofApproverRoleIds` -- those stay as empty arrays `[]`.
 
-Meanwhile, when a user manually selects a reason in Step 1, `onCategoryChange(reason.id)` correctly sets `categoryId` to the reason's UUID. The draft loading path uses the wrong field.
+So the system thinks configuration is already loaded, but the approver role IDs were never fetched.
 
 ## Fix
 
 **File: `src/components/pssr/CreatePSSRWizard.tsx`**
 
-Change the draft loading to use `draft.reason_id` directly as the `categoryId` (since that is the value the Step 1 cards match against), and also synchronize the `categoryIdRef`:
+During draft loading (after line 216), also fetch the approver role IDs from `pssr_reason_configuration` and include them in the restored state:
 
-**Line 186** - Replace:
 ```tsx
-const categoryId = matchedReason?.category || '';
-```
-With:
-```tsx
-const categoryId = draft.reason_id || '';
-```
+// After loading custom items, also load approver config
+const { data: config } = await supabase
+  .from('pssr_reason_configuration')
+  .select('pssr_approver_role_ids, sof_approver_role_ids')
+  .eq('reason_id', draft.reason_id)
+  .maybeSingle();
 
-**After line 230 (after `setWizardState`)** - Add ref sync:
-```tsx
-categoryIdRef.current = categoryId;
+const pssrApproverIds = config?.pssr_approver_role_ids || [];
+const sofApproverIds = config?.sof_approver_role_ids || [];
 ```
 
-This ensures that when a draft is reopened:
-- `wizardState.categoryId` holds the reason's UUID (matching the card comparison logic)
-- `categoryIdRef.current` is also populated as a backup
-- The reason card is correctly highlighted on Step 1
-- "Next" validation passes because `categoryId` is no longer empty
+Then in the `setWizardState` call (lines 217-230), add:
+
+```tsx
+selectedPssrApproverRoleIds: pssrApproverIds,
+selectedSofApproverRoleIds: sofApproverIds,
+templatePssrApproverRoleIds: pssrApproverIds,
+templateSofApproverRoleIds: sofApproverIds,
+configLoaded: true,
+```
+
+This way `configLoaded: true` is justified because ALL config data (checklist IDs and approver role IDs) is fully restored.
 
 ## Summary
-A single-line fix in the draft loading logic plus a ref sync line. The `category` column was always null, so the code was effectively setting `categoryId` to an empty string when restoring drafts.
+
+Single file change in `src/components/pssr/CreatePSSRWizard.tsx`: add approver role ID fetching to the draft loading logic so the data is available by the time the user reaches Step 4.
+
