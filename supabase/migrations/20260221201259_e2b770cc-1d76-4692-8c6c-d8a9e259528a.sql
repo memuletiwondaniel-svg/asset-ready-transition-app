@@ -1,0 +1,1 @@
+UPDATE pssrs SET status = 'DRAFT', updated_at = now() WHERE pssr_id = 'PSSR-BNGL-001';
