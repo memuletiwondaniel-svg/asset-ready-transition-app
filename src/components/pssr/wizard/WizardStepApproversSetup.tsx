@@ -69,7 +69,7 @@ const WizardStepApproversSetup: React.FC<WizardStepApproversSetupProps> = ({
       <div className="border rounded-lg p-4 space-y-3">
         <div className="flex items-center gap-2">
           <UserCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-          <Label className="font-medium text-sm">PSSR Lead</Label>
+          <Label className="font-medium text-sm">PSSR Lead <span className="text-destructive">*</span></Label>
         </div>
         <p className="text-xs text-muted-foreground/70">
           Usually from Tech Safety, Asset, Operations or Maintenance. Search by name or role.

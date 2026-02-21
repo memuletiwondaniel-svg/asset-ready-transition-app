@@ -145,7 +145,8 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
               <div key={roleId} className="border rounded-lg p-3 bg-muted/50 dark:bg-muted/30">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm">{role?.name || 'Unknown'}</span>
+                    <div className="w-1.5 h-1.5 rounded-full bg-primary/60" />
+                    <span className="font-semibold text-sm tracking-tight text-foreground/90">{role?.name || 'Unknown'}</span>
                   </div>
                   <button
                     type="button"
