@@ -119,12 +119,18 @@ export const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
       const roleIds = roles.map(r => r.id);
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('user_id, full_name, avatar_url, role')
+        .select('user_id, full_name, avatar_url, role, position')
         .in('role', roleIds)
         .eq('is_active', true)
-        .limit(5);
+        .limit(10);
       
-      return (profiles || []).map(p => ({
+      // PSSR: only Asset-level staff, exclude Project TAs
+      const filtered = (profiles || []).filter(p => {
+        const pos = (p.position || '').toLowerCase();
+        return !pos.includes('project');
+      });
+      
+      return filtered.map(p => ({
         user_id: p.user_id,
         full_name: p.full_name || '',
         avatar_url: p.avatar_url,
@@ -152,14 +158,20 @@ export const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
         if (roles && roles.length > 0) {
           const { data: profiles } = await supabase
             .from('profiles')
-            .select('user_id, full_name, avatar_url')
+            .select('user_id, full_name, avatar_url, position')
             .in('role', roles.map(r => r.id))
             .eq('is_active', true)
-            .limit(3);
+            .limit(10);
+          
+          // PSSR: only Asset-level staff, exclude Project TAs
+          const filtered = (profiles || []).filter(p => {
+            const pos = (p.position || '').toLowerCase();
+            return !pos.includes('project');
+          });
           
           results.push({
             roleName: roles[0].name,
-            users: (profiles || []).map(p => ({
+            users: filtered.map(p => ({
               user_id: p.user_id,
               full_name: p.full_name || '',
               avatar_url: p.avatar_url,
