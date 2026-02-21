@@ -56,7 +56,8 @@ interface WizardState {
   configLoaded: boolean;
   configLoading: boolean;
   
-  // Step 4: Approvers
+  // Step 4: Approvers & PSSR Lead
+  pssrLeadId: string;
   selectedPssrApproverRoleIds: string[];
   selectedSofApproverRoleIds: string[];
   templatePssrApproverRoleIds: string[];
@@ -99,6 +100,7 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
     templateChecklistItemIds: [],
     configLoaded: false,
     configLoading: false,
+    pssrLeadId: '',
     selectedPssrApproverRoleIds: [],
     selectedSofApproverRoleIds: [],
     templatePssrApproverRoleIds: [],
@@ -144,6 +146,7 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
       templateChecklistItemIds: [],
       configLoaded: false,
       configLoading: false,
+      pssrLeadId: '',
       selectedPssrApproverRoleIds: [],
       selectedSofApproverRoleIds: [],
       templatePssrApproverRoleIds: [],
@@ -178,6 +181,7 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
           plantId: draft.plant_id || '',
           fieldId: draft.field_id || '',
           stationId: draft.station_id || '',
+          pssrLeadId: (draft as any).pssr_lead_id || '',
         }));
 
         // Start at step 2 if reason is already set, otherwise step 1
@@ -281,16 +285,6 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
       const plantValue = selectedPlant?.name || '';
       const csLocationValue = selectedStation?.name || '';
 
-      let pssrLeadId: string | null = null;
-      if (wizardState.reasonId) {
-        const { data: config } = await supabase
-          .from('pssr_reason_configuration')
-          .select('default_pssr_lead_id')
-          .eq('reason_id', wizardState.reasonId)
-          .maybeSingle();
-        pssrLeadId = config?.default_pssr_lead_id || null;
-      }
-
       const draftPayload = {
         reason: selectedReason?.name || '',
         reason_id: wizardState.reasonId || null,
@@ -303,7 +297,7 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
         field_id: wizardState.fieldId || null,
         station_id: wizardState.stationId || null,
         cs_location: csLocationValue || null,
-        pssr_lead_id: pssrLeadId,
+        pssr_lead_id: wizardState.pssrLeadId || null,
       };
 
       if (draftPssrId) {
@@ -401,17 +395,6 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
       const plantValue = selectedPlant?.name || '';
       const csLocationValue = selectedStation?.name || '';
 
-      // Get default PSSR lead from reason configuration
-      let pssrLeadId: string | null = null;
-      if (wizardState.reasonId) {
-        const { data: config } = await supabase
-          .from('pssr_reason_configuration')
-          .select('default_pssr_lead_id')
-          .eq('reason_id', wizardState.reasonId)
-          .maybeSingle();
-        pssrLeadId = config?.default_pssr_lead_id || null;
-      }
-
       const pssrPayload = {
         reason: selectedReason?.name || '',
         reason_id: wizardState.reasonId || null,
@@ -424,7 +407,7 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
         field_id: wizardState.fieldId || null,
         station_id: wizardState.stationId || null,
         cs_location: csLocationValue || null,
-        pssr_lead_id: pssrLeadId,
+        pssr_lead_id: wizardState.pssrLeadId || null,
       };
 
       let newPSSR: any;
@@ -749,6 +732,8 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
           {/* Step 4: Approvers */}
           {currentStep === 4 && (
             <WizardStepApproversSetup
+              pssrLeadId={wizardState.pssrLeadId}
+              onPssrLeadChange={(userId) => setWizardState(prev => ({ ...prev, pssrLeadId: userId }))}
               selectedPssrApproverRoleIds={wizardState.selectedPssrApproverRoleIds}
               onPssrApproverToggle={(roleId) => {
                 setWizardState(prev => ({
