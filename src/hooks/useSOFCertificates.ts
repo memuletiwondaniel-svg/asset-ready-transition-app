@@ -33,33 +33,23 @@ export interface SOFApprover {
 }
 
 // Certificate text templates
-const PROCESS_SAFETY_INCIDENT_TEXT = `This Statement of Fitness confirms that following a process safety incidence at the above-referenced facility:
-
-a. The cause(s) of the incident are understood through the incident investigation process.
+const PROCESS_SAFETY_INCIDENT_TEXT = `a. The cause(s) of the incident are understood through the incident investigation process.
 b. Corrective actions required for restart are completed and address the incident causes. This could include any or all of repairs, alterations or modifications, required monitoring, temporary equipment, mitigations.
 c. The Exceedance Monitoring report has been reviewed to verify no integrity limits (pressure, temperature) have been exceeded for the event leading to the incident.
 d. A review has been conducted to assess implications for similar equipment or barriers on the asset
 e. The Hazards and Effects Register has been reviewed and updated, as necessary, as it applies to this incident
 f. An Incident report is available, and other data and documentation are attached.
 g. All requirements specified in AI-PSM Application Manual Item 7.1 have been met where applicable (exceptions are noted at the end of the concurrence form):
-h. A Pre-Start-Up Safety Review (PSSR) has been completed and all priority 1 actions have been completed
+h. A Pre-Start-Up Safety Review (PSSR) has been completed and all priority 1 actions have been completed`;
 
-The Facility therefore meets the criteria necessary to (re-) introduce hydrocarbons, process fluids or hazardous energy`;
-
-const STANDARD_SOF_TEXT = `This Statement of Fitness (SoF) certificate confirms that for the above referenced facility:
-
-Requirement 7 of the Asset Integrity Process Safety Management (AIPSM) Manual has been met:
-
-01. Process safety risks have been identified and documented and are either managed to ALARP or appropriately being managed to ALARP through application of HEMP.
+const STANDARD_SOF_TEXT = `01. Process safety risks have been identified and documented and are either managed to ALARP or appropriately being managed to ALARP through application of HEMP.
 02. Employees or contractors executing Safety Critical Activities are competent and fit to work.
 03. Safety Critical Equipment (SCE) meets its Technical Integrity requirements.
 04. Design and construction of Asset modifications meet the design and engineering requirements
 05. The Process Safety Basic Requirements (PSBR) are met.
 06. Procedures are in place to operate Safety Critical Equipment (SCE) within its Operational Limits.
 07. Modifications, if made, are complete and have been authorized as specified by the Management of Change (MoC) Manual.
-08. A Pre-Start-Up Safety Review (PSSR) has been completed and all priority 1 actions have been completed
-
-The Facility therefore meets the criteria necessary to (re-) introduce hydrocarbons, process fluids or hazardous energy`;
+08. A Pre-Start-Up Safety Review (PSSR) has been completed and all priority 1 actions have been completed`;
 
 export const getCertificateText = (pssrReason: string): string => {
   const normalizedReason = pssrReason.toLowerCase();
