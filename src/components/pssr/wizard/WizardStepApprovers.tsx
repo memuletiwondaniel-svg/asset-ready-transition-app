@@ -1,10 +1,13 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Users, CheckCircle2, X, MapPin } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Users, X, MapPin, Plus, Check } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { useRoles } from '@/hooks/useRoles';
 import { usePSSRAllowedApproverRoles } from '@/hooks/usePSSRAllowedApproverRoles';
 import { useProfileUsers } from '@/hooks/useProfileUsers';
@@ -24,6 +27,7 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
   onRoleToggle,
   plantName,
 }) => {
+  const [addPopoverOpen, setAddPopoverOpen] = useState(false);
   const { roles = [], isLoading: rolesLoading } = useRoles();
   const { allowedRoleIds, sofAllowedRoleIds, isLoading: allowedLoading } = usePSSRAllowedApproverRoles();
   const { data: profileUsers = [] } = useProfileUsers();
@@ -121,6 +125,10 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
     return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
   };
 
+  const availableRoles = filteredRoles.filter(
+    role => !selectedRoleIds.includes(role.id) && !disabledRoleIds.includes(role.id)
+  );
+
   return (
     <div className="space-y-4">
       {/* Description only - no duplicate title */}
@@ -134,7 +142,7 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
             const people = resolvedPeopleByRole[roleId] || [];
 
             return (
-              <div key={roleId} className="border rounded-lg p-3 bg-muted/20">
+              <div key={roleId} className="border rounded-lg p-3 bg-muted/50 dark:bg-muted/30">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <span className="font-medium text-sm">{role?.name || 'Unknown'}</span>
@@ -185,45 +193,40 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
         </div>
       )}
 
-      {/* Available roles list */}
-      {(() => {
-        const availableRoles = filteredRoles.filter(role => !selectedRoleIds.includes(role.id) && !disabledRoleIds.includes(role.id));
-        
-        if (availableRoles.length === 0 && selectedRoleIds.length > 0) {
-          return null;
-        }
-
-        if (availableRoles.length === 0) {
-          return (
-            <div className="border rounded-lg p-4 text-center text-muted-foreground">
-              <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p>No roles available.</p>
-            </div>
-          );
-        }
-
-        return (
-          <ScrollArea className="h-[200px] border rounded-lg p-3">
-            <div className="space-y-1.5">
-              {availableRoles.map((role) => (
-                <div
-                  key={role.id}
-                  className="flex items-center gap-3 p-2.5 rounded-lg border border-border cursor-pointer hover:bg-accent/50 hover:border-accent transition-all"
-                  onClick={() => onRoleToggle(role.id)}
-                >
-                  <Checkbox
-                    checked={false}
-                    className="pointer-events-none"
-                  />
-                  <div className="flex-1">
-                    <div className="font-medium text-sm">{role.name}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </ScrollArea>
-        );
-      })()}
+      {/* Add Approver Button */}
+      {availableRoles.length > 0 && (
+        <Popover open={addPopoverOpen} onOpenChange={setAddPopoverOpen}>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className="w-full border-dashed text-muted-foreground hover:text-foreground">
+              <Plus className="h-3.5 w-3.5 mr-1.5" />
+              Add Approver
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[300px] p-0" align="start">
+            <Command>
+              <CommandInput placeholder="Search roles..." />
+              <CommandList>
+                <CommandEmpty>No roles found.</CommandEmpty>
+                <CommandGroup className="max-h-[200px] overflow-y-auto">
+                  {availableRoles.map((role) => (
+                    <CommandItem
+                      key={role.id}
+                      value={role.name}
+                      onSelect={() => {
+                        onRoleToggle(role.id);
+                        setAddPopoverOpen(false);
+                      }}
+                    >
+                      <Users className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
+                      <span className="text-sm">{role.name}</span>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+      )}
     </div>
   );
 };
