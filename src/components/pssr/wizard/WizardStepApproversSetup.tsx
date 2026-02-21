@@ -64,16 +64,6 @@ const WizardStepApproversSetup: React.FC<WizardStepApproversSetupProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="text-center mb-4">
-        <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
-          <Users className="h-7 w-7 text-primary" />
-        </div>
-        <h3 className="text-lg font-semibold">Approval Setup</h3>
-        <p className="text-sm text-muted-foreground">
-          Configure PSSR and Statement of Fitness (SoF) approvers
-        </p>
-      </div>
 
       {/* PSSR Lead Selector */}
       <div className="border rounded-lg p-4 space-y-3">
