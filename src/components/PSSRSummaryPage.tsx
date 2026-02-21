@@ -269,7 +269,14 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
       projectId: record.pssr_id,
       projectName: record.title || record.asset,
       asset: record.station_name || record.field_name || record.cs_location || record.plant || '',
-      status: record.status === 'DRAFT' ? 'Draft' : record.status === 'PENDING_LEAD_REVIEW' ? 'Pending Lead Review' : record.status === 'UNDER_REVIEW' ? 'Under Review' : record.status === 'COMPLETED' ? 'Completed' : record.status,
+      status: (() => {
+        const s = (record.status || '').toUpperCase().replace(/[\s_]+/g, '_');
+        if (s === 'DRAFT') return 'Draft';
+        if (s === 'PENDING_LEAD_REVIEW') return 'Pending Lead Review';
+        if (s === 'UNDER_REVIEW') return 'Under Review';
+        if (s === 'COMPLETED') return 'Completed';
+        return record.status;
+      })(),
       priority: 'Medium',
       progress: record.progress,
       created: record.created_at,
