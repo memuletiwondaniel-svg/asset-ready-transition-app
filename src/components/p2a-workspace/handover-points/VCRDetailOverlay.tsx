@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 import { 
   Target, 
   Layers, 
@@ -16,8 +16,14 @@ import {
   BookOpen,
   Settings2,
   Trash2,
+  X,
+  MessageSquare,
+  Award,
+  Medal,
+  Package,
+  FolderOpen,
 } from 'lucide-react';
-import { P2AHandoverPoint, useP2AHandoverPoints } from '../hooks/useP2AHandoverPoints';
+import { P2AHandoverPoint } from '../hooks/useP2AHandoverPoints';
 import { useVCRPrerequisites } from '../hooks/useVCRPrerequisites';
 import { useHandoverPointSystems } from '../hooks/useP2AHandoverPoints';
 import { VCROverviewTab } from './VCROverviewTab';
@@ -27,10 +33,12 @@ import { VCRSystemsTab } from './VCRSystemsTab';
 import { VCRTrainingTab } from './VCRTrainingTab';
 import { VCRProceduresTab } from './VCRProceduresTab';
 import { VCRDocumentationTab } from './VCRDocumentationTab';
+import { VCRCMMSTab } from './VCRCMMSTab';
+import { VCRRegistersTab } from './VCRRegistersTab';
 import { DeleteVCRDialog } from './DeleteVCRDialog';
 import { cn } from '@/lib/utils';
 
-// Placeholder components for new tabs
+// Placeholder for tabs not yet implemented
 const PlaceholderTab: React.FC<{ title: string; icon: React.ReactNode }> = ({ title, icon }) => (
   <Card>
     <CardContent className="p-8 text-center">
@@ -66,6 +74,27 @@ const getStatusConfig = (status: string) => {
   }
 };
 
+// Core navigation tabs (upper section)
+const coreTabs = [
+  { id: 'overview', label: 'VCR Overview', icon: BarChart3 },
+  { id: 'qualifications', label: 'Qualifications', icon: AlertTriangle },
+  { id: 'comments', label: 'Comments', icon: MessageSquare },
+  { id: 'sof', label: 'SoF Certificate', icon: Award },
+  { id: 'pac', label: 'PAC Certificate', icon: Medal },
+];
+
+// Building blocks tabs (lower section)
+const buildingBlockTabs = [
+  { id: 'systems', label: 'Systems', icon: Layers },
+  { id: 'checklist', label: 'Checklist', icon: ClipboardList },
+  { id: 'training', label: 'Training', icon: GraduationCap },
+  { id: 'procedures', label: 'Procedures', icon: BookOpen },
+  { id: 'documentation', label: 'Documentation', icon: FileText },
+  { id: 'cmms', label: 'CMMS', icon: Settings2 },
+  { id: 'spares', label: 'Spares', icon: Package },
+  { id: 'registers', label: 'Operational Registers', icon: FolderOpen },
+];
+
 export const VCRDetailOverlay: React.FC<VCRDetailOverlayProps> = ({
   handoverPoint,
   open,
@@ -91,119 +120,137 @@ export const VCRDetailOverlay: React.FC<VCRDetailOverlayProps> = ({
     }
   };
 
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'overview':
+        return <VCROverviewTab handoverPoint={handoverPoint} onNavigateToTab={handleTabChange} />;
+      case 'systems':
+        return <VCRSystemsTab handoverPoint={handoverPoint} />;
+      case 'checklist':
+        return <VCRChecklistTab handoverPoint={handoverPoint} />;
+      case 'training':
+        return <VCRTrainingTab handoverPoint={handoverPoint} />;
+      case 'documentation':
+        return <VCRDocumentationTab handoverPoint={handoverPoint} />;
+      case 'procedures':
+        return <VCRProceduresTab handoverPoint={handoverPoint} />;
+      case 'cmms':
+        return <VCRCMMSTab handoverPoint={handoverPoint} />;
+      case 'qualifications':
+        return <VCRQualificationsTab handoverPoint={handoverPoint} />;
+      case 'registers':
+        return <VCRRegistersTab handoverPoint={handoverPoint} />;
+      case 'comments':
+        return <PlaceholderTab title="Comments" icon={<MessageSquare className="w-8 h-8 text-blue-500" />} />;
+      case 'sof':
+        return <PlaceholderTab title="SoF Certificate" icon={<Award className="w-8 h-8 text-amber-500" />} />;
+      case 'pac':
+        return <PlaceholderTab title="PAC Certificate" icon={<Medal className="w-8 h-8 text-emerald-500" />} />;
+      case 'spares':
+        return <PlaceholderTab title="Spares" icon={<Package className="w-8 h-8 text-orange-500" />} />;
+      default:
+        return <VCROverviewTab handoverPoint={handoverPoint} onNavigateToTab={handleTabChange} />;
+    }
+  };
+
+  const NavButton: React.FC<{ id: string; label: string; icon: React.ComponentType<any> }> = ({ id, label, icon: Icon }) => (
+    <button
+      onClick={() => handleTabChange(id)}
+      className={cn(
+        "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors text-left",
+        activeTab === id
+          ? "bg-primary text-primary-foreground font-medium"
+          : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+      )}
+    >
+      <Icon className="w-4 h-4 shrink-0" />
+      <span className="truncate">{label}</span>
+    </button>
+  );
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl h-[85vh] overflow-hidden flex flex-col [&>button]:hidden">
-        <DialogHeader className="pb-4 border-b shrink-0">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-500/10 to-blue-500/10 flex items-center justify-center">
-                <Target className="w-5 h-5 text-cyan-500" />
-              </div>
-              <div>
-                <DialogTitle className="text-xl">{handoverPoint.name}</DialogTitle>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="font-mono text-xs text-muted-foreground/60">
-                    {handoverPoint.vcr_code}
-                  </span>
-                  <Badge className={statusConfig.color}>
-                    {statusConfig.label}
-                  </Badge>
-                </div>
-              </div>
-            </div>
-            <div className="flex items-start gap-4">
-              <div className="text-right">
-                <div className={cn('text-3xl font-bold', statusConfig.textColor)}>{progress.overall}%</div>
-                <div className="text-xs text-muted-foreground">Overall Complete</div>
-              </div>
-              {onDelete && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                  onClick={() => setShowDeleteDialog(true)}
-                  title="Delete VCR"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              )}
+      <DialogContent className="max-w-[95vw] w-full h-[95vh] p-0 gap-0 overflow-hidden [&>button]:hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-3 border-b shrink-0">
+          <div className="flex items-center gap-3">
+            <div
+              className="w-3 h-8 rounded-full"
+              style={{ backgroundColor: `hsl(${(handoverPoint.position_y || 0) * 40}, 70%, 55%)` }}
+            />
+            <div>
+              <DialogTitle className="text-lg font-semibold">
+                {handoverPoint.vcr_code}: {handoverPoint.name}
+              </DialogTitle>
+              <DialogDescription className="text-xs text-muted-foreground">
+                Verification Certificate of Readiness
+              </DialogDescription>
             </div>
           </div>
-        </DialogHeader>
+          <div className="flex items-center gap-2">
+            {onDelete && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                onClick={() => setShowDeleteDialog(true)}
+                title="Delete VCR"
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              onClick={() => onOpenChange(false)}
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
 
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="flex-1 flex flex-col overflow-hidden">
-          <TabsList className="grid grid-cols-8 w-full shrink-0">
-            <TabsTrigger value="overview" className="gap-1 text-xs">
-              <BarChart3 className="w-3.5 h-3.5" />
-              <span className="hidden lg:inline">Overview</span>
-            </TabsTrigger>
-            <TabsTrigger value="systems" className="gap-1 text-xs">
-              <Layers className="w-3.5 h-3.5" />
-              <span className="hidden lg:inline">Systems</span>
-            </TabsTrigger>
-            <TabsTrigger value="checklist" className="gap-1 text-xs">
-              <ClipboardList className="w-3.5 h-3.5" />
-              <span className="hidden lg:inline">Checklist</span>
-            </TabsTrigger>
-            <TabsTrigger value="training" className="gap-1 text-xs">
-              <GraduationCap className="w-3.5 h-3.5" />
-              <span className="hidden lg:inline">Training</span>
-            </TabsTrigger>
-            <TabsTrigger value="documentation" className="gap-1 text-xs">
-              <FileText className="w-3.5 h-3.5" />
-              <span className="hidden lg:inline">Docs</span>
-            </TabsTrigger>
-            <TabsTrigger value="procedures" className="gap-1 text-xs">
-              <BookOpen className="w-3.5 h-3.5" />
-              <span className="hidden lg:inline">Procedures</span>
-            </TabsTrigger>
-            <TabsTrigger value="cmms" className="gap-1 text-xs">
-              <Settings2 className="w-3.5 h-3.5" />
-              <span className="hidden lg:inline">CMMS</span>
-            </TabsTrigger>
-            <TabsTrigger value="qualifications" className="gap-1 text-xs">
-              <AlertTriangle className="w-3.5 h-3.5" />
-              <span className="hidden lg:inline">Quals</span>
-            </TabsTrigger>
-          </TabsList>
+        {/* Body: Sidebar + Content */}
+        <div className="flex flex-1 min-h-0">
+          {/* Left Sidebar Navigation */}
+          <div className="w-56 shrink-0 border-r bg-muted/30 flex flex-col">
+            <ScrollArea className="flex-1">
+              <div className="p-3 space-y-1">
+                {/* Section 1: Core Tabs */}
+                <div className="px-2 pt-1 pb-2">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+                    Navigate
+                  </span>
+                </div>
+                {coreTabs.map((tab) => (
+                  <NavButton key={tab.id} {...tab} />
+                ))}
 
-          <ScrollArea className="flex-1 mt-4">
-            <div className="pr-4">
-              <TabsContent value="overview" className="m-0">
-                <VCROverviewTab handoverPoint={handoverPoint} onNavigateToTab={handleTabChange} />
-              </TabsContent>
+                {/* Separator */}
+                <Separator className="my-3" />
 
-              <TabsContent value="systems" className="m-0">
-                <VCRSystemsTab handoverPoint={handoverPoint} />
-              </TabsContent>
+                {/* Section 2: Building Blocks */}
+                <div className="px-2 pb-2">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+                    Building Blocks
+                  </span>
+                </div>
+                {buildingBlockTabs.map((tab) => (
+                  <NavButton key={tab.id} {...tab} />
+                ))}
+              </div>
+            </ScrollArea>
+          </div>
 
-              <TabsContent value="checklist" className="m-0">
-                <VCRChecklistTab handoverPoint={handoverPoint} />
-              </TabsContent>
-
-              <TabsContent value="training" className="m-0">
-                <VCRTrainingTab handoverPoint={handoverPoint} />
-              </TabsContent>
-
-              <TabsContent value="documentation" className="m-0">
-                <VCRDocumentationTab handoverPoint={handoverPoint} />
-              </TabsContent>
-
-              <TabsContent value="procedures" className="m-0">
-                <VCRProceduresTab handoverPoint={handoverPoint} />
-              </TabsContent>
-
-              <TabsContent value="cmms" className="m-0">
-                <PlaceholderTab title="CMMS" icon={<Settings2 className="w-8 h-8 text-rose-500" />} />
-              </TabsContent>
-
-              <TabsContent value="qualifications" className="m-0">
-                <VCRQualificationsTab handoverPoint={handoverPoint} />
-              </TabsContent>
-            </div>
-          </ScrollArea>
-        </Tabs>
+          {/* Main Content Area */}
+          <div className="flex-1 min-w-0 min-h-0 flex flex-col">
+            <ScrollArea className="flex-1">
+              <div className="p-5">
+                {renderContent()}
+              </div>
+            </ScrollArea>
+          </div>
+        </div>
       </DialogContent>
 
       {/* Delete Confirmation Dialog */}
