@@ -104,16 +104,60 @@ export const PSSRDetailOverlay: React.FC<PSSRDetailOverlayProps> = ({
       
       const reason = pssrData?.reason || '';
       const needsExtraDirectors = /incident|near miss|tar|turn around|modification/i.test(reason);
-      
-      const approversToInsert = [
-        { sof_certificate_id: certificate.id, pssr_id: pssrId, approver_name: 'Plant Director', approver_role: 'Plant Director', approver_level: 1, status: 'PENDING' as const },
-        { sof_certificate_id: certificate.id, pssr_id: pssrId, approver_name: 'HSE Director', approver_role: 'HSE Director', approver_level: 2, status: 'LOCKED' as const },
+      const plantName = plantData?.name || '';
+
+      // Helper to find a person by position keyword + optional plant
+      const findPerson = async (positionKeyword: string) => {
+        // First try plant-specific
+        if (plantName) {
+          const { data } = await supabase
+            .from('profiles')
+            .select('user_id, full_name, avatar_url')
+            .eq('is_active', true)
+            .ilike('position', `%${positionKeyword}%${plantName}%`)
+            .limit(1);
+          if (data && data.length > 0) return data[0];
+        }
+        // Fallback to global
+        const { data } = await supabase
+          .from('profiles')
+          .select('user_id, full_name, avatar_url')
+          .eq('is_active', true)
+          .ilike('position', `%${positionKeyword}%`)
+          .limit(1);
+        return data?.[0] || null;
+      };
+
+      const plantDirector = await findPerson('Plant Director');
+      const hseDirector = await findPerson('HSE Director');
+
+      // All SoF approvers start as LOCKED - they only unlock when the entire PSSR is complete
+      const approversToInsert: any[] = [
+        {
+          sof_certificate_id: certificate.id, pssr_id: pssrId,
+          approver_name: plantDirector?.full_name || 'Plant Director',
+          approver_role: 'Plant Director', approver_level: 1,
+          status: 'LOCKED' as const,
+          user_id: plantDirector?.user_id || null,
+        },
+        {
+          sof_certificate_id: certificate.id, pssr_id: pssrId,
+          approver_name: hseDirector?.full_name || 'HSE Director',
+          approver_role: 'HSE Director', approver_level: 2,
+          status: 'LOCKED' as const,
+          user_id: hseDirector?.user_id || null,
+        },
       ];
       
       if (needsExtraDirectors) {
-        approversToInsert.push(
-          { sof_certificate_id: certificate.id, pssr_id: pssrId, approver_name: 'P&M Director', approver_role: 'P&M Director', approver_level: 3, status: 'LOCKED' as const },
-        );
+        const pmDirector = await findPerson('P&M Director');
+        approversToInsert.push({
+          sof_certificate_id: certificate.id, pssr_id: pssrId,
+          approver_name: pmDirector?.full_name || 'P&M Director',
+          approver_role: 'P&M Director', approver_level: 3,
+          status: 'LOCKED' as const,
+          user_id: pmDirector?.user_id || null,
+        });
       }
 
       const { error } = await supabase.from('sof_approvers').insert(approversToInsert);
