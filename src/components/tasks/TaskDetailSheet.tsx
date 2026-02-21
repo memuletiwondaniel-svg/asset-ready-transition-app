@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { CheckCircle, X, Calendar, AlertTriangle, ChevronRight } from 'lucide-react';
+import { CheckCircle, X, Calendar, AlertTriangle, ChevronRight, ExternalLink } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -24,6 +25,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   onApprove,
   onReject,
 }) => {
+  const navigate = useNavigate();
   const [comment, setComment] = useState('');
   const [action, setAction] = useState<'approve' | 'reject' | null>(null);
 
@@ -121,6 +123,24 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
               </div>
             )}
           </div>
+
+          <Separator />
+
+          {/* Review & Edit CTA */}
+          {task.metadata?.pssr_id && (
+            <Button
+              variant="outline"
+              className="w-full gap-2"
+              onClick={() => {
+                const pssrRoute = task.metadata?.pssr_code || task.metadata?.pssr_id;
+                navigate(`/pssr/${pssrRoute}`);
+                onOpenChange(false);
+              }}
+            >
+              <ExternalLink className="h-4 w-4" />
+              Review & Edit PSSR
+            </Button>
+          )}
 
           <Separator />
 
