@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { WidgetCard } from './WidgetCard';
 import { Progress } from '@/components/ui/progress';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Settings, Shield, FileText, Users, AlertTriangle, BarChart3, ChevronDown } from 'lucide-react';
+import { Settings, Shield, FileText, Users, AlertTriangle, BarChart3, ChevronDown, Wrench, Ruler, FolderCog, HeartPulse } from 'lucide-react';
 import { useWidgetSize } from '@/contexts/WidgetSizeContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -34,11 +34,15 @@ export const PSSRProgressWidget: React.FC<PSSRProgressWidgetProps> = ({
   const widgetId = 'pssr-progress';
   const getCategoryIcon = (name: string) => {
     const iconMap: Record<string, any> = {
+      'Design Integrity': Ruler,
+      'Technical Integrity': Wrench,
+      'Operating Integrity': Settings,
+      'Management Systems': FolderCog,
+      'Health & Safety': HeartPulse,
       'Hardware Integrity': Settings,
       'Process Safety': Shield,
       'Documentation': FileText,
       'Organization': Users,
-      'Health & Safety': AlertTriangle,
       'General': BarChart3
     };
     return iconMap[name] || BarChart3;
@@ -46,6 +50,36 @@ export const PSSRProgressWidget: React.FC<PSSRProgressWidgetProps> = ({
 
   const getCategoryColors = (name: string) => {
     const colorMap: Record<string, { bg: string; icon: string; progress: string; border: string }> = {
+      'Design Integrity': {
+        bg: 'bg-cyan-500/20 dark:bg-cyan-500/30',
+        icon: 'text-cyan-600 dark:text-cyan-400',
+        progress: '[&>div]:bg-cyan-500/50',
+        border: 'border-cyan-500/30 hover:border-cyan-500/50'
+      },
+      'Technical Integrity': {
+        bg: 'bg-blue-500/20 dark:bg-blue-500/30',
+        icon: 'text-blue-600 dark:text-blue-400',
+        progress: '[&>div]:bg-blue-500/50',
+        border: 'border-blue-500/30 hover:border-blue-500/50'
+      },
+      'Operating Integrity': {
+        bg: 'bg-amber-500/20 dark:bg-amber-500/30',
+        icon: 'text-amber-600 dark:text-amber-400',
+        progress: '[&>div]:bg-amber-500/50',
+        border: 'border-amber-500/30 hover:border-amber-500/50'
+      },
+      'Management Systems': {
+        bg: 'bg-purple-500/20 dark:bg-purple-500/30',
+        icon: 'text-purple-600 dark:text-purple-400',
+        progress: '[&>div]:bg-purple-500/50',
+        border: 'border-purple-500/30 hover:border-purple-500/50'
+      },
+      'Health & Safety': {
+        bg: 'bg-emerald-500/20 dark:bg-emerald-500/30',
+        icon: 'text-emerald-600 dark:text-emerald-400',
+        progress: '[&>div]:bg-emerald-500/50',
+        border: 'border-emerald-500/30 hover:border-emerald-500/50'
+      },
       'Hardware Integrity': {
         bg: 'bg-blue-500/20 dark:bg-blue-500/30',
         icon: 'text-blue-600 dark:text-blue-400',
@@ -59,22 +93,16 @@ export const PSSRProgressWidget: React.FC<PSSRProgressWidgetProps> = ({
         border: 'border-orange-500/30 hover:border-orange-500/50'
       },
       'Documentation': {
-        bg: 'bg-amber-500/20 dark:bg-amber-500/30',
-        icon: 'text-amber-600 dark:text-amber-400',
-        progress: '[&>div]:bg-amber-500/50',
-        border: 'border-amber-500/30 hover:border-amber-500/50'
+        bg: 'bg-teal-500/20 dark:bg-teal-500/30',
+        icon: 'text-teal-600 dark:text-teal-400',
+        progress: '[&>div]:bg-teal-500/50',
+        border: 'border-teal-500/30 hover:border-teal-500/50'
       },
       'Organization': {
         bg: 'bg-purple-500/20 dark:bg-purple-500/30',
         icon: 'text-purple-600 dark:text-purple-400',
         progress: '[&>div]:bg-purple-500/50',
         border: 'border-purple-500/30 hover:border-purple-500/50'
-      },
-      'Health & Safety': {
-        bg: 'bg-teal-500/20 dark:bg-teal-500/30',
-        icon: 'text-teal-600 dark:text-teal-400',
-        progress: '[&>div]:bg-teal-500/50',
-        border: 'border-teal-500/30 hover:border-teal-500/50'
       },
       'General': {
         bg: 'bg-slate-500/20 dark:bg-slate-500/30',
