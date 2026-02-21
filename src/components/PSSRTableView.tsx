@@ -45,6 +45,7 @@ interface PSSR {
   lastActivity: string;
   location: string;
   scope?: string;
+  pssrReason?: string;
 }
 
 interface PSSRTableViewProps {
@@ -188,6 +189,8 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails, pin
         return <div className="font-semibold text-foreground text-left whitespace-normal break-words">{pssr.projectName}</div>;
       case 'asset':
         return <div className="font-medium text-foreground/80 text-left">{pssr.asset}</div>;
+      case 'pssrReason':
+        return <div className="text-sm font-medium text-foreground/80 text-left">{pssr.pssrReason || '—'}</div>;
       case 'scope':
         return <div className="text-sm text-muted-foreground text-left whitespace-normal break-words">{(pssr as any).scope || '—'}</div>;
       case 'pssrLead':
