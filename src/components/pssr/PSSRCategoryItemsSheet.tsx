@@ -38,6 +38,16 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; textColor: s
   not_started: { label: 'Not Started', color: 'bg-muted border-border', textColor: 'text-muted-foreground', icon: FileCheck },
 };
 
+const ITEM_COLORS = [
+  'bg-blue-100 text-blue-700',
+  'bg-emerald-100 text-emerald-700',
+  'bg-amber-100 text-amber-700',
+  'bg-rose-100 text-rose-700',
+  'bg-indigo-100 text-indigo-700',
+  'bg-teal-100 text-teal-700',
+  'bg-purple-100 text-purple-700',
+];
+
 function deriveStatus(response: string | null, status: string | null): string {
   if (status === 'approved' || response === 'YES' || response === 'NA') return 'completed';
   if (status === 'submitted' || status === 'in_review') return 'in_review';
@@ -137,7 +147,7 @@ export const PSSRCategoryItemsSheet: React.FC<PSSRCategoryItemsSheetProps> = ({
               </div>
             ) : (
               <div className="space-y-2">
-                {items.map((item) => {
+                {items.map((item, idx) => {
                   const statusCfg = STATUS_CONFIG[item.status] || STATUS_CONFIG.not_started;
                   const StatusIcon = statusCfg.icon;
                   return (
@@ -148,17 +158,14 @@ export const PSSRCategoryItemsSheet: React.FC<PSSRCategoryItemsSheetProps> = ({
                     >
                       <CardContent className="p-4">
                         <div className="flex items-start gap-3">
-                          <div className={cn(
-                            'w-7 h-7 rounded-md flex items-center justify-center shrink-0 mt-0.5',
-                            statusCfg.color
-                          )}>
-                            <StatusIcon className={cn('w-3.5 h-3.5', statusCfg.textColor)} />
-                          </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
-                              <span className="text-[10px] text-muted-foreground font-mono">
+                              <Badge className={cn(
+                                'text-[10px] px-1.5 font-mono border-0',
+                                ITEM_COLORS[idx % ITEM_COLORS.length]
+                              )}>
                                 {item.itemCode}
-                              </span>
+                              </Badge>
                               <Badge variant="outline" className={cn('text-[9px] px-1.5', statusCfg.color, statusCfg.textColor)}>
                                 {statusCfg.label}
                               </Badge>
