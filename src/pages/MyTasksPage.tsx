@@ -40,6 +40,14 @@ const MyTasksPage: React.FC = () => {
     return () => clearTimeout(timer);
   }, [updateLastLogin]);
 
+  // Fallback: if panels haven't reported in 3s, show content anyway
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setPanelsLoaded(prev => ({ pssr: true, ora: true, owl: true, ...prev }));
+    }, 3000);
+    return () => clearTimeout(timeout);
+  }, []);
+
   // Auto-expand logic: if only one panel has tasks, expand it
   useEffect(() => {
     const panelsWithTasks = Object.entries(panelTaskCounts)
