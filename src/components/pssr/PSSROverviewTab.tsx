@@ -284,7 +284,7 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
   const renderInfoPanel = () => (
     <Card className="h-full flex flex-col">
       <CardHeader className="relative overflow-hidden border-b py-3 text-center">
-        <div className="absolute inset-0 bg-gradient-to-r from-muted via-muted/50 to-muted" />
+        <div className="absolute inset-0 rounded-t-lg bg-gradient-to-r from-muted via-muted/50 to-muted" />
         <CardTitle className="relative text-lg font-semibold">
           Overview
         </CardTitle>
@@ -389,7 +389,7 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
   const renderProgressPanel = () => (
     <Card className="h-full flex flex-col">
       <CardHeader className="relative overflow-hidden border-b py-3 text-center">
-        <div className="absolute inset-0 bg-gradient-to-r from-muted via-muted/50 to-muted" />
+        <div className="absolute inset-0 rounded-t-lg bg-gradient-to-r from-muted via-muted/50 to-muted" />
         <CardTitle className="relative text-lg font-semibold">
           Progress
         </CardTitle>
@@ -604,7 +604,7 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
   const renderApprovalsPanel = () => (
     <Card className="h-full flex flex-col">
       <CardHeader className="relative overflow-hidden border-b py-3 text-center">
-        <div className="absolute inset-0 bg-gradient-to-r from-muted via-muted/50 to-muted" />
+        <div className="absolute inset-0 rounded-t-lg bg-gradient-to-r from-muted via-muted/50 to-muted" />
         <CardTitle className="relative text-lg font-semibold">
           Review & Approvals
         </CardTitle>
