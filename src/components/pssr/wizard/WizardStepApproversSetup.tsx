@@ -1,10 +1,22 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Users, RotateCcw, Sparkles } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Users, RotateCcw, Sparkles, Check, ChevronsUpDown, UserCircle } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useProfileUsers } from '@/hooks/useProfileUsers';
 import WizardStepApprovers from './WizardStepApprovers';
 
+const PSSR_LEAD_POSITION_KEYWORDS = ['Tech Safety', 'Asset', 'Operations', 'Maintenance', 'MTCE'];
+
 interface WizardStepApproversSetupProps {
+  // PSSR Lead
+  pssrLeadId: string;
+  onPssrLeadChange: (userId: string) => void;
+
   // PSSR Approvers
   selectedPssrApproverRoleIds: string[];
   onPssrApproverToggle: (roleId: string) => void;
@@ -22,6 +34,8 @@ interface WizardStepApproversSetupProps {
 }
 
 const WizardStepApproversSetup: React.FC<WizardStepApproversSetupProps> = ({
+  pssrLeadId,
+  onPssrLeadChange,
   selectedPssrApproverRoleIds,
   onPssrApproverToggle,
   isPssrApproversModified,
@@ -32,6 +46,22 @@ const WizardStepApproversSetup: React.FC<WizardStepApproversSetupProps> = ({
   onResetSofApprovers,
   plantName,
 }) => {
+  const [leadPopoverOpen, setLeadPopoverOpen] = useState(false);
+  const { data: profileUsers, isLoading: usersLoading } = useProfileUsers();
+
+  const sortedUsers = useMemo(() => {
+    if (!profileUsers) return [];
+    return [...profileUsers].sort((a, b) => {
+      const aMatch = PSSR_LEAD_POSITION_KEYWORDS.some(k => a.position?.toLowerCase().includes(k.toLowerCase()));
+      const bMatch = PSSR_LEAD_POSITION_KEYWORDS.some(k => b.position?.toLowerCase().includes(k.toLowerCase()));
+      if (aMatch && !bMatch) return -1;
+      if (!aMatch && bMatch) return 1;
+      return (a.full_name || '').localeCompare(b.full_name || '');
+    });
+  }, [profileUsers]);
+
+  const selectedUser = profileUsers?.find(u => u.user_id === pssrLeadId);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -43,6 +73,104 @@ const WizardStepApproversSetup: React.FC<WizardStepApproversSetupProps> = ({
         <p className="text-sm text-muted-foreground">
           Configure PSSR and Statement of Fitness (SoF) approvers
         </p>
+      </div>
+
+      {/* PSSR Lead Selector */}
+      <div className="border rounded-lg p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <UserCircle className="h-4 w-4 text-primary" />
+          <Label className="font-medium text-sm">PSSR Lead</Label>
+        </div>
+        <p className="text-xs text-muted-foreground/70">
+          Usually from Tech Safety, Asset, Operations or Maintenance. Search by name or role.
+        </p>
+        <Popover open={leadPopoverOpen} onOpenChange={setLeadPopoverOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-expanded={leadPopoverOpen}
+              className="w-full justify-between h-10"
+            >
+              {selectedUser ? (
+                <div className="flex items-center gap-2">
+                  <Avatar className="h-6 w-6">
+                    <AvatarImage src={selectedUser.avatar_url || ''} />
+                    <AvatarFallback className="text-xs">
+                      {selectedUser.full_name?.charAt(0) || '?'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="truncate">{selectedUser.full_name}</span>
+                  {selectedUser.position && (
+                    <span className="text-xs text-muted-foreground truncate ml-1">
+                      — {selectedUser.position}
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <span className="text-muted-foreground">
+                  {usersLoading ? 'Loading...' : 'Search by name or role...'}
+                </span>
+              )}
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[400px] p-0" align="start">
+            <Command>
+              <CommandInput placeholder="Search by name, position or role..." />
+              <CommandList>
+                <CommandEmpty>No users found.</CommandEmpty>
+                <CommandGroup className="max-h-[250px] overflow-y-auto">
+                  {sortedUsers.map((user) => {
+                    const isRecommended = PSSR_LEAD_POSITION_KEYWORDS.some(k =>
+                      user.position?.toLowerCase().includes(k.toLowerCase())
+                    );
+                    return (
+                      <CommandItem
+                        key={user.user_id}
+                        value={`${user.full_name} ${user.position || ''} ${user.role || ''}`}
+                        onSelect={() => {
+                          onPssrLeadChange(user.user_id === pssrLeadId ? '' : user.user_id);
+                          setLeadPopoverOpen(false);
+                        }}
+                      >
+                        <div className="flex items-center gap-2 w-full">
+                          <Avatar className="h-6 w-6">
+                            <AvatarImage src={user.avatar_url || ''} />
+                            <AvatarFallback className="text-xs">
+                              {user.full_name?.charAt(0) || '?'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex flex-col flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="truncate">{user.full_name}</span>
+                              {isRecommended && (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary font-medium shrink-0">
+                                  Recommended
+                                </span>
+                              )}
+                            </div>
+                            {(user.position || user.role) && (
+                              <span className="text-xs text-muted-foreground truncate">
+                                {user.position}{user.position && user.role ? ' · ' : ''}{user.role}
+                              </span>
+                            )}
+                          </div>
+                          <Check
+                            className={cn(
+                              'h-4 w-4 shrink-0',
+                              pssrLeadId === user.user_id ? 'opacity-100' : 'opacity-0'
+                            )}
+                          />
+                        </div>
+                      </CommandItem>
+                    );
+                  })}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
       </div>
 
       {/* PSSR Approvers */}
