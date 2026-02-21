@@ -112,6 +112,35 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
     enabled: !!pssrId,
   });
 
+  // Fetch delivering parties from checklist items (responsible field) when item approvals are empty
+  const { data: deliveringParties } = useQuery({
+    queryKey: ['pssr-delivering-parties', pssrId],
+    queryFn: async () => {
+      // Get all checklist items for this PSSR's responses with their responsible roles
+      const { data, error } = await supabase
+        .from('pssr_checklist_responses')
+        .select(`
+          id,
+          pssr_checklist_items!inner(
+            responsible
+          )
+        `)
+        .eq('pssr_id', pssrId);
+      if (error) throw error;
+
+      // Group by responsible role
+      const roleMap: Record<string, number> = {};
+      (data || []).forEach((resp: any) => {
+        const role = resp.pssr_checklist_items?.responsible;
+        if (role) {
+          roleMap[role] = (roleMap[role] || 0) + 1;
+        }
+      });
+      return roleMap;
+    },
+    enabled: !!pssrId,
+  });
+
   // Fetch profiles for approvers
   const approverUserIds = useMemo(() => {
     const ids = new Set<string>();
@@ -241,7 +270,7 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
         <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-blue-500 via-cyan-400 to-blue-300" />
         <CardTitle className="relative text-base font-semibold flex items-center justify-center gap-2">
           <FileText className="h-4 w-4 text-blue-500" />
-          PSSR Overview
+          Overview
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0 flex-1">
@@ -349,30 +378,30 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
         <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-amber-500 via-orange-400 to-yellow-300" />
         <CardTitle className="relative text-base font-semibold flex items-center justify-center gap-2">
           <Zap className="h-4 w-4 text-amber-500" />
-          Progress & Activities
+          Progress
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0 flex-1">
         <ScrollArea className="h-full">
           <div className="p-4 space-y-5">
             {/* Circular progress */}
-            <div className="flex items-center gap-4">
-              <div className="relative w-20 h-20">
-                <svg className="w-20 h-20 -rotate-90" viewBox="0 0 80 80">
-                  <circle cx="40" cy="40" r="34" fill="none" stroke="hsl(var(--muted))" strokeWidth="7" />
+             <div className="flex items-center gap-5">
+              <div className="relative w-28 h-28">
+                <svg className="w-28 h-28 -rotate-90" viewBox="0 0 112 112">
+                  <circle cx="56" cy="56" r="48" fill="none" stroke="hsl(var(--muted))" strokeWidth="8" />
                   <circle
-                    cx="40" cy="40" r="34" fill="none"
+                    cx="56" cy="56" r="48" fill="none"
                     stroke="hsl(var(--primary))"
-                    strokeWidth="7"
+                    strokeWidth="8"
                     strokeLinecap="round"
-                    strokeDasharray={`${2 * Math.PI * 34}`}
-                    strokeDashoffset={`${2 * Math.PI * 34 * (1 - overallProgress / 100)}`}
+                    strokeDasharray={`${2 * Math.PI * 48}`}
+                    strokeDashoffset={`${2 * Math.PI * 48 * (1 - overallProgress / 100)}`}
                     className="transition-all duration-500"
                   />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-lg font-bold">{overallProgress}%</span>
-                  <span className="text-[8px] uppercase tracking-wider text-muted-foreground">Complete</span>
+                  <span className="text-2xl font-bold">{overallProgress}%</span>
+                  <span className="text-[9px] uppercase tracking-wider text-muted-foreground">Complete</span>
                 </div>
               </div>
               <div>
@@ -542,13 +571,14 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
                 <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Delivering Parties</span>
                 <div className="flex items-center gap-1.5">
                   <Badge variant="secondary" className="text-[10px] h-5">
-                    {Object.keys(partiesByRole).length}
+                    {Object.keys(partiesByRole).length > 0 ? Object.keys(partiesByRole).length : Object.keys(deliveringParties || {}).length}
                   </Badge>
                   {openSections['delivering'] ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
                 </div>
               </CollapsibleTrigger>
               <CollapsibleContent className="space-y-1 mt-1">
-                {Object.entries(partiesByRole).map(([role, data]) => {
+                {/* If item approvals exist, show resolved users */}
+                {Object.keys(partiesByRole).length > 0 && Object.entries(partiesByRole).map(([role, data]) => {
                   const userIds = Array.from(data.userIds);
                   return userIds.map(uid => {
                     const profile = approverProfiles?.[uid];
@@ -563,7 +593,20 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
                     );
                   });
                 })}
-                {Object.keys(partiesByRole).length === 0 && (
+                {/* If no item approvals, show delivering parties from checklist items responsible field */}
+                {Object.keys(partiesByRole).length === 0 && deliveringParties && Object.entries(deliveringParties).map(([role, count]) => (
+                  <div key={role} className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted/40 transition-colors">
+                    <Avatar className="h-7 w-7">
+                      <AvatarFallback className="text-[10px]">{getInitials(role)}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium truncate">{role}</p>
+                      <p className="text-[10px] text-muted-foreground">{count} item{count !== 1 ? 's' : ''}</p>
+                    </div>
+                    <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                  </div>
+                ))}
+                {Object.keys(partiesByRole).length === 0 && (!deliveringParties || Object.keys(deliveringParties).length === 0) && (
                   <p className="text-xs text-muted-foreground px-2">No delivering parties assigned</p>
                 )}
               </CollapsibleContent>
@@ -585,8 +628,9 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
               <CollapsibleContent className="space-y-1 mt-1">
                 {(pssrApprovers || []).map(approver => {
                   const profile = approver.user_id ? approverProfiles?.[approver.user_id] : null;
+                  const displayName = profile?.full_name || (approver.approver_name !== 'Pending Assignment' ? approver.approver_name : approver.approver_role);
                   return renderApprovalPerson(
-                    profile?.full_name || approver.approver_name,
+                    displayName,
                     profile?.avatar_url || null,
                     approver.approver_role,
                     approver.status,
@@ -617,8 +661,9 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
               <CollapsibleContent className="space-y-1 mt-1">
                 {(sofApprovers || []).map((approver: any) => {
                   const profile = approver.user_id ? approverProfiles?.[approver.user_id] : null;
+                  const displayName = profile?.full_name || (approver.approver_name !== 'Pending Assignment' ? approver.approver_name : approver.approver_role);
                   return renderApprovalPerson(
-                    profile?.full_name || approver.approver_name,
+                    displayName,
                     profile?.avatar_url || null,
                     approver.approver_role,
                     approver.status,

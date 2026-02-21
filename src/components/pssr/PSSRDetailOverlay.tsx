@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,11 @@ import {
   X,
 } from 'lucide-react';
 import { PSSROverviewTab } from './PSSROverviewTab';
+import { SOFCertificateNavigator } from '@/components/sof/SOFCertificateNavigator';
 import { cn } from '@/lib/utils';
+import { useSOFCertificate, useSOFApprovers } from '@/hooks/useSOFCertificates';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 interface PSSRDetailOverlayProps {
   open: boolean;
@@ -36,7 +40,7 @@ const PlaceholderTab: React.FC<{ title: string; icon: React.ReactNode }> = ({ ti
 );
 
 const navTabs = [
-  { id: 'overview', label: 'PSSR Overview', icon: BarChart3 },
+  { id: 'overview', label: 'Overview', icon: BarChart3 },
   { id: 'qualifications', label: 'Qualifications', icon: AlertTriangle },
   { id: 'comments', label: 'Comments', icon: MessageSquare },
   { id: 'sof', label: 'SoF Certificate', icon: Award },
@@ -60,6 +64,72 @@ export const PSSRDetailOverlay: React.FC<PSSRDetailOverlayProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const statusConfig = getStatusConfig(status || '');
+  const queryClient = useQueryClient();
+
+  // Fetch SoF certificate data
+  const { certificate, isLoading: sofLoading } = useSOFCertificate(pssrId);
+  const { approvers: sofApprovers, isLoading: sofApproversLoading } = useSOFApprovers(pssrId);
+
+  // Fetch PSSR details for reason
+  const { data: pssrData } = useQuery({
+    queryKey: ['pssr-detail-for-sof', pssrId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('pssrs')
+        .select('reason, plant_id')
+        .eq('id', pssrId)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!pssrId,
+  });
+
+  // Fetch plant name
+  const { data: plantData } = useQuery({
+    queryKey: ['pssr-plant-for-sof', pssrData?.plant_id],
+    queryFn: async () => {
+      if (!pssrData?.plant_id) return null;
+      const { data, error } = await supabase.from('plant').select('name').eq('id', pssrData.plant_id).single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!pssrData?.plant_id,
+  });
+
+  // Auto-populate SoF approvers if certificate exists but approvers are empty
+  const autoPopulateSofApprovers = useMutation({
+    mutationFn: async () => {
+      if (!certificate || (sofApprovers && sofApprovers.length > 0)) return;
+      
+      const reason = pssrData?.reason || '';
+      const needsExtraDirectors = /incident|near miss|tar|turn around|modification/i.test(reason);
+      
+      const approversToInsert = [
+        { sof_certificate_id: certificate.id, pssr_id: pssrId, approver_name: 'Plant Director', approver_role: 'Plant Director', approver_level: 1, status: 'PENDING' as const },
+        { sof_certificate_id: certificate.id, pssr_id: pssrId, approver_name: 'HSE Director', approver_role: 'HSE Director', approver_level: 2, status: 'LOCKED' as const },
+      ];
+      
+      if (needsExtraDirectors) {
+        approversToInsert.push(
+          { sof_certificate_id: certificate.id, pssr_id: pssrId, approver_name: 'P&M Director', approver_role: 'P&M Director', approver_level: 3, status: 'LOCKED' as const },
+        );
+      }
+
+      const { error } = await supabase.from('sof_approvers').insert(approversToInsert);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sof-approvers', pssrId] });
+    },
+  });
+
+  // Trigger auto-populate when certificate loaded and approvers empty
+  useEffect(() => {
+    if (certificate && sofApprovers && sofApprovers.length === 0 && !sofLoading && !sofApproversLoading) {
+      autoPopulateSofApprovers.mutate();
+    }
+  }, [certificate, sofApprovers, sofLoading, sofApproversLoading]);
 
   const renderContent = () => {
     switch (activeTab) {
@@ -70,6 +140,33 @@ export const PSSRDetailOverlay: React.FC<PSSRDetailOverlayProps> = ({
       case 'comments':
         return <PlaceholderTab title="Comments" icon={<MessageSquare className="w-8 h-8 text-blue-500" />} />;
       case 'sof':
+        if (certificate) {
+          return (
+            <div className="h-full">
+              <SOFCertificateNavigator
+                pssrId={pssrId}
+                certificateNumber={certificate.certificate_number}
+                pssrReason={certificate.pssr_reason}
+                plantName={certificate.plant_name || plantData?.name || ''}
+                facilityName={certificate.facility_name || ''}
+                projectName={certificate.project_name || ''}
+                approvers={(sofApprovers || []).map((a: any) => ({
+                  id: a.id,
+                  approver_name: a.approver_name,
+                  approver_role: a.approver_role,
+                  approver_level: a.approver_level,
+                  status: a.status,
+                  comments: a.comments,
+                  approved_at: a.approved_at,
+                  signature_data: a.signature_data,
+                }))}
+                issuedAt={certificate.issued_at || undefined}
+                status={certificate.status}
+                isViewOnly={false}
+              />
+            </div>
+          );
+        }
         return <PlaceholderTab title="SoF Certificate" icon={<Award className="w-8 h-8 text-amber-500" />} />;
       default:
         return <PSSROverviewTab pssrId={pssrId} pssrDisplayId={pssrDisplayId} />;
@@ -95,15 +192,19 @@ export const PSSRDetailOverlay: React.FC<PSSRDetailOverlayProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[95vw] w-full h-[95vh] p-0 gap-0 overflow-hidden [&>button]:hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3 border-b shrink-0">
+        <div className="flex items-center justify-between px-5 py-2.5 border-b shrink-0 min-h-[52px]">
           <div className="flex items-center gap-3">
-            <div className={cn('w-3 h-8 rounded-full', statusConfig.color)} />
+            <div className={cn('w-3 h-10 rounded-full', statusConfig.color)} />
             <div>
-              <DialogTitle className="text-lg font-semibold">
-                {pssrDisplayId}{pssrTitle ? `: ${pssrTitle}` : ''}
+              <DialogTitle className="text-sm text-muted-foreground font-medium">
+                {pssrDisplayId}
               </DialogTitle>
-              <DialogDescription className="text-xs text-muted-foreground">
-                Pre-Startup Safety Review
+              {pssrTitle && (
+                <p className="text-base font-semibold leading-tight">{pssrTitle}</p>
+              )}
+              {/* Hidden description for accessibility */}
+              <DialogDescription className="sr-only">
+                PSSR Detail View
               </DialogDescription>
             </div>
           </div>
