@@ -283,11 +283,8 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
 
   const renderInfoPanel = () => (
     <Card className="h-full flex flex-col">
-      <CardHeader className="relative overflow-hidden border-b py-3 text-center">
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-cyan-500/8 to-blue-400/5" />
-        <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-blue-500 via-cyan-400 to-blue-300" />
-        <CardTitle className="relative text-base font-semibold flex items-center justify-center gap-2">
-          <FileText className="h-4 w-4 text-blue-500" />
+      <CardHeader className="border-b py-3 text-center bg-muted/50">
+        <CardTitle className="text-lg font-semibold">
           Overview
         </CardTitle>
       </CardHeader>
@@ -390,11 +387,8 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
 
   const renderProgressPanel = () => (
     <Card className="h-full flex flex-col">
-      <CardHeader className="relative overflow-hidden border-b py-3 text-center">
-        <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 via-orange-500/8 to-amber-400/5" />
-        <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-amber-500 via-orange-400 to-yellow-300" />
-        <CardTitle className="relative text-base font-semibold flex items-center justify-center gap-2">
-          <Zap className="h-4 w-4 text-amber-500" />
+      <CardHeader className="border-b py-3 text-center bg-muted/50">
+        <CardTitle className="text-lg font-semibold">
           Progress
         </CardTitle>
       </CardHeader>
@@ -607,11 +601,8 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
 
   const renderApprovalsPanel = () => (
     <Card className="h-full flex flex-col">
-      <CardHeader className="relative overflow-hidden border-b py-3 text-center">
-        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 via-teal-500/8 to-emerald-400/5" />
-        <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-emerald-500 via-teal-400 to-green-300" />
-        <CardTitle className="relative text-base font-semibold flex items-center justify-center gap-2">
-          <Shield className="h-4 w-4 text-emerald-500" />
+      <CardHeader className="border-b py-3 text-center bg-muted/50">
+        <CardTitle className="text-lg font-semibold">
           Review & Approvals
         </CardTitle>
       </CardHeader>
