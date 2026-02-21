@@ -1,73 +1,81 @@
 
 
-## Bug Fix + Inspection Test Plan (ITP) Implementation
+## Problem
 
-### Bug: "No Systems Mapped" on Step 6
+When navigating back to Step 1 of the PSSR wizard, the previously selected reason card is not highlighted and the user sees "Please select a PSSR reason" when clicking Next -- even though they already made a selection.
 
-**Root cause**: The `SystemsStep` query requests columns `overall_completion` and `itr_completion` from `p2a_systems`, but those columns don't exist. The actual column names are `completion_percentage`, `itr_a_count`, `itr_b_count`, etc. Because the query uses an `!inner` join with invalid columns, Supabase returns an error silently, causing the empty state.
+## Root Cause
 
-**Fix**: Correct the column names in the query to match the actual schema.
+The `categoryIdRef` backup mechanism (added previously) only restores state inside a `useEffect`, which runs **after** render. This means there's a window where the component renders with an empty `categoryId` and the ref restoration happens too late. Additionally, the ref itself gets reset if the component remounts (e.g., due to parent re-renders from `location.key` changes triggering `setActiveView('list')` in `PSSRSummaryPage`).
 
----
+## Fix (Two-Pronged Approach)
 
-### Feature: Transform Step 6 into an Inspection Test Plan (ITP)
+### 1. Synchronous ref update + render-time fallback (CreatePSSRWizard.tsx)
 
-Step 6 will be renamed from "Systems" to "Inspection Test Plan" and redesigned to let the project and asset agree on **Witness (W)** and **Hold (H)** points for each system's key activities.
+- **Set the ref synchronously** inside the `onCategoryChange` handler (not just in an effect), so it's always up-to-date immediately.
+- **Pass a fallback value** to `WizardStepCategory`: use `wizardState.categoryId || categoryIdRef.current` so even if state was cleared, the ref provides the correct value at render time (no effect delay).
+- **Restore state from ref** inside `handleBack` and `handleStepClick` when navigating to step 1 -- if `wizardState.categoryId` is empty but the ref has a value, restore state synchronously before the step renders.
 
-**Definitions:**
-- **Witness (W)**: Asset wants to be notified and observe the activity (e.g., line cleaning, leak testing, FAT, SAT, cause & effect testing)
-- **Hold (H)**: Asset MUST be present to witness AND sign off (e.g., MCC Tri-party Walkdown, RFO certificate sign-off, Performance Testing, Dynamic Commissioning)
+### 2. Guard against accidental state loss (CreatePSSRWizard.tsx)
 
-### UI Design
+- In `handleBack` and `handleStepClick`, before setting `currentStep`, check if `categoryId` is empty but the ref has a value, and restore it in the same state update batch.
 
-**Layout**: Each mapped system is shown as an expandable card. The card header shows the system name, code, and HC status. Expanding reveals the system's ITP activity rows.
+## Technical Details
 
-**Activity rows**: Each row represents a milestone/activity with:
-- Activity name (text input or selection from common activities)
-- A toggle group to mark it as **W** (Witness) or **H** (Hold) or **N/A**
-- The W badge uses amber styling, H badge uses red styling
-- Optional notes field
+**File: `src/components/pssr/CreatePSSRWizard.tsx`**
 
-**Pre-populated activities**: Common commissioning activities are suggested per system:
-- Leak Testing, Line Cleaning/Flushing, Loop Testing, Cause & Effect Testing, FAT, SAT, MCC Walkdown, RFO Walkdown, Performance Testing, Dynamic Commissioning, etc.
+1. Update `onCategoryChange` handler (line 749) to also set the ref synchronously:
+   ```tsx
+   onCategoryChange={(id) => {
+     categoryIdRef.current = id;
+     setWizardState(prev => ({ 
+       ...prev, 
+       categoryId: id,
+       reasonId: id === '__other__' ? '' : id,
+       selectedAtiScopeIds: [],
+       configLoaded: false,
+     }));
+   }}
+   ```
 
-**Header bar**: Search filter, system count badge, and summary stats (e.g., "12W / 5H across 8 systems")
+2. Update line 748 to use ref as fallback:
+   ```tsx
+   categoryId={wizardState.categoryId || categoryIdRef.current}
+   ```
 
-### Database
+3. Update `handleBack` (line 344) to restore categoryId if needed:
+   ```tsx
+   const handleBack = () => {
+     if (!wizardState.categoryId && categoryIdRef.current) {
+       setWizardState(prev => ({
+         ...prev,
+         categoryId: categoryIdRef.current,
+         reasonId: categoryIdRef.current === '__other__' ? '' : categoryIdRef.current,
+       }));
+     }
+     setCurrentStep(prev => Math.max(prev - 1, 1));
+   };
+   ```
 
-A new table `p2a_itp_activities` will store the ITP data:
+4. Update `handleStepClick` (line 325) similarly to restore categoryId when navigating to step 1.
 
-```text
-p2a_itp_activities
-  id              uuid PK
-  handover_point_id uuid FK -> p2a_handover_points
-  system_id       uuid FK -> p2a_systems
-  activity_name   text
-  inspection_type text ('WITNESS' | 'HOLD' | 'NA')
-  notes           text (nullable)
-  display_order   integer
-  created_at      timestamptz
-  updated_at      timestamptz
-```
+5. Update `validateStep` for step 1 (line 303) to also check the ref:
+   ```tsx
+   case 1:
+     if (!wizardState.categoryId && !categoryIdRef.current) {
+       if (!silent) toast.error('Please select a PSSR reason');
+       return false;
+     }
+     // Restore from ref if state is empty
+     if (!wizardState.categoryId && categoryIdRef.current) {
+       setWizardState(prev => ({
+         ...prev,
+         categoryId: categoryIdRef.current,
+         reasonId: categoryIdRef.current === '__other__' ? '' : categoryIdRef.current,
+       }));
+     }
+     return true;
+   ```
 
-RLS: Authenticated users can read/write.
-
-### Technical Steps
-
-1. **Fix the SystemsStep query** -- correct `overall_completion` to `completion_percentage` and `itr_completion` to `itr_a_count/itr_b_count` so systems load correctly.
-
-2. **Create `p2a_itp_activities` table** via SQL migration with RLS policies.
-
-3. **Rename Step 6** from "Systems" to "Inspection Test Plan" in `VCRExecutionPlanWizard.tsx`, update icon to `ClipboardList` or `Shield`.
-
-4. **Rewrite `SystemsStep.tsx`** as the new ITP component:
-   - Fetch mapped systems from `p2a_handover_point_systems` (with corrected column names)
-   - Fetch existing ITP activities from `p2a_itp_activities`
-   - Render each system as a collapsible card with its activity rows
-   - Each activity row has: name, W/H/NA toggle, optional notes
-   - "Add Activity" button per system to add custom activities
-   - Pre-populate with default activities when a system has none
-   - Auto-save changes via mutations
-
-5. **Update step description** in the wizard to: "Define witness and hold points for each system"
+6. Remove debug `console.log` statements added in previous attempts.
 
