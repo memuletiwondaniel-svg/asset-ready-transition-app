@@ -770,7 +770,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
                   </div>
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h1 className="text-lg sm:text-xl font-bold text-foreground">{pssrData.id}</h1>
+                      <h1 className="text-lg sm:text-xl font-bold text-foreground">{dbPssr?.pssr_id || pssrId}</h1>
                       <Badge 
                         variant="outline" 
                         className={`flex items-center gap-1 sm:gap-1.5 text-xs ${getStatusColor(pssrData.status)}`}
