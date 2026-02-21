@@ -11,7 +11,7 @@ import {
   X,
 } from 'lucide-react';
 import { PSSROverviewTab } from './PSSROverviewTab';
-import { SOFCertificateNavigator } from '@/components/sof/SOFCertificateNavigator';
+import { SOFCertificate } from '@/components/sof/SOFCertificate';
 import { cn } from '@/lib/utils';
 import { useSOFCertificate, useSOFApprovers } from '@/hooks/useSOFCertificates';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -142,29 +142,26 @@ export const PSSRDetailOverlay: React.FC<PSSRDetailOverlayProps> = ({
       case 'sof':
         if (certificate) {
           return (
-            <div className="h-full">
-              <SOFCertificateNavigator
-                pssrId={pssrId}
-                certificateNumber={certificate.certificate_number}
-                pssrReason={certificate.pssr_reason}
-                plantName={certificate.plant_name || plantData?.name || ''}
-                facilityName={certificate.facility_name || ''}
-                projectName={certificate.project_name || ''}
-                approvers={(sofApprovers || []).map((a: any) => ({
-                  id: a.id,
-                  approver_name: a.approver_name,
-                  approver_role: a.approver_role,
-                  approver_level: a.approver_level,
-                  status: a.status,
-                  comments: a.comments,
-                  approved_at: a.approved_at,
-                  signature_data: a.signature_data,
-                }))}
-                issuedAt={certificate.issued_at || undefined}
-                status={certificate.status}
-                isViewOnly={false}
-              />
-            </div>
+            <SOFCertificate
+              pssrId={pssrId}
+              certificateNumber={certificate.certificate_number}
+              pssrReason={certificate.pssr_reason}
+              plantName={certificate.plant_name || plantData?.name || ''}
+              pssrTitle={pssrTitle}
+              approvers={(sofApprovers || []).map((a: any) => ({
+                id: a.id,
+                approver_name: a.approver_name,
+                approver_role: a.approver_role,
+                approver_level: a.approver_level,
+                status: a.status,
+                comments: a.comments,
+                approved_at: a.approved_at,
+                signature_data: a.signature_data,
+              }))}
+              issuedAt={certificate.issued_at || undefined}
+              status={certificate.status}
+              isViewOnly={false}
+            />
           );
         }
         return <PlaceholderTab title="SoF Certificate" icon={<Award className="w-8 h-8 text-amber-500" />} />;

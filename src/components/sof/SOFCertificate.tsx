@@ -51,6 +51,7 @@ interface SOFCertificateProps {
   plantName?: string;
   facilityName?: string;
   projectName?: string;
+  pssrTitle?: string;
   approvers: SOFApprover[];
   issuedAt?: string;
   status: string;
@@ -100,6 +101,7 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
   plantName: propPlantName,
   facilityName: propFacilityName,
   projectName: propProjectName,
+  pssrTitle: propPssrTitle,
   approvers: propApprovers,
   issuedAt,
   status,
@@ -143,11 +145,11 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
   const [tempMarijeSignature, setTempMarijeSignature] = useState<string | null>(null);
   
   const [localApprovers, setLocalApprovers] = useState<SOFApprover[]>(() => {
-    // In view-only mode, use the passed approvers directly (they contain the actual state)
-    if (isViewOnly && propApprovers.length > 0) {
+    // Use passed approvers when they exist (from DB)
+    if (propApprovers.length > 0) {
       return propApprovers;
     }
-    // Otherwise use mock data
+    // Fallback to mock data only for legacy mock PSSRs
     const savedAli = typeof window !== 'undefined' ? localStorage.getItem(ALI_SIGNATURE_KEY) : null;
     const savedPaul = typeof window !== 'undefined' ? localStorage.getItem(PAUL_SIGNATURE_KEY) : null;
     const savedMarije = typeof window !== 'undefined' ? localStorage.getItem(MARIJE_SIGNATURE_KEY) : null;
@@ -225,9 +227,10 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
   };
   
   // Use props for display, with fallback defaults
-  const plantName = propPlantName || 'CS';
-  const facilityName = propFacilityName || 'Hammar Mishrif';
-  const projectName = propProjectName || 'DP-300 HM Additional Compressors';
+  const plantName = propPlantName || '';
+  const facilityName = propFacilityName || '';
+  const projectName = propProjectName || '';
+  const pssrTitle = propPssrTitle || '';
   const pssrReason = propPssrReason || 'Start-up of a New Project or Facility';
   
   const certificateText = getCertificateText(pssrReason);
@@ -393,24 +396,22 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
 
         {/* Facility Information */}
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-2 text-sm">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2 text-sm">
             <div>
-              <span className="text-gray-500 block text-xs uppercase tracking-wide">Plant</span>
+              <span className="text-gray-500 block text-xs uppercase tracking-wide">Location</span>
               <span className="font-medium text-gray-800">{plantName}</span>
             </div>
             <div>
-              <span className="text-gray-500 block text-xs uppercase tracking-wide">Facility</span>
-              <span className="font-medium text-gray-800">{facilityName}</span>
-            </div>
-            <div className="col-span-2">
-              <span className="text-gray-500 block text-xs uppercase tracking-wide">Project</span>
-              <span className="font-medium text-gray-800">{projectName}</span>
+              <span className="text-gray-500 block text-xs uppercase tracking-wide">PSSR Reason</span>
+              <span className="font-medium text-gray-800">{pssrReason}</span>
             </div>
           </div>
-          <div className="mt-3 pt-3 border-t border-gray-200">
-            <span className="text-gray-500 text-xs uppercase tracking-wide block mb-0.5">PSSR Reason</span>
-            <span className="font-medium text-gray-800 text-sm">{pssrReason}</span>
-          </div>
+          {pssrTitle && (
+            <div className="mt-3 pt-3 border-t border-gray-200">
+              <span className="text-gray-500 text-xs uppercase tracking-wide block mb-0.5">PSSR Title</span>
+              <span className="font-medium text-gray-800 text-sm">{pssrTitle}</span>
+            </div>
+          )}
         </div>
 
         {/* Certificate Text */}
