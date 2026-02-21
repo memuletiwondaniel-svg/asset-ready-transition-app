@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -84,6 +84,9 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
   const { plants } = usePlants();
   const { allFields: fields } = useFields();
   const { allStations: stations } = useStations();
+
+  // Ref to persist categoryId across potential re-renders/remounts
+  const categoryIdRef = useRef<string>('');
   
   const [wizardState, setWizardState] = useState<WizardState>({
     categoryId: '',
@@ -108,6 +111,20 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
     templateSofApproverRoleIds: [],
   });
 
+  // Keep ref in sync with state, and restore if state gets cleared unexpectedly
+  useEffect(() => {
+    if (wizardState.categoryId) {
+      categoryIdRef.current = wizardState.categoryId;
+    } else if (categoryIdRef.current && open && currentStep === 1) {
+      // State was cleared but ref still has value - restore it
+      setWizardState(prev => ({
+        ...prev,
+        categoryId: categoryIdRef.current,
+        reasonId: categoryIdRef.current === '__other__' ? '' : categoryIdRef.current,
+      }));
+    }
+  }, [wizardState.categoryId, open, currentStep]);
+
   // Custom PSSR items created during this wizard session
   const [customItems, setCustomItems] = useState<Array<{
     id: string;
@@ -130,6 +147,7 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
   const selectedStation = stations?.find(s => s.id === wizardState.stationId);
 
   const resetWizard = () => {
+    categoryIdRef.current = '';
     setCurrentStep(1);
     setVisitedSteps(new Set([1]));
     setWizardState({
