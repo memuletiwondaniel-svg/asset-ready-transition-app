@@ -5729,6 +5729,53 @@ export type Database = {
         }
         Relationships: []
       }
+      pssr_custom_checklist_items: {
+        Row: {
+          category: string
+          created_at: string | null
+          description: string
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          pssr_id: string
+          supporting_evidence: string | null
+          topic: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          description: string
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          pssr_id: string
+          supporting_evidence?: string | null
+          topic?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          description?: string
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          pssr_id?: string
+          supporting_evidence?: string | null
+          topic?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pssr_custom_checklist_items_pssr_id_fkey"
+            columns: ["pssr_id"]
+            isOneToOne: false
+            referencedRelation: "pssrs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pssr_delivery_parties: {
         Row: {
           code: string
@@ -6574,6 +6621,8 @@ export type Database = {
           completed_at: string | null
           created_at: string
           cs_location: string | null
+          draft_checklist_item_ids: string[] | null
+          draft_na_item_ids: string[] | null
           field_id: string | null
           finalized_at: string | null
           id: string
@@ -6600,6 +6649,8 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           cs_location?: string | null
+          draft_checklist_item_ids?: string[] | null
+          draft_na_item_ids?: string[] | null
           field_id?: string | null
           finalized_at?: string | null
           id?: string
@@ -6626,6 +6677,8 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           cs_location?: string | null
+          draft_checklist_item_ids?: string[] | null
+          draft_na_item_ids?: string[] | null
           field_id?: string | null
           finalized_at?: string | null
           id?: string

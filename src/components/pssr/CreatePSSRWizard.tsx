@@ -172,6 +172,35 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
         const matchedReason = reasons?.find(r => r.id === draft.reason_id);
         const categoryId = matchedReason?.category || '';
 
+        // Load custom checklist items for this draft
+        const { data: savedCustomItems } = await supabase
+          .from('pssr_custom_checklist_items')
+          .select('*')
+          .eq('pssr_id', draftPssrId)
+          .order('display_order');
+
+        const restoredCustomItems = (savedCustomItems || []).map((ci: any) => ({
+          id: `custom-${ci.id}`,
+          category: ci.category,
+          topic: ci.topic,
+          description: ci.description,
+          supporting_evidence: ci.supporting_evidence,
+          approvers: null,
+          responsible: null,
+          sequence_number: 999,
+          is_active: true,
+          version: 1,
+          created_at: ci.created_at,
+          updated_at: ci.updated_at,
+        }));
+
+        setCustomItems(restoredCustomItems);
+
+        // Restore checklist item IDs: saved DB item IDs + custom item IDs
+        const dbItemIds = (draft as any).draft_checklist_item_ids || [];
+        const customItemIds = restoredCustomItems.map((ci: any) => ci.id);
+        const restoredNaItemIds = (draft as any).draft_na_item_ids || [];
+
         setWizardState(prev => ({
           ...prev,
           categoryId,
@@ -182,6 +211,9 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
           fieldId: draft.field_id || '',
           stationId: draft.station_id || '',
           pssrLeadId: (draft as any).pssr_lead_id || '',
+          selectedChecklistItemIds: [...dbItemIds, ...customItemIds],
+          naItemIds: restoredNaItemIds,
+          configLoaded: dbItemIds.length > 0 || customItemIds.length > 0,
         }));
 
         // Start at step 2 if reason is already set, otherwise step 1
@@ -300,9 +332,18 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
         pssr_lead_id: wizardState.pssrLeadId || null,
       };
 
+      // Include checklist state in draft payload
+      const fullDraftPayload = {
+        ...draftPayload,
+        draft_checklist_item_ids: wizardState.selectedChecklistItemIds.filter(id => !id.startsWith('custom-')),
+        draft_na_item_ids: wizardState.naItemIds.filter(id => !id.startsWith('custom-')),
+      };
+
+      let resolvedPssrId = draftPssrId;
+
       if (draftPssrId) {
         // Update existing draft - regenerate ID if it contains GEN and we now have a plant
-        const updatePayload: any = { ...draftPayload };
+        const updatePayload: any = { ...fullDraftPayload };
         const { data: existingDraft } = await supabase
           .from('pssrs')
           .select('pssr_id')
@@ -316,26 +357,47 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
           .update(updatePayload)
           .eq('id', draftPssrId);
         if (updateError) throw updateError;
-
-        queryClient.invalidateQueries({ queryKey: ['pssrs'] });
-        queryClient.invalidateQueries({ queryKey: ['pssr-records'] });
-        toast.success('Draft PSSR updated successfully!');
       } else {
         // Create new draft
         const pssrId = await generatePSSRId();
-        const { error: pssrError } = await supabase
+        const { data: newDraft, error: pssrError } = await supabase
           .from('pssrs')
           .insert({
-            ...draftPayload,
+            ...fullDraftPayload,
             pssr_id: pssrId,
             user_id: user.id,
-          } as any);
+          } as any)
+          .select('id')
+          .single();
         if (pssrError) throw pssrError;
-
-        queryClient.invalidateQueries({ queryKey: ['pssrs'] });
-        queryClient.invalidateQueries({ queryKey: ['pssr-records'] });
-        toast.success(`Draft PSSR ${pssrId} saved successfully!`);
+        resolvedPssrId = newDraft?.id;
       }
+
+      // Save custom checklist items
+      if (resolvedPssrId && customItems.length > 0) {
+        // Remove old custom items for this draft, then re-insert
+        await supabase
+          .from('pssr_custom_checklist_items')
+          .delete()
+          .eq('pssr_id', resolvedPssrId);
+
+        const customInserts = customItems.map((item, idx) => ({
+          pssr_id: resolvedPssrId!,
+          category: item.category,
+          topic: item.topic,
+          description: item.description,
+          supporting_evidence: item.supporting_evidence,
+          display_order: idx,
+        }));
+
+        await supabase
+          .from('pssr_custom_checklist_items')
+          .insert(customInserts);
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['pssrs'] });
+      queryClient.invalidateQueries({ queryKey: ['pssr-records'] });
+      toast.success(draftPssrId ? 'Draft PSSR updated successfully!' : 'Draft PSSR saved successfully!');
 
       handleClose();
     } catch (error: any) {
