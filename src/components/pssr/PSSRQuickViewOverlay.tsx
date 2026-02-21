@@ -94,8 +94,11 @@ const getStatusBadge = (status: string) => {
   if (statusLower === 'approved' || statusLower === 'completed') {
     return <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">Completed</Badge>;
   }
-  if (statusLower === 'in-review' || statusLower === 'under review') {
+  if (statusLower === 'in-review' || statusLower === 'under review' || statusLower === 'under_review') {
     return <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/20">In Review</Badge>;
+  }
+  if (statusLower === 'pending_lead_review') {
+    return <Badge className="bg-blue-500/10 text-blue-600 border-blue-500/20">Pending Lead Review</Badge>;
   }
   return <Badge className="bg-muted text-muted-foreground">Draft</Badge>;
 };

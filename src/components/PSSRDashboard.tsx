@@ -708,8 +708,11 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
       case 'completed': 
         return 'bg-green-100 text-green-800 border-green-200';
       case 'under review':
+      case 'under_review':
       case 'in progress': 
         return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'pending_lead_review':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
       case 'pending':
       case 'scheduled': 
         return 'bg-orange-100 text-orange-800 border-orange-200';
@@ -724,8 +727,11 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
       case 'completed': 
         return <span className="inline-flex">✓</span>;
       case 'under review':
+      case 'under_review':
       case 'in progress': 
         return <span className="inline-flex">⏱</span>;
+      case 'pending_lead_review':
+        return <span className="inline-flex">👁</span>;
       case 'pending':
       case 'scheduled': 
         return <span className="inline-flex">⚠</span>;

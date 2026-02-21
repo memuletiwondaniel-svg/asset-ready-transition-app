@@ -77,6 +77,7 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
   const [showDraftConfirm, setShowDraftConfirm] = useState(false);
+  const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
   const [visitedSteps, setVisitedSteps] = useState<Set<number>>(new Set([1]));
   
   const { data: atiScopes } = usePSSRTieInScopes();
@@ -687,9 +688,71 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
         if (atiError) console.error('Error saving ATI scopes:', atiError);
       }
 
+      // Update status to PENDING_LEAD_REVIEW
+      const { error: statusError } = await supabase
+        .from('pssrs')
+        .update({ status: 'PENDING_LEAD_REVIEW' })
+        .eq('id', newPSSR.id);
+
+      if (statusError) console.error('Error updating status:', statusError);
+
+      // Create task for PSSR Lead to review the draft
+      if (wizardState.pssrLeadId) {
+        const { data: leadProfile } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        const creatorName = leadProfile?.full_name || 'A team member';
+
+        const { error: taskError } = await supabase
+          .from('user_tasks')
+          .insert({
+            user_id: wizardState.pssrLeadId,
+            title: `Review Draft PSSR: ${wizardState.title.trim()}`,
+            description: `${creatorName} has submitted a new PSSR for your review. Please review the PSSR items, approvers, and scope, then approve, edit, or reject the draft.`,
+            priority: 'high',
+            type: 'review',
+            status: 'pending',
+            metadata: {
+              source: 'pssr_workflow',
+              pssr_id: newPSSR.id,
+              pssr_code: newPSSR.pssr_id,
+              action: 'review_draft_pssr',
+              created_by: user.id,
+            },
+          });
+
+        if (taskError) console.error('Error creating PSSR Lead task:', taskError);
+      }
+
+      // Create notification for PSSR Lead
+      if (wizardState.pssrLeadId) {
+        const { data: leadEmail } = await supabase
+          .from('profiles')
+          .select('email')
+          .eq('user_id', wizardState.pssrLeadId)
+          .maybeSingle();
+
+        if (leadEmail?.email) {
+          await supabase.from('notifications').insert({
+            recipient_user_id: wizardState.pssrLeadId,
+            recipient_email: leadEmail.email,
+            sender_user_id: user.id,
+            title: `New PSSR Submitted for Review: ${newPSSR.pssr_id}`,
+            content: `A new PSSR "${wizardState.title.trim()}" has been submitted and requires your review as PSSR Lead.`,
+            type: 'pssr_review',
+            status: 'pending',
+            pssr_id: newPSSR.id,
+          });
+        }
+      }
+
       queryClient.invalidateQueries({ queryKey: ['pssrs'] });
       queryClient.invalidateQueries({ queryKey: ['pssr-records'] });
-      toast.success(draftPssrId ? 'PSSR updated successfully!' : `PSSR ${newPSSR.pssr_id} created successfully!`);
+      queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+      toast.success(`PSSR ${newPSSR.pssr_id} submitted for Lead review!`);
       handleClose();
       onSuccess?.(newPSSR.id);
     } catch (error: any) {
@@ -983,16 +1046,16 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
                 <ChevronRight className="h-4 w-4 ml-1" />
               </Button>
             ) : (
-              <Button onClick={handleSubmit} disabled={isSubmitting || isSavingDraft}>
+              <Button onClick={() => setShowSubmitConfirm(true)} disabled={isSubmitting || isSavingDraft}>
                 {isSubmitting ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Creating...
+                    Submitting...
                   </>
                 ) : (
                   <>
                     <Check className="h-4 w-4 mr-2" />
-                    Create PSSR
+                    Submit for Review
                   </>
                 )}
               </Button>
@@ -1013,6 +1076,29 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction onClick={handleSaveAsDraft}>
                 Save Draft
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Submit for Review Confirmation */}
+        <AlertDialog open={showSubmitConfirm} onOpenChange={setShowSubmitConfirm}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Submit PSSR for Lead Review?</AlertDialogTitle>
+              <AlertDialogDescription className="space-y-2">
+                <span className="block">
+                  This PSSR will be submitted to the designated PSSR Lead for review and approval.
+                </span>
+                <span className="block text-sm">
+                  The PSSR Lead will be able to review all items, approvers, and scope details before approving the draft. You will be notified once the review is complete.
+                </span>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Go Back</AlertDialogCancel>
+              <AlertDialogAction onClick={handleSubmit}>
+                Confirm &amp; Submit
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

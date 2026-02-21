@@ -145,6 +145,11 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails, pin
         text: 'text-amber-700 dark:text-amber-400', 
         border: 'border-amber-200 dark:border-amber-800/60' 
       },
+      'Pending Lead Review': { 
+        bg: 'bg-blue-50 dark:bg-blue-950/40', 
+        text: 'text-blue-700 dark:text-blue-400', 
+        border: 'border-blue-200 dark:border-blue-800/60' 
+      },
       'Draft': { 
         bg: 'bg-slate-50 dark:bg-slate-800/40', 
         text: 'text-slate-600 dark:text-slate-400', 
