@@ -111,21 +111,12 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
     templateSofApproverRoleIds: [],
   });
 
-  // Keep ref in sync with state, and restore if state gets cleared unexpectedly
+  // Keep ref in sync with state
   useEffect(() => {
-    console.log('[PSSR Debug] categoryId effect:', { categoryId: wizardState.categoryId, ref: categoryIdRef.current, open, currentStep });
     if (wizardState.categoryId) {
       categoryIdRef.current = wizardState.categoryId;
-    } else if (categoryIdRef.current && open && currentStep === 1) {
-      // State was cleared but ref still has value - restore it
-      console.log('[PSSR Debug] Restoring categoryId from ref:', categoryIdRef.current);
-      setWizardState(prev => ({
-        ...prev,
-        categoryId: categoryIdRef.current,
-        reasonId: categoryIdRef.current === '__other__' ? '' : categoryIdRef.current,
-      }));
     }
-  }, [wizardState.categoryId, open, currentStep]);
+  }, [wizardState.categoryId]);
 
   // Custom PSSR items created during this wizard session
   const [customItems, setCustomItems] = useState<Array<{
@@ -300,9 +291,17 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
   const validateStep = (step: number, silent = false): boolean => {
     switch (step) {
       case 1:
-        if (!wizardState.categoryId) {
+        if (!wizardState.categoryId && !categoryIdRef.current) {
           if (!silent) toast.error('Please select a PSSR reason');
           return false;
+        }
+        // Restore from ref if state is empty
+        if (!wizardState.categoryId && categoryIdRef.current) {
+          setWizardState(prev => ({
+            ...prev,
+            categoryId: categoryIdRef.current,
+            reasonId: categoryIdRef.current === '__other__' ? '' : categoryIdRef.current,
+          }));
         }
         return true;
       case 2:
@@ -330,6 +329,14 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
       // Allow jumping forward only if current step validates
       if (!validateStep(currentStep)) return;
     }
+    // Restore categoryId from ref if navigating back to step 1
+    if (targetStep === 1 && !wizardState.categoryId && categoryIdRef.current) {
+      setWizardState(prev => ({
+        ...prev,
+        categoryId: categoryIdRef.current,
+        reasonId: categoryIdRef.current === '__other__' ? '' : categoryIdRef.current,
+      }));
+    }
     setVisitedSteps(prev => new Set([...prev, targetStep]));
     setCurrentStep(targetStep);
   };
@@ -342,8 +349,16 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
   };
 
   const handleBack = () => {
-    console.log('[PSSR Debug] handleBack called, current categoryId:', wizardState.categoryId, 'ref:', categoryIdRef.current);
-    setCurrentStep(prev => Math.max(prev - 1, 1));
+    const prevStep = Math.max(currentStep - 1, 1);
+    // Restore categoryId from ref if navigating back to step 1
+    if (prevStep === 1 && !wizardState.categoryId && categoryIdRef.current) {
+      setWizardState(prev => ({
+        ...prev,
+        categoryId: categoryIdRef.current,
+        reasonId: categoryIdRef.current === '__other__' ? '' : categoryIdRef.current,
+      }));
+    }
+    setCurrentStep(prevStep);
   };
 
   const handleSaveAsDraft = async () => {
@@ -745,14 +760,17 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
           {/* Step 1: Reason (select PSSR template) */}
           {currentStep === 1 && (
             <WizardStepCategory
-              categoryId={wizardState.categoryId}
-              onCategoryChange={(id) => setWizardState(prev => ({ 
-                ...prev, 
-                categoryId: id,
-                reasonId: id === '__other__' ? '' : id,
-                selectedAtiScopeIds: [],
-                configLoaded: false,
-              }))}
+              categoryId={wizardState.categoryId || categoryIdRef.current}
+              onCategoryChange={(id) => {
+                categoryIdRef.current = id;
+                setWizardState(prev => ({ 
+                  ...prev, 
+                  categoryId: id,
+                  reasonId: id === '__other__' ? '' : id,
+                  selectedAtiScopeIds: [],
+                  configLoaded: false,
+                }));
+              }}
             />
           )}
 
