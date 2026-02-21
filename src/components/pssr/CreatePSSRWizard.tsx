@@ -248,7 +248,7 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
   // Load configuration when entering Step 3
   useEffect(() => {
     const loadConfiguration = async () => {
-      if (currentStep === 3 && wizardState.reasonId && !wizardState.configLoaded && !wizardState.configLoading) {
+      if ((currentStep === 3 || currentStep === 4) && wizardState.reasonId && !wizardState.configLoaded && !wizardState.configLoading) {
         setWizardState(prev => ({ ...prev, configLoading: true }));
         
         try {
@@ -290,20 +290,14 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
 
   const validateStep = (step: number, silent = false): boolean => {
     switch (step) {
-      case 1:
-        if (!wizardState.categoryId && !categoryIdRef.current) {
+      case 1: {
+        const effectiveCategoryId = wizardState.categoryId || categoryIdRef.current;
+        if (!effectiveCategoryId) {
           if (!silent) toast.error('Please select a PSSR reason');
           return false;
         }
-        // Restore from ref if state is empty
-        if (!wizardState.categoryId && categoryIdRef.current) {
-          setWizardState(prev => ({
-            ...prev,
-            categoryId: categoryIdRef.current,
-            reasonId: categoryIdRef.current === '__other__' ? '' : categoryIdRef.current,
-          }));
-        }
         return true;
+      }
       case 2:
         if (!wizardState.title.trim()) {
           if (!silent) toast.error('Please enter a PSSR title');
@@ -344,6 +338,14 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
   const handleNext = () => {
     if (!validateStep(currentStep)) return;
     const nextStep = Math.min(currentStep + 1, STEPS.length);
+    // Ensure reasonId is set before entering step 3 (config loading step)
+    if (nextStep === 3 && !wizardState.reasonId && categoryIdRef.current) {
+      setWizardState(prev => ({
+        ...prev,
+        categoryId: categoryIdRef.current,
+        reasonId: categoryIdRef.current === '__other__' ? '' : categoryIdRef.current,
+      }));
+    }
     setVisitedSteps(prev => new Set([...prev, nextStep]));
     setCurrentStep(nextStep);
   };
