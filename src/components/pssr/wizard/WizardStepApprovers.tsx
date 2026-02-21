@@ -176,9 +176,6 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
                             <p className="text-[10px] text-muted-foreground/50 truncate">{person.position}</p>
                           )}
                         </div>
-                        {plantName && (person.position || '').toLowerCase().includes(plantName.toLowerCase()) && (
-                          <MapPin className="h-3 w-3 text-emerald-500 flex-shrink-0" />
-                        )}
                       </div>
                     ))}
                   </div>
