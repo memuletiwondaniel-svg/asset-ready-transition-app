@@ -234,7 +234,15 @@ const MyTasksPage: React.FC = () => {
           </div>
         </div>
 
-        {isAllCaughtUp ? (
+        {!allPanelsLoaded ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="text-center max-w-md space-y-4">
+              <Skeleton className="h-16 w-16 rounded-full mx-auto" />
+              <Skeleton className="h-6 w-48 mx-auto" />
+              <Skeleton className="h-4 w-64 mx-auto" />
+            </div>
+          </div>
+        ) : isAllCaughtUp ? (
           <div className="flex items-center justify-center py-20">
             <div className="text-center max-w-md">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-green-500/10 to-emerald-500/10 mb-6">
