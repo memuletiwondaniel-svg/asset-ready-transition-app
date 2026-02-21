@@ -39,7 +39,7 @@ export function usePSSRCategoryProgress(pssrId: string) {
   return useQuery({
     queryKey: ['pssr-category-progress', pssrId],
     queryFn: async () => {
-      // Fetch all active categories
+      // Fetch all active categories for name/order lookup
       const { data: categories, error: catError } = await supabase
         .from('pssr_checklist_categories')
         .select('id, name, ref_id, display_order')
@@ -48,51 +48,31 @@ export function usePSSRCategoryProgress(pssrId: string) {
 
       if (catError) throw catError;
 
-      // Fetch ALL active checklist items to get true totals per category
-      const { data: allItems, error: itemsError } = await supabase
-        .from('pssr_checklist_items')
-        .select('id, category')
-        .eq('is_active', true);
-
-      if (itemsError) throw itemsError;
-
-      // Build total items per category from checklist_items
-      const categoryItemTotals: Record<string, number> = {};
-      (allItems || []).forEach(item => {
-        categoryItemTotals[item.category] = (categoryItemTotals[item.category] || 0) + 1;
-      });
-
-      // Fetch checklist responses for this PSSR
+      // Fetch checklist responses for THIS PSSR with their item's category
       const { data: responses, error: respError } = await supabase
         .from('pssr_checklist_responses')
-        .select('id, status, response, checklist_item_id')
+        .select('id, status, response, checklist_item_id, pssr_checklist_items!inner(id, category)')
         .eq('pssr_id', pssrId);
 
       if (respError) throw respError;
 
-      // Map response checklist_item_id to category
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      const itemCategoryMap: Record<string, string> = {};
-      (allItems || []).forEach(item => {
-        itemCategoryMap[item.id] = item.category;
-      });
-
-      // Count completed responses per category
+      // Count totals and completed per category from actual PSSR responses
+      const categoryTotals: Record<string, number> = {};
       const categoryCompleted: Record<string, number> = {};
-      (responses || []).forEach((resp) => {
-        const categoryId = itemCategoryMap[resp.checklist_item_id];
-        if (categoryId) {
-          if (resp.status === 'approved' || resp.response === 'YES' || resp.response === 'NA') {
-            categoryCompleted[categoryId] = (categoryCompleted[categoryId] || 0) + 1;
-          }
+      (responses || []).forEach((resp: any) => {
+        const catId = resp.pssr_checklist_items?.category;
+        if (!catId) return;
+        categoryTotals[catId] = (categoryTotals[catId] || 0) + 1;
+        if (resp.status === 'approved' || resp.response === 'YES' || resp.response === 'NA') {
+          categoryCompleted[catId] = (categoryCompleted[catId] || 0) + 1;
         }
       });
 
-      // Build category progress — show ALL categories that have checklist items
+      // Build category progress — only categories that have responses for this PSSR
       const categoryProgress: CategoryProgress[] = (categories || [])
-        .filter(cat => (categoryItemTotals[cat.id] || 0) > 0)
+        .filter(cat => (categoryTotals[cat.id] || 0) > 0)
         .map(cat => {
-          const total = categoryItemTotals[cat.id] || 0;
+          const total = categoryTotals[cat.id] || 0;
           const completed = categoryCompleted[cat.id] || 0;
           return {
             id: cat.id,
