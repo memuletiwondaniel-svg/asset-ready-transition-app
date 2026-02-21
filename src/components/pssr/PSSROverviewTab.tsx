@@ -250,7 +250,7 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
 
   if (detailsLoading) {
     return (
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[1, 2, 3].map(i => (
           <Card key={i} className="animate-pulse">
             <CardHeader className="bg-muted/40 border-b py-3"><div className="h-4 w-32 bg-muted rounded" /></CardHeader>
@@ -749,7 +749,7 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
 
   return (
     <>
-      <div className="grid grid-cols-3 gap-4 h-[calc(95vh-120px)]">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:h-[calc(95vh-120px)]">
         {renderInfoPanel()}
         {renderProgressPanel()}
         {renderApprovalsPanel()}

@@ -174,7 +174,9 @@ export const PSSRDetailOverlay: React.FC<PSSRDetailOverlayProps> = ({
     <button
       onClick={() => setActiveTab(id)}
       className={cn(
-        "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors text-left",
+        "flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors text-left",
+        "w-full md:w-full",
+        "shrink-0 md:shrink",
         activeTab === id
           ? "bg-primary text-primary-foreground font-medium"
           : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
@@ -187,25 +189,24 @@ export const PSSRDetailOverlay: React.FC<PSSRDetailOverlayProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] w-full h-[95vh] p-0 gap-0 overflow-hidden [&>button]:hidden">
+      <DialogContent className="max-w-[95vw] w-full h-[95vh] max-h-[95vh] md:h-[95vh] p-0 gap-0 overflow-hidden [&>button]:hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-2.5 border-b shrink-0 min-h-[52px]">
-          <div className="flex items-center gap-3">
-            <div className={cn('w-3 h-10 rounded-full', statusConfig.color)} />
-            <div>
-              <DialogTitle className="text-sm text-muted-foreground font-medium">
+        <div className="flex items-center justify-between px-3 sm:px-5 py-2 sm:py-2.5 border-b shrink-0 min-h-[48px] sm:min-h-[52px]">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className={cn('w-2 sm:w-3 h-8 sm:h-10 rounded-full shrink-0', statusConfig.color)} />
+            <div className="min-w-0">
+              <DialogTitle className="text-xs sm:text-sm text-muted-foreground font-medium truncate">
                 {pssrDisplayId}
               </DialogTitle>
               {pssrTitle && (
-                <p className="text-base font-semibold leading-tight">{pssrTitle}</p>
+                <p className="text-sm sm:text-base font-semibold leading-tight line-clamp-2 sm:line-clamp-1">{pssrTitle}</p>
               )}
-              {/* Hidden description for accessibility */}
               <DialogDescription className="sr-only">
                 PSSR Detail View
               </DialogDescription>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <Button
               variant="ghost"
               size="icon"
@@ -217,10 +218,34 @@ export const PSSRDetailOverlay: React.FC<PSSRDetailOverlayProps> = ({
           </div>
         </div>
 
-        {/* Body: Sidebar + Content */}
+        {/* Mobile Tab Bar */}
+        <div className="md:hidden border-b shrink-0 overflow-x-auto">
+          <div className="flex gap-1 p-2">
+            {navTabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors shrink-0",
+                    activeTab === tab.id
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  )}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Body: Sidebar (desktop) + Content */}
         <div className="flex flex-1 min-h-0">
-          {/* Left Sidebar Navigation */}
-          <div className="w-56 shrink-0 border-r bg-muted/30 flex flex-col">
+          {/* Left Sidebar Navigation - Hidden on mobile */}
+          <div className="hidden md:flex w-56 shrink-0 border-r bg-muted/30 flex-col">
             <ScrollArea className="flex-1">
               <div className="p-3 space-y-1">
                 <div className="px-2 pt-1 pb-2">
@@ -238,7 +263,7 @@ export const PSSRDetailOverlay: React.FC<PSSRDetailOverlayProps> = ({
           {/* Main Content Area */}
           <div className="flex-1 min-w-0 min-h-0 flex flex-col">
             <ScrollArea className="flex-1">
-              <div className="p-5">
+              <div className="p-3 sm:p-5">
                 {renderContent()}
               </div>
             </ScrollArea>
