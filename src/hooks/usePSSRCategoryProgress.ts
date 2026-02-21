@@ -64,31 +64,31 @@ export function usePSSRCategoryProgress(pssrId: string) {
 
       if (respError) throw respError;
 
-      // Count items per category
+      // Count items per category — keyed by category ID (UUID) since checklist_items.category stores UUIDs
       const categoryStats: Record<string, { total: number; completed: number }> = {};
       
-      // Initialize all categories
+      // Initialize all categories by ID
       categories?.forEach(cat => {
-        categoryStats[cat.name] = { total: 0, completed: 0 };
+        categoryStats[cat.id] = { total: 0, completed: 0 };
       });
 
-      // Count responses by category
+      // Count responses by category (UUID match)
       responses?.forEach((resp: any) => {
-        const categoryName = resp.pssr_checklist_items?.category;
-        if (categoryName && categoryStats[categoryName] !== undefined) {
-          categoryStats[categoryName].total++;
+        const categoryId = resp.pssr_checklist_items?.category;
+        if (categoryId && categoryStats[categoryId] !== undefined) {
+          categoryStats[categoryId].total++;
           // Consider 'approved' or responses with 'YES'/'NA' as completed
           if (resp.status === 'approved' || resp.response === 'YES' || resp.response === 'NA') {
-            categoryStats[categoryName].completed++;
+            categoryStats[categoryId].completed++;
           }
         }
       });
 
       // Build category progress array
       const categoryProgress: CategoryProgress[] = (categories || [])
-        .filter(cat => categoryStats[cat.name]?.total > 0)
+        .filter(cat => categoryStats[cat.id]?.total > 0)
         .map(cat => {
-          const stats = categoryStats[cat.name];
+          const stats = categoryStats[cat.id];
           return {
             id: cat.id,
             name: cat.name,
