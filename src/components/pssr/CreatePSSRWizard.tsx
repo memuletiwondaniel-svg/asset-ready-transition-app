@@ -593,7 +593,7 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
         const checklistResponses = wizardState.selectedChecklistItemIds.map((itemId: string) => ({
           pssr_id: newPSSR.id,
           checklist_item_id: itemId,
-          status: 'pending',
+          status: 'NOT_SUBMITTED',
           response: null,
         }));
 
@@ -617,7 +617,7 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
             approver_role: role.name,
             approver_name: 'Pending Assignment',
             approver_level: index + 1,
-            status: 'pending',
+            status: 'PENDING',
           }));
 
           const { error: approverError } = await supabase
@@ -712,7 +712,7 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
             user_id: wizardState.pssrLeadId,
             title: `Review Draft PSSR: ${wizardState.title.trim()}`,
             description: `${creatorName} has submitted a new PSSR for your review. Please review the PSSR items, approvers, and scope, then approve, edit, or reject the draft.`,
-            priority: 'high',
+            priority: 'High',
             type: 'review',
             status: 'pending',
             metadata: {
@@ -742,8 +742,8 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
             sender_user_id: user.id,
             title: `New PSSR Submitted for Review: ${newPSSR.pssr_id}`,
             content: `A new PSSR "${wizardState.title.trim()}" has been submitted and requires your review as PSSR Lead.`,
-            type: 'pssr_review',
-            status: 'pending',
+            type: 'PSSR_REVIEW_REQUEST',
+            status: 'PENDING',
             pssr_id: newPSSR.id,
           });
         }
