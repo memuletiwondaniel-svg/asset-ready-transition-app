@@ -1,0 +1,2 @@
+UPDATE field SET name = 'NRNGL - Compressor & Utilities', updated_at = now() WHERE id = 'f68357bb-fbe7-459f-9cb7-b1396037d0f1';
+UPDATE field SET name = 'NRNGL - Gas Treatment & Liquids', updated_at = now() WHERE id = 'eaedd2e1-0b72-4f36-8a8a-f50d87faed4e';
