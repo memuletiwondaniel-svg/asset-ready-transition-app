@@ -58,14 +58,17 @@ export function usePSSRCategoryProgress(pssrId: string) {
 
       // Collect unique checklist_item_ids and fetch their categories separately
       // (checklist_item_id is text, pssr_checklist_items.id is uuid — no FK join available)
-      const itemIds = [...new Set((responses || []).map(r => r.checklist_item_id).filter(Boolean))];
+      const allItemIds = [...new Set((responses || []).map(r => r.checklist_item_id).filter(Boolean))];
+      // Filter out custom items (non-UUID format) that won't exist in pssr_checklist_items
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const validItemIds = allItemIds.filter(id => uuidRegex.test(id));
       
       let itemCategoryMap = new Map<string, string>();
-      if (itemIds.length > 0) {
+      if (validItemIds.length > 0) {
         const { data: items, error: itemsError } = await supabase
           .from('pssr_checklist_items')
           .select('id, category')
-          .in('id', itemIds);
+          .in('id', validItemIds);
         
         if (itemsError) throw itemsError;
         itemCategoryMap = new Map((items || []).map(i => [i.id, i.category]));
@@ -135,14 +138,16 @@ export function usePSSRCategoryItems(pssrId: string, categoryName: string | null
       if (error) throw error;
 
       // Fetch all checklist items referenced by these responses
-      const itemIds = [...new Set((responses || []).map(r => r.checklist_item_id).filter(Boolean))];
+      const allItemIds = [...new Set((responses || []).map(r => r.checklist_item_id).filter(Boolean))];
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const validItemIds = allItemIds.filter(id => uuidRegex.test(id));
       let itemMap = new Map<string, any>();
       
-      if (itemIds.length > 0) {
+      if (validItemIds.length > 0) {
         const { data: items } = await supabase
           .from('pssr_checklist_items')
           .select('id, description, category, sequence_number, topic')
-          .in('id', itemIds);
+          .in('id', validItemIds);
         
         // Also fetch category names
         const catIds = [...new Set((items || []).map(i => i.category).filter(Boolean))];
