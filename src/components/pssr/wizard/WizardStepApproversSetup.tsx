@@ -48,8 +48,8 @@ const WizardStepApproversSetup: React.FC<WizardStepApproversSetupProps> = ({
   plantName,
 }) => {
   const [leadPopoverOpen, setLeadPopoverOpen] = useState(false);
-  const [pssrApproversOpen, setPssrApproversOpen] = useState(true);
-  const [sofApproversOpen, setSofApproversOpen] = useState(true);
+  const [pssrApproversOpen, setPssrApproversOpen] = useState(false);
+  const [sofApproversOpen, setSofApproversOpen] = useState(false);
   const { data: profileUsers, isLoading: usersLoading } = useProfileUsers();
 
   const sortedUsers = useMemo(() => {
