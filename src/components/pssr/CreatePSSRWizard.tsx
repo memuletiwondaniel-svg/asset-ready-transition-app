@@ -643,11 +643,50 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
         newPSSR = data;
       }
 
-      // Create checklist responses
+      // Save custom checklist items BEFORE creating responses so we get real UUIDs
+      const customItemIdMap = new Map<string, string>(); // temp ID -> "custom-{real_uuid}"
+      const customItemsForSubmit = customItems.filter(ci => 
+        wizardState.selectedChecklistItemIds.some(id => id === `custom-${ci.id}`)
+      );
+      if (customItemsForSubmit.length > 0) {
+        // Remove old custom items for this PSSR
+        await supabase
+          .from('pssr_custom_checklist_items')
+          .delete()
+          .eq('pssr_id', newPSSR.id);
+
+        const customInserts = customItemsForSubmit.map((item, idx) => ({
+          pssr_id: newPSSR.id,
+          category: item.category,
+          topic: item.topic,
+          description: item.description,
+          supporting_evidence: item.supporting_evidence,
+          display_order: idx,
+        }));
+
+        const { data: insertedCustom, error: customError } = await supabase
+          .from('pssr_custom_checklist_items')
+          .insert(customInserts)
+          .select('id, description');
+
+        if (customError) {
+          console.error('Error saving custom items:', customError);
+        } else if (insertedCustom) {
+          // Map temp IDs to real UUIDs by matching description + order
+          customItemsForSubmit.forEach((item, idx) => {
+            const realItem = insertedCustom[idx];
+            if (realItem) {
+              customItemIdMap.set(`custom-${item.id}`, `custom-${realItem.id}`);
+            }
+          });
+        }
+      }
+
+      // Create checklist responses with remapped custom item IDs
       if (wizardState.selectedChecklistItemIds.length > 0) {
         const checklistResponses = wizardState.selectedChecklistItemIds.map((itemId: string) => ({
           pssr_id: newPSSR.id,
-          checklist_item_id: itemId,
+          checklist_item_id: customItemIdMap.get(itemId) || itemId,
           status: 'NOT_SUBMITTED',
           response: null,
         }));
