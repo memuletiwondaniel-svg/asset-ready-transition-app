@@ -214,10 +214,16 @@ export const PSSRDetailOverlay: React.FC<PSSRDetailOverlayProps> = ({
     },
   });
 
-  // Auto-populate SoF approvers if certificate exists but approvers are empty
+  // Auto-populate SoF approvers: insert if empty, or resolve names for existing unresolved ones
   const autoPopulateSofApprovers = useMutation({
     mutationFn: async () => {
-      if (!certificate || (sofApprovers && sofApprovers.length > 0)) return;
+      if (!certificate) return;
+
+      const hasUnresolved = sofApprovers && sofApprovers.some((a: any) => !a.user_id);
+      const isEmpty = !sofApprovers || sofApprovers.length === 0;
+
+      // If approvers exist and all are resolved, nothing to do
+      if (!isEmpty && !hasUnresolved) return;
       
       const reason = pssrData?.reason || '';
       const needsExtraDirectors = /incident|near miss|tar|turn around|modification/i.test(reason);
@@ -225,7 +231,6 @@ export const PSSRDetailOverlay: React.FC<PSSRDetailOverlayProps> = ({
 
       // Helper to find a person by position keyword + optional plant
       const findPerson = async (positionKeyword: string) => {
-        // First try plant-specific
         if (plantName) {
           const { data } = await supabase
             .from('profiles')
@@ -235,7 +240,6 @@ export const PSSRDetailOverlay: React.FC<PSSRDetailOverlayProps> = ({
             .limit(1);
           if (data && data.length > 0) return data[0];
         }
-        // Fallback to global
         const { data } = await supabase
           .from('profiles')
           .select('user_id, full_name, avatar_url')
@@ -245,10 +249,25 @@ export const PSSRDetailOverlay: React.FC<PSSRDetailOverlayProps> = ({
         return data?.[0] || null;
       };
 
+      // If approvers exist but are unresolved, update them in place
+      if (hasUnresolved && !isEmpty) {
+        for (const approver of sofApprovers.filter((a: any) => !a.user_id)) {
+          const role = approver.approver_role || '';
+          const matched = await findPerson(role);
+          if (matched) {
+            await supabase
+              .from('sof_approvers')
+              .update({ user_id: matched.user_id, approver_name: matched.full_name })
+              .eq('id', approver.id);
+          }
+        }
+        return;
+      }
+
+      // Otherwise, insert new approvers
       const plantDirector = await findPerson('Plant Director');
       const hseDirector = await findPerson('HSE Director');
 
-      // All SoF approvers start as LOCKED - they only unlock when the entire PSSR is complete
       const approversToInsert: any[] = [
         {
           sof_certificate_id: certificate.id, pssr_id: pssrId,
@@ -285,10 +304,14 @@ export const PSSRDetailOverlay: React.FC<PSSRDetailOverlayProps> = ({
     },
   });
 
-  // Trigger auto-populate when certificate loaded and approvers empty
+  // Trigger auto-populate when certificate loaded and approvers are empty or unresolved
   useEffect(() => {
-    if (certificate && sofApprovers && sofApprovers.length === 0 && !sofLoading && !sofApproversLoading) {
-      autoPopulateSofApprovers.mutate();
+    if (certificate && !sofLoading && !sofApproversLoading) {
+      const isEmpty = !sofApprovers || sofApprovers.length === 0;
+      const hasUnresolved = sofApprovers && sofApprovers.some((a: any) => !a.user_id);
+      if (isEmpty || hasUnresolved) {
+        autoPopulateSofApprovers.mutate();
+      }
     }
   }, [certificate, sofApprovers, sofLoading, sofApproversLoading]);
 
