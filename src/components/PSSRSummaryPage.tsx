@@ -472,8 +472,8 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
       setActiveView('create');
       return;
     }
-    // For Under Review or Completed PSSRs, open the overlay
-    if (pssr && (pssr.status === 'Under Review' || pssr.status === 'Completed')) {
+    // For Under Review, Pending Lead Review, or Completed PSSRs, open the overlay
+    if (pssr && (pssr.status === 'Under Review' || pssr.status === 'Completed' || pssr.status === 'Pending Lead Review')) {
       const record = pssrRecords?.find(r => r.id === pssrId);
       setOverlayPSSR({
         id: pssrId,
@@ -753,12 +753,14 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
           if (!open) {
             setActiveView('list');
             setDraftEditId(null);
+            setSelectedPSSR(null);
           }
         }}
         draftPssrId={draftEditId || undefined}
         onSuccess={() => {
           setActiveView('list');
           setDraftEditId(null);
+          setSelectedPSSR(null);
         }}
       />
 
