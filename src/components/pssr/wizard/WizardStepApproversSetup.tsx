@@ -5,7 +5,8 @@ import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { Users, RotateCcw, Sparkles, Check, ChevronsUpDown, UserCircle } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Users, RotateCcw, Sparkles, Check, ChevronsUpDown, UserCircle, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useProfileUsers } from '@/hooks/useProfileUsers';
 import WizardStepApprovers from './WizardStepApprovers';
@@ -47,6 +48,8 @@ const WizardStepApproversSetup: React.FC<WizardStepApproversSetupProps> = ({
   plantName,
 }) => {
   const [leadPopoverOpen, setLeadPopoverOpen] = useState(false);
+  const [pssrApproversOpen, setPssrApproversOpen] = useState(true);
+  const [sofApproversOpen, setSofApproversOpen] = useState(true);
   const { data: profileUsers, isLoading: usersLoading } = useProfileUsers();
 
   const sortedUsers = useMemo(() => {
@@ -164,34 +167,39 @@ const WizardStepApproversSetup: React.FC<WizardStepApproversSetupProps> = ({
       </div>
 
       {/* PSSR Approvers */}
+      <Collapsible open={pssrApproversOpen} onOpenChange={setPssrApproversOpen}>
       <div className="border rounded-lg p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-blue-600" />
-            <span className="font-medium text-sm">PSSR Approvers</span>
-            <Badge variant="secondary" className="text-xs">
-              {selectedPssrApproverRoleIds.length} roles
-            </Badge>
-          </div>
-          <div className="flex items-center gap-2">
-            {isPssrApproversModified ? (
-              <>
-                <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-700">
-                  Modified
-                </Badge>
-                <Button variant="ghost" size="sm" onClick={onResetPssrApprovers} className="text-xs h-7">
-                  <RotateCcw className="h-3 w-3 mr-1" />
-                  Reset
-                </Button>
-              </>
-            ) : (
-              <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-700">
-                <Sparkles className="h-3 w-3 mr-1" />
-                From Template
+        <CollapsibleTrigger asChild>
+          <button className="flex items-center justify-between w-full">
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-blue-600" />
+              <span className="font-medium text-sm">PSSR Approvers</span>
+              <Badge variant="secondary" className="text-xs">
+                {selectedPssrApproverRoleIds.length} roles
               </Badge>
-            )}
-          </div>
-        </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {isPssrApproversModified ? (
+                <>
+                  <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-700">
+                    Modified
+                  </Badge>
+                  <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); onResetPssrApprovers(); }} className="text-xs h-7">
+                    <RotateCcw className="h-3 w-3 mr-1" />
+                    Reset
+                  </Button>
+                </>
+              ) : (
+                <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-700">
+                  <Sparkles className="h-3 w-3 mr-1" />
+                  From Template
+                </Badge>
+              )}
+              <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", pssrApproversOpen && "rotate-180")} />
+            </div>
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
         <WizardStepApprovers
           type="pssr"
           selectedRoleIds={selectedPssrApproverRoleIds}
@@ -199,37 +207,44 @@ const WizardStepApproversSetup: React.FC<WizardStepApproversSetupProps> = ({
           onRoleToggle={onPssrApproverToggle}
           plantName={plantName}
         />
+        </CollapsibleContent>
       </div>
+      </Collapsible>
 
       {/* SoF Approvers */}
+      <Collapsible open={sofApproversOpen} onOpenChange={setSofApproversOpen}>
       <div className="border rounded-lg p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-violet-600" />
-            <span className="font-medium text-sm">SoF Approvers</span>
-            <Badge variant="secondary" className="text-xs">
-              {selectedSofApproverRoleIds.length} roles
-            </Badge>
-          </div>
-          <div className="flex items-center gap-2">
-            {isSofApproversModified ? (
-              <>
-                <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-700">
-                  Modified
-                </Badge>
-                <Button variant="ghost" size="sm" onClick={onResetSofApprovers} className="text-xs h-7">
-                  <RotateCcw className="h-3 w-3 mr-1" />
-                  Reset
-                </Button>
-              </>
-            ) : (
-              <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-700">
-                <Sparkles className="h-3 w-3 mr-1" />
-                From Template
+        <CollapsibleTrigger asChild>
+          <button className="flex items-center justify-between w-full">
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-violet-600" />
+              <span className="font-medium text-sm">SoF Approvers</span>
+              <Badge variant="secondary" className="text-xs">
+                {selectedSofApproverRoleIds.length} roles
               </Badge>
-            )}
-          </div>
-        </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {isSofApproversModified ? (
+                <>
+                  <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-700">
+                    Modified
+                  </Badge>
+                  <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); onResetSofApprovers(); }} className="text-xs h-7">
+                    <RotateCcw className="h-3 w-3 mr-1" />
+                    Reset
+                  </Button>
+                </>
+              ) : (
+                <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-700">
+                  <Sparkles className="h-3 w-3 mr-1" />
+                  From Template
+                </Badge>
+              )}
+              <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", sofApproversOpen && "rotate-180")} />
+            </div>
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
         <WizardStepApprovers
           type="sof"
           selectedRoleIds={selectedSofApproverRoleIds}
@@ -237,7 +252,9 @@ const WizardStepApproversSetup: React.FC<WizardStepApproversSetupProps> = ({
           onRoleToggle={onSofApproverToggle}
           plantName={plantName}
         />
+        </CollapsibleContent>
       </div>
+      </Collapsible>
 
       {/* Validation Note */}
       {(selectedPssrApproverRoleIds.length === 0 || selectedSofApproverRoleIds.length === 0) && (
