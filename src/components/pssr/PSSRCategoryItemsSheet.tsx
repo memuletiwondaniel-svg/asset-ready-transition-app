@@ -67,19 +67,11 @@ export const PSSRCategoryItemsSheet: React.FC<PSSRCategoryItemsSheetProps> = ({
 }) => {
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
 
+  const isCustomCategory = categoryId.startsWith('custom-cat:');
+
   const { data: items, isLoading } = useQuery({
     queryKey: ['pssr-category-items-sheet', pssrId, categoryId],
     queryFn: async () => {
-      // Fetch all checklist items in this category
-      const { data: checklistItems, error: itemsError } = await supabase
-        .from('pssr_checklist_items')
-        .select('id, description, topic, responsible, sequence_number')
-        .eq('category', categoryId)
-        .eq('is_active', true)
-        .order('sequence_number', { ascending: true });
-
-      if (itemsError) throw itemsError;
-
       // Fetch responses for this PSSR
       const { data: responses, error: respError } = await supabase
         .from('pssr_checklist_responses')
@@ -92,18 +84,62 @@ export const PSSRCategoryItemsSheet: React.FC<PSSRCategoryItemsSheetProps> = ({
         (responses || []).map(r => [r.checklist_item_id, { response: r.response, status: r.status }])
       );
 
-      return (checklistItems || []).map((item, idx) => {
-        const resp = responseMap.get(item.id);
-        return {
-          id: item.id,
-          itemCode: `${categoryRefId}-${String(idx + 1).padStart(2, '0')}`,
-          description: item.description,
-          topic: item.topic,
-          responsible: item.responsible,
-          status: deriveStatus(resp?.response || null, resp?.status || null),
-          response: resp?.response || null,
-        } as PSSRItemWithStatus;
-      });
+      if (isCustomCategory) {
+        // Custom category — fetch from pssr_custom_checklist_items
+        // categoryId format: "custom-cat:other:Project VCR" → raw category = "other:Project VCR"
+        const rawCategory = categoryId.replace('custom-cat:', '');
+
+        const { data: customItems, error: customError } = await supabase
+          .from('pssr_custom_checklist_items')
+          .select('id, description, topic, display_order')
+          .eq('pssr_id', pssrId)
+          .eq('category', rawCategory)
+          .order('display_order', { ascending: true });
+
+        if (customError) throw customError;
+
+        return (customItems || []).map((item, idx) => {
+          const customKey = `custom-${item.id}`;
+          const resp = responseMap.get(customKey);
+          return {
+            id: item.id,
+            itemCode: `${categoryRefId}-${String(idx + 1).padStart(2, '0')}`,
+            description: item.description,
+            topic: item.topic,
+            responsible: null,
+            status: deriveStatus(resp?.response || null, resp?.status || null),
+            response: resp?.response || null,
+          } as PSSRItemWithStatus;
+        });
+      }
+
+      // Standard category — fetch from pssr_checklist_items
+      const { data: checklistItems, error: itemsError } = await supabase
+        .from('pssr_checklist_items')
+        .select('id, description, topic, responsible, sequence_number')
+        .eq('category', categoryId)
+        .eq('is_active', true)
+        .order('sequence_number', { ascending: true });
+
+      if (itemsError) throw itemsError;
+
+      // Only show items that have responses for this PSSR
+      const pssrItemIds = new Set((responses || []).map(r => r.checklist_item_id));
+
+      return (checklistItems || [])
+        .filter(item => pssrItemIds.has(item.id))
+        .map((item, idx) => {
+          const resp = responseMap.get(item.id);
+          return {
+            id: item.id,
+            itemCode: `${categoryRefId}-${String(idx + 1).padStart(2, '0')}`,
+            description: item.description,
+            topic: item.topic,
+            responsible: item.responsible,
+            status: deriveStatus(resp?.response || null, resp?.status || null),
+            response: resp?.response || null,
+          } as PSSRItemWithStatus;
+        });
     },
     enabled: open && !!pssrId && !!categoryId,
   });
