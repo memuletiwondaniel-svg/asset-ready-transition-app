@@ -264,16 +264,35 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
 
   // Extracted config loader - can be called from handleNext or useEffect
   const loadReasonConfig = async (reasonId: string) => {
+    if (!reasonId || reasonId === '__other__') {
+      console.log('[PSSR Config] Skipping load - invalid reasonId:', reasonId);
+      setWizardState(prev => ({ ...prev, configLoading: false }));
+      return;
+    }
+    
     try {
-      const { data: config } = await supabase
+      console.log('[PSSR Config] Loading config for reason:', reasonId);
+      const { data: config, error } = await supabase
         .from('pssr_reason_configuration')
         .select('checklist_item_ids, pssr_approver_role_ids, sof_approver_role_ids')
         .eq('reason_id', reasonId)
         .maybeSingle();
       
+      if (error) {
+        console.error('[PSSR Config] Query error:', error);
+        setWizardState(prev => ({ ...prev, configLoading: false }));
+        return;
+      }
+      
       const checklistIds = config?.checklist_item_ids || [];
       const pssrApproverIds = config?.pssr_approver_role_ids || [];
       const sofApproverIds = config?.sof_approver_role_ids || [];
+      
+      console.log('[PSSR Config] Loaded:', {
+        checklistItems: checklistIds.length,
+        pssrApprovers: pssrApproverIds.length,
+        sofApprovers: sofApproverIds.length,
+      });
       
       setWizardState(prev => ({
         ...prev,
@@ -287,16 +306,18 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
         configLoading: false,
       }));
     } catch (error) {
-      console.error('Error loading configuration:', error);
+      console.error('[PSSR Config] Error loading configuration:', error);
       setWizardState(prev => ({ ...prev, configLoading: false }));
     }
   };
 
-  // Fallback: Load configuration when entering Step 3+ via useEffect
+  // Reactive fallback: Load configuration whenever we're on step 3+ and config isn't loaded
   useEffect(() => {
     const effectiveReasonId = wizardState.reasonId || 
       (categoryIdRef.current && categoryIdRef.current !== '__other__' ? categoryIdRef.current : '');
+    
     if (currentStep >= 3 && effectiveReasonId && !wizardState.configLoaded && !wizardState.configLoading) {
+      console.log('[PSSR Config] Fallback useEffect triggering load for step', currentStep);
       setWizardState(prev => ({ ...prev, configLoading: true }));
       loadReasonConfig(effectiveReasonId);
     }
@@ -921,7 +942,13 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
           )}
 
           {/* Step 3: PSSR Items */}
-          {currentStep === 3 && (
+          {currentStep === 3 && wizardState.configLoading && (
+            <div className="flex flex-col items-center justify-center py-12 gap-3">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="text-sm text-muted-foreground">Loading PSSR template items...</p>
+            </div>
+          )}
+          {currentStep === 3 && !wizardState.configLoading && (
             <WizardStepChecklistItems
               selectedItemIds={wizardState.selectedChecklistItemIds}
               itemOverrides={wizardState.checklistItemOverrides}
