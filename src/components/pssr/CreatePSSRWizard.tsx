@@ -211,9 +211,20 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
         setCustomItems(restoredCustomItems);
 
         // Restore checklist item IDs: saved DB item IDs + custom item IDs
-        const dbItemIds = (draft as any).draft_checklist_item_ids || [];
+        let dbItemIds = (draft as any).draft_checklist_item_ids || [];
         const customItemIds = restoredCustomItems.map((ci: any) => ci.id);
         const restoredNaItemIds = (draft as any).draft_na_item_ids || [];
+
+        // Fallback: if draft_checklist_item_ids is empty, load from pssr_checklist_responses
+        if (dbItemIds.length === 0) {
+          const { data: checklistResponses } = await supabase
+            .from('pssr_checklist_responses')
+            .select('checklist_item_id')
+            .eq('pssr_id', draftPssrId);
+          if (checklistResponses && checklistResponses.length > 0) {
+            dbItemIds = checklistResponses.map((r: any) => r.checklist_item_id);
+          }
+        }
 
         // Also load approver config for this reason
         const { data: approverConfig } = await supabase
