@@ -507,26 +507,29 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
         resolvedPssrId = newDraft?.id;
       }
 
-      // Save custom checklist items
-      if (resolvedPssrId && customItems.length > 0) {
-        // Remove old custom items for this draft, then re-insert
+      // Save custom checklist items — always clean up old ones first
+      if (resolvedPssrId) {
+        // Remove old custom items for this draft
         await supabase
           .from('pssr_custom_checklist_items')
           .delete()
           .eq('pssr_id', resolvedPssrId);
 
-        const customInserts = customItems.map((item, idx) => ({
-          pssr_id: resolvedPssrId!,
-          category: item.category,
-          topic: item.topic,
-          description: item.description,
-          supporting_evidence: item.supporting_evidence,
-          display_order: idx,
-        }));
+        // Re-insert current custom items (if any remain)
+        if (customItems.length > 0) {
+          const customInserts = customItems.map((item, idx) => ({
+            pssr_id: resolvedPssrId!,
+            category: item.category,
+            topic: item.topic,
+            description: item.description,
+            supporting_evidence: item.supporting_evidence,
+            display_order: idx,
+          }));
 
-        await supabase
-          .from('pssr_custom_checklist_items')
-          .insert(customInserts);
+          await supabase
+            .from('pssr_custom_checklist_items')
+            .insert(customInserts);
+        }
       }
 
       queryClient.invalidateQueries({ queryKey: ['pssrs'] });
@@ -1047,7 +1050,7 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
               plantName={selectedPlant?.name}
               fieldName={selectedField?.name}
               customItems={customItems}
-              onRemoveCustomItem={(itemId) => {
+              onRemoveCustomItem={async (itemId) => {
                 setCustomItems(prev => prev.filter(i => i.id !== itemId));
                 setWizardState(prev => ({
                   ...prev,
@@ -1057,8 +1060,26 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
                 const newOverrides = { ...wizardState.checklistItemOverrides };
                 delete newOverrides[itemId];
                 setWizardState(prev => ({ ...prev, checklistItemOverrides: newOverrides }));
+
+                // Persist to DB
+                if (draftPssrId) {
+                  const realId = itemId.replace(/^custom-/, '');
+                  if (/^[0-9a-f]{8}-/.test(realId)) {
+                    await supabase.from('pssr_custom_checklist_items').delete().eq('id', realId);
+                  }
+                  const { data: currentDraft } = await supabase
+                    .from('pssrs')
+                    .select('draft_checklist_item_ids')
+                    .eq('id', draftPssrId)
+                    .maybeSingle();
+                  if (currentDraft) {
+                    const currentIds = ((currentDraft as any).draft_checklist_item_ids || []) as string[];
+                    const updated = currentIds.filter((id: string) => id !== itemId && id !== realId);
+                    await supabase.from('pssrs').update({ draft_checklist_item_ids: updated } as any).eq('id', draftPssrId);
+                  }
+                }
               }}
-              onRemoveCustomCategory={(categoryId) => {
+              onRemoveCustomCategory={async (categoryId) => {
                 const itemsInCategory = customItems.filter(i => i.category === categoryId);
                 const idsToRemove = new Set(itemsInCategory.map(i => i.id));
                 setCustomItems(prev => prev.filter(i => i.category !== categoryId));
@@ -1067,6 +1088,25 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
                   selectedChecklistItemIds: prev.selectedChecklistItemIds.filter(id => !idsToRemove.has(id)),
                   naItemIds: prev.naItemIds.filter(id => !idsToRemove.has(id)),
                 }));
+
+                // Persist to DB
+                if (draftPssrId) {
+                  await supabase
+                    .from('pssr_custom_checklist_items')
+                    .delete()
+                    .eq('pssr_id', draftPssrId)
+                    .eq('category', categoryId);
+                  const { data: currentDraft } = await supabase
+                    .from('pssrs')
+                    .select('draft_checklist_item_ids')
+                    .eq('id', draftPssrId)
+                    .maybeSingle();
+                  if (currentDraft) {
+                    const currentIds = ((currentDraft as any).draft_checklist_item_ids || []) as string[];
+                    const updated = currentIds.filter((id: string) => !idsToRemove.has(id));
+                    await supabase.from('pssrs').update({ draft_checklist_item_ids: updated } as any).eq('id', draftPssrId);
+                  }
+                }
               }}
               onAddExistingItems={(itemIds) => {
                 setWizardState(prev => ({
