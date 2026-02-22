@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Sheet,
   SheetContent,
@@ -11,6 +11,22 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
 import {
   FileText,
   ArrowRight,
@@ -21,12 +37,20 @@ import {
   BookOpen,
   ClipboardList,
   Paperclip,
+  Pencil,
+  Save,
+  X,
+  Check,
+  ChevronsUpDown,
+  Plus,
+  Trash2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from 'sonner';
 
 interface PSSRItemDetailSheetProps {
   itemId: string | null;
@@ -44,17 +68,120 @@ const getAvatarUrl = (avatarPath: string | null) => {
 const getInitials = (name: string) =>
   name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 
+// Role combobox component
+const RoleCombobox: React.FC<{
+  value: string;
+  onChange: (val: string) => void;
+  roles: { id: string; name: string }[];
+  placeholder?: string;
+}> = ({ value, onChange, roles, placeholder = 'Select role...' }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          className="w-full justify-between text-xs h-8"
+        >
+          <span className="truncate">{value || placeholder}</span>
+          <ChevronsUpDown className="ml-1 h-3 w-3 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-64 p-0" align="start">
+        <Command>
+          <CommandInput placeholder="Search roles..." className="text-xs" />
+          <CommandList>
+            <CommandEmpty className="text-xs p-2">No roles found.</CommandEmpty>
+            <CommandGroup>
+              {roles.map(role => (
+                <CommandItem
+                  key={role.id}
+                  value={role.name}
+                  onSelect={() => {
+                    onChange(role.name);
+                    setOpen(false);
+                  }}
+                  className="text-xs"
+                >
+                  <Check className={cn('mr-2 h-3 w-3', value === role.name ? 'opacity-100' : 'opacity-0')} />
+                  {role.name}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+};
+
 export const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
   itemId,
   pssrId,
   open,
   onOpenChange,
 }) => {
+  const queryClient = useQueryClient();
+  const [isEditing, setIsEditing] = useState(false);
+  const [editDescription, setEditDescription] = useState('');
+  const [editTopic, setEditTopic] = useState('');
+  const [editResponsible, setEditResponsible] = useState('');
+  const [editApprovers, setEditApprovers] = useState<string[]>([]);
+  const [approverPopoverOpen, setApproverPopoverOpen] = useState(false);
+
+  // Determine if this is a custom item
+  const isCustomItem = itemId?.startsWith('custom-') || false;
+  const actualItemId = isCustomItem ? itemId?.replace('custom-', '') : itemId;
+
+  // Fetch available roles
+  const { data: allRoles } = useQuery({
+    queryKey: ['all-roles-for-pssr'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('roles')
+        .select('id, name')
+        .eq('is_active', true)
+        .order('name');
+      return data || [];
+    },
+    enabled: open,
+  });
+
   // Fetch checklist item details
   const { data: itemDetail, isLoading } = useQuery({
     queryKey: ['pssr-item-detail', itemId],
     queryFn: async () => {
       if (!itemId) return null;
+      
+      if (isCustomItem) {
+        // Custom item from pssr_custom_checklist_items
+        const { data, error } = await supabase
+          .from('pssr_custom_checklist_items')
+          .select('id, description, topic, category, display_order, supporting_evidence')
+          .eq('id', actualItemId!)
+          .maybeSingle();
+        if (error) throw error;
+        if (!data) return null;
+        
+        const displayName = data.category.includes(':')
+          ? data.category.split(':').slice(1).join(':').trim()
+          : data.category;
+        
+        return {
+          id: data.id,
+          description: data.description,
+          topic: data.topic,
+          responsible: null,
+          approvers: null,
+          supporting_evidence: data.supporting_evidence,
+          guidance_notes: null,
+          sequence_number: data.display_order || 1,
+          pssr_checklist_categories: { name: displayName, ref_id: 'OT' },
+          _isCustom: true,
+        } as any;
+      }
+      
       const { data, error } = await supabase
         .from('pssr_checklist_items')
         .select(`
@@ -70,16 +197,40 @@ export const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
     enabled: open && !!itemId,
   });
 
+  // Fetch per-PSSR overrides
+  const { data: overrides } = useQuery({
+    queryKey: ['pssr-item-overrides', pssrId, itemId],
+    queryFn: async () => {
+      if (!itemId) return null;
+      const checklistItemKey = isCustomItem ? `custom-${actualItemId}` : itemId;
+      const { data } = await supabase
+        .from('pssr_item_overrides')
+        .select('*')
+        .eq('pssr_id', pssrId)
+        .eq('checklist_item_id', checklistItemKey)
+        .maybeSingle();
+      return data;
+    },
+    enabled: open && !!itemId && !!pssrId,
+  });
+
+  // Effective values (override > template)
+  const effectiveDescription = overrides?.description_override || itemDetail?.description || '';
+  const effectiveTopic = overrides?.topic_override || itemDetail?.topic || '';
+  const effectiveResponsible = overrides?.responsible_override || itemDetail?.responsible || '';
+  const effectiveApprovers = overrides?.approvers_override || itemDetail?.approvers || '';
+
   // Fetch the response for this item + this PSSR
   const { data: responseDetail } = useQuery({
     queryKey: ['pssr-item-response', pssrId, itemId],
     queryFn: async () => {
       if (!itemId) return null;
+      const checklistItemKey = isCustomItem ? `custom-${actualItemId}` : itemId;
       const { data, error } = await supabase
         .from('pssr_checklist_responses')
         .select('*')
         .eq('pssr_id', pssrId)
-        .eq('checklist_item_id', itemId)
+        .eq('checklist_item_id', checklistItemKey)
         .maybeSingle();
       if (error) return null;
       return data;
@@ -87,7 +238,7 @@ export const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
     enabled: open && !!itemId && !!pssrId,
   });
 
-  // Fetch item approval for this response
+  // Fetch item approval
   const { data: approvalDetail } = useQuery({
     queryKey: ['pssr-item-approval', responseDetail?.id],
     queryFn: async () => {
@@ -102,20 +253,17 @@ export const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
     enabled: !!responseDetail?.id,
   });
 
-  // Resolve delivering party users by role name
+  // Resolve delivering party users
   const { data: deliveringUsers } = useQuery({
-    queryKey: ['pssr-delivering-users', itemDetail?.responsible],
+    queryKey: ['pssr-delivering-users', effectiveResponsible],
     queryFn: async () => {
-      if (!itemDetail?.responsible) return [];
-      // Try to find a role by name, then find profiles with that role
-      const roleName = itemDetail.responsible.trim();
+      if (!effectiveResponsible) return [];
+      const roleName = effectiveResponsible.trim();
       const { data: roles } = await supabase
         .from('roles')
         .select('id, name')
         .ilike('name', roleName);
-      
       if (!roles || roles.length === 0) return [];
-      
       const roleIds = roles.map(r => r.id);
       const { data: profiles } = await supabase
         .from('profiles')
@@ -123,38 +271,25 @@ export const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
         .in('role', roleIds)
         .eq('is_active', true)
         .limit(10);
-      
-      // PSSR: only Asset-level staff, exclude Project TAs
-      const filtered = (profiles || []).filter(p => {
-        const pos = (p.position || '').toLowerCase();
-        return !pos.includes('project');
-      });
-      
-      return filtered.map(p => ({
-        user_id: p.user_id,
-        full_name: p.full_name || '',
-        avatar_url: p.avatar_url,
-      }));
+      return (profiles || [])
+        .filter(p => !(p.position || '').toLowerCase().includes('project'))
+        .map(p => ({ user_id: p.user_id, full_name: p.full_name || '', avatar_url: p.avatar_url }));
     },
-    enabled: open && !!itemDetail?.responsible,
+    enabled: open && !!effectiveResponsible,
   });
 
   // Resolve approving party users
   const { data: approvingData } = useQuery({
-    queryKey: ['pssr-approving-users', itemDetail?.approvers],
+    queryKey: ['pssr-approving-users', effectiveApprovers],
     queryFn: async () => {
-      if (!itemDetail?.approvers) return [];
-      const roleNames = itemDetail.approvers.split(',').map((r: string) => r.trim()).filter(Boolean);
-      
-      // Find roles by name
+      if (!effectiveApprovers) return [];
+      const roleNames = effectiveApprovers.split(',').map((r: string) => r.trim()).filter(Boolean);
       const results: { roleName: string; users: { user_id: string; full_name: string; avatar_url: string | null }[] }[] = [];
-      
       for (const roleName of roleNames) {
         const { data: roles } = await supabase
           .from('roles')
           .select('id, name')
           .ilike('name', roleName);
-        
         if (roles && roles.length > 0) {
           const { data: profiles } = await supabase
             .from('profiles')
@@ -162,30 +297,87 @@ export const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
             .in('role', roles.map(r => r.id))
             .eq('is_active', true)
             .limit(10);
-          
-          // PSSR: only Asset-level staff, exclude Project TAs
-          const filtered = (profiles || []).filter(p => {
-            const pos = (p.position || '').toLowerCase();
-            return !pos.includes('project');
-          });
-          
+          const filtered = (profiles || []).filter(p => !(p.position || '').toLowerCase().includes('project'));
           results.push({
             roleName: roles[0].name,
-            users: filtered.map(p => ({
-              user_id: p.user_id,
-              full_name: p.full_name || '',
-              avatar_url: p.avatar_url,
-            })),
+            users: filtered.map(p => ({ user_id: p.user_id, full_name: p.full_name || '', avatar_url: p.avatar_url })),
           });
         } else {
           results.push({ roleName, users: [] });
         }
       }
-      
       return results;
     },
-    enabled: open && !!itemDetail?.approvers,
+    enabled: open && !!effectiveApprovers,
   });
+
+  // Enter edit mode
+  const startEditing = () => {
+    setEditDescription(effectiveDescription);
+    setEditTopic(effectiveTopic);
+    setEditResponsible(effectiveResponsible);
+    setEditApprovers(effectiveApprovers ? effectiveApprovers.split(',').map(s => s.trim()).filter(Boolean) : []);
+    setIsEditing(true);
+  };
+
+  const cancelEditing = () => {
+    setIsEditing(false);
+  };
+
+  // Save mutation
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      const checklistItemKey = isCustomItem ? `custom-${actualItemId}` : itemId!;
+      const approversStr = editApprovers.join(', ');
+      
+      const { data: existing } = await supabase
+        .from('pssr_item_overrides')
+        .select('id')
+        .eq('pssr_id', pssrId)
+        .eq('checklist_item_id', checklistItemKey)
+        .maybeSingle();
+
+      const overrideData = {
+        description_override: editDescription || null,
+        responsible_override: editResponsible || null,
+        approvers_override: approversStr || null,
+        topic_override: editTopic || null,
+        updated_by: (await supabase.auth.getUser()).data.user?.id || null,
+      };
+
+      if (existing) {
+        const { error } = await supabase
+          .from('pssr_item_overrides')
+          .update(overrideData)
+          .eq('id', existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('pssr_item_overrides')
+          .insert({
+            pssr_id: pssrId,
+            checklist_item_id: checklistItemKey,
+            ...overrideData,
+          });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      toast.success('Item updated successfully');
+      setIsEditing(false);
+      queryClient.invalidateQueries({ queryKey: ['pssr-item-overrides', pssrId, itemId] });
+      queryClient.invalidateQueries({ queryKey: ['pssr-delivering-users'] });
+      queryClient.invalidateQueries({ queryKey: ['pssr-approving-users'] });
+    },
+    onError: (err: any) => {
+      toast.error('Failed to save: ' + err.message);
+    },
+  });
+
+  // Reset edit state when sheet closes
+  useEffect(() => {
+    if (!open) setIsEditing(false);
+  }, [open]);
 
   if (!itemId) return null;
 
@@ -221,23 +413,75 @@ export const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
         ) : (
           <>
             <SheetHeader className="px-6 pt-6 pb-4 border-b">
-              <div className="flex items-center gap-2 flex-wrap">
-                <Badge variant="outline" className="font-mono text-[10px]">
-                  {itemCode}
-                </Badge>
-                <Badge className={cn('text-[10px] border', statusColor)}>
-                  {statusLabel}
-                </Badge>
-                {response && (
-                  <Badge variant="secondary" className="text-[10px]">
-                    {response}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Badge variant="outline" className="font-mono text-[10px]">
+                    {itemCode}
                   </Badge>
+                  <Badge className={cn('text-[10px] border', statusColor)}>
+                    {statusLabel}
+                  </Badge>
+                  {response && (
+                    <Badge variant="secondary" className="text-[10px]">
+                      {response}
+                    </Badge>
+                  )}
+                </div>
+                {!isEditing ? (
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={startEditing}>
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                ) : (
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-destructive"
+                      onClick={cancelEditing}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-primary"
+                      onClick={() => saveMutation.mutate()}
+                      disabled={saveMutation.isPending}
+                    >
+                      <Save className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
                 )}
               </div>
-              {itemDetail?.topic && (
-                <p className="text-xs text-muted-foreground mt-1">{itemDetail.topic}</p>
+              {isEditing ? (
+                <div className="space-y-2 mt-2">
+                  <div>
+                    <label className="text-[10px] text-muted-foreground">Topic</label>
+                    <Input
+                      value={editTopic}
+                      onChange={e => setEditTopic(e.target.value)}
+                      className="h-7 text-xs mt-0.5"
+                      placeholder="Topic"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-muted-foreground">Question / Description</label>
+                    <Textarea
+                      value={editDescription}
+                      onChange={e => setEditDescription(e.target.value)}
+                      className="text-xs mt-0.5 min-h-[60px]"
+                      placeholder="Item description"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {effectiveTopic && (
+                    <p className="text-xs text-muted-foreground mt-1">{effectiveTopic}</p>
+                  )}
+                  <SheetTitle className="text-base mt-1">{effectiveDescription}</SheetTitle>
+                </>
               )}
-              <SheetTitle className="text-base mt-1">{itemDetail?.description}</SheetTitle>
               <SheetDescription className="sr-only">PSSR Item Detail</SheetDescription>
             </SheetHeader>
 
@@ -259,28 +503,37 @@ export const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
                   <Card>
                     <CardContent className="p-3">
                       <div className="text-[10px] text-muted-foreground mb-2">Delivering Party</div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-[10px] font-medium text-muted-foreground w-24 shrink-0 truncate" title={itemDetail?.responsible || 'Not assigned'}>
-                          {itemDetail?.responsible || 'Not assigned'}
-                        </span>
-                        {deliveringUsers && deliveringUsers.length > 0 ? (
-                          <div className="flex items-center gap-3 flex-1 min-w-0">
-                            {deliveringUsers.map((user: any) => (
-                              <div key={user.user_id} className="flex flex-col items-center gap-0.5 min-w-0">
-                                <Avatar className="w-7 h-7">
-                                  <AvatarImage src={getAvatarUrl(user.avatar_url)} />
-                                  <AvatarFallback className="text-[10px]">{getInitials(user.full_name)}</AvatarFallback>
-                                </Avatar>
-                                <span className="text-[10px] text-foreground truncate max-w-[80px] text-center" title={user.full_name}>
-                                  {user.full_name?.split(' ')[0]}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="text-[10px] text-muted-foreground italic">Unassigned</p>
-                        )}
-                      </div>
+                      {isEditing ? (
+                        <RoleCombobox
+                          value={editResponsible}
+                          onChange={setEditResponsible}
+                          roles={allRoles || []}
+                          placeholder="Select delivering role..."
+                        />
+                      ) : (
+                        <div className="flex items-center gap-3">
+                          <span className="text-[10px] font-medium text-muted-foreground w-24 shrink-0 truncate" title={effectiveResponsible || 'Not assigned'}>
+                            {effectiveResponsible || 'Not assigned'}
+                          </span>
+                          {deliveringUsers && deliveringUsers.length > 0 ? (
+                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                              {deliveringUsers.map((user: any) => (
+                                <div key={user.user_id} className="flex flex-col items-center gap-0.5 min-w-0">
+                                  <Avatar className="w-7 h-7">
+                                    <AvatarImage src={getAvatarUrl(user.avatar_url)} />
+                                    <AvatarFallback className="text-[10px]">{getInitials(user.full_name)}</AvatarFallback>
+                                  </Avatar>
+                                  <span className="text-[10px] text-foreground truncate max-w-[80px] text-center" title={user.full_name}>
+                                    {user.full_name?.split(' ')[0]}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-[10px] text-muted-foreground italic">Unassigned</p>
+                          )}
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
 
@@ -292,37 +545,77 @@ export const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
                   <Card>
                     <CardContent className="p-3">
                       <div className="text-[10px] text-muted-foreground mb-2">Approving Parties</div>
-                      {approvingData && approvingData.length > 0 ? (
-                        <div className="divide-y divide-border">
-                          {approvingData.map((role: any, idx: number) => (
-                            <div key={idx} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
-                              <span className="text-[10px] font-medium text-muted-foreground w-24 shrink-0 truncate" title={role.roleName}>
-                                {role.roleName}
-                              </span>
-                              {role.users.length > 0 ? (
-                                <div className="flex items-center gap-4 flex-1 min-w-0">
-                                  {role.users.map((user: any) => (
-                                    <div key={user.user_id} className="flex flex-col items-center gap-0.5 w-14">
-                                      <Avatar className="w-7 h-7">
-                                        <AvatarImage src={getAvatarUrl(user.avatar_url)} />
-                                        <AvatarFallback className="text-[10px]">{getInitials(user.full_name)}</AvatarFallback>
-                                      </Avatar>
-                                      <span className="text-[10px] text-foreground truncate w-full text-center" title={user.full_name}>
-                                        {user.full_name?.split(' ')[0]}
-                                      </span>
-                                    </div>
-                                  ))}
-                                </div>
-                              ) : (
-                                <p className="text-[10px] text-muted-foreground italic">Unassigned</p>
-                              )}
+                      {isEditing ? (
+                        <div className="space-y-2">
+                          {editApprovers.map((approverRole, idx) => (
+                            <div key={idx} className="flex items-center gap-1">
+                              <div className="flex-1">
+                                <RoleCombobox
+                                  value={approverRole}
+                                  onChange={(val) => {
+                                    const updated = [...editApprovers];
+                                    updated[idx] = val;
+                                    setEditApprovers(updated);
+                                  }}
+                                  roles={allRoles || []}
+                                  placeholder="Select approving role..."
+                                />
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-destructive shrink-0"
+                                onClick={() => setEditApprovers(editApprovers.filter((_, i) => i !== idx))}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
                             </div>
                           ))}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full h-7 text-xs"
+                            onClick={() => setEditApprovers([...editApprovers, ''])}
+                          >
+                            <Plus className="h-3 w-3 mr-1" />
+                            Add Approver
+                          </Button>
                         </div>
                       ) : (
-                        <p className="text-xs text-muted-foreground italic">
-                          {itemDetail?.approvers || 'Not assigned'}
-                        </p>
+                        <>
+                          {approvingData && approvingData.length > 0 ? (
+                            <div className="divide-y divide-border">
+                              {approvingData.map((role: any, idx: number) => (
+                                <div key={idx} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
+                                  <span className="text-[10px] font-medium text-muted-foreground w-24 shrink-0 truncate" title={role.roleName}>
+                                    {role.roleName}
+                                  </span>
+                                  {role.users.length > 0 ? (
+                                    <div className="flex items-center gap-4 flex-1 min-w-0">
+                                      {role.users.map((user: any) => (
+                                        <div key={user.user_id} className="flex flex-col items-center gap-0.5 w-14">
+                                          <Avatar className="w-7 h-7">
+                                            <AvatarImage src={getAvatarUrl(user.avatar_url)} />
+                                            <AvatarFallback className="text-[10px]">{getInitials(user.full_name)}</AvatarFallback>
+                                          </Avatar>
+                                          <span className="text-[10px] text-foreground truncate w-full text-center" title={user.full_name}>
+                                            {user.full_name?.split(' ')[0]}
+                                          </span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <p className="text-[10px] text-muted-foreground italic">Unassigned</p>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-xs text-muted-foreground italic">
+                              {effectiveApprovers || 'Not assigned'}
+                            </p>
+                          )}
+                        </>
                       )}
                     </CardContent>
                   </Card>
