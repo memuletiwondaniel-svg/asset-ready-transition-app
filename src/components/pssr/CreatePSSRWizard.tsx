@@ -706,25 +706,39 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
 
         const creatorName = leadProfile?.full_name || 'A team member';
 
-        const { error: taskError } = await supabase
+        // Check for existing pending review task to prevent duplicates
+        const { data: existingTask } = await supabase
           .from('user_tasks')
-          .insert({
-            user_id: wizardState.pssrLeadId,
-            title: `Review Draft PSSR: ${wizardState.title.trim()}`,
-            description: `${creatorName} has submitted a new PSSR for your review. Please review the PSSR items, approvers, and scope, then approve, edit, or reject the draft.`,
-            priority: 'High',
-            type: 'review',
-            status: 'pending',
-            metadata: {
-              source: 'pssr_workflow',
-              pssr_id: newPSSR.id,
-              pssr_code: newPSSR.pssr_id,
-              action: 'review_draft_pssr',
-              created_by: user.id,
-            },
-          });
+          .select('id')
+          .eq('user_id', wizardState.pssrLeadId)
+          .eq('type', 'review')
+          .eq('status', 'pending')
+          .filter('metadata->>pssr_id', 'eq', newPSSR.id)
+          .filter('metadata->>action', 'eq', 'review_draft_pssr')
+          .maybeSingle();
 
-        if (taskError) console.error('Error creating PSSR Lead task:', taskError);
+        if (!existingTask) {
+          const { error: taskError } = await supabase
+            .from('user_tasks')
+            .insert({
+              user_id: wizardState.pssrLeadId,
+              title: `Review Draft PSSR: ${wizardState.title.trim()}`,
+              description: `${creatorName} has submitted a new PSSR for your review. Please review the PSSR items, approvers, and scope, then approve, edit, or reject the draft.`,
+              priority: 'High',
+              type: 'review',
+              status: 'pending',
+              metadata: {
+                source: 'pssr_workflow',
+                pssr_id: newPSSR.id,
+                pssr_code: newPSSR.pssr_id,
+                action: 'review_draft_pssr',
+                created_by: user.id,
+              },
+            });
+
+          if (taskError) console.error('Error creating PSSR Lead task:', taskError);
+        }
+
       }
 
       // Create notification for PSSR Lead
