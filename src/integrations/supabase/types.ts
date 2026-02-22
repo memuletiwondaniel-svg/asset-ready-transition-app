@@ -6734,6 +6734,7 @@ export type Database = {
           created_at: string
           cs_location: string | null
           draft_checklist_item_ids: string[] | null
+          draft_item_overrides: Json | null
           draft_na_item_ids: string[] | null
           field_id: string | null
           finalized_at: string | null
@@ -6762,6 +6763,7 @@ export type Database = {
           created_at?: string
           cs_location?: string | null
           draft_checklist_item_ids?: string[] | null
+          draft_item_overrides?: Json | null
           draft_na_item_ids?: string[] | null
           field_id?: string | null
           finalized_at?: string | null
@@ -6790,6 +6792,7 @@ export type Database = {
           created_at?: string
           cs_location?: string | null
           draft_checklist_item_ids?: string[] | null
+          draft_item_overrides?: Json | null
           draft_na_item_ids?: string[] | null
           field_id?: string | null
           finalized_at?: string | null

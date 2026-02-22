@@ -247,6 +247,7 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
           stationId: draft.station_id || '',
           pssrLeadId: (draft as any).pssr_lead_id || '',
           selectedChecklistItemIds: [...dbItemIds, ...customItemIds],
+          checklistItemOverrides: (draft as any).draft_item_overrides || {},
           naItemIds: restoredNaItemIds,
           selectedPssrApproverRoleIds: pssrApproverIds,
           selectedSofApproverRoleIds: sofApproverIds,
@@ -471,6 +472,9 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
         ...draftPayload,
         draft_checklist_item_ids: wizardState.selectedChecklistItemIds.filter(id => !id.startsWith('custom-')),
         draft_na_item_ids: wizardState.naItemIds.filter(id => !id.startsWith('custom-')),
+        draft_item_overrides: Object.keys(wizardState.checklistItemOverrides).length > 0
+          ? wizardState.checklistItemOverrides
+          : null,
       };
 
       let resolvedPssrId = draftPssrId;
@@ -1019,33 +1023,55 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
               onDeselectAll={() => {
                 setWizardState(prev => ({ ...prev, selectedChecklistItemIds: [] }));
               }}
-              onItemOverrideChange={(itemId, override) => {
+              onItemOverrideChange={async (itemId, override) => {
+                const newOverrides = { ...wizardState.checklistItemOverrides, [itemId]: override };
                 setWizardState(prev => ({
                   ...prev,
-                  checklistItemOverrides: { ...prev.checklistItemOverrides, [itemId]: override }
+                  checklistItemOverrides: newOverrides
                 }));
+                if (draftPssrId) {
+                  await supabase.from('pssrs').update({ draft_item_overrides: newOverrides } as any).eq('id', draftPssrId);
+                }
               }}
-              onItemOverrideReset={(itemId) => {
-                setWizardState(prev => {
-                  const newOverrides = { ...prev.checklistItemOverrides };
-                  delete newOverrides[itemId];
-                  return { ...prev, checklistItemOverrides: newOverrides };
-                });
+              onItemOverrideReset={async (itemId) => {
+                const newOverrides = { ...wizardState.checklistItemOverrides };
+                delete newOverrides[itemId];
+                setWizardState(prev => ({ ...prev, checklistItemOverrides: newOverrides }));
+                if (draftPssrId) {
+                  const payload = Object.keys(newOverrides).length > 0 ? newOverrides : null;
+                  await supabase.from('pssrs').update({ draft_item_overrides: payload } as any).eq('id', draftPssrId);
+                }
               }}
               naItemIds={wizardState.naItemIds}
-              onMarkNA={(itemId) => {
+              onMarkNA={async (itemId) => {
+                const newNaIds = [...wizardState.naItemIds, itemId];
+                const newSelectedIds = wizardState.selectedChecklistItemIds.filter(id => id !== itemId);
                 setWizardState(prev => ({
                   ...prev,
-                  naItemIds: [...prev.naItemIds, itemId],
-                  selectedChecklistItemIds: prev.selectedChecklistItemIds.filter(id => id !== itemId),
+                  naItemIds: newNaIds,
+                  selectedChecklistItemIds: newSelectedIds,
                 }));
+                if (draftPssrId) {
+                  await supabase.from('pssrs').update({
+                    draft_na_item_ids: newNaIds.filter(id => !id.startsWith('custom-')),
+                    draft_checklist_item_ids: newSelectedIds.filter(id => !id.startsWith('custom-')),
+                  } as any).eq('id', draftPssrId);
+                }
               }}
-              onRestoreNA={(itemId) => {
+              onRestoreNA={async (itemId) => {
+                const newNaIds = wizardState.naItemIds.filter(id => id !== itemId);
+                const newSelectedIds = [...wizardState.selectedChecklistItemIds, itemId];
                 setWizardState(prev => ({
                   ...prev,
-                  naItemIds: prev.naItemIds.filter(id => id !== itemId),
-                  selectedChecklistItemIds: [...prev.selectedChecklistItemIds, itemId],
+                  naItemIds: newNaIds,
+                  selectedChecklistItemIds: newSelectedIds,
                 }));
+                if (draftPssrId) {
+                  await supabase.from('pssrs').update({
+                    draft_na_item_ids: newNaIds.filter(id => !id.startsWith('custom-')),
+                    draft_checklist_item_ids: newSelectedIds.filter(id => !id.startsWith('custom-')),
+                  } as any).eq('id', draftPssrId);
+                }
               }}
               plantName={selectedPlant?.name}
               fieldName={selectedField?.name}
