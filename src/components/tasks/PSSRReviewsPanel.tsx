@@ -66,8 +66,17 @@ export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({
     );
   });
 
-  // User tasks (reviews & approvals from user_tasks table)
-  const filteredUserTasks = userTasks.filter(t => {
+  // User tasks - only show PSSR and P2A handover related tasks in this panel
+  const relevantUserTasks = userTasks.filter(t => {
+    const meta = t.metadata as Record<string, any> | null;
+    const source = meta?.source;
+    const action = meta?.action;
+    // Only include tasks from pssr_workflow or p2a_handover sources
+    return source === 'pssr_workflow' || source === 'p2a_handover' || 
+           action === 'review_draft_pssr';
+  });
+
+  const filteredUserTasks = relevantUserTasks.filter(t => {
     if (!searchQuery.trim()) return true;
     const query = searchQuery.toLowerCase();
     return (
@@ -77,7 +86,7 @@ export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({
   });
 
   const totalCount = pendingPssrs.length + filteredUserTasks.length;
-  const rawTotalCount = pssrs.length + userTasks.length;
+  const rawTotalCount = pssrs.length + relevantUserTasks.length;
   const newPssrCount = pendingPssrs.filter(p => isNewSinceLastLogin(p.pendingSince)).length;
   const newTaskCount = filteredUserTasks.filter(t => isNewSinceLastLogin(t.created_at)).length;
   const newCount = newPssrCount + newTaskCount;
