@@ -48,19 +48,34 @@ export function usePSSRCategoryProgress(pssrId: string) {
 
       if (catError) throw catError;
 
-      // Fetch checklist responses for THIS PSSR with their item's category
+      // Fetch checklist responses for THIS PSSR
       const { data: responses, error: respError } = await supabase
         .from('pssr_checklist_responses')
-        .select('id, status, response, checklist_item_id, pssr_checklist_items!inner(id, category)')
+        .select('id, status, response, checklist_item_id')
         .eq('pssr_id', pssrId);
 
       if (respError) throw respError;
+
+      // Collect unique checklist_item_ids and fetch their categories separately
+      // (checklist_item_id is text, pssr_checklist_items.id is uuid — no FK join available)
+      const itemIds = [...new Set((responses || []).map(r => r.checklist_item_id).filter(Boolean))];
+      
+      let itemCategoryMap = new Map<string, string>();
+      if (itemIds.length > 0) {
+        const { data: items, error: itemsError } = await supabase
+          .from('pssr_checklist_items')
+          .select('id, category')
+          .in('id', itemIds);
+        
+        if (itemsError) throw itemsError;
+        itemCategoryMap = new Map((items || []).map(i => [i.id, i.category]));
+      }
 
       // Count totals and completed per category from actual PSSR responses
       const categoryTotals: Record<string, number> = {};
       const categoryCompleted: Record<string, number> = {};
       (responses || []).forEach((resp: any) => {
-        const catId = resp.pssr_checklist_items?.category;
+        const catId = itemCategoryMap.get(resp.checklist_item_id);
         if (!catId) return;
         categoryTotals[catId] = (categoryTotals[catId] || 0) + 1;
         if (resp.status === 'approved' || resp.response === 'YES' || resp.response === 'NA') {
@@ -98,7 +113,7 @@ export function usePSSRCategoryItems(pssrId: string, categoryName: string | null
     queryFn: async () => {
       if (!categoryName) return [];
 
-      // Fetch checklist responses for this PSSR filtered by category
+      // Fetch checklist responses for this PSSR (no FK join — types differ)
       const { data: responses, error } = await supabase
         .from('pssr_checklist_responses')
         .select(`
@@ -106,7 +121,6 @@ export function usePSSRCategoryItems(pssrId: string, categoryName: string | null
           status,
           response,
           narrative,
-          attachments,
           deviation_reason,
           potential_risk,
           mitigations,
@@ -114,17 +128,38 @@ export function usePSSRCategoryItems(pssrId: string, categoryName: string | null
           action_owner,
           justification,
           created_at,
-          checklist_item_id,
-          pssr_checklist_items!inner(
-            id,
-            unique_id,
-            question,
-            category
-          )
+          checklist_item_id
         `)
         .eq('pssr_id', pssrId);
 
       if (error) throw error;
+
+      // Fetch all checklist items referenced by these responses
+      const itemIds = [...new Set((responses || []).map(r => r.checklist_item_id).filter(Boolean))];
+      let itemMap = new Map<string, any>();
+      
+      if (itemIds.length > 0) {
+        const { data: items } = await supabase
+          .from('pssr_checklist_items')
+          .select('id, description, category, sequence_number, topic')
+          .in('id', itemIds);
+        
+        // Also fetch category names
+        const catIds = [...new Set((items || []).map(i => i.category).filter(Boolean))];
+        let catNameMap = new Map<string, { name: string; ref_id: string }>();
+        if (catIds.length > 0) {
+          const { data: cats } = await supabase
+            .from('pssr_checklist_categories')
+            .select('id, name, ref_id')
+            .in('id', catIds);
+          catNameMap = new Map((cats || []).map(c => [c.id, { name: c.name, ref_id: c.ref_id }]));
+        }
+        
+        itemMap = new Map((items || []).map(i => {
+          const cat = catNameMap.get(i.category);
+          return [i.id, { ...i, category_name: cat?.name || '', category_ref_id: cat?.ref_id || '' }];
+        }));
+      }
 
       // Fetch item approvals with more details
       const { data: approvals } = await supabase
@@ -152,22 +187,28 @@ export function usePSSRCategoryItems(pssrId: string, categoryName: string | null
         approver_name: a.approver_user_id ? profileMap.get(a.approver_user_id) || null : null
       }]) || []);
 
-      // Filter by category and transform
+      // Filter by category name and transform
       const items: CategoryItem[] = (responses || [])
-        .filter((resp: any) => resp.pssr_checklist_items?.category === categoryName)
+        .filter((resp: any) => {
+          const item = itemMap.get(resp.checklist_item_id);
+          return item?.category_name === categoryName;
+        })
         .map((resp: any) => {
+          const item = itemMap.get(resp.checklist_item_id);
           const approval = approvalMap.get(resp.id);
+          const seqNum = item?.sequence_number || 0;
+          const refId = item?.category_ref_id || 'XX';
+          const uniqueId = `${refId}-${String(seqNum).padStart(2, '0')}`;
           return {
-            id: resp.pssr_checklist_items.id,
-            unique_id: resp.pssr_checklist_items.unique_id,
-            question: resp.pssr_checklist_items.question,
+            id: item?.id || resp.checklist_item_id,
+            unique_id: uniqueId,
+            question: item?.description || '',
             response_id: resp.id,
             response: resp.response,
             status: resp.status,
             approval_status: approval?.status || null,
             narrative: resp.narrative,
-            category: resp.pssr_checklist_items.category,
-            // Extended fields
+            category: categoryName,
             deviation_reason: resp.deviation_reason || null,
             potential_risk: resp.potential_risk || null,
             mitigations: resp.mitigations || null,
@@ -178,7 +219,7 @@ export function usePSSRCategoryItems(pssrId: string, categoryName: string | null
             approved_at: approval?.reviewed_at || null,
             approver_name: approval?.approver_name || null,
             approval_comments: approval?.comments || null,
-            attachments: resp.attachments || null,
+            attachments: null,
           };
         })
         .sort((a: CategoryItem, b: CategoryItem) => a.unique_id.localeCompare(b.unique_id));
