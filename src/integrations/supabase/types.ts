@@ -5919,6 +5919,53 @@ export type Database = {
           },
         ]
       }
+      pssr_item_overrides: {
+        Row: {
+          approvers_override: string | null
+          checklist_item_id: string
+          created_at: string
+          description_override: string | null
+          id: string
+          pssr_id: string
+          responsible_override: string | null
+          topic_override: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          approvers_override?: string | null
+          checklist_item_id: string
+          created_at?: string
+          description_override?: string | null
+          id?: string
+          pssr_id: string
+          responsible_override?: string | null
+          topic_override?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          approvers_override?: string | null
+          checklist_item_id?: string
+          created_at?: string
+          description_override?: string | null
+          id?: string
+          pssr_id?: string
+          responsible_override?: string | null
+          topic_override?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pssr_item_overrides_pssr_id_fkey"
+            columns: ["pssr_id"]
+            isOneToOne: false
+            referencedRelation: "pssrs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pssr_key_activities: {
         Row: {
           activity_type: string
