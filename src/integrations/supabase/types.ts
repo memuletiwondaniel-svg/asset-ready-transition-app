@@ -6736,6 +6736,8 @@ export type Database = {
           draft_checklist_item_ids: string[] | null
           draft_item_overrides: Json | null
           draft_na_item_ids: string[] | null
+          draft_pssr_approver_role_ids: string[] | null
+          draft_sof_approver_role_ids: string[] | null
           field_id: string | null
           finalized_at: string | null
           id: string
@@ -6765,6 +6767,8 @@ export type Database = {
           draft_checklist_item_ids?: string[] | null
           draft_item_overrides?: Json | null
           draft_na_item_ids?: string[] | null
+          draft_pssr_approver_role_ids?: string[] | null
+          draft_sof_approver_role_ids?: string[] | null
           field_id?: string | null
           finalized_at?: string | null
           id?: string
@@ -6794,6 +6798,8 @@ export type Database = {
           draft_checklist_item_ids?: string[] | null
           draft_item_overrides?: Json | null
           draft_na_item_ids?: string[] | null
+          draft_pssr_approver_role_ids?: string[] | null
+          draft_sof_approver_role_ids?: string[] | null
           field_id?: string | null
           finalized_at?: string | null
           id?: string

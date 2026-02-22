@@ -226,15 +226,25 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
           }
         }
 
-        // Also load approver config for this reason
+        // Load approver config: prefer persisted draft selections, fall back to template defaults
         const { data: approverConfig } = await supabase
           .from('pssr_reason_configuration')
           .select('pssr_approver_role_ids, sof_approver_role_ids')
           .eq('reason_id', draft.reason_id)
           .maybeSingle();
 
-        const pssrApproverIds = approverConfig?.pssr_approver_role_ids || [];
-        const sofApproverIds = approverConfig?.sof_approver_role_ids || [];
+        const templatePssrApproverIds = approverConfig?.pssr_approver_role_ids || [];
+        const templateSofApproverIds = approverConfig?.sof_approver_role_ids || [];
+
+        // Use draft-persisted approver IDs if available, otherwise fall back to template
+        const draftPssrApproverIds = (draft as any).draft_pssr_approver_role_ids;
+        const draftSofApproverIds = (draft as any).draft_sof_approver_role_ids;
+        const pssrApproverIds = (draftPssrApproverIds && draftPssrApproverIds.length > 0)
+          ? draftPssrApproverIds
+          : templatePssrApproverIds;
+        const sofApproverIds = (draftSofApproverIds && draftSofApproverIds.length > 0)
+          ? draftSofApproverIds
+          : templateSofApproverIds;
 
         setWizardState(prev => ({
           ...prev,
@@ -251,8 +261,8 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
           naItemIds: restoredNaItemIds,
           selectedPssrApproverRoleIds: pssrApproverIds,
           selectedSofApproverRoleIds: sofApproverIds,
-          templatePssrApproverRoleIds: pssrApproverIds,
-          templateSofApproverRoleIds: sofApproverIds,
+          templatePssrApproverRoleIds: templatePssrApproverIds,
+          templateSofApproverRoleIds: templateSofApproverIds,
           configLoaded: true,
         }));
 
@@ -467,13 +477,19 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
         pssr_lead_id: wizardState.pssrLeadId || null,
       };
 
-      // Include checklist state in draft payload
+      // Include checklist state + approver selections in draft payload
       const fullDraftPayload = {
         ...draftPayload,
         draft_checklist_item_ids: wizardState.selectedChecklistItemIds.filter(id => !id.startsWith('custom-')),
         draft_na_item_ids: wizardState.naItemIds.filter(id => !id.startsWith('custom-')),
         draft_item_overrides: Object.keys(wizardState.checklistItemOverrides).length > 0
           ? wizardState.checklistItemOverrides
+          : null,
+        draft_pssr_approver_role_ids: wizardState.selectedPssrApproverRoleIds.length > 0
+          ? wizardState.selectedPssrApproverRoleIds
+          : null,
+        draft_sof_approver_role_ids: wizardState.selectedSofApproverRoleIds.length > 0
+          ? wizardState.selectedSofApproverRoleIds
           : null,
       };
 
@@ -704,6 +720,10 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
 
         if (checklistError) console.error('Error creating checklist responses:', checklistError);
       }
+
+      // Clean up existing approvers before re-inserting (handles draft re-submissions)
+      await supabase.from('pssr_approvers').delete().eq('pssr_id', newPSSR.id);
+      await supabase.from('sof_approvers').delete().eq('pssr_id', newPSSR.id);
 
       // Create PSSR approvers
       if (wizardState.selectedPssrApproverRoleIds.length > 0) {
