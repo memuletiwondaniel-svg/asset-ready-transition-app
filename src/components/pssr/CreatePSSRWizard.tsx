@@ -1047,6 +1047,27 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
               plantName={selectedPlant?.name}
               fieldName={selectedField?.name}
               customItems={customItems}
+              onRemoveCustomItem={(itemId) => {
+                setCustomItems(prev => prev.filter(i => i.id !== itemId));
+                setWizardState(prev => ({
+                  ...prev,
+                  selectedChecklistItemIds: prev.selectedChecklistItemIds.filter(id => id !== itemId),
+                  naItemIds: prev.naItemIds.filter(id => id !== itemId),
+                }));
+                const newOverrides = { ...wizardState.checklistItemOverrides };
+                delete newOverrides[itemId];
+                setWizardState(prev => ({ ...prev, checklistItemOverrides: newOverrides }));
+              }}
+              onRemoveCustomCategory={(categoryId) => {
+                const itemsInCategory = customItems.filter(i => i.category === categoryId);
+                const idsToRemove = new Set(itemsInCategory.map(i => i.id));
+                setCustomItems(prev => prev.filter(i => i.category !== categoryId));
+                setWizardState(prev => ({
+                  ...prev,
+                  selectedChecklistItemIds: prev.selectedChecklistItemIds.filter(id => !idsToRemove.has(id)),
+                  naItemIds: prev.naItemIds.filter(id => !idsToRemove.has(id)),
+                }));
+              }}
               onAddExistingItems={(itemIds) => {
                 setWizardState(prev => ({
                   ...prev,

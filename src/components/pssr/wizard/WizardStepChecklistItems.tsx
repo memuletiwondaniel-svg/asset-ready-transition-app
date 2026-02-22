@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Search, FileCheck, ChevronDown, ChevronRight, Ban, Undo2, Edit2, Globe, Loader2, Plus, User } from 'lucide-react';
+import { Search, FileCheck, ChevronDown, ChevronRight, Ban, Undo2, Edit2, Globe, Loader2, Plus, User, Trash2 } from 'lucide-react';
 import { usePSSRChecklistItems, usePSSRChecklistCategories, ChecklistItem } from '@/hooks/usePSSRChecklistLibrary';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChecklistItemOverride } from './ChecklistItemEditDialog';
@@ -37,6 +37,9 @@ interface WizardStepChecklistItemsProps {
   // Adding items
   onAddExistingItems?: (itemIds: string[]) => void;
   onAddCustomItem?: (item: { category: string; description: string; topic?: string; supporting_evidence?: string }) => void;
+  /** Remove a custom item or all items in a custom category */
+  onRemoveCustomItem?: (itemId: string) => void;
+  onRemoveCustomCategory?: (categoryId: string) => void;
   /** Custom items added during this wizard session */
   customItems?: ChecklistItem[];
 }
@@ -56,6 +59,8 @@ const WizardStepChecklistItems: React.FC<WizardStepChecklistItemsProps> = ({
   fieldName,
   onAddExistingItems,
   onAddCustomItem,
+  onRemoveCustomItem,
+  onRemoveCustomCategory,
   customItems = [],
 }) => {
   const { data: rawChecklistItems = [], isLoading: itemsLoading } = usePSSRChecklistItems();
@@ -347,7 +352,7 @@ const WizardStepChecklistItems: React.FC<WizardStepChecklistItemsProps> = ({
                     onOpenChange={() => toggleCategory(categoryId)}
                   >
                     <CollapsibleTrigger className="w-full">
-                      <div className="flex items-center justify-between px-4 py-3 hover:bg-muted/40 transition-colors">
+                      <div className="group/cat flex items-center justify-between px-4 py-3 hover:bg-muted/40 transition-colors">
                         <div className="flex items-center gap-2">
                           {isExpanded ? (
                             <ChevronDown className="h-4 w-4 text-muted-foreground/60" />
@@ -359,7 +364,23 @@ const WizardStepChecklistItems: React.FC<WizardStepChecklistItemsProps> = ({
                           </Badge>
                           <span className="font-semibold text-sm uppercase tracking-wide text-foreground">{getCategoryName(categoryId)}</span>
                         </div>
-                        <span className="text-sm text-muted-foreground">{items.length}</span>
+                        <div className="flex items-center gap-2">
+                          {/* Delete custom category button */}
+                          {categoryId.startsWith('other:') && onRemoveCustomCategory && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onRemoveCustomCategory(categoryId);
+                              }}
+                              className="p-1 rounded-md opacity-0 group-hover/cat:opacity-100 hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all"
+                              title="Delete category and all its items"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+                          <span className="text-sm text-muted-foreground">{items.length}</span>
+                        </div>
                       </div>
                     </CollapsibleTrigger>
 
@@ -423,6 +444,19 @@ const WizardStepChecklistItems: React.FC<WizardStepChecklistItemsProps> = ({
                                 >
                                   <Edit2 className="h-3.5 w-3.5" />
                                 </button>
+                                {item.id.startsWith('custom-') && onRemoveCustomItem && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onRemoveCustomItem(item.id);
+                                    }}
+                                    className="p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                                    title="Delete custom item"
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </button>
+                                )}
                                 {onMarkNA && (
                                   <button
                                     type="button"
