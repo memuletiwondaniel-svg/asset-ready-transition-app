@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { 
   BarChart3, 
@@ -9,6 +11,8 @@ import {
   MessageSquare, 
   Award,
   X,
+  RotateCcw,
+  Loader2,
 } from 'lucide-react';
 import { PSSROverviewTab } from './PSSROverviewTab';
 import { SOFCertificate } from '@/components/sof/SOFCertificate';
@@ -16,6 +20,7 @@ import { cn } from '@/lib/utils';
 import { useSOFCertificate, useSOFApprovers } from '@/hooks/useSOFCertificates';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 
 interface PSSRDetailOverlayProps {
   open: boolean;
@@ -63,8 +68,55 @@ export const PSSRDetailOverlay: React.FC<PSSRDetailOverlayProps> = ({
   status,
 }) => {
   const [activeTab, setActiveTab] = useState('overview');
-  const statusConfig = getStatusConfig(status || '');
+  const [currentStatus, setCurrentStatus] = useState(status);
+  const statusConfig = getStatusConfig(currentStatus || '');
   const queryClient = useQueryClient();
+  const isPendingLeadReview = (currentStatus || '').toUpperCase().replace(/[\s-]+/g, '_') === 'PENDING_LEAD_REVIEW';
+
+  // Revert to Draft mutation
+  const revertToDraft = useMutation({
+    mutationFn: async () => {
+      // 1. Update PSSR status to DRAFT
+      const { error: statusError } = await supabase
+        .from('pssrs')
+        .update({ status: 'DRAFT', approval_status: null })
+        .eq('id', pssrId);
+      if (statusError) throw statusError;
+
+      // 2. Delete the pending review task for the PSSR Lead
+      const { data: tasks } = await supabase
+        .from('user_tasks')
+        .select('id')
+        .eq('type', 'review')
+        .eq('status', 'pending')
+        .filter('metadata->>pssr_id', 'eq', pssrId)
+        .filter('metadata->>action', 'eq', 'review_draft_pssr');
+
+      if (tasks && tasks.length > 0) {
+        const taskIds = tasks.map(t => t.id);
+        for (const taskId of taskIds) {
+          await supabase.from('user_tasks').delete().eq('id', taskId);
+        }
+      }
+    },
+    onSuccess: () => {
+      setCurrentStatus('DRAFT');
+      queryClient.invalidateQueries({ queryKey: ['pssr-records'] });
+      queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+      toast({
+        title: 'Reverted to Draft',
+        description: 'The PSSR has been reverted to Draft status and the lead review task has been removed.',
+      });
+      onOpenChange(false);
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Failed to Revert',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
 
   // Fetch SoF certificate data
   const { certificate, isLoading: sofLoading } = useSOFCertificate(pssrId);
@@ -323,6 +375,58 @@ export const PSSRDetailOverlay: React.FC<PSSRDetailOverlayProps> = ({
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            {/* Status Badge */}
+            <Badge className={cn(
+              'text-xs font-medium px-2.5 py-0.5 rounded-full border',
+              isPendingLeadReview
+                ? 'bg-blue-500/10 text-blue-600 border-blue-500/20 dark:text-blue-400'
+                : statusConfig.color === 'bg-emerald-500'
+                  ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+                  : statusConfig.color === 'bg-amber-500'
+                    ? 'bg-amber-500/10 text-amber-600 border-amber-500/20'
+                    : 'bg-muted text-muted-foreground border-border'
+            )}>
+              {statusConfig.label}
+            </Badge>
+
+            {/* Revert to Draft button - only for Pending Lead Review */}
+            {isPendingLeadReview && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs gap-1.5 h-7"
+                    disabled={revertToDraft.isPending}
+                  >
+                    {revertToDraft.isPending ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <RotateCcw className="h-3 w-3" />
+                    )}
+                    Revert to Draft
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Revert PSSR to Draft?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will revert <strong>{pssrDisplayId}</strong> back to Draft status and remove the pending review task from the PSSR Lead's task list. You can then re-edit and resubmit the PSSR.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => revertToDraft.mutate()}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Revert to Draft
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+
             <Button
               variant="ghost"
               size="icon"
