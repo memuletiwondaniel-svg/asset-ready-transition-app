@@ -57,21 +57,52 @@ export function usePSSRCategoryProgress(pssrId: string) {
       if (respError) throw respError;
 
       // Collect unique checklist_item_ids and fetch their categories separately
-      // (checklist_item_id is text, pssr_checklist_items.id is uuid — no FK join available)
       const allItemIds = [...new Set((responses || []).map(r => r.checklist_item_id).filter(Boolean))];
-      // Filter out custom items (non-UUID format) that won't exist in pssr_checklist_items
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      const validItemIds = allItemIds.filter(id => uuidRegex.test(id));
+      const standardIds = allItemIds.filter(id => uuidRegex.test(id));
+      const customPrefixedIds = allItemIds.filter(id => id.startsWith('custom-'));
+      // Extract UUID portion from custom- prefixed IDs
+      const customUuids = customPrefixedIds
+        .map(id => id.replace('custom-', ''))
+        .filter(id => uuidRegex.test(id));
       
+      // itemCategoryMap: checklist_item_id (as stored in responses) -> category UUID
       let itemCategoryMap = new Map<string, string>();
-      if (validItemIds.length > 0) {
+
+      // Fetch standard checklist items
+      if (standardIds.length > 0) {
         const { data: items, error: itemsError } = await supabase
           .from('pssr_checklist_items')
           .select('id, category')
-          .in('id', validItemIds);
+          .in('id', standardIds);
         
         if (itemsError) throw itemsError;
-        itemCategoryMap = new Map((items || []).map(i => [i.id, i.category]));
+        (items || []).forEach(i => itemCategoryMap.set(i.id, i.category));
+      }
+
+      // Fetch custom checklist items for this PSSR
+      // Custom items use category format "other:Category Name" — we need to map them
+      // to a virtual category entry
+      const customCategoryNames = new Map<string, { name: string; count: number }>();
+      if (customUuids.length > 0) {
+        const { data: customItems } = await supabase
+          .from('pssr_custom_checklist_items')
+          .select('id, category')
+          .eq('pssr_id', pssrId)
+          .in('id', customUuids);
+        
+        (customItems || []).forEach(ci => {
+          const customKey = `custom-${ci.id}`;
+          // Use the category string as a virtual category key (e.g. "other:Project VCR")
+          const virtualCatId = `custom-cat:${ci.category}`;
+          itemCategoryMap.set(customKey, virtualCatId);
+          
+          // Extract display name from category (e.g. "other:Project VCR" -> "Project VCR")
+          const displayName = ci.category.includes(':') 
+            ? ci.category.split(':').slice(1).join(':').trim() 
+            : ci.category;
+          customCategoryNames.set(virtualCatId, { name: displayName, count: 0 });
+        });
       }
 
       // Count totals and completed per category from actual PSSR responses
@@ -86,7 +117,7 @@ export function usePSSRCategoryProgress(pssrId: string) {
         }
       });
 
-      // Build category progress — only categories that have responses for this PSSR
+      // Build category progress from standard categories
       const categoryProgress: CategoryProgress[] = (categories || [])
         .filter(cat => (categoryTotals[cat.id] || 0) > 0)
         .map(cat => {
@@ -101,8 +132,25 @@ export function usePSSRCategoryProgress(pssrId: string) {
             percentage: total > 0 ? Math.round((completed / total) * 100) : 0,
             display_order: cat.display_order,
           };
-        })
-        .sort((a, b) => a.display_order - b.display_order);
+        });
+
+      // Add custom categories
+      for (const [virtualCatId, info] of customCategoryNames) {
+        const total = categoryTotals[virtualCatId] || 0;
+        if (total === 0) continue;
+        const completed = categoryCompleted[virtualCatId] || 0;
+        categoryProgress.push({
+          id: virtualCatId,
+          name: info.name,
+          ref_id: 'OT',
+          completed,
+          total,
+          percentage: total > 0 ? Math.round((completed / total) * 100) : 0,
+          display_order: 9999, // Custom categories at the end
+        });
+      }
+
+      categoryProgress.sort((a, b) => a.display_order - b.display_order);
 
       return categoryProgress;
     },
@@ -140,14 +188,17 @@ export function usePSSRCategoryItems(pssrId: string, categoryName: string | null
       // Fetch all checklist items referenced by these responses
       const allItemIds = [...new Set((responses || []).map(r => r.checklist_item_id).filter(Boolean))];
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      const validItemIds = allItemIds.filter(id => uuidRegex.test(id));
+      const standardIds = allItemIds.filter(id => uuidRegex.test(id));
+      const customPrefixedIds = allItemIds.filter(id => id.startsWith('custom-'));
+      const customUuids = customPrefixedIds.map(id => id.replace('custom-', '')).filter(id => uuidRegex.test(id));
+
       let itemMap = new Map<string, any>();
       
-      if (validItemIds.length > 0) {
+      if (standardIds.length > 0) {
         const { data: items } = await supabase
           .from('pssr_checklist_items')
           .select('id, description, category, sequence_number, topic')
-          .in('id', validItemIds);
+          .in('id', standardIds);
         
         // Also fetch category names
         const catIds = [...new Set((items || []).map(i => i.category).filter(Boolean))];
@@ -160,10 +211,31 @@ export function usePSSRCategoryItems(pssrId: string, categoryName: string | null
           catNameMap = new Map((cats || []).map(c => [c.id, { name: c.name, ref_id: c.ref_id }]));
         }
         
-        itemMap = new Map((items || []).map(i => {
+        (items || []).forEach(i => {
           const cat = catNameMap.get(i.category);
-          return [i.id, { ...i, category_name: cat?.name || '', category_ref_id: cat?.ref_id || '' }];
-        }));
+          itemMap.set(i.id, { ...i, category_name: cat?.name || '', category_ref_id: cat?.ref_id || '' });
+        });
+      }
+
+      // Fetch custom checklist items for this PSSR
+      if (customUuids.length > 0) {
+        const { data: customItems } = await supabase
+          .from('pssr_custom_checklist_items')
+          .select('id, description, category, display_order, topic')
+          .eq('pssr_id', pssrId)
+          .in('id', customUuids);
+        
+        (customItems || []).forEach((ci, idx) => {
+          const displayName = ci.category.includes(':') 
+            ? ci.category.split(':').slice(1).join(':').trim() 
+            : ci.category;
+          itemMap.set(`custom-${ci.id}`, {
+            ...ci,
+            sequence_number: ci.display_order || idx + 1,
+            category_name: displayName,
+            category_ref_id: 'OT',
+          });
+        });
       }
 
       // Fetch item approvals with more details
