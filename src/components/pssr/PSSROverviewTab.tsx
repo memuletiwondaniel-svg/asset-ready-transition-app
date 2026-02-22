@@ -320,56 +320,6 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
               <p className="text-sm mt-0.5">{pssr?.reason || '-'}</p>
             </div>
 
-            <Separator />
-
-            {/* Detailed Scope */}
-            <div>
-              <span className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">Detailed Scope</span>
-              {pssr?.scope ? (
-                <div
-                  className="text-sm mt-1 prose prose-sm max-w-none dark:prose-invert"
-                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(pssr.scope) }}
-                />
-              ) : (
-                <p className="text-sm text-muted-foreground mt-0.5">No scope defined</p>
-              )}
-              {pssr?.scope_image_url && (
-                <img
-                  src={pssr.scope_image_url}
-                  alt="Scope"
-                  className="mt-2 rounded-lg max-h-48 object-cover w-full"
-                />
-              )}
-            </div>
-
-            <Separator />
-
-            {/* PSSR Lead */}
-            <div className="flex items-center gap-2">
-              <User className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">PSSR Lead</span>
-            </div>
-            {pssr?.pssr_lead ? (
-              <div className="flex items-center gap-2">
-                <Avatar className="h-7 w-7">
-                  <AvatarImage src={pssr.pssr_lead.avatar_url || ''} />
-                  <AvatarFallback className="text-[10px]">
-                    {getInitials(pssr.pssr_lead.full_name || '')}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="text-sm font-medium">{pssr.pssr_lead.full_name}</p>
-                  {pssr.pssr_lead.position && (
-                    <p className="text-[10px] text-muted-foreground">{pssr.pssr_lead.position}</p>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">Unassigned</p>
-            )}
-
-            <Separator />
-
             {/* Date */}
             <div className="flex items-center gap-2">
               <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
@@ -612,7 +562,33 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
       <CardContent className="p-0 flex-1">
         <ScrollArea className="h-full">
           <div className="p-4 space-y-2">
-            {/* Delivering Parties */}
+            {/* PSSR Lead */}
+            <div className="p-2">
+              <div className="flex items-center gap-2 mb-2">
+                <User className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">PSSR Lead</span>
+              </div>
+              {pssr?.pssr_lead ? (
+                <div className="flex items-center gap-2">
+                  <Avatar className="h-7 w-7">
+                    <AvatarImage src={pssr.pssr_lead.avatar_url || ''} />
+                    <AvatarFallback className="text-[10px]">
+                      {getInitials(pssr.pssr_lead.full_name || '')}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="text-xs font-medium">{pssr.pssr_lead.full_name}</p>
+                    {pssr.pssr_lead.position && (
+                      <p className="text-[10px] text-muted-foreground">{pssr.pssr_lead.position}</p>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">Unassigned</p>
+              )}
+            </div>
+
+            <Separator />
             <Collapsible open={openSections['delivering']} onOpenChange={() => toggleSection('delivering')}>
               <CollapsibleTrigger className="flex items-center justify-between w-full p-2 rounded-lg hover:bg-muted/30">
                 <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Delivering Parties</span>
