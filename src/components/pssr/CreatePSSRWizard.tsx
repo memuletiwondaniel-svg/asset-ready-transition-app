@@ -262,42 +262,42 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
     loadDraft();
   }, [open, draftPssrId, reasons]);
 
-  // Load configuration when entering Step 3
+  // Extracted config loader - can be called from handleNext or useEffect
+  const loadReasonConfig = async (reasonId: string) => {
+    try {
+      const { data: config } = await supabase
+        .from('pssr_reason_configuration')
+        .select('checklist_item_ids, pssr_approver_role_ids, sof_approver_role_ids')
+        .eq('reason_id', reasonId)
+        .maybeSingle();
+      
+      const checklistIds = config?.checklist_item_ids || [];
+      const pssrApproverIds = config?.pssr_approver_role_ids || [];
+      const sofApproverIds = config?.sof_approver_role_ids || [];
+      
+      setWizardState(prev => ({
+        ...prev,
+        selectedChecklistItemIds: checklistIds,
+        selectedPssrApproverRoleIds: pssrApproverIds,
+        selectedSofApproverRoleIds: sofApproverIds,
+        templateChecklistItemIds: checklistIds,
+        templatePssrApproverRoleIds: pssrApproverIds,
+        templateSofApproverRoleIds: sofApproverIds,
+        configLoaded: true,
+        configLoading: false,
+      }));
+    } catch (error) {
+      console.error('Error loading configuration:', error);
+      setWizardState(prev => ({ ...prev, configLoading: false }));
+    }
+  };
+
+  // Fallback: Load configuration when entering Step 3 via useEffect
   useEffect(() => {
-    const loadConfiguration = async () => {
-      if ((currentStep === 3 || currentStep === 4) && wizardState.reasonId && !wizardState.configLoaded && !wizardState.configLoading) {
-        setWizardState(prev => ({ ...prev, configLoading: true }));
-        
-        try {
-          const { data: config } = await supabase
-            .from('pssr_reason_configuration')
-            .select('checklist_item_ids, pssr_approver_role_ids, sof_approver_role_ids')
-            .eq('reason_id', wizardState.reasonId)
-            .maybeSingle();
-          
-          const checklistIds = config?.checklist_item_ids || [];
-          const pssrApproverIds = config?.pssr_approver_role_ids || [];
-          const sofApproverIds = config?.sof_approver_role_ids || [];
-          
-          setWizardState(prev => ({
-            ...prev,
-            selectedChecklistItemIds: checklistIds,
-            selectedPssrApproverRoleIds: pssrApproverIds,
-            selectedSofApproverRoleIds: sofApproverIds,
-            templateChecklistItemIds: checklistIds,
-            templatePssrApproverRoleIds: pssrApproverIds,
-            templateSofApproverRoleIds: sofApproverIds,
-            configLoaded: true,
-            configLoading: false,
-          }));
-        } catch (error) {
-          console.error('Error loading configuration:', error);
-          setWizardState(prev => ({ ...prev, configLoading: false }));
-        }
-      }
-    };
-    
-    loadConfiguration();
+    if ((currentStep === 3 || currentStep === 4) && wizardState.reasonId && !wizardState.configLoaded && !wizardState.configLoading) {
+      setWizardState(prev => ({ ...prev, configLoading: true }));
+      loadReasonConfig(wizardState.reasonId);
+    }
   }, [currentStep, wizardState.reasonId, wizardState.configLoaded, wizardState.configLoading]);
 
   const handleClose = () => {
@@ -332,7 +332,7 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
 
   const isStepComplete = (step: number): boolean => validateStep(step, true);
 
-  const handleStepClick = (targetStep: number) => {
+  const handleStepClick = async (targetStep: number) => {
     if (targetStep === currentStep) return;
     // Allow navigating to any visited step, or one step ahead of the highest completed
     const canNavigate = visitedSteps.has(targetStep) || targetStep <= currentStep;
@@ -348,13 +348,23 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
         reasonId: categoryIdRef.current === '__other__' ? '' : categoryIdRef.current,
       }));
     }
+    // Eagerly load config when jumping to step 3 or 4
+    const effectiveReasonId = wizardState.reasonId || (categoryIdRef.current !== '__other__' ? categoryIdRef.current : '');
+    if ((targetStep === 3 || targetStep === 4) && effectiveReasonId && !wizardState.configLoaded) {
+      setWizardState(prev => ({ ...prev, configLoading: true }));
+      await loadReasonConfig(effectiveReasonId);
+    }
     setVisitedSteps(prev => new Set([...prev, targetStep]));
     setCurrentStep(targetStep);
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (!validateStep(currentStep)) return;
     const nextStep = Math.min(currentStep + 1, STEPS.length);
+    
+    // Resolve the effective reasonId
+    const effectiveReasonId = wizardState.reasonId || (categoryIdRef.current !== '__other__' ? categoryIdRef.current : '');
+    
     // Ensure reasonId is set before entering step 3 (config loading step)
     if (nextStep === 3 && !wizardState.reasonId && categoryIdRef.current) {
       setWizardState(prev => ({
@@ -363,6 +373,13 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
         reasonId: categoryIdRef.current === '__other__' ? '' : categoryIdRef.current,
       }));
     }
+    
+    // Eagerly load template config when entering step 3 for the first time
+    if ((nextStep === 3 || nextStep === 4) && effectiveReasonId && !wizardState.configLoaded) {
+      setWizardState(prev => ({ ...prev, configLoading: true }));
+      await loadReasonConfig(effectiveReasonId);
+    }
+    
     setVisitedSteps(prev => new Set([...prev, nextStep]));
     setCurrentStep(nextStep);
   };
