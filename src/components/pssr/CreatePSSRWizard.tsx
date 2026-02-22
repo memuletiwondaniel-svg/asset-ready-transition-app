@@ -292,11 +292,13 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
     }
   };
 
-  // Fallback: Load configuration when entering Step 3 via useEffect
+  // Fallback: Load configuration when entering Step 3+ via useEffect
   useEffect(() => {
-    if ((currentStep === 3 || currentStep === 4) && wizardState.reasonId && !wizardState.configLoaded && !wizardState.configLoading) {
+    const effectiveReasonId = wizardState.reasonId || 
+      (categoryIdRef.current && categoryIdRef.current !== '__other__' ? categoryIdRef.current : '');
+    if (currentStep >= 3 && effectiveReasonId && !wizardState.configLoaded && !wizardState.configLoading) {
       setWizardState(prev => ({ ...prev, configLoading: true }));
-      loadReasonConfig(wizardState.reasonId);
+      loadReasonConfig(effectiveReasonId);
     }
   }, [currentStep, wizardState.reasonId, wizardState.configLoaded, wizardState.configLoading]);
 
@@ -348,9 +350,11 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
         reasonId: categoryIdRef.current === '__other__' ? '' : categoryIdRef.current,
       }));
     }
-    // Eagerly load config when jumping to step 3 or 4
-    const effectiveReasonId = wizardState.reasonId || (categoryIdRef.current !== '__other__' ? categoryIdRef.current : '');
-    if ((targetStep === 3 || targetStep === 4) && effectiveReasonId && !wizardState.configLoaded) {
+    // Eagerly load config when jumping to step 3+
+    const effectiveReasonId = categoryIdRef.current && categoryIdRef.current !== '__other__' 
+      ? categoryIdRef.current 
+      : wizardState.reasonId;
+    if (targetStep >= 3 && effectiveReasonId && !wizardState.configLoaded && !wizardState.configLoading) {
       setWizardState(prev => ({ ...prev, configLoading: true }));
       await loadReasonConfig(effectiveReasonId);
     }
@@ -362,20 +366,22 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
     if (!validateStep(currentStep)) return;
     const nextStep = Math.min(currentStep + 1, STEPS.length);
     
-    // Resolve the effective reasonId
-    const effectiveReasonId = wizardState.reasonId || (categoryIdRef.current !== '__other__' ? categoryIdRef.current : '');
+    // Resolve the effective reasonId synchronously from ref (always up-to-date)
+    const effectiveReasonId = categoryIdRef.current && categoryIdRef.current !== '__other__' 
+      ? categoryIdRef.current 
+      : wizardState.reasonId;
     
-    // Ensure reasonId is set before entering step 3 (config loading step)
-    if (nextStep === 3 && !wizardState.reasonId && categoryIdRef.current) {
+    // Ensure reasonId is set in state before entering step 3
+    if (nextStep >= 3 && !wizardState.reasonId && effectiveReasonId) {
       setWizardState(prev => ({
         ...prev,
         categoryId: categoryIdRef.current,
-        reasonId: categoryIdRef.current === '__other__' ? '' : categoryIdRef.current,
+        reasonId: effectiveReasonId,
       }));
     }
     
-    // Eagerly load template config when entering step 3 for the first time
-    if ((nextStep === 3 || nextStep === 4) && effectiveReasonId && !wizardState.configLoaded) {
+    // Eagerly load template config when entering step 3+ for the first time (or after reason change)
+    if (nextStep >= 3 && effectiveReasonId && !wizardState.configLoaded && !wizardState.configLoading) {
       setWizardState(prev => ({ ...prev, configLoading: true }));
       await loadReasonConfig(effectiveReasonId);
     }
@@ -880,7 +886,17 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
                   categoryId: id,
                   reasonId: id === '__other__' ? '' : id,
                   selectedAtiScopeIds: [],
+                  // Reset ALL template-loaded state so config reloads for new reason
                   configLoaded: false,
+                  configLoading: false,
+                  selectedChecklistItemIds: [],
+                  checklistItemOverrides: {},
+                  naItemIds: [],
+                  templateChecklistItemIds: [],
+                  selectedPssrApproverRoleIds: [],
+                  selectedSofApproverRoleIds: [],
+                  templatePssrApproverRoleIds: [],
+                  templateSofApproverRoleIds: [],
                 }));
               }}
             />
