@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
@@ -37,7 +37,7 @@ import { usePSSRApprovers } from '@/hooks/usePSSRApprovers';
 import { usePSSRPriorityActions } from '@/hooks/usePSSRPriorityActions';
 import { usePSSRKeyActivities, PSSRKeyActivity } from '@/hooks/usePSSRKeyActivities';
 import { ScheduleActivitySheet } from './ScheduleActivitySheet';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -189,6 +189,92 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
     },
     enabled: approverUserIds.length > 0,
   });
+
+  // Auto-populate PSSR approvers if none exist
+  const queryClient = useQueryClient();
+  const autoPopulateAttempted = useRef(false);
+
+  const autoPopulatePssrApprovers = useMutation({
+    mutationFn: async () => {
+      if (!pssr?.reason_id) return;
+
+      const { data: config } = await supabase
+        .from('pssr_reason_configuration')
+        .select('pssr_approver_role_ids')
+        .eq('reason_id', pssr.reason_id)
+        .maybeSingle();
+
+      const roleIds = config?.pssr_approver_role_ids;
+      if (!roleIds || roleIds.length === 0) return;
+
+      const { data: roles } = await supabase
+        .from('roles')
+        .select('id, name')
+        .in('id', roleIds);
+
+      if (!roles || roles.length === 0) return;
+
+      let plantName = '';
+      if (pssr?.plant_id) {
+        const { data: plantData } = await supabase.from('plant').select('name').eq('id', pssr.plant_id).single();
+        plantName = plantData?.name || '';
+      }
+
+      const findPerson = async (positionKeyword: string) => {
+        if (plantName) {
+          const { data } = await supabase
+            .from('profiles')
+            .select('user_id, full_name, avatar_url')
+            .eq('is_active', true)
+            .ilike('position', `%${positionKeyword}%${plantName}%`)
+            .limit(1);
+          if (data && data.length > 0) return data[0];
+        }
+        const { data } = await supabase
+          .from('profiles')
+          .select('user_id, full_name, avatar_url, position')
+          .eq('is_active', true)
+          .ilike('position', `%${positionKeyword}%`)
+          .limit(10);
+        if (data && data.length > 0) {
+          return data.find(p => p.position?.includes('Asset')) || data[0];
+        }
+        return null;
+      };
+
+      const approversToInsert = [];
+      for (let i = 0; i < roles.length; i++) {
+        const role = roles[i];
+        const matched = await findPerson(role.name);
+        approversToInsert.push({
+          pssr_id: pssrId,
+          approver_role: role.name,
+          approver_name: matched?.full_name || 'Pending Assignment',
+          approver_level: i + 1,
+          status: 'PENDING',
+          user_id: matched?.user_id || null,
+        });
+      }
+
+      const { error } = await supabase.from('pssr_approvers').insert(approversToInsert);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pssr-approvers', pssrId] });
+    },
+  });
+
+  useEffect(() => {
+    if (
+      !approversLoading &&
+      !autoPopulateAttempted.current &&
+      pssr?.reason_id &&
+      (!pssrApprovers || pssrApprovers.length === 0)
+    ) {
+      autoPopulateAttempted.current = true;
+      autoPopulatePssrApprovers.mutate();
+    }
+  }, [approversLoading, pssrApprovers, pssr?.reason_id]);
 
   // Fetch location names
   const { data: locationInfo } = useQuery({
