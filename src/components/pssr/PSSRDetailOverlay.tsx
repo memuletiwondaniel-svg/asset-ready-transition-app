@@ -128,7 +128,7 @@ export const PSSRDetailOverlay: React.FC<PSSRDetailOverlayProps> = ({
     queryFn: async () => {
       const { data, error } = await supabase
         .from('pssrs')
-        .select('reason, plant_id')
+        .select('reason, plant_id, reason_id')
         .eq('id', pssrId)
         .single();
       if (error) throw error;
@@ -164,49 +164,89 @@ export const PSSRDetailOverlay: React.FC<PSSRDetailOverlayProps> = ({
     enabled: !!pssrId,
   });
 
-  // Auto-populate PSSR approvers if they have null user_ids
+  // Auto-populate PSSR approvers: create from reason config if empty, or resolve unresolved ones
   const autoPopulatePssrApprovers = useMutation({
     mutationFn: async () => {
-      const unresolved = pssrApprovers?.filter(a => !a.user_id) || [];
-      if (unresolved.length === 0) return;
+      const isEmpty = !pssrApprovers || pssrApprovers.length === 0;
+      const hasUnresolved = pssrApprovers?.some(a => !a.user_id);
+
+      // If approvers exist and all resolved, nothing to do
+      if (!isEmpty && !hasUnresolved) return;
 
       const plantName = plantData?.name || '';
 
-      for (const approver of unresolved) {
-        const role = approver.approver_role || '';
-        let matched: any = null;
-
-        // Try plant-specific position match first
+      // Helper to find person by position keyword + optional plant
+      const findPerson = async (positionKeyword: string) => {
         if (plantName) {
           const { data } = await supabase
             .from('profiles')
             .select('user_id, full_name, avatar_url')
             .eq('is_active', true)
-            .ilike('position', `%${role}%${plantName}%`)
+            .ilike('position', `%${positionKeyword}%${plantName}%`)
             .limit(1);
-          if (data && data.length > 0) matched = data[0];
+          if (data && data.length > 0) return data[0];
         }
+        const { data } = await supabase
+          .from('profiles')
+          .select('user_id, full_name, avatar_url, position')
+          .eq('is_active', true)
+          .ilike('position', `%${positionKeyword}%`)
+          .limit(10);
+        if (data && data.length > 0) {
+          return data.find(p => p.position?.includes('Asset')) || data[0];
+        }
+        return null;
+      };
 
-        // Fallback: match role keyword, prefer Asset over Projects
-        if (!matched) {
-          const { data } = await supabase
-            .from('profiles')
-            .select('user_id, full_name, avatar_url, position')
-            .eq('is_active', true)
-            .ilike('position', `%${role}%`)
-            .limit(10);
-          if (data && data.length > 0) {
-            // Prefer Asset positions over Projects
-            matched = data.find(p => p.position?.includes('Asset')) || data[0];
+      // If approvers exist but are unresolved, update them in place
+      if (hasUnresolved && !isEmpty) {
+        for (const approver of pssrApprovers!.filter(a => !a.user_id)) {
+          const role = approver.approver_role || '';
+          const matched = await findPerson(role);
+          if (matched) {
+            await supabase
+              .from('pssr_approvers')
+              .update({ user_id: matched.user_id, approver_name: matched.full_name })
+              .eq('id', approver.id);
           }
         }
+        return;
+      }
 
-        if (matched) {
-          await supabase
-            .from('pssr_approvers')
-            .update({ user_id: matched.user_id, approver_name: matched.full_name })
-            .eq('id', approver.id);
+      // If empty, create approvers from reason configuration
+      if (isEmpty && pssrData?.reason_id) {
+        const { data: config } = await supabase
+          .from('pssr_reason_configuration')
+          .select('pssr_approver_role_ids')
+          .eq('reason_id', pssrData.reason_id)
+          .maybeSingle();
+
+        const roleIds = config?.pssr_approver_role_ids;
+        if (!roleIds || roleIds.length === 0) return;
+
+        const { data: roles } = await supabase
+          .from('roles')
+          .select('id, name')
+          .in('id', roleIds);
+
+        if (!roles || roles.length === 0) return;
+
+        const approversToInsert = [];
+        for (let i = 0; i < roles.length; i++) {
+          const role = roles[i];
+          const matched = await findPerson(role.name);
+          approversToInsert.push({
+            pssr_id: pssrId,
+            approver_role: role.name,
+            approver_name: matched?.full_name || 'Pending Assignment',
+            approver_level: i + 1,
+            status: 'PENDING',
+            user_id: matched?.user_id || null,
+          });
         }
+
+        const { error } = await supabase.from('pssr_approvers').insert(approversToInsert);
+        if (error) throw error;
       }
     },
     onSuccess: () => {
@@ -315,12 +355,16 @@ export const PSSRDetailOverlay: React.FC<PSSRDetailOverlayProps> = ({
     }
   }, [certificate, sofApprovers, sofLoading, sofApproversLoading]);
 
-  // Trigger auto-populate for PSSR approvers with null user_ids
+  // Trigger auto-populate for PSSR approvers: empty OR unresolved
   useEffect(() => {
-    if (pssrApprovers && pssrApprovers.some(a => !a.user_id) && plantData) {
-      autoPopulatePssrApprovers.mutate();
+    if (pssrApprovers !== undefined && pssrData && plantData !== undefined) {
+      const isEmpty = !pssrApprovers || pssrApprovers.length === 0;
+      const hasUnresolved = pssrApprovers?.some(a => !a.user_id);
+      if (isEmpty || hasUnresolved) {
+        autoPopulatePssrApprovers.mutate();
+      }
     }
-  }, [pssrApprovers, plantData]);
+  }, [pssrApprovers, pssrData, plantData]);
 
   const renderContent = () => {
     switch (activeTab) {
