@@ -262,11 +262,15 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pssr-approvers', pssrId] });
     },
+    onError: (error: any) => {
+      console.error('Auto-populate PSSR approvers failed:', error);
+    },
   });
 
   useEffect(() => {
     if (
       !approversLoading &&
+      !detailsLoading &&
       !autoPopulateAttempted.current &&
       pssr?.reason_id &&
       (!pssrApprovers || pssrApprovers.length === 0)
@@ -274,7 +278,7 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
       autoPopulateAttempted.current = true;
       autoPopulatePssrApprovers.mutate();
     }
-  }, [approversLoading, pssrApprovers, pssr?.reason_id]);
+  }, [approversLoading, detailsLoading, pssrApprovers, pssr]);
 
   // Fetch location names
   const { data: locationInfo } = useQuery({
