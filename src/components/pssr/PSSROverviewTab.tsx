@@ -116,52 +116,99 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
     enabled: !!pssrId,
   });
 
-  // Fetch delivering/approving parties from item approvals
-  const { data: itemApprovals } = useQuery({
-    queryKey: ['pssr-item-approvals-summary', pssrId],
+  // Fetch delivering & approving role summaries from checklist responses
+  const { data: partyRoleSummary } = useQuery({
+    queryKey: ['pssr-party-roles', pssrId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('pssr_item_approvals')
-        .select('approver_role, approver_user_id, status')
+      const { data: responses, error } = await supabase
+        .from('pssr_checklist_responses')
+        .select('delivering_role, approving_role')
         .eq('pssr_id', pssrId);
       if (error) throw error;
-      return data || [];
+
+      // Aggregate delivering roles
+      const delivering: Record<string, number> = {};
+      // Aggregate approving roles (comma-separated per item)
+      const approving: Record<string, number> = {};
+
+      (responses || []).forEach(r => {
+        if (r.delivering_role) {
+          delivering[r.delivering_role] = (delivering[r.delivering_role] || 0) + 1;
+        }
+        if (r.approving_role) {
+          r.approving_role.split(',').map(s => s.trim()).filter(Boolean).forEach(role => {
+            approving[role] = (approving[role] || 0) + 1;
+          });
+        }
+      });
+
+      return { delivering, approving };
     },
     enabled: !!pssrId,
   });
 
-  // Fetch delivering parties from checklist items (responsible field) when item approvals are empty
-  const { data: deliveringParties } = useQuery({
-    queryKey: ['pssr-delivering-parties', pssrId],
+  // Resolve role names to user profiles (match by position containing role name)
+  const allRoleNames = useMemo(() => {
+    if (!partyRoleSummary) return [];
+    const roles = new Set([
+      ...Object.keys(partyRoleSummary.delivering),
+      ...Object.keys(partyRoleSummary.approving),
+    ]);
+    return Array.from(roles);
+  }, [partyRoleSummary]);
+
+  const { data: roleProfileMap } = useQuery({
+    queryKey: ['pssr-role-profiles', pssrId, allRoleNames],
     queryFn: async () => {
-      // Get all checklist response item IDs for this PSSR
-      const { data: responses, error } = await supabase
-        .from('pssr_checklist_responses')
-        .select('checklist_item_id')
-        .eq('pssr_id', pssrId);
-      if (error) throw error;
+      if (allRoleNames.length === 0) return {};
 
-      const itemIds = [...new Set((responses || []).map(r => r.checklist_item_id).filter(Boolean))];
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      const standardIds = itemIds.filter(id => uuidRegex.test(id));
+      // Get the PSSR's plant name for location-aware matching
+      let plantName = '';
+      if (pssr?.plant_id) {
+        const { data: plantData } = await supabase.from('plant').select('name').eq('id', pssr.plant_id).single();
+        plantName = plantData?.name || '';
+      }
 
-      if (standardIds.length === 0) return {};
+      const map: Record<string, { user_id: string; full_name: string; avatar_url: string | null; position: string | null }> = {};
 
-      const { data: items } = await supabase
-        .from('pssr_checklist_items')
-        .select('id, responsible')
-        .in('id', standardIds);
-
-      // Count by responsible role
-      const roleMap: Record<string, number> = {};
-      (items || []).forEach(item => {
-        if (item.responsible) {
-          roleMap[item.responsible] = (roleMap[item.responsible] || 0) + 1;
+      for (const role of allRoleNames) {
+        // Try plant-specific match first
+        let found = null;
+        if (plantName) {
+          const { data } = await supabase
+            .from('profiles')
+            .select('user_id, full_name, avatar_url, position')
+            .eq('is_active', true)
+            .ilike('position', `%${role}%`)
+            .ilike('position', `%${plantName}%`)
+            .not('position', 'ilike', '%Project%')
+            .limit(1);
+          if (data && data.length > 0) found = data[0];
         }
-      });
-      return roleMap;
+        // Fallback: match role name, prefer Asset-level
+        if (!found) {
+          const { data } = await supabase
+            .from('profiles')
+            .select('user_id, full_name, avatar_url, position')
+            .eq('is_active', true)
+            .ilike('position', `%${role}%`)
+            .not('position', 'ilike', '%Project%')
+            .limit(5);
+          if (data && data.length > 0) {
+            found = data.find(p => p.position?.includes('Asset')) || data[0];
+          }
+        }
+        if (found) {
+          let avatarUrl = found.avatar_url;
+          if (avatarUrl && !avatarUrl.startsWith('http')) {
+            avatarUrl = supabase.storage.from('user-avatars').getPublicUrl(avatarUrl).data.publicUrl;
+          }
+          map[role] = { user_id: found.user_id, full_name: found.full_name || role, avatar_url: avatarUrl, position: found.position };
+        }
+      }
+      return map;
     },
-    enabled: !!pssrId,
+    enabled: allRoleNames.length > 0 && !!pssr,
   });
 
   // Fetch profiles for approvers
@@ -169,9 +216,8 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
     const ids = new Set<string>();
     pssrApprovers?.forEach(a => { if (a.user_id) ids.add(a.user_id); });
     sofApprovers?.forEach((a: any) => { if (a.user_id) ids.add(a.user_id); });
-    itemApprovals?.forEach(a => { if (a.approver_user_id) ids.add(a.approver_user_id); });
     return Array.from(ids);
-  }, [pssrApprovers, sofApprovers, itemApprovals]);
+  }, [pssrApprovers, sofApprovers]);
 
   const { data: approverProfiles } = useQuery({
     queryKey: ['approver-profiles', approverUserIds],
@@ -348,18 +394,8 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
   const completedItems = categoryProgress?.reduce((s, c) => s + c.completed, 0) || 0;
   const pendingItems = totalItems - completedItems;
 
-  // Group item approvals by role for delivering/approving parties
-  const partiesByRole = useMemo(() => {
-    if (!itemApprovals) return {};
-    const grouped: Record<string, { total: number; completed: number; userIds: Set<string> }> = {};
-    itemApprovals.forEach(a => {
-      if (!grouped[a.approver_role]) grouped[a.approver_role] = { total: 0, completed: 0, userIds: new Set() };
-      grouped[a.approver_role].total++;
-      if (a.status === 'approved') grouped[a.approver_role].completed++;
-      if (a.approver_user_id) grouped[a.approver_role].userIds.add(a.approver_user_id);
-    });
-    return grouped;
-  }, [itemApprovals]);
+  const deliveringRoles = partyRoleSummary?.delivering || {};
+  const approvingRoles = partyRoleSummary?.approving || {};
 
   if (detailsLoading) {
     return (
@@ -702,42 +738,33 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
                 <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Delivering Parties</span>
                 <div className="flex items-center gap-1.5">
                   <Badge variant="secondary" className="text-[10px] h-5">
-                    {Object.keys(partiesByRole).length > 0 ? Object.keys(partiesByRole).length : Object.keys(deliveringParties || {}).length}
+                    {Object.keys(deliveringRoles).length}
                   </Badge>
                   {openSections['delivering'] ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
                 </div>
               </CollapsibleTrigger>
               <CollapsibleContent className="space-y-1 mt-1">
-                {/* If item approvals exist, show resolved users */}
-                {Object.keys(partiesByRole).length > 0 && Object.entries(partiesByRole).map(([role, data]) => {
-                  const userIds = Array.from(data.userIds);
-                  return userIds.map(uid => {
-                    const profile = approverProfiles?.[uid];
-                    return renderApprovalPerson(
-                      profile?.full_name || role,
-                      profile?.avatar_url || null,
-                      role,
-                      data.completed === data.total ? 'APPROVED' : 'PENDING',
-                      data.completed,
-                      data.total,
-                      uid
-                    );
-                  });
-                })}
-                {/* If no item approvals, show delivering parties from checklist items responsible field */}
-                {Object.keys(partiesByRole).length === 0 && deliveringParties && Object.entries(deliveringParties).map(([role, count]) => (
-                  <div key={role} className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted/40 transition-colors">
-                    <Avatar className="h-7 w-7">
-                      <AvatarFallback className="text-[10px]">{getInitials(role)}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium truncate">{role}</p>
-                      <p className="text-[10px] text-muted-foreground">{count} item{count !== 1 ? 's' : ''}</p>
+                {Object.entries(deliveringRoles).map(([role, count]) => {
+                  const resolved = roleProfileMap?.[role];
+                  return (
+                    <div
+                      key={role}
+                      className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted/40 transition-colors cursor-pointer"
+                      onClick={() => resolved && setSelectedUser({ id: resolved.user_id, name: resolved.full_name, role })}
+                    >
+                      <Avatar className="h-7 w-7">
+                        {resolved?.avatar_url && <AvatarImage src={resolved.avatar_url} />}
+                        <AvatarFallback className="text-[10px]">{getInitials(resolved?.full_name || role)}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium truncate">{resolved?.full_name || role}</p>
+                        <p className="text-[10px] text-muted-foreground truncate">{role}</p>
+                      </div>
+                      <span className="text-[10px] text-muted-foreground shrink-0">{count} item{count !== 1 ? 's' : ''}</span>
                     </div>
-                    <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                  </div>
-                ))}
-                {Object.keys(partiesByRole).length === 0 && (!deliveringParties || Object.keys(deliveringParties).length === 0) && (
+                  );
+                })}
+                {Object.keys(deliveringRoles).length === 0 && (
                   <p className="text-xs text-muted-foreground px-2">No delivering parties assigned</p>
                 )}
               </CollapsibleContent>
@@ -751,42 +778,33 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
                 <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Approving Parties</span>
                 <div className="flex items-center gap-1.5">
                   <Badge variant="secondary" className="text-[10px] h-5">
-                    {Object.keys(partiesByRole).length}
+                    {Object.keys(approvingRoles).length}
                   </Badge>
                   {openSections['approvingParties'] ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
                 </div>
               </CollapsibleTrigger>
               <CollapsibleContent className="space-y-1 mt-1">
-                {Object.keys(partiesByRole).length > 0 && Object.entries(partiesByRole).map(([role, data]) => {
-                  const userIds = Array.from(data.userIds);
-                  if (userIds.length === 0) {
-                    return (
-                      <div key={role} className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted/40 transition-colors">
-                        <Avatar className="h-7 w-7">
-                          <AvatarFallback className="text-[10px]">{getInitials(role)}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium truncate">{role}</p>
-                          <p className="text-[10px] text-muted-foreground">{data.total} item{data.total !== 1 ? 's' : ''}</p>
-                        </div>
-                        <span className="text-[10px] text-muted-foreground">{data.completed}/{data.total}</span>
+                {Object.entries(approvingRoles).map(([role, count]) => {
+                  const resolved = roleProfileMap?.[role];
+                  return (
+                    <div
+                      key={role}
+                      className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted/40 transition-colors cursor-pointer"
+                      onClick={() => resolved && setSelectedUser({ id: resolved.user_id, name: resolved.full_name, role })}
+                    >
+                      <Avatar className="h-7 w-7">
+                        {resolved?.avatar_url && <AvatarImage src={resolved.avatar_url} />}
+                        <AvatarFallback className="text-[10px]">{getInitials(resolved?.full_name || role)}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium truncate">{resolved?.full_name || role}</p>
+                        <p className="text-[10px] text-muted-foreground truncate">{role}</p>
                       </div>
-                    );
-                  }
-                  return userIds.map(uid => {
-                    const profile = approverProfiles?.[uid];
-                    return renderApprovalPerson(
-                      profile?.full_name || role,
-                      profile?.avatar_url || null,
-                      role,
-                      data.completed === data.total ? 'APPROVED' : 'PENDING',
-                      data.completed,
-                      data.total,
-                      uid
-                    );
-                  });
+                      <span className="text-[10px] text-muted-foreground shrink-0">{count} item{count !== 1 ? 's' : ''}</span>
+                    </div>
+                  );
                 })}
-                {Object.keys(partiesByRole).length === 0 && (
+                {Object.keys(approvingRoles).length === 0 && (
                   <p className="text-xs text-muted-foreground px-2">No approving parties assigned</p>
                 )}
               </CollapsibleContent>
