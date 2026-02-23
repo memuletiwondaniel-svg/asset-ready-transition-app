@@ -1,0 +1,2 @@
+ALTER TABLE public.pssr_approvers DROP CONSTRAINT pssr_approvers_approver_level_check;
+ALTER TABLE public.pssr_approvers ADD CONSTRAINT pssr_approvers_approver_level_check CHECK (approver_level >= 1 AND approver_level <= 10);
