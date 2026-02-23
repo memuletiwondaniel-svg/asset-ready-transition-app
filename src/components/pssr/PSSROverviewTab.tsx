@@ -320,6 +320,17 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
               <p className="text-sm mt-0.5">{pssr?.reason || '-'}</p>
             </div>
 
+            {/* Detailed Scope */}
+            {pssr?.scope && (
+              <div>
+                <span className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">Detailed Scope</span>
+                <div
+                  className="text-sm mt-1 prose prose-sm max-w-none dark:prose-invert [&_img]:max-w-full [&_img]:rounded-md [&_img]:my-1"
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(pssr.scope) }}
+                />
+              </div>
+            )}
+
             {/* Date */}
             <div className="flex items-center gap-2">
               <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
