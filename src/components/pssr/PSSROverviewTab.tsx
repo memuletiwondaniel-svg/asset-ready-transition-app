@@ -361,6 +361,7 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
   // Party detail sheet state
   const [selectedParty, setSelectedParty] = useState<{
     roleName: string;
+    position?: string | null;
     userName?: string;
     avatarUrl?: string | null;
     itemCount: number;
@@ -735,7 +736,7 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
                     <div
                       key={role}
                       className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted/40 transition-colors cursor-pointer"
-                      onClick={() => setSelectedParty({ roleName: role, userName: resolved?.full_name, avatarUrl: resolved?.avatar_url, itemCount: count, partyType: 'delivering' })}
+                      onClick={() => setSelectedParty({ roleName: role, position: resolved?.position, userName: resolved?.full_name, avatarUrl: resolved?.avatar_url, itemCount: count, partyType: 'delivering' })}
                     >
                       <Avatar className="h-7 w-7">
                         {resolved?.avatar_url && <AvatarImage src={resolved.avatar_url} />}
@@ -775,7 +776,7 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
                     <div
                       key={role}
                       className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted/40 transition-colors cursor-pointer"
-                      onClick={() => setSelectedParty({ roleName: role, userName: resolved?.full_name, avatarUrl: resolved?.avatar_url, itemCount: count, partyType: 'approving' })}
+                      onClick={() => setSelectedParty({ roleName: role, position: resolved?.position, userName: resolved?.full_name, avatarUrl: resolved?.avatar_url, itemCount: count, partyType: 'approving' })}
                     >
                       <Avatar className="h-7 w-7">
                         {resolved?.avatar_url && <AvatarImage src={resolved.avatar_url} />}
@@ -880,7 +881,7 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
           open={!!selectedParty}
           onOpenChange={(o) => !o && setSelectedParty(null)}
           pssrId={pssrId}
-          roleName={selectedParty.roleName}
+          roleName={selectedParty.position || selectedParty.roleName}
           userName={selectedParty.userName}
           avatarUrl={selectedParty.avatarUrl}
           itemCount={selectedParty.itemCount}
