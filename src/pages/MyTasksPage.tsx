@@ -242,42 +242,40 @@ const MyTasksPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Hidden panels to trigger data loading and count reporting */}
-        {!allPanelsLoaded && (
-          <div className="sr-only" aria-hidden="true">
-            <PSSRReviewsPanel
-              key="pssr-hidden"
-              userId={user.id}
-              isExpanded={false}
-              onToggleExpand={() => {}}
-              isFullHeight={false}
-              isRelocated={false}
-              isDimmed={false}
-              searchQuery=""
-              onTaskCountUpdate={handlePssrTaskCount}
-            />
-            <ORPActivitiesPanel
-              key="ora-hidden"
-              isExpanded={false}
-              onToggleExpand={() => {}}
-              isFullHeight={false}
-              isRelocated={false}
-              isDimmed={false}
-              searchQuery=""
-              onTaskCountUpdate={handleOraTaskCount}
-            />
-            <OWLPanel
-              key="owl-hidden"
-              isExpanded={false}
-              onToggleExpand={() => {}}
-              isFullHeight={false}
-              isRelocated={false}
-              isDimmed={false}
-              searchQuery=""
-              onTaskCountUpdate={handleOwlTaskCount}
-            />
-          </div>
-        )}
+        {/* Hidden panels always mounted for continuous count reporting & self-healing */}
+        <div className="sr-only" aria-hidden="true">
+          <PSSRReviewsPanel
+            key="pssr-hidden"
+            userId={user.id}
+            isExpanded={false}
+            onToggleExpand={() => {}}
+            isFullHeight={false}
+            isRelocated={false}
+            isDimmed={false}
+            searchQuery=""
+            onTaskCountUpdate={handlePssrTaskCount}
+          />
+          <ORPActivitiesPanel
+            key="ora-hidden"
+            isExpanded={false}
+            onToggleExpand={() => {}}
+            isFullHeight={false}
+            isRelocated={false}
+            isDimmed={false}
+            searchQuery=""
+            onTaskCountUpdate={handleOraTaskCount}
+          />
+          <OWLPanel
+            key="owl-hidden"
+            isExpanded={false}
+            onToggleExpand={() => {}}
+            isFullHeight={false}
+            isRelocated={false}
+            isDimmed={false}
+            searchQuery=""
+            onTaskCountUpdate={handleOwlTaskCount}
+          />
+        </div>
 
         {!allPanelsLoaded ? (
           <div className="flex items-center justify-center py-20">
