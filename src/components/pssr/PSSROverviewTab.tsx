@@ -564,14 +564,16 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
           <div className="p-4 space-y-2">
             {/* PSSR Lead */}
             <div className="p-2">
-              <div className="flex items-center gap-2 mb-2">
-                <User className="h-3.5 w-3.5 text-muted-foreground" />
-                <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">PSSR Lead</span>
-              </div>
+              <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">PSSR Lead</span>
               {pssr?.pssr_lead ? (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 mt-2">
                   <Avatar className="h-7 w-7">
-                    <AvatarImage src={pssr.pssr_lead.avatar_url || ''} />
+                    <AvatarImage src={(() => {
+                      const url = pssr.pssr_lead.avatar_url;
+                      if (!url) return '';
+                      if (url.startsWith('http')) return url;
+                      return supabase.storage.from('user-avatars').getPublicUrl(url).data.publicUrl;
+                    })()} />
                     <AvatarFallback className="text-[10px]">
                       {getInitials(pssr.pssr_lead.full_name || '')}
                     </AvatarFallback>
@@ -584,7 +586,7 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
                   </div>
                 </div>
               ) : (
-                <p className="text-xs text-muted-foreground">Unassigned</p>
+                <p className="text-xs text-muted-foreground mt-2">Unassigned</p>
               )}
             </div>
 
