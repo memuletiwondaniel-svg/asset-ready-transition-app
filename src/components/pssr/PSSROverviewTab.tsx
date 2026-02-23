@@ -134,24 +134,29 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
   const { data: deliveringParties } = useQuery({
     queryKey: ['pssr-delivering-parties', pssrId],
     queryFn: async () => {
-      // Get all checklist items for this PSSR's responses with their responsible roles
-      const { data, error } = await supabase
+      // Get all checklist response item IDs for this PSSR
+      const { data: responses, error } = await supabase
         .from('pssr_checklist_responses')
-        .select(`
-          id,
-          pssr_checklist_items!inner(
-            responsible
-          )
-        `)
+        .select('checklist_item_id')
         .eq('pssr_id', pssrId);
       if (error) throw error;
 
-      // Group by responsible role
+      const itemIds = [...new Set((responses || []).map(r => r.checklist_item_id).filter(Boolean))];
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const standardIds = itemIds.filter(id => uuidRegex.test(id));
+
+      if (standardIds.length === 0) return {};
+
+      const { data: items } = await supabase
+        .from('pssr_checklist_items')
+        .select('id, responsible')
+        .in('id', standardIds);
+
+      // Count by responsible role
       const roleMap: Record<string, number> = {};
-      (data || []).forEach((resp: any) => {
-        const role = resp.pssr_checklist_items?.responsible;
-        if (role) {
-          roleMap[role] = (roleMap[role] || 0) + 1;
+      (items || []).forEach(item => {
+        if (item.responsible) {
+          roleMap[item.responsible] = (roleMap[item.responsible] || 0) + 1;
         }
       });
       return roleMap;
