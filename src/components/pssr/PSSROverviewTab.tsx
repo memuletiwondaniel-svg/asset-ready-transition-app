@@ -372,14 +372,14 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
   // ─── Panel 1: PSSR Info ───────────────────────────────
 
   const renderInfoPanel = () => (
-    <Card className="h-full flex flex-col">
+    <Card className="h-full flex flex-col overflow-hidden">
       <CardHeader className="relative overflow-hidden border-b py-3 text-center">
         <div className="absolute inset-0 rounded-t-lg bg-gradient-to-r from-muted via-muted/70 to-muted" />
         <CardTitle className="relative text-lg font-semibold">
           Overview
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-0 flex-1">
+      <CardContent className="p-0 flex-1 min-h-0">
         <ScrollArea className="h-full">
           <div className="p-4 space-y-4">
             {/* PSSR ID */}
@@ -438,14 +438,14 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
   // ─── Panel 2: Progress & Activities ───────────────────
 
   const renderProgressPanel = () => (
-    <Card className="h-full flex flex-col">
+    <Card className="h-full flex flex-col overflow-hidden">
       <CardHeader className="relative overflow-hidden border-b py-3 text-center">
         <div className="absolute inset-0 rounded-t-lg bg-gradient-to-r from-muted via-muted/70 to-muted" />
         <CardTitle className="relative text-lg font-semibold">
           Progress
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-0 flex-1">
+      <CardContent className="p-0 flex-1 min-h-0">
         <ScrollArea className="h-full">
           <div className="p-4 space-y-5">
             {/* Circular progress */}
@@ -653,14 +653,14 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
   );
 
   const renderApprovalsPanel = () => (
-    <Card className="h-full flex flex-col">
+    <Card className="h-full flex flex-col overflow-hidden">
       <CardHeader className="relative overflow-hidden border-b py-3 text-center">
         <div className="absolute inset-0 rounded-t-lg bg-gradient-to-r from-muted via-muted/70 to-muted" />
         <CardTitle className="relative text-lg font-semibold">
           Review & Approvals
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-0 flex-1">
+      <CardContent className="p-0 flex-1 min-h-0">
         <ScrollArea className="h-full">
           <div className="p-4 space-y-2">
             {/* PSSR Lead */}
