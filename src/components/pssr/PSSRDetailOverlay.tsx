@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -329,28 +329,62 @@ export const PSSRDetailOverlay: React.FC<PSSRDetailOverlayProps> = ({
     },
   });
 
-  // Step 1: Auto-create SoF certificate if it doesn't exist
+  // Guards to prevent duplicate mutation calls
+  const sofCertCreated = useRef(false);
+  const sofApproversPopulated = useRef(false);
+  const pssrApproversResolved = useRef(false);
+
+  // Reset guards when pssrId changes
   useEffect(() => {
-    if (!sofLoading && !certificate && pssrData && plantData) {
+    sofCertCreated.current = false;
+    sofApproversPopulated.current = false;
+    pssrApproversResolved.current = false;
+  }, [pssrId]);
+
+  // Step 1: Auto-create SoF certificate if it doesn't exist, or update if stale
+  useEffect(() => {
+    if (sofLoading || !pssrData || !plantData) return;
+
+    if (!certificate && !sofCertCreated.current) {
+      sofCertCreated.current = true;
       autoCreateSofCertificate.mutate();
+    } else if (certificate) {
+      // Update existing certificate if PSSR data changed (e.g. reason or plant)
+      const needsUpdate =
+        certificate.pssr_reason !== (pssrData.reason || 'Pre-Startup Safety Review') ||
+        certificate.plant_name !== (plantData.name || null);
+      if (needsUpdate) {
+        supabase
+          .from('sof_certificates')
+          .update({
+            pssr_reason: pssrData.reason || 'Pre-Startup Safety Review',
+            plant_name: plantData.name || null,
+          })
+          .eq('id', certificate.id)
+          .then(() => {
+            queryClient.invalidateQueries({ queryKey: ['sof-certificate', pssrId] });
+          });
+      }
     }
   }, [sofLoading, certificate, pssrData, plantData]);
 
   // Step 2: Auto-populate SoF approvers once certificate exists and approvers are empty
   useEffect(() => {
-    if (certificate && !sofApproversLoading) {
-      const isEmpty = !sofApprovers || sofApprovers.length === 0;
-      if (isEmpty) {
-        autoPopulateSofApprovers.mutate();
-      }
+    if (!certificate || sofApproversLoading || sofApproversPopulated.current) return;
+    const isEmpty = !sofApprovers || sofApprovers.length === 0;
+    if (isEmpty) {
+      sofApproversPopulated.current = true;
+      autoPopulateSofApprovers.mutate();
     }
   }, [certificate, sofApprovers, sofApproversLoading]);
 
-  // Trigger auto-resolve for PSSR approvers with missing user_ids
+  // Step 3: Trigger auto-resolve for PSSR approvers with missing user_ids
   useEffect(() => {
+    if (pssrApproversResolved.current) return;
     if (pssrApprovers && pssrApprovers.length > 0 && plantData !== undefined) {
       const hasUnresolved = pssrApprovers.some(a => !a.user_id);
       if (hasUnresolved) {
+        pssrApproversResolved.current = true;
         autoPopulatePssrApprovers.mutate();
       }
     }
