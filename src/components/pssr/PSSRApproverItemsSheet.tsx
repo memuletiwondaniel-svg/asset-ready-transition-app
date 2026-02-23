@@ -83,19 +83,37 @@ export const PSSRApproverItemsSheet: React.FC<PSSRApproverItemsSheetProps> = ({
       if (error) throw error;
       if (!responses?.length) return [];
 
-      // Step 2: Batch-fetch checklist item details
+      // Step 2: Batch-fetch checklist item details (checklist_item_id is text, pssr_checklist_items.id is uuid)
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       const standardIds = [...new Set(responses.map((r: any) => r.checklist_item_id).filter((id: any) => id && uuidRegex.test(id)))];
 
-      let itemMap: Record<string, { unique_id: string; question: string; category: string; topic: string | null }> = {};
+      let itemMap: Record<string, { description: string; category: string; topic: string | null; sequence_number: number | null }> = {};
 
       if (standardIds.length > 0) {
+        // Use RPC or direct query — category is a UUID FK, need to resolve name
         const { data: stdItems } = await client
           .from('pssr_checklist_items')
-          .select('id, unique_id, question, category, topic')
+          .select('id, description, category, topic, sequence_number')
           .in('id', standardIds);
+
+        // Collect category UUIDs to resolve names
+        const catIds = [...new Set((stdItems || []).map((i: any) => i.category).filter((c: any) => c && uuidRegex.test(c)))];
+        let catMap: Record<string, string> = {};
+        if (catIds.length > 0) {
+          const { data: cats } = await client
+            .from('pssr_checklist_categories')
+            .select('id, name')
+            .in('id', catIds);
+          (cats || []).forEach((c: any) => { catMap[c.id] = c.name; });
+        }
+
         (stdItems || []).forEach((i: any) => {
-          itemMap[i.id] = { unique_id: i.unique_id, question: i.question, category: i.category, topic: i.topic };
+          itemMap[i.id] = {
+            description: i.description,
+            category: catMap[i.category] || 'Other',
+            topic: i.topic,
+            sequence_number: i.sequence_number,
+          };
         });
       }
 
@@ -105,10 +123,10 @@ export const PSSRApproverItemsSheet: React.FC<PSSRApproverItemsSheetProps> = ({
         const detail = itemMap[itemId];
         return {
           id: r.id,
-          unique_id: detail?.unique_id || '-',
-          question: detail?.question || 'Unknown item',
+          description: detail?.description || 'Unknown item',
           category: detail?.category || 'Other',
           topic: detail?.topic || null,
+          sequence_number: detail?.sequence_number || null,
           status: deriveStatus(r.response, r.status),
         };
       });
@@ -122,10 +140,9 @@ export const PSSRApproverItemsSheet: React.FC<PSSRApproverItemsSheetProps> = ({
     if (search.trim()) {
       const q = search.toLowerCase();
       result = result.filter(i =>
-        i.question?.toLowerCase().includes(q) ||
+        i.description?.toLowerCase().includes(q) ||
         i.category?.toLowerCase().includes(q) ||
-        i.topic?.toLowerCase().includes(q) ||
-        i.unique_id?.toLowerCase().includes(q)
+        i.topic?.toLowerCase().includes(q)
       );
     }
     return result;
@@ -227,7 +244,7 @@ export const PSSRApproverItemsSheet: React.FC<PSSRApproverItemsSheetProps> = ({
                       <div className={cn("w-2 h-2 rounded-full mt-1.5 shrink-0", sc.dot)} />
                       <div className="flex-1 min-w-0">
                         <div className="text-xs font-medium text-foreground leading-snug">
-                          {item.question}
+                          {item.description}
                         </div>
                         <div className="flex items-center gap-2 mt-1">
                           <span className={cn("text-[9px] font-medium", catColor)}>
