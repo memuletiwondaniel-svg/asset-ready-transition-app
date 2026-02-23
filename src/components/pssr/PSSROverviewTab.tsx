@@ -740,6 +740,55 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
 
             <Separator />
 
+            {/* Approving Parties (per-item approvers) */}
+            <Collapsible open={openSections['approvingParties']} onOpenChange={() => toggleSection('approvingParties')}>
+              <CollapsibleTrigger className="flex items-center justify-between w-full p-2 rounded-lg hover:bg-muted/30">
+                <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Approving Parties</span>
+                <div className="flex items-center gap-1.5">
+                  <Badge variant="secondary" className="text-[10px] h-5">
+                    {Object.keys(partiesByRole).length}
+                  </Badge>
+                  {openSections['approvingParties'] ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                </div>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-1 mt-1">
+                {Object.keys(partiesByRole).length > 0 && Object.entries(partiesByRole).map(([role, data]) => {
+                  const userIds = Array.from(data.userIds);
+                  if (userIds.length === 0) {
+                    return (
+                      <div key={role} className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted/40 transition-colors">
+                        <Avatar className="h-7 w-7">
+                          <AvatarFallback className="text-[10px]">{getInitials(role)}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium truncate">{role}</p>
+                          <p className="text-[10px] text-muted-foreground">{data.total} item{data.total !== 1 ? 's' : ''}</p>
+                        </div>
+                        <span className="text-[10px] text-muted-foreground">{data.completed}/{data.total}</span>
+                      </div>
+                    );
+                  }
+                  return userIds.map(uid => {
+                    const profile = approverProfiles?.[uid];
+                    return renderApprovalPerson(
+                      profile?.full_name || role,
+                      profile?.avatar_url || null,
+                      role,
+                      data.completed === data.total ? 'APPROVED' : 'PENDING',
+                      data.completed,
+                      data.total,
+                      uid
+                    );
+                  });
+                })}
+                {Object.keys(partiesByRole).length === 0 && (
+                  <p className="text-xs text-muted-foreground px-2">No approving parties assigned</p>
+                )}
+              </CollapsibleContent>
+            </Collapsible>
+
+            <Separator />
+
             {/* PSSR Approvers */}
             <Collapsible open={openSections['pssrApprovers']} onOpenChange={() => toggleSection('pssrApprovers')}>
               <CollapsibleTrigger className="flex items-center justify-between w-full p-2 rounded-lg hover:bg-muted/30">
