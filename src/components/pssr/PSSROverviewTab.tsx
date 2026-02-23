@@ -6,7 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Separator } from '@/components/ui/separator';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import {
   MapPin,
   Calendar,
@@ -33,6 +33,7 @@ import {
 import { usePSSRDetails } from '@/hooks/usePSSRDetails';
 import { usePSSRCategoryProgress, CategoryProgress } from '@/hooks/usePSSRCategoryProgress';
 import { PSSRCategoryItemsSheet } from './PSSRCategoryItemsSheet';
+import { PSSRApproverItemsSheet } from './PSSRApproverItemsSheet';
 import { usePSSRApprovers } from '@/hooks/usePSSRApprovers';
 import { usePSSRPriorityActions } from '@/hooks/usePSSRPriorityActions';
 import { usePSSRKeyActivities, PSSRKeyActivity } from '@/hooks/usePSSRKeyActivities';
@@ -357,30 +358,14 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const toggleSection = (key: string) => setOpenSections(prev => ({ ...prev, [key]: !prev[key] }));
 
-  // User detail sheet state
-  const [selectedUser, setSelectedUser] = useState<{ id: string; name: string; role: string } | null>(null);
-
-  // Fetch items for selected user
-  const { data: userItems } = useQuery({
-    queryKey: ['pssr-user-items', pssrId, selectedUser?.id],
-    queryFn: async () => {
-      if (!selectedUser?.id) return [];
-      const { data, error } = await supabase
-        .from('pssr_item_approvals')
-        .select(`
-          id, status, approver_role,
-          pssr_checklist_responses!inner(
-            id, response,
-            pssr_checklist_items!inner(unique_id, question, category)
-          )
-        `)
-        .eq('pssr_id', pssrId)
-        .eq('approver_user_id', selectedUser.id);
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!selectedUser?.id && !!pssrId,
-  });
+  // Party detail sheet state
+  const [selectedParty, setSelectedParty] = useState<{
+    roleName: string;
+    userName?: string;
+    avatarUrl?: string | null;
+    itemCount: number;
+    partyType: 'delivering' | 'approving';
+  } | null>(null);
 
   // Overall progress
   const overallProgress = useMemo(() => {
@@ -670,7 +655,7 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
     <div
       key={`${name}-${userId}`}
       className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted/40 transition-colors cursor-pointer"
-      onClick={() => userId && setSelectedUser({ id: userId, name, role: position || '' })}
+      onClick={() => {}}
     >
       <Avatar className="h-7 w-7">
         <AvatarImage src={avatarUrl || ''} />
@@ -750,7 +735,7 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
                     <div
                       key={role}
                       className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted/40 transition-colors cursor-pointer"
-                      onClick={() => resolved && setSelectedUser({ id: resolved.user_id, name: resolved.full_name, role })}
+                      onClick={() => setSelectedParty({ roleName: role, userName: resolved?.full_name, avatarUrl: resolved?.avatar_url, itemCount: count, partyType: 'delivering' })}
                     >
                       <Avatar className="h-7 w-7">
                         {resolved?.avatar_url && <AvatarImage src={resolved.avatar_url} />}
@@ -790,7 +775,7 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
                     <div
                       key={role}
                       className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted/40 transition-colors cursor-pointer"
-                      onClick={() => resolved && setSelectedUser({ id: resolved.user_id, name: resolved.full_name, role })}
+                      onClick={() => setSelectedParty({ roleName: role, userName: resolved?.full_name, avatarUrl: resolved?.avatar_url, itemCount: count, partyType: 'approving' })}
                     >
                       <Avatar className="h-7 w-7">
                         {resolved?.avatar_url && <AvatarImage src={resolved.avatar_url} />}
@@ -881,68 +866,6 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
     </Card>
   );
 
-  // ─── User Detail Sheet ─────────────────────────────────
-
-  const renderUserDetailSheet = () => {
-    if (!selectedUser) return null;
-    const profile = approverProfiles?.[selectedUser.id];
-
-    return (
-      <Sheet open={!!selectedUser} onOpenChange={(open) => !open && setSelectedUser(null)}>
-        <SheetContent className="w-[420px] sm:w-[480px] p-0">
-          <SheetHeader className="p-5 border-b">
-            <div className="flex items-center gap-3">
-              <Avatar className="h-12 w-12">
-                <AvatarImage src={profile?.avatar_url || ''} />
-                <AvatarFallback>{getInitials(selectedUser.name)}</AvatarFallback>
-              </Avatar>
-              <div>
-                <SheetTitle className="text-base">{selectedUser.name}</SheetTitle>
-                <SheetDescription className="text-xs">{selectedUser.role}</SheetDescription>
-              </div>
-            </div>
-          </SheetHeader>
-
-          <ScrollArea className="h-[calc(100vh-120px)]">
-            <div className="p-4 space-y-3">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Assigned PSSR Items ({userItems?.length || 0})
-              </p>
-              {(userItems || []).map((item: any) => {
-                const ci = item.pssr_checklist_responses?.pssr_checklist_items;
-                const isApproved = item.status === 'approved';
-                return (
-                  <div key={item.id} className="flex items-start gap-2 p-2.5 rounded-lg border bg-card">
-                    <div className={cn(
-                      'w-5 h-5 rounded-full flex items-center justify-center mt-0.5 shrink-0',
-                      isApproved ? 'bg-emerald-500/10' : 'bg-muted'
-                    )}>
-                      {isApproved ? (
-                        <CheckCircle2 className="h-3 w-3 text-emerald-500" />
-                      ) : (
-                        <Clock className="h-3 w-3 text-muted-foreground" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5 mb-0.5">
-                        <Badge variant="outline" className="text-[9px] px-1 h-4">{ci?.unique_id}</Badge>
-                        <Badge variant="secondary" className="text-[9px] px-1 h-4">{ci?.category}</Badge>
-                      </div>
-                      <p className="text-xs leading-relaxed">{ci?.question}</p>
-                    </div>
-                  </div>
-                );
-              })}
-              {(!userItems || userItems.length === 0) && (
-                <p className="text-xs text-muted-foreground">No items assigned to this user</p>
-              )}
-            </div>
-          </ScrollArea>
-        </SheetContent>
-      </Sheet>
-    );
-  };
-
   // ─── Main Render ──────────────────────────────────────
 
   return (
@@ -952,7 +875,18 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
         {renderProgressPanel()}
         {renderApprovalsPanel()}
       </div>
-      {renderUserDetailSheet()}
+      {selectedParty && (
+        <PSSRApproverItemsSheet
+          open={!!selectedParty}
+          onOpenChange={(o) => !o && setSelectedParty(null)}
+          pssrId={pssrId}
+          roleName={selectedParty.roleName}
+          userName={selectedParty.userName}
+          avatarUrl={selectedParty.avatarUrl}
+          itemCount={selectedParty.itemCount}
+          partyType={selectedParty.partyType}
+        />
+      )}
       {selectedCategory && (
         <PSSRCategoryItemsSheet
           open={!!selectedCategory}
