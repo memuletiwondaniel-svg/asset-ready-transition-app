@@ -70,7 +70,7 @@ export const PSSRApproverItemsSheet: React.FC<PSSRApproverItemsSheetProps> = ({
       // Step 1: Fetch responses matching this role
       let query = client
         .from('pssr_checklist_responses')
-        .select('id, response, status, checklist_item_id, custom_checklist_item_id, approving_role, delivering_role')
+        .select('id, response, status, checklist_item_id, approving_role, delivering_role')
         .eq('pssr_id', pssrId);
 
       if (partyType === 'approving') {
@@ -84,38 +84,24 @@ export const PSSRApproverItemsSheet: React.FC<PSSRApproverItemsSheetProps> = ({
       if (!responses?.length) return [];
 
       // Step 2: Batch-fetch checklist item details
-      const standardIds = [...new Set(responses.map((r: any) => r.checklist_item_id).filter(Boolean))];
-      const customIds = [...new Set(responses.map((r: any) => r.custom_checklist_item_id).filter(Boolean))];
-
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      const validStandardIds = standardIds.filter((id: string) => uuidRegex.test(id));
-      const validCustomIds = customIds.filter((id: string) => uuidRegex.test(id));
+      const standardIds = [...new Set(responses.map((r: any) => r.checklist_item_id).filter((id: any) => id && uuidRegex.test(id)))];
 
       let itemMap: Record<string, { unique_id: string; question: string; category: string; topic: string | null }> = {};
 
-      if (validStandardIds.length > 0) {
+      if (standardIds.length > 0) {
         const { data: stdItems } = await client
           .from('pssr_checklist_items')
           .select('id, unique_id, question, category, topic')
-          .in('id', validStandardIds);
+          .in('id', standardIds);
         (stdItems || []).forEach((i: any) => {
           itemMap[i.id] = { unique_id: i.unique_id, question: i.question, category: i.category, topic: i.topic };
         });
       }
 
-      if (validCustomIds.length > 0) {
-        const { data: custItems } = await client
-          .from('pssr_custom_checklist_items')
-          .select('id, unique_id, question, category, topic')
-          .in('id', validCustomIds);
-        (custItems || []).forEach((i: any) => {
-          itemMap[i.id] = { unique_id: i.unique_id || 'CUSTOM', question: i.question, category: i.category || 'Custom', topic: i.topic };
-        });
-      }
-
       // Step 3: Merge
       return responses.map((r: any) => {
-        const itemId = r.checklist_item_id || r.custom_checklist_item_id;
+        const itemId = r.checklist_item_id;
         const detail = itemMap[itemId];
         return {
           id: r.id,
