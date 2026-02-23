@@ -55,6 +55,55 @@ export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({
 
   const isLoading = pssrLoading || tasksLoading;
 
+  // Self-healing: ensure review tasks exist for PSSRs in PENDING_LEAD_REVIEW where user is lead
+  useEffect(() => {
+    if (tasksLoading || !userId) return;
+    const ensureReviewTasks = async () => {
+      try {
+        // Find PSSRs where this user is the lead and status is PENDING_LEAD_REVIEW
+        const { data: pendingPssrs } = await supabase
+          .from('pssrs')
+          .select('id, pssr_id, title')
+          .eq('pssr_lead_id', userId)
+          .eq('status', 'PENDING_LEAD_REVIEW');
+
+        if (!pendingPssrs?.length) return;
+
+        for (const pssr of pendingPssrs) {
+          // Check if task already exists
+          const { data: existing } = await supabase
+            .from('user_tasks')
+            .select('id')
+            .eq('user_id', userId)
+            .eq('type', 'review')
+            .eq('status', 'pending')
+            .filter('metadata->>pssr_id', 'eq', pssr.id)
+            .maybeSingle();
+
+          if (!existing) {
+            await supabase.from('user_tasks').insert({
+              user_id: userId,
+              title: `Review Draft PSSR: ${pssr.title || pssr.pssr_id}`,
+              description: 'A PSSR has been submitted for your review. Please review the PSSR items, approvers, and scope, then approve, edit, or reject the draft.',
+              priority: 'High',
+              type: 'review',
+              status: 'pending',
+              metadata: {
+                source: 'pssr_workflow',
+                pssr_id: pssr.id,
+                pssr_code: pssr.pssr_id,
+                action: 'review_draft_pssr',
+              },
+            });
+          }
+        }
+      } catch (err) {
+        console.error('Self-heal review tasks:', err);
+      }
+    };
+    ensureReviewTasks();
+  }, [userId, tasksLoading]);
+
   // PSSR items
   const pssrs = realPssrs || [];
   const pendingPssrs = pssrs.filter(p => {
