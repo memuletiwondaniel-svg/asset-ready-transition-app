@@ -131,8 +131,8 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
             <Button
               className="w-full gap-2 bg-muted hover:bg-muted/80 text-foreground font-medium border border-border"
               onClick={() => {
-                const pssrRoute = task.metadata?.pssr_code || task.metadata?.pssr_id;
-                navigate(`/pssr/${pssrRoute}`);
+                // Always use the UUID (pssr_id) for navigation, not the human-readable code
+                navigate(`/pssr/${task.metadata?.pssr_id}`);
                 onOpenChange(false);
               }}
             >
