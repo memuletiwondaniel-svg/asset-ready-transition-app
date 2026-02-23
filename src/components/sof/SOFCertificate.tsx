@@ -1,8 +1,8 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Printer, CheckCircle2, Clock, Lock, PenLine, Edit2, XCircle } from 'lucide-react';
+import { Printer, CheckCircle2, Clock, Lock, PenLine, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { getCertificateText } from '@/hooks/useSOFCertificates';
 import { SOFSignatureDialog } from './SOFSignatureDialog';
@@ -13,19 +13,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { SignatureCanvas } from './SignatureCanvas';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
-
-// Local storage key for Ali's signature
-const ALI_SIGNATURE_KEY = 'ali-danbous-signature';
-const PAUL_SIGNATURE_KEY = 'paul-vandenhemel-signature';
-const MARIJE_SIGNATURE_KEY = 'marije-hoedemaker-signature';
 
 interface SOFApprover {
   id: string;
@@ -42,9 +29,6 @@ interface SOFApprover {
   rejection_linked_item?: string;
 }
 
-// Storage key for rejection activity
-const SOF_REJECTION_ACTIVITY_KEY = 'sof-rejection-activity';
-
 interface SOFCertificateProps {
   certificateNumber: string;
   pssrReason: string;
@@ -59,41 +43,8 @@ interface SOFCertificateProps {
   onRejectComplete?: () => void;
   isViewOnly?: boolean;
   pssrId?: string;
+  sourceType?: string;
 }
-
-// Mock approvers with Ali Danbous already signed, Paul pending, Marije locked
-const getMockApprovers = (aliSignature?: string | null): SOFApprover[] => [
-  {
-    id: 'approver-1',
-    approver_name: 'Ali Danbous',
-    approver_role: 'HSSE Director',
-    approver_level: 1,
-    status: 'APPROVED',
-    comments: 'All safety requirements have been verified. Ready for facility startup.',
-    approved_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
-    signature_data: aliSignature || undefined,
-  },
-  {
-    id: 'approver-2',
-    approver_name: 'Paul Van Den Hemel',
-    approver_role: 'P&M Director',
-    approver_level: 2,
-    status: 'PENDING',
-    comments: undefined,
-    approved_at: undefined,
-    signature_data: undefined,
-  },
-  {
-    id: 'approver-3',
-    approver_name: 'Marije Hoedemaker',
-    approver_role: 'P&E Director',
-    approver_level: 3,
-    status: 'LOCKED',
-    comments: undefined,
-    approved_at: undefined,
-    signature_data: undefined,
-  },
-];
 
 export const SOFCertificate: React.FC<SOFCertificateProps> = ({
   certificateNumber,
@@ -115,124 +66,15 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [pr1DetailsOpen, setPr1DetailsOpen] = useState(false);
   const [selectedRejection, setSelectedRejection] = useState<SOFApprover | null>(null);
-  const [aliSignatureDialogOpen, setAliSignatureDialogOpen] = useState(false);
-  const [paulSignatureDialogOpen, setPaulSignatureDialogOpen] = useState(false);
-  const [marijeSignatureDialogOpen, setMarijeSignatureDialogOpen] = useState(false);
-  
-  // Check if this is DP-385 for manual signature mode
-  const isDP385 = pssrId === 'mock-pssr-dp385';
-  
-  const [aliSignature, setAliSignature] = useState<string | null>(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem(ALI_SIGNATURE_KEY);
-    }
-    return null;
-  });
-  const [paulSignature, setPaulSignature] = useState<string | null>(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem(PAUL_SIGNATURE_KEY);
-    }
-    return null;
-  });
-  const [marijeSignature, setMarijeSignature] = useState<string | null>(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem(MARIJE_SIGNATURE_KEY);
-    }
-    return null;
-  });
-  const [tempAliSignature, setTempAliSignature] = useState<string | null>(null);
-  const [tempPaulSignature, setTempPaulSignature] = useState<string | null>(null);
-  const [tempMarijeSignature, setTempMarijeSignature] = useState<string | null>(null);
-  
-  const [localApprovers, setLocalApprovers] = useState<SOFApprover[]>(() => {
-    // Use passed approvers when they exist (from DB)
-    if (propApprovers.length > 0) {
-      return propApprovers;
-    }
-    // Fallback to mock data only for legacy mock PSSRs
-    const savedAli = typeof window !== 'undefined' ? localStorage.getItem(ALI_SIGNATURE_KEY) : null;
-    const savedPaul = typeof window !== 'undefined' ? localStorage.getItem(PAUL_SIGNATURE_KEY) : null;
-    const savedMarije = typeof window !== 'undefined' ? localStorage.getItem(MARIJE_SIGNATURE_KEY) : null;
-    return getMockApprovers(savedAli).map(approver => {
-      if (approver.approver_name === 'Paul Van Den Hemel' && savedPaul) {
-        return { ...approver, status: 'APPROVED', signature_data: savedPaul, approved_at: new Date().toISOString() };
-      }
-      if (approver.approver_name === 'Marije Hoedemaker' && savedMarije) {
-        return { ...approver, status: 'APPROVED', signature_data: savedMarije, approved_at: new Date().toISOString() };
-      }
-      return approver;
-    });
-  });
 
-  // Update approvers when signatures change
-  useEffect(() => {
-    setLocalApprovers(prev => prev.map(approver => {
-      if (approver.approver_name === 'Ali Danbous') {
-        return { ...approver, signature_data: aliSignature || undefined };
-      }
-      if (approver.approver_name === 'Paul Van Den Hemel' && paulSignature) {
-        return { ...approver, status: 'APPROVED', signature_data: paulSignature, approved_at: approver.approved_at || new Date().toISOString() };
-      }
-      if (approver.approver_name === 'Marije Hoedemaker' && marijeSignature) {
-        return { ...approver, status: marijeSignature ? 'APPROVED' : approver.status, signature_data: marijeSignature || undefined, approved_at: approver.approved_at || new Date().toISOString() };
-      }
-      return approver;
-    }));
-  }, [aliSignature, paulSignature, marijeSignature]);
+  // Use DB approvers directly — no mock data, no localStorage
+  const localApprovers = propApprovers;
 
-  const handleSaveAliSignature = () => {
-    if (tempAliSignature) {
-      localStorage.setItem(ALI_SIGNATURE_KEY, tempAliSignature);
-      setAliSignature(tempAliSignature);
-      setAliSignatureDialogOpen(false);
-      setTempAliSignature(null);
-      toast({
-        title: 'Signature Updated',
-        description: "Ali Danbous's signature has been updated.",
-      });
-    }
-  };
-
-  const handleSavePaulSignature = () => {
-    if (tempPaulSignature) {
-      localStorage.setItem(PAUL_SIGNATURE_KEY, tempPaulSignature);
-      setPaulSignature(tempPaulSignature);
-      setPaulSignatureDialogOpen(false);
-      setTempPaulSignature(null);
-      // Also unlock Marije when Paul signs
-      setLocalApprovers(prev => prev.map(approver => {
-        if (approver.approver_name === 'Marije Hoedemaker' && approver.status === 'LOCKED') {
-          return { ...approver, status: 'PENDING' };
-        }
-        return approver;
-      }));
-      toast({
-        title: 'Signature Updated',
-        description: "Paul Van Den Hemel's signature has been updated.",
-      });
-    }
-  };
-
-  const handleSaveMarijeSignature = () => {
-    if (tempMarijeSignature) {
-      localStorage.setItem(MARIJE_SIGNATURE_KEY, tempMarijeSignature);
-      setMarijeSignature(tempMarijeSignature);
-      setMarijeSignatureDialogOpen(false);
-      setTempMarijeSignature(null);
-      toast({
-        title: 'Signature Updated',
-        description: "Marije Hoedemaker's signature has been updated.",
-      });
-    }
-  };
-  
-  // Use props for display, with fallback defaults
   const plantName = propPlantName || '';
-  const facilityName = propFacilityName || '';
   const projectName = propProjectName || '';
   const pssrTitle = propPssrTitle || '';
   const pssrReason = propPssrReason || 'Start-up of a New Project or Facility';
-  
+
   const certificateText = getCertificateText(pssrReason);
   const isProcessSafetyIncidence = pssrReason.toLowerCase().includes('process safety incidence');
 
@@ -247,9 +89,8 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
 
   const { signatureData: savedSignature, saveSignature } = useUserSignature(currentUser?.id);
 
-  // Find current user's approver entry (Paul in this mock)
-  const currentUserApprover = localApprovers.find(a => a.approver_name === 'Paul Van Den Hemel');
-  // In view-only mode, disable signing
+  // Find current user's approver entry
+  const currentUserApprover = localApprovers.find(a => a.status === 'PENDING');
   const canSign = !isViewOnly && currentUserApprover?.status === 'PENDING';
 
   const handlePrint = () => {
@@ -263,39 +104,7 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
   };
 
   const handleSign = (signatureData: string, comments: string, pr2Action?: { priority: 'Pr2'; description: string }) => {
-    // Update local state to show signature
-    setLocalApprovers(prev => prev.map(approver => {
-      if (approver.approver_name === 'Paul Van Den Hemel') {
-        return {
-          ...approver,
-          status: 'APPROVED',
-          signature_data: signatureData,
-          comments: comments || undefined,
-          approved_at: new Date().toISOString(),
-        };
-      }
-      // Unlock next approver
-      if (approver.approver_name === 'Marije Hoedemaker') {
-        return { ...approver, status: 'PENDING' };
-      }
-      return approver;
-    }));
-
-    // Store activity for the dashboard
-    const activity = {
-      type: 'approved',
-      approver: 'Paul Van Den Hemel',
-      timestamp: new Date().toISOString(),
-      comments: comments || undefined,
-      pr2Action: pr2Action || undefined,
-      projectName: projectName,
-      pssrId: certificateNumber,
-    };
-    localStorage.setItem(SOF_REJECTION_ACTIVITY_KEY, JSON.stringify(activity));
-
-    // Notify parent that signing is complete
     onSignComplete?.();
-
     if (pr2Action) {
       toast({
         title: 'Statement of Fitness Signed with Pr2 Action',
@@ -310,37 +119,7 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
   };
 
   const handleReject = (priorityLevel: 'Pr1', description: string, linkedItemId?: string) => {
-    // Update local state to show rejection (always Pr1)
-    setLocalApprovers(prev => prev.map(approver => {
-      if (approver.approver_name === 'Paul Van Den Hemel') {
-        return {
-          ...approver,
-          status: 'REJECTED_PR1',
-          rejected_at: new Date().toISOString(),
-          rejection_priority: 'Pr1',
-          rejection_description: description,
-          rejection_linked_item: linkedItemId,
-        };
-      }
-      return approver;
-    }));
-
-    // Store activity for the dashboard
-    const activity = {
-      type: 'rejected',
-      approver: 'Paul Van Den Hemel',
-      priorityLevel: 'Pr1',
-      description,
-      linkedItemId,
-      timestamp: new Date().toISOString(),
-      projectName: projectName,
-      pssrId: certificateNumber,
-    };
-    localStorage.setItem(SOF_REJECTION_ACTIVITY_KEY, JSON.stringify(activity));
-
-    // Notify parent that rejection is complete
     onRejectComplete?.();
-
     toast({
       title: 'SoF Rejected - Priority 1 Action Created',
       description: 'PSSR Lead has been notified. This item must be resolved before re-review.',
@@ -378,15 +157,16 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
       </div>
 
       {/* Certificate */}
-      <Card 
-        ref={certificateRef} 
+      <Card
+        ref={certificateRef}
         className="bg-white text-black p-8 max-w-4xl mx-auto print:shadow-none print:border-2 print:border-black"
+        data-certificate
       >
         {/* Header with Logo */}
         <div className="text-center border-b-2 border-black pb-4 mb-6">
-          <img 
-            src="/images/bgc-logo.png" 
-            alt="Basrah Gas Company Logo" 
+          <img
+            src="/images/bgc-logo.png"
+            alt="Basrah Gas Company Logo"
             className="h-12 mx-auto mb-4"
           />
           <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-gray-800 to-transparent mb-2" />
@@ -417,12 +197,12 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
         {/* Certificate Text */}
         <div className="mb-8">
           <p className="text-base text-gray-800 leading-relaxed mb-4">
-            {isProcessSafetyIncidence 
+            {isProcessSafetyIncidence
               ? "This Statement of Fitness confirms that following a process safety incidence at the above-referenced facility:"
               : "This Statement of Fitness (SoF) certificate confirms that for the above referenced facility:"
             }
           </p>
-          
+
           {!isProcessSafetyIncidence && (
             <p className="text-base text-gray-700 mb-4 italic">
               Requirement 7 of the Asset Integrity Process Safety Management (AIPSM) Manual has been met:
@@ -431,13 +211,12 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
 
           <div className="space-y-2">
             {certificateText.split('\n').filter(line => line.trim()).map((line, index) => {
-              // Check if this is a bullet point (starts with a letter followed by period)
               const isBulletItem = /^[a-h]\.\s/.test(line.trim());
-              
+
               if (isBulletItem) {
                 const letter = line.trim().charAt(0);
                 const text = line.trim().substring(3);
-                
+
                 return (
                   <div key={index} className="flex items-start ml-6 gap-3">
                     <span className="font-semibold text-gray-800 min-w-[20px]">{letter}.</span>
@@ -445,7 +224,7 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
                   </div>
                 );
               }
-              
+
               return (
                 <p key={index} className="text-gray-700 text-base leading-relaxed">
                   {line}
@@ -464,34 +243,24 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
           <h4 className="font-bold text-gray-800 mb-4 text-lg">APPROVALS</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {localApprovers.sort((a, b) => a.approver_level - b.approver_level).map((approver) => {
-              const isPaul = approver.approver_name === 'Paul Van Den Hemel';
-              const isMarije = approver.approver_name === 'Marije Hoedemaker';
               const isPending = approver.status === 'PENDING';
               const isLocked = approver.status === 'LOCKED';
               const isRejected = approver.status === 'REJECTED_PR1';
-              
-              // For DP-385, allow manual signature entry for Paul and Marije
-              const canManualSign = isDP385 && (isPaul || isMarije) && !approver.signature_data;
-              // For non-DP-385, Paul can sign when pending
-              const isClickable = (!isDP385 && isPaul && isPending) || canManualSign;
-              
+              const isClickable = !isViewOnly && isPending;
+
               const handleCardClick = () => {
-                if (canManualSign && isPaul) {
-                  setPaulSignatureDialogOpen(true);
-                } else if (canManualSign && isMarije) {
-                  setMarijeSignatureDialogOpen(true);
-                } else if (!isDP385 && isPaul && isPending) {
+                if (isClickable) {
                   handleSignClick();
                 }
               };
-              
+
               return (
-                <div 
-                  key={approver.id} 
+                <div
+                  key={approver.id}
                   className={cn(
                     "border rounded-lg p-4 transition-all",
-                    approver.status === 'APPROVED' 
-                      ? 'border-green-200 bg-green-50/50 opacity-70' 
+                    approver.status === 'APPROVED'
+                      ? 'border-green-200 bg-green-50/50 opacity-70'
                       : approver.status === 'LOCKED'
                       ? 'border-gray-200 bg-gray-50 opacity-80'
                       : approver.status === 'REJECTED_PR1'
@@ -504,16 +273,16 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
                   {/* Signature Area */}
                   <div className={cn(
                     "h-20 border-b border-gray-300 mb-3 flex items-center justify-center relative group",
-                    approver.status === 'LOCKED' && "opacity-40"
+                    isLocked && "opacity-40"
                   )}>
                     {approver.signature_data ? (
-                      <img 
-                        src={approver.signature_data} 
+                      <img
+                        src={approver.signature_data}
                         alt={`${approver.approver_name}'s signature`}
                         className="max-h-16 max-w-full object-contain mix-blend-multiply"
                       />
                     ) : isRejected ? (
-                      <div 
+                      <div
                         className="flex flex-col items-center gap-1 text-center px-2 cursor-pointer hover:bg-red-100/50 rounded py-1 transition-colors"
                         onClick={(e) => {
                           e.stopPropagation();
@@ -536,16 +305,16 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
                       </div>
                     ) : (
                       <span className="text-gray-400 text-sm italic">
-                        {approver.status === 'LOCKED' ? 'Locked' : 'Awaiting signature'}
+                        {isLocked ? 'Locked' : 'Awaiting signature'}
                       </span>
                     )}
                   </div>
 
-                  {/* Reject button for Paul when pending */}
+                  {/* Reject button when pending */}
                   {isClickable && (
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       className="w-full mb-2 text-red-600 hover:text-red-700 hover:bg-red-50"
                       onClick={(e) => {
                         e.stopPropagation();
@@ -556,11 +325,11 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
                       Reject with Pr1 Action
                     </Button>
                   )}
-                  
+
                   {/* Approver Details */}
                   <div className={cn(
                     "text-center",
-                    approver.status === 'LOCKED' && "opacity-50"
+                    isLocked && "opacity-50"
                   )}>
                     <p className="font-semibold text-gray-800">{approver.approver_name}</p>
                     <p className="text-sm text-gray-600">{approver.approver_role}</p>
@@ -596,7 +365,7 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
         </div>
       </Card>
 
-      {/* Signature Dialog for Paul */}
+      {/* Signature Dialog */}
       {currentUserApprover && (
         <SOFSignatureDialog
           open={signatureDialogOpen}
@@ -609,105 +378,12 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
         />
       )}
 
-      {/* Reject Dialog for Paul */}
+      {/* Reject Dialog */}
       <SOFRejectDialog
         open={rejectDialogOpen}
         onOpenChange={setRejectDialogOpen}
         onReject={(description, linkedItemId) => handleReject('Pr1', description, linkedItemId)}
       />
-
-      {/* Ali's Signature Drawing Dialog */}
-      <Dialog open={aliSignatureDialogOpen} onOpenChange={(open) => {
-        setAliSignatureDialogOpen(open);
-        if (!open) setTempAliSignature(null);
-      }}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Draw Ali Danbous's Signature</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <SignatureCanvas
-              onSignatureChange={setTempAliSignature}
-              showSavedOption={false}
-              width={380}
-              height={120}
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => {
-              setAliSignatureDialogOpen(false);
-              setTempAliSignature(null);
-            }}>
-              Cancel
-            </Button>
-            <Button onClick={handleSaveAliSignature} disabled={!tempAliSignature}>
-              Save Signature
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Paul's Signature Drawing Dialog (DP-385) */}
-      <Dialog open={paulSignatureDialogOpen} onOpenChange={(open) => {
-        setPaulSignatureDialogOpen(open);
-        if (!open) setTempPaulSignature(null);
-      }}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Draw Paul Van Den Hemel's Signature</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <SignatureCanvas
-              onSignatureChange={setTempPaulSignature}
-              showSavedOption={false}
-              width={380}
-              height={120}
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => {
-              setPaulSignatureDialogOpen(false);
-              setTempPaulSignature(null);
-            }}>
-              Cancel
-            </Button>
-            <Button onClick={handleSavePaulSignature} disabled={!tempPaulSignature}>
-              Save Signature
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Marije's Signature Drawing Dialog (DP-385) */}
-      <Dialog open={marijeSignatureDialogOpen} onOpenChange={(open) => {
-        setMarijeSignatureDialogOpen(open);
-        if (!open) setTempMarijeSignature(null);
-      }}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Draw Marije Hoedemaker's Signature</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <SignatureCanvas
-              onSignatureChange={setTempMarijeSignature}
-              showSavedOption={false}
-              width={380}
-              height={120}
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => {
-              setMarijeSignatureDialogOpen(false);
-              setTempMarijeSignature(null);
-            }}>
-              Cancel
-            </Button>
-            <Button onClick={handleSaveMarijeSignature} disabled={!tempMarijeSignature}>
-              Save Signature
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Print Styles */}
       <style>{`

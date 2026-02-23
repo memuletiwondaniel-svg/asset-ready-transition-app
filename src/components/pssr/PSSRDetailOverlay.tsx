@@ -119,7 +119,7 @@ export const PSSRDetailOverlay: React.FC<PSSRDetailOverlayProps> = ({
   });
 
   // Fetch SoF certificate data
-  const { certificate, isLoading: sofLoading } = useSOFCertificate(pssrId);
+  const { certificate, isLoading: sofLoading, createCertificate } = useSOFCertificate(pssrId);
   const { approvers: sofApprovers, isLoading: sofApproversLoading } = useSOFApprovers(pssrId);
 
   // Fetch PSSR details for reason
@@ -128,7 +128,7 @@ export const PSSRDetailOverlay: React.FC<PSSRDetailOverlayProps> = ({
     queryFn: async () => {
       const { data, error } = await supabase
         .from('pssrs')
-        .select('reason, plant_id, reason_id')
+        .select('reason, plant_id, reason_id, asset, draft_sof_approver_role_ids')
         .eq('id', pssrId)
         .single();
       if (error) throw error;
@@ -173,23 +173,24 @@ export const PSSRDetailOverlay: React.FC<PSSRDetailOverlayProps> = ({
       const plantName = plantData?.name || '';
 
       const findPerson = async (positionKeyword: string) => {
+        // First try exact plant match: "Plant Director - NRNGL"
         if (plantName) {
           const { data } = await supabase
             .from('profiles')
-            .select('user_id, full_name, avatar_url')
+            .select('user_id, full_name, avatar_url, position')
+            .eq('is_active', true)
+            .ilike('position', `${positionKeyword} - ${plantName}`)
+            .limit(1);
+          if (data && data.length > 0) return data[0];
+          
+          // Fallback: contains both keyword and plant name
+          const { data: data2 } = await supabase
+            .from('profiles')
+            .select('user_id, full_name, avatar_url, position')
             .eq('is_active', true)
             .ilike('position', `%${positionKeyword}%${plantName}%`)
             .limit(1);
-          if (data && data.length > 0) return data[0];
-        }
-        const { data } = await supabase
-          .from('profiles')
-          .select('user_id, full_name, avatar_url, position')
-          .eq('is_active', true)
-          .ilike('position', `%${positionKeyword}%`)
-          .limit(10);
-        if (data && data.length > 0) {
-          return data.find(p => p.position?.includes('Asset')) || data[0];
+          if (data2 && data2.length > 0) return data2[0];
         }
         return null;
       };
@@ -210,106 +211,140 @@ export const PSSRDetailOverlay: React.FC<PSSRDetailOverlayProps> = ({
     },
   });
 
-  // Auto-populate SoF approvers: insert if empty, or resolve names for existing unresolved ones
+  // Auto-create SoF certificate from PSSR data when it doesn't exist
+  const autoCreateSofCertificate = useMutation({
+    mutationFn: async () => {
+      if (certificate || !pssrData || !plantData) return;
+
+      // Create the SoF certificate using PSSR data
+      await createCertificate.mutateAsync({
+        pssrId,
+        pssrReason: pssrData.reason || 'Pre-Startup Safety Review',
+        plantName: plantData.name || undefined,
+      });
+    },
+  });
+
+  // Auto-populate SoF approvers from configured roles
   const autoPopulateSofApprovers = useMutation({
     mutationFn: async () => {
-      if (!certificate) return;
+      // Re-fetch certificate since it may have just been created
+      const { data: cert } = await supabase
+        .from('sof_certificates')
+        .select('*')
+        .eq('pssr_id', pssrId)
+        .maybeSingle();
+      if (!cert) return;
 
-      const hasUnresolved = sofApprovers && sofApprovers.some((a: any) => !a.user_id);
-      const isEmpty = !sofApprovers || sofApprovers.length === 0;
+      // Check existing approvers
+      const { data: existingApprovers } = await supabase
+        .from('sof_approvers')
+        .select('*')
+        .eq('pssr_id', pssrId);
 
-      // If approvers exist and all are resolved, nothing to do
-      if (!isEmpty && !hasUnresolved) return;
-      
-      const reason = pssrData?.reason || '';
-      const needsExtraDirectors = /incident|near miss|tar|turn around|modification/i.test(reason);
+      if (existingApprovers && existingApprovers.length > 0) return;
+
       const plantName = plantData?.name || '';
 
-      // Helper to find a person by position keyword + optional plant
+      // Get SoF approver role IDs from the PSSR's draft or from reason configuration
+      let sofRoleIds: string[] = [];
+      
+      if (pssrData?.draft_sof_approver_role_ids) {
+        sofRoleIds = pssrData.draft_sof_approver_role_ids as string[];
+      } else if (pssrData?.reason_id) {
+        const { data: config } = await supabase
+          .from('pssr_reason_configuration')
+          .select('sof_approver_role_ids')
+          .eq('reason_id', pssrData.reason_id)
+          .maybeSingle();
+        if (config?.sof_approver_role_ids) {
+          sofRoleIds = config.sof_approver_role_ids as string[];
+        }
+      }
+
+      if (sofRoleIds.length === 0) return;
+
+      // Resolve role IDs to role names
+      const { data: roles } = await supabase
+        .from('roles')
+        .select('id, name')
+        .in('id', sofRoleIds);
+
+      if (!roles || roles.length === 0) return;
+
+      // Helper to find a person by exact position + plant
       const findPerson = async (positionKeyword: string) => {
         if (plantName) {
+          // Exact match: "Plant Director - NRNGL"
           const { data } = await supabase
             .from('profiles')
-            .select('user_id, full_name, avatar_url')
+            .select('user_id, full_name, avatar_url, position')
+            .eq('is_active', true)
+            .ilike('position', `${positionKeyword} - ${plantName}`)
+            .limit(1);
+          if (data && data.length > 0) return data[0];
+          
+          // Contains both
+          const { data: data2 } = await supabase
+            .from('profiles')
+            .select('user_id, full_name, avatar_url, position')
             .eq('is_active', true)
             .ilike('position', `%${positionKeyword}%${plantName}%`)
             .limit(1);
-          if (data && data.length > 0) return data[0];
+          if (data2 && data2.length > 0) return data2[0];
         }
+        // For director-level roles without plant specificity (e.g., P&M Director, HSE Director)
         const { data } = await supabase
           .from('profiles')
-          .select('user_id, full_name, avatar_url')
+          .select('user_id, full_name, avatar_url, position')
           .eq('is_active', true)
           .ilike('position', `%${positionKeyword}%`)
           .limit(1);
         return data?.[0] || null;
       };
 
-      // If approvers exist but are unresolved, update them in place
-      if (hasUnresolved && !isEmpty) {
-        for (const approver of sofApprovers.filter((a: any) => !a.user_id)) {
-          const role = approver.approver_role || '';
-          const matched = await findPerson(role);
-          if (matched) {
-            await supabase
-              .from('sof_approvers')
-              .update({ user_id: matched.user_id, approver_name: matched.full_name })
-              .eq('id', approver.id);
-          }
-        }
-        return;
-      }
-
-      // Otherwise, insert new approvers
-      const plantDirector = await findPerson('Plant Director');
-      const hseDirector = await findPerson('HSE Director');
-
-      const approversToInsert: any[] = [
-        {
-          sof_certificate_id: certificate.id, pssr_id: pssrId,
-          approver_name: plantDirector?.full_name || 'Plant Director',
-          approver_role: 'Plant Director', approver_level: 1,
-          status: 'LOCKED' as const,
-          user_id: plantDirector?.user_id || null,
-        },
-        {
-          sof_certificate_id: certificate.id, pssr_id: pssrId,
-          approver_name: hseDirector?.full_name || 'HSE Director',
-          approver_role: 'HSE Director', approver_level: 2,
-          status: 'LOCKED' as const,
-          user_id: hseDirector?.user_id || null,
-        },
-      ];
-      
-      if (needsExtraDirectors) {
-        const pmDirector = await findPerson('P&M Director');
+      const approversToInsert: any[] = [];
+      for (let i = 0; i < roles.length; i++) {
+        const role = roles[i];
+        const person = await findPerson(role.name);
         approversToInsert.push({
-          sof_certificate_id: certificate.id, pssr_id: pssrId,
-          approver_name: pmDirector?.full_name || 'P&M Director',
-          approver_role: 'P&M Director', approver_level: 3,
+          sof_certificate_id: cert.id,
+          pssr_id: pssrId,
+          approver_name: person?.full_name || role.name,
+          approver_role: role.name,
+          approver_level: i + 1,
           status: 'LOCKED' as const,
-          user_id: pmDirector?.user_id || null,
+          user_id: person?.user_id || null,
         });
       }
 
-      const { error } = await supabase.from('sof_approvers').insert(approversToInsert);
-      if (error) throw error;
+      if (approversToInsert.length > 0) {
+        const { error } = await supabase.from('sof_approvers').insert(approversToInsert);
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sof-approvers', pssrId] });
+      queryClient.invalidateQueries({ queryKey: ['sof-certificate', pssrId] });
     },
   });
 
-  // Trigger auto-populate when certificate loaded and approvers are empty or unresolved
+  // Step 1: Auto-create SoF certificate if it doesn't exist
   useEffect(() => {
-    if (certificate && !sofLoading && !sofApproversLoading) {
+    if (!sofLoading && !certificate && pssrData && plantData) {
+      autoCreateSofCertificate.mutate();
+    }
+  }, [sofLoading, certificate, pssrData, plantData]);
+
+  // Step 2: Auto-populate SoF approvers once certificate exists and approvers are empty
+  useEffect(() => {
+    if (certificate && !sofApproversLoading) {
       const isEmpty = !sofApprovers || sofApprovers.length === 0;
-      const hasUnresolved = sofApprovers && sofApprovers.some((a: any) => !a.user_id);
-      if (isEmpty || hasUnresolved) {
+      if (isEmpty) {
         autoPopulateSofApprovers.mutate();
       }
     }
-  }, [certificate, sofApprovers, sofLoading, sofApproversLoading]);
+  }, [certificate, sofApprovers, sofApproversLoading]);
 
   // Trigger auto-resolve for PSSR approvers with missing user_ids
   useEffect(() => {
@@ -337,7 +372,7 @@ export const PSSRDetailOverlay: React.FC<PSSRDetailOverlayProps> = ({
               certificateNumber={certificate.certificate_number}
               pssrReason={certificate.pssr_reason}
               plantName={certificate.plant_name || plantData?.name || ''}
-              pssrTitle={pssrTitle}
+              pssrTitle={pssrTitle || pssrData?.asset || ''}
               approvers={(sofApprovers || []).map((a: any) => ({
                 id: a.id,
                 approver_name: a.approver_name,
