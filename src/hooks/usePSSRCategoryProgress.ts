@@ -39,7 +39,16 @@ export function usePSSRCategoryProgress(pssrId: string) {
   return useQuery({
     queryKey: ['pssr-category-progress', pssrId],
     queryFn: async () => {
-      // Fetch all active categories for name/order lookup
+      // Try fast path: read persisted category_progress from pssrs table
+      const { data: pssr } = await supabase
+        .from('pssrs')
+        .select('category_progress')
+        .eq('id', pssrId)
+        .single();
+
+      const persistedProgress = pssr?.category_progress as Record<string, { completed: number; total: number }> | null;
+
+      // Fetch all active categories for name/order lookup (needed for both paths)
       const { data: categories, error: catError } = await supabase
         .from('pssr_checklist_categories')
         .select('id, name, ref_id, display_order')
@@ -48,7 +57,45 @@ export function usePSSRCategoryProgress(pssrId: string) {
 
       if (catError) throw catError;
 
-      // Fetch checklist responses for THIS PSSR
+      // If we have persisted progress with data, use fast path
+      if (persistedProgress && Object.keys(persistedProgress).length > 0) {
+        const categoryProgress: CategoryProgress[] = (categories || [])
+          .filter(cat => persistedProgress[cat.id] && persistedProgress[cat.id].total > 0)
+          .map(cat => {
+            const p = persistedProgress[cat.id];
+            return {
+              id: cat.id,
+              name: cat.name,
+              ref_id: cat.ref_id,
+              completed: p.completed,
+              total: p.total,
+              percentage: p.total > 0 ? Math.round((p.completed / p.total) * 100) : 0,
+              display_order: cat.display_order,
+            };
+          });
+
+        // Add custom categories (keys that don't match standard category UUIDs)
+        const standardCatIds = new Set((categories || []).map(c => c.id));
+        for (const [key, val] of Object.entries(persistedProgress)) {
+          if (!standardCatIds.has(key) && val.total > 0) {
+            const displayName = key.includes(':') ? key.split(':').slice(1).join(':').trim() : key;
+            categoryProgress.push({
+              id: `custom-cat:${key}`,
+              name: displayName,
+              ref_id: 'OT',
+              completed: val.completed,
+              total: val.total,
+              percentage: val.total > 0 ? Math.round((val.completed / val.total) * 100) : 0,
+              display_order: 9999,
+            });
+          }
+        }
+
+        categoryProgress.sort((a, b) => a.display_order - b.display_order);
+        return categoryProgress;
+      }
+
+      // Fallback: full calculation (same as before)
       const { data: responses, error: respError } = await supabase
         .from('pssr_checklist_responses')
         .select('id, status, response, checklist_item_id')
@@ -56,81 +103,61 @@ export function usePSSRCategoryProgress(pssrId: string) {
 
       if (respError) throw respError;
 
-      // Collect unique checklist_item_ids and fetch their categories separately
       const allItemIds = [...new Set((responses || []).map(r => r.checklist_item_id).filter(Boolean))];
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       const standardIds = allItemIds.filter(id => uuidRegex.test(id));
       const customPrefixedIds = allItemIds.filter(id => id.startsWith('custom-'));
-      // Extract UUID portion from custom- prefixed IDs
       const customUuids = customPrefixedIds
         .map(id => id.replace('custom-', ''))
         .filter(id => uuidRegex.test(id));
-      // Also track non-UUID custom IDs (legacy timestamp-based)
       const customNonUuids = customPrefixedIds
         .filter(id => !uuidRegex.test(id.replace('custom-', '')));
-      
-      // itemCategoryMap: checklist_item_id (as stored in responses) -> category UUID
+
       let itemCategoryMap = new Map<string, string>();
 
-      // Fetch standard checklist items
       if (standardIds.length > 0) {
         const { data: items, error: itemsError } = await supabase
           .from('pssr_checklist_items')
           .select('id, category')
           .in('id', standardIds);
-        
         if (itemsError) throw itemsError;
         (items || []).forEach(i => itemCategoryMap.set(i.id, i.category));
       }
 
-      // Fetch custom checklist items for this PSSR
       const customCategoryNames = new Map<string, { name: string; count: number }>();
-      
-      // For UUID-based custom items
+
       if (customUuids.length > 0) {
         const { data: customItems } = await supabase
           .from('pssr_custom_checklist_items')
           .select('id, category')
           .eq('pssr_id', pssrId)
           .in('id', customUuids);
-        
         (customItems || []).forEach(ci => {
           const customKey = `custom-${ci.id}`;
           const virtualCatId = `custom-cat:${ci.category}`;
           itemCategoryMap.set(customKey, virtualCatId);
-          
-          const displayName = ci.category.includes(':') 
-            ? ci.category.split(':').slice(1).join(':').trim() 
-            : ci.category;
+          const displayName = ci.category.includes(':') ? ci.category.split(':').slice(1).join(':').trim() : ci.category;
           customCategoryNames.set(virtualCatId, { name: displayName, count: 0 });
         });
       }
 
-      // For legacy non-UUID custom items, fetch ALL custom items for this PSSR
-      // and assign them to responses that have non-UUID custom IDs
       if (customNonUuids.length > 0) {
         const { data: allCustomItems } = await supabase
           .from('pssr_custom_checklist_items')
           .select('id, category')
           .eq('pssr_id', pssrId)
           .order('display_order', { ascending: true });
-        
-        // Map each legacy custom response to a custom item by order
         (allCustomItems || []).forEach((ci, idx) => {
           const legacyKey = customNonUuids[idx];
           if (legacyKey) {
             const virtualCatId = `custom-cat:${ci.category}`;
             itemCategoryMap.set(legacyKey, virtualCatId);
-            
-            const displayName = ci.category.includes(':') 
-              ? ci.category.split(':').slice(1).join(':').trim() 
-              : ci.category;
+            const displayName = ci.category.includes(':') ? ci.category.split(':').slice(1).join(':').trim() : ci.category;
             customCategoryNames.set(virtualCatId, { name: displayName, count: 0 });
           }
         });
       }
 
-      // Count totals and completed per category from actual PSSR responses
       const categoryTotals: Record<string, number> = {};
       const categoryCompleted: Record<string, number> = {};
       (responses || []).forEach((resp: any) => {
@@ -142,7 +169,6 @@ export function usePSSRCategoryProgress(pssrId: string) {
         }
       });
 
-      // Build category progress from standard categories
       const categoryProgress: CategoryProgress[] = (categories || [])
         .filter(cat => (categoryTotals[cat.id] || 0) > 0)
         .map(cat => {
@@ -159,7 +185,6 @@ export function usePSSRCategoryProgress(pssrId: string) {
           };
         });
 
-      // Add custom categories
       for (const [virtualCatId, info] of customCategoryNames) {
         const total = categoryTotals[virtualCatId] || 0;
         if (total === 0) continue;
@@ -171,12 +196,11 @@ export function usePSSRCategoryProgress(pssrId: string) {
           completed,
           total,
           percentage: total > 0 ? Math.round((completed / total) * 100) : 0,
-          display_order: 9999, // Custom categories at the end
+          display_order: 9999,
         });
       }
 
       categoryProgress.sort((a, b) => a.display_order - b.display_order);
-
       return categoryProgress;
     },
     enabled: !!pssrId,

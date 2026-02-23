@@ -5638,8 +5638,12 @@ export type Database = {
         Row: {
           action_owner: string | null
           approved_at: string | null
+          approving_role: string | null
+          approving_user_id: string | null
           checklist_item_id: string
           created_at: string
+          delivering_role: string | null
+          delivering_user_id: string | null
           deviation_reason: string | null
           follow_up_action: string | null
           id: string
@@ -5656,8 +5660,12 @@ export type Database = {
         Insert: {
           action_owner?: string | null
           approved_at?: string | null
+          approving_role?: string | null
+          approving_user_id?: string | null
           checklist_item_id: string
           created_at?: string
+          delivering_role?: string | null
+          delivering_user_id?: string | null
           deviation_reason?: string | null
           follow_up_action?: string | null
           id?: string
@@ -5674,8 +5682,12 @@ export type Database = {
         Update: {
           action_owner?: string | null
           approved_at?: string | null
+          approving_role?: string | null
+          approving_user_id?: string | null
           checklist_item_id?: string
           created_at?: string
+          delivering_role?: string | null
+          delivering_user_id?: string | null
           deviation_reason?: string | null
           follow_up_action?: string | null
           id?: string
@@ -5690,6 +5702,34 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "pssr_checklist_responses_approving_user_id_fkey"
+            columns: ["approving_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "pssr_checklist_responses_approving_user_id_fkey"
+            columns: ["approving_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_safe"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "pssr_checklist_responses_delivering_user_id_fkey"
+            columns: ["delivering_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "pssr_checklist_responses_delivering_user_id_fkey"
+            columns: ["delivering_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_safe"
+            referencedColumns: ["user_id"]
+          },
           {
             foreignKeyName: "pssr_checklist_responses_pssr_id_fkey"
             columns: ["pssr_id"]
@@ -6730,6 +6770,7 @@ export type Database = {
           approval_status: string | null
           approved_at: string | null
           asset: string
+          category_progress: Json | null
           completed_at: string | null
           created_at: string
           cs_location: string | null
@@ -6741,8 +6782,10 @@ export type Database = {
           field_id: string | null
           finalized_at: string | null
           id: string
+          key_activity_dates: Json | null
           plant: string | null
           plant_id: string | null
+          progress_percentage: number
           project_id: string | null
           project_name: string | null
           pssr_id: string
@@ -6761,6 +6804,7 @@ export type Database = {
           approval_status?: string | null
           approved_at?: string | null
           asset: string
+          category_progress?: Json | null
           completed_at?: string | null
           created_at?: string
           cs_location?: string | null
@@ -6772,8 +6816,10 @@ export type Database = {
           field_id?: string | null
           finalized_at?: string | null
           id?: string
+          key_activity_dates?: Json | null
           plant?: string | null
           plant_id?: string | null
+          progress_percentage?: number
           project_id?: string | null
           project_name?: string | null
           pssr_id: string
@@ -6792,6 +6838,7 @@ export type Database = {
           approval_status?: string | null
           approved_at?: string | null
           asset?: string
+          category_progress?: Json | null
           completed_at?: string | null
           created_at?: string
           cs_location?: string | null
@@ -6803,8 +6850,10 @@ export type Database = {
           field_id?: string | null
           finalized_at?: string | null
           id?: string
+          key_activity_dates?: Json | null
           plant?: string | null
           plant_id?: string | null
+          progress_percentage?: number
           project_id?: string | null
           project_name?: string | null
           pssr_id?: string
