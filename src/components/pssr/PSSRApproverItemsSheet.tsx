@@ -9,6 +9,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Search, CheckCircle2, Clock, AlertCircle, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { PSSRItemDetailSheet } from './PSSRItemDetailSheet';
 
 interface PSSRApproverItemsSheetProps {
   open: boolean;
@@ -123,6 +124,7 @@ export const PSSRApproverItemsSheet: React.FC<PSSRApproverItemsSheetProps> = ({
         const detail = itemMap[itemId];
         return {
           id: r.id,
+          checklist_item_id: itemId,
           description: detail?.description || 'Unknown item',
           category: detail?.category || 'Other',
           topic: detail?.topic || null,
@@ -155,6 +157,9 @@ export const PSSRApproverItemsSheet: React.FC<PSSRApproverItemsSheetProps> = ({
     not_started: items.filter(i => i.status === 'not_started').length,
   }), [items]);
 
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [itemDetailOpen, setItemDetailOpen] = useState(false);
+
   const displayName = userName || roleName;
 
   return (
@@ -172,7 +177,7 @@ export const PSSRApproverItemsSheet: React.FC<PSSRApproverItemsSheetProps> = ({
               <SheetTitle className="text-lg font-semibold text-foreground truncate">
                 {displayName}
               </SheetTitle>
-              <div className="text-sm text-muted-foreground">{roleName}</div>
+              <div className="text-sm text-muted-foreground truncate" title={roleName}>{roleName}</div>
               <div className="flex items-center gap-2 mt-1.5">
                 <Badge variant="outline" className="text-[10px] px-2 py-0.5 font-medium">
                   {counts.completed}/{itemCount} items
@@ -238,7 +243,11 @@ export const PSSRApproverItemsSheet: React.FC<PSSRApproverItemsSheetProps> = ({
                 return (
                   <div
                     key={item.id}
-                    className={cn("rounded-xl border p-3 transition-colors", sc.bg)}
+                    className={cn("rounded-xl border p-3 transition-colors cursor-pointer hover:shadow-sm", sc.bg)}
+                    onClick={() => {
+                      setSelectedItemId(item.checklist_item_id || item.id);
+                      setItemDetailOpen(true);
+                    }}
                   >
                     <div className="flex items-start gap-3">
                       <div className={cn("w-2 h-2 rounded-full mt-1.5 shrink-0", sc.dot)} />
@@ -270,6 +279,13 @@ export const PSSRApproverItemsSheet: React.FC<PSSRApproverItemsSheetProps> = ({
           </div>
         </ScrollArea>
       </SheetContent>
+
+      <PSSRItemDetailSheet
+        itemId={selectedItemId}
+        pssrId={pssrId}
+        open={itemDetailOpen}
+        onOpenChange={setItemDetailOpen}
+      />
     </Sheet>
   );
 };
