@@ -744,7 +744,7 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
                       </Avatar>
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-medium truncate">{resolved?.full_name || role}</p>
-                        <p className="text-[10px] text-muted-foreground truncate">{role}</p>
+                        <p className="text-[10px] text-muted-foreground truncate" title={resolved?.position || role}>{resolved?.position || role}</p>
                       </div>
                       <span className="text-[10px] text-muted-foreground shrink-0">{count} item{count !== 1 ? 's' : ''}</span>
                     </div>
@@ -784,7 +784,7 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
                       </Avatar>
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-medium truncate">{resolved?.full_name || role}</p>
-                        <p className="text-[10px] text-muted-foreground truncate">{role}</p>
+                        <p className="text-[10px] text-muted-foreground truncate" title={resolved?.position || role}>{resolved?.position || role}</p>
                       </div>
                       <span className="text-[10px] text-muted-foreground shrink-0">{count} item{count !== 1 ? 's' : ''}</span>
                     </div>
