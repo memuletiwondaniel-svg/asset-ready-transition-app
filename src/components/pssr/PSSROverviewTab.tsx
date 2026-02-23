@@ -634,6 +634,7 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
         open={!!selectedActivity}
         onOpenChange={(open) => !open && setSelectedActivity(null)}
         activity={selectedActivity}
+        pssrId={pssrId}
         pssrTitle={pssr?.title}
         onSchedule={async (data) => {
           await scheduleActivity.mutateAsync(data);
