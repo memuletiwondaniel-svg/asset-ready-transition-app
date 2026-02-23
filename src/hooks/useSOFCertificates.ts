@@ -60,10 +60,21 @@ export const getCertificateText = (pssrReason: string): string => {
   return STANDARD_SOF_TEXT;
 };
 
-export const generateCertificateNumber = (): string => {
-  const year = new Date().getFullYear();
-  const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-  return `SOF-${year}-${random}`;
+export const generateCertificateNumber = async (plantName?: string): Promise<string> => {
+  const plantCode = (plantName || 'BGC').toUpperCase();
+  
+  // Get next serial for this plant
+  const { data } = await supabase
+    .from('sof_certificates')
+    .select('certificate_number')
+    .like('certificate_number', `SOF-${plantCode}-%`);
+  
+  const existingNums = (data || []).map(d => {
+    const match = d.certificate_number.match(/SOF-[A-Z]+-(\d+)$/);
+    return match ? parseInt(match[1], 10) : 0;
+  });
+  const nextNum = Math.max(0, ...existingNums) + 1;
+  return `SOF-${plantCode}-${String(nextNum).padStart(3, '0')}`;
 };
 
 export const useSOFCertificate = (pssrId: string | undefined) => {
@@ -97,12 +108,13 @@ export const useSOFCertificate = (pssrId: string | undefined) => {
       projectName?: string;
     }) => {
       const certificateText = getCertificateText(data.pssrReason);
+      const certNumber = await generateCertificateNumber(data.plantName);
       
       const { data: cert, error } = await supabase
         .from('sof_certificates')
         .insert({
           pssr_id: data.pssrId,
-          certificate_number: generateCertificateNumber(),
+          certificate_number: certNumber,
           pssr_reason: data.pssrReason,
           plant_name: data.plantName || null,
           facility_name: data.facilityName || null,
