@@ -1000,7 +1000,7 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
-      <DialogContent className={cn("max-h-[90vh] overflow-hidden flex flex-col", currentStep === 5 && mode === 'lead-review' ? "max-w-[95vw] w-full" : "max-w-3xl")}>
+      <DialogContent className={cn("h-[90vh] max-h-[90vh] overflow-hidden flex flex-col", currentStep === 5 && mode === 'lead-review' ? "max-w-[95vw] w-full" : "max-w-3xl")}>
         <DialogHeader className="border-b pb-4">
           <DialogTitle className="text-xl font-semibold">
             {mode === 'lead-review' ? 'Review PSSR' : 'Create New PSSR'}
