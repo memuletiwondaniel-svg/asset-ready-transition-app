@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -10,16 +10,15 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useProfileUsers } from '@/hooks/useProfileUsers';
-
-const PSSR_REASON_OPTIONS = [
-  'Start-up after a Process Safety Incidence or Near Miss (RAM 5A/B and RED)',
-  'Start-up after a Turn Around Maintenance (TAR)',
-  'Startup of a retired or idle equipment (over 6 months)',
-  'Start-up after a plant modification (Asset MoC)',
-  'Other',
-];
+import { supabase } from '@/integrations/supabase/client';
 
 const PSSR_LEAD_POSITION_KEYWORDS = ['Tech Safety', 'Asset', 'Operations', 'Maintenance', 'MTCE'];
+
+interface PSSRReasonOption {
+  id: string;
+  name: string;
+  description: string | null;
+}
 
 interface WizardStepReasonDetailsProps {
   reasonName: string;
@@ -38,10 +37,43 @@ const WizardStepReasonDetails: React.FC<WizardStepReasonDetailsProps> = ({
   onDescriptionChange,
   onPssrLeadChange,
 }) => {
-  const isOther = !PSSR_REASON_OPTIONS.slice(0, -1).includes(reasonName) && reasonName !== '';
+  const [reasonOptions, setReasonOptions] = useState<PSSRReasonOption[]>([]);
+  const [loadingReasons, setLoadingReasons] = useState(true);
+
+  // Fetch PSSR reasons from database
+  useEffect(() => {
+    const fetchReasons = async () => {
+      const { data, error } = await supabase
+        .from('pssr_reasons')
+        .select('id, name, description')
+        .eq('is_active', true)
+        .order('display_order');
+      if (!error && data) {
+        setReasonOptions(data);
+      }
+      setLoadingReasons(false);
+    };
+    fetchReasons();
+  }, []);
+
+  const knownNames = reasonOptions.map(r => r.name);
+  const isOther = reasonName !== '' && !knownNames.includes(reasonName);
   const [selectValue, setSelectValue] = useState(isOther ? 'Other' : reasonName);
   const [customReason, setCustomReason] = useState(isOther ? reasonName : '');
   const [leadPopoverOpen, setLeadPopoverOpen] = useState(false);
+
+  // Sync selectValue when reasonOptions load
+  useEffect(() => {
+    if (reasonOptions.length > 0 && reasonName) {
+      const match = reasonOptions.find(r => r.name === reasonName);
+      setSelectValue(match ? reasonName : 'Other');
+      if (!match && reasonName) {
+        setCustomReason(reasonName);
+      }
+    }
+  }, [reasonOptions, reasonName]);
+
+  const selectedReason = reasonOptions.find(r => r.name === selectValue);
 
   const { data: profileUsers, isLoading: usersLoading } = useProfileUsers();
 
@@ -79,18 +111,27 @@ const WizardStepReasonDetails: React.FC<WizardStepReasonDetailsProps> = ({
       {/* Reason Dropdown */}
       <div className="space-y-3">
         <Label htmlFor="reason-name" className="text-base font-medium">PSSR Reason *</Label>
-        <Select value={selectValue} onValueChange={handleSelectChange}>
+        <Select value={selectValue} onValueChange={handleSelectChange} disabled={loadingReasons}>
           <SelectTrigger className="w-full">
-            <SelectValue placeholder="Select a PSSR reason..." />
+            <SelectValue placeholder={loadingReasons ? "Loading reasons..." : "Select a PSSR reason..."} />
           </SelectTrigger>
           <SelectContent>
-            {PSSR_REASON_OPTIONS.map((option) => (
-              <SelectItem key={option} value={option}>
-                {option}
+            {reasonOptions.map((option) => (
+              <SelectItem key={option.id} value={option.name}>
+                {option.name}
               </SelectItem>
             ))}
+            <SelectItem value="Other">Other</SelectItem>
           </SelectContent>
         </Select>
+
+        {/* Description subtext for selected reason */}
+        {selectedReason?.description && (
+          <p className="text-sm text-muted-foreground bg-muted/30 rounded-md px-3 py-2">
+            {selectedReason.description}
+          </p>
+        )}
+
         {selectValue === 'Other' && (
           <div className="space-y-2 mt-3">
             <Label htmlFor="custom-reason" className="text-sm font-medium">Specify PSSR Reason *</Label>
