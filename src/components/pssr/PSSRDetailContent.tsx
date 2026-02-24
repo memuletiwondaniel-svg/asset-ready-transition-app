@@ -12,6 +12,8 @@ interface PSSRDetailContentProps {
   pssrId: string;
   pssrDisplayId: string;
   pssrTitle?: string;
+  /** When true, only show Overview and SoF Certificate tabs (hides Comments/Qualifications) */
+  reviewOnly?: boolean;
 }
 
 const PlaceholderTab: React.FC<{ title: string; icon: React.ReactNode }> = ({ title, icon }) => (
@@ -26,18 +28,22 @@ const PlaceholderTab: React.FC<{ title: string; icon: React.ReactNode }> = ({ ti
   </div>
 );
 
-const navTabs = [
+const allNavTabs = [
   { id: 'overview', label: 'Overview', icon: BarChart3 },
   { id: 'qualifications', label: 'Qualifications', icon: AlertTriangle },
   { id: 'comments', label: 'Comments', icon: MessageSquare },
   { id: 'sof', label: 'SoF Certificate', icon: Award },
 ];
 
+const reviewOnlyTabIds = new Set(['overview', 'sof']);
+
 export const PSSRDetailContent: React.FC<PSSRDetailContentProps> = ({
   pssrId,
   pssrDisplayId,
   pssrTitle,
+  reviewOnly = false,
 }) => {
+  const navTabs = reviewOnly ? allNavTabs.filter(t => reviewOnlyTabIds.has(t.id)) : allNavTabs;
   const [activeTab, setActiveTab] = useState('overview');
   const queryClient = useQueryClient();
 

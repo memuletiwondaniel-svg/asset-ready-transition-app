@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { cn } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -999,7 +1000,7 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className={cn("max-h-[90vh] overflow-hidden flex flex-col", currentStep === 5 && mode === 'lead-review' ? "max-w-5xl" : "max-w-3xl")}>
         <DialogHeader className="border-b pb-4">
           <DialogTitle className="text-xl font-semibold">
             {mode === 'lead-review' ? 'Review PSSR' : 'Create New PSSR'}
@@ -1335,6 +1336,7 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
                 pssrId={draftPssrId}
                 pssrDisplayId=""
                 pssrTitle={wizardState.title}
+                reviewOnly
               />
             </div>
           )}
