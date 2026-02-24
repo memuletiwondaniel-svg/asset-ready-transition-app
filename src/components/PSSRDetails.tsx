@@ -19,9 +19,9 @@ const PSSRDetails: React.FC<PSSRDetailsProps> = ({ pssrId, onBack }) => {
   // Mock PSSR details data
   const pssrData = {
     id: pssrId,
-    title: 'DP300 HM Additional Compressors',
-    asset: 'NRNGL Plant',
-    reason: 'Start-up or Commissioning of a new Asset',
+    title: 'Untitled PSSR',
+    asset: '',
+    reason: '',
     projectId: 'BGC-2024-001',
     projectName: 'Phase 3 Expansion Project',
     status: 'Under Review',
