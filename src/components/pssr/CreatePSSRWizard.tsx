@@ -906,6 +906,94 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
     }
   };
 
+  // Lead-review mode: approve the PSSR (transition to UNDER_REVIEW, complete the task)
+  const handleLeadApprove = async () => {
+    if (!draftPssrId) return;
+    setIsSubmitting(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      // 1. Save any edits the lead made (approvers, checklist, etc.)
+      const plantValue = selectedPlant?.name || '';
+      const csLocationValue = selectedStation?.name || '';
+
+      const updatePayload: any = {
+        reason: selectedReason?.name || '',
+        reason_id: wizardState.reasonId || null,
+        scope: wizardState.scopeDescription.trim() || null,
+        asset: wizardState.title.trim(),
+        title: wizardState.title.trim(),
+        plant: plantValue || null,
+        plant_id: wizardState.plantId || null,
+        field_id: wizardState.fieldId || null,
+        station_id: wizardState.stationId || null,
+        cs_location: csLocationValue || null,
+        pssr_lead_id: wizardState.pssrLeadId || null,
+        draft_checklist_item_ids: wizardState.selectedChecklistItemIds.filter(id => !id.startsWith('custom-')),
+        draft_na_item_ids: wizardState.naItemIds.filter(id => !id.startsWith('custom-')),
+        draft_item_overrides: Object.keys(wizardState.checklistItemOverrides).length > 0
+          ? wizardState.checklistItemOverrides : null,
+        draft_pssr_approver_role_ids: wizardState.selectedPssrApproverRoleIds.length > 0
+          ? wizardState.selectedPssrApproverRoleIds : null,
+        draft_sof_approver_role_ids: wizardState.selectedSofApproverRoleIds.length > 0
+          ? wizardState.selectedSofApproverRoleIds : null,
+        // 2. Transition status to UNDER_REVIEW
+        status: 'UNDER_REVIEW',
+      };
+
+      const { error: updateError } = await supabase
+        .from('pssrs')
+        .update(updatePayload)
+        .eq('id', draftPssrId);
+      if (updateError) throw updateError;
+
+      // 3. Complete/delete the pending lead review task
+      const { data: tasks } = await supabase
+        .from('user_tasks')
+        .select('id')
+        .eq('type', 'review')
+        .eq('status', 'pending')
+        .filter('metadata->>pssr_id', 'eq', draftPssrId)
+        .filter('metadata->>action', 'eq', 'review_draft_pssr');
+
+      if (tasks && tasks.length > 0) {
+        for (const task of tasks) {
+          await supabase
+            .from('user_tasks')
+            .update({ status: 'completed' })
+            .eq('id', task.id);
+        }
+      }
+
+      // Save custom checklist items
+      await supabase.from('pssr_custom_checklist_items').delete().eq('pssr_id', draftPssrId);
+      if (customItems.length > 0) {
+        const customInserts = customItems.map((item, idx) => ({
+          pssr_id: draftPssrId,
+          category: item.category,
+          topic: item.topic,
+          description: item.description,
+          supporting_evidence: item.supporting_evidence,
+          display_order: idx,
+        }));
+        await supabase.from('pssr_custom_checklist_items').insert(customInserts);
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['pssrs'] });
+      queryClient.invalidateQueries({ queryKey: ['pssr-records'] });
+      queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+      toast.success('PSSR approved and transitioned to Under Review!');
+      handleClose();
+      onSuccess?.(draftPssrId);
+    } catch (error: any) {
+      console.error('Failed to approve PSSR:', error);
+      toast.error(error.message || 'Failed to approve PSSR');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const progressPercentage = (currentStep / STEPS.length) * 100;
 
 
@@ -1386,7 +1474,7 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Go Back</AlertDialogCancel>
-              <AlertDialogAction onClick={handleSubmit}>
+              <AlertDialogAction onClick={mode === 'lead-review' ? handleLeadApprove : handleSubmit}>
                 {mode === 'lead-review' ? 'Confirm & Approve' : 'Confirm & Submit'}
               </AlertDialogAction>
             </AlertDialogFooter>
