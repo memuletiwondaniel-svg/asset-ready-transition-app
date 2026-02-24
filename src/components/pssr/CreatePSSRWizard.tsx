@@ -25,6 +25,7 @@ import WizardStepCategory from './wizard/WizardStepCategory';
 import WizardStepDetails from './wizard/WizardStepDetails';
 import WizardStepChecklistItems, { ChecklistItemOverrides } from './wizard/WizardStepChecklistItems';
 import WizardStepApproversSetup from './wizard/WizardStepApproversSetup';
+import { PSSRDetailContent } from './PSSRDetailContent';
 import { Attachment } from '@/components/ui/RichTextEditor';
 
 interface CreatePSSRWizardProps {
@@ -32,6 +33,7 @@ interface CreatePSSRWizardProps {
   onOpenChange: (open: boolean) => void;
   onSuccess?: (pssrId: string) => void;
   draftPssrId?: string;
+  mode?: 'create' | 'lead-review';
 }
 
 interface WizardState {
@@ -64,14 +66,20 @@ interface WizardState {
   templateSofApproverRoleIds: string[];
 }
 
-const STEPS = [
+const BASE_STEPS = [
   { id: 1, title: 'Reason', description: 'Select PSSR reason' },
   { id: 2, title: 'Details & Location', description: 'Title, scope and location' },
   { id: 3, title: 'PSSR Items', description: 'Review checklist items' },
   { id: 4, title: 'Approvers', description: 'PSSR & SoF approvers' },
 ];
 
-const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange, onSuccess, draftPssrId }) => {
+const FINAL_REVIEW_STEP = { id: 5, title: 'Final Review', description: 'Review & approve' };
+
+const getSteps = (mode: 'create' | 'lead-review') =>
+  mode === 'lead-review' ? [...BASE_STEPS, FINAL_REVIEW_STEP] : BASE_STEPS;
+
+const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange, onSuccess, draftPssrId, mode = 'create' }) => {
+  const STEPS = getSteps(mode);
   const queryClient = useQueryClient();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -906,7 +914,7 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader className="border-b pb-4">
           <DialogTitle className="text-xl font-semibold">
-            Create New PSSR
+            {mode === 'lead-review' ? 'Review PSSR' : 'Create New PSSR'}
           </DialogTitle>
           
           {/* Progress Indicator */}
@@ -1231,6 +1239,17 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
               plantName={selectedPlant?.name}
             />
           )}
+
+          {/* Step 5: Final Review (lead-review mode only) */}
+          {currentStep === 5 && mode === 'lead-review' && draftPssrId && (
+            <div className="h-[50vh] border rounded-lg overflow-hidden">
+              <PSSRDetailContent
+                pssrId={draftPssrId}
+                pssrDisplayId=""
+                pssrTitle={wizardState.title}
+              />
+            </div>
+          )}
         </div>
 
         {/* Navigation Buttons */}
@@ -1251,7 +1270,8 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
           </Button>
 
           <div className="flex items-center gap-2">
-            {currentStep >= 2 && wizardState.title.trim() && (
+            {/* Save as Draft - hidden in lead-review mode on Step 5 */}
+            {currentStep >= 2 && wizardState.title.trim() && !(mode === 'lead-review' && currentStep === 5) && (
               <Button
                 variant="outline"
                 onClick={() => setShowDraftConfirm(true)}
@@ -1273,8 +1293,31 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
 
             {currentStep < STEPS.length ? (
               <Button onClick={handleNext} disabled={isSavingDraft}>
-                Next
-                <ChevronRight className="h-4 w-4 ml-1" />
+                {mode === 'lead-review' && currentStep === 4 ? (
+                  <>
+                    Final Review
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </>
+                ) : (
+                  <>
+                    Next
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </>
+                )}
+              </Button>
+            ) : mode === 'lead-review' ? (
+              <Button onClick={() => setShowSubmitConfirm(true)} disabled={isSubmitting || isSavingDraft}>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Approving...
+                  </>
+                ) : (
+                  <>
+                    <Check className="h-4 w-4 mr-2" />
+                    Approve PSSR
+                  </>
+                )}
               </Button>
             ) : (
               <Button onClick={() => setShowSubmitConfirm(true)} disabled={isSubmitting || isSavingDraft}>
@@ -1312,24 +1355,39 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
           </AlertDialogContent>
         </AlertDialog>
 
-        {/* Submit for Review Confirmation */}
+        {/* Submit / Approve Confirmation */}
         <AlertDialog open={showSubmitConfirm} onOpenChange={setShowSubmitConfirm}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Submit PSSR for Lead Review?</AlertDialogTitle>
+              <AlertDialogTitle>
+                {mode === 'lead-review' ? 'Approve PSSR?' : 'Submit PSSR for Lead Review?'}
+              </AlertDialogTitle>
               <AlertDialogDescription className="space-y-2">
-                <span className="block">
-                  This PSSR will be submitted to the designated PSSR Lead for review and approval.
-                </span>
-                <span className="block text-sm">
-                  The PSSR Lead will be able to review all items, approvers, and scope details before approving the draft. You will be notified once the review is complete.
-                </span>
+                {mode === 'lead-review' ? (
+                  <>
+                    <span className="block">
+                      This will approve the PSSR and transition it to "Under Review" status. The walkdown process can then begin.
+                    </span>
+                    <span className="block text-sm">
+                      Approvers and team members will be notified. You can revert to draft later if needed.
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="block">
+                      This PSSR will be submitted to the designated PSSR Lead for review and approval.
+                    </span>
+                    <span className="block text-sm">
+                      The PSSR Lead will be able to review all items, approvers, and scope details before approving the draft. You will be notified once the review is complete.
+                    </span>
+                  </>
+                )}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Go Back</AlertDialogCancel>
               <AlertDialogAction onClick={handleSubmit}>
-                Confirm &amp; Submit
+                {mode === 'lead-review' ? 'Confirm & Approve' : 'Confirm & Submit'}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
