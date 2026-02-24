@@ -43,6 +43,7 @@ interface PSSRQuickViewOverlayProps {
   onOpenChange: (open: boolean) => void;
   pssrId: string;
   pssrDisplayId: string;
+  onViewFullDetails?: (pssrId: string, displayId: string) => void;
 }
 
 // Default category data when no responses exist (matches PSSR Dashboard behavior)
@@ -119,6 +120,7 @@ export const PSSRQuickViewOverlay: React.FC<PSSRQuickViewOverlayProps> = ({
   onOpenChange,
   pssrId,
   pssrDisplayId,
+  onViewFullDetails,
 }) => {
   const navigate = useNavigate();
   const { pssr: pssrDetails, isLoading: detailsLoading } = usePSSRDetails(pssrId);
@@ -211,7 +213,11 @@ export const PSSRQuickViewOverlay: React.FC<PSSRQuickViewOverlayProps> = ({
 
   const handleViewFullDetails = () => {
     onOpenChange(false);
-    navigate(`/pssr/${pssrId}`);
+    if (onViewFullDetails) {
+      onViewFullDetails(pssrId, pssrDisplayId);
+    } else {
+      navigate(`/pssr/${pssrId}`);
+    }
   };
 
   return (

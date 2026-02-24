@@ -29,7 +29,7 @@ import PSSRApproverDashboard from "@/pages/PSSRApproverDashboard";
 import MyTasksPage from "@/pages/MyTasksPage";
 import PSSRItemReview from "@/pages/PSSRItemReview";
 import PSSRApprovalPage from "@/pages/PSSRApprovalPage";
-import PSSRDetailsPage from "@/pages/PSSRDetailsPage";
+
 import SoFReviewPage from "@/pages/SoFReviewPage";
 import MicrosoftCallback from "@/pages/auth/MicrosoftCallback";
 
@@ -79,7 +79,7 @@ const App = () => (
                       <Route path="/pssr/:id/review" element={<PSSRItemReview />} />
                       <Route path="/pssr/:id/approve" element={<PSSRApprovalPage />} />
                       <Route path="/pssr/:id/sof" element={<SoFReviewPage />} />
-                      <Route path="/pssr/:id" element={<PSSRDetailsPage />} />
+                      {/* /pssr/:id route removed — PSSRDetailOverlay is used instead */}
                       <Route path="/operation-readiness" element={<ORPLandingPage />} />
                       <Route path="/operation-readiness/analytics" element={<ORPAnalyticsPage />} />
                       <Route path="/operation-readiness/:id" element={<ORPDetailsPage />} />

@@ -10,6 +10,7 @@ import { useProjectVCRs, ProjectVCR } from '@/hooks/useProjectVCRs';
 import { useProjectORPPlans } from '@/hooks/useProjectORPPlans';
 import { useProjectMilestones } from '@/hooks/useProjects';
 import { PSSRQuickViewOverlay } from '@/components/pssr/PSSRQuickViewOverlay';
+import { PSSRDetailOverlay } from '@/components/pssr/PSSRDetailOverlay';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CreateVCRWizard } from './vcr-wizard/CreateVCRWizard';
 import { P2AWorkspaceOverlay } from './P2AWorkspaceOverlay';
@@ -88,6 +89,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
   const { milestones: projectMilestones } = useProjectMilestones(projectId);
   const { canCreate: canCreateVCR, isLoading: roleLoading } = useCanCreateVCR();
   const [selectedPSSR, setSelectedPSSR] = useState<{ id: string; displayId: string } | null>(null);
+  const [overlayPSSR, setOverlayPSSR] = useState<{ id: string; displayId: string; title: string; status: string } | null>(null);
   const [showCreateVCR, setShowCreateVCR] = useState(false);
   const [showP2AWorkspace, setShowP2AWorkspace] = useState(false);
   const [showP2APlanWizard, setShowP2APlanWizard] = useState(false);
@@ -267,6 +269,28 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
           onOpenChange={(open) => !open && setSelectedPSSR(null)}
           pssrId={selectedPSSR.id}
           pssrDisplayId={selectedPSSR.displayId}
+          onViewFullDetails={(id, displayId) => {
+            setSelectedPSSR(null);
+            const pssr = pssrs?.find(p => p.id === id);
+            setOverlayPSSR({
+              id,
+              displayId,
+              title: pssr?.asset || '',
+              status: pssr?.status || '',
+            });
+          }}
+        />
+      )}
+
+      {/* PSSR Detail Overlay */}
+      {overlayPSSR && (
+        <PSSRDetailOverlay
+          open={!!overlayPSSR}
+          onOpenChange={(open) => !open && setOverlayPSSR(null)}
+          pssrId={overlayPSSR.id}
+          pssrDisplayId={overlayPSSR.displayId}
+          pssrTitle={overlayPSSR.title}
+          status={overlayPSSR.status}
         />
       )}
 
