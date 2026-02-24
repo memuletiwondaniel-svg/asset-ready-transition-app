@@ -472,19 +472,14 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
       setActiveView('create');
       return;
     }
-    // For Under Review, Pending Lead Review, or Completed PSSRs, open the overlay
-    if (pssr && (pssr.status === 'Under Review' || pssr.status === 'Completed' || pssr.status === 'Pending Lead Review')) {
-      const record = pssrRecords?.find(r => r.id === pssrId);
-      setOverlayPSSR({
-        id: pssrId,
-        displayId: record?.pssr_id || pssr.projectId || pssrId,
-        title: pssr.projectName || '',
-        status: record?.status || pssr.status,
-      });
-      return;
-    }
-    setSelectedPSSR(pssrId);
-    setActiveView('details');
+    // For all other statuses, open the detail overlay
+    const record = pssrRecords?.find(r => r.id === pssrId);
+    setOverlayPSSR({
+      id: pssrId,
+      displayId: record?.pssr_id || pssr?.projectId || pssrId,
+      title: pssr?.projectName || '',
+      status: record?.status || pssr?.status || '',
+    });
   };
   const handleNavigateToCategory = (categoryName: string) => {
     setSelectedCategory(categoryName);
