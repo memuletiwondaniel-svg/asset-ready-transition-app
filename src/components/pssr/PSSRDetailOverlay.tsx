@@ -106,11 +106,15 @@ export const PSSRDetailOverlay: React.FC<PSSRDetailOverlayProps> = ({
   const revertToDraft = useMutation({
     mutationFn: async () => {
       // 1. Update PSSR status to DRAFT
-      const { error: statusError } = await supabase
+      const { data: updated, error: statusError } = await supabase
         .from('pssrs')
         .update({ status: 'DRAFT', approval_status: null })
-        .eq('id', pssrId);
+        .eq('id', pssrId)
+        .select('id');
       if (statusError) throw statusError;
+      if (!updated || updated.length === 0) {
+        throw new Error('Update failed — you may not have permission to modify this PSSR.');
+      }
 
       // 2. Delete the pending review task for the PSSR Lead
       const { data: tasks } = await supabase
