@@ -1,68 +1,45 @@
 
-# Enhanced Schedule Activity Sheet with Invite List and Message Preview
+
+# Two-Step PSSR Lead Review Flow: Edit then Review
 
 ## Overview
-Redesign the `ScheduleActivitySheet` to include three sections when scheduling a key activity: (1) date/time/location selection, (2) an editable invitation message preview, and (3) a reviewable invite list that is context-aware based on the activity type.
+When the PSSR Lead clicks "Review & Edit PSSR" from their task, implement a two-step flow:
+1. Open the `CreatePSSRWizard` in edit mode for making changes
+2. When the wizard closes, automatically open the `PSSRDetailOverlay` for final review (including the SoF certificate) before approving
 
-## Invite List Logic
-
-| Activity Type | Invitees |
-|---|---|
-| PSSR Kick-off | PSSR Lead + Delivering Parties + Approving Parties |
-| PSSR Walkdown | PSSR Lead + Delivering Parties + Approving Parties |
-| SoF Meeting | PSSR Lead + SoF Approvers + Deputy Plant Director |
-| Custom | PSSR Lead + Delivering Parties + Approving Parties (default) |
+## Why Two Steps?
+- The wizard is great for editing but does not display the SoF certificate or the read-only overview layout
+- The Lead needs to verify everything looks correct after edits before approving
+- Mirrors a natural workflow: Edit -> Review -> Approve
 
 ## Changes
 
-### 1. Update `ScheduleActivitySheet` props and data fetching
-- Accept `pssrId` as a new prop (currently only receives the activity object)
-- Fetch PSSR details (lead info, scope/title) using `pssrId`
-- Fetch delivering/approving party profiles from `pssr_checklist_responses` + `profiles` (reuse existing role-resolution pattern from `PSSROverviewTab`)
-- Fetch `pssr_approvers` and `sof_approvers` records with their profiles
-- Compute the invite list based on `activity.activity_type`
+### File: `src/components/tasks/TaskDetailSheet.tsx`
 
-### 2. Redesign the sheet layout (scheduling mode)
-The sheet will have three collapsible/scrollable sections:
+1. **Add state for both components**:
+   - `wizardOpen` — controls whether the edit wizard is showing
+   - `pssrOverlayOpen` — controls whether the review overlay is showing
 
-**Section A - Schedule Details** (existing, mostly unchanged)
-- Date picker, start/end time, location fields
+2. **Button click** ("Review & Edit PSSR"):
+   - Opens the `CreatePSSRWizard` in edit mode (`draftPssrId={pssrId}`)
 
-**Section B - Invitation Preview**
-- Reuse the existing `InvitationPreview` component from `src/components/pssr/walkdown/InvitationPreview.tsx`
-- Pre-populate subject as `"[Activity Label] - [PSSR Title]"`
-- Generate a default body referencing the activity type and PSSR scope
-- Allow editing via the existing edit/preview toggle
+3. **Wizard close handler**:
+   - When the wizard closes (saved or dismissed), automatically open the `PSSRDetailOverlay` for final read-only review
+   - The overlay shows the full tabbed view: Overview, Progress, Approvals, SoF Certificate
 
-**Section C - Invite List**
-- Display the computed list of invitees with avatar, name, and position
-- Each invitee shown as a compact row (similar to the Review & Approvals panel style)
-- Group by role type (e.g., "PSSR Lead", "Delivering Parties", "Approving Parties" or "SoF Approvers")
+4. **Import both components**:
+   - `CreatePSSRWizard` for editing
+   - `PSSRDetailOverlay` for review (already imported)
 
-### 3. Update `PSSROverviewTab` to pass `pssrId`
-- Pass `pssrId` to `ScheduleActivitySheet` so it can fetch its own data
+### Flow Diagram
 
-### 4. Fallback key activity rows
-- Make the fallback rows (for pre-UNDER_REVIEW PSSRs) also clickable so they open the scheduling sheet, initializing the activities on the fly if needed
-
-## Technical Details
-
-### Files to modify:
-- **`src/components/pssr/ScheduleActivitySheet.tsx`** - Major refactor: add `pssrId` prop, add data-fetching queries for PSSR details + party profiles + approvers, compute invite list based on activity type, integrate `InvitationPreview`, render invite list section, widen sheet to `sm:max-w-lg`
-- **`src/components/pssr/PSSROverviewTab.tsx`** - Pass `pssrId` to `ScheduleActivitySheet`; make fallback activity rows clickable
-
-### Data fetching inside ScheduleActivitySheet:
-- Query `pssrs` table joined with lead profile for PSSR details
-- Query `pssr_checklist_responses` for delivering/approving roles, then resolve to profiles (same pattern as PSSROverviewTab)
-- Query `pssr_approvers` and `sof_approvers` tables, resolve user profiles
-- Filter: For kick-off/walkdown, use lead + delivering + approving parties. For SoF, use lead + SoF approvers + any approver with role containing "Dep. Plant Director"
-
-### Invite list data structure:
-```typescript
-interface Invitee {
-  name: string;
-  position: string | null;
-  avatarUrl: string | null;
-  group: 'PSSR Lead' | 'Delivering Party' | 'Approving Party' | 'SoF Approver';
-}
+```text
++------------------+     +-----------------------+     +---------------------+
+| Task Detail      | --> | CreatePSSRWizard      | --> | PSSRDetailOverlay   |
+| Sheet            |     | (Edit Mode)           |     | (Review + Approve)  |
+| [Review & Edit]  |     | Scope, Items, Lead... |     | Overview, SoF Cert  |
++------------------+     +-----------------------+     +---------------------+
 ```
+
+This is a single-file change to `TaskDetailSheet.tsx` -- adding state logic and rendering both components conditionally.
+
