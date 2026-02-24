@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CheckCircle, X, Calendar, AlertTriangle, ChevronRight, ExternalLink, Pencil } from 'lucide-react';
+import { CheckCircle, X, Calendar, AlertTriangle, ChevronRight, Pencil } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -7,7 +7,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { PSSRDetailOverlay } from '@/components/pssr/PSSRDetailOverlay';
 import CreatePSSRWizard from '@/components/pssr/CreatePSSRWizard';
 import type { UserTask } from '@/hooks/useUserTasks';
 
@@ -29,7 +28,6 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   const [comment, setComment] = useState('');
   const [action, setAction] = useState<'approve' | 'reject' | null>(null);
   const [wizardOpen, setWizardOpen] = useState(false);
-  const [pssrOverlayOpen, setPssrOverlayOpen] = useState(false);
 
   const handleAction = (type: 'approve' | 'reject') => {
     if (!task) return;
@@ -80,7 +78,6 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   };
 
   const pssrId = task.metadata?.pssr_id as string | undefined;
-  const pssrCode = task.metadata?.pssr_code as string | undefined;
 
   return (
     <>
@@ -132,13 +129,11 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
 
             <Separator />
 
-            {/* Review & Edit CTA - opens the PSSRDetailOverlay */}
+            {/* Review & Edit CTA - opens the wizard in lead-review mode */}
             {pssrId && (
               <Button
                 className="w-full gap-2 bg-muted hover:bg-muted/80 text-foreground font-medium border border-border"
-                onClick={() => {
-                  setWizardOpen(true);
-                }}
+                onClick={() => setWizardOpen(true)}
               >
                 <Pencil className="h-4 w-4" />
                 Review & Edit PSSR
@@ -188,30 +183,17 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
         </SheetContent>
       </Sheet>
 
-      {/* CreatePSSRWizard - Edit Mode */}
+      {/* CreatePSSRWizard - Lead Review Mode with Step 5 Final Review */}
       {pssrId && (
         <CreatePSSRWizard
           open={wizardOpen}
-          onOpenChange={(isOpen) => {
-            setWizardOpen(isOpen);
-            if (!isOpen) {
-              // When wizard closes, open the review overlay
-              setPssrOverlayOpen(true);
-            }
-          }}
+          onOpenChange={setWizardOpen}
           draftPssrId={pssrId}
-        />
-      )}
-
-      {/* PSSR Detail Overlay - Final Review */}
-      {pssrId && (
-        <PSSRDetailOverlay
-          open={pssrOverlayOpen}
-          onOpenChange={setPssrOverlayOpen}
-          pssrId={pssrId}
-          pssrDisplayId={pssrCode || ''}
-          pssrTitle={task.title}
-          status={task.metadata?.action === 'review_draft_pssr' ? 'PENDING_LEAD_REVIEW' : undefined}
+          mode="lead-review"
+          onSuccess={() => {
+            setWizardOpen(false);
+            onOpenChange(false);
+          }}
         />
       )}
     </>
