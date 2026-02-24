@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CheckCircle, X, Calendar, AlertTriangle, ChevronRight, ExternalLink } from 'lucide-react';
+import { CheckCircle, X, Calendar, AlertTriangle, ChevronRight, ExternalLink, Pencil } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { PSSRDetailOverlay } from '@/components/pssr/PSSRDetailOverlay';
+import CreatePSSRWizard from '@/components/pssr/CreatePSSRWizard';
 import type { UserTask } from '@/hooks/useUserTasks';
 
 interface TaskDetailSheetProps {
@@ -27,6 +28,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
 }) => {
   const [comment, setComment] = useState('');
   const [action, setAction] = useState<'approve' | 'reject' | null>(null);
+  const [wizardOpen, setWizardOpen] = useState(false);
   const [pssrOverlayOpen, setPssrOverlayOpen] = useState(false);
 
   const handleAction = (type: 'approve' | 'reject') => {
@@ -135,10 +137,10 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
               <Button
                 className="w-full gap-2 bg-muted hover:bg-muted/80 text-foreground font-medium border border-border"
                 onClick={() => {
-                  setPssrOverlayOpen(true);
+                  setWizardOpen(true);
                 }}
               >
-                <ExternalLink className="h-4 w-4" />
+                <Pencil className="h-4 w-4" />
                 Review & Edit PSSR
                 <ChevronRight className="h-4 w-4 ml-auto" />
               </Button>
@@ -186,7 +188,22 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
         </SheetContent>
       </Sheet>
 
-      {/* PSSR Detail Overlay */}
+      {/* CreatePSSRWizard - Edit Mode */}
+      {pssrId && (
+        <CreatePSSRWizard
+          open={wizardOpen}
+          onOpenChange={(isOpen) => {
+            setWizardOpen(isOpen);
+            if (!isOpen) {
+              // When wizard closes, open the review overlay
+              setPssrOverlayOpen(true);
+            }
+          }}
+          draftPssrId={pssrId}
+        />
+      )}
+
+      {/* PSSR Detail Overlay - Final Review */}
       {pssrId && (
         <PSSRDetailOverlay
           open={pssrOverlayOpen}
