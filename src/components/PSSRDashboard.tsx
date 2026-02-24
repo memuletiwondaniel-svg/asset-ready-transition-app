@@ -178,22 +178,22 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
   // PSSR data - combines database data with defaults for missing fields
   const pssrData = useMemo(() => ({
     id: pssrId,
-    title: dbPssr?.title || dbPssr?.project_name || 'Untitled PSSR',
-    asset: dbPssr?.asset || '',
-    reason: dbPssr?.reason || '',
-    projectId: dbPssr?.project_id || '',
-    projectName: dbPssr?.project_name || '',
-    status: dbPssr?.status || 'Under Review',
+    title: dbPssr?.title || dbPssr?.project_name || 'DP300 HM Additional Compressors',
+    asset: dbPssr?.asset || 'NRNGL Plant',
+    reason: dbPssr?.reason || 'Start-up or Commissioning of a new Asset',
+    projectId: dbPssr?.project_id || 'DP300',
+    projectName: dbPssr?.project_name || 'HM Additional Compressors',
+    status: 'Under Review',
     progress: 75,
-    created: dbPssr?.created_at ? new Date(dbPssr.created_at).toISOString().split('T')[0] : '',
-    dueDate: '',
-    initiator: dbPssr?.pssr_lead?.full_name || '',
+    created: '2024-01-15',
+    dueDate: '2024-02-15',
+    initiator: dbPssr?.pssr_lead?.full_name || 'Ahmed Al-Rashid',
     tier: 'Tier 1',
-    scope: dbPssr?.scope || '',
+    scope: dbPssr?.scope || 'Pre-start-up safety review for the commissioning of new natural gas processing units including safety systems, process controls, and emergency shutdown procedures.',
     scopeImageUrl: dbPssr?.scope_image_url || null,
     scopeImages: dbPssr?.scope_image_url 
       ? [dbPssr.scope_image_url] 
-      : [],
+      : ['/lovable-uploads/a389c47e-ef05-4852-85d3-e4be66d1eb1e.png'],
     
     // Statistics - calculated from category progress
     statistics: {

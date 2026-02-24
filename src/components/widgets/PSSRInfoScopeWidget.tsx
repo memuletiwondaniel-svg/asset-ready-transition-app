@@ -114,7 +114,6 @@ export const PSSRInfoScopeWidget: React.FC<PSSRInfoScopeWidgetProps> = ({
       <div className="space-y-4">
         
         {/* Project - Full Width */}
-        {(projectId || projectName) && (
         <div className="flex flex-col gap-1.5">
           <label className="block text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Project</label>
           <Button
@@ -122,11 +121,10 @@ export const PSSRInfoScopeWidget: React.FC<PSSRInfoScopeWidgetProps> = ({
             className="h-auto p-0 text-sm font-semibold text-primary hover:text-primary/80 text-left break-words whitespace-normal justify-start w-fit"
             onClick={handleProjectClick}
           >
-            <span className="line-clamp-2">{[projectId, projectName].filter(Boolean).join(' - ')}</span>
+            <span className="line-clamp-2">{projectId} - {projectName}</span>
             <ExternalLink className="h-3 w-3 ml-1.5 flex-shrink-0" />
           </Button>
         </div>
-        )}
 
         {/* Reason for PSSR - Full Width */}
         <div className="space-y-1.5">
