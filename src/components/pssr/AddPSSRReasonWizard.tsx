@@ -166,7 +166,7 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
           sof_approver_role_ids: wizardState.sofApproverRoleIds,
           checklist_item_ids: wizardState.checklistItemIds,
           checklist_item_overrides: wizardState.checklistItemOverrides as Json,
-          default_pssr_lead_id: wizardState.pssrLeadId || null,
+          default_pssr_lead_role_id: wizardState.pssrLeadId || null,
         } as any);
 
       if (configError) throw configError;
