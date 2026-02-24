@@ -143,7 +143,7 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
         const loadedSofApprovers = config?.sof_approver_role_ids || [];
         const loadedChecklistIds = config?.checklist_item_ids || [];
         const loadedOverrides = (config?.checklist_item_overrides as ChecklistItemOverrides) || {};
-        const loadedLeadId = (config as any)?.default_pssr_lead_id || '';
+        const loadedLeadId = (config as any)?.default_pssr_lead_role_id || '';
 
         if (config) {
           setPssrApproverRoleIds(loadedPssrApprovers);
@@ -252,7 +252,7 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
           sof_approver_role_ids: sofApproverRoleIds,
           checklist_item_ids: checklistItemIds,
           checklist_item_overrides: checklistItemOverrides as Json,
-          default_pssr_lead_id: pssrLeadId || null,
+          default_pssr_lead_role_id: pssrLeadId || null,
         } as any)
         .eq('reason_id', reasonId);
 

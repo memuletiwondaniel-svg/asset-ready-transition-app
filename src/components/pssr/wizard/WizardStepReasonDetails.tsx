@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -6,13 +6,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Check, ChevronsUpDown } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Check, ChevronsUpDown, Shield, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useRoles } from '@/hooks/useRoles';
 import { useProfileUsers } from '@/hooks/useProfileUsers';
 import { supabase } from '@/integrations/supabase/client';
-
-const PSSR_LEAD_POSITION_KEYWORDS = ['Tech Safety', 'Asset', 'Operations', 'Maintenance', 'MTCE'];
 
 interface PSSRReasonOption {
   id: string;
@@ -26,7 +25,7 @@ interface WizardStepReasonDetailsProps {
   pssrLeadId: string;
   onReasonNameChange: (name: string) => void;
   onDescriptionChange: (description: string) => void;
-  onPssrLeadChange: (userId: string) => void;
+  onPssrLeadChange: (roleId: string) => void;
 }
 
 const WizardStepReasonDetails: React.FC<WizardStepReasonDetailsProps> = ({
@@ -60,7 +59,7 @@ const WizardStepReasonDetails: React.FC<WizardStepReasonDetailsProps> = ({
   const isOther = reasonName !== '' && !knownNames.includes(reasonName);
   const [selectValue, setSelectValue] = useState(isOther ? 'Other' : reasonName);
   const [customReason, setCustomReason] = useState(isOther ? reasonName : '');
-  const [leadPopoverOpen, setLeadPopoverOpen] = useState(false);
+  const [rolePopoverOpen, setRolePopoverOpen] = useState(false);
 
   // Sync selectValue when reasonOptions load
   useEffect(() => {
@@ -75,21 +74,19 @@ const WizardStepReasonDetails: React.FC<WizardStepReasonDetailsProps> = ({
 
   const selectedReason = reasonOptions.find(r => r.name === selectValue);
 
-  const { data: profileUsers, isLoading: usersLoading } = useProfileUsers();
+  const { roles = [], isLoading: rolesLoading } = useRoles();
+  const { data: profileUsers } = useProfileUsers();
 
-  // Sort: prioritize Tech Safety, Asset, Operations, Maintenance positions
-  const sortedUsers = useMemo(() => {
-    if (!profileUsers) return [];
-    return [...profileUsers].sort((a, b) => {
-      const aMatch = PSSR_LEAD_POSITION_KEYWORDS.some(k => a.position?.toLowerCase().includes(k.toLowerCase()));
-      const bMatch = PSSR_LEAD_POSITION_KEYWORDS.some(k => b.position?.toLowerCase().includes(k.toLowerCase()));
-      if (aMatch && !bMatch) return -1;
-      if (!aMatch && bMatch) return 1;
-      return (a.full_name || '').localeCompare(b.full_name || '');
-    });
-  }, [profileUsers]);
+  const selectedRole = roles.find(r => r.id === pssrLeadId);
 
-  const selectedUser = profileUsers?.find(u => u.user_id === pssrLeadId);
+  // Find matching profiles for the selected role
+  const matchingProfiles = pssrLeadId && selectedRole && profileUsers
+    ? profileUsers.filter(u => {
+        const pos = u.position?.toLowerCase() || '';
+        const roleName = selectedRole.name.toLowerCase();
+        return pos.includes(roleName) || roleName.includes(pos);
+      }).slice(0, 5)
+    : [];
 
   const handleSelectChange = (value: string) => {
     setSelectValue(value);
@@ -146,38 +143,33 @@ const WizardStepReasonDetails: React.FC<WizardStepReasonDetailsProps> = ({
         )}
       </div>
 
-      {/* PSSR Lead Selector */}
+      {/* PSSR Lead Role Selector */}
       <div className="space-y-3">
-        <Label className="text-base font-medium">PSSR Lead</Label>
+        <Label className="text-base font-medium">
+          <div className="flex items-center gap-2">
+            <Shield className="h-4 w-4 text-primary" />
+            PSSR Lead Role
+          </div>
+        </Label>
         <p className="text-sm text-muted-foreground -mt-1">
-          Usually from Tech Safety, Asset, Operations or Maintenance
+          Select the role responsible for leading the PSSR. The actual person will be resolved based on the plant/location when the PSSR is created.
         </p>
-        <Popover open={leadPopoverOpen} onOpenChange={setLeadPopoverOpen} modal={true}>
+        <Popover open={rolePopoverOpen} onOpenChange={setRolePopoverOpen} modal={true}>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
               role="combobox"
-              aria-expanded={leadPopoverOpen}
+              aria-expanded={rolePopoverOpen}
               className="w-full justify-between h-10"
             >
-              {selectedUser ? (
+              {selectedRole ? (
                 <div className="flex items-center gap-2">
-                  <Avatar className="h-6 w-6">
-                    <AvatarImage src={selectedUser.avatar_url || ''} />
-                    <AvatarFallback className="text-xs">
-                      {selectedUser.full_name?.charAt(0) || '?'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="truncate">{selectedUser.full_name}</span>
-                  {selectedUser.position && (
-                    <span className="text-xs text-muted-foreground truncate ml-1">
-                      — {selectedUser.position}
-                    </span>
-                  )}
+                  <Shield className="h-4 w-4 text-primary shrink-0" />
+                  <span className="truncate">{selectedRole.name}</span>
                 </div>
               ) : (
                 <span className="text-muted-foreground">
-                  {usersLoading ? 'Loading...' : 'Search and select PSSR Lead...'}
+                  {rolesLoading ? 'Loading roles...' : 'Select a PSSR Lead role...'}
                 </span>
               )}
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -185,60 +177,54 @@ const WizardStepReasonDetails: React.FC<WizardStepReasonDetailsProps> = ({
           </PopoverTrigger>
           <PopoverContent className="w-[400px] p-0" align="start">
             <Command>
-              <CommandInput placeholder="Search by name or position..." />
+              <CommandInput placeholder="Search roles..." />
               <CommandList>
-                <CommandEmpty>No users found.</CommandEmpty>
+                <CommandEmpty>No roles found.</CommandEmpty>
                 <CommandGroup className="max-h-[250px] overflow-y-auto">
-                  {sortedUsers.map((user) => {
-                    const isRecommended = PSSR_LEAD_POSITION_KEYWORDS.some(k =>
-                      user.position?.toLowerCase().includes(k.toLowerCase())
-                    );
-                    return (
-                      <CommandItem
-                        key={user.user_id}
-                        value={`${user.full_name} ${user.position || ''}`}
-                        onSelect={() => {
-                          onPssrLeadChange(user.user_id === pssrLeadId ? '' : user.user_id);
-                          setLeadPopoverOpen(false);
-                        }}
-                      >
-                        <div className="flex items-center gap-2 w-full">
-                          <Avatar className="h-6 w-6">
-                            <AvatarImage src={user.avatar_url || ''} />
-                            <AvatarFallback className="text-xs">
-                              {user.full_name?.charAt(0) || '?'}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex flex-col flex-1 min-w-0">
-                            <div className="flex items-center gap-1.5">
-                              <span className="truncate">{user.full_name}</span>
-                              {isRecommended && (
-                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary font-medium shrink-0">
-                                  Recommended
-                                </span>
-                              )}
-                            </div>
-                            {user.position && (
-                              <span className="text-xs text-muted-foreground truncate">
-                                {user.position}
-                              </span>
-                            )}
-                          </div>
-                          <Check
-                            className={cn(
-                              'h-4 w-4 shrink-0',
-                              pssrLeadId === user.user_id ? 'opacity-100' : 'opacity-0'
-                            )}
-                          />
-                        </div>
-                      </CommandItem>
-                    );
-                  })}
+                  {roles.map((role) => (
+                    <CommandItem
+                      key={role.id}
+                      value={role.name}
+                      onSelect={() => {
+                        onPssrLeadChange(role.id === pssrLeadId ? '' : role.id);
+                        setRolePopoverOpen(false);
+                      }}
+                    >
+                      <div className="flex items-center gap-2 w-full">
+                        <Shield className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <span className="flex-1 truncate">{role.name}</span>
+                        <Check
+                          className={cn(
+                            'h-4 w-4 shrink-0',
+                            pssrLeadId === role.id ? 'opacity-100' : 'opacity-0'
+                          )}
+                        />
+                      </div>
+                    </CommandItem>
+                  ))}
                 </CommandGroup>
               </CommandList>
             </Command>
           </PopoverContent>
         </Popover>
+
+        {/* Matching profiles preview */}
+        {selectedRole && matchingProfiles.length > 0 && (
+          <div className="bg-muted/30 rounded-md px-3 py-2.5 space-y-1.5">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Users className="h-3.5 w-3.5" />
+              <span>Matching profiles for "{selectedRole.name}":</span>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {matchingProfiles.map(u => (
+                <Badge key={u.user_id} variant="secondary" className="text-xs font-normal">
+                  {u.full_name}
+                  {u.position && <span className="text-muted-foreground ml-1">— {u.position}</span>}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Additional Description */}
