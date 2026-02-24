@@ -1,50 +1,45 @@
 
 
-# Replace `/pssr/{uuid}` Route with PSSRDetailOverlay
+# Codebase Cleanup: Remove Dead `/pssr/{uuid}` References
 
-## Problem
-The `/pssr/{uuid}` route renders the older `PSSRDashboard` widget-based view. Meanwhile, the `PSSRDetailOverlay` already provides a richer, full-screen detail experience for "Under Review", "Completed", and "Pending Lead Review" statuses. Draft PSSRs and the QuickView overlay still navigate to the old route unnecessarily.
+## Summary
+The `/pssr/:id` route was already removed from `App.tsx` and `PSSRDetailsPage.tsx` was deleted. Several files still reference this dead route or contain unused code. This plan removes all orphaned references safely.
 
-## What Changes
+## Changes
 
-### 1. `PSSRSummaryPage.tsx` -- Handle ALL statuses via overlay
-Currently, `handleViewDetails()` only opens the overlay for non-Draft statuses. Draft PSSRs fall through to `navigate(/pssr/{id})`.
+### 1. `src/components/PSSRSummaryPage.tsx`
+- Remove the `PSSRDashboard` import (line 28)
+- Remove the dead `activeView === 'details'` render branch (lines 657-659) -- this path is no longer reachable since `handleViewDetails` was changed to use the overlay
+- Remove `'details'` from the `activeView` type union (line 80)
+- Remove the `case 'details'` breadcrumb branch (lines 551-576)
 
-**Change**: Open the `PSSRDetailOverlay` for **all** statuses, including Draft. Remove the fallback navigation to `/pssr/{id}`.
+### 2. `src/components/pssr/PSSRQuickViewOverlay.tsx`
+- Remove the fallback `navigate(/pssr/${pssrId})` in `handleViewFullDetails` (line 219) -- the `onViewFullDetails` callback is always provided by the parent. Remove the `useNavigate` import if no longer needed.
 
-### 2. `PSSRQuickViewOverlay.tsx` -- Open overlay instead of navigating
-The "View Full PSSR Details" button currently navigates to `/pssr/{id}`. 
+### 3. `src/components/pssr/walkdown/ScheduleWalkdownModal.tsx`
+- Keep the PSSR link as-is. This link is used in calendar invites/emails sent externally. Since `/pssr/:id/review` sub-routes still exist, the link format is still meaningful for sharing context. No change needed here.
 
-**Change**: Instead of navigating, close the QuickView and signal the parent (PSSRSummaryPage) to open the `PSSRDetailOverlay`. This requires:
-- Adding an `onViewFullDetails` callback prop
-- The parent wires this to open the detail overlay with the correct PSSR data
+### 4. `src/components/pssr/ScheduleActivitySheet.tsx`
+- Same as above -- the link is embedded in invitation previews. Keep as-is.
 
-### 3. `PSSRDetailOverlay.tsx` -- Support Draft status
-Ensure the overlay renders correctly for Draft PSSRs (it may already work, but we verify that no UI elements are gated on non-Draft status).
+### 5. `src/components/PSSRDashboard.tsx`
+- Keep for now. It may still be useful as a component rendered inside the overlay or other contexts in the future. It has no route dependency.
 
-### 4. Remove `/pssr/{id}` route and `PSSRDetailsPage.tsx`
-- Remove the `<Route path="/pssr/:id" element={<PSSRDetailsPage />} />` from `App.tsx`
-- The sub-routes (`/pssr/:id/review`, `/pssr/:id/approve`, `/pssr/:id/sof`) remain untouched since they serve different purposes (approver workflow)
-- `PSSRDashboard.tsx` can be kept for now (it may have other uses) or flagged for future cleanup
+### 6. `src/components/PSSRModule.tsx`
+- Delete this file entirely. It is not imported anywhere in the codebase (dead code).
 
-## Flow After Changes
-
-```text
-User clicks PSSR row in summary table (any status)
-  -> PSSRDetailOverlay opens (full-screen overlay, no route change)
-
-User clicks "View Full Details" in QuickView
-  -> QuickView closes -> PSSRDetailOverlay opens (no route change)
-```
+### 7. `supabase/functions/ai-chat/index.ts`
+- Update the `pssr-detail` navigation helper (line 3151) to remove the `/pssr/${id}` path or redirect to `/pssr` instead
+- Update the single-PSSR match navigation (line 4227) similarly
 
 ## Files Modified
-- `src/components/PSSRSummaryPage.tsx` -- unified handleViewDetails for all statuses
-- `src/components/pssr/PSSRQuickViewOverlay.tsx` -- callback prop instead of navigate
-- `src/App.tsx` -- remove `/pssr/:id` route
-- `src/pages/PSSRDetailsPage.tsx` -- can be deleted (no longer referenced)
+- `src/components/PSSRSummaryPage.tsx` -- remove dead PSSRDashboard code path
+- `src/components/pssr/PSSRQuickViewOverlay.tsx` -- remove fallback navigate
+- `src/components/PSSRModule.tsx` -- delete (unused)
+- `supabase/functions/ai-chat/index.ts` -- update navigation references
 
-## Technical Notes
-- The `/pssr/:id/review`, `/pssr/:id/approve`, and `/pssr/:id/sof` routes are unaffected
-- No database changes required
-- The `PSSRDashboard` component is not deleted yet in case it is referenced elsewhere; it can be cleaned up in a follow-up
+## Files NOT Changed (intentionally kept)
+- `ScheduleWalkdownModal.tsx` and `ScheduleActivitySheet.tsx` -- external shareable links
+- `PSSRDashboard.tsx` -- still a valid component, just no longer route-mounted
+- All `/pssr/:id/review`, `/pssr/:id/approve`, `/pssr/:id/sof` routes -- unaffected
 
