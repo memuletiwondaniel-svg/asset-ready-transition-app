@@ -1,0 +1,1 @@
+UPDATE pssr_reasons SET name = 'Retired or idle equipment (over 6 months)', updated_at = now() WHERE id = '14e91ac8-b5e3-410a-abf8-c6e7b3aed602';
