@@ -77,7 +77,7 @@ const WizardStepApproversSetup: React.FC<WizardStepApproversSetupProps> = ({
         <p className="text-xs text-muted-foreground/70">
           Usually from Tech Safety, Asset, Operations or Maintenance. Search by name or role.
         </p>
-        <Popover open={leadPopoverOpen} onOpenChange={setLeadPopoverOpen}>
+        <Popover open={leadPopoverOpen} onOpenChange={setLeadPopoverOpen} modal={true}>
           <PopoverTrigger asChild>
             <Button
               variant="outline"

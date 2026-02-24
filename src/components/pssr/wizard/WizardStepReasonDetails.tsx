@@ -111,7 +111,7 @@ const WizardStepReasonDetails: React.FC<WizardStepReasonDetailsProps> = ({
         <p className="text-sm text-muted-foreground -mt-1">
           Usually from Tech Safety, Asset, Operations or Maintenance
         </p>
-        <Popover open={leadPopoverOpen} onOpenChange={setLeadPopoverOpen}>
+        <Popover open={leadPopoverOpen} onOpenChange={setLeadPopoverOpen} modal={true}>
           <PopoverTrigger asChild>
             <Button
               variant="outline"

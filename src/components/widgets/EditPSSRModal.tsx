@@ -302,7 +302,7 @@ export const EditPSSRModal: React.FC<EditPSSRModalProps> = ({
 
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Lead Reviewer</Label>
-                <Popover open={leadPopoverOpen} onOpenChange={setLeadPopoverOpen}>
+                <Popover open={leadPopoverOpen} onOpenChange={setLeadPopoverOpen} modal={true}>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
