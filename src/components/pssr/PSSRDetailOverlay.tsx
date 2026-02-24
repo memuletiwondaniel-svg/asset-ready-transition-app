@@ -71,7 +71,36 @@ export const PSSRDetailOverlay: React.FC<PSSRDetailOverlayProps> = ({
   const [currentStatus, setCurrentStatus] = useState(status);
   const statusConfig = getStatusConfig(currentStatus || '');
   const queryClient = useQueryClient();
-  const isPendingLeadReview = (currentStatus || '').toUpperCase().replace(/[\s-]+/g, '_') === 'PENDING_LEAD_REVIEW';
+  const normalizedStatus = (currentStatus || '').toUpperCase().replace(/[\s-]+/g, '_');
+  const isPendingLeadReview = normalizedStatus === 'PENDING_LEAD_REVIEW';
+  const isDraft = normalizedStatus === 'DRAFT';
+  const canRevertToStatus = !isDraft; // Show revert button for any non-draft status
+
+  // Fetch current user ID
+  const { data: currentUser } = useQuery({
+    queryKey: ['current-auth-user'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      return user;
+    },
+    staleTime: 300000,
+  });
+
+  // Fetch PSSR lead ID for this PSSR
+  const { data: pssrLeadData } = useQuery({
+    queryKey: ['pssr-lead', pssrId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('pssrs')
+        .select('pssr_lead_id')
+        .eq('id', pssrId)
+        .single();
+      return data;
+    },
+    enabled: !!pssrId,
+  });
+
+  const isCurrentUserPSSRLead = !!(currentUser?.id && pssrLeadData?.pssr_lead_id && currentUser.id === pssrLeadData.pssr_lead_id);
 
   // Revert to Draft mutation
   const revertToDraft = useMutation({
@@ -93,9 +122,8 @@ export const PSSRDetailOverlay: React.FC<PSSRDetailOverlayProps> = ({
         .filter('metadata->>action', 'eq', 'review_draft_pssr');
 
       if (tasks && tasks.length > 0) {
-        const taskIds = tasks.map(t => t.id);
-        for (const taskId of taskIds) {
-          await supabase.from('user_tasks').delete().eq('id', taskId);
+        for (const task of tasks) {
+          await supabase.from('user_tasks').delete().eq('id', task.id);
         }
       }
     },
@@ -480,15 +508,16 @@ export const PSSRDetailOverlay: React.FC<PSSRDetailOverlayProps> = ({
               {statusConfig.label}
             </Badge>
 
-            {/* Revert to Draft button - only for Pending Lead Review */}
-            {isPendingLeadReview && (
+            {/* Revert to Draft - always visible for non-draft, only actionable by PSSR Lead */}
+            {canRevertToStatus && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button
                     variant="outline"
                     size="sm"
                     className="text-xs gap-1.5 h-7"
-                    disabled={revertToDraft.isPending}
+                    disabled={revertToDraft.isPending || !isCurrentUserPSSRLead}
+                    title={!isCurrentUserPSSRLead ? 'Only the PSSR Lead can revert to draft' : 'Revert this PSSR to Draft status'}
                   >
                     {revertToDraft.isPending ? (
                       <Loader2 className="h-3 w-3 animate-spin" />
