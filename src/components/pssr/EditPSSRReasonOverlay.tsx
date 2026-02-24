@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -92,6 +92,20 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
   const [checklistItemOverrides, setChecklistItemOverrides] = useState<ChecklistItemOverrides>({});
   const [naItemIds, setNaItemIds] = useState<string[]>([]);
   const [customItems, setCustomItems] = useState<import('@/hooks/usePSSRChecklistLibrary').ChecklistItem[]>([]);
+  const [showUnsavedConfirm, setShowUnsavedConfirm] = useState(false);
+
+  // Snapshot of initial values to detect dirty state
+  const initialSnapshot = useRef<{
+    reasonName: string;
+    description: string;
+    categoryId: string | null;
+    subCategory: string | null;
+    pssrLeadId: string;
+    pssrApproverRoleIds: string[];
+    sofApproverRoleIds: string[];
+    checklistItemIds: string[];
+    checklistItemOverrides: ChecklistItemOverrides;
+  } | null>(null);
 
   // Load full configuration including checklist items
   useEffect(() => {
@@ -125,13 +139,32 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
         setDescription(reason.description || '');
         setStatus(reason.status as PSSRReasonStatus);
         
+        const loadedPssrApprovers = config?.pssr_approver_role_ids || [];
+        const loadedSofApprovers = config?.sof_approver_role_ids || [];
+        const loadedChecklistIds = config?.checklist_item_ids || [];
+        const loadedOverrides = (config?.checklist_item_overrides as ChecklistItemOverrides) || {};
+        const loadedLeadId = (config as any)?.default_pssr_lead_id || '';
+
         if (config) {
-          setPssrApproverRoleIds(config.pssr_approver_role_ids || []);
-          setSofApproverRoleIds(config.sof_approver_role_ids || []);
-          setChecklistItemIds(config.checklist_item_ids || []);
-          setChecklistItemOverrides((config.checklist_item_overrides as ChecklistItemOverrides) || {});
-          setPssrLeadId((config as any).default_pssr_lead_id || '');
+          setPssrApproverRoleIds(loadedPssrApprovers);
+          setSofApproverRoleIds(loadedSofApprovers);
+          setChecklistItemIds(loadedChecklistIds);
+          setChecklistItemOverrides(loadedOverrides);
+          setPssrLeadId(loadedLeadId);
         }
+
+        // Store initial snapshot for dirty tracking
+        initialSnapshot.current = {
+          reasonName: reason.name,
+          description: reason.description || '',
+          categoryId: reason.category_id,
+          subCategory: reason.sub_category as string | null,
+          pssrLeadId: loadedLeadId,
+          pssrApproverRoleIds: loadedPssrApprovers,
+          sofApproverRoleIds: loadedSofApprovers,
+          checklistItemIds: loadedChecklistIds,
+          checklistItemOverrides: loadedOverrides,
+        };
       } catch (error) {
         console.error('Failed to load configuration:', error);
         toast.error('Failed to load template configuration');
@@ -143,6 +176,22 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
     loadConfiguration();
   }, [open, reasonId]);
 
+  // Dirty state detection
+  const isDirty = useMemo(() => {
+    if (!initialSnapshot.current) return false;
+    const s = initialSnapshot.current;
+    if (formReasonName !== s.reasonName) return true;
+    if (description !== s.description) return true;
+    if (formCategoryId !== s.categoryId) return true;
+    if (subCategory !== s.subCategory) return true;
+    if (pssrLeadId !== s.pssrLeadId) return true;
+    if (JSON.stringify([...pssrApproverRoleIds].sort()) !== JSON.stringify([...s.pssrApproverRoleIds].sort())) return true;
+    if (JSON.stringify([...sofApproverRoleIds].sort()) !== JSON.stringify([...s.sofApproverRoleIds].sort())) return true;
+    if (JSON.stringify([...checklistItemIds].sort()) !== JSON.stringify([...s.checklistItemIds].sort())) return true;
+    if (JSON.stringify(checklistItemOverrides) !== JSON.stringify(s.checklistItemOverrides)) return true;
+    return false;
+  }, [formReasonName, description, formCategoryId, subCategory, pssrLeadId, pssrApproverRoleIds, sofApproverRoleIds, checklistItemIds, checklistItemOverrides]);
+
   // Reset step when modal opens
   useEffect(() => {
     if (open) {
@@ -151,6 +200,16 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
   }, [open]);
 
   const handleClose = () => {
+    if (isDirty) {
+      setShowUnsavedConfirm(true);
+      return;
+    }
+    setCurrentStep(1);
+    onOpenChange(false);
+  };
+
+  const handleForceClose = () => {
+    setShowUnsavedConfirm(false);
     setCurrentStep(1);
     onOpenChange(false);
   };
@@ -286,6 +345,12 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
                   <StatusIcon className="h-3 w-3 mr-1" />
                   {statusConfig.label}
                 </Badge>
+                {isDirty && (
+                  <Badge variant="outline" className="border-amber-400 text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20 animate-in fade-in duration-300">
+                    <span className="h-1.5 w-1.5 rounded-full bg-amber-500 mr-1.5 animate-pulse" />
+                    Unsaved changes
+                  </Badge>
+                )}
               </div>
             
             {/* Progress Indicator */}
@@ -589,6 +654,30 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
               }}
             >
               Save Changes
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Unsaved Changes Confirmation Dialog */}
+      <AlertDialog open={showUnsavedConfirm} onOpenChange={setShowUnsavedConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              Unsaved Changes
+            </AlertDialogTitle>
+            <AlertDialogDescription className="pt-2">
+              You have unsaved changes. Are you sure you want to close? Your changes will be lost.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Continue Editing</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleForceClose}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Discard Changes
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
