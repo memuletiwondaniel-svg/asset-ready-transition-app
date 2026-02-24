@@ -528,31 +528,29 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
                 Cancel
               </Button>
               
-              {currentStep < STEPS.length ? (
+              <Button 
+                variant="outline" 
+                onClick={() => setShowSaveConfirm(true)} 
+                disabled={!formReasonName.trim() || isSaving}
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-2" />
+                    Save Changes
+                  </>
+                )}
+              </Button>
+
+              {currentStep < STEPS.length && (
                 <Button onClick={handleNext}>
                   Next
                   <ChevronRight className="h-4 w-4 ml-2" />
                 </Button>
-              ) : (
-                <>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setShowSaveConfirm(true)} 
-                    disabled={!formReasonName.trim() || isSaving}
-                  >
-                    {isSaving ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Saving...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="h-4 w-4 mr-2" />
-                        Save Changes
-                      </>
-                    )}
-                  </Button>
-                </>
               )}
             </div>
           </div>
