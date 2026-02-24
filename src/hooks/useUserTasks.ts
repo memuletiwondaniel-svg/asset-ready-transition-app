@@ -269,6 +269,103 @@ async function syncBackToBack(
 }
 
 /**
+ * PSSR workflow sync: transitions PSSR status based on task approval/rejection.
+ */
+async function syncPSSRWorkflow(
+  meta: any,
+  taskType: string,
+  status: 'completed' | 'cancelled',
+  queryClient: ReturnType<typeof useQueryClient>
+) {
+  const pssrId = meta?.pssr_id;
+  const source = meta?.source;
+  const action = meta?.action;
+
+  // Only handle pssr_workflow tasks
+  if (!pssrId || (source !== 'pssr_workflow' && action !== 'review_draft_pssr')) return;
+  if (taskType !== 'review') return;
+
+  if (status === 'completed') {
+    // Approve: transition PSSR to UNDER_REVIEW
+    await supabase
+      .from('pssrs')
+      .update({ status: 'UNDER_REVIEW' })
+      .eq('id', pssrId);
+
+    // Initialize key activities if they don't exist yet
+    const { data: pssrData } = await supabase
+      .from('pssrs')
+      .select('id, title, user_id')
+      .eq('id', pssrId)
+      .single();
+
+    if (pssrData) {
+      const DEFAULT_ACTIVITIES = [
+        { activity_type: 'kickoff', label: 'PSSR Kick-off', display_order: 1 },
+        { activity_type: 'walkdown', label: 'PSSR Walkdown', display_order: 2 },
+        { activity_type: 'sof_meeting', label: 'SoF Meeting', display_order: 3 },
+      ];
+
+      const { data: existing } = await supabase
+        .from('pssr_key_activities')
+        .select('id')
+        .eq('pssr_id', pssrId)
+        .limit(1);
+
+      if (!existing || existing.length === 0) {
+        const { data: inserted } = await supabase
+          .from('pssr_key_activities')
+          .insert(DEFAULT_ACTIVITIES.map(a => ({ pssr_id: pssrId, ...a })))
+          .select('id, label, activity_type');
+
+        // Create schedule tasks for the PSSR creator
+        if (inserted && pssrData.user_id) {
+          const scheduleTasks = inserted.map(act => ({
+            user_id: pssrData.user_id,
+            title: `Schedule ${act.label}`,
+            description: `Schedule the ${act.label} for PSSR: ${pssrData.title}`,
+            priority: 'High',
+            type: 'action',
+            status: 'pending',
+            metadata: {
+              pssr_id: pssrId,
+              activity_id: act.id,
+              activity_type: act.activity_type,
+              module: 'pssr',
+            },
+          }));
+
+          const { data: taskData } = await supabase
+            .from('user_tasks')
+            .insert(scheduleTasks)
+            .select('id, metadata');
+
+          if (taskData) {
+            await Promise.all(taskData.map(t => {
+              const m = t.metadata as Record<string, any>;
+              return supabase
+                .from('pssr_key_activities')
+                .update({ task_id: t.id })
+                .eq('id', m.activity_id);
+            }));
+          }
+        }
+      }
+    }
+  } else if (status === 'cancelled') {
+    // Reject: revert PSSR to DRAFT
+    await supabase
+      .from('pssrs')
+      .update({ status: 'DRAFT' })
+      .eq('id', pssrId);
+  }
+
+  // Invalidate PSSR queries so UI reflects changes
+  queryClient.invalidateQueries({ queryKey: ['pssrs'] });
+  queryClient.invalidateQueries({ queryKey: ['pssr-detail', pssrId] });
+}
+
+/**
  * Full post-completion handler that runs all sync logic for a single task.
  */
 async function runPostCompletionSync(
@@ -289,6 +386,9 @@ async function runPostCompletionSync(
 
   // P2A Handover approval sync
   await syncP2AApproval(meta, completedTask.type, status, queryClient, userId);
+
+  // PSSR workflow sync (review approve/reject)
+  await syncPSSRWorkflow(meta, completedTask.type, status, queryClient);
 
   // VCR Template sync (only on approval/completion)
   if (status === 'completed') {
