@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { CheckCircle, X, Calendar, AlertTriangle, ChevronRight, ExternalLink } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -8,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { PSSRDetailOverlay } from '@/components/pssr/PSSRDetailOverlay';
 import type { UserTask } from '@/hooks/useUserTasks';
 
 interface TaskDetailSheetProps {
@@ -25,9 +25,9 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   onApprove,
   onReject,
 }) => {
-  const navigate = useNavigate();
   const [comment, setComment] = useState('');
   const [action, setAction] = useState<'approve' | 'reject' | null>(null);
+  const [pssrOverlayOpen, setPssrOverlayOpen] = useState(false);
 
   const handleAction = (type: 'approve' | 'reject') => {
     if (!task) return;
@@ -77,111 +77,126 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
     }
   };
 
+  const pssrId = task.metadata?.pssr_id as string | undefined;
+  const pssrCode = task.metadata?.pssr_code as string | undefined;
+
   return (
-    <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetContent className="sm:max-w-lg overflow-y-auto">
-        <SheetHeader className="pb-4">
-          <div className="flex items-center gap-2 flex-wrap">
-            {getTypeBadge(task.type)}
-            {getPriorityBadge(task.priority)}
-          </div>
-          <SheetTitle className="text-left text-lg leading-snug mt-2">
-            {task.title}
-          </SheetTitle>
-        </SheetHeader>
+    <>
+      <Sheet open={open} onOpenChange={handleOpenChange}>
+        <SheetContent className="sm:max-w-lg overflow-y-auto">
+          <SheetHeader className="pb-4">
+            <div className="flex items-center gap-2 flex-wrap">
+              {getTypeBadge(task.type)}
+              {getPriorityBadge(task.priority)}
+            </div>
+            <SheetTitle className="text-left text-lg leading-snug mt-2">
+              {task.title}
+            </SheetTitle>
+          </SheetHeader>
 
-        <div className="space-y-5">
-          {/* Details Section */}
-          <div className="space-y-3">
-            {task.description && (
-              <div>
-                <p className="text-sm text-muted-foreground font-medium mb-1">Description</p>
-                <p className="text-sm text-foreground">{task.description}</p>
-              </div>
-            )}
+          <div className="space-y-5">
+            {/* Details Section */}
+            <div className="space-y-3">
+              {task.description && (
+                <div>
+                  <p className="text-sm text-muted-foreground font-medium mb-1">Description</p>
+                  <p className="text-sm text-foreground">{task.description}</p>
+                </div>
+              )}
 
-            <div className="flex items-center gap-4 text-sm">
-              <div className="flex items-center gap-1.5 text-muted-foreground">
-                <Calendar className="h-3.5 w-3.5" />
-                <span>Created {format(new Date(task.created_at), 'MMM d, yyyy')}</span>
+              <div className="flex items-center gap-4 text-sm">
+                <div className="flex items-center gap-1.5 text-muted-foreground">
+                  <Calendar className="h-3.5 w-3.5" />
+                  <span>Created {format(new Date(task.created_at), 'MMM d, yyyy')}</span>
+                </div>
+                {daysPending > 0 && (
+                  <div className={cn(
+                    "flex items-center gap-1.5",
+                    daysPending >= 7 ? "text-destructive" : daysPending >= 3 ? "text-amber-600" : "text-muted-foreground"
+                  )}>
+                    {daysPending >= 7 && <AlertTriangle className="h-3.5 w-3.5" />}
+                    <span>{daysPending} day{daysPending !== 1 ? 's' : ''} pending</span>
+                  </div>
+                )}
               </div>
-              {daysPending > 0 && (
-                <div className={cn(
-                  "flex items-center gap-1.5",
-                  daysPending >= 7 ? "text-destructive" : daysPending >= 3 ? "text-amber-600" : "text-muted-foreground"
-                )}>
-                  {daysPending >= 7 && <AlertTriangle className="h-3.5 w-3.5" />}
-                  <span>{daysPending} day{daysPending !== 1 ? 's' : ''} pending</span>
+
+              {task.due_date && (
+                <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <Calendar className="h-3.5 w-3.5" />
+                  <span>Due {format(new Date(task.due_date), 'MMM d, yyyy')}</span>
                 </div>
               )}
             </div>
 
-            {task.due_date && (
-              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                <Calendar className="h-3.5 w-3.5" />
-                <span>Due {format(new Date(task.due_date), 'MMM d, yyyy')}</span>
-              </div>
+            <Separator />
+
+            {/* Review & Edit CTA - opens the PSSRDetailOverlay */}
+            {pssrId && (
+              <Button
+                className="w-full gap-2 bg-muted hover:bg-muted/80 text-foreground font-medium border border-border"
+                onClick={() => {
+                  setPssrOverlayOpen(true);
+                }}
+              >
+                <ExternalLink className="h-4 w-4" />
+                Review & Edit PSSR
+                <ChevronRight className="h-4 w-4 ml-auto" />
+              </Button>
             )}
-          </div>
 
-          <Separator />
+            <Separator />
 
-          {/* Review & Edit CTA */}
-          {task.metadata?.pssr_id && (
-            <Button
-              className="w-full gap-2 bg-muted hover:bg-muted/80 text-foreground font-medium border border-border"
-              onClick={() => {
-                // Always use the UUID (pssr_id) for navigation, not the human-readable code
-                navigate(`/pssr/${task.metadata?.pssr_id}`);
-                onOpenChange(false);
-              }}
-            >
-              <ExternalLink className="h-4 w-4" />
-              Review & Edit PSSR
-              <ChevronRight className="h-4 w-4 ml-auto" />
-            </Button>
-          )}
+            {/* Comment Section */}
+            <div>
+              <label className="text-sm font-medium text-foreground mb-2 block">
+                Comments <span className="text-muted-foreground font-normal">(optional)</span>
+              </label>
+              <Textarea
+                placeholder="Add any comments or notes about your decision..."
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                className="min-h-[100px] resize-none"
+              />
+            </div>
 
-          <Separator />
+            <Separator />
 
-          {/* Comment Section */}
-          <div>
-            <label className="text-sm font-medium text-foreground mb-2 block">
-              Comments <span className="text-muted-foreground font-normal">(optional)</span>
-            </label>
-            <Textarea
-              placeholder="Add any comments or notes about your decision..."
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              className="min-h-[100px] resize-none"
-            />
-          </div>
-
-          <Separator />
-
-          {/* Action Buttons */}
-          <div className="flex flex-col gap-3">
-            <p className="text-sm font-medium text-foreground">Decision</p>
-            <div className="flex items-center gap-3">
-              <Button
-                className="flex-1 gap-2 bg-green-600 hover:bg-green-700 text-white"
-                onClick={() => handleAction('approve')}
-              >
-                <CheckCircle className="h-4 w-4" />
-                Approve
-              </Button>
-              <Button
-                variant="destructive"
-                className="flex-1 gap-2"
-                onClick={() => handleAction('reject')}
-              >
-                <X className="h-4 w-4" />
-                Reject
-              </Button>
+            {/* Action Buttons */}
+            <div className="flex flex-col gap-3">
+              <p className="text-sm font-medium text-foreground">Decision</p>
+              <div className="flex items-center gap-3">
+                <Button
+                  className="flex-1 gap-2 bg-green-600 hover:bg-green-700 text-white"
+                  onClick={() => handleAction('approve')}
+                >
+                  <CheckCircle className="h-4 w-4" />
+                  Approve
+                </Button>
+                <Button
+                  variant="destructive"
+                  className="flex-1 gap-2"
+                  onClick={() => handleAction('reject')}
+                >
+                  <X className="h-4 w-4" />
+                  Reject
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
-      </SheetContent>
-    </Sheet>
+        </SheetContent>
+      </Sheet>
+
+      {/* PSSR Detail Overlay */}
+      {pssrId && (
+        <PSSRDetailOverlay
+          open={pssrOverlayOpen}
+          onOpenChange={setPssrOverlayOpen}
+          pssrId={pssrId}
+          pssrDisplayId={pssrCode || ''}
+          pssrTitle={task.title}
+          status={task.metadata?.action === 'review_draft_pssr' ? 'PENDING_LEAD_REVIEW' : undefined}
+        />
+      )}
+    </>
   );
 };
