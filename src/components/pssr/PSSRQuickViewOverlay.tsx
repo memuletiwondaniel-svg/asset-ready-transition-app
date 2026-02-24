@@ -30,7 +30,7 @@ import {
   Settings2,
   Layers
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+
 import { usePSSRCategoryProgress } from '@/hooks/usePSSRCategoryProgress';
 import { usePSSRDetails } from '@/hooks/usePSSRDetails';
 import { useQuery } from '@tanstack/react-query';
@@ -122,7 +122,6 @@ export const PSSRQuickViewOverlay: React.FC<PSSRQuickViewOverlayProps> = ({
   pssrDisplayId,
   onViewFullDetails,
 }) => {
-  const navigate = useNavigate();
   const { pssr: pssrDetails, isLoading: detailsLoading } = usePSSRDetails(pssrId);
   const { data: categoryProgress, isLoading: progressLoading } = usePSSRCategoryProgress(pssrId);
 
@@ -215,8 +214,6 @@ export const PSSRQuickViewOverlay: React.FC<PSSRQuickViewOverlayProps> = ({
     onOpenChange(false);
     if (onViewFullDetails) {
       onViewFullDetails(pssrId, pssrDisplayId);
-    } else {
-      navigate(`/pssr/${pssrId}`);
     }
   };
 

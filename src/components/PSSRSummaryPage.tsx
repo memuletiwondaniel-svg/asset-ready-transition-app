@@ -25,7 +25,6 @@ import PSSRDateRangeFilter, { DateRangeFilter } from './PSSRDateRangeFilter';
 import PSSRAdvancedSearch from './PSSRAdvancedSearch';
 import CreatePSSRIntroModal from './CreatePSSRIntroModal';
 import CreatePSSRWizard from './pssr/CreatePSSRWizard';
-import PSSRDashboard from './PSSRDashboard';
 import { PSSRDetailOverlay } from './pssr/PSSRDetailOverlay';
 
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbEllipsis } from '@/components/ui/breadcrumb';
@@ -77,7 +76,7 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
     updateWidgetSettings,
     reorderWidgets
   } = useWidgetConfigs();
-  const [activeView, setActiveView] = useState<'list' | 'create' | 'details' | 'category-items' | 'manage-checklist'>('list');
+  const [activeView, setActiveView] = useState<'list' | 'create' | 'category-items' | 'manage-checklist'>('list');
   const [viewMode, setViewMode] = useState<'table' | 'kanban'>('table');
   const [showCreateIntro, setShowCreateIntro] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -548,20 +547,6 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
           onClick: undefined
         });
         break;
-      case 'details':
-        crumbs.push({
-          label: 'PSSR',
-          icon: undefined,
-          onClick: () => setActiveView('list')
-        });
-        if (selectedPSSR) {
-          crumbs.push({
-            label: selectedPSSR,
-            icon: FileText,
-            onClick: undefined
-          });
-        }
-        break;
       case 'category-items':
         crumbs.push({
           label: 'PSSR',
@@ -572,7 +557,7 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
           crumbs.push({
             label: selectedPSSR,
             icon: FileText,
-            onClick: () => setActiveView('details')
+            onClick: () => setActiveView('list')
           });
         }
         if (selectedCategory) {
@@ -654,10 +639,6 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
     }
   };
 
-  // Render different views
-  if (activeView === 'details' && selectedPSSR) {
-    return <PSSRDashboard pssrId={selectedPSSR} onBack={() => setActiveView('list')} onNavigateToCategory={handleNavigateToCategory} />;
-  }
   return <div className="flex-1 flex flex-col overflow-hidden">
 
         {/* Header - matching VCR page layout */}
