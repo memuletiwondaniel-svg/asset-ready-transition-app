@@ -3,57 +3,15 @@ import { Label } from '@/components/ui/label';
 import { 
   Loader2, 
   ClipboardList, 
-  AlertTriangle,
-  Wrench,
-  Factory,
-  FileText,
   CheckCircle2,
-  FlaskConical,
-  Power,
-  Settings,
   HelpCircle,
-  type LucideIcon
 } from 'lucide-react';
 import { usePSSRReasons } from '@/hooks/usePSSRReasons';
 import { cn } from '@/lib/utils';
+import { getReasonCardConfig, getDisplayName } from './reasonCardConfig';
 
 // Export for backward compatibility with AddPSSRReasonWizard and EditPSSRReasonOverlay
 export type SubCategoryType = 'P&E' | 'BFM' | null;
-
-interface ReasonCardConfig {
-  icon: LucideIcon;
-  hue: number;
-}
-
-// Map reason names to icons/hues based on known templates
-const getReasonCardConfig = (name: string): ReasonCardConfig => {
-  const lower = name.toLowerCase();
-  if (lower.includes('safety') || lower.includes('inciden')) {
-    return { icon: AlertTriangle, hue: 38 };
-  }
-  if (lower.includes('turn around') || lower === 'tar' || lower.includes('turnaround') || (lower.includes('maintenance') && !lower.includes('idle') && !lower.includes('retired'))) {
-    return { icon: Wrench, hue: 200 };
-  }
-  if (lower.includes('restart') || lower.includes('idle') || lower.includes('retired')) {
-    return { icon: Power, hue: 155 };
-  }
-  if (lower.includes('modification') || lower.includes('moc') || lower.includes('brown field')) {
-    return { icon: Settings, hue: 270 };
-  }
-  if (lower.includes('project') || lower.includes('p&e')) {
-    return { icon: Factory, hue: 220 };
-  }
-  return { icon: ClipboardList, hue: 180 };
-};
-
-// Display name overrides
-const getDisplayName = (name: string): string => {
-  const lower = name.toLowerCase();
-  if (lower.includes('restart') || (lower.includes('idle') && lower.includes('retired'))) {
-    return 'Idle or Retired Equipment';
-  }
-  return name;
-};
 
 interface WizardStepCategoryProps {
   categoryId: string | null;

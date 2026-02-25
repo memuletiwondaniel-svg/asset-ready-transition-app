@@ -2,22 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Check, ChevronsUpDown, Shield, Users } from 'lucide-react';
+import { Check, ChevronsUpDown, Shield, Users, ClipboardList, CheckCircle2, HelpCircle, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRoles } from '@/hooks/useRoles';
 import { useProfileUsers } from '@/hooks/useProfileUsers';
-import { supabase } from '@/integrations/supabase/client';
-
-interface PSSRReasonOption {
-  id: string;
-  name: string;
-  description: string | null;
-}
+import { usePSSRReasons } from '@/hooks/usePSSRReasons';
+import { getReasonCardConfig, getDisplayName } from './reasonCardConfig';
 
 interface WizardStepReasonDetailsProps {
   reasonName: string;
@@ -36,65 +30,33 @@ const WizardStepReasonDetails: React.FC<WizardStepReasonDetailsProps> = ({
   onDescriptionChange,
   onPssrLeadChange,
 }) => {
-  const [reasonOptions, setReasonOptions] = useState<PSSRReasonOption[]>([]);
-  const [loadingReasons, setLoadingReasons] = useState(true);
+  const { data: reasons, isLoading: loadingReasons } = usePSSRReasons();
 
-  // Fetch PSSR reasons from database
-  useEffect(() => {
-    const fetchReasons = async () => {
-      const { data, error } = await supabase
-        .from('pssr_reasons')
-        .select('id, name, description')
-        .eq('is_active', true)
-        .order('display_order');
-      if (!error && data) {
-        setReasonOptions(data);
-      }
-      setLoadingReasons(false);
-    };
-    fetchReasons();
-  }, []);
-
-  const knownNames = reasonOptions.map(r => r.name);
+  const knownNames = reasons?.map(r => r.name) ?? [];
   const isOther = reasonName !== '' && !knownNames.includes(reasonName);
-  const [selectValue, setSelectValue] = useState(isOther ? 'Other' : reasonName);
   const [customReason, setCustomReason] = useState(isOther ? reasonName : '');
   const [rolePopoverOpen, setRolePopoverOpen] = useState(false);
 
-  // Sync selectValue when reasonOptions load
+  // Sync customReason when reasons load
   useEffect(() => {
-    if (reasonOptions.length > 0 && reasonName) {
-      const match = reasonOptions.find(r => r.name === reasonName);
-      setSelectValue(match ? reasonName : 'Other');
+    if (reasons && reasons.length > 0 && reasonName) {
+      const match = reasons.find(r => r.name === reasonName);
       if (!match && reasonName) {
         setCustomReason(reasonName);
       }
     }
-  }, [reasonOptions, reasonName]);
+  }, [reasons, reasonName]);
 
-  const selectedReason = reasonOptions.find(r => r.name === selectValue);
+  const OTHER_VALUE = '__other__';
+  const isOtherSelected = isOther || reasonName === OTHER_VALUE;
 
-  const { roles = [], isLoading: rolesLoading } = useRoles();
-  const { data: profileUsers } = useProfileUsers();
-
-  const selectedRole = roles.find(r => r.id === pssrLeadId);
-
-  // Find matching profiles for the selected role
-  const matchingProfiles = pssrLeadId && selectedRole && profileUsers
-    ? profileUsers.filter(u => {
-        const pos = u.position?.toLowerCase() || '';
-        const roleName = selectedRole.name.toLowerCase();
-        return pos.includes(roleName) || roleName.includes(pos);
-      }).slice(0, 5)
-    : [];
-
-  const handleSelectChange = (value: string) => {
-    setSelectValue(value);
-    if (value === 'Other') {
-      onReasonNameChange(customReason);
+  const handleCardSelect = (name: string) => {
+    if (name === OTHER_VALUE) {
+      setCustomReason('');
+      onReasonNameChange(OTHER_VALUE);
     } else {
       setCustomReason('');
-      onReasonNameChange(value);
+      onReasonNameChange(name);
     }
   };
 
@@ -103,33 +65,169 @@ const WizardStepReasonDetails: React.FC<WizardStepReasonDetailsProps> = ({
     onReasonNameChange(value);
   };
 
+  const { roles = [], isLoading: rolesLoading } = useRoles();
+  const { data: profileUsers } = useProfileUsers();
+
+  const selectedRole = roles.find(r => r.id === pssrLeadId);
+
+  const matchingProfiles = pssrLeadId && selectedRole && profileUsers
+    ? profileUsers.filter(u => {
+        const pos = u.position?.toLowerCase() || '';
+        const roleName = selectedRole.name.toLowerCase();
+        return pos.includes(roleName) || roleName.includes(pos);
+      }).slice(0, 5)
+    : [];
+
   return (
     <div className="space-y-6">
-      {/* Reason Dropdown */}
+      {/* Reason Card Selector */}
       <div className="space-y-3">
-        <Label htmlFor="reason-name" className="text-base font-medium">PSSR Reason *</Label>
-        <Select value={selectValue} onValueChange={handleSelectChange} disabled={loadingReasons}>
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder={loadingReasons ? "Loading reasons..." : "Select a PSSR reason..."} />
-          </SelectTrigger>
-          <SelectContent>
-            {reasonOptions.map((option) => (
-              <SelectItem key={option.id} value={option.name}>
-                {option.name}
-              </SelectItem>
-            ))}
-            <SelectItem value="Other">Other</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-2">
+          <ClipboardList className="h-5 w-5 text-primary" />
+          <Label className="text-base font-medium">PSSR Reason *</Label>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          Select the reason that best describes the purpose of this PSSR
+        </p>
 
-        {/* Description subtext for selected reason */}
-        {selectedReason?.description && (
-          <p className="text-sm text-muted-foreground bg-muted/30 rounded-md px-3 py-2">
-            {selectedReason.description}
-          </p>
+        {loadingReasons ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-2">
+            {reasons?.map((reason) => {
+              const config = getReasonCardConfig(reason.name);
+              const IconComponent = config.icon;
+              const isSelected = reasonName === reason.name;
+              const displayName = getDisplayName(reason.name);
+
+              return (
+                <button
+                  key={reason.id}
+                  type="button"
+                  onClick={() => handleCardSelect(reason.name)}
+                  className={cn(
+                    'group relative flex items-center gap-3.5 px-4 py-3 rounded-xl border-2 text-left transition-all duration-200 overflow-hidden',
+                    isSelected
+                      ? 'border-primary shadow-md'
+                      : 'border-border/50 hover:border-border hover:shadow-sm'
+                  )}
+                  style={{
+                    background: isSelected
+                      ? `linear-gradient(135deg, hsl(${config.hue} 75% 96%), hsl(${config.hue} 65% 93%))`
+                      : undefined,
+                  }}
+                >
+                  <div
+                    className={cn(
+                      'absolute inset-0 opacity-0 transition-opacity duration-200 pointer-events-none',
+                      !isSelected && 'group-hover:opacity-100'
+                    )}
+                    style={{
+                      background: `linear-gradient(135deg, hsl(${config.hue} 60% 95% / 0.9), hsl(${config.hue} 50% 92% / 0.6))`,
+                    }}
+                  />
+                  <div
+                    className="relative z-10 p-2 rounded-lg shrink-0 transition-colors duration-200"
+                    style={{
+                      backgroundColor: isSelected
+                        ? `hsl(${config.hue} 65% 88%)`
+                        : `hsl(${config.hue} 40% 92%)`,
+                    }}
+                  >
+                    <IconComponent
+                      className="h-5 w-5 transition-colors duration-200"
+                      strokeWidth={2.25}
+                      style={{
+                        color: isSelected
+                          ? `hsl(${config.hue} 80% 35%)`
+                          : `hsl(${config.hue} 50% 42%)`,
+                      }}
+                    />
+                  </div>
+                  <div className="relative z-10 flex-1 min-w-0">
+                    <h4 className={cn(
+                      'font-semibold text-sm leading-snug transition-colors',
+                      isSelected ? 'text-foreground' : 'text-foreground/80 group-hover:text-foreground'
+                    )}>
+                      {displayName}
+                    </h4>
+                    {reason.description && (
+                      <p className={cn(
+                        'text-xs leading-snug mt-0.5 line-clamp-1 transition-colors',
+                        isSelected ? 'text-muted-foreground' : 'text-muted-foreground/60 group-hover:text-muted-foreground'
+                      )}>
+                        {reason.description}
+                      </p>
+                    )}
+                  </div>
+                  {isSelected && (
+                    <CheckCircle2 className="relative z-10 h-5 w-5 shrink-0 text-primary animate-in fade-in zoom-in duration-200" />
+                  )}
+                </button>
+              );
+            })}
+
+            {/* Other card */}
+            <button
+              type="button"
+              onClick={() => handleCardSelect(OTHER_VALUE)}
+              className={cn(
+                'group relative flex items-center gap-3.5 px-4 py-3 rounded-xl border-2 text-left transition-all duration-200 overflow-hidden',
+                isOtherSelected
+                  ? 'border-primary shadow-md'
+                  : 'border-border/50 hover:border-border hover:shadow-sm'
+              )}
+              style={{
+                background: isOtherSelected
+                  ? `linear-gradient(135deg, hsl(0 0% 94%), hsl(0 0% 91%))`
+                  : undefined,
+              }}
+            >
+              <div
+                className={cn(
+                  'absolute inset-0 opacity-0 transition-opacity duration-200 pointer-events-none',
+                  !isOtherSelected && 'group-hover:opacity-100'
+                )}
+                style={{
+                  background: `linear-gradient(135deg, hsl(0 0% 95% / 0.9), hsl(0 0% 93% / 0.6))`,
+                }}
+              />
+              <div
+                className="relative z-10 p-2 rounded-lg shrink-0 transition-colors duration-200"
+                style={{
+                  backgroundColor: isOtherSelected ? 'hsl(0 0% 86%)' : 'hsl(0 0% 92%)',
+                }}
+              >
+                <HelpCircle
+                  className="h-5 w-5 transition-colors duration-200"
+                  strokeWidth={2.25}
+                  style={{ color: isOtherSelected ? 'hsl(0 0% 30%)' : 'hsl(0 0% 45%)' }}
+                />
+              </div>
+              <div className="relative z-10 flex-1 min-w-0">
+                <h4 className={cn(
+                  'font-semibold text-sm leading-snug transition-colors',
+                  isOtherSelected ? 'text-foreground' : 'text-foreground/80 group-hover:text-foreground'
+                )}>
+                  Other
+                </h4>
+                <p className={cn(
+                  'text-xs leading-snug mt-0.5 transition-colors',
+                  isOtherSelected ? 'text-muted-foreground' : 'text-muted-foreground/60 group-hover:text-muted-foreground'
+                )}>
+                  Other reason not listed above
+                </p>
+              </div>
+              {isOtherSelected && (
+                <CheckCircle2 className="relative z-10 h-5 w-5 shrink-0 text-primary animate-in fade-in zoom-in duration-200" />
+              )}
+            </button>
+          </div>
         )}
 
-        {selectValue === 'Other' && (
+        {isOtherSelected && (
           <div className="space-y-2 mt-3">
             <Label htmlFor="custom-reason" className="text-sm font-medium">Specify PSSR Reason *</Label>
             <Input
@@ -208,7 +306,6 @@ const WizardStepReasonDetails: React.FC<WizardStepReasonDetailsProps> = ({
           </PopoverContent>
         </Popover>
 
-        {/* Matching profiles preview */}
         {selectedRole && matchingProfiles.length > 0 && (
           <div className="bg-muted/30 rounded-md px-3 py-2.5 space-y-1.5">
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
