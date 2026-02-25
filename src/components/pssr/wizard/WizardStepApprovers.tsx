@@ -65,11 +65,17 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
       const roleName = role.name.toLowerCase();
       
       // Find profiles that match this role (by role_id or position-based fuzzy match)
+      // For director roles, use word-boundary regex to prevent "plant director" matching "dep. plant director"
+      const roleRegex = roleName.includes('director')
+        ? new RegExp(`(^|[^a-z])${roleName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}([^a-z]|$)`)
+        : null;
+      
       const matching = profileUsers.filter(p => {
         const posLower = (p.position || '').toLowerCase();
         
         // Match by role_id OR by position containing the role name
-        const roleMatches = p.role_id === roleId || posLower.includes(roleName);
+        const positionMatches = roleRegex ? roleRegex.test(posLower) : posLower.includes(roleName);
+        const roleMatches = p.role_id === roleId || positionMatches;
         if (!roleMatches) return false;
         if (!plantLower) return true;
         
@@ -86,9 +92,7 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
         }
         
         // Plant-specific director roles: must match both role name AND plant
-        // Use word-boundary regex to prevent "plant director" matching "dep. plant director"
-        if (roleName.includes('director')) {
-          const roleRegex = new RegExp(`(^|[^a-z])${roleName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}([^a-z]|$)`);
+        if (roleName.includes('director') && roleRegex) {
           return roleRegex.test(posLower) && posLower.includes(plantLower);
         }
         
