@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Sheet,
   SheetContent,
@@ -27,7 +27,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { RotateCcw, Save, ArrowRight, Plus, X, Search } from 'lucide-react';
+import { RotateCcw, Save, ArrowRight, Plus, X, Search, ChevronRight } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { cn } from '@/lib/utils';
 import { ChecklistItem } from '@/hooks/usePSSRChecklistLibrary';
 import { ChecklistItemOverride } from './ChecklistItemEditDialog';
 import { useQuery } from '@tanstack/react-query';
@@ -83,7 +85,8 @@ const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
   const [addRoleOpen, setAddRoleOpen] = useState(false);
   const [addRoleSearch, setAddRoleSearch] = useState('');
   const [selectedDeliveringMemberId, setSelectedDeliveringMemberId] = useState<string | null>(null);
-
+  const [expandedRoles, setExpandedRoles] = useState<Set<string>>(new Set());
+  const [deliveringExpanded, setDeliveringExpanded] = useState(false);
   useEffect(() => {
     if (item && open) {
       setFormData({
@@ -373,50 +376,58 @@ const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
                   ))}
                 </SelectContent>
               </Select>
-              {deliveringMembers.length > 0 && (
-                <div className="space-y-1.5">
-                  {deliveringMembers.length > 1 && (
-                    <p className="text-[10px] text-muted-foreground">
-                      Click to select the relevant person{plantName ? ` for ${plantName}${fieldName ? ` - ${fieldName}` : ''}` : ''}
-                    </p>
-                  )}
-                  <div className="flex items-center gap-3 flex-wrap">
-                    {deliveringMembers.map((member) => {
-                      const isSelected = selectedDeliveringMemberId === member.user_id;
-                      const isLocationMatch = resolvedParties?.locationMatched?.includes(member.user_id);
-                      return (
+              {currentDeliveringRole && deliveringMembers.length > 0 && (
+                <Collapsible open={deliveringExpanded} onOpenChange={setDeliveringExpanded}>
+                  <div className="border rounded-lg bg-muted/50 dark:bg-muted/30">
+                    <div className="flex items-center px-3 py-2.5">
+                      <CollapsibleTrigger asChild>
                         <button
-                          key={member.user_id}
                           type="button"
-                          onClick={() => {
-                            setSelectedDeliveringMemberId(
-                              isSelected ? null : member.user_id
-                            );
-                          }}
-                          className={`flex flex-col items-center gap-0.5 p-1.5 rounded-lg transition-all cursor-pointer ${
-                            isSelected
-                              ? 'ring-2 ring-primary bg-primary/5'
-                              : 'opacity-40 hover:opacity-70'
-                          }`}
-                          title={`${member.full_name}\n${member.position}`}
+                          className="flex items-center gap-2 flex-1 min-w-0 text-left hover:opacity-80 transition-opacity"
                         >
-                          <Avatar className="w-7 h-7">
-                            <AvatarImage src={getAvatarUrl(member.avatar_url)} />
-                            <AvatarFallback className="text-[10px]">{getInitials(member.full_name)}</AvatarFallback>
-                          </Avatar>
-                          <span className="text-[10px] text-foreground truncate max-w-[80px] text-center">
-                            {member.full_name}
-                          </span>
-                          {isLocationMatch && (
-                            <Badge variant="outline" className="text-[8px] px-1 py-0 h-3.5 border-primary/30 text-primary">
-                              Location match
-                            </Badge>
-                          )}
+                          <ChevronRight className={cn(
+                            "h-3.5 w-3.5 text-muted-foreground/40 shrink-0 transition-transform duration-200",
+                            deliveringExpanded && "rotate-90"
+                          )} />
+                          <span className="font-semibold text-sm tracking-tight text-foreground/90 truncate">{currentDeliveringRole}</span>
+                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-normal ml-1 shrink-0 text-muted-foreground/50">
+                            {deliveringMembers.length}
+                          </Badge>
                         </button>
-                      );
-                    })}
+                      </CollapsibleTrigger>
+                    </div>
+                    <CollapsibleContent>
+                      <div className="px-3 pb-3 pt-0">
+                        <div className="flex flex-wrap gap-2 pl-0.5">
+                          {deliveringMembers.map((member) => (
+                            <div
+                              key={member.user_id}
+                              className="flex items-center gap-2 bg-background border rounded-md px-2.5 py-1.5"
+                            >
+                              <Avatar className="h-6 w-6">
+                                <AvatarImage src={getAvatarUrl(member.avatar_url)} />
+                                <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
+                                  {getInitials(member.full_name)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="min-w-0">
+                                <p className="text-xs font-medium truncate">{member.full_name}</p>
+                                {member.position && (
+                                  <p className="text-[10px] text-muted-foreground/50 truncate">{member.position}</p>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </CollapsibleContent>
                   </div>
-                </div>
+                </Collapsible>
+              )}
+              {currentDeliveringRole && deliveringMembers.length === 0 && (
+                <p className="text-xs text-muted-foreground italic pl-1">
+                  No matching personnel found{plantName ? ` for ${plantName}` : ''}
+                </p>
               )}
             </div>
 
@@ -471,51 +482,84 @@ const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
               </div>
 
               {currentApprovingRoles.length > 0 && (
-                <Card>
-                  <CardContent className="p-3">
-                    <div className="divide-y divide-border">
-                      {currentApprovingRoles.map((roleName) => {
-                        const members = approvingGroups[roleName] || [];
-                        return (
-                          <div
-                            key={roleName}
-                            className="group flex items-center gap-3 py-3 first:pt-0 last:pb-0 hover:bg-muted/30 -mx-3 px-3 transition-colors"
-                          >
-                            <span className="text-[10px] font-medium text-muted-foreground w-20 shrink-0 truncate" title={roleName}>
-                              {roleName}
-                            </span>
-                            {members.length > 0 ? (
-                              <div className="flex items-center gap-4 flex-1 min-w-0">
-                                {members.map((member) => (
-                                  <div key={member.user_id} className="flex flex-col items-center gap-0.5 w-14">
-                                    <Avatar className="w-7 h-7">
-                                      <AvatarImage src={getAvatarUrl(member.avatar_url)} />
-                                      <AvatarFallback className="text-[10px]">{getInitials(member.full_name)}</AvatarFallback>
-                                    </Avatar>
-                                    <span className="text-[10px] text-foreground truncate w-full text-center" title={member.full_name}>
-                                      {member.full_name?.split(' ')[0]}
-                                    </span>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <p className="text-[10px] text-muted-foreground italic flex-1">Unassigned</p>
-                            )}
-                            {/* Delete button - visible on hover */}
+                <div className="space-y-2">
+                  {currentApprovingRoles.map((roleName) => {
+                    const members = approvingGroups[roleName] || [];
+                    const isExpanded = expandedRoles.has(roleName);
+                    return (
+                      <Collapsible
+                        key={roleName}
+                        open={isExpanded}
+                        onOpenChange={(open) => {
+                          setExpandedRoles(prev => {
+                            const next = new Set(prev);
+                            open ? next.add(roleName) : next.delete(roleName);
+                            return next;
+                          });
+                        }}
+                      >
+                        <div className="border rounded-lg bg-muted/50 dark:bg-muted/30 group">
+                          <div className="flex items-center justify-between px-3 py-2.5">
+                            <CollapsibleTrigger asChild>
+                              <button
+                                type="button"
+                                className="flex items-center gap-2 flex-1 min-w-0 text-left hover:opacity-80 transition-opacity"
+                              >
+                                <ChevronRight className={cn(
+                                  "h-3.5 w-3.5 text-muted-foreground/40 shrink-0 transition-transform duration-200",
+                                  isExpanded && "rotate-90"
+                                )} />
+                                <span className="font-semibold text-sm tracking-tight text-foreground/90 truncate">{roleName}</span>
+                                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-normal ml-1 shrink-0 text-muted-foreground/50">
+                                  {members.length}
+                                </Badge>
+                              </button>
+                            </CollapsibleTrigger>
                             <button
                               type="button"
                               onClick={() => handleRemoveApprover(roleName)}
-                              className="opacity-0 group-hover:opacity-100 transition-all p-1 rounded-full hover:bg-destructive/10 text-destructive/70 hover:text-destructive shrink-0"
+                              className="opacity-0 group-hover:opacity-100 transition-all p-1 rounded-full hover:bg-destructive/10 text-destructive/70 hover:text-destructive shrink-0 ml-2"
                               title={`Remove ${roleName}`}
                             >
                               <X className="h-3.5 w-3.5" />
                             </button>
                           </div>
-                        );
-                      })}
-                    </div>
-                  </CardContent>
-                </Card>
+                          <CollapsibleContent>
+                            <div className="px-3 pb-3 pt-0">
+                              {members.length > 0 ? (
+                                <div className="flex flex-wrap gap-2 pl-0.5">
+                                  {members.map((member) => (
+                                    <div
+                                      key={member.user_id}
+                                      className="flex items-center gap-2 bg-background border rounded-md px-2.5 py-1.5"
+                                    >
+                                      <Avatar className="h-6 w-6">
+                                        <AvatarImage src={getAvatarUrl(member.avatar_url)} />
+                                        <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
+                                          {getInitials(member.full_name)}
+                                        </AvatarFallback>
+                                      </Avatar>
+                                      <div className="min-w-0">
+                                        <p className="text-xs font-medium truncate">{member.full_name}</p>
+                                        {member.position && (
+                                          <p className="text-[10px] text-muted-foreground/50 truncate">{member.position}</p>
+                                        )}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-xs text-muted-foreground italic">
+                                  No matching personnel found{plantName ? ` for ${plantName}` : ''}
+                                </p>
+                              )}
+                            </div>
+                          </CollapsibleContent>
+                        </div>
+                      </Collapsible>
+                    );
+                  })}
+                </div>
               )}
             </div>
 
