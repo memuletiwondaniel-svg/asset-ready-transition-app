@@ -147,73 +147,84 @@ const WizardStepReasonDetails: React.FC<WizardStepReasonDetailsProps> = ({
             })}
 
             {/* Other card */}
-            <button
-              type="button"
-              onClick={() => handleCardSelect(OTHER_VALUE)}
-              className={cn(
-                'group relative flex items-center gap-3.5 px-4 py-3 rounded-xl border-2 text-left transition-all duration-200 overflow-hidden',
-                isOtherSelected
-                  ? 'border-primary shadow-md'
-                  : 'border-border/50 hover:border-border hover:shadow-sm'
-              )}
-              style={{
-                background: isOtherSelected
-                  ? `linear-gradient(135deg, hsl(0 0% 94%), hsl(0 0% 91%))`
-                  : undefined,
-              }}
-            >
-              <div
+            <div>
+              <button
+                type="button"
+                onClick={() => handleCardSelect(OTHER_VALUE)}
                 className={cn(
-                  'absolute inset-0 opacity-0 transition-opacity duration-200 pointer-events-none',
-                  !isOtherSelected && 'group-hover:opacity-100'
+                  'group relative flex items-center gap-3.5 px-4 py-3 rounded-xl border-2 text-left transition-all duration-200 overflow-hidden w-full',
+                  isOtherSelected
+                    ? customReason.trim()
+                      ? 'border-primary shadow-md'
+                      : 'border-amber-500 shadow-md'
+                    : 'border-border/50 hover:border-border hover:shadow-sm',
+                  isOtherSelected && 'rounded-b-none border-b-0'
                 )}
                 style={{
-                  background: `linear-gradient(135deg, hsl(0 0% 95% / 0.9), hsl(0 0% 93% / 0.6))`,
-                }}
-              />
-              <div
-                className="relative z-10 p-2 rounded-lg shrink-0 transition-colors duration-200"
-                style={{
-                  backgroundColor: isOtherSelected ? 'hsl(0 0% 86%)' : 'hsl(0 0% 92%)',
+                  background: isOtherSelected
+                    ? `linear-gradient(135deg, hsl(0 0% 94%), hsl(0 0% 91%))`
+                    : undefined,
                 }}
               >
-                <HelpCircle
-                  className="h-5 w-5 transition-colors duration-200"
-                  strokeWidth={2.25}
-                  style={{ color: isOtherSelected ? 'hsl(0 0% 30%)' : 'hsl(0 0% 45%)' }}
+                <div
+                  className={cn(
+                    'absolute inset-0 opacity-0 transition-opacity duration-200 pointer-events-none',
+                    !isOtherSelected && 'group-hover:opacity-100'
+                  )}
+                  style={{
+                    background: `linear-gradient(135deg, hsl(0 0% 95% / 0.9), hsl(0 0% 93% / 0.6))`,
+                  }}
                 />
-              </div>
-              <div className="relative z-10 flex-1 min-w-0">
-                <h4 className={cn(
-                  'font-semibold text-sm leading-snug transition-colors',
-                  isOtherSelected ? 'text-foreground' : 'text-foreground/80 group-hover:text-foreground'
-                )}>
-                  Other
-                </h4>
-                <p className={cn(
-                  'text-xs leading-snug mt-0.5 transition-colors',
-                  isOtherSelected ? 'text-muted-foreground' : 'text-muted-foreground/60 group-hover:text-muted-foreground'
-                )}>
-                  Other reason not listed above
-                </p>
-              </div>
+                <div
+                  className="relative z-10 p-2 rounded-lg shrink-0 transition-colors duration-200"
+                  style={{
+                    backgroundColor: isOtherSelected ? 'hsl(0 0% 86%)' : 'hsl(0 0% 92%)',
+                  }}
+                >
+                  <HelpCircle
+                    className="h-5 w-5 transition-colors duration-200"
+                    strokeWidth={2.25}
+                    style={{ color: isOtherSelected ? 'hsl(0 0% 30%)' : 'hsl(0 0% 45%)' }}
+                  />
+                </div>
+                <div className="relative z-10 flex-1 min-w-0">
+                  <h4 className={cn(
+                    'font-semibold text-sm leading-snug transition-colors',
+                    isOtherSelected ? 'text-foreground' : 'text-foreground/80 group-hover:text-foreground'
+                  )}>
+                    Other
+                  </h4>
+                  <p className={cn(
+                    'text-xs leading-snug mt-0.5 transition-colors',
+                    isOtherSelected ? 'text-muted-foreground' : 'text-muted-foreground/60 group-hover:text-muted-foreground'
+                  )}>
+                    {isOtherSelected ? 'Please specify your reason' : 'Other reason not listed above'}
+                  </p>
+                </div>
+                {isOtherSelected && (
+                  <CheckCircle2 className="relative z-10 h-5 w-5 shrink-0 text-primary animate-in fade-in zoom-in duration-200" />
+                )}
+              </button>
               {isOtherSelected && (
-                <CheckCircle2 className="relative z-10 h-5 w-5 shrink-0 text-primary animate-in fade-in zoom-in duration-200" />
+                <div
+                  className={cn(
+                    'px-4 pb-3 pt-2 rounded-b-xl border-2 border-t-0 animate-in slide-in-from-top-2 fade-in duration-200',
+                    customReason.trim() ? 'border-primary' : 'border-amber-500'
+                  )}
+                  style={{ background: `linear-gradient(135deg, hsl(0 0% 94%), hsl(0 0% 91%))` }}
+                >
+                  <Input
+                    autoFocus
+                    id="custom-reason"
+                    value={customReason}
+                    onChange={(e) => handleCustomReasonChange(e.target.value)}
+                    placeholder="Enter custom PSSR reason..."
+                    maxLength={200}
+                    className="bg-background/80"
+                  />
+                </div>
               )}
-            </button>
-          </div>
-        )}
-
-        {isOtherSelected && (
-          <div className="space-y-2 mt-3">
-            <Label htmlFor="custom-reason" className="text-sm font-medium">Specify PSSR Reason *</Label>
-            <Input
-              id="custom-reason"
-              value={customReason}
-              onChange={(e) => handleCustomReasonChange(e.target.value)}
-              placeholder="Enter custom PSSR reason..."
-              maxLength={200}
-            />
+            </div>
           </div>
         )}
       </div>
