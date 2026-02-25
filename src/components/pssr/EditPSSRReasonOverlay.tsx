@@ -265,8 +265,8 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
 
       // Reset snapshot so dirty state clears
       initialSnapshot.current = {
-        reasonName: formReasonName.trim(),
-        description: description.trim() || '',
+        reasonName: formReasonName,
+        description: description,
         categoryId: formCategoryId,
         subCategory,
         pssrLeadId,
