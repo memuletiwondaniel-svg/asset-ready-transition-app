@@ -1,57 +1,37 @@
 
 
-## Plan: Streamline Step 1 and Move PSSR Lead to Step 2
+## Problem
 
-Three changes across two files to reduce scroll on Step 1 and improve layout:
+When the user clicks "Other", the custom reason input field appears **below** the card grid (line 207-218). If the card list is long enough, the input is pushed below the visible area and the user has no visual cue that they need to scroll down to complete a required field.
 
-### 1. Move Deactivate/Activate/Reactivate actions to the footer row
+## Modern UI/UX Approach: Inline Expansion
 
-**File: `src/components/pssr/EditPSSRReasonOverlay.tsx`**
+The best pattern here is to **embed the input directly inside the Other card** when it is selected, expanding the card itself. This is the approach used by Linear, Notion, and similar tools for "Other / Custom" options. The user clicks the card, it expands in-place to reveal the text field with autofocus, and the context is immediately clear.
 
-- Remove the large status action cards from Step 1 content area (lines 518-575 — the `{currentStep === 1 && ...}` block with draft/active/inactive cards)
-- Add a compact Deactivate/Activate button in the footer bar (line 578 area), next to the existing Delete button on the left side
-  - For `active` status: show an "Deactivate" button styled with `text-amber-600` and warning icon
-  - For `draft` status: show an "Activate" button styled with `text-green-600`
-  - For `inactive` status: show a "Reactivate" button styled with `text-green-600`
-  - When clicking Deactivate on an active template with existing PSSRs, show a confirmation dialog warning that it will no longer be available for new PSSRs
-- This frees up significant vertical space on Step 1
-
-### 2. Move PSSR Lead Role selector from Step 1 to Step 2
+### Plan
 
 **File: `src/components/pssr/wizard/WizardStepReasonDetails.tsx`**
 
-- Remove the PSSR Lead Role selector section (the `<Shield>` labeled popover and matching profiles preview) from this component
-- Remove the `pssrLeadId`, `onPssrLeadChange` props
-- Step 1 will now contain only: PSSR Reason cards + Other input + Additional Description
+1. **Remove the separate `{isOtherSelected && ...}` block** (lines 207-218) that renders the custom input below the entire card grid
 
-**File: `src/components/pssr/wizard/WizardStepApprovers.tsx`**
+2. **Expand the Other card itself** when selected to include the input inline:
+   - When `isOtherSelected` is true, the Other card grows to include an input field directly beneath the "Other" label inside the card
+   - The input gets `autoFocus` so the cursor is immediately placed for typing
+   - Add a subtle amber/warning-colored hint text inside the card: "Please specify the reason below" to draw attention
+   - The card's border uses `border-amber-500` (instead of `border-primary`) when selected but the custom reason is still empty, signaling incompleteness
+   - Once the user types something, the border reverts to the normal `border-primary` selected state
 
-- Add the PSSR Lead Role selector at the top of the Step 2 (PSSR Approvers) component, only when `type="pssr"`
-- Add new optional props: `pssrLeadRoleId?: string`, `onPssrLeadRoleChange?: (id: string) => void`
-- Render the Shield-labeled popover and matching profiles preview above the approver role list
+3. **Visual details**:
+   - The input renders inside the card with a small top margin, spanning the full width below the icon+label row
+   - Use `animate-in slide-in-from-top-2 fade-in duration-200` for a smooth reveal
+   - The card's description text changes from "Other reason not listed above" to "Please specify your reason" when expanded
 
-**File: `src/components/pssr/EditPSSRReasonOverlay.tsx`**
-
-- Remove `pssrLeadId` and `onPssrLeadChange` from the `WizardStepReasonDetails` props on Step 1
-- Pass `pssrLeadRoleId={pssrLeadId}` and `onPssrLeadRoleChange={setPssrLeadId}` to the Step 2 `WizardStepApprovers` component
-
-**File: `src/components/pssr/AddPSSRReasonWizard.tsx`**
-
-- Same prop changes: remove from Step 1, add to Step 2
-
-### 3. Show "Other" custom input inline
-
-Already working correctly — when the "Other" card is selected, a text input appears below. No changes needed here.
-
-### Summary of UX improvements
-- Step 1 becomes much shorter: just reason cards + description — no scrolling needed
-- Status actions (activate/deactivate) move to footer for persistent access from any step
-- PSSR Lead Role lives with PSSR Approvers (Step 2) which is its natural grouping
+This keeps everything in-place with zero scrolling needed, and the autofocus + visual hint make it impossible to miss.
 
 ### Technical Details
 
-- No database changes required
-- Props interface changes on `WizardStepReasonDetails` (remove `pssrLeadId`, `onPssrLeadChange`) and `WizardStepApprovers` (add optional `pssrLeadRoleId`, `onPssrLeadRoleChange`)
-- The deactivation confirmation dialog (for active templates) reuses the existing `AlertDialog` pattern
-- Files modified: `EditPSSRReasonOverlay.tsx`, `AddPSSRReasonWizard.tsx`, `WizardStepReasonDetails.tsx`, `WizardStepApprovers.tsx`
+- Only `WizardStepReasonDetails.tsx` needs changes
+- The same pattern should also be applied to `WizardStepCategory.tsx` (the Create PSSR wizard) for consistency — it has the same "Other" card structure
+- No prop or database changes required
+- The `autoFocus` on the input ensures keyboard-first users can immediately start typing
 
