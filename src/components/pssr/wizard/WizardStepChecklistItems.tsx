@@ -163,7 +163,7 @@ const WizardStepChecklistItems: React.FC<WizardStepChecklistItemsProps> = ({
 
       return result;
     },
-    enabled: rawChecklistItems.length > 0,
+    enabled: rawChecklistItems.length > 0 && !!plantName,
   });
 
   // All items including custom ones
@@ -391,7 +391,7 @@ const WizardStepChecklistItems: React.FC<WizardStepChecklistItemsProps> = ({
                           const displayDescription = itemOverrides[item.id]?.description ?? item.description;
                           const displayTopic = itemOverrides[item.id]?.topic ?? item.topic;
                           const responsibleRole = itemOverrides[item.id]?.responsible ?? item.responsible;
-                          const resolvedName = responsibleRole ? resolvedDeliveringParties[responsibleRole] : null;
+                          const resolvedName = plantName && responsibleRole ? resolvedDeliveringParties[responsibleRole] : null;
                           // Sequential numbering within the visible category (1-based)
                           const itemRefId = refId
                             ? `${refId}-${String(itemIndex + 1).padStart(2, '0')}`
