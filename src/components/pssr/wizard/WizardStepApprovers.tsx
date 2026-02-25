@@ -35,6 +35,7 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
   const [addPopoverOpen, setAddPopoverOpen] = useState(false);
   const [expandedRoles, setExpandedRoles] = useState<Set<string>>(new Set());
   const [leadPopoverOpen, setLeadPopoverOpen] = useState(false);
+  const [leadExpanded, setLeadExpanded] = useState(false);
   const { roles = [], isLoading: rolesLoading } = useRoles();
   const { allowedRoleIds, sofAllowedRoleIds, isLoading: allowedLoading } = usePSSRAllowedApproverRoles();
   const { data: profileUsers = [] } = useProfileUsers();
@@ -165,28 +166,70 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
             Select the role responsible for leading the PSSR. The actual person will be resolved based on the plant/location when the PSSR is created.
           </p>
 
-          {/* Selected PSSR Lead - card format matching approver cards */}
+          {/* Selected PSSR Lead - collapsible card matching approver cards */}
           {selectedLeadRole ? (
-            <div className="border rounded-lg bg-muted/50 dark:bg-muted/30 group">
-              <div className="flex items-center justify-between px-3 py-2.5">
-                <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/60 shrink-0" />
-                  <span className="font-semibold text-sm tracking-tight text-foreground/90 truncate">{selectedLeadRole.name}</span>
-                  {matchingLeadProfiles.length > 0 && (
-                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-normal ml-1 shrink-0 text-muted-foreground/50">
-                      {matchingLeadProfiles.length}
-                    </Badge>
-                  )}
+            <Collapsible open={leadExpanded} onOpenChange={setLeadExpanded}>
+              <div className="border rounded-lg bg-muted/50 dark:bg-muted/30 group">
+                <div className="flex items-center justify-between px-3 py-2.5">
+                  <CollapsibleTrigger asChild>
+                    <button
+                      type="button"
+                      className="flex items-center gap-2 flex-1 min-w-0 text-left hover:opacity-80 transition-opacity"
+                    >
+                      <ChevronRight className={cn(
+                        "h-3.5 w-3.5 text-muted-foreground/40 shrink-0 transition-transform duration-200",
+                        leadExpanded && "rotate-90"
+                      )} />
+                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/60 shrink-0" />
+                      <span className="font-semibold text-sm tracking-tight text-foreground/90 truncate">{selectedLeadRole.name}</span>
+                      {matchingLeadProfiles.length > 0 && (
+                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-normal ml-1 shrink-0 text-muted-foreground/50">
+                          {matchingLeadProfiles.length}
+                        </Badge>
+                      )}
+                    </button>
+                  </CollapsibleTrigger>
+                  <button
+                    type="button"
+                    onClick={() => onPssrLeadRoleChange?.('')}
+                    className="text-destructive/70 hover:text-destructive transition-all p-1 rounded-full hover:bg-destructive/10 shrink-0 ml-2 opacity-0 group-hover:opacity-100"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => onPssrLeadRoleChange?.('')}
-                  className="text-destructive/70 hover:text-destructive transition-all p-1 rounded-full hover:bg-destructive/10 shrink-0 ml-2 opacity-0 group-hover:opacity-100"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
+                <CollapsibleContent>
+                  <div className="px-3 pb-3 pt-0">
+                    {matchingLeadProfiles.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {matchingLeadProfiles.map((person) => (
+                          <div
+                            key={person.user_id}
+                            className="flex items-center gap-2 bg-background border rounded-md px-2.5 py-1.5"
+                          >
+                            <Avatar className="h-6 w-6">
+                              <AvatarImage src={person.avatar_url} />
+                              <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
+                                {getInitials(person.full_name)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="min-w-0">
+                              <p className="text-xs font-medium truncate">{person.full_name}</p>
+                              {person.position && (
+                                <p className="text-[10px] text-muted-foreground/50 truncate">{person.position}</p>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground italic">
+                        No matching personnel found{plantName ? ` for ${plantName}` : ''}
+                      </p>
+                    )}
+                  </div>
+                </CollapsibleContent>
               </div>
-            </div>
+            </Collapsible>
           ) : (
             <Popover open={leadPopoverOpen} onOpenChange={setLeadPopoverOpen} modal={true}>
               <PopoverTrigger asChild>
