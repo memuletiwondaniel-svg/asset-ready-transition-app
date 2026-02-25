@@ -22,6 +22,8 @@ import { usePlants } from '@/hooks/usePlants';
 import { useFields } from '@/hooks/useFields';
 import { useStations } from '@/hooks/useStations';
 import { usePSSRReasons } from '@/hooks/usePSSRReasons';
+import { useProfileUsers } from '@/hooks/useProfileUsers';
+import { useRoles } from '@/hooks/useRoles';
 import WizardStepCategory from './wizard/WizardStepCategory';
 import WizardStepDetails from './wizard/WizardStepDetails';
 import WizardStepChecklistItems, { ChecklistItemOverrides } from './wizard/WizardStepChecklistItems';
@@ -65,6 +67,7 @@ interface WizardState {
   selectedSofApproverRoleIds: string[];
   templatePssrApproverRoleIds: string[];
   templateSofApproverRoleIds: string[];
+  templatePssrLeadRoleId: string;
 }
 
 const BASE_STEPS = [
@@ -94,6 +97,8 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
   const { plants } = usePlants();
   const { allFields: fields } = useFields();
   const { allStations: stations } = useStations();
+  const { data: profileUsers = [] } = useProfileUsers();
+  const { roles = [] } = useRoles();
 
   // Ref to persist categoryId across potential re-renders/remounts
   const categoryIdRef = useRef<string>('');
@@ -119,6 +124,7 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
     selectedSofApproverRoleIds: [],
     templatePssrApproverRoleIds: [],
     templateSofApproverRoleIds: [],
+    templatePssrLeadRoleId: '',
   });
 
   // Keep ref in sync with state
@@ -174,6 +180,7 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
       selectedSofApproverRoleIds: [],
       templatePssrApproverRoleIds: [],
       templateSofApproverRoleIds: [],
+      templatePssrLeadRoleId: '',
     });
   };
 
@@ -305,7 +312,7 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
       console.log('[PSSR Config] Loading config for reason:', reasonId);
       const { data: config, error } = await supabase
         .from('pssr_reason_configuration')
-        .select('checklist_item_ids, pssr_approver_role_ids, sof_approver_role_ids')
+        .select('checklist_item_ids, pssr_approver_role_ids, sof_approver_role_ids, default_pssr_lead_role_id')
         .eq('reason_id', reasonId)
         .maybeSingle();
       
@@ -318,11 +325,13 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
       const checklistIds = config?.checklist_item_ids || [];
       const pssrApproverIds = config?.pssr_approver_role_ids || [];
       const sofApproverIds = config?.sof_approver_role_ids || [];
+      const leadRoleId = (config as any)?.default_pssr_lead_role_id || '';
       
       console.log('[PSSR Config] Loaded:', {
         checklistItems: checklistIds.length,
         pssrApprovers: pssrApproverIds.length,
         sofApprovers: sofApproverIds.length,
+        leadRoleId,
       });
       
       setWizardState(prev => ({
@@ -333,6 +342,7 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
         templateChecklistItemIds: checklistIds,
         templatePssrApproverRoleIds: pssrApproverIds,
         templateSofApproverRoleIds: sofApproverIds,
+        templatePssrLeadRoleId: leadRoleId,
         configLoaded: true,
         configLoading: false,
       }));
@@ -353,6 +363,32 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
       loadReasonConfig(effectiveReasonId);
     }
   }, [currentStep, wizardState.reasonId, wizardState.configLoaded, wizardState.configLoading]);
+
+  // Auto-resolve PSSR Lead from template role + selected plant
+  useEffect(() => {
+    const { templatePssrLeadRoleId, pssrLeadId, plantId } = wizardState;
+    if (!templatePssrLeadRoleId || !plantId || pssrLeadId) return;
+    
+    const role = roles.find(r => r.id === templatePssrLeadRoleId);
+    if (!role) return;
+    
+    const plantObj = plants?.find(p => p.id === plantId);
+    const plantLower = plantObj?.name?.toLowerCase() || '';
+    const roleName = role.name.toLowerCase();
+    
+    const match = profileUsers.find(p => {
+      const pos = (p.position || '').toLowerCase();
+      if (pos.includes('project')) return false;
+      if (!pos.includes(roleName)) return false;
+      if (plantLower && !pos.includes(plantLower)) return false;
+      return true;
+    });
+    
+    if (match) {
+      console.log('[PSSR Lead] Auto-resolved from template role:', role.name, '→', match.full_name);
+      setWizardState(prev => ({ ...prev, pssrLeadId: match.user_id }));
+    }
+  }, [wizardState.templatePssrLeadRoleId, wizardState.plantId, wizardState.pssrLeadId, profileUsers, roles, plants]);
 
   const handleClose = () => {
     resetWizard();
@@ -1092,6 +1128,8 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
                   selectedSofApproverRoleIds: [],
                   templatePssrApproverRoleIds: [],
                   templateSofApproverRoleIds: [],
+                  templatePssrLeadRoleId: '',
+                  pssrLeadId: '',
                 }));
               }}
             />
