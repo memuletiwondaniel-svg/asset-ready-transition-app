@@ -93,6 +93,7 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
   const [naItemIds, setNaItemIds] = useState<string[]>([]);
   const [customItems, setCustomItems] = useState<import('@/hooks/usePSSRChecklistLibrary').ChecklistItem[]>([]);
   const [showUnsavedConfirm, setShowUnsavedConfirm] = useState(false);
+  const [showDeactivateConfirm, setShowDeactivateConfirm] = useState(false);
 
   // Snapshot of initial values to detect dirty state
   const initialSnapshot = useRef<{
@@ -414,10 +415,8 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
               <WizardStepReasonDetails
                 reasonName={formReasonName}
                 description={description}
-                pssrLeadId={pssrLeadId}
                 onReasonNameChange={setFormReasonName}
                 onDescriptionChange={setDescription}
-                onPssrLeadChange={setPssrLeadId}
               />
             )}
 
@@ -432,6 +431,8 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
                       : [...prev, roleId]
                   );
                 }}
+                pssrLeadRoleId={pssrLeadId}
+                onPssrLeadRoleChange={setPssrLeadId}
               />
             )}
 
@@ -515,65 +516,6 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
             )}
           </div>
 
-          {/* Status Actions (shown on step 1) */}
-          {currentStep === 1 && (
-            <div className="px-1 pb-4">
-              {status === 'draft' && (
-                <div className="bg-muted/30 rounded-lg p-4 border border-border/50">
-                  <div className="flex items-start gap-3">
-                    <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
-                    <div className="flex-1">
-                      <h4 className="text-sm font-medium mb-1">Ready to activate?</h4>
-                      <p className="text-xs text-muted-foreground mb-3">
-                        Activating this template will make it available for creating new PSSRs.
-                      </p>
-                      <Button size="sm" onClick={handleActivateTemplate} disabled={isSaving} className="bg-green-600 hover:bg-green-700">
-                        <CheckCircle className="h-4 w-4 mr-1" />
-                        Activate Template
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {status === 'active' && (
-                <div className="bg-green-50 dark:bg-green-950/20 rounded-lg p-4 border border-green-200 dark:border-green-800">
-                  <div className="flex items-start gap-3">
-                    <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5" />
-                    <div className="flex-1">
-                      <h4 className="text-sm font-medium text-green-800 dark:text-green-200 mb-1">Template is Active</h4>
-                      <p className="text-xs text-green-700 dark:text-green-300 mb-3">
-                        This template is currently available for creating new PSSRs.
-                      </p>
-                      <Button size="sm" variant="outline" onClick={handleDeactivateTemplate} disabled={isSaving} className="border-red-300 text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-950/30">
-                        <AlertCircle className="h-4 w-4 mr-1" />
-                        Deactivate Template
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {status === 'inactive' && (
-                <div className="bg-red-50 dark:bg-red-950/20 rounded-lg p-4 border border-red-200 dark:border-red-800">
-                  <div className="flex items-start gap-3">
-                    <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 mt-0.5" />
-                    <div className="flex-1">
-                      <h4 className="text-sm font-medium text-red-800 dark:text-red-200 mb-1">Template is Inactive</h4>
-                      <p className="text-xs text-red-700 dark:text-red-300 mb-3">
-                        This template is deactivated and not available for creating new PSSRs.
-                      </p>
-                      <Button size="sm" onClick={handleActivateTemplate} disabled={isSaving} className="bg-green-600 hover:bg-green-700">
-                        <CheckCircle className="h-4 w-4 mr-1" />
-                        Reactivate Template
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
           {/* Footer Navigation */}
           <div className="border-t pt-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -586,6 +528,44 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
                 <Trash2 className="h-4 w-4 mr-1" />
                 Delete
               </Button>
+              
+              {/* Status action button */}
+              {status === 'active' && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950/30"
+                  onClick={() => setShowDeactivateConfirm(true)}
+                  disabled={isSaving}
+                >
+                  <AlertCircle className="h-4 w-4 mr-1" />
+                  Deactivate
+                </Button>
+              )}
+              {status === 'draft' && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-950/30"
+                  onClick={handleActivateTemplate}
+                  disabled={isSaving}
+                >
+                  <CheckCircle className="h-4 w-4 mr-1" />
+                  Activate
+                </Button>
+              )}
+              {status === 'inactive' && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-950/30"
+                  onClick={handleActivateTemplate}
+                  disabled={isSaving}
+                >
+                  <CheckCircle className="h-4 w-4 mr-1" />
+                  Reactivate
+                </Button>
+              )}
             </div>
 
             <div className="flex items-center gap-2">
@@ -659,6 +639,38 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Deactivate Confirmation Dialog */}
+      <AlertDialog open={showDeactivateConfirm} onOpenChange={setShowDeactivateConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              Deactivate Template?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="pt-2 space-y-2">
+              <p>
+                You are about to deactivate "<strong>{formReasonName}</strong>".
+              </p>
+              <p>
+                This template will no longer be available for creating new PSSRs. Existing PSSRs using this template will not be affected.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setShowDeactivateConfirm(false);
+                handleDeactivateTemplate();
+              }}
+              className="bg-amber-600 text-white hover:bg-amber-700"
+            >
+              Deactivate
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    
       {/* Unsaved Changes Confirmation Dialog */}
       <AlertDialog open={showUnsavedConfirm} onOpenChange={setShowUnsavedConfirm}>
         <AlertDialogContent>
