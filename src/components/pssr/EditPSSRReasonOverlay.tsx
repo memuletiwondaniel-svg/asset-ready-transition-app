@@ -336,7 +336,7 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
   if (isLoadingConfig) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogContent className="max-w-4xl h-[85vh] overflow-hidden flex flex-col">
           <div className="flex-1 flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
@@ -348,7 +348,7 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
   return (
     <>
       <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogContent className="max-w-4xl h-[85vh] overflow-hidden flex flex-col">
           <DialogHeader className="border-b pb-4">
               <div className="flex items-center gap-3">
                 <DialogTitle className="text-xl font-semibold">
@@ -424,107 +424,115 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
           {/* Step Content */}
           <div className="flex-1 overflow-y-auto py-6 px-1">
             {currentStep === 1 && (
-              <WizardStepReasonDetails
-                reasonName={formReasonName}
-                description={description}
-                onReasonNameChange={setFormReasonName}
-                onDescriptionChange={setDescription}
-              />
+              <div key="step-1" className="animate-in fade-in duration-200">
+                <WizardStepReasonDetails
+                  reasonName={formReasonName}
+                  description={description}
+                  onReasonNameChange={setFormReasonName}
+                  onDescriptionChange={setDescription}
+                />
+              </div>
             )}
 
             {currentStep === 2 && (
-              <WizardStepApprovers
-                type="pssr"
-                selectedRoleIds={pssrApproverRoleIds}
-                onRoleToggle={(roleId) => {
-                  setPssrApproverRoleIds(prev => 
-                    prev.includes(roleId) 
-                      ? prev.filter(id => id !== roleId)
-                      : [...prev, roleId]
-                  );
-                }}
-                pssrLeadRoleId={pssrLeadId}
-                onPssrLeadRoleChange={setPssrLeadId}
-              />
+              <div key="step-2" className="animate-in fade-in duration-200">
+                <WizardStepApprovers
+                  type="pssr"
+                  selectedRoleIds={pssrApproverRoleIds}
+                  onRoleToggle={(roleId) => {
+                    setPssrApproverRoleIds(prev => 
+                      prev.includes(roleId) 
+                        ? prev.filter(id => id !== roleId)
+                        : [...prev, roleId]
+                    );
+                  }}
+                  pssrLeadRoleId={pssrLeadId}
+                  onPssrLeadRoleChange={setPssrLeadId}
+                />
+              </div>
             )}
 
             {currentStep === 3 && (
-              <WizardStepApprovers
-                type="sof"
-                selectedRoleIds={sofApproverRoleIds}
-                onRoleToggle={(roleId) => {
-                  setSofApproverRoleIds(prev =>
-                    prev.includes(roleId)
-                      ? prev.filter(id => id !== roleId)
-                      : [...prev, roleId]
-                  );
-                }}
-              />
+              <div key="step-3" className="animate-in fade-in duration-200">
+                <WizardStepApprovers
+                  type="sof"
+                  selectedRoleIds={sofApproverRoleIds}
+                  onRoleToggle={(roleId) => {
+                    setSofApproverRoleIds(prev =>
+                      prev.includes(roleId)
+                        ? prev.filter(id => id !== roleId)
+                        : [...prev, roleId]
+                    );
+                  }}
+                />
+              </div>
             )}
 
             {currentStep === 4 && (
-              <WizardStepChecklistItems
-                selectedItemIds={checklistItemIds}
-                itemOverrides={checklistItemOverrides}
-                onItemToggle={(itemId) => {
-                  setChecklistItemIds(prev =>
-                    prev.includes(itemId)
-                      ? prev.filter(id => id !== itemId)
-                      : [...prev, itemId]
-                  );
-                }}
-                onSelectAllItems={(allItemIds) => {
-                  setChecklistItemIds(allItemIds);
-                }}
-                onDeselectAll={() => {
-                  setChecklistItemIds([]);
-                }}
-                onItemOverrideChange={(itemId: string, override: ChecklistItemOverride) => {
-                  setChecklistItemOverrides(prev => ({
-                    ...prev,
-                    [itemId]: override,
-                  }));
-                }}
-                onItemOverrideReset={(itemId: string) => {
-                  setChecklistItemOverrides(prev => {
-                    const newOverrides = { ...prev };
-                    delete newOverrides[itemId];
-                    return newOverrides;
-                  });
-                }}
-                naItemIds={naItemIds}
-                onMarkNA={(itemId) => {
-                  setNaItemIds(prev => [...prev, itemId]);
-                  setChecklistItemIds(prev => prev.filter(id => id !== itemId));
-                }}
-                onRestoreNA={(itemId) => {
-                  setNaItemIds(prev => prev.filter(id => id !== itemId));
-                  setChecklistItemIds(prev => [...prev, itemId]);
-                }}
-                customItems={customItems}
-                onAddExistingItems={(itemIds) => {
-                  setChecklistItemIds(prev => [...new Set([...prev, ...itemIds])]);
-                }}
-                onAddCustomItem={(item) => {
-                  const customId = `custom-${Date.now()}`;
-                  const newItem = {
-                    id: customId,
-                    category: item.category,
-                    topic: item.topic || null,
-                    description: item.description,
-                    supporting_evidence: item.supporting_evidence || null,
-                    approvers: null,
-                    responsible: null,
-                    sequence_number: 999,
-                    is_active: true,
-                    version: 1,
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString(),
-                  };
-                  setCustomItems(prev => [...prev, newItem]);
-                  setChecklistItemIds(prev => [...prev, customId]);
-                }}
-              />
+              <div key="step-4" className="animate-in fade-in duration-200">
+                <WizardStepChecklistItems
+                  selectedItemIds={checklistItemIds}
+                  itemOverrides={checklistItemOverrides}
+                  onItemToggle={(itemId) => {
+                    setChecklistItemIds(prev =>
+                      prev.includes(itemId)
+                        ? prev.filter(id => id !== itemId)
+                        : [...prev, itemId]
+                    );
+                  }}
+                  onSelectAllItems={(allItemIds) => {
+                    setChecklistItemIds(allItemIds);
+                  }}
+                  onDeselectAll={() => {
+                    setChecklistItemIds([]);
+                  }}
+                  onItemOverrideChange={(itemId: string, override: ChecklistItemOverride) => {
+                    setChecklistItemOverrides(prev => ({
+                      ...prev,
+                      [itemId]: override,
+                    }));
+                  }}
+                  onItemOverrideReset={(itemId: string) => {
+                    setChecklistItemOverrides(prev => {
+                      const newOverrides = { ...prev };
+                      delete newOverrides[itemId];
+                      return newOverrides;
+                    });
+                  }}
+                  naItemIds={naItemIds}
+                  onMarkNA={(itemId) => {
+                    setNaItemIds(prev => [...prev, itemId]);
+                    setChecklistItemIds(prev => prev.filter(id => id !== itemId));
+                  }}
+                  onRestoreNA={(itemId) => {
+                    setNaItemIds(prev => prev.filter(id => id !== itemId));
+                    setChecklistItemIds(prev => [...prev, itemId]);
+                  }}
+                  customItems={customItems}
+                  onAddExistingItems={(itemIds) => {
+                    setChecklistItemIds(prev => [...new Set([...prev, ...itemIds])]);
+                  }}
+                  onAddCustomItem={(item) => {
+                    const customId = `custom-${Date.now()}`;
+                    const newItem = {
+                      id: customId,
+                      category: item.category,
+                      topic: item.topic || null,
+                      description: item.description,
+                      supporting_evidence: item.supporting_evidence || null,
+                      approvers: null,
+                      responsible: null,
+                      sequence_number: 999,
+                      is_active: true,
+                      version: 1,
+                      created_at: new Date().toISOString(),
+                      updated_at: new Date().toISOString(),
+                    };
+                    setCustomItems(prev => [...prev, newItem]);
+                    setChecklistItemIds(prev => [...prev, customId]);
+                  }}
+                />
+              </div>
             )}
           </div>
 
