@@ -1,17 +1,44 @@
 
 
-## Add BFM Lead to PSSR Allowed Approver Roles
+## Fix: Exclude "Projects" Personnel from PSSR Approver Resolution
 
-### Change
-Insert the **BFM Lead** role (`ed6046ca-a68c-4840-a2ba-787f0fd6f3d5`) into the `pssr_allowed_approver_roles` table.
+### Problem
+Martyn Turner ("Engr. Manager - Projects") appears under the "Engr. Manager" approver role in the PSSR template editor. He should never appear in PSSR contexts — only in VCR workflows.
 
-### SQL
-```sql
-INSERT INTO pssr_allowed_approver_roles (role_id)
-VALUES ('ed6046ca-a68c-4840-a2ba-787f0fd6f3d5');
+### Root Cause
+In `src/components/pssr/wizard/WizardStepApprovers.tsx`, the personnel matching logic has this order:
+
+```
+if (!roleMatches) return false;
+if (!plantLower) return true;    // ← early return BEFORE project check
+// ...
+if (pos.includes('project')) return false;  // ← never reached when no plant
 ```
 
-### Impact
-- No code changes needed — the UI dynamically reads from this table
-- "BFM Lead" will appear in the PSSR Approvers dropdown in Step 2 of the Edit PSSR Template
+When `plantName` is empty (template editor), the function returns `true` at line 86 before the "project" exclusion on line 89 is ever evaluated.
+
+### Fix
+**File: `src/components/pssr/wizard/WizardStepApprovers.tsx`**
+
+Move the "Projects" exclusion check **above** the `!plantLower` early return. This ensures "Projects" personnel are always excluded from PSSR contexts regardless of whether a plant is selected.
+
+Change the order from:
+```
+if (!roleMatches) return false;
+if (!plantLower) return true;
+// ...
+if (pos.includes('project')) return false;
+```
+
+To:
+```
+if (!roleMatches) return false;
+if (pos.includes('project')) return false;   // ← moved up
+if (!plantLower) return true;
+```
+
+### Result
+- Martyn Turner ("Engr. Manager - Projects") will no longer appear under "Engr. Manager" in PSSR templates or creation wizards
+- Only "Engr. Manager - Asset" personnel (Harald Traa, Mohamed Ehab) will be shown
+- No impact on VCR workflows (separate code path)
 
