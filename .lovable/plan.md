@@ -1,26 +1,41 @@
 
 
-## Problem
+## Analysis
 
-Two issues with the Edit PSSR Template modal:
+You raise two good points:
 
-1. **Inconsistent height**: The modal content area shrinks on Step 3 (SoF Approvers) because the content is shorter than other steps and the dialog has no fixed height — it uses `max-h-[90vh]` but no minimum, so it collapses to fit content.
+### 1. Icon consistency: PSSR Lead vs PSSR Approvers
 
-2. **Jarring transition between Step 1 and Step 2**: When switching steps, React unmounts one component and mounts another. Without any transition, this causes a visual "flash" as the content area briefly empties then fills with new content.
+Currently:
+- **PSSR Lead** uses a `Shield` icon (emerald) — which doesn't visually convey "person"
+- **PSSR Approvers** section heading uses a `Users` icon (blue) — which clearly conveys "people"
+
+Your suggestion is correct from a modern UI/UX perspective. Using **`User`** (single person, from lucide-react) for PSSR Lead and **`Users`** (multiple people) for PSSR Approvers creates a natural visual pairing that immediately communicates the 1-vs-many distinction. The `Shield` icon is semantically weaker here.
+
+### 2. Colored dots in front of selected roles — are they needed?
+
+Currently:
+- **Green dot** (`bg-emerald-500/60`) before the selected PSSR Lead role name
+- **Blue dot** (`bg-primary/60`) before each selected PSSR Approver role name
+
+These dots are **redundant visual noise**. The cards are already clearly differentiated by:
+- Being inside their respective labeled sections (PSSR Lead vs PSSR Approvers)
+- Having the chevron expand icon
+- Having distinct section headings with icons
+
+The dots add no additional information and clutter the card. Removing them is the cleaner, more modern approach — the section context and card structure already provide enough visual hierarchy.
 
 ## Plan
 
-**File: `src/components/pssr/EditPSSRReasonOverlay.tsx`**
+**File: `src/components/pssr/wizard/WizardStepApprovers.tsx`**
 
-1. **Fix consistent height** — Change the `DialogContent` className from `max-h-[90vh]` to `h-[85vh]` so the modal maintains a fixed height across all steps. The inner content area (`flex-1 overflow-y-auto`) already handles scrolling, so shorter steps will simply have empty space below rather than collapsing.
+1. **Replace `Shield` icon with `User` icon** for the PSSR Lead section heading (line 161), keeping the emerald color
+2. **Update import** — add `User` to the lucide-react import, remove `Shield` (line 10)
+3. **Remove the green dot** (`<div className="w-1.5 h-1.5 rounded-full bg-emerald-500/60 ...">`) from the selected PSSR Lead card (line 183)
+4. **Remove the blue dot** (`<div className="w-1.5 h-1.5 rounded-full bg-primary/60 ...">`) from each selected PSSR Approver card (line 325)
 
-2. **Smooth step transitions** — Wrap the step content area in a container with a CSS transition. Add `animate-in fade-in duration-200` to each step's content wrapper so that when React swaps step components, the new one fades in smoothly instead of appearing abruptly.
+**File: `src/components/pssr/wizard/WizardStepApproversSetup.tsx`**
 
-Both the loading state dialog (line 339) and the main dialog (line 351) will get the fixed height for consistency.
-
-### Technical Details
-
-- Line 339: Change `max-h-[90vh]` → `h-[85vh]` on loading state DialogContent
-- Line 351: Change `max-h-[90vh]` → `h-[85vh]` on main DialogContent  
-- Lines 426-528: Add `className="animate-in fade-in duration-200"` wrapper div around each step's rendered content (steps 1-4)
+5. **Replace `UserCircle` icon with `User` icon** in the PSSR Lead section heading (line 74), keeping the emerald color
+6. **Update import** — swap `UserCircle` for `User` (line 10)
 
