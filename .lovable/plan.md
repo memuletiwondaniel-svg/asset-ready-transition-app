@@ -1,41 +1,25 @@
 
 
-## Analysis
+## Problem
 
-You raise two good points:
+The PSSR Lead section only shows 5 out of 9 Ops Team Leads. The root cause is a single line of code:
 
-### 1. Icon consistency: PSSR Lead vs PSSR Approvers
+```tsx
+// Line 134 in WizardStepApprovers.tsx
+.slice(0, 5)   // ← Hard-caps results to 5
+```
 
-Currently:
-- **PSSR Lead** uses a `Shield` icon (emerald) — which doesn't visually convey "person"
-- **PSSR Approvers** section heading uses a `Users` icon (blue) — which clearly conveys "people"
+All 9 users have "Ops Team Lead" in their position, so the filter matches correctly. The `.slice(0, 5)` silently drops the remaining 4 (Haydar Khalid, Khalid Isam, Mustafa Ali, Muwafaq Al-Maleki).
 
-Your suggestion is correct from a modern UI/UX perspective. Using **`User`** (single person, from lucide-react) for PSSR Lead and **`Users`** (multiple people) for PSSR Approvers creates a natural visual pairing that immediately communicates the 1-vs-many distinction. The `Shield` icon is semantically weaker here.
-
-### 2. Colored dots in front of selected roles — are they needed?
-
-Currently:
-- **Green dot** (`bg-emerald-500/60`) before the selected PSSR Lead role name
-- **Blue dot** (`bg-primary/60`) before each selected PSSR Approver role name
-
-These dots are **redundant visual noise**. The cards are already clearly differentiated by:
-- Being inside their respective labeled sections (PSSR Lead vs PSSR Approvers)
-- Having the chevron expand icon
-- Having distinct section headings with icons
-
-The dots add no additional information and clutter the card. Removing them is the cleaner, more modern approach — the section context and card structure already provide enough visual hierarchy.
-
-## Plan
+## Fix
 
 **File: `src/components/pssr/wizard/WizardStepApprovers.tsx`**
 
-1. **Replace `Shield` icon with `User` icon** for the PSSR Lead section heading (line 161), keeping the emerald color
-2. **Update import** — add `User` to the lucide-react import, remove `Shield` (line 10)
-3. **Remove the green dot** (`<div className="w-1.5 h-1.5 rounded-full bg-emerald-500/60 ...">`) from the selected PSSR Lead card (line 183)
-4. **Remove the blue dot** (`<div className="w-1.5 h-1.5 rounded-full bg-primary/60 ...">`) from each selected PSSR Approver card (line 325)
+1. **Remove `.slice(0, 5)`** from line 134 — show all matching profiles, not an arbitrary subset.
 
-**File: `src/components/pssr/wizard/WizardStepApproversSetup.tsx`**
+That's the only change needed. One line removal.
 
-5. **Replace `UserCircle` icon with `User` icon** in the PSSR Lead section heading (line 74), keeping the emerald color
-6. **Update import** — swap `UserCircle` for `User` (line 10)
+## Secondary observation (no action needed now)
+
+4 of the 9 Ops Team Leads have no `role` UUID assigned in the database (their `role` column is `null`). The current matching logic works because it falls back to position-string matching. However, assigning the correct role UUID (`761eb276-fdd5-4c5d-8d72-a75e00b0fbf6`) to those 4 users (Ammar, Hussein, Khalid Isam, Sajad) would improve data consistency.
 
