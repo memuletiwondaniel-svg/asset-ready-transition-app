@@ -85,9 +85,9 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
           return true;
         }
         
-        // Plant-specific director roles: strict plant match only
+        // Plant-specific director roles: must match both role name AND plant
         if (roleName.includes('director')) {
-          return pos.includes(plantLower);
+          return posLower.includes(roleName) && posLower.includes(plantLower);
         }
         
         // For most roles, prefer those whose position matches the plant
