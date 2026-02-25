@@ -152,93 +152,102 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* PSSR Lead Role - only for pssr type */}
+      {/* PSSR Lead - only for pssr type */}
       {type === 'pssr' && onPssrLeadRoleChange && (
         <div className="space-y-3 pb-4 border-b border-border/50">
           <Label className="text-base font-medium">
             <div className="flex items-center gap-2">
-              <Shield className="h-4 w-4 text-primary" />
-              PSSR Lead Role
+              <Shield className="h-4 w-4 text-emerald-500" />
+              PSSR Lead
             </div>
           </Label>
           <p className="text-sm text-muted-foreground -mt-1">
             Select the role responsible for leading the PSSR. The actual person will be resolved based on the plant/location when the PSSR is created.
           </p>
-          <Popover open={leadPopoverOpen} onOpenChange={setLeadPopoverOpen} modal={true}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                role="combobox"
-                aria-expanded={leadPopoverOpen}
-                className="w-full justify-between h-10"
-              >
-                {selectedLeadRole ? (
-                  <div className="flex items-center gap-2">
-                    <Shield className="h-4 w-4 text-primary shrink-0" />
-                    <span className="truncate">{selectedLeadRole.name}</span>
-                  </div>
-                ) : (
+
+          {/* Selected PSSR Lead - card format matching approver cards */}
+          {selectedLeadRole ? (
+            <div className="border rounded-lg bg-muted/50 dark:bg-muted/30 group">
+              <div className="flex items-center justify-between px-3 py-2.5">
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/60 shrink-0" />
+                  <span className="font-semibold text-sm tracking-tight text-foreground/90 truncate">{selectedLeadRole.name}</span>
+                  {matchingLeadProfiles.length > 0 && (
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-normal ml-1 shrink-0 text-muted-foreground/50">
+                      {matchingLeadProfiles.length}
+                    </Badge>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onPssrLeadRoleChange?.('')}
+                  className="text-destructive/70 hover:text-destructive transition-all p-1 rounded-full hover:bg-destructive/10 shrink-0 ml-2 opacity-0 group-hover:opacity-100"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <Popover open={leadPopoverOpen} onOpenChange={setLeadPopoverOpen} modal={true}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={leadPopoverOpen}
+                  className="w-full justify-between h-10"
+                >
                   <span className="text-muted-foreground">
                     {rolesLoading ? 'Loading roles...' : 'Select a PSSR Lead role...'}
                   </span>
-                )}
-                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[400px] p-0" align="start">
-              <Command>
-                <CommandInput placeholder="Search roles..." />
-                <CommandList>
-                  <CommandEmpty>No roles found.</CommandEmpty>
-                  <CommandGroup className="max-h-[250px] overflow-y-auto">
-                    {roles.map((role) => (
-                      <CommandItem
-                        key={role.id}
-                        value={role.name}
-                        onSelect={() => {
-                          onPssrLeadRoleChange(role.id === pssrLeadRoleId ? '' : role.id);
-                          setLeadPopoverOpen(false);
-                        }}
-                      >
-                        <div className="flex items-center gap-2 w-full">
-                          <Shield className="h-4 w-4 text-muted-foreground shrink-0" />
-                          <span className="flex-1 truncate">{role.name}</span>
-                          <Check
-                            className={cn(
-                              'h-4 w-4 shrink-0',
-                              pssrLeadRoleId === role.id ? 'opacity-100' : 'opacity-0'
-                            )}
-                          />
-                        </div>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
-
-          {selectedLeadRole && matchingLeadProfiles.length > 0 && (
-            <div className="bg-muted/30 rounded-md px-3 py-2.5 space-y-1.5">
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <Users className="h-3.5 w-3.5" />
-                <span>Matching profiles for "{selectedLeadRole.name}":</span>
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {matchingLeadProfiles.map(u => (
-                  <Badge key={u.user_id} variant="secondary" className="text-xs font-normal">
-                    {u.full_name}
-                    {u.position && <span className="text-muted-foreground ml-1">— {u.position}</span>}
-                  </Badge>
-                ))}
-              </div>
-            </div>
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[400px] p-0" align="start">
+                <Command>
+                  <CommandInput placeholder="Search roles..." />
+                  <CommandList>
+                    <CommandEmpty>No roles found.</CommandEmpty>
+                    <CommandGroup className="max-h-[250px] overflow-y-auto">
+                      {roles.map((role) => (
+                        <CommandItem
+                          key={role.id}
+                          value={role.name}
+                          onSelect={() => {
+                            onPssrLeadRoleChange(role.id);
+                            setLeadPopoverOpen(false);
+                          }}
+                        >
+                          <div className="flex items-center gap-2 w-full">
+                            <Shield className="h-4 w-4 text-muted-foreground shrink-0" />
+                            <span className="flex-1 truncate">{role.name}</span>
+                          </div>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           )}
         </div>
       )}
 
-      {/* Description only - no duplicate title */}
-      <p className="text-xs text-muted-foreground/70">{description}</p>
+      {/* PSSR Approvers Section Heading */}
+      {type === 'pssr' && (
+        <div className="space-y-1 pb-1 pt-2">
+          <Label className="text-base font-medium">
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-blue-500" />
+              PSSR Approvers
+            </div>
+          </Label>
+          <p className="text-sm text-muted-foreground">{description}</p>
+        </div>
+      )}
+
+      {type !== 'pssr' && (
+        <p className="text-xs text-muted-foreground/70">{description}</p>
+      )}
 
       {/* Selected roles with resolved people */}
       {selectedRoleIds.length > 0 && (
@@ -259,7 +268,7 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
                   });
                 }}
               >
-                <div className="border rounded-lg bg-muted/50 dark:bg-muted/30">
+                <div className="border rounded-lg bg-muted/50 dark:bg-muted/30 group">
                   <div className="flex items-center justify-between px-3 py-2.5">
                     <CollapsibleTrigger asChild>
                       <button
@@ -267,12 +276,12 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
                         className="flex items-center gap-2 flex-1 min-w-0 text-left hover:opacity-80 transition-opacity"
                       >
                         <ChevronRight className={cn(
-                          "h-3.5 w-3.5 text-muted-foreground shrink-0 transition-transform duration-200",
+                          "h-3.5 w-3.5 text-muted-foreground/40 shrink-0 transition-transform duration-200",
                           expandedRoles.has(roleId) && "rotate-90"
                         )} />
                         <div className="w-1.5 h-1.5 rounded-full bg-primary/60 shrink-0" />
                         <span className="font-semibold text-sm tracking-tight text-foreground/90 truncate">{role?.name || 'Unknown'}</span>
-                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-normal ml-1 shrink-0">
+                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-normal ml-1 shrink-0 text-muted-foreground/50">
                           {people.length}
                         </Badge>
                       </button>
@@ -280,7 +289,7 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
                     <button
                       type="button"
                       onClick={() => onRoleToggle(roleId)}
-                      className="text-muted-foreground hover:text-destructive transition-colors p-1 rounded-full hover:bg-destructive/10 shrink-0 ml-2"
+                      className="text-destructive/70 hover:text-destructive transition-all p-1 rounded-full hover:bg-destructive/10 shrink-0 ml-2 opacity-0 group-hover:opacity-100"
                     >
                       <X className="h-3.5 w-3.5" />
                     </button>
