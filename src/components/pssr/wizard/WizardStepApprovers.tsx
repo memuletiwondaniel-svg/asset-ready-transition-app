@@ -56,12 +56,16 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
 
       const roleName = role.name.toLowerCase();
       
-      // Find profiles that match this role
+      // Find profiles that match this role (by role_id or position-based fuzzy match)
       const matching = profileUsers.filter(p => {
-        if (p.role_id !== roleId) return false;
+        const posLower = (p.position || '').toLowerCase();
+        
+        // Match by role_id OR by position containing the role name
+        const roleMatches = p.role_id === roleId || posLower.includes(roleName);
+        if (!roleMatches) return false;
         if (!plantLower) return true;
         
-        const pos = (p.position || '').toLowerCase();
+        const pos = posLower;
         const knownPlants = ['cs', 'kaz', 'uq', 'nrngl', 'bngl'];
         const otherPlants = knownPlants.filter(pl => pl !== plantLower);
 
