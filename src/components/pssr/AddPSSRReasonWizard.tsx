@@ -258,10 +258,8 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
             <WizardStepReasonDetails
               reasonName={wizardState.reasonName}
               description={wizardState.description}
-              pssrLeadId={wizardState.pssrLeadId}
               onReasonNameChange={(reasonName) => setWizardState(prev => ({ ...prev, reasonName }))}
               onDescriptionChange={(description) => setWizardState(prev => ({ ...prev, description }))}
-              onPssrLeadChange={(pssrLeadId) => setWizardState(prev => ({ ...prev, pssrLeadId }))}
             />
           )}
 
@@ -279,6 +277,8 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
                   return { ...prev, pssrApproverRoleIds: newRoles, sofApproverRoleIds: newSofRoles };
                 });
               }}
+              pssrLeadRoleId={wizardState.pssrLeadId}
+              onPssrLeadRoleChange={(pssrLeadId) => setWizardState(prev => ({ ...prev, pssrLeadId }))}
             />
           )}
 
