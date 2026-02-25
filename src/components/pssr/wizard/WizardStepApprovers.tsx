@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Users, X, MapPin, Plus, Check, ChevronRight, User, ChevronsUpDown } from 'lucide-react';
+import { Users, X, MapPin, Plus, Check, ChevronRight, User, ChevronsUpDown, FileCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRoles } from '@/hooks/useRoles';
 import { usePSSRAllowedApproverRoles } from '@/hooks/usePSSRAllowedApproverRoles';
@@ -293,21 +293,56 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
         </div>
       )}
 
-      {/* PSSR Approvers Section Heading */}
-      {type === 'pssr' && (
+      {/* Section Header for PSSR / SoF approvers with inline Add button */}
+      {(type === 'pssr' || type === 'sof') && (
         <div className="space-y-1 pb-1 pt-2">
-          <Label className="text-base font-medium">
-            <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-blue-500" />
-              PSSR Approvers
-            </div>
-          </Label>
+          <div className="flex items-center justify-between">
+            <Label className="text-base font-medium">
+              <div className="flex items-center gap-2">
+                {type === 'pssr' ? (
+                  <Users className="h-4 w-4 text-primary" />
+                ) : (
+                  <FileCheck className="h-4 w-4 text-amber-500" />
+                )}
+                {type === 'pssr' ? 'PSSR Approvers' : 'SoF Approvers'}
+              </div>
+            </Label>
+            {availableRoles.length > 0 && (
+              <Popover open={addPopoverOpen} onOpenChange={setAddPopoverOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" size="sm" className="text-primary hover:text-primary/80 h-7 px-2 text-sm font-medium">
+                    <Plus className="h-3.5 w-3.5 mr-1" />
+                    Add Approver
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[300px] p-0" align="end">
+                  <Command>
+                    <CommandInput placeholder="Search roles..." />
+                    <CommandList>
+                      <CommandEmpty>No roles found.</CommandEmpty>
+                      <CommandGroup className="max-h-[200px] overflow-y-auto">
+                        {availableRoles.map((role) => (
+                          <CommandItem
+                            key={role.id}
+                            value={role.name}
+                            onSelect={() => {
+                              onRoleToggle(role.id);
+                              setAddPopoverOpen(false);
+                            }}
+                          >
+                            <Users className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
+                            <span className="text-sm">{role.name}</span>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            )}
+          </div>
           <p className="text-sm text-muted-foreground">{description}</p>
         </div>
-      )}
-
-      {type !== 'pssr' && (
-        <p className="text-xs text-muted-foreground/70">{description}</p>
       )}
 
       {/* Selected roles with resolved people */}
@@ -392,41 +427,6 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
             );
           })}
         </div>
-      )}
-
-      {/* Add Approver Button */}
-      {availableRoles.length > 0 && (
-        <Popover open={addPopoverOpen} onOpenChange={setAddPopoverOpen}>
-          <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="w-full border-dashed text-muted-foreground hover:text-foreground">
-              <Plus className="h-3.5 w-3.5 mr-1.5" />
-              Add Approver
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-[300px] p-0" align="start">
-            <Command>
-              <CommandInput placeholder="Search roles..." />
-              <CommandList>
-                <CommandEmpty>No roles found.</CommandEmpty>
-                <CommandGroup className="max-h-[200px] overflow-y-auto">
-                  {availableRoles.map((role) => (
-                    <CommandItem
-                      key={role.id}
-                      value={role.name}
-                      onSelect={() => {
-                        onRoleToggle(role.id);
-                        setAddPopoverOpen(false);
-                      }}
-                    >
-                      <Users className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
-                      <span className="text-sm">{role.name}</span>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
       )}
     </div>
   );
