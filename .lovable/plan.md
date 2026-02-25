@@ -1,47 +1,47 @@
 
 
-## Bug: "Unsaved changes" badge persists after saving
+## Bug: Plant Director role showing Deputy Plant Directors
 
 ### Root Cause
 
-In `EditPSSRReasonOverlay.tsx`, after a successful save, the snapshot is reset using **trimmed** values (lines 267-269):
+In `src/components/pssr/wizard/WizardStepApprovers.tsx`, lines 88-91, the profile matching for director roles uses a broad filter:
 
 ```tsx
-initialSnapshot.current = {
-  reasonName: formReasonName.trim(),    // trimmed
-  description: description.trim() || '', // trimmed
-  ...
-};
+if (roleName.includes('director')) {
+  return pos.includes(plantLower);
+}
 ```
 
-But the actual React state (`formReasonName`, `description`) is **never updated** to the trimmed versions. So immediately after save, the dirty check compares:
+When the selected role is **"Plant Director"**, this matches both:
+- `"Plant Director - BNGL"` (correct)
+- `"Dep. Plant Director - BNGL"` (incorrect)
 
-- `formReasonName` (e.g. `"Retired or idle equipment "`) vs snapshot `reasonName` (e.g. `"Retired or idle equipment"`)
-
-The trailing whitespace causes `isDirty` to evaluate to `true` — even though nothing actually changed.
-
-This also happens if the description loaded from the DB had any whitespace difference, or even just from how React state preserves the raw input value.
+Both positions contain the plant name, so the deputy directors slip through. The code doesn't distinguish between "Plant Director" and "Dep. Plant Director" — it only checks that the position contains the plant name.
 
 ### Fix
 
-**File: `src/components/pssr/EditPSSRReasonOverlay.tsx`** — Lines 266-277
+**File: `src/components/pssr/wizard/WizardStepApprovers.tsx`** — Lines 88-91
 
-Store the **raw current state values** (not trimmed) in the snapshot after save. The trimming should only apply to what's sent to the database, not to what's stored for comparison:
+Tighten the director matching logic to also verify the position actually contains the role name, not just the plant name. This ensures "Plant Director" only matches positions like "Plant Director - BNGL" and excludes "Dep. Plant Director - BNGL":
 
 ```tsx
-// Reset snapshot so dirty state clears
-initialSnapshot.current = {
-  reasonName: formReasonName,        // use raw state, not trimmed
-  description: description,          // use raw state, not trimmed
-  categoryId: formCategoryId,
-  subCategory,
-  pssrLeadId,
-  pssrApproverRoleIds: [...pssrApproverRoleIds],
-  sofApproverRoleIds: [...sofApproverRoleIds],
-  checklistItemIds: [...checklistItemIds],
-  checklistItemOverrides: { ...checklistItemOverrides },
-};
+// Plant-specific director roles: must match both role name AND plant
+if (roleName.includes('director')) {
+  return posLower.includes(roleName) && posLower.includes(plantLower);
+}
 ```
 
-This is a two-line change (removing `.trim()` from `reasonName` and `description` in the snapshot reset). The dirty badge will now correctly clear on save and only reappear when the user makes actual changes.
+Since `roleName` is already lowercased (line 65) and `posLower` is the lowercase position (line 69), this comparison is safe. "plant director" will match "plant director - bngl" but NOT "dep. plant director - bngl".
+
+This is a one-line change. It also correctly handles the reverse case — if someone selects the "Dep. Plant Director" role, "dep. plant director" will match "dep. plant director - bngl" but not "plant director - bngl".
+
+### Delegation Note
+
+The user mentioned Plant Directors can delegate to deputies. This is a runtime workflow concern (delegation at PSSR execution time), not a template configuration issue. The template should list only the correct role holders. Delegation can be handled separately if needed.
+
+### Technical Details
+
+- **Role IDs**: Plant Director = `ba9391b0-...`, Dep. Plant Director = `0e8c8c81-...`
+- **Current count shown**: 15 (mix of both). After fix: ~6 actual Plant Directors only.
+- The existing `role_id` match on line 72 (`p.role_id === roleId`) already correctly distinguishes the two roles. The bug is only in the position-based fuzzy fallback on line 72's second condition (`posLower.includes(roleName)`), but that's handled upstream — the director-specific block on line 89 returns early before the general logic runs, so fixing line 90 is sufficient.
 
