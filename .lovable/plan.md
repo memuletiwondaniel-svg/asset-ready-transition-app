@@ -1,59 +1,61 @@
 
 
-## PSSR Item Detail Sheet — Responsible Parties UI Improvements
+## SoF Approvers — Header and Inline "Add" Button Refinement
 
-Three issues to fix in `src/components/pssr/PSSRItemDetailSheet.tsx`:
+### Current state
 
-### 1. Delivering Party name truncation (lines 514-517)
+- **Step 2 (PSSR)** has a styled section header: icon (blue `Users`) + "PSSR Approvers" label + description text, followed by role cards and a full-width dashed "Add Approver" button at the bottom.
+- **Step 3 (SoF)** has no header — just a small muted description line (`text-xs text-muted-foreground/70`), then the role cards, then the same full-width dashed button.
 
-The role name label has `w-24` (96px) which truncates longer role names. Will remove the fixed width and let it flow naturally, or increase it.
+The user asks two questions:
+1. Should SoF get a matching header with icon?
+2. Should "Add Approver" move inline with the header instead of being a separate row?
 
-**Current** (line 515):
-```tsx
-<span className="text-[10px] font-medium text-muted-foreground w-24 shrink-0 truncate">
+### UI/UX recommendation
+
+**Yes to both.** The modern pattern is a **section header row** with the action button right-aligned on the same line. This:
+
+- Reduces vertical space (eliminates a dedicated button row)
+- Creates clear visual hierarchy — the header anchors the section, the action is discoverable but secondary
+- Matches patterns seen in Notion, Linear, Figma, and most modern SaaS tools
+- Keeps consistency across Step 2 and Step 3
+
+The "Add Approver" becomes a **text button** (no border, blue/primary font, small `Plus` icon) right-aligned on the header row. The dashed full-width button is removed.
+
+### Layout
+
+```text
+┌─────────────────────────────────────────────┐
+│ 📋 SoF Approvers              + Add Approver│  ← header row
+│ Users with these roles will be able to...   │  ← description
+├─────────────────────────────────────────────┤
+│ > HSE Director  [1]                         │  ← collapsible card
+│ v Plant Director  [5]                       │  ← expanded card
+│   [avatar chips...]                         │
+└─────────────────────────────────────────────┘
 ```
 
-**Fix**: Remove `w-24` constraint; the collapsible card approach (item 2) will eliminate this layout entirely.
+Same treatment applied to Step 2's PSSR Approvers header for full consistency.
 
----
+### Technical plan
 
-### 2. Use expandable role cards instead of flat avatar lists (lines 502-621)
+**File: `src/components/pssr/wizard/WizardStepApprovers.tsx`**
 
-Currently, the Delivering Party and Approving Parties sections display role names inline with avatar rows. This is inconsistent with the Step 2 wizard pattern which uses collapsible cards showing the role name + personnel count badge, expandable to reveal the people.
+1. **Add SoF header with icon** (replaces lines 309-311): Give `sof` type the same header treatment as `pssr` — a `FileCheck` icon in amber/orange + "SoF Approvers" label + description underneath.
 
-**Approach**: Refactor both the Delivering Party and Approving Parties read-only views to use `Collapsible` / `CollapsibleTrigger` / `CollapsibleContent` from Radix, matching the exact pattern from `WizardStepApprovers.tsx`:
+2. **Move "Add Approver" inline with header** (for both `pssr` and `sof` types):
+   - The header row becomes a `flex items-center justify-between` container.
+   - Left side: icon + title label.
+   - Right side: the "Add Approver" `Popover` trigger, styled as a ghost/link button with `text-primary text-sm font-medium` and a small `Plus` icon. Only shown when `availableRoles.length > 0`.
+   - Remove the existing full-width dashed button block (lines 397-429).
 
-- Each role renders as a `border rounded-lg bg-muted/50` card
-- Collapsed: shows `ChevronRight` + role name + count badge
-- Expanded: shows avatar chips with name and position
-- Add local state `expandedRoles` (Set) to track which are open
+3. **Keep `reason` type unchanged** — it uses a different layout context and doesn't need the inline pattern.
 
-This replaces:
-- **Delivering Party** (lines 513-535): single role → single collapsible card
-- **Approving Parties** (lines 584-618): multiple roles → multiple collapsible cards in a `space-y-2` container
+4. **Import `FileCheck`** from lucide-react for the SoF icon (or `ClipboardCheck` — `FileCheck` fits "Statement of Fitness" well).
 
----
+### Changes summary
 
-### 3. Use X icon instead of Trash2 for role deletion in edit mode (lines 564-571)
-
-The edit mode approver delete button currently uses `<Trash2>`. For consistency with the template editor and Step 2 wizard (which both use `<X>`), change to `<X>` with the same hover-to-reveal pattern.
-
-**Current** (line 570):
-```tsx
-<Trash2 className="h-3 w-3" />
-```
-
-**Fix**: Replace with `<X className="h-3.5 w-3.5" />` and update the button styling to match the wizard pattern: `text-destructive/70 hover:text-destructive opacity-0 group-hover:opacity-100`.
-
----
-
-### Files to modify
-
-- **`src/components/pssr/PSSRItemDetailSheet.tsx`**
-  - Add imports: `Collapsible`, `CollapsibleContent`, `CollapsibleTrigger`, `ChevronRight`
-  - Add `expandedRoles` state (and `deliveringExpanded` for the single delivering card)
-  - Rewrite Delivering Party read-only view (lines 513-535) → collapsible card
-  - Rewrite Approving Parties read-only view (lines 584-618) → collapsible cards
-  - Replace `Trash2` with `X` in edit-mode delete buttons (line 570)
-  - `Trash2` can be removed from imports if unused elsewhere in the file
+- Lines 296-311: Merge the `pssr` and `sof` header blocks into a unified section that renders for both types, with type-specific icon/title/description, and the "Add Approver" popover inlined on the right.
+- Lines 397-429: Remove the standalone "Add Approver" button block (it moves into the header).
+- Add `FileCheck` to the lucide imports.
 
