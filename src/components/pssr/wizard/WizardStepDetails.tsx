@@ -103,12 +103,23 @@ const WizardStepDetails: React.FC<WizardStepDetailsProps> = ({
           <Input
             id="moc-number"
             value={mocNumber || ''}
-            onChange={(e) => onMocNumberChange?.(e.target.value)}
-            placeholder="Enter the MoC reference number (e.g. MOC-2026-001)"
-            maxLength={100}
+            onChange={(e) => {
+              // Format as XX-XXX: auto-insert hyphen after 2 chars
+              let val = e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, '');
+              // Remove any existing hyphens to reformat
+              const raw = val.replace(/-/g, '');
+              if (raw.length <= 2) {
+                val = raw;
+              } else {
+                val = raw.slice(0, 2) + '-' + raw.slice(2, 5);
+              }
+              onMocNumberChange?.(val);
+            }}
+            placeholder="e.g. AB-123"
+            maxLength={6}
           />
           <p className="text-xs text-muted-foreground">
-            The Management of Change number associated with this plant modification
+            Format: XX-XXX (e.g. AB-123)
           </p>
         </div>
       )}
