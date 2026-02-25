@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Users, X, MapPin, Plus, Check, ChevronRight, Shield, ChevronsUpDown } from 'lucide-react';
+import { Users, X, MapPin, Plus, Check, ChevronRight, User, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRoles } from '@/hooks/useRoles';
 import { usePSSRAllowedApproverRoles } from '@/hooks/usePSSRAllowedApproverRoles';
@@ -158,7 +158,7 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
         <div className="space-y-3 pb-4 border-b border-border/50">
           <Label className="text-base font-medium">
             <div className="flex items-center gap-2">
-              <Shield className="h-4 w-4 text-emerald-500" />
+              <User className="h-4 w-4 text-emerald-500" />
               PSSR Lead
             </div>
           </Label>
@@ -180,7 +180,7 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
                         "h-3.5 w-3.5 text-muted-foreground/40 shrink-0 transition-transform duration-200",
                         leadExpanded && "rotate-90"
                       )} />
-                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/60 shrink-0" />
+                      
                       <span className="font-semibold text-sm tracking-tight text-foreground/90 truncate">{selectedLeadRole.name}</span>
                       {matchingLeadProfiles.length > 0 && (
                         <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-normal ml-1 shrink-0 text-muted-foreground/50">
@@ -261,7 +261,7 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
                           }}
                         >
                           <div className="flex items-center gap-2 w-full">
-                            <Shield className="h-4 w-4 text-muted-foreground shrink-0" />
+                            <User className="h-4 w-4 text-muted-foreground shrink-0" />
                             <span className="flex-1 truncate">{role.name}</span>
                           </div>
                         </CommandItem>
@@ -322,7 +322,7 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
                           "h-3.5 w-3.5 text-muted-foreground/40 shrink-0 transition-transform duration-200",
                           expandedRoles.has(roleId) && "rotate-90"
                         )} />
-                        <div className="w-1.5 h-1.5 rounded-full bg-primary/60 shrink-0" />
+                        
                         <span className="font-semibold text-sm tracking-tight text-foreground/90 truncate">{role?.name || 'Unknown'}</span>
                         <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-normal ml-1 shrink-0 text-muted-foreground/50">
                           {people.length}

@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Users, RotateCcw, Sparkles, Check, ChevronsUpDown, UserCircle, ChevronDown } from 'lucide-react';
+import { Users, RotateCcw, Sparkles, Check, ChevronsUpDown, User, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useProfileUsers } from '@/hooks/useProfileUsers';
 import WizardStepApprovers from './WizardStepApprovers';
@@ -71,7 +71,7 @@ const WizardStepApproversSetup: React.FC<WizardStepApproversSetupProps> = ({
       {/* PSSR Lead Selector */}
       <div className="border rounded-lg p-4 space-y-3">
         <div className="flex items-center gap-2">
-          <UserCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+          <User className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
           <Label className="font-medium text-sm">PSSR Lead <span className="text-destructive">*</span></Label>
         </div>
         <p className="text-xs text-muted-foreground/70">
