@@ -131,7 +131,7 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
       const pos = u.position?.toLowerCase() || '';
       const roleName = selectedLeadRole.name.toLowerCase();
       return pos.includes(roleName) || roleName.includes(pos);
-    }).slice(0, 5);
+    });
   }, [pssrLeadRoleId, selectedLeadRole, profileUsers]);
 
   if (rolesLoading || allowedLoading) {
