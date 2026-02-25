@@ -628,7 +628,9 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
     let locationCode = plantName || 'GEN';
     
     if (plantName === 'CS' && selectedStation) {
-      locationCode = selectedStation.name;
+      // Extract short code from parentheses if present, e.g. "Hammar (HAM)" -> "HAM"
+      const stationParenMatch = selectedStation.name.match(/\(([^)]+)\)/);
+      locationCode = stationParenMatch ? stationParenMatch[1] : selectedStation.name;
     } else if (plantName === 'UQ' && selectedField) {
       // Extract short code from field name (e.g., "UQST - UQ Storage Terminal" -> "UQST")
       const fieldCode = selectedField.name.split(' - ')[0]?.trim() || selectedField.name;
