@@ -4,7 +4,7 @@
  */
 
 // Portfolios are regions: North, Central, South
-export const PORTFOLIO_REGIONS = ['North', 'Central', 'South'];
+export const PORTFOLIO_REGIONS = ['North', 'Central', 'South', 'BFM'];
 
 // Roles that require ONLY Portfolio (region) assignment
 export const ROLES_REQUIRING_PORTFOLIO_ONLY = [
