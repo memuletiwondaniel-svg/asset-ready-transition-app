@@ -6776,6 +6776,7 @@ export type Database = {
           finalized_at: string | null
           id: string
           key_activity_dates: Json | null
+          moc_number: string | null
           plant: string | null
           plant_id: string | null
           progress_percentage: number
@@ -6810,6 +6811,7 @@ export type Database = {
           finalized_at?: string | null
           id?: string
           key_activity_dates?: Json | null
+          moc_number?: string | null
           plant?: string | null
           plant_id?: string | null
           progress_percentage?: number
@@ -6844,6 +6846,7 @@ export type Database = {
           finalized_at?: string | null
           id?: string
           key_activity_dates?: Json | null
+          moc_number?: string | null
           plant?: string | null
           plant_id?: string | null
           progress_percentage?: number
