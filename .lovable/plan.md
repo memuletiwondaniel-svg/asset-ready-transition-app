@@ -2,36 +2,25 @@
 
 ## Problem
 
-When the user clicks "Other", the custom reason input field appears **below** the card grid (line 207-218). If the card list is long enough, the input is pushed below the visible area and the user has no visual cue that they need to scroll down to complete a required field.
+Two issues with the Edit PSSR Template modal:
 
-## Modern UI/UX Approach: Inline Expansion
+1. **Inconsistent height**: The modal content area shrinks on Step 3 (SoF Approvers) because the content is shorter than other steps and the dialog has no fixed height — it uses `max-h-[90vh]` but no minimum, so it collapses to fit content.
 
-The best pattern here is to **embed the input directly inside the Other card** when it is selected, expanding the card itself. This is the approach used by Linear, Notion, and similar tools for "Other / Custom" options. The user clicks the card, it expands in-place to reveal the text field with autofocus, and the context is immediately clear.
+2. **Jarring transition between Step 1 and Step 2**: When switching steps, React unmounts one component and mounts another. Without any transition, this causes a visual "flash" as the content area briefly empties then fills with new content.
 
-### Plan
+## Plan
 
-**File: `src/components/pssr/wizard/WizardStepReasonDetails.tsx`**
+**File: `src/components/pssr/EditPSSRReasonOverlay.tsx`**
 
-1. **Remove the separate `{isOtherSelected && ...}` block** (lines 207-218) that renders the custom input below the entire card grid
+1. **Fix consistent height** — Change the `DialogContent` className from `max-h-[90vh]` to `h-[85vh]` so the modal maintains a fixed height across all steps. The inner content area (`flex-1 overflow-y-auto`) already handles scrolling, so shorter steps will simply have empty space below rather than collapsing.
 
-2. **Expand the Other card itself** when selected to include the input inline:
-   - When `isOtherSelected` is true, the Other card grows to include an input field directly beneath the "Other" label inside the card
-   - The input gets `autoFocus` so the cursor is immediately placed for typing
-   - Add a subtle amber/warning-colored hint text inside the card: "Please specify the reason below" to draw attention
-   - The card's border uses `border-amber-500` (instead of `border-primary`) when selected but the custom reason is still empty, signaling incompleteness
-   - Once the user types something, the border reverts to the normal `border-primary` selected state
+2. **Smooth step transitions** — Wrap the step content area in a container with a CSS transition. Add `animate-in fade-in duration-200` to each step's content wrapper so that when React swaps step components, the new one fades in smoothly instead of appearing abruptly.
 
-3. **Visual details**:
-   - The input renders inside the card with a small top margin, spanning the full width below the icon+label row
-   - Use `animate-in slide-in-from-top-2 fade-in duration-200` for a smooth reveal
-   - The card's description text changes from "Other reason not listed above" to "Please specify your reason" when expanded
-
-This keeps everything in-place with zero scrolling needed, and the autofocus + visual hint make it impossible to miss.
+Both the loading state dialog (line 339) and the main dialog (line 351) will get the fixed height for consistency.
 
 ### Technical Details
 
-- Only `WizardStepReasonDetails.tsx` needs changes
-- The same pattern should also be applied to `WizardStepCategory.tsx` (the Create PSSR wizard) for consistency — it has the same "Other" card structure
-- No prop or database changes required
-- The `autoFocus` on the input ensures keyboard-first users can immediately start typing
+- Line 339: Change `max-h-[90vh]` → `h-[85vh]` on loading state DialogContent
+- Line 351: Change `max-h-[90vh]` → `h-[85vh]` on main DialogContent  
+- Lines 426-528: Add `className="animate-in fade-in duration-200"` wrapper div around each step's rendered content (steps 1-4)
 
