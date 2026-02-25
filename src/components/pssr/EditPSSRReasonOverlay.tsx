@@ -403,7 +403,7 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
             <div className="mx-1 mt-2 rounded-lg bg-primary/5 border border-primary/15 px-4 py-2.5 flex items-center gap-2.5">
               <FileText className="h-4 w-4 text-primary shrink-0" />
               <div className="flex items-center gap-2 min-w-0">
-                <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground shrink-0">Reason:</span>
+                <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground shrink-0">PSSR Reason:</span>
                 <span className="text-sm font-semibold text-foreground truncate">{formReasonName}</span>
               </div>
             </div>
