@@ -1,0 +1,1 @@
+TRUNCATE TABLE ora_activity_catalog CASCADE;
