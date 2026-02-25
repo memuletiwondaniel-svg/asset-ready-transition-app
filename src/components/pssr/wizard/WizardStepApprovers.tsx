@@ -89,14 +89,15 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
         }
         const roleMatches = p.role_id === roleId || positionMatches;
         if (!roleMatches) return false;
+
+        // Exclude "Projects" personnel from PSSR approvers (they are for VCRs only)
+        if (posLower.includes('project')) return false;
+
         if (!plantLower) return true;
         
         const pos = posLower;
         const knownPlants = ['cs', 'kaz', 'uq', 'nrngl', 'bngl'];
         const otherPlants = knownPlants.filter(pl => pl !== plantLower);
-
-        // Exclude "Projects" personnel from PSSR approvers (they are for VCRs only)
-        if (pos.includes('project')) return false;
         
         // Company-wide director roles (HSE Director, P&M Director, etc.) - no plant filter
         if (COMPANY_WIDE_ROLES.includes(roleName)) {
