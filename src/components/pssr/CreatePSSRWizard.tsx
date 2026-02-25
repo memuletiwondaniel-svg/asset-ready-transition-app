@@ -1104,6 +1104,14 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
           </div>
         </DialogHeader>
 
+        {/* Reason context banner - shown from Step 2 onwards */}
+        {currentStep >= 2 && selectedReason && (
+          <div className="mx-1 mb-0 px-4 py-2.5 rounded-lg bg-muted/60 border border-border/50">
+            <p className="text-xs text-muted-foreground font-medium">PSSR Reason</p>
+            <p className="text-sm font-semibold text-foreground/90 truncate">{selectedReason.name}</p>
+          </div>
+        )}
+
         {/* Step Content */}
         <div className="flex-1 overflow-y-auto py-6 px-1">
           {/* Step 1: Reason (select PSSR template) */}
