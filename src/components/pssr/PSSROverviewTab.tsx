@@ -31,6 +31,7 @@ import {
   Layers,
 } from 'lucide-react';
 import { usePSSRDetails } from '@/hooks/usePSSRDetails';
+import { useProfileUsers } from '@/hooks/useProfileUsers';
 import { usePSSRCategoryProgress, CategoryProgress } from '@/hooks/usePSSRCategoryProgress';
 import { PSSRCategoryItemsSheet } from './PSSRCategoryItemsSheet';
 import { PSSRApproverItemsSheet } from './PSSRApproverItemsSheet';
@@ -96,6 +97,7 @@ const getInitials = (name: string) =>
 export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDisplayId }) => {
   const { pssr, isLoading: detailsLoading } = usePSSRDetails(pssrId);
   const { data: categoryProgress, isLoading: catLoading } = usePSSRCategoryProgress(pssrId);
+  const { data: profileUsers } = useProfileUsers();
   const { approvers: pssrApprovers, isLoading: approversLoading } = usePSSRApprovers(pssrId);
   const { actions, stats: actionStats } = usePSSRPriorityActions(pssrId);
   const { activities, scheduleActivity } = usePSSRKeyActivities(pssrId);
@@ -115,6 +117,7 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
       return data || [];
     },
     enabled: !!pssrId,
+    staleTime: 60000,
   });
 
   // Fetch delivering & approving role summaries from checklist responses
@@ -149,6 +152,28 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
   });
 
   // Resolve role names to user profiles (match by position containing role name)
+  // Fetch location names (must be before roleProfileMap which depends on it)
+  const { data: locationInfo } = useQuery({
+    queryKey: ['pssr-location', pssr?.plant_id, pssr?.field_id, pssr?.station_id],
+    queryFn: async () => {
+      const result: { plant?: string; field?: string; station?: string } = {};
+      if (pssr?.plant_id) {
+        const { data } = await supabase.from('plant').select('name').eq('id', pssr.plant_id).single();
+        if (data) result.plant = data.name;
+      }
+      if (pssr?.field_id) {
+        const { data } = await supabase.from('field').select('name').eq('id', pssr.field_id).single();
+        if (data) result.field = data.name;
+      }
+      if (pssr?.station_id) {
+        const { data } = await supabase.from('station').select('name').eq('id', pssr.station_id).single();
+        if (data) result.station = data.name;
+      }
+      return result;
+    },
+    enabled: !!pssr,
+  });
+
   const allRoleNames = useMemo(() => {
     if (!partyRoleSummary) return [];
     const roles = new Set([
@@ -158,59 +183,45 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
     return Array.from(roles);
   }, [partyRoleSummary]);
 
-  const { data: roleProfileMap } = useQuery({
-    queryKey: ['pssr-role-profiles', pssrId, allRoleNames],
-    queryFn: async () => {
-      if (allRoleNames.length === 0) return {};
+  // Resolve role names using cached profileUsers (eliminates N+1 queries)
+  const roleProfileMap = useMemo(() => {
+    if (allRoleNames.length === 0 || !profileUsers || profileUsers.length === 0) return {};
+    const plantName = locationInfo?.plant || '';
 
-      // Get the PSSR's plant name for location-aware matching
-      let plantName = '';
-      if (pssr?.plant_id) {
-        const { data: plantData } = await supabase.from('plant').select('name').eq('id', pssr.plant_id).single();
-        plantName = plantData?.name || '';
+    const matchProfile = (role: string) => {
+      const roleLower = role.toLowerCase();
+      if (plantName) {
+        const plantLower = plantName.toLowerCase();
+        const plantMatch = profileUsers.find(p => {
+          const pos = p.position?.toLowerCase() || '';
+          return pos.includes(roleLower) && pos.includes(plantLower) && !pos.includes('project');
+        });
+        if (plantMatch) return plantMatch;
       }
-
-      const map: Record<string, { user_id: string; full_name: string; avatar_url: string | null; position: string | null }> = {};
-
-      for (const role of allRoleNames) {
-        // Try plant-specific match first
-        let found = null;
-        if (plantName) {
-          const { data } = await supabase
-            .from('profiles')
-            .select('user_id, full_name, avatar_url, position')
-            .eq('is_active', true)
-            .ilike('position', `%${role}%`)
-            .ilike('position', `%${plantName}%`)
-            .not('position', 'ilike', '%Project%')
-            .limit(1);
-          if (data && data.length > 0) found = data[0];
-        }
-        // Fallback: match role name, prefer Asset-level
-        if (!found) {
-          const { data } = await supabase
-            .from('profiles')
-            .select('user_id, full_name, avatar_url, position')
-            .eq('is_active', true)
-            .ilike('position', `%${role}%`)
-            .not('position', 'ilike', '%Project%')
-            .limit(5);
-          if (data && data.length > 0) {
-            found = data.find(p => p.position?.includes('Asset')) || data[0];
-          }
-        }
-        if (found) {
-          let avatarUrl = found.avatar_url;
-          if (avatarUrl && !avatarUrl.startsWith('http')) {
-            avatarUrl = supabase.storage.from('user-avatars').getPublicUrl(avatarUrl).data.publicUrl;
-          }
-          map[role] = { user_id: found.user_id, full_name: found.full_name || role, avatar_url: avatarUrl, position: found.position };
-        }
+      const candidates = profileUsers.filter(p => {
+        const pos = p.position?.toLowerCase() || '';
+        return pos.includes(roleLower) && !pos.includes('project');
+      });
+      if (candidates.length > 0) {
+        return candidates.find(p => p.position?.includes('Asset')) || candidates[0];
       }
-      return map;
-    },
-    enabled: allRoleNames.length > 0 && !!pssr,
-  });
+      return null;
+    };
+
+    const map: Record<string, { user_id: string; full_name: string; avatar_url: string | null; position: string | null }> = {};
+    for (const role of allRoleNames) {
+      const found = matchProfile(role);
+      if (found) {
+        map[role] = {
+          user_id: found.user_id,
+          full_name: found.full_name || role,
+          avatar_url: found.avatar_url || null,
+          position: found.position || null,
+        };
+      }
+    }
+    return map;
+  }, [allRoleNames, profileUsers, locationInfo?.plant]);
 
   // Fetch profiles for approvers
   const approverUserIds = useMemo(() => {
@@ -240,7 +251,41 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
       return map;
     },
     enabled: approverUserIds.length > 0,
+    staleTime: 60000,
   });
+
+  // Position-based fallback for approvers with null user_id
+  const approverRoleFallback = useMemo(() => {
+    if (!profileUsers || profileUsers.length === 0) return {};
+    const plantName = locationInfo?.plant?.toLowerCase() || '';
+    const allApprovers = [...(pssrApprovers || []), ...(sofApprovers || [])];
+    const rolesNeedingFallback = allApprovers
+      .filter(a => !a.user_id && a.approver_role)
+      .map(a => a.approver_role);
+    const uniqueRoles = [...new Set(rolesNeedingFallback)];
+
+    const map: Record<string, { full_name: string; avatar_url: string | null }> = {};
+    for (const role of uniqueRoles) {
+      const roleLower = role.toLowerCase();
+      let match = plantName
+        ? profileUsers.find(p => {
+            const pos = p.position?.toLowerCase() || '';
+            return pos.includes(roleLower) && pos.includes(plantName) && !pos.includes('project');
+          })
+        : undefined;
+      if (!match) {
+        const candidates = profileUsers.filter(p => {
+          const pos = p.position?.toLowerCase() || '';
+          return pos.includes(roleLower) && !pos.includes('project');
+        });
+        match = candidates.find(p => p.position?.includes('Asset')) || candidates[0];
+      }
+      if (match) {
+        map[role] = { full_name: match.full_name, avatar_url: match.avatar_url || null };
+      }
+    }
+    return map;
+  }, [profileUsers, locationInfo?.plant, pssrApprovers, sofApprovers]);
 
   // Auto-populate PSSR approvers if none exist
   const queryClient = useQueryClient();
@@ -332,27 +377,6 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
     }
   }, [approversLoading, detailsLoading, pssrApprovers, pssr]);
 
-  // Fetch location names
-  const { data: locationInfo } = useQuery({
-    queryKey: ['pssr-location', pssr?.plant_id, pssr?.field_id, pssr?.station_id],
-    queryFn: async () => {
-      const result: { plant?: string; field?: string; station?: string } = {};
-      if (pssr?.plant_id) {
-        const { data } = await supabase.from('plant').select('name').eq('id', pssr.plant_id).single();
-        if (data) result.plant = data.name;
-      }
-      if (pssr?.field_id) {
-        const { data } = await supabase.from('field').select('name').eq('id', pssr.field_id).single();
-        if (data) result.field = data.name;
-      }
-      if (pssr?.station_id) {
-        const { data } = await supabase.from('station').select('name').eq('id', pssr.station_id).single();
-        if (data) result.station = data.name;
-      }
-      return result;
-    },
-    enabled: !!pssr,
-  });
 
   // Collapsible states
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
@@ -813,10 +837,12 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
               <CollapsibleContent className="space-y-1 mt-1">
                 {(pssrApprovers || []).map(approver => {
                   const profile = approver.user_id ? approverProfiles?.[approver.user_id] : null;
-                  const displayName = profile?.full_name || (approver.approver_name !== 'Pending Assignment' ? approver.approver_name : approver.approver_role);
+                  const fallback = !profile && approver.approver_role ? approverRoleFallback[approver.approver_role] : null;
+                  const displayName = profile?.full_name || fallback?.full_name || (approver.approver_name !== 'Pending Assignment' ? approver.approver_name : approver.approver_role);
+                  const avatarUrl = profile?.avatar_url || fallback?.avatar_url || null;
                   return renderApprovalPerson(
                     displayName,
-                    profile?.avatar_url || null,
+                    avatarUrl,
                     approver.approver_role,
                     approver.status,
                     approver.status === 'APPROVED' ? 1 : 0,
@@ -846,10 +872,12 @@ export const PSSROverviewTab: React.FC<PSSROverviewTabProps> = ({ pssrId, pssrDi
               <CollapsibleContent className="space-y-1 mt-1">
                 {(sofApprovers || []).map((approver: any) => {
                   const profile = approver.user_id ? approverProfiles?.[approver.user_id] : null;
-                  const displayName = profile?.full_name || (approver.approver_name !== 'Pending Assignment' ? approver.approver_name : approver.approver_role);
+                  const fallback = !profile && approver.approver_role ? approverRoleFallback[approver.approver_role] : null;
+                  const displayName = profile?.full_name || fallback?.full_name || (approver.approver_name !== 'Pending Assignment' ? approver.approver_name : approver.approver_role);
+                  const avatarUrl = profile?.avatar_url || fallback?.avatar_url || null;
                   return renderApprovalPerson(
                     displayName,
-                    profile?.avatar_url || null,
+                    avatarUrl,
                     approver.approver_role,
                     approver.status,
                     approver.status === 'APPROVED' ? 1 : 0,
