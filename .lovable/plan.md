@@ -1,29 +1,22 @@
 
 
-## PSSR Item Detail Overlay — 3 Fixes
+## Fix: Stop Showing Resolved Person Names in Template Editor
 
-### Issues identified
+### Problem
+In Step 4 of the Edit PSSR Template modal, each checklist item shows a resolved person's name (e.g., "Donia Abdulhaleem") next to the topic. This is incorrect for the template editor context -- templates define roles, not specific people. The personnel resolution query runs even when no `plantName` is provided, and without location filtering it picks the first matching profile by role.
 
-1. **Left border truncation on Delivering Party names**: In `src/components/pssr/PSSRItemDetailSheet.tsx` (line 545), the user chip container uses `bg-background border rounded-md px-2.5 py-1.5` inside a `flex flex-wrap gap-2` wrapper (line 541). The parent `px-3 pb-3 pt-0` (line 539) combined with the outer Card's `p-3` (line 507) leaves insufficient space, causing the left border of the first chip to clip.
+### Root Cause
+In `src/components/pssr/wizard/WizardStepChecklistItems.tsx`, the `resolvedDeliveringParties` query (line 95) is enabled whenever `rawChecklistItems.length > 0` (line 166), regardless of whether `plantName` is provided. When `plantName` is undefined (template editor context), the query still resolves role names to actual people by picking the first profile with a matching role.
 
-2. **Delivering Party should use expandable role card pattern**: Currently, the Delivering Party view mode (lines 517-563) shows a single collapsible with the role name that expands to show all user chips directly. This is already close to the pattern but is wrapped in a `Card > CardContent` container. The Approving Parties section (lines 612-675) uses the same expandable role card pattern. Both are consistent — however, the user wants both sections to match the Step 2 wizard pattern more closely. The current implementation already does this, so the fix is primarily about the truncation.
+### Fix
 
-3. **Delete icon inconsistency**: In `src/components/pssr/wizard/PSSRItemDetailSheet.tsx` (line 511), the remove-approver button uses `Minus` icon. The Edit PSSR Template modal (`WizardStepApprovers.tsx`) and the main `PSSRItemDetailSheet.tsx` (line 597) both use `X` icon. The wizard item detail sheet should use `X` for consistency.
+**File: `src/components/pssr/wizard/WizardStepChecklistItems.tsx`**
 
-### Technical plan
+1. **Disable the resolution query when no plant context is provided**: Change line 166 from `enabled: rawChecklistItems.length > 0` to `enabled: rawChecklistItems.length > 0 && !!plantName`. This ensures the query only runs during PSSR creation (where a plant/location is selected), not in the template editor.
 
-**File: `src/components/pssr/PSSRItemDetailSheet.tsx`**
+2. **As a safety net on the display side**: On line 426, change `{resolvedName || responsibleRole}` to just `{responsibleRole}` when `plantName` is not available. This can be done by updating the `resolvedName` assignment on line 394 to: `const resolvedName = plantName && responsibleRole ? resolvedDeliveringParties[responsibleRole] : null;`
 
-- **Fix 1 — Truncation**: The delivering party collapsible content at line 539 uses `px-3 pb-3 pt-0`. The inner flex-wrap chips at line 541 render correctly but the `px-3` padding from the collapsible content div plus the Card's `p-3` means space is tight. Add `overflow-visible` or increase left padding slightly. Alternatively, add `pl-1` to the first chip or ensure the flex-wrap container has adequate margin. The simplest fix: change the chips container from `flex flex-wrap gap-2` to include a small left padding offset (`pl-0.5`) to prevent the border from clipping against the rounded-lg parent.
-
-**File: `src/components/pssr/wizard/PSSRItemDetailSheet.tsx`**
-
-- **Fix 3 — Delete icon**: Replace `Minus` import with `X` (line 30), and change `<Minus className="h-3.5 w-3.5" />` to `<X className="h-3.5 w-3.5" />` at line 511. Update the button styling to match the template modal: `text-destructive/70 hover:text-destructive` with `rounded-full hover:bg-destructive/10`.
-
-### Changes summary
-
-| File | Change |
-|------|--------|
-| `src/components/pssr/PSSRItemDetailSheet.tsx` | Add `pl-0.5` to delivering party chips container to fix left border clipping |
-| `src/components/pssr/wizard/PSSRItemDetailSheet.tsx` | Replace `Minus` with `X` icon for role deletion; update button styling to match template modal pattern |
+### Result
+- Template editor (Edit/Add PSSR Reason): Shows only role names (e.g., "Commissioning Manager")
+- PSSR Creation Wizard: Continues to resolve and show actual person names based on selected plant/location
 
