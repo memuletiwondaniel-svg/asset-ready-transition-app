@@ -65,16 +65,28 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
       const roleName = role.name.toLowerCase();
       
       // Find profiles that match this role (by role_id or position-based fuzzy match)
-      // For director roles, use word-boundary regex to prevent "plant director" matching "dep. plant director"
-      const roleRegex = roleName.includes('director')
-        ? new RegExp(`(^|[^a-z])${roleName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}([^a-z]|$)`)
-        : null;
+      // For director roles, use strict matching to prevent "plant director" matching "dep. plant director"
+      const isDirectorRole = roleName.includes('director');
       
       const matching = profileUsers.filter(p => {
         const posLower = (p.position || '').toLowerCase();
         
         // Match by role_id OR by position containing the role name
-        const positionMatches = roleRegex ? roleRegex.test(posLower) : posLower.includes(roleName);
+        let positionMatches: boolean;
+        if (isDirectorRole) {
+          // For director roles, check that the position starts with the role name
+          // (after trimming) or that there's no "dep" prefix before it
+          const roleIdx = posLower.indexOf(roleName);
+          if (roleIdx === -1) {
+            positionMatches = false;
+          } else {
+            // Check what's before the match - reject if preceded by word chars like "dep."
+            const prefix = posLower.substring(0, roleIdx).trim();
+            positionMatches = prefix === '' || prefix.endsWith('-');
+          }
+        } else {
+          positionMatches = posLower.includes(roleName);
+        }
         const roleMatches = p.role_id === roleId || positionMatches;
         if (!roleMatches) return false;
         if (!plantLower) return true;
@@ -92,8 +104,8 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
         }
         
         // Plant-specific director roles: must match both role name AND plant
-        if (roleName.includes('director') && roleRegex) {
-          return roleRegex.test(posLower) && posLower.includes(plantLower);
+        if (isDirectorRole) {
+          return positionMatches && posLower.includes(plantLower);
         }
         
         // For most roles, prefer those whose position matches the plant
