@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent, DragStartEvent } from '@dnd-kit/core';
 import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
@@ -136,6 +136,88 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
       setSelectedCategory(null);
     }
   }, [location.key]); // location.key changes on each navigation, even to the same route
+
+  // Self-healing: create missing review tasks for PSSRs stuck in PENDING_LEAD_REVIEW
+  const queryClient = useQueryClient();
+  const selfHealRanRef = useRef(false);
+  useEffect(() => {
+    if (selfHealRanRef.current) return;
+    selfHealRanRef.current = true;
+
+    const healOrphanedTasks = async () => {
+      try {
+        // Fetch all PSSRs in PENDING_LEAD_REVIEW with a lead assigned
+        const { data: pendingPssrs, error: pssrError } = await supabase
+          .from('pssrs')
+          .select('id, pssr_id, title, pssr_lead_id, user_id')
+          .eq('status', 'PENDING_LEAD_REVIEW')
+          .not('pssr_lead_id', 'is', null);
+
+        if (pssrError || !pendingPssrs?.length) return;
+
+        let tasksCreated = 0;
+
+        for (const pssr of pendingPssrs) {
+          // Check if a pending review task already exists for this PSSR
+          const { data: existingTask } = await supabase
+            .from('user_tasks')
+            .select('id')
+            .eq('user_id', pssr.pssr_lead_id)
+            .eq('type', 'review')
+            .eq('status', 'pending')
+            .filter('metadata->>pssr_id', 'eq', pssr.id)
+            .filter('metadata->>action', 'eq', 'review_draft_pssr')
+            .maybeSingle();
+
+          if (!existingTask) {
+            // Get creator name for the task description
+            const { data: creatorProfile } = await supabase
+              .from('profiles')
+              .select('full_name')
+              .eq('user_id', pssr.user_id)
+              .maybeSingle();
+
+            const creatorName = creatorProfile?.full_name || 'A team member';
+
+            const { error: insertError } = await supabase
+              .from('user_tasks')
+              .insert({
+                user_id: pssr.pssr_lead_id,
+                title: `Review Draft PSSR: ${pssr.title || pssr.pssr_id}`,
+                description: `${creatorName} has submitted a new PSSR for your review. Please review the PSSR items, approvers, and scope, then approve, edit, or reject the draft.`,
+                priority: 'High',
+                type: 'review',
+                status: 'pending',
+                metadata: {
+                  source: 'pssr_workflow',
+                  pssr_id: pssr.id,
+                  pssr_code: pssr.pssr_id,
+                  action: 'review_draft_pssr',
+                  created_by: pssr.user_id,
+                  auto_healed: true,
+                },
+              });
+
+            if (!insertError) {
+              tasksCreated++;
+              console.log(`[Self-heal] Created missing review task for PSSR ${pssr.pssr_id} → lead ${pssr.pssr_lead_id}`);
+            } else {
+              console.error(`[Self-heal] Failed to create task for PSSR ${pssr.pssr_id}:`, insertError);
+            }
+          }
+        }
+
+        if (tasksCreated > 0) {
+          queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+          console.log(`[Self-heal] Created ${tasksCreated} missing PSSR review task(s)`);
+        }
+      } catch (err) {
+        console.error('[Self-heal] Error during orphaned PSSR task check:', err);
+      }
+    };
+
+    healOrphanedTasks();
+  }, [queryClient]);
 
   // Derive widget states from persisted configs
   const widgetVisibility = useMemo(() => {
@@ -504,7 +586,7 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
     toast.success(`PSSR ${pssrId} archived`);
   };
 
-  const queryClient = useQueryClient();
+  // queryClient already declared above for self-healing
   const handleDeletePSSR = async (pssrId: string) => {
     try {
       // Delete related data first, then the PSSR itself
