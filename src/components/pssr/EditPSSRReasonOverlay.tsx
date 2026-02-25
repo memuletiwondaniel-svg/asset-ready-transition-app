@@ -262,9 +262,21 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
       queryClient.invalidateQueries({ queryKey: ['pssr-reason-configurations'] });
       queryClient.invalidateQueries({ queryKey: ['pssr-reasons-all'] });
       queryClient.invalidateQueries({ queryKey: ['pssr-reasons'] });
+
+      // Reset snapshot so dirty state clears
+      initialSnapshot.current = {
+        reasonName: formReasonName.trim(),
+        description: description.trim() || '',
+        categoryId: formCategoryId,
+        subCategory,
+        pssrLeadId,
+        pssrApproverRoleIds: [...pssrApproverRoleIds],
+        sofApproverRoleIds: [...sofApproverRoleIds],
+        checklistItemIds: [...checklistItemIds],
+        checklistItemOverrides: { ...checklistItemOverrides },
+      };
       
       toast.success('PSSR Template updated successfully');
-      handleClose();
     } catch (error: any) {
       console.error('Failed to save:', error);
       toast.error(error.message || 'Failed to save changes');
