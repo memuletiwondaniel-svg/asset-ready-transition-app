@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Building, MapPin, Layers, FileText } from 'lucide-react';
+import { Building, MapPin, Layers, FileText, Hash } from 'lucide-react';
 import { usePlants } from '@/hooks/usePlants';
 import { useFields } from '@/hooks/useFields';
 import { useStations } from '@/hooks/useStations';
@@ -11,6 +11,9 @@ import RichTextEditor, { Attachment } from '@/components/ui/RichTextEditor';
 interface WizardStepDetailsProps {
   title: string;
   onTitleChange: (title: string) => void;
+  mocNumber?: string;
+  onMocNumberChange?: (mocNumber: string) => void;
+  showMocNumber?: boolean;
   scopeDescription: string;
   scopeAttachments: Attachment[];
   onScopeChange: (html: string) => void;
@@ -26,6 +29,9 @@ interface WizardStepDetailsProps {
 const WizardStepDetails: React.FC<WizardStepDetailsProps> = ({
   title,
   onTitleChange,
+  mocNumber,
+  onMocNumberChange,
+  showMocNumber = false,
   scopeDescription,
   scopeAttachments,
   onScopeChange,
@@ -87,6 +93,26 @@ const WizardStepDetails: React.FC<WizardStepDetailsProps> = ({
 
   return (
     <div className="space-y-6">
+      {/* MOC Number - only shown for Plant Modification reason */}
+      {showMocNumber && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Hash className="h-5 w-5 text-primary" />
+            <Label htmlFor="moc-number" className="text-base font-medium">MOC Number *</Label>
+          </div>
+          <Input
+            id="moc-number"
+            value={mocNumber || ''}
+            onChange={(e) => onMocNumberChange?.(e.target.value)}
+            placeholder="Enter the MoC reference number (e.g. MOC-2026-001)"
+            maxLength={100}
+          />
+          <p className="text-xs text-muted-foreground">
+            The Management of Change number associated with this plant modification
+          </p>
+        </div>
+      )}
+
       {/* PSSR Title */}
       <div className="space-y-2">
         <div className="flex items-center gap-2">

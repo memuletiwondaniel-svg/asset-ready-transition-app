@@ -47,6 +47,7 @@ interface WizardState {
   
   // Step 2: Details & Location
   title: string;
+  mocNumber: string;
   scopeDescription: string;
   scopeAttachments: Attachment[];
   plantId: string;
@@ -108,6 +109,7 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
     reasonId: '',
     selectedAtiScopeIds: [],
     title: '',
+    mocNumber: '',
     scopeDescription: '',
     scopeAttachments: [],
     plantId: '',
@@ -164,6 +166,7 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
       reasonId: '',
       selectedAtiScopeIds: [],
       title: '',
+      mocNumber: '',
       scopeDescription: '',
       scopeAttachments: [],
       plantId: '',
@@ -267,6 +270,7 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
           categoryId,
           reasonId: draft.reason_id || '',
           title: draft.title || draft.asset || '',
+          mocNumber: (draft as any).moc_number || '',
           scopeDescription: (draft as any).scope || '',
           plantId: draft.plant_id || '',
           fieldId: draft.field_id || '',
@@ -414,6 +418,11 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
           if (!silent) toast.error('Please select a plant');
           return false;
         }
+        // MOC number is mandatory for Plant Modification reason
+        if (selectedReason?.name === 'Plant Modification' && !wizardState.mocNumber.trim()) {
+          if (!silent) toast.error('Please enter the MOC number');
+          return false;
+        }
         return true;
       default:
         return true;
@@ -519,6 +528,7 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
         field_id: wizardState.fieldId || null,
         station_id: wizardState.stationId || null,
         cs_location: csLocationValue || null,
+        moc_number: wizardState.mocNumber.trim() || null,
         pssr_lead_id: wizardState.pssrLeadId || null,
       };
 
@@ -670,6 +680,7 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
         field_id: wizardState.fieldId || null,
         station_id: wizardState.stationId || null,
         cs_location: csLocationValue || null,
+        moc_number: wizardState.mocNumber.trim() || null,
         pssr_lead_id: wizardState.pssrLeadId || null,
       };
 
@@ -965,6 +976,7 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
         field_id: wizardState.fieldId || null,
         station_id: wizardState.stationId || null,
         cs_location: csLocationValue || null,
+        moc_number: wizardState.mocNumber.trim() || null,
         pssr_lead_id: wizardState.pssrLeadId || null,
         draft_checklist_item_ids: wizardState.selectedChecklistItemIds.filter(id => !id.startsWith('custom-')),
         draft_na_item_ids: wizardState.naItemIds.filter(id => !id.startsWith('custom-')),
@@ -1147,6 +1159,9 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
             <WizardStepDetails
               title={wizardState.title}
               onTitleChange={(title) => setWizardState(prev => ({ ...prev, title }))}
+              mocNumber={wizardState.mocNumber}
+              onMocNumberChange={(mocNumber) => setWizardState(prev => ({ ...prev, mocNumber }))}
+              showMocNumber={selectedReason?.name === 'Plant Modification'}
               scopeDescription={wizardState.scopeDescription}
               scopeAttachments={wizardState.scopeAttachments}
               onScopeChange={(html) => setWizardState(prev => ({ ...prev, scopeDescription: html }))}
