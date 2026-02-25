@@ -894,25 +894,39 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
           .maybeSingle();
 
         if (!existingTask) {
-          const { error: taskError } = await supabase
-            .from('user_tasks')
-            .insert({
-              user_id: wizardState.pssrLeadId,
-              title: `Review Draft PSSR: ${wizardState.title.trim()}`,
-              description: `${creatorName} has submitted a new PSSR for your review. Please review the PSSR items, approvers, and scope, then approve, edit, or reject the draft.`,
-              priority: 'High',
-              type: 'review',
-              status: 'pending',
-              metadata: {
-                source: 'pssr_workflow',
-                pssr_id: newPSSR.id,
-                pssr_code: newPSSR.pssr_id,
-                action: 'review_draft_pssr',
-                created_by: user.id,
-              },
-            });
+          const taskPayload = {
+            user_id: wizardState.pssrLeadId,
+            title: `Review Draft PSSR: ${wizardState.title.trim()}`,
+            description: `${creatorName} has submitted a new PSSR for your review. Please review the PSSR items, approvers, and scope, then approve, edit, or reject the draft.`,
+            priority: 'High',
+            type: 'review',
+            status: 'pending',
+            metadata: {
+              source: 'pssr_workflow',
+              pssr_id: newPSSR.id,
+              pssr_code: newPSSR.pssr_id,
+              action: 'review_draft_pssr',
+              created_by: user.id,
+            },
+          };
 
-          if (taskError) console.error('Error creating PSSR Lead task:', taskError);
+          let { error: taskError } = await supabase
+            .from('user_tasks')
+            .insert(taskPayload);
+
+          // Retry once on failure
+          if (taskError) {
+            console.warn('First attempt to create PSSR Lead task failed, retrying...', taskError);
+            const retryResult = await supabase
+              .from('user_tasks')
+              .insert(taskPayload);
+            taskError = retryResult.error;
+          }
+
+          if (taskError) {
+            console.error('Error creating PSSR Lead task after retry:', taskError);
+            toast.warning('PSSR submitted, but the review task for the PSSR Lead could not be created. They may not see it in their task panel.');
+          }
         }
 
       }
