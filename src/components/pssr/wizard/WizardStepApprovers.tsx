@@ -309,7 +309,7 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
               </div>
             </Label>
             {availableRoles.length > 0 && (
-              <Popover open={addPopoverOpen} onOpenChange={setAddPopoverOpen}>
+              <Popover open={addPopoverOpen} onOpenChange={setAddPopoverOpen} modal={true}>
                 <PopoverTrigger asChild>
                   <Button variant="ghost" size="sm" className="text-primary hover:text-primary/80 h-7 px-2 text-sm font-medium">
                     <Plus className="h-3.5 w-3.5 mr-1" />
