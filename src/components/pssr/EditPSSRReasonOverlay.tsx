@@ -277,6 +277,7 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
       };
       
       toast.success('PSSR Template updated successfully');
+      onOpenChange(false);
     } catch (error: any) {
       console.error('Failed to save:', error);
       toast.error(error.message || 'Failed to save changes');
