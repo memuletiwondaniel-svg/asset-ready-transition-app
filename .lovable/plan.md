@@ -2,41 +2,44 @@
 
 ## Problem
 
-Two PSSRs (PSSR-KAZ-001 assigned to Hussein Alaa, and PSSR-CS-001 assigned to Shakir Alzohairy) are stuck in "Pending Lead Review" status, but neither lead has a corresponding review task in `user_tasks`. This means they have no way to act on or even see these PSSRs in their task panel.
+The PSSR detail overlay has two performance and correctness issues with name/picture resolution:
 
-The root cause is likely that task creation failed silently during PSSR submission (the error is only `console.error`'d at line 915 of CreatePSSRWizard.tsx), and the self-healing mechanism in `PSSRReviewsPanel` only runs when the **lead user themselves** logs in and views the panel -- it does not fix tasks for other users.
+### 1. N+1 Query Problem in `roleProfileMap` (Lines 161-213)
+The `roleProfileMap` query iterates over every role name and makes **sequential individual Supabase queries** -- one per role, with a plant-specific attempt first, then a fallback. For a PSSR with 10+ delivering/approving roles, this means 10-20+ serial network requests. This is the primary cause of erratic performance and slow rendering.
+
+### 2. Approver Profile Resolution Depends on `user_id` Being Set
+For PSSR and SoF approvers (lines 814-858), profiles are only resolved when `approver.user_id` is populated. However, from the network data we can see approvers like "Engr. Manager" and "Central Mtce Lead" have `user_id: null` and `approver_name: "Pending Assignment"`. These show only the role name with no avatar because:
+- The `approverProfiles` query only fetches profiles for non-null `user_id`s
+- There is no fallback to resolve by position/role name when `user_id` is null
 
 ## Plan
 
-### 1. Broaden Self-Healing to the PSSR Summary Page
+### 1. Batch the `roleProfileMap` query (eliminate N+1)
 
-Currently, self-healing only runs in `PSSRReviewsPanel` (dashboard task panel) and only for the logged-in user. Add a similar self-healing check on the **PSSR Summary Page** (`PSSRSummaryPage.tsx`) that runs once on mount:
+Replace the sequential per-role Supabase calls with a single bulk fetch using the already-cached `useProfileUsers` hook (which loads all active profiles once with a 2-minute cache). Use the same position-matching logic client-side instead of making individual server calls.
 
-- Query all PSSRs with status `PENDING_LEAD_REVIEW` that have a `pssr_lead_id` set.
-- For each, check if a matching `user_tasks` record exists (type=review, status=pending, metadata pssr_id match).
-- If missing, insert the review task for that lead.
+**File: `src/components/pssr/PSSROverviewTab.tsx`**
+- Import `useProfileUsers` from `@/hooks/useProfileUsers`
+- Replace the `roleProfileMap` `useQuery` block (lines 161-213) with a `useMemo` that filters the cached `profileUsers` array by position matching, reusing the plant name from `locationInfo`
+- This eliminates all the individual `ilike` queries and uses already-fetched data
 
-This ensures that when an admin or any user views the PSSR list, orphaned "Pending Lead Review" PSSRs get their tasks auto-created.
+### 2. Resolve approvers without `user_id` by position fallback
 
-### 2. Make Task Creation in the Wizard More Resilient
+Enhance the `approverProfiles` query (lines 223-243) to also resolve approvers that have `user_id: null` but have an `approver_role` set. Use the same `profileUsers` cache to find matching profiles by position.
 
-In `CreatePSSRWizard.tsx` (around line 897), the task insertion error is silently logged. Enhance this to:
+**File: `src/components/pssr/PSSROverviewTab.tsx`**
+- Add a `useMemo` that builds a `roleToProfile` map from `profileUsers` for approver roles that lack a `user_id`
+- In the PSSR Approvers and SoF Approvers rendering sections (lines 814-858), fall back to this `roleToProfile` map when `approver.user_id` is null
+- This ensures "Engr. Manager", "Central Mtce Lead", etc. show the resolved person's name and avatar even when the `user_id` was not saved at creation time
 
-- Retry once on failure.
-- Surface a toast warning if the task still fails, so the user knows the lead may not have been notified.
+### 3. Add `staleTime` to prevent redundant refetches
 
-### 3. Files to Modify
-
-- **`src/components/PSSRSummaryPage.tsx`** -- Add a `useEffect` self-healing hook that checks for PSSRs in PENDING_LEAD_REVIEW without corresponding tasks and creates them.
-- **`src/components/pssr/CreatePSSRWizard.tsx`** -- Add a retry and toast warning for task creation failure.
+Add `staleTime: 60000` to the `approverProfiles` and `sof-approvers` queries to prevent unnecessary refetches when navigating between tabs within the same PSSR overlay.
 
 ### Technical Details
 
-The self-healing query in PSSRSummaryPage will:
-1. Fetch all PSSRs where `status = 'PENDING_LEAD_REVIEW'` and `pssr_lead_id IS NOT NULL`.
-2. For each PSSR, query `user_tasks` for a matching pending review task.
-3. Insert missing tasks with the same metadata structure used in the wizard (source: pssr_workflow, action: review_draft_pssr).
-4. Invalidate the `user-tasks` query cache if any tasks were created.
+The key change replaces ~20 sequential network requests with zero additional requests by leveraging the `useProfileUsers` hook that already caches all active profiles. The position matching logic will mirror the existing pattern from `WizardStepApprovers.tsx` (plant-aware, director-aware, project-exclusion).
 
-This runs once per page load with a `useRef` guard to prevent repeated execution, matching the existing pattern in `PSSRReviewsPanel`.
+**Files to modify:**
+- `src/components/pssr/PSSROverviewTab.tsx` -- Refactor `roleProfileMap` to use cached profiles; add position-based fallback for null `user_id` approvers; add `staleTime` to queries.
 
