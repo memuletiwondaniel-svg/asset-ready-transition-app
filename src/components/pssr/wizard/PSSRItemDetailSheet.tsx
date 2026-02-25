@@ -27,7 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { RotateCcw, Save, ArrowRight, Plus, Minus, Search } from 'lucide-react';
+import { RotateCcw, Save, ArrowRight, Plus, X, Search } from 'lucide-react';
 import { ChecklistItem } from '@/hooks/usePSSRChecklistLibrary';
 import { ChecklistItemOverride } from './ChecklistItemEditDialog';
 import { useQuery } from '@tanstack/react-query';
@@ -505,10 +505,10 @@ const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
                             <button
                               type="button"
                               onClick={() => handleRemoveApprover(roleName)}
-                              className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-md hover:bg-destructive/10 text-destructive shrink-0"
+                              className="opacity-0 group-hover:opacity-100 transition-all p-1 rounded-full hover:bg-destructive/10 text-destructive/70 hover:text-destructive shrink-0"
                               title={`Remove ${roleName}`}
                             >
-                              <Minus className="h-3.5 w-3.5" />
+                              <X className="h-3.5 w-3.5" />
                             </button>
                           </div>
                         );

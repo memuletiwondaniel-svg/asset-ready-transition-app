@@ -538,7 +538,7 @@ export const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
                             <CollapsibleContent>
                               <div className="px-3 pb-3 pt-0">
                                 {deliveringUsers && deliveringUsers.length > 0 ? (
-                                  <div className="flex flex-wrap gap-2">
+                                  <div className="flex flex-wrap gap-2 pl-0.5">
                                     {deliveringUsers.map((user: any) => (
                                       <div
                                         key={user.user_id}
