@@ -104,9 +104,8 @@ const WizardStepDetails: React.FC<WizardStepDetailsProps> = ({
             id="moc-number"
             value={mocNumber || ''}
             onChange={(e) => {
-              // Format as XX-XXX: auto-insert hyphen after 2 chars
-              let val = e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, '');
-              // Remove any existing hyphens to reformat
+              // Format as NN-NNN: auto-insert hyphen after 2 digits
+              let val = e.target.value.replace(/[^0-9-]/g, '');
               const raw = val.replace(/-/g, '');
               if (raw.length <= 2) {
                 val = raw;
@@ -115,12 +114,14 @@ const WizardStepDetails: React.FC<WizardStepDetailsProps> = ({
               }
               onMocNumberChange?.(val);
             }}
-            placeholder="e.g. AB-123"
+            placeholder="e.g. 25-658"
             maxLength={6}
           />
-          <p className="text-xs text-muted-foreground">
-            Format: XX-XXX (e.g. AB-123)
-          </p>
+          {(!mocNumber || mocNumber.replace(/-/g, '').length < 5) && (
+            <p className="text-xs text-muted-foreground">
+              Format: NN-NNN (e.g. 25-658)
+            </p>
+          )}
         </div>
       )}
 
