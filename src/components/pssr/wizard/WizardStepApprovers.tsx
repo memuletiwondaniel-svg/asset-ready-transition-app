@@ -86,8 +86,10 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
         }
         
         // Plant-specific director roles: must match both role name AND plant
+        // Use word-boundary regex to prevent "plant director" matching "dep. plant director"
         if (roleName.includes('director')) {
-          return posLower.includes(roleName) && posLower.includes(plantLower);
+          const roleRegex = new RegExp(`(^|[^a-z])${roleName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}([^a-z]|$)`);
+          return roleRegex.test(posLower) && posLower.includes(plantLower);
         }
         
         // For most roles, prefer those whose position matches the plant
