@@ -21,6 +21,7 @@ interface WizardStepApproversProps {
   plantName?: string;
   pssrLeadRoleId?: string;
   onPssrLeadRoleChange?: (roleId: string) => void;
+  hideHeader?: boolean;
 }
 
 const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
@@ -31,6 +32,7 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
   plantName,
   pssrLeadRoleId,
   onPssrLeadRoleChange,
+  hideHeader = false,
 }) => {
   const [addPopoverOpen, setAddPopoverOpen] = useState(false);
   const [expandedRoles, setExpandedRoles] = useState<Set<string>>(new Set());
@@ -295,7 +297,7 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
       )}
 
       {/* Section Header for PSSR / SoF approvers with inline Add button */}
-      {(type === 'pssr' || type === 'sof') && (
+      {!hideHeader && (type === 'pssr' || type === 'sof') && (
         <div className="space-y-1 pb-1 pt-2">
           <div className="flex items-center justify-between">
             <Label className="text-base font-medium">

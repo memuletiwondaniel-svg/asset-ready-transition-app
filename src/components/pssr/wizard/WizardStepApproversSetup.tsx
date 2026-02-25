@@ -206,6 +206,7 @@ const WizardStepApproversSetup: React.FC<WizardStepApproversSetupProps> = ({
           disabledRoleIds={selectedSofApproverRoleIds}
           onRoleToggle={onPssrApproverToggle}
           plantName={plantName}
+          hideHeader
         />
         </CollapsibleContent>
       </div>
@@ -251,6 +252,7 @@ const WizardStepApproversSetup: React.FC<WizardStepApproversSetupProps> = ({
           disabledRoleIds={selectedPssrApproverRoleIds}
           onRoleToggle={onSofApproverToggle}
           plantName={plantName}
+          hideHeader
         />
         </CollapsibleContent>
       </div>
