@@ -317,8 +317,8 @@ const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
               </Badge>
             )}
           </div>
-          <SheetDescription className="text-xs text-muted-foreground mt-1">
-            Changes only apply to this PSSR instance.
+          <SheetDescription className="sr-only">
+            Edit PSSR item details
           </SheetDescription>
         </SheetHeader>
 
