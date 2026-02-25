@@ -161,212 +161,23 @@ export const ORAActivityCatalog = () => {
 
   return (
     <div className="space-y-4">
-      {/* Compact Filter Bar */}
-      <div className="flex flex-wrap items-center gap-3 bg-card p-3 rounded-lg border">
-        <div className="relative flex-1 min-w-48">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search activities..."
-            value={filters.search}
-            onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
-            className="pl-8 h-9"
-          />
-        </div>
-        
-        <Select value={filters.phase} onValueChange={(v) => setFilters(prev => ({ ...prev, phase: v }))}>
-          <SelectTrigger className="w-32 h-9">
-            <SelectValue placeholder="Phase" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Phases</SelectItem>
-            {ORA_PHASES.map((phase) => (
-              <SelectItem key={phase.value} value={phase.value}>{phase.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={filters.entryType} onValueChange={(v) => setFilters(prev => ({ ...prev, entryType: v }))}>
-          <SelectTrigger className="w-32 h-9">
-            <SelectValue placeholder="Type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
-            {ORA_ENTRY_TYPES.map((type) => (
-              <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        {hasActiveFilters && (
-          <Button variant="ghost" size="sm" onClick={clearFilters} className="h-9">
-            <X className="h-4 w-4 mr-1" />
-            Clear
-          </Button>
-        )}
-
-        <div className="flex items-center gap-2 ml-auto">
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className="h-9">
-                <Columns3 className="h-4 w-4 mr-1" />
-                Columns
-                {visibleColumns.length > 0 && (
-                  <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
-                    {visibleColumns.length}
-                  </Badge>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-48 p-2" align="end">
-              <div className="space-y-1">
-                <p className="text-xs font-medium text-muted-foreground px-2 py-1">Toggle columns</p>
-                {[
-                  { id: 'description', label: 'Description' },
-                  { id: 'hours', label: 'Hours' },
-                  { id: 'type', label: 'Type' }
-                ].map((col) => (
-                  <label
-                    key={col.id}
-                    className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-muted cursor-pointer"
-                  >
-                    <Checkbox
-                      checked={visibleColumns.includes(col.id)}
-                      onCheckedChange={(checked) => {
-                        setVisibleColumns(prev =>
-                          checked
-                            ? [...prev, col.id]
-                            : prev.filter(c => c !== col.id)
-                        );
-                      }}
-                    />
-                    <span className="text-sm">{col.label}</span>
-                  </label>
-                ))}
-              </div>
-            </PopoverContent>
-          </Popover>
-          <Button variant="outline" size="sm" onClick={expandAll} className="h-9">
-            <ChevronDown className="h-4 w-4 mr-1" />
-            Expand All
-          </Button>
-          <Button variant="outline" size="sm" onClick={collapseAll} className="h-9">
-            <ChevronUp className="h-4 w-4 mr-1" />
-            Collapse
-          </Button>
-          <Button onClick={() => handleOpenForm()} size="sm" className="h-9">
-            <Plus className="h-4 w-4 mr-1" />
-            Add Activity
-          </Button>
-        </div>
+      {/* Header with Add button */}
+      <div className="flex items-center justify-end bg-card p-3 rounded-lg border">
+        <Button onClick={() => handleOpenForm()} size="sm" className="h-9">
+          <Plus className="h-4 w-4 mr-1" />
+          Add Activity
+        </Button>
       </div>
 
-      {/* Results count */}
-      <p className="text-sm text-muted-foreground px-1">
-        {activities.length} {activities.length === 1 ? 'activity' : 'activities'}
-      </p>
-
-      {/* Simplified Phase Tables */}
-      <div className="space-y-3">
-        {ORA_PHASES.map((phase) => {
-          const phaseActivities = activitiesByPhase[phase.value] || [];
-          if (phaseActivities.length === 0 && filters.phase !== 'all' && filters.phase !== phase.value) return null;
-          
-          return (
-            <Collapsible 
-              key={phase.value} 
-              open={expandedPhases.includes(phase.value)}
-              onOpenChange={() => togglePhase(phase.value)}
-            >
-              <Card className="overflow-hidden">
-                <CollapsibleTrigger asChild>
-                  <div className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-muted/50 transition-colors border-b">
-                    <div className="flex items-center gap-3">
-                      <span className="font-semibold">{phase.label}</span>
-                      <Badge variant="secondary" className="text-xs">
-                        {phaseActivities.length}
-                      </Badge>
-                    </div>
-                    <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${expandedPhases.includes(phase.value) ? 'rotate-180' : ''}`} />
-                  </div>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  {phaseActivities.length === 0 ? (
-                    <div className="text-center py-6 text-muted-foreground text-sm">
-                      No activities in this phase
-                    </div>
-                  ) : (
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-muted/30">
-                          <TableHead className="w-16">S/N</TableHead>
-                          <TableHead>Activity</TableHead>
-                          {visibleColumns.includes('description') && <TableHead className="min-w-[200px]">Description</TableHead>}
-                          {visibleColumns.includes('type') && <TableHead className="w-28">Type</TableHead>}
-                          {visibleColumns.includes('hours') && <TableHead className="w-24">Hours</TableHead>}
-                          <TableHead className="w-20 text-right">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {phaseActivities.map((activity) => (
-                          <TableRow key={activity.id} className="group">
-                            <TableCell className="font-mono text-xs text-muted-foreground">
-                              {activity.display_order}
-                            </TableCell>
-                            <TableCell>
-                              <p className="font-medium text-sm">{activity.name}</p>
-                            </TableCell>
-                            {visibleColumns.includes('description') && (
-                              <TableCell className="text-sm text-muted-foreground max-w-[300px]">
-                                <p className="line-clamp-2">{activity.description || '—'}</p>
-                              </TableCell>
-                            )}
-                            {visibleColumns.includes('type') && (
-                              <TableCell>
-                                <Badge variant="outline" className={`text-xs capitalize ${getTypeBadgeColor(activity.entry_type)}`}>
-                                  {activity.entry_type.replace('_', ' ')}
-                                </Badge>
-                              </TableCell>
-                            )}
-                            {visibleColumns.includes('hours') && (
-                              <TableCell className="text-sm text-muted-foreground">
-                                {activity.estimated_manhours ? (
-                                  <span className="flex items-center gap-1">
-                                    <Clock className="h-3 w-3" />
-                                    {activity.estimated_manhours}
-                                  </span>
-                                ) : '—'}
-                              </TableCell>
-                            )}
-                            <TableCell className="text-right">
-                              <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7"
-                                  onClick={() => handleOpenForm(activity)}
-                                >
-                                  <Edit3 className="h-3.5 w-3.5" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7 text-destructive hover:text-destructive"
-                                  onClick={() => setDeleteConfirmId(activity.id)}
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  )}
-                </CollapsibleContent>
-              </Card>
-            </Collapsible>
-          );
-        })}
+      {/* Empty state */}
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <div className="rounded-full bg-muted p-4 mb-4">
+          <Search className="h-8 w-8 text-muted-foreground" />
+        </div>
+        <h3 className="text-lg font-semibold mb-1">No activities yet</h3>
+        <p className="text-sm text-muted-foreground max-w-md">
+          The activity catalog is empty. Click "Add Activity" to start building your ORA activity catalog.
+        </p>
       </div>
 
       {/* Add/Edit Form Dialog */}
