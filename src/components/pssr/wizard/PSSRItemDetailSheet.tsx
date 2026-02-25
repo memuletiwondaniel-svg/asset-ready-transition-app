@@ -246,6 +246,12 @@ const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
   if (!item) return null;
 
   const hasOverrides = currentOverride && Object.keys(currentOverride).length > 0;
+  const hasUnsavedChanges = 
+    formData.topic !== (item.topic ?? '') ||
+    formData.description !== (item.description ?? '') ||
+    formData.supporting_evidence !== (item.supporting_evidence ?? '') ||
+    formData.approvers !== (item.approvers ?? '') ||
+    formData.responsible !== (item.responsible ?? '');
 
   const itemId = categoryRefId
     ? `${categoryRefId}-${String(item.sequence_number).padStart(2, '0')}`
@@ -588,7 +594,7 @@ const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
             variant="outline"
             size="sm"
             onClick={handleReset}
-            disabled={!hasOverrides}
+            disabled={!hasOverrides && !hasUnsavedChanges}
             className="gap-1.5 text-xs"
           >
             <RotateCcw className="h-3.5 w-3.5" />
