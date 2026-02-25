@@ -1,47 +1,57 @@
 
 
-## Analysis: Edit Template Step 1 vs Create PSSR Step 1
+## Plan: Streamline Step 1 and Move PSSR Lead to Step 2
 
-### Current State
+Three changes across two files to reduce scroll on Step 1 and improve layout:
 
-**Create New PSSR** (Step 1 - `WizardStepCategory.tsx`):
-- Rich interactive **card-based** selector with icons, color-coded backgrounds, hover effects, and check indicators
-- Name as primary label, description as muted subtext beneath
-- Visual, scannable, modern
+### 1. Move Deactivate/Activate/Reactivate actions to the footer row
 
-**Edit/Add PSSR Template** (Step 1 - `WizardStepReasonDetails.tsx`):
-- Plain `<Select>` dropdown for reason selection
-- Description shown as subtext only after selection
-- Also includes PSSR Lead Role selector and Additional Description textarea
+**File: `src/components/pssr/EditPSSRReasonOverlay.tsx`**
 
-### Best Modern UI/UX Approach
+- Remove the large status action cards from Step 1 content area (lines 518-575 — the `{currentStep === 1 && ...}` block with draft/active/inactive cards)
+- Add a compact Deactivate/Activate button in the footer bar (line 578 area), next to the existing Delete button on the left side
+  - For `active` status: show an "Deactivate" button styled with `text-amber-600` and warning icon
+  - For `draft` status: show an "Activate" button styled with `text-green-600`
+  - For `inactive` status: show a "Reactivate" button styled with `text-green-600`
+  - When clicking Deactivate on an active template with existing PSSRs, show a confirmation dialog warning that it will no longer be available for new PSSRs
+- This frees up significant vertical space on Step 1
 
-The **card-based selector** from the Create flow is the stronger pattern. It follows modern UI conventions (Notion, Linear, Figma) where important categorical choices use visually distinct, scannable cards rather than hidden dropdowns. For consistency, Step 1 of the template wizard should adopt the same card-based reason selector.
-
-However, the template wizard's Step 1 also contains additional fields (PSSR Lead Role, Description) that don't exist in the Create flow. These should remain but the reason selector portion should be upgraded.
-
-### Plan
+### 2. Move PSSR Lead Role selector from Step 1 to Step 2
 
 **File: `src/components/pssr/wizard/WizardStepReasonDetails.tsx`**
 
-1. **Replace the `<Select>` dropdown** with the same card-based layout used in `WizardStepCategory.tsx`:
-   - Import the same icon mapping logic (`getReasonCardConfig`, `getDisplayName`)
-   - Render each reason as a clickable card with icon, hue-based gradient, name as primary label, description as subtext
-   - Include the "Other" card at the bottom with a `HelpCircle` icon
-   - When "Other" is selected, show the custom reason `<Input>` field below the cards
+- Remove the PSSR Lead Role selector section (the `<Shield>` labeled popover and matching profiles preview) from this component
+- Remove the `pssrLeadId`, `onPssrLeadChange` props
+- Step 1 will now contain only: PSSR Reason cards + Other input + Additional Description
 
-2. **Extract shared card config** into a small utility to avoid duplication:
-   - Move `getReasonCardConfig` and `getDisplayName` from `WizardStepCategory.tsx` into a shared file (e.g., `src/components/pssr/wizard/reasonCardConfig.ts`)
-   - Import from both `WizardStepCategory.tsx` and `WizardStepReasonDetails.tsx`
+**File: `src/components/pssr/wizard/WizardStepApprovers.tsx`**
 
-3. **Keep the remaining fields unchanged**:
-   - PSSR Lead Role popover selector stays as-is
-   - Additional Description textarea stays as-is
+- Add the PSSR Lead Role selector at the top of the Step 2 (PSSR Approvers) component, only when `type="pssr"`
+- Add new optional props: `pssrLeadRoleId?: string`, `onPssrLeadRoleChange?: (id: string) => void`
+- Render the Shield-labeled popover and matching profiles preview above the approver role list
+
+**File: `src/components/pssr/EditPSSRReasonOverlay.tsx`**
+
+- Remove `pssrLeadId` and `onPssrLeadChange` from the `WizardStepReasonDetails` props on Step 1
+- Pass `pssrLeadRoleId={pssrLeadId}` and `onPssrLeadRoleChange={setPssrLeadId}` to the Step 2 `WizardStepApprovers` component
+
+**File: `src/components/pssr/AddPSSRReasonWizard.tsx`**
+
+- Same prop changes: remove from Step 1, add to Step 2
+
+### 3. Show "Other" custom input inline
+
+Already working correctly — when the "Other" card is selected, a text input appears below. No changes needed here.
+
+### Summary of UX improvements
+- Step 1 becomes much shorter: just reason cards + description — no scrolling needed
+- Status actions (activate/deactivate) move to footer for persistent access from any step
+- PSSR Lead Role lives with PSSR Approvers (Step 2) which is its natural grouping
 
 ### Technical Details
 
-- The card layout reuses the exact same styling: `rounded-xl border-2`, hue-based gradients, `CheckCircle2` indicator, hover overlays
-- The reason options are already fetched from `pssr_reasons` table in both components
-- The "Other" flow (custom input) will render below the card grid when the Other card is selected
 - No database changes required
+- Props interface changes on `WizardStepReasonDetails` (remove `pssrLeadId`, `onPssrLeadChange`) and `WizardStepApprovers` (add optional `pssrLeadRoleId`, `onPssrLeadRoleChange`)
+- The deactivation confirmation dialog (for active templates) reuses the existing `AlertDialog` pattern
+- Files modified: `EditPSSRReasonOverlay.tsx`, `AddPSSRReasonWizard.tsx`, `WizardStepReasonDetails.tsx`, `WizardStepApprovers.tsx`
 
