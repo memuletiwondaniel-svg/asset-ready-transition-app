@@ -6,7 +6,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { Users, X, MapPin, Plus, Check } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Users, X, MapPin, Plus, Check, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRoles } from '@/hooks/useRoles';
 import { usePSSRAllowedApproverRoles } from '@/hooks/usePSSRAllowedApproverRoles';
@@ -28,6 +29,7 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
   plantName,
 }) => {
   const [addPopoverOpen, setAddPopoverOpen] = useState(false);
+  const [expandedRoles, setExpandedRoles] = useState<Set<string>>(new Set());
   const { roles = [], isLoading: rolesLoading } = useRoles();
   const { allowedRoleIds, sofAllowedRoleIds, isLoading: allowedLoading } = usePSSRAllowedApproverRoles();
   const { data: profileUsers = [] } = useProfileUsers();
@@ -146,50 +148,77 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
             const people = resolvedPeopleByRole[roleId] || [];
 
             return (
-              <div key={roleId} className="border rounded-lg p-3 bg-muted/50 dark:bg-muted/30">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary/60" />
-                    <span className="font-semibold text-sm tracking-tight text-foreground/90">{role?.name || 'Unknown'}</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => onRoleToggle(roleId)}
-                    className="text-muted-foreground hover:text-destructive transition-colors p-1 rounded-full hover:bg-destructive/10"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-                
-                {/* Resolved people */}
-                {people.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {people.map((person) => (
-                      <div
-                        key={person.user_id}
-                        className="flex items-center gap-2 bg-background border rounded-md px-2.5 py-1.5"
+              <Collapsible
+                key={roleId}
+                open={expandedRoles.has(roleId)}
+                onOpenChange={(open) => {
+                  setExpandedRoles(prev => {
+                    const next = new Set(prev);
+                    open ? next.add(roleId) : next.delete(roleId);
+                    return next;
+                  });
+                }}
+              >
+                <div className="border rounded-lg bg-muted/50 dark:bg-muted/30">
+                  <div className="flex items-center justify-between px-3 py-2.5">
+                    <CollapsibleTrigger asChild>
+                      <button
+                        type="button"
+                        className="flex items-center gap-2 flex-1 min-w-0 text-left hover:opacity-80 transition-opacity"
                       >
-                        <Avatar className="h-6 w-6">
-                          <AvatarImage src={person.avatar_url} />
-                          <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
-                            {getInitials(person.full_name)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="min-w-0">
-                          <p className="text-xs font-medium truncate">{person.full_name}</p>
-                          {person.position && (
-                            <p className="text-[10px] text-muted-foreground/50 truncate">{person.position}</p>
-                          )}
-                        </div>
-                      </div>
-                    ))}
+                        <ChevronRight className={cn(
+                          "h-3.5 w-3.5 text-muted-foreground shrink-0 transition-transform duration-200",
+                          expandedRoles.has(roleId) && "rotate-90"
+                        )} />
+                        <div className="w-1.5 h-1.5 rounded-full bg-primary/60 shrink-0" />
+                        <span className="font-semibold text-sm tracking-tight text-foreground/90 truncate">{role?.name || 'Unknown'}</span>
+                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-normal ml-1 shrink-0">
+                          {people.length}
+                        </Badge>
+                      </button>
+                    </CollapsibleTrigger>
+                    <button
+                      type="button"
+                      onClick={() => onRoleToggle(roleId)}
+                      className="text-muted-foreground hover:text-destructive transition-colors p-1 rounded-full hover:bg-destructive/10 shrink-0 ml-2"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
                   </div>
-                ) : (
-                  <p className="text-xs text-muted-foreground italic">
-                    No matching personnel found{plantName ? ` for ${plantName}` : ''}
-                  </p>
-                )}
-              </div>
+                  
+                  <CollapsibleContent>
+                    <div className="px-3 pb-3 pt-0">
+                      {people.length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                          {people.map((person) => (
+                            <div
+                              key={person.user_id}
+                              className="flex items-center gap-2 bg-background border rounded-md px-2.5 py-1.5"
+                            >
+                              <Avatar className="h-6 w-6">
+                                <AvatarImage src={person.avatar_url} />
+                                <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
+                                  {getInitials(person.full_name)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="min-w-0">
+                                <p className="text-xs font-medium truncate">{person.full_name}</p>
+                                {person.position && (
+                                  <p className="text-[10px] text-muted-foreground/50 truncate">{person.position}</p>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-muted-foreground italic">
+                          No matching personnel found{plantName ? ` for ${plantName}` : ''}
+                        </p>
+                      )}
+                    </div>
+                  </CollapsibleContent>
+                </div>
+              </Collapsible>
             );
           })}
         </div>
