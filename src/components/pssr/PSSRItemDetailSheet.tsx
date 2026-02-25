@@ -27,6 +27,7 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   FileText,
   ArrowRight,
@@ -43,7 +44,7 @@ import {
   Check,
   ChevronsUpDown,
   Plus,
-  Trash2,
+  ChevronRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
@@ -129,6 +130,8 @@ export const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
   const [editResponsible, setEditResponsible] = useState('');
   const [editApprovers, setEditApprovers] = useState<string[]>([]);
   const [approverPopoverOpen, setApproverPopoverOpen] = useState(false);
+  const [expandedRoles, setExpandedRoles] = useState<Set<string>>(new Set());
+  const [deliveringExpanded, setDeliveringExpanded] = useState(false);
 
   // Determine if this is a custom item
   const isCustomItem = itemId?.startsWith('custom-') || false;
@@ -511,28 +514,53 @@ export const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
                           placeholder="Select delivering role..."
                         />
                       ) : (
-                        <div className="flex items-center gap-3">
-                          <span className="text-[10px] font-medium text-muted-foreground w-24 shrink-0 truncate" title={effectiveResponsible || 'Not assigned'}>
-                            {effectiveResponsible || 'Not assigned'}
-                          </span>
-                          {deliveringUsers && deliveringUsers.length > 0 ? (
-                            <div className="flex items-center gap-3 flex-1 min-w-0">
-                              {deliveringUsers.map((user: any) => (
-                                <div key={user.user_id} className="flex flex-col items-center gap-0.5 min-w-0">
-                                  <Avatar className="w-7 h-7">
-                                    <AvatarImage src={getAvatarUrl(user.avatar_url)} />
-                                    <AvatarFallback className="text-[10px]">{getInitials(user.full_name)}</AvatarFallback>
-                                  </Avatar>
-                                  <span className="text-[10px] text-foreground truncate max-w-[80px] text-center" title={user.full_name}>
-                                    {user.full_name?.split(' ')[0]}
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <p className="text-[10px] text-muted-foreground italic">Unassigned</p>
-                          )}
-                        </div>
+                        <Collapsible open={deliveringExpanded} onOpenChange={setDeliveringExpanded}>
+                          <div className="border rounded-lg bg-muted/50 dark:bg-muted/30">
+                            <CollapsibleTrigger asChild>
+                              <button
+                                type="button"
+                                className="flex items-center gap-2 w-full px-3 py-2.5 text-left hover:opacity-80 transition-opacity"
+                              >
+                                <ChevronRight className={cn(
+                                  "h-3.5 w-3.5 text-muted-foreground/40 shrink-0 transition-transform duration-200",
+                                  deliveringExpanded && "rotate-90"
+                                )} />
+                                <span className="font-semibold text-sm tracking-tight text-foreground/90 truncate">
+                                  {effectiveResponsible || 'Not assigned'}
+                                </span>
+                                {deliveringUsers && deliveringUsers.length > 0 && (
+                                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-normal ml-1 shrink-0 text-muted-foreground/50">
+                                    {deliveringUsers.length}
+                                  </Badge>
+                                )}
+                              </button>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent>
+                              <div className="px-3 pb-3 pt-0">
+                                {deliveringUsers && deliveringUsers.length > 0 ? (
+                                  <div className="flex flex-wrap gap-2">
+                                    {deliveringUsers.map((user: any) => (
+                                      <div
+                                        key={user.user_id}
+                                        className="flex items-center gap-2 bg-background border rounded-md px-2.5 py-1.5"
+                                      >
+                                        <Avatar className="h-6 w-6">
+                                          <AvatarImage src={getAvatarUrl(user.avatar_url)} />
+                                          <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
+                                            {getInitials(user.full_name)}
+                                          </AvatarFallback>
+                                        </Avatar>
+                                        <p className="text-xs font-medium truncate">{user.full_name}</p>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <p className="text-xs text-muted-foreground italic">No matching personnel found</p>
+                                )}
+                              </div>
+                            </CollapsibleContent>
+                          </div>
+                        </Collapsible>
                       )}
                     </CardContent>
                   </Card>
@@ -561,14 +589,13 @@ export const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
                                   placeholder="Select approving role..."
                                 />
                               </div>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 text-destructive shrink-0"
+                              <button
+                                type="button"
+                                className="text-destructive/70 hover:text-destructive transition-all p-1 rounded-full hover:bg-destructive/10 shrink-0"
                                 onClick={() => setEditApprovers(editApprovers.filter((_, i) => i !== idx))}
                               >
-                                <Trash2 className="h-3 w-3" />
-                              </Button>
+                                <X className="h-3.5 w-3.5" />
+                              </button>
                             </div>
                           ))}
                           <Button
@@ -584,31 +611,68 @@ export const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
                       ) : (
                         <>
                           {approvingData && approvingData.length > 0 ? (
-                            <div className="divide-y divide-border">
-                              {approvingData.map((role: any, idx: number) => (
-                                <div key={idx} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
-                                  <span className="text-[10px] font-medium text-muted-foreground w-24 shrink-0 truncate" title={role.roleName}>
-                                    {role.roleName}
-                                  </span>
-                                  {role.users.length > 0 ? (
-                                    <div className="flex items-center gap-4 flex-1 min-w-0">
-                                      {role.users.map((user: any) => (
-                                        <div key={user.user_id} className="flex flex-col items-center gap-0.5 w-14">
-                                          <Avatar className="w-7 h-7">
-                                            <AvatarImage src={getAvatarUrl(user.avatar_url)} />
-                                            <AvatarFallback className="text-[10px]">{getInitials(user.full_name)}</AvatarFallback>
-                                          </Avatar>
-                                          <span className="text-[10px] text-foreground truncate w-full text-center" title={user.full_name}>
-                                            {user.full_name?.split(' ')[0]}
+                            <div className="space-y-2">
+                              {approvingData.map((role: any, idx: number) => {
+                                const roleKey = `approver-${idx}`;
+                                const isExpanded = expandedRoles.has(roleKey);
+                                return (
+                                  <Collapsible
+                                    key={idx}
+                                    open={isExpanded}
+                                    onOpenChange={(open) => {
+                                      setExpandedRoles(prev => {
+                                        const next = new Set(prev);
+                                        open ? next.add(roleKey) : next.delete(roleKey);
+                                        return next;
+                                      });
+                                    }}
+                                  >
+                                    <div className="border rounded-lg bg-muted/50 dark:bg-muted/30">
+                                      <CollapsibleTrigger asChild>
+                                        <button
+                                          type="button"
+                                          className="flex items-center gap-2 w-full px-3 py-2.5 text-left hover:opacity-80 transition-opacity"
+                                        >
+                                          <ChevronRight className={cn(
+                                            "h-3.5 w-3.5 text-muted-foreground/40 shrink-0 transition-transform duration-200",
+                                            isExpanded && "rotate-90"
+                                          )} />
+                                          <span className="font-semibold text-sm tracking-tight text-foreground/90 truncate">
+                                            {role.roleName}
                                           </span>
+                                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-normal ml-1 shrink-0 text-muted-foreground/50">
+                                            {role.users.length}
+                                          </Badge>
+                                        </button>
+                                      </CollapsibleTrigger>
+                                      <CollapsibleContent>
+                                        <div className="px-3 pb-3 pt-0">
+                                          {role.users.length > 0 ? (
+                                            <div className="flex flex-wrap gap-2">
+                                              {role.users.map((user: any) => (
+                                                <div
+                                                  key={user.user_id}
+                                                  className="flex items-center gap-2 bg-background border rounded-md px-2.5 py-1.5"
+                                                >
+                                                  <Avatar className="h-6 w-6">
+                                                    <AvatarImage src={getAvatarUrl(user.avatar_url)} />
+                                                    <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
+                                                      {getInitials(user.full_name)}
+                                                    </AvatarFallback>
+                                                  </Avatar>
+                                                  <p className="text-xs font-medium truncate">{user.full_name}</p>
+                                                </div>
+                                              ))}
+                                            </div>
+                                          ) : (
+                                            <p className="text-xs text-muted-foreground italic">No matching personnel found</p>
+                                          )}
                                         </div>
-                                      ))}
+                                      </CollapsibleContent>
                                     </div>
-                                  ) : (
-                                    <p className="text-[10px] text-muted-foreground italic">Unassigned</p>
-                                  )}
-                                </div>
-                              ))}
+                                  </Collapsible>
+                                );
+                              })}
                             </div>
                           ) : (
                             <p className="text-xs text-muted-foreground italic">
