@@ -6353,18 +6353,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "pssr_reason_configuration_default_pssr_lead_id_fkey"
+            foreignKeyName: "pssr_reason_configuration_default_pssr_lead_role_id_fkey"
             columns: ["default_pssr_lead_role_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "pssr_reason_configuration_default_pssr_lead_id_fkey"
-            columns: ["default_pssr_lead_role_id"]
-            isOneToOne: false
-            referencedRelation: "profiles_safe"
-            referencedColumns: ["user_id"]
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "pssr_reason_configuration_reason_id_fkey"
