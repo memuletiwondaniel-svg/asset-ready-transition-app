@@ -1,16 +1,13 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Edit3, Trash2, Search } from 'lucide-react';
 import { useORAActivityCatalog, useORPPhases, ORAActivity, ORAActivityInput } from '@/hooks/useORAActivityCatalog';
+import { ActivityFormDialog } from './ActivityFormDialog';
 
 export const ORAActivityCatalog = () => {
   const [filters, setFilters] = useState({ phase_id: '', search: '' });
@@ -24,41 +21,13 @@ export const ORAActivityCatalog = () => {
   const [editingActivity, setEditingActivity] = useState<ORAActivity | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
-  const [formData, setFormData] = useState<ORAActivityInput>({
-    activity: '',
-    description: '',
-    phase_id: '',
-    parent_activity_id: null,
-    duration_high: undefined,
-    duration_med: undefined,
-    duration_low: undefined,
-  });
-
   const handleOpenForm = (activity?: ORAActivity) => {
-    if (activity) {
-      setEditingActivity(activity);
-      setFormData({
-        activity: activity.activity,
-        description: activity.description || '',
-        phase_id: activity.phase_id || '',
-        parent_activity_id: activity.parent_activity_id || null,
-        duration_high: activity.duration_high || undefined,
-        duration_med: activity.duration_med || undefined,
-        duration_low: activity.duration_low || undefined,
-      });
-    } else {
-      setEditingActivity(null);
-      setFormData({ activity: '', description: '', phase_id: '', parent_activity_id: null, duration_high: undefined, duration_med: undefined, duration_low: undefined });
-    }
+    setEditingActivity(activity || null);
     setIsFormOpen(true);
   };
 
-  const handleSave = async () => {
+  const handleSave = async (payload: ORAActivityInput) => {
     try {
-      const payload = { ...formData };
-      if (!payload.phase_id) delete payload.phase_id;
-      if (!payload.parent_activity_id) payload.parent_activity_id = null;
-
       if (editingActivity) {
         await updateActivity({ id: editingActivity.id, ...payload });
       } else {
@@ -159,72 +128,15 @@ export const ORAActivityCatalog = () => {
       )}
 
       {/* Add/Edit Dialog */}
-      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh]">
-          <DialogHeader><DialogTitle>{editingActivity ? 'Edit Activity' : 'Add New Activity'}</DialogTitle></DialogHeader>
-          <ScrollArea className="max-h-[60vh] pr-4">
-            <div className="space-y-4 py-4">
-              {editingActivity && (
-                <div className="space-y-2">
-                  <Label>Activity Code</Label>
-                  <Input value={editingActivity.activity_code} disabled className="bg-muted" />
-                </div>
-              )}
-              <div className="space-y-2">
-                <Label>Activity *</Label>
-                <Input value={formData.activity} onChange={e => setFormData(f => ({ ...f, activity: e.target.value }))} placeholder="Enter activity name" />
-              </div>
-              <div className="space-y-2">
-                <Label>Description</Label>
-                <Textarea value={formData.description} onChange={e => setFormData(f => ({ ...f, description: e.target.value }))} placeholder="Enter description" rows={3} />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Phase</Label>
-                  <Select value={formData.phase_id || ''} onValueChange={v => setFormData(f => ({ ...f, phase_id: v }))}>
-                    <SelectTrigger><SelectValue placeholder="Select phase" /></SelectTrigger>
-                    <SelectContent>
-                      {phases.map(p => <SelectItem key={p.id} value={p.id}>{p.label}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Parent Activity</Label>
-                  <Select value={formData.parent_activity_id || 'none'} onValueChange={v => setFormData(f => ({ ...f, parent_activity_id: v === 'none' ? null : v }))}>
-                    <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">None</SelectItem>
-                      {activities.filter(a => a.id !== editingActivity?.id).map(a => (
-                        <SelectItem key={a.id} value={a.id}>{a.activity_code} - {a.activity}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label>Duration High (Days)</Label>
-                  <Input type="number" value={formData.duration_high ?? ''} onChange={e => setFormData(f => ({ ...f, duration_high: e.target.value ? parseInt(e.target.value) : undefined }))} placeholder="0" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Duration Med (Days)</Label>
-                  <Input type="number" value={formData.duration_med ?? ''} onChange={e => setFormData(f => ({ ...f, duration_med: e.target.value ? parseInt(e.target.value) : undefined }))} placeholder="0" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Duration Low (Days)</Label>
-                  <Input type="number" value={formData.duration_low ?? ''} onChange={e => setFormData(f => ({ ...f, duration_low: e.target.value ? parseInt(e.target.value) : undefined }))} placeholder="0" />
-                </div>
-              </div>
-            </div>
-          </ScrollArea>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setIsFormOpen(false); setEditingActivity(null); }}>Cancel</Button>
-            <Button onClick={handleSave} disabled={!formData.activity || isCreating || isUpdating}>
-              {isCreating || isUpdating ? 'Saving...' : editingActivity ? 'Update Activity' : 'Add Activity'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ActivityFormDialog
+        open={isFormOpen}
+        onOpenChange={(open) => { setIsFormOpen(open); if (!open) setEditingActivity(null); }}
+        editingActivity={editingActivity}
+        phases={phases}
+        activities={activities}
+        onSave={handleSave}
+        isSaving={isCreating || isUpdating}
+      />
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteConfirmId} onOpenChange={() => setDeleteConfirmId(null)}>
