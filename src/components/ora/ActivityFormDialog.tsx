@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -7,8 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Clock, Layers, FileText, Hash, ArrowRight, Loader2 } from 'lucide-react';
-import { ORAActivity, ORAActivityInput, ORPPhase } from '@/hooks/useORAActivityCatalog';
+import { Clock, Layers, FileText, ArrowRight, Loader2, Hash } from 'lucide-react';
+import { ORAActivity, ORAActivityInput, ORPPhase, getDescendantIds } from '@/hooks/useORAActivityCatalog';
 
 interface Props {
   open: boolean;
@@ -18,6 +18,7 @@ interface Props {
   activities: ORAActivity[];
   onSave: (data: ORAActivityInput) => Promise<void>;
   isSaving: boolean;
+  defaultParentId?: string | null;
 }
 
 export const ActivityFormDialog: React.FC<Props> = ({
@@ -28,6 +29,7 @@ export const ActivityFormDialog: React.FC<Props> = ({
   activities,
   onSave,
   isSaving,
+  defaultParentId,
 }) => {
   const [formData, setFormData] = useState<ORAActivityInput>({
     activity: '',
@@ -51,17 +53,28 @@ export const ActivityFormDialog: React.FC<Props> = ({
         duration_low: editingActivity.duration_low || undefined,
       });
     } else {
+      const parentActivity = defaultParentId ? activities.find(a => a.id === defaultParentId) : null;
       setFormData({
         activity: '',
         description: '',
-        phase_id: '',
-        parent_activity_id: null,
+        phase_id: parentActivity?.phase_id || '',
+        parent_activity_id: defaultParentId || null,
         duration_high: undefined,
         duration_med: undefined,
         duration_low: undefined,
       });
     }
-  }, [editingActivity, open]);
+  }, [editingActivity, open, defaultParentId, activities]);
+
+  // Auto-inherit phase when parent changes
+  useEffect(() => {
+    if (!editingActivity && formData.parent_activity_id) {
+      const parent = activities.find(a => a.id === formData.parent_activity_id);
+      if (parent?.phase_id) {
+        setFormData(f => ({ ...f, phase_id: parent.phase_id || '' }));
+      }
+    }
+  }, [formData.parent_activity_id, activities, editingActivity]);
 
   const handleSave = async () => {
     const payload = { ...formData };
@@ -69,6 +82,26 @@ export const ActivityFormDialog: React.FC<Props> = ({
     if (!payload.parent_activity_id) payload.parent_activity_id = null;
     await onSave(payload);
   };
+
+  // Filter parent options: exclude self and descendants
+  const excludedIds = useMemo(() => {
+    if (!editingActivity) return new Set<string>();
+    const descendants = getDescendantIds(editingActivity.id, activities);
+    descendants.add(editingActivity.id);
+    return descendants;
+  }, [editingActivity, activities]);
+
+  const parentOptions = activities.filter(a => !excludedIds.has(a.id));
+
+  // Preview code that will be generated
+  const codePreview = useMemo(() => {
+    if (editingActivity) return editingActivity.activity_code;
+    if (!formData.parent_activity_id) return null;
+    const parent = activities.find(a => a.id === formData.parent_activity_id);
+    if (!parent) return null;
+    const siblingCount = activities.filter(a => a.parent_activity_id === formData.parent_activity_id).length;
+    return `${parent.activity_code}.${String(siblingCount + 1).padStart(2, '0')}`;
+  }, [formData.parent_activity_id, activities, editingActivity]);
 
   const getPhaseColor = (code: string) => {
     const colors: Record<string, string> = {
@@ -94,19 +127,22 @@ export const ActivityFormDialog: React.FC<Props> = ({
               </div>
               <div>
                 <DialogTitle className="text-lg">
-                  {editingActivity ? 'Edit Activity' : 'New Activity'}
+                  {editingActivity ? 'Edit Activity' : formData.parent_activity_id ? 'New Sub-Activity' : 'New Activity'}
                 </DialogTitle>
                 <p className="text-sm text-muted-foreground mt-0.5">
                   {editingActivity
                     ? `Editing ${editingActivity.activity_code}`
-                    : 'Define a new activity for the ORA catalog'}
+                    : formData.parent_activity_id
+                      ? `Adding sub-activity under ${activities.find(a => a.id === formData.parent_activity_id)?.activity_code || ''}`
+                      : 'Define a new activity for the ORA catalog'}
                 </p>
               </div>
             </div>
           </DialogHeader>
-          {editingActivity && (
+          {(editingActivity || codePreview) && (
             <Badge variant="outline" className="mt-3 font-mono text-xs bg-background/80 backdrop-blur-sm">
-              {editingActivity.activity_code}
+              <Hash className="h-3 w-3 mr-1" />
+              {editingActivity ? editingActivity.activity_code : codePreview}
             </Badge>
           )}
         </div>
@@ -151,6 +187,7 @@ export const ActivityFormDialog: React.FC<Props> = ({
               <Select
                 value={formData.phase_id || 'none'}
                 onValueChange={v => setFormData(f => ({ ...f, phase_id: v === 'none' ? '' : v }))}
+                disabled={!!formData.parent_activity_id}
               >
                 <SelectTrigger className="h-11">
                   <SelectValue placeholder="Select phase" />
@@ -168,6 +205,9 @@ export const ActivityFormDialog: React.FC<Props> = ({
                   ))}
                 </SelectContent>
               </Select>
+              {formData.parent_activity_id && (
+                <p className="text-[11px] text-muted-foreground">Inherited from parent</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -186,14 +226,12 @@ export const ActivityFormDialog: React.FC<Props> = ({
                   <SelectItem value="none">
                     <span className="text-muted-foreground">No parent</span>
                   </SelectItem>
-                  {activities
-                    .filter(a => a.id !== editingActivity?.id)
-                    .map(a => (
-                      <SelectItem key={a.id} value={a.id}>
-                        <span className="font-mono text-xs text-muted-foreground mr-1.5">{a.activity_code}</span>
-                        {a.activity}
-                      </SelectItem>
-                    ))}
+                  {parentOptions.map(a => (
+                    <SelectItem key={a.id} value={a.id}>
+                      <span className="font-mono text-xs text-muted-foreground mr-1.5">{a.activity_code}</span>
+                      {a.activity}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -242,7 +280,7 @@ export const ActivityFormDialog: React.FC<Props> = ({
         <div className="flex items-center justify-between gap-3 px-6 py-4 bg-muted/30 border-t">
           {!editingActivity && (
             <p className="text-xs text-muted-foreground">
-              Code will be auto-generated on save
+              {codePreview ? `Code: ${codePreview}` : 'Code will be auto-generated on save'}
             </p>
           )}
           {editingActivity && <div />}
