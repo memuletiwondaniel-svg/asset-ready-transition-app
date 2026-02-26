@@ -211,18 +211,15 @@ export const ActivityFormDialog: React.FC<Props> = ({
             </Label>
             <div className="grid grid-cols-3 gap-3">
               {[
-                { key: 'duration_high' as const, label: 'High', dot: 'bg-rose-500' },
-                { key: 'duration_med' as const, label: 'Medium', dot: 'bg-amber-500' },
-                { key: 'duration_low' as const, label: 'Low', dot: 'bg-emerald-500' },
-              ].map(({ key, label, dot }) => (
+                { key: 'duration_high' as const, label: 'High' },
+                { key: 'duration_med' as const, label: 'Medium' },
+                { key: 'duration_low' as const, label: 'Low' },
+              ].map(({ key, label }) => (
                 <div
                   key={key}
-                  className="relative rounded-lg border border-border bg-card p-3 text-center transition-all focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary/40"
+                  className="relative rounded-lg border border-border bg-card p-3 text-center transition-all hover:border-primary/40 hover:bg-accent/50 focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary/40"
                 >
-                  <div className="flex items-center justify-center gap-1.5 mb-1.5">
-                    <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
-                    <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">{label}</span>
-                  </div>
+                  <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">{label}</span>
                   <Input
                     type="number"
                     min={0}
