@@ -35,6 +35,7 @@ export interface ORPPhase {
   id: string;
   code: string;
   label: string;
+  prefix: string;
   display_order: number;
   is_active: boolean;
   created_at: string;

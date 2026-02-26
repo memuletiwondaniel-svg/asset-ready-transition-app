@@ -2078,6 +2078,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           label: string
+          prefix: string
         }
         Insert: {
           code: string
@@ -2086,6 +2087,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           label: string
+          prefix: string
         }
         Update: {
           code?: string
@@ -2094,6 +2096,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           label?: string
+          prefix?: string
         }
         Relationships: []
       }
