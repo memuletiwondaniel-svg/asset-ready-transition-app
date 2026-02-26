@@ -4,62 +4,65 @@ import { useToast } from '@/hooks/use-toast';
 
 export interface ORAActivity {
   id: string;
-  phase: 'IDENTIFY' | 'ASSESS' | 'SELECT' | 'DEFINE' | 'EXECUTE' | 'OPERATE';
-  level: 'L1' | 'L2';
-  area: 'ORM' | 'FEO' | 'CSU';
-  activity_id: string;
-  entry_type: 'activity' | 'critical_task' | 'control_point' | 'deliverable';
-  requirement_level: 'mandatory' | 'optional' | 'scalable';
-  name: string;
+  activity_code: string;
+  activity: string;
   description: string | null;
-  discipline: string | null;
-  applicable_business: string | null;
-  estimated_manhours: number | null;
-  outcome_evidence: string | null;
-  rolled_up_in_document: string | null;
-  dcaf_control_point: string | null;
-  pmf_controls: string[] | null;
-  ams_processes: string[] | null;
-  display_order: number;
+  phase_id: string | null;
+  parent_activity_id: string | null;
+  duration_high: number | null;
+  duration_med: number | null;
+  duration_low: number | null;
   is_active: boolean;
-  or_toolbox_section: string | null;
-  tools_templates: string | null;
-  precursors: string[] | null;
+  display_order: number;
   created_at: string;
   updated_at: string;
   created_by: string | null;
 }
 
 export interface ORAActivityInput {
-  phase: string;
-  level?: string;
-  area?: string;
-  activity_id: string;
-  entry_type?: string;
-  requirement_level?: string;
-  name: string;
+  activity: string;
   description?: string;
-  discipline?: string;
-  applicable_business?: string;
-  estimated_manhours?: number;
-  outcome_evidence?: string;
-  rolled_up_in_document?: string;
-  dcaf_control_point?: string;
-  pmf_controls?: string[];
-  ams_processes?: string[];
+  phase_id?: string;
+  parent_activity_id?: string | null;
+  duration_high?: number;
+  duration_med?: number;
+  duration_low?: number;
   display_order?: number;
   is_active?: boolean;
-  or_toolbox_section?: string;
-  tools_templates?: string;
-  precursors?: string[];
+}
+
+export interface ORPPhase {
+  id: string;
+  code: string;
+  label: string;
+  display_order: number;
+  is_active: boolean;
+  created_at: string;
 }
 
 interface UseORAActivityCatalogFilters {
-  phase?: string;
-  area?: string;
-  entryType?: string;
+  phase_id?: string;
   search?: string;
 }
+
+// Hook to fetch ORP phases
+export const useORPPhases = () => {
+  const { data: phases, isLoading } = useQuery({
+    queryKey: ['orp-phases'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('orp_phases')
+        .select('*')
+        .eq('is_active', true)
+        .order('display_order');
+
+      if (error) throw error;
+      return data as ORPPhase[];
+    }
+  });
+
+  return { phases: phases || [], isLoading };
+};
 
 export const useORAActivityCatalog = (filters?: UseORAActivityCatalogFilters) => {
   const { toast } = useToast();
@@ -71,20 +74,13 @@ export const useORAActivityCatalog = (filters?: UseORAActivityCatalogFilters) =>
       let query = supabase
         .from('ora_activity_catalog')
         .select('*')
-        .order('phase')
         .order('display_order');
 
-      if (filters?.phase && filters.phase !== 'all') {
-        query = query.eq('phase', filters.phase);
-      }
-      if (filters?.area && filters.area !== 'all') {
-        query = query.eq('area', filters.area);
-      }
-      if (filters?.entryType && filters.entryType !== 'all') {
-        query = query.eq('entry_type', filters.entryType);
+      if (filters?.phase_id) {
+        query = query.eq('phase_id', filters.phase_id);
       }
       if (filters?.search) {
-        query = query.or(`name.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
+        query = query.or(`activity.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
       }
 
       const { data, error } = await query;
@@ -101,6 +97,7 @@ export const useORAActivityCatalog = (filters?: UseORAActivityCatalogFilters) =>
         .from('ora_activity_catalog')
         .insert({
           ...input,
+          activity_code: '',
           created_by: user.user?.id
         })
         .select()
@@ -111,17 +108,10 @@ export const useORAActivityCatalog = (filters?: UseORAActivityCatalogFilters) =>
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ora-activity-catalog'] });
-      toast({
-        title: 'Success',
-        description: 'ORA activity created successfully'
-      });
+      toast({ title: 'Success', description: 'Activity created successfully' });
     },
     onError: (error: Error) => {
-      toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive'
-      });
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
     }
   });
 
@@ -139,17 +129,10 @@ export const useORAActivityCatalog = (filters?: UseORAActivityCatalogFilters) =>
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ora-activity-catalog'] });
-      toast({
-        title: 'Success',
-        description: 'ORA activity updated successfully'
-      });
+      toast({ title: 'Success', description: 'Activity updated successfully' });
     },
     onError: (error: Error) => {
-      toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive'
-      });
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
     }
   });
 
@@ -164,32 +147,15 @@ export const useORAActivityCatalog = (filters?: UseORAActivityCatalogFilters) =>
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ora-activity-catalog'] });
-      toast({
-        title: 'Success',
-        description: 'ORA activity deleted successfully'
-      });
+      toast({ title: 'Success', description: 'Activity deleted successfully' });
     },
     onError: (error: Error) => {
-      toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive'
-      });
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
     }
   });
 
-  // Group activities by phase
-  const activitiesByPhase = activities?.reduce((acc, activity) => {
-    if (!acc[activity.phase]) {
-      acc[activity.phase] = [];
-    }
-    acc[activity.phase].push(activity);
-    return acc;
-  }, {} as Record<string, ORAActivity[]>) || {};
-
   return {
     activities: activities || [],
-    activitiesByPhase,
     isLoading,
     createActivity: createActivity.mutateAsync,
     updateActivity: updateActivity.mutateAsync,
@@ -199,31 +165,3 @@ export const useORAActivityCatalog = (filters?: UseORAActivityCatalogFilters) =>
     isDeleting: deleteActivity.isPending
   };
 };
-
-export const ORA_PHASES = [
-  { value: 'IDENTIFY', label: 'Identify' },
-  { value: 'ASSESS', label: 'Assess' },
-  { value: 'SELECT', label: 'Select' },
-  { value: 'DEFINE', label: 'Define' },
-  { value: 'EXECUTE', label: 'Execute' },
-  { value: 'OPERATE', label: 'Operate' }
-] as const;
-
-export const ORA_AREAS = [
-  { value: 'ORM', label: 'Operations Readiness Management' },
-  { value: 'FEO', label: 'Facility & Equipment Operations' },
-  { value: 'CSU', label: 'Commissioning & Start-up' }
-] as const;
-
-export const ORA_ENTRY_TYPES = [
-  { value: 'activity', label: 'Activity' },
-  { value: 'critical_task', label: 'Critical Task' },
-  { value: 'control_point', label: 'Control Point' },
-  { value: 'deliverable', label: 'Deliverable' }
-] as const;
-
-export const ORA_REQUIREMENT_LEVELS = [
-  { value: 'mandatory', label: 'Mandatory' },
-  { value: 'optional', label: 'Optional' },
-  { value: 'scalable', label: 'Scalable' }
-] as const;

@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { ORAActivity } from './useORAActivityCatalog';
 
 export interface ORAPlanTemplate {
   id: string;
@@ -15,18 +14,6 @@ export interface ORAPlanTemplate {
   created_by: string | null;
   created_at: string;
   updated_at: string;
-}
-
-export interface ORATemplateActivity {
-  id: string;
-  template_id: string;
-  activity_id: string;
-  is_required: boolean;
-  custom_estimated_hours: number | null;
-  notes: string | null;
-  display_order: number;
-  created_at: string;
-  activity?: ORAActivity;
 }
 
 export interface ORAPlanTemplateInput {
@@ -75,17 +62,10 @@ export const useORAPlanTemplates = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ora-plan-templates'] });
-      toast({
-        title: 'Success',
-        description: 'Template created successfully'
-      });
+      toast({ title: 'Success', description: 'Template created successfully' });
     },
     onError: (error: Error) => {
-      toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive'
-      });
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
     }
   });
 
@@ -103,17 +83,10 @@ export const useORAPlanTemplates = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ora-plan-templates'] });
-      toast({
-        title: 'Success',
-        description: 'Template updated successfully'
-      });
+      toast({ title: 'Success', description: 'Template updated successfully' });
     },
     onError: (error: Error) => {
-      toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive'
-      });
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
     }
   });
 
@@ -128,17 +101,10 @@ export const useORAPlanTemplates = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ora-plan-templates'] });
-      toast({
-        title: 'Success',
-        description: 'Template deleted successfully'
-      });
+      toast({ title: 'Success', description: 'Template deleted successfully' });
     },
     onError: (error: Error) => {
-      toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive'
-      });
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
     }
   });
 
@@ -151,95 +117,6 @@ export const useORAPlanTemplates = () => {
     isCreating: createTemplate.isPending,
     isUpdating: updateTemplate.isPending,
     isDeleting: deleteTemplate.isPending
-  };
-};
-
-// Hook for managing template activities
-export const useORATemplateActivities = (templateId: string) => {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-
-  const { data: templateActivities, isLoading } = useQuery({
-    queryKey: ['ora-template-activities', templateId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('ora_template_activities')
-        .select(`
-          *,
-          activity:activity_id(*)
-        `)
-        .eq('template_id', templateId)
-        .order('display_order');
-
-      if (error) throw error;
-      return data as ORATemplateActivity[];
-    },
-    enabled: !!templateId
-  });
-
-  const addActivity = useMutation({
-    mutationFn: async (input: { activity_id: string; is_required?: boolean; custom_estimated_hours?: number; notes?: string }) => {
-      const { data, error } = await supabase
-        .from('ora_template_activities')
-        .insert({
-          template_id: templateId,
-          ...input
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ora-template-activities', templateId] });
-      toast({
-        title: 'Success',
-        description: 'Activity added to template'
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive'
-      });
-    }
-  });
-
-  const removeActivity = useMutation({
-    mutationFn: async (activityId: string) => {
-      const { error } = await supabase
-        .from('ora_template_activities')
-        .delete()
-        .eq('template_id', templateId)
-        .eq('activity_id', activityId);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ora-template-activities', templateId] });
-      toast({
-        title: 'Success',
-        description: 'Activity removed from template'
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive'
-      });
-    }
-  });
-
-  return {
-    templateActivities: templateActivities || [],
-    isLoading,
-    addActivity: addActivity.mutateAsync,
-    removeActivity: removeActivity.mutateAsync,
-    isAdding: addActivity.isPending,
-    isRemoving: removeActivity.isPending
   };
 };
 

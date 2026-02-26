@@ -16,9 +16,7 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
   const selectedActivities = activities.filter(a => a.selected);
 
   const updateActivity = (id: string, updates: Partial<WizardActivity>) => {
-    onActivitiesChange(
-      activities.map(a => a.id === id ? { ...a, ...updates } : a)
-    );
+    onActivitiesChange(activities.map(a => a.id === id ? { ...a, ...updates } : a));
   };
 
   const toggleDependency = (activityId: string, predecessorId: string) => {
@@ -37,9 +35,7 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
           <CalendarDays className="w-6 h-6 text-primary" />
         </div>
         <h3 className="text-lg font-semibold">Schedule & Dependencies</h3>
-        <p className="text-sm text-muted-foreground">
-          Set duration, dates, and link dependent activities.
-        </p>
+        <p className="text-sm text-muted-foreground">Set duration, dates, and link dependent activities.</p>
       </div>
 
       <ScrollArea className="h-[380px]">
@@ -48,65 +44,38 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
             <div key={activity.id} className="p-4 border rounded-lg space-y-3">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-mono text-muted-foreground w-6">{index + 1}.</span>
-                <span className="font-medium text-sm flex-1">{activity.name}</span>
-                <Badge variant="outline" className="text-[10px]">{activity.entryType}</Badge>
+                <span className="font-medium text-sm flex-1">{activity.activity}</span>
+                <Badge variant="outline" className="text-[10px] font-mono">{activity.activityCode}</Badge>
               </div>
 
               <div className="grid grid-cols-3 gap-3">
                 <div>
                   <Label className="text-xs">Duration (days)</Label>
-                  <Input
-                    type="number"
-                    min={1}
-                    value={activity.durationDays ?? ''}
-                    onChange={(e) => updateActivity(activity.id, { durationDays: parseInt(e.target.value) || null })}
-                    className="mt-1 h-8 text-sm"
-                    placeholder="—"
-                  />
+                  <Input type="number" min={1} value={activity.durationDays ?? ''} onChange={(e) => updateActivity(activity.id, { durationDays: parseInt(e.target.value) || null })} className="mt-1 h-8 text-sm" placeholder="—" />
                 </div>
                 <div>
                   <Label className="text-xs">Start Date</Label>
-                  <Input
-                    type="date"
-                    value={activity.startDate}
-                    onChange={(e) => updateActivity(activity.id, { startDate: e.target.value })}
-                    className="mt-1 h-8 text-sm"
-                  />
+                  <Input type="date" value={activity.startDate} onChange={(e) => updateActivity(activity.id, { startDate: e.target.value })} className="mt-1 h-8 text-sm" />
                 </div>
                 <div>
                   <Label className="text-xs">End Date</Label>
-                  <Input
-                    type="date"
-                    value={activity.endDate}
-                    onChange={(e) => updateActivity(activity.id, { endDate: e.target.value })}
-                    className="mt-1 h-8 text-sm"
-                  />
+                  <Input type="date" value={activity.endDate} onChange={(e) => updateActivity(activity.id, { endDate: e.target.value })} className="mt-1 h-8 text-sm" />
                 </div>
               </div>
 
-              {/* Dependencies */}
               {selectedActivities.length > 1 && (
                 <div>
                   <Label className="text-xs">Predecessors (depends on)</Label>
-                  <Select
-                    value=""
-                    onValueChange={(val) => toggleDependency(activity.id, val)}
-                  >
+                  <Select value="" onValueChange={(val) => toggleDependency(activity.id, val)}>
                     <SelectTrigger className="mt-1 h-8 text-sm">
-                      <SelectValue placeholder={
-                        activity.predecessorIds.length > 0
-                          ? `${activity.predecessorIds.length} predecessor(s)`
-                          : "No dependencies"
-                      } />
+                      <SelectValue placeholder={activity.predecessorIds.length > 0 ? `${activity.predecessorIds.length} predecessor(s)` : "No dependencies"} />
                     </SelectTrigger>
                     <SelectContent>
-                      {selectedActivities
-                        .filter(a => a.id !== activity.id && a.id)
-                        .map(a => (
-                          <SelectItem key={a.id} value={a.id}>
-                            {activity.predecessorIds.includes(a.id) ? '✓ ' : ''}{a.name}
-                          </SelectItem>
-                        ))}
+                      {selectedActivities.filter(a => a.id !== activity.id).map(a => (
+                        <SelectItem key={a.id} value={a.id}>
+                          {activity.predecessorIds.includes(a.id) ? '✓ ' : ''}{a.activity}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   {activity.predecessorIds.length > 0 && (
@@ -114,13 +83,8 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                       {activity.predecessorIds.map(pid => {
                         const pred = selectedActivities.find(a => a.id === pid);
                         return pred ? (
-                          <Badge
-                            key={pid}
-                            variant="secondary"
-                            className="text-[10px] cursor-pointer"
-                            onClick={() => toggleDependency(activity.id, pid)}
-                          >
-                            {pred.name} ✕
+                          <Badge key={pid} variant="secondary" className="text-[10px] cursor-pointer" onClick={() => toggleDependency(activity.id, pid)}>
+                            {pred.activity} ✕
                           </Badge>
                         ) : null;
                       })}

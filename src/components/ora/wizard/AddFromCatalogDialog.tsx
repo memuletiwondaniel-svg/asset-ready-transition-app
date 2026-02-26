@@ -21,7 +21,7 @@ export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, exis
   const [search, setSearch] = useState('');
 
   const available = catalogActivities.filter(a => !existingIds.includes(a.id));
-  const filtered = available.filter(a => a.name.toLowerCase().includes(search.toLowerCase()));
+  const filtered = available.filter(a => a.activity.toLowerCase().includes(search.toLowerCase()));
 
   const toggleSelect = (id: string) => {
     setSelected(prev => {
@@ -53,8 +53,8 @@ export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, exis
               <div key={a.id} className="flex items-center gap-2 p-2 rounded hover:bg-muted/50 cursor-pointer" onClick={() => toggleSelect(a.id)}>
                 <Checkbox checked={selected.has(a.id)} />
                 <div className="flex-1 min-w-0">
-                  <span className="text-sm font-medium truncate">{a.name}</span>
-                  <span className="text-xs text-muted-foreground ml-2">{a.phase}</span>
+                  <span className="text-sm font-medium truncate">{a.activity}</span>
+                  <span className="text-xs text-muted-foreground ml-2">{a.activity_code}</span>
                 </div>
               </div>
             ))}

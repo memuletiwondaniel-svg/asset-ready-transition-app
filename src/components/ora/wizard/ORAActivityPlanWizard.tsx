@@ -53,7 +53,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
   // Load activities from catalog when phase changes
   const catalogPhase = phase ? PHASE_TO_CATALOG[phase] : undefined;
   const { activities: catalogActivities, isLoading: catalogLoading } = useORAActivityCatalog(
-    catalogPhase ? { phase: catalogPhase } : undefined
+    undefined
   );
 
   // When moving to step 3, load catalog activities
@@ -105,7 +105,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
           deliverable_id: a.id,
           start_date: a.startDate || null,
           end_date: a.endDate || null,
-          estimated_manhours: a.durationDays ? a.durationDays * 8 : a.estimatedManhours,
+          estimated_manhours: a.durationDays ? a.durationDays * 8 : (a.durationMed ? a.durationMed * 8 : null),
           status: 'NOT_STARTED' as any,
         }));
 
