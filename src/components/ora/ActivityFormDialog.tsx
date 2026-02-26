@@ -161,10 +161,9 @@ export const ActivityFormDialog: React.FC<Props> = ({
                   </SelectItem>
                   {phases.map(p => (
                     <SelectItem key={p.id} value={p.id}>
-                      <div className="flex items-center gap-2">
-                        <span className={`inline-block h-2 w-2 rounded-full ${getPhaseColor(p.code).split(' ')[0].replace('/15', '')}`} />
+                      <Badge variant="outline" className={`text-[11px] px-2 py-0 font-medium ${getPhaseColor(p.code)}`}>
                         {p.label}
-                      </div>
+                      </Badge>
                     </SelectItem>
                   ))}
                 </SelectContent>

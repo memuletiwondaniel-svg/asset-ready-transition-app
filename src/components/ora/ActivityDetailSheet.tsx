@@ -135,17 +135,16 @@ export const ActivityDetailSheet: React.FC<Props> = ({
               <SelectTrigger className="h-10">
                 <SelectValue placeholder="Select phase" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none"><span className="text-muted-foreground">No phase</span></SelectItem>
-                {phases.map(p => (
-                  <SelectItem key={p.id} value={p.id}>
-                    <div className="flex items-center gap-2">
-                      <span className={`inline-block h-2 w-2 rounded-full ${getPhaseColor(p.code).split(' ')[0].replace('/15', '')}`} />
-                      {p.label}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
+                <SelectContent>
+                  <SelectItem value="none"><span className="text-muted-foreground">No phase</span></SelectItem>
+                  {phases.map(p => (
+                    <SelectItem key={p.id} value={p.id}>
+                      <Badge variant="outline" className={`text-[11px] px-2 py-0 font-medium ${getPhaseColor(p.code)}`}>
+                        {p.label}
+                      </Badge>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
             </Select>
           </div>
 
