@@ -248,7 +248,7 @@ export const translations = {
     oraConfiguration: 'ORA Configuration',
     manageORAPlans: 'ORA Activity Plan',
     oraConfigSubtitle: 'Configure ORA activities, templates, and milestone types',
-    activityCatalog: 'Activity Catalog',
+    activityCatalog: 'Activities',
     templates: 'Templates',
     
     // ORA Procedures
