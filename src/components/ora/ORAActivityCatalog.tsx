@@ -1,119 +1,71 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Plus, Edit3, Trash2, Search, ChevronDown, ChevronUp, X, Clock, Columns3, Check } from 'lucide-react';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Checkbox } from '@/components/ui/checkbox';
-import { useORAActivityCatalog, ORA_PHASES, ORA_AREAS, ORA_ENTRY_TYPES, ORA_REQUIREMENT_LEVELS, ORAActivity, ORAActivityInput } from '@/hooks/useORAActivityCatalog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Plus, Edit3, Trash2, Search } from 'lucide-react';
+import { useORAActivityCatalog, useORPPhases, ORAActivity, ORAActivityInput } from '@/hooks/useORAActivityCatalog';
 
 export const ORAActivityCatalog = () => {
-  const [filters, setFilters] = useState({
-    phase: 'all',
-    area: 'all',
-    entryType: 'all',
-    search: ''
-  });
-  
-  const { activities, activitiesByPhase, isLoading, createActivity, updateActivity, deleteActivity, isCreating, isUpdating } = useORAActivityCatalog({
-    phase: filters.phase !== 'all' ? filters.phase : undefined,
-    area: filters.area !== 'all' ? filters.area : undefined,
-    entryType: filters.entryType !== 'all' ? filters.entryType : undefined,
+  const [filters, setFilters] = useState({ phase_id: '', search: '' });
+  const { activities, isLoading, createActivity, updateActivity, deleteActivity, isCreating, isUpdating } = useORAActivityCatalog({
+    phase_id: filters.phase_id || undefined,
     search: filters.search || undefined
   });
-  
+  const { phases } = useORPPhases();
+
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingActivity, setEditingActivity] = useState<ORAActivity | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-  const [expandedPhases, setExpandedPhases] = useState<string[]>([]);
-  const [visibleColumns, setVisibleColumns] = useState<string[]>(['type']);
-  
+
   const [formData, setFormData] = useState<ORAActivityInput>({
-    phase: '',
-    level: 'L1',
-    area: 'ORM',
-    activity_id: '',
-    entry_type: 'activity',
-    requirement_level: 'mandatory',
-    name: '',
+    activity: '',
     description: '',
-    discipline: '',
-    applicable_business: 'All',
-    estimated_manhours: undefined,
-    outcome_evidence: '',
-    rolled_up_in_document: '',
-    dcaf_control_point: '',
-    pmf_controls: [],
-    ams_processes: [],
-    or_toolbox_section: '',
-    tools_templates: ''
+    phase_id: '',
+    parent_activity_id: null,
+    duration_high: undefined,
+    duration_med: undefined,
+    duration_low: undefined,
   });
 
   const handleOpenForm = (activity?: ORAActivity) => {
     if (activity) {
       setEditingActivity(activity);
       setFormData({
-        phase: activity.phase,
-        level: activity.level,
-        area: activity.area,
-        activity_id: activity.activity_id,
-        entry_type: activity.entry_type,
-        requirement_level: activity.requirement_level,
-        name: activity.name,
+        activity: activity.activity,
         description: activity.description || '',
-        discipline: activity.discipline || '',
-        applicable_business: activity.applicable_business || 'All',
-        estimated_manhours: activity.estimated_manhours || undefined,
-        outcome_evidence: activity.outcome_evidence || '',
-        rolled_up_in_document: activity.rolled_up_in_document || '',
-        dcaf_control_point: activity.dcaf_control_point || '',
-        pmf_controls: activity.pmf_controls || [],
-        ams_processes: activity.ams_processes || [],
-        or_toolbox_section: activity.or_toolbox_section || '',
-        tools_templates: activity.tools_templates || ''
+        phase_id: activity.phase_id || '',
+        parent_activity_id: activity.parent_activity_id || null,
+        duration_high: activity.duration_high || undefined,
+        duration_med: activity.duration_med || undefined,
+        duration_low: activity.duration_low || undefined,
       });
     } else {
       setEditingActivity(null);
-      setFormData({
-        phase: '',
-        level: 'L1',
-        area: 'ORM',
-        activity_id: '',
-        entry_type: 'activity',
-        requirement_level: 'mandatory',
-        name: '',
-        description: '',
-        discipline: '',
-        applicable_business: 'All',
-        estimated_manhours: undefined,
-        outcome_evidence: ''
-      });
+      setFormData({ activity: '', description: '', phase_id: '', parent_activity_id: null, duration_high: undefined, duration_med: undefined, duration_low: undefined });
     }
     setIsFormOpen(true);
   };
 
-  const handleCloseForm = () => {
-    setIsFormOpen(false);
-    setEditingActivity(null);
-  };
-
   const handleSave = async () => {
     try {
+      const payload = { ...formData };
+      if (!payload.phase_id) delete payload.phase_id;
+      if (!payload.parent_activity_id) payload.parent_activity_id = null;
+
       if (editingActivity) {
-        await updateActivity({ id: editingActivity.id, ...formData });
+        await updateActivity({ id: editingActivity.id, ...payload });
       } else {
-        await createActivity(formData);
+        await createActivity(payload);
       }
-      handleCloseForm();
+      setIsFormOpen(false);
+      setEditingActivity(null);
     } catch (error) {
       console.error('Error saving activity:', error);
     }
@@ -128,230 +80,146 @@ export const ORAActivityCatalog = () => {
     }
   };
 
-  const togglePhase = (phase: string) => {
-    setExpandedPhases(prev => 
-      prev.includes(phase) 
-        ? prev.filter(p => p !== phase)
-        : [...prev, phase]
-    );
+  const getPhaseLabel = (phaseId: string | null) => {
+    if (!phaseId) return '-';
+    return phases.find(p => p.id === phaseId)?.label || '-';
   };
 
-  const expandAll = () => setExpandedPhases(ORA_PHASES.map(p => p.value));
-  const collapseAll = () => setExpandedPhases([]);
-
-  const getTypeBadgeColor = (type: string) => {
-    return type === 'deliverable' 
-      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' 
-      : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
+  const getActivityName = (id: string | null) => {
+    if (!id) return '-';
+    return activities.find(a => a.id === id)?.activity || '-';
   };
-
-  const clearFilters = () => {
-    setFilters({ phase: 'all', area: 'all', entryType: 'all', search: '' });
-  };
-
-  const hasActiveFilters = filters.phase !== 'all' || filters.area !== 'all' || filters.entryType !== 'all' || filters.search;
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-muted-foreground">Loading activity catalog...</div>
-      </div>
-    );
+    return <div className="flex items-center justify-center py-12"><div className="text-muted-foreground">Loading activity catalog...</div></div>;
   }
 
   return (
     <div className="space-y-4">
-      {/* Header with Add button */}
-      <div className="flex items-center justify-end bg-card p-3 rounded-lg border">
-        <Button onClick={() => handleOpenForm()} size="sm" className="h-9">
-          <Plus className="h-4 w-4 mr-1" />
-          Add Activity
-        </Button>
-      </div>
-
-      {/* Empty state */}
-      <div className="flex flex-col items-center justify-center py-16 text-center">
-        <div className="rounded-full bg-muted p-4 mb-4">
-          <Search className="h-8 w-8 text-muted-foreground" />
+      {/* Toolbar */}
+      <div className="flex items-center gap-3 bg-card p-3 rounded-lg border">
+        <div className="relative flex-1 max-w-xs">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input placeholder="Search activities..." value={filters.search} onChange={e => setFilters(f => ({ ...f, search: e.target.value }))} className="pl-8 h-9" />
         </div>
-        <h3 className="text-lg font-semibold mb-1">No activities yet</h3>
-        <p className="text-sm text-muted-foreground max-w-md">
-          The activity catalog is empty. Click "Add Activity" to start building your ORA activity catalog.
-        </p>
+        <Select value={filters.phase_id || 'all'} onValueChange={v => setFilters(f => ({ ...f, phase_id: v === 'all' ? '' : v }))}>
+          <SelectTrigger className="w-[160px] h-9"><SelectValue placeholder="All Phases" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Phases</SelectItem>
+            {phases.map(p => <SelectItem key={p.id} value={p.id}>{p.label}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <div className="flex-1" />
+        <Button onClick={() => handleOpenForm()} size="sm" className="h-9"><Plus className="h-4 w-4 mr-1" />Add Activity</Button>
       </div>
 
-      {/* Add/Edit Form Dialog */}
+      {/* Table or empty state */}
+      {activities.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="rounded-full bg-muted p-4 mb-4"><Search className="h-8 w-8 text-muted-foreground" /></div>
+          <h3 className="text-lg font-semibold mb-1">No activities yet</h3>
+          <p className="text-sm text-muted-foreground max-w-md">Click "Add Activity" to start building your ORA activity catalog.</p>
+        </div>
+      ) : (
+        <div className="rounded-lg border bg-card">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[100px]">Code</TableHead>
+                <TableHead>Activity</TableHead>
+                <TableHead>Phase</TableHead>
+                <TableHead>Parent</TableHead>
+                <TableHead className="text-center">High</TableHead>
+                <TableHead className="text-center">Med</TableHead>
+                <TableHead className="text-center">Low</TableHead>
+                <TableHead className="w-[80px]" />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {activities.map(a => (
+                <TableRow key={a.id}>
+                  <TableCell><Badge variant="outline" className="font-mono text-xs">{a.activity_code}</Badge></TableCell>
+                  <TableCell className="font-medium">{a.activity}</TableCell>
+                  <TableCell>{getPhaseLabel(a.phase_id)}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{getActivityName(a.parent_activity_id)}</TableCell>
+                  <TableCell className="text-center">{a.duration_high ?? '-'}</TableCell>
+                  <TableCell className="text-center">{a.duration_med ?? '-'}</TableCell>
+                  <TableCell className="text-center">{a.duration_low ?? '-'}</TableCell>
+                  <TableCell>
+                    <div className="flex gap-1">
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleOpenForm(a)}><Edit3 className="h-3.5 w-3.5" /></Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeleteConfirmId(a.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+
+      {/* Add/Edit Dialog */}
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh]">
-          <DialogHeader>
-            <DialogTitle>
-              {editingActivity ? 'Edit Activity' : 'Add New Activity'}
-            </DialogTitle>
-          </DialogHeader>
-          
+          <DialogHeader><DialogTitle>{editingActivity ? 'Edit Activity' : 'Add New Activity'}</DialogTitle></DialogHeader>
           <ScrollArea className="max-h-[60vh] pr-4">
             <div className="space-y-4 py-4">
-              {/* Row 1: Phase, Activity ID */}
-              <div className="grid grid-cols-2 gap-4">
+              {editingActivity && (
                 <div className="space-y-2">
-                  <Label>Phase *</Label>
-                  <Select
-                    value={formData.phase}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, phase: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select phase" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ORA_PHASES.map((phase) => (
-                        <SelectItem key={phase.value} value={phase.value}>
-                          {phase.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label>Activity Code</Label>
+                  <Input value={editingActivity.activity_code} disabled className="bg-muted" />
                 </div>
-                <div className="space-y-2">
-                  <Label>Activity ID *</Label>
-                  <Input
-                    value={formData.activity_id}
-                    onChange={(e) => setFormData(prev => ({ ...prev, activity_id: e.target.value }))}
-                    placeholder="e.g. SELECT-1"
-                  />
-                </div>
-              </div>
-
-              {/* Row 2: Name */}
+              )}
               <div className="space-y-2">
-                <Label>Activity Name *</Label>
-                <Input
-                  value={formData.name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="Enter activity name"
-                />
+                <Label>Activity *</Label>
+                <Input value={formData.activity} onChange={e => setFormData(f => ({ ...f, activity: e.target.value }))} placeholder="Enter activity name" />
               </div>
-
-              {/* Row 3: Type, Level, Area */}
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label>Type</Label>
-                  <Select
-                    value={formData.entry_type}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, entry_type: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ORA_ENTRY_TYPES.map((type) => (
-                        <SelectItem key={type.value} value={type.value}>
-                          {type.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Level</Label>
-                  <Select
-                    value={formData.level}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, level: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="L1">L1</SelectItem>
-                      <SelectItem value="L2">L2</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Area</Label>
-                  <Select
-                    value={formData.area}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, area: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ORA_AREAS.map((area) => (
-                        <SelectItem key={area.value} value={area.value}>
-                          {area.value} - {area.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {/* Row 4: Requirement Level, Estimated Hours */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Requirement Level</Label>
-                  <Select
-                    value={formData.requirement_level}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, requirement_level: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ORA_REQUIREMENT_LEVELS.map((level) => (
-                        <SelectItem key={level.value} value={level.value}>
-                          {level.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Estimated Man-Hours</Label>
-                  <Input
-                    type="number"
-                    value={formData.estimated_manhours || ''}
-                    onChange={(e) => setFormData(prev => ({ 
-                      ...prev, 
-                      estimated_manhours: e.target.value ? parseInt(e.target.value) : undefined 
-                    }))}
-                    placeholder="e.g. 50"
-                  />
-                </div>
-              </div>
-
-              {/* Row 5: Description */}
               <div className="space-y-2">
                 <Label>Description</Label>
-                <Textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="Enter activity description"
-                  rows={4}
-                />
+                <Textarea value={formData.description} onChange={e => setFormData(f => ({ ...f, description: e.target.value }))} placeholder="Enter description" rows={3} />
               </div>
-
-              {/* Row 6: Outcome Evidence */}
-              <div className="space-y-2">
-                <Label>Outcome Evidence</Label>
-                <Textarea
-                  value={formData.outcome_evidence}
-                  onChange={(e) => setFormData(prev => ({ ...prev, outcome_evidence: e.target.value }))}
-                  placeholder="What evidence demonstrates completion?"
-                  rows={2}
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Phase</Label>
+                  <Select value={formData.phase_id || ''} onValueChange={v => setFormData(f => ({ ...f, phase_id: v }))}>
+                    <SelectTrigger><SelectValue placeholder="Select phase" /></SelectTrigger>
+                    <SelectContent>
+                      {phases.map(p => <SelectItem key={p.id} value={p.id}>{p.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Parent Activity</Label>
+                  <Select value={formData.parent_activity_id || 'none'} onValueChange={v => setFormData(f => ({ ...f, parent_activity_id: v === 'none' ? null : v }))}>
+                    <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      {activities.filter(a => a.id !== editingActivity?.id).map(a => (
+                        <SelectItem key={a.id} value={a.id}>{a.activity_code} - {a.activity}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>Duration High (Days)</Label>
+                  <Input type="number" value={formData.duration_high ?? ''} onChange={e => setFormData(f => ({ ...f, duration_high: e.target.value ? parseInt(e.target.value) : undefined }))} placeholder="0" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Duration Med (Days)</Label>
+                  <Input type="number" value={formData.duration_med ?? ''} onChange={e => setFormData(f => ({ ...f, duration_med: e.target.value ? parseInt(e.target.value) : undefined }))} placeholder="0" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Duration Low (Days)</Label>
+                  <Input type="number" value={formData.duration_low ?? ''} onChange={e => setFormData(f => ({ ...f, duration_low: e.target.value ? parseInt(e.target.value) : undefined }))} placeholder="0" />
+                </div>
               </div>
             </div>
           </ScrollArea>
-
           <DialogFooter>
-            <Button variant="outline" onClick={handleCloseForm}>
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleSave} 
-              disabled={!formData.phase || !formData.activity_id || !formData.name || isCreating || isUpdating}
-            >
+            <Button variant="outline" onClick={() => { setIsFormOpen(false); setEditingActivity(null); }}>Cancel</Button>
+            <Button onClick={handleSave} disabled={!formData.activity || isCreating || isUpdating}>
               {isCreating || isUpdating ? 'Saving...' : editingActivity ? 'Update Activity' : 'Add Activity'}
             </Button>
           </DialogFooter>
@@ -363,18 +231,11 @@ export const ORAActivityCatalog = () => {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Activity</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete this activity? This action cannot be undone.
-            </AlertDialogDescription>
+            <AlertDialogDescription>Are you sure? This action cannot be undone.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => deleteConfirmId && handleDelete(deleteConfirmId)}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Delete
-            </AlertDialogAction>
+            <AlertDialogAction onClick={() => deleteConfirmId && handleDelete(deleteConfirmId)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

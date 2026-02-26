@@ -31,21 +31,19 @@ export const PROJECT_TYPES = [
 
 export interface WizardActivity {
   id: string;
-  catalogId: string;
-  name: string;
+  activityCode: string;
+  activity: string;
   description: string | null;
-  phase: string;
-  area: string;
-  entryType: string;
-  requirementLevel: string;
-  estimatedManhours: number | null;
-  discipline: string | null;
+  phaseId: string | null;
+  parentActivityId: string | null;
+  durationHigh: number | null;
+  durationMed: number | null;
+  durationLow: number | null;
   selected: boolean;
   // Schedule fields
   durationDays: number | null;
   startDate: string;
   endDate: string;
-  // Dependencies
   predecessorIds: string[];
 }
 
@@ -58,17 +56,16 @@ export interface ORAActivityPlanWizardState {
 export function catalogToWizardActivity(activity: ORAActivity): WizardActivity {
   return {
     id: activity.id,
-    catalogId: activity.activity_id,
-    name: activity.name,
+    activityCode: activity.activity_code,
+    activity: activity.activity,
     description: activity.description,
-    phase: activity.phase,
-    area: activity.area,
-    entryType: activity.entry_type,
-    requirementLevel: activity.requirement_level,
-    estimatedManhours: activity.estimated_manhours,
-    discipline: activity.discipline,
+    phaseId: activity.phase_id,
+    parentActivityId: activity.parent_activity_id,
+    durationHigh: activity.duration_high,
+    durationMed: activity.duration_med,
+    durationLow: activity.duration_low,
     selected: true,
-    durationDays: activity.estimated_manhours ? Math.ceil(activity.estimated_manhours / 8) : null,
+    durationDays: activity.duration_med,
     startDate: '',
     endDate: '',
     predecessorIds: [],
