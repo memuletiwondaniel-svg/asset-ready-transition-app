@@ -6,8 +6,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Plus, Search, Columns, Edit3, Trash2 } from 'lucide-react';
-import { useORAActivityCatalog, useORPPhases, ORAActivity, ORAActivityInput } from '@/hooks/useORAActivityCatalog';
+import { Plus, Search, Columns, Edit3, Trash2, ChevronRight, ChevronDown, PlusCircle } from 'lucide-react';
+import { useORAActivityCatalog, useORPPhases, ORAActivity, ORAActivityInput, TreeActivity } from '@/hooks/useORAActivityCatalog';
 import { ActivityFormDialog } from './ActivityFormDialog';
 import { ActivityDetailSheet } from './ActivityDetailSheet';
 
@@ -26,7 +26,7 @@ const DEFAULT_COLUMNS: ColumnKey[] = ['phase'];
 
 export const ORAActivityCatalog = () => {
   const [filters, setFilters] = useState({ phase_id: '', search: '' });
-  const { activities, isLoading, createActivity, updateActivity, deleteActivity, isCreating, isUpdating } = useORAActivityCatalog({
+  const { activities, treeActivities, isLoading, createActivity, updateActivity, deleteActivity, isCreating, isUpdating } = useORAActivityCatalog({
     phase_id: filters.phase_id || undefined,
     search: filters.search || undefined
   });
@@ -37,6 +37,8 @@ export const ORAActivityCatalog = () => {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [selectedActivity, setSelectedActivity] = useState<ORAActivity | null>(null);
   const [visibleColumns, setVisibleColumns] = useState<ColumnKey[]>(DEFAULT_COLUMNS);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [defaultParentId, setDefaultParentId] = useState<string | null>(null);
 
   const toggleColumn = (key: ColumnKey) => {
     setVisibleColumns(prev =>
@@ -46,8 +48,19 @@ export const ORAActivityCatalog = () => {
 
   const isColVisible = (key: ColumnKey) => visibleColumns.includes(key);
 
-  const handleOpenForm = (activity?: ORAActivity) => {
+  const toggleExpand = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setExpandedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleOpenForm = (activity?: ORAActivity, parentId?: string) => {
     setEditingActivity(activity || null);
+    setDefaultParentId(parentId || null);
     setIsFormOpen(true);
   };
 
@@ -60,6 +73,7 @@ export const ORAActivityCatalog = () => {
       }
       setIsFormOpen(false);
       setEditingActivity(null);
+      setDefaultParentId(null);
     } catch (error) {
       console.error('Error saving activity:', error);
     }
@@ -98,6 +112,35 @@ export const ORAActivityCatalog = () => {
     };
     return colors[phase.code] || 'bg-muted text-muted-foreground border-muted';
   };
+
+  // Filter tree to only show visible rows (respect expand/collapse)
+  const getVisibleRows = (tree: TreeActivity[]): TreeActivity[] => {
+    const result: TreeActivity[] = [];
+    for (const node of tree) {
+      if (node.depth === 0) {
+        result.push(node);
+      } else {
+        // Check if all ancestors are expanded
+        let parentId = node.parent_activity_id;
+        let visible = true;
+        while (parentId) {
+          if (!expandedIds.has(parentId)) {
+            visible = false;
+            break;
+          }
+          const parent = activities.find(a => a.id === parentId);
+          parentId = parent?.parent_activity_id || null;
+        }
+        if (visible) result.push(node);
+      }
+    }
+    return result;
+  };
+
+  const visibleRows = getVisibleRows(treeActivities);
+
+  // Count direct children for badge
+  const getChildCount = (id: string) => activities.filter(a => a.parent_activity_id === id).length;
 
   if (isLoading) {
     return <div className="flex items-center justify-center py-12"><div className="text-muted-foreground">Loading activity catalog...</div></div>;
@@ -157,7 +200,7 @@ export const ORAActivityCatalog = () => {
           <Table>
              <TableHeader className="sticky top-0 bg-card z-10">
               <TableRow>
-                <TableHead className="w-[80px]">Code</TableHead>
+                <TableHead className="w-[100px]">Code</TableHead>
                 <TableHead>Activity</TableHead>
                 {isColVisible('description') && <TableHead className="hidden md:table-cell">Description</TableHead>}
                 {isColVisible('phase') && <TableHead className="hidden sm:table-cell">Phase</TableHead>}
@@ -165,45 +208,83 @@ export const ORAActivityCatalog = () => {
                 {isColVisible('high') && <TableHead className="hidden sm:table-cell text-center">High</TableHead>}
                 {isColVisible('med') && <TableHead className="hidden sm:table-cell text-center">Med</TableHead>}
                 {isColVisible('low') && <TableHead className="hidden sm:table-cell text-center">Low</TableHead>}
-                <TableHead className="w-[70px]" />
+                <TableHead className="w-[90px]" />
               </TableRow>
             </TableHeader>
             <TableBody>
-              {activities.map(a => (
-                <TableRow key={a.id} className="group cursor-pointer hover:bg-muted/50" onClick={() => setSelectedActivity(a)}>
-                  <TableCell><Badge variant="outline" className={`font-mono text-xs whitespace-nowrap ${getCodeColor(a.phase_id)}`}>{a.activity_code}</Badge></TableCell>
-                  <TableCell className="font-medium">
-                    <div>{a.activity}</div>
-                    {!isColVisible('phase') && <div className="text-xs text-muted-foreground sm:hidden">{getPhaseLabel(a.phase_id)}</div>}
-                  </TableCell>
-                  {isColVisible('description') && <TableCell className="hidden md:table-cell text-sm text-muted-foreground max-w-xs truncate">{a.description || '-'}</TableCell>}
-                  {isColVisible('phase') && <TableCell className="hidden sm:table-cell">{getPhaseLabel(a.phase_id)}</TableCell>}
-                  {isColVisible('parent') && <TableCell className="hidden md:table-cell text-sm text-muted-foreground">{getActivityName(a.parent_activity_id)}</TableCell>}
-                  {isColVisible('high') && <TableCell className="hidden sm:table-cell text-center">{a.duration_high ?? '-'}</TableCell>}
-                  {isColVisible('med') && <TableCell className="hidden sm:table-cell text-center">{a.duration_med ?? '-'}</TableCell>}
-                  {isColVisible('low') && <TableCell className="hidden sm:table-cell text-center">{a.duration_low ?? '-'}</TableCell>}
-                  <TableCell>
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); setSelectedActivity(a); }}><Edit3 className="h-3.5 w-3.5" /></Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={(e) => { e.stopPropagation(); setDeleteConfirmId(a.id); }}><Trash2 className="h-3.5 w-3.5" /></Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {visibleRows.map(a => {
+                const childCount = getChildCount(a.id);
+                const isExpanded = expandedIds.has(a.id);
+                
+                return (
+                  <TableRow key={a.id} className="group cursor-pointer hover:bg-muted/50" onClick={() => setSelectedActivity(a)}>
+                    <TableCell>
+                      <Badge variant="outline" className={`font-mono text-xs whitespace-nowrap ${getCodeColor(a.phase_id)}`}>
+                        {a.activity_code}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center" style={{ paddingLeft: `${a.depth * 24}px` }}>
+                        {a.hasChildren ? (
+                          <button
+                            onClick={(e) => toggleExpand(a.id, e)}
+                            className="mr-1.5 p-0.5 rounded hover:bg-muted transition-colors shrink-0"
+                          >
+                            {isExpanded ? (
+                              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                            ) : (
+                              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                            )}
+                          </button>
+                        ) : (
+                          <span className="w-[22px] shrink-0" />
+                        )}
+                        <span>{a.activity}</span>
+                        {a.hasChildren && !isExpanded && childCount > 0 && (
+                          <Badge variant="secondary" className="ml-2 text-[10px] px-1.5 py-0 h-4">
+                            {childCount}
+                          </Badge>
+                        )}
+                      </div>
+                      {!isColVisible('phase') && <div className="text-xs text-muted-foreground sm:hidden" style={{ paddingLeft: `${a.depth * 24 + 22}px` }}>{getPhaseLabel(a.phase_id)}</div>}
+                    </TableCell>
+                    {isColVisible('description') && <TableCell className="hidden md:table-cell text-sm text-muted-foreground max-w-xs truncate">{a.description || '-'}</TableCell>}
+                    {isColVisible('phase') && <TableCell className="hidden sm:table-cell">{getPhaseLabel(a.phase_id)}</TableCell>}
+                    {isColVisible('parent') && <TableCell className="hidden md:table-cell text-sm text-muted-foreground">{getActivityName(a.parent_activity_id)}</TableCell>}
+                    {isColVisible('high') && <TableCell className="hidden sm:table-cell text-center">{a.duration_high ?? '-'}</TableCell>}
+                    {isColVisible('med') && <TableCell className="hidden sm:table-cell text-center">{a.duration_med ?? '-'}</TableCell>}
+                    {isColVisible('low') && <TableCell className="hidden sm:table-cell text-center">{a.duration_low ?? '-'}</TableCell>}
+                    <TableCell>
+                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button variant="ghost" size="icon" className="h-7 w-7" title="Add sub-activity" onClick={(e) => { e.stopPropagation(); handleOpenForm(undefined, a.id); }}>
+                          <PlusCircle className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); setSelectedActivity(a); }}>
+                          <Edit3 className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={(e) => { e.stopPropagation(); setDeleteConfirmId(a.id); }}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </div>
       )}
 
-      {/* Add Dialog (for new activities only) */}
+      {/* Add Dialog */}
       <ActivityFormDialog
         open={isFormOpen}
-        onOpenChange={(open) => { setIsFormOpen(open); if (!open) setEditingActivity(null); }}
+        onOpenChange={(open) => { setIsFormOpen(open); if (!open) { setEditingActivity(null); setDefaultParentId(null); } }}
         editingActivity={editingActivity}
         phases={phases}
         activities={activities}
         onSave={handleSave}
         isSaving={isCreating || isUpdating}
+        defaultParentId={defaultParentId}
       />
 
       {/* Detail Side Panel */}

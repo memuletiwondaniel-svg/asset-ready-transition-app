@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,8 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Clock, Layers, ArrowRight, Loader2, Save, Trash2 } from 'lucide-react';
-import { ORAActivity, ORAActivityInput, ORPPhase } from '@/hooks/useORAActivityCatalog';
+import { Clock, Layers, ArrowRight, Loader2, Save, Trash2, GitBranch } from 'lucide-react';
+import { ORAActivity, ORAActivityInput, ORPPhase, getDescendantIds } from '@/hooks/useORAActivityCatalog';
 
 interface Props {
   activity: ORAActivity | null;
@@ -74,6 +74,24 @@ export const ActivityDetailSheet: React.FC<Props> = ({
     if (!payload.parent_activity_id) payload.parent_activity_id = null;
     await onSave({ id: activity.id, ...payload });
   };
+
+  // Filter parent options: exclude self and descendants
+  const excludedIds = useMemo(() => {
+    if (!activity) return new Set<string>();
+    const descendants = getDescendantIds(activity.id, activities);
+    descendants.add(activity.id);
+    return descendants;
+  }, [activity, activities]);
+
+  const parentOptions = activities.filter(a => !excludedIds.has(a.id));
+
+  // Get children of this activity
+  const children = useMemo(() => {
+    if (!activity) return [];
+    return activities
+      .filter(a => a.parent_activity_id === activity.id)
+      .sort((a, b) => a.activity_code.localeCompare(b.activity_code));
+  }, [activity, activities]);
 
   const phase = phases.find(p => p.id === activity?.phase_id);
 
@@ -163,14 +181,12 @@ export const ActivityDetailSheet: React.FC<Props> = ({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="none"><span className="text-muted-foreground">No parent</span></SelectItem>
-                {activities
-                  .filter(a => a.id !== activity?.id)
-                  .map(a => (
-                    <SelectItem key={a.id} value={a.id}>
-                      <span className="font-mono text-xs text-muted-foreground mr-1.5">{a.activity_code}</span>
-                      {a.activity}
-                    </SelectItem>
-                  ))}
+                {parentOptions.map(a => (
+                  <SelectItem key={a.id} value={a.id}>
+                    <span className="font-mono text-xs text-muted-foreground mr-1.5">{a.activity_code}</span>
+                    {a.activity}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -207,6 +223,28 @@ export const ActivityDetailSheet: React.FC<Props> = ({
               ))}
             </div>
           </div>
+
+          {/* Children list */}
+          {children.length > 0 && (
+            <>
+              <Separator />
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                  <GitBranch className="h-3.5 w-3.5" />
+                  Sub-Activities
+                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 ml-1">{children.length}</Badge>
+                </Label>
+                <div className="space-y-1">
+                  {children.map(child => (
+                    <div key={child.id} className="flex items-center gap-2 px-3 py-2 rounded-md bg-muted/50 text-sm">
+                      <Badge variant="outline" className="font-mono text-[10px] shrink-0">{child.activity_code}</Badge>
+                      <span className="truncate">{child.activity}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Footer */}

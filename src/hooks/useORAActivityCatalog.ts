@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useMemo } from 'react';
 
 export interface ORAActivity {
   id: string;
@@ -41,9 +42,64 @@ export interface ORPPhase {
   created_at: string;
 }
 
+export interface TreeActivity extends ORAActivity {
+  depth: number;
+  children: TreeActivity[];
+  hasChildren: boolean;
+}
+
 interface UseORAActivityCatalogFilters {
   phase_id?: string;
   search?: string;
+}
+
+// Build a flat, tree-ordered list from activities
+export function buildActivityTree(activities: ORAActivity[]): TreeActivity[] {
+  const childrenMap = new Map<string | null, ORAActivity[]>();
+  
+  for (const a of activities) {
+    const parentId = a.parent_activity_id || null;
+    if (!childrenMap.has(parentId)) childrenMap.set(parentId, []);
+    childrenMap.get(parentId)!.push(a);
+  }
+
+  const result: TreeActivity[] = [];
+  
+  function walk(parentId: string | null, depth: number) {
+    const children = childrenMap.get(parentId) || [];
+    // Sort by activity_code for consistent ordering
+    children.sort((a, b) => a.activity_code.localeCompare(b.activity_code));
+    for (const child of children) {
+      const childChildren = childrenMap.get(child.id) || [];
+      const treeNode: TreeActivity = {
+        ...child,
+        depth,
+        children: [],
+        hasChildren: childChildren.length > 0,
+      };
+      result.push(treeNode);
+      walk(child.id, depth + 1);
+    }
+  }
+
+  walk(null, 0);
+  return result;
+}
+
+// Get all descendant IDs of an activity (for circular reference prevention)
+export function getDescendantIds(activityId: string, activities: ORAActivity[]): Set<string> {
+  const descendants = new Set<string>();
+  const queue = [activityId];
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    for (const a of activities) {
+      if (a.parent_activity_id === current && !descendants.has(a.id)) {
+        descendants.add(a.id);
+        queue.push(a.id);
+      }
+    }
+  }
+  return descendants;
 }
 
 // Hook to fetch ORP phases
@@ -89,6 +145,10 @@ export const useORAActivityCatalog = (filters?: UseORAActivityCatalogFilters) =>
       return data as ORAActivity[];
     }
   });
+
+  const treeActivities = useMemo(() => {
+    return buildActivityTree(activities || []);
+  }, [activities]);
 
   const createActivity = useMutation({
     mutationFn: async (input: ORAActivityInput) => {
@@ -157,6 +217,7 @@ export const useORAActivityCatalog = (filters?: UseORAActivityCatalogFilters) =>
 
   return {
     activities: activities || [],
+    treeActivities,
     isLoading,
     createActivity: createActivity.mutateAsync,
     updateActivity: updateActivity.mutateAsync,
