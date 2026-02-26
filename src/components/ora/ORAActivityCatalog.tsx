@@ -6,7 +6,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Plus, Search, Columns } from 'lucide-react';
+import { Plus, Search, Columns, Edit3, Trash2 } from 'lucide-react';
 import { useORAActivityCatalog, useORPPhases, ORAActivity, ORAActivityInput } from '@/hooks/useORAActivityCatalog';
 import { ActivityFormDialog } from './ActivityFormDialog';
 import { ActivityDetailSheet } from './ActivityDetailSheet';
@@ -165,11 +165,12 @@ export const ORAActivityCatalog = () => {
                 {isColVisible('high') && <TableHead className="hidden sm:table-cell text-center">High</TableHead>}
                 {isColVisible('med') && <TableHead className="hidden sm:table-cell text-center">Med</TableHead>}
                 {isColVisible('low') && <TableHead className="hidden sm:table-cell text-center">Low</TableHead>}
+                <TableHead className="w-[70px]" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {activities.map(a => (
-                <TableRow key={a.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setSelectedActivity(a)}>
+                <TableRow key={a.id} className="group cursor-pointer hover:bg-muted/50" onClick={() => setSelectedActivity(a)}>
                   <TableCell><Badge variant="outline" className={`font-mono text-xs whitespace-nowrap ${getCodeColor(a.phase_id)}`}>{a.activity_code}</Badge></TableCell>
                   <TableCell className="font-medium">
                     <div>{a.activity}</div>
@@ -181,6 +182,12 @@ export const ORAActivityCatalog = () => {
                   {isColVisible('high') && <TableCell className="hidden sm:table-cell text-center">{a.duration_high ?? '-'}</TableCell>}
                   {isColVisible('med') && <TableCell className="hidden sm:table-cell text-center">{a.duration_med ?? '-'}</TableCell>}
                   {isColVisible('low') && <TableCell className="hidden sm:table-cell text-center">{a.duration_low ?? '-'}</TableCell>}
+                  <TableCell>
+                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); setSelectedActivity(a); }}><Edit3 className="h-3.5 w-3.5" /></Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={(e) => { e.stopPropagation(); setDeleteConfirmId(a.id); }}><Trash2 className="h-3.5 w-3.5" /></Button>
+                    </div>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
