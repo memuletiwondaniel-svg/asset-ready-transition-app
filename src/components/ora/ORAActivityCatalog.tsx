@@ -5,9 +5,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, Search, SlidersHorizontal } from 'lucide-react';
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Plus, Search, Columns } from 'lucide-react';
 import { useORAActivityCatalog, useORPPhases, ORAActivity, ORAActivityInput } from '@/hooks/useORAActivityCatalog';
 import { ActivityFormDialog } from './ActivityFormDialog';
 import { ActivityDetailSheet } from './ActivityDetailSheet';
@@ -120,25 +119,26 @@ export const ORAActivityCatalog = () => {
               {phases.map(p => <SelectItem key={p.id} value={p.id}>{p.label}</SelectItem>)}
             </SelectContent>
           </Select>
-          <Popover>
-            <PopoverTrigger asChild>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
               <Button variant="outline" size="icon" className="h-9 w-9 shrink-0">
-                <SlidersHorizontal className="h-4 w-4" />
+                <Columns className="h-4 w-4" />
               </Button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="w-48 p-2">
-              <p className="text-xs font-medium text-muted-foreground mb-2 px-2">Toggle columns</p>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuLabel>Toggle Columns</DropdownMenuLabel>
+              <DropdownMenuSeparator />
               {COLUMN_OPTIONS.map(col => (
-                <label key={col.key} className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-muted cursor-pointer text-sm">
-                  <Checkbox
-                    checked={isColVisible(col.key)}
-                    onCheckedChange={() => toggleColumn(col.key)}
-                  />
+                <DropdownMenuCheckboxItem
+                  key={col.key}
+                  checked={isColVisible(col.key)}
+                  onCheckedChange={() => toggleColumn(col.key)}
+                >
                   {col.label}
-                </label>
+                </DropdownMenuCheckboxItem>
               ))}
-            </PopoverContent>
-          </Popover>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         <Button onClick={() => handleOpenForm()} size="sm" className="h-9 shrink-0 w-full sm:w-auto">
           <Plus className="h-4 w-4 mr-1" />Add Activity
