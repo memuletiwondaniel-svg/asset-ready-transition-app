@@ -122,9 +122,8 @@ export const ORAActivityCatalog = () => {
           </Select>
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className="h-9 shrink-0">
-                <SlidersHorizontal className="h-4 w-4 mr-1.5" />
-                <span className="hidden sm:inline">Columns</span>
+              <Button variant="outline" size="icon" className="h-9 w-9 shrink-0">
+                <SlidersHorizontal className="h-4 w-4" />
               </Button>
             </PopoverTrigger>
             <PopoverContent align="end" className="w-48 p-2">
