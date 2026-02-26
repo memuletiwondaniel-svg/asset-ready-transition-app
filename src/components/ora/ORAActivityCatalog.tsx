@@ -105,7 +105,7 @@ export const ORAActivityCatalog = () => {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 flex flex-col min-h-0">
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 bg-card p-3 rounded-lg border">
         <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -154,9 +154,9 @@ export const ORAActivityCatalog = () => {
           <p className="text-sm text-muted-foreground max-w-md">Click "Add Activity" to start building your ORA activity catalog.</p>
         </div>
       ) : (
-        <div className="rounded-lg border bg-card overflow-x-auto">
+        <div className="rounded-lg border bg-card overflow-auto max-h-[calc(100vh-320px)]">
           <Table>
-             <TableHeader>
+             <TableHeader className="sticky top-0 bg-card z-10">
               <TableRow>
                 <TableHead className="w-[80px]">Code</TableHead>
                 <TableHead>Activity</TableHead>
