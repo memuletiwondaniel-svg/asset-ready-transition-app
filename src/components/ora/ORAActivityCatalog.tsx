@@ -5,9 +5,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit3, Trash2, Search } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import { useORAActivityCatalog, useORPPhases, ORAActivity, ORAActivityInput } from '@/hooks/useORAActivityCatalog';
 import { ActivityFormDialog } from './ActivityFormDialog';
+import { ActivityDetailSheet } from './ActivityDetailSheet';
 
 export const ORAActivityCatalog = () => {
   const [filters, setFilters] = useState({ phase_id: '', search: '' });
@@ -20,6 +21,7 @@ export const ORAActivityCatalog = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingActivity, setEditingActivity] = useState<ORAActivity | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [selectedActivity, setSelectedActivity] = useState<ORAActivity | null>(null);
 
   const handleOpenForm = (activity?: ORAActivity) => {
     setEditingActivity(activity || null);
@@ -110,7 +112,7 @@ export const ORAActivityCatalog = () => {
       ) : (
         <div className="rounded-lg border bg-card overflow-x-auto">
           <Table>
-            <TableHeader>
+             <TableHeader>
               <TableRow>
                 <TableHead className="w-[80px]">Code</TableHead>
                 <TableHead>Activity</TableHead>
@@ -119,12 +121,11 @@ export const ORAActivityCatalog = () => {
                 <TableHead className="hidden sm:table-cell text-center">High</TableHead>
                 <TableHead className="hidden sm:table-cell text-center">Med</TableHead>
                 <TableHead className="hidden sm:table-cell text-center">Low</TableHead>
-                <TableHead className="w-[70px]" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {activities.map(a => (
-                <TableRow key={a.id}>
+                <TableRow key={a.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setSelectedActivity(a)}>
                   <TableCell><Badge variant="outline" className={`font-mono text-xs whitespace-nowrap ${getCodeColor(a.phase_id)}`}>{a.activity_code}</Badge></TableCell>
                   <TableCell className="font-medium">
                     <div>{a.activity}</div>
@@ -135,12 +136,6 @@ export const ORAActivityCatalog = () => {
                   <TableCell className="hidden sm:table-cell text-center">{a.duration_high ?? '-'}</TableCell>
                   <TableCell className="hidden sm:table-cell text-center">{a.duration_med ?? '-'}</TableCell>
                   <TableCell className="hidden sm:table-cell text-center">{a.duration_low ?? '-'}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleOpenForm(a)}><Edit3 className="h-3.5 w-3.5" /></Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeleteConfirmId(a.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
-                    </div>
-                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -148,7 +143,7 @@ export const ORAActivityCatalog = () => {
         </div>
       )}
 
-      {/* Add/Edit Dialog */}
+      {/* Add Dialog (for new activities only) */}
       <ActivityFormDialog
         open={isFormOpen}
         onOpenChange={(open) => { setIsFormOpen(open); if (!open) setEditingActivity(null); }}
@@ -157,6 +152,21 @@ export const ORAActivityCatalog = () => {
         activities={activities}
         onSave={handleSave}
         isSaving={isCreating || isUpdating}
+      />
+
+      {/* Detail Side Panel */}
+      <ActivityDetailSheet
+        activity={selectedActivity}
+        open={!!selectedActivity}
+        onOpenChange={(open) => { if (!open) setSelectedActivity(null); }}
+        phases={phases}
+        activities={activities}
+        onSave={async (payload) => {
+          await updateActivity(payload);
+          setSelectedActivity(null);
+        }}
+        onDelete={(id) => { setSelectedActivity(null); setDeleteConfirmId(id); }}
+        isSaving={isUpdating}
       />
 
       {/* Delete Confirmation */}
