@@ -54,6 +54,16 @@ interface UseORAActivityCatalogFilters {
 }
 
 // Build a flat, tree-ordered list from activities
+// Phase display order for sorting top-level activities
+const PHASE_PREFIX_ORDER: Record<string, number> = {
+  IDN: 0, ASS: 1, SEL: 2, DEF: 3, EXE: 4, OPR: 5,
+};
+
+function getPhaseOrder(code: string): number {
+  const prefix = code.split('-')[0];
+  return PHASE_PREFIX_ORDER[prefix] ?? 99;
+}
+
 export function buildActivityTree(activities: ORAActivity[]): TreeActivity[] {
   const childrenMap = new Map<string | null, ORAActivity[]>();
   
@@ -67,8 +77,15 @@ export function buildActivityTree(activities: ORAActivity[]): TreeActivity[] {
   
   function walk(parentId: string | null, depth: number) {
     const children = childrenMap.get(parentId) || [];
-    // Sort by activity_code for consistent ordering
-    children.sort((a, b) => a.activity_code.localeCompare(b.activity_code));
+    // Sort top-level by phase order, then by code; children just by code
+    children.sort((a, b) => {
+      if (depth === 0) {
+        const phaseOrdA = getPhaseOrder(a.activity_code);
+        const phaseOrdB = getPhaseOrder(b.activity_code);
+        if (phaseOrdA !== phaseOrdB) return phaseOrdA - phaseOrdB;
+      }
+      return a.activity_code.localeCompare(b.activity_code);
+    });
     for (const child of children) {
       const childChildren = childrenMap.get(child.id) || [];
       const treeNode: TreeActivity = {
