@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Clock, Layers, ArrowRight, Hash, Loader2, Save, Trash2 } from 'lucide-react';
+import { Clock, Layers, ArrowRight, Loader2, Save, Trash2 } from 'lucide-react';
 import { ORAActivity, ORAActivityInput, ORPPhase } from '@/hooks/useORAActivityCatalog';
 
 interface Props {
@@ -86,13 +86,7 @@ export const ActivityDetailSheet: React.FC<Props> = ({
             <div className="flex items-center gap-2 mb-1">
               {activity && (
                 <Badge variant="outline" className={`font-mono text-xs whitespace-nowrap ${phase ? getPhaseColor(phase.code) : 'bg-muted text-muted-foreground'}`}>
-                  <Hash className="h-3 w-3 mr-1" />
                   {activity.activity_code}
-                </Badge>
-              )}
-              {phase && (
-                <Badge variant="outline" className={`text-xs ${getPhaseColor(phase.code)}`}>
-                  {phase.label}
                 </Badge>
               )}
             </div>
@@ -105,7 +99,7 @@ export const ActivityDetailSheet: React.FC<Props> = ({
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
           {/* Activity Name */}
           <div className="space-y-1.5">
-            <Label className="text-sm font-medium">
+            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Activity Name <span className="text-destructive">*</span>
             </Label>
             <Input
@@ -117,11 +111,11 @@ export const ActivityDetailSheet: React.FC<Props> = ({
 
           {/* Description */}
           <div className="space-y-1.5">
-            <Label className="text-sm font-medium">Description</Label>
+            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Description</Label>
             <Textarea
               value={formData.description}
               onChange={e => setFormData(f => ({ ...f, description: e.target.value }))}
-              rows={5}
+              rows={8}
               className="resize-none text-sm"
             />
           </div>
@@ -130,8 +124,8 @@ export const ActivityDetailSheet: React.FC<Props> = ({
 
           {/* Phase */}
           <div className="space-y-1.5">
-            <Label className="text-sm font-medium flex items-center gap-1.5">
-              <Layers className="h-3.5 w-3.5 text-muted-foreground" />
+            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+              <Layers className="h-3.5 w-3.5" />
               Phase
             </Label>
             <Select
@@ -157,8 +151,8 @@ export const ActivityDetailSheet: React.FC<Props> = ({
 
           {/* Parent Activity */}
           <div className="space-y-1.5">
-            <Label className="text-sm font-medium flex items-center gap-1.5">
-              <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+              <ArrowRight className="h-3.5 w-3.5" />
               Parent Activity
             </Label>
             <Select
@@ -186,29 +180,32 @@ export const ActivityDetailSheet: React.FC<Props> = ({
 
           {/* Duration Estimates */}
           <div className="space-y-2">
-            <Label className="text-sm font-medium flex items-center gap-1.5">
-              <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+              <Clock className="h-3.5 w-3.5" />
               Duration Estimates
-              <span className="text-xs text-muted-foreground font-normal">(days)</span>
+              <span className="text-[10px] font-normal normal-case">(days)</span>
             </Label>
             <div className="grid grid-cols-3 gap-3">
               {[
-                { key: 'duration_high' as const, label: 'High', color: 'border-t-rose-500' },
-                { key: 'duration_med' as const, label: 'Medium', color: 'border-t-amber-500' },
-                { key: 'duration_low' as const, label: 'Low', color: 'border-t-emerald-500' },
-              ].map(({ key, label, color }) => (
+                { key: 'duration_high' as const, label: 'High', dot: 'bg-rose-500' },
+                { key: 'duration_med' as const, label: 'Medium', dot: 'bg-amber-500' },
+                { key: 'duration_low' as const, label: 'Low', dot: 'bg-emerald-500' },
+              ].map(({ key, label, dot }) => (
                 <div
                   key={key}
-                  className={`relative rounded-lg border-2 border-border/50 ${color} border-t-[3px] bg-muted/30 p-3 text-center transition-colors focus-within:border-primary/40`}
+                  className="relative rounded-lg border border-border bg-card p-3 text-center transition-all focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary/40"
                 >
-                  <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">{label}</span>
+                  <div className="flex items-center justify-center gap-1.5 mb-1.5">
+                    <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
+                    <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">{label}</span>
+                  </div>
                   <Input
                     type="number"
                     min={0}
                     value={formData[key] ?? ''}
                     onChange={e => setFormData(f => ({ ...f, [key]: e.target.value ? parseInt(e.target.value) : undefined }))}
                     placeholder="0"
-                    className="mt-1.5 h-9 text-center text-lg font-semibold border-0 bg-transparent shadow-none focus-visible:ring-0 p-0"
+                    className="h-9 text-center text-lg font-semibold border-0 bg-transparent shadow-none focus-visible:ring-0 p-0"
                   />
                 </div>
               ))}
