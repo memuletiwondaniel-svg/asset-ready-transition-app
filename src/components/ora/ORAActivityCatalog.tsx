@@ -5,10 +5,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Plus, Search, SlidersHorizontal } from 'lucide-react';
 import { useORAActivityCatalog, useORPPhases, ORAActivity, ORAActivityInput } from '@/hooks/useORAActivityCatalog';
 import { ActivityFormDialog } from './ActivityFormDialog';
 import { ActivityDetailSheet } from './ActivityDetailSheet';
+
+type ColumnKey = 'phase' | 'description' | 'parent' | 'high' | 'med' | 'low';
+
+const COLUMN_OPTIONS: { key: ColumnKey; label: string }[] = [
+  { key: 'phase', label: 'Phase' },
+  { key: 'description', label: 'Description' },
+  { key: 'parent', label: 'Parent' },
+  { key: 'high', label: 'High' },
+  { key: 'med', label: 'Medium' },
+  { key: 'low', label: 'Low' },
+];
+
+const DEFAULT_COLUMNS: ColumnKey[] = ['phase'];
 
 export const ORAActivityCatalog = () => {
   const [filters, setFilters] = useState({ phase_id: '', search: '' });
@@ -22,6 +37,15 @@ export const ORAActivityCatalog = () => {
   const [editingActivity, setEditingActivity] = useState<ORAActivity | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [selectedActivity, setSelectedActivity] = useState<ORAActivity | null>(null);
+  const [visibleColumns, setVisibleColumns] = useState<ColumnKey[]>(DEFAULT_COLUMNS);
+
+  const toggleColumn = (key: ColumnKey) => {
+    setVisibleColumns(prev =>
+      prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+    );
+  };
+
+  const isColVisible = (key: ColumnKey) => visibleColumns.includes(key);
 
   const handleOpenForm = (activity?: ORAActivity) => {
     setEditingActivity(activity || null);
@@ -96,6 +120,26 @@ export const ORAActivityCatalog = () => {
               {phases.map(p => <SelectItem key={p.id} value={p.id}>{p.label}</SelectItem>)}
             </SelectContent>
           </Select>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="h-9 shrink-0">
+                <SlidersHorizontal className="h-4 w-4 mr-1.5" />
+                <span className="hidden sm:inline">Columns</span>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-48 p-2">
+              <p className="text-xs font-medium text-muted-foreground mb-2 px-2">Toggle columns</p>
+              {COLUMN_OPTIONS.map(col => (
+                <label key={col.key} className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-muted cursor-pointer text-sm">
+                  <Checkbox
+                    checked={isColVisible(col.key)}
+                    onCheckedChange={() => toggleColumn(col.key)}
+                  />
+                  {col.label}
+                </label>
+              ))}
+            </PopoverContent>
+          </Popover>
         </div>
         <Button onClick={() => handleOpenForm()} size="sm" className="h-9 shrink-0 w-full sm:w-auto">
           <Plus className="h-4 w-4 mr-1" />Add Activity
@@ -116,11 +160,12 @@ export const ORAActivityCatalog = () => {
               <TableRow>
                 <TableHead className="w-[80px]">Code</TableHead>
                 <TableHead>Activity</TableHead>
-                <TableHead className="hidden sm:table-cell">Phase</TableHead>
-                <TableHead className="hidden md:table-cell">Parent</TableHead>
-                <TableHead className="hidden sm:table-cell text-center">High</TableHead>
-                <TableHead className="hidden sm:table-cell text-center">Med</TableHead>
-                <TableHead className="hidden sm:table-cell text-center">Low</TableHead>
+                {isColVisible('description') && <TableHead className="hidden md:table-cell">Description</TableHead>}
+                {isColVisible('phase') && <TableHead className="hidden sm:table-cell">Phase</TableHead>}
+                {isColVisible('parent') && <TableHead className="hidden md:table-cell">Parent</TableHead>}
+                {isColVisible('high') && <TableHead className="hidden sm:table-cell text-center">High</TableHead>}
+                {isColVisible('med') && <TableHead className="hidden sm:table-cell text-center">Med</TableHead>}
+                {isColVisible('low') && <TableHead className="hidden sm:table-cell text-center">Low</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -129,13 +174,14 @@ export const ORAActivityCatalog = () => {
                   <TableCell><Badge variant="outline" className={`font-mono text-xs whitespace-nowrap ${getCodeColor(a.phase_id)}`}>{a.activity_code}</Badge></TableCell>
                   <TableCell className="font-medium">
                     <div>{a.activity}</div>
-                    <div className="text-xs text-muted-foreground sm:hidden">{getPhaseLabel(a.phase_id)}</div>
+                    {!isColVisible('phase') && <div className="text-xs text-muted-foreground sm:hidden">{getPhaseLabel(a.phase_id)}</div>}
                   </TableCell>
-                  <TableCell className="hidden sm:table-cell">{getPhaseLabel(a.phase_id)}</TableCell>
-                  <TableCell className="hidden md:table-cell text-sm text-muted-foreground">{getActivityName(a.parent_activity_id)}</TableCell>
-                  <TableCell className="hidden sm:table-cell text-center">{a.duration_high ?? '-'}</TableCell>
-                  <TableCell className="hidden sm:table-cell text-center">{a.duration_med ?? '-'}</TableCell>
-                  <TableCell className="hidden sm:table-cell text-center">{a.duration_low ?? '-'}</TableCell>
+                  {isColVisible('description') && <TableCell className="hidden md:table-cell text-sm text-muted-foreground max-w-xs truncate">{a.description || '-'}</TableCell>}
+                  {isColVisible('phase') && <TableCell className="hidden sm:table-cell">{getPhaseLabel(a.phase_id)}</TableCell>}
+                  {isColVisible('parent') && <TableCell className="hidden md:table-cell text-sm text-muted-foreground">{getActivityName(a.parent_activity_id)}</TableCell>}
+                  {isColVisible('high') && <TableCell className="hidden sm:table-cell text-center">{a.duration_high ?? '-'}</TableCell>}
+                  {isColVisible('med') && <TableCell className="hidden sm:table-cell text-center">{a.duration_med ?? '-'}</TableCell>}
+                  {isColVisible('low') && <TableCell className="hidden sm:table-cell text-center">{a.duration_low ?? '-'}</TableCell>}
                 </TableRow>
               ))}
             </TableBody>
