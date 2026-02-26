@@ -1,117 +1,68 @@
 
 
-## Plan: Create ORP Phase Table and Redesign ORA Activity Catalog Table
+## Plan: Hierarchical Sub-Activities with Parent/Child ID Scheme
 
-### Current State
-The existing `ora_activity_catalog` table has 25 columns with a complex schema. The user wants a simplified, fresh structure with different columns. The table is already empty (truncated previously).
+### ID Scheme
 
-### Step 1: Create `orp_phases` reference table
+Currently, activity codes are phase-prefixed serials like `IDN-01`, `ASS-01`. For sub-activities, we extend with dot notation:
 
-Create a new lookup table with the 6 phases and seed data:
-
-```sql
-CREATE TABLE public.orp_phases (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  code TEXT NOT NULL UNIQUE,        -- 'IDENTIFY', 'ASSESS', etc.
-  label TEXT NOT NULL,              -- 'Identify', 'Assess', etc.
-  display_order INTEGER NOT NULL,
-  is_active BOOLEAN DEFAULT true,
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-
--- Enable RLS with read access for authenticated users
-ALTER TABLE public.orp_phases ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Authenticated users can read phases"
-  ON public.orp_phases FOR SELECT TO authenticated USING (true);
-
--- Seed the 6 phases
-INSERT INTO public.orp_phases (code, label, display_order) VALUES
-  ('IDENTIFY', 'Identify', 1),
-  ('ASSESS', 'Assess', 2),
-  ('SELECT', 'Select', 3),
-  ('DEFINE', 'Define', 4),
-  ('EXECUTE', 'Execute', 5),
-  ('OPERATE', 'Operate', 6);
+```text
+IDN-01              ← Parent: "3D Model Review"
+IDN-01.01           ← Child: "30% Model Review"
+IDN-01.02           ← Child: "60% Model Review"
+IDN-01.03           ← Child: "90% Model Review"
+IDN-01.03.01        ← Grandchild (if needed later)
 ```
 
-### Step 2: Drop and recreate `ora_activity_catalog` with new schema
+Serial numbers restart per parent. Children inherit the parent's full code prefix.
 
-Drop the existing table (it's empty) and create the new simplified structure:
+### UX Approach: Inline Tree with Indented Rows
 
-```sql
-DROP TABLE public.ora_activity_catalog;
+The table will display sub-activities as indented rows beneath their parent, with a collapsible chevron on parent rows. This is the most modern and intuitive pattern (used by Linear, Notion, Jira).
 
-CREATE TABLE public.ora_activity_catalog (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  activity_code TEXT NOT NULL UNIQUE,           -- Auto-generated: ORA-001, ORA-002...
-  activity TEXT NOT NULL,                        -- Free text activity name
-  description TEXT,                              -- Free text description
-  phase_id UUID REFERENCES public.orp_phases(id),-- FK to orp_phases
-  parent_activity_id UUID REFERENCES public.ora_activity_catalog(id), -- Self-referencing FK
-  duration_high INTEGER,                         -- Days (high estimate)
-  duration_med INTEGER,                          -- Days (medium estimate)
-  duration_low INTEGER,                          -- Days (low estimate)
-  is_active BOOLEAN DEFAULT true,
-  display_order INTEGER DEFAULT 0,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now(),
-  created_by UUID
-);
-
--- Auto-generate activity_code (ORA-001, ORA-002, etc.)
-CREATE OR REPLACE FUNCTION public.generate_ora_activity_code()
-RETURNS TRIGGER LANGUAGE plpgsql SET search_path TO 'public' AS $$
-DECLARE next_num INTEGER;
-BEGIN
-  SELECT COALESCE(MAX(CAST(SUBSTRING(activity_code FROM 'ORA-(\d+)') AS INTEGER)), 0) + 1
-  INTO next_num FROM public.ora_activity_catalog;
-  NEW.activity_code := 'ORA-' || LPAD(next_num::TEXT, 3, '0');
-  RETURN NEW;
-END; $$;
-
-CREATE TRIGGER trg_generate_ora_activity_code
-  BEFORE INSERT ON public.ora_activity_catalog
-  FOR EACH ROW WHEN (NEW.activity_code IS NULL OR NEW.activity_code = '')
-  EXECUTE FUNCTION public.generate_ora_activity_code();
-
--- Updated_at trigger
-CREATE TRIGGER trg_ora_activity_updated_at
-  BEFORE UPDATE ON public.ora_activity_catalog
-  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
-
--- RLS policies
-ALTER TABLE public.ora_activity_catalog ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Authenticated users can read activities"
-  ON public.ora_activity_catalog FOR SELECT TO authenticated USING (true);
-CREATE POLICY "Authenticated users can insert activities"
-  ON public.ora_activity_catalog FOR INSERT TO authenticated WITH CHECK (true);
-CREATE POLICY "Authenticated users can update activities"
-  ON public.ora_activity_catalog FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "Authenticated users can delete activities"
-  ON public.ora_activity_catalog FOR DELETE TO authenticated USING (true);
+```text
+▼ IDN-01   3D Model Review         Identify   30   20   10
+    IDN-01.01  30% Model Review    Identify   10    7    5
+    IDN-01.02  60% Model Review    Identify   10    7    5
+    IDN-01.03  90% Model Review    Identify   10    6    5
+▶ IDN-02   Hazop Review            Identify   15   10    7
 ```
 
-### Step 3: Update frontend hook (`useORAActivityCatalog.ts`)
+When creating a new activity, if a parent is selected, the code auto-generates as `{parent_code}.{next_serial}`.
 
-- Update the `ORAActivity` interface to match the new columns (activity_code, activity, description, phase_id, parent_activity_id, duration_high, duration_med, duration_low)
-- Update `ORAActivityInput` similarly
-- Remove old constants (ORA_AREAS, ORA_ENTRY_TYPES, ORA_REQUIREMENT_LEVELS)
-- Add a new `useORPPhases` hook or query to fetch from `orp_phases`
+### Technical Steps
 
-### Step 4: Update frontend form (`ORAActivityCatalog.tsx`)
+#### Step 1: Update `generate_ora_activity_code` DB function
+New migration that replaces the trigger function:
+- If `parent_activity_id` is set, look up parent's `activity_code`, count existing children with that prefix, generate `{parent_code}.{next_serial}` (zero-padded to 2 digits)
+- If no parent, keep existing phase-prefix logic (`IDN-01`)
 
-- Update the Add/Edit dialog form fields to match the new schema: Activity, Description, Phase dropdown (from `orp_phases`), Parent Activity dropdown (self-referencing), Duration High/Med/Low
-- Activity Code shown as read-only (auto-generated)
-- Remove all references to old columns (level, area, entry_type, requirement_level, etc.)
+#### Step 2: Update `useORAActivityCatalog.ts` hook
+- Add a utility function `buildActivityTree(activities)` that nests children under parents
+- Expose a `treeActivities` computed property for the table to consume
+- Ensure parent dropdown filters out descendants (prevent circular references)
 
-### Step 5: Update wizard types (`src/components/ora/wizard/types.ts`)
+#### Step 3: Update `ORAActivityCatalog.tsx` table
+- Render activities as a flat list but sorted by tree order (parent, then children, then grandchildren)
+- Indent child rows with left padding proportional to depth (e.g., `pl-{depth * 6}`)
+- Add a collapsible chevron icon (`ChevronRight`/`ChevronDown`) on rows that have children
+- Track expanded/collapsed state per parent ID
+- Show child count badge on collapsed parent rows
+- When creating from a parent row context, auto-select that parent
 
-- Update `catalogToWizardActivity` and `WizardActivity` to align with the new table structure
+#### Step 4: Update `ActivityFormDialog.tsx`
+- When a parent is selected, show a read-only preview of the code that will be generated (e.g., "Code: IDN-01.03")
+- Filter parent dropdown to prevent selecting self or own descendants
+- Auto-inherit phase from parent when parent is selected
+
+#### Step 5: Update `ActivityDetailSheet.tsx`
+- Same parent dropdown filtering as the form dialog
+- Show children list at bottom of sheet if the activity has sub-activities
 
 ### Files to modify
-- **Migration**: New SQL migration (Steps 1 & 2)
-- `src/hooks/useORAActivityCatalog.ts` — Rewrite interfaces and queries
-- `src/components/ora/ORAActivityCatalog.tsx` — Update form and display
-- `src/components/ora/wizard/types.ts` — Align with new schema
-- `src/integrations/supabase/types.ts` — Auto-updated after migration
+- **New migration SQL** — Update `generate_ora_activity_code` function for hierarchical codes
+- `src/hooks/useORAActivityCatalog.ts` — Tree builder, circular reference prevention
+- `src/components/ora/ORAActivityCatalog.tsx` — Indented tree rows, expand/collapse
+- `src/components/ora/ActivityFormDialog.tsx` — Parent-aware code preview, phase inheritance
+- `src/components/ora/ActivityDetailSheet.tsx` — Children list, parent filtering
 
