@@ -59,6 +59,21 @@ export const ORAActivityCatalog = () => {
     return activities.find(a => a.id === id)?.activity || '-';
   };
 
+  const getCodeColor = (phaseId: string | null) => {
+    if (!phaseId) return 'bg-muted text-muted-foreground border-muted';
+    const phase = phases.find(p => p.id === phaseId);
+    if (!phase) return 'bg-muted text-muted-foreground border-muted';
+    const colors: Record<string, string> = {
+      IDENTIFY: 'bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/30',
+      ASSESS: 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30',
+      SELECT: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30',
+      DEFINE: 'bg-violet-500/15 text-violet-700 dark:text-violet-400 border-violet-500/30',
+      EXECUTE: 'bg-rose-500/15 text-rose-700 dark:text-rose-400 border-rose-500/30',
+      OPERATE: 'bg-cyan-500/15 text-cyan-700 dark:text-cyan-400 border-cyan-500/30',
+    };
+    return colors[phase.code] || 'bg-muted text-muted-foreground border-muted';
+  };
+
   if (isLoading) {
     return <div className="flex items-center justify-center py-12"><div className="text-muted-foreground">Loading activity catalog...</div></div>;
   }
@@ -110,7 +125,7 @@ export const ORAActivityCatalog = () => {
             <TableBody>
               {activities.map(a => (
                 <TableRow key={a.id}>
-                  <TableCell><Badge variant="outline" className="font-mono text-xs">{a.activity_code}</Badge></TableCell>
+                  <TableCell><Badge variant="outline" className={`font-mono text-xs whitespace-nowrap ${getCodeColor(a.phase_id)}`}>{a.activity_code}</Badge></TableCell>
                   <TableCell className="font-medium">
                     <div>{a.activity}</div>
                     <div className="text-xs text-muted-foreground sm:hidden">{getPhaseLabel(a.phase_id)}</div>
