@@ -66,20 +66,23 @@ export const ORAActivityCatalog = () => {
   return (
     <div className="space-y-4">
       {/* Toolbar */}
-      <div className="flex items-center gap-3 bg-card p-3 rounded-lg border">
-        <div className="relative flex-1 max-w-xs">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search activities..." value={filters.search} onChange={e => setFilters(f => ({ ...f, search: e.target.value }))} className="pl-8 h-9" />
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 bg-card p-3 rounded-lg border">
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <div className="relative flex-1">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input placeholder="Search..." value={filters.search} onChange={e => setFilters(f => ({ ...f, search: e.target.value }))} className="pl-8 h-9" />
+          </div>
+          <Select value={filters.phase_id || 'all'} onValueChange={v => setFilters(f => ({ ...f, phase_id: v === 'all' ? '' : v }))}>
+            <SelectTrigger className="w-[120px] sm:w-[160px] h-9 shrink-0"><SelectValue placeholder="All Phases" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Phases</SelectItem>
+              {phases.map(p => <SelectItem key={p.id} value={p.id}>{p.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
         </div>
-        <Select value={filters.phase_id || 'all'} onValueChange={v => setFilters(f => ({ ...f, phase_id: v === 'all' ? '' : v }))}>
-          <SelectTrigger className="w-[160px] h-9"><SelectValue placeholder="All Phases" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Phases</SelectItem>
-            {phases.map(p => <SelectItem key={p.id} value={p.id}>{p.label}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <div className="flex-1" />
-        <Button onClick={() => handleOpenForm()} size="sm" className="h-9"><Plus className="h-4 w-4 mr-1" />Add Activity</Button>
+        <Button onClick={() => handleOpenForm()} size="sm" className="h-9 shrink-0 w-full sm:w-auto">
+          <Plus className="h-4 w-4 mr-1" />Add Activity
+        </Button>
       </div>
 
       {/* Table or empty state */}
@@ -90,30 +93,33 @@ export const ORAActivityCatalog = () => {
           <p className="text-sm text-muted-foreground max-w-md">Click "Add Activity" to start building your ORA activity catalog.</p>
         </div>
       ) : (
-        <div className="rounded-lg border bg-card">
+        <div className="rounded-lg border bg-card overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[100px]">Code</TableHead>
+                <TableHead className="w-[80px]">Code</TableHead>
                 <TableHead>Activity</TableHead>
-                <TableHead>Phase</TableHead>
-                <TableHead>Parent</TableHead>
-                <TableHead className="text-center">High</TableHead>
-                <TableHead className="text-center">Med</TableHead>
-                <TableHead className="text-center">Low</TableHead>
-                <TableHead className="w-[80px]" />
+                <TableHead className="hidden sm:table-cell">Phase</TableHead>
+                <TableHead className="hidden md:table-cell">Parent</TableHead>
+                <TableHead className="hidden sm:table-cell text-center">High</TableHead>
+                <TableHead className="hidden sm:table-cell text-center">Med</TableHead>
+                <TableHead className="hidden sm:table-cell text-center">Low</TableHead>
+                <TableHead className="w-[70px]" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {activities.map(a => (
                 <TableRow key={a.id}>
                   <TableCell><Badge variant="outline" className="font-mono text-xs">{a.activity_code}</Badge></TableCell>
-                  <TableCell className="font-medium">{a.activity}</TableCell>
-                  <TableCell>{getPhaseLabel(a.phase_id)}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{getActivityName(a.parent_activity_id)}</TableCell>
-                  <TableCell className="text-center">{a.duration_high ?? '-'}</TableCell>
-                  <TableCell className="text-center">{a.duration_med ?? '-'}</TableCell>
-                  <TableCell className="text-center">{a.duration_low ?? '-'}</TableCell>
+                  <TableCell className="font-medium">
+                    <div>{a.activity}</div>
+                    <div className="text-xs text-muted-foreground sm:hidden">{getPhaseLabel(a.phase_id)}</div>
+                  </TableCell>
+                  <TableCell className="hidden sm:table-cell">{getPhaseLabel(a.phase_id)}</TableCell>
+                  <TableCell className="hidden md:table-cell text-sm text-muted-foreground">{getActivityName(a.parent_activity_id)}</TableCell>
+                  <TableCell className="hidden sm:table-cell text-center">{a.duration_high ?? '-'}</TableCell>
+                  <TableCell className="hidden sm:table-cell text-center">{a.duration_med ?? '-'}</TableCell>
+                  <TableCell className="hidden sm:table-cell text-center">{a.duration_low ?? '-'}</TableCell>
                   <TableCell>
                     <div className="flex gap-1">
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleOpenForm(a)}><Edit3 className="h-3.5 w-3.5" /></Button>
