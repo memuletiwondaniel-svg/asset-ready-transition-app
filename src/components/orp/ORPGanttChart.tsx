@@ -154,7 +154,6 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
   const [showAddItem, setShowAddItem] = useState(false);
   const [selectedDeliverable, setSelectedDeliverable] = useState<any>(null);
   const [zoomLevel, setZoomLevel] = useState(1);
-  const [expandedCodes, setExpandedCodes] = useState<Set<string>>(new Set());
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const searchQuery = externalSearchQuery ?? internalSearchQuery;
@@ -169,6 +168,17 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
   }, [deliverables, searchQuery]);
 
   const { childrenMap } = useMemo(() => buildHierarchyFromCodes(filteredDeliverables), [filteredDeliverables]);
+
+  // Default expand: top-level parents expanded so activities are visible
+  const [expandedCodes, setExpandedCodes] = useState<Set<string>>(() => {
+    const roots = (childrenMap.get(null) || []);
+    const rootCodes = new Set<string>();
+    roots.forEach(d => {
+      const code = d.deliverable?.activity_code || '';
+      if (code && (childrenMap.get(code) || []).length > 0) rootCodes.add(code);
+    });
+    return rootCodes;
+  });
 
   const visibleRows = useMemo(
     () => buildVisibleRows(childrenMap, expandedCodes),

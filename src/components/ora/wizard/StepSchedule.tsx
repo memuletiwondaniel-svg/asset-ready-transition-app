@@ -184,12 +184,17 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
   const [zoomLevel, setZoomLevel] = useState(1);
   const [visibleCols, setVisibleCols] = useState<Set<ColKey>>(new Set(DEFAULT_VISIBLE));
   const [selectedActivityId, setSelectedActivityId] = useState<string | null>(null);
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const selectedActivities = useMemo(() => activities.filter(a => a.selected), [activities]);
 
   const childrenMap = useMemo(() => buildChildrenMap(selectedActivities), [selectedActivities]);
+
+  // Default expand: show top-level parents expanded so activities are visible
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(() => {
+    const roots = (childrenMap.get(null) || []).filter(a => (childrenMap.get(a.id) || []).length > 0);
+    return new Set(roots.map(a => a.id));
+  });
 
   const visibleRows = useMemo(
     () => buildVisibleRows(selectedActivities, childrenMap, expandedIds),
@@ -685,9 +690,22 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">End Date</span>
-                      <span className="text-xs font-medium">
-                        {selectedActivity.endDate ? format(parseISO(selectedActivity.endDate), 'dd MMM yyyy') : '—'}
-                      </span>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" size="sm" className={cn("h-7 text-xs px-3", !selectedActivity.endDate && "text-muted-foreground")}>
+                            {selectedActivity.endDate ? format(parseISO(selectedActivity.endDate), 'dd MMM yyyy') : 'Pick date'}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="end">
+                          <Calendar
+                            mode="single"
+                            selected={selectedActivity.endDate ? parseISO(selectedActivity.endDate) : undefined}
+                            onSelect={(date) => { if (date) updateActivity(selectedActivity.id, { endDate: format(date, 'yyyy-MM-dd') }); }}
+                            initialFocus
+                            className={cn("p-3 pointer-events-auto")}
+                          />
+                        </PopoverContent>
+                      </Popover>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">Duration (days)</span>
