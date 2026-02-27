@@ -1,12 +1,18 @@
 import React, { useState, useMemo, useRef, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CalendarDays, ZoomIn, ZoomOut, GripVertical } from 'lucide-react';
+import { CalendarDays, ZoomIn, ZoomOut } from 'lucide-react';
 import { WizardActivity } from './types';
 import { format, parseISO, addDays, differenceInDays, startOfDay } from 'date-fns';
 import { cn } from '@/lib/utils';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface Props {
   activities: WizardActivity[];
@@ -15,9 +21,28 @@ interface Props {
 
 const DAY_WIDTH_BASE = 28;
 const MIN_BAR_WIDTH = 8;
-const ACTIVITY_COL_WIDTH = 280;
+const ROW_HEIGHT = 40;
 
-const PHASE_COLORS: Record<string, string> = {
+const COL_WIDTHS = {
+  id: 90,
+  name: 180,
+  start: 100,
+  end: 80,
+  duration: 56,
+  status: 100,
+};
+const LEFT_PANEL_WIDTH = Object.values(COL_WIDTHS).reduce((a, b) => a + b, 0);
+
+const PHASE_COLORS: Record<string, { bg: string; text: string }> = {
+  IDN: { bg: 'bg-blue-500/15', text: 'text-blue-700 dark:text-blue-400' },
+  ASS: { bg: 'bg-amber-500/15', text: 'text-amber-700 dark:text-amber-400' },
+  SEL: { bg: 'bg-emerald-500/15', text: 'text-emerald-700 dark:text-emerald-400' },
+  DEF: { bg: 'bg-teal-500/15', text: 'text-teal-700 dark:text-teal-400' },
+  EXE: { bg: 'bg-rose-500/15', text: 'text-rose-700 dark:text-rose-400' },
+  OPR: { bg: 'bg-purple-500/15', text: 'text-purple-700 dark:text-purple-400' },
+};
+
+const BAR_COLORS: Record<string, string> = {
   IDN: 'bg-blue-400 dark:bg-blue-500',
   ASS: 'bg-amber-400 dark:bg-amber-500',
   SEL: 'bg-emerald-400 dark:bg-emerald-500',
@@ -26,22 +51,41 @@ const PHASE_COLORS: Record<string, string> = {
   OPR: 'bg-purple-400 dark:bg-purple-500',
 };
 
+const STATUS_OPTIONS = [
+  { value: 'NOT_STARTED', label: 'Not Started', class: 'bg-muted text-muted-foreground' },
+  { value: 'IN_PROGRESS', label: 'In Progress', class: 'bg-amber-500/15 text-amber-700 dark:text-amber-400' },
+  { value: 'COMPLETED', label: 'Completed', class: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400' },
+];
+
+const ZOOM_PRESETS = [
+  { label: '6M', days: 180 },
+  { label: '12M', days: 365 },
+  { label: '24M', days: 730 },
+];
+
+function getPhasePrefix(code: string): string {
+  return code.split('-')[0];
+}
+
 function getBarColor(code: string): string {
-  const prefix = code.split('-')[0];
-  return PHASE_COLORS[prefix] || 'bg-primary';
+  return BAR_COLORS[getPhasePrefix(code)] || 'bg-primary';
+}
+
+function getIdBadgeClasses(code: string) {
+  const prefix = getPhasePrefix(code);
+  return PHASE_COLORS[prefix] || { bg: 'bg-muted', text: 'text-foreground' };
 }
 
 export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }) => {
   const [zoomLevel, setZoomLevel] = useState(1);
-  const timelineRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const selectedActivities = useMemo(() => activities.filter(a => a.selected), [activities]);
 
-  const updateActivity = useCallback((id: string, updates: Partial<WizardActivity>) => {
+  const updateActivity = useCallback((id: string, updates: Partial<WizardActivity & { status?: string }>) => {
     onActivitiesChange(activities.map(a => {
       if (a.id !== id) return a;
       const updated = { ...a, ...updates };
-      // Auto-calculate end date from start date + duration
       if ((updates.startDate || updates.durationDays) && updated.startDate && updated.durationDays) {
         try {
           const start = parseISO(updated.startDate);
@@ -49,7 +93,6 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
           updated.endDate = format(end, 'yyyy-MM-dd');
         } catch {}
       }
-      // Auto-calculate duration from start and end dates
       if (updates.endDate && updated.startDate && updated.endDate && !updates.durationDays) {
         try {
           const start = parseISO(updated.startDate);
@@ -62,58 +105,45 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
     }));
   }, [activities, onActivitiesChange]);
 
-  // Timeline range calculations
+  // Timeline range
   const { timelineStart, timelineEnd, totalDays } = useMemo(() => {
     const datesWithValues = selectedActivities.filter(a => a.startDate);
     if (datesWithValues.length === 0) {
       const today = startOfDay(new Date());
-      return {
-        timelineStart: today,
-        timelineEnd: addDays(today, 90),
-        totalDays: 90,
-      };
+      return { timelineStart: today, timelineEnd: addDays(today, 90), totalDays: 90 };
     }
-
     let minDate = parseISO(datesWithValues[0].startDate);
     let maxDate = parseISO(datesWithValues[0].startDate);
-
     datesWithValues.forEach(a => {
       const start = parseISO(a.startDate);
       if (start < minDate) minDate = start;
       const end = a.endDate ? parseISO(a.endDate) : addDays(start, a.durationDays || 30);
       if (end > maxDate) maxDate = end;
     });
-
-    // Add padding
     const padStart = addDays(minDate, -7);
     const padEnd = addDays(maxDate, 14);
     const days = Math.max(differenceInDays(padEnd, padStart), 60);
-
     return { timelineStart: padStart, timelineEnd: padEnd, totalDays: days };
   }, [selectedActivities]);
 
   const dayWidth = DAY_WIDTH_BASE * zoomLevel;
   const timelineWidth = totalDays * dayWidth;
 
-  // Generate month markers
+  // Month markers
   const monthMarkers = useMemo(() => {
     const markers: { label: string; left: number }[] = [];
     let current = new Date(timelineStart);
     current.setDate(1);
     if (current < timelineStart) current.setMonth(current.getMonth() + 1);
-
     while (current <= timelineEnd) {
       const dayOffset = differenceInDays(current, timelineStart);
-      markers.push({
-        label: format(current, 'MMM yyyy'),
-        left: dayOffset * dayWidth,
-      });
+      markers.push({ label: format(current, 'MMM yyyy'), left: dayOffset * dayWidth });
       current.setMonth(current.getMonth() + 1);
     }
     return markers;
   }, [timelineStart, timelineEnd, dayWidth]);
 
-  // Generate week markers
+  // Week markers
   const weekMarkers = useMemo(() => {
     const markers: number[] = [];
     for (let i = 0; i < totalDays; i += 7) {
@@ -135,6 +165,13 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
     }
   };
 
+  const setZoomToFitDays = (targetDays: number) => {
+    if (!scrollContainerRef.current) return;
+    const containerWidth = scrollContainerRef.current.clientWidth;
+    const newZoom = containerWidth / (targetDays * DAY_WIDTH_BASE);
+    setZoomLevel(Math.max(0.1, Math.min(4, newZoom)));
+  };
+
   return (
     <div className="space-y-3 p-1">
       <div className="text-center space-y-2 pb-1">
@@ -146,31 +183,50 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
       </div>
 
       {/* Zoom controls */}
-      <div className="flex items-center justify-end gap-1">
-        <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setZoomLevel(z => Math.max(0.5, z - 0.25))} disabled={zoomLevel <= 0.5}>
-          <ZoomOut className="w-3.5 h-3.5" />
-        </Button>
-        <span className="text-[10px] text-muted-foreground font-mono w-8 text-center">{Math.round(zoomLevel * 100)}%</span>
-        <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setZoomLevel(z => Math.min(3, z + 0.25))} disabled={zoomLevel >= 3}>
-          <ZoomIn className="w-3.5 h-3.5" />
-        </Button>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1">
+          {ZOOM_PRESETS.map(p => (
+            <Button
+              key={p.label}
+              variant="outline"
+              size="sm"
+              className="h-6 px-2 text-[10px] font-medium"
+              onClick={() => setZoomToFitDays(p.days)}
+            >
+              {p.label}
+            </Button>
+          ))}
+        </div>
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setZoomLevel(z => Math.max(0.1, z - 0.15))} disabled={zoomLevel <= 0.1}>
+            <ZoomOut className="w-3.5 h-3.5" />
+          </Button>
+          <span className="text-[10px] text-muted-foreground font-mono w-8 text-center">{Math.round(zoomLevel * 100)}%</span>
+          <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setZoomLevel(z => Math.min(4, z + 0.15))} disabled={zoomLevel >= 4}>
+            <ZoomIn className="w-3.5 h-3.5" />
+          </Button>
+        </div>
       </div>
 
-      {/* Gantt chart container */}
+      {/* Gantt chart */}
       <div className="border rounded-lg overflow-hidden bg-background">
         <div className="flex">
-          {/* Activity column header */}
-          <div className="shrink-0 border-r bg-muted/30" style={{ width: ACTIVITY_COL_WIDTH }}>
-            <div className="h-10 px-3 flex items-center border-b">
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Activity</span>
+          {/* Left panel header */}
+          <div className="shrink-0 border-r bg-muted/30" style={{ width: LEFT_PANEL_WIDTH }}>
+            <div className="flex items-center h-9 border-b text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
+              <div className="px-2" style={{ width: COL_WIDTHS.id }}>ID</div>
+              <div className="px-1 truncate" style={{ width: COL_WIDTHS.name }}>Activity</div>
+              <div className="px-1 text-center" style={{ width: COL_WIDTHS.start }}>Start</div>
+              <div className="px-1 text-center" style={{ width: COL_WIDTHS.end }}>End</div>
+              <div className="px-1 text-center" style={{ width: COL_WIDTHS.duration }}>Days</div>
+              <div className="px-1 text-center" style={{ width: COL_WIDTHS.status }}>Status</div>
             </div>
           </div>
 
           {/* Timeline header */}
-          <div className="flex-1 overflow-x-auto" ref={timelineRef}>
+          <div className="flex-1 overflow-hidden">
             <div style={{ width: timelineWidth, minWidth: '100%' }}>
-              {/* Month markers */}
-              <div className="h-10 relative border-b bg-muted/20">
+              <div className="h-9 relative border-b bg-muted/20">
                 {monthMarkers.map((m, i) => (
                   <div
                     key={i}
@@ -186,102 +242,149 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
         </div>
 
         {/* Activity rows */}
-        <div className="max-h-[340px] overflow-y-auto">
-          {selectedActivities.map((activity, index) => {
-            const barPos = getBarPosition(activity);
+        <div className="max-h-[380px] overflow-y-auto" ref={scrollContainerRef}>
+          <div className="flex">
+            {/* Left panel rows */}
+            <div className="shrink-0 border-r" style={{ width: LEFT_PANEL_WIDTH }}>
+              {selectedActivities.map((activity, index) => {
+                const idColors = getIdBadgeClasses(activity.activityCode);
+                const status = (activity as any).status || 'NOT_STARTED';
+                const statusOpt = STATUS_OPTIONS.find(s => s.value === status) || STATUS_OPTIONS[0];
 
-            return (
-              <div key={activity.id} className="flex border-b last:border-b-0 hover:bg-muted/20 transition-colors group">
-                {/* Activity info */}
-                <div className="shrink-0 border-r" style={{ width: ACTIVITY_COL_WIDTH }}>
-                  <div className="px-3 py-2 space-y-1.5">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 font-mono shrink-0">
+                return (
+                  <div
+                    key={activity.id}
+                    className={cn(
+                      "flex items-center border-b last:border-b-0 transition-colors",
+                      index % 2 === 0 ? 'bg-background' : 'bg-muted/10'
+                    )}
+                    style={{ height: ROW_HEIGHT }}
+                  >
+                    {/* Activity ID badge */}
+                    <div className="px-1.5 flex items-center justify-center" style={{ width: COL_WIDTHS.id }}>
+                      <span className={cn(
+                        "inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-mono font-semibold whitespace-nowrap",
+                        idColors.bg, idColors.text
+                      )}>
                         {activity.activityCode}
-                      </Badge>
-                      <span className="text-xs font-medium truncate flex-1">{activity.activity}</span>
+                      </span>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <div className="flex-1">
-                        <Input
-                          type="date"
-                          value={activity.startDate}
-                          onChange={(e) => updateActivity(activity.id, { startDate: e.target.value })}
-                          className="h-6 text-[10px] px-1.5"
-                          placeholder="Start"
-                        />
-                      </div>
-                      <div className="w-12">
-                        <Input
-                          type="number"
-                          min={1}
-                          value={activity.durationDays ?? ''}
-                          onChange={(e) => updateActivity(activity.id, { durationDays: parseInt(e.target.value) || null })}
-                          className="h-6 text-[10px] px-1.5 text-center"
-                          placeholder="Days"
-                        />
-                      </div>
-                      <span className="text-[9px] text-muted-foreground whitespace-nowrap">
+
+                    {/* Activity Name */}
+                    <div className="px-1 overflow-hidden" style={{ width: COL_WIDTHS.name }}>
+                      <span className="text-[11px] font-medium truncate block" title={activity.activity}>
+                        {activity.activity}
+                      </span>
+                    </div>
+
+                    {/* Start Date */}
+                    <div className="px-0.5" style={{ width: COL_WIDTHS.start }}>
+                      <Input
+                        type="date"
+                        value={activity.startDate}
+                        onChange={(e) => updateActivity(activity.id, { startDate: e.target.value })}
+                        className="h-6 text-[10px] px-1 border-dashed"
+                      />
+                    </div>
+
+                    {/* End Date (read-only, auto-calculated) */}
+                    <div className="px-0.5 flex items-center justify-center" style={{ width: COL_WIDTHS.end }}>
+                      <span className="text-[10px] text-muted-foreground whitespace-nowrap">
                         {activity.endDate ? format(parseISO(activity.endDate), 'dd MMM') : '—'}
                       </span>
                     </div>
-                  </div>
-                </div>
 
-                {/* Timeline bar */}
-                <div className="flex-1 overflow-hidden">
-                  <div
-                    className="relative"
-                    style={{ width: timelineWidth, minWidth: '100%', height: '100%', minHeight: 52 }}
-                  >
-                    {/* Week grid lines */}
-                    {weekMarkers.map((left, i) => (
-                      <div
-                        key={i}
-                        className="absolute top-0 bottom-0 border-l border-border/20"
-                        style={{ left }}
+                    {/* Duration */}
+                    <div className="px-0.5" style={{ width: COL_WIDTHS.duration }}>
+                      <Input
+                        type="number"
+                        min={1}
+                        value={activity.durationDays ?? ''}
+                        onChange={(e) => updateActivity(activity.id, { durationDays: parseInt(e.target.value) || null })}
+                        className="h-6 text-[10px] px-1 text-center border-dashed"
+                        placeholder="—"
                       />
-                    ))}
+                    </div>
 
-                    {/* Bar */}
-                    {barPos && (
-                      <div
-                        className={cn(
-                          "absolute top-3 h-7 rounded-md shadow-sm transition-all",
-                          getBarColor(activity.activityCode),
-                          "opacity-80 hover:opacity-100 cursor-default"
-                        )}
-                        style={{
-                          left: barPos.left,
-                          width: barPos.width,
-                        }}
-                        title={`${activity.activity}: ${activity.startDate} → ${activity.endDate || '?'} (${activity.durationDays || '?'}d)`}
+                    {/* Status */}
+                    <div className="px-0.5" style={{ width: COL_WIDTHS.status }}>
+                      <Select
+                        value={status}
+                        onValueChange={(v) => updateActivity(activity.id, { status: v } as any)}
                       >
-                        <div className="px-1.5 h-full flex items-center overflow-hidden">
-                          <span className="text-[9px] text-white font-medium truncate">
-                            {activity.durationDays}d
-                          </span>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* No-date placeholder */}
-                    {!barPos && (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-[10px] text-muted-foreground/50 italic">Set start date →</span>
-                      </div>
-                    )}
+                        <SelectTrigger className="h-6 text-[9px] px-1.5 border-dashed [&>svg]:w-3 [&>svg]:h-3">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {STATUS_OPTIONS.map(opt => (
+                            <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                              {opt.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
-                </div>
-              </div>
-            );
-          })}
+                );
+              })}
 
-          {selectedActivities.length === 0 && (
-            <div className="text-center py-12 text-sm text-muted-foreground">
-              No activities selected. Go back to Step 3 to select activities.
+              {selectedActivities.length === 0 && (
+                <div className="text-center py-12 text-sm text-muted-foreground">
+                  No activities selected. Go back to Step 3.
+                </div>
+              )}
             </div>
-          )}
+
+            {/* Timeline rows */}
+            <div className="flex-1 overflow-x-auto">
+              <div style={{ width: timelineWidth, minWidth: '100%' }}>
+                {selectedActivities.map((activity, index) => {
+                  const barPos = getBarPosition(activity);
+                  return (
+                    <div
+                      key={activity.id}
+                      className={cn(
+                        "relative border-b last:border-b-0",
+                        index % 2 === 0 ? 'bg-background' : 'bg-muted/10'
+                      )}
+                      style={{ height: ROW_HEIGHT }}
+                    >
+                      {/* Week grid lines */}
+                      {weekMarkers.map((left, i) => (
+                        <div key={i} className="absolute top-0 bottom-0 border-l border-border/15" style={{ left }} />
+                      ))}
+
+                      {/* Bar */}
+                      {barPos && (
+                        <div
+                          className={cn(
+                            "absolute top-2 rounded shadow-sm transition-all",
+                            getBarColor(activity.activityCode),
+                            "opacity-85 hover:opacity-100"
+                          )}
+                          style={{ left: barPos.left, width: barPos.width, height: ROW_HEIGHT - 16 }}
+                          title={`${activity.activity}: ${activity.startDate} → ${activity.endDate || '?'} (${activity.durationDays || '?'}d)`}
+                        >
+                          <div className="px-1.5 h-full flex items-center overflow-hidden">
+                            <span className="text-[9px] text-white font-medium truncate">
+                              {activity.durationDays}d
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* No-date placeholder */}
+                      {!barPos && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <span className="text-[10px] text-muted-foreground/40 italic">Set start date →</span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
