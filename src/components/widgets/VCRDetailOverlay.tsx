@@ -503,7 +503,7 @@ const ApprovalsPanel: React.FC<ApprovalsPanelProps> = ({
   );
 };
 // ── Execution Plan Status Badge ─────────────────────────────────
-const ExecutionPlanStatus: React.FC<{ vcrId: string; status: string }> = ({ vcrId, status }) => {
+const ExecutionPlanStatus: React.FC<{ vcrId: string; status: string; projectId?: string; projectCode?: string }> = ({ vcrId, status, projectId, projectCode }) => {
   const queryClient = useQueryClient();
   const [updating, setUpdating] = useState(false);
 
@@ -553,7 +553,20 @@ const ExecutionPlanStatus: React.FC<{ vcrId: string; status: string }> = ({ vcrI
       execution_plan_status: 'APPROVED',
       execution_plan_approved_at: new Date().toISOString(),
     }).eq('id', vcrId);
+
+    // Trigger building block activity generation
+    if (projectId) {
+      try {
+        const { generateBuildingBlockActivities } = await import('@/hooks/useORAActivityPlanSync');
+        await generateBuildingBlockActivities(vcrId, projectId, projectCode || '');
+      } catch (e) {
+        console.error('[VCR Approve] Failed to generate building blocks:', e);
+      }
+    }
+
     queryClient.invalidateQueries({ queryKey: ['project-vcrs'] });
+    queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+    queryClient.invalidateQueries({ queryKey: ['ora-plan-activities'] });
     setUpdating(false);
   };
 
@@ -618,7 +631,7 @@ const ExecutionPlanStatus: React.FC<{ vcrId: string; status: string }> = ({ vcrI
 };
 
 // ── Overview Info Panel (Right) ─────────────────────────────────
-const OverviewInfoPanel: React.FC<{ vcr: ProjectVCR; projectName?: string; projectCode?: string; liveTargetDate?: Date; onTargetDateChange?: (d: Date | undefined) => void }> = ({ vcr, projectName, projectCode, liveTargetDate, onTargetDateChange }) => {
+const OverviewInfoPanel: React.FC<{ vcr: ProjectVCR; projectName?: string; projectCode?: string; projectId?: string; liveTargetDate?: Date; onTargetDateChange?: (d: Date | undefined) => void }> = ({ vcr, projectName, projectCode, projectId, liveTargetDate, onTargetDateChange }) => {
   const [editingScope, setEditingScope] = useState(false);
   const [execPlanWizardOpen, setExecPlanWizardOpen] = useState(false);
   const [scopeText, setScopeText] = useState(
@@ -773,7 +786,7 @@ const OverviewInfoPanel: React.FC<{ vcr: ProjectVCR; projectName?: string; proje
               <ChevronRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
             </div>
           </button>
-          <ExecutionPlanStatus vcrId={vcr.id} status={(vcr as any).execution_plan_status || 'DRAFT'} />
+          <ExecutionPlanStatus vcrId={vcr.id} status={(vcr as any).execution_plan_status || 'DRAFT'} projectId={projectId} projectCode={projectCode} />
         </div>
 
         {/* Execution Plan Wizard */}
@@ -1763,7 +1776,7 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
                 vcrApprovers={vcrApprovers}
                 showSof={!!vcr.has_hydrocarbon}
               />,
-              <OverviewInfoPanel key="info" vcr={vcr} projectName={projectName} projectCode={projectCode} liveTargetDate={liveTargetDate} onTargetDateChange={setLiveTargetDate} />,
+              <OverviewInfoPanel key="info" vcr={vcr} projectName={projectName} projectCode={projectCode} projectId={projectId} liveTargetDate={liveTargetDate} onTargetDateChange={setLiveTargetDate} />,
             ].map((panel, idx) => (
               <div
                 key={idx}
