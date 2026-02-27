@@ -1,45 +1,40 @@
 
 
-## Redesign: Gantt Chart Activity Section
+## Collapsible Hierarchy in Gantt Charts
 
-Both `StepSchedule.tsx` (wizard) and `ORPGanttChart.tsx` (plan view) need a modern redesign with structured columns and extended zoom range.
+### Current State
+Both Gantt components (`StepSchedule.tsx` and `ORPGanttChart.tsx`) render all activities in a flat list. The `WizardActivity` type already has `parentActivityId`, and `ora_activity_catalog` has `parent_activity_id` — the hierarchy data exists but is not used for display.
 
-### Changes to Both Gantt Components
+Activity codes use dot notation for hierarchy: `IDN-01` (parent), `IDN-01.01` (child), `IDN-01.01.01` (grandchild), etc.
 
-#### 1. Structured Column Layout (Left Panel)
-Replace the current cramped activity info area with a proper table-like layout with distinct columns:
+### Changes
 
-```text
-┌──────────┬────────────────────┬────────────┬────────────┬──────┬─────────────┬─────────────────┐
-│ Activity │ Activity Name      │ Start Date │ End Date   │ Days │ Status      │ Timeline bars…  │
-│ ID       │                    │            │            │      │             │                 │
-├──────────┼────────────────────┼────────────┼────────────┼──────┼─────────────┼─────────────────┤
-│ IDN-001  │ Identify Hazards   │ 01 Mar     │ 15 Mar     │  14  │ Not Started │ ████████        │
-│ ASS-002  │ Assess Risks       │ 10 Mar     │ 25 Mar     │  15  │ In Progress │    ██████████   │
-└──────────┴────────────────────┴────────────┴────────────┴──────┴─────────────┴─────────────────┘
-```
+#### 1. `StepSchedule.tsx` — Wizard Gantt with collapsible rows
 
-- **Activity ID**: Phase-colored badge (blue for IDN, amber for ASS, emerald for SEL, teal for DEF, rose for EXE, purple for OPR) — uses existing `PHASE_COLORS` mapping
-- **Activity Name**: Truncated text, full name on hover
-- **Start Date**: Formatted `dd MMM` (editable input in wizard, read-only in review)
-- **End Date**: Formatted `dd MMM` (auto-calculated in wizard, read-only in review)
-- **Duration**: Number of days (editable in wizard)
-- **Status**: Badge showing Not Started / In Progress / Completed with appropriate colors
+- Add `expandedIds: Set<string>` state, defaulting to empty (all collapsed — only top-level activities visible)
+- Build a `childrenMap` from `parentActivityId` (same pattern used in `StepActivities.tsx`)
+- Compute `visibleActivities` by walking the tree: show root activities always, show children only if parent is in `expandedIds`
+- Add a chevron toggle (ChevronRight/ChevronDown) in the Activity Name column for activities that have children
+- Indent activity name based on depth level (each level adds ~16px left padding)
+- Timeline bars render for visible activities only; parent activities show a summary bar spanning min(start)→max(end) of children
 
-#### 2. Extended Zoom Range
-- **StepSchedule.tsx**: Change min zoom from `0.5` to `0.15` (allows ~24 months at typical widths)
-- **ORPGanttChart.tsx**: Add lower zoom levels: `[0.15, 0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4]`
-- Add preset buttons: "6M", "12M", "24M" for quick timeline views
+#### 2. `ORPGanttChart.tsx` — Plan view Gantt with collapsible rows
 
-#### 3. Visual Polish
-- Sticky left columns (activity info stays visible while scrolling timeline)
-- Alternating row backgrounds for readability
-- Thinner, more refined grid lines
-- Bar colors matched to phase-colored Activity ID badges
-- Row height standardized to single-line (compact ~40px)
+- The `deliverables` data joins `orp_deliverables_catalog` which is fetched via `deliverable:orp_deliverables_catalog(*)` — need to verify if `ora_activity_catalog` fields (specifically `parent_activity_id`) are included. If not, build hierarchy from activity code dot notation (e.g., `IDN-01` is parent of `IDN-01.01`)
+- Add `expandedIds: Set<string>` state
+- Same tree-walk logic for visible rows
+- Add chevron + indentation in the Activity Name column
+- Parent rows show aggregated duration (sum or span) and a summary bar
+
+#### 3. Shared hierarchy utility
+
+Create a small helper (inline or extracted) to:
+- Build parent→children map from `parentActivityId` or activity code dot notation
+- Compute depth level for indentation
+- Determine if an activity has children (to show chevron)
 
 ### Files Modified
 
-1. **`src/components/ora/wizard/StepSchedule.tsx`** — Full rewrite of left panel to columnar layout; add status column (defaults to "Not Started" for wizard); extend zoom min to 0.15; add preset timeline buttons
-2. **`src/components/orp/ORPGanttChart.tsx`** — Restructure left panel with Activity ID (colored badge), Name, Start, End, Duration, Status columns; extend zoom levels; add preset buttons
+1. **`src/components/ora/wizard/StepSchedule.tsx`** — Add expand/collapse state, tree-walk for visible activities, chevron toggles, indented names, summary bars for parents
+2. **`src/components/orp/ORPGanttChart.tsx`** — Same hierarchy logic using activity code parsing or `parent_activity_id` from joined catalog data
 
