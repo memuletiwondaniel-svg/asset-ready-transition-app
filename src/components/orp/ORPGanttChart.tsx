@@ -38,6 +38,7 @@ const PHASE_COLORS: Record<string, { bg: string; text: string }> = {
   DEF: { bg: 'bg-teal-500/15', text: 'text-teal-700 dark:text-teal-400' },
   EXE: { bg: 'bg-indigo-500/15', text: 'text-indigo-700 dark:text-indigo-400' },
   OPR: { bg: 'bg-purple-500/15', text: 'text-purple-700 dark:text-purple-400' },
+  VCR: { bg: 'bg-rose-500/15', text: 'text-rose-700 dark:text-rose-400' },
 };
 
 const BAR_COLORS: Record<string, string> = {
@@ -47,6 +48,7 @@ const BAR_COLORS: Record<string, string> = {
   DEF: 'bg-teal-400 dark:bg-teal-500',
   EXE: 'bg-indigo-400 dark:bg-indigo-500',
   OPR: 'bg-purple-400 dark:bg-purple-500',
+  VCR: 'bg-rose-400 dark:bg-rose-500',
 };
 
 const ZOOM_PRESETS = [
@@ -56,7 +58,10 @@ const ZOOM_PRESETS = [
 ];
 
 function getPhasePrefix(code: string): string {
-  return (code || '').split('-')[0];
+  if (!code) return '';
+  // VCR activity codes start with "VCR-"
+  if (code.startsWith('VCR-')) return 'VCR';
+  return code.split('-')[0];
 }
 
 // Build hierarchy from activity_code dot notation

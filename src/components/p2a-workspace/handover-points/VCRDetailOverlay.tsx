@@ -59,6 +59,7 @@ interface VCRDetailOverlayProps {
   onOpenChange: (open: boolean) => void;
   onDelete?: () => void;
   isDeleting?: boolean;
+  projectId?: string;
 }
 
 const getStatusConfig = (status: string) => {
@@ -101,6 +102,7 @@ export const VCRDetailOverlay: React.FC<VCRDetailOverlayProps> = ({
   onOpenChange,
   onDelete,
   isDeleting,
+  projectId,
 }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -127,7 +129,7 @@ export const VCRDetailOverlay: React.FC<VCRDetailOverlayProps> = ({
       case 'systems':
         return <VCRSystemsTab handoverPoint={handoverPoint} />;
       case 'checklist':
-        return <VCRChecklistTab handoverPoint={handoverPoint} />;
+        return <VCRChecklistTab handoverPoint={handoverPoint} projectId={projectId} />;
       case 'training':
         return <VCRTrainingTab handoverPoint={handoverPoint} />;
       case 'documentation':
