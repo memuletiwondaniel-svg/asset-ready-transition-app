@@ -102,6 +102,20 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error('Not authenticated');
 
+      // Guard: check if an active plan already exists for this project
+      const { data: existingPlans } = await supabase
+        .from('orp_plans')
+        .select('id')
+        .eq('project_id', projectId)
+        .eq('is_active', true)
+        .limit(1);
+
+      if (existingPlans && existingPlans.length > 0) {
+        toast({ title: 'Plan already exists', description: 'This project already has an active ORA Activity Plan.', variant: 'destructive' });
+        setIsCreating(false);
+        return;
+      }
+
       const orpPhase = PHASE_TO_ORP[phase] || 'ASSESS_SELECT';
 
       const { data: plan, error: planError } = await supabase
