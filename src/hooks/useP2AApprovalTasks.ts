@@ -87,10 +87,29 @@ export async function checkAndCompletePlan(planId: string) {
 
   const allApproved = allApprovers.every((a: any) => a.status === 'APPROVED');
   if (allApproved) {
+    // Transition plan to COMPLETED
     await client
       .from('p2a_handover_plans')
       .update({ status: 'COMPLETED' })
       .eq('id', planId);
+
+    // Fetch plan details for ORA activity generation
+    const { data: plan } = await client
+      .from('p2a_handover_plans')
+      .select('project_id, project_code')
+      .eq('id', planId)
+      .single();
+
+    if (plan?.project_id) {
+      // Generate VCR activities in the ORA Activity Plan
+      try {
+        const { generateVCRActivitiesFromP2A } = await import('./useORAActivityPlanSync');
+        await generateVCRActivitiesFromP2A(planId, plan.project_id, plan.project_code || '');
+      } catch (e) {
+        console.error('[P2A] Failed to generate VCR activities:', e);
+      }
+    }
+
     return true;
   }
   return false;

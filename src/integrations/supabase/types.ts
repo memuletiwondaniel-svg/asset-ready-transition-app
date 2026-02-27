@@ -695,6 +695,98 @@ export type Database = {
           },
         ]
       }
+      ora_plan_activities: {
+        Row: {
+          activity_code: string
+          assigned_to: string | null
+          completion_percentage: number | null
+          created_at: string | null
+          description: string | null
+          duration_days: number | null
+          end_date: string | null
+          id: string
+          name: string
+          orp_plan_id: string
+          parent_id: string | null
+          source_ref_id: string | null
+          source_ref_table: string | null
+          source_type: string
+          start_date: string | null
+          status: string
+          task_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          activity_code: string
+          assigned_to?: string | null
+          completion_percentage?: number | null
+          created_at?: string | null
+          description?: string | null
+          duration_days?: number | null
+          end_date?: string | null
+          id?: string
+          name: string
+          orp_plan_id: string
+          parent_id?: string | null
+          source_ref_id?: string | null
+          source_ref_table?: string | null
+          source_type?: string
+          start_date?: string | null
+          status?: string
+          task_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          activity_code?: string
+          assigned_to?: string | null
+          completion_percentage?: number | null
+          created_at?: string | null
+          description?: string | null
+          duration_days?: number | null
+          end_date?: string | null
+          id?: string
+          name?: string
+          orp_plan_id?: string
+          parent_id?: string | null
+          source_ref_id?: string | null
+          source_ref_table?: string | null
+          source_type?: string
+          start_date?: string | null
+          status?: string
+          task_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ora_plan_activities_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "ora_plan_activities_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles_safe"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "ora_plan_activities_orp_plan_id_fkey"
+            columns: ["orp_plan_id"]
+            isOneToOne: false
+            referencedRelation: "orp_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ora_plan_activities_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "ora_plan_activities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ora_plan_templates: {
         Row: {
           applicable_phases: string[]
