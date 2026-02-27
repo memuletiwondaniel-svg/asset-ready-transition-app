@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Plus, Search, ZoomIn, ZoomOut, Maximize2, ChevronRight, ChevronDown, ChevronsUpDown } from 'lucide-react';
 import { CreateORPModal } from './CreateORPModal';
 import { ORPDeliverableModal } from './ORPDeliverableModal';
+import { ORAActivityTaskSheet } from '@/components/tasks/ORAActivityTaskSheet';
 import { getStatusLabel, getStatusBadgeClasses } from './utils/statusStyles';
 import { cn } from '@/lib/utils';
 
@@ -23,7 +24,7 @@ const ROW_HEIGHT = 40;
 const COL_WIDTHS = {
   index: 36,
   id: 90,
-  name: 190,
+  name: 260,
   start: 72,
   end: 72,
   duration: 48,
@@ -158,6 +159,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
   const [internalSearchQuery, setInternalSearchQuery] = useState('');
   const [showAddItem, setShowAddItem] = useState(false);
   const [selectedDeliverable, setSelectedDeliverable] = useState<any>(null);
+  const [selectedOraActivity, setSelectedOraActivity] = useState<any>(null);
   const [zoomLevel, setZoomLevel] = useState(1);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -387,8 +389,8 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
             <div className="shrink-0 border-r bg-muted/30" style={{ width: LEFT_PANEL_WIDTH }}>
               <div className="flex items-center h-9 border-b text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
                 <div className="px-1 text-center" style={{ width: COL_WIDTHS.index }}>#</div>
-                <div className="px-1" style={{ width: COL_WIDTHS.id }}>ID</div>
-                <div className="px-1 truncate" style={{ width: COL_WIDTHS.name }}>Activity</div>
+                <div className="px-1 border-r border-border/40" style={{ width: COL_WIDTHS.id }}>ID</div>
+                <div className="px-1.5 border-r border-border/40" style={{ width: COL_WIDTHS.name }}>Activity</div>
                 <div className="px-1 text-center" style={{ width: COL_WIDTHS.start }}>Start</div>
                 <div className="px-1 text-center" style={{ width: COL_WIDTHS.end }}>End</div>
                 <div className="px-1 text-center" style={{ width: COL_WIDTHS.duration }}>Days</div>
@@ -431,12 +433,35 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                         isParent && 'font-medium'
                       )}
                       style={{ height: ROW_HEIGHT }}
-                      onClick={() => setSelectedDeliverable(deliverable)}
+                      onClick={() => {
+                        if (deliverable._isOraActivity) {
+                          // Convert to UserTask-like shape for ORAActivityTaskSheet
+                          setSelectedOraActivity({
+                            id: deliverable.id,
+                            title: deliverable.deliverable?.name || '',
+                            description: deliverable.deliverable?.description || '',
+                            type: 'ora_activity',
+                            status: deliverable.status === 'COMPLETED' ? 'completed' : deliverable.status === 'IN_PROGRESS' ? 'in_progress' : 'pending',
+                            metadata: {
+                              activity_name: deliverable.deliverable?.name,
+                              activity_code: deliverable.deliverable?.activity_code,
+                              plan_id: planId,
+                              deliverable_id: deliverable.deliverable?.id,
+                              start_date: deliverable.start_date,
+                              end_date: deliverable.end_date,
+                            },
+                            priority: 'medium',
+                            created_at: deliverable.created_at || new Date().toISOString(),
+                          });
+                        } else {
+                          setSelectedDeliverable(deliverable);
+                        }
+                      }}
                     >
                       <div className="px-1 text-center text-[10px] text-muted-foreground" style={{ width: COL_WIDTHS.index }}>
                         {index + 1}
                       </div>
-                      <div className="px-1 flex items-center" style={{ width: COL_WIDTHS.id }}>
+                      <div className="px-1 flex items-center border-r border-border/40" style={{ width: COL_WIDTHS.id }}>
                         {activityCode ? (
                           <span className={cn("inline-flex items-center rounded px-1.5 py-0.5 text-[9px] font-mono font-semibold whitespace-nowrap", idColors.bg, idColors.text)}>
                             {activityCode}
@@ -445,8 +470,8 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                           <span className="text-[10px] text-muted-foreground">—</span>
                         )}
                       </div>
-                      <div className="px-1 overflow-hidden flex items-center gap-0.5" style={{ width: COL_WIDTHS.name }}>
-                        <div style={{ paddingLeft: depth * 16 }} className="flex items-center gap-0.5 min-w-0">
+                      <div className="px-1.5 overflow-hidden flex items-center gap-0.5 border-r border-border/40" style={{ width: COL_WIDTHS.name }}>
+                        <div style={{ paddingLeft: depth * 16 }} className="flex items-center gap-1 min-w-0">
                           {hasChildren ? (
                             <button
                               className="shrink-0 w-4 h-4 flex items-center justify-center rounded hover:bg-accent/50"
@@ -460,7 +485,10 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                           ) : (
                             <span className="shrink-0 w-4" />
                           )}
-                          <span className={cn("text-[11px] truncate block", isParent && "font-semibold")} title={deliverable.deliverable?.name}>
+                          <span className={cn(
+                            "text-[11px] leading-snug",
+                            isParent ? "font-semibold text-foreground" : "text-foreground/90"
+                          )} title={deliverable.deliverable?.name}>
                             {deliverable.deliverable?.name}
                           </span>
                         </div>
@@ -590,6 +618,11 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
           planId={planId}
         />
       )}
+      <ORAActivityTaskSheet
+        task={selectedOraActivity}
+        open={!!selectedOraActivity}
+        onOpenChange={(open) => !open && setSelectedOraActivity(null)}
+      />
     </Card>
   );
 };

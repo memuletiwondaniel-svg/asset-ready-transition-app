@@ -43,7 +43,7 @@ const ROW_HEIGHT = 40;
 
 const COL_DEFS = {
   id: { key: 'id' as const, label: 'ID', width: 90, alwaysVisible: true },
-  name: { key: 'name' as const, label: 'Activity', width: 200, alwaysVisible: true },
+  name: { key: 'name' as const, label: 'Activity', width: 280, alwaysVisible: true },
   start: { key: 'start' as const, label: 'Start', width: 100, alwaysVisible: false },
   end: { key: 'end' as const, label: 'End', width: 80, alwaysVisible: false },
   duration: { key: 'duration' as const, label: 'Days', width: 56, alwaysVisible: false },
@@ -390,8 +390,8 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
         <div className="flex">
           <div className="shrink-0 border-r bg-muted/30" style={{ width: leftPanelWidth }}>
             <div className="flex items-center h-9 border-b text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
-              {isColVisible('id') && <div className="px-2" style={{ width: COL_DEFS.id.width }}>ID</div>}
-              {isColVisible('name') && <div className="px-1 truncate" style={{ width: COL_DEFS.name.width }}>Activity</div>}
+              {isColVisible('id') && <div className="px-2 border-r border-border/40" style={{ width: COL_DEFS.id.width }}>ID</div>}
+              {isColVisible('name') && <div className="px-1.5 border-r border-border/40" style={{ width: COL_DEFS.name.width }}>Activity</div>}
               {isColVisible('start') && <div className="px-1 text-center" style={{ width: COL_DEFS.start.width }}>Start</div>}
               {isColVisible('end') && <div className="px-1 text-center" style={{ width: COL_DEFS.end.width }}>End</div>}
               {isColVisible('duration') && <div className="px-1 text-center" style={{ width: COL_DEFS.duration.width }}>Days</div>}
@@ -430,11 +430,11 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                       index % 2 === 0 ? 'bg-background' : 'bg-muted/10',
                       isParent && 'font-medium'
                     )}
-                    style={{ height: ROW_HEIGHT }}
+                    style={{ minHeight: ROW_HEIGHT }}
                     onClick={() => setSelectedActivityId(activity.id)}
                   >
                     {isColVisible('id') && (
-                      <div className="px-1.5 flex items-center justify-center" style={{ width: COL_DEFS.id.width }}>
+                      <div className="px-1.5 flex items-center justify-center border-r border-border/40" style={{ width: COL_DEFS.id.width }}>
                         <span className={cn(
                           "inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-mono font-semibold whitespace-nowrap",
                           idColors.bg, idColors.text
@@ -445,8 +445,8 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                     )}
 
                     {isColVisible('name') && (
-                      <div className="px-1 overflow-hidden flex items-center gap-0.5" style={{ width: COL_DEFS.name.width }}>
-                        <div style={{ paddingLeft: depth * 16 }} className="flex items-center gap-0.5 min-w-0">
+                      <div className="px-1.5 overflow-hidden flex items-center gap-0.5 border-r border-border/40" style={{ width: COL_DEFS.name.width }}>
+                        <div style={{ paddingLeft: depth * 16 }} className="flex items-center gap-1 min-w-0">
                           {hasChildren ? (
                             <button
                               className="shrink-0 w-4 h-4 flex items-center justify-center rounded hover:bg-accent/50"
@@ -460,7 +460,10 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                           ) : (
                             <span className="shrink-0 w-4" />
                           )}
-                          <span className={cn("text-[11px] truncate block", isParent && "font-semibold")} title={activity.activity}>
+                          <span className={cn(
+                            "text-[11px] leading-snug",
+                            isParent ? "font-semibold text-foreground" : "text-foreground/90"
+                          )} title={activity.activity}>
                             {activity.activity}
                           </span>
                         </div>
