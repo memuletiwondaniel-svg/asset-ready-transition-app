@@ -395,6 +395,16 @@ async function runPostCompletionSync(
     await syncVCRTemplateApproval(meta, completedTask.type, completedTask.title, taskId, userId);
     await syncBackToBack(meta, completedTask.type, userId);
   }
+
+  // ORA Activity Plan sync (bidirectional task ↔ activity)
+  if (meta?.ora_plan_activity_id) {
+    try {
+      const { syncORAActivityCompletion } = await import('./useORAActivityPlanSync');
+      await syncORAActivityCompletion(taskId, status);
+    } catch (e) {
+      console.warn('ORA activity sync failed:', e);
+    }
+  }
 }
 
 export const useUserTasks = () => {

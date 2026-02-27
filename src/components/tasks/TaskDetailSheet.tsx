@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CheckCircle, X, Calendar, AlertTriangle, ChevronRight, Pencil, CalendarCheck } from 'lucide-react';
+import { CheckCircle, X, Calendar, AlertTriangle, ChevronRight, Pencil, CalendarCheck, ClipboardList } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,9 @@ import CreatePSSRWizard from '@/components/pssr/CreatePSSRWizard';
 import { ORAActivityPlanWizard } from '@/components/ora/wizard/ORAActivityPlanWizard';
 import { ORAActivityPlanReviewOverlay } from '@/components/ora/ORAActivityPlanReviewOverlay';
 import { ORAActivityTaskSheet } from './ORAActivityTaskSheet';
+import { VCRExecutionPlanWizard } from '@/components/widgets/vcr-wizard/VCRExecutionPlanWizard';
 import type { UserTask } from '@/hooks/useUserTasks';
+import type { ProjectVCR } from '@/hooks/useProjectVCRs';
 
 interface TaskDetailSheetProps {
   task: UserTask | null;
@@ -34,6 +36,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   const [oraWizardOpen, setOraWizardOpen] = useState(false);
   const [oraReviewOpen, setOraReviewOpen] = useState(false);
   const [oraActivityOpen, setOraActivityOpen] = useState(false);
+  const [vcrWizardOpen, setVcrWizardOpen] = useState(false);
 
   const handleAction = (type: 'approve' | 'reject') => {
     if (!task) return;
@@ -73,6 +76,8 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
         return <Badge variant="secondary" className="text-xs bg-amber-500/10 text-amber-600">ORA Review</Badge>;
       case 'ora_activity':
         return <Badge variant="secondary" className="text-xs bg-purple-500/10 text-purple-600">ORA Activity</Badge>;
+      case 'vcr_delivery_plan':
+        return <Badge variant="secondary" className="text-xs bg-teal-500/10 text-teal-600">VCR Delivery Plan</Badge>;
       default:
         return <Badge variant="secondary" className="text-xs">{type}</Badge>;
     }
@@ -93,8 +98,23 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   const isOraTask = task.type === 'ora_plan_creation';
   const isOraReviewTask = task.type === 'ora_plan_review';
   const isOraActivityTask = task.type === 'ora_activity';
+  const isVcrDeliveryPlanTask = task.type === 'vcr_delivery_plan' && task.metadata?.action === 'create_vcr_delivery_plan';
   const oraProjectId = task.metadata?.project_id as string | undefined;
   const oraPlanId = task.metadata?.plan_id as string | undefined;
+
+  // Build VCR object for the wizard when needed
+  const vcrForWizard: ProjectVCR | null = isVcrDeliveryPlanTask && task.metadata ? {
+    id: task.metadata.vcr_id,
+    vcr_code: task.metadata.vcr_code || '',
+    name: task.metadata.vcr_name || '',
+    description: null,
+    status: 'IN_PROGRESS',
+    target_date: null,
+    created_at: '',
+    progress: 0,
+    systems_count: 0,
+    has_hydrocarbon: false,
+  } : null;
 
   return (
     <>
@@ -197,6 +217,18 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
               </Button>
             )}
 
+            {/* VCR Delivery Plan CTA - opens VCR execution plan wizard */}
+            {isVcrDeliveryPlanTask && vcrForWizard && (
+              <Button
+                className="w-full gap-2 bg-muted hover:bg-muted/80 text-foreground font-medium border border-border"
+                onClick={() => setVcrWizardOpen(true)}
+              >
+                <ClipboardList className="h-4 w-4" />
+                Setup VCR Delivery Plan
+                <ChevronRight className="h-4 w-4 ml-auto" />
+              </Button>
+            )}
+
             <Separator />
 
             {/* Comment Section */}
@@ -286,6 +318,16 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
           task={task}
           open={oraActivityOpen}
           onOpenChange={setOraActivityOpen}
+        />
+      )}
+
+      {/* VCR Execution Plan Wizard */}
+      {isVcrDeliveryPlanTask && vcrForWizard && (
+        <VCRExecutionPlanWizard
+          open={vcrWizardOpen}
+          onOpenChange={setVcrWizardOpen}
+          vcr={vcrForWizard}
+          projectCode={task.metadata?.project_code}
         />
       )}
     </>
