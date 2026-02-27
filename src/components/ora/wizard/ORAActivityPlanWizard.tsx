@@ -111,7 +111,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
           phase: orpPhase as any,
           created_by: user.user.id,
           ora_engineer_id: user.user.id,
-          status: 'DRAFT' as any,
+          status: 'PENDING_APPROVAL' as any,
         })
         .select()
         .single();
@@ -141,7 +141,49 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
         }
       }
 
-      toast({ title: 'Success', description: 'ORA Activity Plan created successfully' });
+      // Mark the Snr ORA Engr's creation task as completed
+      const { error: taskCompleteError } = await supabase
+        .from('user_tasks')
+        .update({ status: 'completed' })
+        .eq('user_id', user.user.id)
+        .eq('type', 'ora_plan_creation')
+        .match({ 'metadata->>project_id': projectId } as any);
+
+      if (taskCompleteError) {
+        console.warn('Could not complete creation task:', taskCompleteError.message);
+      }
+
+      // Find ORA Lead from project team to create review task
+      const { data: teamMembers } = await supabase
+        .from('project_team_members')
+        .select('user_id, role')
+        .eq('project_id', projectId);
+
+      // Also try to find ORA Lead from profiles
+      const ORA_LEAD_ROLES = ['ORA Lead'];
+      const oraLeadMember = teamMembers?.find(m => ORA_LEAD_ROLES.includes(m.role));
+
+      if (oraLeadMember) {
+        // Create review task for ORA Lead
+        await supabase
+          .from('user_tasks')
+          .insert({
+            user_id: oraLeadMember.user_id,
+            title: 'Review ORA Activity Plan',
+            description: `Review and approve the ORA Activity Plan for project`,
+            type: 'ora_plan_review',
+            status: 'pending',
+            priority: 'high',
+            metadata: {
+              source: 'ora_workflow',
+              project_id: projectId,
+              plan_id: plan.id,
+              action: 'review_ora_plan',
+            }
+          });
+      }
+
+      toast({ title: 'Submitted', description: 'ORA Activity Plan submitted for approval' });
       onOpenChange(false);
       resetForm();
       onSuccess?.();
@@ -197,7 +239,10 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
+      <DialogContent className={cn(
+        "max-h-[85vh] overflow-hidden flex flex-col",
+        currentStep === 4 ? "max-w-5xl w-[95vw]" : "max-w-2xl"
+      )}>
         <DialogHeader className="border-b pb-4">
           <DialogTitle className="flex items-center gap-2 text-xl font-semibold">
             <CalendarCheck className="w-5 h-5 text-primary" />
@@ -313,11 +358,11 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
               Next
             </Button>
           ) : (
-            <Button onClick={handleCreate} disabled={isCreating}>
+            <Button onClick={handleCreate} disabled={isCreating} className="gap-2">
               {isCreating ? (
-                <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Creating...</>
+                <><Loader2 className="w-4 h-4 animate-spin" /> Submitting...</>
               ) : (
-                'Create Plan'
+                'Submit for Approval'
               )}
             </Button>
           )}
