@@ -1,40 +1,31 @@
 
 
-## Collapsible Hierarchy in Gantt Charts
+## Plan: Improve StepSchedule UX
 
-### Current State
-Both Gantt components (`StepSchedule.tsx` and `ORPGanttChart.tsx`) render all activities in a flat list. The `WizardActivity` type already has `parentActivityId`, and `ora_activity_catalog` has `parent_activity_id` — the hierarchy data exists but is not used for display.
+### 1. Replace date input with calendar popover
+- Remove the `<Input type="date">` for start date — replace with a clickable text that shows "Set date" in muted style when empty, or the formatted date (e.g., "15 Mar") when set
+- On click, open a `Popover` with `Calendar` component (shadcn) for date selection
+- Same clean muted display for end date (already read-only)
 
-Activity codes use dot notation for hierarchy: `IDN-01` (parent), `IDN-01.01` (child), `IDN-01.01.01` (grandchild), etc.
+### 2. Column visibility toggle
+- Add a `Columns` dropdown button (using `DropdownMenu`) next to the zoom controls
+- Allow toggling visibility of: Start, End, Days, Status columns
+- Default visible: ID, Activity, Start (always show ID + Activity)
+- Dynamically compute `LEFT_PANEL_WIDTH` based on visible columns
 
-### Changes
+### 3. Activity detail side overlay
+- Add state for `selectedActivityId`
+- When user clicks an activity row, open a `Sheet` (from right) showing full activity details: code, name, description, phase, duration estimates (high/med/low), start/end dates, status
+- Allow inline editing of schedule fields within the sheet
 
-#### 1. `StepSchedule.tsx` — Wizard Gantt with collapsible rows
+### 4. Fix Activity ID badge colors
+- Change `EXE` phase from rose (red-like) to **indigo** or **orange** — rose connotes errors
+- Adjust to: IDN=blue, ASS=amber, SEL=emerald, DEF=teal, EXE=indigo, OPR=purple
 
-- Add `expandedIds: Set<string>` state, defaulting to empty (all collapsed — only top-level activities visible)
-- Build a `childrenMap` from `parentActivityId` (same pattern used in `StepActivities.tsx`)
-- Compute `visibleActivities` by walking the tree: show root activities always, show children only if parent is in `expandedIds`
-- Add a chevron toggle (ChevronRight/ChevronDown) in the Activity Name column for activities that have children
-- Indent activity name based on depth level (each level adds ~16px left padding)
-- Timeline bars render for visible activities only; parent activities show a summary bar spanning min(start)→max(end) of children
-
-#### 2. `ORPGanttChart.tsx` — Plan view Gantt with collapsible rows
-
-- The `deliverables` data joins `orp_deliverables_catalog` which is fetched via `deliverable:orp_deliverables_catalog(*)` — need to verify if `ora_activity_catalog` fields (specifically `parent_activity_id`) are included. If not, build hierarchy from activity code dot notation (e.g., `IDN-01` is parent of `IDN-01.01`)
-- Add `expandedIds: Set<string>` state
-- Same tree-walk logic for visible rows
-- Add chevron + indentation in the Activity Name column
-- Parent rows show aggregated duration (sum or span) and a summary bar
-
-#### 3. Shared hierarchy utility
-
-Create a small helper (inline or extracted) to:
-- Build parent→children map from `parentActivityId` or activity code dot notation
-- Compute depth level for indentation
-- Determine if an activity has children (to show chevron)
+### 5. Widen Step 4 dialog
+- In `ORAActivityPlanWizard.tsx` line 258, change `max-w-5xl` to `max-w-7xl w-[98vw]` for step 4
 
 ### Files Modified
-
-1. **`src/components/ora/wizard/StepSchedule.tsx`** — Add expand/collapse state, tree-walk for visible activities, chevron toggles, indented names, summary bars for parents
-2. **`src/components/orp/ORPGanttChart.tsx`** — Same hierarchy logic using activity code parsing or `parent_activity_id` from joined catalog data
+1. **`src/components/ora/wizard/StepSchedule.tsx`** — Calendar popover, column toggle, activity detail sheet, color fix
+2. **`src/components/ora/wizard/ORAActivityPlanWizard.tsx`** — Wider dialog for step 4
 
