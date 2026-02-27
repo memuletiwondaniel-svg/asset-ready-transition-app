@@ -1,0 +1,1 @@
+UPDATE orp_plans SET is_active = false WHERE project_id = '76901c6c-927d-4266-aaea-bc036888f274';
