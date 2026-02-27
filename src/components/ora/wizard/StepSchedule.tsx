@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef, useCallback } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { CalendarDays, ZoomIn, ZoomOut, ChevronDown, Columns3, X } from 'lucide-react';
+import { CalendarDays, ZoomIn, ZoomOut, ChevronRight, ChevronDown, Columns3, ChevronsUpDown } from 'lucide-react';
 import { WizardActivity } from './types';
 import { format, parseISO, addDays, differenceInDays, startOfDay } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -43,7 +43,7 @@ const ROW_HEIGHT = 40;
 
 const COL_DEFS = {
   id: { key: 'id' as const, label: 'ID', width: 90, alwaysVisible: true },
-  name: { key: 'name' as const, label: 'Activity', width: 180, alwaysVisible: true },
+  name: { key: 'name' as const, label: 'Activity', width: 200, alwaysVisible: true },
   start: { key: 'start' as const, label: 'Start', width: 100, alwaysVisible: false },
   end: { key: 'end' as const, label: 'End', width: 80, alwaysVisible: false },
   duration: { key: 'duration' as const, label: 'Days', width: 56, alwaysVisible: false },
@@ -95,13 +95,107 @@ function getIdBadgeClasses(code: string) {
   return PHASE_COLORS[prefix] || { bg: 'bg-muted', text: 'text-foreground' };
 }
 
+// Hierarchy helpers
+function buildChildrenMap(activities: WizardActivity[]): Map<string | null, WizardActivity[]> {
+  const map = new Map<string | null, WizardActivity[]>();
+  activities.forEach(a => {
+    const parentId = a.parentActivityId || null;
+    if (!map.has(parentId)) map.set(parentId, []);
+    map.get(parentId)!.push(a);
+  });
+  return map;
+}
+
+function getDepth(activity: WizardActivity, activities: WizardActivity[]): number {
+  let depth = 0;
+  let current = activity;
+  while (current.parentActivityId) {
+    depth++;
+    const parent = activities.find(a => a.id === current.parentActivityId);
+    if (!parent) break;
+    current = parent;
+  }
+  return depth;
+}
+
+interface FlatRow {
+  activity: WizardActivity;
+  depth: number;
+  hasChildren: boolean;
+}
+
+function buildVisibleRows(
+  activities: WizardActivity[],
+  childrenMap: Map<string | null, WizardActivity[]>,
+  expandedIds: Set<string>,
+  parentId: string | null = null,
+  depth: number = 0
+): FlatRow[] {
+  const children = childrenMap.get(parentId) || [];
+  const rows: FlatRow[] = [];
+  for (const child of children) {
+    const hasChildren = (childrenMap.get(child.id) || []).length > 0;
+    rows.push({ activity: child, depth, hasChildren });
+    if (hasChildren && expandedIds.has(child.id)) {
+      rows.push(...buildVisibleRows(activities, childrenMap, expandedIds, child.id, depth + 1));
+    }
+  }
+  return rows;
+}
+
+// Get aggregated date range for parent from all descendants
+function getParentDateRange(
+  activityId: string,
+  activities: WizardActivity[],
+  childrenMap: Map<string | null, WizardActivity[]>
+): { minStart: string | null; maxEnd: string | null } {
+  const children = childrenMap.get(activityId) || [];
+  let minStart: Date | null = null;
+  let maxEnd: Date | null = null;
+
+  for (const child of children) {
+    if (child.startDate) {
+      const s = parseISO(child.startDate);
+      if (!minStart || s < minStart) minStart = s;
+    }
+    if (child.endDate) {
+      const e = parseISO(child.endDate);
+      if (!maxEnd || e > maxEnd) maxEnd = e;
+    }
+    // Recurse
+    const sub = getParentDateRange(child.id, activities, childrenMap);
+    if (sub.minStart) {
+      const s = parseISO(sub.minStart);
+      if (!minStart || s < minStart) minStart = s;
+    }
+    if (sub.maxEnd) {
+      const e = parseISO(sub.maxEnd);
+      if (!maxEnd || e > maxEnd) maxEnd = e;
+    }
+  }
+
+  return {
+    minStart: minStart ? format(minStart, 'yyyy-MM-dd') : null,
+    maxEnd: maxEnd ? format(maxEnd, 'yyyy-MM-dd') : null,
+  };
+}
+
 export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }) => {
   const [zoomLevel, setZoomLevel] = useState(1);
   const [visibleCols, setVisibleCols] = useState<Set<ColKey>>(new Set(DEFAULT_VISIBLE));
   const [selectedActivityId, setSelectedActivityId] = useState<string | null>(null);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const selectedActivities = useMemo(() => activities.filter(a => a.selected), [activities]);
+
+  const childrenMap = useMemo(() => buildChildrenMap(selectedActivities), [selectedActivities]);
+
+  const visibleRows = useMemo(
+    () => buildVisibleRows(selectedActivities, childrenMap, expandedIds),
+    [selectedActivities, childrenMap, expandedIds]
+  );
+
   const selectedActivity = useMemo(
     () => selectedActivityId ? activities.find(a => a.id === selectedActivityId) : null,
     [selectedActivityId, activities]
@@ -120,6 +214,25 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
       return next;
     });
   };
+
+  const toggleExpand = (id: string) => {
+    setExpandedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const expandAll = () => {
+    const allParentIds = new Set<string>();
+    selectedActivities.forEach(a => {
+      if ((childrenMap.get(a.id) || []).length > 0) allParentIds.add(a.id);
+    });
+    setExpandedIds(allParentIds);
+  };
+
+  const collapseAll = () => setExpandedIds(new Set());
 
   const updateActivity = useCallback((id: string, updates: Partial<WizardActivity & { status?: string }>) => {
     onActivitiesChange(activities.map(a => {
@@ -186,13 +299,17 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
     return markers;
   }, [totalDays, dayWidth]);
 
-  const getBarPosition = (activity: WizardActivity) => {
-    if (!activity.startDate) return null;
+  const getBarPosition = (startDate: string, endDateOrDuration: string | number) => {
     try {
-      const start = parseISO(activity.startDate);
-      const duration = activity.durationDays || 14;
+      const start = parseISO(startDate);
       const left = differenceInDays(start, timelineStart) * dayWidth;
-      const width = Math.max(duration * dayWidth, MIN_BAR_WIDTH);
+      let width: number;
+      if (typeof endDateOrDuration === 'string') {
+        const end = parseISO(endDateOrDuration);
+        width = Math.max(differenceInDays(end, start) * dayWidth, MIN_BAR_WIDTH);
+      } else {
+        width = Math.max((endDateOrDuration || 14) * dayWidth, MIN_BAR_WIDTH);
+      }
       return { left, width };
     } catch { return null; }
   };
@@ -205,9 +322,7 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
   };
 
   const handleDateSelect = (activityId: string, date: Date | undefined) => {
-    if (date) {
-      updateActivity(activityId, { startDate: format(date, 'yyyy-MM-dd') });
-    }
+    if (date) updateActivity(activityId, { startDate: format(date, 'yyyy-MM-dd') });
   };
 
   const isColVisible = (col: ColKey) => visibleCols.has(col);
@@ -230,9 +345,15 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
               {p.label}
             </Button>
           ))}
+          <div className="w-px h-4 bg-border mx-1" />
+          <Button variant="outline" size="sm" className="h-6 px-2 text-[10px] font-medium gap-1" onClick={expandAll}>
+            <ChevronsUpDown className="w-3 h-3" /> Expand
+          </Button>
+          <Button variant="outline" size="sm" className="h-6 px-2 text-[10px] font-medium" onClick={collapseAll}>
+            Collapse
+          </Button>
         </div>
         <div className="flex items-center gap-2">
-          {/* Column toggle */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="h-7 px-2 text-[10px] gap-1">
@@ -241,19 +362,12 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-40">
               {ALL_COLS.filter(k => !COL_DEFS[k].alwaysVisible).map(col => (
-                <DropdownMenuCheckboxItem
-                  key={col}
-                  checked={visibleCols.has(col)}
-                  onCheckedChange={() => toggleCol(col)}
-                  className="text-xs"
-                >
+                <DropdownMenuCheckboxItem key={col} checked={visibleCols.has(col)} onCheckedChange={() => toggleCol(col)} className="text-xs">
                   {COL_DEFS[col].label}
                 </DropdownMenuCheckboxItem>
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
-
-          {/* Zoom */}
           <div className="flex items-center gap-1">
             <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setZoomLevel(z => Math.max(0.1, z - 0.15))} disabled={zoomLevel <= 0.1}>
               <ZoomOut className="w-3.5 h-3.5" />
@@ -269,7 +383,6 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
       {/* Gantt chart */}
       <div className="border rounded-lg overflow-hidden bg-background">
         <div className="flex">
-          {/* Left panel header */}
           <div className="shrink-0 border-r bg-muted/30" style={{ width: leftPanelWidth }}>
             <div className="flex items-center h-9 border-b text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
               {isColVisible('id') && <div className="px-2" style={{ width: COL_DEFS.id.width }}>ID</div>}
@@ -280,8 +393,6 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
               {isColVisible('status') && <div className="px-1 text-center" style={{ width: COL_DEFS.status.width }}>Status</div>}
             </div>
           </div>
-
-          {/* Timeline header */}
           <div className="flex-1 overflow-hidden">
             <div style={{ width: timelineWidth, minWidth: '100%' }}>
               <div className="h-9 relative border-b bg-muted/20">
@@ -295,26 +406,28 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
           </div>
         </div>
 
-        {/* Activity rows */}
+        {/* Rows */}
         <div className="max-h-[380px] overflow-y-auto" ref={scrollContainerRef}>
           <div className="flex">
-            {/* Left panel rows */}
             <div className="shrink-0 border-r" style={{ width: leftPanelWidth }}>
-              {selectedActivities.map((activity, index) => {
+              {visibleRows.map((row, index) => {
+                const { activity, depth, hasChildren } = row;
                 const idColors = getIdBadgeClasses(activity.activityCode);
                 const status = (activity as any).status || 'NOT_STARTED';
+                const isExpanded = expandedIds.has(activity.id);
+                const isParent = hasChildren;
 
                 return (
                   <div
                     key={activity.id}
                     className={cn(
                       "flex items-center border-b last:border-b-0 transition-colors cursor-pointer hover:bg-accent/50",
-                      index % 2 === 0 ? 'bg-background' : 'bg-muted/10'
+                      index % 2 === 0 ? 'bg-background' : 'bg-muted/10',
+                      isParent && 'font-medium'
                     )}
                     style={{ height: ROW_HEIGHT }}
                     onClick={() => setSelectedActivityId(activity.id)}
                   >
-                    {/* Activity ID badge */}
                     {isColVisible('id') && (
                       <div className="px-1.5 flex items-center justify-center" style={{ width: COL_DEFS.id.width }}>
                         <span className={cn(
@@ -326,41 +439,57 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                       </div>
                     )}
 
-                    {/* Activity Name */}
                     {isColVisible('name') && (
-                      <div className="px-1 overflow-hidden" style={{ width: COL_DEFS.name.width }}>
-                        <span className="text-[11px] font-medium truncate block" title={activity.activity}>
-                          {activity.activity}
-                        </span>
+                      <div className="px-1 overflow-hidden flex items-center gap-0.5" style={{ width: COL_DEFS.name.width }}>
+                        <div style={{ paddingLeft: depth * 16 }} className="flex items-center gap-0.5 min-w-0">
+                          {hasChildren ? (
+                            <button
+                              className="shrink-0 w-4 h-4 flex items-center justify-center rounded hover:bg-accent/50"
+                              onClick={(e) => { e.stopPropagation(); toggleExpand(activity.id); }}
+                            >
+                              {isExpanded
+                                ? <ChevronDown className="w-3 h-3 text-muted-foreground" />
+                                : <ChevronRight className="w-3 h-3 text-muted-foreground" />
+                              }
+                            </button>
+                          ) : (
+                            <span className="shrink-0 w-4" />
+                          )}
+                          <span className={cn("text-[11px] truncate block", isParent && "font-semibold")} title={activity.activity}>
+                            {activity.activity}
+                          </span>
+                        </div>
                       </div>
                     )}
 
-                    {/* Start Date - Calendar Popover */}
                     {isColVisible('start') && (
                       <div className="px-0.5" style={{ width: COL_DEFS.start.width }} onClick={e => e.stopPropagation()}>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <button className={cn(
-                              "w-full h-6 rounded border border-dashed border-border/50 text-[10px] px-1.5 text-left hover:bg-accent/30 transition-colors",
-                              activity.startDate ? 'text-foreground' : 'text-muted-foreground/50'
-                            )}>
-                              {activity.startDate ? format(parseISO(activity.startDate), 'dd MMM yy') : 'Set date'}
-                            </button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start" side="bottom">
-                            <Calendar
-                              mode="single"
-                              selected={activity.startDate ? parseISO(activity.startDate) : undefined}
-                              onSelect={(date) => handleDateSelect(activity.id, date)}
-                              initialFocus
-                              className={cn("p-3 pointer-events-auto")}
-                            />
-                          </PopoverContent>
-                        </Popover>
+                        {!isParent ? (
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <button className={cn(
+                                "w-full h-6 rounded border border-dashed border-border/50 text-[10px] px-1.5 text-left hover:bg-accent/30 transition-colors",
+                                activity.startDate ? 'text-foreground' : 'text-muted-foreground/50'
+                              )}>
+                                {activity.startDate ? format(parseISO(activity.startDate), 'dd MMM yy') : 'Set date'}
+                              </button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start" side="bottom">
+                              <Calendar
+                                mode="single"
+                                selected={activity.startDate ? parseISO(activity.startDate) : undefined}
+                                onSelect={(date) => handleDateSelect(activity.id, date)}
+                                initialFocus
+                                className={cn("p-3 pointer-events-auto")}
+                              />
+                            </PopoverContent>
+                          </Popover>
+                        ) : (
+                          <span className="text-[10px] text-muted-foreground/50 px-1.5">—</span>
+                        )}
                       </div>
                     )}
 
-                    {/* End Date (read-only) */}
                     {isColVisible('end') && (
                       <div className="px-0.5 flex items-center justify-center" style={{ width: COL_DEFS.end.width }}>
                         <span className="text-[10px] text-muted-foreground/60 whitespace-nowrap">
@@ -369,21 +498,22 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                       </div>
                     )}
 
-                    {/* Duration */}
                     {isColVisible('duration') && (
                       <div className="px-0.5" style={{ width: COL_DEFS.duration.width }} onClick={e => e.stopPropagation()}>
-                        <Input
-                          type="number"
-                          min={1}
-                          value={activity.durationDays ?? ''}
-                          onChange={(e) => updateActivity(activity.id, { durationDays: parseInt(e.target.value) || null })}
-                          className="h-6 text-[10px] px-1 text-center border-dashed"
-                          placeholder="—"
-                        />
+                        {!isParent ? (
+                          <Input
+                            type="number" min={1}
+                            value={activity.durationDays ?? ''}
+                            onChange={(e) => updateActivity(activity.id, { durationDays: parseInt(e.target.value) || null })}
+                            className="h-6 text-[10px] px-1 text-center border-dashed"
+                            placeholder="—"
+                          />
+                        ) : (
+                          <span className="text-[10px] text-muted-foreground/50 px-1 block text-center">—</span>
+                        )}
                       </div>
                     )}
 
-                    {/* Status */}
                     {isColVisible('status') && (
                       <div className="px-0.5" style={{ width: COL_DEFS.status.width }} onClick={e => e.stopPropagation()}>
                         <Select value={status} onValueChange={(v) => updateActivity(activity.id, { status: v } as any)}>
@@ -402,7 +532,7 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                 );
               })}
 
-              {selectedActivities.length === 0 && (
+              {visibleRows.length === 0 && (
                 <div className="text-center py-12 text-sm text-muted-foreground">
                   No activities selected. Go back to Step 3.
                 </div>
@@ -412,8 +542,21 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
             {/* Timeline rows */}
             <div className="flex-1 overflow-x-auto">
               <div style={{ width: timelineWidth, minWidth: '100%' }}>
-                {selectedActivities.map((activity, index) => {
-                  const barPos = getBarPosition(activity);
+                {visibleRows.map((row, index) => {
+                  const { activity, hasChildren } = row;
+                  const isParent = hasChildren;
+
+                  // For parents, show summary bar spanning children
+                  let barPos: { left: number; width: number } | null = null;
+                  if (isParent) {
+                    const range = getParentDateRange(activity.id, selectedActivities, childrenMap);
+                    if (range.minStart && range.maxEnd) {
+                      barPos = getBarPosition(range.minStart, range.maxEnd);
+                    }
+                  } else if (activity.startDate) {
+                    barPos = getBarPosition(activity.startDate, activity.durationDays || 14);
+                  }
+
                   return (
                     <div
                       key={activity.id}
@@ -426,7 +569,20 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                       {weekMarkers.map((left, i) => (
                         <div key={i} className="absolute top-0 bottom-0 border-l border-border/15" style={{ left }} />
                       ))}
-                      {barPos && (
+                      {barPos && isParent && (
+                        <div
+                          className={cn(
+                            "absolute rounded-sm transition-all border-2",
+                            getBarColor(activity.activityCode).replace('bg-', 'border-'),
+                            "bg-transparent opacity-60"
+                          )}
+                          style={{ left: barPos.left, width: barPos.width, top: ROW_HEIGHT / 2 - 4, height: 8 }}
+                          title={`${activity.activity} (summary)`}
+                        >
+                          <div className={cn("h-full rounded-sm", getBarColor(activity.activityCode), "opacity-30")} />
+                        </div>
+                      )}
+                      {barPos && !isParent && (
                         <div
                           className={cn(
                             "absolute top-2 rounded shadow-sm transition-all",
@@ -441,7 +597,7 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                           </div>
                         </div>
                       )}
-                      {!barPos && (
+                      {!barPos && !isParent && (
                         <div className="absolute inset-0 flex items-center justify-center">
                           <span className="text-[10px] text-muted-foreground/40 italic">Set start date →</span>
                         </div>
@@ -480,7 +636,6 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
               </SheetHeader>
 
               <div className="space-y-5 pt-4">
-                {/* Description */}
                 {selectedActivity.description && (
                   <div>
                     <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wide">Description</label>
@@ -488,7 +643,6 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                   </div>
                 )}
 
-                {/* Duration Estimates */}
                 <div>
                   <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wide">Duration Estimates (days)</label>
                   <div className="grid grid-cols-3 gap-2 mt-1.5">
@@ -507,11 +661,9 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                   </div>
                 </div>
 
-                {/* Schedule fields */}
                 <div>
                   <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wide">Schedule</label>
                   <div className="space-y-3 mt-1.5">
-                    {/* Start Date */}
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">Start Date</span>
                       <Popover>
@@ -531,29 +683,22 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                         </PopoverContent>
                       </Popover>
                     </div>
-
-                    {/* End Date */}
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">End Date</span>
                       <span className="text-xs font-medium">
                         {selectedActivity.endDate ? format(parseISO(selectedActivity.endDate), 'dd MMM yyyy') : '—'}
                       </span>
                     </div>
-
-                    {/* Duration */}
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">Duration (days)</span>
                       <Input
-                        type="number"
-                        min={1}
+                        type="number" min={1}
                         value={selectedActivity.durationDays ?? ''}
                         onChange={(e) => updateActivity(selectedActivity.id, { durationDays: parseInt(e.target.value) || null })}
                         className="h-7 w-20 text-xs text-center"
                         placeholder="—"
                       />
                     </div>
-
-                    {/* Status */}
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">Status</span>
                       <Select

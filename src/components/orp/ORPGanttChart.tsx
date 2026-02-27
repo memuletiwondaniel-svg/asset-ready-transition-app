@@ -4,7 +4,7 @@ import { format, differenceInDays, parseISO, addDays } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Search, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
+import { Plus, Search, ZoomIn, ZoomOut, Maximize2, ChevronRight, ChevronDown, ChevronsUpDown } from 'lucide-react';
 import { CreateORPModal } from './CreateORPModal';
 import { ORPDeliverableModal } from './ORPDeliverableModal';
 import { getStatusLabel, getStatusBadgeClasses } from './utils/statusStyles';
@@ -23,7 +23,7 @@ const ROW_HEIGHT = 40;
 const COL_WIDTHS = {
   index: 36,
   id: 90,
-  name: 170,
+  name: 190,
   start: 72,
   end: 72,
   duration: 48,
@@ -36,7 +36,7 @@ const PHASE_COLORS: Record<string, { bg: string; text: string }> = {
   ASS: { bg: 'bg-amber-500/15', text: 'text-amber-700 dark:text-amber-400' },
   SEL: { bg: 'bg-emerald-500/15', text: 'text-emerald-700 dark:text-emerald-400' },
   DEF: { bg: 'bg-teal-500/15', text: 'text-teal-700 dark:text-teal-400' },
-  EXE: { bg: 'bg-rose-500/15', text: 'text-rose-700 dark:text-rose-400' },
+  EXE: { bg: 'bg-indigo-500/15', text: 'text-indigo-700 dark:text-indigo-400' },
   OPR: { bg: 'bg-purple-500/15', text: 'text-purple-700 dark:text-purple-400' },
 };
 
@@ -45,7 +45,7 @@ const BAR_COLORS: Record<string, string> = {
   ASS: 'bg-amber-400 dark:bg-amber-500',
   SEL: 'bg-emerald-400 dark:bg-emerald-500',
   DEF: 'bg-teal-400 dark:bg-teal-500',
-  EXE: 'bg-rose-400 dark:bg-rose-500',
+  EXE: 'bg-indigo-400 dark:bg-indigo-500',
   OPR: 'bg-purple-400 dark:bg-purple-500',
 };
 
@@ -59,11 +59,102 @@ function getPhasePrefix(code: string): string {
   return (code || '').split('-')[0];
 }
 
+// Build hierarchy from activity_code dot notation
+// IDN-01 is parent of IDN-01.01, which is parent of IDN-01.01.01
+function getParentCode(code: string): string | null {
+  if (!code) return null;
+  const lastDotIdx = code.lastIndexOf('.');
+  if (lastDotIdx === -1) return null; // top-level
+  return code.substring(0, lastDotIdx);
+}
+
+function getCodeDepth(code: string): number {
+  if (!code) return 0;
+  // Count dots: IDN-01 = 0, IDN-01.01 = 1, IDN-01.01.01 = 2
+  return (code.match(/\./g) || []).length;
+}
+
+interface FlatRow {
+  deliverable: any;
+  depth: number;
+  hasChildren: boolean;
+  activityCode: string;
+}
+
+function buildHierarchyFromCodes(deliverables: any[]): {
+  childrenMap: Map<string | null, any[]>;
+  codeToDeliverable: Map<string, any>;
+} {
+  const codeToDeliverable = new Map<string, any>();
+  deliverables.forEach(d => {
+    const code = d.deliverable?.activity_code;
+    if (code) codeToDeliverable.set(code, d);
+  });
+
+  const childrenMap = new Map<string | null, any[]>();
+  deliverables.forEach(d => {
+    const code = d.deliverable?.activity_code || '';
+    const parentCode = getParentCode(code);
+    // If parent exists in our list, nest under it; otherwise it's a root
+    const parentKey = parentCode && codeToDeliverable.has(parentCode) ? parentCode : null;
+    if (!childrenMap.has(parentKey)) childrenMap.set(parentKey, []);
+    childrenMap.get(parentKey)!.push(d);
+  });
+
+  return { childrenMap, codeToDeliverable };
+}
+
+function buildVisibleRows(
+  childrenMap: Map<string | null, any[]>,
+  expandedCodes: Set<string>,
+  parentKey: string | null = null,
+  depth: number = 0
+): FlatRow[] {
+  const children = childrenMap.get(parentKey) || [];
+  const rows: FlatRow[] = [];
+  for (const d of children) {
+    const code = d.deliverable?.activity_code || '';
+    const hasChildren = (childrenMap.get(code) || []).length > 0;
+    rows.push({ deliverable: d, depth, hasChildren, activityCode: code });
+    if (hasChildren && expandedCodes.has(code)) {
+      rows.push(...buildVisibleRows(childrenMap, expandedCodes, code, depth + 1));
+    }
+  }
+  return rows;
+}
+
+function getParentDateRange(
+  code: string,
+  childrenMap: Map<string | null, any[]>
+): { minStart: Date | null; maxEnd: Date | null } {
+  const children = childrenMap.get(code) || [];
+  let minStart: Date | null = null;
+  let maxEnd: Date | null = null;
+
+  for (const d of children) {
+    if (d.start_date) {
+      const s = parseISO(d.start_date);
+      if (!minStart || s < minStart) minStart = s;
+    }
+    if (d.end_date) {
+      const e = parseISO(d.end_date);
+      if (!maxEnd || e > maxEnd) maxEnd = e;
+    }
+    const childCode = d.deliverable?.activity_code || '';
+    const sub = getParentDateRange(childCode, childrenMap);
+    if (sub.minStart && (!minStart || sub.minStart < minStart)) minStart = sub.minStart;
+    if (sub.maxEnd && (!maxEnd || sub.maxEnd > maxEnd)) maxEnd = sub.maxEnd;
+  }
+
+  return { minStart, maxEnd };
+}
+
 export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverables, searchQuery: externalSearchQuery, hideToolbar }) => {
   const [internalSearchQuery, setInternalSearchQuery] = useState('');
   const [showAddItem, setShowAddItem] = useState(false);
   const [selectedDeliverable, setSelectedDeliverable] = useState<any>(null);
   const [zoomLevel, setZoomLevel] = useState(1);
+  const [expandedCodes, setExpandedCodes] = useState<Set<string>>(new Set());
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const searchQuery = externalSearchQuery ?? internalSearchQuery;
@@ -76,6 +167,51 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
       d.deliverable?.activity_code?.toLowerCase().includes(query)
     );
   }, [deliverables, searchQuery]);
+
+  const { childrenMap } = useMemo(() => buildHierarchyFromCodes(filteredDeliverables), [filteredDeliverables]);
+
+  const visibleRows = useMemo(
+    () => buildVisibleRows(childrenMap, expandedCodes),
+    [childrenMap, expandedCodes]
+  );
+
+  const toggleExpand = (code: string) => {
+    setExpandedCodes(prev => {
+      const next = new Set(prev);
+      if (next.has(code)) next.delete(code); else next.add(code);
+      return next;
+    });
+  };
+
+  const expandAll = () => {
+    const allParents = new Set<string>();
+    for (const [key] of childrenMap) {
+      if (key !== null) {
+        // check if this key is itself a parent
+        const parentCode = getParentCode(key);
+        if (parentCode !== null) allParents.add(parentCode);
+      }
+    }
+    // Add all codes that have children
+    for (const [key, children] of childrenMap) {
+      if (key !== null && children.length > 0) {
+        // key is activity code of parent - but we need to add codes that ARE parents
+      }
+    }
+    // Simpler: just add all keys that are non-null
+    const codes = new Set<string>();
+    for (const [key] of childrenMap) {
+      if (key !== null) codes.add(key);
+    }
+    // Also add all activity codes that have children
+    filteredDeliverables.forEach(d => {
+      const code = d.deliverable?.activity_code;
+      if (code && (childrenMap.get(code) || []).length > 0) codes.add(code);
+    });
+    setExpandedCodes(codes);
+  };
+
+  const collapseAll = () => setExpandedCodes(new Set());
 
   // Date range
   const dates = useMemo(() => {
@@ -96,7 +232,6 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
   const dayWidth = 28 * zoomLevel;
   const timelineWidth = totalDays * dayWidth;
 
-  // Month markers
   const monthMarkers = useMemo(() => {
     const markers: { label: string; left: number }[] = [];
     let current = new Date(minDate);
@@ -110,7 +245,6 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
     return markers;
   }, [minDate, maxDate, dayWidth]);
 
-  // Week markers
   const weekMarkers = useMemo(() => {
     const markers: number[] = [];
     for (let i = 0; i < totalDays; i += 7) markers.push(i * dayWidth);
@@ -144,8 +278,6 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
     );
     setZoomLevel(closest);
   };
-
-  const activeDeliverables = filteredDeliverables.filter(d => d.start_date && d.end_date);
 
   // Early return - no data
   if (!dates.length) {
@@ -186,8 +318,18 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
         <div className="flex items-center justify-between">
           <CardTitle>Gantt Chart</CardTitle>
           <div className="flex items-center gap-2">
+            {/* Expand/Collapse */}
+            <Button variant="outline" size="sm" className="h-7 px-2 text-[10px] font-medium gap-1" onClick={expandAll}>
+              <ChevronsUpDown className="w-3 h-3" /> Expand
+            </Button>
+            <Button variant="outline" size="sm" className="h-7 px-2 text-[10px] font-medium" onClick={collapseAll}>
+              Collapse
+            </Button>
+
+            <div className="w-px h-5 bg-border" />
+
             {/* Zoom presets */}
-            <div className="flex items-center gap-1 mr-1">
+            <div className="flex items-center gap-1">
               {ZOOM_PRESETS.map(p => (
                 <Button key={p.label} variant="outline" size="sm" className="h-6 px-2 text-[10px] font-medium" onClick={() => setZoomToFitDays(p.days)}>
                   {p.label}
@@ -256,18 +398,22 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
             <div className="flex">
               {/* Left panel rows */}
               <div className="shrink-0 border-r" style={{ width: LEFT_PANEL_WIDTH }}>
-                {activeDeliverables.map((deliverable, index) => {
-                  const activityCode = deliverable.deliverable?.activity_code || '';
+                {visibleRows.map((row, index) => {
+                  const { deliverable, depth, hasChildren, activityCode } = row;
                   const prefix = getPhasePrefix(activityCode);
                   const idColors = PHASE_COLORS[prefix] || { bg: 'bg-muted', text: 'text-foreground' };
-                  const durationDays = differenceInDays(parseISO(deliverable.end_date), parseISO(deliverable.start_date));
+                  const isExpanded = expandedCodes.has(activityCode);
+                  const isParent = hasChildren;
+                  const hasDates = deliverable.start_date && deliverable.end_date;
+                  const durationDays = hasDates ? differenceInDays(parseISO(deliverable.end_date), parseISO(deliverable.start_date)) : null;
 
                   return (
                     <div
                       key={deliverable.id}
                       className={cn(
                         "flex items-center border-b last:border-b-0 cursor-pointer hover:bg-muted/30 transition-colors",
-                        index % 2 === 0 ? 'bg-background' : 'bg-muted/10'
+                        index % 2 === 0 ? 'bg-background' : 'bg-muted/10',
+                        isParent && 'font-medium'
                       )}
                       style={{ height: ROW_HEIGHT }}
                       onClick={() => setSelectedDeliverable(deliverable)}
@@ -284,19 +430,38 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                           <span className="text-[10px] text-muted-foreground">—</span>
                         )}
                       </div>
-                      <div className="px-1 overflow-hidden" style={{ width: COL_WIDTHS.name }}>
-                        <span className="text-[11px] font-medium truncate block" title={deliverable.deliverable?.name}>
-                          {deliverable.deliverable?.name}
-                        </span>
+                      <div className="px-1 overflow-hidden flex items-center gap-0.5" style={{ width: COL_WIDTHS.name }}>
+                        <div style={{ paddingLeft: depth * 16 }} className="flex items-center gap-0.5 min-w-0">
+                          {hasChildren ? (
+                            <button
+                              className="shrink-0 w-4 h-4 flex items-center justify-center rounded hover:bg-accent/50"
+                              onClick={(e) => { e.stopPropagation(); toggleExpand(activityCode); }}
+                            >
+                              {isExpanded
+                                ? <ChevronDown className="w-3 h-3 text-muted-foreground" />
+                                : <ChevronRight className="w-3 h-3 text-muted-foreground" />
+                              }
+                            </button>
+                          ) : (
+                            <span className="shrink-0 w-4" />
+                          )}
+                          <span className={cn("text-[11px] truncate block", isParent && "font-semibold")} title={deliverable.deliverable?.name}>
+                            {deliverable.deliverable?.name}
+                          </span>
+                        </div>
                       </div>
                       <div className="px-1 text-center" style={{ width: COL_WIDTHS.start }}>
-                        <span className="text-[10px] text-muted-foreground">{format(parseISO(deliverable.start_date), 'dd MMM')}</span>
+                        <span className="text-[10px] text-muted-foreground">
+                          {hasDates ? format(parseISO(deliverable.start_date), 'dd MMM') : '—'}
+                        </span>
                       </div>
                       <div className="px-1 text-center" style={{ width: COL_WIDTHS.end }}>
-                        <span className="text-[10px] text-muted-foreground">{format(parseISO(deliverable.end_date), 'dd MMM')}</span>
+                        <span className="text-[10px] text-muted-foreground">
+                          {hasDates ? format(parseISO(deliverable.end_date), 'dd MMM') : '—'}
+                        </span>
                       </div>
                       <div className="px-1 text-center" style={{ width: COL_WIDTHS.duration }}>
-                        <span className="text-[10px] font-medium">{durationDays}d</span>
+                        <span className="text-[10px] font-medium">{durationDays !== null ? `${durationDays}d` : '—'}</span>
                       </div>
                       <div className="px-1 flex items-center justify-center" style={{ width: COL_WIDTHS.status }}>
                         <Badge variant="outline" className={cn("text-[9px] px-1.5 py-0 h-5", getStatusBadgeClasses(deliverable.status))}>
@@ -311,11 +476,27 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
               {/* Timeline rows */}
               <div className="flex-1 overflow-x-auto">
                 <div style={{ width: timelineWidth, minWidth: '100%' }}>
-                  {activeDeliverables.map((deliverable, index) => {
-                    const pos = getBarPosition(deliverable.start_date, deliverable.end_date);
-                    const activityCode = deliverable.deliverable?.activity_code || '';
+                  {visibleRows.map((row, index) => {
+                    const { deliverable, hasChildren, activityCode } = row;
                     const prefix = getPhasePrefix(activityCode);
                     const barColor = BAR_COLORS[prefix] || 'bg-primary';
+                    const isParent = hasChildren;
+                    const hasDates = deliverable.start_date && deliverable.end_date;
+
+                    // Parent summary bar from children date range
+                    let barPos: { left: number; width: number } | null = null;
+                    if (isParent) {
+                      const range = getParentDateRange(activityCode, childrenMap);
+                      if (range.minStart && range.maxEnd) {
+                        const start = range.minStart;
+                        const end = range.maxEnd;
+                        const left = differenceInDays(start, minDate) * dayWidth;
+                        const width = Math.max(differenceInDays(end, start) * dayWidth, 8);
+                        barPos = { left, width };
+                      }
+                    } else if (hasDates) {
+                      barPos = getBarPosition(deliverable.start_date, deliverable.end_date);
+                    }
 
                     return (
                       <div
@@ -330,25 +511,40 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                           <div key={i} className="absolute top-0 bottom-0 border-l border-border/15" style={{ left }} />
                         ))}
 
-                        <div
-                          className={cn(
-                            "absolute top-2 rounded shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-all",
-                            barColor, "opacity-85 hover:opacity-100"
-                          )}
-                          style={{ left: pos.left, width: pos.width, height: ROW_HEIGHT - 16 }}
-                          onClick={() => setSelectedDeliverable(deliverable)}
-                        >
-                          {/* Progress fill */}
+                        {barPos && isParent && (
                           <div
-                            className="absolute h-full bg-white/20 rounded-l"
-                            style={{ width: `${deliverable.completion_percentage || 0}%` }}
-                          />
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <span className="text-[9px] text-white font-medium drop-shadow-sm">
-                              {deliverable.completion_percentage || 0}%
-                            </span>
+                            className={cn(
+                              "absolute rounded-sm transition-all border-2",
+                              barColor.replace('bg-', 'border-'),
+                              "bg-transparent opacity-60"
+                            )}
+                            style={{ left: barPos.left, width: barPos.width, top: ROW_HEIGHT / 2 - 4, height: 8 }}
+                            title={`${deliverable.deliverable?.name} (summary)`}
+                          >
+                            <div className={cn("h-full rounded-sm", barColor, "opacity-30")} />
                           </div>
-                        </div>
+                        )}
+
+                        {barPos && !isParent && (
+                          <div
+                            className={cn(
+                              "absolute top-2 rounded shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-all",
+                              barColor, "opacity-85 hover:opacity-100"
+                            )}
+                            style={{ left: barPos.left, width: barPos.width, height: ROW_HEIGHT - 16 }}
+                            onClick={() => setSelectedDeliverable(deliverable)}
+                          >
+                            <div
+                              className="absolute h-full bg-white/20 rounded-l"
+                              style={{ width: `${deliverable.completion_percentage || 0}%` }}
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <span className="text-[9px] text-white font-medium drop-shadow-sm">
+                                {deliverable.completion_percentage || 0}%
+                              </span>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
