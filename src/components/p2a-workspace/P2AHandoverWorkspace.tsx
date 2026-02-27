@@ -683,6 +683,7 @@ export const P2AHandoverWorkspace: React.FC<P2AHandoverWorkspaceProps> = ({
             setSelectedVCR(null);
           }}
           isDeleting={isDeletingVCR}
+          projectId={projectId}
         />
       )}
 
