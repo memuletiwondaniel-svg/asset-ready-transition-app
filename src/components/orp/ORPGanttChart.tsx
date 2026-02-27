@@ -1,10 +1,10 @@
 import React, { useState, useMemo, useRef, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { format, differenceInDays, parseISO, addDays, subDays } from 'date-fns';
+import { format, differenceInDays, parseISO, addDays } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Search, ZoomIn, ZoomOut, Maximize2, GripVertical } from 'lucide-react';
+import { Plus, Search, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
 import { CreateORPModal } from './CreateORPModal';
 import { ORPDeliverableModal } from './ORPDeliverableModal';
 import { getStatusLabel, getStatusBadgeClasses } from './utils/statusStyles';
@@ -17,69 +17,67 @@ interface ORPGanttChartProps {
   hideToolbar?: boolean;
 }
 
-const ZOOM_LEVELS = [0.5, 0.75, 1, 1.5, 2, 3, 4];
-const ZOOM_LABELS: Record<number, string> = {
-  0.5: '50%',
-  0.75: '75%',
-  1: '100%',
-  1.5: '150%',
-  2: '200%',
-  3: '300%',
-  4: '400%',
+const ZOOM_LEVELS = [0.15, 0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4];
+const ROW_HEIGHT = 40;
+
+const COL_WIDTHS = {
+  index: 36,
+  id: 90,
+  name: 170,
+  start: 72,
+  end: 72,
+  duration: 48,
+  status: 96,
+};
+const LEFT_PANEL_WIDTH = Object.values(COL_WIDTHS).reduce((a, b) => a + b, 0);
+
+const PHASE_COLORS: Record<string, { bg: string; text: string }> = {
+  IDN: { bg: 'bg-blue-500/15', text: 'text-blue-700 dark:text-blue-400' },
+  ASS: { bg: 'bg-amber-500/15', text: 'text-amber-700 dark:text-amber-400' },
+  SEL: { bg: 'bg-emerald-500/15', text: 'text-emerald-700 dark:text-emerald-400' },
+  DEF: { bg: 'bg-teal-500/15', text: 'text-teal-700 dark:text-teal-400' },
+  EXE: { bg: 'bg-rose-500/15', text: 'text-rose-700 dark:text-rose-400' },
+  OPR: { bg: 'bg-purple-500/15', text: 'text-purple-700 dark:text-purple-400' },
 };
 
-const MIN_ACTIVITY_WIDTH = 200;
-const MAX_ACTIVITY_WIDTH = 600;
-const DEFAULT_ACTIVITY_WIDTH = 320;
+const BAR_COLORS: Record<string, string> = {
+  IDN: 'bg-blue-400 dark:bg-blue-500',
+  ASS: 'bg-amber-400 dark:bg-amber-500',
+  SEL: 'bg-emerald-400 dark:bg-emerald-500',
+  DEF: 'bg-teal-400 dark:bg-teal-500',
+  EXE: 'bg-rose-400 dark:bg-rose-500',
+  OPR: 'bg-purple-400 dark:bg-purple-500',
+};
+
+const ZOOM_PRESETS = [
+  { label: '6M', days: 180 },
+  { label: '12M', days: 365 },
+  { label: '24M', days: 730 },
+];
+
+function getPhasePrefix(code: string): string {
+  return (code || '').split('-')[0];
+}
 
 export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverables, searchQuery: externalSearchQuery, hideToolbar }) => {
   const [internalSearchQuery, setInternalSearchQuery] = useState('');
   const [showAddItem, setShowAddItem] = useState(false);
   const [selectedDeliverable, setSelectedDeliverable] = useState<any>(null);
   const [zoomLevel, setZoomLevel] = useState(1);
-  const [activityColumnWidth, setActivityColumnWidth] = useState(DEFAULT_ACTIVITY_WIDTH);
-  const [isResizing, setIsResizing] = useState(false);
-  const timelineRef = useRef<HTMLDivElement>(null);
-  const resizeStartX = useRef<number>(0);
-  const resizeStartWidth = useRef<number>(0);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // Handle column resize
-  const handleResizeStart = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsResizing(true);
-    resizeStartX.current = e.clientX;
-    resizeStartWidth.current = activityColumnWidth;
-
-    const handleMouseMove = (e: MouseEvent) => {
-      const delta = e.clientX - resizeStartX.current;
-      const newWidth = Math.min(MAX_ACTIVITY_WIDTH, Math.max(MIN_ACTIVITY_WIDTH, resizeStartWidth.current + delta));
-      setActivityColumnWidth(newWidth);
-    };
-
-    const handleMouseUp = () => {
-      setIsResizing(false);
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  }, [activityColumnWidth]);
-  
-  // Use external search query if provided, otherwise use internal
   const searchQuery = externalSearchQuery ?? internalSearchQuery;
-  
-  // Filter deliverables based on search query
+
   const filteredDeliverables = useMemo(() => {
     if (!searchQuery.trim()) return deliverables;
     const query = searchQuery.toLowerCase();
-    return deliverables.filter(d => 
-      d.deliverable?.name?.toLowerCase().includes(query)
+    return deliverables.filter(d =>
+      d.deliverable?.name?.toLowerCase().includes(query) ||
+      d.deliverable?.activity_code?.toLowerCase().includes(query)
     );
   }, [deliverables, searchQuery]);
 
-  // Calculate date range
+  // Date range
   const dates = useMemo(() => {
     return filteredDeliverables
       .filter(d => d.start_date && d.end_date)
@@ -87,94 +85,69 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
   }, [filteredDeliverables]);
 
   const { minDate, maxDate, totalDays } = useMemo(() => {
-    if (!dates.length) {
-      return { minDate: new Date(), maxDate: new Date(), totalDays: 1 };
-    }
+    if (!dates.length) return { minDate: new Date(), maxDate: new Date(), totalDays: 1 };
     const min = new Date(Math.min(...dates.map(d => d.getTime())));
     const max = new Date(Math.max(...dates.map(d => d.getTime())));
-    return { minDate: min, maxDate: max, totalDays: differenceInDays(max, min) + 1 };
+    const padMin = addDays(min, -7);
+    const padMax = addDays(max, 14);
+    return { minDate: padMin, maxDate: padMax, totalDays: Math.max(differenceInDays(padMax, padMin), 60) };
   }, [dates]);
 
-  // Generate time markers based on zoom level - must be before any early returns
-  const timeMarkers = useMemo(() => {
-    if (!dates.length) return [];
-    
-    const markers: { date: Date; label: string }[] = [];
-    let currentDate = new Date(minDate);
-    
-    // Determine marker interval based on zoom level
-    const showWeeks = zoomLevel >= 2;
-    const showDays = zoomLevel >= 4;
-    
-    if (showDays) {
-      // Show every 7 days
-      while (currentDate <= maxDate) {
-        markers.push({ date: new Date(currentDate), label: format(currentDate, 'd MMM') });
-        currentDate = addDays(currentDate, 7);
-      }
-    } else if (showWeeks) {
-      // Show bi-weekly
-      while (currentDate <= maxDate) {
-        markers.push({ date: new Date(currentDate), label: format(currentDate, 'd MMM') });
-        currentDate = addDays(currentDate, 14);
-      }
-    } else {
-      // Show months
-      while (currentDate <= maxDate) {
-        markers.push({ date: new Date(currentDate), label: format(currentDate, 'MMM yyyy') });
-        currentDate.setMonth(currentDate.getMonth() + 1);
-      }
-    }
-    
-    return markers;
-  }, [dates.length, minDate, maxDate, zoomLevel]);
+  const dayWidth = 28 * zoomLevel;
+  const timelineWidth = totalDays * dayWidth;
 
-  // Helper function to get bar position
+  // Month markers
+  const monthMarkers = useMemo(() => {
+    const markers: { label: string; left: number }[] = [];
+    let current = new Date(minDate);
+    current.setDate(1);
+    if (current < minDate) current.setMonth(current.getMonth() + 1);
+    while (current <= maxDate) {
+      const dayOffset = differenceInDays(current, minDate);
+      markers.push({ label: format(current, 'MMM yyyy'), left: dayOffset * dayWidth });
+      current.setMonth(current.getMonth() + 1);
+    }
+    return markers;
+  }, [minDate, maxDate, dayWidth]);
+
+  // Week markers
+  const weekMarkers = useMemo(() => {
+    const markers: number[] = [];
+    for (let i = 0; i < totalDays; i += 7) markers.push(i * dayWidth);
+    return markers;
+  }, [totalDays, dayWidth]);
+
   const getBarPosition = useCallback((startDate: string, endDate: string) => {
     const start = parseISO(startDate);
     const end = parseISO(endDate);
-    const left = (differenceInDays(start, minDate) / totalDays) * 100;
-    const width = (differenceInDays(end, start) / totalDays) * 100;
-    return { left: `${left}%`, width: `${width}%` };
-  }, [minDate, totalDays]);
+    const left = differenceInDays(start, minDate) * dayWidth;
+    const width = Math.max(differenceInDays(end, start) * dayWidth, 8);
+    return { left, width };
+  }, [minDate, dayWidth]);
 
-  // Zoom controls
   const handleZoomIn = useCallback(() => {
-    const currentIndex = ZOOM_LEVELS.indexOf(zoomLevel);
-    if (currentIndex < ZOOM_LEVELS.length - 1) {
-      setZoomLevel(ZOOM_LEVELS[currentIndex + 1]);
-    }
+    const idx = ZOOM_LEVELS.indexOf(zoomLevel);
+    if (idx < ZOOM_LEVELS.length - 1) setZoomLevel(ZOOM_LEVELS[idx + 1]);
   }, [zoomLevel]);
 
   const handleZoomOut = useCallback(() => {
-    const currentIndex = ZOOM_LEVELS.indexOf(zoomLevel);
-    if (currentIndex > 0) {
-      setZoomLevel(ZOOM_LEVELS[currentIndex - 1]);
-    }
+    const idx = ZOOM_LEVELS.indexOf(zoomLevel);
+    if (idx > 0) setZoomLevel(ZOOM_LEVELS[idx - 1]);
   }, [zoomLevel]);
 
-  const handleFitToScreen = useCallback(() => {
-    setZoomLevel(1);
-  }, []);
+  const setZoomToFitDays = (targetDays: number) => {
+    if (!scrollContainerRef.current) return;
+    const containerWidth = scrollContainerRef.current.clientWidth;
+    const newZoom = containerWidth / (targetDays * 28);
+    const closest = ZOOM_LEVELS.reduce((prev, curr) =>
+      Math.abs(curr - newZoom) < Math.abs(prev - newZoom) ? curr : prev
+    );
+    setZoomLevel(closest);
+  };
 
-  // Handle mouse wheel zoom on header only
-  const handleHeaderWheel = useCallback((e: React.WheelEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.deltaY < 0) {
-      handleZoomIn();
-    } else {
-      handleZoomOut();
-    }
-  }, [handleZoomIn, handleZoomOut]);
+  const activeDeliverables = filteredDeliverables.filter(d => d.start_date && d.end_date);
 
-  // Dynamic cursor based on zoom capability
-  const currentZoomIndex = ZOOM_LEVELS.indexOf(zoomLevel);
-  const canZoomIn = currentZoomIndex < ZOOM_LEVELS.length - 1;
-  const canZoomOut = currentZoomIndex > 0;
-  const zoomCursor = canZoomIn ? 'cursor-zoom-in' : canZoomOut ? 'cursor-zoom-out' : 'cursor-default';
-
-  // Early return for no data - AFTER all hooks
+  // Early return - no data
   if (!dates.length) {
     return (
       <Card>
@@ -185,16 +158,10 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
               <div className="flex items-center gap-4">
                 <div className="relative w-64">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search deliverables..."
-                    value={internalSearchQuery}
-                    onChange={(e) => setInternalSearchQuery(e.target.value)}
-                    className="pl-9"
-                  />
+                  <Input placeholder="Search deliverables..." value={internalSearchQuery} onChange={(e) => setInternalSearchQuery(e.target.value)} className="pl-9" />
                 </div>
                 <Button onClick={() => setShowAddItem(true)}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add ORA Item
+                  <Plus className="w-4 h-4 mr-2" /> Add ORA Item
                 </Button>
               </div>
             )}
@@ -208,13 +175,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
             </div>
           </div>
         </CardContent>
-        {showAddItem && (
-          <CreateORPModal
-            open={showAddItem}
-            onOpenChange={setShowAddItem}
-            onSuccess={() => setShowAddItem(false)}
-          />
-        )}
+        {showAddItem && <CreateORPModal open={showAddItem} onOpenChange={setShowAddItem} onSuccess={() => setShowAddItem(false)} />}
       </Card>
     );
   }
@@ -225,54 +186,37 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
         <div className="flex items-center justify-between">
           <CardTitle>Gantt Chart</CardTitle>
           <div className="flex items-center gap-2">
+            {/* Zoom presets */}
+            <div className="flex items-center gap-1 mr-1">
+              {ZOOM_PRESETS.map(p => (
+                <Button key={p.label} variant="outline" size="sm" className="h-6 px-2 text-[10px] font-medium" onClick={() => setZoomToFitDays(p.days)}>
+                  {p.label}
+                </Button>
+              ))}
+            </div>
+
             {/* Zoom controls */}
-            <div className="flex items-center gap-1 border rounded-md p-1 mr-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7"
-                onClick={handleZoomOut}
-                disabled={zoomLevel === ZOOM_LEVELS[0]}
-              >
+            <div className="flex items-center gap-1 border rounded-md p-1">
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleZoomOut} disabled={zoomLevel === ZOOM_LEVELS[0]}>
                 <ZoomOut className="h-4 w-4" />
               </Button>
-              <span className="text-xs font-medium w-12 text-center">
-                {ZOOM_LABELS[zoomLevel] || `${Math.round(zoomLevel * 100)}%`}
-              </span>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7"
-                onClick={handleZoomIn}
-                disabled={zoomLevel === ZOOM_LEVELS[ZOOM_LEVELS.length - 1]}
-              >
+              <span className="text-xs font-medium w-10 text-center">{Math.round(zoomLevel * 100)}%</span>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleZoomIn} disabled={zoomLevel === ZOOM_LEVELS[ZOOM_LEVELS.length - 1]}>
                 <ZoomIn className="h-4 w-4" />
               </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7"
-                onClick={handleFitToScreen}
-                title="Fit to screen"
-              >
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setZoomLevel(1)} title="Fit to screen">
                 <Maximize2 className="h-4 w-4" />
               </Button>
             </div>
-            
+
             {!hideToolbar && (
               <>
                 <div className="relative w-64">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search deliverables..."
-                    value={internalSearchQuery}
-                    onChange={(e) => setInternalSearchQuery(e.target.value)}
-                    className="pl-9"
-                  />
+                  <Input placeholder="Search deliverables..." value={internalSearchQuery} onChange={(e) => setInternalSearchQuery(e.target.value)} className="pl-9" />
                 </div>
                 <Button onClick={() => setShowAddItem(true)}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add ORA Item
+                  <Plus className="w-4 h-4 mr-2" /> Add ORA Item
                 </Button>
               </>
             )}
@@ -280,149 +224,152 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
         </div>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          {/* Vertical scroll container for activities */}
-          <div className="max-h-[60vh] overflow-y-auto overscroll-contain scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
-            {/* Timeline container with horizontal scroll */}
-            <div 
-              ref={timelineRef}
-              className="overflow-x-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent"
-            >
-              <div style={{ minWidth: `${100 * zoomLevel}%` }}>
-                {/* Timeline header - wheel zoom only here */}
-                <div className={cn("sticky top-0 bg-background z-10 border-b", isResizing && "select-none")}>
-                  <div className="flex items-center h-10">
-                    <div 
-                      className="flex-shrink-0 font-semibold px-4 sticky left-0 bg-background z-20 flex items-center justify-between h-full border-r"
-                      style={{ width: `calc(40px + ${activityColumnWidth}px)` }}
+        <div className="border rounded-lg overflow-hidden bg-background">
+          {/* Header row */}
+          <div className="flex">
+            <div className="shrink-0 border-r bg-muted/30" style={{ width: LEFT_PANEL_WIDTH }}>
+              <div className="flex items-center h-9 border-b text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
+                <div className="px-1 text-center" style={{ width: COL_WIDTHS.index }}>#</div>
+                <div className="px-1" style={{ width: COL_WIDTHS.id }}>ID</div>
+                <div className="px-1 truncate" style={{ width: COL_WIDTHS.name }}>Activity</div>
+                <div className="px-1 text-center" style={{ width: COL_WIDTHS.start }}>Start</div>
+                <div className="px-1 text-center" style={{ width: COL_WIDTHS.end }}>End</div>
+                <div className="px-1 text-center" style={{ width: COL_WIDTHS.duration }}>Days</div>
+                <div className="px-1 text-center" style={{ width: COL_WIDTHS.status }}>Status</div>
+              </div>
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <div style={{ width: timelineWidth, minWidth: '100%' }}>
+                <div className="h-9 relative border-b bg-muted/20">
+                  {monthMarkers.map((m, i) => (
+                    <div key={i} className="absolute top-0 h-full flex items-center px-2 border-l border-border/40" style={{ left: m.left }}>
+                      <span className="text-[10px] font-medium text-muted-foreground whitespace-nowrap">{m.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Activity rows */}
+          <div className="max-h-[60vh] overflow-y-auto" ref={scrollContainerRef}>
+            <div className="flex">
+              {/* Left panel rows */}
+              <div className="shrink-0 border-r" style={{ width: LEFT_PANEL_WIDTH }}>
+                {activeDeliverables.map((deliverable, index) => {
+                  const activityCode = deliverable.deliverable?.activity_code || '';
+                  const prefix = getPhasePrefix(activityCode);
+                  const idColors = PHASE_COLORS[prefix] || { bg: 'bg-muted', text: 'text-foreground' };
+                  const durationDays = differenceInDays(parseISO(deliverable.end_date), parseISO(deliverable.start_date));
+
+                  return (
+                    <div
+                      key={deliverable.id}
+                      className={cn(
+                        "flex items-center border-b last:border-b-0 cursor-pointer hover:bg-muted/30 transition-colors",
+                        index % 2 === 0 ? 'bg-background' : 'bg-muted/10'
+                      )}
+                      style={{ height: ROW_HEIGHT }}
+                      onClick={() => setSelectedDeliverable(deliverable)}
                     >
-                      <span className="pl-1">Activity</span>
-                      <div
-                        className="w-4 h-full flex items-center justify-center cursor-col-resize hover:bg-muted rounded group"
-                        onMouseDown={handleResizeStart}
-                        title="Drag to resize"
-                      >
-                        <GripVertical className="w-3 h-3 text-muted-foreground group-hover:text-foreground" />
+                      <div className="px-1 text-center text-[10px] text-muted-foreground" style={{ width: COL_WIDTHS.index }}>
+                        {index + 1}
+                      </div>
+                      <div className="px-1 flex items-center" style={{ width: COL_WIDTHS.id }}>
+                        {activityCode ? (
+                          <span className={cn("inline-flex items-center rounded px-1.5 py-0.5 text-[9px] font-mono font-semibold whitespace-nowrap", idColors.bg, idColors.text)}>
+                            {activityCode}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-muted-foreground">—</span>
+                        )}
+                      </div>
+                      <div className="px-1 overflow-hidden" style={{ width: COL_WIDTHS.name }}>
+                        <span className="text-[11px] font-medium truncate block" title={deliverable.deliverable?.name}>
+                          {deliverable.deliverable?.name}
+                        </span>
+                      </div>
+                      <div className="px-1 text-center" style={{ width: COL_WIDTHS.start }}>
+                        <span className="text-[10px] text-muted-foreground">{format(parseISO(deliverable.start_date), 'dd MMM')}</span>
+                      </div>
+                      <div className="px-1 text-center" style={{ width: COL_WIDTHS.end }}>
+                        <span className="text-[10px] text-muted-foreground">{format(parseISO(deliverable.end_date), 'dd MMM')}</span>
+                      </div>
+                      <div className="px-1 text-center" style={{ width: COL_WIDTHS.duration }}>
+                        <span className="text-[10px] font-medium">{durationDays}d</span>
+                      </div>
+                      <div className="px-1 flex items-center justify-center" style={{ width: COL_WIDTHS.status }}>
+                        <Badge variant="outline" className={cn("text-[9px] px-1.5 py-0 h-5", getStatusBadgeClasses(deliverable.status))}>
+                          {getStatusLabel(deliverable.status)}
+                        </Badge>
                       </div>
                     </div>
-                    <div 
-                      className={`flex-1 relative h-full ${zoomCursor}`}
-                      onWheel={handleHeaderWheel}
-                    >
-                      {timeMarkers.map((marker, idx) => {
-                        const pos = (differenceInDays(marker.date, minDate) / totalDays) * 100;
-                        return (
+                  );
+                })}
+              </div>
+
+              {/* Timeline rows */}
+              <div className="flex-1 overflow-x-auto">
+                <div style={{ width: timelineWidth, minWidth: '100%' }}>
+                  {activeDeliverables.map((deliverable, index) => {
+                    const pos = getBarPosition(deliverable.start_date, deliverable.end_date);
+                    const activityCode = deliverable.deliverable?.activity_code || '';
+                    const prefix = getPhasePrefix(activityCode);
+                    const barColor = BAR_COLORS[prefix] || 'bg-primary';
+
+                    return (
+                      <div
+                        key={deliverable.id}
+                        className={cn(
+                          "relative border-b last:border-b-0",
+                          index % 2 === 0 ? 'bg-background' : 'bg-muted/10'
+                        )}
+                        style={{ height: ROW_HEIGHT }}
+                      >
+                        {weekMarkers.map((left, i) => (
+                          <div key={i} className="absolute top-0 bottom-0 border-l border-border/15" style={{ left }} />
+                        ))}
+
+                        <div
+                          className={cn(
+                            "absolute top-2 rounded shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-all",
+                            barColor, "opacity-85 hover:opacity-100"
+                          )}
+                          style={{ left: pos.left, width: pos.width, height: ROW_HEIGHT - 16 }}
+                          onClick={() => setSelectedDeliverable(deliverable)}
+                        >
+                          {/* Progress fill */}
                           <div
-                            key={idx}
-                            className="absolute top-0 bottom-0 border-l border-border flex items-center justify-center"
-                            style={{ left: `${pos}%` }}
-                          >
-                            <span className="ml-2 text-xs font-medium whitespace-nowrap">
-                              {marker.label}
+                            className="absolute h-full bg-white/20 rounded-l"
+                            style={{ width: `${deliverable.completion_percentage || 0}%` }}
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <span className="text-[9px] text-white font-medium drop-shadow-sm">
+                              {deliverable.completion_percentage || 0}%
                             </span>
                           </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-
-              {/* Gantt rows */}
-              <div className="space-y-2">
-                {filteredDeliverables
-                  .filter(d => d.start_date && d.end_date)
-                  .map((deliverable, index) => {
-                    const position = getBarPosition(deliverable.start_date, deliverable.end_date);
-                    return (
-                      <div 
-                        key={deliverable.id} 
-                        className={cn("flex items-center group hover:bg-muted/50 rounded py-2 cursor-pointer", isResizing && "select-none")}
-                        onClick={() => setSelectedDeliverable(deliverable)}
-                      >
-                        <div className="flex-shrink-0 w-10 px-2 text-center text-sm text-muted-foreground sticky left-0 bg-background z-10 border-r">
-                          {index + 1}
-                        </div>
-                        <div 
-                          className="flex-shrink-0 px-4 sticky bg-background z-10"
-                          style={{ width: activityColumnWidth, left: '40px' }}
-                        >
-                          <div className="text-sm font-medium truncate" title={deliverable.deliverable?.name}>
-                            {deliverable.deliverable?.name}
-                          </div>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Badge variant="outline" className={cn("text-xs", getStatusBadgeClasses(deliverable.status))}>
-                              {getStatusLabel(deliverable.status)}
-                            </Badge>
-                            {deliverable.estimated_manhours && (
-                              <span className="text-xs text-muted-foreground">
-                                {deliverable.estimated_manhours}h
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="flex-1 relative h-10 px-2">
-                          {/* Progress bar */}
-                          <div
-                            className="absolute h-6 rounded bg-slate-300 dark:bg-slate-500 overflow-hidden hover:shadow-md transition-all cursor-pointer group-hover:scale-y-110"
-                            style={position}
-                          >
-                            {/* Green progress fill */}
-                            <div
-                              className="absolute h-full bg-green-500 rounded-l transition-all"
-                              style={{ width: `${deliverable.completion_percentage || 0}%` }}
-                            />
-                            {/* Progress text */}
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <span className="text-xs font-medium text-white drop-shadow-sm">
-                                {deliverable.completion_percentage || 0}%
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Dependencies lines */}
-                          {deliverable.dependencies?.map((dep: any) => {
-                            const predecessor = deliverables.find(d => d.id === dep.predecessor_id);
-                            if (!predecessor?.end_date) return null;
-                            return (
-                              <div
-                                key={dep.id}
-                                className="absolute h-px bg-primary/50"
-                                style={{
-                                  left: getBarPosition(predecessor.end_date, predecessor.end_date).left,
-                                  width: '20px',
-                                  top: '50%'
-                                }}
-                              />
-                            );
-                          })}
                         </div>
                       </div>
                     );
                   })}
-              </div>
+                </div>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Legend */}
-          <div className="flex items-center gap-3 pt-4 border-t">
-            <div className="w-16 h-4 bg-slate-300 dark:bg-slate-500 rounded overflow-hidden">
-              <div className="w-1/2 h-full bg-green-500" />
-            </div>
-            <span className="text-xs text-muted-foreground">Progress (completed / remaining)</span>
-          </div>
+        {/* Legend */}
+        <div className="flex items-center gap-4 pt-3 mt-3 border-t text-[10px] text-muted-foreground">
+          <span className="font-medium">Phases:</span>
+          {Object.entries(PHASE_COLORS).map(([key, colors]) => (
+            <span key={key} className={cn("inline-flex items-center rounded px-1.5 py-0.5 font-mono font-semibold", colors.bg, colors.text)}>
+              {key}
+            </span>
+          ))}
         </div>
       </CardContent>
 
-      {showAddItem && (
-        <CreateORPModal
-          open={showAddItem}
-          onOpenChange={setShowAddItem}
-          onSuccess={() => setShowAddItem(false)}
-        />
-      )}
-
+      {showAddItem && <CreateORPModal open={showAddItem} onOpenChange={setShowAddItem} onSuccess={() => setShowAddItem(false)} />}
       {selectedDeliverable && (
         <ORPDeliverableModal
           open={!!selectedDeliverable}
