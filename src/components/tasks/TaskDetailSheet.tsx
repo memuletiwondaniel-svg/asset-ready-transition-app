@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CheckCircle, X, Calendar, AlertTriangle, ChevronRight, Pencil } from 'lucide-react';
+import { CheckCircle, X, Calendar, AlertTriangle, ChevronRight, Pencil, CalendarCheck } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import CreatePSSRWizard from '@/components/pssr/CreatePSSRWizard';
+import { ORAActivityPlanWizard } from '@/components/ora/wizard/ORAActivityPlanWizard';
 import type { UserTask } from '@/hooks/useUserTasks';
 
 interface TaskDetailSheetProps {
@@ -28,6 +29,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   const [comment, setComment] = useState('');
   const [action, setAction] = useState<'approve' | 'reject' | null>(null);
   const [wizardOpen, setWizardOpen] = useState(false);
+  const [oraWizardOpen, setOraWizardOpen] = useState(false);
 
   const handleAction = (type: 'approve' | 'reject') => {
     if (!task) return;
@@ -61,6 +63,8 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
         return <Badge variant="secondary" className="text-xs bg-blue-500/10 text-blue-600">Review</Badge>;
       case 'approval':
         return <Badge variant="secondary" className="text-xs bg-purple-500/10 text-purple-600">Approval</Badge>;
+      case 'ora_plan_creation':
+        return <Badge variant="secondary" className="text-xs bg-violet-500/10 text-violet-600">ORA Plan</Badge>;
       default:
         return <Badge variant="secondary" className="text-xs">{type}</Badge>;
     }
@@ -78,7 +82,8 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   };
 
   const pssrId = task.metadata?.pssr_id as string | undefined;
-
+  const isOraTask = task.type === 'ora_plan_creation';
+  const oraProjectId = task.metadata?.project_id as string | undefined;
   return (
     <>
       <Sheet open={open} onOpenChange={handleOpenChange}>
@@ -141,6 +146,18 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
               </Button>
             )}
 
+            {/* ORA Plan Creation CTA */}
+            {isOraTask && oraProjectId && (
+              <Button
+                className="w-full gap-2 bg-muted hover:bg-muted/80 text-foreground font-medium border border-border"
+                onClick={() => setOraWizardOpen(true)}
+              >
+                <CalendarCheck className="h-4 w-4" />
+                Create ORA Activity Plan
+                <ChevronRight className="h-4 w-4 ml-auto" />
+              </Button>
+            )}
+
             <Separator />
 
             {/* Comment Section */}
@@ -192,6 +209,19 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
           mode="lead-review"
           onSuccess={() => {
             setWizardOpen(false);
+            onOpenChange(false);
+          }}
+        />
+      )}
+
+      {/* ORA Activity Plan Wizard */}
+      {isOraTask && oraProjectId && (
+        <ORAActivityPlanWizard
+          open={oraWizardOpen}
+          onOpenChange={setOraWizardOpen}
+          projectId={oraProjectId}
+          onSuccess={() => {
+            setOraWizardOpen(false);
             onOpenChange(false);
           }}
         />

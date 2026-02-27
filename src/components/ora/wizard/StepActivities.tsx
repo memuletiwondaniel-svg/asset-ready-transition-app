@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,18 +16,96 @@ interface Props {
   onActivitiesChange: (activities: WizardActivity[]) => void;
 }
 
+// Phase-based badge colors matching ORAActivityCatalog styling
+const PHASE_BADGE_COLORS: Record<string, string> = {
+  IDN: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+  ASS: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+  SEL: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+  DEF: 'bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300',
+  EXE: 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300',
+  OPR: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300',
+};
+
+function getCodeBadgeColor(code: string): string {
+  const prefix = code.split('-')[0];
+  return PHASE_BADGE_COLORS[prefix] || 'bg-muted text-muted-foreground';
+}
+
+interface TreeNode {
+  activity: WizardActivity;
+  children: TreeNode[];
+  depth: number;
+}
+
+function buildTree(activities: WizardActivity[]): TreeNode[] {
+  const activityMap = new Map<string, WizardActivity>();
+  activities.forEach(a => activityMap.set(a.id, a));
+
+  const childrenMap = new Map<string | null, WizardActivity[]>();
+  activities.forEach(a => {
+    const parentId = a.parentActivityId || null;
+    if (!childrenMap.has(parentId)) childrenMap.set(parentId, []);
+    childrenMap.get(parentId)!.push(a);
+  });
+
+  const result: TreeNode[] = [];
+
+  function walk(parentId: string | null, depth: number) {
+    const children = childrenMap.get(parentId) || [];
+    children.sort((a, b) => a.activityCode.localeCompare(b.activityCode));
+    for (const child of children) {
+      const childChildren = childrenMap.get(child.id) || [];
+      const node: TreeNode = { activity: child, children: [], depth };
+      result.push(node);
+      if (childChildren.length > 0) {
+        walk(child.id, depth + 1);
+      }
+    }
+  }
+
+  walk(null, 0);
+  return result;
+}
+
 export const StepActivities: React.FC<Props> = ({ activities, phase, onActivitiesChange }) => {
   const [search, setSearch] = useState('');
   const [showAddFromCatalog, setShowAddFromCatalog] = useState(false);
   const [showAddCustom, setShowAddCustom] = useState(false);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
   const selectedCount = activities.filter(a => a.selected).length;
 
-  const filteredActivities = activities.filter(a =>
-    a.activity.toLowerCase().includes(search.toLowerCase()) ||
-    a.description?.toLowerCase().includes(search.toLowerCase())
-  );
+  // Build tree structure
+  const treeNodes = useMemo(() => buildTree(activities), [activities]);
+
+  // Get parent IDs that have children
+  const parentIds = useMemo(() => {
+    const ids = new Set<string>();
+    activities.forEach(a => {
+      if (a.parentActivityId) ids.add(a.parentActivityId);
+    });
+    return ids;
+  }, [activities]);
+
+  // Filter logic - show matching items and their parents
+  const filteredNodes = useMemo(() => {
+    if (!search.trim()) return treeNodes;
+    const query = search.toLowerCase();
+    const matchingIds = new Set<string>();
+    
+    // Find all matching activities
+    activities.forEach(a => {
+      if (a.activity.toLowerCase().includes(query) || 
+          a.description?.toLowerCase().includes(query) ||
+          a.activityCode.toLowerCase().includes(query)) {
+        matchingIds.add(a.id);
+        // Also include parents
+        if (a.parentActivityId) matchingIds.add(a.parentActivityId);
+      }
+    });
+
+    return treeNodes.filter(n => matchingIds.has(n.activity.id));
+  }, [treeNodes, activities, search]);
 
   const handleToggle = (id: string) => {
     onActivitiesChange(
@@ -35,9 +113,29 @@ export const StepActivities: React.FC<Props> = ({ activities, phase, onActivitie
     );
   };
 
+  const handleToggleExpand = (id: string) => {
+    setExpandedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
   const handleSelectAll = () => {
     const allSelected = activities.every(a => a.selected);
     onActivitiesChange(activities.map(a => ({ ...a, selected: !allSelected })));
+  };
+
+  // Determine visibility: a node is visible if it's a root or its parent is expanded
+  const isNodeVisible = (node: TreeNode): boolean => {
+    if (node.depth === 0) return true;
+    // Check if parent is expanded
+    const parent = activities.find(a => {
+      const children = activities.filter(c => c.parentActivityId === a.id);
+      return children.some(c => c.id === node.activity.id);
+    });
+    if (!parent) return true;
+    return expandedIds.has(parent.id);
   };
 
   return (
@@ -71,37 +169,81 @@ export const StepActivities: React.FC<Props> = ({ activities, phase, onActivitie
       </div>
 
       <ScrollArea className="h-[320px]">
-        <div className="space-y-1 pr-2">
-          {filteredActivities.map((activity, idx) => (
-            <div key={activity.id} className={cn("rounded-md border transition-all", activity.selected ? "bg-primary/[0.03] border-primary/20" : "bg-muted/10 border-transparent opacity-50")}>
-              <div className="flex items-center gap-2.5 px-3 py-2 cursor-pointer group" onClick={() => setExpandedId(expandedId === activity.id ? null : activity.id)}>
-                <Checkbox checked={activity.selected} onCheckedChange={() => handleToggle(activity.id)} onClick={(e) => e.stopPropagation()} className="shrink-0" />
-                <span className="text-[11px] font-mono text-muted-foreground w-5 text-right shrink-0">{idx + 1}.</span>
-                <div className="flex-1 min-w-0">
-                  <span className="text-sm font-medium truncate block">{activity.activity}</span>
-                </div>
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 font-mono">{activity.activityCode}</Badge>
-                  {activity.description ? (
-                    expandedId === activity.id
-                      ? <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
-                      : <ChevronRight className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                  ) : null}
-                </div>
-              </div>
-              {expandedId === activity.id && activity.description && (
-                <div className="px-3 pb-2.5 pt-0 ml-[3.25rem] border-t border-border/40">
-                  <p className="text-xs text-muted-foreground pt-2 leading-relaxed">{activity.description}</p>
-                  <div className="flex gap-3 mt-2 text-[10px] text-muted-foreground">
-                    {activity.durationHigh && <span className="bg-muted/40 px-1.5 py-0.5 rounded">High: {activity.durationHigh}d</span>}
-                    {activity.durationMed && <span className="bg-muted/40 px-1.5 py-0.5 rounded">Med: {activity.durationMed}d</span>}
-                    {activity.durationLow && <span className="bg-muted/40 px-1.5 py-0.5 rounded">Low: {activity.durationLow}d</span>}
+        <div className="space-y-0.5 pr-2">
+          {filteredNodes.map((node) => {
+            const activity = node.activity;
+            const hasChildren = parentIds.has(activity.id);
+            const isExpanded = expandedIds.has(activity.id);
+            const isChild = node.depth > 0;
+
+            // Skip children of collapsed parents
+            if (!isNodeVisible(node)) return null;
+
+            return (
+              <div
+                key={activity.id}
+                className={cn(
+                  "rounded-md border transition-all",
+                  activity.selected ? "bg-primary/[0.03] border-primary/20" : "bg-muted/10 border-transparent opacity-60"
+                )}
+                style={{ marginLeft: node.depth * 20 }}
+              >
+                <div className="flex items-center gap-2 px-3 py-2 group">
+                  {/* Expand/collapse for parents */}
+                  {hasChildren ? (
+                    <button
+                      type="button"
+                      onClick={() => handleToggleExpand(activity.id)}
+                      className="shrink-0 p-0.5 rounded hover:bg-muted/50 transition-colors"
+                    >
+                      {isExpanded
+                        ? <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+                        : <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
+                      }
+                    </button>
+                  ) : (
+                    <span className="w-[18px] shrink-0" />
+                  )}
+
+                  <Checkbox
+                    checked={activity.selected}
+                    onCheckedChange={() => handleToggle(activity.id)}
+                    className="shrink-0"
+                  />
+
+                  <div className="flex-1 min-w-0">
+                    <span className={cn(
+                      "text-sm truncate block",
+                      isChild ? "font-normal" : "font-medium"
+                    )}>
+                      {activity.activity}
+                    </span>
+                    {activity.description && isExpanded && (
+                      <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{activity.description}</p>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        "text-[9px] px-1.5 py-0 h-4 font-mono border-0 whitespace-nowrap",
+                        getCodeBadgeColor(activity.activityCode)
+                      )}
+                    >
+                      {activity.activityCode}
+                    </Badge>
+                    {activity.durationDays && (
+                      <span className="text-[10px] text-muted-foreground bg-muted/40 px-1.5 py-0.5 rounded">
+                        {activity.durationDays}d
+                      </span>
+                    )}
                   </div>
                 </div>
-              )}
-            </div>
-          ))}
-          {filteredActivities.length === 0 && (
+              </div>
+            );
+          })}
+          {filteredNodes.length === 0 && (
             <div className="text-center py-12 text-muted-foreground text-sm">No activities match your search</div>
           )}
         </div>

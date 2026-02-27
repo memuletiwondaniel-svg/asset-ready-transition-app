@@ -221,6 +221,31 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
         if (teamError) {
           console.error('Error saving team members:', teamError);
         }
+
+        // Auto-create "Create ORA Activity Plan" task for Snr ORA Engr
+        const ORA_ROLE_VARIANTS = ['Snr ORA Engr', 'Snr ORA Engr.', 'Snr. ORA Engr.', 'Snr. ORA Engr', 'Senior ORA Engr.', 'Senior ORA Engineer'];
+        const oraEngrMember = validTeamMembers.find(m => ORA_ROLE_VARIANTS.includes(m.role));
+        if (oraEngrMember) {
+          const { error: taskError } = await supabase
+            .from('user_tasks')
+            .insert({
+              user_id: oraEngrMember.user_id,
+              title: `Create ORA Activity Plan`,
+              description: `Create the ORA Activity Plan for project ${formData.project_id_prefix}${formData.project_id_number} - ${formData.project_title}`,
+              type: 'ora_plan_creation',
+              status: 'pending',
+              priority: 'high',
+              metadata: {
+                source: 'ora_workflow',
+                project_id: newProject.id,
+                project_name: `${formData.project_id_prefix}${formData.project_id_number} - ${formData.project_title}`,
+                action: 'create_ora_plan',
+              }
+            });
+          if (taskError) {
+            console.error('Error creating ORA plan task:', taskError);
+          }
+        }
       }
       
       // Invalidate team members query so widgets refresh

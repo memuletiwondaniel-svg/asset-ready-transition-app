@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { CalendarCheck, Loader2 } from 'lucide-react';
+import { CalendarCheck, Loader2, Check, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { StepPhaseSelection } from './StepPhaseSelection';
 import { StepProjectType } from './StepProjectType';
@@ -9,9 +9,10 @@ import { StepActivities } from './StepActivities';
 import { StepSchedule } from './StepSchedule';
 import { StepReview } from './StepReview';
 import { WizardActivity, catalogToWizardActivity } from './types';
-import { useORAActivityCatalog } from '@/hooks/useORAActivityCatalog';
+import { useORAActivityCatalog, useORPPhases } from '@/hooks/useORAActivityCatalog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { Progress } from '@/components/ui/progress';
 
 interface ORAActivityPlanWizardProps {
   open: boolean;
@@ -20,16 +21,13 @@ interface ORAActivityPlanWizardProps {
   onSuccess?: () => void;
 }
 
-const STEP_LABELS = ['Phase', 'Type', 'Activities', 'Schedule', 'Review'];
-
-// Map wizard phases to catalog phases
-const PHASE_TO_CATALOG: Record<string, string> = {
-  'IDENTIFY': 'IDENTIFY',
-  'ASSESS': 'ASSESS',
-  'SELECT': 'SELECT',
-  'DEFINE': 'DEFINE',
-  'EXECUTE': 'EXECUTE',
-};
+const STEPS = [
+  { id: 1, title: 'Phase', description: 'Select ORP phase' },
+  { id: 2, title: 'Type', description: 'Project complexity' },
+  { id: 3, title: 'Activities', description: 'Select activities' },
+  { id: 4, title: 'Schedule', description: 'Set dates' },
+  { id: 5, title: 'Review', description: 'Review & create' },
+];
 
 // Map wizard phases to orp_phase enum values
 const PHASE_TO_ORP: Record<string, string> = {
@@ -43,28 +41,56 @@ const PHASE_TO_ORP: Record<string, string> = {
 export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
   open, onOpenChange, projectId, onSuccess
 }) => {
-  const [step, setStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(1);
+  const [visitedSteps, setVisitedSteps] = useState<Set<number>>(new Set([1]));
   const [phase, setPhase] = useState('');
   const [projectType, setProjectType] = useState('');
   const [activities, setActivities] = useState<WizardActivity[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const { toast } = useToast();
 
-  // Load activities from catalog when phase changes
-  const catalogPhase = phase ? PHASE_TO_CATALOG[phase] : undefined;
-  const { activities: catalogActivities, isLoading: catalogLoading } = useORAActivityCatalog(
-    undefined
-  );
+  // Load ORP phases to resolve phase_id from phase code
+  const { phases: orpPhases } = useORPPhases();
 
-  // When moving to step 3, load catalog activities
+  // Load all catalog activities
+  const { activities: catalogActivities, isLoading: catalogLoading } = useORAActivityCatalog();
+
+  // When moving to step 3, load catalog activities filtered by selected phase
   useEffect(() => {
-    if (step === 3 && catalogActivities.length > 0 && activities.length === 0) {
-      setActivities(catalogActivities.map(catalogToWizardActivity));
+    if (currentStep === 3 && catalogActivities.length > 0 && activities.length === 0) {
+      // Find the orp_phase record matching the selected phase
+      const selectedPhase = orpPhases.find(p => 
+        p.code?.toUpperCase() === phase || p.label?.toUpperCase() === phase
+      );
+
+      let filtered = catalogActivities;
+      if (selectedPhase) {
+        // Include activities for this phase (and activities with no phase)
+        filtered = catalogActivities.filter(a => 
+          a.phase_id === selectedPhase.id || !a.phase_id
+        );
+      }
+
+      // Map to wizard activities with duration based on project type
+      const mapped = filtered.map(a => {
+        const wa = catalogToWizardActivity(a);
+        // Auto-set duration based on project type
+        if (projectType === 'TYPE_A') {
+          wa.durationDays = a.duration_high || a.duration_med || null;
+        } else if (projectType === 'TYPE_B') {
+          wa.durationDays = a.duration_med || null;
+        } else if (projectType === 'TYPE_C') {
+          wa.durationDays = a.duration_low || a.duration_med || null;
+        }
+        return wa;
+      });
+      setActivities(mapped);
     }
-  }, [step, catalogActivities]);
+  }, [currentStep, catalogActivities, orpPhases, phase, projectType]);
 
   const resetForm = () => {
-    setStep(1);
+    setCurrentStep(1);
+    setVisitedSteps(new Set([1]));
     setPhase('');
     setProjectType('');
     setActivities([]);
@@ -78,7 +104,6 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
 
       const orpPhase = PHASE_TO_ORP[phase] || 'ASSESS_SELECT';
 
-      // Create ORP plan
       const { data: plan, error: planError } = await supabase
         .from('orp_plans')
         .insert({
@@ -93,11 +118,8 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
 
       if (planError) throw planError;
 
-      // Get selected activities
       const selectedActivities = activities.filter(a => a.selected);
 
-      // For catalog activities, insert plan deliverables
-      // For custom activities, we'll need to create catalog entries first or skip
       const catalogDeliverables = selectedActivities
         .filter(a => !a.id.startsWith('custom-'))
         .map(a => ({
@@ -130,70 +152,140 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
     }
   };
 
-  const canProceed = () => {
+  const validateStep = (step: number): boolean => {
     switch (step) {
       case 1: return !!phase;
       case 2: return !!projectType;
       case 3: return activities.some(a => a.selected);
-      case 4: return true;
-      case 5: return true;
-      default: return false;
+      default: return true;
     }
   };
 
+  const isStepComplete = (step: number): boolean => validateStep(step);
+
+  const handleStepClick = (targetStep: number) => {
+    if (targetStep === currentStep) return;
+    const canNavigate = visitedSteps.has(targetStep) || targetStep <= currentStep;
+    if (!canNavigate) {
+      if (!validateStep(currentStep)) return;
+    }
+    setVisitedSteps(prev => new Set([...prev, targetStep]));
+    setCurrentStep(targetStep);
+  };
+
+  const handleNext = () => {
+    if (!validateStep(currentStep)) return;
+    const nextStep = Math.min(currentStep + 1, STEPS.length);
+    if (currentStep === 2 && activities.length === 0) {
+      // Reset so they reload in step 3
+      setActivities([]);
+    }
+    setVisitedSteps(prev => new Set([...prev, nextStep]));
+    setCurrentStep(nextStep);
+  };
+
+  const handleBack = () => {
+    setCurrentStep(Math.max(currentStep - 1, 1));
+  };
+
+  const handleClose = () => {
+    resetForm();
+    onOpenChange(false);
+  };
+
+  const progressPercentage = (currentStep / STEPS.length) * 100;
+
   return (
-    <Dialog open={open} onOpenChange={(o) => { onOpenChange(o); if (!o) resetForm(); }}>
+    <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+        <DialogHeader className="border-b pb-4">
+          <DialogTitle className="flex items-center gap-2 text-xl font-semibold">
             <CalendarCheck className="w-5 h-5 text-primary" />
             Create ORA Activity Plan
           </DialogTitle>
+
+          {/* Progress Indicator - PSSR pattern */}
+          <div className="mt-4 space-y-3">
+            <div className="flex items-center justify-between text-sm">
+              <span className="font-medium">Step {currentStep} of {STEPS.length}</span>
+              <span className="text-muted-foreground">{STEPS[currentStep - 1].title}</span>
+            </div>
+            <Progress value={progressPercentage} className="h-2" />
+            
+            {/* Step Indicators */}
+            <div className="flex justify-between mt-2">
+              {STEPS.map((step) => {
+                const isActive = step.id === currentStep;
+                const isVisited = visitedSteps.has(step.id);
+                const isComplete = step.id < currentStep || (isVisited && isStepComplete(step.id));
+                const isClickable = isVisited || step.id <= currentStep;
+
+                return (
+                  <button
+                    key={step.id}
+                    type="button"
+                    onClick={() => handleStepClick(step.id)}
+                    disabled={!isClickable}
+                    className={cn(
+                      "flex flex-col items-center flex-1 transition-colors",
+                      isClickable ? "cursor-pointer" : "cursor-default",
+                      isActive
+                        ? "text-primary"
+                        : isComplete
+                          ? "text-primary/60"
+                          : "text-muted-foreground"
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium border-2 transition-colors",
+                        isActive
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : isComplete
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-muted-foreground/30 bg-muted/30"
+                      )}
+                    >
+                      {isComplete ? (
+                        <Check className="h-4 w-4" />
+                      ) : (
+                        step.id
+                      )}
+                    </div>
+                    <span className="text-xs mt-1 text-center hidden sm:block">{step.title}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </DialogHeader>
 
-        {/* Step indicator */}
-        <div className="flex items-center px-2">
-          {STEP_LABELS.map((label, i) => {
-            const stepNum = i + 1;
-            const isCompleted = stepNum < step;
-            const isCurrent = stepNum === step;
-
-            return (
-              <React.Fragment key={label}>
-                <div className="flex flex-col items-center gap-0.5">
-                  <div className={cn(
-                    "w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold transition-all duration-300",
-                    isCompleted && "border-2 border-emerald-600 text-emerald-600 bg-transparent",
-                    isCurrent && "bg-primary text-primary-foreground ring-2 ring-primary/30",
-                    !isCompleted && !isCurrent && "bg-muted text-muted-foreground"
-                  )}>
-                    {stepNum}
+        {/* Phase context banner - shown from Step 2 onwards */}
+        {currentStep >= 2 && phase && (
+          <div className="mx-1 mb-0 px-4 py-2.5 rounded-lg bg-muted/60 border border-border/50">
+            <div className="flex items-center gap-3">
+              <div>
+                <p className="text-xs text-muted-foreground font-medium">Phase</p>
+                <p className="text-sm font-semibold text-foreground/90">{phase}</p>
+              </div>
+              {projectType && currentStep >= 3 && (
+                <>
+                  <div className="w-px h-8 bg-border" />
+                  <div>
+                    <p className="text-xs text-muted-foreground font-medium">Type</p>
+                    <p className="text-sm font-semibold text-foreground/90">{projectType.replace('_', ' ')}</p>
                   </div>
-                  <span className={cn(
-                    "text-[10px] transition-colors whitespace-nowrap",
-                    isCompleted && "text-muted-foreground",
-                    isCurrent && "text-foreground font-semibold",
-                    !isCompleted && !isCurrent && "text-muted-foreground"
-                  )}>
-                    {label}
-                  </span>
-                </div>
-                {i < STEP_LABELS.length - 1 && (
-                  <div className={cn(
-                    "flex-1 h-[3px] rounded-full mx-1 mb-4 transition-colors duration-300",
-                    isCompleted ? "bg-emerald-600" : isCurrent ? "bg-amber-200" : "bg-border"
-                  )} />
-                )}
-              </React.Fragment>
-            );
-          })}
-        </div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Step content */}
         <div className="flex-1 overflow-auto py-2">
-          {step === 1 && <StepPhaseSelection phase={phase} onPhaseChange={setPhase} />}
-          {step === 2 && <StepProjectType projectType={projectType} onProjectTypeChange={setProjectType} />}
-          {step === 3 && (
+          {currentStep === 1 && <StepPhaseSelection phase={phase} onPhaseChange={setPhase} />}
+          {currentStep === 2 && <StepProjectType projectType={projectType} onProjectTypeChange={setProjectType} />}
+          {currentStep === 3 && (
             catalogLoading ? (
               <div className="flex items-center justify-center py-20">
                 <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
@@ -203,27 +295,21 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
               <StepActivities activities={activities} phase={phase} onActivitiesChange={setActivities} />
             )
           )}
-          {step === 4 && <StepSchedule activities={activities} onActivitiesChange={setActivities} />}
-          {step === 5 && <StepReview phase={phase} projectType={projectType} activities={activities} />}
+          {currentStep === 4 && <StepSchedule activities={activities} onActivitiesChange={setActivities} />}
+          {currentStep === 5 && <StepReview phase={phase} projectType={projectType} activities={activities} />}
         </div>
 
         {/* Navigation */}
         <div className="flex justify-between pt-4 border-t">
           <Button
             variant="outline"
-            onClick={() => step > 1 ? setStep(step - 1) : onOpenChange(false)}
+            onClick={() => currentStep > 1 ? handleBack() : handleClose()}
           >
-            {step === 1 ? 'Cancel' : 'Back'}
+            {currentStep === 1 ? 'Cancel' : 'Back'}
           </Button>
 
-          {step < 5 ? (
-            <Button onClick={() => {
-              if (step === 2 && activities.length === 0) {
-                // Reset activities when moving to step 3 so they reload
-                setActivities([]);
-              }
-              setStep(step + 1);
-            }} disabled={!canProceed()}>
+          {currentStep < 5 ? (
+            <Button onClick={handleNext} disabled={!validateStep(currentStep)}>
               Next
             </Button>
           ) : (
