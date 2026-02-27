@@ -3,21 +3,25 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Progress } from '@/components/ui/progress';
 import { 
   CheckCircle2, 
   Clock, 
   AlertTriangle, 
   XCircle,
   FileCheck,
-  ChevronRight
+  ChevronRight,
+  Brain
 } from 'lucide-react';
 import { P2AHandoverPoint } from '../hooks/useP2AHandoverPoints';
 import { useVCRPrerequisites, VCRPrerequisite, getPrerequisiteStatusConfig } from '../hooks/useVCRPrerequisites';
 import { PrerequisiteDetailSheet } from './PrerequisiteDetailSheet';
+import { useVCROverallIntelligence } from '@/hooks/useVCRChecklistIntelligence';
 import { cn } from '@/lib/utils';
 
 interface VCRChecklistTabProps {
   handoverPoint: P2AHandoverPoint;
+  projectId?: string;
 }
 
 const getStatusIcon = (status: VCRPrerequisite['status']) => {
@@ -37,9 +41,10 @@ const getStatusIcon = (status: VCRPrerequisite['status']) => {
   }
 };
 
-export const VCRChecklistTab: React.FC<VCRChecklistTabProps> = ({ handoverPoint }) => {
+export const VCRChecklistTab: React.FC<VCRChecklistTabProps> = ({ handoverPoint, projectId }) => {
   const { prerequisites, isLoading } = useVCRPrerequisites(handoverPoint.id);
   const [selectedPrereq, setSelectedPrereq] = useState<VCRPrerequisite | null>(null);
+  const { data: intelligence } = useVCROverallIntelligence(handoverPoint.id, projectId);
 
   if (isLoading) {
     return (
@@ -74,6 +79,45 @@ export const VCRChecklistTab: React.FC<VCRChecklistTabProps> = ({ handoverPoint 
 
   return (
     <div className="space-y-4">
+      {/* ORA Intelligence Banner */}
+      {intelligence && intelligence.total > 0 && (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardContent className="p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <Brain className="w-4 h-4 text-primary" />
+              <span className="text-xs font-semibold text-primary uppercase tracking-wide">ORA Activity Intelligence</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <Progress 
+                value={intelligence.percentage} 
+                className="h-2 flex-1"
+                indicatorClassName={cn(
+                  intelligence.percentage === 100 ? 'bg-emerald-500' :
+                  intelligence.percentage >= 50 ? 'bg-amber-500' : 'bg-destructive'
+                )}
+              />
+              <span className="text-xs font-medium whitespace-nowrap">
+                {intelligence.completed}/{intelligence.total} activities
+              </span>
+            </div>
+            <div className="flex gap-3 mt-1.5 text-[10px] text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                {intelligence.completed} done
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                {intelligence.inProgress} in progress
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground" />
+                {intelligence.notStarted} pending
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Status Summary */}
       <div className="flex flex-wrap gap-2">
         {Object.entries(statusCounts).map(([status, count]) => {

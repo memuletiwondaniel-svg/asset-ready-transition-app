@@ -485,7 +485,42 @@ export const useORPPlanDetails = (planId: string) => {
         ora_engineer = engineer;
       }
 
-      return { ...data, ora_engineer };
+      // Fetch dynamic ora_plan_activities and merge into deliverables
+      const client = supabase as any;
+      const { data: oraActivities } = await client
+        .from('ora_plan_activities')
+        .select('*')
+        .eq('orp_plan_id', planId)
+        .order('activity_code');
+
+      // Convert ora_plan_activities into deliverable-compatible format
+      const activityDeliverables = (oraActivities || []).map((a: any) => ({
+        id: `ora-${a.id}`,
+        orp_plan_id: a.orp_plan_id,
+        start_date: a.start_date,
+        end_date: a.end_date,
+        status: a.status,
+        completion_percentage: a.completion_percentage || 0,
+        deliverable: {
+          id: a.id,
+          name: a.name,
+          activity_code: a.activity_code,
+          description: a.description,
+        },
+        collaborators: [],
+        dependencies: [],
+        // Extra metadata for identification
+        _isOraActivity: true,
+        _sourceType: a.source_type,
+      }));
+
+      // Merge: existing deliverables first, then ORA activities
+      const mergedDeliverables = [
+        ...(data.deliverables || []),
+        ...activityDeliverables,
+      ];
+
+      return { ...data, ora_engineer, deliverables: mergedDeliverables };
     },
     enabled: !!planId
   });
