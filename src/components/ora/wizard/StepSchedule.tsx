@@ -739,44 +739,69 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                 <div>
                   <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wide">Schedule</label>
                   <div className="space-y-3 mt-1.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">Start Date</span>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button variant="outline" size="sm" className={cn("h-7 text-xs px-3", !selectedActivity.startDate && "text-muted-foreground")}>
-                            {selectedActivity.startDate ? format(parseISO(selectedActivity.startDate), 'dd MMM yyyy') : 'Pick date'}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="end">
-                          <Calendar
-                            mode="single"
-                            selected={selectedActivity.startDate ? parseISO(selectedActivity.startDate) : undefined}
-                            onSelect={(date) => { if (date) updateActivity(selectedActivity.id, { startDate: format(date, 'yyyy-MM-dd') }); }}
-                            initialFocus
-                            className={cn("p-3 pointer-events-auto")}
-                          />
-                        </PopoverContent>
-                      </Popover>
+                    {/* Date summary row */}
+                    <div className="flex items-center gap-3 text-xs">
+                      <div className="flex-1 rounded-md border p-2 text-center">
+                        <div className="text-[10px] text-muted-foreground mb-0.5">Start</div>
+                        <div className={cn("font-medium", selectedActivity.startDate ? "text-foreground" : "text-muted-foreground/50")}>
+                          {selectedActivity.startDate ? format(parseISO(selectedActivity.startDate), 'dd MMM yyyy') : '—'}
+                        </div>
+                      </div>
+                      <span className="text-muted-foreground">→</span>
+                      <div className="flex-1 rounded-md border p-2 text-center">
+                        <div className="text-[10px] text-muted-foreground mb-0.5">End</div>
+                        <div className={cn("font-medium", selectedActivity.endDate ? "text-foreground" : "text-muted-foreground/50")}>
+                          {selectedActivity.endDate ? format(parseISO(selectedActivity.endDate), 'dd MMM yyyy') : '—'}
+                        </div>
+                      </div>
+                      <div className="w-16 rounded-md border p-2 text-center">
+                        <div className="text-[10px] text-muted-foreground mb-0.5">Days</div>
+                        <div className="font-medium">{selectedActivity.durationDays ?? '—'}</div>
+                      </div>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">End Date</span>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button variant="outline" size="sm" className={cn("h-7 text-xs px-3", !selectedActivity.endDate && "text-muted-foreground")}>
-                            {selectedActivity.endDate ? format(parseISO(selectedActivity.endDate), 'dd MMM yyyy') : 'Pick date'}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="end">
-                          <Calendar
-                            mode="single"
-                            selected={selectedActivity.endDate ? parseISO(selectedActivity.endDate) : undefined}
-                            onSelect={(date) => { if (date) updateActivity(selectedActivity.id, { endDate: format(date, 'yyyy-MM-dd') }); }}
-                            initialFocus
-                            className={cn("p-3 pointer-events-auto")}
-                          />
-                        </PopoverContent>
-                      </Popover>
+
+                    {/* Inline range calendar */}
+                    <div className="text-[10px] text-muted-foreground text-center">
+                      {!selectedActivity.startDate 
+                        ? 'Click a date to set start' 
+                        : !selectedActivity.endDate 
+                          ? 'Click another date to set end' 
+                          : 'Click to change start date, then end date'}
                     </div>
+                    <div className="border rounded-lg flex justify-center">
+                      <Calendar
+                        mode="range"
+                        selected={
+                          selectedActivity.startDate
+                            ? {
+                                from: parseISO(selectedActivity.startDate),
+                                to: selectedActivity.endDate ? parseISO(selectedActivity.endDate) : undefined,
+                              }
+                            : undefined
+                        }
+                        onSelect={(range) => {
+                          if (!range) return;
+                          const updates: Partial<WizardActivity> = {};
+                          if (range.from) {
+                            updates.startDate = format(range.from, 'yyyy-MM-dd');
+                          }
+                          if (range.from && range.to) {
+                            updates.endDate = format(range.to, 'yyyy-MM-dd');
+                            updates.durationDays = differenceInDays(range.to, range.from);
+                          } else if (range.from && !range.to && selectedActivity.durationDays) {
+                            // Only start picked and duration exists → auto-compute end
+                            const computedEnd = addDays(range.from, selectedActivity.durationDays);
+                            updates.endDate = format(computedEnd, 'yyyy-MM-dd');
+                          }
+                          updateActivity(selectedActivity.id, updates);
+                        }}
+                        numberOfMonths={1}
+                        initialFocus
+                        className={cn("p-3 pointer-events-auto")}
+                      />
+                    </div>
+
+                    {/* Duration manual input */}
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">Duration (days)</span>
                       <Input
