@@ -65,8 +65,10 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
     }
   };
 
-  // No plan state
-  if (!primaryPlan) {
+  const isDraft = planStatus === 'DRAFT';
+
+  // No plan state OR draft state → show creation/resume UI
+  if (!primaryPlan || isDraft) {
     return (
       <>
         <Card className="h-full transition-all duration-300 group">
@@ -86,12 +88,20 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
                 />
                 <span>ORA Activity Plan</span>
               </div>
+              {isDraft && (
+                <Badge variant="outline" className="text-[10px] gap-1 bg-muted text-muted-foreground border-border">
+                  <FileEdit className="h-3 w-3" />
+                  Draft
+                </Badge>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="text-center py-8 text-muted-foreground">
-              <p className="text-sm font-medium mb-1">No ORA Plan</p>
-              <p className="text-xs opacity-70 mb-4">Operation Readiness activities will appear here</p>
+              <p className="text-sm font-medium mb-1">{isDraft ? 'Draft in Progress' : 'No ORA Plan'}</p>
+              <p className="text-xs opacity-70 mb-4">
+                {isDraft ? 'You have an unsaved draft. Continue where you left off.' : 'Operation Readiness activities will appear here'}
+              </p>
               <Button
                 variant="secondary"
                 size="sm"
@@ -100,7 +110,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
                   setWizardOpen(true);
                 }}
               >
-                Create ORA Activity Plan
+                {isDraft ? 'Continue Setup' : 'Create ORA Activity Plan'}
               </Button>
             </div>
           </CardContent>

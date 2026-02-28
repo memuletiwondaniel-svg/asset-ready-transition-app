@@ -2311,6 +2311,7 @@ export type Database = {
           project_id: string
           status: Database["public"]["Enums"]["orp_status"]
           updated_at: string
+          wizard_state: Json | null
         }
         Insert: {
           created_at?: string
@@ -2322,6 +2323,7 @@ export type Database = {
           project_id: string
           status?: Database["public"]["Enums"]["orp_status"]
           updated_at?: string
+          wizard_state?: Json | null
         }
         Update: {
           created_at?: string
@@ -2333,6 +2335,7 @@ export type Database = {
           project_id?: string
           status?: Database["public"]["Enums"]["orp_status"]
           updated_at?: string
+          wizard_state?: Json | null
         }
         Relationships: [
           {

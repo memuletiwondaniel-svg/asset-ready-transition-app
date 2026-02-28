@@ -1,0 +1,1 @@
+ALTER TABLE public.orp_plans ADD COLUMN IF NOT EXISTS wizard_state jsonb DEFAULT NULL;
