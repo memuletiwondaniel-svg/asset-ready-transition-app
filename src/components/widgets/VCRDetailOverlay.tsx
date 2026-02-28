@@ -3,6 +3,9 @@ import { useParams } from 'react-router-dom';
 import { getAPIConfig } from '@/lib/api-config-storage';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { MultiViewDatePicker } from '@/components/ui/multi-view-date-picker';
+import { DndContext, closestCenter, useSensor, useSensors, PointerSensor, type DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, horizontalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 import {
   Dialog,
@@ -1246,6 +1249,28 @@ const PlaceholderContent: React.FC<{ title: string; icon: React.ElementType }> =
   </div>
 );
 
+// ── Sortable Card Wrapper ─────────────────────────────────────────
+const SortableCard: React.FC<{ id: string; children: React.ReactNode }> = ({ id, children }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+    zIndex: isDragging ? 10 : undefined,
+  };
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className="rounded-2xl bg-card/85 backdrop-blur-sm border border-border/50 shadow-sm min-h-0 flex flex-col overflow-hidden cursor-grab active:cursor-grabbing"
+    >
+      {children}
+    </div>
+  );
+};
+
 // ── Main Overlay ─────────────────────────────────────────────────
 export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
   open,
@@ -1259,6 +1284,18 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
   const vcrColor = getVCRColor(vcr.vcr_code);
   const displayCode = shortCode(vcr.vcr_code);
   const isComplete = vcr.progress === 100;
+  const [cardOrder, setCardOrder] = useState<string[]>(['overview', 'progress', 'approvals']);
+  const cardSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
+  const handleCardDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      setCardOrder(prev => {
+        const oldIndex = prev.indexOf(active.id as string);
+        const newIndex = prev.indexOf(over.id as string);
+        return arrayMove(prev, oldIndex, newIndex);
+      });
+    }
+  };
   const [liveTargetDate, setLiveTargetDate] = useState<Date | undefined>(
     vcr.target_date ? new Date(vcr.target_date) : undefined
   );
@@ -1822,29 +1859,30 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
   const renderContent = () => {
     switch (activeNav) {
       case 'overview': {
+        const panels = cardOrder.map(id => {
+          switch (id) {
+            case 'overview': return <OverviewInfoPanel key="info" vcr={vcr} projectName={projectName} projectCode={projectCode} projectId={projectId} liveTargetDate={liveTargetDate} onTargetDateChange={setLiveTargetDate} />;
+            case 'progress': return <ProgressPanel key="progress" vcr={vcr} liveTargetDate={liveTargetDate} />;
+            case 'approvals': return <ApprovalsPanel key="approvals" vcr={vcr} checklistApprovers={checklistApprovers} sofApprovers={sofDirectorApprovers} pacApprovers={pacCertificateApprovers} vcrApprovers={vcrApprovers} showSof={!!vcr.has_hydrocarbon} />;
+            default: return null;
+          }
+        });
         return (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full min-h-0">
-            {[
-              <ProgressPanel key="progress" vcr={vcr} liveTargetDate={liveTargetDate} />,
-              <ApprovalsPanel
-                key="approvals"
-                vcr={vcr}
-                checklistApprovers={checklistApprovers}
-                sofApprovers={sofDirectorApprovers}
-                pacApprovers={pacCertificateApprovers}
-                vcrApprovers={vcrApprovers}
-                showSof={!!vcr.has_hydrocarbon}
-              />,
-              <OverviewInfoPanel key="info" vcr={vcr} projectName={projectName} projectCode={projectCode} projectId={projectId} liveTargetDate={liveTargetDate} onTargetDateChange={setLiveTargetDate} />,
-            ].map((panel, idx) => (
-              <div
-                key={idx}
-                className="rounded-2xl bg-card/85 backdrop-blur-sm border border-border/50 shadow-sm min-h-0 flex flex-col overflow-hidden"
-              >
-                {panel}
+          <DndContext
+            sensors={cardSensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleCardDragEnd}
+          >
+            <SortableContext items={cardOrder} strategy={horizontalListSortingStrategy}>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full min-h-0">
+                {cardOrder.map((id, idx) => (
+                  <SortableCard key={id} id={id}>
+                    {panels[idx]}
+                  </SortableCard>
+                ))}
               </div>
-            ))}
-          </div>
+            </SortableContext>
+          </DndContext>
         );
       }
       case 'sof':
