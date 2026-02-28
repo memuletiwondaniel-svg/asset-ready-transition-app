@@ -277,7 +277,7 @@ const PACCertificate: React.FC<PACCertificateProps> = ({
               </div>
               <div>
                 <span className="font-semibold text-foreground">PAC Date:</span>
-                <span className="ml-2 text-muted-foreground">{pacDate || '[PAC Date]'}</span>
+                <span className="ml-2 text-muted-foreground">{pacDate || 'Pending Approval'}</span>
               </div>
             </div>
           </div>
@@ -304,19 +304,14 @@ const PACCertificate: React.FC<PACCertificateProps> = ({
                     <thead>
                       <tr className="bg-muted/60">
                         <th className="text-left px-3 py-2 font-semibold text-foreground border-b border-border">#</th>
-                        <th className="text-left px-3 py-2 font-semibold text-foreground border-b border-border">VCR</th>
                         <th className="text-left px-3 py-2 font-semibold text-foreground border-b border-border">System Code</th>
                         <th className="text-left px-3 py-2 font-semibold text-foreground border-b border-border">System Name</th>
                       </tr>
                     </thead>
                     <tbody>
                       {vcrSystems.map((sys, idx) => (
-                        <tr key={`${sys.vcrCode}-${sys.systemCode}-${idx}`} className={idx % 2 === 0 ? 'bg-background' : 'bg-muted/20'}>
+                        <tr key={`${sys.systemCode}-${idx}`} className={idx % 2 === 0 ? 'bg-background' : 'bg-muted/20'}>
                           <td className="px-3 py-1.5 text-muted-foreground border-b border-border/50">{idx + 1}</td>
-                          <td className="px-3 py-1.5 text-foreground border-b border-border/50">
-                            <span className="font-medium">{sys.vcrCode}</span>
-                            <span className="text-muted-foreground ml-1.5">– {sys.vcrName}</span>
-                          </td>
                           <td className="px-3 py-1.5 font-mono text-xs text-muted-foreground border-b border-border/50">{sys.systemCode}</td>
                           <td className="px-3 py-1.5 text-foreground border-b border-border/50">{sys.systemName}</td>
                         </tr>
