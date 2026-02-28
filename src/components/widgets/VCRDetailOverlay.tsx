@@ -346,6 +346,7 @@ const ApprovalsPanel: React.FC<ApprovalsPanelProps> = ({
   };
 
   const approvingParties = checklistApprovers.filter(a => a.role === 'receiving');
+  const deliveringParties = checklistApprovers.filter(a => a.role === 'delivering');
 
   const StatusIndicator: React.FC<{ accepted: number; total: number }> = ({ accepted, total }) => {
     if (accepted === total && total > 0) return (
@@ -402,6 +403,27 @@ const ApprovalsPanel: React.FC<ApprovalsPanelProps> = ({
         <CardContent className="flex-1 p-0 overflow-hidden">
           <ScrollArea className="h-full">
           <div className="p-6 pt-4">
+          {/* Section 0: VCR Delivering Parties */}
+          <CollapsibleSection title="VCR Delivering Parties" count={deliveringParties.length} defaultOpen={false}>
+            <div className="space-y-0.5">
+              {deliveringParties.map((person, i) => (
+                <PersonRow
+                  key={`delivering-${person.name}-${i}`}
+                  name={person.userName || person.name}
+                  subtitle={person.userPosition || person.name}
+                  avatarUrl={person.avatarUrl}
+                  onClick={() => setSelectedApprover(person)}
+                  trailing={<StatusIndicator accepted={person.acceptedCount} total={person.itemCount} />}
+                />
+              ))}
+              {deliveringParties.length === 0 && (
+                <div className="py-2 text-[10px] text-muted-foreground italic">No delivering parties assigned</div>
+              )}
+            </div>
+          </CollapsibleSection>
+
+          <div className="border-t border-border/40" />
+
           {/* Section 1: VCR Reviewers */}
           <CollapsibleSection title="VCR Reviewers" count={approvingParties.length} defaultOpen={false}>
             <div className="space-y-0.5">
@@ -497,6 +519,7 @@ const ApprovalsPanel: React.FC<ApprovalsPanelProps> = ({
           approverAvatarUrl={selectedApprover.avatarUrl}
           approverItemCount={selectedApprover.itemCount}
           approverAcceptedCount={selectedApprover.acceptedCount}
+          roleType={selectedApprover.role === 'delivering' ? 'delivering' : 'receiving'}
         />
       )}
     </>
@@ -1246,24 +1269,27 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
     queryFn: async () => {
       const client = supabase as any;
 
-      // Get VCR items with their approving party roles
+      // Get VCR items with their approving and delivering party roles
       const { data: vcrItems } = await client
         .from('vcr_items')
         .select(`
-          id, approving_party_role_ids,
+          id, approving_party_role_ids, delivering_party_role_id, vcr_item,
           vcr_item_categories!vcr_items_category_id_fkey (name)
         `)
         .eq('is_active', true);
 
       if (!vcrItems?.length) return [];
 
-      // Collect all unique approving role IDs
+      // Collect all unique approving + delivering role IDs
       const allRoleIds = new Set<string>();
       for (const item of vcrItems) {
         if (item.approving_party_role_ids) {
           for (const rid of item.approving_party_role_ids) {
             allRoleIds.add(rid);
           }
+        }
+        if (item.delivering_party_role_id) {
+          allRoleIds.add(item.delivering_party_role_id);
         }
       }
 
@@ -1461,9 +1487,42 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
         }
       }
 
+      // Aggregate by delivering role
+      const deliveringMap = new Map<string, { itemCount: number; acceptedCount: number; userName?: string; userPosition?: string; avatarUrl?: string; userId?: string }>();
+
+      for (const item of vcrItems) {
+        if (!item.delivering_party_role_id) continue;
+        const roleId = item.delivering_party_role_id;
+        if (excludedRoleIds.has(roleId)) continue;
+
+        const roleName = roleMap.get(roleId) || roleId;
+        const existing = deliveringMap.get(roleName) || { itemCount: 0, acceptedCount: 0 };
+        existing.itemCount++;
+
+        const matchedPrereq = prereqs?.find((p: any) =>
+          p.summary?.toLowerCase().trim() === item.vcr_item?.toLowerCase?.().trim?.()
+        );
+        if (matchedPrereq && acceptedStatuses.includes(matchedPrereq.status)) {
+          existing.acceptedCount++;
+        }
+
+        const userProfile = roleUserMap.get(roleId);
+        if (userProfile) {
+          existing.userName = userProfile.full_name;
+          existing.userPosition = userProfile.position;
+          existing.avatarUrl = getFullAvatarUrl(userProfile.avatar_url);
+          existing.userId = userProfile.user_id;
+        }
+
+        deliveringMap.set(roleName, existing);
+      }
+
       const result: ChecklistApproverData[] = [];
       approverMap.forEach((val, name) => {
         result.push({ name, role: 'receiving', ...val });
+      });
+      deliveringMap.forEach((val, name) => {
+        result.push({ name, role: 'delivering', ...val });
       });
 
       return result;
