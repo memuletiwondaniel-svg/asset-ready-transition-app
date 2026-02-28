@@ -228,7 +228,7 @@ export const VCRDetailOverlay: React.FC<VCRDetailOverlayProps> = ({
                 ))}
 
                 {/* Separator */}
-                <Separator className="my-3" />
+                <Separator className="my-6" />
 
                 {/* Section 2: VCR Deliverables */}
                 <div className="px-2 pb-2">
