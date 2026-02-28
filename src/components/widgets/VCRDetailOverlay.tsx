@@ -1912,12 +1912,12 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
       case 'pac':
         return (
           <PACCertificate
-            certificateNumber={`PAC-${displayCode}`}
+            certificateNumber={`PAC-${projectCode}-VCR-${displayCode.replace('VCR-', '')}`}
             facilityName={vcr.name}
             projectName={projectName}
             handoverPointId={vcr.id}
             vcrCode={vcr.vcr_code}
-            pacDate={vcr.target_date ? format(new Date(vcr.target_date), 'dd MMM yyyy') : ''}
+            pacDate=""
             approvers={pacCertificateApprovers.length > 0 ? pacCertificateApprovers.filter(a => a.name) : undefined}
           />
         );
