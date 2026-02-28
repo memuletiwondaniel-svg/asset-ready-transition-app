@@ -2009,7 +2009,7 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
                   );
                 })}
 
-                <Separator className="my-3" />
+                <Separator className="my-5" />
 
                 <div className="px-2 pb-2">
                   <span className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">
