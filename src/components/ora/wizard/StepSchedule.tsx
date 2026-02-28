@@ -2,10 +2,11 @@ import React, { useState, useMemo, useRef, useCallback } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { CalendarDays, ZoomIn, ZoomOut, ChevronRight, ChevronDown, Columns3, ChevronsUpDown } from 'lucide-react';
+import { CalendarDays, ZoomIn, ZoomOut, ChevronRight, ChevronDown, Columns3, ChevronsUpDown, GitBranch } from 'lucide-react';
 import { WizardActivity } from './types';
 import { format, parseISO, addDays, differenceInDays, startOfDay } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { useGanttBarResize } from '@/hooks/useGanttBarResize';
 import {
   Select,
   SelectContent,
@@ -70,6 +71,15 @@ const BAR_COLORS: Record<string, string> = {
   DEF: 'bg-teal-400 dark:bg-teal-500',
   EXE: 'bg-indigo-400 dark:bg-indigo-500',
   OPR: 'bg-purple-400 dark:bg-purple-500',
+};
+
+const BAR_COLORS_MUTED: Record<string, string> = {
+  IDN: 'bg-blue-200 dark:bg-blue-800',
+  ASS: 'bg-amber-200 dark:bg-amber-800',
+  SEL: 'bg-emerald-200 dark:bg-emerald-800',
+  DEF: 'bg-teal-200 dark:bg-teal-800',
+  EXE: 'bg-indigo-200 dark:bg-indigo-800',
+  OPR: 'bg-purple-200 dark:bg-purple-800',
 };
 
 const STATUS_OPTIONS = [
@@ -184,6 +194,7 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
   const [zoomLevel, setZoomLevel] = useState(1);
   const [visibleCols, setVisibleCols] = useState<Set<ColKey>>(new Set(DEFAULT_VISIBLE));
   const [selectedActivityId, setSelectedActivityId] = useState<string | null>(null);
+  const [showRelationships, setShowRelationships] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const selectedActivities = useMemo(() => activities.filter(a => a.selected), [activities]);
@@ -285,6 +296,19 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
   const dayWidth = DAY_WIDTH_BASE * zoomLevel;
   const timelineWidth = totalDays * dayWidth;
 
+  const handleBarResize = useCallback((activityId: string, newStart: Date, newEnd: Date) => {
+    const startStr = format(newStart, 'yyyy-MM-dd');
+    const endStr = format(newEnd, 'yyyy-MM-dd');
+    const durationDays = differenceInDays(newEnd, newStart);
+    updateActivity(activityId, { startDate: startStr, endDate: endStr, durationDays });
+  }, [updateActivity]);
+
+  const { draggingId, previewLeft, previewWidth, handleMouseDown } = useGanttBarResize({
+    minDate: timelineStart,
+    dayWidth,
+    onResize: handleBarResize,
+  });
+
   const monthMarkers = useMemo(() => {
     const markers: { label: string; left: number }[] = [];
     let current = new Date(timelineStart);
@@ -356,6 +380,16 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
           </Button>
           <Button variant="outline" size="sm" className="h-6 px-2 text-[10px] font-medium" onClick={collapseAll}>
             Collapse
+          </Button>
+          <div className="w-px h-4 bg-border mx-1" />
+          <Button
+            variant={showRelationships ? 'secondary' : 'outline'}
+            size="sm"
+            className="h-6 px-2 text-[10px] font-medium gap-1"
+            onClick={() => setShowRelationships(!showRelationships)}
+          >
+            <GitBranch className="w-3 h-3" />
+            Relations
           </Button>
         </div>
         <div className="flex items-center gap-2">
@@ -590,21 +624,54 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                           <div className={cn("h-full rounded-sm", getBarColor(activity.activityCode), "opacity-30")} />
                         </div>
                       )}
-                      {barPos && !isParent && (
-                        <div
-                          className={cn(
-                            "absolute top-2 rounded shadow-sm transition-all",
-                            getBarColor(activity.activityCode),
-                            "opacity-85 hover:opacity-100"
-                          )}
-                          style={{ left: barPos.left, width: barPos.width, height: ROW_HEIGHT - 16 }}
-                          title={`${activity.activity}: ${activity.startDate} → ${activity.endDate || '?'} (${activity.durationDays || '?'}d)`}
-                        >
-                          <div className="px-1.5 h-full flex items-center overflow-hidden">
-                            <span className="text-[9px] text-white font-medium truncate">{activity.durationDays}d</span>
+                      {barPos && !isParent && (() => {
+                        const isDragging = draggingId === activity.id;
+                        const barL = isDragging && previewLeft !== null ? previewLeft : barPos.left;
+                        const barW = isDragging && previewWidth !== null ? previewWidth : barPos.width;
+                        const prefix = getPhasePrefix(activity.activityCode);
+                        const mutedColor = BAR_COLORS_MUTED[prefix] || 'bg-muted';
+                        const barColorSolid = getBarColor(activity.activityCode);
+                        const completion = (activity as any).completionPercentage || 0;
+
+                        return (
+                          <div
+                            className={cn(
+                              "absolute top-2 rounded shadow-sm overflow-hidden transition-all group",
+                              mutedColor,
+                              isDragging && "ring-2 ring-primary/50 shadow-lg"
+                            )}
+                            style={{ left: barL, width: barW, height: ROW_HEIGHT - 16 }}
+                            title={`${activity.activity}: ${activity.startDate} → ${activity.endDate || '?'} (${activity.durationDays || '?'}d)`}
+                          >
+                            {/* Progress fill */}
+                            <div
+                              className={cn("absolute h-full rounded-l", barColorSolid)}
+                              style={{ width: `${completion}%` }}
+                            />
+                            {/* Label */}
+                            <div className="absolute inset-0 flex items-center px-1.5 z-10">
+                              <span className="text-[9px] text-white font-medium truncate drop-shadow-sm">{activity.durationDays}d</span>
+                            </div>
+                            {/* Left resize handle */}
+                            <div
+                              className="absolute left-0 top-0 bottom-0 w-[6px] cursor-col-resize z-20 hover:bg-white/30"
+                              onMouseDown={(e) => {
+                                if (!activity.startDate || !activity.endDate) return;
+                                handleMouseDown(e, 'left', activity.id, barPos.left, barPos.width, parseISO(activity.startDate), parseISO(activity.endDate));
+                              }}
+                            />
+                            {/* Right resize handle */}
+                            <div
+                              className="absolute right-0 top-0 bottom-0 w-[6px] cursor-col-resize z-20 hover:bg-white/30"
+                              onMouseDown={(e) => {
+                                if (!activity.startDate) return;
+                                const endDate = activity.endDate ? parseISO(activity.endDate) : addDays(parseISO(activity.startDate), activity.durationDays || 14);
+                                handleMouseDown(e, 'right', activity.id, barPos.left, barPos.width, parseISO(activity.startDate), endDate);
+                              }}
+                            />
                           </div>
-                        </div>
-                      )}
+                        );
+                      })()}
                       {!barPos && !isParent && (
                         <div className="absolute inset-0 flex items-center justify-center">
                           <span className="text-[10px] text-muted-foreground/40 italic">Set start date →</span>
