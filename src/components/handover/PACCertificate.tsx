@@ -36,7 +36,8 @@ interface PACCertificateProps {
   facilityName?: string;
   projectName?: string;
   pacDate?: string;
-  projectId?: string;
+  handoverPointId?: string;
+  vcrCode?: string;
   approvers?: PACApprover[];
 }
 
@@ -58,7 +59,8 @@ const PACCertificate: React.FC<PACCertificateProps> = ({
   facilityName = "",
   projectName = "",
   pacDate = "",
-  projectId,
+  handoverPointId,
+  vcrCode,
   approvers = [
     { id: '1', name: '', role: 'Plant Director' },
     { id: '2', name: '', role: 'Project Hub Lead' }
@@ -114,60 +116,38 @@ const PACCertificate: React.FC<PACCertificateProps> = ({
     },
   });
 
-  // Fetch VCR systems for the associated project
+  // Fetch systems for this specific VCR (handover point)
   const { data: vcrSystems = [] } = useQuery({
-    queryKey: ['pac-vcr-systems', projectId],
+    queryKey: ['pac-vcr-systems', handoverPointId],
     queryFn: async (): Promise<VCRSystem[]> => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const client = supabase as any;
 
-      const planResult = await client
-        .from('p2a_handover_plans')
-        .select('id')
-        .eq('project_id', projectId)
-        .maybeSingle();
+      const sysResult = await client
+        .from('p2a_handover_point_systems')
+        .select('system_id')
+        .eq('handover_point_id', handoverPointId);
 
-      if (planResult.error) throw planResult.error;
-      if (!planResult.data) return [];
+      if (sysResult.error) throw sysResult.error;
+      if (!sysResult.data || sysResult.data.length === 0) return [];
 
-      const hpResult = await client
-        .from('p2a_handover_points')
-        .select('id, vcr_code, name')
-        .eq('handover_plan_id', planResult.data.id)
-        .order('vcr_code', { ascending: true });
+      const systemIds = sysResult.data.map((s: any) => s.system_id);
+      const detailsResult = await client
+        .from('p2a_systems')
+        .select('system_id, name')
+        .in('id', systemIds);
 
-      if (hpResult.error) throw hpResult.error;
-      if (!hpResult.data || hpResult.data.length === 0) return [];
+      if (detailsResult.error) throw detailsResult.error;
+      if (!detailsResult.data) return [];
 
-      const allSystems: VCRSystem[] = [];
-      for (const hp of hpResult.data) {
-        const sysResult = await client
-          .from('p2a_handover_point_systems')
-          .select('system_id')
-          .eq('handover_point_id', hp.id);
-        
-        if (sysResult.data && sysResult.data.length > 0) {
-          const systemIds = sysResult.data.map((s: any) => s.system_id);
-          const detailsResult = await client
-            .from('p2a_systems')
-            .select('system_id, name')
-            .in('id', systemIds);
-
-          if (detailsResult.data) {
-            for (const sys of detailsResult.data) {
-              allSystems.push({
-                vcrCode: hp.vcr_code,
-                vcrName: hp.name,
-                systemCode: sys.system_id,
-                systemName: sys.name,
-              });
-            }
-          }
-        }
-      }
-      return allSystems;
+      return detailsResult.data.map((sys: any) => ({
+        vcrCode: vcrCode || '',
+        vcrName: facilityName || '',
+        systemCode: sys.system_id,
+        systemName: sys.name,
+      }));
     },
-    enabled: !!projectId,
+    enabled: !!handoverPointId,
   });
 
 
@@ -292,9 +272,7 @@ const PACCertificate: React.FC<PACCertificateProps> = ({
               <div>
                 <span className="font-semibold text-foreground">VCR Ref:</span>
                 <span className="ml-2 text-muted-foreground">
-                  {vcrSystems.length > 0
-                    ? [...new Set(vcrSystems.map(s => s.vcrCode))].join(', ')
-                    : '[VCR Ref]'}
+                  {vcrCode || '[VCR Ref]'}
                 </span>
               </div>
               <div>
