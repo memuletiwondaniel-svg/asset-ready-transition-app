@@ -23,6 +23,9 @@ import {
   XCircle,
   AlertTriangle,
   FileCheck,
+  Brain,
+  TrendingUp,
+  ShieldAlert,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -30,6 +33,18 @@ import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { useParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { Progress } from '@/components/ui/progress';
+import { useVCRChecklistIntelligence } from '@/hooks/useVCRChecklistIntelligence';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 export interface VCRItemBasic {
   id: string;
@@ -67,6 +82,17 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
   vcrId,
 }) => {
   const { id: projectId } = useParams<{ id: string }>();
+  const [showWarningDialog, setShowWarningDialog] = React.useState(false);
+  const [pendingStatus, setPendingStatus] = React.useState<string | null>(null);
+
+  // Determine the category for ORA intelligence based on item category
+  const categoryForIntelligence = item?.category_name?.toLowerCase().includes('training') ? 'training'
+    : item?.category_name?.toLowerCase().includes('procedure') ? 'procedures'
+    : item?.category_name?.toLowerCase().includes('document') ? 'documentation'
+    : item?.category_name?.toLowerCase().includes('register') ? 'registers'
+    : undefined;
+
+  const { data: intelligence } = useVCRChecklistIntelligence(vcrId, projectId, categoryForIntelligence);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -102,7 +128,22 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
       toast({ title: 'Error', description: 'No prerequisite linked to this item', variant: 'destructive' });
       return;
     }
+
+    // Soft warning when approving/accepting with incomplete ORA activities
+    if ((newStatus === 'ACCEPTED' || newStatus === 'READY_FOR_REVIEW') && intelligence && intelligence.total > 0 && intelligence.completed < intelligence.total) {
+      setPendingStatus(newStatus);
+      setShowWarningDialog(true);
+      return;
+    }
+
     updateStatus.mutate({ prerequisiteId: item.prerequisite_id, status: newStatus });
+  };
+
+  const confirmStatusChange = () => {
+    if (!item?.prerequisite_id || !pendingStatus) return;
+    updateStatus.mutate({ prerequisiteId: item.prerequisite_id, status: pendingStatus });
+    setShowWarningDialog(false);
+    setPendingStatus(null);
   };
 
   const { data: prereqDetail } = useQuery({
@@ -257,6 +298,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
   };
 
   return (
+    <>
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="sm:max-w-lg overflow-hidden flex flex-col p-0">
         <SheetHeader className="px-6 pt-6 pb-4 border-b">
@@ -421,6 +463,69 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
               </>
             )}
 
+            {/* ORA Activity Intelligence */}
+            {intelligence && intelligence.total > 0 && (
+              <>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-1.5">
+                    <Brain className="w-3.5 h-3.5 text-primary" />
+                    <div className="text-[10px] uppercase tracking-wide text-muted-foreground">ORA Activity Intelligence</div>
+                  </div>
+                  <Card className={cn(
+                    'border',
+                    intelligence.percentage === 100 ? 'border-emerald-500/30 bg-emerald-500/5' :
+                    intelligence.percentage > 0 ? 'border-amber-500/30 bg-amber-500/5' :
+                    'border-border bg-muted/30'
+                  )}>
+                    <CardContent className="p-3 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium">
+                          {categoryForIntelligence ? `${categoryForIntelligence.charAt(0).toUpperCase() + categoryForIntelligence.slice(1)} Activities` : 'Related Activities'}
+                        </span>
+                        <Badge variant="outline" className={cn('text-[10px]',
+                          intelligence.percentage === 100 ? 'border-emerald-500 text-emerald-600' :
+                          intelligence.percentage > 0 ? 'border-amber-500 text-amber-600' :
+                          'text-muted-foreground'
+                        )}>
+                          {intelligence.completed}/{intelligence.total} completed
+                        </Badge>
+                      </div>
+                      <Progress value={intelligence.percentage} className="h-1.5" />
+                      <div className="flex gap-4 text-[10px] text-muted-foreground">
+                        {intelligence.completed > 0 && (
+                          <span className="flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                            {intelligence.completed} done
+                          </span>
+                        )}
+                        {intelligence.inProgress > 0 && (
+                          <span className="flex items-center gap-1">
+                            <TrendingUp className="w-3 h-3 text-amber-500" />
+                            {intelligence.inProgress} in progress
+                          </span>
+                        )}
+                        {intelligence.notStarted > 0 && (
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3 text-muted-foreground" />
+                            {intelligence.notStarted} pending
+                          </span>
+                        )}
+                      </div>
+                      {intelligence.percentage < 100 && (
+                        <div className="flex items-start gap-2 pt-1 border-t border-border/50">
+                          <ShieldAlert className="w-3.5 h-3.5 text-amber-500 mt-0.5 shrink-0" />
+                          <p className="text-[10px] text-muted-foreground">
+                            ORA data indicates {intelligence.total - intelligence.completed} activit{intelligence.total - intelligence.completed === 1 ? 'y is' : 'ies are'} still outstanding. Confirm status before closing this item.
+                          </p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+                <Separator />
+              </>
+            )}
+
             {/* Evidence Documents */}
             <div className="space-y-3">
               <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Evidence Documents</div>
@@ -499,5 +604,47 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
         </div>
       </SheetContent>
     </Sheet>
+
+    {/* Warning dialog for incomplete ORA activities */}
+    <AlertDialog open={showWarningDialog} onOpenChange={setShowWarningDialog}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle className="flex items-center gap-2">
+            <ShieldAlert className="w-5 h-5 text-amber-500" />
+            Incomplete Activities Detected
+          </AlertDialogTitle>
+          <AlertDialogDescription asChild>
+            <div className="space-y-3">
+              <p>
+                ORA Activity data shows <strong>{intelligence ? intelligence.total - intelligence.completed : 0}</strong> of <strong>{intelligence?.total || 0}</strong> related activities are still outstanding.
+              </p>
+              {intelligence && intelligence.activities.filter(a => a.status !== 'COMPLETED').length > 0 && (
+                <div className="bg-muted/50 rounded-lg p-3 max-h-32 overflow-y-auto space-y-1">
+                  {intelligence.activities.filter(a => a.status !== 'COMPLETED').slice(0, 5).map(a => (
+                    <div key={a.id} className="flex items-center justify-between text-xs">
+                      <span className="truncate mr-2">{a.name}</span>
+                      <Badge variant="outline" className="text-[9px] shrink-0">
+                        {a.status === 'IN_PROGRESS' ? 'In Progress' : 'Not Started'}
+                      </Badge>
+                    </div>
+                  ))}
+                  {intelligence.activities.filter(a => a.status !== 'COMPLETED').length > 5 && (
+                    <p className="text-[10px] text-muted-foreground">+{intelligence.activities.filter(a => a.status !== 'COMPLETED').length - 5} more</p>
+                  )}
+                </div>
+              )}
+              <p className="text-sm">Are you sure you want to proceed?</p>
+            </div>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => setPendingStatus(null)}>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={confirmStatusChange}>
+            Proceed Anyway
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 };
