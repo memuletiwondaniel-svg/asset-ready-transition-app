@@ -1,93 +1,38 @@
 
 
-## Plan: VCR Discipline Assurance Statements (Comments Tab)
+## Root Cause Analysis
 
-### Context
+Three bugs prevent the PAC certificate from populating correctly:
 
-VCRs and PSSRs are **separate workflows**. Projects use VCRs; PSSRs are a distinct process. VCR items are assigned to delivering parties (TAs) via `delivering_party_role_id` on `p2a_vcr_prerequisites`. Each TA discipline reviews their assigned VCR items. The "Comments" tab in the VCR Detail Overlay should display **discipline assurance statements** -- formal readiness declarations from each TA who reviewed VCR items, plus an interdisciplinary statement from the VCR Lead.
+1. **Wrong prop value**: Line 1918 passes `projectId={projectCode}` — `projectCode` is a string like `"HM-AC"` but `PACCertificate` uses it to query `p2a_handover_plans.project_id` which expects a UUID. The query always returns no results.
 
-This is entirely within the VCR domain -- no dependency on PSSR tables.
+2. **Wrong query scope**: The PAC certificate queries ALL systems across ALL VCRs in the project. But each PAC is rendered per-VCR, so it should only show systems for THIS specific VCR (handover point).
 
----
+3. **No direct VCR reference**: The PAC component doesn't receive the VCR's `id` (handover_point_id) or VCR code, so it can't query systems directly or display the VCR reference number.
 
-### 1. Create `vcr_discipline_assurance` table
+## Fix Plan
 
-New Supabase migration:
+### 1. Update PACCertificate props and query logic
 
-```sql
-CREATE TABLE public.vcr_discipline_assurance (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  handover_point_id UUID NOT NULL REFERENCES p2a_handover_points(id) ON DELETE CASCADE,
-  discipline_role_id UUID REFERENCES roles(id),
-  discipline_role_name TEXT NOT NULL,
-  reviewer_user_id UUID,
-  assurance_statement TEXT NOT NULL,
-  statement_type TEXT NOT NULL DEFAULT 'discipline'
-    CHECK (statement_type IN ('discipline', 'interdisciplinary')),
-  submitted_at TIMESTAMPTZ DEFAULT now(),
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now(),
-  UNIQUE(handover_point_id, discipline_role_name)
-);
+In `src/components/handover/PACCertificate.tsx`:
+- Add `handoverPointId` prop (the VCR's UUID)
+- Add `vcrCode` prop (for VCR Ref display)
+- Replace the project-wide systems query with a direct query on `p2a_handover_point_systems` filtered by `handoverPointId`
+- Use `vcrCode` prop directly in the VCR Ref field instead of deriving from systems
+- Remove the now-unnecessary `projectId` prop
 
-ALTER TABLE public.vcr_discipline_assurance ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Authenticated users can view assurance statements"
-  ON public.vcr_discipline_assurance FOR SELECT
-  TO authenticated USING (true);
-
-CREATE POLICY "Authenticated users can insert assurance statements"
-  ON public.vcr_discipline_assurance FOR INSERT
-  TO authenticated WITH CHECK (true);
-
-CREATE POLICY "Users can update own statements"
-  ON public.vcr_discipline_assurance FOR UPDATE
-  TO authenticated USING (reviewer_user_id = auth.uid());
-```
-
-### 2. Create hook `useVCRDisciplineAssurance`
-
-New file: `src/components/widgets/hooks/useVCRDisciplineAssurance.ts`
-
-- `useQuery` to fetch all assurance statements for a given `handover_point_id`
-- Join with profiles to get reviewer name/avatar
-- `useMutation` to submit/upsert a discipline assurance statement
-- Derive which disciplines have/haven't submitted based on the distinct `delivering_party_role_id` values from `p2a_vcr_prerequisites`
-
-### 3. Build `VCRAssuranceTab` component
-
-New file: `src/components/widgets/VCRAssuranceTab.tsx`
-
-Layout:
-- **Interdisciplinary Assurance Statement** card at top (from VCR Lead / PSSR Lead, `statement_type = 'interdisciplinary'`)
-  - If not yet submitted: empty state with prompt
-- **Discipline Assurance Statements** section below
-  - One card per delivering discipline (derived from distinct `delivering_party_role_id` on VCR items)
-  - Each card shows: discipline name, reviewer avatar + name, statement text, submission timestamp
-  - Disciplines that haven't submitted show a muted "Pending" state
-  - If current user is the TA for a discipline, show a text input to submit their statement
-
-### 4. Wire into VCR Detail Overlay
+### 2. Update PAC rendering in VCRDetailOverlay
 
 In `src/components/widgets/VCRDetailOverlay.tsx`:
-- Add `case 'comments'` in `renderContent()` to render `VCRAssuranceTab`
-- Pass `handoverPointId` and `projectId`
+- Pass `handoverPointId={vcr.id}` and `vcrCode={vcr.vcr_code}` to `PACCertificate`
+- Pass `projectId={projectId}` (the actual UUID from route params) instead of `projectCode`
+- Pass approvers with resolved Plant Director name (already working via `pacCertificateApprovers`)
 
-### 5. Add discipline completion flow to VCR item review
+### 3. Display VCR Ref correctly
 
-When a TA finishes reviewing all their assigned VCR items (all items for their `delivering_party_role_id` are in a terminal status), prompt them with a modal to enter their **Discipline Assurance Statement** before marking their review as complete. This mirrors the `DisciplineCompletionPanel` pattern but is VCR-specific:
-
-- New component: `src/components/widgets/VCRDisciplineCompletionPanel.tsx`
-- Triggered when the last VCR item for a discipline reaches approved/completed status
-- Required field: assurance statement text
-- On submit: upserts into `vcr_discipline_assurance`
-
-### Files to create
-- `src/components/widgets/hooks/useVCRDisciplineAssurance.ts`
-- `src/components/widgets/VCRAssuranceTab.tsx`
-- `src/components/widgets/VCRDisciplineCompletionPanel.tsx`
-- Migration SQL for `vcr_discipline_assurance` table
+Update the VCR Ref field in PACCertificate to show the VCR code (e.g., "VCR-01") instead of trying to derive it from system data.
 
 ### Files to modify
-- `src/components/widgets/VCRDetailOverlay.tsx` (add comments case)
+- `src/components/handover/PACCertificate.tsx` — fix props, query logic, VCR Ref display
+- `src/components/widgets/VCRDetailOverlay.tsx` — pass correct props
 
