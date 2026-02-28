@@ -1,38 +1,29 @@
 
 
-## Root Cause Analysis
+## Plan: Show ITP Activities & Status per System in the VCR Systems Tab
 
-Three bugs prevent the PAC certificate from populating correctly:
+### Current State
+- The Systems tab (`VCRSystemsTab.tsx`) shows system cards with progress wheels, punchlist counts, and HC/non-HC indicators
+- When expanded, each system only shows placeholder punchlist items
+- ITP activities exist in `p2a_itp_activities` (fields: `activity_name`, `inspection_type` W/H, `system_id`, `handover_point_id`)
+- ORA plan activities track ITP completion status via `ora_plan_activities` where `source_type = 'itp'` and `source_ref_table = 'p2a_itp_activities'`
 
-1. **Wrong prop value**: Line 1918 passes `projectId={projectCode}` — `projectCode` is a string like `"HM-AC"` but `PACCertificate` uses it to query `p2a_handover_plans.project_id` which expects a UUID. The query always returns no results.
+### Changes
 
-2. **Wrong query scope**: The PAC certificate queries ALL systems across ALL VCRs in the project. But each PAC is rendered per-VCR, so it should only show systems for THIS specific VCR (handover point).
+**1. Create a hook `useSystemITPActivities`**
+- Query `p2a_itp_activities` filtered by `handover_point_id` (VCR) and `system_id`
+- For each ITP activity, join/lookup `ora_plan_activities` where `source_ref_id = itp.id` and `source_ref_table = 'p2a_itp_activities'` to get `status` and `completion_percentage`
+- Return merged list: `{ id, activity_name, inspection_type, ora_status, ora_completion_percentage }`
 
-3. **No direct VCR reference**: The PAC component doesn't receive the VCR's `id` (handover_point_id) or VCR code, so it can't query systems directly or display the VCR reference number.
+**2. Update `VCRSystemsTab.tsx` collapsible content**
+- Replace the placeholder punchlist expansion with two sections:
+  - **ITP Activities** — a compact table showing each activity's name, W/H badge, and ORA status badge (Not Started / In Progress / Completed) with color coding
+  - **Punchlist Items** — keep existing (below ITP section)
+- Fetch ITP activities for each expanded system using the new hook
+- Show "No ITP activities defined" empty state if none exist
 
-## Fix Plan
-
-### 1. Update PACCertificate props and query logic
-
-In `src/components/handover/PACCertificate.tsx`:
-- Add `handoverPointId` prop (the VCR's UUID)
-- Add `vcrCode` prop (for VCR Ref display)
-- Replace the project-wide systems query with a direct query on `p2a_handover_point_systems` filtered by `handoverPointId`
-- Use `vcrCode` prop directly in the VCR Ref field instead of deriving from systems
-- Remove the now-unnecessary `projectId` prop
-
-### 2. Update PAC rendering in VCRDetailOverlay
-
-In `src/components/widgets/VCRDetailOverlay.tsx`:
-- Pass `handoverPointId={vcr.id}` and `vcrCode={vcr.vcr_code}` to `PACCertificate`
-- Pass `projectId={projectId}` (the actual UUID from route params) instead of `projectCode`
-- Pass approvers with resolved Plant Director name (already working via `pacCertificateApprovers`)
-
-### 3. Display VCR Ref correctly
-
-Update the VCR Ref field in PACCertificate to show the VCR code (e.g., "VCR-01") instead of trying to derive it from system data.
-
-### Files to modify
-- `src/components/handover/PACCertificate.tsx` — fix props, query logic, VCR Ref display
-- `src/components/widgets/VCRDetailOverlay.tsx` — pass correct props
+**3. Status badge mapping**
+- `NOT_STARTED` → grey outline badge
+- `IN_PROGRESS` → amber badge  
+- `COMPLETED` → emerald badge
 
