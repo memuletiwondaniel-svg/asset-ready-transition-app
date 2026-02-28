@@ -58,6 +58,7 @@ import { VCRExecutionPlanWizard } from './vcr-wizard/VCRExecutionPlanWizard';
 import { VCRProceduresTab } from '@/components/p2a-workspace/handover-points/VCRProceduresTab';
 import { VCRCMMSTab } from '@/components/p2a-workspace/handover-points/VCRCMMSTab';
 import { VCRRegistersTab } from '@/components/p2a-workspace/handover-points/VCRRegistersTab';
+import { VCRAssuranceTab } from './VCRAssuranceTab';
 import { P2AHandoverPoint } from '@/components/p2a-workspace/hooks/useP2AHandoverPoints';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -1932,6 +1933,8 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
         return <PlaceholderContent title="Spares" icon={Package} />;
       case 'systems':
         return <VCRSystemsPanel vcrId={vcr.id} projectCode={projectCode} />;
+      case 'comments':
+        return <VCRAssuranceTab handoverPointId={vcr.id} />;
       default:
         return null;
     }

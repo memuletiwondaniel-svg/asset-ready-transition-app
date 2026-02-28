@@ -27,6 +27,7 @@ import { P2AHandoverPoint } from '../hooks/useP2AHandoverPoints';
 import { useVCRPrerequisites } from '../hooks/useVCRPrerequisites';
 import { useHandoverPointSystems } from '../hooks/useP2AHandoverPoints';
 import { VCROverviewTab } from './VCROverviewTab';
+import { VCRAssuranceTab } from '@/components/widgets/VCRAssuranceTab';
 import { VCRChecklistTab } from './VCRChecklistTab';
 import { VCRQualificationsTab } from './VCRQualificationsTab';
 import { VCRSystemsTab } from './VCRSystemsTab';
@@ -142,7 +143,7 @@ export const VCRDetailOverlay: React.FC<VCRDetailOverlayProps> = ({
       case 'registers':
         return <VCRRegistersTab handoverPoint={handoverPoint} />;
       case 'comments':
-        return <PlaceholderTab title="Comments" icon={<MessageSquare className="w-8 h-8 text-blue-500" />} />;
+        return <VCRAssuranceTab handoverPointId={handoverPoint.id} />;
       case 'sof':
         return <PlaceholderTab title="SoF Certificate" icon={<Award className="w-8 h-8 text-amber-500" />} />;
       case 'pac':
