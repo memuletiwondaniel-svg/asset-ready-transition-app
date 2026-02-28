@@ -4,12 +4,15 @@ import { format, differenceInDays, parseISO, addDays } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Search, ZoomIn, ZoomOut, Maximize2, ChevronRight, ChevronDown, ChevronsUpDown } from 'lucide-react';
+import { Plus, Search, ZoomIn, ZoomOut, Maximize2, ChevronRight, ChevronDown, ChevronsUpDown, GitBranch } from 'lucide-react';
 import { CreateORPModal } from './CreateORPModal';
 import { ORPDeliverableModal } from './ORPDeliverableModal';
 import { ORAActivityTaskSheet } from '@/components/tasks/ORAActivityTaskSheet';
 import { getStatusLabel, getStatusBadgeClasses } from './utils/statusStyles';
 import { cn } from '@/lib/utils';
+import { useGanttBarResize } from '@/hooks/useGanttBarResize';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface ORPGanttChartProps {
   planId: string;
@@ -50,6 +53,16 @@ const BAR_COLORS: Record<string, string> = {
   EXE: 'bg-indigo-400 dark:bg-indigo-500',
   OPR: 'bg-purple-400 dark:bg-purple-500',
   VCR: 'bg-rose-400 dark:bg-rose-500',
+};
+
+const BAR_COLORS_MUTED: Record<string, string> = {
+  IDN: 'bg-blue-200 dark:bg-blue-800',
+  ASS: 'bg-amber-200 dark:bg-amber-800',
+  SEL: 'bg-emerald-200 dark:bg-emerald-800',
+  DEF: 'bg-teal-200 dark:bg-teal-800',
+  EXE: 'bg-indigo-200 dark:bg-indigo-800',
+  OPR: 'bg-purple-200 dark:bg-purple-800',
+  VCR: 'bg-rose-200 dark:bg-rose-800',
 };
 
 const ZOOM_PRESETS = [
@@ -162,6 +175,8 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
   const [selectedOraActivity, setSelectedOraActivity] = useState<any>(null);
   const [zoomLevel, setZoomLevel] = useState(1);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const queryClient = useQueryClient();
+  const [showRelationships, setShowRelationships] = useState(false);
 
   const searchQuery = externalSearchQuery ?? internalSearchQuery;
 
@@ -276,6 +291,23 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
     return { left, width };
   }, [minDate, dayWidth]);
 
+  const handleBarResize = useCallback(async (activityId: string, newStart: Date, newEnd: Date) => {
+    const startStr = format(newStart, 'yyyy-MM-dd');
+    const endStr = format(newEnd, 'yyyy-MM-dd');
+    const durationDays = differenceInDays(newEnd, newStart);
+    await supabase
+      .from('ora_plan_activities')
+      .update({ start_date: startStr, end_date: endStr, duration_days: durationDays })
+      .eq('id', activityId);
+    queryClient.invalidateQueries({ queryKey: ['orp-plan'] });
+  }, [queryClient]);
+
+  const { draggingId, previewLeft, previewWidth, handleMouseDown } = useGanttBarResize({
+    minDate,
+    dayWidth,
+    onResize: handleBarResize,
+  });
+
   const handleZoomIn = useCallback(() => {
     const idx = ZOOM_LEVELS.indexOf(zoomLevel);
     if (idx < ZOOM_LEVELS.length - 1) setZoomLevel(ZOOM_LEVELS[idx + 1]);
@@ -341,6 +373,19 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
             </Button>
             <Button variant="outline" size="sm" className="h-7 px-2 text-[10px] font-medium" onClick={collapseAll}>
               Collapse
+            </Button>
+
+            <div className="w-px h-5 bg-border" />
+
+            {/* Relationships toggle */}
+            <Button
+              variant={showRelationships ? 'secondary' : 'outline'}
+              size="sm"
+              className="h-7 px-2 text-[10px] font-medium gap-1"
+              onClick={() => setShowRelationships(!showRelationships)}
+            >
+              <GitBranch className="w-3 h-3" />
+              Relations
             </Button>
 
             <div className="w-px h-5 bg-border" />
@@ -568,26 +613,47 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                           </div>
                         )}
 
-                        {barPos && !isParent && (
-                          <div
-                            className={cn(
-                              "absolute top-2 rounded shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-all",
-                              barColor, "opacity-85 hover:opacity-100"
-                            )}
-                            style={{ left: barPos.left, width: barPos.width, height: ROW_HEIGHT - 16 }}
-                            onClick={() => setSelectedDeliverable(deliverable)}
-                          >
+                        {barPos && !isParent && (() => {
+                          const isDragging = draggingId === deliverable.id;
+                          const barL = isDragging && previewLeft !== null ? previewLeft : barPos.left;
+                          const barW = isDragging && previewWidth !== null ? previewWidth : barPos.width;
+                          const mutedColor = BAR_COLORS_MUTED[prefix] || 'bg-muted';
+                          const completion = deliverable.completion_percentage || 0;
+
+                          return (
                             <div
-                              className="absolute h-full bg-white/20 rounded-l"
-                              style={{ width: `${deliverable.completion_percentage || 0}%` }}
-                            />
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <span className="text-[9px] text-white font-medium drop-shadow-sm">
-                                {deliverable.completion_percentage || 0}%
-                              </span>
+                              className={cn(
+                                "absolute top-2 rounded shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-all group",
+                                mutedColor,
+                                isDragging && "ring-2 ring-primary/50 shadow-lg"
+                              )}
+                              style={{ left: barL, width: barW, height: ROW_HEIGHT - 16 }}
+                              onClick={() => !isDragging && setSelectedDeliverable(deliverable)}
+                            >
+                              {/* Progress fill */}
+                              <div
+                                className={cn("absolute h-full rounded-l", barColor)}
+                                style={{ width: `${completion}%` }}
+                              />
+                              {/* Label */}
+                              <div className="absolute inset-0 flex items-center justify-center z-10">
+                                <span className="text-[9px] text-white font-medium drop-shadow-sm">
+                                  {completion}%
+                                </span>
+                              </div>
+                              {/* Left resize handle */}
+                              <div
+                                className="absolute left-0 top-0 bottom-0 w-[6px] cursor-col-resize z-20 hover:bg-white/30"
+                                onMouseDown={(e) => handleMouseDown(e, 'left', deliverable.id, barPos.left, barPos.width, parseISO(deliverable.start_date), parseISO(deliverable.end_date))}
+                              />
+                              {/* Right resize handle */}
+                              <div
+                                className="absolute right-0 top-0 bottom-0 w-[6px] cursor-col-resize z-20 hover:bg-white/30"
+                                onMouseDown={(e) => handleMouseDown(e, 'right', deliverable.id, barPos.left, barPos.width, parseISO(deliverable.start_date), parseISO(deliverable.end_date))}
+                              />
                             </div>
-                          </div>
-                        )}
+                          );
+                        })()}
                       </div>
                     );
                   })}
