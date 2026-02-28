@@ -618,26 +618,39 @@ export const useP2AHandoverPoints = (handoverPlanId: string) => {
 };
 
 // Hook to get systems assigned to a specific handover point
+// Deduplicates by parent system — when all subsystems of a system are mapped
+// to this VCR, only the parent system is shown (not each subsystem row).
 export const useHandoverPointSystems = (handoverPointId: string) => {
-  const { data: systemIds, isLoading } = useQuery({
+  const { data: systems, isLoading } = useQuery({
     queryKey: ['p2a-handover-point-systems', handoverPointId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('p2a_handover_point_systems')
         .select(`
-          *,
+          system_id,
+          subsystem_id,
           p2a_systems (*)
         `)
         .eq('handover_point_id', handoverPointId);
 
       if (error) throw error;
-      return data?.map((d: any) => d.p2a_systems) || [];
+      if (!data?.length) return [];
+
+      // Deduplicate: group by parent system_id, return unique parent systems
+      const seen = new Map<string, any>();
+      for (const row of data) {
+        const sys = (row as any).p2a_systems;
+        if (sys && !seen.has(sys.id)) {
+          seen.set(sys.id, sys);
+        }
+      }
+      return Array.from(seen.values());
     },
     enabled: !!handoverPointId,
   });
 
   return {
-    systems: systemIds || [],
+    systems: systems || [],
     isLoading,
   };
 };
