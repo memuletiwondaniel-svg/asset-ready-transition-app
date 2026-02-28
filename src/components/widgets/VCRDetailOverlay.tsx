@@ -40,7 +40,10 @@ import {
   Lock,
   Users,
   ChevronRight,
+  MessageSquare,
+  AlertTriangle,
 } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { ProjectVCR } from '@/hooks/useProjectVCRs';
@@ -76,17 +79,22 @@ type NavItem = {
   locked?: boolean;
 };
 
-const NAV_ITEMS: NavItem[] = [
-  { id: 'overview', label: 'Overview', icon: BarChart3 },
+const CORE_NAV_ITEMS: NavItem[] = [
+  { id: 'overview', label: 'VCR', icon: BarChart3 },
+  { id: 'comments', label: 'Comments', icon: MessageSquare },
+  { id: 'qualifications', label: 'Qualifications', icon: AlertTriangle },
+  { id: 'sof', label: 'SoF', icon: Shield, locked: true },
+  { id: 'pac', label: 'PAC', icon: Award, locked: true },
+];
+
+const DELIVERABLE_NAV_ITEMS: NavItem[] = [
   { id: 'systems', label: 'Systems', icon: Layers },
   { id: 'training', label: 'Training', icon: GraduationCap },
   { id: 'procedures', label: 'Procedures', icon: BookOpen },
-  { id: 'registers', label: 'Operational Registers', icon: FileText },
   { id: 'documentation', label: 'Documentation', icon: FileText },
   { id: 'cmms', label: 'CMMS', icon: Settings2 },
   { id: 'spares', label: 'Spares', icon: Package },
-  { id: 'sof', label: 'SoF', icon: Shield, locked: true },
-  { id: 'pac', label: 'PAC', icon: Award, locked: true },
+  { id: 'registers', label: 'Operational Registers', icon: FileText },
 ];
 
 const shortCode = (code?: string) => {
@@ -1976,7 +1984,7 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
             </div>
             <ScrollArea className="flex-1">
               <div className="px-2 pb-4 space-y-0.5">
-                {NAV_ITEMS.filter(item => item.id !== 'sof' || vcr.has_hydrocarbon).map((item) => {
+                {CORE_NAV_ITEMS.filter(item => item.id !== 'sof' || vcr.has_hydrocarbon).map((item) => {
                   const Icon = item.icon;
                   const isActive = activeNav === item.id;
                   const isLocked = item.locked && !isComplete;
@@ -1997,6 +2005,34 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
                       <Icon className="w-4 h-4 shrink-0" />
                       <span className="truncate">{item.label}</span>
                       {isLocked && <Lock className="w-3 h-3 ml-auto shrink-0" />}
+                    </button>
+                  );
+                })}
+
+                <Separator className="my-3" />
+
+                <div className="px-2 pb-2">
+                  <span className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">
+                    VCR Deliverables
+                  </span>
+                </div>
+                {DELIVERABLE_NAV_ITEMS.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activeNav === item.id;
+
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => setActiveNav(item.id)}
+                      className={cn(
+                        'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-sm transition-all duration-200',
+                        isActive
+                          ? 'bg-primary text-primary-foreground font-medium shadow-sm'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
+                      )}
+                    >
+                      <Icon className="w-4 h-4 shrink-0" />
+                      <span className="truncate">{item.label}</span>
                     </button>
                   );
                 })}
