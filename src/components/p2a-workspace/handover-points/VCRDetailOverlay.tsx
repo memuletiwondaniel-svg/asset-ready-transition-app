@@ -77,17 +77,16 @@ const getStatusConfig = (status: string) => {
 
 // Core navigation tabs (upper section)
 const coreTabs = [
-  { id: 'overview', label: 'VCR Overview', icon: BarChart3 },
-  { id: 'qualifications', label: 'Qualifications', icon: AlertTriangle },
+  { id: 'overview', label: 'VCR', icon: BarChart3 },
   { id: 'comments', label: 'Comments', icon: MessageSquare },
-  { id: 'sof', label: 'SoF Certificate', icon: Award },
-  { id: 'pac', label: 'PAC Certificate', icon: Medal },
+  { id: 'qualifications', label: 'Qualifications', icon: AlertTriangle },
+  { id: 'sof', label: 'SoF', icon: Award },
+  { id: 'pac', label: 'PAC', icon: Medal },
 ];
 
-// Building blocks tabs (lower section)
+// VCR Deliverables tabs (lower section)
 const buildingBlockTabs = [
   { id: 'systems', label: 'Systems', icon: Layers },
-  { id: 'checklist', label: 'Checklist', icon: ClipboardList },
   { id: 'training', label: 'Training', icon: GraduationCap },
   { id: 'procedures', label: 'Procedures', icon: BookOpen },
   { id: 'documentation', label: 'Documentation', icon: FileText },
@@ -231,10 +230,10 @@ export const VCRDetailOverlay: React.FC<VCRDetailOverlayProps> = ({
                 {/* Separator */}
                 <Separator className="my-3" />
 
-                {/* Section 2: Building Blocks */}
+                {/* Section 2: VCR Deliverables */}
                 <div className="px-2 pb-2">
                   <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
-                    Building Blocks
+                    VCR Deliverables
                   </span>
                 </div>
                 {buildingBlockTabs.map((tab) => (
