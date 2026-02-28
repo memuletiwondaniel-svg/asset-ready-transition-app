@@ -30,10 +30,12 @@ import {
   AlertCircle,
   FileCheck,
   ClipboardList,
+  Eye,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { P2ASystem, P2ASubsystem, useP2ASubsystems } from '../hooks/useP2ASystems';
 import { P2AHandoverPoint } from '../hooks/useP2AHandoverPoints';
+import { SystemITPSection } from '../handover-points/SystemITPSection';
 
 /** Shorten VCR code for display: "VCR-DP300-001" → "VCR-001" */
 const shortenVCR = (code: string) => {
@@ -73,7 +75,6 @@ export const SystemDetailSheet: React.FC<SystemDetailSheetProps> = ({
 
   const { subsystems, isLoading: subsystemsLoading } = useP2ASubsystems(system.id);
 
-  // Reset state when system changes
   useEffect(() => {
     setEditIsHC(system.is_hydrocarbon);
     setEditName(system.name);
@@ -83,7 +84,6 @@ export const SystemDetailSheet: React.FC<SystemDetailSheetProps> = ({
     setSubsystemsExpanded(false);
   }, [system.id, open]);
 
-  // Track changes
   useEffect(() => {
     setHasChanges(editIsHC !== system.is_hydrocarbon || editName !== system.name);
   }, [editIsHC, editName, system.is_hydrocarbon, system.name]);
@@ -116,25 +116,19 @@ export const SystemDetailSheet: React.FC<SystemDetailSheetProps> = ({
 
   const handleSubsystemVCRChange = (subsystemId: string, newVcrId: string) => {
     const oldParentVCRId = system.assigned_handover_point_id;
-    
-    // If the parent system has a system-level VCR assignment and the subsystem is diverging,
-    // we need to: 1) remove parent assignment, 2) create subsystem assignments for all OTHER
-    // subsystems with the old VCR, 3) assign this subsystem to the new VCR
     if (oldParentVCRId && !system.assigned_subsystems?.length && newVcrId !== oldParentVCRId) {
-      // Remove parent system-level assignment first
       onUnassignSystemFromVCR?.(system.id);
-      
-      // Create subsystem-level assignments for all OTHER subsystems with old parent VCR
       subsystems.forEach(sub => {
         if (sub.id !== subsystemId) {
           onAssignSubsystemToVCR?.(oldParentVCRId, system.id, sub.id);
         }
       });
     }
-    
-    // Assign the changed subsystem to new VCR (or unassign if 'none')
     onAssignSubsystemToVCR?.(newVcrId, system.id, subsystemId);
   };
+
+  // Find the VCR this system is assigned to (for ITP tab)
+  const assignedVCR = handoverPoints.find(hp => hp.id === currentVCRId);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -170,12 +164,16 @@ export const SystemDetailSheet: React.FC<SystemDetailSheetProps> = ({
           )}
         </SheetHeader>
 
-        {/* Tabs */}
+        {/* Tabs — 3 tabs: Details, ITP, Punchlist */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
           <TabsList className="mx-4 mt-2 shrink-0">
             <TabsTrigger value="details" className="text-xs gap-1 data-[state=active]:text-blue-600">
               <ClipboardList className={cn("w-3 h-3", activeTab === 'details' ? 'text-blue-600' : 'text-muted-foreground')} />
               Details
+            </TabsTrigger>
+            <TabsTrigger value="itp" className="text-xs gap-1 data-[state=active]:text-teal-600">
+              <Eye className={cn("w-3 h-3", activeTab === 'itp' ? 'text-teal-600' : 'text-muted-foreground')} />
+              ITP
             </TabsTrigger>
             <TabsTrigger value="punchlist" className="text-xs gap-1 data-[state=active]:text-amber-600">
               <AlertCircle className={cn("w-3 h-3", activeTab === 'punchlist' ? 'text-amber-600' : 'text-muted-foreground')} />
@@ -183,7 +181,7 @@ export const SystemDetailSheet: React.FC<SystemDetailSheetProps> = ({
             </TabsTrigger>
           </TabsList>
 
-          {/* Details Tab (merged with Statistics) */}
+          {/* Details Tab */}
           <TabsContent value="details" className="flex-1 min-h-0 mt-0">
             <ScrollArea className="h-full">
               <div className="px-4 py-4 space-y-4">
@@ -304,6 +302,28 @@ export const SystemDetailSheet: React.FC<SystemDetailSheetProps> = ({
                   <MetricCard label="Punchlist B" value={system.punchlist_b_count} icon={<AlertCircle className="w-3.5 h-3.5 text-amber-500" />} color="amber" onClick={() => setActiveTab('punchlist')} clickable />
                 </div>
 
+              </div>
+            </ScrollArea>
+          </TabsContent>
+
+          {/* ITP Tab */}
+          <TabsContent value="itp" className="flex-1 min-h-0 mt-0">
+            <ScrollArea className="h-full">
+              <div className="px-4 py-4">
+                {currentVCRId ? (
+                  <SystemITPSection
+                    handoverPointId={currentVCRId}
+                    systemId={system.id}
+                  />
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <Eye className="w-8 h-8 text-muted-foreground/30 mb-3" />
+                    <p className="text-sm font-medium text-muted-foreground">No VCR Assigned</p>
+                    <p className="text-xs text-muted-foreground/70 mt-1 max-w-[240px]">
+                      Assign this system to a VCR to view its Inspection Test Plan activities.
+                    </p>
+                  </div>
+                )}
               </div>
             </ScrollArea>
           </TabsContent>
