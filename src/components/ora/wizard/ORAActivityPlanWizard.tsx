@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { CalendarCheck, Loader2, Check, AlertCircle } from 'lucide-react';
+import { CalendarCheck, Loader2, Check, AlertCircle, Save } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { StepPhaseSelection } from './StepPhaseSelection';
 import { StepProjectType } from './StepProjectType';
@@ -13,6 +13,7 @@ import { useORAActivityCatalog, useORPPhases } from '@/hooks/useORAActivityCatal
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Progress } from '@/components/ui/progress';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface ORAActivityPlanWizardProps {
   open: boolean;
@@ -47,7 +48,10 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
   const [projectType, setProjectType] = useState('');
   const [activities, setActivities] = useState<WizardActivity[]>([]);
   const [isCreating, setIsCreating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [draftPlanId, setDraftPlanId] = useState<string | null>(null);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Load ORP phases to resolve phase_id from phase code
   const { phases: orpPhases } = useORPPhases();
@@ -94,6 +98,102 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
     setPhase('');
     setProjectType('');
     setActivities([]);
+    setDraftPlanId(null);
+  };
+
+  // Check for existing draft on open
+  useEffect(() => {
+    if (!open) return;
+    const loadDraft = async () => {
+      const { data: drafts } = await (supabase as any)
+        .from('orp_plans')
+        .select('id, wizard_state')
+        .eq('project_id', projectId)
+        .eq('status', 'DRAFT')
+        .eq('is_active', true)
+        .limit(1);
+
+      if (drafts && drafts.length > 0) {
+        const draft = drafts[0];
+        setDraftPlanId(draft.id);
+        const ws = draft.wizard_state as any;
+        if (ws) {
+          setPhase(ws.phase || '');
+          setProjectType(ws.projectType || '');
+          setActivities(ws.activities || []);
+          setCurrentStep(ws.currentStep || 1);
+          const visited = new Set<number>(ws.visitedSteps || [1]);
+          setVisitedSteps(visited);
+        }
+      }
+    };
+    loadDraft();
+  }, [open, projectId]);
+
+  const handleSaveDraft = async () => {
+    try {
+      setIsSaving(true);
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) throw new Error('Not authenticated');
+
+      const orpPhase = PHASE_TO_ORP[phase] || 'ASSESS_SELECT';
+      const wizardState = {
+        phase,
+        projectType,
+        activities,
+        currentStep,
+        visitedSteps: Array.from(visitedSteps),
+      };
+
+      if (draftPlanId) {
+        const { error } = await (supabase as any)
+          .from('orp_plans')
+          .update({
+            phase: orpPhase,
+            wizard_state: wizardState,
+          })
+          .eq('id', draftPlanId);
+        if (error) throw error;
+      } else {
+        // Check no active plan exists
+        const { data: existingPlans } = await supabase
+          .from('orp_plans')
+          .select('id')
+          .eq('project_id', projectId)
+          .eq('is_active', true)
+          .limit(1);
+
+        if (existingPlans && existingPlans.length > 0) {
+          toast({ title: 'Plan already exists', description: 'This project already has an active ORA Activity Plan.', variant: 'destructive' });
+          setIsSaving(false);
+          return;
+        }
+
+        const { data: plan, error } = await (supabase as any)
+          .from('orp_plans')
+          .insert({
+            project_id: projectId,
+            phase: orpPhase,
+            created_by: user.user.id,
+            ora_engineer_id: user.user.id,
+            status: 'DRAFT',
+            wizard_state: wizardState,
+          })
+          .select()
+          .single();
+        if (error) throw error;
+        setDraftPlanId(plan.id);
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['project-orp-plans'] });
+      toast({ title: 'Draft saved', description: 'Your progress has been saved. You can resume anytime.' });
+      onOpenChange(false);
+      resetForm();
+    } catch (err: any) {
+      toast({ title: 'Save failed', description: err.message, variant: 'destructive' });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleCreate = async () => {
@@ -102,42 +202,57 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error('Not authenticated');
 
-      // Guard: check if an active plan already exists for this project
-      const { data: existingPlans } = await supabase
-        .from('orp_plans')
-        .select('id')
-        .eq('project_id', projectId)
-        .eq('is_active', true)
-        .limit(1);
-
-      if (existingPlans && existingPlans.length > 0) {
-        toast({ title: 'Plan already exists', description: 'This project already has an active ORA Activity Plan.', variant: 'destructive' });
-        setIsCreating(false);
-        return;
-      }
-
       const orpPhase = PHASE_TO_ORP[phase] || 'ASSESS_SELECT';
+      let planId = draftPlanId;
 
-      const { data: plan, error: planError } = await supabase
-        .from('orp_plans')
-        .insert({
-          project_id: projectId,
-          phase: orpPhase as any,
-          created_by: user.user.id,
-          ora_engineer_id: user.user.id,
-          status: 'PENDING_APPROVAL' as any,
-        })
-        .select()
-        .single();
+      if (draftPlanId) {
+        // Upgrade draft to PENDING_APPROVAL
+        const { error } = await (supabase as any)
+          .from('orp_plans')
+          .update({
+            phase: orpPhase,
+            status: 'PENDING_APPROVAL',
+            wizard_state: null,
+          })
+          .eq('id', draftPlanId);
+        if (error) throw error;
+      } else {
+        // Guard: check if an active plan already exists
+        const { data: existingPlans } = await supabase
+          .from('orp_plans')
+          .select('id')
+          .eq('project_id', projectId)
+          .eq('is_active', true)
+          .limit(1);
 
-      if (planError) throw planError;
+        if (existingPlans && existingPlans.length > 0) {
+          toast({ title: 'Plan already exists', description: 'This project already has an active ORA Activity Plan.', variant: 'destructive' });
+          setIsCreating(false);
+          return;
+        }
+
+        const { data: plan, error: planError } = await supabase
+          .from('orp_plans')
+          .insert({
+            project_id: projectId,
+            phase: orpPhase as any,
+            created_by: user.user.id,
+            ora_engineer_id: user.user.id,
+            status: 'PENDING_APPROVAL' as any,
+          })
+          .select()
+          .single();
+
+        if (planError) throw planError;
+        planId = plan.id;
+      }
 
       const selectedActivities = activities.filter(a => a.selected);
 
       const catalogDeliverables = selectedActivities
         .filter(a => !a.id.startsWith('custom-'))
         .map(a => ({
-          orp_plan_id: plan.id,
+          orp_plan_id: planId!,
           deliverable_id: a.id,
           start_date: a.startDate || null,
           end_date: a.endDate || null,
@@ -191,7 +306,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
             metadata: {
               source: 'ora_workflow',
               project_id: projectId,
-              plan_id: plan.id,
+              plan_id: planId,
               action: 'review_ora_plan',
             }
           });
@@ -359,7 +474,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
         </div>
 
         {/* Navigation */}
-        <div className="flex justify-between pt-4 border-t">
+        <div className="flex items-center justify-between pt-4 border-t">
           <Button
             variant="outline"
             onClick={() => currentStep > 1 ? handleBack() : handleClose()}
@@ -367,19 +482,34 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
             {currentStep === 1 ? 'Cancel' : 'Back'}
           </Button>
 
-          {currentStep < 5 ? (
-            <Button onClick={handleNext} disabled={!validateStep(currentStep)}>
-              Next
-            </Button>
-          ) : (
-            <Button onClick={handleCreate} disabled={isCreating} className="gap-2">
-              {isCreating ? (
-                <><Loader2 className="w-4 h-4 animate-spin" /> Submitting...</>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              onClick={handleSaveDraft}
+              disabled={isSaving}
+              className="gap-1.5 text-muted-foreground"
+            >
+              {isSaving ? (
+                <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>
               ) : (
-                'Submit for Approval'
+                <><Save className="w-4 h-4" /> Save & Exit</>
               )}
             </Button>
-          )}
+
+            {currentStep < 5 ? (
+              <Button onClick={handleNext} disabled={!validateStep(currentStep)}>
+                Next
+              </Button>
+            ) : (
+              <Button onClick={handleCreate} disabled={isCreating} className="gap-2">
+                {isCreating ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Submitting...</>
+                ) : (
+                  'Submit for Approval'
+                )}
+              </Button>
+            )}
+          </div>
         </div>
       </DialogContent>
     </Dialog>
