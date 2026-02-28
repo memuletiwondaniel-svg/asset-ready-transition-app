@@ -1,30 +1,26 @@
-import React, { useState } from 'react';
-import { toast } from 'sonner';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { 
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
+import { Progress } from '@/components/ui/progress';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 import { 
   Layers, 
-  ChevronDown,
-  CheckCircle2,
-  Clock,
-  AlertCircle,
-  ListTodo,
+  ChevronRight,
   Flame,
   Snowflake,
-  Plus
+  Plus,
+  Search,
+  LayoutGrid,
+  List,
 } from 'lucide-react';
 import { P2AHandoverPoint } from '../hooks/useP2AHandoverPoints';
 import { useHandoverPointSystems } from '../hooks/useP2AHandoverPoints';
 import { cn } from '@/lib/utils';
 import { AddSystemSheet } from './AddSystemSheet';
-import { SystemITPSection } from './SystemITPSection';
 
 interface VCRSystemsTabProps {
   handoverPoint: P2AHandoverPoint;
@@ -48,37 +44,18 @@ interface P2ASystem {
   itr_total_count: number;
 }
 
-// Circular Progress Wheel Component
-const CircularProgressWheel: React.FC<{ percentage: number; size?: number }> = ({ 
-  percentage, 
-  size = 56 
-}) => {
-  const strokeWidth = 5;
+// Compact circular progress
+const MiniProgress: React.FC<{ percentage: number; size?: number }> = ({ percentage, size = 40 }) => {
+  const strokeWidth = 3.5;
   const radius = (size - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
   const offset = circumference - (percentage / 100) * circumference;
-  
-  const getProgressColor = () => {
-    if (percentage >= 70) return '#10b981'; // emerald-500
-    if (percentage >= 40) return '#f59e0b'; // amber-500
-    return '#f97316'; // orange-500
-  };
 
-  const getProgressColorEnd = () => {
-    if (percentage >= 70) return '#34d399'; // emerald-400
-    if (percentage >= 40) return '#fbbf24'; // amber-400
-    return '#fb923c'; // orange-400
-  };
+  const color = percentage >= 70 ? '#10b981' : percentage >= 40 ? '#f59e0b' : '#94a3b8';
 
   return (
     <div className="relative" style={{ width: size, height: size }}>
       <svg className="transform -rotate-90" width={size} height={size}>
-        <defs>
-          <linearGradient id={`sysProgressGradient-${percentage}`} x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor={getProgressColor()} />
-            <stop offset="100%" stopColor={getProgressColorEnd()} />
-          </linearGradient>
-        </defs>
         <circle
           className="stroke-muted/20"
           strokeWidth={strokeWidth}
@@ -88,14 +65,14 @@ const CircularProgressWheel: React.FC<{ percentage: number; size?: number }> = (
           cy={size / 2}
         />
         <circle
-          stroke={`url(#sysProgressGradient-${percentage})`}
+          stroke={color}
           strokeWidth={strokeWidth}
           strokeLinecap="round"
           fill="transparent"
           r={radius}
           cx={size / 2}
           cy={size / 2}
-          className="transition-all duration-700 ease-out"
+          className="transition-all duration-500 ease-out"
           style={{
             strokeDasharray: circumference,
             strokeDashoffset: offset,
@@ -103,48 +80,46 @@ const CircularProgressWheel: React.FC<{ percentage: number; size?: number }> = (
         />
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
-        <span className="text-xs font-bold">{percentage}%</span>
+        <span className="text-[10px] font-semibold text-foreground">{percentage}%</span>
       </div>
     </div>
   );
 };
 
-const getCompletionStatusConfig = (status: P2ASystem['completion_status']) => {
+const getStatusBadge = (status: P2ASystem['completion_status'], isHC: boolean) => {
+  const targetCert = isHC ? 'RFSU' : 'RFO';
   switch (status) {
     case 'RFSU':
-      return { label: 'RFSU', color: 'bg-emerald-500', textColor: 'text-emerald-500', icon: CheckCircle2 };
+      return <Badge className="bg-emerald-500 text-[9px] px-1.5">RFSU</Badge>;
     case 'RFO':
-      return { label: 'RFO', color: 'bg-blue-500', textColor: 'text-blue-500', icon: CheckCircle2 };
+      return <Badge className="bg-blue-500 text-[9px] px-1.5">RFO</Badge>;
     case 'IN_PROGRESS':
-      return { label: 'In Progress', color: 'bg-amber-500', textColor: 'text-amber-500', icon: Clock };
+      return <Badge variant="outline" className="text-[9px] px-1.5 text-amber-500 border-amber-500/40">In Progress</Badge>;
     default:
-      return { label: 'Not Started', color: 'bg-slate-400', textColor: 'text-slate-500', icon: AlertCircle };
+      return <Badge variant="outline" className="text-[9px] px-1.5 text-muted-foreground">{targetCert}</Badge>;
   }
 };
 
+type ViewMode = 'list' | 'grid';
+
 export const VCRSystemsTab: React.FC<VCRSystemsTabProps> = ({ handoverPoint }) => {
   const { systems, isLoading } = useHandoverPointSystems(handoverPoint.id);
-  const [expandedSystems, setExpandedSystems] = useState<Set<string>>(new Set());
   const [addSystemOpen, setAddSystemOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
 
-  const toggleExpanded = (systemId: string) => {
-    setExpandedSystems(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(systemId)) {
-        newSet.delete(systemId);
-      } else {
-        newSet.add(systemId);
-      }
-      return newSet;
-    });
-  };
+  const filteredSystems = useMemo(() => {
+    if (!searchQuery) return systems;
+    const q = searchQuery.toLowerCase();
+    return systems.filter((s: P2ASystem) =>
+      s.name.toLowerCase().includes(q) || s.system_id.toLowerCase().includes(q)
+    );
+  }, [systems, searchQuery]);
 
   if (isLoading) {
     return (
       <div className="space-y-3">
-        {[1, 2, 3].map(i => (
-          <Skeleton key={i} className="h-32" />
-        ))}
+        {[1, 2, 3].map(i => <Skeleton key={i} className="h-16" />)}
       </div>
     );
   }
@@ -163,216 +138,109 @@ export const VCRSystemsTab: React.FC<VCRSystemsTabProps> = ({ handoverPoint }) =
     );
   }
 
-  // Calculate aggregated stats
+  // Aggregated stats
   const totalSystems = systems.length;
-  const hydrocarbonSystems = systems.filter((s: P2ASystem) => s.is_hydrocarbon);
-  const nonHydrocarbonSystems = systems.filter((s: P2ASystem) => !s.is_hydrocarbon);
-  const hasHydrocarbon = hydrocarbonSystems.length > 0;
-  const hasNonHydrocarbon = nonHydrocarbonSystems.length > 0;
-  
-  // RFO count: non-HC systems that have achieved RFO (or RFSU)
-  const rfoAchieved = nonHydrocarbonSystems.filter((s: P2ASystem) => 
-    s.completion_status === 'RFO' || s.completion_status === 'RFSU'
-  ).length;
-  // RFSU count: HC systems that have achieved RFSU
-  const rfsuAchieved = hydrocarbonSystems.filter((s: P2ASystem) => 
-    s.completion_status === 'RFSU'
-  ).length;
-  
-  const totalPunchlistA = systems.reduce((sum: number, s: P2ASystem) => sum + (s.punchlist_a_count || 0), 0);
-  const totalPunchlistB = systems.reduce((sum: number, s: P2ASystem) => sum + (s.punchlist_b_count || 0), 0);
-  const totalITRA = systems.reduce((sum: number, s: P2ASystem) => sum + (s.itr_a_count || 0), 0);
-  const totalITRB = systems.reduce((sum: number, s: P2ASystem) => sum + (s.itr_b_count || 0), 0);
+  const hcCount = systems.filter((s: P2ASystem) => s.is_hydrocarbon).length;
+  const avgProgress = Math.round(systems.reduce((sum: number, s: P2ASystem) => sum + s.completion_percentage, 0) / totalSystems);
+  const totalPL = systems.reduce((sum: number, s: P2ASystem) => sum + (s.punchlist_a_count || 0) + (s.punchlist_b_count || 0), 0);
 
   return (
-    <div className="space-y-4">
-      {/* Aggregated Stats */}
-      <div className="flex flex-wrap items-center gap-3">
-        <Card>
-          <CardContent className="p-3 text-center">
-            <div className="text-lg font-bold text-cyan-500">{totalSystems}</div>
-            <div className="text-[10px] text-muted-foreground">Total Systems</div>
-          </CardContent>
-        </Card>
-        {hasNonHydrocarbon && (
-          <Card>
-            <CardContent className="p-3 text-center">
-              <div className="text-lg font-bold text-blue-500">{rfoAchieved}/{nonHydrocarbonSystems.length}</div>
-              <div className="text-[10px] text-muted-foreground">RFO Achieved</div>
-            </CardContent>
-          </Card>
+    <div className="space-y-5">
+      {/* Summary Bar — compact horizontal strip */}
+      <div className="flex items-center gap-6 px-1">
+        <div className="flex items-center gap-2">
+          <span className="text-2xl font-bold text-foreground">{totalSystems}</span>
+          <span className="text-xs text-muted-foreground">Systems</span>
+        </div>
+        <Separator orientation="vertical" className="h-6" />
+        {hcCount > 0 && (
+          <>
+            <div className="flex items-center gap-1.5">
+              <Flame className="w-3.5 h-3.5 text-orange-500" />
+              <span className="text-sm font-medium">{hcCount}</span>
+              <span className="text-xs text-muted-foreground">HC</span>
+            </div>
+            <Separator orientation="vertical" className="h-6" />
+          </>
         )}
-        {hasHydrocarbon && (
-          <Card>
-            <CardContent className="p-3 text-center">
-              <div className="text-lg font-bold text-emerald-500">{rfsuAchieved}/{hydrocarbonSystems.length}</div>
-              <div className="text-[10px] text-muted-foreground">RFSU Achieved</div>
-            </CardContent>
-          </Card>
+        <div className="flex items-center gap-1.5">
+          <Progress value={avgProgress} className="h-1.5 w-16" />
+          <span className="text-xs font-medium text-muted-foreground">{avgProgress}%</span>
+        </div>
+        {totalPL > 0 && (
+          <>
+            <Separator orientation="vertical" className="h-6" />
+            <div className="flex items-center gap-1">
+              <span className="text-sm font-medium text-amber-500">{totalPL}</span>
+              <span className="text-xs text-muted-foreground">Punchlists</span>
+            </div>
+          </>
         )}
-        <Card>
-          <CardContent className="p-3 text-center">
-            <div className="text-lg font-bold text-amber-500">{totalPunchlistA + totalPunchlistB}</div>
-            <div className="text-[10px] text-muted-foreground">Outstanding Punchlists</div>
-          </CardContent>
-        </Card>
+        <div className="ml-auto flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            className={cn("h-7 w-7", viewMode === 'list' && "bg-muted")}
+            onClick={() => setViewMode('list')}
+          >
+            <List className="w-3.5 h-3.5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className={cn("h-7 w-7", viewMode === 'grid' && "bg-muted")}
+            onClick={() => setViewMode('grid')}
+          >
+            <LayoutGrid className="w-3.5 h-3.5" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Search + Add */}
+      <div className="flex items-center gap-3">
+        {systems.length > 5 && (
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Search systems..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 h-9"
+            />
+          </div>
+        )}
         <Button
           variant="outline"
           size="sm"
           onClick={() => setAddSystemOpen(true)}
-          className="gap-2 ml-auto"
+          className="gap-1.5 shrink-0"
         >
-          <Plus className="w-4 h-4" />
-          Add System
+          <Plus className="w-3.5 h-3.5" />
+          Add
         </Button>
       </div>
 
-      {/* Systems List */}
-      <div className="space-y-2">
-        {systems.map((system: P2ASystem) => {
-          const statusConfig = getCompletionStatusConfig(system.completion_status);
-          const StatusIcon = statusConfig.icon;
-          const isExpanded = expandedSystems.has(system.id);
-          const targetCert = system.is_hydrocarbon ? 'RFSU' : 'RFO';
-          
-          return (
-            <Collapsible 
-              key={system.id} 
-              open={isExpanded}
-              onOpenChange={() => toggleExpanded(system.id)}
-            >
-              <Card className="overflow-hidden">
-                <CollapsibleTrigger asChild>
-                  <CardContent className="p-4 cursor-pointer hover:bg-muted/50 transition-colors">
-                    <div className="flex items-center gap-6">
-                      {/* Circular Progress Wheel */}
-                      <CircularProgressWheel percentage={system.completion_percentage} size={56} />
-                      
-                      {/* System Info */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-mono text-[10px] text-muted-foreground/60">
-                            {system.system_id}
-                          </span>
-                          {system.completion_status !== 'NOT_STARTED' && (
-                            <Badge className={cn("text-[10px]", statusConfig.color)}>
-                              {statusConfig.label}
-                            </Badge>
-                          )}
-                        </div>
-                        
-                        <p className="text-sm font-medium text-foreground">{system.name}</p>
-                        
-                        {/* Hydrocarbon Indicator */}
-                        {system.is_hydrocarbon && (
-                          <div className="flex items-center gap-1.5 mt-1">
-                            <Flame className="w-3 h-3 text-orange-500" />
-                            <span className="text-xs text-muted-foreground">Hydrocarbon</span>
-                          </div>
-                        )}
-                      </div>
-                      
-                      {/* Stats - Outstanding counts */}
-                      <div className="flex flex-col items-center gap-1">
-                        <div className="text-[9px] text-muted-foreground/70 uppercase tracking-wide">Outstanding</div>
-                        <div className="flex items-center gap-4 text-center">
-                          <div>
-                            <div className="text-sm font-bold text-red-500">{system.punchlist_a_count}</div>
-                            <div className="text-[10px] text-muted-foreground">PL-A</div>
-                          </div>
-                          <div>
-                            <div className="text-sm font-bold text-amber-500">{system.punchlist_b_count}</div>
-                            <div className="text-[10px] text-muted-foreground">PL-B</div>
-                          </div>
-                          <div>
-                            <div className="text-sm font-bold text-blue-500">{system.itr_a_count + system.itr_b_count}</div>
-                            <div className="text-[10px] text-muted-foreground">ITRs</div>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="ml-6">
-                        <Badge className={cn(
-                          "text-[10px] px-2",
-                          system.is_hydrocarbon 
-                            ? (system.actual_rfsu_date ? "bg-emerald-500" : "bg-slate-400")
-                            : (system.actual_rfo_date ? "bg-emerald-500" : "bg-slate-400")
-                        )}>
-                          {targetCert}
-                        </Badge>
-                      </div>
-                      <ChevronDown className={cn(
-                        "w-4 h-4 text-muted-foreground transition-transform",
-                        isExpanded && "rotate-180"
-                      )} />
-                    </div>
-                  </CardContent>
-                </CollapsibleTrigger>
-                
-                <CollapsibleContent>
-                  <div className="px-4 pb-4 pt-3 border-t bg-muted/30 space-y-4">
-                    {/* ITP Activities */}
-                    <SystemITPSection
-                      handoverPointId={handoverPoint.id}
-                      systemId={system.id}
-                    />
-
-                    {/* Punchlist Items */}
-                    <div className="space-y-2">
-                      <div className="text-xs font-medium text-muted-foreground mb-3">Punchlist Items</div>
-                      
-                      {(system.punchlist_a_count + system.punchlist_b_count) === 0 ? (
-                        <div className="text-center py-6 text-sm text-muted-foreground">
-                          No outstanding punchlist items
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          {Array.from({ length: Math.min(system.punchlist_a_count + system.punchlist_b_count, 5) }).map((_, idx) => (
-                            <div 
-                              key={idx}
-                              className="flex items-center justify-between p-2 rounded-md bg-background border text-sm"
-                            >
-                              <div className="flex items-center gap-3">
-                                <Badge 
-                                  variant="outline" 
-                                  className={cn(
-                                    "text-[10px]",
-                                    idx < system.punchlist_a_count 
-                                      ? "border-red-500 text-red-500" 
-                                      : "border-amber-500 text-amber-500"
-                                  )}
-                                >
-                                  {idx < system.punchlist_a_count ? 'A' : 'B'}
-                                </Badge>
-                                <span className="text-muted-foreground">PL-{String(idx + 1).padStart(3, '0')}</span>
-                              </div>
-                              <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                                <span>Created: --</span>
-                                <Badge variant="outline" className="text-[10px]">Open</Badge>
-                              </div>
-                            </div>
-                          ))}
-                          
-                          {(system.punchlist_a_count + system.punchlist_b_count) > 5 && (
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="w-full text-xs text-muted-foreground"
-                              onClick={() => toast.info('Full punchlist view coming soon')}
-                            >
-                              View all {system.punchlist_a_count + system.punchlist_b_count} items
-                            </Button>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </CollapsibleContent>
-              </Card>
-            </Collapsible>
-          );
-        })}
-      </div>
-
+      {/* Systems */}
+      <ScrollArea className="h-[420px]">
+        {viewMode === 'list' ? (
+          <div className="space-y-1.5 pr-4">
+            {filteredSystems.map((system: P2ASystem) => (
+              <SystemListRow key={system.id} system={system} />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 pr-4">
+            {filteredSystems.map((system: P2ASystem) => (
+              <SystemGridCard key={system.id} system={system} />
+            ))}
+          </div>
+        )}
+        {filteredSystems.length === 0 && searchQuery && (
+          <div className="text-center py-8 text-sm text-muted-foreground">
+            No systems match "{searchQuery}"
+          </div>
+        )}
+      </ScrollArea>
 
       {/* Add System Sheet */}
       <AddSystemSheet
@@ -383,5 +251,71 @@ export const VCRSystemsTab: React.FC<VCRSystemsTabProps> = ({ handoverPoint }) =
         currentVcrCode={handoverPoint.vcr_code}
       />
     </div>
+  );
+};
+
+// ─── List Row ────────────────────────────────────────────────────
+const SystemListRow: React.FC<{ system: P2ASystem }> = ({ system }) => {
+  const totalPL = system.punchlist_a_count + system.punchlist_b_count;
+
+  return (
+    <div className="group flex items-center gap-4 px-3 py-2.5 rounded-lg border border-transparent hover:border-border hover:bg-muted/30 transition-all cursor-pointer">
+      <MiniProgress percentage={system.completion_percentage} size={36} />
+      
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium truncate">{system.name}</span>
+          {system.is_hydrocarbon && (
+            <Flame className="w-3 h-3 text-orange-500 shrink-0" />
+          )}
+        </div>
+        <span className="text-[10px] font-mono text-muted-foreground">{system.system_id}</span>
+      </div>
+
+      {/* Compact stats — visible on hover */}
+      <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+        {totalPL > 0 && (
+          <span className="text-[10px] text-amber-500 font-medium">{totalPL} PL</span>
+        )}
+        {(system.itr_a_count + system.itr_b_count) > 0 && (
+          <span className="text-[10px] text-blue-500 font-medium">
+            {system.itr_a_count + system.itr_b_count} ITR
+          </span>
+        )}
+      </div>
+
+      {getStatusBadge(system.completion_status, system.is_hydrocarbon)}
+      <ChevronRight className="w-4 h-4 text-muted-foreground/40 shrink-0" />
+    </div>
+  );
+};
+
+// ─── Grid Card ───────────────────────────────────────────────────
+const SystemGridCard: React.FC<{ system: P2ASystem }> = ({ system }) => {
+  const totalPL = system.punchlist_a_count + system.punchlist_b_count;
+
+  return (
+    <Card className="group cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+      <CardContent className="p-4 space-y-3">
+        <div className="flex items-start justify-between">
+          <MiniProgress percentage={system.completion_percentage} size={40} />
+          {system.is_hydrocarbon && (
+            <Flame className="w-3.5 h-3.5 text-orange-500" />
+          )}
+        </div>
+
+        <div>
+          <p className="text-sm font-medium line-clamp-2 leading-tight">{system.name}</p>
+          <p className="text-[10px] font-mono text-muted-foreground mt-0.5">{system.system_id}</p>
+        </div>
+
+        <div className="flex items-center justify-between pt-1 border-t border-border/50">
+          {getStatusBadge(system.completion_status, system.is_hydrocarbon)}
+          {totalPL > 0 && (
+            <span className="text-[10px] font-medium text-amber-500">{totalPL} PL</span>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 };
