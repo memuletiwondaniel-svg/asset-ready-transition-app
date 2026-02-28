@@ -130,6 +130,7 @@ export const VCRAssuranceTab: React.FC<VCRAssuranceTabProps> = ({ handoverPointI
 
   const submittedCount = expectedDisciplines.filter(d => d.submitted).length;
   const totalCount = expectedDisciplines.length;
+  const allDisciplinesSubmitted = totalCount > 0 && submittedCount === totalCount;
 
   return (
     <div className="space-y-6">
@@ -188,10 +189,20 @@ export const VCRAssuranceTab: React.FC<VCRAssuranceTabProps> = ({ handoverPointI
                     </div>
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">Not yet submitted</p>
-                      <p className="text-xs text-muted-foreground">The VCR Lead provides this statement after all disciplines are reviewed.</p>
+                      <p className="text-xs text-muted-foreground">
+                        {allDisciplinesSubmitted
+                          ? 'All discipline statements received. The VCR Lead can now provide the interdisciplinary statement.'
+                          : `Waiting for ${totalCount - submittedCount} of ${totalCount} discipline statement${totalCount - submittedCount === 1 ? '' : 's'} before this can be submitted.`}
+                      </p>
                     </div>
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => setShowInterForm(true)}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowInterForm(true)}
+                    disabled={!allDisciplinesSubmitted}
+                    title={!allDisciplinesSubmitted ? 'All discipline statements must be submitted first' : undefined}
+                  >
                     Add Statement
                   </Button>
                 </div>
