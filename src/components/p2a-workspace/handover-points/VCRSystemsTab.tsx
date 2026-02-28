@@ -24,6 +24,7 @@ import { P2AHandoverPoint } from '../hooks/useP2AHandoverPoints';
 import { useHandoverPointSystems } from '../hooks/useP2AHandoverPoints';
 import { cn } from '@/lib/utils';
 import { AddSystemSheet } from './AddSystemSheet';
+import { SystemITPSection } from './SystemITPSection';
 
 interface VCRSystemsTabProps {
   handoverPoint: P2AHandoverPoint;
@@ -308,8 +309,14 @@ export const VCRSystemsTab: React.FC<VCRSystemsTabProps> = ({ handoverPoint }) =
                 </CollapsibleTrigger>
                 
                 <CollapsibleContent>
-                  <div className="px-4 pb-4 pt-3 border-t bg-muted/30">
-                    {/* Punchlist Items Placeholder */}
+                  <div className="px-4 pb-4 pt-3 border-t bg-muted/30 space-y-4">
+                    {/* ITP Activities */}
+                    <SystemITPSection
+                      handoverPointId={handoverPoint.id}
+                      systemId={system.id}
+                    />
+
+                    {/* Punchlist Items */}
                     <div className="space-y-2">
                       <div className="text-xs font-medium text-muted-foreground mb-3">Punchlist Items</div>
                       
@@ -319,7 +326,6 @@ export const VCRSystemsTab: React.FC<VCRSystemsTabProps> = ({ handoverPoint }) =
                         </div>
                       ) : (
                         <div className="space-y-2">
-                          {/* Placeholder punchlist rows - will be replaced with actual data */}
                           {Array.from({ length: Math.min(system.punchlist_a_count + system.punchlist_b_count, 5) }).map((_, idx) => (
                             <div 
                               key={idx}
