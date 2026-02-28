@@ -33,6 +33,7 @@ interface PACContent {
 
 interface PACCertificateProps {
   certificateNumber?: string;
+  projectCode?: string;
   facilityName?: string;
   projectName?: string;
   pacDate?: string;
@@ -56,6 +57,7 @@ const defaultContent: PACContent = {
 
 const PACCertificate: React.FC<PACCertificateProps> = ({
   certificateNumber = "PAC-XXXX-XXX",
+  projectCode = "",
   facilityName = "",
   projectName = "",
   pacDate = "",
@@ -260,14 +262,18 @@ const PACCertificate: React.FC<PACCertificateProps> = ({
 
           {/* Info Box */}
           <div className="bg-muted/50 border border-border rounded-lg p-4 mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 text-sm">
               <div>
-                <span className="font-semibold text-foreground">Facility:</span>
-                <span className="ml-2 text-muted-foreground">{facilityName || '[Facility Name]'}</span>
+                <span className="font-semibold text-foreground">Project ID:</span>
+                <span className="ml-2 text-muted-foreground">{projectCode || '[Project ID]'}</span>
               </div>
               <div>
                 <span className="font-semibold text-foreground">Project:</span>
                 <span className="ml-2 text-muted-foreground">{projectName || '[Project Name]'}</span>
+              </div>
+              <div>
+                <span className="font-semibold text-foreground">VCR Name:</span>
+                <span className="ml-2 text-muted-foreground">{facilityName || '[VCR Name]'}</span>
               </div>
               <div>
                 <span className="font-semibold text-foreground">VCR Ref:</span>
