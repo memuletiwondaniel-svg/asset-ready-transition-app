@@ -20,6 +20,7 @@ interface ApproverDetailSheetProps {
   approverAvatarUrl?: string;
   approverItemCount: number;
   approverAcceptedCount: number;
+  roleType?: 'delivering' | 'receiving';
 }
 
 type FilterStatus = 'all' | 'completed' | 'pending' | 'not_submitted';
@@ -41,6 +42,7 @@ export const ApproverDetailSheet: React.FC<ApproverDetailSheetProps> = ({
   approverAvatarUrl,
   approverItemCount,
   approverAcceptedCount,
+  roleType = 'receiving',
 }) => {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterStatus>('all');
@@ -51,7 +53,7 @@ export const ApproverDetailSheet: React.FC<ApproverDetailSheetProps> = ({
 
   // Fetch VCR items assigned to this approver role, with their prereq status for this VCR
   const { data: items = [], isLoading } = useQuery({
-    queryKey: ['approver-vcr-items', vcrId, approverRoleName],
+    queryKey: ['approver-vcr-items', vcrId, approverRoleName, roleType],
     queryFn: async () => {
       const client = supabase as any;
 
@@ -65,16 +67,22 @@ export const ApproverDetailSheet: React.FC<ApproverDetailSheetProps> = ({
       const roleId = roles?.[0]?.id;
       if (!roleId) return [];
 
-      // Get all VCR items that have this role in approving_party_role_ids
-      const { data: allItems } = await client
+      // Get all VCR items for this role based on roleType
+      let itemsQuery = client
         .from('vcr_items')
         .select(`
           id, vcr_item, supporting_evidence, display_order, topic,
           vcr_item_categories!vcr_items_category_id_fkey (name, code)
         `)
-        .eq('is_active', true)
-        .contains('approving_party_role_ids', [roleId])
-        .order('display_order', { ascending: true });
+        .eq('is_active', true);
+
+      if (roleType === 'delivering') {
+        itemsQuery = itemsQuery.eq('delivering_party_role_id', roleId);
+      } else {
+        itemsQuery = itemsQuery.contains('approving_party_role_ids', [roleId]);
+      }
+
+      const { data: allItems } = await itemsQuery.order('display_order', { ascending: true });
 
       if (!allItems?.length) return [];
 
