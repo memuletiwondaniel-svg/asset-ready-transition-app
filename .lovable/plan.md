@@ -1,25 +1,46 @@
 
 
-## Plan: Add VCR Delivering Parties to Review and Approval Panel
+## Plan: Rearrange sidebar navigation in widgets VCRDetailOverlay
 
 ### Changes
 
-**1. Extend data fetching in `VCRDetailOverlay.tsx` (around line 1243-1470)**
+**1. Split `NAV_ITEMS` into two sections in `src/components/widgets/VCRDetailOverlay.tsx` (lines 79-90)**
 
-Modify the `checklistApprovers` query to also aggregate **delivering parties** (from `delivering_party_role_id` on `vcr_items`), in addition to the existing approving/receiving parties. Each delivering party gets `role: 'delivering'` in the `ChecklistApproverData` result. The same profile resolution logic (plant-aware, excluding Asset-level) applies.
+Replace single `NAV_ITEMS` array with two arrays:
 
-**2. Update `ApprovalsPanel` component (around line 334-503)**
+```typescript
+const CORE_NAV_ITEMS: NavItem[] = [
+  { id: 'overview', label: 'VCR', icon: BarChart3 },
+  { id: 'comments', label: 'Comments', icon: MessageSquare },
+  { id: 'qualifications', label: 'Qualifications', icon: AlertTriangle },
+  { id: 'sof', label: 'SoF', icon: Shield, locked: true },
+  { id: 'pac', label: 'PAC', icon: Award, locked: true },
+];
 
-- Extract delivering parties: `checklistApprovers.filter(a => a.role === 'delivering')`
-- Add a new `CollapsibleSection` titled **"VCR Delivering Parties"** above "VCR Reviewers" (line 406), with count and the same `PersonRow` + `StatusIndicator` pattern
-- Clicking a delivering party opens the same `ApproverDetailSheet` (already reusable)
-- Add a `<div className="border-t border-border/40" />` separator between the new section and VCR Reviewers
+const DELIVERABLE_NAV_ITEMS: NavItem[] = [
+  { id: 'systems', label: 'Systems', icon: Layers },
+  { id: 'training', label: 'Training', icon: GraduationCap },
+  { id: 'procedures', label: 'Procedures', icon: BookOpen },
+  { id: 'documentation', label: 'Documentation', icon: FileText },
+  { id: 'cmms', label: 'CMMS', icon: Settings2 },
+  { id: 'spares', label: 'Spares', icon: Package },
+  { id: 'registers', label: 'Operational Registers', icon: FileText },
+];
+```
 
-**3. Update `ApproverDetailSheet.tsx` to support delivering role lookup**
+**2. Update sidebar rendering (lines 1970-2004)**
 
-Currently the sheet queries items where `approving_party_role_ids` contains the role. Add a prop `roleType?: 'delivering' | 'receiving'` (default `'receiving'`). When `roleType === 'delivering'`, query items where `delivering_party_role_id` equals the role ID instead of using `contains` on `approving_party_role_ids`.
+Replace the single `NAV_ITEMS.map` with two sections separated by a `Separator`:
+- "Navigate" header → `CORE_NAV_ITEMS` (filtering SoF by `has_hydrocarbon`)
+- Separator
+- "VCR Deliverables" header → `DELIVERABLE_NAV_ITEMS`
+
+Both use the same button rendering logic already in place.
+
+**3. Add missing imports**
+
+Add `MessageSquare`, `AlertTriangle` from lucide-react (if not already imported) and `Separator` from UI components.
 
 ### Files to modify
-- `src/components/widgets/VCRDetailOverlay.tsx` — data fetch + UI section
-- `src/components/widgets/ApproverDetailSheet.tsx` — support delivering role query
+- `src/components/widgets/VCRDetailOverlay.tsx`
 
