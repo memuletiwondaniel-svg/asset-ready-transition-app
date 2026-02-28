@@ -18,6 +18,10 @@ export interface P2AHandoverPoint {
   created_by?: string;
   created_at: string;
   updated_at: string;
+  // VCR Execution Plan lifecycle
+  execution_plan_status?: string; // DRAFT | SUBMITTED | APPROVED
+  execution_plan_submitted_at?: string;
+  execution_plan_approved_at?: string;
   // Computed/joined data
   systems_count?: number;
   prerequisites_count?: number;

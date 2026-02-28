@@ -16,7 +16,15 @@ import {
   Loader2,
 } from 'lucide-react';
 import { P2AHandoverPoint } from '../hooks/useP2AHandoverPoints';
-import { OperationalRegister } from './VCRRegistersTab';
+export interface OperationalRegister {
+  id: string;
+  title: string;
+  registerNumber: string;
+  category: 'safety' | 'environmental' | 'operational' | 'maintenance' | 'quality';
+  status: 'draft' | 'active' | 'under_review' | 'archived';
+  owner: string;
+  lastUpdated: string;
+}
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
