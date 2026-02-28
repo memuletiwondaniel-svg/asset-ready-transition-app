@@ -7661,6 +7661,60 @@ export type Database = {
         }
         Relationships: []
       }
+      vcr_discipline_assurance: {
+        Row: {
+          assurance_statement: string
+          created_at: string | null
+          discipline_role_id: string | null
+          discipline_role_name: string
+          handover_point_id: string
+          id: string
+          reviewer_user_id: string | null
+          statement_type: string
+          submitted_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          assurance_statement: string
+          created_at?: string | null
+          discipline_role_id?: string | null
+          discipline_role_name: string
+          handover_point_id: string
+          id?: string
+          reviewer_user_id?: string | null
+          statement_type?: string
+          submitted_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          assurance_statement?: string
+          created_at?: string | null
+          discipline_role_id?: string | null
+          discipline_role_name?: string
+          handover_point_id?: string
+          id?: string
+          reviewer_user_id?: string | null
+          statement_type?: string
+          submitted_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vcr_discipline_assurance_discipline_role_id_fkey"
+            columns: ["discipline_role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vcr_discipline_assurance_handover_point_id_fkey"
+            columns: ["handover_point_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_handover_points"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vcr_item_categories: {
         Row: {
           code: string
