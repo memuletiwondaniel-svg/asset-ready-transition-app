@@ -1913,6 +1913,7 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
         return (
           <PACCertificate
             certificateNumber={`PAC-${projectCode}-VCR-${displayCode.replace('VCR-', '')}`}
+            projectCode={projectCode}
             facilityName={vcr.name}
             projectName={projectName}
             handoverPointId={vcr.id}
