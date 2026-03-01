@@ -534,7 +534,153 @@ export async function generateBuildingBlockActivities(
     );
   }
 
+  // ── Assign delivering party tasks for VCR checklist items ──
+  await generateDeliveringPartyTasks(vcrId, projectId, projectCode);
+
   console.log(`[ORA Sync] Generated building block activities for VCR ${vcrId}`);
+}
+
+// ─── Delivering Party Task Assignment ────────────────────────────
+
+/**
+ * Creates tasks for each delivering party user based on their assigned VCR checklist items.
+ * Resolves role IDs to actual users via project team membership and profile roles.
+ */
+async function generateDeliveringPartyTasks(
+  vcrId: string,
+  projectId: string,
+  projectCode: string
+) {
+  const client = supabase as any;
+
+  // Duplicate prevention
+  const { data: existingTasks } = await client
+    .from('user_tasks')
+    .select('id')
+    .eq('type', 'vcr_checklist_item')
+    .filter('metadata->>vcr_id', 'eq', vcrId)
+    .filter('metadata->>source', 'eq', 'vcr_execution_plan_approval')
+    .limit(1);
+
+  if (existingTasks?.length > 0) {
+    console.log('[ORA Sync] Delivering party tasks already exist for VCR', vcrId);
+    return;
+  }
+
+  // Fetch all prerequisites for this VCR
+  const { data: prereqs } = await client
+    .from('p2a_vcr_prerequisites')
+    .select('id, summary, delivering_party_id, delivering_party_name, status')
+    .eq('handover_point_id', vcrId);
+
+  if (!prereqs?.length) return;
+
+  // Filter to items that have a delivering party and are not already closed
+  const closedStatuses = ['ACCEPTED', 'QUALIFICATION_APPROVED', 'NA'];
+  const actionablePrereqs = prereqs.filter(
+    (p: any) => p.delivering_party_id && !closedStatuses.includes(p.status)
+  );
+
+  if (!actionablePrereqs.length) return;
+
+  // Collect unique delivering party role IDs
+  const roleIds = [...new Set(actionablePrereqs.map((p: any) => p.delivering_party_id))];
+
+  // Resolve role IDs to users: first try project team members, then fallback to profiles
+  const { data: teamMembers } = await client
+    .from('project_team_members')
+    .select('user_id')
+    .eq('project_id', projectId);
+
+  const teamUserIds = (teamMembers || []).map((m: any) => m.user_id);
+
+  let profilesByRole: any[] = [];
+  if (teamUserIds.length) {
+    const { data: profiles } = await client
+      .from('profiles')
+      .select('user_id, full_name, role, position')
+      .in('user_id', teamUserIds)
+      .in('role', roleIds)
+      .eq('is_active', true);
+    profilesByRole = (profiles || []).filter((p: any) => {
+      const pos = (p.position || '').toLowerCase();
+      return !pos.includes('asset');
+    });
+  }
+
+  // Fallback for uncovered roles
+  const coveredRoleIds = new Set(profilesByRole.map((p: any) => p.role));
+  const uncoveredRoleIds = roleIds.filter((rid: string) => !coveredRoleIds.has(rid));
+  if (uncoveredRoleIds.length) {
+    const { data: fallbackProfiles } = await client
+      .from('profiles')
+      .select('user_id, full_name, role, position')
+      .in('role', uncoveredRoleIds)
+      .eq('is_active', true);
+    if (fallbackProfiles) {
+      const filtered = fallbackProfiles.filter((p: any) => {
+        const pos = (p.position || '').toLowerCase();
+        return !pos.includes('asset');
+      });
+      profilesByRole.push(...filtered);
+    }
+  }
+
+  // Build role → user map (first match wins)
+  const roleUserMap = new Map<string, string>();
+  for (const p of profilesByRole) {
+    if (p.role && !roleUserMap.has(p.role)) {
+      roleUserMap.set(p.role, p.user_id);
+    }
+  }
+
+  // Fetch VCR name for task descriptions
+  const { data: vcrData } = await client
+    .from('p2a_handover_points')
+    .select('vcr_code, name')
+    .eq('id', vcrId)
+    .maybeSingle();
+
+  const vcrLabel = vcrData ? `${vcrData.vcr_code}: ${vcrData.name}` : 'VCR';
+
+  // Create tasks grouped by user
+  const tasksByUser = new Map<string, any[]>();
+  for (const prereq of actionablePrereqs) {
+    const userId = roleUserMap.get(prereq.delivering_party_id);
+    if (!userId) continue;
+    if (!tasksByUser.has(userId)) tasksByUser.set(userId, []);
+    tasksByUser.get(userId)!.push(prereq);
+  }
+
+  for (const [userId, userPrereqs] of tasksByUser) {
+    // Create one task per checklist item for clear tracking
+    for (const prereq of userPrereqs) {
+      await client
+        .from('user_tasks')
+        .insert({
+          user_id: userId,
+          title: `${prereq.summary}`,
+          description: `Complete and provide evidence for checklist item "${prereq.summary}" on ${vcrLabel}. Submit supporting evidence and mark as ready for review.`,
+          type: 'vcr_checklist_item',
+          priority: 'Medium',
+          status: 'pending',
+          metadata: {
+            project_id: projectId,
+            project_code: projectCode,
+            vcr_id: vcrId,
+            vcr_label: vcrLabel,
+            prerequisite_id: prereq.id,
+            delivering_party_id: prereq.delivering_party_id,
+            delivering_party_name: prereq.delivering_party_name,
+            action: 'complete_vcr_checklist_item',
+            source: 'vcr_execution_plan_approval',
+          },
+        });
+    }
+  }
+
+  const totalTasks = [...tasksByUser.values()].reduce((sum, arr) => sum + arr.length, 0);
+  console.log(`[ORA Sync] Created ${totalTasks} delivering party tasks for VCR ${vcrId}`);
 }
 
 // ─── Bidirectional Sync ──────────────────────────────────────────
