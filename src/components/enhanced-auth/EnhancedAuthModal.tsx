@@ -6,8 +6,9 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Eye, EyeOff, Mail, Lock, ArrowLeft, ArrowRight, Star, X } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, ArrowLeft, ArrowRight, Star, X, AlertTriangle } from 'lucide-react';
 import { useAuth } from './AuthProvider';
+import { useTenantContext } from '@/contexts/TenantContext';
 import EnhancedRegistrationForm from '@/components/user-management/EnhancedRegistrationForm';
 import OrshLogo from '@/components/ui/OrshLogo';
 interface EnhancedAuthModalProps {
@@ -26,6 +27,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
     signInWithSSO,
     resetPassword
   } = useAuth();
+  const { subdomainTenant, tenantMismatch } = useTenantContext();
   const [activeTab, setActiveTab] = useState('signin');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -137,12 +139,27 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                 {/* Sign In Header */}
                 <div className="text-center mb-6">
                   <div className="flex justify-center mb-3">
-                    <OrshLogo className="h-12 w-auto" />
+                    {subdomainTenant?.logo_url ? (
+                      <img src={subdomainTenant.logo_url} alt={subdomainTenant.name} className="h-12 w-auto" />
+                    ) : (
+                      <OrshLogo className="h-12 w-auto" />
+                    )}
                   </div>
+                  {subdomainTenant && (
+                    <p className="text-xs font-medium text-primary mb-1">{subdomainTenant.name}</p>
+                  )}
                   <p className="text-muted-foreground text-sm">
                     {activeTab === 'reset' ? 'Reset your password' : 'Sign in to your ORSH account'}
                   </p>
                 </div>
+
+                {/* Tenant mismatch warning */}
+                {tenantMismatch && (
+                  <div className="flex items-center gap-2 p-3 mb-4 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs">
+                    <AlertTriangle className="h-4 w-4 shrink-0" />
+                    <span>Your account belongs to a different organization. Please use the correct portal.</span>
+                  </div>
+                )}
 
               <div className="space-y-4">
                   {activeTab === 'reset' ? (
