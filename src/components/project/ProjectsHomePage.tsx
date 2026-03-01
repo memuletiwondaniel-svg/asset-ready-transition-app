@@ -14,7 +14,7 @@ import { AddProjectWizard } from '@/components/project/AddProjectWizard';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { useCanPerformActions } from '@/hooks/useCurrentUserRole';
+import { useCanPerformActionsPermission } from '@/hooks/usePermissions';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -46,7 +46,7 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
   const navigate = useNavigate();
   const { translations: t } = useLanguage();
   const { projects, isLoading } = useProjects();
-  const { canPerformActions } = useCanPerformActions();
+  const { canPerformActions } = useCanPerformActionsPermission();
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [columnVisibility, setColumnVisibility] = useState<ColumnVisibility>({

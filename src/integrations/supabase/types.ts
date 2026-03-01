@@ -7079,6 +7079,38 @@ export type Database = {
         }
         Relationships: []
       }
+      role_permissions: {
+        Row: {
+          created_at: string
+          granted_by: string | null
+          id: string
+          permission: Database["public"]["Enums"]["app_permission"]
+          role_id: string
+        }
+        Insert: {
+          created_at?: string
+          granted_by?: string | null
+          id?: string
+          permission: Database["public"]["Enums"]["app_permission"]
+          role_id: string
+        }
+        Update: {
+          created_at?: string
+          granted_by?: string | null
+          id?: string
+          permission?: Database["public"]["Enums"]["app_permission"]
+          role_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_permissions_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       roles: {
         Row: {
           category_id: string | null
@@ -8645,7 +8677,15 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_user_permissions: { Args: { _user_id: string }; Returns: string[] }
       get_user_tenant_id: { Args: never; Returns: string }
+      has_permission: {
+        Args: {
+          _permission: Database["public"]["Enums"]["app_permission"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       initiate_password_reset: { Args: { user_email: string }; Returns: string }
       reject_user_account: {
         Args: { rejection_reason_text?: string; target_user_id: string }
@@ -8703,6 +8743,19 @@ export type Database = {
       }
     }
     Enums: {
+      app_permission:
+        | "create_project"
+        | "create_vcr"
+        | "create_pssr"
+        | "approve_pssr"
+        | "approve_sof"
+        | "manage_users"
+        | "access_admin"
+        | "view_reports"
+        | "create_ora_plan"
+        | "manage_p2a"
+        | "manage_orm"
+        | "create_p2a_plan"
       ora_training_approval_status: "PENDING" | "APPROVED" | "REJECTED"
       ora_training_execution_stage:
         | "NOT_STARTED"
@@ -8952,6 +9005,20 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_permission: [
+        "create_project",
+        "create_vcr",
+        "create_pssr",
+        "approve_pssr",
+        "approve_sof",
+        "manage_users",
+        "access_admin",
+        "view_reports",
+        "create_ora_plan",
+        "manage_p2a",
+        "manage_orm",
+        "create_p2a_plan",
+      ],
       ora_training_approval_status: ["PENDING", "APPROVED", "REJECTED"],
       ora_training_execution_stage: [
         "NOT_STARTED",
