@@ -184,7 +184,7 @@ export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({
   return (
     <>
     <MyTasksPanelCard
-      title="P2A Handover"
+      title="P2A Plan"
       icon={<ClipboardCheck className="h-5 w-5 text-white" />}
       iconColorClass="from-blue-500 to-blue-600"
       primaryStat={totalCount}

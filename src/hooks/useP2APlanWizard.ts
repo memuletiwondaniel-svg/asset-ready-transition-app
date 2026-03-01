@@ -638,7 +638,7 @@ export function useP2APlanWizard(projectId: string, projectCode: string) {
       setDraftLoaded(false);
       toast({
         title: 'Draft deleted',
-        description: 'Your P2A Handover Plan draft has been deleted.',
+        description: 'Your P2A Plan draft has been deleted.',
       });
     },
     onError: (error: Error) => {

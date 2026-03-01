@@ -82,8 +82,8 @@ export const translations = {
     navMyTasks: 'My Tasks',
     navORAPlans: 'ORA Plans',
     navORMaintenance: 'OR Maintenance',
-    navP2AHandover: 'P2A Handover',
-    navProjects: 'P2A Handover',
+    navP2AHandover: 'P2A Plan',
+    navProjects: 'P2A Plan',
     
     // Sidebar UI
     lightMode: 'Light Mode',
@@ -100,7 +100,7 @@ export const translations = {
     welcomeDescription: 'Transform your project start-up and handover experience with the ORSH platform.',
     safeStartup: 'PSSR',
     safeStartupDesc: 'Pre-Start Up Safety Review - Manage the safe introduction of hydrocarbons into new facilities using PSSR checklists',
-    p2oHandover: 'P2A Handover',
+    p2oHandover: 'P2A Plan',
     p2oHandoverDesc: 'Seamless transition and handover from construction and commissioning to Asset Operation',
     accessButton: 'Access ORSH Platform',
     enterpriseSecure: 'Enterprise Secure',
@@ -293,7 +293,7 @@ export const translations = {
     
 
     // P2A Handover
-    p2aHandover: 'P2A Handover',
+    p2aHandover: 'P2A Plan',
     projectToAsset: 'Project to Asset',
     handoverPackage: 'Handover Package',
     
@@ -417,7 +417,7 @@ export const translations = {
     currentPhase: 'Current',
     
     // P2A Landing Page
-    p2aTitle: 'P2A Handover',
+    p2aTitle: 'P2A Plan',
     p2aSubtitle: 'Project to Asset Transition Management',
     totalHandovers: 'Total Handovers',
     behindSchedule: 'Behind Schedule',
@@ -647,7 +647,7 @@ export const translations = {
     noActivityPlansYet: 'No activity plans yet',
     createFirstPlan: 'Create First Plan',
     viewPlan: 'View Plan',
-    p2aHandoverWidget: 'P2A Handover',
+    p2aHandoverWidget: 'P2A Plan',
     noHandoversYet: 'No handovers yet',
     createFirstHandover: 'Create First Handover',
     deliverablesReady: 'deliverables ready',
@@ -674,7 +674,7 @@ export const translations = {
     createdNewChecklist: 'Created new checklist',
     addedTeamMember: 'Added team member',
     updatedProjectSettings: 'Updated project settings',
-    reviewedP2AHandover: 'Reviewed P2A handover',
+    reviewedP2AHandover: 'Reviewed P2A plan',
     createNewPSSRTitle: 'Create New PSSR',
     stepOf: 'Step {current} of {total}',
     pssrReason: 'PSSR Reason',

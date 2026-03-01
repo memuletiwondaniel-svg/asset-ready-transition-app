@@ -158,7 +158,7 @@ export const ORPDetailsPage: React.FC = () => {
               </TabsTrigger>
               <TabsTrigger value="handover" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm group">
                 <ArrowLeftRight className="w-4 h-4 text-muted-foreground group-data-[state=active]:text-cyan-500" />
-                P2A Handover
+                P2A Plan
               </TabsTrigger>
               <TabsTrigger value="training" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm group">
                 <GraduationCap className="w-4 h-4 text-muted-foreground group-data-[state=active]:text-emerald-500" />
