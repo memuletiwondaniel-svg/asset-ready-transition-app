@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { WidgetCard } from './WidgetCard';
 import { Plus, Settings, MessageSquare } from 'lucide-react';
 import { ORSHChatDialog } from './ORSHChatDialog';
-import { useCanPerformActions } from '@/hooks/useCurrentUserRole';
+import { useCanPerformActionsPermission } from '@/hooks/usePermissions';
 
 interface PSSRQuickActionsWidgetProps {
   onCreatePSSR: () => void;
@@ -28,7 +28,7 @@ export const PSSRQuickActionsWidget: React.FC<PSSRQuickActionsWidgetProps> = ({
   dragListeners
 }) => {
   const [chatOpen, setChatOpen] = useState(false);
-  const { canPerformActions } = useCanPerformActions();
+  const { canPerformActions } = useCanPerformActionsPermission();
 
   const handleChatClick = () => {
     setChatOpen(true);

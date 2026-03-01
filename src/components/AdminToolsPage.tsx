@@ -30,6 +30,7 @@ const AdminActivityLog = lazy(() => import("./AdminActivityLog"));
 const BulkUserUpload = lazy(() => import("./admin-tools/BulkUserUpload").then(m => ({ default: m.BulkUserUpload })));
 const APIManagement = lazy(() => import("./admin-tools/APIManagement"));
 const SSOConfiguration = lazy(() => import("./admin-tools/SSOConfiguration").then(m => ({ default: m.SSOConfiguration })));
+const RolePermissionsManager = lazy(() => import("./admin-tools/RolePermissionsManager"));
 
 // Loading fallback component
 const ViewLoadingFallback = () => (
@@ -60,7 +61,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   const location = useLocation();
 
   // State management - consolidated for cleaner code
-  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'activity-log' | 'ora-configuration' | 'handover-management' | 'bulk-upload' | 'apis' | 'sso'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'activity-log' | 'ora-configuration' | 'handover-management' | 'bulk-upload' | 'apis' | 'sso' | 'roles-permissions'>('dashboard');
 
   // Reset to dashboard when sidebar navigation triggers a same-route click
   useEffect(() => {
@@ -257,6 +258,16 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     stats: {},
     height: 'md:row-span-2',
     onClick: () => setActiveView('sso')
+  }, {
+    id: 'roles-permissions',
+    title: 'Roles & Permissions',
+    description: 'Configure what each role can do — create projects, VCRs, PSSRs, approve documents, and more',
+    icon: Shield,
+    gradient: 'from-rose-500 to-pink-600',
+    tooltip: 'Manage role-based access control (RBAC) across the platform',
+    stats: {},
+    height: 'md:row-span-2',
+    onClick: () => setActiveView('roles-permissions')
   }];
 
   // Filter admin tools based on search query
@@ -376,6 +387,13 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     return <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
         <Suspense fallback={<ViewLoadingFallback />}>
           <SSOConfiguration onBack={() => setActiveView('dashboard')} />
+        </Suspense>
+      </div>;
+  }
+  if (activeView === 'roles-permissions') {
+    return <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
+        <Suspense fallback={<ViewLoadingFallback />}>
+          <RolePermissionsManager onBack={() => setActiveView('dashboard')} />
         </Suspense>
       </div>;
   }

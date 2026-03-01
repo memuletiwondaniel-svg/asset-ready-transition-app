@@ -18,7 +18,7 @@ import { P2APlanSummaryDialog } from './P2APlanSummaryDialog';
 import { P2APlanCreationWizard } from './p2a-wizard/P2APlanCreationWizard';
 import { VCRDetailOverlayWidget } from './VCRDetailOverlay';
 import { cn } from '@/lib/utils';
-import { useCanCreateVCR } from '@/hooks/useCurrentUserRole';
+import { useCanCreateVCRPermission } from '@/hooks/usePermissions';
 import { useP2AHandoverPlan } from '@/components/p2a-workspace/hooks/useP2AHandoverPlan';
 import { useP2APlanByProject } from '@/hooks/useP2APlanByProject';
 
@@ -87,7 +87,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
   const { data: vcrs, isLoading: vcrsLoading } = useProjectVCRs(projectId);
   const { data: orpPlans, isLoading: orpLoading } = useProjectORPPlans(projectId);
   const { milestones: projectMilestones } = useProjectMilestones(projectId);
-  const { canCreate: canCreateVCR, isLoading: roleLoading } = useCanCreateVCR();
+  const { canCreate: canCreateVCR, isLoading: roleLoading } = useCanCreateVCRPermission();
   const [selectedPSSR, setSelectedPSSR] = useState<{ id: string; displayId: string } | null>(null);
   const [overlayPSSR, setOverlayPSSR] = useState<{ id: string; displayId: string; title: string; status: string } | null>(null);
   const [showCreateVCR, setShowCreateVCR] = useState(false);
