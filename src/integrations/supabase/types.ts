@@ -7589,7 +7589,9 @@ export type Database = {
           id: string
           metadata: Json | null
           priority: string
+          progress_percentage: number | null
           status: string
+          sub_items: Json | null
           title: string
           type: string
           updated_at: string | null
@@ -7603,7 +7605,9 @@ export type Database = {
           id?: string
           metadata?: Json | null
           priority: string
+          progress_percentage?: number | null
           status?: string
+          sub_items?: Json | null
           title: string
           type: string
           updated_at?: string | null
@@ -7617,7 +7621,9 @@ export type Database = {
           id?: string
           metadata?: Json | null
           priority?: string
+          progress_percentage?: number | null
           status?: string
+          sub_items?: Json | null
           title?: string
           type?: string
           updated_at?: string | null

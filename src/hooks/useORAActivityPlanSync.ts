@@ -553,17 +553,17 @@ async function generateDeliveringPartyTasks(
 ) {
   const client = supabase as any;
 
-  // Duplicate prevention
+  // Duplicate prevention — check for consolidated bundle tasks
   const { data: existingTasks } = await client
     .from('user_tasks')
     .select('id')
-    .eq('type', 'vcr_checklist_item')
+    .eq('type', 'vcr_checklist_bundle')
     .filter('metadata->>vcr_id', 'eq', vcrId)
     .filter('metadata->>source', 'eq', 'vcr_execution_plan_approval')
     .limit(1);
 
   if (existingTasks?.length > 0) {
-    console.log('[ORA Sync] Delivering party tasks already exist for VCR', vcrId);
+    console.log('[ORA Sync] Delivering party bundle tasks already exist for VCR', vcrId);
     return;
   }
 
@@ -643,44 +643,51 @@ async function generateDeliveringPartyTasks(
 
   const vcrLabel = vcrData ? `${vcrData.vcr_code}: ${vcrData.name}` : 'VCR';
 
-  // Create tasks grouped by user
-  const tasksByUser = new Map<string, any[]>();
+  // Group prerequisites by user (consolidated bundle approach)
+  const tasksByUser = new Map<string, { prereqs: any[]; deliveringPartyId: string }>();
   for (const prereq of actionablePrereqs) {
     const userId = roleUserMap.get(prereq.delivering_party_id);
     if (!userId) continue;
-    if (!tasksByUser.has(userId)) tasksByUser.set(userId, []);
-    tasksByUser.get(userId)!.push(prereq);
-  }
-
-  for (const [userId, userPrereqs] of tasksByUser) {
-    // Create one task per checklist item for clear tracking
-    for (const prereq of userPrereqs) {
-      await client
-        .from('user_tasks')
-        .insert({
-          user_id: userId,
-          title: `${prereq.summary}`,
-          description: `Complete and provide evidence for checklist item "${prereq.summary}" on ${vcrLabel}. Submit supporting evidence and mark as ready for review.`,
-          type: 'vcr_checklist_item',
-          priority: 'Medium',
-          status: 'pending',
-          metadata: {
-            project_id: projectId,
-            project_code: projectCode,
-            vcr_id: vcrId,
-            vcr_label: vcrLabel,
-            prerequisite_id: prereq.id,
-            delivering_party_id: prereq.delivering_party_id,
-            delivering_party_name: prereq.delivering_party_name,
-            action: 'complete_vcr_checklist_item',
-            source: 'vcr_execution_plan_approval',
-          },
-        });
+    if (!tasksByUser.has(userId)) {
+      tasksByUser.set(userId, { prereqs: [], deliveringPartyId: prereq.delivering_party_id });
     }
+    tasksByUser.get(userId)!.prereqs.push(prereq);
   }
 
-  const totalTasks = [...tasksByUser.values()].reduce((sum, arr) => sum + arr.length, 0);
-  console.log(`[ORA Sync] Created ${totalTasks} delivering party tasks for VCR ${vcrId}`);
+  // Create ONE consolidated bundle task per user
+  for (const [userId, { prereqs: userPrereqs, deliveringPartyId }] of tasksByUser) {
+    const subItems = userPrereqs.map((p: any) => ({
+      prerequisite_id: p.id,
+      summary: p.summary,
+      completed: false,
+    }));
+
+    await client
+      .from('user_tasks')
+      .insert({
+        user_id: userId,
+        title: `VCR Checklist Items – ${vcrLabel}`,
+        description: `Complete ${userPrereqs.length} checklist item(s) for ${vcrLabel}. Submit supporting evidence and mark each item as ready for review.`,
+        type: 'vcr_checklist_bundle',
+        priority: 'Medium',
+        status: 'pending',
+        progress_percentage: 0,
+        sub_items: subItems,
+        metadata: {
+          project_id: projectId,
+          project_code: projectCode,
+          vcr_id: vcrId,
+          vcr_label: vcrLabel,
+          delivering_party_id: deliveringPartyId,
+          total_items: userPrereqs.length,
+          completed_items: 0,
+          action: 'complete_vcr_checklist_bundle',
+          source: 'vcr_execution_plan_approval',
+        },
+      });
+  }
+
+  console.log(`[ORA Sync] Created ${tasksByUser.size} consolidated bundle tasks for VCR ${vcrId}`);
 }
 
 // ─── Bidirectional Sync ──────────────────────────────────────────
