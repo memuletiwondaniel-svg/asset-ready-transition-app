@@ -48,6 +48,8 @@ interface UnifiedTask {
   progressPercentage?: number;
   completedItems?: number;
   totalItems?: number;
+  isWaiting?: boolean;
+  itemsReadyForReview?: number;
 }
 
 const CATEGORY_CONFIG = {
@@ -186,6 +188,8 @@ export const AllTasksTable: React.FC<AllTasksTableProps> = ({ searchQuery, userI
         progressPercentage: task.progress_percentage,
         completedItems: task.sub_items.filter(i => i.completed).length,
         totalItems: task.sub_items.length,
+        isWaiting: task.status === 'waiting',
+        itemsReadyForReview: (task.metadata as any)?.items_ready_for_review ?? 0,
       });
     });
 
@@ -250,9 +254,10 @@ export const AllTasksTable: React.FC<AllTasksTableProps> = ({ searchQuery, userI
                 key={task.id}
                 className={cn(
                   "cursor-pointer hover:bg-muted/50 transition-colors",
-                  task.isNew && "bg-primary/5"
+                  task.isNew && "bg-primary/5",
+                  task.isWaiting && "opacity-50"
                 )}
-                onClick={() => navigate(task.navigateTo)}
+                onClick={() => !task.isWaiting && navigate(task.navigateTo)}
               >
                 <TableCell>
                   <Badge variant="outline" className={cn("gap-1.5", config.color)}>
@@ -274,7 +279,16 @@ export const AllTasksTable: React.FC<AllTasksTableProps> = ({ searchQuery, userI
                   {task.project}
                 </TableCell>
                 <TableCell>
-                  {(task.category === 'vcr_bundle' || task.category === 'vcr_approval') && task.totalItems ? (
+                  {task.isWaiting ? (
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-xs text-muted-foreground italic">Waiting for deliverables</span>
+                      {task.itemsReadyForReview != null && task.totalItems != null && (
+                        <span className="text-[10px] text-muted-foreground">
+                          {task.itemsReadyForReview}/{task.totalItems} items ready
+                        </span>
+                      )}
+                    </div>
+                  ) : (task.category === 'vcr_bundle' || task.category === 'vcr_approval') && task.totalItems ? (
                     <div className="flex items-center gap-2">
                       <Progress
                         value={task.progressPercentage || 0}

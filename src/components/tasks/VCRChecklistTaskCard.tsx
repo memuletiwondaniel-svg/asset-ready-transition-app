@@ -8,6 +8,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { CheckCircle2, Circle, ChevronDown, ChevronRight, ExternalLink, ClipboardList } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { VCRBundleTask, VCRSubItem } from '@/hooks/useUserVCRBundleTasks';
+import { Clock } from 'lucide-react';
 
 interface VCRChecklistTaskCardProps {
   task: VCRBundleTask;
@@ -24,9 +25,11 @@ export const VCRChecklistTaskCard: React.FC<VCRChecklistTaskCardProps> = ({ task
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
 
+  const isWaiting = task.status === 'waiting';
   const completedCount = task.sub_items.filter(i => i.completed).length;
   const totalCount = task.sub_items.length;
   const pct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+  const itemsReady = (task.metadata as any)?.items_ready_for_review ?? 0;
 
   const handleNavigateToVCR = () => {
     const vcrId = task.metadata?.vcr_id;
@@ -53,7 +56,7 @@ export const VCRChecklistTaskCard: React.FC<VCRChecklistTaskCardProps> = ({ task
   }
 
   return (
-    <Card className="overflow-hidden">
+    <Card className={cn("overflow-hidden", isWaiting && "opacity-50")}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
@@ -62,32 +65,49 @@ export const VCRChecklistTaskCard: React.FC<VCRChecklistTaskCardProps> = ({ task
               {task.metadata?.vcr_label || 'VCR'}
             </p>
           </div>
-          <Badge
-            variant="outline"
-            className={cn(
-              'text-xs shrink-0',
-              pct >= 75 && 'bg-green-500/10 text-green-600 border-green-500/20',
-              pct >= 25 && pct < 75 && 'bg-amber-500/10 text-amber-600 border-amber-500/20',
-              pct < 25 && 'bg-red-500/10 text-red-600 border-red-500/20'
-            )}
-          >
-            {pct}%
-          </Badge>
+          {isWaiting ? (
+            <Badge variant="outline" className="text-xs shrink-0 gap-1 bg-muted/50 text-muted-foreground border-border">
+              <Clock className="h-3 w-3" />
+              Awaiting
+            </Badge>
+          ) : (
+            <Badge
+              variant="outline"
+              className={cn(
+                'text-xs shrink-0',
+                pct >= 75 && 'bg-green-500/10 text-green-600 border-green-500/20',
+                pct >= 25 && pct < 75 && 'bg-amber-500/10 text-amber-600 border-amber-500/20',
+                pct < 25 && 'bg-red-500/10 text-red-600 border-red-500/20'
+              )}
+            >
+              {pct}%
+            </Badge>
+          )}
         </div>
       </CardHeader>
       <CardContent className="pt-0 space-y-3">
-        {/* Progress bar */}
-        <div className="space-y-1.5">
-          <Progress
-            value={pct}
-            className="h-2.5"
-            indicatorClassName={getProgressColor(pct)}
-          />
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>{completedCount}/{totalCount} items completed</span>
-            <span>{pct}%</span>
+        {/* Progress bar or waiting indicator */}
+        {isWaiting ? (
+          <div className="space-y-1.5">
+            <div className="h-2.5 w-full rounded-full bg-muted" />
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span className="italic">Waiting for deliverables</span>
+              <span>{itemsReady}/{totalCount} ready</span>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="space-y-1.5">
+            <Progress
+              value={pct}
+              className="h-2.5"
+              indicatorClassName={getProgressColor(pct)}
+            />
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>{completedCount}/{totalCount} items completed</span>
+              <span>{pct}%</span>
+            </div>
+          </div>
+        )}
 
         {/* Expandable mini-checklist */}
         <Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -130,8 +150,9 @@ export const VCRChecklistTaskCard: React.FC<VCRChecklistTaskCardProps> = ({ task
           variant="outline"
           className="w-full h-8 text-xs gap-1.5"
           onClick={handleNavigateToVCR}
+          disabled={isWaiting}
         >
-          Open VCR
+          {isWaiting ? 'Not yet actionable' : 'Open VCR'}
           <ExternalLink className="h-3 w-3" />
         </Button>
       </CardContent>
