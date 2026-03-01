@@ -59,7 +59,7 @@ const CATEGORY_CONFIG = {
     color: 'bg-blue-500/10 text-blue-600 border-blue-500/20' 
   },
   handover: { 
-    label: 'P2A Handover', 
+    label: 'P2A Plan', 
     icon: RefreshCw, 
     color: 'bg-teal-500/10 text-teal-600 border-teal-500/20' 
   },

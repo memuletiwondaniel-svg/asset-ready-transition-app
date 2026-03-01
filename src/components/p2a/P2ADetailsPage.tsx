@@ -41,7 +41,7 @@ export const P2ADetailsPage: React.FC = () => {
         <div className="text-center">
           <h2 className="text-2xl font-bold">Handover not found</h2>
           <Button onClick={() => navigate('/p2a-handover')} className="mt-4">
-            Back to P2A Handover
+            Back to P2A Plan
           </Button>
         </div>
       </div>

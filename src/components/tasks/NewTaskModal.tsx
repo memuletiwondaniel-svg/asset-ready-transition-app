@@ -56,7 +56,7 @@ const CATEGORIES = [
   },
   { 
     id: 'handover' as TaskCategory, 
-    label: 'P2A Handover', 
+    label: 'P2A Plan', 
     icon: RefreshCw,
     color: 'from-teal-500 to-teal-600',
     description: 'Project handover reviews'

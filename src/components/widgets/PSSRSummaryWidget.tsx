@@ -141,7 +141,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
               glowFrom="from-orange-500/40"
               glowTo="to-amber-500/40"
             />
-            <span>P2A Handover</span>
+            <span>P2A Plan</span>
           </CardTitle>
         </CardHeader>
         <CardContent className="flex-1 flex flex-col space-y-3 pt-2">

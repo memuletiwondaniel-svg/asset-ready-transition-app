@@ -34,7 +34,7 @@ export const P2AHandoverWidget: React.FC<P2AHandoverWidgetProps> = ({ projectId,
               glowFrom="from-blue-500/40"
               glowTo="to-cyan-500/40"
             />
-            <span>P2A Handover</span>
+            <span>P2A Plan</span>
           </div>
         </CardTitle>
       </CardHeader>
