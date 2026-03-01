@@ -78,7 +78,7 @@ export const useP2AHandoverPlan = (identifier: string, identifierType: 'project_
       queryClient.invalidateQueries({ queryKey: ['p2a-handover-plan', identifierType, identifier] });
       toast({
         title: 'Success',
-        description: 'P2A Handover Plan created successfully',
+        description: 'P2A Plan created successfully',
       });
     },
     onError: (error) => {

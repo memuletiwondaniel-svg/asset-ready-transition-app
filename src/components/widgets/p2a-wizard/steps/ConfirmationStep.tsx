@@ -55,7 +55,7 @@ export const ConfirmationStep: React.FC<ConfirmationStepProps> = ({
         <div>
           <h3 className="text-sm font-medium">Review & Confirm</h3>
           <p className="text-xs text-muted-foreground">
-            Review your P2A Handover Plan before submitting for approval
+            Review your P2A Plan before submitting for approval
           </p>
         </div>
         <Badge 

@@ -193,7 +193,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
       await submitForApproval();
       handleClose();
       onSuccess?.();
-      toast.success('P2A Handover Plan submitted for approval!');
+      toast.success('P2A Plan submitted for approval!');
     } catch (error) {
       // Error handled in hook
     }
@@ -339,7 +339,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
                   <AlertDialogHeader>
                     <AlertDialogTitle>Delete Draft Plan?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      This will permanently delete the P2A Handover Plan draft including all systems, VCRs, phases, and approvers. This action cannot be undone.
+                      This will permanently delete the P2A Plan draft including all systems, VCRs, phases, and approvers. This action cannot be undone.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>

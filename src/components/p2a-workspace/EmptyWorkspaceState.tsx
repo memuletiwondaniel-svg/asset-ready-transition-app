@@ -55,7 +55,7 @@ export const EmptyWorkspaceState: React.FC<EmptyWorkspaceStateProps> = ({
             </div>
 
             <h2 className="text-2xl font-bold text-foreground mb-2">
-              Create P2A Handover Plan
+              Create P2A Plan
             </h2>
             <p className="text-muted-foreground text-center max-w-md mb-8">
               Set up your Project-to-Asset handover workspace to manage systems, 
@@ -90,7 +90,7 @@ export const EmptyWorkspaceState: React.FC<EmptyWorkspaceStateProps> = ({
               className="gap-2 px-8"
             >
               <Plus className="w-5 h-5" />
-              Create P2A Handover Plan
+              Create P2A Plan
             </Button>
           </CardContent>
         </Card>
@@ -100,7 +100,7 @@ export const EmptyWorkspaceState: React.FC<EmptyWorkspaceStateProps> = ({
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Create P2A Handover Plan</DialogTitle>
+            <DialogTitle>Create P2A Plan</DialogTitle>
             <DialogDescription>
               Set up your handover workspace with project identifiers
             </DialogDescription>
