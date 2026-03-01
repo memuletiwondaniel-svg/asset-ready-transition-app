@@ -1,41 +1,94 @@
 
 
-## Progressive Activation for Approving Party VCR Tasks
+## Full RBAC Implementation Plan
 
-### Concept
-Create `vcr_approval_bundle` tasks immediately during the VCR execution cascade in a `waiting` state. The task is visible but greyed out, showing passive progress as delivering parties complete items. It transitions to `pending` (active/actionable) only when **all** delivering party items for that VCR have been submitted for review.
+### Current State
 
-### Changes Required
+Your app has fragmented access control:
+- **`user_roles` table** — stores system-level roles (`admin`, `moderator`, `user`) 
+- **`roles` table** — stores job titles (ORA Engineer, Plant Director, etc.) referenced by profiles
+- **`user_privileges` table** — stores granular privileges (`view_only`, `complete_assigned_tasks`, etc.)
+- **Hardcoded checks** scattered across components (`useCanCreateVCR`, `useIsDirector`, `useCanPerformActions`) with role name string matching
+- No centralized permission matrix — each feature independently decides who has access
 
-#### 1. Database: Update trigger to handle waiting → pending transition
-**Migration** — Modify `update_delivering_party_task_progress()` to:
-- When a `vcr_checklist_bundle` task reaches 100%, find the matching `vcr_approval_bundle` tasks for the same VCR and transition their status from `waiting` to `pending`
-- Track `items_ready_for_review` count in approval bundle metadata as delivering parties complete items
+### What We Will Build
 
-#### 2. Task Generation: Change approval bundle initial status
-**File: `src/hooks/useORAActivityPlanSync.ts`** (line ~824)
-- Change `status: 'pending'` → `status: 'waiting'` in `generateApprovingPartyTasks`
-- Add `metadata.items_ready_for_review: 0` to track how many items have been submitted
+#### 1. Permission Matrix Table (Database)
 
-#### 3. Hook: Include `waiting` status tasks
-**File: `src/hooks/useUserVCRBundleTasks.ts`** (line ~47)
-- Currently filters `.neq('status', 'completed')` — this already includes `waiting`, so no change needed
+A new `role_permissions` table mapping job roles (from the `roles` table) to specific permissions:
 
-#### 4. UI: Greyed-out waiting state in AllTasksTable
-**File: `src/components/tasks/AllTasksTable.tsx`**
-- Add `isWaiting` field to `UnifiedTask` interface
-- Pass `task.status` through from bundle tasks
-- Apply `opacity-50 pointer-events-none` styling to waiting rows
-- Show "Waiting for deliverables" label instead of progress bar when status is `waiting`
-- Show a subtle "X/Y items ready" counter from metadata
+```text
+role_permissions
+├── id (uuid)
+├── role_id (uuid → roles.id)
+├── permission (enum: create_project, create_vcr, create_pssr, approve_pssr, 
+│                      approve_sof, manage_users, access_admin, view_reports,
+│                      create_ora_plan, manage_p2a, manage_orm)
+├── granted_by (uuid)
+├── created_at (timestamptz)
+└── UNIQUE(role_id, permission)
+```
 
-#### 5. UI: Waiting state in VCRChecklistTaskCard
-**File: `src/components/tasks/VCRChecklistTaskCard.tsx`**
-- Add visual distinction for `waiting` status: greyed-out card, "Awaiting deliverables" badge
-- Disable the "Open VCR" action button when in waiting state
+A security definer function `has_permission(user_id, permission)` that checks if the user's assigned role has a given permission — replacing all hardcoded role-name checks.
 
-### Implementation Steps
-1. Update `generateApprovingPartyTasks` to use `status: 'waiting'`
-2. Update DB trigger to transition approval bundles from `waiting` → `pending` when all delivering items are submitted
-3. Add waiting-state UI styling in `AllTasksTable` and `VCRChecklistTaskCard`
+#### 2. Centralized Permission Hook (Frontend)
+
+Replace `useCanCreateVCR`, `useIsDirector`, `useCanPerformActions` with a single hook:
+
+```typescript
+const { hasPermission, isLoading } = usePermissions();
+
+// Usage anywhere:
+if (hasPermission('create_vcr')) { ... }
+if (hasPermission('access_admin')) { ... }
+if (hasPermission('create_project')) { ... }
+```
+
+This hook fetches the user's role permissions once and caches them.
+
+#### 3. Admin UI — Role Permissions Manager
+
+A new "Roles & Permissions" card in Admin Tools with:
+- **Role list** on the left (from `roles` table, grouped by category)
+- **Permission checkboxes** on the right — toggle which permissions each role has
+- Visual matrix view showing all roles × all permissions
+- Changes saved immediately to `role_permissions` table
+
+#### 4. Strengthen RLS Policies
+
+Add a `has_permission()` security definer function used in RLS policies:
+- Projects table: `has_permission(auth.uid(), 'create_project')` for INSERT
+- PSSRs table: `has_permission(auth.uid(), 'create_pssr')` for INSERT
+- Admin-only tables: `has_permission(auth.uid(), 'access_admin')` for all operations
+
+#### 5. Migrate Existing Hardcoded Rules
+
+Seed the `role_permissions` table with your current implicit rules:
+- ORA Engineers/Leads → `create_vcr`
+- Directors → `view_reports`, `approve_sof` (but NOT `create_project`, `create_pssr`)
+- All non-director roles → `create_project`, `create_pssr`
+- Admin users → `access_admin`, `manage_users`
+
+Then refactor existing components to use the new `usePermissions()` hook.
+
+### Technical Summary
+
+| Step | What | Type |
+|------|------|------|
+| 1 | Create `permission` enum + `role_permissions` table + `has_permission()` function | DB Migration |
+| 2 | Seed initial permission assignments based on current rules | DB Insert |
+| 3 | Create `usePermissions` hook | Frontend |
+| 4 | Build Role Permissions Manager UI under Admin Tools | Frontend |
+| 5 | Refactor existing components to use `usePermissions()` | Frontend |
+| 6 | Add RLS policies using `has_permission()` | DB Migration |
+
+### Files to Create/Modify
+
+- **New**: `src/hooks/usePermissions.ts`
+- **New**: `src/components/admin-tools/RolePermissionsManager.tsx`
+- **Modify**: `src/components/AdminToolsPage.tsx` — add Roles & Permissions card
+- **Modify**: `src/components/project/ProjectsHomePage.tsx` — use `usePermissions`
+- **Modify**: `src/components/widgets/PSSRSummaryWidget.tsx` — use `usePermissions`
+- **Modify**: `src/components/widgets/PSSRQuickActionsWidget.tsx` — use `usePermissions`
+- **New**: Migration for `role_permissions` table, enum, and functions
 
