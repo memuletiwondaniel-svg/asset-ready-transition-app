@@ -190,7 +190,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                     }
                   }}
                 >
-                  P2A Handover Plan
+                  P2A Plan
                 </p>
                 <Badge 
                   variant="outline" 
@@ -224,7 +224,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
               </div>
             ) : (
               <div className="text-center py-10 text-muted-foreground">
-                <p className="text-sm font-medium mb-1">No P2A Handover Plan</p>
+                <p className="text-sm font-medium mb-1">No P2A Plan</p>
                 <p className="text-xs opacity-70 mb-5">Set up your handover workflow with systems and VCRs</p>
                 {canCreateVCR && (
                   <Button
@@ -233,7 +233,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                     className="text-xs"
                     onClick={() => setShowP2APlanWizard(true)}
                   >
-                    Create P2A Handover Plan
+                    Create P2A Plan
                   </Button>
                 )}
               </div>
@@ -249,7 +249,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                 className="flex-1 text-xs"
                 onClick={() => setShowP2ASummary(true)}
               >
-                P2A Handover Plan
+                P2A Plan
                 <Badge 
                   variant="outline" 
                   className="ml-2 text-[9px] px-1.5 py-0 bg-emerald-50 text-emerald-700 border-emerald-200"

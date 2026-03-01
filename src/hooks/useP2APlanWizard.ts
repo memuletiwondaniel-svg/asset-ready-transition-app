@@ -255,7 +255,7 @@ async function persistPlanToDatabase(
       .from('p2a_handover_plans')
       .insert({
         project_id: projectId,
-        name: `P2A Handover Plan - ${projectCode}`,
+        name: `P2A Plan - ${projectCode}`,
         status,
         created_by: user.id,
       })
@@ -533,7 +533,7 @@ export function useP2APlanWizard(projectId: string, projectCode: string) {
       invalidateQueries();
       toast({
         title: 'Draft saved',
-        description: 'Your P2A Handover Plan has been saved as draft.',
+        description: 'Your P2A Plan has been saved as draft.',
       });
     },
     onError: (error: Error) => {
@@ -557,8 +557,8 @@ export function useP2APlanWizard(projectId: string, projectCode: string) {
         const client = supabase as any;
         const taskRecords = phase1Approvers.map(approver => ({
           user_id: approver.user_id!,
-          title: `Review & Approve P2A Handover Plan – ${projectCode}`,
-          description: `You have been assigned as ${approver.role_name} to review and approve the P2A Handover Plan for project ${projectCode}. Please review the plan and provide your approval.`,
+          title: `Review & Approve P2A Plan – ${projectCode}`,
+          description: `You have been assigned as ${approver.role_name} to review and approve the P2A Plan for project ${projectCode}. Please review the plan and provide your approval.`,
           type: 'approval',
           priority: 'High',
           status: 'pending',

@@ -11,7 +11,7 @@ export interface P2APlanSummary {
 }
 
 /**
- * Fetches the P2A Handover Plan for a project by project_id.
+ * Fetches the P2A Plan for a project by project_id.
  * Returns the plan summary regardless of whether VCRs exist.
  */
 export function useP2APlanByProject(projectId: string) {

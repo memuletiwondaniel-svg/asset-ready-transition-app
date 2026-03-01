@@ -168,7 +168,7 @@ export const P2APlanSummaryDialog: React.FC<P2APlanSummaryDialogProps> = ({
               </div>
             </div>
             <div className="flex-1">
-              <DialogTitle className="text-base">P2A Handover Plan</DialogTitle>
+              <DialogTitle className="text-base">P2A Plan</DialogTitle>
             </div>
             <Badge variant="outline" className={cn("text-xs", statusBadgeClass(planStatus))}>
               {statusLabel(planStatus)}

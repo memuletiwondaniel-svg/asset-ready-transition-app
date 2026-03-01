@@ -50,8 +50,8 @@ export async function createPhase2Tasks(planId: string, projectId: string, proje
       if (!approver.user_id) return null;
       return {
         user_id: approver.user_id,
-        title: `Final Approval – P2A Handover Plan ${projectCode}`,
-        description: `Technical review is complete. As ${approver.role_name}, please provide your final approval for the P2A Handover Plan for project ${projectCode}.`,
+        title: `Final Approval – P2A Plan ${projectCode}`,
+        description: `Technical review is complete. As ${approver.role_name}, please provide your final approval for the P2A Plan for project ${projectCode}.`,
         type: 'approval',
         priority: 'High',
         status: 'pending',
