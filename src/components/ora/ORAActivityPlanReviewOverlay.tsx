@@ -118,7 +118,7 @@ export const ORAActivityPlanReviewOverlay: React.FC<ORAActivityPlanReviewOverlay
       queryClient.invalidateQueries({ queryKey: ['orp-plans'] });
       queryClient.invalidateQueries({ queryKey: ['project-orp-plans'] });
 
-      toast({ title: 'Approved', description: 'ORA Activity Plan has been approved. Activity tasks have been created.' });
+      toast({ title: 'Approved', description: 'ORA Plan has been approved. Activity tasks have been created.' });
       onOpenChange(false);
       onApproved?.();
     } catch (err: any) {
@@ -151,7 +151,7 @@ export const ORAActivityPlanReviewOverlay: React.FC<ORAActivityPlanReviewOverlay
       queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
       queryClient.invalidateQueries({ queryKey: ['orp-plans'] });
 
-      toast({ title: 'Rejected', description: 'ORA Activity Plan has been sent back for revision.' });
+      toast({ title: 'Rejected', description: 'ORA Plan has been sent back for revision.' });
       onOpenChange(false);
     } catch (err: any) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
@@ -171,7 +171,7 @@ export const ORAActivityPlanReviewOverlay: React.FC<ORAActivityPlanReviewOverlay
               </div>
               <div>
                 <DialogTitle className="text-base font-bold">
-                  Review ORA Activity Plan
+                  Review ORA Plan
                 </DialogTitle>
                 <DialogDescription className="text-xs mt-0.5">
                   Review the plan and approve or request changes

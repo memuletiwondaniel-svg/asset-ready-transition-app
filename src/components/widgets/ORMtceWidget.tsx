@@ -13,7 +13,7 @@ interface ORMtceWidgetProps {
   onHide?: () => void;
 }
 
-// Key maintenance elements from ORA Activity Plan
+// Key maintenance elements from ORA Plan
 const MAINTENANCE_ELEMENTS = [
   {
     key: 'ARB',

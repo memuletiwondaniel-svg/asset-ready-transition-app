@@ -396,7 +396,7 @@ async function runPostCompletionSync(
     await syncBackToBack(meta, completedTask.type, userId);
   }
 
-  // ORA Activity Plan sync (bidirectional task ↔ activity)
+  // ORA Plan sync (bidirectional task ↔ activity)
   if (meta?.ora_plan_activity_id) {
     try {
       const { syncORAActivityCompletion } = await import('./useORAActivityPlanSync');

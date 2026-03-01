@@ -164,7 +164,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
           .limit(1);
 
         if (existingPlans && existingPlans.length > 0) {
-          toast({ title: 'Plan already exists', description: 'This project already has an active ORA Activity Plan.', variant: 'destructive' });
+          toast({ title: 'Plan already exists', description: 'This project already has an active ORA Plan.', variant: 'destructive' });
           setIsSaving(false);
           return;
         }
@@ -226,7 +226,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
           .limit(1);
 
         if (existingPlans && existingPlans.length > 0) {
-          toast({ title: 'Plan already exists', description: 'This project already has an active ORA Activity Plan.', variant: 'destructive' });
+          toast({ title: 'Plan already exists', description: 'This project already has an active ORA Plan.', variant: 'destructive' });
           setIsCreating(false);
           return;
         }
@@ -298,8 +298,8 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
           .from('user_tasks')
           .insert({
             user_id: oraLeadMember.user_id,
-            title: 'Review ORA Activity Plan',
-            description: `Review and approve the ORA Activity Plan for project`,
+            title: 'Review ORA Plan',
+            description: `Review and approve the ORA Plan for project`,
             type: 'ora_plan_review',
             status: 'pending',
             priority: 'high',
@@ -312,7 +312,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
           });
       }
 
-      toast({ title: 'Submitted', description: 'ORA Activity Plan submitted for approval' });
+      toast({ title: 'Submitted', description: 'ORA Plan submitted for approval' });
       onOpenChange(false);
       resetForm();
       onSuccess?.();
@@ -375,7 +375,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
         <DialogHeader className="border-b pb-4">
           <DialogTitle className="flex items-center gap-2 text-xl font-semibold">
             <CalendarCheck className="w-5 h-5 text-primary" />
-            Create ORA Activity Plan
+            Create ORA Plan
           </DialogTitle>
 
           {/* Progress Indicator - PSSR pattern */}

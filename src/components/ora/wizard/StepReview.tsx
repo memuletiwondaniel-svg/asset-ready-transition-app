@@ -27,7 +27,7 @@ export const StepReview: React.FC<Props> = ({ phase, projectType, activities }) 
         </div>
         <h3 className="text-lg font-semibold">Review & Submit</h3>
         <p className="text-sm text-muted-foreground">
-          Review your ORA Activity Plan before submitting for approval.
+          Review your ORA Plan before submitting for approval.
         </p>
       </div>
 

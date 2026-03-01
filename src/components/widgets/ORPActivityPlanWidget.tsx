@@ -90,7 +90,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
                   glowFrom="from-purple-500/40"
                   glowTo="to-violet-500/40"
                 />
-                <span>ORA Activity Plan</span>
+                <span>ORA Plan</span>
               </div>
               {isDraft && (
                 <Badge variant="outline" className="text-[10px] gap-1 bg-muted text-muted-foreground border-border">
@@ -115,7 +115,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
                     setWizardOpen(true);
                   }}
                 >
-                  {isDraft ? 'Continue Setup' : 'Create ORA Activity Plan'}
+                  {isDraft ? 'Continue Setup' : 'Create ORA Plan'}
                 </Button>
                 {isDraft && primaryPlan && (
                   <Button
@@ -142,7 +142,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
         <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Delete Draft ORA Activity Plan?</AlertDialogTitle>
+              <AlertDialogTitle>Delete Draft ORA Plan?</AlertDialogTitle>
               <AlertDialogDescription>
                 This will permanently delete the draft plan including all deliverables, resources, and approvals. This action cannot be undone.
               </AlertDialogDescription>
@@ -194,7 +194,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
                 glowFrom="from-purple-500/40"
                 glowTo="to-violet-500/40"
               />
-              <span>ORA Activity Plan</span>
+              <span>ORA Plan</span>
             </div>
             {statusConfig && (
               <Badge variant="outline" className={cn("text-[10px] gap-1", statusConfig.className)}>
