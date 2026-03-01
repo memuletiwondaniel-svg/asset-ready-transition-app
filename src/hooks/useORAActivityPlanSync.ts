@@ -821,7 +821,7 @@ async function generateApprovingPartyTasks(
         description: `Review and approve ${userPrereqs.length} checklist item(s) for ${vcrLabel}. Verify evidence and accept or raise qualifications.`,
         type: 'vcr_approval_bundle',
         priority: 'Medium',
-        status: 'pending',
+        status: 'waiting',
         progress_percentage: 0,
         sub_items: subItems,
         metadata: {
@@ -832,6 +832,7 @@ async function generateApprovingPartyTasks(
           receiving_party_id: receivingPartyId,
           total_items: userPrereqs.length,
           completed_items: 0,
+          items_ready_for_review: 0,
           action: 'review_vcr_checklist_bundle',
           source: 'vcr_execution_plan_approval',
         },
