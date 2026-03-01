@@ -11,12 +11,14 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 import { 
   ClipboardCheck, 
   RefreshCw, 
   Activity, 
   ListTodo,
-  ExternalLink 
+  ExternalLink,
+  ClipboardList
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePSSRsAwaitingReview } from '@/hooks/usePSSRItemApprovals';
@@ -24,6 +26,7 @@ import { useUserP2AApprovals } from '@/hooks/useUserP2AApprovals';
 import { useUserORPActivities } from '@/hooks/useUserORPActivities';
 import { useUserOWLItems } from '@/hooks/useUserOWLItems';
 import { useUserLastLogin } from '@/hooks/useUserLastLogin';
+import { useUserVCRBundleTasks } from '@/hooks/useUserVCRBundleTasks';
 import { format } from 'date-fns';
 
 interface AllTasksTableProps {
@@ -33,7 +36,7 @@ interface AllTasksTableProps {
 
 interface UnifiedTask {
   id: string;
-  category: 'pssr' | 'handover' | 'ora' | 'owl';
+  category: 'pssr' | 'handover' | 'ora' | 'owl' | 'vcr_bundle';
   title: string;
   project: string;
   status: string;
@@ -41,6 +44,10 @@ interface UnifiedTask {
   createdAt: string;
   navigateTo: string;
   isNew: boolean;
+  // Bundle-specific fields
+  progressPercentage?: number;
+  completedItems?: number;
+  totalItems?: number;
 }
 
 const CATEGORY_CONFIG = {
@@ -64,6 +71,11 @@ const CATEGORY_CONFIG = {
     icon: ListTodo, 
     color: 'bg-amber-500/10 text-amber-600 border-amber-500/20' 
   },
+  vcr_bundle: { 
+    label: 'VCR Checklist', 
+    icon: ClipboardList, 
+    color: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' 
+  },
 };
 
 export const AllTasksTable: React.FC<AllTasksTableProps> = ({ searchQuery, userId }) => {
@@ -75,8 +87,9 @@ export const AllTasksTable: React.FC<AllTasksTableProps> = ({ searchQuery, userI
   const { approvals, isLoading: handoverLoading } = useUserP2AApprovals();
   const { activities, isLoading: oraLoading } = useUserORPActivities();
   const { items: owlItems, isLoading: owlLoading } = useUserOWLItems();
+  const { bundleTasks, isLoading: bundleLoading } = useUserVCRBundleTasks();
 
-  const isLoading = pssrLoading || handoverLoading || oraLoading || owlLoading;
+  const isLoading = pssrLoading || handoverLoading || oraLoading || owlLoading || bundleLoading;
 
   // Unify all tasks into a single array
   const allTasks = useMemo<UnifiedTask[]>(() => {
@@ -153,11 +166,28 @@ export const AllTasksTable: React.FC<AllTasksTableProps> = ({ searchQuery, userI
       });
     });
 
+    // VCR Bundle Tasks
+    (bundleTasks || []).forEach(task => {
+      tasks.push({
+        id: `vcr-bundle-${task.id}`,
+        category: 'vcr_bundle',
+        title: task.title,
+        project: task.metadata?.project_code || 'Unknown Project',
+        status: `${task.sub_items.filter(i => i.completed).length}/${task.sub_items.length} items`,
+        createdAt: task.created_at,
+        navigateTo: task.metadata?.vcr_id ? `/p2a-handover?vcr=${task.metadata.vcr_id}` : '/p2a-handover',
+        isNew: isNewSinceLastLogin(task.created_at),
+        progressPercentage: task.progress_percentage,
+        completedItems: task.sub_items.filter(i => i.completed).length,
+        totalItems: task.sub_items.length,
+      });
+    });
+
     // Sort by creation date (newest first)
     return tasks.sort((a, b) => 
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
-  }, [pssrs, approvals, activities, owlItems, isNewSinceLastLogin]);
+  }, [pssrs, approvals, activities, owlItems, bundleTasks, isNewSinceLastLogin]);
 
   // Filter tasks based on search query
   const filteredTasks = useMemo(() => {
@@ -238,7 +268,24 @@ export const AllTasksTable: React.FC<AllTasksTableProps> = ({ searchQuery, userI
                   {task.project}
                 </TableCell>
                 <TableCell>
-                  <span className="text-sm">{task.status}</span>
+                  {task.category === 'vcr_bundle' && task.totalItems ? (
+                    <div className="flex items-center gap-2">
+                      <Progress
+                        value={task.progressPercentage || 0}
+                        className="h-2 w-20"
+                        indicatorClassName={cn(
+                          (task.progressPercentage || 0) >= 75 && 'bg-green-500',
+                          (task.progressPercentage || 0) >= 25 && (task.progressPercentage || 0) < 75 && 'bg-amber-500',
+                          (task.progressPercentage || 0) < 25 && 'bg-red-500'
+                        )}
+                      />
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">
+                        {task.completedItems}/{task.totalItems}
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="text-sm">{task.status}</span>
+                  )}
                 </TableCell>
                 <TableCell>
                   {task.dueDate ? (
