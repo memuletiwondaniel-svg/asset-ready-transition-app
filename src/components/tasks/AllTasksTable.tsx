@@ -36,7 +36,7 @@ interface AllTasksTableProps {
 
 interface UnifiedTask {
   id: string;
-  category: 'pssr' | 'handover' | 'ora' | 'owl' | 'vcr_bundle';
+  category: 'pssr' | 'handover' | 'ora' | 'owl' | 'vcr_bundle' | 'vcr_approval';
   title: string;
   project: string;
   status: string;
@@ -75,6 +75,11 @@ const CATEGORY_CONFIG = {
     label: 'VCR Checklist', 
     icon: ClipboardList, 
     color: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' 
+  },
+  vcr_approval: { 
+    label: 'VCR Review', 
+    icon: ClipboardCheck, 
+    color: 'bg-indigo-500/10 text-indigo-600 border-indigo-500/20' 
   },
 };
 
@@ -166,11 +171,12 @@ export const AllTasksTable: React.FC<AllTasksTableProps> = ({ searchQuery, userI
       });
     });
 
-    // VCR Bundle Tasks
+    // VCR Bundle Tasks (delivering + approving)
     (bundleTasks || []).forEach(task => {
+      const isApproval = task.type === 'vcr_approval_bundle';
       tasks.push({
-        id: `vcr-bundle-${task.id}`,
-        category: 'vcr_bundle',
+        id: `vcr-${isApproval ? 'approval' : 'bundle'}-${task.id}`,
+        category: isApproval ? 'vcr_approval' : 'vcr_bundle',
         title: task.title,
         project: task.metadata?.project_code || 'Unknown Project',
         status: `${task.sub_items.filter(i => i.completed).length}/${task.sub_items.length} items`,
@@ -268,7 +274,7 @@ export const AllTasksTable: React.FC<AllTasksTableProps> = ({ searchQuery, userI
                   {task.project}
                 </TableCell>
                 <TableCell>
-                  {task.category === 'vcr_bundle' && task.totalItems ? (
+                  {(task.category === 'vcr_bundle' || task.category === 'vcr_approval') && task.totalItems ? (
                     <div className="flex items-center gap-2">
                       <Progress
                         value={task.progressPercentage || 0}
