@@ -196,7 +196,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signInWithSSO = async (provider: string) => {
     try {
-      // For demo purposes, simulate SSO login
+      // Check if this is a Supabase SAML SSO provider ID (UUID format)
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(provider);
+      
+      if (isUUID || provider === 'saml') {
+        // Real SAML SSO via Supabase
+        const ssoParams: any = {
+          options: {
+            redirectTo: `${window.location.origin}/`
+          }
+        };
+        
+        if (isUUID) {
+          ssoParams.providerId = provider;
+        }
+        
+        const { data, error } = await supabase.auth.signInWithSSO(ssoParams);
+
+        if (error) {
+          toast.error(error.message || 'SSO authentication failed');
+          return { error };
+        }
+
+        // Redirect to IdP login page
+        if (data?.url) {
+          window.location.href = data.url;
+        }
+
+        return { error: null };
+      }
+
+      // Legacy demo SSO for BGC/Kent buttons
       if (provider === 'azure' || provider === 'google') {
         const mockUser = {
           id: 'sso-user-id',

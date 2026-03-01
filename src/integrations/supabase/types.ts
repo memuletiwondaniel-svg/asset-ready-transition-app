@@ -7380,6 +7380,68 @@ export type Database = {
           },
         ]
       }
+      tenant_sso_configs: {
+        Row: {
+          button_label: string | null
+          configured_by: string | null
+          created_at: string
+          display_name: string
+          id: string
+          idp_certificate: string | null
+          idp_entity_id: string | null
+          idp_metadata_url: string | null
+          idp_sso_url: string | null
+          is_active: boolean
+          is_configured: boolean
+          provider_type: string
+          supabase_sso_provider_id: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          button_label?: string | null
+          configured_by?: string | null
+          created_at?: string
+          display_name?: string
+          id?: string
+          idp_certificate?: string | null
+          idp_entity_id?: string | null
+          idp_metadata_url?: string | null
+          idp_sso_url?: string | null
+          is_active?: boolean
+          is_configured?: boolean
+          provider_type?: string
+          supabase_sso_provider_id?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          button_label?: string | null
+          configured_by?: string | null
+          created_at?: string
+          display_name?: string
+          id?: string
+          idp_certificate?: string | null
+          idp_entity_id?: string | null
+          idp_metadata_url?: string | null
+          idp_sso_url?: string | null
+          is_active?: boolean
+          is_configured?: boolean
+          provider_type?: string
+          supabase_sso_provider_id?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_sso_configs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenants: {
         Row: {
           created_at: string
@@ -7389,6 +7451,7 @@ export type Database = {
           name: string
           settings: Json | null
           slug: string
+          sso_enforcement: string
           updated_at: string
         }
         Insert: {
@@ -7399,6 +7462,7 @@ export type Database = {
           name: string
           settings?: Json | null
           slug: string
+          sso_enforcement?: string
           updated_at?: string
         }
         Update: {
@@ -7409,6 +7473,7 @@ export type Database = {
           name?: string
           settings?: Json | null
           slug?: string
+          sso_enforcement?: string
           updated_at?: string
         }
         Relationships: []

@@ -6,9 +6,10 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Eye, EyeOff, Mail, Lock, ArrowLeft, ArrowRight, Star, X, AlertTriangle } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, ArrowLeft, ArrowRight, Star, X, AlertTriangle, Shield } from 'lucide-react';
 import { useAuth } from './AuthProvider';
 import { useTenantContext } from '@/contexts/TenantContext';
+import { useTenantSSOConfigPublic } from '@/hooks/useTenantSSOConfig';
 import EnhancedRegistrationForm from '@/components/user-management/EnhancedRegistrationForm';
 import OrshLogo from '@/components/ui/OrshLogo';
 interface EnhancedAuthModalProps {
@@ -28,6 +29,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
     resetPassword
   } = useAuth();
   const { subdomainTenant, tenantMismatch } = useTenantContext();
+  const { ssoConfig } = useTenantSSOConfigPublic(subdomainTenant?.id ?? null);
   const [activeTab, setActiveTab] = useState('signin');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -292,7 +294,30 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
 
                   {activeTab === 'signin' && (
                     <>
-                      {/* SSO Buttons */}
+                      {/* Dynamic SSO Button from tenant config */}
+                      {ssoConfig && (
+                        <div className="space-y-3 pt-2">
+                          <Button 
+                            onClick={() => handleSSO(ssoConfig.supabase_sso_provider_id || 'saml')} 
+                            disabled={loading} 
+                            className="w-full h-10 text-sm font-semibold bg-muted/40 text-muted-foreground 
+                                         hover:bg-gradient-to-r hover:from-primary hover:to-primary/90 hover:text-primary-foreground
+                                         shadow-sm hover:shadow-lg transition-all duration-300 ease-out
+                                         hover:scale-[1.02] active:scale-[0.98]
+                                         border border-border/40 hover:border-primary/40
+                                         relative overflow-hidden group"
+                          >
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                            <div className="relative z-10 flex items-center justify-center">
+                              <Shield className="w-4 h-4 mr-2 opacity-60 group-hover:opacity-100 transition-all duration-300" />
+                              {ssoConfig.button_label || 'Sign in with SSO'}
+                            </div>
+                          </Button>
+                        </div>
+                      )}
+
+                      {/* Fallback SSO Buttons (shown when no tenant SSO config) */}
+                      {!ssoConfig && (
                   <div className="space-y-3 pt-2">
                     <Button onClick={() => handleSSO('azure')} disabled={loading} className="w-full h-10 text-sm font-semibold bg-muted/40 text-muted-foreground 
                                  hover:bg-gradient-to-r hover:from-bgc hover:to-bgc/90 hover:text-bgc-foreground
@@ -320,6 +345,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                       </div>
                     </Button>
                   </div>
+                      )}
 
                   {/* New to ORSH Text */}
                   <div className="text-center text-sm text-muted-foreground pt-3">
