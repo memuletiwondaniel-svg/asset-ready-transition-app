@@ -2,13 +2,15 @@ import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CalendarCheck, Clock, CheckCircle2, Plus, FileEdit, Send, AlertTriangle, ChevronRight } from 'lucide-react';
+import { CalendarCheck, Clock, CheckCircle2, Plus, FileEdit, Send, AlertTriangle, ChevronRight, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { StyledWidgetIcon } from './StyledWidgetIcon';
 import { useProjectORPPlans } from '@/hooks/useProjectORPPlans';
+import { useORPPlans } from '@/hooks/useORPPlans';
 import { Progress } from '@/components/ui/progress';
 import { ORPGanttOverlay } from '@/components/orp/ORPGanttOverlay';
 import { ORAActivityPlanWizard } from '@/components/ora/wizard/ORAActivityPlanWizard';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { format, parseISO, isPast, isToday, addDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -36,7 +38,9 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
   const navigate = useNavigate();
   const [overlayOpen, setOverlayOpen] = useState(false);
   const [wizardOpen, setWizardOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const { data: plans = [], isLoading } = useProjectORPPlans(projectId);
+  const { deletePlan, isDeletingPlan } = useORPPlans();
   
   const primaryPlan = plans[0];
   const planStatus = primaryPlan?.status || '';
@@ -102,16 +106,31 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
               <p className="text-xs opacity-70 mb-4">
                 {isDraft ? 'You have an unsaved draft. Continue where you left off.' : 'Operation Readiness activities will appear here'}
               </p>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setWizardOpen(true);
-                }}
-              >
-                {isDraft ? 'Continue Setup' : 'Create ORA Activity Plan'}
-              </Button>
+              <div className="flex items-center justify-center gap-2">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setWizardOpen(true);
+                  }}
+                >
+                  {isDraft ? 'Continue Setup' : 'Create ORA Activity Plan'}
+                </Button>
+                {isDraft && primaryPlan && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDeleteDialogOpen(true);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -120,6 +139,31 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
           onOpenChange={setWizardOpen}
           projectId={projectId}
         />
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Draft ORA Activity Plan?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete the draft plan including all deliverables, resources, and approvals. This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                disabled={isDeletingPlan}
+                onClick={() => {
+                  if (primaryPlan) {
+                    deletePlan(primaryPlan.id);
+                    setDeleteDialogOpen(false);
+                  }
+                }}
+              >
+                {isDeletingPlan ? 'Deleting...' : 'Delete Plan'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </>
     );
   }

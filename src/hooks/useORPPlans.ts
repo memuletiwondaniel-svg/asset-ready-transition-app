@@ -413,6 +413,75 @@ export const useORPPlans = () => {
     }
   });
 
+  const deletePlan = useMutation({
+    mutationFn: async (planId: string) => {
+      // Only allow deletion of DRAFT plans
+      const { data: plan } = await supabase
+        .from('orp_plans')
+        .select('status, project_id')
+        .eq('id', planId)
+        .single();
+
+      if (plan?.status !== 'DRAFT') {
+        throw new Error('Only draft plans can be deleted');
+      }
+
+      const client = supabase as any;
+
+      // Delete ORA plan activities
+      await client.from('ora_plan_activities').delete().eq('orp_plan_id', planId);
+
+      // Delete activity log
+      await client.from('orp_activity_log').delete().eq('orp_plan_id', planId);
+
+      // Delete approvals
+      await supabase.from('orp_approvals').delete().eq('orp_plan_id', planId);
+
+      // Delete resources
+      await supabase.from('orp_resources').delete().eq('orp_plan_id', planId);
+
+      // Get deliverable IDs for sub-record cleanup
+      const { data: deliverables } = await supabase
+        .from('orp_plan_deliverables')
+        .select('id')
+        .eq('orp_plan_id', planId);
+
+      const deliverableIds = (deliverables || []).map((d: any) => d.id);
+
+      if (deliverableIds.length > 0) {
+        await supabase.from('orp_collaborators').delete().in('plan_deliverable_id', deliverableIds);
+        await supabase.from('orp_deliverable_attachments').delete().in('plan_deliverable_id', deliverableIds);
+        await supabase.from('orp_deliverable_comments').delete().in('plan_deliverable_id', deliverableIds);
+        await client.from('orp_deliverable_dependencies').delete()
+          .or(deliverableIds.map((id: string) => `deliverable_id.eq.${id}`).join(','));
+      }
+
+      // Delete deliverables
+      await supabase.from('orp_plan_deliverables').delete().eq('orp_plan_id', planId);
+
+      // Delete related user_tasks (ora_plan_creation task for this project)
+      if (plan?.project_id) {
+        await client.from('user_tasks').delete()
+          .eq('type', 'ora_plan_creation')
+          .filter('metadata->>project_id', 'eq', plan.project_id);
+      }
+
+      // Finally delete the plan itself
+      const { error } = await supabase.from('orp_plans').delete().eq('id', planId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orp-plans'] });
+      queryClient.invalidateQueries({ queryKey: ['orp-plan'] });
+      queryClient.invalidateQueries({ queryKey: ['project-orp-plans'] });
+      queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+      toast({ title: 'Success', description: 'ORA Activity Plan deleted' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    }
+  });
+
   return {
     plans,
     isLoading,
@@ -425,7 +494,9 @@ export const useORPPlans = () => {
     removeCollaborator: removeCollaborator.mutate,
     addDependency: addDependency.mutate,
     removeDependency: removeDependency.mutate,
-    deleteDeliverable: deleteDeliverable.mutate
+    deleteDeliverable: deleteDeliverable.mutate,
+    deletePlan: deletePlan.mutate,
+    isDeletingPlan: deletePlan.isPending,
   };
 };
 
