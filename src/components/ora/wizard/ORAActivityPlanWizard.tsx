@@ -378,23 +378,10 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
         currentStep === 4 ? "max-w-7xl w-[98vw]" : "max-w-2xl"
       )}>
         <DialogHeader className="border-b pb-4">
-          <DialogTitle className="flex items-center gap-2 text-xl font-semibold flex-1">
+          <DialogTitle className="flex items-center gap-2 text-xl font-semibold">
             <CalendarCheck className="w-5 h-5 text-primary" />
             Create ORA Plan
           </DialogTitle>
-          {draftPlanId && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0"
-              onClick={(e) => {
-                e.stopPropagation();
-                setDeleteDialogOpen(true);
-              }}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          )}
 
           {/* Progress Indicator - PSSR pattern */}
           <div className="mt-4 space-y-3">
@@ -493,12 +480,26 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
 
         {/* Navigation */}
         <div className="flex items-center justify-between pt-4 border-t">
-          <Button
-            variant="outline"
-            onClick={() => currentStep > 1 ? handleBack() : handleClose()}
-          >
-            {currentStep === 1 ? 'Cancel' : 'Back'}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => currentStep > 1 ? handleBack() : handleClose()}
+            >
+              {currentStep === 1 ? 'Cancel' : 'Back'}
+            </Button>
+
+            {draftPlanId && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10"
+                onClick={() => setDeleteDialogOpen(true)}
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete Draft
+              </Button>
+            )}
+          </div>
 
           <div className="flex items-center gap-2">
             <Button
