@@ -232,9 +232,9 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
               user_id: oraEngrMember.user_id,
               title: `Create ORA Plan`,
               description: `Create the ORA Plan for project ${formData.project_id_prefix}${formData.project_id_number} - ${formData.project_title}`,
-              type: 'ora_plan_creation',
+              type: 'task',
               status: 'pending',
-              priority: 'high',
+              priority: 'High',
               metadata: {
                 source: 'ora_workflow',
                 project_id: newProject.id,
