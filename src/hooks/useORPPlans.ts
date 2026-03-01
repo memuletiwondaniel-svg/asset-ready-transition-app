@@ -426,47 +426,15 @@ export const useORPPlans = () => {
         throw new Error('Only draft plans can be deleted');
       }
 
-      const client = supabase as any;
-
-      // Delete ORA plan activities
-      await client.from('ora_plan_activities').delete().eq('orp_plan_id', planId);
-
-      // Delete activity log
-      await client.from('orp_activity_log').delete().eq('orp_plan_id', planId);
-
-      // Delete approvals
-      await supabase.from('orp_approvals').delete().eq('orp_plan_id', planId);
-
-      // Delete resources
-      await supabase.from('orp_resources').delete().eq('orp_plan_id', planId);
-
-      // Get deliverable IDs for sub-record cleanup
-      const { data: deliverables } = await supabase
-        .from('orp_plan_deliverables')
-        .select('id')
-        .eq('orp_plan_id', planId);
-
-      const deliverableIds = (deliverables || []).map((d: any) => d.id);
-
-      if (deliverableIds.length > 0) {
-        await supabase.from('orp_collaborators').delete().in('plan_deliverable_id', deliverableIds);
-        await supabase.from('orp_deliverable_attachments').delete().in('plan_deliverable_id', deliverableIds);
-        await supabase.from('orp_deliverable_comments').delete().in('plan_deliverable_id', deliverableIds);
-        await client.from('orp_deliverable_dependencies').delete()
-          .or(deliverableIds.map((id: string) => `deliverable_id.eq.${id}`).join(','));
-      }
-
-      // Delete deliverables
-      await supabase.from('orp_plan_deliverables').delete().eq('orp_plan_id', planId);
-
-      // Delete related user_tasks (ora_plan_creation task for this project)
+      // Delete related user_tasks before deleting the plan
       if (plan?.project_id) {
+        const client = supabase as any;
         await client.from('user_tasks').delete()
           .eq('type', 'ora_plan_creation')
           .filter('metadata->>project_id', 'eq', plan.project_id);
       }
 
-      // Finally delete the plan itself
+      // Delete the plan - all child records are cleaned up via ON DELETE CASCADE
       const { error } = await supabase.from('orp_plans').delete().eq('id', planId);
       if (error) throw error;
     },
