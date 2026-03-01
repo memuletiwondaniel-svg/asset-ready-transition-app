@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { ClipboardCheck } from 'lucide-react';
@@ -12,7 +12,6 @@ import { useUserTasks, type UserTask } from '@/hooks/useUserTasks';
 import { useUserLastLogin } from '@/hooks/useUserLastLogin';
 import { getUrgencyBackground, getUrgencyGlow } from '@/utils/assetColors';
 import { cn } from '@/lib/utils';
-import { supabase } from '@/integrations/supabase/client';
 
 interface PSSRReviewsPanelProps {
   userId: string;
@@ -52,63 +51,12 @@ export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({
   const { tasks: userTasks, loading: tasksLoading, updateTaskStatus } = useUserTasks();
   const { isNewSinceLastLogin } = useUserLastLogin();
   const [selectedTask, setSelectedTask] = useState<UserTask | null>(null);
-  const selfHealRan = useRef(false);
+  
 
   const isLoading = pssrLoading || tasksLoading;
 
-  // Self-healing: ensure review tasks exist for PSSRs in PENDING_LEAD_REVIEW where user is lead
-  useEffect(() => {
-    if (tasksLoading || !userId || selfHealRan.current) return;
-    selfHealRan.current = true;
-    const ensureReviewTasks = async () => {
-      try {
-        const { data: pendingPssrs } = await supabase
-          .from('pssrs')
-          .select('id, pssr_id, title')
-          .eq('pssr_lead_id', userId)
-          .eq('status', 'PENDING_LEAD_REVIEW');
-
-        if (!pendingPssrs?.length) return;
-
-        let created = false;
-        for (const pssr of pendingPssrs) {
-          const { data: existing } = await supabase
-            .from('user_tasks')
-            .select('id')
-            .eq('user_id', userId)
-            .eq('type', 'review')
-            .eq('status', 'pending')
-            .filter('metadata->>pssr_id', 'eq', pssr.id)
-            .maybeSingle();
-
-          if (!existing) {
-            const { error } = await supabase.from('user_tasks').insert({
-              user_id: userId,
-              title: `Review Draft PSSR: ${pssr.title || pssr.pssr_id}`,
-              description: 'A PSSR has been submitted for your review. Please review the PSSR items, approvers, and scope, then approve, edit, or reject the draft.',
-              priority: 'High',
-              type: 'review',
-              status: 'pending',
-              metadata: {
-                source: 'pssr_workflow',
-                pssr_id: pssr.id,
-                pssr_code: pssr.pssr_id,
-                action: 'review_draft_pssr',
-              },
-            });
-            if (!error) created = true;
-            else console.error('Self-heal insert error:', error);
-          }
-        }
-        if (created) {
-          queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
-        }
-      } catch (err) {
-        console.error('Self-heal review tasks:', err);
-      }
-    };
-    ensureReviewTasks();
-  }, [userId, tasksLoading, queryClient]);
+  // Note: PSSR review tasks are now auto-created by DB trigger (trg_auto_create_pssr_review_task)
+  // when a PSSR status transitions to PENDING_LEAD_REVIEW
 
   // PSSR items
   const pssrs = realPssrs || [];

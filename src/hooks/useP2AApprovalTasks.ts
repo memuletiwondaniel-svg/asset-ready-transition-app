@@ -18,58 +18,14 @@ interface CreateApprovalTasksParams {
  * Called when the last Phase 1 approver marks their task as completed.
  * Includes duplicate prevention to avoid creating multiple tasks.
  */
-export async function createPhase2Tasks(planId: string, projectId: string, projectCode: string) {
-  const client = supabase as any;
-
-  // Fetch Phase 2 approver (Deputy Plant Director) from the plan
-  const { data: approvers, error: approverError } = await client
-    .from('p2a_handover_approvers')
-    .select('role_name, display_order, user_id')
-    .eq('handover_id', planId)
-    .eq('role_name', 'Deputy Plant Director');
-
-  if (approverError || !approvers?.length) return;
-
-  // DUPLICATE PREVENTION: Check if Phase 2 tasks already exist for this plan
-  const { data: existingTasks } = await client
-    .from('user_tasks')
-    .select('id')
-    .eq('type', 'approval')
-    .eq('status', 'pending')
-    .filter('metadata->>plan_id', 'eq', planId)
-    .filter('metadata->>approval_phase', 'eq', '2');
-
-  if (existingTasks?.length > 0) {
-    console.log('[P2A] Phase 2 tasks already exist, skipping creation');
-    return;
-  }
-
-  // Use user_id directly from the approver record (set during wizard)
-  const taskRecords = approvers
-    .map((approver: any) => {
-      if (!approver.user_id) return null;
-      return {
-        user_id: approver.user_id,
-        title: `Final Approval – P2A Plan ${projectCode}`,
-        description: `Technical review is complete. As ${approver.role_name}, please provide your final approval for the P2A Plan for project ${projectCode}.`,
-        type: 'approval',
-        priority: 'High',
-        status: 'pending',
-        metadata: {
-          plan_id: planId,
-          project_id: projectId,
-          project_code: projectCode,
-          approver_role: approver.role_name,
-          approval_phase: 2,
-          source: 'p2a_handover',
-        },
-      };
-    })
-    .filter(Boolean);
-
-  if (taskRecords.length > 0) {
-    await client.from('user_tasks').insert(taskRecords);
-  }
+/**
+ * Phase 2 tasks are now auto-created by DB trigger (trg_auto_create_p2a_approval_task)
+ * and auto-activated by trigger (trg_auto_activate_p2a_phase2) when all Phase 1 approvers approve.
+ * This function is kept as a no-op for backward compatibility with callers.
+ */
+export async function createPhase2Tasks(_planId: string, _projectId: string, _projectCode: string) {
+  // No-op: handled by database triggers
+  console.log('[P2A] Phase 2 task creation handled by DB trigger trg_auto_activate_p2a_phase2');
 }
 
 /**
