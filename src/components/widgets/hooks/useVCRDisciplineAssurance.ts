@@ -1,5 +1,114 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, QueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+
+const ORA_ROLE_VARIANTS = [
+  'Snr ORA Engr', 'Snr ORA Engr.', 'Snr. ORA Engr.', 'Snr. ORA Engr',
+  'Senior ORA Engr.', 'Senior ORA Engineer',
+];
+
+/**
+ * When all discipline statements are submitted AND all VCR checklist items are closed,
+ * auto-creates a task for the Snr ORA Engineer to add the interdisciplinary statement
+ * and submit the VCR for approval.
+ */
+async function checkAndCreateFinalizationTask(handoverPointId: string, queryClient: QueryClient) {
+  const client = supabase as any;
+
+  // 1. Check if all expected disciplines have statements
+  const { data: prereqs } = await client
+    .from('p2a_vcr_prerequisites')
+    .select('delivering_party_id')
+    .eq('handover_point_id', handoverPointId)
+    .not('delivering_party_id', 'is', null);
+
+  const uniqueRoleIds = [...new Set((prereqs || []).map((p: any) => p.delivering_party_id))];
+  if (uniqueRoleIds.length === 0) return;
+
+  const { data: statements } = await client
+    .from('vcr_discipline_assurance')
+    .select('discipline_role_id, discipline_role_name, statement_type')
+    .eq('handover_point_id', handoverPointId)
+    .eq('statement_type', 'discipline');
+
+  const submittedRoleIds = new Set((statements || []).map((s: any) => s.discipline_role_id));
+  const allDisciplinesSubmitted = uniqueRoleIds.every((id: string) => submittedRoleIds.has(id));
+  if (!allDisciplinesSubmitted) return;
+
+  // 2. Check if all VCR items are closed (ACCEPTED or QUALIFICATION_APPROVED)
+  const { data: allPrereqs } = await client
+    .from('p2a_vcr_prerequisites')
+    .select('status')
+    .eq('handover_point_id', handoverPointId);
+
+  const closedStatuses = ['ACCEPTED', 'QUALIFICATION_APPROVED', 'NA'];
+  const allItemsClosed = (allPrereqs || []).length > 0 &&
+    (allPrereqs || []).every((p: any) => closedStatuses.includes(p.status));
+
+  if (!allItemsClosed) return;
+
+  // 3. Check for existing finalization task (duplicate prevention)
+  const { data: existingTask } = await client
+    .from('user_tasks')
+    .select('id')
+    .eq('type', 'vcr_finalization')
+    .filter('metadata->>vcr_id', 'eq', handoverPointId)
+    .eq('status', 'pending')
+    .limit(1);
+
+  if (existingTask?.length > 0) return;
+
+  // 4. Find project_id via handover plan chain
+  const { data: vcr } = await client
+    .from('p2a_handover_points')
+    .select('handover_plan_id, vcr_code, name')
+    .eq('id', handoverPointId)
+    .single();
+
+  if (!vcr) return;
+
+  const { data: plan } = await client
+    .from('p2a_handover_plans')
+    .select('project_id, project_code')
+    .eq('id', vcr.handover_plan_id)
+    .single();
+
+  if (!plan?.project_id) return;
+
+  // 5. Find Snr ORA Engineer
+  const { data: members } = await client
+    .from('user_projects')
+    .select('user_id, role')
+    .eq('project_id', plan.project_id);
+
+  const oraEngineer = (members || []).find((m: any) => ORA_ROLE_VARIANTS.includes(m.role));
+  if (!oraEngineer) return;
+
+  // 6. Create the finalization task
+  const vcrLabel = `${vcr.vcr_code}: ${vcr.name}`;
+  await client.from('user_tasks').insert({
+    user_id: oraEngineer.user_id,
+    title: `Finalize VCR – ${vcrLabel}`,
+    description: `All discipline assurance statements and VCR checklist items are complete for ${vcrLabel}. Add the Interdisciplinary Assurance Statement and submit the VCR for approval.`,
+    type: 'vcr_finalization',
+    priority: 'High',
+    status: 'pending',
+    metadata: {
+      vcr_id: handoverPointId,
+      vcr_code: vcr.vcr_code,
+      vcr_name: vcr.name,
+      project_id: plan.project_id,
+      project_code: plan.project_code,
+      action: 'add_interdisciplinary_and_submit',
+      source: 'vcr_assurance',
+    },
+  });
+
+  queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+  console.log(`[VCR Assurance] Created finalization task for ${vcrLabel}`);
+}
+
+/** Exported alias for external callers (e.g., VCRItemDetailSheet) */
+export const checkVCRFinalizationReadiness = checkAndCreateFinalizationTask;
 
 export interface DisciplineAssurance {
   id: string;
@@ -141,9 +250,19 @@ export const useVCRDisciplineAssurance = (handoverPointId: string | undefined) =
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: async (_data, variables) => {
       queryClient.invalidateQueries({ queryKey });
       queryClient.invalidateQueries({ queryKey: ['vcr-expected-disciplines', handoverPointId] });
+
+      // When a discipline statement is submitted, check if all are now complete
+      // If so, auto-create a task for the Snr ORA Eng to finalize VCR
+      if (variables.statementType === 'discipline' && handoverPointId) {
+        try {
+          await checkAndCreateFinalizationTask(handoverPointId, queryClient);
+        } catch (e) {
+          console.warn('[VCR Assurance] Failed to check finalization task:', e);
+        }
+      }
     },
   });
 
