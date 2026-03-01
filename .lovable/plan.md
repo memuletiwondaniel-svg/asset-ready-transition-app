@@ -1,79 +1,41 @@
 
 
-## Consolidated VCR Delivering Party Task with Progress Tracker
+## Progressive Activation for Approving Party VCR Tasks
 
-### Overview
-Replace the current per-item task creation (14 tasks for 14 items) with a single consolidated task per delivering party per VCR, featuring an embedded progress tracker and mini-checklist.
+### Concept
+Create `vcr_approval_bundle` tasks immediately during the VCR execution cascade in a `waiting` state. The task is visible but greyed out, showing passive progress as delivering parties complete items. It transitions to `pending` (active/actionable) only when **all** delivering party items for that VCR have been submitted for review.
 
-### Database Changes
+### Changes Required
 
-**Add columns to `user_tasks`** (migration):
-```sql
-ALTER TABLE public.user_tasks 
-  ADD COLUMN IF NOT EXISTS progress_percentage integer DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS sub_items jsonb DEFAULT '[]'::jsonb;
-```
+#### 1. Database: Update trigger to handle waiting → pending transition
+**Migration** — Modify `update_delivering_party_task_progress()` to:
+- When a `vcr_checklist_bundle` task reaches 100%, find the matching `vcr_approval_bundle` tasks for the same VCR and transition their status from `waiting` to `pending`
+- Track `items_ready_for_review` count in approval bundle metadata as delivering parties complete items
 
-- `progress_percentage`: 0-100, auto-calculated from sub-item completion
-- `sub_items`: JSON array storing linked prerequisite IDs and their completion state, e.g.:
-  ```json
-  [
-    {"prerequisite_id": "uuid", "summary": "Design review complete", "completed": false},
-    {"prerequisite_id": "uuid", "summary": "Safety docs submitted", "completed": true}
-  ]
-  ```
+#### 2. Task Generation: Change approval bundle initial status
+**File: `src/hooks/useORAActivityPlanSync.ts`** (line ~824)
+- Change `status: 'pending'` → `status: 'waiting'` in `generateApprovingPartyTasks`
+- Add `metadata.items_ready_for_review: 0` to track how many items have been submitted
 
-**Create a trigger function** to auto-update the consolidated task when a `p2a_vcr_prerequisites` status changes:
-```sql
-CREATE OR REPLACE FUNCTION update_delivering_party_task_progress()
-```
-- Fires on UPDATE of `p2a_vcr_prerequisites`
-- Finds the matching `user_tasks` row (type = `vcr_checklist_bundle`, metadata vcr_id match, delivering_party_id match)
-- Updates `sub_items` to mark the changed item as completed/uncompleted
-- Recalculates `progress_percentage`
-- Auto-completes the task when 100%
+#### 3. Hook: Include `waiting` status tasks
+**File: `src/hooks/useUserVCRBundleTasks.ts`** (line ~47)
+- Currently filters `.neq('status', 'completed')` — this already includes `waiting`, so no change needed
 
-### Backend Logic Changes
-
-**File: `src/hooks/useORAActivityPlanSync.ts`**
-
-Refactor `generateDeliveringPartyTasks` (lines 549-684):
-- Change task type from `vcr_checklist_item` to `vcr_checklist_bundle`
-- Instead of creating one task per prerequisite, group by `(userId, delivering_party_id)` and create ONE task per user per VCR
-- Title: `"VCR Checklist Items – {vcrLabel}"` with subtitle showing count
-- Populate `sub_items` with all actionable prerequisites
-- Set `progress_percentage` to 0
-- Include `metadata.total_items` and `metadata.completed_items` for quick reads
-
-### UI Changes
-
-**File: `src/components/tasks/ORPActivitiesPanel.tsx`** (or wherever VCR tasks render in My Tasks)
-
-No changes needed here — VCR checklist tasks are type `vcr_checklist_bundle` and would surface through the existing task hooks.
-
+#### 4. UI: Greyed-out waiting state in AllTasksTable
 **File: `src/components/tasks/AllTasksTable.tsx`**
+- Add `isWaiting` field to `UnifiedTask` interface
+- Pass `task.status` through from bundle tasks
+- Apply `opacity-50 pointer-events-none` styling to waiting rows
+- Show "Waiting for deliverables" label instead of progress bar when status is `waiting`
+- Show a subtle "X/Y items ready" counter from metadata
 
-- Add `vcr_checklist_bundle` to `CATEGORY_CONFIG`
-- Show a progress bar inline in the table row for bundle tasks
-- Display "X/Y items" text alongside the progress
-
-**New component: `src/components/tasks/VCRChecklistTaskCard.tsx`**
-
-A reusable card for rendering consolidated VCR tasks in both grid and table views:
-- Progress bar (e.g., `10/14 – 71%`)
-- Expandable mini-checklist showing each sub-item with check/unchecked state
-- Click-through to the VCR overlay for the specific item
-- Color-coded progress (green > 75%, amber 25-75%, red < 25%)
-
-**File: `src/hooks/useUserORPActivities.ts`** (or create new hook)
-
-Add a hook or extend existing to fetch `vcr_checklist_bundle` tasks for the current user, including their `sub_items` and `progress_percentage`.
+#### 5. UI: Waiting state in VCRChecklistTaskCard
+**File: `src/components/tasks/VCRChecklistTaskCard.tsx`**
+- Add visual distinction for `waiting` status: greyed-out card, "Awaiting deliverables" badge
+- Disable the "Open VCR" action button when in waiting state
 
 ### Implementation Steps
-
-1. Run database migration (add columns + trigger)
-2. Refactor `generateDeliveringPartyTasks` to create consolidated bundle tasks
-3. Create `VCRChecklistTaskCard` component with progress bar and mini-checklist
-4. Integrate bundle tasks into `AllTasksTable` and panel views
-5. Wire the DB trigger to keep progress in sync when prerequisites change
+1. Update `generateApprovingPartyTasks` to use `status: 'waiting'`
+2. Update DB trigger to transition approval bundles from `waiting` → `pending` when all delivering items are submitted
+3. Add waiting-state UI styling in `AllTasksTable` and `VCRChecklistTaskCard`
 
