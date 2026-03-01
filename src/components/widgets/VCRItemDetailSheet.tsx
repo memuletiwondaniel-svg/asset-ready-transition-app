@@ -109,14 +109,25 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
         .update(updateData)
         .eq('id', prerequisiteId);
       if (error) throw error;
+      return status;
     },
-    onSuccess: () => {
+    onSuccess: async (completedStatus) => {
       queryClient.invalidateQueries({ queryKey: ['vcr-prereq-detail'] });
       queryClient.invalidateQueries({ queryKey: ['vcr-progress-data'] });
       queryClient.invalidateQueries({ queryKey: ['vcr-prerequisites'] });
       queryClient.invalidateQueries({ queryKey: ['vcr-category-items'] });
       toast({ title: 'Status updated' });
       onOpenChange(false);
+
+      // When an item is accepted, check if all items + discipline statements are done → auto-task
+      if (completedStatus === 'ACCEPTED' || completedStatus === 'QUALIFICATION_APPROVED') {
+        try {
+          const { checkVCRFinalizationReadiness } = await import('./hooks/useVCRDisciplineAssurance');
+          await checkVCRFinalizationReadiness(vcrId, queryClient);
+        } catch (e) {
+          console.warn('[VCR Item] Finalization check failed:', e);
+        }
+      }
     },
     onError: (error) => {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
