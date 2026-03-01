@@ -212,7 +212,7 @@ export const AddProjectWizard: React.FC<AddProjectWizardProps> = ({ open, onClos
           if (teamError) throw teamError;
         }
 
-        // Auto-create "Create ORA Activity Plan" task for Snr ORA Engr
+        // Auto-create "Create ORA Plan" task for Snr ORA Engr
         const ORA_ROLE_VARIANTS = ['Snr ORA Engr', 'Snr ORA Engr.', 'Snr. ORA Engr.', 'Snr. ORA Engr', 'Senior ORA Engr.', 'Senior ORA Engineer'];
         const oraEngrMember = validTeamMembers.find(m => ORA_ROLE_VARIANTS.includes(m.role));
         if (oraEngrMember) {
@@ -220,8 +220,8 @@ export const AddProjectWizard: React.FC<AddProjectWizardProps> = ({ open, onClos
             .from('user_tasks')
             .insert({
               user_id: oraEngrMember.user_id,
-              title: `Create ORA Activity Plan`,
-              description: `Create the ORA Activity Plan for project ${formData.project_id_prefix}${formData.project_id_number} - ${formData.project_title}`,
+              title: `Create ORA Plan`,
+              description: `Create the ORA Plan for project ${formData.project_id_prefix}${formData.project_id_number} - ${formData.project_title}`,
               type: 'ora_plan_creation',
               status: 'pending',
               priority: 'high',

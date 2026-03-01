@@ -185,7 +185,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                 onClick={() => setOraWizardOpen(true)}
               >
                 <CalendarCheck className="h-4 w-4" />
-                Create ORA Activity Plan
+                Create ORA Plan
                 <ChevronRight className="h-4 w-4 ml-auto" />
               </Button>
             )}
@@ -197,7 +197,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                 onClick={() => setOraReviewOpen(true)}
               >
                 <CalendarCheck className="h-4 w-4" />
-                Review ORA Activity Plan
+                Review ORA Plan
                 <ChevronRight className="h-4 w-4 ml-auto" />
               </Button>
             )}
@@ -285,7 +285,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
         />
       )}
 
-      {/* ORA Activity Plan Wizard */}
+      {/* ORA Plan Wizard */}
       {isOraTask && oraProjectId && (
         <ORAActivityPlanWizard
           open={oraWizardOpen}
@@ -298,7 +298,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
         />
       )}
 
-      {/* ORA Activity Plan Review Overlay */}
+      {/* ORA Plan Review Overlay */}
       {isOraReviewTask && oraPlanId && (
         <ORAActivityPlanReviewOverlay
           open={oraReviewOpen}

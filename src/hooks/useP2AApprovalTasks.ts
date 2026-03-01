@@ -101,7 +101,7 @@ export async function checkAndCompletePlan(planId: string) {
       .single();
 
     if (plan?.project_id) {
-      // Generate VCR activities in the ORA Activity Plan
+      // Generate VCR activities in the ORA Plan
       try {
         const { generateVCRActivitiesFromP2A } = await import('./useORAActivityPlanSync');
         await generateVCRActivitiesFromP2A(planId, plan.project_id, plan.project_code || '');

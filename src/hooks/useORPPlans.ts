@@ -475,7 +475,7 @@ export const useORPPlans = () => {
       queryClient.invalidateQueries({ queryKey: ['orp-plan'] });
       queryClient.invalidateQueries({ queryKey: ['project-orp-plans'] });
       queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
-      toast({ title: 'Success', description: 'ORA Activity Plan deleted' });
+      toast({ title: 'Success', description: 'ORA Plan deleted' });
     },
     onError: (error: Error) => {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });

@@ -51,7 +51,7 @@ export const ORPGanttOverlay: React.FC<ORPGanttOverlayProps> = ({
               </div>
               <div>
                 <DialogTitle className="text-base font-bold">
-                  ORA Activity Plan
+                  ORA Plan
                 </DialogTitle>
                 <DialogDescription className="sr-only">
                   Gantt chart view of project activities and timeline

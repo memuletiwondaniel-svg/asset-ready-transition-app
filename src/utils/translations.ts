@@ -643,7 +643,7 @@ export const translations = {
     organizationCategory: 'Organization',
     healthSafety: 'Health & Safety',
     generalCategory: 'General',
-    oraActivityPlan: 'ORA Activity Plan',
+    oraActivityPlan: 'ORA Plan',
     noActivityPlansYet: 'No activity plans yet',
     createFirstPlan: 'Create First Plan',
     viewPlan: 'View Plan',
