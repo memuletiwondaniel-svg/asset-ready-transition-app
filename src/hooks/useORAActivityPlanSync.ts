@@ -534,8 +534,9 @@ export async function generateBuildingBlockActivities(
     );
   }
 
-  // ── Assign delivering party tasks for VCR checklist items ──
+  // ── Assign delivering & approving party tasks for VCR checklist items ──
   await generateDeliveringPartyTasks(vcrId, projectId, projectCode);
+  await generateApprovingPartyTasks(vcrId, projectId, projectCode);
 
   console.log(`[ORA Sync] Generated building block activities for VCR ${vcrId}`);
 }
@@ -688,6 +689,156 @@ async function generateDeliveringPartyTasks(
   }
 
   console.log(`[ORA Sync] Created ${tasksByUser.size} consolidated bundle tasks for VCR ${vcrId}`);
+}
+
+// ─── Approving Party Task Assignment ─────────────────────────────
+
+/**
+ * Creates consolidated bundle tasks for each approving/receiving party user
+ * based on their assigned VCR checklist items to review.
+ */
+async function generateApprovingPartyTasks(
+  vcrId: string,
+  projectId: string,
+  projectCode: string
+) {
+  const client = supabase as any;
+
+  // Duplicate prevention
+  const { data: existingTasks } = await client
+    .from('user_tasks')
+    .select('id')
+    .eq('type', 'vcr_approval_bundle')
+    .filter('metadata->>vcr_id', 'eq', vcrId)
+    .filter('metadata->>source', 'eq', 'vcr_execution_plan_approval')
+    .limit(1);
+
+  if (existingTasks?.length > 0) {
+    console.log('[ORA Sync] Approving party bundle tasks already exist for VCR', vcrId);
+    return;
+  }
+
+  // Fetch all prerequisites for this VCR
+  const { data: prereqs } = await client
+    .from('p2a_vcr_prerequisites')
+    .select('id, summary, receiving_party_id, receiving_party_name, status')
+    .eq('handover_point_id', vcrId);
+
+  if (!prereqs?.length) return;
+
+  // Filter to items that have a receiving party and are not already closed
+  const closedStatuses = ['ACCEPTED', 'QUALIFICATION_APPROVED', 'NA'];
+  const actionablePrereqs = prereqs.filter(
+    (p: any) => p.receiving_party_id && !closedStatuses.includes(p.status)
+  );
+
+  if (!actionablePrereqs.length) return;
+
+  // Collect unique receiving party role IDs
+  const roleIds = [...new Set(actionablePrereqs.map((p: any) => p.receiving_party_id))];
+
+  // Resolve role IDs to users via project team, excluding Asset-level staff
+  const { data: teamMembers } = await client
+    .from('project_team_members')
+    .select('user_id')
+    .eq('project_id', projectId);
+
+  const teamUserIds = (teamMembers || []).map((m: any) => m.user_id);
+
+  let profilesByRole: any[] = [];
+  if (teamUserIds.length) {
+    const { data: profiles } = await client
+      .from('profiles')
+      .select('user_id, full_name, role, position')
+      .in('user_id', teamUserIds)
+      .in('role', roleIds)
+      .eq('is_active', true);
+    profilesByRole = (profiles || []).filter((p: any) => {
+      const pos = (p.position || '').toLowerCase();
+      return !pos.includes('asset');
+    });
+  }
+
+  // Fallback for uncovered roles
+  const coveredRoleIds = new Set(profilesByRole.map((p: any) => p.role));
+  const uncoveredRoleIds = roleIds.filter((rid: string) => !coveredRoleIds.has(rid));
+  if (uncoveredRoleIds.length) {
+    const { data: fallbackProfiles } = await client
+      .from('profiles')
+      .select('user_id, full_name, role, position')
+      .in('role', uncoveredRoleIds)
+      .eq('is_active', true);
+    if (fallbackProfiles) {
+      const filtered = fallbackProfiles.filter((p: any) => {
+        const pos = (p.position || '').toLowerCase();
+        return !pos.includes('asset');
+      });
+      profilesByRole.push(...filtered);
+    }
+  }
+
+  // Build role → user map
+  const roleUserMap = new Map<string, string>();
+  for (const p of profilesByRole) {
+    if (p.role && !roleUserMap.has(p.role)) {
+      roleUserMap.set(p.role, p.user_id);
+    }
+  }
+
+  // Fetch VCR label
+  const { data: vcrData } = await client
+    .from('p2a_handover_points')
+    .select('vcr_code, name')
+    .eq('id', vcrId)
+    .maybeSingle();
+
+  const vcrLabel = vcrData ? `${vcrData.vcr_code}: ${vcrData.name}` : 'VCR';
+
+  // Group prerequisites by approving user
+  const tasksByUser = new Map<string, { prereqs: any[]; receivingPartyId: string }>();
+  for (const prereq of actionablePrereqs) {
+    const userId = roleUserMap.get(prereq.receiving_party_id);
+    if (!userId) continue;
+    if (!tasksByUser.has(userId)) {
+      tasksByUser.set(userId, { prereqs: [], receivingPartyId: prereq.receiving_party_id });
+    }
+    tasksByUser.get(userId)!.prereqs.push(prereq);
+  }
+
+  // Create ONE consolidated approval bundle task per user
+  for (const [userId, { prereqs: userPrereqs, receivingPartyId }] of tasksByUser) {
+    const subItems = userPrereqs.map((p: any) => ({
+      prerequisite_id: p.id,
+      summary: p.summary,
+      completed: false,
+    }));
+
+    await client
+      .from('user_tasks')
+      .insert({
+        user_id: userId,
+        title: `VCR Review Items – ${vcrLabel}`,
+        description: `Review and approve ${userPrereqs.length} checklist item(s) for ${vcrLabel}. Verify evidence and accept or raise qualifications.`,
+        type: 'vcr_approval_bundle',
+        priority: 'Medium',
+        status: 'pending',
+        progress_percentage: 0,
+        sub_items: subItems,
+        metadata: {
+          project_id: projectId,
+          project_code: projectCode,
+          vcr_id: vcrId,
+          vcr_label: vcrLabel,
+          receiving_party_id: receivingPartyId,
+          total_items: userPrereqs.length,
+          completed_items: 0,
+          action: 'review_vcr_checklist_bundle',
+          source: 'vcr_execution_plan_approval',
+        },
+      });
+  }
+
+  console.log(`[ORA Sync] Created ${tasksByUser.size} approving party bundle tasks for VCR ${vcrId}`);
 }
 
 // ─── Bidirectional Sync ──────────────────────────────────────────

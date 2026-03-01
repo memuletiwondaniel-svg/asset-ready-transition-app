@@ -13,6 +13,7 @@ export interface VCRBundleTask {
   user_id: string;
   title: string;
   description: string | null;
+  type: 'vcr_checklist_bundle' | 'vcr_approval_bundle';
   status: string;
   priority: string;
   progress_percentage: number;
@@ -42,7 +43,7 @@ export const useUserVCRBundleTasks = () => {
         .from('user_tasks')
         .select('*')
         .eq('user_id', user.id)
-        .eq('type', 'vcr_checklist_bundle')
+        .in('type', ['vcr_checklist_bundle', 'vcr_approval_bundle'])
         .neq('status', 'completed')
         .order('created_at', { ascending: false });
 
@@ -52,6 +53,7 @@ export const useUserVCRBundleTasks = () => {
         id: task.id,
         user_id: task.user_id,
         title: task.title,
+        type: task.type as 'vcr_checklist_bundle' | 'vcr_approval_bundle',
         description: task.description,
         status: task.status,
         priority: task.priority,
