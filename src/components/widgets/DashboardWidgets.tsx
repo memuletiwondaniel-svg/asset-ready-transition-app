@@ -10,9 +10,6 @@ import { ProjectsOverviewWidget } from './ProjectsOverviewWidget';
 import { NotificationsWidget } from './NotificationsWidget';
 import { PSSRStatsWidget } from './PSSRStatsWidget';
 import { TeamMembersWidget } from './TeamMembersWidget';
-import { ORMPendingReviewsWidget } from './ORMPendingReviewsWidget';
-import { ORMOverdueTasksWidget } from './ORMOverdueTasksWidget';
-import { ORMResourceUtilizationWidget } from './ORMResourceUtilizationWidget';
 import { WidgetLibrary } from './WidgetLibrary';
 import { WidgetSettingsModal } from './WidgetSettingsModal';
 import { PresetManager } from './PresetManager';
@@ -177,12 +174,6 @@ export const DashboardWidgets: React.FC = () => {
         return <PSSRStatsWidget settings={widget.settings} />;
       case 'team-members':
         return <TeamMembersWidget settings={widget.settings} />;
-      case 'orm-pending-reviews':
-        return <ORMPendingReviewsWidget />;
-      case 'orm-overdue-tasks':
-        return <ORMOverdueTasksWidget />;
-      case 'orm-resource-utilization':
-        return <ORMResourceUtilizationWidget />;
       default:
         return null;
     }

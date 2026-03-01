@@ -78,7 +78,7 @@ export default function ProjectDetailsPage() {
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [widgetOrder, setWidgetOrder] = useState<string[]>(() => {
     const saved = localStorage.getItem(`project-widget-order-${id}`);
-    return saved ? JSON.parse(saved) : ['orp', 'pssr', 'cost', 'orm'];
+    return saved ? JSON.parse(saved) : ['orp', 'pssr'];
   });
   const [hiddenWidgets, setHiddenWidgets] = useState<string[]>(() => {
     const saved = localStorage.getItem(`project-hidden-widgets-${id}`);
