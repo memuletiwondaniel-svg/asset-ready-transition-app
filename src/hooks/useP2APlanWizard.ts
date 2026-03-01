@@ -549,34 +549,8 @@ export function useP2APlanWizard(projectId: string, projectCode: string) {
     mutationFn: async () => {
       const planId = await persistPlanToDatabase(projectId, projectCode, state, 'ACTIVE');
 
-      // Create user_tasks for Phase 1 approvers (all leads except Deputy Plant Director)
-      // Phase 2 approver (Deputy Plant Director) gets task once Phase 1 is complete
-      const phase1Approvers = state.approvers.filter(a => a.role_name !== 'Deputy Plant Director' && a.user_id);
-
-      if (phase1Approvers.length > 0) {
-        const client = supabase as any;
-        const taskRecords = phase1Approvers.map(approver => ({
-          user_id: approver.user_id!,
-          title: `Review & Approve P2A Plan – ${projectCode}`,
-          description: `You have been assigned as ${approver.role_name} to review and approve the P2A Plan for project ${projectCode}. Please review the plan and provide your approval.`,
-          type: 'approval',
-          priority: 'High',
-          status: 'pending',
-          metadata: {
-            plan_id: planId,
-            project_id: projectId,
-            project_code: projectCode,
-            approver_role: approver.role_name,
-            approval_phase: 1,
-            source: 'p2a_handover',
-          },
-        }));
-
-        const { error: taskError } = await client.from('user_tasks').insert(taskRecords);
-        if (taskError) {
-          console.error('[P2A] Failed to create approval tasks:', taskError);
-        }
-      }
+      // Note: P2A approval tasks are now auto-created by DB trigger (trg_auto_create_p2a_approval_task)
+      // when approvers are inserted into p2a_handover_approvers with a user_id
 
       return planId;
     },
