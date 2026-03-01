@@ -8,6 +8,7 @@ import { ThemeProvider } from "@/components/ui/theme-provider";
 import { BreadcrumbProvider } from "@/contexts/BreadcrumbContext";
 import { WidgetSizeProvider } from "@/contexts/WidgetSizeContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { TenantProvider } from "@/contexts/TenantContext";
 import AuthenticatedLayout from "@/components/layouts/AuthenticatedLayout";
 import Index from "./pages/Index";
 import AuthPage from "./pages/AuthPage";
@@ -48,9 +49,10 @@ const App = () => (
     <ThemeProvider defaultTheme="light" storageKey="orsh-theme">
       <LanguageProvider>
         <AuthProvider>
-          <WidgetSizeProvider>
-            <TooltipProvider>
-              <Toaster />
+          <TenantProvider>
+            <WidgetSizeProvider>
+              <TooltipProvider>
+                <Toaster />
               <Sonner />
               <BrowserRouter>
                 <BreadcrumbProvider>
@@ -97,8 +99,9 @@ const App = () => (
                   </Routes>
                 </BreadcrumbProvider>
               </BrowserRouter>
-            </TooltipProvider>
-          </WidgetSizeProvider>
+              </TooltipProvider>
+            </WidgetSizeProvider>
+          </TenantProvider>
         </AuthProvider>
       </LanguageProvider>
     </ThemeProvider>

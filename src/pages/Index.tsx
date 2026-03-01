@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Shield, FileCheck, Headphones, ClipboardCheck, Key } from "lucide-react";
 import { useAuth } from "@/components/enhanced-auth/AuthProvider";
+import { useTenantContext } from "@/contexts/TenantContext";
 import EnhancedAuthModal from "@/components/enhanced-auth/EnhancedAuthModal";
 import PSSRSummaryPage from "@/components/PSSRSummaryPage";
 import LandingPage from "@/components/LandingPage";
@@ -18,6 +19,7 @@ import LandingLanguageSelector from "@/components/LandingLanguageSelector";
 const Index = () => {
   const [showAuth, setShowAuth] = useState(false);
   const { session, signOut, loading } = useAuth();
+  const { subdomainTenant } = useTenantContext();
   const isAuthenticated = !!session;
   const navigate = useNavigate();
   const location = useLocation();
@@ -126,13 +128,21 @@ const Index = () => {
               <OrshLogo size="medium" />
             </div>
             
-            {/* BGC Logo - Right */}
+             {/* Tenant or BGC Logo - Right */}
             <div className="flex items-center">
-              <img 
-                src="/lovable-uploads/421778ce-4ffe-4e3b-b370-8d1bb24a3d51.png" 
-                alt="BGC Logo" 
-                className="h-12 w-auto drop-shadow-lg"
-              />
+              {subdomainTenant?.logo_url ? (
+                <img 
+                  src={subdomainTenant.logo_url} 
+                  alt={subdomainTenant.name} 
+                  className="h-12 w-auto drop-shadow-lg"
+                />
+              ) : (
+                <img 
+                  src="/lovable-uploads/421778ce-4ffe-4e3b-b370-8d1bb24a3d51.png" 
+                  alt="BGC Logo" 
+                  className="h-12 w-auto drop-shadow-lg"
+                />
+              )}
             </div>
           </div>
         </div>
