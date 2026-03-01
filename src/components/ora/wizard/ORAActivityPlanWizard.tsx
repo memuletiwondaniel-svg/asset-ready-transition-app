@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { CalendarCheck, Loader2, Check, AlertCircle, Save } from 'lucide-react';
+import { CalendarCheck, Loader2, Check, AlertCircle, Save, Trash2 } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 import { StepPhaseSelection } from './StepPhaseSelection';
 import { StepProjectType } from './StepProjectType';
@@ -14,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Progress } from '@/components/ui/progress';
 import { useQueryClient } from '@tanstack/react-query';
+import { useORPPlans } from '@/hooks/useORPPlans';
 
 interface ORAActivityPlanWizardProps {
   open: boolean;
@@ -50,8 +52,10 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
   const [isCreating, setIsCreating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [draftPlanId, setDraftPlanId] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { deletePlan, isDeletingPlan } = useORPPlans();
 
   // Load ORP phases to resolve phase_id from phase code
   const { phases: orpPhases } = useORPPhases();
@@ -367,16 +371,30 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
   const progressPercentage = (currentStep / STEPS.length) * 100;
 
   return (
+    <>
     <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
       <DialogContent className={cn(
         "max-h-[85vh] overflow-hidden flex flex-col",
         currentStep === 4 ? "max-w-7xl w-[98vw]" : "max-w-2xl"
       )}>
         <DialogHeader className="border-b pb-4">
-          <DialogTitle className="flex items-center gap-2 text-xl font-semibold">
+          <DialogTitle className="flex items-center gap-2 text-xl font-semibold flex-1">
             <CalendarCheck className="w-5 h-5 text-primary" />
             Create ORA Plan
           </DialogTitle>
+          {draftPlanId && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                setDeleteDialogOpen(true);
+              }}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
 
           {/* Progress Indicator - PSSR pattern */}
           <div className="mt-4 space-y-3">
@@ -513,5 +531,36 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
         </div>
       </DialogContent>
     </Dialog>
+
+    <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle className="flex items-center gap-2">
+            <AlertCircle className="h-5 w-5 text-destructive" />
+            Delete Draft ORA Plan?
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            This will permanently delete the draft plan including all deliverables, resources, and approvals. This action cannot be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            disabled={isDeletingPlan}
+            onClick={() => {
+              if (draftPlanId) {
+                deletePlan(draftPlanId);
+                setDeleteDialogOpen(false);
+                handleClose();
+              }
+            }}
+          >
+            {isDeletingPlan ? 'Deleting...' : 'Delete Plan'}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  </>
   );
 };
