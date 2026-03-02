@@ -14,6 +14,77 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          action: string
+          category: string
+          description: string
+          entity_id: string | null
+          entity_label: string | null
+          entity_type: string | null
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          new_values: Json | null
+          old_values: Json | null
+          severity: string
+          tenant_id: string | null
+          timestamp: string
+          user_agent: string | null
+          user_email: string | null
+          user_id: string | null
+          user_name: string | null
+        }
+        Insert: {
+          action: string
+          category: string
+          description: string
+          entity_id?: string | null
+          entity_label?: string | null
+          entity_type?: string | null
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          new_values?: Json | null
+          old_values?: Json | null
+          severity?: string
+          tenant_id?: string | null
+          timestamp?: string
+          user_agent?: string | null
+          user_email?: string | null
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Update: {
+          action?: string
+          category?: string
+          description?: string
+          entity_id?: string | null
+          entity_label?: string | null
+          entity_type?: string | null
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          new_values?: Json | null
+          old_values?: Json | null
+          severity?: string
+          tenant_id?: string | null
+          timestamp?: string
+          user_agent?: string | null
+          user_email?: string | null
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_conversations: {
         Row: {
           created_at: string
@@ -8740,6 +8811,22 @@ export type Database = {
           token_id: string
           user_id: string
         }[]
+      }
+      write_audit_log: {
+        Args: {
+          p_action: string
+          p_category: string
+          p_description: string
+          p_entity_id: string
+          p_entity_label: string
+          p_entity_type: string
+          p_metadata?: Json
+          p_new_values?: Json
+          p_old_values?: Json
+          p_severity: string
+          p_user_id: string
+        }
+        Returns: undefined
       }
     }
     Enums: {
