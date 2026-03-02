@@ -431,7 +431,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
             ) : user.role && (
               <div className="text-sm font-medium">
                 {user.role}
-                {user.role === "Technical Authority (TA2)" && (user.ta2_discipline || user.ta2_commission) && (
+                {user.role?.includes("TA2") && (user.ta2_discipline || user.ta2_commission) && (
                   <div className="text-xs text-muted-foreground mt-1">
                     {user.ta2_discipline && <span>{user.ta2_discipline}</span>}
                     {user.ta2_discipline && user.ta2_commission && <span> • </span>}

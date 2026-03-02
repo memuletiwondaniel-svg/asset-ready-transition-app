@@ -205,13 +205,10 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
       return false;
     }
     
-    // TA2 needs discipline
-    if (role === "TA2") {
-      if (!formData.discipline) {
-        return false;
-      }
+    // TA2 needs discipline (for non-discipline-specific TA2 roles)
+    if (role.includes("TA2")) {
       // For disciplines other than Tech Safety and Civil, commission is required
-      if (formData.discipline !== "Tech Safety" && formData.discipline !== "Civil" && !formData.commission) {
+      if (!role.includes("Civil") && !role.includes("Tech Safety") && !formData.commission) {
         return false;
       }
     }
@@ -256,20 +253,19 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
       case 'ER Lead':
         return 'ER Lead';
       
-      case 'TA2':
-        if (formData.discipline) {
-          // For Tech Safety and Civil, don't include commission
-          if (formData.discipline === "Tech Safety" || formData.discipline === "Civil") {
-            return `TA2 ${formData.discipline}`;
-          }
-          // For other disciplines, include commission with dash format if provided
-          if (formData.commission) {
-            return `TA2 ${formData.discipline} - ${formData.commission}`;
-          }
-        }
-        return '';
-      
+      // TA2 roles now have discipline in the name (e.g., "Process TA2 - Project")
+      // Position title adds commission for non-Civil/Tech Safety disciplines
       default:
+        // Handle TA2 roles (e.g., "Process TA2 - Project", "Civil TA2")
+        if (role.includes("TA2")) {
+          if (role.includes("Civil") || role.includes("Tech Safety")) {
+            return role; // e.g., "Civil TA2"
+          }
+          if (formData.commission) {
+            return `${role} - ${formData.commission}`; // e.g., "Process TA2 - Project - P&E"
+          }
+          return role;
+        }
         return '';
     }
   };
@@ -348,7 +344,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
             value !== "Ops Coach" && value !== "Ops Team Lead") {
           newData.field = "";
         }
-        if (prev.role.includes("TA2") && value !== "TA2") {
+        if (prev.role.includes("TA2") && !value.includes("TA2")) {
           newData.commission = "";
           newData.discipline = "";
         }
@@ -909,7 +905,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                             const selectedRole = value;
                             
                             // Reset commission if switching away from roles that need it
-                            if (selectedRole !== "Director" && selectedRole !== "HSE Lead" && selectedRole !== "Engr. Manager" && selectedRole !== "TA2") {
+                            if (selectedRole !== "Director" && selectedRole !== "HSE Lead" && selectedRole !== "Engr. Manager" && !selectedRole.includes("TA2")) {
                               handleInputChange("commission", "");
                             }
                             // Reset plant if switching away from plant roles
@@ -925,14 +921,14 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                               handleInputChange("field", "");
                             }
                              // Reset TA2 fields when selecting non-TA2 roles
-                            if (selectedRole !== "TA2") {
+                            if (!selectedRole.includes("TA2")) {
                               handleInputChange("discipline", "");
                               if (selectedRole !== "Director" && selectedRole !== "HSE Lead" && selectedRole !== "Engr. Manager") {
                                 handleInputChange("commission", "");
                               }
                             }
-                            // Reset commission when switching discipline for TA2
-                            if (selectedRole === "TA2") {
+                            // Reset commission when switching between TA2 roles
+                            if (selectedRole.includes("TA2")) {
                               handleInputChange("commission", "");
                             }
                             
@@ -1000,45 +996,14 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                     </div>
 
                     {/* Conditional Fields */}
-                    {/* Discipline Field for TA2 - comes first */}
-                    {(formData.role === "TA2" || formData.role.includes("TA2")) && (
-                      <div className="flex flex-col">
-                        <Label htmlFor="discipline" className="mb-2">Discipline *</Label>
-                        <Select 
-                          value={formData.discipline}
-                          onValueChange={(value) => {
-                            handleInputChange("discipline", value);
-                            // Reset commission when changing discipline
-                            handleInputChange("commission", "");
-                          }}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select discipline" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {disciplinesLoading ? (
-                              <SelectItem value="loading" disabled>Loading disciplines...</SelectItem>
-                            ) : disciplineNames.length > 0 ? (
-                              disciplineNames.map((disciplineName) => (
-                                <SelectItem key={disciplineName} value={disciplineName}>
-                                  {disciplineName}
-                                </SelectItem>
-                              ))
-                            ) : (
-                              <SelectItem value="no-disciplines" disabled>No disciplines available</SelectItem>
-                            )}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
+                    {/* Discipline Field removed for TA2 - discipline is now part of the role name */}
 
                     {/* Commission Field for Director, HSE Lead, Engr. Manager, and TA2 roles */}
                     {((formData.role === "Director" || formData.role === "HSE Lead" || formData.role === "Engr. Manager") || 
                       (formData.role.includes("Director") && !formData.role.includes("Plant Director") && !formData.role.includes("Dep Plant Dir")) ||
                       (formData.role.includes("HSE Lead")) || (formData.role.includes("Engr. Manager")) ||
-                       // For TA2, show commission only if discipline is not Tech Safety or Civil
-                       ((formData.role === "TA2" || formData.role.includes("TA2")) && formData.discipline &&
-                       formData.discipline !== "Tech Safety" && formData.discipline !== "Civil")) && (
+                       // For TA2, show commission only if role is not Civil or Tech Safety
+                       (formData.role.includes("TA2") && !formData.role.includes("Civil") && !formData.role.includes("Tech Safety"))) && (
                       <div className="flex flex-col">
                         <Label htmlFor="commission" className="mb-2">Commission *</Label>
                         <Select 
