@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Users, FolderOpen, Settings, ArrowLeft, ClipboardList, CheckCircle, Home, Search, X, Star, Activity, Sliders, Building2, LayoutTemplate, Key, Loader2, Upload, Plug, Shield, FileSearch, Timer, ShieldAlert, Database, Archive, BookOpen, KeyRound, Webhook, HeartPulse, UserMinus, ClipboardCheck, Rocket, Flag } from 'lucide-react';
+import { Users, FolderOpen, Settings, ArrowLeft, ClipboardList, CheckCircle, Home, Search, X, Star, Activity, Sliders, Building2, LayoutTemplate, Key, Loader2, Upload, Plug, Shield, FileSearch, Timer, ShieldAlert, Database, Archive, BookOpen, KeyRound, Webhook, HeartPulse, UserMinus, ClipboardCheck, Rocket, Flag, FileText } from 'lucide-react';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
@@ -44,6 +44,7 @@ const UserOffboarding = lazy(() => import("./admin-tools/UserOffboarding"));
 const PermissionReview = lazy(() => import("./admin-tools/PermissionReview"));
 const DeploymentLog = lazy(() => import("./admin-tools/DeploymentLog"));
 const TenantFeatureFlags = lazy(() => import("./admin-tools/TenantFeatureFlags"));
+const EnterpriseSecurityDocument = lazy(() => import("./admin-tools/EnterpriseSecurityDocument"));
 
 // Loading fallback component
 const ViewLoadingFallback = () => (
@@ -74,7 +75,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   const location = useLocation();
 
   // State management - consolidated for cleaner code
-  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'activity-log' | 'ora-configuration' | 'handover-management' | 'bulk-upload' | 'apis' | 'sso' | 'roles-permissions' | 'audit-logs' | 'session-timeout' | 'brute-force' | 'data-export' | 'audit-retention' | 'disaster-recovery' | 'api-keys' | 'webhook-security' | 'integration-health' | 'user-offboarding' | 'permission-review' | 'deployment-log' | 'feature-flags'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'activity-log' | 'ora-configuration' | 'handover-management' | 'bulk-upload' | 'apis' | 'sso' | 'roles-permissions' | 'audit-logs' | 'session-timeout' | 'brute-force' | 'data-export' | 'audit-retention' | 'disaster-recovery' | 'api-keys' | 'webhook-security' | 'integration-health' | 'user-offboarding' | 'permission-review' | 'deployment-log' | 'feature-flags' | 'security-document'>('dashboard');
 
   // Reset to dashboard when sidebar navigation triggers a same-route click
   useEffect(() => {
@@ -411,6 +412,16 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     stats: {},
     height: 'md:row-span-2',
     onClick: () => setActiveView('feature-flags')
+  }, {
+    id: 'security-document',
+    title: 'Security & Compliance Doc',
+    description: 'Live enterprise security document covering authentication, RBAC, multi-tenancy, audit, DR, and compliance posture',
+    icon: FileText,
+    gradient: 'from-slate-600 to-zinc-700',
+    tooltip: 'View the living ORSH enterprise security and compliance document',
+    stats: {},
+    height: 'md:row-span-2',
+    onClick: () => setActiveView('security-document')
   }];
 
   // Filter admin tools based on search query
@@ -628,6 +639,13 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     return <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
         <Suspense fallback={<ViewLoadingFallback />}>
           <TenantFeatureFlags onBack={() => setActiveView('dashboard')} />
+        </Suspense>
+      </div>;
+  }
+  if (activeView === 'security-document') {
+    return <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
+        <Suspense fallback={<ViewLoadingFallback />}>
+          <EnterpriseSecurityDocument onBack={() => setActiveView('dashboard')} />
         </Suspense>
       </div>;
   }
