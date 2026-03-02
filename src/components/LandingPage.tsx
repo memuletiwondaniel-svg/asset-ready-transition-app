@@ -1,4 +1,5 @@
 import React, { useState, useRef, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -82,6 +83,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
   } = useLanguage();
   const [userInput, setUserInput] = useState('');
   const { favorites } = useFavoritePages();
+  const navigate = useNavigate();
   const [messages, setMessages] = useState<Array<{
     role: 'user' | 'assistant';
     content: string;
@@ -669,7 +671,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                       <Button
                         key={fav.path}
                         variant="outline"
-                        onClick={() => onNavigate(fav.section)}
+                        onClick={() => navigate(fav.path)}
                         className="rounded-lg px-3 py-1.5 h-auto text-xs bg-primary/5 hover:bg-primary/10 hover:border-primary/30 transition-all hover:scale-105"
                       >
                         <Star className="w-3 h-3 mr-1.5 fill-amber-400 text-amber-400" />
