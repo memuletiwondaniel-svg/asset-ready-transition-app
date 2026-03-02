@@ -1,30 +1,57 @@
 
 
-# Plan: Create ORSH Strategic North Star Document
+# Plan: Update Enterprise Security Document — Gap Analysis & ORIP Readiness
 
-## Overview
-Create a new live document — **"ORSH Strategic North Star"** — accessible from Admin Tools alongside the existing Security and Platform Guide documents. This document will articulate the ORIP (Operational Readiness Intelligence Platform) vision, strategic positioning, and evolution roadmap.
+## Gap Analysis Summary
 
-## New File
-**`src/components/admin-tools/StrategicNorthstarDocument.tsx`**
+Analyzing the 25 requirements against the current document:
 
-A scroll-based document following the exact same pattern as `EnterpriseSecurityDocument.tsx` — using the shared `Section`, `StatusTable`, TOC sidebar, and `onBack` prop conventions.
+| # | Requirement | Current Status | Gap |
+|---|---|---|---|
+| a | SSO (Entra/Okta/SAP IAM) | SAML/OIDC documented | Missing explicit Entra ID, Okta, SAP IAM callouts |
+| b | RBAC | Fully documented | No gap |
+| c | Multi-Tenancy | Fully documented | No gap |
+| d | Single-tenant Deployment | Not mentioned | **Gap** — needs new content |
+| e | On-prem compatible | Mentioned briefly in §15 | Needs dedicated treatment |
+| f | Regional Data Hosting | Mentioned in §15 | Adequate, minor enhancement |
+| g | API Isolation per Tenant | Not mentioned | **Gap** — RLS covers data, but API-level isolation not documented |
+| h | Cloud-agnostic | Listed in §15 | Adequate |
+| i | Containerized (Docker) | Listed in §15 | Adequate |
+| j | Kubernetes-deployable | Listed in §15 | Adequate |
+| k | Air-gapped capable | Not mentioned | **Gap** — needs new content |
+| l | Data Segregation | RLS documented, but not framed as "data segregation" | Needs explicit framing |
+| m | Disaster Recovery (RPO/RTO) | Documented (4h/1h) | No gap |
+| n | CI/CD | "Build → Test → Publish" documented | Needs framing as CI/CD pipeline |
+| o | Documented Response Process | Not mentioned | **Gap** — incident response process needed |
+| p.i | Audit log immutability | Mentioned as "tamper-proof" | Needs stronger language |
+| p.ii | Tenant data isolation at DB level | RLS documented | Needs explicit "not just UI filtering" statement |
+| p.iii | Encryption at rest (AES-256) | "Encryption at rest (Supabase)" | Needs AES-256 specification |
+| p.iv | Encryption in transit (TLS 1.2+) | "TLS in transit" | Needs TLS 1.2+ specification |
+| p.v | Role inheritance controls | Not mentioned | **Gap** — needs new content |
+| p.vi | Least-privilege defaults | Not mentioned | **Gap** — needs new content |
+| p.vii | SOC 2 Type I → II | Not mentioned | **Gap** — mandatory for ORIP |
+| p.viii | Pen Test | Not mentioned | **Gap** — mandatory for ORIP |
+| p.ix | ISO 27001 | Not mentioned | **Gap** — mandatory for ORIP |
 
-### Sections (8 total):
-1. **Executive Summary** — ORSH today → ORIP tomorrow; the "quantified operational readiness" category definition
-2. **60-Second Investor Pitch** — Verbatim-aligned pitch: sovereign-deployable, single system of record, weighted readiness index, startup confidence score
-3. **Board-Level Strategic Brief** — Strategic context (fragmented reporting), what ORIP delivers (system of record + intelligence engine), executive impact metrics
-4. **Target Market & Industry Context** — Capital-intensive industries (O&G, LNG, mining); operators like ADNOC, Aramco, QatarEnergy; cost-of-delay framing
-5. **Platform Evolution Roadmap** — Visual timeline: ORSH (current) → ORIP phases — readiness scoring engine, predictive analytics, portfolio benchmarking, AI-driven risk modeling
-6. **Acquisition-Positioning Narrative** — Gap analysis vs AVEVA, Hexagon, Emerson, Honeywell, Schneider; ORIP as embeddable intelligence layer; defensible vertical AI capability
-7. **Technical Differentiation** — Configurable readiness ontology, weighted scoring engine, startup probability analytics, API-first integration, sovereign deployment
-8. **Current Module Alignment** — StatusTable mapping each existing ORSH module (ORA, P2A, PSSR, ORM, Training, Certificates) to its ORIP strategic function
+## Changes to `EnterpriseSecurityDocument.tsx`
 
-## Edits to Existing File
-**`src/components/AdminToolsPage.tsx`**
+### 1. Add new TOC entry: "Enterprise SaaS Architecture Readiness" (new §16)
+A comprehensive new section that consolidates all architecture/deployment requirements in one enterprise-grade table with gap status indicators.
 
-- Add `'northstar-document'` to the `activeView` union type
-- Add lazy import for `StrategicNorthstarDocument`
-- Add dashboard card (icon: `Compass` from lucide, gradient: `from-amber-600 to-orange-700`, title: "Strategic North Star")
-- Add render block for the new view
+### 2. Add new TOC entry: "Security Controls & Hardening" (new §17)
+Covers the security controls sub-items: audit log immutability, DB-level tenant isolation, AES-256 at rest, TLS 1.2+, role inheritance, least-privilege defaults.
+
+### 3. Add new TOC entry: "Compliance Certifications & ORIP Roadmap" (new §18)
+Mandatory ORIP items: SOC 2 Type I → II roadmap, ISO 27001 certification path, penetration testing schedule, incident response process.
+
+### 4. Enhance existing sections
+- **§1 (Auth)**: Add explicit Entra ID, Okta, SAP IAM to SSO row descriptions
+- **§3 (Multi-Tenancy)**: Add "Data Segregation" and "API Isolation per Tenant" rows
+- **§14 (Compliance Summary)**: Add rows for SOC 2, ISO 27001, Pen Test, Air-gapped, Single-tenant
+
+### 5. Add a new Badge status: `'roadmap'`
+For items that are planned/mandatory for ORIP but not yet implemented (displayed as amber/orange badge with "🔶 Roadmap" label).
+
+### Files Modified
+- `src/components/admin-tools/EnterpriseSecurityDocument.tsx`
 
