@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, BookOpen, Workflow, Database, Users, FolderOpen, ClipboardList, Shield, Layers, Code, Table, GitBranch, CheckCircle, FileText, Boxes, ArrowRight, Wrench } from 'lucide-react';
+import { ArrowLeft, BookOpen, Workflow, Database, Users, FolderOpen, ClipboardList, Shield, Layers, Code, Table, GitBranch, CheckCircle, FileText, Boxes, ArrowRight, Wrench, Container } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -73,6 +73,7 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
     { id: 'task-automation', label: 'Task Automation & Triggers' },
     { id: 'integrations', label: 'External Integrations' },
     { id: 'admin-tools', label: 'Admin Tools Reference' },
+    { id: 'deployment-portability', label: 'Deployment Architecture & Portability' },
   ];
 
   return (
@@ -731,6 +732,73 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
                 </div>
               ))}
             </div>
+          </Section>
+
+          <Separator />
+
+          {/* 16. Deployment Architecture & Portability */}
+          <Section id="deployment-portability" icon={<Container className="h-5 w-5 text-primary" />} title="16. Deployment Architecture & Portability">
+            <p>ORSH is designed for <strong className="text-foreground">full architectural portability</strong> — no proprietary dependencies, no vendor lock-in, and multiple deployment models supported.</p>
+
+            <p className="font-medium text-foreground mt-3">Technology Stack Summary</p>
+            <InfoTable headers={['Layer', 'Technology', 'Portability']} rows={[
+              ['Frontend', 'React 18 + TypeScript + Vite + Tailwind CSS', 'Runs anywhere — static build served by any web server'],
+              ['Backend API', 'Supabase PostgREST (auto-generated REST)', 'Replaceable with any PostgreSQL REST layer'],
+              ['Database', 'PostgreSQL 15+', 'Standard SQL — migrate to any PostgreSQL host'],
+              ['Authentication', 'GoTrue (Supabase Auth)', 'Self-hostable via Docker; compatible with SAML/OIDC'],
+              ['Edge Functions', 'Deno-based serverless functions', 'Portable to Deno Deploy, Cloudflare Workers, or self-hosted Deno'],
+              ['Storage', 'S3-compatible object storage', 'Works with AWS S3, MinIO, or any S3-compatible provider'],
+              ['Realtime', 'Supabase Realtime (WebSocket)', 'Self-hostable via official Docker image'],
+            ]} />
+
+            <p className="font-medium text-foreground mt-4">Export & Migration Path</p>
+            <FlowDiagram steps={['Clone GitHub Repo', 'pg_dump Database', 'Export Storage Files', 'Copy Edge Functions', 'Deploy to Target']} />
+            <ul className="list-disc pl-5 space-y-1 mt-2">
+              <li><strong className="text-foreground">Source Code:</strong> Full codebase available via GitHub — <code className="bg-muted px-1 rounded text-xs">git clone</code> and build with <code className="bg-muted px-1 rounded text-xs">npm run build</code></li>
+              <li><strong className="text-foreground">Database:</strong> Export via <code className="bg-muted px-1 rounded text-xs">pg_dump --format=custom</code> — import to any PostgreSQL 15+ instance</li>
+              <li><strong className="text-foreground">Migrations:</strong> All schema changes stored as versioned SQL files in <code className="bg-muted px-1 rounded text-xs">supabase/migrations/</code></li>
+              <li><strong className="text-foreground">Edge Functions:</strong> Standard Deno/TypeScript — deploy to Deno Deploy, self-hosted Deno, or refactor to Node.js</li>
+            </ul>
+
+            <p className="font-medium text-foreground mt-4">Supported Deployment Models</p>
+            <InfoTable headers={['Model', 'Infrastructure', 'Best For']} rows={[
+              ['Cloud (Supabase)', 'Managed Supabase on AWS', 'Fastest setup, zero ops overhead, automatic scaling'],
+              ['Self-Hosted (Docker)', 'Docker Compose on any VM/server', 'Full control, cost optimization, air-gapped environments'],
+              ['On-Premises', 'Customer data center', 'Strict data sovereignty, regulatory compliance'],
+              ['Kubernetes', 'K8s cluster (EKS, AKS, GKE, on-prem)', 'Enterprise scale, HA, auto-scaling, multi-region'],
+            ]} />
+
+            <p className="font-medium text-foreground mt-4">Containerization Architecture</p>
+            <div className="bg-muted/50 rounded-lg p-4 font-mono text-xs space-y-1">
+              <div className="text-foreground font-semibold mb-2">┌─────────── Kubernetes Cluster / Docker Compose ───────────┐</div>
+              <div>│                                                           │</div>
+              <div>│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  │</div>
+              <div>│  │ Frontend  │  │   API    │  │   Auth   │  │ Realtime │  │</div>
+              <div>│  │  (Nginx)  │  │(PostgREST)│  │ (GoTrue) │  │   (WS)   │  │</div>
+              <div>│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘  │</div>
+              <div>│       │             │             │             │         │</div>
+              <div>│  ┌────┴─────────────┴─────────────┴─────────────┴────┐    │</div>
+              <div>│  │              PostgreSQL Database                   │    │</div>
+              <div>│  └──────────────────────────────────────────────────┘    │</div>
+              <div>│                                                           │</div>
+              <div>│  ┌──────────┐  ┌──────────┐                              │</div>
+              <div>│  │ Storage  │  │  Edge Fn  │                              │</div>
+              <div>│  │  (S3)    │  │  (Deno)   │                              │</div>
+              <div>│  └──────────┘  └──────────┘                              │</div>
+              <div>│                                                           │</div>
+              <div>└───────────────────────────────────────────────────────────┘</div>
+            </div>
+
+            <p className="font-medium text-foreground mt-4">Regional Hosting Options — Middle East</p>
+            <InfoTable headers={['Region', 'AWS Code', 'Services Available']} rows={[
+              ['Bahrain', 'me-south-1', 'RDS PostgreSQL, S3, Lambda, EC2, EKS — full stack support'],
+              ['UAE', 'me-central-1', 'RDS PostgreSQL, S3, EC2 — data residency compliance'],
+            ]} />
+            <Card className="bg-primary/5 border-primary/20 mt-2">
+              <CardContent className="pt-4 text-sm">
+                <p><strong className="text-foreground">Data Sovereignty Note:</strong> By deploying to a Middle East AWS region, all data (database, file storage, backups) resides within the selected country's jurisdiction, meeting local regulatory and data residency requirements.</p>
+              </CardContent>
+            </Card>
           </Section>
 
           {/* Footer */}

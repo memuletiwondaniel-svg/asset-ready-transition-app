@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, Shield, CheckCircle, FileText, Lock, Users, Database, Globe, Key, Activity, Server, Flag, MonitorCheck, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Shield, CheckCircle, FileText, Lock, Users, Database, Globe, Key, Activity, Server, Flag, MonitorCheck, RefreshCw, Container } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -63,6 +63,7 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
     { id: 'sso', label: 'Single Sign-On (SSO)' },
     { id: 'db-security', label: 'Database Security' },
     { id: 'compliance', label: 'Enterprise Compliance Summary' },
+    { id: 'portability', label: 'Architecture Portability & Data Sovereignty' },
   ];
 
   return (
@@ -462,6 +463,58 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
               { label: 'Data Retention', value: 'Configurable audit log retention with auto-purge', status: 'active' },
               { label: 'Encryption', value: 'TLS in transit, encryption at rest (Supabase)', status: 'active' },
             ]} />
+          </Section>
+
+          <Separator />
+
+          {/* 15. Architecture Portability & Data Sovereignty */}
+          <Section id="portability" icon={<Container className="h-5 w-5 text-primary" />} title="15. Architecture Portability & Data Sovereignty">
+            <p>ORSH is built on a <strong className="text-foreground">100% open-source, standards-based</strong> technology stack with zero proprietary lock-in. Every component can be exported, migrated, or self-hosted.</p>
+
+            <p className="font-medium text-foreground mt-3">Data Ownership & Export</p>
+            <StatusTable rows={[
+              { label: 'Database Engine', value: 'Standard PostgreSQL — fully owned, exportable via pg_dump', status: 'active' },
+              { label: 'Connection Strings', value: 'Standard PostgreSQL connection URI available for any client', status: 'active' },
+              { label: 'Data Export', value: 'Admin CSV/JSON export + full pg_dump for complete backup', status: 'active' },
+              { label: 'Schema Portability', value: 'All migrations stored as SQL files — apply to any PostgreSQL instance', status: 'active' },
+            ]} />
+
+            <p className="font-medium text-foreground mt-4">Hosting Flexibility</p>
+            <StatusTable rows={[
+              { label: 'Current Hosting', value: 'Supabase Cloud (AWS infrastructure)', status: 'active' },
+              { label: 'Cloud Migration', value: 'Portable to AWS RDS, Azure Database for PostgreSQL, Google Cloud SQL', status: 'configured' },
+              { label: 'Self-Hosted (Docker)', value: 'Official Supabase Docker images for all backend services', status: 'configured' },
+              { label: 'On-Premises', value: 'Full on-prem deployment via Docker Compose or Kubernetes', status: 'configured' },
+            ]} />
+
+            <p className="font-medium text-foreground mt-4">Regional Data Residency — Middle East</p>
+            <StatusTable rows={[
+              { label: 'AWS Bahrain', value: 'me-south-1 — Available for PostgreSQL, Storage, and Edge Functions', status: 'configured' },
+              { label: 'AWS UAE', value: 'me-central-1 — Available for regional data residency requirements', status: 'configured' },
+              { label: 'Compliance', value: 'Data sovereignty requirements met via regional hosting selection', status: 'info' },
+            ]} />
+
+            <p className="font-medium text-foreground mt-4">Kubernetes & Containerization</p>
+            <StatusTable rows={[
+              { label: 'Frontend', value: 'Static build served via Nginx container — standard K8s Deployment', status: 'configured' },
+              { label: 'API Gateway', value: 'PostgREST container — auto-generates REST API from PostgreSQL schema', status: 'configured' },
+              { label: 'Authentication', value: 'GoTrue container — handles auth, JWT, SSO independently', status: 'configured' },
+              { label: 'Realtime', value: 'Supabase Realtime container — WebSocket subscriptions', status: 'configured' },
+              { label: 'Storage', value: 'Supabase Storage container — S3-compatible object storage', status: 'configured' },
+              { label: 'Helm Charts', value: 'Community-maintained Helm charts available for K8s orchestration', status: 'info' },
+            ]} />
+
+            <p className="font-medium text-foreground mt-4">Zero Vendor Lock-In</p>
+            <Card className="bg-emerald-500/5 border-emerald-500/20">
+              <CardContent className="pt-4 text-sm space-y-2">
+                <ul className="list-disc pl-5 space-y-1">
+                  <li><strong className="text-foreground">Frontend:</strong> React 18 + TypeScript + Vite + Tailwind — runs anywhere Node.js runs</li>
+                  <li><strong className="text-foreground">Backend:</strong> PostgreSQL + Deno Edge Functions — portable to any PostgreSQL host and Deno runtime</li>
+                  <li><strong className="text-foreground">Source Code:</strong> Full GitHub repository — clone and deploy independently at any time</li>
+                  <li><strong className="text-foreground">No Proprietary Components:</strong> Every library and service used is open-source or has open standards-based alternatives</li>
+                </ul>
+              </CardContent>
+            </Card>
           </Section>
 
           {/* Footer */}
