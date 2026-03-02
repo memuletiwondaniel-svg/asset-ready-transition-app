@@ -1455,14 +1455,19 @@ export type Database = {
           completed_count: number | null
           confidence_level: string | null
           critical_path_score: number | null
+          critical_path_stability_index: number | null
+          dimension_scores: Json | null
           id: string
           module_scores: Json
           node_count: number | null
           notes: string | null
           overall_score: number
           project_id: string
+          risk_penalty_total: number | null
+          schedule_adherence_index: number | null
           schedule_variance_days: number | null
           snapshot_type: string
+          startup_confidence_score: number | null
           tenant_id: string | null
           weight_profile_id: string | null
         }
@@ -1474,14 +1479,19 @@ export type Database = {
           completed_count?: number | null
           confidence_level?: string | null
           critical_path_score?: number | null
+          critical_path_stability_index?: number | null
+          dimension_scores?: Json | null
           id?: string
           module_scores?: Json
           node_count?: number | null
           notes?: string | null
           overall_score?: number
           project_id: string
+          risk_penalty_total?: number | null
+          schedule_adherence_index?: number | null
           schedule_variance_days?: number | null
           snapshot_type?: string
+          startup_confidence_score?: number | null
           tenant_id?: string | null
           weight_profile_id?: string | null
         }
@@ -1493,14 +1503,19 @@ export type Database = {
           completed_count?: number | null
           confidence_level?: string | null
           critical_path_score?: number | null
+          critical_path_stability_index?: number | null
+          dimension_scores?: Json | null
           id?: string
           module_scores?: Json
           node_count?: number | null
           notes?: string | null
           overall_score?: number
           project_id?: string
+          risk_penalty_total?: number | null
+          schedule_adherence_index?: number | null
           schedule_variance_days?: number | null
           snapshot_type?: string
+          startup_confidence_score?: number | null
           tenant_id?: string | null
           weight_profile_id?: string | null
         }
@@ -7641,8 +7656,10 @@ export type Database = {
       readiness_nodes: {
         Row: {
           completion_pct: number | null
+          confidence_factor: number | null
           created_at: string
           description: string | null
+          dimension_id: string | null
           id: string
           label: string
           metadata: Json | null
@@ -7650,6 +7667,7 @@ export type Database = {
           node_type: Database["public"]["Enums"]["readiness_node_type"]
           phase: string | null
           project_id: string
+          risk_severity: string | null
           source_id: string
           source_table: string
           status: Database["public"]["Enums"]["readiness_node_status"]
@@ -7659,8 +7677,10 @@ export type Database = {
         }
         Insert: {
           completion_pct?: number | null
+          confidence_factor?: number | null
           created_at?: string
           description?: string | null
+          dimension_id?: string | null
           id?: string
           label: string
           metadata?: Json | null
@@ -7668,6 +7688,7 @@ export type Database = {
           node_type: Database["public"]["Enums"]["readiness_node_type"]
           phase?: string | null
           project_id: string
+          risk_severity?: string | null
           source_id: string
           source_table: string
           status?: Database["public"]["Enums"]["readiness_node_status"]
@@ -7677,8 +7698,10 @@ export type Database = {
         }
         Update: {
           completion_pct?: number | null
+          confidence_factor?: number | null
           created_at?: string
           description?: string | null
+          dimension_id?: string | null
           id?: string
           label?: string
           metadata?: Json | null
@@ -7686,6 +7709,7 @@ export type Database = {
           node_type?: Database["public"]["Enums"]["readiness_node_type"]
           phase?: string | null
           project_id?: string
+          risk_severity?: string | null
           source_id?: string
           source_table?: string
           status?: Database["public"]["Enums"]["readiness_node_status"]
@@ -7694,6 +7718,13 @@ export type Database = {
           weight?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "readiness_nodes_dimension_id_fkey"
+            columns: ["dimension_id"]
+            isOneToOne: false
+            referencedRelation: "vcr_item_categories"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "readiness_nodes_project_id_fkey"
             columns: ["project_id"]
@@ -8728,35 +8759,58 @@ export type Database = {
       vcr_item_categories: {
         Row: {
           code: string
+          confidence_factor_default: number | null
           created_at: string
+          default_weight: number | null
           description: string | null
           display_order: number
           id: string
           is_active: boolean
+          is_readiness_dimension: boolean | null
           name: string
+          risk_severity_multiplier: number | null
+          tenant_id: string | null
           updated_at: string
         }
         Insert: {
           code: string
+          confidence_factor_default?: number | null
           created_at?: string
+          default_weight?: number | null
           description?: string | null
           display_order?: number
           id?: string
           is_active?: boolean
+          is_readiness_dimension?: boolean | null
           name: string
+          risk_severity_multiplier?: number | null
+          tenant_id?: string | null
           updated_at?: string
         }
         Update: {
           code?: string
+          confidence_factor_default?: number | null
           created_at?: string
+          default_weight?: number | null
           description?: string | null
           display_order?: number
           id?: string
           is_active?: boolean
+          is_readiness_dimension?: boolean | null
           name?: string
+          risk_severity_multiplier?: number | null
+          tenant_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "vcr_item_categories_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       vcr_items: {
         Row: {

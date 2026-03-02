@@ -546,6 +546,16 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
           <Section id="architecture-readiness" icon={<Target className="h-5 w-5 text-primary" />} title="16. Enterprise SaaS Architecture Readiness">
             <p>Consolidated assessment of all enterprise architecture requirements against ORSH current state. Items marked <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/20 mx-1 text-xs">🔶 Roadmap</Badge> are planned for ORIP evolution.</p>
 
+            <p className="font-medium text-foreground mt-3">ORIP Scoring & Intelligence Engine</p>
+            <StatusTable rows={[
+              { label: 'Readiness Ontology', value: 'VCR Item Categories (Design Integrity, Technical Integrity, Operating Integrity, Management Systems, Health & Safety) serve as tenant-configurable readiness dimensions with weights and confidence factors', status: 'active' },
+              { label: 'ORI Scoring Engine', value: 'Full ORIP formula: ORI = Σ(Dimension Weight × DS_i) − Risk Penalty; Confidence-adjusted dimension scores; Risk penalty capped at 15%', status: 'active' },
+              { label: 'Startup Confidence Score', value: 'SCS = ORI × Schedule Adherence × Critical Path Stability — executive decision metric with High/Moderate/High Risk/Unlikely classifications', status: 'active' },
+              { label: 'Risk Penalty Engine', value: 'Severity-weighted risk deductions: Minor(0.5×), Moderate(1.0×), Major(2.0×), Startup-blocking(3.0×) — prevents inflated readiness reporting', status: 'active' },
+              { label: 'Confidence Factor System', value: 'Auto-assigned: Verified/Approved=1.0, In-progress/Self-reported=0.8, Forecasted/Not-started=0.7', status: 'active' },
+              { label: 'Executive Dashboard', value: 'Strategic layout: ORI/SCS banner, dimension breakdown with trends, Top 5 blockers, predictive trend chart, risk impact summary', status: 'active' },
+            ]} />
+
             <p className="font-medium text-foreground mt-3">Identity & Access</p>
             <StatusTable rows={[
               { label: 'SSO (Azure AD / Entra ID)', value: 'SAML 2.0 + OIDC integration via Supabase Auth; per-tenant IdP configuration', status: 'active' },
@@ -562,6 +572,7 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
               { label: 'Data Segregation', value: 'PostgreSQL RLS enforces tenant isolation at the query engine level — not UI-side filtering', status: 'active' },
               { label: 'API Isolation per Tenant', value: 'All API requests scoped by tenant via JWT claims + RLS; tenant-bound API keys with independent rate limits', status: 'active' },
               { label: 'Single-Tenant Deployment', value: 'Architecture supports dedicated instance per client via Docker Compose or Kubernetes — isolated DB, storage, and auth', status: 'configured' },
+              { label: 'Tenant-Configurable Scoring', value: 'Each tenant can customize readiness dimension weights, confidence defaults, and risk severity multipliers independently', status: 'active' },
             ]} />
 
             <p className="font-medium text-foreground mt-4">Infrastructure & Deployment</p>
