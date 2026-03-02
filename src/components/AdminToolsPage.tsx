@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Users, FolderOpen, Settings, ArrowLeft, ClipboardList, CheckCircle, Home, Search, X, Star, Activity, Sliders, Building2, LayoutTemplate, Key, Loader2, Upload, Plug, Shield, FileSearch, Timer } from 'lucide-react';
+import { Users, FolderOpen, Settings, ArrowLeft, ClipboardList, CheckCircle, Home, Search, X, Star, Activity, Sliders, Building2, LayoutTemplate, Key, Loader2, Upload, Plug, Shield, FileSearch, Timer, ShieldAlert } from 'lucide-react';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
@@ -33,6 +33,7 @@ const SSOConfiguration = lazy(() => import("./admin-tools/SSOConfiguration").the
 const RolePermissionsManager = lazy(() => import("./admin-tools/RolePermissionsManager"));
 const AuditLogViewer = lazy(() => import("./admin-tools/AuditLogViewer"));
 const SessionTimeoutConfig = lazy(() => import("./admin-tools/SessionTimeoutConfig"));
+const BruteForceConfig = lazy(() => import("./admin-tools/BruteForceConfig"));
 
 // Loading fallback component
 const ViewLoadingFallback = () => (
@@ -63,7 +64,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   const location = useLocation();
 
   // State management - consolidated for cleaner code
-  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'activity-log' | 'ora-configuration' | 'handover-management' | 'bulk-upload' | 'apis' | 'sso' | 'roles-permissions' | 'audit-logs' | 'session-timeout'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'activity-log' | 'ora-configuration' | 'handover-management' | 'bulk-upload' | 'apis' | 'sso' | 'roles-permissions' | 'audit-logs' | 'session-timeout' | 'brute-force'>('dashboard');
 
   // Reset to dashboard when sidebar navigation triggers a same-route click
   useEffect(() => {
@@ -290,6 +291,16 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     stats: {},
     height: 'md:row-span-2',
     onClick: () => setActiveView('session-timeout')
+  }, {
+    id: 'brute-force',
+    title: 'Brute-Force Protection',
+    description: 'Configure account lockout thresholds, lockout duration, and progressive lockout policies',
+    icon: ShieldAlert,
+    gradient: 'from-red-500 to-rose-600',
+    tooltip: 'Protect accounts from brute-force login attacks',
+    stats: {},
+    height: 'md:row-span-2',
+    onClick: () => setActiveView('brute-force')
   }];
 
   // Filter admin tools based on search query
@@ -430,6 +441,13 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     return <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
         <Suspense fallback={<ViewLoadingFallback />}>
           <SessionTimeoutConfig onBack={() => setActiveView('dashboard')} />
+        </Suspense>
+      </div>;
+  }
+  if (activeView === 'brute-force') {
+    return <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
+        <Suspense fallback={<ViewLoadingFallback />}>
+          <BruteForceConfig onBack={() => setActiveView('dashboard')} />
         </Suspense>
       </div>;
   }

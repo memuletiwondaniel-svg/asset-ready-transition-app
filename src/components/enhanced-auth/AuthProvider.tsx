@@ -107,6 +107,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, password: string, rememberMe: boolean = true) => {
     try {
+      // Check if account is locked BEFORE attempting sign-in
+      try {
+        const { data: lockStatus } = await supabase.rpc('check_account_lockout', {
+          user_email: email,
+        });
+
+        const lockData = lockStatus as any;
+        if (lockData && lockData.locked) {
+          const remainingMin = Math.ceil((lockData.remaining_seconds || 0) / 60);
+          const message = `Account is locked due to too many failed attempts. Try again in ${remainingMin} minute${remainingMin !== 1 ? 's' : ''}.`;
+          toast.error(message);
+          return { error: { message } };
+        }
+      } catch {
+        // If check fails, allow the attempt (fail-open for the check only)
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -123,9 +140,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               .single();
             
             if (profileData) {
-              await supabase.rpc('track_failed_login', {
+              const { data: trackResult } = await supabase.rpc('track_failed_login', {
                 user_uuid: profileData.user_id
               });
+
+              const tr = trackResult as any;
+              // Show remaining attempts warning
+              if (tr && !tr.locked && tr.remaining > 0 && tr.remaining <= 3) {
+                toast.warning(`Invalid credentials. ${tr.remaining} attempt${tr.remaining !== 1 ? 's' : ''} remaining before lockout.`);
+              } else if (tr && tr.locked) {
+                const lockMin = Math.ceil((tr.locked_until ? 
+                  (new Date(tr.locked_until).getTime() - Date.now()) / 60000 : 30));
+                toast.error(`Account locked after ${tr.max_attempts} failed attempts. Try again in ${lockMin} minutes.`);
+                return { error };
+              }
             }
             // Audit log: failed login
             await supabase.from('audit_logs').insert({
