@@ -801,6 +801,62 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
             </Card>
           </Section>
 
+          {/* 17. Readiness Ontology & Scoring Engine */}
+          <Separator />
+          <Section id="readiness-scoring" icon={<Layers className="h-5 w-5 text-primary" />} title="17. Readiness Ontology & Scoring Engine (ORIP)">
+            <p>The ORIP Scoring Engine converts execution data from all modules into a quantified <strong className="text-foreground">Operational Readiness Index (ORI)</strong> and <strong className="text-foreground">Startup Confidence Score (SCS)</strong>.</p>
+
+            <p className="font-medium text-foreground mt-3">Readiness Dimensions</p>
+            <p>VCR Item Categories serve as tenant-configurable readiness dimensions:</p>
+            <InfoTable headers={['Code', 'Dimension', 'Default Weight', 'Maps From']} rows={[
+              ['DI2', 'Design Integrity', '20%', 'P2A Handover Points'],
+              ['TI', 'Technical Integrity', '20%', 'Training Items'],
+              ['OI', 'Operating Integrity', '20%', 'ORA Plan Activities'],
+              ['MS', 'Management Systems', '20%', 'ORM Deliverables'],
+              ['HS', 'Health & Safety', '20%', 'PSSRs'],
+            ]} />
+
+            <p className="font-medium text-foreground mt-4">ORIP Formula</p>
+            <div className="bg-muted/50 rounded-lg p-4 font-mono text-xs space-y-2">
+              <div><strong>Dimension Score:</strong> DS_i = (Σ Subcomponent_Weight × Completion%) × Confidence_Factor</div>
+              <div><strong>Risk Penalty:</strong> RP_i = Σ (Risk_Severity × Impact_Multiplier) — capped at 15%</div>
+              <div><strong>ORI:</strong> Σ (Dimension_Weight_i × DS_i) − Global_Risk_Penalty</div>
+              <div><strong>SCS:</strong> ORI × Schedule_Adherence_Index × Critical_Path_Stability_Index</div>
+            </div>
+
+            <p className="font-medium text-foreground mt-4">Confidence Factors</p>
+            <InfoTable headers={['Level', 'Factor', 'Applied When']} rows={[
+              ['Verified / Approved', '1.0', 'Node status = completed, approved, SOF_APPROVED'],
+              ['Self-Reported', '0.8', 'Node status = in_progress, under_review'],
+              ['Forecasted', '0.7', 'Node status = not_started'],
+            ]} />
+
+            <p className="font-medium text-foreground mt-4">Risk Severity Multipliers</p>
+            <InfoTable headers={['Severity', 'Multiplier', 'Example']} rows={[
+              ['Minor', '0.5', 'Low-priority open items'],
+              ['Moderate', '1.0', 'Overdue milestones'],
+              ['Major', '2.0', 'Blocked VCR prerequisites'],
+              ['Startup-Blocking', '3.0', 'Critical path items preventing startup'],
+            ]} />
+
+            <p className="font-medium text-foreground mt-4">Startup Confidence Score (SCS) Classification</p>
+            <InfoTable headers={['Range', 'Classification', 'Executive Interpretation']} rows={[
+              ['85–100', 'High Confidence', 'On track for startup'],
+              ['70–84', 'Moderate Risk', 'Attention required on lagging dimensions'],
+              ['50–69', 'High Risk', 'Significant blockers to startup'],
+              ['< 50', 'Startup Unlikely', 'Major intervention required'],
+            ]} />
+
+            <p className="font-medium text-foreground mt-4">Key Tables</p>
+            <InfoTable headers={['Table', 'Purpose']} rows={[
+              ['vcr_item_categories', 'Readiness dimensions with weights, confidence defaults, risk multipliers'],
+              ['readiness_nodes', 'Synced execution data with dimension_id, confidence_factor, risk_severity'],
+              ['readiness_dependencies', 'Cross-node dependencies (blocks, gates, requires, informs)'],
+              ['ori_scores', 'Calculated ORI snapshots with dimension_scores, SCS, risk_penalty_total'],
+              ['ori_weight_profiles', 'Named weight configurations per tenant'],
+            ]} />
+          </Section>
+
           {/* Footer */}
           <div className="text-center text-xs text-muted-foreground py-6 border-t border-border">
             <p>This is a living document maintained within the ORSH platform.</p>

@@ -216,9 +216,11 @@ const StrategicNorthstarDocument: React.FC<StrategicNorthstarDocumentProps> = ({
               { label: 'Readiness Tracking', value: 'System and subsystem readiness tracking across all disciplines', status: 'active' },
               { label: 'Action Governance', value: 'Action tracking and closeout with full audit trail', status: 'active' },
               { label: 'Multi-Org Collaboration', value: 'Cross-organization workflows with enterprise-grade auditability', status: 'active' },
-              { label: 'Readiness Index', value: 'Weighted Operational Readiness Index with structured risk penalty logic', status: 'planned' },
-              { label: 'Confidence Score', value: 'Startup Confidence Score with readiness trajectory forecasting', status: 'planned' },
-              { label: 'Exposure Identification', value: 'Startup-critical exposure identification and alerting', status: 'planned' },
+              { label: 'Readiness Index (ORI)', value: 'Dimension-based Operational Readiness Index with confidence factors and risk penalty logic', status: 'active' },
+              { label: 'Startup Confidence Score', value: 'SCS = ORI × Schedule Adherence × Critical Path Stability — executive decision metric', status: 'active' },
+              { label: 'Risk Penalty Engine', value: 'Severity-weighted risk deductions (Minor to Startup-blocking) — prevents inflated readiness reporting', status: 'active' },
+              { label: 'Executive Dashboard', value: 'Strategic decision view with ORI/SCS banner, dimension breakdown, Top 5 blockers, predictive trends', status: 'active' },
+              { label: 'Predictive Analytics', value: 'Startup probability forecasting and readiness trajectory analysis', status: 'planned' },
             ]} />
 
             <p className="font-medium text-foreground mt-4">Executive Impact</p>
@@ -291,43 +293,49 @@ const StrategicNorthstarDocument: React.FC<StrategicNorthstarDocumentProps> = ({
               </Card>
 
               {/* Phase 1 */}
-              <Card className="border-amber-500/20">
+              <Card className="border-emerald-500/20">
                 <CardContent className="pt-4">
                   <div className="flex items-center gap-3 mb-2">
-                    <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/20">Phase 1</Badge>
-                    <p className="font-bold text-foreground">Readiness Scoring Engine</p>
+                    <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">Phase 1 — Active</Badge>
+                    <p className="font-bold text-foreground">Readiness Scoring Engine (ORIP Core)</p>
                   </div>
-                  <p className="text-sm text-muted-foreground">Weighted Operational Readiness Index • Configurable scoring ontology • Discipline-level readiness dashboards • Risk penalty logic</p>
+                  <p className="text-sm text-muted-foreground">Dimension-based Operational Readiness Index (ORI) using VCR Item Categories as configurable readiness dimensions (Design Integrity, Technical Integrity, Operating Integrity, Management Systems, Health & Safety). Full ORIP formula with confidence factors (0.7–1.0), risk penalty engine (capped at 15%), and Startup Confidence Score (SCS = ORI × Schedule Adherence × Critical Path Stability).</p>
+                  <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                    <div className="bg-emerald-500/5 rounded p-2"><strong className="text-foreground">ORI Formula:</strong> Σ(Dimension Weight × DS_i) − Risk Penalty</div>
+                    <div className="bg-emerald-500/5 rounded p-2"><strong className="text-foreground">SCS:</strong> ORI × Schedule Adherence × Critical Path Stability</div>
+                    <div className="bg-emerald-500/5 rounded p-2"><strong className="text-foreground">Confidence:</strong> Verified=1.0, Self-reported=0.8, Forecasted=0.7</div>
+                    <div className="bg-emerald-500/5 rounded p-2"><strong className="text-foreground">Risk Severity:</strong> Minor(0.5), Moderate(1.0), Major(2.0), Startup-blocking(3.0)</div>
+                  </div>
                 </CardContent>
               </Card>
 
               {/* Phase 2 */}
-              <Card className="border-blue-500/20">
+              <Card className="border-amber-500/20">
                 <CardContent className="pt-4">
                   <div className="flex items-center gap-3 mb-2">
-                    <Badge className="bg-blue-500/10 text-blue-600 border-blue-500/20">Phase 2</Badge>
+                    <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/20">Phase 2</Badge>
                     <p className="font-bold text-foreground">Predictive Analytics & Confidence Scoring</p>
                   </div>
-                  <p className="text-sm text-muted-foreground">Startup Confidence Score • Readiness trajectory forecasting • Monte Carlo simulation for startup probability • What-if scenario modeling</p>
+                  <p className="text-sm text-muted-foreground">Readiness trajectory forecasting • Monte Carlo simulation for startup probability • What-if scenario modeling • Readiness decay risk detection • Lagging discipline identification</p>
                 </CardContent>
               </Card>
 
               {/* Phase 3 */}
-              <Card className="border-purple-500/20">
+              <Card className="border-blue-500/20">
                 <CardContent className="pt-4">
                   <div className="flex items-center gap-3 mb-2">
-                    <Badge className="bg-purple-500/10 text-purple-600 border-purple-500/20">Phase 3</Badge>
+                    <Badge className="bg-blue-500/10 text-blue-600 border-blue-500/20">Phase 3</Badge>
                     <p className="font-bold text-foreground">Portfolio Benchmarking & Cross-Project Intelligence</p>
                   </div>
-                  <p className="text-sm text-muted-foreground">Cross-project readiness benchmarking • Industry-level KPIs • Organizational maturity scoring • Portfolio risk dashboard</p>
+                  <p className="text-sm text-muted-foreground">Cross-project readiness benchmarking • Industry-level KPIs • Organizational maturity scoring • Portfolio risk dashboard • Capital risk heatmap</p>
                 </CardContent>
               </Card>
 
               {/* Phase 4 */}
-              <Card className="border-rose-500/20">
+              <Card className="border-purple-500/20">
                 <CardContent className="pt-4">
                   <div className="flex items-center gap-3 mb-2">
-                    <Badge className="bg-rose-500/10 text-rose-600 border-rose-500/20">Phase 4</Badge>
+                    <Badge className="bg-purple-500/10 text-purple-600 border-purple-500/20">Phase 4</Badge>
                     <p className="font-bold text-foreground">AI-Driven Risk Modeling</p>
                   </div>
                   <p className="text-sm text-muted-foreground">Machine learning on historical readiness data • Anomaly detection for at-risk activities • Natural language risk summaries • Autonomous alerting</p>
@@ -401,8 +409,12 @@ const StrategicNorthstarDocument: React.FC<StrategicNorthstarDocumentProps> = ({
             <p>ORIP's technical architecture is purpose-built for operational readiness intelligence in regulated, sovereign-sensitive environments.</p>
             
             <StatusTable rows={[
-              { label: 'Configurable Readiness Ontology', value: 'Tenant-specific readiness dimensions, weightings, and scoring rules', status: 'planned' },
-              { label: 'Weighted Scoring Engine', value: 'Multi-dimensional readiness index with risk penalty logic', status: 'planned' },
+              { label: 'Configurable Readiness Ontology', value: 'VCR Item Categories serve as tenant-configurable readiness dimensions with custom weights, confidence factors, and risk multipliers', status: 'active' },
+              { label: 'Dimension-Based Scoring Engine', value: 'ORI = Σ(Dimension Weight × DS_i) − Risk Penalty; DS_i = Completion% × Confidence Factor; Risk Penalty capped at 15%', status: 'active' },
+              { label: 'Startup Confidence Score (SCS)', value: 'SCS = ORI × Schedule Adherence Index × Critical Path Stability Index — VP-level decision metric', status: 'active' },
+              { label: 'Confidence Factor System', value: 'Verified/audited=1.0, Self-reported=0.8, Forecasted=0.7 — discourages inflated reporting', status: 'active' },
+              { label: 'Risk Penalty Engine', value: 'Severity multipliers: Minor(0.5), Moderate(1.0), Major(2.0), Startup-blocking(3.0)', status: 'active' },
+              { label: 'Executive Dashboard', value: 'Strategic decision view: ORI banner, SCS, dimension breakdown with trends, Top 5 blockers, predictive trend chart', status: 'active' },
               { label: 'Startup Probability Analytics', value: 'Monte Carlo simulation and trajectory forecasting', status: 'roadmap' },
               { label: 'API-First Integration', value: 'RESTful APIs with scoped keys, rate limiting, webhook support', status: 'active' },
               { label: 'Sovereign Deployment', value: 'Docker, Kubernetes, on-prem; Middle East regions (AWS me-south-1, me-central-1)', status: 'active' },

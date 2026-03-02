@@ -9,6 +9,11 @@ export interface VCRItemCategory {
   description: string | null;
   is_active: boolean;
   display_order: number;
+  tenant_id: string | null;
+  default_weight: number | null;
+  confidence_factor_default: number | null;
+  risk_severity_multiplier: number | null;
+  is_readiness_dimension: boolean;
   created_at: string;
   updated_at: string;
 }

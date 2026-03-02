@@ -15,6 +15,9 @@ export interface ReadinessNode {
   weight: number;
   module: string;
   phase: string | null;
+  dimension_id: string | null;
+  confidence_factor: number;
+  risk_severity: string;
   metadata: Record<string, unknown>;
   created_at: string;
   updated_at: string;
@@ -36,6 +39,11 @@ export interface ORIScore {
   project_id: string;
   overall_score: number;
   module_scores: Record<string, any>;
+  dimension_scores: Record<string, any>;
+  risk_penalty_total: number;
+  startup_confidence_score: number | null;
+  schedule_adherence_index: number;
+  critical_path_stability_index: number;
   node_count: number;
   completed_count: number;
   blocked_count: number;
