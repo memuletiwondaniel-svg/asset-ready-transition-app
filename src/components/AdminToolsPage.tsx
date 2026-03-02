@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Users, FolderOpen, Settings, ArrowLeft, ClipboardList, CheckCircle, Home, Search, X, Star, Activity, Sliders, Building2, LayoutTemplate, Key, Loader2, Upload, Plug, Shield, FileSearch, Timer, ShieldAlert, Database, Archive, BookOpen, KeyRound, Webhook, HeartPulse, UserMinus, ClipboardCheck, Rocket, Flag, FileText, Compass } from 'lucide-react';
+import { Users, FolderOpen, Settings, ArrowLeft, ClipboardList, CheckCircle, Home, Search, X, Star, Activity, Sliders, Building2, LayoutTemplate, Key, Loader2, Upload, Plug, Shield, FileSearch, Timer, ShieldAlert, Database, Archive, BookOpen, KeyRound, Webhook, HeartPulse, UserMinus, ClipboardCheck, Rocket, Flag, FileText, Compass, AlertTriangle, Container } from 'lucide-react';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
@@ -47,6 +47,8 @@ const TenantFeatureFlags = lazy(() => import("./admin-tools/TenantFeatureFlags")
 const EnterpriseSecurityDocument = lazy(() => import("./admin-tools/EnterpriseSecurityDocument"));
 const PlatformGuideDocument = lazy(() => import("./admin-tools/PlatformGuideDocument"));
 const StrategicNorthstarDocument = lazy(() => import("./admin-tools/StrategicNorthstarDocument"));
+const IncidentResponseRunbook = lazy(() => import("./admin-tools/IncidentResponseRunbook"));
+const DeploymentConfigs = lazy(() => import("./admin-tools/DeploymentConfigs"));
 
 // Loading fallback component
 const ViewLoadingFallback = () => (
@@ -77,7 +79,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   const location = useLocation();
 
   // State management - consolidated for cleaner code
-  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'activity-log' | 'ora-configuration' | 'handover-management' | 'bulk-upload' | 'apis' | 'sso' | 'roles-permissions' | 'audit-logs' | 'session-timeout' | 'brute-force' | 'data-export' | 'audit-retention' | 'disaster-recovery' | 'api-keys' | 'webhook-security' | 'integration-health' | 'user-offboarding' | 'permission-review' | 'deployment-log' | 'feature-flags' | 'security-document' | 'platform-guide' | 'northstar-document'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'activity-log' | 'ora-configuration' | 'handover-management' | 'bulk-upload' | 'apis' | 'sso' | 'roles-permissions' | 'audit-logs' | 'session-timeout' | 'brute-force' | 'data-export' | 'audit-retention' | 'disaster-recovery' | 'api-keys' | 'webhook-security' | 'integration-health' | 'user-offboarding' | 'permission-review' | 'deployment-log' | 'feature-flags' | 'security-document' | 'platform-guide' | 'northstar-document' | 'incident-response' | 'deployment-configs'>('dashboard');
 
   // Reset to dashboard when sidebar navigation triggers a same-route click
   useEffect(() => {
@@ -444,6 +446,26 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     stats: {},
     height: 'md:row-span-2',
     onClick: () => setActiveView('northstar-document')
+  }, {
+    id: 'incident-response',
+    title: 'Incident Response Runbook',
+    description: 'Interactive severity classification, escalation paths, response SLAs, and containment procedures',
+    icon: AlertTriangle,
+    gradient: 'from-red-600 to-rose-700',
+    tooltip: 'Structured incident response with P1-P4 severity levels and built-in containment capabilities',
+    stats: {},
+    height: 'md:row-span-2',
+    onClick: () => setActiveView('incident-response')
+  }, {
+    id: 'deployment-configs',
+    title: 'Deployment Configs',
+    description: 'Docker Compose for single-tenant/air-gapped, GitHub Actions CI/CD pipeline, and environment templates',
+    icon: Container,
+    gradient: 'from-cyan-600 to-blue-700',
+    tooltip: 'Download ready-to-use deployment configurations for self-hosted and CI/CD environments',
+    stats: {},
+    height: 'md:row-span-2',
+    onClick: () => setActiveView('deployment-configs')
   }];
 
   // Filter admin tools based on search query
@@ -682,6 +704,20 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     return <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
         <Suspense fallback={<ViewLoadingFallback />}>
           <StrategicNorthstarDocument onBack={() => setActiveView('dashboard')} />
+        </Suspense>
+      </div>;
+  }
+  if (activeView === 'incident-response') {
+    return <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
+        <Suspense fallback={<ViewLoadingFallback />}>
+          <IncidentResponseRunbook onBack={() => setActiveView('dashboard')} />
+        </Suspense>
+      </div>;
+  }
+  if (activeView === 'deployment-configs') {
+    return <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
+        <Suspense fallback={<ViewLoadingFallback />}>
+          <DeploymentConfigs onBack={() => setActiveView('dashboard')} />
         </Suspense>
       </div>;
   }

@@ -553,7 +553,7 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
               { label: 'SSO (SAP IAM)', value: 'Supported via SAML 2.0 federation; requires customer IdP configuration', status: 'configured' },
               { label: 'RBAC', value: 'Granular permission-based RBAC with dedicated roles table and server-side enforcement', status: 'active' },
               { label: 'Role Inheritance Controls', value: 'Hierarchical role-permission model; permissions assigned per role, not per user', status: 'active' },
-              { label: 'Least-Privilege Defaults', value: 'New users receive minimal permissions; admin must explicitly grant elevated access', status: 'roadmap' },
+              { label: 'Least-Privilege Defaults', value: 'New users auto-assigned "Viewer" role with minimal permissions via database trigger; admin must explicitly grant elevated access', status: 'active' },
             ]} />
 
             <p className="font-medium text-foreground mt-4">Multi-Tenancy & Data</p>
@@ -578,7 +578,7 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
             <StatusTable rows={[
               { label: 'Disaster Recovery', value: 'Defined RPO (1h) and RTO (4h); daily automated backups with documented recovery runbook', status: 'active' },
               { label: 'CI/CD Pipeline', value: 'Build → Test (Preview) → Verify (8-point checklist) → Publish with deployment logging and rollback', status: 'active' },
-              { label: 'Incident Response Process', value: 'Documented escalation path with primary emergency contact; needs formal SLA and runbook expansion', status: 'roadmap' },
+              { label: 'Incident Response Process', value: 'Interactive runbook with P1-P4 severity classification, defined SLAs (15min–24h), escalation paths, and built-in containment capabilities', status: 'active' },
             ]} />
           </Section>
 
@@ -594,7 +594,7 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
               { label: 'Encryption at Rest (AES-256)', value: 'All data encrypted at rest using AES-256 via the underlying cloud infrastructure (Supabase/AWS). Storage buckets and database volumes use AES-256 encryption.', status: 'active' },
               { label: 'Encryption in Transit (TLS 1.2+)', value: 'All client-server communication enforced via TLS 1.2+ (HTTPS). Database connections use SSL/TLS. No plaintext channels permitted.', status: 'active' },
               { label: 'Role Inheritance Controls', value: 'Permissions are assigned to roles (not users directly). Users inherit permissions from their assigned role. Role changes propagate immediately.', status: 'active' },
-              { label: 'Least-Privilege Defaults', value: 'New user accounts are provisioned with minimal permissions (view-only). Elevated access requires explicit admin grant with audit log entry.', status: 'roadmap' },
+              { label: 'Least-Privilege Defaults', value: 'New user accounts auto-assigned "Viewer" role (view-only) via database trigger. Elevated access requires explicit admin grant with audit log entry.', status: 'active' },
             ]} />
 
             <Card className="bg-muted/30 mt-4">

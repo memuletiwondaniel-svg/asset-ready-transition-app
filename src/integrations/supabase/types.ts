@@ -7512,6 +7512,7 @@ export type Database = {
           is_active: boolean
           is_director: boolean | null
           name: string
+          parent_role_id: string | null
           updated_at: string
         }
         Insert: {
@@ -7523,6 +7524,7 @@ export type Database = {
           is_active?: boolean
           is_director?: boolean | null
           name: string
+          parent_role_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -7534,6 +7536,7 @@ export type Database = {
           is_active?: boolean
           is_director?: boolean | null
           name?: string
+          parent_role_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -7542,6 +7545,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "role_category"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "roles_parent_role_id_fkey"
+            columns: ["parent_role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
             referencedColumns: ["id"]
           },
         ]
@@ -9158,6 +9168,10 @@ export type Database = {
           two_factor_enabled: boolean
           user_id: string
         }[]
+      }
+      get_inherited_permissions: {
+        Args: { _role_id: string }
+        Returns: string[]
       }
       get_public_profile_info: {
         Args: { target_user_id: string }
