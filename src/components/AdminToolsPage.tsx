@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Users, FolderOpen, Settings, ArrowLeft, ClipboardList, CheckCircle, Home, Search, X, Star, Activity, Sliders, Building2, LayoutTemplate, Key, Loader2, Upload, Plug, Shield, FileSearch, Timer, ShieldAlert } from 'lucide-react';
+import { Users, FolderOpen, Settings, ArrowLeft, ClipboardList, CheckCircle, Home, Search, X, Star, Activity, Sliders, Building2, LayoutTemplate, Key, Loader2, Upload, Plug, Shield, FileSearch, Timer, ShieldAlert, Database, Archive, BookOpen } from 'lucide-react';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
@@ -34,6 +34,9 @@ const RolePermissionsManager = lazy(() => import("./admin-tools/RolePermissionsM
 const AuditLogViewer = lazy(() => import("./admin-tools/AuditLogViewer"));
 const SessionTimeoutConfig = lazy(() => import("./admin-tools/SessionTimeoutConfig"));
 const BruteForceConfig = lazy(() => import("./admin-tools/BruteForceConfig"));
+const DataExport = lazy(() => import("./admin-tools/DataExport"));
+const AuditLogRetention = lazy(() => import("./admin-tools/AuditLogRetention"));
+const DisasterRecoveryRunbook = lazy(() => import("./admin-tools/DisasterRecoveryRunbook"));
 
 // Loading fallback component
 const ViewLoadingFallback = () => (
@@ -64,7 +67,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   const location = useLocation();
 
   // State management - consolidated for cleaner code
-  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'activity-log' | 'ora-configuration' | 'handover-management' | 'bulk-upload' | 'apis' | 'sso' | 'roles-permissions' | 'audit-logs' | 'session-timeout' | 'brute-force'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'activity-log' | 'ora-configuration' | 'handover-management' | 'bulk-upload' | 'apis' | 'sso' | 'roles-permissions' | 'audit-logs' | 'session-timeout' | 'brute-force' | 'data-export' | 'audit-retention' | 'disaster-recovery'>('dashboard');
 
   // Reset to dashboard when sidebar navigation triggers a same-route click
   useEffect(() => {
@@ -301,6 +304,36 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     stats: {},
     height: 'md:row-span-2',
     onClick: () => setActiveView('brute-force')
+  }, {
+    id: 'data-export',
+    title: 'Data Export',
+    description: 'Export critical tables (projects, users, audit logs) in CSV or JSON for backup and compliance',
+    icon: Database,
+    gradient: 'from-teal-500 to-emerald-600',
+    tooltip: 'Download application data for offline backup',
+    stats: {},
+    height: 'md:row-span-2',
+    onClick: () => setActiveView('data-export')
+  }, {
+    id: 'audit-retention',
+    title: 'Audit Log Retention',
+    description: 'Configure retention period and purge old audit log entries automatically',
+    icon: Archive,
+    gradient: 'from-orange-500 to-amber-600',
+    tooltip: 'Manage audit log lifecycle and storage',
+    stats: {},
+    height: 'md:row-span-2',
+    onClick: () => setActiveView('audit-retention')
+  }, {
+    id: 'disaster-recovery',
+    title: 'Disaster Recovery Runbook',
+    description: 'Step-by-step procedures for backup verification, database restore, and incident recovery',
+    icon: BookOpen,
+    gradient: 'from-cyan-600 to-blue-700',
+    tooltip: 'View disaster recovery procedures and checklists',
+    stats: {},
+    height: 'md:row-span-2',
+    onClick: () => setActiveView('disaster-recovery')
   }];
 
   // Filter admin tools based on search query
@@ -448,6 +481,27 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     return <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
         <Suspense fallback={<ViewLoadingFallback />}>
           <BruteForceConfig onBack={() => setActiveView('dashboard')} />
+        </Suspense>
+      </div>;
+  }
+  if (activeView === 'data-export') {
+    return <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
+        <Suspense fallback={<ViewLoadingFallback />}>
+          <DataExport onBack={() => setActiveView('dashboard')} />
+        </Suspense>
+      </div>;
+  }
+  if (activeView === 'audit-retention') {
+    return <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
+        <Suspense fallback={<ViewLoadingFallback />}>
+          <AuditLogRetention onBack={() => setActiveView('dashboard')} />
+        </Suspense>
+      </div>;
+  }
+  if (activeView === 'disaster-recovery') {
+    return <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
+        <Suspense fallback={<ViewLoadingFallback />}>
+          <DisasterRecoveryRunbook onBack={() => setActiveView('dashboard')} />
         </Suspense>
       </div>;
   }
