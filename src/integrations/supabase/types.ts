@@ -306,6 +306,56 @@ export type Database = {
         }
         Relationships: []
       }
+      deployment_log: {
+        Row: {
+          changes_summary: Json | null
+          created_at: string
+          deployed_by: string | null
+          deployed_by_name: string | null
+          environment: string
+          id: string
+          release_notes: string | null
+          rollback_version_id: string | null
+          status: string
+          tenant_id: string | null
+          version_label: string | null
+        }
+        Insert: {
+          changes_summary?: Json | null
+          created_at?: string
+          deployed_by?: string | null
+          deployed_by_name?: string | null
+          environment?: string
+          id?: string
+          release_notes?: string | null
+          rollback_version_id?: string | null
+          status?: string
+          tenant_id?: string | null
+          version_label?: string | null
+        }
+        Update: {
+          changes_summary?: Json | null
+          created_at?: string
+          deployed_by?: string | null
+          deployed_by_name?: string | null
+          environment?: string
+          id?: string
+          release_notes?: string | null
+          rollback_version_id?: string | null
+          status?: string
+          tenant_id?: string | null
+          version_label?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deployment_log_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       discipline: {
         Row: {
           created_at: string
@@ -7357,6 +7407,39 @@ export type Database = {
           },
         ]
       }
+      publish_checklist_items: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          display_order: number
+          id: string
+          is_active: boolean
+          is_required: boolean
+          label: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          is_required?: boolean
+          label: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          is_required?: boolean
+          label?: string
+        }
+        Relationships: []
+      }
       role_category: {
         Row: {
           created_at: string
@@ -7749,6 +7832,56 @@ export type Database = {
             columns: ["task_id"]
             isOneToOne: false
             referencedRelation: "user_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_feature_flags: {
+        Row: {
+          created_at: string
+          description: string | null
+          enabled_at: string | null
+          enabled_by: string | null
+          feature_key: string
+          feature_label: string
+          id: string
+          is_enabled: boolean
+          metadata: Json | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          enabled_at?: string | null
+          enabled_by?: string | null
+          feature_key: string
+          feature_label: string
+          id?: string
+          is_enabled?: boolean
+          metadata?: Json | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          enabled_at?: string | null
+          enabled_by?: string | null
+          feature_key?: string
+          feature_label?: string
+          id?: string
+          is_enabled?: boolean
+          metadata?: Json | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_feature_flags_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -9109,6 +9242,7 @@ export type Database = {
         Returns: boolean
       }
       initiate_password_reset: { Args: { user_email: string }; Returns: string }
+      is_feature_enabled: { Args: { p_feature_key: string }; Returns: boolean }
       offboard_user: {
         Args: {
           admin_user_id: string

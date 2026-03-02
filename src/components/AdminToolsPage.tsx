@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Users, FolderOpen, Settings, ArrowLeft, ClipboardList, CheckCircle, Home, Search, X, Star, Activity, Sliders, Building2, LayoutTemplate, Key, Loader2, Upload, Plug, Shield, FileSearch, Timer, ShieldAlert, Database, Archive, BookOpen, KeyRound, Webhook, HeartPulse, UserMinus, ClipboardCheck } from 'lucide-react';
+import { Users, FolderOpen, Settings, ArrowLeft, ClipboardList, CheckCircle, Home, Search, X, Star, Activity, Sliders, Building2, LayoutTemplate, Key, Loader2, Upload, Plug, Shield, FileSearch, Timer, ShieldAlert, Database, Archive, BookOpen, KeyRound, Webhook, HeartPulse, UserMinus, ClipboardCheck, Rocket, Flag } from 'lucide-react';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
@@ -42,6 +42,8 @@ const WebhookSecurity = lazy(() => import("./admin-tools/WebhookSecurity"));
 const IntegrationHealth = lazy(() => import("./admin-tools/IntegrationHealth"));
 const UserOffboarding = lazy(() => import("./admin-tools/UserOffboarding"));
 const PermissionReview = lazy(() => import("./admin-tools/PermissionReview"));
+const DeploymentLog = lazy(() => import("./admin-tools/DeploymentLog"));
+const TenantFeatureFlags = lazy(() => import("./admin-tools/TenantFeatureFlags"));
 
 // Loading fallback component
 const ViewLoadingFallback = () => (
@@ -72,7 +74,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   const location = useLocation();
 
   // State management - consolidated for cleaner code
-  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'activity-log' | 'ora-configuration' | 'handover-management' | 'bulk-upload' | 'apis' | 'sso' | 'roles-permissions' | 'audit-logs' | 'session-timeout' | 'brute-force' | 'data-export' | 'audit-retention' | 'disaster-recovery' | 'api-keys' | 'webhook-security' | 'integration-health' | 'user-offboarding' | 'permission-review'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'activity-log' | 'ora-configuration' | 'handover-management' | 'bulk-upload' | 'apis' | 'sso' | 'roles-permissions' | 'audit-logs' | 'session-timeout' | 'brute-force' | 'data-export' | 'audit-retention' | 'disaster-recovery' | 'api-keys' | 'webhook-security' | 'integration-health' | 'user-offboarding' | 'permission-review' | 'deployment-log' | 'feature-flags'>('dashboard');
 
   // Reset to dashboard when sidebar navigation triggers a same-route click
   useEffect(() => {
@@ -389,6 +391,26 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     stats: {},
     height: 'md:row-span-2',
     onClick: () => setActiveView('permission-review')
+  }, {
+    id: 'deployment-log',
+    title: 'Deployment Log',
+    description: 'Track releases with version labels, release notes, and a pre-publish verification checklist',
+    icon: Rocket,
+    gradient: 'from-emerald-500 to-teal-600',
+    tooltip: 'Log deployments and verify changes before publishing to production',
+    stats: {},
+    height: 'md:row-span-2',
+    onClick: () => setActiveView('deployment-log')
+  }, {
+    id: 'feature-flags',
+    title: 'Tenant Feature Flags',
+    description: 'Enable or disable modules per company — ship features to one tenant first, then roll out to all',
+    icon: Flag,
+    gradient: 'from-amber-500 to-orange-600',
+    tooltip: 'Per-tenant feature toggles for controlled rollouts',
+    stats: {},
+    height: 'md:row-span-2',
+    onClick: () => setActiveView('feature-flags')
   }];
 
   // Filter admin tools based on search query
@@ -592,6 +614,20 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     return <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
         <Suspense fallback={<ViewLoadingFallback />}>
           <PermissionReview onBack={() => setActiveView('dashboard')} />
+        </Suspense>
+      </div>;
+  }
+  if (activeView === 'deployment-log') {
+    return <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
+        <Suspense fallback={<ViewLoadingFallback />}>
+          <DeploymentLog onBack={() => setActiveView('dashboard')} />
+        </Suspense>
+      </div>;
+  }
+  if (activeView === 'feature-flags') {
+    return <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
+        <Suspense fallback={<ViewLoadingFallback />}>
+          <TenantFeatureFlags onBack={() => setActiveView('dashboard')} />
         </Suspense>
       </div>;
   }
