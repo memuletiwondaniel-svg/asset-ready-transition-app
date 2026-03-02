@@ -1,57 +1,77 @@
 
 
-# Plan: Update Enterprise Security Document — Gap Analysis & ORIP Readiness
+# Plan: ORIP Scoring Engine Using Existing VCR Item Categories
 
-## Gap Analysis Summary
+## Impact Assessment: Zero Breaking Changes
 
-Analyzing the 25 requirements against the current document:
+**No existing workflows will be affected.** The approach reuses the existing `vcr_item_categories` table (Design Integrity, Technical Integrity, Operating Integrity, Management Systems, Health & Safety) as the readiness dimensions for ORI scoring. All changes are additive:
 
-| # | Requirement | Current Status | Gap |
-|---|---|---|---|
-| a | SSO (Entra/Okta/SAP IAM) | SAML/OIDC documented | Missing explicit Entra ID, Okta, SAP IAM callouts |
-| b | RBAC | Fully documented | No gap |
-| c | Multi-Tenancy | Fully documented | No gap |
-| d | Single-tenant Deployment | Not mentioned | **Gap** — needs new content |
-| e | On-prem compatible | Mentioned briefly in §15 | Needs dedicated treatment |
-| f | Regional Data Hosting | Mentioned in §15 | Adequate, minor enhancement |
-| g | API Isolation per Tenant | Not mentioned | **Gap** — RLS covers data, but API-level isolation not documented |
-| h | Cloud-agnostic | Listed in §15 | Adequate |
-| i | Containerized (Docker) | Listed in §15 | Adequate |
-| j | Kubernetes-deployable | Listed in §15 | Adequate |
-| k | Air-gapped capable | Not mentioned | **Gap** — needs new content |
-| l | Data Segregation | RLS documented, but not framed as "data segregation" | Needs explicit framing |
-| m | Disaster Recovery (RPO/RTO) | Documented (4h/1h) | No gap |
-| n | CI/CD | "Build → Test → Publish" documented | Needs framing as CI/CD pipeline |
-| o | Documented Response Process | Not mentioned | **Gap** — incident response process needed |
-| p.i | Audit log immutability | Mentioned as "tamper-proof" | Needs stronger language |
-| p.ii | Tenant data isolation at DB level | RLS documented | Needs explicit "not just UI filtering" statement |
-| p.iii | Encryption at rest (AES-256) | "Encryption at rest (Supabase)" | Needs AES-256 specification |
-| p.iv | Encryption in transit (TLS 1.2+) | "TLS in transit" | Needs TLS 1.2+ specification |
-| p.v | Role inheritance controls | Not mentioned | **Gap** — needs new content |
-| p.vi | Least-privilege defaults | Not mentioned | **Gap** — needs new content |
-| p.vii | SOC 2 Type I → II | Not mentioned | **Gap** — mandatory for ORIP |
-| p.viii | Pen Test | Not mentioned | **Gap** — mandatory for ORIP |
-| p.ix | ISO 27001 | Not mentioned | **Gap** — mandatory for ORIP |
+- The `vcr_item_categories` table gets a `tenant_id` column and weight/confidence fields -- existing rows remain intact
+- The `readiness_nodes` table gets a new nullable `dimension_id` column pointing to `vcr_item_categories`
+- The `sync_readiness_nodes` and `calculate_ori_score` functions are replaced with enhanced versions that use category-based dimensions instead of module-based grouping
+- Existing P2A, ORA, PSSR, ORM workflows are untouched -- the ontology layer only reads from them
 
-## Changes to `EnterpriseSecurityDocument.tsx`
+## Current VCR Item Categories (Become Readiness Dimensions)
 
-### 1. Add new TOC entry: "Enterprise SaaS Architecture Readiness" (new §16)
-A comprehensive new section that consolidates all architecture/deployment requirements in one enterprise-grade table with gap status indicators.
+| Code | Name | Active |
+|------|------|--------|
+| DI2 | Design Integrity | Yes |
+| TI | Technical Integrity | Yes |
+| OI | Operating Integrity | Yes |
+| MS | Management Systems | Yes |
+| HS | Health & Safety | Yes |
 
-### 2. Add new TOC entry: "Security Controls & Hardening" (new §17)
-Covers the security controls sub-items: audit log immutability, DB-level tenant isolation, AES-256 at rest, TLS 1.2+, role inheritance, least-privilege defaults.
+These become the tenant-configurable readiness dimensions. Different tenants can add/rename/reweight their own categories.
 
-### 3. Add new TOC entry: "Compliance Certifications & ORIP Roadmap" (new §18)
-Mandatory ORIP items: SOC 2 Type I → II roadmap, ISO 27001 certification path, penetration testing schedule, incident response process.
+## Implementation Tasks
 
-### 4. Enhance existing sections
-- **§1 (Auth)**: Add explicit Entra ID, Okta, SAP IAM to SSO row descriptions
-- **§3 (Multi-Tenancy)**: Add "Data Segregation" and "API Isolation per Tenant" rows
-- **§14 (Compliance Summary)**: Add rows for SOC 2, ISO 27001, Pen Test, Air-gapped, Single-tenant
+### Task 1: Extend `vcr_item_categories` for ORI Scoring
+Add columns to make categories serve double duty as readiness dimensions:
+- `tenant_id UUID` (nullable, defaults via trigger -- existing rows get current tenant)
+- `default_weight NUMERIC(5,4)` (e.g., 0.20 = 20%)
+- `confidence_factor_default NUMERIC(3,2)` (default 0.8)
+- `risk_severity_multiplier NUMERIC(3,1)` (default 1.0)
+- `is_readiness_dimension BOOLEAN DEFAULT true`
 
-### 5. Add a new Badge status: `'roadmap'`
-For items that are planned/mandatory for ORIP but not yet implemented (displayed as amber/orange badge with "🔶 Roadmap" label).
+Add `dimension_id UUID REFERENCES vcr_item_categories(id)` to `readiness_nodes`.
 
-### Files Modified
-- `src/components/admin-tools/EnterpriseSecurityDocument.tsx`
+### Task 2: Enhanced ORI Formula
+Replace `calculate_ori_score()` with the full ORIP formula:
+
+```
+DS_i = (Σ Subcomponent_Weight × Completion%) × Confidence_Factor
+RP_i = Σ (Risk_Severity × Impact_Multiplier)  -- capped at 15%
+ORI  = Σ (Dimension_Weight_i × DS_i) − Global_Risk_Penalty
+SCS  = ORI × Schedule_Adherence × Critical_Path_Stability
+```
+
+Add columns to `ori_scores`: `dimension_scores JSONB`, `risk_penalty_total NUMERIC`, `startup_confidence_score NUMERIC`, `schedule_adherence_index NUMERIC`, `critical_path_stability_index NUMERIC`.
+
+Add `confidence_factor NUMERIC(3,2) DEFAULT 0.8` and `risk_severity TEXT DEFAULT 'none'` to `readiness_nodes`.
+
+### Task 3: Update Sync Function
+Update `sync_readiness_nodes()` to auto-assign `dimension_id` by mapping:
+- P2A VCR prerequisites → mapped via their `vcr_items.category_id` directly to `vcr_item_categories`
+- ORA activities → default to "Operating Integrity" or map via metadata
+- PSSR items → map via PSSR checklist category → nearest VCR category
+- ORM deliverables → default to "Management Systems"
+- Training → default to "Operating Integrity"
+
+Set confidence factors: completed/approved = 1.0, in-progress = 0.8, not-started = 0.7.
+
+### Task 4: Executive Dashboard Enhancement
+Redesign `ExecutiveDashboard.tsx` to match the strategic layout:
+- **Top Banner**: Large ORI + SCS + color coding (Green >85, Amber 70-85, Red <70)
+- **Dimension Breakdown**: Bar/table showing each VCR category's score, trend arrow, risk level
+- **Top 5 Startup Blockers**: Blocked/critical nodes with severity
+- **Predictive Trend**: ORI line chart with dashed target curve
+- **Risk Impact Summary**: 4 stat boxes (Open High Risks, Startup-blocking, Dimensions below 70%, Systems below 60%)
+
+### Task 5: Tenant-Configurable Weight Profiles
+Update the existing `ori_weight_profiles` to store dimension-based weights keyed by `vcr_item_categories.id` instead of module names. Add a simple admin UI for editing weights per tenant.
+
+### Task 6: Update Living Documents
+- **Security & Compliance Doc**: Add rows for Readiness Dimensions, Risk Penalty Engine, Startup Confidence Score (mark as Active)
+- **Platform Guide**: Add "Readiness Ontology & Scoring Engine" section documenting the 6 dimensions, ORI formula, SCS
+- **Strategic North Star**: Update scoring engine status from Planned to Active, add dimension-based architecture detail
 
