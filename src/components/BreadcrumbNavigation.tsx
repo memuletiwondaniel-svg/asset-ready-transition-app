@@ -1,6 +1,7 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { useFavoritePages, FAVORITABLE_PAGES } from '@/hooks/useFavoritePages';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   DropdownMenu,
@@ -16,7 +17,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Star } from 'lucide-react';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { cn } from '@/lib/utils';
 
@@ -45,8 +46,12 @@ export const BreadcrumbNavigation: React.FC<BreadcrumbNavigationProps> = ({
     currentHistoryIndex
   } = useBreadcrumb();
 
-  const breadcrumbs = customBreadcrumbs || buildBreadcrumbsFromPath();
   const location = useLocation();
+  const { isFavorite, toggleFavorite } = useFavoritePages();
+  const canBeFavorited = !!FAVORITABLE_PAGES[location.pathname];
+  const isCurrentFavorite = isFavorite(location.pathname);
+
+  const breadcrumbs = customBreadcrumbs || buildBreadcrumbsFromPath();
   // Only slice for auto-generated breadcrumbs, not custom ones
   const crumbsToShow = customBreadcrumbs 
     ? breadcrumbs 
@@ -194,6 +199,34 @@ export const BreadcrumbNavigation: React.FC<BreadcrumbNavigationProps> = ({
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
+
+      {/* Favorite Toggle */}
+      {canBeFavorited && (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => toggleFavorite(location.pathname)}
+                className="h-7 w-7 rounded-lg ml-1"
+              >
+                <Star 
+                  className={cn(
+                    "h-3.5 w-3.5 transition-colors",
+                    isCurrentFavorite 
+                      ? "fill-amber-400 text-amber-400" 
+                      : "text-muted-foreground hover:text-amber-400"
+                  )} 
+                />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">
+              {isCurrentFavorite ? 'Remove from favorites' : 'Add to favorites'}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )}
     </div>
   );
 };

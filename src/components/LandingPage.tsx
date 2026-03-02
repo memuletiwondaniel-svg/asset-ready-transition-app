@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -23,7 +23,8 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { arrayMove, SortableContext, rectSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { processUserInput, getBlockedResponse } from '@/lib/security';
-
+import { useFavoritePages } from '@/hooks/useFavoritePages';
+import { Star } from 'lucide-react';
 interface WidgetConfig {
   id: string;
   title: string;
@@ -80,6 +81,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
     translations: t
   } = useLanguage();
   const [userInput, setUserInput] = useState('');
+  const { favorites } = useFavoritePages();
   const [messages, setMessages] = useState<Array<{
     role: 'user' | 'assistant';
     content: string;
@@ -654,43 +656,67 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
               </div>
             </Card>
 
-            {/* Quick Actions Section */}
+            {/* Favorites / Quick Actions Section */}
             <div className="animate-fade-in" style={{ animationDelay: '100ms' }}>
-              <h2 className="text-sm font-semibold text-muted-foreground text-center mb-3">{t.quickActions || 'Quick Actions'}</h2>
-              <div className="flex flex-wrap justify-center gap-2">
-                <Button 
-                  variant="outline"
-                  onClick={() => onNavigate('pssr')}
-                  className="rounded-lg px-3 py-1.5 h-auto text-xs bg-primary/5 hover:bg-primary/10 hover:border-primary/30 transition-all hover:scale-105"
-                >
-                  <Zap className="w-3.5 h-3.5 mr-1.5 text-primary" /> 
-                  {t.createAPSSR || 'Create PSSR'}
-                </Button>
-                <Button 
-                  variant="outline"
-                  onClick={() => onNavigate('pssr')}
-                  className="rounded-lg px-3 py-1.5 h-auto text-xs bg-green-500/5 hover:bg-green-500/10 hover:border-green-500/30 transition-all hover:scale-105"
-                >
-                  <CheckCircle className="w-3.5 h-3.5 mr-1.5 text-green-500" /> 
-                  {t.approveAPSSR || 'Approve PSSR'}
-                </Button>
-                <Button 
-                  variant="outline"
-                  onClick={() => onNavigate('projects')}
-                  className="rounded-lg px-3 py-1.5 h-auto text-xs bg-purple-500/5 hover:bg-purple-500/10 hover:border-purple-500/30 transition-all hover:scale-105"
-                >
-                  <Zap className="w-3.5 h-3.5 mr-1.5 text-purple-500" /> 
-                  {t.addNewProject || 'Add Project'}
-                </Button>
-                <Button 
-                  variant="outline"
-                  onClick={() => onNavigate('pssr')}
-                  className="rounded-lg px-3 py-1.5 h-auto text-xs bg-amber-500/5 hover:bg-amber-500/10 hover:border-amber-500/30 transition-all hover:scale-105"
-                >
-                  <ClipboardList className="w-3.5 h-3.5 mr-1.5 text-amber-500" /> 
-                  {t.myTasks || 'My Tasks'}
-                </Button>
-              </div>
+              {favorites.length > 0 ? (
+                <>
+                  <h2 className="text-sm font-semibold text-muted-foreground text-center mb-3 flex items-center justify-center gap-1.5">
+                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                    Favorites
+                  </h2>
+                  <div className="flex flex-wrap justify-center gap-2">
+                    {favorites.map((fav) => (
+                      <Button
+                        key={fav.path}
+                        variant="outline"
+                        onClick={() => onNavigate(fav.section)}
+                        className="rounded-lg px-3 py-1.5 h-auto text-xs bg-primary/5 hover:bg-primary/10 hover:border-primary/30 transition-all hover:scale-105"
+                      >
+                        <Star className="w-3 h-3 mr-1.5 fill-amber-400 text-amber-400" />
+                        {fav.label}
+                      </Button>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h2 className="text-sm font-semibold text-muted-foreground text-center mb-3">{t.quickActions || 'Quick Actions'}</h2>
+                  <div className="flex flex-wrap justify-center gap-2">
+                    <Button 
+                      variant="outline"
+                      onClick={() => onNavigate('pssr')}
+                      className="rounded-lg px-3 py-1.5 h-auto text-xs bg-primary/5 hover:bg-primary/10 hover:border-primary/30 transition-all hover:scale-105"
+                    >
+                      <Zap className="w-3.5 h-3.5 mr-1.5 text-primary" /> 
+                      {t.createAPSSR || 'Create PSSR'}
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      onClick={() => onNavigate('pssr')}
+                      className="rounded-lg px-3 py-1.5 h-auto text-xs bg-green-500/5 hover:bg-green-500/10 hover:border-green-500/30 transition-all hover:scale-105"
+                    >
+                      <CheckCircle className="w-3.5 h-3.5 mr-1.5 text-green-500" /> 
+                      {t.approveAPSSR || 'Approve PSSR'}
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      onClick={() => onNavigate('projects')}
+                      className="rounded-lg px-3 py-1.5 h-auto text-xs bg-purple-500/5 hover:bg-purple-500/10 hover:border-purple-500/30 transition-all hover:scale-105"
+                    >
+                      <Zap className="w-3.5 h-3.5 mr-1.5 text-purple-500" /> 
+                      {t.addNewProject || 'Add Project'}
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      onClick={() => onNavigate('pssr')}
+                      className="rounded-lg px-3 py-1.5 h-auto text-xs bg-amber-500/5 hover:bg-amber-500/10 hover:border-amber-500/30 transition-all hover:scale-105"
+                    >
+                      <ClipboardList className="w-3.5 h-3.5 mr-1.5 text-amber-500" /> 
+                      {t.myTasks || 'My Tasks'}
+                    </Button>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Bottom spacer for vertical centering */}
