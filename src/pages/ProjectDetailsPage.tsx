@@ -205,7 +205,7 @@ export default function ProjectDetailsPage() {
   return (
     <AnimatedBackground>
         <div className="flex-1 overflow-auto min-h-0">
-        <div className="container mx-auto p-6 space-y-6">
+        <div className="container mx-auto p-4 md:p-6 space-y-6">
           <BreadcrumbNavigation currentPageLabel={project ? `${getProjectId()}` : 'Project'} />
 
           {/* Header - standardized design */}
@@ -225,8 +225,8 @@ export default function ProjectDetailsPage() {
           </div>
 
           {/* Project Widgets Dashboard */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left Column - Large Overview Widget */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+            {/* Left Column - Overview Widget */}
             <div className="lg:row-span-3 lg:h-[calc(100vh-180px)] lg:sticky lg:top-6">
               <ProjectReadinessWidget
                   projectId={id || ''} 
@@ -235,7 +235,7 @@ export default function ProjectDetailsPage() {
               </div>
               
               {/* Right Column - Draggable Widgets */}
-              <div className="lg:col-span-2 lg:h-[calc(100vh-180px)] flex flex-col">
+              <div className="lg:col-span-2 flex flex-col">
                 <DndContext
                   sensors={sensors}
                   collisionDetection={closestCenter}
