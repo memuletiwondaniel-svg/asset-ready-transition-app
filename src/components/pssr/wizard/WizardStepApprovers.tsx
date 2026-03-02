@@ -43,7 +43,7 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
   const { data: profileUsers = [] } = useProfileUsers();
 
   // Hidden roles per approver type
-  const HIDDEN_PSSR_APPROVER_ROLES = ['Project Manager', 'Process TA2'];
+  const HIDDEN_PSSR_APPROVER_ROLES = ['Project Manager'];
   const HIDDEN_SOF_APPROVER_ROLES = ['P&E Director'];
 
   // Company-wide roles that don't have plant-specific positions

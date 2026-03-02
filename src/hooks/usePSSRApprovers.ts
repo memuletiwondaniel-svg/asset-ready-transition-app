@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { usePermissions } from '@/hooks/usePermissions';
 
 export interface PSSRApprover {
   id: string;
@@ -17,6 +18,7 @@ export interface PSSRApprover {
 
 export const usePSSRApprovers = (pssrId: string | undefined) => {
   const queryClient = useQueryClient();
+  const { hasPermission } = usePermissions();
 
   const { data: approvers, isLoading, error } = useQuery({
     queryKey: ['pssr-approvers', pssrId],
@@ -37,6 +39,9 @@ export const usePSSRApprovers = (pssrId: string | undefined) => {
 
   const approveApproval = useMutation({
     mutationFn: async ({ approverId, comments }: { approverId: string; comments?: string }) => {
+      if (!hasPermission('approve_pssr')) {
+        throw new Error('You do not have permission to approve PSSRs');
+      }
       const { data, error } = await supabase
         .from('pssr_approvers')
         .update({
@@ -70,6 +75,9 @@ export const usePSSRApprovers = (pssrId: string | undefined) => {
 
   const rejectApproval = useMutation({
     mutationFn: async ({ approverId, comments }: { approverId: string; comments: string }) => {
+      if (!hasPermission('approve_pssr')) {
+        throw new Error('You do not have permission to review PSSRs');
+      }
       const { data, error } = await supabase
         .from('pssr_approvers')
         .update({
