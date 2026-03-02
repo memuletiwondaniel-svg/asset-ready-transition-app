@@ -1,7 +1,7 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { useFavoritePages, FAVORITABLE_PAGES } from '@/hooks/useFavoritePages';
+import { useFavoritePages } from '@/hooks/useFavoritePages';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   DropdownMenu,
@@ -48,7 +48,7 @@ export const BreadcrumbNavigation: React.FC<BreadcrumbNavigationProps> = ({
 
   const location = useLocation();
   const { isFavorite, toggleFavorite } = useFavoritePages();
-  const canBeFavorited = !!FAVORITABLE_PAGES[location.pathname];
+  const isHomePage = location.pathname === '/';
   const isCurrentFavorite = isFavorite(location.pathname);
 
   const breadcrumbs = customBreadcrumbs || buildBreadcrumbsFromPath();
@@ -201,14 +201,14 @@ export const BreadcrumbNavigation: React.FC<BreadcrumbNavigationProps> = ({
       </Breadcrumb>
 
       {/* Favorite Toggle */}
-      {canBeFavorited && (
+      {!isHomePage && (
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => toggleFavorite(location.pathname)}
+                onClick={() => toggleFavorite(location.pathname, currentPageLabel)}
                 className="h-7 w-7 rounded-lg ml-1"
               >
                 <Star 
