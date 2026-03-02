@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/components/enhanced-auth/AuthProvider";
+import SessionTimeoutProvider from "@/components/session/SessionTimeoutProvider";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import { BreadcrumbProvider } from "@/contexts/BreadcrumbContext";
 import { WidgetSizeProvider } from "@/contexts/WidgetSizeContext";
@@ -49,6 +50,7 @@ const App = () => (
     <ThemeProvider defaultTheme="light" storageKey="orsh-theme">
       <LanguageProvider>
         <AuthProvider>
+          <SessionTimeoutProvider>
           <TenantProvider>
             <WidgetSizeProvider>
               <TooltipProvider>
@@ -102,6 +104,7 @@ const App = () => (
               </TooltipProvider>
             </WidgetSizeProvider>
           </TenantProvider>
+          </SessionTimeoutProvider>
         </AuthProvider>
       </LanguageProvider>
     </ThemeProvider>
