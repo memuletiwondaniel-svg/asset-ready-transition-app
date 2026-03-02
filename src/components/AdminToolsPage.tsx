@@ -45,6 +45,7 @@ const PermissionReview = lazy(() => import("./admin-tools/PermissionReview"));
 const DeploymentLog = lazy(() => import("./admin-tools/DeploymentLog"));
 const TenantFeatureFlags = lazy(() => import("./admin-tools/TenantFeatureFlags"));
 const EnterpriseSecurityDocument = lazy(() => import("./admin-tools/EnterpriseSecurityDocument"));
+const PlatformGuideDocument = lazy(() => import("./admin-tools/PlatformGuideDocument"));
 
 // Loading fallback component
 const ViewLoadingFallback = () => (
@@ -75,7 +76,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   const location = useLocation();
 
   // State management - consolidated for cleaner code
-  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'activity-log' | 'ora-configuration' | 'handover-management' | 'bulk-upload' | 'apis' | 'sso' | 'roles-permissions' | 'audit-logs' | 'session-timeout' | 'brute-force' | 'data-export' | 'audit-retention' | 'disaster-recovery' | 'api-keys' | 'webhook-security' | 'integration-health' | 'user-offboarding' | 'permission-review' | 'deployment-log' | 'feature-flags' | 'security-document'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'activity-log' | 'ora-configuration' | 'handover-management' | 'bulk-upload' | 'apis' | 'sso' | 'roles-permissions' | 'audit-logs' | 'session-timeout' | 'brute-force' | 'data-export' | 'audit-retention' | 'disaster-recovery' | 'api-keys' | 'webhook-security' | 'integration-health' | 'user-offboarding' | 'permission-review' | 'deployment-log' | 'feature-flags' | 'security-document' | 'platform-guide'>('dashboard');
 
   // Reset to dashboard when sidebar navigation triggers a same-route click
   useEffect(() => {
@@ -422,6 +423,16 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     stats: {},
     height: 'md:row-span-2',
     onClick: () => setActiveView('security-document')
+  }, {
+    id: 'platform-guide',
+    title: 'Platform Guide',
+    description: 'Comprehensive guide explaining all ORSH workflows, codes, tables, roles, automations, and integrations',
+    icon: BookOpen,
+    gradient: 'from-blue-600 to-indigo-700',
+    tooltip: 'View the living ORSH platform guide — how everything works',
+    stats: {},
+    height: 'md:row-span-2',
+    onClick: () => setActiveView('platform-guide')
   }];
 
   // Filter admin tools based on search query
@@ -646,6 +657,13 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     return <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
         <Suspense fallback={<ViewLoadingFallback />}>
           <EnterpriseSecurityDocument onBack={() => setActiveView('dashboard')} />
+        </Suspense>
+      </div>;
+  }
+  if (activeView === 'platform-guide') {
+    return <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
+        <Suspense fallback={<ViewLoadingFallback />}>
+          <PlatformGuideDocument onBack={() => setActiveView('dashboard')} />
         </Suspense>
       </div>;
   }
