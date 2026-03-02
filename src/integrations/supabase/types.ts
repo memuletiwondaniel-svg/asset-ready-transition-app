@@ -8635,6 +8635,7 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: boolean
       }
+      check_account_lockout: { Args: { user_email: string }; Returns: Json }
       check_orm_plan_access: {
         Args: { plan_id: string; user_id: string }
         Returns: boolean
@@ -8813,10 +8814,9 @@ export type Database = {
         Args: { p_unique_id: string }
         Returns: undefined
       }
-      track_failed_login: {
-        Args: { ip_addr?: unknown; user_uuid: string }
-        Returns: undefined
-      }
+      track_failed_login:
+        | { Args: { ip_addr?: unknown; user_uuid: string }; Returns: undefined }
+        | { Args: { ip_addr?: string; user_uuid: string }; Returns: Json }
       track_user_login: {
         Args: { session_data?: Json; user_uuid: string }
         Returns: undefined
