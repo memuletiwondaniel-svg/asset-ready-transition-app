@@ -203,9 +203,8 @@ export default function ProjectDetailsPage() {
   };
 
   return (
-    <AnimatedBackground>
-        <div className="flex-1 overflow-auto min-h-0">
-        <div className="container mx-auto p-4 md:p-6 space-y-6">
+    <div className="flex-1 min-h-0 overflow-auto">
+      <div className="container mx-auto p-4 md:p-6 space-y-6 pb-12">
           <BreadcrumbNavigation currentPageLabel={project ? `${getProjectId()}` : 'Project'} />
 
           {/* Header - standardized design */}
@@ -281,8 +280,7 @@ export default function ProjectDetailsPage() {
               }}
             />
           )}
-        </div>
       </div>
-    </AnimatedBackground>
+    </div>
   );
 }
