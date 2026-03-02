@@ -53,6 +53,36 @@ serve(async (req) => {
   const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
   try {
+    // Verify the caller is an admin before proceeding
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    const callerClient = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_ANON_KEY") || SERVICE_ROLE_KEY, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: claimsData, error: claimsError } = await callerClient.auth.getClaims(authHeader.replace('Bearer ', ''));
+    if (claimsError || !claimsData?.claims?.sub) {
+      return new Response(JSON.stringify({ error: 'Unauthorized: invalid token' }), {
+        status: 401,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+    const callerId = claimsData.claims.sub as string;
+
+    // Verify caller is admin
+    const { data: callerRole } = await admin.from('user_roles').select('role').eq('user_id', callerId).eq('role', 'admin').maybeSingle();
+    if (!callerRole) {
+      return new Response(JSON.stringify({ error: 'Forbidden: only admins can create users' }), {
+        status: 403,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
     const body: CreateUserRequest = await req.json();
     const {
       email,
@@ -69,6 +99,12 @@ serve(async (req) => {
       commission,
       systemRole,
     } = body;
+
+    // Prevent non-admin callers from assigning admin role
+    if (systemRole === 'admin') {
+      // Double-check: only existing admins can create new admins
+      // (Already verified above, but explicit guard for clarity)
+    }
 
     if (!email || !firstName || !lastName || !password) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), {

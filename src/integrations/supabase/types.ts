@@ -5027,6 +5027,107 @@ export type Database = {
           },
         ]
       }
+      permission_review_campaigns: {
+        Row: {
+          completed_date: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          scheduled_date: string
+          status: string
+          tenant_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          completed_date?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          scheduled_date: string
+          status?: string
+          tenant_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          completed_date?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          scheduled_date?: string
+          status?: string
+          tenant_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "permission_review_campaigns_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      permission_review_items: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          current_permissions: string[] | null
+          current_role_id: string | null
+          decision: string | null
+          id: string
+          notes: string | null
+          reviewed_at: string | null
+          reviewer_id: string | null
+          user_id: string
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          current_permissions?: string[] | null
+          current_role_id?: string | null
+          decision?: string | null
+          id?: string
+          notes?: string | null
+          reviewed_at?: string | null
+          reviewer_id?: string | null
+          user_id: string
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          current_permissions?: string[] | null
+          current_role_id?: string | null
+          decision?: string | null
+          id?: string
+          notes?: string | null
+          reviewed_at?: string | null
+          reviewer_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "permission_review_items_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "permission_review_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permission_review_items_current_role_id_fkey"
+            columns: ["current_role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       plant: {
         Row: {
           created_at: string
@@ -5156,6 +5257,9 @@ export type Database = {
           login_attempts: number | null
           manager_id: string | null
           notification_preferences: Json | null
+          offboard_notes: string | null
+          offboarded_at: string | null
+          offboarded_by: string | null
           password_change_required: boolean | null
           password_changed_at: string | null
           password_reset_required: boolean | null
@@ -5169,6 +5273,7 @@ export type Database = {
           role: string | null
           secondary_phone: string | null
           sso_enabled: boolean | null
+          stale_flagged_at: string | null
           station: string | null
           status: Database["public"]["Enums"]["user_status"] | null
           temporary_password: string | null
@@ -5205,6 +5310,9 @@ export type Database = {
           login_attempts?: number | null
           manager_id?: string | null
           notification_preferences?: Json | null
+          offboard_notes?: string | null
+          offboarded_at?: string | null
+          offboarded_by?: string | null
           password_change_required?: boolean | null
           password_changed_at?: string | null
           password_reset_required?: boolean | null
@@ -5218,6 +5326,7 @@ export type Database = {
           role?: string | null
           secondary_phone?: string | null
           sso_enabled?: boolean | null
+          stale_flagged_at?: string | null
           station?: string | null
           status?: Database["public"]["Enums"]["user_status"] | null
           temporary_password?: string | null
@@ -5254,6 +5363,9 @@ export type Database = {
           login_attempts?: number | null
           manager_id?: string | null
           notification_preferences?: Json | null
+          offboard_notes?: string | null
+          offboarded_at?: string | null
+          offboarded_by?: string | null
           password_change_required?: boolean | null
           password_changed_at?: string | null
           password_reset_required?: boolean | null
@@ -5267,6 +5379,7 @@ export type Database = {
           role?: string | null
           secondary_phone?: string | null
           sso_enabled?: boolean | null
+          stale_flagged_at?: string | null
           station?: string | null
           status?: Database["public"]["Enums"]["user_status"] | null
           temporary_password?: string | null
@@ -8854,6 +8967,10 @@ export type Database = {
           user_id: string
         }[]
       }
+      flag_stale_accounts: {
+        Args: { days_threshold?: number }
+        Returns: number
+      }
       generate_pssr_code: { Args: { plant_code: string }; Returns: string }
       generate_vcr_code: { Args: { p_project_code: string }; Returns: string }
       get_active_roles: {
@@ -8992,6 +9109,14 @@ export type Database = {
         Returns: boolean
       }
       initiate_password_reset: { Args: { user_email: string }; Returns: string }
+      offboard_user: {
+        Args: {
+          admin_user_id: string
+          p_notes?: string
+          target_user_id: string
+        }
+        Returns: Json
+      }
       purge_old_audit_logs: {
         Args: { retention_days_param?: number }
         Returns: number
