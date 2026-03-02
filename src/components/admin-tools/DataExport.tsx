@@ -85,10 +85,30 @@ const DataExport: React.FC<DataExportProps> = ({ onBack }) => {
   const exportTable = async (tableConfig: ExportableTable) => {
     setExporting(tableConfig.id);
     try {
-      let query = supabase.from(tableConfig.table as any).select(tableConfig.columns || '*');
-      const { data, error } = await query.limit(10000);
+      // Paginated fetch to handle tables larger than 1000 rows
+      let allData: any[] = [];
+      let from = 0;
+      const pageSize = 1000;
+      let hasMore = true;
 
-      if (error) throw error;
+      while (hasMore) {
+        let query = supabase
+          .from(tableConfig.table as any)
+          .select(tableConfig.columns || '*')
+          .range(from, from + pageSize - 1);
+        const { data, error: fetchError } = await query;
+        if (fetchError) throw fetchError;
+        if (data && data.length > 0) {
+          allData = allData.concat(data);
+          from += pageSize;
+          hasMore = data.length === pageSize;
+        } else {
+          hasMore = false;
+        }
+      }
+
+      const data = allData;
+
       if (!data || data.length === 0) {
         toast.info(`No data found in ${tableConfig.label}`);
         setExporting(null);
