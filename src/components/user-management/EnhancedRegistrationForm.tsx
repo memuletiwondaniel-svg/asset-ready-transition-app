@@ -195,7 +195,7 @@ const EnhancedRegistrationForm: React.FC<RegistrationFormProps> = ({
         newErrors.otherRole = 'Please specify the role';
       }
       
-      if (formData.userRole === 'Technical Authority (TA2)') {
+      if (formData.userRole?.includes('TA2')) {
         if (!formData.ta2Discipline) newErrors.ta2Discipline = 'TA2 Discipline is required';
         if (!formData.ta2Commission) newErrors.ta2Commission = 'TA2 Commission is required';
       }
@@ -719,7 +719,7 @@ const EnhancedRegistrationForm: React.FC<RegistrationFormProps> = ({
             <div>
               <Label className="text-sm font-medium text-muted-foreground">Role</Label>
               <p>{formData.userRole === 'Others (specify)' ? formData.otherRole : formData.userRole}</p>
-              {formData.userRole === 'Technical Authority (TA2)' && (
+              {formData.userRole?.includes('TA2') && (
                 <div className="text-xs text-muted-foreground">
                   <p>Discipline: {formData.ta2Discipline}</p>
                   <p>Commission: {formData.ta2Commission}</p>

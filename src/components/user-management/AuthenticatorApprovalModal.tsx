@@ -96,7 +96,8 @@ const AuthenticatorApprovalModal: React.FC<AuthenticatorApprovalModalProps> = ({
     'Project Manager',
     'Commissioning Lead',
     'Construction Lead',
-    'Technical Authority (TA2)',
+    'Technical Authority (TA2 - Project)',
+    'Technical Authority (TA2 - Asset)',
     'Plant Director',
     'Deputy Plant Director',
     'Operations Coach',
@@ -273,7 +274,7 @@ const AuthenticatorApprovalModal: React.FC<AuthenticatorApprovalModalProps> = ({
             </div>
           </div>
 
-          {editedUser.role === 'Technical Authority (TA2)' && (
+          {editedUser.role?.includes('TA2') && (
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Discipline</Label>
