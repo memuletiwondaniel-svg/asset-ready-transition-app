@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Users, FolderOpen, Settings, ArrowLeft, ClipboardList, CheckCircle, Home, Search, X, Star, Activity, Sliders, Building2, LayoutTemplate, Key, Loader2, Upload, Plug, Shield, FileSearch } from 'lucide-react';
+import { Users, FolderOpen, Settings, ArrowLeft, ClipboardList, CheckCircle, Home, Search, X, Star, Activity, Sliders, Building2, LayoutTemplate, Key, Loader2, Upload, Plug, Shield, FileSearch, Timer } from 'lucide-react';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
@@ -32,6 +32,7 @@ const APIManagement = lazy(() => import("./admin-tools/APIManagement"));
 const SSOConfiguration = lazy(() => import("./admin-tools/SSOConfiguration").then(m => ({ default: m.SSOConfiguration })));
 const RolePermissionsManager = lazy(() => import("./admin-tools/RolePermissionsManager"));
 const AuditLogViewer = lazy(() => import("./admin-tools/AuditLogViewer"));
+const SessionTimeoutConfig = lazy(() => import("./admin-tools/SessionTimeoutConfig"));
 
 // Loading fallback component
 const ViewLoadingFallback = () => (
@@ -62,7 +63,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   const location = useLocation();
 
   // State management - consolidated for cleaner code
-  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'activity-log' | 'ora-configuration' | 'handover-management' | 'bulk-upload' | 'apis' | 'sso' | 'roles-permissions' | 'audit-logs'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'activity-log' | 'ora-configuration' | 'handover-management' | 'bulk-upload' | 'apis' | 'sso' | 'roles-permissions' | 'audit-logs' | 'session-timeout'>('dashboard');
 
   // Reset to dashboard when sidebar navigation triggers a same-route click
   useEffect(() => {
@@ -279,6 +280,16 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     stats: {},
     height: 'md:row-span-2',
     onClick: () => setActiveView('audit-logs')
+  }, {
+    id: 'session-timeout',
+    title: 'Session Timeout',
+    description: 'Configure auto-logout duration, warning timer, and inactivity timeout for all users',
+    icon: Timer,
+    gradient: 'from-indigo-500 to-violet-600',
+    tooltip: 'Set session timeout and idle lock policies',
+    stats: {},
+    height: 'md:row-span-2',
+    onClick: () => setActiveView('session-timeout')
   }];
 
   // Filter admin tools based on search query
@@ -412,6 +423,13 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     return <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
         <Suspense fallback={<ViewLoadingFallback />}>
           <AuditLogViewer onBack={() => setActiveView('dashboard')} />
+        </Suspense>
+      </div>;
+  }
+  if (activeView === 'session-timeout') {
+    return <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
+        <Suspense fallback={<ViewLoadingFallback />}>
+          <SessionTimeoutConfig onBack={() => setActiveView('dashboard')} />
         </Suspense>
       </div>;
   }

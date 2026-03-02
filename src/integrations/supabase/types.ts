@@ -7403,6 +7403,39 @@ export type Database = {
           },
         ]
       }
+      system_settings: {
+        Row: {
+          category: string
+          description: string | null
+          id: string
+          key: string
+          label: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          category?: string
+          description?: string | null
+          id?: string
+          key: string
+          label: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Update: {
+          category?: string
+          description?: string | null
+          id?: string
+          key?: string
+          label?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
       task_delegations: {
         Row: {
           checklist_item_id: string
