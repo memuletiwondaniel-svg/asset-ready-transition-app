@@ -1,31 +1,30 @@
 
 
-# Plan: Add Architecture Portability & Deployment Sections to Living Documents
+# Plan: Create ORSH Strategic North Star Document
 
-## What Changes
+## Overview
+Create a new live document — **"ORSH Strategic North Star"** — accessible from Admin Tools alongside the existing Security and Platform Guide documents. This document will articulate the ORIP (Operational Readiness Intelligence Platform) vision, strategic positioning, and evolution roadmap.
 
-### 1. Enterprise Security Document — New Section 15: "Architecture Portability & Data Sovereignty"
-Add before the footer (after section 14), covering:
-- **Data Ownership & Control** — Full PostgreSQL ownership, exportable via `pg_dump`, standard connection strings
-- **Hosting Flexibility** — Current Supabase Cloud (AWS), portable to any PostgreSQL host or cloud provider
-- **Regional Data Residency** — Support for Middle East hosting (AWS Bahrain `me-south-1`, UAE `me-central-1`)
-- **On-Premises Deployment** — Self-hostable via Docker (Supabase has official Docker images for PostgREST, GoTrue, Realtime, Storage)
-- **Kubernetes & Containerization** — Container-ready architecture with Helm chart support; Nginx for frontend, standard K8s services for backend
-- **Zero Vendor Lock-In** — 100% open-source stack (React, TypeScript, Vite, PostgreSQL), no proprietary components
+## New File
+**`src/components/admin-tools/StrategicNorthstarDocument.tsx`**
 
-Use a `StatusTable` with rows showing each capability and its status.
+A scroll-based document following the exact same pattern as `EnterpriseSecurityDocument.tsx` — using the shared `Section`, `StatusTable`, TOC sidebar, and `onBack` prop conventions.
 
-### 2. Platform Guide Document — New Section 16: "Deployment Architecture & Portability"
-Add before the footer (after section 15), covering:
-- **Technology Stack Summary** — React 18 + Vite + TypeScript + Tailwind (frontend), Supabase PostgreSQL + Edge Functions (backend)
-- **Export & Migration Path** — GitHub clone, `pg_dump` for data, Edge Functions portable to Deno Deploy / any Deno runtime
-- **Supported Deployment Models** — Table listing Cloud (Supabase), Self-Hosted (Docker), On-Prem, Kubernetes with descriptions
-- **Containerization Architecture** — Diagram of services: Frontend (Nginx), API (PostgREST), Auth (GoTrue), Realtime, Storage, PostgreSQL
-- **Regional Hosting Options** — Middle East regions and compliance note
+### Sections (8 total):
+1. **Executive Summary** — ORSH today → ORIP tomorrow; the "quantified operational readiness" category definition
+2. **60-Second Investor Pitch** — Verbatim-aligned pitch: sovereign-deployable, single system of record, weighted readiness index, startup confidence score
+3. **Board-Level Strategic Brief** — Strategic context (fragmented reporting), what ORIP delivers (system of record + intelligence engine), executive impact metrics
+4. **Target Market & Industry Context** — Capital-intensive industries (O&G, LNG, mining); operators like ADNOC, Aramco, QatarEnergy; cost-of-delay framing
+5. **Platform Evolution Roadmap** — Visual timeline: ORSH (current) → ORIP phases — readiness scoring engine, predictive analytics, portfolio benchmarking, AI-driven risk modeling
+6. **Acquisition-Positioning Narrative** — Gap analysis vs AVEVA, Hexagon, Emerson, Honeywell, Schneider; ORIP as embeddable intelligence layer; defensible vertical AI capability
+7. **Technical Differentiation** — Configurable readiness ontology, weighted scoring engine, startup probability analytics, API-first integration, sovereign deployment
+8. **Current Module Alignment** — StatusTable mapping each existing ORSH module (ORA, P2A, PSSR, ORM, Training, Certificates) to its ORIP strategic function
 
-Update TOC arrays in both files to include the new sections.
+## Edits to Existing File
+**`src/components/AdminToolsPage.tsx`**
 
-### Files Modified
-- `src/components/admin-tools/EnterpriseSecurityDocument.tsx`
-- `src/components/admin-tools/PlatformGuideDocument.tsx`
+- Add `'northstar-document'` to the `activeView` union type
+- Add lazy import for `StrategicNorthstarDocument`
+- Add dashboard card (icon: `Compass` from lucide, gradient: `from-amber-600 to-orange-700`, title: "Strategic North Star")
+- Add render block for the new view
 
