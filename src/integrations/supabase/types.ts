@@ -1446,6 +1446,139 @@ export type Database = {
           },
         ]
       }
+      ori_scores: {
+        Row: {
+          at_risk_count: number | null
+          blocked_count: number | null
+          calculated_at: string
+          calculated_by: string | null
+          completed_count: number | null
+          confidence_level: string | null
+          critical_path_score: number | null
+          id: string
+          module_scores: Json
+          node_count: number | null
+          notes: string | null
+          overall_score: number
+          project_id: string
+          schedule_variance_days: number | null
+          snapshot_type: string
+          tenant_id: string | null
+          weight_profile_id: string | null
+        }
+        Insert: {
+          at_risk_count?: number | null
+          blocked_count?: number | null
+          calculated_at?: string
+          calculated_by?: string | null
+          completed_count?: number | null
+          confidence_level?: string | null
+          critical_path_score?: number | null
+          id?: string
+          module_scores?: Json
+          node_count?: number | null
+          notes?: string | null
+          overall_score?: number
+          project_id: string
+          schedule_variance_days?: number | null
+          snapshot_type?: string
+          tenant_id?: string | null
+          weight_profile_id?: string | null
+        }
+        Update: {
+          at_risk_count?: number | null
+          blocked_count?: number | null
+          calculated_at?: string
+          calculated_by?: string | null
+          completed_count?: number | null
+          confidence_level?: string | null
+          critical_path_score?: number | null
+          id?: string
+          module_scores?: Json
+          node_count?: number | null
+          notes?: string | null
+          overall_score?: number
+          project_id?: string
+          schedule_variance_days?: number | null
+          snapshot_type?: string
+          tenant_id?: string | null
+          weight_profile_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ori_scores_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ori_scores_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_enriched"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ori_scores_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ori_scores_weight_profile_id_fkey"
+            columns: ["weight_profile_id"]
+            isOneToOne: false
+            referencedRelation: "ori_weight_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ori_weight_profiles: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_default: boolean | null
+          name: string
+          tenant_id: string | null
+          updated_at: string
+          weights: Json
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_default?: boolean | null
+          name: string
+          tenant_id?: string | null
+          updated_at?: string
+          weights?: Json
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_default?: boolean | null
+          name?: string
+          tenant_id?: string | null
+          updated_at?: string
+          weights?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ori_weight_profiles_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orm_attachments: {
         Row: {
           attachment_type: string
@@ -7440,6 +7573,150 @@ export type Database = {
         }
         Relationships: []
       }
+      readiness_dependencies: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          dependency_type: Database["public"]["Enums"]["dependency_type"]
+          description: string | null
+          from_node_id: string
+          id: string
+          is_critical: boolean | null
+          project_id: string
+          to_node_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          dependency_type?: Database["public"]["Enums"]["dependency_type"]
+          description?: string | null
+          from_node_id: string
+          id?: string
+          is_critical?: boolean | null
+          project_id: string
+          to_node_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          dependency_type?: Database["public"]["Enums"]["dependency_type"]
+          description?: string | null
+          from_node_id?: string
+          id?: string
+          is_critical?: boolean | null
+          project_id?: string
+          to_node_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "readiness_dependencies_from_node_id_fkey"
+            columns: ["from_node_id"]
+            isOneToOne: false
+            referencedRelation: "readiness_nodes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "readiness_dependencies_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "readiness_dependencies_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_enriched"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "readiness_dependencies_to_node_id_fkey"
+            columns: ["to_node_id"]
+            isOneToOne: false
+            referencedRelation: "readiness_nodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      readiness_nodes: {
+        Row: {
+          completion_pct: number | null
+          created_at: string
+          description: string | null
+          id: string
+          label: string
+          metadata: Json | null
+          module: string
+          node_type: Database["public"]["Enums"]["readiness_node_type"]
+          phase: string | null
+          project_id: string
+          source_id: string
+          source_table: string
+          status: Database["public"]["Enums"]["readiness_node_status"]
+          tenant_id: string | null
+          updated_at: string
+          weight: number | null
+        }
+        Insert: {
+          completion_pct?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          label: string
+          metadata?: Json | null
+          module: string
+          node_type: Database["public"]["Enums"]["readiness_node_type"]
+          phase?: string | null
+          project_id: string
+          source_id: string
+          source_table: string
+          status?: Database["public"]["Enums"]["readiness_node_status"]
+          tenant_id?: string | null
+          updated_at?: string
+          weight?: number | null
+        }
+        Update: {
+          completion_pct?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          label?: string
+          metadata?: Json | null
+          module?: string
+          node_type?: Database["public"]["Enums"]["readiness_node_type"]
+          phase?: string | null
+          project_id?: string
+          source_id?: string
+          source_table?: string
+          status?: Database["public"]["Enums"]["readiness_node_status"]
+          tenant_id?: string | null
+          updated_at?: string
+          weight?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "readiness_nodes_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "readiness_nodes_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_enriched"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "readiness_nodes_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       role_category: {
         Row: {
           created_at: string
@@ -9080,6 +9357,14 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: boolean
       }
+      calculate_ori_score: {
+        Args: {
+          p_project_id: string
+          p_snapshot_type?: string
+          p_weight_profile_id?: string
+        }
+        Returns: Json
+      }
       check_account_lockout: { Args: { user_email: string }; Returns: Json }
       check_api_rate_limit: {
         Args: { p_key_prefix: string }
@@ -9291,6 +9576,7 @@ export type Database = {
         Args: { p_unique_id: string }
         Returns: undefined
       }
+      sync_readiness_nodes: { Args: { p_project_id: string }; Returns: number }
       track_failed_login:
         | { Args: { ip_addr?: unknown; user_uuid: string }; Returns: undefined }
         | { Args: { ip_addr?: string; user_uuid: string }; Returns: Json }
@@ -9353,6 +9639,7 @@ export type Database = {
         | "manage_p2a"
         | "manage_orm"
         | "create_p2a_plan"
+      dependency_type: "blocks" | "gates" | "informs" | "requires"
       ora_training_approval_status: "PENDING" | "APPROVED" | "REJECTED"
       ora_training_execution_stage:
         | "NOT_STARTED"
@@ -9443,6 +9730,24 @@ export type Database = {
         | "rejected"
         | "approved_with_action"
       pssr_priority_level: "A" | "B"
+      readiness_node_status:
+        | "not_started"
+        | "in_progress"
+        | "completed"
+        | "blocked"
+        | "at_risk"
+        | "na"
+      readiness_node_type:
+        | "ora_activity"
+        | "p2a_handover_point"
+        | "p2a_system"
+        | "pssr"
+        | "pssr_checklist_item"
+        | "orm_deliverable"
+        | "orm_milestone"
+        | "training_item"
+        | "certificate"
+        | "custom"
       ta2_commission: "Asset" | "Project and Engineering"
       ta2_discipline:
         | "Civil"
@@ -9616,6 +9921,7 @@ export const Constants = {
         "manage_orm",
         "create_p2a_plan",
       ],
+      dependency_type: ["blocks", "gates", "informs", "requires"],
       ora_training_approval_status: ["PENDING", "APPROVED", "REJECTED"],
       ora_training_execution_stage: [
         "NOT_STARTED",
@@ -9718,6 +10024,26 @@ export const Constants = {
         "approved_with_action",
       ],
       pssr_priority_level: ["A", "B"],
+      readiness_node_status: [
+        "not_started",
+        "in_progress",
+        "completed",
+        "blocked",
+        "at_risk",
+        "na",
+      ],
+      readiness_node_type: [
+        "ora_activity",
+        "p2a_handover_point",
+        "p2a_system",
+        "pssr",
+        "pssr_checklist_item",
+        "orm_deliverable",
+        "orm_milestone",
+        "training_item",
+        "certificate",
+        "custom",
+      ],
       ta2_commission: ["Asset", "Project and Engineering"],
       ta2_discipline: [
         "Civil",

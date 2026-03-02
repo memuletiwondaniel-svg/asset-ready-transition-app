@@ -129,3 +129,6 @@ verify_jwt = false
 
 [functions.gohub-sync-counts]
 verify_jwt = false
+
+[functions.readiness-api]
+verify_jwt = false

@@ -15,6 +15,7 @@ import Index from "./pages/Index";
 import AuthPage from "./pages/AuthPage";
 import NotFound from "./pages/NotFound";
 import { ORPLandingPage } from "@/components/orp/ORPLandingPage";
+import ExecutiveDashboardPage from "@/pages/ExecutiveDashboardPage";
 import { ORPDetailsPage } from "@/components/orp/ORPDetailsPage";
 import { ORPAnalyticsPage } from "@/components/orp/ORPAnalyticsPage";
 import { P2ALandingPage } from "@/components/p2a/P2ALandingPage";
@@ -83,6 +84,7 @@ const App = () => (
                       <Route path="/pssr/:id/review" element={<PSSRItemReview />} />
                       <Route path="/pssr/:id/approve" element={<PSSRApprovalPage />} />
                       <Route path="/pssr/:id/sof" element={<SoFReviewPage />} />
+                      <Route path="/executive-dashboard" element={<ExecutiveDashboardPage />} />
                       {/* /pssr/:id route removed — PSSRDetailOverlay is used instead */}
                       <Route path="/operation-readiness" element={<ORPLandingPage />} />
                       <Route path="/operation-readiness/analytics" element={<ORPAnalyticsPage />} />
