@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Users, FolderOpen, Settings, ArrowLeft, ClipboardList, CheckCircle, Home, Search, X, Star, Activity, Sliders, Building2, LayoutTemplate, Key, Loader2, Upload, Plug, Shield, FileSearch, Timer, ShieldAlert, Database, Archive, BookOpen } from 'lucide-react';
+import { Users, FolderOpen, Settings, ArrowLeft, ClipboardList, CheckCircle, Home, Search, X, Star, Activity, Sliders, Building2, LayoutTemplate, Key, Loader2, Upload, Plug, Shield, FileSearch, Timer, ShieldAlert, Database, Archive, BookOpen, KeyRound, Webhook, HeartPulse } from 'lucide-react';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
@@ -37,6 +37,9 @@ const BruteForceConfig = lazy(() => import("./admin-tools/BruteForceConfig"));
 const DataExport = lazy(() => import("./admin-tools/DataExport"));
 const AuditLogRetention = lazy(() => import("./admin-tools/AuditLogRetention"));
 const DisasterRecoveryRunbook = lazy(() => import("./admin-tools/DisasterRecoveryRunbook"));
+const ApiKeyManagement = lazy(() => import("./admin-tools/ApiKeyManagement"));
+const WebhookSecurity = lazy(() => import("./admin-tools/WebhookSecurity"));
+const IntegrationHealth = lazy(() => import("./admin-tools/IntegrationHealth"));
 
 // Loading fallback component
 const ViewLoadingFallback = () => (
@@ -67,7 +70,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   const location = useLocation();
 
   // State management - consolidated for cleaner code
-  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'activity-log' | 'ora-configuration' | 'handover-management' | 'bulk-upload' | 'apis' | 'sso' | 'roles-permissions' | 'audit-logs' | 'session-timeout' | 'brute-force' | 'data-export' | 'audit-retention' | 'disaster-recovery'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'activity-log' | 'ora-configuration' | 'handover-management' | 'bulk-upload' | 'apis' | 'sso' | 'roles-permissions' | 'audit-logs' | 'session-timeout' | 'brute-force' | 'data-export' | 'audit-retention' | 'disaster-recovery' | 'api-keys' | 'webhook-security' | 'integration-health'>('dashboard');
 
   // Reset to dashboard when sidebar navigation triggers a same-route click
   useEffect(() => {
@@ -334,6 +337,36 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     stats: {},
     height: 'md:row-span-2',
     onClick: () => setActiveView('disaster-recovery')
+  }, {
+    id: 'api-keys',
+    title: 'API Key Management',
+    description: 'Generate, scope, rotate, and revoke API keys for external integrations with rate limiting and IP restrictions',
+    icon: KeyRound,
+    gradient: 'from-violet-500 to-purple-600',
+    tooltip: 'Manage scoped API keys for SAP, Primavera, GoCompletions, and RPA bots',
+    stats: {},
+    height: 'md:row-span-2',
+    onClick: () => setActiveView('api-keys')
+  }, {
+    id: 'webhook-security',
+    title: 'Webhook Security',
+    description: 'Configure HMAC signature verification for incoming webhook payloads from external systems',
+    icon: Webhook,
+    gradient: 'from-sky-500 to-blue-600',
+    tooltip: 'Verify webhook authenticity with HMAC signatures',
+    stats: {},
+    height: 'md:row-span-2',
+    onClick: () => setActiveView('webhook-security')
+  }, {
+    id: 'integration-health',
+    title: 'Integration Health',
+    description: 'Monitor API call success rates, response times, error rates, and usage patterns per integration',
+    icon: HeartPulse,
+    gradient: 'from-green-500 to-emerald-600',
+    tooltip: 'Real-time health dashboard for all external API integrations',
+    stats: {},
+    height: 'md:row-span-2',
+    onClick: () => setActiveView('integration-health')
   }];
 
   // Filter admin tools based on search query
@@ -502,6 +535,27 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     return <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
         <Suspense fallback={<ViewLoadingFallback />}>
           <DisasterRecoveryRunbook onBack={() => setActiveView('dashboard')} />
+        </Suspense>
+      </div>;
+  }
+  if (activeView === 'api-keys') {
+    return <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
+        <Suspense fallback={<ViewLoadingFallback />}>
+          <ApiKeyManagement onBack={() => setActiveView('dashboard')} />
+        </Suspense>
+      </div>;
+  }
+  if (activeView === 'webhook-security') {
+    return <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
+        <Suspense fallback={<ViewLoadingFallback />}>
+          <WebhookSecurity onBack={() => setActiveView('dashboard')} />
+        </Suspense>
+      </div>;
+  }
+  if (activeView === 'integration-health') {
+    return <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
+        <Suspense fallback={<ViewLoadingFallback />}>
+          <IntegrationHealth onBack={() => setActiveView('dashboard')} />
         </Suspense>
       </div>;
   }

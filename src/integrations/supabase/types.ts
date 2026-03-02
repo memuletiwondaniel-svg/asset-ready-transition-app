@@ -14,6 +14,130 @@ export type Database = {
   }
   public: {
     Tables: {
+      api_keys: {
+        Row: {
+          allowed_ips: string[] | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          expires_at: string | null
+          id: string
+          integration_type: string
+          is_active: boolean
+          key_hash: string
+          key_prefix: string
+          last_rotated_at: string | null
+          last_used_at: string | null
+          name: string
+          permissions: string[]
+          rate_limit_per_minute: number
+          rotation_reminder_days: number | null
+          tenant_id: string | null
+          total_requests: number | null
+          updated_at: string
+        }
+        Insert: {
+          allowed_ips?: string[] | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          integration_type: string
+          is_active?: boolean
+          key_hash: string
+          key_prefix: string
+          last_rotated_at?: string | null
+          last_used_at?: string | null
+          name: string
+          permissions?: string[]
+          rate_limit_per_minute?: number
+          rotation_reminder_days?: number | null
+          tenant_id?: string | null
+          total_requests?: number | null
+          updated_at?: string
+        }
+        Update: {
+          allowed_ips?: string[] | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          integration_type?: string
+          is_active?: boolean
+          key_hash?: string
+          key_prefix?: string
+          last_rotated_at?: string | null
+          last_used_at?: string | null
+          name?: string
+          permissions?: string[]
+          rate_limit_per_minute?: number
+          rotation_reminder_days?: number | null
+          tenant_id?: string | null
+          total_requests?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_keys_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      api_request_logs: {
+        Row: {
+          api_key_id: string | null
+          created_at: string
+          endpoint: string
+          error_message: string | null
+          id: string
+          ip_address: string | null
+          method: string
+          request_metadata: Json | null
+          response_time_ms: number | null
+          status_code: number | null
+          user_agent: string | null
+        }
+        Insert: {
+          api_key_id?: string | null
+          created_at?: string
+          endpoint: string
+          error_message?: string | null
+          id?: string
+          ip_address?: string | null
+          method: string
+          request_metadata?: Json | null
+          response_time_ms?: number | null
+          status_code?: number | null
+          user_agent?: string | null
+        }
+        Update: {
+          api_key_id?: string | null
+          created_at?: string
+          endpoint?: string
+          error_message?: string | null
+          id?: string
+          ip_address?: string | null
+          method?: string
+          request_metadata?: Json | null
+          response_time_ms?: number | null
+          status_code?: number | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_request_logs_api_key_id_fkey"
+            columns: ["api_key_id"]
+            isOneToOne: false
+            referencedRelation: "api_keys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
@@ -8312,6 +8436,71 @@ export type Database = {
           },
         ]
       }
+      webhook_configs: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          endpoint_path: string
+          header_name: string
+          id: string
+          is_active: boolean
+          last_received_at: string | null
+          name: string
+          signing_algorithm: string
+          signing_secret_hash: string
+          source_system: string
+          tenant_id: string | null
+          total_failed: number | null
+          total_received: number | null
+          total_verified: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          endpoint_path: string
+          header_name?: string
+          id?: string
+          is_active?: boolean
+          last_received_at?: string | null
+          name: string
+          signing_algorithm?: string
+          signing_secret_hash: string
+          source_system: string
+          tenant_id?: string | null
+          total_failed?: number | null
+          total_received?: number | null
+          total_verified?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          endpoint_path?: string
+          header_name?: string
+          id?: string
+          is_active?: boolean
+          last_received_at?: string | null
+          name?: string
+          signing_algorithm?: string
+          signing_secret_hash?: string
+          source_system?: string
+          tenant_id?: string | null
+          total_failed?: number | null
+          total_received?: number | null
+          total_verified?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webhook_configs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       widget_layout_presets: {
         Row: {
           created_at: string
@@ -8636,11 +8825,22 @@ export type Database = {
         Returns: boolean
       }
       check_account_lockout: { Args: { user_email: string }; Returns: Json }
+      check_api_rate_limit: {
+        Args: { p_key_prefix: string }
+        Returns: {
+          api_key_id: string
+          is_allowed: boolean
+          key_integration: string
+          key_permissions: string[]
+          remaining_requests: number
+        }[]
+      }
       check_orm_plan_access: {
         Args: { plan_id: string; user_id: string }
         Returns: boolean
       }
       cleanup_expired_password_reset_tokens: { Args: never; Returns: number }
+      cleanup_old_api_request_logs: { Args: never; Returns: number }
       create_password_reset_token: {
         Args: { target_user_id: string }
         Returns: string
