@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Users, FolderOpen, Settings, ArrowLeft, ClipboardList, CheckCircle, Home, Search, X, Star, Activity, Sliders, Building2, LayoutTemplate, Key, Loader2, Upload, Plug, Shield, FileSearch, Timer, ShieldAlert, Database, Archive, BookOpen, KeyRound, Webhook, HeartPulse } from 'lucide-react';
+import { Users, FolderOpen, Settings, ArrowLeft, ClipboardList, CheckCircle, Home, Search, X, Star, Activity, Sliders, Building2, LayoutTemplate, Key, Loader2, Upload, Plug, Shield, FileSearch, Timer, ShieldAlert, Database, Archive, BookOpen, KeyRound, Webhook, HeartPulse, UserMinus, ClipboardCheck } from 'lucide-react';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
@@ -40,6 +40,8 @@ const DisasterRecoveryRunbook = lazy(() => import("./admin-tools/DisasterRecover
 const ApiKeyManagement = lazy(() => import("./admin-tools/ApiKeyManagement"));
 const WebhookSecurity = lazy(() => import("./admin-tools/WebhookSecurity"));
 const IntegrationHealth = lazy(() => import("./admin-tools/IntegrationHealth"));
+const UserOffboarding = lazy(() => import("./admin-tools/UserOffboarding"));
+const PermissionReview = lazy(() => import("./admin-tools/PermissionReview"));
 
 // Loading fallback component
 const ViewLoadingFallback = () => (
@@ -70,7 +72,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   const location = useLocation();
 
   // State management - consolidated for cleaner code
-  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'activity-log' | 'ora-configuration' | 'handover-management' | 'bulk-upload' | 'apis' | 'sso' | 'roles-permissions' | 'audit-logs' | 'session-timeout' | 'brute-force' | 'data-export' | 'audit-retention' | 'disaster-recovery' | 'api-keys' | 'webhook-security' | 'integration-health'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'activity-log' | 'ora-configuration' | 'handover-management' | 'bulk-upload' | 'apis' | 'sso' | 'roles-permissions' | 'audit-logs' | 'session-timeout' | 'brute-force' | 'data-export' | 'audit-retention' | 'disaster-recovery' | 'api-keys' | 'webhook-security' | 'integration-health' | 'user-offboarding' | 'permission-review'>('dashboard');
 
   // Reset to dashboard when sidebar navigation triggers a same-route click
   useEffect(() => {
@@ -367,6 +369,26 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     stats: {},
     height: 'md:row-span-2',
     onClick: () => setActiveView('integration-health')
+  }, {
+    id: 'user-offboarding',
+    title: 'User Offboarding',
+    description: 'Securely deactivate departing users — cancel tasks, revoke API keys, remove roles, and flag stale accounts',
+    icon: UserMinus,
+    gradient: 'from-red-500 to-rose-600',
+    tooltip: 'Manage user departure and stale account detection',
+    stats: {},
+    height: 'md:row-span-2',
+    onClick: () => setActiveView('user-offboarding')
+  }, {
+    id: 'permission-review',
+    title: 'Permission Reviews',
+    description: 'Schedule periodic access certification campaigns, review user permissions, and track high-privilege grants',
+    icon: ClipboardCheck,
+    gradient: 'from-indigo-500 to-violet-600',
+    tooltip: 'Quarterly permission review campaigns and access certification',
+    stats: {},
+    height: 'md:row-span-2',
+    onClick: () => setActiveView('permission-review')
   }];
 
   // Filter admin tools based on search query
@@ -556,6 +578,20 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     return <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
         <Suspense fallback={<ViewLoadingFallback />}>
           <IntegrationHealth onBack={() => setActiveView('dashboard')} />
+        </Suspense>
+      </div>;
+  }
+  if (activeView === 'user-offboarding') {
+    return <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
+        <Suspense fallback={<ViewLoadingFallback />}>
+          <UserOffboarding onBack={() => setActiveView('dashboard')} />
+        </Suspense>
+      </div>;
+  }
+  if (activeView === 'permission-review') {
+    return <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
+        <Suspense fallback={<ViewLoadingFallback />}>
+          <PermissionReview onBack={() => setActiveView('dashboard')} />
         </Suspense>
       </div>;
   }
