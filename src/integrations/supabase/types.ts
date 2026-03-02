@@ -8792,6 +8792,10 @@ export type Database = {
         Returns: boolean
       }
       initiate_password_reset: { Args: { user_email: string }; Returns: string }
+      purge_old_audit_logs: {
+        Args: { retention_days_param?: number }
+        Returns: number
+      }
       reject_user_account: {
         Args: { rejection_reason_text?: string; target_user_id: string }
         Returns: boolean
