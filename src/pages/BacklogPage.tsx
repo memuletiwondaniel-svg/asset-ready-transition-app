@@ -20,6 +20,20 @@ const priorityDot: Record<string, string> = {
   low: 'bg-muted-foreground/40',
 };
 
+// Rotating palette for group colors
+const GROUP_COLORS = [
+  { border: 'border-l-violet-500', bg: 'bg-violet-500/10', text: 'text-violet-700 dark:text-violet-400', dot: 'bg-violet-500' },
+  { border: 'border-l-rose-500', bg: 'bg-rose-500/10', text: 'text-rose-700 dark:text-rose-400', dot: 'bg-rose-500' },
+  { border: 'border-l-sky-500', bg: 'bg-sky-500/10', text: 'text-sky-700 dark:text-sky-400', dot: 'bg-sky-500' },
+  { border: 'border-l-orange-500', bg: 'bg-orange-500/10', text: 'text-orange-700 dark:text-orange-400', dot: 'bg-orange-500' },
+  { border: 'border-l-teal-500', bg: 'bg-teal-500/10', text: 'text-teal-700 dark:text-teal-400', dot: 'bg-teal-500' },
+  { border: 'border-l-pink-500', bg: 'bg-pink-500/10', text: 'text-pink-700 dark:text-pink-400', dot: 'bg-pink-500' },
+  { border: 'border-l-indigo-500', bg: 'bg-indigo-500/10', text: 'text-indigo-700 dark:text-indigo-400', dot: 'bg-indigo-500' },
+  { border: 'border-l-lime-500', bg: 'bg-lime-500/10', text: 'text-lime-700 dark:text-lime-400', dot: 'bg-lime-500' },
+];
+
+const getGroupColor = (groupIndex: number) => GROUP_COLORS[groupIndex % GROUP_COLORS.length];
+
 const COLUMNS: { id: BacklogStatus; label: string; color: string }[] = [
   { id: 'pending', label: 'To Do', color: 'border-t-blue-500' },
   { id: 'in_progress', label: 'Doing', color: 'border-t-amber-500' },
