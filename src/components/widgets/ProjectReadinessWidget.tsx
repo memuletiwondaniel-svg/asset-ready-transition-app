@@ -166,7 +166,7 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
           {/* Icon and Title Row */}
           <div className="flex items-center gap-3 mb-4">
             <StyledWidgetIcon 
-              Icon={FolderOpen}
+              Icon={Building2}
               gradientFrom="from-blue-500"
               gradientTo="to-cyan-500"
               glowFrom="from-blue-500/40"
