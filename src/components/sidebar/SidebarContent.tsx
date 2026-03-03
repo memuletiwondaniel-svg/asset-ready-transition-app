@@ -274,22 +274,24 @@ export const SidebarContent = memo<SidebarContentProps>(({
 
           {/* Quick Actions */}
           <div className="space-y-2">
-            <Button 
-              variant="outline" 
-              size={isCollapsed ? "icon" : "sm"} 
-              onClick={() => onNavigate('admin-tools', isMobile)} 
-              className={cn(
-                `w-full h-10 sm:h-9 ${isCollapsed ? 'justify-center px-0' : 'justify-start'}`,
-                currentPage === 'admin-tools' && "bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary"
-              )} 
-              title={t.adminTools || 'Admin Tools'}
-            >
-              <Settings className={cn(
-                "w-4 h-4 transition-colors",
-                currentPage === 'admin-tools' ? "text-primary" : "text-muted-foreground"
-              )} />
-              {!isCollapsed && <span className="ml-2">{t.adminTools || 'Admin Tools'}</span>}
-            </Button>
+            {hasPermission('access_admin') && (
+              <Button 
+                variant="outline" 
+                size={isCollapsed ? "icon" : "sm"} 
+                onClick={() => onNavigate('admin-tools', isMobile)} 
+                className={cn(
+                  `w-full h-10 sm:h-9 ${isCollapsed ? 'justify-center px-0' : 'justify-start'}`,
+                  currentPage === 'admin-tools' && "bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary"
+                )} 
+                title={t.adminTools || 'Admin Tools'}
+              >
+                <Settings className={cn(
+                  "w-4 h-4 transition-colors",
+                  currentPage === 'admin-tools' ? "text-primary" : "text-muted-foreground"
+                )} />
+                {!isCollapsed && <span className="ml-2">{t.adminTools || 'Admin Tools'}</span>}
+              </Button>
+            )}
 
             <Button 
               variant="outline" 
