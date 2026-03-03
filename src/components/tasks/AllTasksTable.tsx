@@ -321,7 +321,7 @@ export const AllTasksTable: React.FC<AllTasksTableProps> = ({ searchQuery, userI
                         </span>
                       )}
                     </div>
-                  ) : (task.category === 'vcr_bundle' || task.category === 'vcr_approval' || task.category === 'pssr_bundle') && task.totalItems ? (
+                  ) : (task.category === 'vcr_bundle' || task.category === 'vcr_approval' || task.category === 'pssr_bundle' || task.category === 'pssr_approval') && task.totalItems ? (
                     <div className="flex items-center gap-2">
                       <Progress
                         value={task.progressPercentage || 0}
