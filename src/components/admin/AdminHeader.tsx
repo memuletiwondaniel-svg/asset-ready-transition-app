@@ -13,6 +13,7 @@ interface AdminHeaderProps {
     onClick?: () => void;
   }>;
   iconGradient?: string;
+  favoritePath?: string;
 }
 
 const AdminHeader: React.FC<AdminHeaderProps> = ({
