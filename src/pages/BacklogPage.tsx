@@ -199,7 +199,7 @@ interface KanbanColumnProps {
   label: string;
   colorClass: string;
   total: number;
-  grouped: { group: BacklogGroup; tasks: BacklogItem[] }[];
+  grouped: { group: BacklogGroup; colorIndex: number; tasks: BacklogItem[] }[];
   ungrouped: BacklogItem[];
   groups: BacklogGroup[];
   renamingGroupId: string | null;
