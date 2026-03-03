@@ -472,7 +472,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ item, onUpdateDesc, onUpdatePriorit
         )}
       </div>
 
-      <div className={cn('h-2 w-2 rounded-full flex-shrink-0 mt-1', priorityDot[item.priority])} title={item.priority} />
+      
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
