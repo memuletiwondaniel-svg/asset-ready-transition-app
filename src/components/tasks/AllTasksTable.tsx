@@ -36,7 +36,7 @@ interface AllTasksTableProps {
 
 interface UnifiedTask {
   id: string;
-  category: 'pssr' | 'handover' | 'ora' | 'owl' | 'vcr_bundle' | 'vcr_approval';
+  category: 'pssr' | 'handover' | 'ora' | 'owl' | 'vcr_bundle' | 'vcr_approval' | 'pssr_bundle';
   title: string;
   project: string;
   status: string;
