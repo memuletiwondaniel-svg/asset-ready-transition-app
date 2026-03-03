@@ -68,6 +68,7 @@ const navigationItems: NavigationItem[] = [
   { labelKey: 'navProjects', icon: Key, path: '/vcrs', section: 'projects' },
   { labelKey: 'navPSSR', icon: AlertTriangle, path: '/pssr', section: 'pssr' },
   { labelKey: 'navMyTasks', icon: ListChecks, path: '/my-tasks', section: 'my-tasks' },
+  { labelKey: 'navMyBacklog', icon: ClipboardList, path: '/my-backlog', section: 'my-backlog' },
   { labelKey: 'navExecutiveDashboard', icon: Gauge, path: '/executive-dashboard', section: 'executive-dashboard' },
   { labelKey: 'navORMaintenance', icon: Wrench, path: '/or-maintenance', section: 'or-maintenance' },
   { labelKey: 'navAskBob', icon: MessageSquare, path: '/ask-orsh', section: 'ask-orsh' },
