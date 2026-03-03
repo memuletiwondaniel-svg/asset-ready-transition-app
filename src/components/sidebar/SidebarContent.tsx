@@ -98,10 +98,16 @@ export const SidebarContent = memo<SidebarContentProps>(({
   onShowOnboarding,
   onToggleSearchHistory,
   onSearchHistoryClick,
+  currentUserId,
   onLogout,
   onToggleCollapse,
 }) => {
   const { translations: t } = useLanguage();
+  
+  const DANIEL_USER_ID = '05b44255-4358-450c-8aa4-0558b31df70b';
+  const visibleNavItems = navigationItems.filter(item => 
+    item.section !== 'my-backlog' || currentUserId === DANIEL_USER_ID
+  );
   
   // Helper function to get translated label
   const getLabel = (labelKey: string): string => {
