@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { ProfileCompletionIndicator } from '@/components/sidebar/ProfileCompletionIndicator';
 import { OnlineUsersIndicator } from '@/components/sidebar/OnlineUsersIndicator';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { usePermissions } from '@/hooks/usePermissions';
 
 interface NavigationItem {
   labelKey: string;
