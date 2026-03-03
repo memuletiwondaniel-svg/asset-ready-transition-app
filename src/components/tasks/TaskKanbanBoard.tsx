@@ -66,11 +66,13 @@ const KanbanCard: React.FC<{
         task.isNew && 'ring-1 ring-primary/20'
       )}
     >
-      {/* Category + priority */}
+      {/* Project + NEW badge */}
       <div className="flex items-center justify-between gap-2 mb-1.5">
-        <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0 font-normal", task.categoryColor)}>
-          {task.categoryLabel}
-        </Badge>
+        {task.project ? (
+          <ProjectIdBadge size="sm" projectId={task.project}>{task.project}</ProjectIdBadge>
+        ) : (
+          <span className="text-[10px] text-muted-foreground">{task.categoryLabel}</span>
+        )}
         {task.isNew && (
           <Badge variant="secondary" className="text-[10px] px-1 py-0 bg-primary/10 text-primary">NEW</Badge>
         )}
@@ -78,11 +80,6 @@ const KanbanCard: React.FC<{
 
       {/* Title */}
       <p className="text-sm font-medium text-foreground leading-snug mb-1 line-clamp-2">{task.title}</p>
-
-      {/* Project */}
-      {task.project && (
-        <p className="text-[11px] text-muted-foreground truncate mb-1.5">{task.project}</p>
-      )}
 
       {/* Dates row */}
       {(task.startDate || task.endDate || task.dueDate) && (

@@ -227,12 +227,11 @@ const TaskRow: React.FC<{ task: UnifiedTask; onClick: () => void }> = ({ task, o
             <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-primary/10 text-primary shrink-0">NEW</Badge>
           )}
         </div>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          {task.project && <span className="font-medium text-foreground/80 truncate">{task.project}</span>}
-          <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0 font-normal", task.categoryColor)}>
-            {task.categoryLabel}
-          </Badge>
-        </div>
+        {task.project ? (
+          <ProjectIdBadge size="sm" projectId={task.project}>{task.project}</ProjectIdBadge>
+        ) : (
+          <span className="text-[11px] text-muted-foreground">{task.categoryLabel}</span>
+        )}
         {/* Date range for ORA activities */}
         {(task.startDate || task.endDate) && (
           <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mt-1">
