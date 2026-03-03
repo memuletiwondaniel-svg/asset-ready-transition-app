@@ -83,6 +83,11 @@ const CATEGORY_CONFIG = {
     icon: ClipboardCheck, 
     color: 'bg-indigo-500/10 text-indigo-600 border-indigo-500/20' 
   },
+  pssr_bundle: { 
+    label: 'PSSR Checklist', 
+    icon: ClipboardList, 
+    color: 'bg-orange-500/10 text-orange-600 border-orange-500/20' 
+  },
 };
 
 export const AllTasksTable: React.FC<AllTasksTableProps> = ({ searchQuery, userId }) => {
