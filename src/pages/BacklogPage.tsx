@@ -182,7 +182,7 @@ const BacklogPage: React.FC = () => {
               <div className="flex items-center gap-2 p-2 rounded-md border bg-card shadow-xl max-w-xs">
                 <GripVertical className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
                 <span className="text-sm truncate">{activeItem.description}</span>
-                <div className={cn('h-2 w-2 rounded-full flex-shrink-0', priorityDot[activeItem.priority])} />
+                
               </div>
             )}
           </DragOverlay>
@@ -448,7 +448,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ item, onUpdateDesc, onUpdatePriorit
         item.status === 'done' && 'opacity-60'
       )}
     >
-      <button {...listeners} {...attributes} className="flex-shrink-0 mt-0.5 cursor-grab active:cursor-grabbing touch-none text-muted-foreground hover:text-foreground">
+      <button {...listeners} {...attributes} className="flex-shrink-0 mt-0.5 cursor-grab active:cursor-grabbing touch-none text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity">
         <GripVertical className="h-3.5 w-3.5" />
       </button>
 
@@ -472,7 +472,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ item, onUpdateDesc, onUpdatePriorit
         )}
       </div>
 
-      <div className={cn('h-2 w-2 rounded-full flex-shrink-0 mt-1', priorityDot[item.priority])} title={item.priority} />
+      
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
