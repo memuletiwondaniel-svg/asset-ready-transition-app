@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils';
 import { format, isPast, isToday, differenceInDays } from 'date-fns';
 import type { UserTask } from '@/hooks/useUserTasks';
 import { useUnifiedTasks, FILTER_OPTIONS, type CategoryFilter, type UnifiedTask } from './useUnifiedTasks';
+import { ProjectIdBadge } from '@/components/ui/project-id-badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 type GroupBy = 'none' | 'project' | 'category';
@@ -226,12 +227,11 @@ const TaskRow: React.FC<{ task: UnifiedTask; onClick: () => void }> = ({ task, o
             <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-primary/10 text-primary shrink-0">NEW</Badge>
           )}
         </div>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          {task.project && <span className="font-medium text-foreground/80 truncate">{task.project}</span>}
-          <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0 font-normal", task.categoryColor)}>
-            {task.categoryLabel}
-          </Badge>
-        </div>
+        {task.project ? (
+          <ProjectIdBadge size="sm" projectId={task.project}>{task.project}</ProjectIdBadge>
+        ) : (
+          <span className="text-[11px] text-muted-foreground">{task.categoryLabel}</span>
+        )}
         {/* Date range for ORA activities */}
         {(task.startDate || task.endDate) && (
           <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mt-1">
