@@ -45,7 +45,7 @@ export const usePersonalBacklog = (filter: 'all' | 'pending' | 'done' = 'all', g
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['personal-backlog'] });
 
   const addItem = useMutation({
-    mutationFn: async ({ description, priority = 'normal' }: { description: string; priority?: string }) => {
+    mutationFn: async ({ description, priority = 'normal', group_id }: { description: string; priority?: string; group_id?: string | null }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
