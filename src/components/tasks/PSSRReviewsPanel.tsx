@@ -69,14 +69,23 @@ export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({
     );
   });
 
-  // User tasks - only show PSSR and P2A handover related tasks in this panel
+  // User tasks - show PSSR, P2A handover, and bundle tasks in this panel
+  // Also catch any uncategorized tasks that don't belong to ORA or OWL panels
   const relevantUserTasks = userTasks.filter(t => {
     const meta = t.metadata as Record<string, any> | null;
     const source = meta?.source;
     const action = meta?.action;
-    // Only include tasks from pssr_workflow or p2a_handover sources
-    return source === 'pssr_workflow' || source === 'p2a_handover' || 
-           action === 'review_draft_pssr';
+    const type = t.type;
+    // Include tasks from pssr_workflow, p2a_handover, or bundle types
+    if (source === 'pssr_workflow' || source === 'p2a_handover' || 
+        action === 'review_draft_pssr') return true;
+    // Include PSSR/VCR bundle tasks
+    if (type === 'pssr_checklist_bundle' || type === 'pssr_approval_bundle' ||
+        type === 'vcr_checklist_bundle' || type === 'vcr_approval_bundle') return true;
+    // Catch-all: include any tasks NOT claimed by ORA panel (ora_workflow source)
+    // OWL panel uses outstanding_work_items table, not user_tasks
+    if (source !== 'ora_workflow') return true;
+    return false;
   });
 
   const filteredUserTasks = relevantUserTasks.filter(t => {

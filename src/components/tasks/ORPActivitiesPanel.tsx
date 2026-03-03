@@ -1,11 +1,13 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Activity } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { MyTasksPanelCard } from './MyTasksPanelCard';
+import { TaskDetailSheet } from './TaskDetailSheet';
 import { useUserORPActivities } from '@/hooks/useUserORPActivities';
+import { useUserTasks, type UserTask } from '@/hooks/useUserTasks';
 import { useUserLastLogin } from '@/hooks/useUserLastLogin';
 
 import { cn } from '@/lib/utils';
@@ -30,8 +32,27 @@ export const ORPActivitiesPanel: React.FC<ORPActivitiesPanelProps> = ({
   onTaskCountUpdate,
 }) => {
   const navigate = useNavigate();
-  const { activities: realActivities, stats, isLoading } = useUserORPActivities();
+  const { activities: realActivities, stats, isLoading: orpLoading } = useUserORPActivities();
+  const { tasks: userTasks, loading: tasksLoading, updateTaskStatus } = useUserTasks();
   const { isNewSinceLastLogin } = useUserLastLogin();
+  const [selectedTask, setSelectedTask] = useState<UserTask | null>(null);
+
+  const isLoading = orpLoading || tasksLoading;
+
+  // ORA workflow tasks from user_tasks table
+  const oraWorkflowTasks = userTasks.filter(t => {
+    const meta = t.metadata as Record<string, any> | null;
+    return meta?.source === 'ora_workflow';
+  });
+
+  const filteredOraWorkflowTasks = oraWorkflowTasks.filter(t => {
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      t.title.toLowerCase().includes(query) ||
+      t.description?.toLowerCase().includes(query)
+    );
+  });
 
   // Use only real data from the database
   const rawActivities = realActivities || [];
@@ -46,14 +67,17 @@ export const ORPActivitiesPanel: React.FC<ORPActivitiesPanelProps> = ({
     );
   });
 
-  const newCount = activities.filter(a => isNewSinceLastLogin(a.created_at)).length;
+  const newActivityCount = activities.filter(a => isNewSinceLastLogin(a.created_at)).length;
+  const newTaskCount = filteredOraWorkflowTasks.filter(t => isNewSinceLastLogin(t.created_at)).length;
+  const newCount = newActivityCount + newTaskCount;
 
-  // Report task count to parent
+  // Report task count to parent (both ORP activities and ORA workflow tasks)
   useEffect(() => {
     if (!isLoading) {
-      onTaskCountUpdate?.(rawActivities.length);
+      const rawTotal = rawActivities.length + oraWorkflowTasks.length;
+      onTaskCountUpdate?.(rawTotal);
     }
-  }, [rawActivities.length, isLoading, onTaskCountUpdate]);
+  }, [rawActivities.length, oraWorkflowTasks.length, isLoading, onTaskCountUpdate]);
 
   // Group activities by plan to avoid duplicates
   const uniquePlans = activities.reduce((acc, activity) => {
@@ -69,6 +93,8 @@ export const ORPActivitiesPanel: React.FC<ORPActivitiesPanelProps> = ({
     totalDeliverables: activities.reduce((sum, a) => sum + (a.deliverable_count || 0), 0),
     completedDeliverables: activities.reduce((sum, a) => sum + (a.completed_deliverables || 0), 0),
   };
+
+  const totalCount = uniquePlans.length + filteredOraWorkflowTasks.length;
 
   const getPhaseColor = (phase?: string) => {
     switch (phase) {
@@ -88,13 +114,25 @@ export const ORPActivitiesPanel: React.FC<ORPActivitiesPanelProps> = ({
     return phase.replace('ORP_', '').replace('_', ' ');
   };
 
+  const getPriorityBadge = (priority: string) => {
+    switch (priority) {
+      case 'High':
+        return <Badge variant="outline" className="text-[10px] bg-destructive/10 text-destructive border-destructive/20">{priority}</Badge>;
+      case 'Medium':
+        return <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-500/20">{priority}</Badge>;
+      default:
+        return <Badge variant="outline" className="text-[10px]">{priority}</Badge>;
+    }
+  };
+
   return (
+    <>
     <MyTasksPanelCard
       title="ORA Activities"
       icon={<Activity className="h-5 w-5 text-white" />}
       iconColorClass="from-purple-500 to-purple-600"
-      primaryStat={displayStats.totalPlans}
-      primaryLabel="active plans"
+      primaryStat={totalCount}
+      primaryLabel={totalCount === 1 ? "item" : "items"}
       secondaryStat={displayStats.totalDeliverables - displayStats.completedDeliverables}
       secondaryLabel="deliverables pending"
       newCount={newCount}
@@ -104,10 +142,60 @@ export const ORPActivitiesPanel: React.FC<ORPActivitiesPanelProps> = ({
       isRelocated={isRelocated}
       isDimmed={isDimmed}
       isLoading={isLoading}
-      isEmpty={uniquePlans.length === 0}
+      isEmpty={totalCount === 0}
       emptyMessage="No ORA activities assigned"
       onViewAll={() => navigate('/operation-readiness')}
     >
+      {/* ORA Workflow Action Items (from user_tasks) */}
+      {filteredOraWorkflowTasks.map((task, index) => {
+        const isNew = isNewSinceLastLogin(task.created_at);
+        const daysPending = Math.floor(
+          (Date.now() - new Date(task.created_at).getTime()) / (1000 * 60 * 60 * 24)
+        );
+        const meta = task.metadata as Record<string, any> | null;
+
+        return (
+          <div
+            key={task.id}
+            className={cn(
+              "p-3 rounded-lg border transition-all cursor-pointer group/item",
+              "hover:shadow-sm hover:border-primary/20",
+              "bg-card/50",
+              isNew && "border-l-2 border-l-primary",
+              "animate-fade-in"
+            )}
+            style={{ animationDelay: `${index * 50}ms` }}
+            onClick={() => setSelectedTask(task)}
+          >
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Badge variant="secondary" className="text-[10px] bg-purple-500/10 text-purple-600">Action</Badge>
+                  <span className="font-medium text-sm truncate">{task.title}</span>
+                  {isNew && (
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-primary/10 text-primary shrink-0">
+                      NEW
+                    </Badge>
+                  )}
+                </div>
+                {task.description && (
+                  <p className="text-xs text-muted-foreground truncate mt-0.5">{task.description}</p>
+                )}
+                {meta?.project_name && (
+                  <p className="text-xs text-muted-foreground truncate mt-0.5">
+                    Project: {meta.project_name}
+                  </p>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                {getPriorityBadge(task.priority)}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+
+      {/* ORP Plan Activities (from orp_resources) */}
       {uniquePlans.map((activity, index) => {
         const isNew = isNewSinceLastLogin(activity.created_at);
         const progress = activity.deliverable_count > 0
@@ -123,7 +211,7 @@ export const ORPActivitiesPanel: React.FC<ORPActivitiesPanelProps> = ({
               isNew && "border-l-2 border-l-primary",
               "animate-fade-in"
             )}
-            style={{ animationDelay: `${index * 50}ms` }}
+            style={{ animationDelay: `${(filteredOraWorkflowTasks.length + index) * 50}ms` }}
             onClick={() => navigate(`/operation-readiness/${activity.plan_id}`)}
           >
             <div className="flex items-start justify-between gap-2">
@@ -175,5 +263,18 @@ export const ORPActivitiesPanel: React.FC<ORPActivitiesPanelProps> = ({
         );
       })}
     </MyTasksPanelCard>
+
+    <TaskDetailSheet
+      task={selectedTask}
+      open={!!selectedTask}
+      onOpenChange={(open) => { if (!open) setSelectedTask(null); }}
+      onApprove={async (taskId, comment) => {
+        updateTaskStatus(taskId, 'completed');
+      }}
+      onReject={async (taskId, comment) => {
+        updateTaskStatus(taskId, 'cancelled');
+      }}
+    />
+    </>
   );
 };
