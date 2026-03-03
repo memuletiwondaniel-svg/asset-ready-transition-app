@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, Clock, FileText, CheckCircle, Home, Loader2, History, X, Sparkles, Upload, ChevronLeft, ChevronRight, Check, Filter, ArrowUpDown, MoreVertical, Eye, EyeOff, Maximize2, Minimize2, GripVertical, MessageSquare, ChevronDown, ChevronUp, Bot, Zap, BarChart3, Paperclip, Key, AlertTriangle, ListChecks, Gauge, Wrench, Users, Shield, Bookmark, Building2 } from 'lucide-react';
+import { Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, Clock, FileText, CheckCircle, Home, Loader2, History, X, Sparkles, Upload, ChevronLeft, ChevronRight, Check, Filter, ArrowUpDown, MoreVertical, Eye, EyeOff, Maximize2, Minimize2, GripVertical, MessageSquare, ChevronDown, ChevronUp, Bot, Zap, BarChart3, Paperclip, Key, AlertTriangle, ListChecks, Gauge, Wrench, Users, Shield, Bookmark, Building2, CalendarCheck } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
@@ -33,7 +33,7 @@ const FAVORITE_ICON_MAP: Record<string, { icon: React.ComponentType<any>; color:
   '/projects': { icon: Building2, color: 'bg-purple-500' },
   '/project-management': { icon: Building2, color: 'bg-purple-500' },
   '/pssr': { icon: AlertTriangle, color: 'bg-orange-500' },
-  '/my-tasks': { icon: ListChecks, color: 'bg-amber-500' },
+  '/my-tasks': { icon: CalendarCheck, color: 'bg-indigo-500' },
   '/my-backlog': { icon: ClipboardList, color: 'bg-indigo-500' },
   '/executive-dashboard': { icon: Gauge, color: 'bg-cyan-500' },
   '/or-maintenance': { icon: Wrench, color: 'bg-slate-500' },

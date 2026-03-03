@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Users, Target, FileText, UserCircle, FolderOpen } from 'lucide-react';
+import { Users, Target, FileText, UserCircle, Building2 } from 'lucide-react';
 import { useProjects, useProjectTeamMembers } from '@/hooks/useProjects';
 import { usePlants } from '@/hooks/usePlants';
 import { useStations } from '@/hooks/useStations';
@@ -166,7 +166,7 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
           {/* Icon and Title Row */}
           <div className="flex items-center gap-3 mb-4">
             <StyledWidgetIcon 
-              Icon={FolderOpen}
+              Icon={Building2}
               gradientFrom="from-blue-500"
               gradientTo="to-cyan-500"
               glowFrom="from-blue-500/40"

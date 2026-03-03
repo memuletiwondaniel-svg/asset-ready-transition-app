@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CalendarCheck, Clock, CheckCircle2, Plus, FileEdit, Send, AlertTriangle, ChevronRight, Trash2 } from 'lucide-react';
+import { GanttChart, Clock, CheckCircle2, Plus, FileEdit, Send, AlertTriangle, ChevronRight, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { StyledWidgetIcon } from './StyledWidgetIcon';
 import { useProjectORPPlans } from '@/hooks/useProjectORPPlans';
@@ -84,7 +84,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
             <CardTitle className="text-lg flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <StyledWidgetIcon 
-                  Icon={CalendarCheck}
+                  Icon={GanttChart}
                   gradientFrom="from-purple-500"
                   gradientTo="to-violet-500"
                   glowFrom="from-purple-500/40"
@@ -188,7 +188,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
           <CardTitle className="text-lg flex items-center justify-between">
             <div className="flex items-center gap-3">
               <StyledWidgetIcon 
-                Icon={CalendarCheck}
+                Icon={GanttChart}
                 gradientFrom="from-purple-500"
                 gradientTo="to-violet-500"
                 glowFrom="from-purple-500/40"
