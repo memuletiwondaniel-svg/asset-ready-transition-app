@@ -138,21 +138,17 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
               {getTypeBadge()}
               {getPriorityBadge(task.priority)}
             </div>
-            <SheetTitle className="text-left text-lg leading-snug mt-2">
+             <SheetTitle className="text-left text-lg leading-snug mt-2">
               {task.title}
             </SheetTitle>
+            {task.description && (
+              <p className="text-sm text-muted-foreground mt-1">{task.description}</p>
+            )}
           </SheetHeader>
 
           <div className="space-y-5">
-            {/* Details Section */}
+            {/* Meta info */}
             <div className="space-y-3">
-              {task.description && (
-                <div>
-                  <p className="text-sm text-muted-foreground font-medium mb-1">Description</p>
-                  <p className="text-sm text-foreground">{task.description}</p>
-                </div>
-              )}
-
               <div className="flex items-center gap-4 text-sm">
                 <div className="flex items-center gap-1.5 text-muted-foreground">
                   <Calendar className="h-3.5 w-3.5" />
