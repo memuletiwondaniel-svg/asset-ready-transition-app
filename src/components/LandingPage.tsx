@@ -26,6 +26,30 @@ import { CSS } from '@dnd-kit/utilities';
 import { processUserInput, getBlockedResponse } from '@/lib/security';
 import { useFavoritePages } from '@/hooks/useFavoritePages';
 
+// Maps favorite paths to appropriate icons and colors
+const FAVORITE_ICON_MAP: Record<string, { icon: React.ComponentType<any>; color: string }> = {
+  '/home': { icon: Home, color: 'bg-primary' },
+  '/vcrs': { icon: Key, color: 'bg-blue-500' },
+  '/projects': { icon: Key, color: 'bg-blue-500' },
+  '/pssr': { icon: AlertTriangle, color: 'bg-orange-500' },
+  '/my-tasks': { icon: ListChecks, color: 'bg-amber-500' },
+  '/my-backlog': { icon: ClipboardList, color: 'bg-indigo-500' },
+  '/executive-dashboard': { icon: Gauge, color: 'bg-cyan-500' },
+  '/or-maintenance': { icon: Wrench, color: 'bg-slate-500' },
+  '/ask-orsh': { icon: MessageSquare, color: 'bg-violet-500' },
+  '/settings': { icon: Settings, color: 'bg-zinc-500' },
+  '/user-management': { icon: Users, color: 'bg-teal-500' },
+  '/admin-tools': { icon: Shield, color: 'bg-rose-500' },
+};
+
+function getFavoriteIcon(path: string) {
+  return FAVORITE_ICON_MAP[path]?.icon || Bookmark;
+}
+
+function getFavoriteColor(path: string) {
+  return FAVORITE_ICON_MAP[path]?.color || 'bg-primary';
+}
+
 interface WidgetConfig {
   id: string;
   title: string;
