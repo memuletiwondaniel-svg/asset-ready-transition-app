@@ -128,18 +128,12 @@ const Index = () => {
               <OrshLogo size="medium" />
             </div>
             
-             {/* Tenant or BGC Logo - Right */}
+             {/* Tenant Logo - Right (only show if subdomain tenant) */}
             <div className="flex items-center">
-              {subdomainTenant?.logo_url ? (
+              {subdomainTenant?.logo_url && (
                 <img 
                   src={subdomainTenant.logo_url} 
                   alt={subdomainTenant.name} 
-                  className="h-12 w-auto drop-shadow-lg"
-                />
-              ) : (
-                <img 
-                  src="/lovable-uploads/421778ce-4ffe-4e3b-b370-8d1bb24a3d51.png" 
-                  alt="BGC Logo" 
                   className="h-12 w-auto drop-shadow-lg"
                 />
               )}
