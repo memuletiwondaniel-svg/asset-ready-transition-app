@@ -1,16 +1,26 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 
 export interface FavoritePage {
   path: string;
   label: string;
 }
 
-const STORAGE_KEY = 'orsh-favorite-pages';
+const STORAGE_KEY_PREFIX = 'orsh-favorite-pages';
+const LEGACY_STORAGE_KEY = 'orsh-favorite-pages';
+
+const getStorageKey = (userId?: string) => 
+  userId ? `${STORAGE_KEY_PREFIX}-${userId}` : LEGACY_STORAGE_KEY;
 
 export const useFavoritePages = () => {
-const [favorites, setFavorites] = useState<FavoritePage[]>(() => {
+  const { user } = useAuth();
+  const userId = user?.id;
+  const storageKey = getStorageKey(userId);
+  const prevStorageKeyRef = useRef(storageKey);
+
+  const readFromStorage = useCallback((key: string): FavoritePage[] => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
+      const stored = localStorage.getItem(key);
       if (!stored) return [];
       const parsed: FavoritePage[] = JSON.parse(stored);
       
@@ -42,18 +52,58 @@ const [favorites, setFavorites] = useState<FavoritePage[]>(() => {
       });
       
       if (migrated) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(result));
+        localStorage.setItem(key, JSON.stringify(result));
       }
       
       return result;
     } catch {
       return [];
     }
+  }, []);
+
+  const [favorites, setFavorites] = useState<FavoritePage[]>(() => {
+    // On first mount, try user-scoped key, then migrate from legacy key
+    const userFavs = readFromStorage(storageKey);
+    if (userFavs.length > 0) return userFavs;
+    
+    // Migrate legacy (non-scoped) favorites to user-scoped key
+    if (userId) {
+      const legacyFavs = readFromStorage(LEGACY_STORAGE_KEY);
+      if (legacyFavs.length > 0) {
+        localStorage.setItem(storageKey, JSON.stringify(legacyFavs));
+        localStorage.removeItem(LEGACY_STORAGE_KEY);
+        return legacyFavs;
+      }
+    }
+    return [];
   });
 
+  // Re-read favorites when user changes (login/logout)
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(favorites));
-  }, [favorites]);
+    if (prevStorageKeyRef.current !== storageKey) {
+      prevStorageKeyRef.current = storageKey;
+      const userFavs = readFromStorage(storageKey);
+      if (userFavs.length > 0) {
+        setFavorites(userFavs);
+      } else if (userId) {
+        // Migrate legacy favorites for newly logged-in user
+        const legacyFavs = readFromStorage(LEGACY_STORAGE_KEY);
+        if (legacyFavs.length > 0) {
+          localStorage.setItem(storageKey, JSON.stringify(legacyFavs));
+          localStorage.removeItem(LEGACY_STORAGE_KEY);
+          setFavorites(legacyFavs);
+        } else {
+          setFavorites([]);
+        }
+      } else {
+        setFavorites([]);
+      }
+    }
+  }, [storageKey, userId, readFromStorage]);
+
+  useEffect(() => {
+    localStorage.setItem(storageKey, JSON.stringify(favorites));
+  }, [favorites, storageKey]);
 
   const isFavorite = useCallback((path: string) => {
     return favorites.some(f => f.path === path);
