@@ -353,7 +353,7 @@ const GroupedSection: React.FC<GroupedSectionProps> = ({
   const colors = getGroupColor(colorIndex);
 
   return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen} className={cn("rounded-md border-l-[3px] border border-border", colors.border, colors.bg)}>
+    <Collapsible open={isOpen} onOpenChange={setIsOpen} className={cn("rounded-md border-l-[3px] border border-border bg-card", colors.border)}>
       <div className="flex items-center gap-1 px-2 py-1.5">
         <CollapsibleTrigger asChild>
           <Button variant="ghost" size="icon" className="h-5 w-5 flex-shrink-0">
@@ -472,7 +472,13 @@ const TaskCard: React.FC<TaskCardProps> = ({ item, onUpdateDesc, onUpdatePriorit
         )}
       </div>
 
-      
+      <Badge variant="outline" className={cn('text-[9px] h-4 px-1.5 flex-shrink-0 mt-0.5', 
+        item.priority === 'high' ? 'bg-destructive/10 text-destructive border-destructive/30' : 
+        item.priority === 'low' ? 'bg-muted text-muted-foreground border-border' : 
+        'bg-primary/10 text-primary border-primary/30'
+      )}>
+        {item.priority === 'high' ? 'High' : item.priority === 'low' ? 'Low' : 'Med'}
+      </Badge>
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
