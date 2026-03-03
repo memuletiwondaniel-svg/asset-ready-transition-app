@@ -114,5 +114,6 @@ export const usePersonalBacklog = (filter: 'all' | 'pending' | 'done' = 'all', g
     updateDescription,
     updatePriority,
     deleteItem,
+    moveToGroup,
   };
 };
