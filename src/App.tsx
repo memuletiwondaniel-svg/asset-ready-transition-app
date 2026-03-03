@@ -35,6 +35,7 @@ import PSSRApprovalPage from "@/pages/PSSRApprovalPage";
 
 import SoFReviewPage from "@/pages/SoFReviewPage";
 import MicrosoftCallback from "@/pages/auth/MicrosoftCallback";
+import BacklogPage from "@/pages/BacklogPage";
 
 // Create QueryClient outside component to prevent recreation on every render
 const queryClient = new QueryClient({
