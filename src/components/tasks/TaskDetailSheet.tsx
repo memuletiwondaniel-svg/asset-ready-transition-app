@@ -64,7 +64,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
     (Date.now() - new Date(task.created_at).getTime()) / (1000 * 60 * 60 * 24)
   );
 
-  // getTypeBadge moved below after boolean declarations
+  
 
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
