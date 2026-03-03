@@ -25,7 +25,7 @@ import { arrayMove, SortableContext, rectSortingStrategy, useSortable } from '@d
 import { CSS } from '@dnd-kit/utilities';
 import { processUserInput, getBlockedResponse } from '@/lib/security';
 import { useFavoritePages } from '@/hooks/useFavoritePages';
-import { Home, Key, AlertTriangle, ListChecks, ClipboardList, Gauge, Wrench, MessageSquare, Settings, Users, Shield, Bookmark } from 'lucide-react';
+
 interface WidgetConfig {
   id: string;
   title: string;
