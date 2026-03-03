@@ -216,7 +216,7 @@ const DisasterRecoveryRunbook: React.FC<DisasterRecoveryRunbookProps> = ({ onBac
     <div className="flex-1 flex flex-col overflow-auto">
       {/* Header */}
       <div className="border-b border-border bg-card/80 backdrop-blur-sm px-4 md:px-6 py-4 shrink-0">
-        <BreadcrumbNavigation currentPageLabel="Disaster Recovery Runbook" />
+        <BreadcrumbNavigation currentPageLabel="Disaster Recovery Runbook" favoritePath="/admin-tools/disaster-recovery" />
         <div className="flex items-center justify-between mt-3">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" onClick={onBack} className="h-8 w-8">

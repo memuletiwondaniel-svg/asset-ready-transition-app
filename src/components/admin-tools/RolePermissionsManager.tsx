@@ -169,7 +169,7 @@ export const RolePermissionsManager: React.FC<RolePermissionsManagerProps> = ({ 
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Header */}
       <div className="border-b border-border bg-card/80 backdrop-blur-sm px-6 py-4 sticky top-0 z-10">
-        <BreadcrumbNavigation currentPageLabel="Roles & Permissions" />
+        <BreadcrumbNavigation currentPageLabel="Roles & Permissions" favoritePath="/admin-tools/roles-permissions" />
         <div className="flex items-center justify-between mt-3">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" onClick={onBack}>

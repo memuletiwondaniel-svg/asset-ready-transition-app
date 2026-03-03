@@ -192,7 +192,7 @@ const AuditLogViewer: React.FC<AuditLogViewerProps> = ({ onBack }) => {
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Header */}
       <div className="border-b border-border bg-card/80 backdrop-blur-sm px-4 md:px-6 py-4 shrink-0">
-        <BreadcrumbNavigation currentPageLabel="Audit Logs" />
+        <BreadcrumbNavigation currentPageLabel="Audit Logs" favoritePath="/admin-tools/audit-logs" />
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-3">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" onClick={onBack} className="h-8 w-8">
