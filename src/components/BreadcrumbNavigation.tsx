@@ -36,6 +36,7 @@ interface BreadcrumbNavigationProps {
 export const BreadcrumbNavigation: React.FC<BreadcrumbNavigationProps> = ({
   currentPageLabel,
   className,
+  favoritePath,
   customBreadcrumbs
 }) => {
   const { 
@@ -51,7 +52,8 @@ export const BreadcrumbNavigation: React.FC<BreadcrumbNavigationProps> = ({
   const location = useLocation();
   const { isFavorite, toggleFavorite } = useFavoritePages();
   const isHomePage = location.pathname === '/';
-  const isCurrentFavorite = isFavorite(location.pathname);
+  const effectiveFavoritePath = favoritePath || location.pathname;
+  const isCurrentFavorite = isFavorite(effectiveFavoritePath);
 
   const breadcrumbs = customBreadcrumbs || buildBreadcrumbsFromPath();
   // Only slice for auto-generated breadcrumbs, not custom ones
