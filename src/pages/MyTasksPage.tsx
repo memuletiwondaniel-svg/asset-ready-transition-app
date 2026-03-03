@@ -1,25 +1,16 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { CalendarCheck, Plus, Search, LayoutGrid, Table, CheckCircle2 } from 'lucide-react';
+import { CalendarCheck, Plus, Search, CheckCircle2 } from 'lucide-react';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { PSSRReviewsPanel } from '@/components/tasks/PSSRReviewsPanel';
-import { ORPActivitiesPanel } from '@/components/tasks/ORPActivitiesPanel';
-import { OWLPanel } from '@/components/tasks/OWLPanel';
 import { NewTaskModal } from '@/components/tasks/NewTaskModal';
-import { AllTasksTable } from '@/components/tasks/AllTasksTable';
+import { UnifiedTaskList } from '@/components/tasks/UnifiedTaskList';
 import { RecentlyCompletedTasks } from '@/components/tasks/RecentlyCompletedTasks';
 import { DirectorSoFView } from '@/components/tasks/DirectorSoFView';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 import { useUserLastLogin } from '@/hooks/useUserLastLogin';
 import { useUserIsDirector } from '@/hooks/useUserIsDirector';
-import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
-
-type ViewMode = 'grid' | 'table';
-type ExpandedCard = 'pssr' | 'ora' | 'owl' | null;
-
-const PANEL_ORDER = ['pssr', 'ora', 'owl'] as const;
 
 const MyTasksPage: React.FC = () => {
   const { user } = useAuth();
@@ -27,11 +18,6 @@ const MyTasksPage: React.FC = () => {
   const { data: isDirector, isLoading: isDirectorLoading } = useUserIsDirector();
   const [createTaskModalOpen, setCreateTaskModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
-  const [expandedCard, setExpandedCard] = useState<ExpandedCard>(null);
-  
-  const [panelTaskCounts, setPanelTaskCounts] = useState<Record<string, number>>({});
-  const [panelsLoaded, setPanelsLoaded] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -40,51 +26,7 @@ const MyTasksPage: React.FC = () => {
     return () => clearTimeout(timer);
   }, [updateLastLogin]);
 
-  // Fallback: if panels haven't reported in 3s, show content anyway
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      setPanelsLoaded(prev => ({ pssr: true, ora: true, owl: true, ...prev }));
-    }, 3000);
-    return () => clearTimeout(timeout);
-  }, []);
-
-  // Auto-expand logic: if only one panel has tasks, expand it
-  useEffect(() => {
-    const panelsWithTasks = Object.entries(panelTaskCounts)
-      .filter(([_, count]) => count > 0)
-      .map(([panelId]) => panelId);
-    
-    if (panelsWithTasks.length === 1 && expandedCard === null) {
-      setExpandedCard(panelsWithTasks[0] as ExpandedCard);
-    }
-  }, [panelTaskCounts, expandedCard]);
-
-  const handleCardExpand = (cardId: ExpandedCard) => {
-    setExpandedCard(prev => prev === cardId ? null : cardId);
-  };
-
-  const handlePssrTaskCount = useCallback((count: number) => {
-    setPanelTaskCounts(prev => prev.pssr === count ? prev : { ...prev, pssr: count });
-    setPanelsLoaded(prev => prev.pssr ? prev : { ...prev, pssr: true });
-  }, []);
-
-  const handleOraTaskCount = useCallback((count: number) => {
-    setPanelTaskCounts(prev => prev.ora === count ? prev : { ...prev, ora: count });
-    setPanelsLoaded(prev => prev.ora ? prev : { ...prev, ora: true });
-  }, []);
-
-  const handleOwlTaskCount = useCallback((count: number) => {
-    setPanelTaskCounts(prev => prev.owl === count ? prev : { ...prev, owl: count });
-    setPanelsLoaded(prev => prev.owl ? prev : { ...prev, owl: true });
-  }, []);
-
-  const allPanelsLoaded = panelsLoaded.pssr && panelsLoaded.ora && panelsLoaded.owl;
-  const totalTasks = (panelTaskCounts.pssr || 0) + (panelTaskCounts.ora || 0) + (panelTaskCounts.owl || 0);
-  const isAllCaughtUp = allPanelsLoaded && totalTasks === 0;
-
-  if (!user) {
-    return null;
-  }
+  if (!user) return null;
 
   if (isDirectorLoading) {
     return (
@@ -121,71 +63,6 @@ const MyTasksPage: React.FC = () => {
     );
   }
 
-  // 3 panels layout
-  const getColumnLayout = () => {
-    if (!expandedCard) {
-      return {
-        leftColumn: ['pssr'] as const,
-        rightColumn: ['ora', 'owl'] as const,
-        expandedSide: null as 'left' | 'right' | null
-      };
-    }
-
-    const otherCards = PANEL_ORDER.filter(card => card !== expandedCard);
-    return {
-      leftColumn: [expandedCard] as const,
-      rightColumn: otherCards as readonly ('pssr' | 'ora' | 'owl')[],
-      expandedSide: 'left' as const
-    };
-  };
-
-  const layout = getColumnLayout();
-
-  const renderCard = (cardId: string, isInExpandedColumn: boolean) => {
-    const isThisCardExpanded = expandedCard === cardId;
-    const isFullHeight = isInExpandedColumn && isThisCardExpanded;
-    const isDimmed = expandedCard !== null && !isThisCardExpanded;
-
-    const commonProps = {
-      isExpanded: isThisCardExpanded,
-      onToggleExpand: () => handleCardExpand(cardId as ExpandedCard),
-      isFullHeight,
-      isRelocated: false,
-      isDimmed,
-      searchQuery,
-    };
-
-    switch (cardId) {
-      case 'pssr':
-        return (
-          <PSSRReviewsPanel 
-            key="pssr"
-            userId={user.id} 
-            {...commonProps}
-            onTaskCountUpdate={handlePssrTaskCount}
-          />
-        );
-      case 'ora':
-        return (
-          <ORPActivitiesPanel 
-            key="ora"
-            {...commonProps}
-            onTaskCountUpdate={handleOraTaskCount}
-          />
-        );
-      case 'owl':
-        return (
-          <OWLPanel 
-            key="owl"
-            {...commonProps}
-            onTaskCountUpdate={handleOwlTaskCount}
-          />
-        );
-      default:
-        return null;
-    }
-  };
-
   return (
     <div className="min-h-screen">
       <div className="border-b border-border/40 bg-card/30 backdrop-blur-xl p-4 md:p-6">
@@ -201,8 +78,9 @@ const MyTasksPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-6">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 mb-6">
+      <div className="max-w-4xl mx-auto px-6 py-6">
+        {/* Toolbar */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-6">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -212,118 +90,30 @@ const MyTasksPage: React.FC = () => {
               className="pl-10"
             />
           </div>
-          <div className="flex items-center gap-2">
-            <div className="flex items-center border rounded-lg p-1 bg-muted/50">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setViewMode('grid')}
-                className={cn("h-8 w-8 p-0", viewMode === 'grid' && "bg-background shadow-sm")}
-              >
-                <LayoutGrid className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setViewMode('table')}
-                className={cn("h-8 w-8 p-0", viewMode === 'table' && "bg-background shadow-sm")}
-              >
-                <Table className="h-4 w-4" />
-              </Button>
-            </div>
-            <Button
-              size="sm"
-              onClick={() => setCreateTaskModalOpen(true)}
-              className="gap-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm"
-            >
-              <Plus className="h-4 w-4" />
-              New Task
-            </Button>
-          </div>
+          <Button
+            size="sm"
+            onClick={() => setCreateTaskModalOpen(true)}
+            className="gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            New Task
+          </Button>
         </div>
 
-        {/* Loading skeleton */}
-        {!allPanelsLoaded && (
-          <div className="flex items-center justify-center py-20">
-            <div className="text-center max-w-md space-y-4">
-              <Skeleton className="h-16 w-16 rounded-full mx-auto" />
-              <Skeleton className="h-6 w-48 mx-auto" />
-              <Skeleton className="h-4 w-64 mx-auto" />
-            </div>
-          </div>
-        )}
+        {/* Unified task list */}
+        <UnifiedTaskList
+          searchQuery={searchQuery}
+          userId={user.id}
+        />
 
-        {/* All caught up message */}
-        {isAllCaughtUp && allPanelsLoaded && (
-          <div className="flex items-center justify-center py-20">
-            <div className="text-center max-w-md">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-green-500/10 to-emerald-500/10 mb-6">
-                <CheckCircle2 className="h-8 w-8 text-green-500" />
-              </div>
-              <h2 className="text-xl font-semibold text-foreground mb-2">You're all caught up!</h2>
-              <p className="text-muted-foreground">You have no pending activities or reviews at the moment.</p>
-            </div>
-          </div>
-        )}
-
-        {/* Panels always render so hooks fire and report counts. 
-            Hidden with sr-only during loading / caught-up state. */}
-        <div className={cn(
-          "grid grid-cols-1 lg:grid-cols-2 gap-6 transition-all duration-500",
-          expandedCard && "min-h-[calc(100vh-300px)]",
-          viewMode !== 'grid' && "sr-only",
-          (!allPanelsLoaded || isAllCaughtUp) && "sr-only"
-        )}>
-          <div className={cn(
-            "flex flex-col gap-6 transition-all duration-500",
-            layout.expandedSide === 'left' && "h-full"
-          )}>
-            {layout.leftColumn.map((cardId) => {
-              const isExpanded = expandedCard === cardId;
-              return (
-                <div 
-                  key={cardId}
-                  className={cn(
-                    "transition-all duration-500",
-                    layout.expandedSide === 'left' && isExpanded && "flex-1 min-h-0"
-                  )}
-                >
-                  {renderCard(cardId, layout.expandedSide === 'left')}
-                </div>
-              );
-            })}
-          </div>
-
-          <div className={cn(
-            "flex flex-col gap-6 transition-all duration-500",
-            layout.expandedSide === 'right' && "h-full"
-          )}>
-            {layout.rightColumn.map((cardId) => {
-              const isExpanded = expandedCard === cardId;
-              return (
-                <div 
-                  key={cardId}
-                  className={cn(
-                    "transition-all duration-500",
-                    layout.expandedSide === 'right' && isExpanded && "flex-1 min-h-0"
-                  )}
-                >
-                  {renderCard(cardId, layout.expandedSide === 'right')}
-                </div>
-              );
-            })}
-          </div>
+        {/* Recently completed */}
+        <div className="mt-8">
+          <RecentlyCompletedTasks searchQuery={searchQuery} />
         </div>
-
-        {viewMode === 'table' && allPanelsLoaded && !isAllCaughtUp && (
-          <AllTasksTable searchQuery={searchQuery} userId={user.id} />
-        )}
-
-        <RecentlyCompletedTasks searchQuery={searchQuery} />
       </div>
 
-      <NewTaskModal 
-        open={createTaskModalOpen} 
+      <NewTaskModal
+        open={createTaskModalOpen}
         onOpenChange={setCreateTaskModalOpen}
       />
     </div>
