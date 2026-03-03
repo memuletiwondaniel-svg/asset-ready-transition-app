@@ -84,7 +84,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
             <CardTitle className="text-lg flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <StyledWidgetIcon 
-                  Icon={CalendarCheck}
+                  Icon={GanttChart}
                   gradientFrom="from-purple-500"
                   gradientTo="to-violet-500"
                   glowFrom="from-purple-500/40"
