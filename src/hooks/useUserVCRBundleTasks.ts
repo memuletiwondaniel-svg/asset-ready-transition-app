@@ -48,7 +48,7 @@ export const useUserVCRBundleTasks = () => {
         .from('user_tasks')
         .select('*')
         .eq('user_id', user.id)
-        .in('type', ['vcr_checklist_bundle', 'vcr_approval_bundle', 'pssr_checklist_bundle'])
+        .in('type', ['vcr_checklist_bundle', 'vcr_approval_bundle', 'pssr_checklist_bundle', 'pssr_approval_bundle'])
         .neq('status', 'completed')
         .order('created_at', { ascending: false });
 
