@@ -212,7 +212,7 @@ export const BreadcrumbNavigation: React.FC<BreadcrumbNavigationProps> = ({
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => toggleFavorite(location.pathname, currentPageLabel)}
+                onClick={() => toggleFavorite(effectiveFavoritePath, currentPageLabel)}
                 className="h-7 w-7 rounded-lg ml-1"
               >
                 <Star 
