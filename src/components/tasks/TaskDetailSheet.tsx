@@ -64,24 +64,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
     (Date.now() - new Date(task.created_at).getTime()) / (1000 * 60 * 60 * 24)
   );
 
-  const getTypeBadge = (type: string) => {
-    switch (type) {
-      case 'review':
-        return <Badge variant="secondary" className="text-xs bg-blue-500/10 text-blue-600">Review</Badge>;
-      case 'approval':
-        return <Badge variant="secondary" className="text-xs bg-purple-500/10 text-purple-600">Approval</Badge>;
-      case 'ora_plan_creation':
-        return <Badge variant="secondary" className="text-xs bg-violet-500/10 text-violet-600">ORA Plan</Badge>;
-      case 'ora_plan_review':
-        return <Badge variant="secondary" className="text-xs bg-amber-500/10 text-amber-600">ORA Review</Badge>;
-      case 'ora_activity':
-        return <Badge variant="secondary" className="text-xs bg-purple-500/10 text-purple-600">ORA Activity</Badge>;
-      case 'vcr_delivery_plan':
-        return <Badge variant="secondary" className="text-xs bg-teal-500/10 text-teal-600">VCR Delivery Plan</Badge>;
-      default:
-        return <Badge variant="secondary" className="text-xs">{type}</Badge>;
-    }
-  };
+  
 
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
@@ -95,36 +78,42 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   };
 
   const pssrId = task.metadata?.pssr_id as string | undefined;
-  const isOraTask = task.type === 'ora_plan_creation';
+  const isOraTask = task.type === 'ora_plan_creation' || (task.metadata?.action === 'create_ora_plan' && task.metadata?.source === 'ora_workflow');
   const isOraReviewTask = task.type === 'ora_plan_review';
-  const isOraActivityTask = task.type === 'ora_activity';
-  const isVcrDeliveryPlanTask = task.type === 'vcr_delivery_plan' && task.metadata?.action === 'create_vcr_delivery_plan';
+  const isOraActivityTask = task.type === 'ora_activity' || task.metadata?.action === 'complete_ora_activity';
+  const isVcrDeliveryPlanTask = (task.type === 'vcr_delivery_plan' || task.metadata?.action === 'create_vcr_delivery_plan');
   const oraProjectId = task.metadata?.project_id as string | undefined;
   const oraPlanId = task.metadata?.plan_id as string | undefined;
 
   const isReviewTask = ['review', 'approval', 'ora_plan_review'].includes(task.type) || !!pssrId;
+  const isActionTask = isOraTask || isOraActivityTask || isVcrDeliveryPlanTask;
 
   const getIntentMessage = () => {
-    switch (task.type) {
-      case 'ora_plan_creation':
-        return 'You have been assigned to create the ORA Activity Plan for this project. Click below to launch the planning wizard.';
-      case 'vcr_delivery_plan':
-        return 'You need to set up the VCR Delivery Plan for this item. Click below to configure the execution plan.';
-      case 'ora_activity':
-        return 'You have an ORA activity to complete. Click below to open the activity details and update progress.';
-      case 'ora_plan_review':
-        return 'You have been asked to review and approve an ORA Plan. Use the button below to review, then approve or request changes.';
-      case 'review':
-      case 'approval':
-        return pssrId
-          ? 'You have been asked to review and approve a PSSR. Use the button below to review, then approve or reject.'
-          : 'This task requires your review and decision.';
-      default:
-        return null;
-    }
+    if (isOraTask) return 'You have been assigned to create the ORA Activity Plan for this project. Click below to launch the planning wizard.';
+    if (isVcrDeliveryPlanTask) return 'You need to set up the VCR Delivery Plan for this item. Click below to configure the execution plan.';
+    if (isOraActivityTask) return 'You have an ORA activity to complete. Click below to open the activity details and update progress.';
+    if (isOraReviewTask) return 'You have been asked to review and approve an ORA Plan. Use the button below to review, then approve or request changes.';
+    if (pssrId) return 'You have been asked to review and approve a PSSR. Use the button below to review, then approve or reject.';
+    if (isReviewTask) return 'This task requires your review and decision.';
+    return null;
   };
 
   const intentMessage = getIntentMessage();
+
+  const getTypeBadge = () => {
+    if (isOraTask) return <Badge variant="secondary" className="text-xs bg-violet-500/10 text-violet-600">ORA Plan</Badge>;
+    if (isOraReviewTask) return <Badge variant="secondary" className="text-xs bg-amber-500/10 text-amber-600">ORA Review</Badge>;
+    if (isOraActivityTask) return <Badge variant="secondary" className="text-xs bg-purple-500/10 text-purple-600">ORA Activity</Badge>;
+    if (isVcrDeliveryPlanTask) return <Badge variant="secondary" className="text-xs bg-teal-500/10 text-teal-600">VCR Delivery Plan</Badge>;
+    switch (task.type) {
+      case 'review':
+        return <Badge variant="secondary" className="text-xs bg-blue-500/10 text-blue-600">Review</Badge>;
+      case 'approval':
+        return <Badge variant="secondary" className="text-xs bg-purple-500/10 text-purple-600">Approval</Badge>;
+      default:
+        return <Badge variant="secondary" className="text-xs">{task.type}</Badge>;
+    }
+  };
 
   // Build VCR object for the wizard when needed
   const vcrForWizard: ProjectVCR | null = isVcrDeliveryPlanTask && task.metadata ? {
@@ -146,7 +135,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
         <SheetContent className="sm:max-w-lg overflow-y-auto">
           <SheetHeader className="pb-4">
             <div className="flex items-center gap-2 flex-wrap">
-              {getTypeBadge(task.type)}
+              {getTypeBadge()}
               {getPriorityBadge(task.priority)}
             </div>
             <SheetTitle className="text-left text-lg leading-snug mt-2">
