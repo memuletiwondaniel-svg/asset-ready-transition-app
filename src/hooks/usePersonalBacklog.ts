@@ -19,7 +19,7 @@ export const usePersonalBacklog = (filter: 'all' | 'pending' | 'done' = 'all', g
   const { toast } = useToast();
 
   const query = useQuery({
-    queryKey: ['personal-backlog', filter],
+    queryKey: ['personal-backlog', filter, groupId],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
