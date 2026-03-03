@@ -178,17 +178,36 @@ export const AllTasksTable: React.FC<AllTasksTableProps> = ({ searchQuery, userI
       });
     });
 
-    // VCR Bundle Tasks (delivering + approving)
+    // VCR & PSSR Bundle Tasks (delivering + approving)
     (bundleTasks || []).forEach(task => {
       const isApproval = task.type === 'vcr_approval_bundle';
+      const isPSSRBundle = task.type === 'pssr_checklist_bundle';
+      
+      let category: UnifiedTask['category'];
+      if (isPSSRBundle) {
+        category = 'pssr_bundle';
+      } else if (isApproval) {
+        category = 'vcr_approval';
+      } else {
+        category = 'vcr_bundle';
+      }
+
+      const projectLabel = isPSSRBundle 
+        ? (task.metadata?.project_name || 'Unknown Project')
+        : (task.metadata?.project_code || 'Unknown Project');
+
+      const navigatePath = isPSSRBundle
+        ? (task.metadata?.pssr_id ? `/pssr/${task.metadata.pssr_id}/review` : '/my-tasks')
+        : (task.metadata?.vcr_id ? `/p2a-handover?vcr=${task.metadata.vcr_id}` : '/p2a-handover');
+
       tasks.push({
-        id: `vcr-${isApproval ? 'approval' : 'bundle'}-${task.id}`,
-        category: isApproval ? 'vcr_approval' : 'vcr_bundle',
+        id: `${task.type}-${task.id}`,
+        category,
         title: task.title,
-        project: task.metadata?.project_code || 'Unknown Project',
+        project: projectLabel,
         status: `${task.sub_items.filter(i => i.completed).length}/${task.sub_items.length} items`,
         createdAt: task.created_at,
-        navigateTo: task.metadata?.vcr_id ? `/p2a-handover?vcr=${task.metadata.vcr_id}` : '/p2a-handover',
+        navigateTo: navigatePath,
         isNew: isNewSinceLastLogin(task.created_at),
         progressPercentage: task.progress_percentage,
         completedItems: task.sub_items.filter(i => i.completed).length,
