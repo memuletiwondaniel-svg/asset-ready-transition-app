@@ -330,6 +330,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
 
 interface GroupedSectionProps {
   group: BacklogGroup;
+  colorIndex: number;
   tasks: BacklogItem[];
   isRenaming: boolean;
   renameText: string;
@@ -344,11 +345,12 @@ interface GroupedSectionProps {
 }
 
 const GroupedSection: React.FC<GroupedSectionProps> = ({
-  group, tasks, isRenaming, renameText,
+  group, colorIndex, tasks, isRenaming, renameText,
   onStartRename, onRenameChange, onRenameSave, onRenameCancel,
   onDeleteGroup, onUpdateDesc, onUpdatePriority, onDelete,
 }) => {
   const [isOpen, setIsOpen] = useState(true);
+  const colors = getGroupColor(colorIndex);
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen} className="rounded-md border bg-card/50">
