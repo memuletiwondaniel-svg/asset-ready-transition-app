@@ -740,8 +740,8 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                   </h2>
                   <div className="flex flex-wrap justify-center gap-3">
                     {favorites.map((fav) => {
-                      const IconComponent = getFavoriteIcon(fav.path);
-                      const colorClass = getFavoriteColor(fav.path);
+                      const IconComponent = getFavoriteIcon(fav.path, fav.label);
+                      const colorClass = getFavoriteColor(fav.path, fav.label);
                       return (
                         <button
                           key={fav.path}
