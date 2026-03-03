@@ -85,7 +85,7 @@ export const translations = {
     navORMaintenance: 'OR Maintenance',
     navP2AHandover: 'P2A Plan',
     navProjects: 'P2A Plan',
-    
+    navMyBacklog: 'My Backlog',
     // Sidebar UI
     lightMode: 'Light Mode',
     darkMode: 'Dark Mode',
