@@ -784,7 +784,7 @@ export const translations = {
     navORMaintenance: 'صيانة OR',
     navP2AHandover: 'تسليم P2A',
     navProjects: 'المشاريع',
-    
+    navMyBacklog: 'قائمة مهامي',
     // Sidebar UI
     lightMode: 'الوضع الفاتح',
     darkMode: 'الوضع الداكن',
