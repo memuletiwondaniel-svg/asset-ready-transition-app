@@ -793,6 +793,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
           iconGradient="from-blue-500 to-blue-600"
           title="User Management" 
           description="Manage users, roles, and permissions across ORSH platform"
+          favoritePath="/admin-tools/users"
           customBreadcrumbs={[
             { label: 'Home', path: '/', onClick: onBack },
             { label: 'Administration', path: '/admin-tools', onClick: onBack }

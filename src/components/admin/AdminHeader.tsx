@@ -13,6 +13,7 @@ interface AdminHeaderProps {
     onClick?: () => void;
   }>;
   iconGradient?: string;
+  favoritePath?: string;
 }
 
 const AdminHeader: React.FC<AdminHeaderProps> = ({
@@ -21,7 +22,8 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
   description,
   children,
   customBreadcrumbs,
-  iconGradient = 'from-purple-500 to-purple-600'
+  iconGradient = 'from-purple-500 to-purple-600',
+  favoritePath
 }) => {
   return (
     <div className="z-50 bg-card/95 backdrop-blur-md border-b border-border shadow-sm">
@@ -29,7 +31,7 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
         <div className="flex items-center justify-between">
           {/* Left side - Breadcrumb Navigation */}
           <div className="flex items-center gap-4 flex-1">
-            <BreadcrumbNavigation currentPageLabel={title} customBreadcrumbs={customBreadcrumbs} />
+            <BreadcrumbNavigation currentPageLabel={title} customBreadcrumbs={customBreadcrumbs} favoritePath={favoritePath} />
           </div>
           
           {/* Right side - Notification Center */}
