@@ -15,7 +15,7 @@ export interface VCRBundleTask {
   user_id: string;
   title: string;
   description: string | null;
-  type: 'vcr_checklist_bundle' | 'vcr_approval_bundle' | 'pssr_checklist_bundle';
+  type: 'vcr_checklist_bundle' | 'vcr_approval_bundle' | 'pssr_checklist_bundle' | 'pssr_approval_bundle';
   status: string;
   priority: string;
   progress_percentage: number;
