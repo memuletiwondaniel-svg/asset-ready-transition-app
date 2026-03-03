@@ -1,15 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { DndContext, DragOverlay, closestCenter, PointerSensor, useSensor, useSensors, type DragStartEvent, type DragEndEvent, useDroppable, type DragOverEvent } from '@dnd-kit/core';
+import { useDraggable } from '@dnd-kit/core';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Mic, MicOff, Plus, Trash2, MoreVertical, ClipboardList, ChevronDown, Pencil, FolderPlus } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Mic, MicOff, Plus, Trash2, MoreVertical, ClipboardList, ChevronDown, Pencil, FolderPlus, GripVertical, CheckCircle2, Circle, ArrowRightLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePersonalBacklog, type BacklogItem } from '@/hooks/usePersonalBacklog';
-import { useBacklogGroups } from '@/hooks/useBacklogGroups';
+import { useBacklogGroups, type BacklogGroup } from '@/hooks/useBacklogGroups';
 import { useVoiceInput } from '@/hooks/useVoiceInput';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { formatDistanceToNow } from 'date-fns';
@@ -28,10 +30,11 @@ const BacklogPage: React.FC = () => {
   const [showNewGroup, setShowNewGroup] = useState(false);
   const [renamingGroupId, setRenamingGroupId] = useState<string | null>(null);
   const [renameText, setRenameText] = useState('');
+  const [activeItem, setActiveItem] = useState<BacklogItem | null>(null);
   const { translations: t } = useLanguage();
 
   const { groups, isLoading: groupsLoading, addGroup, renameGroup, deleteGroup } = useBacklogGroups();
-  const { items, isLoading: itemsLoading, addItem, toggleStatus, updateDescription, updatePriority, deleteItem } = usePersonalBacklog(filter);
+  const { items, isLoading: itemsLoading, addItem, toggleStatus, updateDescription, updatePriority, deleteItem, moveToGroup } = usePersonalBacklog(filter);
 
   const isLoading = groupsLoading || itemsLoading;
 
@@ -43,6 +46,32 @@ const BacklogPage: React.FC = () => {
 
   const pendingCount = items.filter(i => i.status === 'pending').length;
   const doneCount = items.filter(i => i.status === 'done').length;
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+  );
+
+  const handleDragStart = (event: DragStartEvent) => {
+    const item = items.find(i => i.id === event.active.id);
+    setActiveItem(item || null);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    setActiveItem(null);
+    const { active, over } = event;
+    if (!over) return;
+
+    const itemId = active.id as string;
+    const targetGroupId = over.id as string;
+    const item = items.find(i => i.id === itemId);
+    if (!item) return;
+
+    // "ungrouped" is our sentinel for null group_id
+    const newGroupId = targetGroupId === 'ungrouped' ? null : targetGroupId;
+    if (item.group_id === newGroupId) return;
+
+    moveToGroup.mutate({ id: itemId, group_id: newGroupId });
+  };
 
   const handleAddGroup = () => {
     const name = newGroupName.trim();
@@ -58,10 +87,20 @@ const BacklogPage: React.FC = () => {
     setRenamingGroupId(null);
   };
 
+  const handleMoveToGroup = (itemId: string, groupId: string | null) => {
+    moveToGroup.mutate({ id: itemId, group_id: groupId });
+  };
+
   const filters: { key: FilterType; label: string }[] = [
     { key: 'all', label: 'All' },
     { key: 'pending', label: 'Pending' },
     { key: 'done', label: 'Done' },
+  ];
+
+  // Build move targets: all groups + ungrouped
+  const moveTargets: { id: string | null; name: string }[] = [
+    ...groups.map(g => ({ id: g.id as string | null, name: g.name })),
+    { id: null, name: 'Ungrouped' },
   ];
 
   return (
@@ -120,61 +159,75 @@ const BacklogPage: React.FC = () => {
           {[1, 2, 3].map(i => <Skeleton key={i} className="h-14 w-full rounded-lg" />)}
         </div>
       ) : (
-        <div className="space-y-4">
-          {/* Grouped sections */}
-          {groupedItems.map(({ group, tasks }) => (
-            <TaskGroupSection
-              key={group.id}
-              groupId={group.id}
-              groupName={group.name}
-              tasks={tasks}
-              isRenaming={renamingGroupId === group.id}
-              renameText={renameText}
-              onStartRename={() => { setRenamingGroupId(group.id); setRenameText(group.name); }}
-              onRenameChange={setRenameText}
-              onRenameSave={() => handleRenameGroup(group.id)}
-              onRenameCancel={() => setRenamingGroupId(null)}
-              onDeleteGroup={() => deleteGroup.mutate(group.id)}
-              onAddItem={(desc) => addItem.mutate({ description: desc, group_id: group.id })}
-              onToggle={(id, status) => toggleStatus.mutate({ id, currentStatus: status })}
-              onUpdateDesc={(id, desc) => updateDescription.mutate({ id, description: desc })}
-              onUpdatePriority={(id, p) => updatePriority.mutate({ id, priority: p })}
-              onDelete={(id) => deleteItem.mutate(id)}
-            />
-          ))}
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+          <div className="space-y-4">
+            {groupedItems.map(({ group, tasks }) => (
+              <TaskGroupSection
+                key={group.id}
+                groupId={group.id}
+                groupName={group.name}
+                tasks={tasks}
+                allGroups={moveTargets}
+                isRenaming={renamingGroupId === group.id}
+                renameText={renameText}
+                onStartRename={() => { setRenamingGroupId(group.id); setRenameText(group.name); }}
+                onRenameChange={setRenameText}
+                onRenameSave={() => handleRenameGroup(group.id)}
+                onRenameCancel={() => setRenamingGroupId(null)}
+                onDeleteGroup={() => deleteGroup.mutate(group.id)}
+                onAddItem={(desc) => addItem.mutate({ description: desc, group_id: group.id })}
+                onToggle={(id, status) => toggleStatus.mutate({ id, currentStatus: status })}
+                onUpdateDesc={(id, desc) => updateDescription.mutate({ id, description: desc })}
+                onUpdatePriority={(id, p) => updatePriority.mutate({ id, priority: p })}
+                onDelete={(id) => deleteItem.mutate(id)}
+                onMoveToGroup={handleMoveToGroup}
+              />
+            ))}
 
-          {/* Ungrouped */}
-          {(ungroupedItems.length > 0 || groupedItems.length === 0) && (
-            <TaskGroupSection
-              groupId={null}
-              groupName="Ungrouped"
-              tasks={ungroupedItems}
-              isRenaming={false}
-              renameText=""
-              onStartRename={() => {}}
-              onRenameChange={() => {}}
-              onRenameSave={() => {}}
-              onRenameCancel={() => {}}
-              onDeleteGroup={undefined}
-              onAddItem={(desc) => addItem.mutate({ description: desc, group_id: null })}
-              onToggle={(id, status) => toggleStatus.mutate({ id, currentStatus: status })}
-              onUpdateDesc={(id, desc) => updateDescription.mutate({ id, description: desc })}
-              onUpdatePriority={(id, p) => updatePriority.mutate({ id, priority: p })}
-              onDelete={(id) => deleteItem.mutate(id)}
-            />
-          )}
-        </div>
+            {(ungroupedItems.length > 0 || groupedItems.length === 0) && (
+              <TaskGroupSection
+                groupId={null}
+                groupName="Ungrouped"
+                tasks={ungroupedItems}
+                allGroups={moveTargets}
+                isRenaming={false}
+                renameText=""
+                onStartRename={() => {}}
+                onRenameChange={() => {}}
+                onRenameSave={() => {}}
+                onRenameCancel={() => {}}
+                onDeleteGroup={undefined}
+                onAddItem={(desc) => addItem.mutate({ description: desc, group_id: null })}
+                onToggle={(id, status) => toggleStatus.mutate({ id, currentStatus: status })}
+                onUpdateDesc={(id, desc) => updateDescription.mutate({ id, description: desc })}
+                onUpdatePriority={(id, p) => updatePriority.mutate({ id, priority: p })}
+                onDelete={(id) => deleteItem.mutate(id)}
+                onMoveToGroup={handleMoveToGroup}
+              />
+            )}
+          </div>
+
+          <DragOverlay>
+            {activeItem && (
+              <div className="flex items-center gap-2 p-2 rounded-md border bg-card shadow-lg opacity-90">
+                <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="text-sm truncate">{activeItem.description}</span>
+              </div>
+            )}
+          </DragOverlay>
+        </DndContext>
       )}
     </div>
   );
 };
 
-/* ─── Task Group Section ─── */
+/* ─── Task Group Section (Droppable) ─── */
 
 interface TaskGroupSectionProps {
   groupId: string | null;
   groupName: string;
   tasks: BacklogItem[];
+  allGroups: { id: string | null; name: string }[];
   isRenaming: boolean;
   renameText: string;
   onStartRename: () => void;
@@ -187,16 +240,20 @@ interface TaskGroupSectionProps {
   onUpdateDesc: (id: string, desc: string) => void;
   onUpdatePriority: (id: string, p: string) => void;
   onDelete: (id: string) => void;
+  onMoveToGroup: (itemId: string, groupId: string | null) => void;
 }
 
 const TaskGroupSection: React.FC<TaskGroupSectionProps> = ({
-  groupId, groupName, tasks, isRenaming, renameText,
+  groupId, groupName, tasks, allGroups, isRenaming, renameText,
   onStartRename, onRenameChange, onRenameSave, onRenameCancel,
-  onDeleteGroup, onAddItem, onToggle, onUpdateDesc, onUpdatePriority, onDelete,
+  onDeleteGroup, onAddItem, onToggle, onUpdateDesc, onUpdatePriority, onDelete, onMoveToGroup,
 }) => {
   const [isOpen, setIsOpen] = useState(true);
   const [newTask, setNewTask] = useState('');
   const { isListening, startListening, stopListening, isSupported } = useVoiceInput();
+
+  const droppableId = groupId || 'ungrouped';
+  const { setNodeRef, isOver } = useDroppable({ id: droppableId });
 
   const handleAdd = () => {
     const desc = newTask.trim();
@@ -210,113 +267,132 @@ const TaskGroupSection: React.FC<TaskGroupSectionProps> = ({
     else startListening((transcript) => setNewTask(prev => (prev ? prev + ' ' : '') + transcript));
   };
 
+  // Filter out current group from move targets
+  const otherGroups = allGroups.filter(g => g.id !== groupId);
+
   return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen} className="border rounded-lg bg-card">
-      <div className="flex items-center gap-2 px-3 py-2">
-        <CollapsibleTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0">
-            <ChevronDown className={cn("h-4 w-4 transition-transform", !isOpen && "-rotate-90")} />
-          </Button>
-        </CollapsibleTrigger>
-
-        {isRenaming ? (
-          <Input
-            autoFocus
-            value={renameText}
-            onChange={e => onRenameChange(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') onRenameSave(); if (e.key === 'Escape') onRenameCancel(); }}
-            onBlur={onRenameSave}
-            className="h-7 text-sm flex-1"
-          />
-        ) : (
-          <span className="text-sm font-medium flex-1">{groupName}</span>
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <div
+        ref={setNodeRef}
+        className={cn(
+          "border rounded-lg bg-card transition-colors",
+          isOver && "ring-2 ring-primary/50 bg-primary/5"
         )}
-
-        <Badge variant="secondary" className="text-xs">{tasks.length}</Badge>
-
-        {groupId && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0">
-                <MoreVertical className="h-3.5 w-3.5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-36">
-              <DropdownMenuItem onClick={onStartRename}>
-                <Pencil className="h-3.5 w-3.5 mr-2" /> Rename
-              </DropdownMenuItem>
-              {onDeleteGroup && (
-                <DropdownMenuItem onClick={onDeleteGroup} className="text-destructive">
-                  <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete Group
-                </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-      </div>
-
-      <CollapsibleContent>
-        <div className="px-3 pb-3 space-y-1.5">
-          {tasks.length === 0 && (
-            <p className="text-xs text-muted-foreground py-2 text-center">No tasks in this group</p>
-          )}
-          {tasks.map(item => (
-            <BacklogItemRow
-              key={item.id}
-              item={item}
-              onToggle={() => onToggle(item.id, item.status)}
-              onUpdateDesc={(desc) => onUpdateDesc(item.id, desc)}
-              onPriorityChange={(p) => onUpdatePriority(item.id, p)}
-              onDelete={() => onDelete(item.id)}
-            />
-          ))}
-
-          {/* Inline add */}
-          <div className="flex gap-1.5 pt-1">
-            <div className="relative flex-1">
-              <Input
-                value={newTask}
-                onChange={e => setNewTask(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleAdd()}
-                placeholder="Add a task..."
-                className="h-8 text-sm pr-8"
-              />
-              {isSupported && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleVoice}
-                  className={cn('absolute right-0.5 top-1/2 -translate-y-1/2 h-7 w-7', isListening && 'text-destructive animate-pulse')}
-                >
-                  {isListening ? <MicOff className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
-                </Button>
-              )}
-            </div>
-            <Button size="icon" className="h-8 w-8" onClick={handleAdd} disabled={!newTask.trim()}>
-              <Plus className="h-3.5 w-3.5" />
+      >
+        <div className="flex items-center gap-2 px-3 py-2">
+          <CollapsibleTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0">
+              <ChevronDown className={cn("h-4 w-4 transition-transform", !isOpen && "-rotate-90")} />
             </Button>
-          </div>
+          </CollapsibleTrigger>
+
+          {isRenaming ? (
+            <Input
+              autoFocus
+              value={renameText}
+              onChange={e => onRenameChange(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') onRenameSave(); if (e.key === 'Escape') onRenameCancel(); }}
+              onBlur={onRenameSave}
+              className="h-7 text-sm flex-1"
+            />
+          ) : (
+            <span className="text-sm font-medium flex-1">{groupName}</span>
+          )}
+
+          <Badge variant="secondary" className="text-xs">{tasks.length}</Badge>
+
+          {groupId && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0">
+                  <MoreVertical className="h-3.5 w-3.5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-36">
+                <DropdownMenuItem onClick={onStartRename}>
+                  <Pencil className="h-3.5 w-3.5 mr-2" /> Rename
+                </DropdownMenuItem>
+                {onDeleteGroup && (
+                  <DropdownMenuItem onClick={onDeleteGroup} className="text-destructive">
+                    <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete Group
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
-      </CollapsibleContent>
+
+        <CollapsibleContent>
+          <div className="px-3 pb-3 space-y-1.5">
+            {tasks.length === 0 && (
+              <p className="text-xs text-muted-foreground py-2 text-center">No tasks in this group</p>
+            )}
+            {tasks.map(item => (
+              <DraggableBacklogItem
+                key={item.id}
+                item={item}
+                otherGroups={otherGroups}
+                onToggle={() => onToggle(item.id, item.status)}
+                onUpdateDesc={(desc) => onUpdateDesc(item.id, desc)}
+                onPriorityChange={(p) => onUpdatePriority(item.id, p)}
+                onDelete={() => onDelete(item.id)}
+                onMoveToGroup={(gId) => onMoveToGroup(item.id, gId)}
+              />
+            ))}
+
+            {/* Inline add */}
+            <div className="flex gap-1.5 pt-1">
+              <div className="relative flex-1">
+                <Input
+                  value={newTask}
+                  onChange={e => setNewTask(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleAdd()}
+                  placeholder="Add a task..."
+                  className="h-8 text-sm pr-8"
+                />
+                {isSupported && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleVoice}
+                    className={cn('absolute right-0.5 top-1/2 -translate-y-1/2 h-7 w-7', isListening && 'text-destructive animate-pulse')}
+                  >
+                    {isListening ? <MicOff className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
+                  </Button>
+                )}
+              </div>
+              <Button size="icon" className="h-8 w-8" onClick={handleAdd} disabled={!newTask.trim()}>
+                <Plus className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          </div>
+        </CollapsibleContent>
+      </div>
     </Collapsible>
   );
 };
 
-/* ─── Single Item Row ─── */
+/* ─── Draggable Item Row ─── */
 
-interface BacklogItemRowProps {
+interface DraggableBacklogItemProps {
   item: BacklogItem;
+  otherGroups: { id: string | null; name: string }[];
   onToggle: () => void;
   onUpdateDesc: (desc: string) => void;
   onPriorityChange: (p: string) => void;
   onDelete: () => void;
+  onMoveToGroup: (groupId: string | null) => void;
 }
 
-const BacklogItemRow: React.FC<BacklogItemRowProps> = ({ item, onToggle, onUpdateDesc, onPriorityChange, onDelete }) => {
+const DraggableBacklogItem: React.FC<DraggableBacklogItemProps> = ({
+  item, otherGroups, onToggle, onUpdateDesc, onPriorityChange, onDelete, onMoveToGroup,
+}) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(item.description);
   const editRef = useRef<HTMLInputElement>(null);
   const isDone = item.status === 'done';
+
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: item.id });
 
   useEffect(() => { if (isEditing && editRef.current) editRef.current.focus(); }, [isEditing]);
 
@@ -326,8 +402,25 @@ const BacklogItemRow: React.FC<BacklogItemRowProps> = ({ item, onToggle, onUpdat
     setIsEditing(false);
   };
 
+  const style = transform ? {
+    transform: `translate(${transform.x}px, ${transform.y}px)`,
+  } : undefined;
+
   return (
-    <div className={cn('flex items-center gap-2 p-2 rounded-md border bg-background transition-colors group', isDone && 'opacity-60')}>
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        'flex items-center gap-2 p-2 rounded-md border bg-background transition-colors group',
+        isDone && 'opacity-60',
+        isDragging && 'opacity-40 shadow-lg z-50'
+      )}
+    >
+      {/* Drag handle */}
+      <button {...listeners} {...attributes} className="flex-shrink-0 cursor-grab active:cursor-grabbing touch-none text-muted-foreground hover:text-foreground">
+        <GripVertical className="h-3.5 w-3.5" />
+      </button>
+
       <Checkbox checked={isDone} onCheckedChange={onToggle} className="flex-shrink-0" />
       <div className="flex-1 min-w-0">
         {isEditing ? (
@@ -356,7 +449,25 @@ const BacklogItemRow: React.FC<BacklogItemRowProps> = ({ item, onToggle, onUpdat
             <MoreVertical className="h-3 w-3" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-36">
+        <DropdownMenuContent align="end" className="w-44">
+          <DropdownMenuItem onClick={onToggle}>
+            {isDone ? <Circle className="h-3.5 w-3.5 mr-2" /> : <CheckCircle2 className="h-3.5 w-3.5 mr-2" />}
+            {isDone ? 'Mark Pending' : 'Mark Complete'}
+          </DropdownMenuItem>
+          {otherGroups.length > 0 && (
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>
+                <ArrowRightLeft className="h-3.5 w-3.5 mr-2" /> Move to…
+              </DropdownMenuSubTrigger>
+              <DropdownMenuSubContent>
+                {otherGroups.map(g => (
+                  <DropdownMenuItem key={g.id ?? 'ungrouped'} onClick={() => onMoveToGroup(g.id)}>
+                    {g.name}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+          )}
           <DropdownMenuItem onClick={() => onPriorityChange('high')}>🔴 High</DropdownMenuItem>
           <DropdownMenuItem onClick={() => onPriorityChange('normal')}>🔵 Normal</DropdownMenuItem>
           <DropdownMenuItem onClick={() => onPriorityChange('low')}>⚪ Low</DropdownMenuItem>

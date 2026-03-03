@@ -98,6 +98,14 @@ export const usePersonalBacklog = (filter: 'all' | 'pending' | 'done' = 'all', g
     onSuccess: invalidate,
   });
 
+  const moveToGroup = useMutation({
+    mutationFn: async ({ id, group_id }: { id: string; group_id: string | null }) => {
+      const { error } = await supabase.from('personal_backlog').update({ group_id }).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: invalidate,
+  });
+
   return {
     items: query.data ?? [],
     isLoading: query.isLoading,
@@ -106,5 +114,6 @@ export const usePersonalBacklog = (filter: 'all' | 'pending' | 'done' = 'all', g
     updateDescription,
     updatePriority,
     deleteItem,
+    moveToGroup,
   };
 };
