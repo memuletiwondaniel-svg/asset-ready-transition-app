@@ -95,10 +95,10 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   };
 
   const pssrId = task.metadata?.pssr_id as string | undefined;
-  const isOraTask = task.type === 'ora_plan_creation';
+  const isOraTask = task.type === 'ora_plan_creation' || (task.metadata?.action === 'create_ora_plan' && task.metadata?.source === 'ora_workflow');
   const isOraReviewTask = task.type === 'ora_plan_review';
-  const isOraActivityTask = task.type === 'ora_activity';
-  const isVcrDeliveryPlanTask = task.type === 'vcr_delivery_plan' && task.metadata?.action === 'create_vcr_delivery_plan';
+  const isOraActivityTask = task.type === 'ora_activity' || task.metadata?.action === 'complete_ora_activity';
+  const isVcrDeliveryPlanTask = (task.type === 'vcr_delivery_plan' || task.metadata?.action === 'create_vcr_delivery_plan');
   const oraProjectId = task.metadata?.project_id as string | undefined;
   const oraPlanId = task.metadata?.plan_id as string | undefined;
 
