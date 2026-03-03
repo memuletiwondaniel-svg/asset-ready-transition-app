@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { ProjectIdBadge } from '@/components/ui/project-id-badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, FolderOpen, Users, Calendar, FileText, MoreVertical, Eye, Edit3, Trash2, Folder, Star, GitBranch, Milestone, Layers } from 'lucide-react';
+import { Plus, FolderOpen, Users, Calendar, FileText, MoreVertical, Eye, Edit3, Trash2, Building2, Star, GitBranch, Milestone, Layers } from 'lucide-react';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { getCurrentTranslations } from '@/utils/translations';
@@ -353,7 +353,7 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="grid w-full grid-cols-4 max-w-2xl mb-6">
                   <TabsTrigger value="projects" className="flex items-center gap-2">
-                    <Folder className="h-4 w-4" />
+                    <Building2 className="h-4 w-4" />
                     Projects
                   </TabsTrigger>
                   <TabsTrigger value="hierarchy" className="flex items-center gap-2">

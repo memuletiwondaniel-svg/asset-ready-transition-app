@@ -83,8 +83,8 @@ export const translations = {
     navExecutiveDashboard: 'Executive Dashboard',
     navORAPlans: 'ORA Plans',
     navORMaintenance: 'OR Maintenance',
-    navP2AHandover: 'P2A Plan',
-    navProjects: 'P2A Plan',
+    navP2AHandover: 'P2A Handover',
+    navProjects: 'P2A Handover',
     navMyBacklog: 'My Backlog',
     // Sidebar UI
     lightMode: 'Light Mode',
