@@ -64,22 +64,18 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
     (Date.now() - new Date(task.created_at).getTime()) / (1000 * 60 * 60 * 24)
   );
 
-  const getTypeBadge = (type: string) => {
-    switch (type) {
+  const getTypeBadge = () => {
+    if (isOraTask) return <Badge variant="secondary" className="text-xs bg-violet-500/10 text-violet-600">ORA Plan</Badge>;
+    if (isOraReviewTask) return <Badge variant="secondary" className="text-xs bg-amber-500/10 text-amber-600">ORA Review</Badge>;
+    if (isOraActivityTask) return <Badge variant="secondary" className="text-xs bg-purple-500/10 text-purple-600">ORA Activity</Badge>;
+    if (isVcrDeliveryPlanTask) return <Badge variant="secondary" className="text-xs bg-teal-500/10 text-teal-600">VCR Delivery Plan</Badge>;
+    switch (task.type) {
       case 'review':
         return <Badge variant="secondary" className="text-xs bg-blue-500/10 text-blue-600">Review</Badge>;
       case 'approval':
         return <Badge variant="secondary" className="text-xs bg-purple-500/10 text-purple-600">Approval</Badge>;
-      case 'ora_plan_creation':
-        return <Badge variant="secondary" className="text-xs bg-violet-500/10 text-violet-600">ORA Plan</Badge>;
-      case 'ora_plan_review':
-        return <Badge variant="secondary" className="text-xs bg-amber-500/10 text-amber-600">ORA Review</Badge>;
-      case 'ora_activity':
-        return <Badge variant="secondary" className="text-xs bg-purple-500/10 text-purple-600">ORA Activity</Badge>;
-      case 'vcr_delivery_plan':
-        return <Badge variant="secondary" className="text-xs bg-teal-500/10 text-teal-600">VCR Delivery Plan</Badge>;
       default:
-        return <Badge variant="secondary" className="text-xs">{type}</Badge>;
+        return <Badge variant="secondary" className="text-xs">{task.type}</Badge>;
     }
   };
 
