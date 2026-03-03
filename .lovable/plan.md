@@ -1,77 +1,97 @@
 
 
-# Plan: ORIP Scoring Engine Using Existing VCR Item Categories
+## Plan: Restrict "My Backlog" to Daniel & Add Task Groups
 
-## Impact Assessment: Zero Breaking Changes
+### 1. Sidebar Visibility — Restrict to Daniel Memuletiwon
 
-**No existing workflows will be affected.** The approach reuses the existing `vcr_item_categories` table (Design Integrity, Technical Integrity, Operating Integrity, Management Systems, Health & Safety) as the readiness dimensions for ORI scoring. All changes are additive:
+In `src/components/sidebar/SidebarContent.tsx`, the `navigationItems` array is static. We need to make it dynamic by:
+- Adding `currentUserId` to the `SidebarContentProps` (passed from `OrshSidebar.tsx`)
+- Filtering out the `my-backlog` nav item unless `currentUserId === '05b44255-4358-450c-8aa4-0558b31df70b'` (Daniel's UUID)
+- Also apply the same filter in the collapsed sidebar icon rendering
 
-- The `vcr_item_categories` table gets a `tenant_id` column and weight/confidence fields -- existing rows remain intact
-- The `readiness_nodes` table gets a new nullable `dimension_id` column pointing to `vcr_item_categories`
-- The `sync_readiness_nodes` and `calculate_ori_score` functions are replaced with enhanced versions that use category-based dimensions instead of module-based grouping
-- Existing P2A, ORA, PSSR, ORM workflows are untouched -- the ontology layer only reads from them
+### 2. Database Schema — Add `backlog_groups` Table
 
-## Current VCR Item Categories (Become Readiness Dimensions)
+Create a new `backlog_groups` table and add a `group_id` FK to `personal_backlog`:
 
-| Code | Name | Active |
-|------|------|--------|
-| DI2 | Design Integrity | Yes |
-| TI | Technical Integrity | Yes |
-| OI | Operating Integrity | Yes |
-| MS | Management Systems | Yes |
-| HS | Health & Safety | Yes |
+```sql
+CREATE TABLE public.backlog_groups (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  sort_order INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 
-These become the tenant-configurable readiness dimensions. Different tenants can add/rename/reweight their own categories.
+ALTER TABLE public.backlog_groups ENABLE ROW LEVEL SECURITY;
 
-## Implementation Tasks
+CREATE POLICY "Users manage own groups"
+  ON public.backlog_groups FOR ALL
+  TO authenticated
+  USING (user_id = auth.uid())
+  WITH CHECK (user_id = auth.uid());
 
-### Task 1: Extend `vcr_item_categories` for ORI Scoring
-Add columns to make categories serve double duty as readiness dimensions:
-- `tenant_id UUID` (nullable, defaults via trigger -- existing rows get current tenant)
-- `default_weight NUMERIC(5,4)` (e.g., 0.20 = 20%)
-- `confidence_factor_default NUMERIC(3,2)` (default 0.8)
-- `risk_severity_multiplier NUMERIC(3,1)` (default 1.0)
-- `is_readiness_dimension BOOLEAN DEFAULT true`
-
-Add `dimension_id UUID REFERENCES vcr_item_categories(id)` to `readiness_nodes`.
-
-### Task 2: Enhanced ORI Formula
-Replace `calculate_ori_score()` with the full ORIP formula:
-
-```
-DS_i = (Σ Subcomponent_Weight × Completion%) × Confidence_Factor
-RP_i = Σ (Risk_Severity × Impact_Multiplier)  -- capped at 15%
-ORI  = Σ (Dimension_Weight_i × DS_i) − Global_Risk_Penalty
-SCS  = ORI × Schedule_Adherence × Critical_Path_Stability
+ALTER TABLE public.personal_backlog
+  ADD COLUMN group_id UUID REFERENCES public.backlog_groups(id) ON DELETE SET NULL;
 ```
 
-Add columns to `ori_scores`: `dimension_scores JSONB`, `risk_penalty_total NUMERIC`, `startup_confidence_score NUMERIC`, `schedule_adherence_index NUMERIC`, `critical_path_stability_index NUMERIC`.
+Existing backlog items get `group_id = NULL` (ungrouped) which is fine.
 
-Add `confidence_factor NUMERIC(3,2) DEFAULT 0.8` and `risk_severity TEXT DEFAULT 'none'` to `readiness_nodes`.
+### 3. New Hook — `useBacklogGroups`
 
-### Task 3: Update Sync Function
-Update `sync_readiness_nodes()` to auto-assign `dimension_id` by mapping:
-- P2A VCR prerequisites → mapped via their `vcr_items.category_id` directly to `vcr_item_categories`
-- ORA activities → default to "Operating Integrity" or map via metadata
-- PSSR items → map via PSSR checklist category → nearest VCR category
-- ORM deliverables → default to "Management Systems"
-- Training → default to "Operating Integrity"
+Create `src/hooks/useBacklogGroups.ts` with CRUD operations:
+- `groups` query (fetch all groups for current user, ordered by `sort_order`)
+- `addGroup` mutation (insert new group)
+- `renameGroup` mutation
+- `deleteGroup` mutation (items become ungrouped)
 
-Set confidence factors: completed/approved = 1.0, in-progress = 0.8, not-started = 0.7.
+### 4. Update `usePersonalBacklog` Hook
 
-### Task 4: Executive Dashboard Enhancement
-Redesign `ExecutiveDashboard.tsx` to match the strategic layout:
-- **Top Banner**: Large ORI + SCS + color coding (Green >85, Amber 70-85, Red <70)
-- **Dimension Breakdown**: Bar/table showing each VCR category's score, trend arrow, risk level
-- **Top 5 Startup Blockers**: Blocked/critical nodes with severity
-- **Predictive Trend**: ORI line chart with dashed target curve
-- **Risk Impact Summary**: 4 stat boxes (Open High Risks, Startup-blocking, Dimensions below 70%, Systems below 60%)
+- Accept optional `groupId` filter parameter
+- Update `addItem` to accept a `group_id`
+- Query now also orders/groups by `group_id`
 
-### Task 5: Tenant-Configurable Weight Profiles
-Update the existing `ori_weight_profiles` to store dimension-based weights keyed by `vcr_item_categories.id` instead of module names. Add a simple admin UI for editing weights per tenant.
+### 5. Redesign `BacklogPage.tsx`
 
-### Task 6: Update Living Documents
-- **Security & Compliance Doc**: Add rows for Readiness Dimensions, Risk Penalty Engine, Startup Confidence Score (mark as Active)
-- **Platform Guide**: Add "Readiness Ontology & Scoring Engine" section documenting the 6 dimensions, ORI formula, SCS
-- **Strategic North Star**: Update scoring engine status from Planned to Active, add dimension-based architecture detail
+Replace the flat list with a grouped, collapsible layout:
+
+```text
+┌─────────────────────────────────────┐
+│ My Backlog                          │
+│ 5 pending · 2 done                  │
+├─────────────────────────────────────┤
+│ [+ New Group]  [All|Pending|Done]   │
+├─────────────────────────────────────┤
+│ ▼ Sprint Tasks (3)            [···] │
+│   ☐ Fix homepage logo               │
+│   ☐ PSSR workflow button             │
+│   ☑ Update sidebar                   │
+│   [+ Add task...]                    │
+├─────────────────────────────────────┤
+│ ▼ Backlog Ideas (2)           [···] │
+│   ☐ VCR/PSSR dependencies           │
+│   ☐ Schedule improvements            │
+│   [+ Add task...]                    │
+├─────────────────────────────────────┤
+│ ▼ Ungrouped (1)                     │
+│   ☐ Misc item                        │
+│   [+ Add task...]                    │
+└─────────────────────────────────────┘
+```
+
+- Each group is a collapsible section (using Collapsible component)
+- Group header has rename/delete via dropdown menu
+- Inline "add task" input at bottom of each group
+- Ungrouped items shown in a default section
+- Existing filters (All/Pending/Done) still work globally
+
+### 6. Files to Change
+
+| File | Change |
+|------|--------|
+| `supabase/migrations/...` | Create `backlog_groups` table, add `group_id` to `personal_backlog` |
+| `src/hooks/useBacklogGroups.ts` | New — CRUD for groups |
+| `src/hooks/usePersonalBacklog.ts` | Add `group_id` support to queries and mutations |
+| `src/pages/BacklogPage.tsx` | Rewrite with grouped collapsible UI |
+| `src/components/sidebar/SidebarContent.tsx` | Accept `currentUserId`, filter nav items |
+| `src/components/OrshSidebar.tsx` | Pass `currentUserId` to `SidebarContent` |
 
