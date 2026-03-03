@@ -353,7 +353,7 @@ const GroupedSection: React.FC<GroupedSectionProps> = ({
   const colors = getGroupColor(colorIndex);
 
   return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen} className={cn("rounded-md border-l-[3px] border border-border", colors.border, colors.bg)}>
+    <Collapsible open={isOpen} onOpenChange={setIsOpen} className={cn("rounded-md border-l-[3px] border border-border bg-card", colors.border)}>
       <div className="flex items-center gap-1 px-2 py-1.5">
         <CollapsibleTrigger asChild>
           <Button variant="ghost" size="icon" className="h-5 w-5 flex-shrink-0">
