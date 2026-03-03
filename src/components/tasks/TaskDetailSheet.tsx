@@ -120,7 +120,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
         <SheetContent className="sm:max-w-lg overflow-y-auto">
           <SheetHeader className="pb-4">
             <div className="flex items-center gap-2 flex-wrap">
-              {getTypeBadge(task.type)}
+              {getTypeBadge()}
               {getPriorityBadge(task.priority)}
             </div>
             <SheetTitle className="text-left text-lg leading-snug mt-2">
