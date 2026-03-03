@@ -263,10 +263,11 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
       <ScrollArea className="flex-1 px-2 pb-2">
         <div className="space-y-2">
           {/* Grouped tasks */}
-          {grouped.map(({ group, tasks }) => (
+          {grouped.map(({ group, colorIndex, tasks }) => (
             <GroupedSection
               key={group.id}
               group={group}
+              colorIndex={colorIndex}
               tasks={tasks}
               isRenaming={renamingGroupId === group.id}
               renameText={renameText}
