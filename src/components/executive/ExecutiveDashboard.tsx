@@ -271,19 +271,27 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ onBack }
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Button
+              variant={useMockData ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => { setUseMockData(!useMockData); setSelectedProjectId(useMockData ? null : 'mock-1'); }}
+              className="text-xs h-8"
+            >
+              {useMockData ? '📊 Demo Data' : 'Live Data'}
+            </Button>
             <Select value={selectedProjectId || ''} onValueChange={(v) => setSelectedProjectId(v || null)}>
               <SelectTrigger className="w-[280px]">
                 <SelectValue placeholder="Select a project for drill-down" />
               </SelectTrigger>
               <SelectContent>
-                {projects.map((p) => (
+                {projects.map((p: any) => (
                   <SelectItem key={p.id} value={p.id}>
                     {p.project_id_prefix}{p.project_id_number} — {p.project_title}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            {selectedProjectId && (
+            {selectedProjectId && !useMockData && (
               <Button variant="outline" size="sm" onClick={() => handleSyncAndCalculate(selectedProjectId)} disabled={isBusy}>
                 {isBusy ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <RefreshCw className="h-4 w-4 mr-1" />}
                 Calculate ORI
