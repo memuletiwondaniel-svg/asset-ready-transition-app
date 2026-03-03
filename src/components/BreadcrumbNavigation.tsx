@@ -24,6 +24,8 @@ import { cn } from '@/lib/utils';
 interface BreadcrumbNavigationProps {
   currentPageLabel: string;
   className?: string;
+  /** Override the path used for favoriting (useful for sub-views that share a route) */
+  favoritePath?: string;
   customBreadcrumbs?: Array<{
     label: string;
     path: string;
