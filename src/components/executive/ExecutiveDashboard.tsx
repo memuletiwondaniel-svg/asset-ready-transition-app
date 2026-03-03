@@ -67,70 +67,145 @@ const getRiskBadge = (blocked: number, atRisk: number) => {
   return <Badge variant="outline" className="bg-emerald-500/10 text-emerald-700 border-emerald-200 text-xs">Low</Badge>;
 };
 
-// ── Mock Data ──
+// ── Mock Data per project ──
 const MOCK_PROJECTS = [
-  { id: 'mock-1', project_title: 'Bongkot Gas Processing Upgrade', project_id_prefix: 'VCR-', project_id_number: 'BNGL-001' },
-  { id: 'mock-2', project_title: 'Arthit Compression Enhancement', project_id_prefix: 'VCR-', project_id_number: 'ARTH-002' },
-  { id: 'mock-3', project_title: 'Erawan Platform Brownfield Mod', project_id_prefix: 'VCR-', project_id_number: 'ERWN-003' },
-  { id: 'mock-4', project_title: 'Bongkot South Subsea Tie-back', project_id_prefix: 'VCR-', project_id_number: 'BNGS-004' },
+  { id: 'mock-1', project_title: 'HM Additional Compressors', project_id_prefix: 'DP', project_id_number: '300' },
+  { id: 'mock-2', project_title: 'Majnoon Pipeline', project_id_prefix: 'DP', project_id_number: '317' },
+  { id: 'mock-3', project_title: 'NRNGL Fire Water System', project_id_prefix: 'DP', project_id_number: '217' },
+  { id: 'mock-4', project_title: 'UQ Pipelines', project_id_prefix: 'DP', project_id_number: '354' },
+  { id: 'mock-5', project_title: 'West Qurna OT2/3 Gas Feed to CS6/7', project_id_prefix: 'DP', project_id_number: '385' },
 ];
 
-const MOCK_DIMENSION_SCORES: Record<string, any> = {
-  DSN: { name: 'Design', score: 88.2, raw_score: 91.0, confidence: 0.97, risk_penalty: 1.2, total: 42, completed: 38, blocked: 0, at_risk: 2, weight: 0.25 },
-  TEC: { name: 'Technical', score: 74.5, raw_score: 79.0, confidence: 0.92, risk_penalty: 3.8, total: 56, completed: 39, blocked: 3, at_risk: 5, weight: 0.25 },
-  OPI: { name: 'Operating Integrity', score: 62.1, raw_score: 68.5, confidence: 0.85, risk_penalty: 5.2, total: 38, completed: 21, blocked: 4, at_risk: 6, weight: 0.20 },
-  MGT: { name: 'Management Systems', score: 81.3, raw_score: 84.0, confidence: 0.95, risk_penalty: 1.5, total: 28, completed: 23, blocked: 0, at_risk: 1, weight: 0.15 },
-  HSE: { name: 'Health & Safety', score: 91.6, raw_score: 93.0, confidence: 0.98, risk_penalty: 0.8, total: 34, completed: 31, blocked: 0, at_risk: 1, weight: 0.15 },
+const MOCK_PROJECT_DATA: Record<string, {
+  dimensions: Record<string, any>;
+  prevDimensions: Record<string, any>;
+  score: any;
+  history: number[];
+  blockers: any[];
+}> = {
+  'mock-1': {
+    dimensions: {
+      DSN: { name: 'Design', score: 88.2, raw_score: 91.0, confidence: 0.97, risk_penalty: 1.2, total: 42, completed: 38, blocked: 0, at_risk: 2, weight: 0.25 },
+      TEC: { name: 'Technical', score: 74.5, raw_score: 79.0, confidence: 0.92, risk_penalty: 3.8, total: 56, completed: 39, blocked: 3, at_risk: 5, weight: 0.25 },
+      OPI: { name: 'Operating Integrity', score: 62.1, raw_score: 68.5, confidence: 0.85, risk_penalty: 5.2, total: 38, completed: 21, blocked: 4, at_risk: 6, weight: 0.20 },
+      MGT: { name: 'Management Systems', score: 81.3, raw_score: 84.0, confidence: 0.95, risk_penalty: 1.5, total: 28, completed: 23, blocked: 0, at_risk: 1, weight: 0.15 },
+      HSE: { name: 'Health & Safety', score: 91.6, raw_score: 93.0, confidence: 0.98, risk_penalty: 0.8, total: 34, completed: 31, blocked: 0, at_risk: 1, weight: 0.15 },
+    },
+    prevDimensions: { DSN: { score: 85.0 }, TEC: { score: 71.2 }, OPI: { score: 64.5 }, MGT: { score: 78.9 }, HSE: { score: 90.1 } },
+    score: { overall_score: 78.4, startup_confidence_score: 71.2, risk_penalty_total: 4.8, node_count: 198, completed_count: 152, blocked_count: 7, at_risk_count: 15, confidence_level: 'medium', schedule_variance_days: -12, schedule_adherence_index: 0.88, critical_path_stability_index: 0.82 },
+    history: [38.0, 44.5, 52.0, 58.2, 65.8, 71.3, 75.1, 78.4],
+    blockers: [
+      { id: 'b1', label: 'Compressor C-4102 Vendor Data Package Outstanding', module: 'ORA', status: 'blocked', risk_severity: 'startup_blocking', completion_pct: 15 },
+      { id: 'b2', label: 'HAZOP Close-out Actions — Flare KO Drum Sizing', module: 'PSSR', status: 'blocked', risk_severity: 'startup_blocking', completion_pct: 0 },
+      { id: 'b3', label: 'SIS Cause & Effect Matrix — Final Approval Pending', module: 'ORM', status: 'blocked', risk_severity: 'major', completion_pct: 72 },
+      { id: 'b4', label: 'Ops Training Batch 2 — Delayed Due to Instructor Availability', module: 'ORA', status: 'blocked', risk_severity: 'major', completion_pct: 30 },
+      { id: 'b5', label: 'EDP-4101 — Material Lead Time Exceeded', module: 'P2A', status: 'blocked', risk_severity: 'major', completion_pct: 45 },
+    ],
+  },
+  'mock-2': {
+    dimensions: {
+      DSN: { name: 'Design', score: 94.1, raw_score: 95.5, confidence: 0.99, risk_penalty: 0.5, total: 30, completed: 29, blocked: 0, at_risk: 0, weight: 0.25 },
+      TEC: { name: 'Technical', score: 87.3, raw_score: 89.0, confidence: 0.96, risk_penalty: 1.2, total: 44, completed: 39, blocked: 1, at_risk: 2, weight: 0.25 },
+      OPI: { name: 'Operating Integrity', score: 79.8, raw_score: 82.0, confidence: 0.93, risk_penalty: 2.1, total: 32, completed: 26, blocked: 1, at_risk: 2, weight: 0.20 },
+      MGT: { name: 'Management Systems', score: 88.5, raw_score: 90.0, confidence: 0.97, risk_penalty: 0.8, total: 22, completed: 20, blocked: 0, at_risk: 1, weight: 0.15 },
+      HSE: { name: 'Health & Safety', score: 92.0, raw_score: 93.5, confidence: 0.99, risk_penalty: 0.4, total: 17, completed: 16, blocked: 0, at_risk: 0, weight: 0.15 },
+    },
+    prevDimensions: { DSN: { score: 91.8 }, TEC: { score: 84.0 }, OPI: { score: 76.5 }, MGT: { score: 86.2 }, HSE: { score: 91.0 } },
+    score: { overall_score: 86.7, startup_confidence_score: 84.1, risk_penalty_total: 2.1, node_count: 145, completed_count: 130, blocked_count: 2, at_risk_count: 5, confidence_level: 'high', schedule_variance_days: -3, schedule_adherence_index: 0.96, critical_path_stability_index: 0.94 },
+    history: [45.0, 53.2, 61.8, 69.4, 75.0, 80.2, 84.0, 86.7],
+    blockers: [
+      { id: 'b1', label: 'Pipeline coating inspection report delayed', module: 'ORM', status: 'blocked', risk_severity: 'major', completion_pct: 60 },
+      { id: 'b2', label: 'Tie-in schedule conflict with live operations', module: 'P2A', status: 'blocked', risk_severity: 'major', completion_pct: 25 },
+    ],
+  },
+  'mock-3': {
+    dimensions: {
+      DSN: { name: 'Design', score: 55.2, raw_score: 62.0, confidence: 0.82, risk_penalty: 6.8, total: 48, completed: 25, blocked: 5, at_risk: 8, weight: 0.25 },
+      TEC: { name: 'Technical', score: 48.7, raw_score: 56.0, confidence: 0.78, risk_penalty: 7.5, total: 62, completed: 28, blocked: 8, at_risk: 10, weight: 0.25 },
+      OPI: { name: 'Operating Integrity', score: 42.3, raw_score: 50.0, confidence: 0.75, risk_penalty: 8.2, total: 45, completed: 17, blocked: 6, at_risk: 9, weight: 0.20 },
+      MGT: { name: 'Management Systems', score: 68.5, raw_score: 72.0, confidence: 0.88, risk_penalty: 3.5, total: 35, completed: 23, blocked: 2, at_risk: 4, weight: 0.15 },
+      HSE: { name: 'Health & Safety', score: 71.0, raw_score: 75.0, confidence: 0.90, risk_penalty: 2.8, total: 30, completed: 21, blocked: 1, at_risk: 3, weight: 0.15 },
+    },
+    prevDimensions: { DSN: { score: 53.0 }, TEC: { score: 50.2 }, OPI: { score: 44.8 }, MGT: { score: 65.1 }, HSE: { score: 69.5 } },
+    score: { overall_score: 54.3, startup_confidence_score: 42.8, risk_penalty_total: 11.2, node_count: 220, completed_count: 114, blocked_count: 22, at_risk_count: 34, confidence_level: 'low', schedule_variance_days: -45, schedule_adherence_index: 0.65, critical_path_stability_index: 0.52 },
+    history: [20.0, 25.5, 30.8, 36.2, 41.0, 46.5, 51.0, 54.3],
+    blockers: [
+      { id: 'b1', label: 'Fire water pump P-2201 factory test failure — re-test pending', module: 'ORA', status: 'blocked', risk_severity: 'startup_blocking', completion_pct: 10 },
+      { id: 'b2', label: 'Deluge system hydraulic model — design revision required', module: 'ORM', status: 'blocked', risk_severity: 'startup_blocking', completion_pct: 35 },
+      { id: 'b3', label: 'Fire detection loop wiring — cable tray routing clash', module: 'P2A', status: 'blocked', risk_severity: 'startup_blocking', completion_pct: 20 },
+      { id: 'b4', label: 'Firewater storage tank T-2201 foundation rework', module: 'ORA', status: 'blocked', risk_severity: 'major', completion_pct: 55 },
+      { id: 'b5', label: 'NFPA compliance gap — foam system design not finalised', module: 'PSSR', status: 'blocked', risk_severity: 'major', completion_pct: 40 },
+    ],
+  },
+  'mock-4': {
+    dimensions: {
+      DSN: { name: 'Design', score: 96.0, raw_score: 97.0, confidence: 0.99, risk_penalty: 0.3, total: 25, completed: 25, blocked: 0, at_risk: 0, weight: 0.25 },
+      TEC: { name: 'Technical', score: 91.5, raw_score: 92.8, confidence: 0.98, risk_penalty: 0.6, total: 32, completed: 30, blocked: 0, at_risk: 1, weight: 0.25 },
+      OPI: { name: 'Operating Integrity', score: 88.2, raw_score: 90.0, confidence: 0.96, risk_penalty: 1.0, total: 20, completed: 18, blocked: 0, at_risk: 1, weight: 0.20 },
+      MGT: { name: 'Management Systems', score: 93.0, raw_score: 94.0, confidence: 0.98, risk_penalty: 0.4, total: 15, completed: 14, blocked: 0, at_risk: 0, weight: 0.15 },
+      HSE: { name: 'Health & Safety', score: 95.8, raw_score: 96.5, confidence: 0.99, risk_penalty: 0.2, total: 12, completed: 12, blocked: 0, at_risk: 0, weight: 0.15 },
+    },
+    prevDimensions: { DSN: { score: 94.5 }, TEC: { score: 89.0 }, OPI: { score: 85.5 }, MGT: { score: 91.2 }, HSE: { score: 94.5 } },
+    score: { overall_score: 92.1, startup_confidence_score: 90.5, risk_penalty_total: 1.0, node_count: 104, completed_count: 99, blocked_count: 0, at_risk_count: 2, confidence_level: 'high', schedule_variance_days: 5, schedule_adherence_index: 0.99, critical_path_stability_index: 0.97 },
+    history: [52.0, 60.5, 70.2, 77.8, 82.5, 86.8, 90.0, 92.1],
+    blockers: [],
+  },
+  'mock-5': {
+    dimensions: {
+      DSN: { name: 'Design', score: 72.5, raw_score: 77.0, confidence: 0.90, risk_penalty: 3.5, total: 55, completed: 38, blocked: 2, at_risk: 5, weight: 0.25 },
+      TEC: { name: 'Technical', score: 65.8, raw_score: 72.0, confidence: 0.87, risk_penalty: 5.0, total: 68, completed: 42, blocked: 5, at_risk: 8, weight: 0.25 },
+      OPI: { name: 'Operating Integrity', score: 58.4, raw_score: 65.0, confidence: 0.82, risk_penalty: 6.2, total: 50, completed: 27, blocked: 4, at_risk: 7, weight: 0.20 },
+      MGT: { name: 'Management Systems', score: 75.0, raw_score: 78.0, confidence: 0.92, risk_penalty: 2.0, total: 30, completed: 22, blocked: 1, at_risk: 3, weight: 0.15 },
+      HSE: { name: 'Health & Safety', score: 82.3, raw_score: 85.0, confidence: 0.95, risk_penalty: 1.5, total: 28, completed: 23, blocked: 0, at_risk: 2, weight: 0.15 },
+    },
+    prevDimensions: { DSN: { score: 69.0 }, TEC: { score: 62.5 }, OPI: { score: 55.0 }, MGT: { score: 72.8 }, HSE: { score: 80.0 } },
+    score: { overall_score: 69.5, startup_confidence_score: 61.3, risk_penalty_total: 7.2, node_count: 231, completed_count: 152, blocked_count: 12, at_risk_count: 25, confidence_level: 'medium', schedule_variance_days: -22, schedule_adherence_index: 0.80, critical_path_stability_index: 0.72 },
+    history: [28.0, 35.5, 42.0, 49.8, 55.2, 60.5, 65.8, 69.5],
+    blockers: [
+      { id: 'b1', label: 'Gas feed tie-in permit — regulatory approval pending', module: 'P2A', status: 'blocked', risk_severity: 'startup_blocking', completion_pct: 5 },
+      { id: 'b2', label: 'CS6 compressor rotor balancing — vendor rework', module: 'ORA', status: 'blocked', risk_severity: 'startup_blocking', completion_pct: 40 },
+      { id: 'b3', label: 'Pipeline pigging launcher — fabrication delay', module: 'ORM', status: 'blocked', risk_severity: 'major', completion_pct: 50 },
+      { id: 'b4', label: 'Gas metering skid calibration — instrument delivery late', module: 'ORA', status: 'blocked', risk_severity: 'major', completion_pct: 20 },
+      { id: 'b5', label: 'CS7 control narrative — DCS vendor review outstanding', module: 'ORM', status: 'blocked', risk_severity: 'major', completion_pct: 65 },
+    ],
+  },
 };
 
-const MOCK_LATEST_SCORE = {
-  id: 'mock-score-1',
-  project_id: 'mock-1',
-  overall_score: 78.4,
-  startup_confidence_score: 71.2,
-  risk_penalty_total: 4.8,
-  node_count: 198,
-  completed_count: 152,
-  blocked_count: 7,
-  at_risk_count: 15,
-  confidence_level: 'medium',
-  calculated_at: new Date().toISOString(),
-  dimension_scores: MOCK_DIMENSION_SCORES,
-  schedule_variance_days: -12,
-  schedule_adherence_index: 0.88,
-  critical_path_stability_index: 0.82,
-};
+// Helper to build mock data for selected project
+function getMockDataForProject(projectId: string) {
+  const data = MOCK_PROJECT_DATA[projectId];
+  if (!data) return null;
+  const baseScore = {
+    id: `score-${projectId}`,
+    project_id: projectId,
+    ...data.score,
+    calculated_at: new Date().toISOString(),
+    dimension_scores: data.dimensions,
+  };
+  const history = data.history.map((s, i) => ({
+    ...baseScore,
+    id: `s-${projectId}-${i}`,
+    overall_score: s,
+    startup_confidence_score: s * (data.score.startup_confidence_score / data.score.overall_score),
+    calculated_at: new Date(Date.now() - (data.history.length - 1 - i) * 7 * 86400000).toISOString(),
+    dimension_scores: i === data.history.length - 1 ? data.dimensions : (i === data.history.length - 2 ? data.prevDimensions : data.dimensions),
+  }));
+  return { latestScore: baseScore, history, blockers: data.blockers };
+}
 
-const MOCK_PREV_DIMENSIONS: Record<string, any> = {
-  DSN: { score: 85.0 }, TEC: { score: 71.2 }, OPI: { score: 64.5 },
-  MGT: { score: 78.9 }, HSE: { score: 90.1 },
-};
-
-const MOCK_SCORE_HISTORY = [
-  { ...MOCK_LATEST_SCORE, calculated_at: new Date().toISOString() },
-  { ...MOCK_LATEST_SCORE, id: 's2', overall_score: 75.1, startup_confidence_score: 67.8, calculated_at: new Date(Date.now() - 7 * 86400000).toISOString(), dimension_scores: MOCK_PREV_DIMENSIONS },
-  { ...MOCK_LATEST_SCORE, id: 's3', overall_score: 71.3, startup_confidence_score: 63.2, calculated_at: new Date(Date.now() - 14 * 86400000).toISOString() },
-  { ...MOCK_LATEST_SCORE, id: 's4', overall_score: 65.8, startup_confidence_score: 55.4, calculated_at: new Date(Date.now() - 21 * 86400000).toISOString() },
-  { ...MOCK_LATEST_SCORE, id: 's5', overall_score: 58.2, startup_confidence_score: 48.1, calculated_at: new Date(Date.now() - 28 * 86400000).toISOString() },
-  { ...MOCK_LATEST_SCORE, id: 's6', overall_score: 52.0, startup_confidence_score: 41.6, calculated_at: new Date(Date.now() - 35 * 86400000).toISOString() },
-  { ...MOCK_LATEST_SCORE, id: 's7', overall_score: 44.5, startup_confidence_score: 35.2, calculated_at: new Date(Date.now() - 42 * 86400000).toISOString() },
-  { ...MOCK_LATEST_SCORE, id: 's8', overall_score: 38.0, startup_confidence_score: 28.0, calculated_at: new Date(Date.now() - 49 * 86400000).toISOString() },
-];
-
-const MOCK_BLOCKERS = [
-  { id: 'b1', label: 'Compressor C-4102 Vendor Data Package Outstanding', module: 'ORA', status: 'blocked', risk_severity: 'startup_blocking', completion_pct: 15 },
-  { id: 'b2', label: 'HAZOP Close-out Actions — Flare KO Drum Sizing', module: 'PSSR', status: 'blocked', risk_severity: 'startup_blocking', completion_pct: 0 },
-  { id: 'b3', label: 'SIS Cause & Effect Matrix — Final Approval Pending', module: 'ORM', status: 'blocked', risk_severity: 'major', completion_pct: 72 },
-  { id: 'b4', label: 'Ops Training Batch 2 — Delayed Due to Instructor Availability', module: 'ORA', status: 'blocked', risk_severity: 'major', completion_pct: 30 },
-  { id: 'b5', label: 'Emergency Depressuring Valve EDP-4101 — Material Lead Time Exceeded', module: 'P2A', status: 'blocked', risk_severity: 'major', completion_pct: 45 },
-];
-
-const MOCK_ALL_SCORES = [
-  { id: 'as1', project_id: 'mock-1', overall_score: 78.4, startup_confidence_score: 71.2, node_count: 198, confidence_level: 'medium', calculated_at: new Date().toISOString(), projects: MOCK_PROJECTS[0] },
-  { id: 'as2', project_id: 'mock-2', overall_score: 86.7, startup_confidence_score: 84.1, node_count: 145, confidence_level: 'high', calculated_at: new Date(Date.now() - 2 * 86400000).toISOString(), projects: MOCK_PROJECTS[1] },
-  { id: 'as3', project_id: 'mock-3', overall_score: 54.3, startup_confidence_score: 42.8, node_count: 220, confidence_level: 'low', calculated_at: new Date(Date.now() - 1 * 86400000).toISOString(), projects: MOCK_PROJECTS[2] },
-  { id: 'as4', project_id: 'mock-4', overall_score: 92.1, startup_confidence_score: 90.5, node_count: 88, confidence_level: 'high', calculated_at: new Date(Date.now() - 3 * 86400000).toISOString(), projects: MOCK_PROJECTS[3] },
-];
+const MOCK_ALL_SCORES = MOCK_PROJECTS.map((p) => {
+  const d = MOCK_PROJECT_DATA[p.id];
+  return {
+    id: `as-${p.id}`,
+    project_id: p.id,
+    overall_score: d?.score.overall_score || 0,
+    startup_confidence_score: d?.score.startup_confidence_score || 0,
+    node_count: d?.score.node_count || 0,
+    confidence_level: d?.score.confidence_level || 'low',
+    calculated_at: new Date(Date.now() - Math.random() * 3 * 86400000).toISOString(),
+    projects: p,
+  };
+});
 
 export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ onBack }) => {
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>('mock-1');
