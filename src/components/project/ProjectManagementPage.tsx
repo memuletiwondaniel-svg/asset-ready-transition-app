@@ -353,7 +353,7 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="grid w-full grid-cols-4 max-w-2xl mb-6">
                   <TabsTrigger value="projects" className="flex items-center gap-2">
-                    <Folder className="h-4 w-4" />
+                    <Building2 className="h-4 w-4" />
                     Projects
                   </TabsTrigger>
                   <TabsTrigger value="hierarchy" className="flex items-center gap-2">
