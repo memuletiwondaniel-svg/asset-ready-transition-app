@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { ListChecks, Plus, Search, LayoutGrid, Table, CheckCircle2 } from 'lucide-react';
+import { CalendarCheck, Plus, Search, LayoutGrid, Table, CheckCircle2 } from 'lucide-react';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
