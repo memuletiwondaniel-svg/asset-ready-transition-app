@@ -104,6 +104,7 @@ export const SidebarContent = memo<SidebarContentProps>(({
   onToggleCollapse,
 }) => {
   const { translations: t } = useLanguage();
+  const { hasPermission } = usePermissions();
   
   const DANIEL_USER_ID = '05b44255-4358-450c-8aa4-0558b31df70b';
   const visibleNavItems = navigationItems.filter(item => 
