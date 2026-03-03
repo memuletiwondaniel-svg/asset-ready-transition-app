@@ -22,6 +22,7 @@ import { usePlants } from '@/hooks/usePlants';
 import { useFields } from '@/hooks/useFields';
 import { useStations } from '@/hooks/useStations';
 import { usePSSRReasons } from '@/hooks/usePSSRReasons';
+import { usePSSRChecklistItems } from '@/hooks/usePSSRChecklistLibrary';
 import { useProfileUsers } from '@/hooks/useProfileUsers';
 import { useRoles } from '@/hooks/useRoles';
 import WizardStepCategory from './wizard/WizardStepCategory';
