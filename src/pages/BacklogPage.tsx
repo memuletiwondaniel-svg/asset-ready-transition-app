@@ -182,7 +182,7 @@ const BacklogPage: React.FC = () => {
               <div className="flex items-center gap-2 p-2 rounded-md border bg-card shadow-xl max-w-xs">
                 <GripVertical className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
                 <span className="text-sm truncate">{activeItem.description}</span>
-                <div className={cn('h-2 w-2 rounded-full flex-shrink-0', priorityDot[activeItem.priority])} />
+                
               </div>
             )}
           </DragOverlay>
