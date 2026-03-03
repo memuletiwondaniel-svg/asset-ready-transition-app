@@ -426,6 +426,23 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
           return false;
         }
         return true;
+      case 3: {
+        // Validate that every selected non-N/A item has a delivering party
+        const activeItemIds = wizardState.selectedChecklistItemIds.filter(
+          id => !wizardState.naItemIds.includes(id)
+        );
+        const itemsWithoutDelivering = activeItemIds.filter(id => {
+          const override = wizardState.checklistItemOverrides[id];
+          const templateItem = allChecklistItems.find(item => item.id === id);
+          const effectiveResponsible = override?.responsible ?? templateItem?.responsible;
+          return !effectiveResponsible || effectiveResponsible.trim() === '';
+        });
+        if (itemsWithoutDelivering.length > 0) {
+          if (!silent) toast.error(`${itemsWithoutDelivering.length} checklist item(s) are missing a delivering party. Please assign one to each item.`);
+          return false;
+        }
+        return true;
+      }
       default:
         return true;
     }
