@@ -57,12 +57,20 @@ const BacklogPage: React.FC = () => {
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   );
 
+  // Build a stable group→index map for colors
+  const groupColorMap = useMemo(() => {
+    const map = new Map<string, number>();
+    groups.forEach((g, i) => map.set(g.id, i));
+    return map;
+  }, [groups]);
+
   // Group items by status, then by group within each status
   const columnData = useMemo(() => {
     return COLUMNS.map(col => {
       const colItems = items.filter(i => i.status === col.id);
-      const grouped = groups.map(g => ({
+      const grouped = groups.map((g, i) => ({
         group: g,
+        colorIndex: i,
         tasks: colItems.filter(i => i.group_id === g.id),
       })).filter(g => g.tasks.length > 0);
       const ungrouped = colItems.filter(i => !i.group_id);
