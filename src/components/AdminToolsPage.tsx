@@ -79,12 +79,17 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   const location = useLocation();
 
   // State management - consolidated for cleaner code
-  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'activity-log' | 'ora-configuration' | 'handover-management' | 'bulk-upload' | 'apis' | 'sso' | 'roles-permissions' | 'audit-logs' | 'session-timeout' | 'brute-force' | 'data-export' | 'audit-retention' | 'disaster-recovery' | 'api-keys' | 'webhook-security' | 'integration-health' | 'user-offboarding' | 'permission-review' | 'deployment-log' | 'feature-flags' | 'security-document' | 'platform-guide' | 'northstar-document' | 'incident-response' | 'deployment-configs'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'activity-log' | 'ora-configuration' | 'handover-management' | 'bulk-upload' | 'apis' | 'sso' | 'roles-permissions' | 'audit-logs' | 'session-timeout' | 'brute-force' | 'data-export' | 'audit-retention' | 'disaster-recovery' | 'api-keys' | 'webhook-security' | 'integration-health' | 'user-offboarding' | 'permission-review' | 'deployment-log' | 'feature-flags' | 'security-document' | 'platform-guide' | 'northstar-document' | 'incident-response' | 'deployment-configs'>(() => {
+    // Check if navigated with a specific activeView from favorites
+    const state = location.state as any;
+    return state?.activeView || 'dashboard';
+  });
 
-  // Reset to dashboard when sidebar navigation triggers a same-route click
+  // Reset to dashboard when sidebar navigation triggers a same-route click (without activeView)
   useEffect(() => {
-    if ((location.state as any)?.navKey) {
-      setActiveView('dashboard');
+    const state = location.state as any;
+    if (state?.navKey) {
+      setActiveView(state.activeView || 'dashboard');
     }
   }, [(location.state as any)?.navKey]);
   const [searchQuery, setSearchQuery] = useState('');
