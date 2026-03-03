@@ -226,7 +226,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                 onClick={() => setOraWizardOpen(true)}
               >
                 <CalendarCheck className="h-4 w-4" />
-                Create ORA Plan
+                {oraCtaLabel}
                 <ChevronRight className="h-4 w-4 ml-auto" />
               </Button>
             )}
