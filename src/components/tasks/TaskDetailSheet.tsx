@@ -190,6 +190,13 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
 
             <Separator />
 
+            {/* Intent message */}
+            {intentMessage && (
+              <div className="p-3 rounded-lg bg-muted/50 border border-border/50">
+                <p className="text-sm text-muted-foreground leading-relaxed">{intentMessage}</p>
+              </div>
+            )}
+
             {/* Review & Edit CTA - opens the wizard in lead-review mode */}
             {pssrId && (
               <Button
@@ -202,10 +209,10 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
               </Button>
             )}
 
-            {/* ORA Plan Creation CTA */}
+            {/* ORA Plan Creation CTA - prominent for action tasks */}
             {isOraTask && oraProjectId && (
               <Button
-                className="w-full gap-2 bg-muted hover:bg-muted/80 text-foreground font-medium border border-border"
+                className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
                 onClick={() => setOraWizardOpen(true)}
               >
                 <CalendarCheck className="h-4 w-4" />
@@ -226,10 +233,10 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
               </Button>
             )}
 
-            {/* ORA Activity Task CTA - opens the task sheet */}
+            {/* ORA Activity Task CTA - prominent for action tasks */}
             {isOraActivityTask && (
               <Button
-                className="w-full gap-2 bg-muted hover:bg-muted/80 text-foreground font-medium border border-border"
+                className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
                 onClick={() => {
                   onOpenChange(false);
                   setOraActivityOpen(true);
@@ -241,10 +248,10 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
               </Button>
             )}
 
-            {/* VCR Delivery Plan CTA - opens VCR execution plan wizard */}
+            {/* VCR Delivery Plan CTA - prominent for action tasks */}
             {isVcrDeliveryPlanTask && vcrForWizard && (
               <Button
-                className="w-full gap-2 bg-muted hover:bg-muted/80 text-foreground font-medium border border-border"
+                className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
                 onClick={() => setVcrWizardOpen(true)}
               >
                 <ClipboardList className="h-4 w-4" />
@@ -253,44 +260,47 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
               </Button>
             )}
 
-            <Separator />
+            {/* Comment & Approve/Reject - only for review tasks */}
+            {isReviewTask && (
+              <>
+                <Separator />
 
-            {/* Comment Section */}
-            <div>
-              <label className="text-sm font-medium text-foreground mb-2 block">
-                Comments <span className="text-muted-foreground font-normal">(optional)</span>
-              </label>
-              <Textarea
-                placeholder="Add any comments or notes about your decision..."
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                className="min-h-[100px] resize-none"
-              />
-            </div>
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-2 block">
+                    Comments <span className="text-muted-foreground font-normal">(optional)</span>
+                  </label>
+                  <Textarea
+                    placeholder="Add any comments or notes about your decision..."
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    className="min-h-[100px] resize-none"
+                  />
+                </div>
 
-            <Separator />
+                <Separator />
 
-            {/* Action Buttons */}
-            <div className="flex flex-col gap-3">
-              <p className="text-sm font-medium text-foreground">Decision</p>
-              <div className="flex items-center gap-3">
-                <Button
-                  className="flex-1 gap-2 bg-green-600 hover:bg-green-700 text-white"
-                  onClick={() => handleAction('approve')}
-                >
-                  <CheckCircle className="h-4 w-4" />
-                  Approve
-                </Button>
-                <Button
-                  variant="destructive"
-                  className="flex-1 gap-2"
-                  onClick={() => handleAction('reject')}
-                >
-                  <X className="h-4 w-4" />
-                  Reject
-                </Button>
-              </div>
-            </div>
+                <div className="flex flex-col gap-3">
+                  <p className="text-sm font-medium text-foreground">Decision</p>
+                  <div className="flex items-center gap-3">
+                    <Button
+                      className="flex-1 gap-2 bg-green-600 hover:bg-green-700 text-white"
+                      onClick={() => handleAction('approve')}
+                    >
+                      <CheckCircle className="h-4 w-4" />
+                      Approve
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      className="flex-1 gap-2"
+                      onClick={() => handleAction('reject')}
+                    >
+                      <X className="h-4 w-4" />
+                      Reject
+                    </Button>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </SheetContent>
       </Sheet>
