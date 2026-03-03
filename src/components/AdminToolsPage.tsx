@@ -776,7 +776,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   return <div className="flex-1 flex flex-col overflow-y-auto bg-gradient-to-br from-background via-background to-muted/20">
         {/* Header */}
         <div className="border-b border-border bg-card/80 backdrop-blur-sm px-6 py-4 sticky top-0 z-10">
-          <BreadcrumbNavigation currentPageLabel="Administration" />
+          <BreadcrumbNavigation currentPageLabel="Administration" favoritePath="/admin-tools" />
           <div className="flex items-center justify-between mt-3">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-slate-600 to-gray-700 flex items-center justify-center shadow-lg">
