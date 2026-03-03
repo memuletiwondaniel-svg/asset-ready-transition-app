@@ -743,26 +743,39 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                       const IconComponent = getFavoriteIcon(fav.path, fav.label);
                       const colorClass = getFavoriteColor(fav.path, fav.label);
                       return (
-                        <button
+                        <div
                           key={fav.path}
-                          onClick={() => {
-                            // Handle virtual admin sub-paths
-                            if (fav.path.startsWith('/admin-tools/')) {
-                              const subView = fav.path.replace('/admin-tools/', '');
-                              navigate('/admin-tools', { state: { activeView: subView, navKey: Date.now() } });
-                            } else {
-                              navigate(fav.path);
-                            }
-                          }}
-                          className="group flex flex-col items-center gap-2.5 p-4 rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-200 min-w-[100px]"
+                          className="group/fav relative flex flex-col items-center gap-2.5 p-4 rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-200 min-w-[100px]"
                         >
-                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${colorClass} transition-transform duration-200 group-hover:scale-110`}>
-                            <IconComponent className="w-5 h-5 text-white" />
-                          </div>
-                          <span className="text-xs font-medium text-foreground/80 group-hover:text-foreground transition-colors line-clamp-1 max-w-[100px] text-center">
-                            {fav.label}
-                          </span>
-                        </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleFavorite(fav.path, fav.label);
+                            }}
+                            className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover/fav:opacity-100 transition-opacity duration-150 hover:scale-110 z-10"
+                            title="Remove from favorites"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (fav.path.startsWith('/admin-tools/')) {
+                                const subView = fav.path.replace('/admin-tools/', '');
+                                navigate('/admin-tools', { state: { activeView: subView, navKey: Date.now() } });
+                              } else {
+                                navigate(fav.path);
+                              }
+                            }}
+                            className="flex flex-col items-center gap-2.5 w-full"
+                          >
+                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${colorClass} transition-transform duration-200 group-hover/fav:scale-110`}>
+                              <IconComponent className="w-5 h-5 text-white" />
+                            </div>
+                            <span className="text-xs font-medium text-foreground/80 group-hover/fav:text-foreground transition-colors line-clamp-1 max-w-[100px] text-center">
+                              {fav.label}
+                            </span>
+                          </button>
+                        </div>
                       );
                     })}
                   </div>
