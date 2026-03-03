@@ -90,7 +90,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
                   glowFrom="from-purple-500/40"
                   glowTo="to-violet-500/40"
                 />
-                <span>ORA Plan</span>
+                <span>ORA Activities</span>
               </div>
               {isDraft && (
                 <Badge variant="outline" className="text-[10px] gap-1 bg-muted text-muted-foreground border-border">
