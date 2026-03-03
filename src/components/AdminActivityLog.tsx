@@ -106,6 +106,7 @@ const AdminActivityLog: React.FC<AdminActivityLogProps> = ({ onBack, selectedLan
         icon={<Activity className="h-5 w-5" />}
         title={t.activityLogPageTitle || "Activity Log"}
         description={t.activityLogSubtitle || "View and monitor all system activities"}
+        favoritePath="/admin-tools/activity-log"
         customBreadcrumbs={[
           { label: t.home || 'Home', path: '/', onClick: onBack },
           { label: t.administration || 'Administration', path: '/admin-tools', onClick: onBack },
