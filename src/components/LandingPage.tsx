@@ -72,12 +72,31 @@ const FAVORITE_ICON_MAP: Record<string, { icon: React.ComponentType<any>; color:
   '/admin-tools/deployment-configs': { icon: Container, color: 'bg-cyan-600' },
 };
 
-function getFavoriteIcon(path: string) {
-  return FAVORITE_ICON_MAP[path]?.icon || Bookmark;
+// Label-based fallback for stale localStorage entries
+const LABEL_ICON_MAP: Record<string, { icon: React.ComponentType<any>; color: string }> = {
+  'User Management': { icon: Users, color: 'bg-blue-500' },
+  'Users': { icon: Users, color: 'bg-blue-500' },
+  'Activity Log': { icon: Activity, color: 'bg-cyan-500' },
+  'API Management': { icon: Plug, color: 'bg-emerald-500' },
+  'ORA Plan': { icon: LayoutTemplate, color: 'bg-amber-500' },
+  'Manage ORA Plans': { icon: LayoutTemplate, color: 'bg-amber-500' },
+  'SSO Configuration': { icon: Shield, color: 'bg-indigo-500' },
+  'Role & Permissions': { icon: Shield, color: 'bg-rose-500' },
+  'Audit Logs': { icon: FileText, color: 'bg-slate-600' },
+  'API Keys': { icon: KeyRound, color: 'bg-violet-500' },
+  'Data Export': { icon: Database, color: 'bg-teal-500' },
+  'Audit Retention': { icon: Archive, color: 'bg-orange-500' },
+  'Handover Management': { icon: Key, color: 'bg-blue-500' },
+  'Manage Handover': { icon: Key, color: 'bg-blue-500' },
+  'Projects': { icon: Building2, color: 'bg-purple-500' },
+};
+
+function getFavoriteIcon(path: string, label?: string) {
+  return FAVORITE_ICON_MAP[path]?.icon || (label && LABEL_ICON_MAP[label]?.icon) || Bookmark;
 }
 
-function getFavoriteColor(path: string) {
-  return FAVORITE_ICON_MAP[path]?.color || 'bg-primary';
+function getFavoriteColor(path: string, label?: string) {
+  return FAVORITE_ICON_MAP[path]?.color || (label && LABEL_ICON_MAP[label]?.color) || 'bg-primary';
 }
 
 interface WidgetConfig {
@@ -721,8 +740,8 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                   </h2>
                   <div className="flex flex-wrap justify-center gap-3">
                     {favorites.map((fav) => {
-                      const IconComponent = getFavoriteIcon(fav.path);
-                      const colorClass = getFavoriteColor(fav.path);
+                      const IconComponent = getFavoriteIcon(fav.path, fav.label);
+                      const colorClass = getFavoriteColor(fav.path, fav.label);
                       return (
                         <button
                           key={fav.path}
