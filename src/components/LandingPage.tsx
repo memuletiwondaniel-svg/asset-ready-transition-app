@@ -726,7 +726,15 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                       return (
                         <button
                           key={fav.path}
-                          onClick={() => navigate(fav.path)}
+                          onClick={() => {
+                            // Handle virtual admin sub-paths
+                            if (fav.path.startsWith('/admin-tools/')) {
+                              const subView = fav.path.replace('/admin-tools/', '');
+                              navigate('/admin-tools', { state: { activeView: subView, navKey: Date.now() } });
+                            } else {
+                              navigate(fav.path);
+                            }
+                          }}
                           className="group flex flex-col items-center gap-2.5 p-4 rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-200 min-w-[100px]"
                         >
                           <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${colorClass} transition-transform duration-200 group-hover:scale-110`}>
