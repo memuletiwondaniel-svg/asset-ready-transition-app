@@ -312,9 +312,10 @@ const MyTasksPage: React.FC = () => {
                   </div>
                 );
               })}
-            </div>
           </div>
-        ) : (
+        </div>
+
+        {viewMode === 'table' && allPanelsLoaded && !isAllCaughtUp && (
           <AllTasksTable searchQuery={searchQuery} userId={user.id} />
         )}
 
