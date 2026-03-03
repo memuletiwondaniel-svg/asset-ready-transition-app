@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { GanttChart, Clock, CheckCircle2, Plus, FileEdit, Send, AlertTriangle, ChevronRight, Trash2 } from 'lucide-react';
+import { Settings2, Clock, CheckCircle2, Plus, FileEdit, Send, AlertTriangle, ChevronRight, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { StyledWidgetIcon } from './StyledWidgetIcon';
 import { useProjectORPPlans } from '@/hooks/useProjectORPPlans';
