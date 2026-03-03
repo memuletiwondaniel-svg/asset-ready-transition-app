@@ -5326,6 +5326,42 @@ export type Database = {
           },
         ]
       }
+      personal_backlog: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          description: string
+          id: string
+          priority: string
+          sort_order: number | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          priority?: string
+          sort_order?: number | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          priority?: string
+          sort_order?: number | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       plant: {
         Row: {
           created_at: string
