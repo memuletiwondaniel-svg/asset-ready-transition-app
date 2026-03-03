@@ -107,17 +107,17 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   const getIntentMessage = () => {
     switch (task.type) {
       case 'ora_plan_creation':
-        return 'You've been assigned to create the ORA Activity Plan for this project. Click below to launch the planning wizard.';
+        return 'You have been assigned to create the ORA Activity Plan for this project. Click below to launch the planning wizard.';
       case 'vcr_delivery_plan':
         return 'You need to set up the VCR Delivery Plan for this item. Click below to configure the execution plan.';
       case 'ora_activity':
         return 'You have an ORA activity to complete. Click below to open the activity details and update progress.';
       case 'ora_plan_review':
-        return 'You've been asked to review and approve an ORA Plan. Use the button below to review, then approve or request changes.';
+        return 'You have been asked to review and approve an ORA Plan. Use the button below to review, then approve or request changes.';
       case 'review':
       case 'approval':
         return pssrId
-          ? 'You've been asked to review and approve a PSSR. Use the button below to review, then approve or reject.'
+          ? 'You have been asked to review and approve a PSSR. Use the button below to review, then approve or reject.'
           : 'This task requires your review and decision.';
       default:
         return null;
