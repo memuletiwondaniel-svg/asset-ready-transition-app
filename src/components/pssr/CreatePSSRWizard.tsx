@@ -96,6 +96,7 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
   
   const { data: atiScopes } = usePSSRTieInScopes();
   const { data: reasons } = usePSSRReasons();
+  const { data: allChecklistItems = [] } = usePSSRChecklistItems();
   const { plants } = usePlants();
   const { allFields: fields } = useFields();
   const { allStations: stations } = useStations();
