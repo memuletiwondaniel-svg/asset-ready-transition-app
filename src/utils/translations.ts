@@ -3515,7 +3515,7 @@ export const translations = {
     navORMaintenance: 'OR 维护',
     navP2AHandover: 'P2A 移交',
     navProjects: '项目',
-    
+    navMyBacklog: '我的待办',
     // Sidebar UI
     lightMode: '浅色模式',
     darkMode: '深色模式',
