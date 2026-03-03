@@ -386,7 +386,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ onBack }
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-center">
               {/* ORI Score */}
               <div className="text-center">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">ORIP Readiness Index</p>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Start-Up Readiness Index</p>
                 <p className={`text-5xl font-black ${getORIColor(oriScore)}`}>{oriScore.toFixed(1)}%</p>
                 <Badge variant="outline" className={`mt-2 ${oriScore >= 85 ? 'bg-emerald-500/10 text-emerald-600 border-emerald-200' : oriScore >= 70 ? 'bg-amber-500/10 text-amber-600 border-amber-200' : 'bg-red-500/10 text-red-600 border-red-200'}`}>
                   {oriScore >= 85 ? 'On Track' : oriScore >= 70 ? 'Caution' : 'At Risk'}
