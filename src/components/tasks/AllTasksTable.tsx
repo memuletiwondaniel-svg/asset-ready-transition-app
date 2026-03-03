@@ -185,23 +185,27 @@ export const AllTasksTable: React.FC<AllTasksTableProps> = ({ searchQuery, userI
 
     // VCR & PSSR Bundle Tasks (delivering + approving)
     (bundleTasks || []).forEach(task => {
-      const isApproval = task.type === 'vcr_approval_bundle';
       const isPSSRBundle = task.type === 'pssr_checklist_bundle';
+      const isPSSRApproval = task.type === 'pssr_approval_bundle';
+      const isVCRApproval = task.type === 'vcr_approval_bundle';
       
       let category: UnifiedTask['category'];
       if (isPSSRBundle) {
         category = 'pssr_bundle';
-      } else if (isApproval) {
+      } else if (isPSSRApproval) {
+        category = 'pssr_approval';
+      } else if (isVCRApproval) {
         category = 'vcr_approval';
       } else {
         category = 'vcr_bundle';
       }
 
-      const projectLabel = isPSSRBundle 
+      const isPSSR = isPSSRBundle || isPSSRApproval;
+      const projectLabel = isPSSR
         ? (task.metadata?.project_name || 'Unknown Project')
         : (task.metadata?.project_code || 'Unknown Project');
 
-      const navigatePath = isPSSRBundle
+      const navigatePath = isPSSR
         ? (task.metadata?.pssr_id ? `/pssr/${task.metadata.pssr_id}/review` : '/my-tasks')
         : (task.metadata?.vcr_id ? `/p2a-handover?vcr=${task.metadata.vcr_id}` : '/p2a-handover');
 
