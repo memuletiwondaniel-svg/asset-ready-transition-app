@@ -448,7 +448,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ item, onUpdateDesc, onUpdatePriorit
         item.status === 'done' && 'opacity-60'
       )}
     >
-      <button {...listeners} {...attributes} className="flex-shrink-0 mt-0.5 cursor-grab active:cursor-grabbing touch-none text-muted-foreground hover:text-foreground">
+      <button {...listeners} {...attributes} className="flex-shrink-0 mt-0.5 cursor-grab active:cursor-grabbing touch-none text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity">
         <GripVertical className="h-3.5 w-3.5" />
       </button>
 
