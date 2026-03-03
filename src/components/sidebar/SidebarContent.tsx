@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import OrshLogo from '@/components/ui/OrshLogo';
-import { Home, Settings, ChevronDown, ChevronLeft, ChevronRight, Languages, Check, Bell, LogOut, Clock, History, LayoutGrid, Moon, Sun, AlertTriangle, FolderKanban, MessageSquare, CalendarCheck, Key, Wrench, ListChecks, Gauge } from 'lucide-react';
+import { Home, Settings, ChevronDown, ChevronLeft, ChevronRight, Languages, Check, Bell, LogOut, Clock, History, LayoutGrid, Moon, Sun, AlertTriangle, FolderKanban, MessageSquare, CalendarCheck, Key, Wrench, ListChecks, Gauge, ClipboardList } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ProfileCompletionIndicator } from '@/components/sidebar/ProfileCompletionIndicator';
 import { OnlineUsersIndicator } from '@/components/sidebar/OnlineUsersIndicator';
