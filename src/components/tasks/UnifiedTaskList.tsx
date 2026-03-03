@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils';
 import { format, isPast, isToday, differenceInDays } from 'date-fns';
 import type { UserTask } from '@/hooks/useUserTasks';
 import { useUnifiedTasks, FILTER_OPTIONS, type CategoryFilter, type UnifiedTask } from './useUnifiedTasks';
+import { ProjectIdBadge } from '@/components/ui/project-id-badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 type GroupBy = 'none' | 'project' | 'category';
