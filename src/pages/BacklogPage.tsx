@@ -353,13 +353,15 @@ const GroupedSection: React.FC<GroupedSectionProps> = ({
   const colors = getGroupColor(colorIndex);
 
   return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen} className="rounded-md border bg-card/50">
+    <Collapsible open={isOpen} onOpenChange={setIsOpen} className={cn("rounded-md border-l-[3px] border border-border", colors.border, colors.bg)}>
       <div className="flex items-center gap-1 px-2 py-1.5">
         <CollapsibleTrigger asChild>
           <Button variant="ghost" size="icon" className="h-5 w-5 flex-shrink-0">
             <ChevronDown className={cn("h-3 w-3 transition-transform", !isOpen && "-rotate-90")} />
           </Button>
         </CollapsibleTrigger>
+
+        <div className={cn("h-2 w-2 rounded-full flex-shrink-0", colors.dot)} />
 
         {isRenaming ? (
           <Input
@@ -371,10 +373,10 @@ const GroupedSection: React.FC<GroupedSectionProps> = ({
             className="h-6 text-xs flex-1"
           />
         ) : (
-          <span className="text-xs font-medium flex-1 text-muted-foreground">{group.name}</span>
+          <span className={cn("text-xs font-semibold flex-1", colors.text)}>{group.name}</span>
         )}
 
-        <Badge variant="outline" className="text-[9px] h-4 px-1">{tasks.length}</Badge>
+        <Badge variant="outline" className={cn("text-[9px] h-4 px-1", colors.text)}>{tasks.length}</Badge>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
