@@ -30,7 +30,8 @@ import { useFavoritePages } from '@/hooks/useFavoritePages';
 const FAVORITE_ICON_MAP: Record<string, { icon: React.ComponentType<any>; color: string }> = {
   '/home': { icon: Home, color: 'bg-primary' },
   '/vcrs': { icon: Key, color: 'bg-blue-500' },
-  '/projects': { icon: Key, color: 'bg-blue-500' },
+  '/projects': { icon: Building2, color: 'bg-purple-500' },
+  '/project-management': { icon: Building2, color: 'bg-purple-500' },
   '/pssr': { icon: AlertTriangle, color: 'bg-orange-500' },
   '/my-tasks': { icon: ListChecks, color: 'bg-amber-500' },
   '/my-backlog': { icon: ClipboardList, color: 'bg-indigo-500' },
@@ -38,8 +39,9 @@ const FAVORITE_ICON_MAP: Record<string, { icon: React.ComponentType<any>; color:
   '/or-maintenance': { icon: Wrench, color: 'bg-slate-500' },
   '/ask-orsh': { icon: MessageSquare, color: 'bg-violet-500' },
   '/settings': { icon: Settings, color: 'bg-zinc-500' },
-  '/user-management': { icon: Users, color: 'bg-teal-500' },
-  '/admin-tools': { icon: Shield, color: 'bg-rose-500' },
+  '/user-management': { icon: Users, color: 'bg-blue-500' },
+  '/users': { icon: Users, color: 'bg-blue-500' },
+  '/admin-tools': { icon: Settings, color: 'bg-rose-500' },
 };
 
 function getFavoriteIcon(path: string) {
