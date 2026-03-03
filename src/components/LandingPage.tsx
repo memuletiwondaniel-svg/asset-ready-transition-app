@@ -26,8 +26,9 @@ import { CSS } from '@dnd-kit/utilities';
 import { processUserInput, getBlockedResponse } from '@/lib/security';
 import { useFavoritePages } from '@/hooks/useFavoritePages';
 
-// Maps favorite paths to appropriate icons and colors
+// Maps favorite paths to appropriate icons and colors matching page headers
 const FAVORITE_ICON_MAP: Record<string, { icon: React.ComponentType<any>; color: string }> = {
+  // Main navigation pages (icons match sidebar & page headers)
   '/home': { icon: Home, color: 'bg-primary' },
   '/vcrs': { icon: Key, color: 'bg-blue-500' },
   '/projects': { icon: Building2, color: 'bg-purple-500' },
@@ -38,10 +39,37 @@ const FAVORITE_ICON_MAP: Record<string, { icon: React.ComponentType<any>; color:
   '/executive-dashboard': { icon: Gauge, color: 'bg-cyan-500' },
   '/or-maintenance': { icon: Wrench, color: 'bg-slate-500' },
   '/ask-orsh': { icon: MessageSquare, color: 'bg-violet-500' },
-  '/settings': { icon: Settings, color: 'bg-zinc-500' },
-  '/user-management': { icon: Users, color: 'bg-blue-500' },
+  '/operation-readiness': { icon: GanttChart, color: 'bg-emerald-500' },
+  '/p2a-handover': { icon: Key, color: 'bg-blue-500' },
+  
+  // Standalone pages
   '/users': { icon: Users, color: 'bg-blue-500' },
-  '/admin-tools': { icon: Settings, color: 'bg-rose-500' },
+  '/user-management': { icon: Users, color: 'bg-blue-500' },
+  '/settings': { icon: Settings, color: 'bg-zinc-500' },
+  
+  // Admin tools main dashboard
+  '/admin-tools': { icon: Sliders, color: 'bg-slate-600' },
+  
+  // Admin sub-pages (using virtual paths for differentiation)
+  '/admin-tools/users': { icon: Users, color: 'bg-blue-500' },
+  '/admin-tools/projects': { icon: Building2, color: 'bg-purple-500' },
+  '/admin-tools/handover-management': { icon: Key, color: 'bg-blue-500' },
+  '/admin-tools/activity-log': { icon: Activity, color: 'bg-cyan-500' },
+  '/admin-tools/ora-configuration': { icon: LayoutTemplate, color: 'bg-amber-500' },
+  '/admin-tools/apis': { icon: Plug, color: 'bg-emerald-500' },
+  '/admin-tools/sso': { icon: Shield, color: 'bg-indigo-500' },
+  '/admin-tools/roles-permissions': { icon: Shield, color: 'bg-rose-500' },
+  '/admin-tools/audit-logs': { icon: FileText, color: 'bg-slate-600' },
+  '/admin-tools/api-keys': { icon: KeyRound, color: 'bg-violet-500' },
+  '/admin-tools/data-export': { icon: Database, color: 'bg-teal-500' },
+  '/admin-tools/audit-retention': { icon: Archive, color: 'bg-orange-500' },
+  '/admin-tools/disaster-recovery': { icon: BookOpen, color: 'bg-blue-600' },
+  '/admin-tools/feature-flags': { icon: Flag, color: 'bg-amber-500' },
+  '/admin-tools/security-document': { icon: FileText, color: 'bg-slate-600' },
+  '/admin-tools/platform-guide': { icon: BookOpen, color: 'bg-blue-600' },
+  '/admin-tools/northstar-document': { icon: Compass, color: 'bg-amber-600' },
+  '/admin-tools/incident-response': { icon: AlertTriangle, color: 'bg-red-600' },
+  '/admin-tools/deployment-configs': { icon: Container, color: 'bg-cyan-600' },
 };
 
 function getFavoriteIcon(path: string) {
