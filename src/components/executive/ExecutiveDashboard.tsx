@@ -67,13 +67,79 @@ const getRiskBadge = (blocked: number, atRisk: number) => {
   return <Badge variant="outline" className="bg-emerald-500/10 text-emerald-700 border-emerald-200 text-xs">Low</Badge>;
 };
 
+// ── Mock Data ──
+const MOCK_PROJECTS = [
+  { id: 'mock-1', project_title: 'Bongkot Gas Processing Upgrade', project_id_prefix: 'VCR-', project_id_number: 'BNGL-001' },
+  { id: 'mock-2', project_title: 'Arthit Compression Enhancement', project_id_prefix: 'VCR-', project_id_number: 'ARTH-002' },
+  { id: 'mock-3', project_title: 'Erawan Platform Brownfield Mod', project_id_prefix: 'VCR-', project_id_number: 'ERWN-003' },
+  { id: 'mock-4', project_title: 'Bongkot South Subsea Tie-back', project_id_prefix: 'VCR-', project_id_number: 'BNGS-004' },
+];
+
+const MOCK_DIMENSION_SCORES: Record<string, any> = {
+  DSN: { name: 'Design', score: 88.2, raw_score: 91.0, confidence: 0.97, risk_penalty: 1.2, total: 42, completed: 38, blocked: 0, at_risk: 2, weight: 0.25 },
+  TEC: { name: 'Technical', score: 74.5, raw_score: 79.0, confidence: 0.92, risk_penalty: 3.8, total: 56, completed: 39, blocked: 3, at_risk: 5, weight: 0.25 },
+  OPI: { name: 'Operating Integrity', score: 62.1, raw_score: 68.5, confidence: 0.85, risk_penalty: 5.2, total: 38, completed: 21, blocked: 4, at_risk: 6, weight: 0.20 },
+  MGT: { name: 'Management Systems', score: 81.3, raw_score: 84.0, confidence: 0.95, risk_penalty: 1.5, total: 28, completed: 23, blocked: 0, at_risk: 1, weight: 0.15 },
+  HSE: { name: 'Health & Safety', score: 91.6, raw_score: 93.0, confidence: 0.98, risk_penalty: 0.8, total: 34, completed: 31, blocked: 0, at_risk: 1, weight: 0.15 },
+};
+
+const MOCK_LATEST_SCORE = {
+  id: 'mock-score-1',
+  project_id: 'mock-1',
+  overall_score: 78.4,
+  startup_confidence_score: 71.2,
+  risk_penalty_total: 4.8,
+  node_count: 198,
+  completed_count: 152,
+  blocked_count: 7,
+  at_risk_count: 15,
+  confidence_level: 'medium',
+  calculated_at: new Date().toISOString(),
+  dimension_scores: MOCK_DIMENSION_SCORES,
+  schedule_variance_days: -12,
+  schedule_adherence_index: 0.88,
+  critical_path_stability_index: 0.82,
+};
+
+const MOCK_PREV_DIMENSIONS: Record<string, any> = {
+  DSN: { score: 85.0 }, TEC: { score: 71.2 }, OPI: { score: 64.5 },
+  MGT: { score: 78.9 }, HSE: { score: 90.1 },
+};
+
+const MOCK_SCORE_HISTORY = [
+  { ...MOCK_LATEST_SCORE, calculated_at: new Date().toISOString() },
+  { ...MOCK_LATEST_SCORE, id: 's2', overall_score: 75.1, startup_confidence_score: 67.8, calculated_at: new Date(Date.now() - 7 * 86400000).toISOString(), dimension_scores: MOCK_PREV_DIMENSIONS },
+  { ...MOCK_LATEST_SCORE, id: 's3', overall_score: 71.3, startup_confidence_score: 63.2, calculated_at: new Date(Date.now() - 14 * 86400000).toISOString() },
+  { ...MOCK_LATEST_SCORE, id: 's4', overall_score: 65.8, startup_confidence_score: 55.4, calculated_at: new Date(Date.now() - 21 * 86400000).toISOString() },
+  { ...MOCK_LATEST_SCORE, id: 's5', overall_score: 58.2, startup_confidence_score: 48.1, calculated_at: new Date(Date.now() - 28 * 86400000).toISOString() },
+  { ...MOCK_LATEST_SCORE, id: 's6', overall_score: 52.0, startup_confidence_score: 41.6, calculated_at: new Date(Date.now() - 35 * 86400000).toISOString() },
+  { ...MOCK_LATEST_SCORE, id: 's7', overall_score: 44.5, startup_confidence_score: 35.2, calculated_at: new Date(Date.now() - 42 * 86400000).toISOString() },
+  { ...MOCK_LATEST_SCORE, id: 's8', overall_score: 38.0, startup_confidence_score: 28.0, calculated_at: new Date(Date.now() - 49 * 86400000).toISOString() },
+];
+
+const MOCK_BLOCKERS = [
+  { id: 'b1', label: 'Compressor C-4102 Vendor Data Package Outstanding', module: 'ORA', status: 'blocked', risk_severity: 'startup_blocking', completion_pct: 15 },
+  { id: 'b2', label: 'HAZOP Close-out Actions — Flare KO Drum Sizing', module: 'PSSR', status: 'blocked', risk_severity: 'startup_blocking', completion_pct: 0 },
+  { id: 'b3', label: 'SIS Cause & Effect Matrix — Final Approval Pending', module: 'ORM', status: 'blocked', risk_severity: 'major', completion_pct: 72 },
+  { id: 'b4', label: 'Ops Training Batch 2 — Delayed Due to Instructor Availability', module: 'ORA', status: 'blocked', risk_severity: 'major', completion_pct: 30 },
+  { id: 'b5', label: 'Emergency Depressuring Valve EDP-4101 — Material Lead Time Exceeded', module: 'P2A', status: 'blocked', risk_severity: 'major', completion_pct: 45 },
+];
+
+const MOCK_ALL_SCORES = [
+  { id: 'as1', project_id: 'mock-1', overall_score: 78.4, startup_confidence_score: 71.2, node_count: 198, confidence_level: 'medium', calculated_at: new Date().toISOString(), projects: MOCK_PROJECTS[0] },
+  { id: 'as2', project_id: 'mock-2', overall_score: 86.7, startup_confidence_score: 84.1, node_count: 145, confidence_level: 'high', calculated_at: new Date(Date.now() - 2 * 86400000).toISOString(), projects: MOCK_PROJECTS[1] },
+  { id: 'as3', project_id: 'mock-3', overall_score: 54.3, startup_confidence_score: 42.8, node_count: 220, confidence_level: 'low', calculated_at: new Date(Date.now() - 1 * 86400000).toISOString(), projects: MOCK_PROJECTS[2] },
+  { id: 'as4', project_id: 'mock-4', overall_score: 92.1, startup_confidence_score: 90.5, node_count: 88, confidence_level: 'high', calculated_at: new Date(Date.now() - 3 * 86400000).toISOString(), projects: MOCK_PROJECTS[3] },
+];
+
 export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ onBack }) => {
-  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>('mock-1');
+  const [useMockData, setUseMockData] = useState(true);
   const syncMutation = useSyncReadinessNodes();
   const calculateMutation = useCalculateORI();
   const { data: categories = [] } = useVCRItemCategories();
 
-  const { data: projects = [] } = useQuery({
+  const { data: realProjects = [] } = useQuery({
     queryKey: ['projects-for-dashboard'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -86,12 +152,20 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ onBack }
     },
   });
 
-  const { data: allScores = [], isLoading: scoresLoading } = useAllProjectORIScores();
-  const { data: nodes = [] } = useReadinessNodes(selectedProjectId);
-  const { data: latestScore } = useLatestORIScore(selectedProjectId);
-  const { data: scoreHistory = [] } = useORIScores(selectedProjectId);
+  const { data: realAllScores = [], isLoading: scoresLoading } = useAllProjectORIScores();
+  const { data: realNodes = [] } = useReadinessNodes(useMockData ? undefined : selectedProjectId);
+  const { data: realLatestScore } = useLatestORIScore(useMockData ? undefined : selectedProjectId);
+  const { data: realScoreHistory = [] } = useORIScores(useMockData ? undefined : selectedProjectId);
+
+  // Use mock or real data
+  const projects = useMockData ? MOCK_PROJECTS : realProjects;
+  const allScores = useMockData ? MOCK_ALL_SCORES : realAllScores;
+  const nodes = useMockData ? MOCK_BLOCKERS : realNodes;
+  const latestScore = useMockData ? MOCK_LATEST_SCORE : realLatestScore;
+  const scoreHistory = useMockData ? MOCK_SCORE_HISTORY : realScoreHistory;
 
   const handleSyncAndCalculate = async (projectId: string) => {
+    if (useMockData) return;
     await syncMutation.mutateAsync(projectId);
     await calculateMutation.mutateAsync({ projectId });
   };
@@ -120,8 +194,8 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ onBack }
   // Calculate trend per dimension from score history
   const dimensionTrends = useMemo(() => {
     if (scoreHistory.length < 2) return {};
-    const latest = scoreHistory[0]?.dimension_scores as Record<string, any> || {};
-    const prev = scoreHistory[1]?.dimension_scores as Record<string, any> || {};
+    const latest = (scoreHistory[0] as any)?.dimension_scores as Record<string, any> || {};
+    const prev = (scoreHistory[1] as any)?.dimension_scores as Record<string, any> || {};
     const trends: Record<string, 'up' | 'down' | 'flat'> = {};
     for (const code of Object.keys(latest)) {
       const curr = latest[code]?.score || 0;
@@ -135,7 +209,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ onBack }
 
   // Top 5 startup blockers
   const topBlockers = useMemo(() => {
-    return nodes
+    return (nodes as any[])
       .filter(n => n.status === 'blocked' || n.risk_severity === 'startup_blocking' || n.risk_severity === 'major')
       .sort((a, b) => {
         const sev = { startup_blocking: 4, major: 3, moderate: 2, minor: 1, none: 0 };
@@ -149,18 +223,18 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ onBack }
     return [...scoreHistory]
       .reverse()
       .slice(-20)
-      .map((s) => ({
+      .map((s: any) => ({
         date: format(new Date(s.calculated_at), 'MMM d'),
         score: Number(s.overall_score),
         scs: Number(s.startup_confidence_score || 0),
-        target: 85, // target readiness curve
+        target: 85,
       }));
   }, [scoreHistory]);
 
   // Risk summary stats
   const riskSummary = useMemo(() => {
-    const blockedNodes = nodes.filter(n => n.status === 'blocked' || n.risk_severity === 'major' || n.risk_severity === 'startup_blocking');
-    const startupBlocking = nodes.filter(n => n.risk_severity === 'startup_blocking');
+    const blockedNodes = (nodes as any[]).filter(n => n.status === 'blocked' || n.risk_severity === 'major' || n.risk_severity === 'startup_blocking');
+    const startupBlocking = (nodes as any[]).filter(n => n.risk_severity === 'startup_blocking');
     const dimensionsBelow70 = dimensionBreakdown.filter(d => d.score < 70 && d.total > 0);
     const systemsBelow60 = dimensionBreakdown.filter(d => d.score < 60 && d.total > 0);
     return { highRisks: blockedNodes.length, startupBlocking: startupBlocking.length, dimensionsBelow70: dimensionsBelow70.length, systemsBelow60: systemsBelow60.length };
@@ -173,8 +247,8 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ onBack }
     fill: d.score >= 85 ? 'hsl(var(--chart-2))' : d.score >= 70 ? 'hsl(var(--chart-4))' : 'hsl(var(--destructive))',
   }));
 
-  const oriScore = latestScore ? Number(latestScore.overall_score) : 0;
-  const scsScore = latestScore ? Number(latestScore.startup_confidence_score || 0) : 0;
+  const oriScore = latestScore ? Number((latestScore as any).overall_score) : 0;
+  const scsScore = latestScore ? Number((latestScore as any).startup_confidence_score || 0) : 0;
   const scsInfo = getSCSLabel(scsScore);
 
   return (
@@ -197,19 +271,27 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ onBack }
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Button
+              variant={useMockData ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => { setUseMockData(!useMockData); setSelectedProjectId(useMockData ? null : 'mock-1'); }}
+              className="text-xs h-8"
+            >
+              {useMockData ? '📊 Demo Data' : 'Live Data'}
+            </Button>
             <Select value={selectedProjectId || ''} onValueChange={(v) => setSelectedProjectId(v || null)}>
               <SelectTrigger className="w-[280px]">
                 <SelectValue placeholder="Select a project for drill-down" />
               </SelectTrigger>
               <SelectContent>
-                {projects.map((p) => (
+                {projects.map((p: any) => (
                   <SelectItem key={p.id} value={p.id}>
                     {p.project_id_prefix}{p.project_id_number} — {p.project_title}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            {selectedProjectId && (
+            {selectedProjectId && !useMockData && (
               <Button variant="outline" size="sm" onClick={() => handleSyncAndCalculate(selectedProjectId)} disabled={isBusy}>
                 {isBusy ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <RefreshCw className="h-4 w-4 mr-1" />}
                 Calculate ORI
@@ -461,7 +543,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ onBack }
             <CardDescription>Click a project to drill down</CardDescription>
           </CardHeader>
           <CardContent>
-            {scoresLoading ? (
+            {scoresLoading && !useMockData ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               </div>
