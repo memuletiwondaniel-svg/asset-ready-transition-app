@@ -40,6 +40,26 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   const [oraActivityOpen, setOraActivityOpen] = useState(false);
   const [vcrWizardOpen, setVcrWizardOpen] = useState(false);
 
+  const oraProjectId = task?.metadata?.project_id as string | undefined;
+  const isOraTask = task ? (task.type === 'ora_plan_creation' || (task.metadata?.action === 'create_ora_plan' && task.metadata?.source === 'ora_workflow')) : false;
+
+  // Check if an ORA plan draft already exists for this project
+  const { data: hasExistingOraDraft } = useQuery({
+    queryKey: ['ora-draft-exists', oraProjectId],
+    queryFn: async () => {
+      if (!oraProjectId) return false;
+      const { data } = await (supabase as any)
+        .from('orp_plans')
+        .select('id')
+        .eq('project_id', oraProjectId)
+        .eq('status', 'DRAFT')
+        .limit(1);
+      return data && data.length > 0;
+    },
+    enabled: !!oraProjectId && isOraTask,
+    staleTime: 30_000,
+  });
+
   const handleAction = (type: 'approve' | 'reject') => {
     if (!task) return;
     if (type === 'approve') {
