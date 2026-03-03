@@ -20,6 +20,20 @@ const priorityDot: Record<string, string> = {
   low: 'bg-muted-foreground/40',
 };
 
+// Rotating palette for group colors
+const GROUP_COLORS = [
+  { border: 'border-l-violet-500', bg: 'bg-violet-500/10', text: 'text-violet-700 dark:text-violet-400', dot: 'bg-violet-500' },
+  { border: 'border-l-rose-500', bg: 'bg-rose-500/10', text: 'text-rose-700 dark:text-rose-400', dot: 'bg-rose-500' },
+  { border: 'border-l-sky-500', bg: 'bg-sky-500/10', text: 'text-sky-700 dark:text-sky-400', dot: 'bg-sky-500' },
+  { border: 'border-l-orange-500', bg: 'bg-orange-500/10', text: 'text-orange-700 dark:text-orange-400', dot: 'bg-orange-500' },
+  { border: 'border-l-teal-500', bg: 'bg-teal-500/10', text: 'text-teal-700 dark:text-teal-400', dot: 'bg-teal-500' },
+  { border: 'border-l-pink-500', bg: 'bg-pink-500/10', text: 'text-pink-700 dark:text-pink-400', dot: 'bg-pink-500' },
+  { border: 'border-l-indigo-500', bg: 'bg-indigo-500/10', text: 'text-indigo-700 dark:text-indigo-400', dot: 'bg-indigo-500' },
+  { border: 'border-l-lime-500', bg: 'bg-lime-500/10', text: 'text-lime-700 dark:text-lime-400', dot: 'bg-lime-500' },
+];
+
+const getGroupColor = (groupIndex: number) => GROUP_COLORS[groupIndex % GROUP_COLORS.length];
+
 const COLUMNS: { id: BacklogStatus; label: string; color: string }[] = [
   { id: 'pending', label: 'To Do', color: 'border-t-blue-500' },
   { id: 'in_progress', label: 'Doing', color: 'border-t-amber-500' },
@@ -43,12 +57,20 @@ const BacklogPage: React.FC = () => {
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   );
 
+  // Build a stable group→index map for colors
+  const groupColorMap = useMemo(() => {
+    const map = new Map<string, number>();
+    groups.forEach((g, i) => map.set(g.id, i));
+    return map;
+  }, [groups]);
+
   // Group items by status, then by group within each status
   const columnData = useMemo(() => {
     return COLUMNS.map(col => {
       const colItems = items.filter(i => i.status === col.id);
-      const grouped = groups.map(g => ({
+      const grouped = groups.map((g, i) => ({
         group: g,
+        colorIndex: i,
         tasks: colItems.filter(i => i.group_id === g.id),
       })).filter(g => g.tasks.length > 0);
       const ungrouped = colItems.filter(i => !i.group_id);
@@ -177,7 +199,7 @@ interface KanbanColumnProps {
   label: string;
   colorClass: string;
   total: number;
-  grouped: { group: BacklogGroup; tasks: BacklogItem[] }[];
+  grouped: { group: BacklogGroup; colorIndex: number; tasks: BacklogItem[] }[];
   ungrouped: BacklogItem[];
   groups: BacklogGroup[];
   renamingGroupId: string | null;
@@ -241,10 +263,11 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
       <ScrollArea className="flex-1 px-2 pb-2">
         <div className="space-y-2">
           {/* Grouped tasks */}
-          {grouped.map(({ group, tasks }) => (
+          {grouped.map(({ group, colorIndex, tasks }) => (
             <GroupedSection
               key={group.id}
               group={group}
+              colorIndex={colorIndex}
               tasks={tasks}
               isRenaming={renamingGroupId === group.id}
               renameText={renameText}
@@ -307,6 +330,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
 
 interface GroupedSectionProps {
   group: BacklogGroup;
+  colorIndex: number;
   tasks: BacklogItem[];
   isRenaming: boolean;
   renameText: string;
@@ -321,20 +345,23 @@ interface GroupedSectionProps {
 }
 
 const GroupedSection: React.FC<GroupedSectionProps> = ({
-  group, tasks, isRenaming, renameText,
+  group, colorIndex, tasks, isRenaming, renameText,
   onStartRename, onRenameChange, onRenameSave, onRenameCancel,
   onDeleteGroup, onUpdateDesc, onUpdatePriority, onDelete,
 }) => {
   const [isOpen, setIsOpen] = useState(true);
+  const colors = getGroupColor(colorIndex);
 
   return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen} className="rounded-md border bg-card/50">
+    <Collapsible open={isOpen} onOpenChange={setIsOpen} className={cn("rounded-md border-l-[3px] border border-border", colors.border, colors.bg)}>
       <div className="flex items-center gap-1 px-2 py-1.5">
         <CollapsibleTrigger asChild>
           <Button variant="ghost" size="icon" className="h-5 w-5 flex-shrink-0">
             <ChevronDown className={cn("h-3 w-3 transition-transform", !isOpen && "-rotate-90")} />
           </Button>
         </CollapsibleTrigger>
+
+        <div className={cn("h-2 w-2 rounded-full flex-shrink-0", colors.dot)} />
 
         {isRenaming ? (
           <Input
@@ -346,10 +373,10 @@ const GroupedSection: React.FC<GroupedSectionProps> = ({
             className="h-6 text-xs flex-1"
           />
         ) : (
-          <span className="text-xs font-medium flex-1 text-muted-foreground">{group.name}</span>
+          <span className={cn("text-xs font-semibold flex-1", colors.text)}>{group.name}</span>
         )}
 
-        <Badge variant="outline" className="text-[9px] h-4 px-1">{tasks.length}</Badge>
+        <Badge variant="outline" className={cn("text-[9px] h-4 px-1", colors.text)}>{tasks.length}</Badge>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
