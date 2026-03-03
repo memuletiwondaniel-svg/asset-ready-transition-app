@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, Clock, FileText, CheckCircle, Home, Loader2, History, X, Sparkles, Upload, ChevronLeft, ChevronRight, Check, Filter, ArrowUpDown, MoreVertical, Eye, EyeOff, Maximize2, Minimize2, GripVertical, MessageSquare, ChevronDown, ChevronUp, Bot, Zap, BarChart3, Paperclip, Key, AlertTriangle, ListChecks, Gauge, Wrench, Users, Shield, Bookmark, Building2, CalendarCheck } from 'lucide-react';
+import { Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, Clock, FileText, CheckCircle, Home, Loader2, History, X, Sparkles, Upload, ChevronLeft, ChevronRight, Check, Filter, ArrowUpDown, MoreVertical, Eye, EyeOff, Maximize2, Minimize2, GripVertical, MessageSquare, ChevronDown, ChevronUp, Bot, Zap, BarChart3, Paperclip, Key, AlertTriangle, ListChecks, Gauge, Wrench, Users, Shield, Bookmark, Building2, CalendarCheck, GanttChart, Sliders, Activity, LayoutTemplate, Plug, Database, Archive, BookOpen, Flag, Compass, Container } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
@@ -26,8 +26,9 @@ import { CSS } from '@dnd-kit/utilities';
 import { processUserInput, getBlockedResponse } from '@/lib/security';
 import { useFavoritePages } from '@/hooks/useFavoritePages';
 
-// Maps favorite paths to appropriate icons and colors
+// Maps favorite paths to appropriate icons and colors matching page headers
 const FAVORITE_ICON_MAP: Record<string, { icon: React.ComponentType<any>; color: string }> = {
+  // Main navigation pages (icons match sidebar & page headers)
   '/home': { icon: Home, color: 'bg-primary' },
   '/vcrs': { icon: Key, color: 'bg-blue-500' },
   '/projects': { icon: Building2, color: 'bg-purple-500' },
@@ -38,10 +39,37 @@ const FAVORITE_ICON_MAP: Record<string, { icon: React.ComponentType<any>; color:
   '/executive-dashboard': { icon: Gauge, color: 'bg-cyan-500' },
   '/or-maintenance': { icon: Wrench, color: 'bg-slate-500' },
   '/ask-orsh': { icon: MessageSquare, color: 'bg-violet-500' },
-  '/settings': { icon: Settings, color: 'bg-zinc-500' },
-  '/user-management': { icon: Users, color: 'bg-blue-500' },
+  '/operation-readiness': { icon: GanttChart, color: 'bg-emerald-500' },
+  '/p2a-handover': { icon: Key, color: 'bg-blue-500' },
+  
+  // Standalone pages
   '/users': { icon: Users, color: 'bg-blue-500' },
-  '/admin-tools': { icon: Settings, color: 'bg-rose-500' },
+  '/user-management': { icon: Users, color: 'bg-blue-500' },
+  '/settings': { icon: Settings, color: 'bg-zinc-500' },
+  
+  // Admin tools main dashboard
+  '/admin-tools': { icon: Sliders, color: 'bg-slate-600' },
+  
+  // Admin sub-pages (using virtual paths for differentiation)
+  '/admin-tools/users': { icon: Users, color: 'bg-blue-500' },
+  '/admin-tools/projects': { icon: Building2, color: 'bg-purple-500' },
+  '/admin-tools/handover-management': { icon: Key, color: 'bg-blue-500' },
+  '/admin-tools/activity-log': { icon: Activity, color: 'bg-cyan-500' },
+  '/admin-tools/ora-configuration': { icon: LayoutTemplate, color: 'bg-amber-500' },
+  '/admin-tools/apis': { icon: Plug, color: 'bg-emerald-500' },
+  '/admin-tools/sso': { icon: Shield, color: 'bg-indigo-500' },
+  '/admin-tools/roles-permissions': { icon: Shield, color: 'bg-rose-500' },
+  '/admin-tools/audit-logs': { icon: FileText, color: 'bg-slate-600' },
+  '/admin-tools/api-keys': { icon: KeyRound, color: 'bg-violet-500' },
+  '/admin-tools/data-export': { icon: Database, color: 'bg-teal-500' },
+  '/admin-tools/audit-retention': { icon: Archive, color: 'bg-orange-500' },
+  '/admin-tools/disaster-recovery': { icon: BookOpen, color: 'bg-blue-600' },
+  '/admin-tools/feature-flags': { icon: Flag, color: 'bg-amber-500' },
+  '/admin-tools/security-document': { icon: FileText, color: 'bg-slate-600' },
+  '/admin-tools/platform-guide': { icon: BookOpen, color: 'bg-blue-600' },
+  '/admin-tools/northstar-document': { icon: Compass, color: 'bg-amber-600' },
+  '/admin-tools/incident-response': { icon: AlertTriangle, color: 'bg-red-600' },
+  '/admin-tools/deployment-configs': { icon: Container, color: 'bg-cyan-600' },
 };
 
 function getFavoriteIcon(path: string) {
@@ -698,7 +726,15 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                       return (
                         <button
                           key={fav.path}
-                          onClick={() => navigate(fav.path)}
+                          onClick={() => {
+                            // Handle virtual admin sub-paths
+                            if (fav.path.startsWith('/admin-tools/')) {
+                              const subView = fav.path.replace('/admin-tools/', '');
+                              navigate('/admin-tools', { state: { activeView: subView, navKey: Date.now() } });
+                            } else {
+                              navigate(fav.path);
+                            }
+                          }}
                           className="group flex flex-col items-center gap-2.5 p-4 rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-200 min-w-[100px]"
                         >
                           <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${colorClass} transition-transform duration-200 group-hover:scale-110`}>

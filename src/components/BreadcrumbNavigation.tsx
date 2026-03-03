@@ -24,6 +24,8 @@ import { cn } from '@/lib/utils';
 interface BreadcrumbNavigationProps {
   currentPageLabel: string;
   className?: string;
+  /** Override the path used for favoriting (useful for sub-views that share a route) */
+  favoritePath?: string;
   customBreadcrumbs?: Array<{
     label: string;
     path: string;
@@ -34,6 +36,7 @@ interface BreadcrumbNavigationProps {
 export const BreadcrumbNavigation: React.FC<BreadcrumbNavigationProps> = ({
   currentPageLabel,
   className,
+  favoritePath,
   customBreadcrumbs
 }) => {
   const { 
@@ -49,7 +52,8 @@ export const BreadcrumbNavigation: React.FC<BreadcrumbNavigationProps> = ({
   const location = useLocation();
   const { isFavorite, toggleFavorite } = useFavoritePages();
   const isHomePage = location.pathname === '/';
-  const isCurrentFavorite = isFavorite(location.pathname);
+  const effectiveFavoritePath = favoritePath || location.pathname;
+  const isCurrentFavorite = isFavorite(effectiveFavoritePath);
 
   const breadcrumbs = customBreadcrumbs || buildBreadcrumbsFromPath();
   // Only slice for auto-generated breadcrumbs, not custom ones
@@ -208,7 +212,7 @@ export const BreadcrumbNavigation: React.FC<BreadcrumbNavigationProps> = ({
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => toggleFavorite(location.pathname, currentPageLabel)}
+                onClick={() => toggleFavorite(effectiveFavoritePath, currentPageLabel)}
                 className="h-7 w-7 rounded-lg ml-1"
               >
                 <Star 

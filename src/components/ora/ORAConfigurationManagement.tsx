@@ -22,6 +22,7 @@ export const ORAConfigurationManagement: React.FC<ORAConfigurationManagementProp
       <div className="border-b border-border/40 bg-card/30 backdrop-blur-xl px-6 py-4 sticky top-0 z-10">
         <BreadcrumbNavigation 
           currentPageLabel={t.oraPlans || "ORA Plans"} 
+          favoritePath="/admin-tools/ora-configuration"
           customBreadcrumbs={[
             { label: 'Home', path: '/', onClick: () => window.location.href = '/' },
             { label: 'Administration', path: '/admin-tools', onClick: () => window.location.href = '/admin-tools' }
