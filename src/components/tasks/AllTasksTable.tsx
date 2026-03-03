@@ -88,6 +88,11 @@ const CATEGORY_CONFIG = {
     icon: ClipboardList, 
     color: 'bg-orange-500/10 text-orange-600 border-orange-500/20' 
   },
+  pssr_approval: { 
+    label: 'PSSR Review', 
+    icon: ClipboardCheck, 
+    color: 'bg-rose-500/10 text-rose-600 border-rose-500/20' 
+  },
 };
 
 export const AllTasksTable: React.FC<AllTasksTableProps> = ({ searchQuery, userId }) => {
