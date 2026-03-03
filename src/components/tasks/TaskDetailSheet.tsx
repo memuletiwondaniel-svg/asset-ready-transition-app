@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { CheckCircle, X, Calendar, AlertTriangle, ChevronRight, Pencil, CalendarCheck, ClipboardList } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -37,6 +39,26 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   const [oraReviewOpen, setOraReviewOpen] = useState(false);
   const [oraActivityOpen, setOraActivityOpen] = useState(false);
   const [vcrWizardOpen, setVcrWizardOpen] = useState(false);
+
+  const oraProjectId = task?.metadata?.project_id as string | undefined;
+  const isOraTask = task ? (task.type === 'ora_plan_creation' || (task.metadata?.action === 'create_ora_plan' && task.metadata?.source === 'ora_workflow')) : false;
+
+  // Check if an ORA plan draft already exists for this project
+  const { data: hasExistingOraDraft } = useQuery({
+    queryKey: ['ora-draft-exists', oraProjectId],
+    queryFn: async () => {
+      if (!oraProjectId) return false;
+      const { data } = await (supabase as any)
+        .from('orp_plans')
+        .select('id')
+        .eq('project_id', oraProjectId)
+        .eq('status', 'DRAFT')
+        .limit(1);
+      return data && data.length > 0;
+    },
+    enabled: !!oraProjectId && isOraTask,
+    staleTime: 30_000,
+  });
 
   const handleAction = (type: 'approve' | 'reject') => {
     if (!task) return;
@@ -78,18 +100,21 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   };
 
   const pssrId = task.metadata?.pssr_id as string | undefined;
-  const isOraTask = task.type === 'ora_plan_creation' || (task.metadata?.action === 'create_ora_plan' && task.metadata?.source === 'ora_workflow');
   const isOraReviewTask = task.type === 'ora_plan_review';
   const isOraActivityTask = task.type === 'ora_activity' || task.metadata?.action === 'complete_ora_activity';
   const isVcrDeliveryPlanTask = (task.type === 'vcr_delivery_plan' || task.metadata?.action === 'create_vcr_delivery_plan');
-  const oraProjectId = task.metadata?.project_id as string | undefined;
   const oraPlanId = task.metadata?.plan_id as string | undefined;
 
   const isReviewTask = ['review', 'approval', 'ora_plan_review'].includes(task.type) || !!pssrId;
   const isActionTask = isOraTask || isOraActivityTask || isVcrDeliveryPlanTask;
 
+  const oraCtaLabel = hasExistingOraDraft ? 'Continue Creating ORA Plan' : 'Create ORA Plan';
+  const oraIntentMessage = hasExistingOraDraft
+    ? 'You have a saved draft for this ORA Activity Plan. Click below to continue where you left off.'
+    : 'You have been assigned to create the ORA Activity Plan for this project. Click below to launch the planning wizard.';
+
   const getIntentMessage = () => {
-    if (isOraTask) return 'You have been assigned to create the ORA Activity Plan for this project. Click below to launch the planning wizard.';
+    if (isOraTask) return oraIntentMessage;
     if (isVcrDeliveryPlanTask) return 'You need to set up the VCR Delivery Plan for this item. Click below to configure the execution plan.';
     if (isOraActivityTask) return 'You have an ORA activity to complete. Click below to open the activity details and update progress.';
     if (isOraReviewTask) return 'You have been asked to review and approve an ORA Plan. Use the button below to review, then approve or request changes.';
@@ -201,7 +226,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                 onClick={() => setOraWizardOpen(true)}
               >
                 <CalendarCheck className="h-4 w-4" />
-                Create ORA Plan
+                {oraCtaLabel}
                 <ChevronRight className="h-4 w-4 ml-auto" />
               </Button>
             )}
