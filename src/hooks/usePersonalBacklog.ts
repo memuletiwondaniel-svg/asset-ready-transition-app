@@ -53,6 +53,7 @@ export const usePersonalBacklog = (filter: 'all' | 'pending' | 'done' = 'all', g
         user_id: user.id,
         description,
         priority,
+        group_id: group_id || null,
       });
       if (error) throw error;
     },

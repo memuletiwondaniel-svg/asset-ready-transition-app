@@ -229,7 +229,7 @@ export const SidebarContent = memo<SidebarContentProps>(({
 
           {isCollapsed && (
             <div className="space-y-2 mb-6">
-              {navigationItems.map((item) => {
+              {visibleNavItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = currentPage === item.section;
                 

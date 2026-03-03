@@ -164,6 +164,7 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
           isMobile={false}
           isCollapsed={isSidebarCollapsed}
           isProfileLoading={isProfileLoading}
+          currentUserId={currentUserId}
           displayName={displayName}
           displayTitle={displayTitle}
           displayAvatar={displayAvatar}
