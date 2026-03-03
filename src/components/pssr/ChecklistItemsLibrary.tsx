@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,6 +31,7 @@ import {
 import { getRoleResolutionDescription, BASE_ROLES_FOR_CHECKLIST } from '@/utils/resolveChecklistRole';
 import { exportPSSRChecklistToExcel } from '@/utils/pssrChecklistExport';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ItemFormData {
   category: string;
@@ -126,6 +128,29 @@ const ChecklistItemsLibrary: React.FC = () => {
   const updateItem = useUpdateChecklistItem();
   const deleteItem = useDeleteChecklistItem();
   const createCategory = useCreateChecklistCategory();
+
+  // Fetch PSSR reasons with their checklist item configurations for export
+  const { data: reasonConfigs } = useQuery({
+    queryKey: ['pssr-reason-configs-for-export'],
+    queryFn: async () => {
+      const { data: reasons, error: rErr } = await supabase
+        .from('pssr_reasons')
+        .select('id, name')
+        .eq('status', 'active')
+        .order('name');
+      if (rErr) throw rErr;
+
+      const { data: configs, error: cErr } = await supabase
+        .from('pssr_reason_configuration')
+        .select('reason_id, checklist_item_ids');
+      if (cErr) throw cErr;
+
+      const configMap = new Map(configs?.map(c => [c.reason_id, c.checklist_item_ids as string[]]) || []);
+      return (reasons || [])
+        .filter(r => configMap.has(r.id) && (configMap.get(r.id)?.length ?? 0) > 0)
+        .map(r => ({ id: r.id, name: r.name, itemIds: configMap.get(r.id)! }));
+    },
+  });
 
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
@@ -476,28 +501,45 @@ const ChecklistItemsLibrary: React.FC = () => {
               </Tooltip>
             </TooltipProvider>
 
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    size="icon"
-                    onClick={() => {
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon" disabled={!items || items.length === 0}>
+                  <Download className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>Export to Excel</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuCheckboxItem
+                  checked={false}
+                  onCheckedChange={() => {
+                    if (items && categories) {
+                      const filename = exportPSSRChecklistToExcel(items, categories);
+                      toast.success(`Exported to ${filename}`);
+                    }
+                  }}
+                >
+                  All Items ({items?.length || 0})
+                </DropdownMenuCheckboxItem>
+                {reasonConfigs?.map(rc => (
+                  <DropdownMenuCheckboxItem
+                    key={rc.id}
+                    checked={false}
+                    onCheckedChange={() => {
                       if (items && categories) {
-                        const filename = exportPSSRChecklistToExcel(items, categories);
+                        const filename = exportPSSRChecklistToExcel(items, categories, {
+                          filterItemIds: rc.itemIds,
+                          reasonName: rc.name,
+                        });
                         toast.success(`Exported to ${filename}`);
                       }
                     }}
-                    disabled={!items || items.length === 0}
                   >
-                    <Download className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Export to Excel</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+                    {rc.name} ({rc.itemIds.length})
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
 
