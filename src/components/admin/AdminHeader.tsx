@@ -22,7 +22,8 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
   description,
   children,
   customBreadcrumbs,
-  iconGradient = 'from-purple-500 to-purple-600'
+  iconGradient = 'from-purple-500 to-purple-600',
+  favoritePath
 }) => {
   return (
     <div className="z-50 bg-card/95 backdrop-blur-md border-b border-border shadow-sm">
