@@ -31,7 +31,7 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
         <div className="flex items-center justify-between">
           {/* Left side - Breadcrumb Navigation */}
           <div className="flex items-center gap-4 flex-1">
-            <BreadcrumbNavigation currentPageLabel={title} customBreadcrumbs={customBreadcrumbs} />
+            <BreadcrumbNavigation currentPageLabel={title} customBreadcrumbs={customBreadcrumbs} favoritePath={favoritePath} />
           </div>
           
           {/* Right side - Notification Center */}
