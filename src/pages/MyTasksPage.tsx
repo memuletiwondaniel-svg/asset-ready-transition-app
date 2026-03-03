@@ -252,7 +252,10 @@ const MyTasksPage: React.FC = () => {
               <Skeleton className="h-4 w-64 mx-auto" />
             </div>
           </div>
-        ) : isAllCaughtUp ? (
+        ) : null}
+
+        {/* Always render panels so they can report counts; hide visually when loading */}
+        {isAllCaughtUp && allPanelsLoaded ? (
           <div className="flex items-center justify-center py-20">
             <div className="text-center max-w-md">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-green-500/10 to-emerald-500/10 mb-6">
@@ -262,42 +265,46 @@ const MyTasksPage: React.FC = () => {
               <p className="text-muted-foreground">You have no pending activities or reviews at the moment.</p>
             </div>
           </div>
-        ) : viewMode === 'grid' ? (
-          <div className={cn(
+        ) : null}
+
+        <div className={cn(
+          viewMode === 'grid' ? cn(
             "grid grid-cols-1 lg:grid-cols-2 gap-6 transition-all duration-500",
             expandedCard && "min-h-[calc(100vh-300px)]"
+          ) : "hidden",
+          (!allPanelsLoaded || isAllCaughtUp) && "!hidden"
+        )}>
+          <div className={cn(
+            "flex flex-col gap-6 transition-all duration-500",
+            layout.expandedSide === 'left' && "h-full"
           )}>
-            <div className={cn(
-              "flex flex-col gap-6 transition-all duration-500",
-              layout.expandedSide === 'left' && "h-full"
-            )}>
-              {layout.leftColumn.map((cardId) => {
-                const isExpanded = expandedCard === cardId;
-                return (
-                  <div 
-                    key={cardId}
-                    className={cn(
-                      "transition-all duration-500",
-                      layout.expandedSide === 'left' && isExpanded && "flex-1 min-h-0"
-                    )}
-                  >
-                    {renderCard(cardId, layout.expandedSide === 'left')}
-                  </div>
-                );
-              })}
-            </div>
+            {layout.leftColumn.map((cardId) => {
+              const isExpanded = expandedCard === cardId;
+              return (
+                <div 
+                  key={cardId}
+                  className={cn(
+                    "transition-all duration-500",
+                    layout.expandedSide === 'left' && isExpanded && "flex-1 min-h-0"
+                  )}
+                >
+                  {renderCard(cardId, layout.expandedSide === 'left')}
+                </div>
+              );
+            })}
+          </div>
 
-            <div className={cn(
-              "flex flex-col gap-6 transition-all duration-500",
-              layout.expandedSide === 'right' && "h-full"
-            )}>
-              {layout.rightColumn.map((cardId) => {
-                const isExpanded = expandedCard === cardId;
-                return (
-                  <div 
-                    key={cardId}
-                    className={cn(
-                      "transition-all duration-500",
+          <div className={cn(
+            "flex flex-col gap-6 transition-all duration-500",
+            layout.expandedSide === 'right' && "h-full"
+          )}>
+            {layout.rightColumn.map((cardId) => {
+              const isExpanded = expandedCard === cardId;
+              return (
+                <div 
+                  key={cardId}
+                  className={cn(
+                    "transition-all duration-500",
                       layout.expandedSide === 'right' && isExpanded && "flex-1 min-h-0"
                     )}
                   >
