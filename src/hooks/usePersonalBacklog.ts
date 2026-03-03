@@ -9,6 +9,7 @@ export interface BacklogItem {
   priority: 'low' | 'normal' | 'high';
   status: 'pending' | 'done';
   sort_order: number;
+  group_id: string | null;
   created_at: string;
   completed_at: string | null;
   updated_at: string;
