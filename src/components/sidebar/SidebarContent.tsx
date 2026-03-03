@@ -40,6 +40,7 @@ interface SidebarContentProps {
   isMobile?: boolean;
   isCollapsed: boolean;
   isProfileLoading?: boolean;
+  currentUserId?: string;
   displayName: string;
   displayTitle: string;
   displayAvatar: string;
