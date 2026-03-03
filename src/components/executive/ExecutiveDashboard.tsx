@@ -235,9 +235,10 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ onBack }
   // Use mock or real data
   const projects = useMockData ? MOCK_PROJECTS : realProjects;
   const allScores = useMockData ? MOCK_ALL_SCORES : realAllScores;
-  const nodes = useMockData ? MOCK_BLOCKERS : realNodes;
-  const latestScore = useMockData ? MOCK_LATEST_SCORE : realLatestScore;
-  const scoreHistory = useMockData ? MOCK_SCORE_HISTORY : realScoreHistory;
+  const mockProjectData = useMockData && selectedProjectId ? getMockDataForProject(selectedProjectId) : null;
+  const nodes = useMockData ? (mockProjectData?.blockers || []) : realNodes;
+  const latestScore = useMockData ? (mockProjectData?.latestScore || null) : realLatestScore;
+  const scoreHistory = useMockData ? (mockProjectData?.history || []) : realScoreHistory;
 
   const handleSyncAndCalculate = async (projectId: string) => {
     if (useMockData) return;
