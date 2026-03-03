@@ -36,7 +36,7 @@ interface AllTasksTableProps {
 
 interface UnifiedTask {
   id: string;
-  category: 'pssr' | 'handover' | 'ora' | 'owl' | 'vcr_bundle' | 'vcr_approval';
+  category: 'pssr' | 'handover' | 'ora' | 'owl' | 'vcr_bundle' | 'vcr_approval' | 'pssr_bundle';
   title: string;
   project: string;
   status: string;
@@ -82,6 +82,11 @@ const CATEGORY_CONFIG = {
     label: 'VCR Review', 
     icon: ClipboardCheck, 
     color: 'bg-indigo-500/10 text-indigo-600 border-indigo-500/20' 
+  },
+  pssr_bundle: { 
+    label: 'PSSR Checklist', 
+    icon: ClipboardList, 
+    color: 'bg-orange-500/10 text-orange-600 border-orange-500/20' 
   },
 };
 
@@ -173,17 +178,36 @@ export const AllTasksTable: React.FC<AllTasksTableProps> = ({ searchQuery, userI
       });
     });
 
-    // VCR Bundle Tasks (delivering + approving)
+    // VCR & PSSR Bundle Tasks (delivering + approving)
     (bundleTasks || []).forEach(task => {
       const isApproval = task.type === 'vcr_approval_bundle';
+      const isPSSRBundle = task.type === 'pssr_checklist_bundle';
+      
+      let category: UnifiedTask['category'];
+      if (isPSSRBundle) {
+        category = 'pssr_bundle';
+      } else if (isApproval) {
+        category = 'vcr_approval';
+      } else {
+        category = 'vcr_bundle';
+      }
+
+      const projectLabel = isPSSRBundle 
+        ? (task.metadata?.project_name || 'Unknown Project')
+        : (task.metadata?.project_code || 'Unknown Project');
+
+      const navigatePath = isPSSRBundle
+        ? (task.metadata?.pssr_id ? `/pssr/${task.metadata.pssr_id}/review` : '/my-tasks')
+        : (task.metadata?.vcr_id ? `/p2a-handover?vcr=${task.metadata.vcr_id}` : '/p2a-handover');
+
       tasks.push({
-        id: `vcr-${isApproval ? 'approval' : 'bundle'}-${task.id}`,
-        category: isApproval ? 'vcr_approval' : 'vcr_bundle',
+        id: `${task.type}-${task.id}`,
+        category,
         title: task.title,
-        project: task.metadata?.project_code || 'Unknown Project',
+        project: projectLabel,
         status: `${task.sub_items.filter(i => i.completed).length}/${task.sub_items.length} items`,
         createdAt: task.created_at,
-        navigateTo: task.metadata?.vcr_id ? `/p2a-handover?vcr=${task.metadata.vcr_id}` : '/p2a-handover',
+        navigateTo: navigatePath,
         isNew: isNewSinceLastLogin(task.created_at),
         progressPercentage: task.progress_percentage,
         completedItems: task.sub_items.filter(i => i.completed).length,
@@ -288,7 +312,7 @@ export const AllTasksTable: React.FC<AllTasksTableProps> = ({ searchQuery, userI
                         </span>
                       )}
                     </div>
-                  ) : (task.category === 'vcr_bundle' || task.category === 'vcr_approval') && task.totalItems ? (
+                  ) : (task.category === 'vcr_bundle' || task.category === 'vcr_approval' || task.category === 'pssr_bundle') && task.totalItems ? (
                     <div className="flex items-center gap-2">
                       <Progress
                         value={task.progressPercentage || 0}

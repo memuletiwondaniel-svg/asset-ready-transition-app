@@ -3,7 +3,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 
 export interface VCRSubItem {
-  prerequisite_id: string;
+  prerequisite_id?: string;
+  checklist_response_id?: string;
+  checklist_item_id?: string;
   summary: string;
   completed: boolean;
 }
@@ -13,7 +15,7 @@ export interface VCRBundleTask {
   user_id: string;
   title: string;
   description: string | null;
-  type: 'vcr_checklist_bundle' | 'vcr_approval_bundle';
+  type: 'vcr_checklist_bundle' | 'vcr_approval_bundle' | 'pssr_checklist_bundle';
   status: string;
   priority: string;
   progress_percentage: number;
@@ -21,8 +23,11 @@ export interface VCRBundleTask {
   metadata: {
     project_id?: string;
     project_code?: string;
+    project_name?: string;
     vcr_id?: string;
     vcr_label?: string;
+    pssr_id?: string;
+    pssr_code?: string;
     delivering_party_id?: string;
     total_items?: number;
     completed_items?: number;
@@ -43,7 +48,7 @@ export const useUserVCRBundleTasks = () => {
         .from('user_tasks')
         .select('*')
         .eq('user_id', user.id)
-        .in('type', ['vcr_checklist_bundle', 'vcr_approval_bundle'])
+        .in('type', ['vcr_checklist_bundle', 'vcr_approval_bundle', 'pssr_checklist_bundle'])
         .neq('status', 'completed')
         .order('created_at', { ascending: false });
 
@@ -53,7 +58,7 @@ export const useUserVCRBundleTasks = () => {
         id: task.id,
         user_id: task.user_id,
         title: task.title,
-        type: task.type as 'vcr_checklist_bundle' | 'vcr_approval_bundle',
+        type: task.type as VCRBundleTask['type'],
         description: task.description,
         status: task.status,
         priority: task.priority,
