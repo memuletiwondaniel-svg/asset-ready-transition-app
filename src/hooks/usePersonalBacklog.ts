@@ -2,12 +2,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 
+export type BacklogStatus = 'pending' | 'in_progress' | 'done';
+
 export interface BacklogItem {
   id: string;
   user_id: string;
   description: string;
   priority: 'low' | 'normal' | 'high';
-  status: 'pending' | 'done';
+  status: BacklogStatus;
   sort_order: number;
   group_id: string | null;
   created_at: string;
@@ -15,29 +17,23 @@ export interface BacklogItem {
   updated_at: string;
 }
 
-export const usePersonalBacklog = (filter: 'all' | 'pending' | 'done' = 'all', groupId?: string | null) => {
+export const usePersonalBacklog = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   const query = useQuery({
-    queryKey: ['personal-backlog', filter, groupId],
+    queryKey: ['personal-backlog'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      let q = supabase
+      const { data, error } = await supabase
         .from('personal_backlog')
         .select('*')
         .eq('user_id', user.id)
-        .order('status', { ascending: true })
         .order('sort_order', { ascending: true })
         .order('created_at', { ascending: false });
 
-      if (filter !== 'all') {
-        q = q.eq('status', filter);
-      }
-
-      const { data, error } = await q;
       if (error) throw error;
       return data as BacklogItem[];
     },
@@ -46,7 +42,7 @@ export const usePersonalBacklog = (filter: 'all' | 'pending' | 'done' = 'all', g
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['personal-backlog'] });
 
   const addItem = useMutation({
-    mutationFn: async ({ description, priority = 'normal', group_id }: { description: string; priority?: string; group_id?: string | null }) => {
+    mutationFn: async ({ description, priority = 'normal', group_id, status = 'pending' }: { description: string; priority?: string; group_id?: string | null; status?: BacklogStatus }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
@@ -55,6 +51,7 @@ export const usePersonalBacklog = (filter: 'all' | 'pending' | 'done' = 'all', g
         description,
         priority,
         group_id: group_id || null,
+        status,
       });
       if (error) throw error;
     },
@@ -62,12 +59,11 @@ export const usePersonalBacklog = (filter: 'all' | 'pending' | 'done' = 'all', g
     onError: (e) => toast({ title: 'Error', description: e.message, variant: 'destructive' }),
   });
 
-  const toggleStatus = useMutation({
-    mutationFn: async ({ id, currentStatus }: { id: string; currentStatus: string }) => {
-      const newStatus = currentStatus === 'pending' ? 'done' : 'pending';
+  const updateStatus = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: BacklogStatus }) => {
       const { error } = await supabase.from('personal_backlog').update({
-        status: newStatus,
-        completed_at: newStatus === 'done' ? new Date().toISOString() : null,
+        status,
+        completed_at: status === 'done' ? new Date().toISOString() : null,
       }).eq('id', id);
       if (error) throw error;
     },
@@ -110,7 +106,7 @@ export const usePersonalBacklog = (filter: 'all' | 'pending' | 'done' = 'all', g
     items: query.data ?? [],
     isLoading: query.isLoading,
     addItem,
-    toggleStatus,
+    updateStatus,
     updateDescription,
     updatePriority,
     deleteItem,
