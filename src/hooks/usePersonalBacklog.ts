@@ -9,17 +9,18 @@ export interface BacklogItem {
   priority: 'low' | 'normal' | 'high';
   status: 'pending' | 'done';
   sort_order: number;
+  group_id: string | null;
   created_at: string;
   completed_at: string | null;
   updated_at: string;
 }
 
-export const usePersonalBacklog = (filter: 'all' | 'pending' | 'done' = 'all') => {
+export const usePersonalBacklog = (filter: 'all' | 'pending' | 'done' = 'all', groupId?: string | null) => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   const query = useQuery({
-    queryKey: ['personal-backlog', filter],
+    queryKey: ['personal-backlog', filter, groupId],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
@@ -45,7 +46,7 @@ export const usePersonalBacklog = (filter: 'all' | 'pending' | 'done' = 'all') =
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['personal-backlog'] });
 
   const addItem = useMutation({
-    mutationFn: async ({ description, priority = 'normal' }: { description: string; priority?: string }) => {
+    mutationFn: async ({ description, priority = 'normal', group_id }: { description: string; priority?: string; group_id?: string | null }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
@@ -53,6 +54,7 @@ export const usePersonalBacklog = (filter: 'all' | 'pending' | 'done' = 'all') =
         user_id: user.id,
         description,
         priority,
+        group_id: group_id || null,
       });
       if (error) throw error;
     },

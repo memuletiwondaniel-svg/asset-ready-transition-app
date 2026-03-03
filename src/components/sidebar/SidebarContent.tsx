@@ -40,6 +40,7 @@ interface SidebarContentProps {
   isMobile?: boolean;
   isCollapsed: boolean;
   isProfileLoading?: boolean;
+  currentUserId?: string;
   displayName: string;
   displayTitle: string;
   displayAvatar: string;
@@ -97,10 +98,16 @@ export const SidebarContent = memo<SidebarContentProps>(({
   onShowOnboarding,
   onToggleSearchHistory,
   onSearchHistoryClick,
+  currentUserId,
   onLogout,
   onToggleCollapse,
 }) => {
   const { translations: t } = useLanguage();
+  
+  const DANIEL_USER_ID = '05b44255-4358-450c-8aa4-0558b31df70b';
+  const visibleNavItems = navigationItems.filter(item => 
+    item.section !== 'my-backlog' || currentUserId === DANIEL_USER_ID
+  );
   
   // Helper function to get translated label
   const getLabel = (labelKey: string): string => {
@@ -188,7 +195,7 @@ export const SidebarContent = memo<SidebarContentProps>(({
                 {t.navigation || 'Navigation'}
               </p>
               <div className="space-y-1">
-                {navigationItems.map((item) => {
+                {visibleNavItems.map((item) => {
                   const Icon = item.icon;
                   const isActive = currentPage === item.section;
                   
@@ -222,7 +229,7 @@ export const SidebarContent = memo<SidebarContentProps>(({
 
           {isCollapsed && (
             <div className="space-y-2 mb-6">
-              {navigationItems.map((item) => {
+              {visibleNavItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = currentPage === item.section;
                 
