@@ -106,7 +106,7 @@ const MyTasksPage: React.FC = () => {
           <BreadcrumbNavigation currentPageLabel="My Tasks" />
           <div className="flex items-center gap-3 mt-4">
             <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500">
-              <ListChecks className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+              <CalendarCheck className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-foreground">My Tasks</h1>
