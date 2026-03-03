@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import OrshLogo from '@/components/ui/OrshLogo';
-import { Home, Settings, ChevronDown, ChevronLeft, ChevronRight, Languages, Check, Bell, LogOut, Clock, History, LayoutGrid, Moon, Sun, AlertTriangle, FolderKanban, MessageSquare, CalendarCheck, Key, Wrench, ListChecks, Gauge } from 'lucide-react';
+import { Home, Settings, ChevronDown, ChevronLeft, ChevronRight, Languages, Check, Bell, LogOut, Clock, History, LayoutGrid, Moon, Sun, AlertTriangle, FolderKanban, MessageSquare, CalendarCheck, Key, Wrench, ListChecks, Gauge, ClipboardList } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ProfileCompletionIndicator } from '@/components/sidebar/ProfileCompletionIndicator';
 import { OnlineUsersIndicator } from '@/components/sidebar/OnlineUsersIndicator';
@@ -68,6 +68,7 @@ const navigationItems: NavigationItem[] = [
   { labelKey: 'navProjects', icon: Key, path: '/vcrs', section: 'projects' },
   { labelKey: 'navPSSR', icon: AlertTriangle, path: '/pssr', section: 'pssr' },
   { labelKey: 'navMyTasks', icon: ListChecks, path: '/my-tasks', section: 'my-tasks' },
+  { labelKey: 'navMyBacklog', icon: ClipboardList, path: '/my-backlog', section: 'my-backlog' },
   { labelKey: 'navExecutiveDashboard', icon: Gauge, path: '/executive-dashboard', section: 'executive-dashboard' },
   { labelKey: 'navORMaintenance', icon: Wrench, path: '/or-maintenance', section: 'or-maintenance' },
   { labelKey: 'navAskBob', icon: MessageSquare, path: '/ask-orsh', section: 'ask-orsh' },

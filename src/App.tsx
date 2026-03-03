@@ -35,6 +35,7 @@ import PSSRApprovalPage from "@/pages/PSSRApprovalPage";
 
 import SoFReviewPage from "@/pages/SoFReviewPage";
 import MicrosoftCallback from "@/pages/auth/MicrosoftCallback";
+import BacklogPage from "@/pages/BacklogPage";
 
 // Create QueryClient outside component to prevent recreation on every render
 const queryClient = new QueryClient({
@@ -81,6 +82,7 @@ const App = () => (
                       <Route path="/pssr/approver-dashboard" element={<PSSRApproverDashboard />} />
                       <Route path="/pssr-reviews" element={<PSSRApproverDashboard />} />
                       <Route path="/my-tasks" element={<MyTasksPage />} />
+                      <Route path="/my-backlog" element={<BacklogPage />} />
                       <Route path="/pssr/:id/review" element={<PSSRItemReview />} />
                       <Route path="/pssr/:id/approve" element={<PSSRApprovalPage />} />
                       <Route path="/pssr/:id/sof" element={<SoFReviewPage />} />

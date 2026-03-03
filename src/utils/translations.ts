@@ -85,7 +85,7 @@ export const translations = {
     navORMaintenance: 'OR Maintenance',
     navP2AHandover: 'P2A Plan',
     navProjects: 'P2A Plan',
-    
+    navMyBacklog: 'My Backlog',
     // Sidebar UI
     lightMode: 'Light Mode',
     darkMode: 'Dark Mode',
@@ -784,7 +784,7 @@ export const translations = {
     navORMaintenance: 'صيانة OR',
     navP2AHandover: 'تسليم P2A',
     navProjects: 'المشاريع',
-    
+    navMyBacklog: 'قائمة مهامي',
     // Sidebar UI
     lightMode: 'الوضع الفاتح',
     darkMode: 'الوضع الداكن',
@@ -1467,7 +1467,7 @@ export const translations = {
     navORMaintenance: 'Maintenance OR',
     navP2AHandover: 'Transfert P2A',
     navProjects: 'Projets',
-    
+    navMyBacklog: 'Mon Backlog',
     // Sidebar UI
     lightMode: 'Mode Clair',
     darkMode: 'Mode Sombre',
@@ -2150,7 +2150,7 @@ export const translations = {
     navORMaintenance: 'Penyelenggaraan OR',
     navP2AHandover: 'Penyerahan P2A',
     navProjects: 'Projek',
-    
+    navMyBacklog: 'Senarai Tugasan',
     // Sidebar UI
     lightMode: 'Mod Cerah',
     darkMode: 'Mod Gelap',
@@ -2833,7 +2833,7 @@ export const translations = {
     navORMaintenance: 'OR қызмет көрсету',
     navP2AHandover: 'P2A тапсыру',
     navProjects: 'Жобалар',
-    
+    navMyBacklog: 'Менің тізімім',
     // Sidebar UI
     lightMode: 'Жарық режим',
     darkMode: 'Қараңғы режим',
@@ -3515,7 +3515,7 @@ export const translations = {
     navORMaintenance: 'OR 维护',
     navP2AHandover: 'P2A 移交',
     navProjects: '项目',
-    
+    navMyBacklog: '我的待办',
     // Sidebar UI
     lightMode: '浅色模式',
     darkMode: '深色模式',
