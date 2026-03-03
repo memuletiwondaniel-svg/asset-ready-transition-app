@@ -209,6 +209,30 @@ export type Database = {
           },
         ]
       }
+      backlog_groups: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          sort_order: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          sort_order?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          sort_order?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       chat_conversations: {
         Row: {
           created_at: string
@@ -5331,6 +5355,7 @@ export type Database = {
           completed_at: string | null
           created_at: string
           description: string
+          group_id: string | null
           id: string
           priority: string
           sort_order: number | null
@@ -5342,6 +5367,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           description: string
+          group_id?: string | null
           id?: string
           priority?: string
           sort_order?: number | null
@@ -5353,6 +5379,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           description?: string
+          group_id?: string | null
           id?: string
           priority?: string
           sort_order?: number | null
@@ -5360,7 +5387,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "personal_backlog_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "backlog_groups"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       plant: {
         Row: {
