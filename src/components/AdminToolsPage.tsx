@@ -217,7 +217,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     id: 'projects',
     title: t.manageProjects,
     description: t.manageProjectsDesc,
-    icon: Folder,
+    icon: Building2,
     gradient: 'from-purple-500 to-purple-600',
     tooltip: t.manageProjectsDesc,
     stats: {

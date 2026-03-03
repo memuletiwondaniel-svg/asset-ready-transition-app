@@ -322,7 +322,7 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
               <div className="min-w-0 flex items-center gap-3">
                 <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600">
-                  <Folder className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                  <Building2 className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold text-foreground">
