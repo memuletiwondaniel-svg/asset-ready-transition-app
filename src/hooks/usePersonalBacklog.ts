@@ -14,7 +14,7 @@ export interface BacklogItem {
   updated_at: string;
 }
 
-export const usePersonalBacklog = (filter: 'all' | 'pending' | 'done' = 'all') => {
+export const usePersonalBacklog = (filter: 'all' | 'pending' | 'done' = 'all', groupId?: string | null) => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
