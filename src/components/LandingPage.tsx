@@ -33,7 +33,7 @@ const FAVORITE_ICON_MAP: Record<string, { icon: React.ComponentType<any>; color:
   '/projects': { icon: Building2, color: 'bg-purple-500' },
   '/project-management': { icon: Building2, color: 'bg-purple-500' },
   '/pssr': { icon: AlertTriangle, color: 'bg-orange-500' },
-  '/my-tasks': { icon: ListChecks, color: 'bg-amber-500' },
+  '/my-tasks': { icon: CalendarCheck, color: 'bg-indigo-500' },
   '/my-backlog': { icon: ClipboardList, color: 'bg-indigo-500' },
   '/executive-dashboard': { icon: Gauge, color: 'bg-cyan-500' },
   '/or-maintenance': { icon: Wrench, color: 'bg-slate-500' },
