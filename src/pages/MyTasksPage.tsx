@@ -1,16 +1,29 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { CalendarCheck, Plus, Search, CheckCircle2 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { CalendarCheck, Plus, Search, LayoutList, Kanban, FolderOpen, Layers } from 'lucide-react';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { NewTaskModal } from '@/components/tasks/NewTaskModal';
 import { UnifiedTaskList } from '@/components/tasks/UnifiedTaskList';
+import { TaskKanbanBoard } from '@/components/tasks/TaskKanbanBoard';
 import { RecentlyCompletedTasks } from '@/components/tasks/RecentlyCompletedTasks';
 import { DirectorSoFView } from '@/components/tasks/DirectorSoFView';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 import { useUserLastLogin } from '@/hooks/useUserLastLogin';
 import { useUserIsDirector } from '@/hooks/useUserIsDirector';
+import { useUnifiedTasks } from '@/components/tasks/useUnifiedTasks';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { cn } from '@/lib/utils';
+
+type ViewMode = 'list' | 'kanban';
+type GroupBy = 'none' | 'project' | 'category';
 
 const MyTasksPage: React.FC = () => {
   const { user } = useAuth();
@@ -18,6 +31,8 @@ const MyTasksPage: React.FC = () => {
   const { data: isDirector, isLoading: isDirectorLoading } = useUserIsDirector();
   const [createTaskModalOpen, setCreateTaskModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [groupBy, setGroupBy] = useState<GroupBy>('none');
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -78,7 +93,7 @@ const MyTasksPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-6 py-6">
+      <div className={cn("mx-auto px-6 py-6", viewMode === 'kanban' ? 'max-w-[1400px]' : 'max-w-4xl')}>
         {/* Toolbar */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-6">
           <div className="relative flex-1">
@@ -90,26 +105,67 @@ const MyTasksPage: React.FC = () => {
               className="pl-10"
             />
           </div>
-          <Button
-            size="sm"
-            onClick={() => setCreateTaskModalOpen(true)}
-            className="gap-2"
-          >
-            <Plus className="h-4 w-4" />
-            New Task
-          </Button>
+
+          <div className="flex items-center gap-2">
+            {/* Group by dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-1.5 text-xs">
+                  {groupBy === 'project' ? <FolderOpen className="h-3.5 w-3.5" /> : groupBy === 'category' ? <Layers className="h-3.5 w-3.5" /> : <Layers className="h-3.5 w-3.5" />}
+                  {groupBy === 'none' ? 'Group' : groupBy === 'project' ? 'By Project' : 'By Category'}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setGroupBy('none')}>
+                  No Grouping
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setGroupBy('project')}>
+                  <FolderOpen className="h-3.5 w-3.5 mr-2" />
+                  By Project
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setGroupBy('category')}>
+                  <Layers className="h-3.5 w-3.5 mr-2" />
+                  By Category
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* View toggle */}
+            <ToggleGroup type="single" value={viewMode} onValueChange={(v) => v && setViewMode(v as ViewMode)} size="sm">
+              <ToggleGroupItem value="list" aria-label="List view" className="px-2">
+                <LayoutList className="h-4 w-4" />
+              </ToggleGroupItem>
+              <ToggleGroupItem value="kanban" aria-label="Board view" className="px-2">
+                <Kanban className="h-4 w-4" />
+              </ToggleGroupItem>
+            </ToggleGroup>
+
+            <Button
+              size="sm"
+              onClick={() => setCreateTaskModalOpen(true)}
+              className="gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              New Task
+            </Button>
+          </div>
         </div>
 
-        {/* Unified task list */}
-        <UnifiedTaskList
-          searchQuery={searchQuery}
-          userId={user.id}
-        />
-
-        {/* Recently completed */}
-        <div className="mt-8">
-          <RecentlyCompletedTasks searchQuery={searchQuery} />
-        </div>
+        {/* Content */}
+        {viewMode === 'list' ? (
+          <>
+            <UnifiedTaskList
+              searchQuery={searchQuery}
+              userId={user.id}
+              groupBy={groupBy}
+            />
+            <div className="mt-8">
+              <RecentlyCompletedTasks searchQuery={searchQuery} />
+            </div>
+          </>
+        ) : (
+          <KanbanView userId={user.id} searchQuery={searchQuery} groupBy={groupBy} />
+        )}
       </div>
 
       <NewTaskModal
@@ -117,6 +173,41 @@ const MyTasksPage: React.FC = () => {
         onOpenChange={setCreateTaskModalOpen}
       />
     </div>
+  );
+};
+
+// Separate component to use hooks properly
+const KanbanView: React.FC<{ userId: string; searchQuery: string; groupBy: GroupBy }> = ({ userId, searchQuery, groupBy }) => {
+  const { allTasks, isLoading, updateTaskStatus } = useUnifiedTasks(userId);
+
+  const filteredTasks = React.useMemo(() => {
+    if (!searchQuery.trim()) return allTasks;
+    const q = searchQuery.toLowerCase();
+    return allTasks.filter(t =>
+      t.title.toLowerCase().includes(q) ||
+      t.subtitle?.toLowerCase().includes(q) ||
+      t.project?.toLowerCase().includes(q) ||
+      t.categoryLabel.toLowerCase().includes(q)
+    );
+  }, [allTasks, searchQuery]);
+
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-4 gap-4">
+        {[1, 2, 3, 4].map(i => (
+          <Skeleton key={i} className="h-64 w-full rounded-xl" />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <TaskKanbanBoard
+      tasks={filteredTasks}
+      activeFilter="all"
+      groupBy={groupBy}
+      onUpdateTaskStatus={updateTaskStatus}
+    />
   );
 };
 
