@@ -2150,7 +2150,7 @@ export const translations = {
     navORMaintenance: 'Penyelenggaraan OR',
     navP2AHandover: 'Penyerahan P2A',
     navProjects: 'Projek',
-    
+    navMyBacklog: 'Senarai Tugasan',
     // Sidebar UI
     lightMode: 'Mod Cerah',
     darkMode: 'Mod Gelap',
