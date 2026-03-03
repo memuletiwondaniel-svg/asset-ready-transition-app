@@ -103,25 +103,16 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   const oraPlanId = task.metadata?.plan_id as string | undefined;
 
   const isReviewTask = ['review', 'approval', 'ora_plan_review'].includes(task.type) || !!pssrId;
+  const isActionTask = isOraTask || isOraActivityTask || isVcrDeliveryPlanTask;
 
   const getIntentMessage = () => {
-    switch (task.type) {
-      case 'ora_plan_creation':
-        return 'You have been assigned to create the ORA Activity Plan for this project. Click below to launch the planning wizard.';
-      case 'vcr_delivery_plan':
-        return 'You need to set up the VCR Delivery Plan for this item. Click below to configure the execution plan.';
-      case 'ora_activity':
-        return 'You have an ORA activity to complete. Click below to open the activity details and update progress.';
-      case 'ora_plan_review':
-        return 'You have been asked to review and approve an ORA Plan. Use the button below to review, then approve or request changes.';
-      case 'review':
-      case 'approval':
-        return pssrId
-          ? 'You have been asked to review and approve a PSSR. Use the button below to review, then approve or reject.'
-          : 'This task requires your review and decision.';
-      default:
-        return null;
-    }
+    if (isOraTask) return 'You have been assigned to create the ORA Activity Plan for this project. Click below to launch the planning wizard.';
+    if (isVcrDeliveryPlanTask) return 'You need to set up the VCR Delivery Plan for this item. Click below to configure the execution plan.';
+    if (isOraActivityTask) return 'You have an ORA activity to complete. Click below to open the activity details and update progress.';
+    if (isOraReviewTask) return 'You have been asked to review and approve an ORA Plan. Use the button below to review, then approve or request changes.';
+    if (pssrId) return 'You have been asked to review and approve a PSSR. Use the button below to review, then approve or reject.';
+    if (isReviewTask) return 'This task requires your review and decision.';
+    return null;
   };
 
   const intentMessage = getIntentMessage();
