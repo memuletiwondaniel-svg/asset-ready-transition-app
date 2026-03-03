@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, Clock, FileText, CheckCircle, Home, Loader2, History, X, Sparkles, Upload, ChevronLeft, ChevronRight, Check, Filter, ArrowUpDown, MoreVertical, Eye, EyeOff, Maximize2, Minimize2, GripVertical, MessageSquare, ChevronDown, ChevronUp, Bot, Zap, BarChart3, Paperclip } from 'lucide-react';
+import { Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, Clock, FileText, CheckCircle, Home, Loader2, History, X, Sparkles, Upload, ChevronLeft, ChevronRight, Check, Filter, ArrowUpDown, MoreVertical, Eye, EyeOff, Maximize2, Minimize2, GripVertical, MessageSquare, ChevronDown, ChevronUp, Bot, Zap, BarChart3, Paperclip, Key, AlertTriangle, ListChecks, Gauge, Wrench, Users, Shield, Bookmark } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
@@ -25,7 +25,31 @@ import { arrayMove, SortableContext, rectSortingStrategy, useSortable } from '@d
 import { CSS } from '@dnd-kit/utilities';
 import { processUserInput, getBlockedResponse } from '@/lib/security';
 import { useFavoritePages } from '@/hooks/useFavoritePages';
-import { Star } from 'lucide-react';
+
+// Maps favorite paths to appropriate icons and colors
+const FAVORITE_ICON_MAP: Record<string, { icon: React.ComponentType<any>; color: string }> = {
+  '/home': { icon: Home, color: 'bg-primary' },
+  '/vcrs': { icon: Key, color: 'bg-blue-500' },
+  '/projects': { icon: Key, color: 'bg-blue-500' },
+  '/pssr': { icon: AlertTriangle, color: 'bg-orange-500' },
+  '/my-tasks': { icon: ListChecks, color: 'bg-amber-500' },
+  '/my-backlog': { icon: ClipboardList, color: 'bg-indigo-500' },
+  '/executive-dashboard': { icon: Gauge, color: 'bg-cyan-500' },
+  '/or-maintenance': { icon: Wrench, color: 'bg-slate-500' },
+  '/ask-orsh': { icon: MessageSquare, color: 'bg-violet-500' },
+  '/settings': { icon: Settings, color: 'bg-zinc-500' },
+  '/user-management': { icon: Users, color: 'bg-teal-500' },
+  '/admin-tools': { icon: Shield, color: 'bg-rose-500' },
+};
+
+function getFavoriteIcon(path: string) {
+  return FAVORITE_ICON_MAP[path]?.icon || Bookmark;
+}
+
+function getFavoriteColor(path: string) {
+  return FAVORITE_ICON_MAP[path]?.color || 'bg-primary';
+}
+
 interface WidgetConfig {
   id: string;
   title: string;
@@ -662,60 +686,70 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
             <div className="animate-fade-in" style={{ animationDelay: '100ms' }}>
               {favorites.length > 0 ? (
                 <>
-                  <h2 className="text-sm font-semibold text-muted-foreground text-center mb-3 flex items-center justify-center gap-1.5">
-                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                  <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground text-center mb-4">
                     Favorites
                   </h2>
-                  <div className="flex flex-wrap justify-center gap-2">
-                    {favorites.map((fav) => (
-                      <Button
-                        key={fav.path}
-                        variant="outline"
-                        onClick={() => navigate(fav.path)}
-                        className="rounded-lg px-3 py-1.5 h-auto text-xs bg-primary/5 hover:bg-primary/10 hover:border-primary/30 transition-all hover:scale-105"
-                      >
-                        <Star className="w-3 h-3 mr-1.5 fill-amber-400 text-amber-400" />
-                        {fav.label}
-                      </Button>
-                    ))}
+                  <div className="flex flex-wrap justify-center gap-3">
+                    {favorites.map((fav) => {
+                      const IconComponent = getFavoriteIcon(fav.path);
+                      const colorClass = getFavoriteColor(fav.path);
+                      return (
+                        <button
+                          key={fav.path}
+                          onClick={() => navigate(fav.path)}
+                          className="group flex flex-col items-center gap-2.5 p-4 rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-200 min-w-[100px]"
+                        >
+                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${colorClass} transition-transform duration-200 group-hover:scale-110`}>
+                            <IconComponent className="w-5 h-5 text-white" />
+                          </div>
+                          <span className="text-xs font-medium text-foreground/80 group-hover:text-foreground transition-colors line-clamp-1 max-w-[100px] text-center">
+                            {fav.label}
+                          </span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </>
               ) : (
                 <>
-                  <h2 className="text-sm font-semibold text-muted-foreground text-center mb-3">{t.quickActions || 'Quick Actions'}</h2>
-                  <div className="flex flex-wrap justify-center gap-2">
-                    <Button 
-                      variant="outline"
+                  <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground text-center mb-4">{t.quickActions || 'Quick Actions'}</h2>
+                  <div className="flex flex-wrap justify-center gap-3">
+                    <button
                       onClick={() => onNavigate('pssr')}
-                      className="rounded-lg px-3 py-1.5 h-auto text-xs bg-primary/5 hover:bg-primary/10 hover:border-primary/30 transition-all hover:scale-105"
+                      className="group flex flex-col items-center gap-2.5 p-4 rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-200 min-w-[100px]"
                     >
-                      <Zap className="w-3.5 h-3.5 mr-1.5 text-primary" /> 
-                      {t.createAPSSR || 'Create PSSR'}
-                    </Button>
-                    <Button 
-                      variant="outline"
+                      <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-primary transition-transform duration-200 group-hover:scale-110">
+                        <Zap className="w-5 h-5 text-primary-foreground" />
+                      </div>
+                      <span className="text-xs font-medium text-foreground/80 group-hover:text-foreground transition-colors">{t.createAPSSR || 'Create PSSR'}</span>
+                    </button>
+                    <button
                       onClick={() => onNavigate('pssr')}
-                      className="rounded-lg px-3 py-1.5 h-auto text-xs bg-green-500/5 hover:bg-green-500/10 hover:border-green-500/30 transition-all hover:scale-105"
+                      className="group flex flex-col items-center gap-2.5 p-4 rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-200 min-w-[100px]"
                     >
-                      <CheckCircle className="w-3.5 h-3.5 mr-1.5 text-green-500" /> 
-                      {t.approveAPSSR || 'Approve PSSR'}
-                    </Button>
-                    <Button 
-                      variant="outline"
+                      <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-emerald-500 transition-transform duration-200 group-hover:scale-110">
+                        <CheckCircle className="w-5 h-5 text-white" />
+                      </div>
+                      <span className="text-xs font-medium text-foreground/80 group-hover:text-foreground transition-colors">{t.approveAPSSR || 'Approve PSSR'}</span>
+                    </button>
+                    <button
                       onClick={() => onNavigate('projects')}
-                      className="rounded-lg px-3 py-1.5 h-auto text-xs bg-purple-500/5 hover:bg-purple-500/10 hover:border-purple-500/30 transition-all hover:scale-105"
+                      className="group flex flex-col items-center gap-2.5 p-4 rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-200 min-w-[100px]"
                     >
-                      <Zap className="w-3.5 h-3.5 mr-1.5 text-purple-500" /> 
-                      {t.addNewProject || 'Add Project'}
-                    </Button>
-                    <Button 
-                      variant="outline"
-                      onClick={() => onNavigate('pssr')}
-                      className="rounded-lg px-3 py-1.5 h-auto text-xs bg-amber-500/5 hover:bg-amber-500/10 hover:border-amber-500/30 transition-all hover:scale-105"
+                      <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-violet-500 transition-transform duration-200 group-hover:scale-110">
+                        <Key className="w-5 h-5 text-white" />
+                      </div>
+                      <span className="text-xs font-medium text-foreground/80 group-hover:text-foreground transition-colors">{t.addNewProject || 'Add Project'}</span>
+                    </button>
+                    <button
+                      onClick={() => onNavigate('my-tasks')}
+                      className="group flex flex-col items-center gap-2.5 p-4 rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-200 min-w-[100px]"
                     >
-                      <ClipboardList className="w-3.5 h-3.5 mr-1.5 text-amber-500" /> 
-                      {t.myTasks || 'My Tasks'}
-                    </Button>
+                      <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-amber-500 transition-transform duration-200 group-hover:scale-110">
+                        <ListChecks className="w-5 h-5 text-white" />
+                      </div>
+                      <span className="text-xs font-medium text-foreground/80 group-hover:text-foreground transition-colors">{t.myTasks || 'My Tasks'}</span>
+                    </button>
                   </div>
                 </>
               )}
