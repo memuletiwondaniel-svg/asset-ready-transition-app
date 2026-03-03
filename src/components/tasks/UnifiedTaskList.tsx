@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -41,7 +41,7 @@ export const UnifiedTaskList: React.FC<UnifiedTaskListProps> = ({
   const [detailOpen, setDetailOpen] = useState(false);
 
   // Report total count
-  React.useEffect(() => {
+  useEffect(() => {
     onTotalCountUpdate?.(allTasks.length);
   }, [allTasks.length, onTotalCountUpdate]);
 
@@ -62,6 +62,22 @@ export const UnifiedTaskList: React.FC<UnifiedTaskListProps> = ({
     }
     return result;
   }, [allTasks, activeFilter, searchQuery]);
+
+  // Group tasks if needed — must be before any early return
+  const groupedTasks = useMemo(() => {
+    if (groupBy === 'none') return null;
+    const groups: Record<string, UnifiedTask[]> = {};
+    filteredTasks.forEach(t => {
+      const key = groupBy === 'project' ? (t.project || 'Unassigned') : t.categoryLabel;
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(t);
+    });
+    return Object.entries(groups).sort(([a], [b]) => {
+      if (a === 'Unassigned') return 1;
+      if (b === 'Unassigned') return -1;
+      return a.localeCompare(b);
+    });
+  }, [filteredTasks, groupBy]);
 
   const handleTaskClick = (task: UnifiedTask) => {
     if (task.isWaiting) return;
@@ -85,22 +101,6 @@ export const UnifiedTaskList: React.FC<UnifiedTaskListProps> = ({
       </div>
     );
   }
-
-  // Group tasks if needed
-  const groupedTasks = useMemo(() => {
-    if (groupBy === 'none') return null;
-    const groups: Record<string, UnifiedTask[]> = {};
-    filteredTasks.forEach(t => {
-      const key = groupBy === 'project' ? (t.project || 'Unassigned') : t.categoryLabel;
-      if (!groups[key]) groups[key] = [];
-      groups[key].push(t);
-    });
-    return Object.entries(groups).sort(([a], [b]) => {
-      if (a === 'Unassigned') return 1;
-      if (b === 'Unassigned') return -1;
-      return a.localeCompare(b);
-    });
-  }, [filteredTasks, groupBy]);
 
   return (
     <>
