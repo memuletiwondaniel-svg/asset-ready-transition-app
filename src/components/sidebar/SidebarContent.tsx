@@ -195,7 +195,7 @@ export const SidebarContent = memo<SidebarContentProps>(({
                 {t.navigation || 'Navigation'}
               </p>
               <div className="space-y-1">
-                {navigationItems.map((item) => {
+                {visibleNavItems.map((item) => {
                   const Icon = item.icon;
                   const isActive = currentPage === item.section;
                   
