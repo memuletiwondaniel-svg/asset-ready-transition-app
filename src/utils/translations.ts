@@ -2833,7 +2833,7 @@ export const translations = {
     navORMaintenance: 'OR қызмет көрсету',
     navP2AHandover: 'P2A тапсыру',
     navProjects: 'Жобалар',
-    
+    navMyBacklog: 'Менің тізімім',
     // Sidebar UI
     lightMode: 'Жарық режим',
     darkMode: 'Қараңғы режим',
