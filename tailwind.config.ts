@@ -401,6 +401,7 @@ export default {
 		'journey-roam-2': 'journey-roam-2 42s ease-in-out infinite',
 		'journey-roam-3': 'journey-roam-3 36s ease-in-out infinite',
 		'pulse-center': 'pulse-center 25s ease-in-out infinite',
+		'pulse-subtle': 'pulse-subtle 3s ease-in-out infinite',
 		'ken-burns': 'ken-burns 7s ease-out forwards',
 			// Combined animations for visible background movement
 			'gradient-shift-morph': 'gradient-shift 12s ease infinite, gradient-color-morph 18s linear infinite',
