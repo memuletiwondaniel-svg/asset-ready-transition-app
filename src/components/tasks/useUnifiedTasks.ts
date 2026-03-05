@@ -35,6 +35,7 @@ export interface UnifiedTask {
   endDate?: string;
   createdAt: string;
   priority: 'high' | 'medium' | 'low';
+  smartPriority: SmartPriorityResult;
   navigateTo?: string;
   isNew: boolean;
   progressPercentage?: number;
@@ -42,6 +43,7 @@ export interface UnifiedTask {
   totalItems?: number;
   isWaiting?: boolean;
   userTask?: UserTask;
+  durationDays?: number;
   // Kanban status mapping
   kanbanColumn: 'todo' | 'in_progress' | 'waiting' | 'done';
 }
