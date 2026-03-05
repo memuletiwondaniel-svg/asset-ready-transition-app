@@ -14,6 +14,7 @@ import { useUserOWLItems } from '@/hooks/useUserOWLItems';
 import { useUserVCRBundleTasks } from '@/hooks/useUserVCRBundleTasks';
 import { useUserTasks, type UserTask } from '@/hooks/useUserTasks';
 import { useUserLastLogin } from '@/hooks/useUserLastLogin';
+import { computeSmartPriority, smartPriorityToLegacy, type SmartPriorityResult, type SmartPriorityLevel } from './smartPriority';
 import React from 'react';
 
 export type CategoryFilter = 'all' | 'pssr' | 'ora' | 'owl' | 'vcr' | 'p2a' | 'action';
@@ -34,6 +35,7 @@ export interface UnifiedTask {
   endDate?: string;
   createdAt: string;
   priority: 'high' | 'medium' | 'low';
+  smartPriority: SmartPriorityResult;
   navigateTo?: string;
   isNew: boolean;
   progressPercentage?: number;
@@ -41,6 +43,7 @@ export interface UnifiedTask {
   totalItems?: number;
   isWaiting?: boolean;
   userTask?: UserTask;
+  durationDays?: number;
   // Kanban status mapping
   kanbanColumn: 'todo' | 'in_progress' | 'waiting' | 'done';
 }
@@ -117,6 +120,18 @@ export function useUnifiedTasks(userId: string) {
       }
 
       const isWaiting = t.status === 'waiting';
+      const durationDays = meta?.duration_days || meta?.duration_med || undefined;
+      const sp = computeSmartPriority({
+        category,
+        categoryLabel,
+        startDate: meta?.start_date,
+        endDate: meta?.end_date,
+        dueDate: t.due_date || undefined,
+        durationDays,
+        progressPercentage: undefined,
+        isWaiting,
+        createdAt: t.created_at,
+      });
       tasks.push({
         id: `ut-${t.id}`,
         category,
@@ -132,10 +147,12 @@ export function useUnifiedTasks(userId: string) {
         startDate: meta?.start_date || undefined,
         endDate: meta?.end_date || undefined,
         createdAt: t.created_at,
-        priority: t.priority === 'High' || t.priority === 'high' ? 'high' : t.priority === 'Medium' || t.priority === 'medium' ? 'medium' : 'low',
+        priority: smartPriorityToLegacy(sp.level),
+        smartPriority: sp,
         isNew: isNewSinceLastLogin(t.created_at),
         userTask: t,
         isWaiting,
+        durationDays,
         kanbanColumn: mapToKanbanColumn({ status: t.status, isWaiting }),
       });
     });
@@ -144,6 +161,10 @@ export function useUnifiedTasks(userId: string) {
       const pssrId = item.pssr?.id;
       if (!pssrId) return;
       if (tasks.some(t => t.userTask?.metadata?.pssr_id === pssrId)) return;
+      const spPssr = computeSmartPriority({
+        category: 'pssr', categoryLabel: 'PSSR Review',
+        createdAt: item.pendingSince,
+      });
       tasks.push({
         id: `pssr-${pssrId}`,
         category: 'pssr',
@@ -155,7 +176,8 @@ export function useUnifiedTasks(userId: string) {
         project: item.pssr?.project_name || undefined,
         status: 'Pending Review',
         createdAt: item.pendingSince,
-        priority: 'high',
+        priority: smartPriorityToLegacy(spPssr.level),
+        smartPriority: spPssr,
         navigateTo: `/pssr/${pssrId}/review`,
         isNew: isNewSinceLastLogin(item.pendingSince),
         kanbanColumn: 'todo',
@@ -164,6 +186,10 @@ export function useUnifiedTasks(userId: string) {
 
     (approvals || []).forEach(item => {
       if (tasks.some(t => t.userTask?.metadata?.plan_id === item.handover_id)) return;
+      const spP2a = computeSmartPriority({
+        category: 'p2a', categoryLabel: 'P2A Approval',
+        createdAt: item.created_at,
+      });
       tasks.push({
         id: `p2a-${item.id}`,
         category: 'p2a',
@@ -174,7 +200,8 @@ export function useUnifiedTasks(userId: string) {
         project: item.project_number || undefined,
         status: item.stage,
         createdAt: item.created_at,
-        priority: 'medium',
+        priority: smartPriorityToLegacy(spP2a.level),
+        smartPriority: spP2a,
         navigateTo: `/p2a-handover/${item.handover_id}`,
         isNew: isNewSinceLastLogin(item.created_at),
         kanbanColumn: 'todo',
@@ -186,6 +213,11 @@ export function useUnifiedTasks(userId: string) {
       const projectName = typeof item.project === 'object' && item.project !== null
         ? (item.project as any).project_title || (item.project as any).name || undefined
         : undefined;
+      const spOwl = computeSmartPriority({
+        category: 'owl', categoryLabel: 'OWL',
+        dueDate: item.due_date || undefined,
+        createdAt: item.created_at,
+      });
       tasks.push({
         id: `owl-${item.id}`,
         category: 'owl',
@@ -197,7 +229,8 @@ export function useUnifiedTasks(userId: string) {
         status: item.status === 'IN_PROGRESS' ? 'In Progress' : 'Open',
         dueDate: item.due_date || undefined,
         createdAt: item.created_at,
-        priority: item.due_date && isPast(new Date(item.due_date)) ? 'high' : 'medium',
+        priority: smartPriorityToLegacy(spOwl.level),
+        smartPriority: spOwl,
         navigateTo: '/outstanding-work-list',
         isNew: isNewSinceLastLogin(item.created_at),
         kanbanColumn: item.status === 'IN_PROGRESS' ? 'in_progress' : 'todo',
@@ -212,12 +245,20 @@ export function useUnifiedTasks(userId: string) {
       const total = task.sub_items.length;
       const pct = task.progress_percentage;
 
+      const bundleCat: CategoryFilter = isPSSR ? 'pssr' : 'vcr';
+      const bundleLabel = isPSSR
+        ? (isApproval ? 'PSSR Review' : 'PSSR Checklist')
+        : (isApproval ? 'VCR Review' : 'VCR Checklist');
+      const spBundle = computeSmartPriority({
+        category: bundleCat, categoryLabel: bundleLabel,
+        progressPercentage: pct,
+        isWaiting,
+        createdAt: task.created_at,
+      });
       tasks.push({
         id: `bundle-${task.id}`,
-        category: isPSSR ? 'pssr' : 'vcr',
-        categoryLabel: isPSSR
-          ? (isApproval ? 'PSSR Review' : 'PSSR Checklist')
-          : (isApproval ? 'VCR Review' : 'VCR Checklist'),
+        category: bundleCat,
+        categoryLabel: bundleLabel,
         categoryColor: isPSSR
           ? 'bg-blue-500/10 text-blue-600 border-blue-500/20'
           : 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
@@ -226,7 +267,8 @@ export function useUnifiedTasks(userId: string) {
         project: isPSSR ? task.metadata?.project_name : task.metadata?.project_code,
         status: `${completed}/${total}`,
         createdAt: task.created_at,
-        priority: isWaiting ? 'low' : 'medium',
+        priority: smartPriorityToLegacy(spBundle.level),
+        smartPriority: spBundle,
         isNew: isNewSinceLastLogin(task.created_at),
         progressPercentage: pct,
         completedItems: completed,
@@ -239,17 +281,19 @@ export function useUnifiedTasks(userId: string) {
       });
     });
 
-    // Default sort: by date (soonest due first, then by created)
+    // Sort by smart priority score (highest first), then by due date, then by created
     return tasks.sort((a, b) => {
       if (a.isWaiting && !b.isWaiting) return 1;
       if (!a.isWaiting && b.isWaiting) return -1;
-      // Sort by due date first if available
-      if (a.dueDate && b.dueDate) return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
-      if (a.dueDate && !b.dueDate) return -1;
-      if (!a.dueDate && b.dueDate) return 1;
-      // Then by priority
-      const prio = { high: 0, medium: 1, low: 2 };
-      if (prio[a.priority] !== prio[b.priority]) return prio[a.priority] - prio[b.priority];
+      // Primary: smart priority score (descending — higher score = more urgent)
+      const scoreDiff = b.smartPriority.score - a.smartPriority.score;
+      if (Math.abs(scoreDiff) >= 5) return scoreDiff;
+      // Secondary: due date
+      const aDue = a.dueDate || a.endDate;
+      const bDue = b.dueDate || b.endDate;
+      if (aDue && bDue) return new Date(aDue).getTime() - new Date(bDue).getTime();
+      if (aDue && !bDue) return -1;
+      if (!aDue && bDue) return 1;
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
   }, [pssrs, approvals, activities, owlItems, bundleTasks, userTasks, isNewSinceLastLogin]);

@@ -131,6 +131,10 @@ export default {
 				'xs': '2px',
 			},
 			keyframes: {
+				'pulse-subtle': {
+					'0%, 100%': { opacity: '1' },
+					'50%': { opacity: '0.92' },
+				},
 				'card-relocate': {
 					'0%': { opacity: '0', transform: 'translateY(-10px) scale(0.98)' },
 					'100%': { opacity: '1', transform: 'translateY(0) scale(1)' }
@@ -397,6 +401,7 @@ export default {
 		'journey-roam-2': 'journey-roam-2 42s ease-in-out infinite',
 		'journey-roam-3': 'journey-roam-3 36s ease-in-out infinite',
 		'pulse-center': 'pulse-center 25s ease-in-out infinite',
+		'pulse-subtle': 'pulse-subtle 3s ease-in-out infinite',
 		'ken-burns': 'ken-burns 7s ease-out forwards',
 			// Combined animations for visible background movement
 			'gradient-shift-morph': 'gradient-shift 12s ease infinite, gradient-color-morph 18s linear infinite',

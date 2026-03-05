@@ -5,6 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TaskDetailSheet } from './TaskDetailSheet';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   AlertTriangle,
   Calendar,
@@ -12,6 +13,7 @@ import {
   CheckCircle2,
   Clock,
   ChevronDown,
+  Zap,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, isPast, isToday, differenceInDays } from 'date-fns';
@@ -200,81 +202,109 @@ const TaskRow: React.FC<{ task: UnifiedTask; onClick: () => void }> = ({ task, o
   const Icon = task.icon;
   const isOverdue = task.dueDate && isPast(new Date(task.dueDate)) && !isToday(new Date(task.dueDate));
   const dateAnnotation = getDateAnnotation(task);
+  const sp = task.smartPriority;
+
+  const priorityBorderColor = sp.level === 'critical'
+    ? 'bg-destructive'
+    : sp.level === 'high'
+    ? 'bg-destructive'
+    : sp.level === 'medium'
+    ? 'bg-amber-500'
+    : 'bg-muted-foreground/30';
 
   return (
-    <Card
-      onClick={onClick}
-      className={cn(
-        "group relative flex items-center gap-4 p-4 cursor-pointer transition-all border",
-        "hover:shadow-md hover:border-primary/20",
-        task.isWaiting && "opacity-50 cursor-default",
-        task.isNew && "border-primary/30 bg-primary/[0.02]"
-      )}
-    >
-      <div className={cn(
-        "w-1 self-stretch rounded-full shrink-0",
-        task.priority === 'high' ? 'bg-destructive' : task.priority === 'medium' ? 'bg-amber-500' : 'bg-muted-foreground/30'
-      )} />
-
-      <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center shrink-0", task.categoryColor)}>
-        <Icon className="h-4 w-4" />
-      </div>
-
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-0.5">
-          <span className="font-medium text-sm text-foreground truncate">{task.title}</span>
-          {task.isNew && (
-            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-primary/10 text-primary shrink-0">NEW</Badge>
-          )}
-        </div>
-        {task.project ? (
-          <ProjectIdBadge size="sm" projectId={task.project}>{task.project}</ProjectIdBadge>
-        ) : (
-          <span className="text-[11px] text-muted-foreground">{task.categoryLabel}</span>
+    <TooltipProvider delayDuration={300}>
+      <Card
+        onClick={onClick}
+        className={cn(
+          "group relative flex items-center gap-4 p-4 cursor-pointer transition-all border",
+          "hover:shadow-md hover:border-primary/20",
+          task.isWaiting && "opacity-50 cursor-default",
+          task.isNew && "border-primary/30 bg-primary/[0.02]",
+          sp.isOverdue && "bg-destructive/[0.02] animate-pulse-subtle"
         )}
-        {/* Date range for ORA activities */}
-        {(task.startDate || task.endDate) && (
-          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mt-1">
-            <Calendar className="h-3 w-3 shrink-0" />
-            {task.startDate && <span>{format(new Date(task.startDate), 'MMM d')}</span>}
-            {task.startDate && task.endDate && <span>→</span>}
-            {task.endDate && <span>{format(new Date(task.endDate), 'MMM d')}</span>}
-            {dateAnnotation && (
-              <span className={cn(
-                "ml-1 text-[10px] font-medium",
-                dateAnnotation.variant === 'overdue' && 'text-destructive',
-                dateAnnotation.variant === 'today' && 'text-amber-600',
-                dateAnnotation.variant === 'upcoming' && 'text-blue-600',
-              )}>
-                · {dateAnnotation.label}
-              </span>
+      >
+        {/* Priority bar with tooltip */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className={cn("w-1 self-stretch rounded-full shrink-0 cursor-help", priorityBorderColor)} />
+          </TooltipTrigger>
+          <TooltipContent side="left" className="max-w-[200px]">
+            <div className="text-xs space-y-1">
+              <p className="font-semibold capitalize">{sp.level} Priority</p>
+              {sp.reasons.length > 0 && (
+                <p className="text-muted-foreground">{sp.reasons.join(' · ')}</p>
+              )}
+              <p className="text-muted-foreground/70">Score: {sp.score}/100</p>
+            </div>
+          </TooltipContent>
+        </Tooltip>
+
+        <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center shrink-0", task.categoryColor)}>
+          <Icon className="h-4 w-4" />
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-0.5">
+            <span className="font-medium text-sm text-foreground truncate">{task.title}</span>
+            {task.isNew && (
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-primary/10 text-primary shrink-0">NEW</Badge>
+            )}
+            {sp.isStartingSoon && (
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-amber-500/30 bg-amber-500/10 text-amber-600 shrink-0 gap-0.5">
+                <Zap className="h-2.5 w-2.5" />Starting Soon
+              </Badge>
             )}
           </div>
-        )}
-      </div>
+          {task.project ? (
+            <ProjectIdBadge size="sm" projectId={task.project}>{task.project}</ProjectIdBadge>
+          ) : (
+            <span className="text-[11px] text-muted-foreground">{task.categoryLabel}</span>
+          )}
+          {/* Date range for ORA activities */}
+          {(task.startDate || task.endDate) && (
+            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mt-1">
+              <Calendar className="h-3 w-3 shrink-0" />
+              {task.startDate && <span>{format(new Date(task.startDate), 'MMM d')}</span>}
+              {task.startDate && task.endDate && <span>→</span>}
+              {task.endDate && <span>{format(new Date(task.endDate), 'MMM d')}</span>}
+              {dateAnnotation && (
+                <span className={cn(
+                  "ml-1 text-[10px] font-medium",
+                  dateAnnotation.variant === 'overdue' && 'text-destructive',
+                  dateAnnotation.variant === 'today' && 'text-amber-600',
+                  dateAnnotation.variant === 'upcoming' && 'text-blue-600',
+                )}>
+                  · {dateAnnotation.label}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
 
-      <div className="flex items-center gap-3 shrink-0">
-        {task.totalItems != null && task.totalItems > 0 ? (
-          <div className="flex items-center gap-2">
-            <Progress value={task.progressPercentage || 0} className="h-2 w-16" />
-            <span className="text-xs text-muted-foreground whitespace-nowrap">{task.completedItems}/{task.totalItems}</span>
-          </div>
-        ) : task.isWaiting ? (
-          <Badge variant="outline" className="text-[10px] text-muted-foreground border-muted-foreground/20">
-            <Clock className="h-3 w-3 mr-1" />Waiting
-          </Badge>
-        ) : task.dueDate && !task.startDate && !task.endDate ? (
-          <span className={cn(
-            "text-xs whitespace-nowrap",
-            isOverdue ? "text-destructive font-medium" : "text-muted-foreground"
-          )}>
-            {isOverdue && <AlertTriangle className="h-3 w-3 inline mr-1" />}
-            {format(new Date(task.dueDate), 'MMM d')}
-          </span>
-        ) : null}
-        <ChevronRight className="h-4 w-4 text-muted-foreground/50 group-hover:text-foreground transition-colors" />
-      </div>
-    </Card>
+        <div className="flex items-center gap-3 shrink-0">
+          {task.totalItems != null && task.totalItems > 0 ? (
+            <div className="flex items-center gap-2">
+              <Progress value={task.progressPercentage || 0} className="h-2 w-16" />
+              <span className="text-xs text-muted-foreground whitespace-nowrap">{task.completedItems}/{task.totalItems}</span>
+            </div>
+          ) : task.isWaiting ? (
+            <Badge variant="outline" className="text-[10px] text-muted-foreground border-muted-foreground/20">
+              <Clock className="h-3 w-3 mr-1" />Waiting
+            </Badge>
+          ) : task.dueDate && !task.startDate && !task.endDate ? (
+            <span className={cn(
+              "text-xs whitespace-nowrap",
+              isOverdue ? "text-destructive font-medium" : "text-muted-foreground"
+            )}>
+              {isOverdue && <AlertTriangle className="h-3 w-3 inline mr-1" />}
+              {format(new Date(task.dueDate), 'MMM d')}
+            </span>
+          ) : null}
+          <ChevronRight className="h-4 w-4 text-muted-foreground/50 group-hover:text-foreground transition-colors" />
+        </div>
+      </Card>
+    </TooltipProvider>
   );
 };
 
