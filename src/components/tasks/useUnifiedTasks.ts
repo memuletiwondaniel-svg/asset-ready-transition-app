@@ -120,6 +120,18 @@ export function useUnifiedTasks(userId: string) {
       }
 
       const isWaiting = t.status === 'waiting';
+      const durationDays = meta?.duration_days || meta?.duration_med || undefined;
+      const sp = computeSmartPriority({
+        category,
+        categoryLabel,
+        startDate: meta?.start_date,
+        endDate: meta?.end_date,
+        dueDate: t.due_date || undefined,
+        durationDays,
+        progressPercentage: undefined,
+        isWaiting,
+        createdAt: t.created_at,
+      });
       tasks.push({
         id: `ut-${t.id}`,
         category,
@@ -135,10 +147,12 @@ export function useUnifiedTasks(userId: string) {
         startDate: meta?.start_date || undefined,
         endDate: meta?.end_date || undefined,
         createdAt: t.created_at,
-        priority: t.priority === 'High' || t.priority === 'high' ? 'high' : t.priority === 'Medium' || t.priority === 'medium' ? 'medium' : 'low',
+        priority: smartPriorityToLegacy(sp.level),
+        smartPriority: sp,
         isNew: isNewSinceLastLogin(t.created_at),
         userTask: t,
         isWaiting,
+        durationDays,
         kanbanColumn: mapToKanbanColumn({ status: t.status, isWaiting }),
       });
     });
