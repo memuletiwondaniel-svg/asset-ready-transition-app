@@ -263,11 +263,11 @@ const TaskRow: React.FC<{ task: UnifiedTask; onClick: () => void }> = ({ task, o
           )}
           {/* Date range for ORA activities */}
           {(task.startDate || task.endDate) && (
-            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mt-1">
-              <Calendar className="h-3 w-3 shrink-0" />
-              {task.startDate && <span>{format(new Date(task.startDate), 'MMM d')}</span>}
-              {task.startDate && task.endDate && <span>→</span>}
-              {task.endDate && <span>{format(new Date(task.endDate), 'MMM d')}</span>}
+            <div className="flex items-center gap-1.5 text-[11px] mt-1">
+              <Calendar className="h-3 w-3 shrink-0 text-muted-foreground/50" />
+              {task.startDate && <span className="text-muted-foreground/50">{format(new Date(task.startDate), 'MMM d')}</span>}
+              {task.startDate && task.endDate && <span className="text-muted-foreground/40">→</span>}
+              {task.endDate && <span className="text-muted-foreground">{format(new Date(task.endDate), 'MMM d')}</span>}
               {dateAnnotation && (
                 <span className={cn(
                   "ml-1 text-[10px] font-medium",

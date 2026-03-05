@@ -118,12 +118,13 @@ const KanbanCard: React.FC<{
 
         {/* Dates row */}
         {(task.startDate || task.endDate || task.dueDate) && (
-          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mb-1.5">
-            <Calendar className="h-3 w-3 shrink-0" />
-            {task.startDate && <span>{format(new Date(task.startDate), 'MMM d')}</span>}
-            {task.startDate && task.endDate && <span>→</span>}
+          <div className="flex items-center gap-1.5 text-[11px] mb-1.5">
+            <Calendar className="h-3 w-3 shrink-0 text-muted-foreground/50" />
+            {task.startDate && <span className="text-muted-foreground/50">{format(new Date(task.startDate), 'MMM d')}</span>}
+            {task.startDate && task.endDate && <span className="text-muted-foreground/40">→</span>}
             {(task.endDate || task.dueDate) && (
               <span className={cn(
+                "text-muted-foreground",
                 dateAnnotation?.variant === 'overdue' && 'text-destructive font-medium',
                 dateAnnotation?.variant === 'today' && 'text-amber-600 font-medium',
               )}>
