@@ -131,6 +131,10 @@ export default {
 				'xs': '2px',
 			},
 			keyframes: {
+				'pulse-subtle': {
+					'0%, 100%': { opacity: '1' },
+					'50%': { opacity: '0.92' },
+				},
 				'card-relocate': {
 					'0%': { opacity: '0', transform: 'translateY(-10px) scale(0.98)' },
 					'100%': { opacity: '1', transform: 'translateY(0) scale(1)' }
