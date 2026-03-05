@@ -213,6 +213,11 @@ export function useUnifiedTasks(userId: string) {
       const projectName = typeof item.project === 'object' && item.project !== null
         ? (item.project as any).project_title || (item.project as any).name || undefined
         : undefined;
+      const spOwl = computeSmartPriority({
+        category: 'owl', categoryLabel: 'OWL',
+        dueDate: item.due_date || undefined,
+        createdAt: item.created_at,
+      });
       tasks.push({
         id: `owl-${item.id}`,
         category: 'owl',
@@ -224,7 +229,8 @@ export function useUnifiedTasks(userId: string) {
         status: item.status === 'IN_PROGRESS' ? 'In Progress' : 'Open',
         dueDate: item.due_date || undefined,
         createdAt: item.created_at,
-        priority: item.due_date && isPast(new Date(item.due_date)) ? 'high' : 'medium',
+        priority: smartPriorityToLegacy(spOwl.level),
+        smartPriority: spOwl,
         navigateTo: '/outstanding-work-list',
         isNew: isNewSinceLastLogin(item.created_at),
         kanbanColumn: item.status === 'IN_PROGRESS' ? 'in_progress' : 'todo',
