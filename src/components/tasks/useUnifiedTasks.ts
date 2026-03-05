@@ -245,12 +245,20 @@ export function useUnifiedTasks(userId: string) {
       const total = task.sub_items.length;
       const pct = task.progress_percentage;
 
+      const bundleCat: CategoryFilter = isPSSR ? 'pssr' : 'vcr';
+      const bundleLabel = isPSSR
+        ? (isApproval ? 'PSSR Review' : 'PSSR Checklist')
+        : (isApproval ? 'VCR Review' : 'VCR Checklist');
+      const spBundle = computeSmartPriority({
+        category: bundleCat, categoryLabel: bundleLabel,
+        progressPercentage: pct,
+        isWaiting,
+        createdAt: task.created_at,
+      });
       tasks.push({
         id: `bundle-${task.id}`,
-        category: isPSSR ? 'pssr' : 'vcr',
-        categoryLabel: isPSSR
-          ? (isApproval ? 'PSSR Review' : 'PSSR Checklist')
-          : (isApproval ? 'VCR Review' : 'VCR Checklist'),
+        category: bundleCat,
+        categoryLabel: bundleLabel,
         categoryColor: isPSSR
           ? 'bg-blue-500/10 text-blue-600 border-blue-500/20'
           : 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
@@ -259,7 +267,8 @@ export function useUnifiedTasks(userId: string) {
         project: isPSSR ? task.metadata?.project_name : task.metadata?.project_code,
         status: `${completed}/${total}`,
         createdAt: task.created_at,
-        priority: isWaiting ? 'low' : 'medium',
+        priority: smartPriorityToLegacy(spBundle.level),
+        smartPriority: spBundle,
         isNew: isNewSinceLastLogin(task.created_at),
         progressPercentage: pct,
         completedItems: completed,
