@@ -161,6 +161,10 @@ export function useUnifiedTasks(userId: string) {
       const pssrId = item.pssr?.id;
       if (!pssrId) return;
       if (tasks.some(t => t.userTask?.metadata?.pssr_id === pssrId)) return;
+      const spPssr = computeSmartPriority({
+        category: 'pssr', categoryLabel: 'PSSR Review',
+        createdAt: item.pendingSince,
+      });
       tasks.push({
         id: `pssr-${pssrId}`,
         category: 'pssr',
@@ -172,7 +176,8 @@ export function useUnifiedTasks(userId: string) {
         project: item.pssr?.project_name || undefined,
         status: 'Pending Review',
         createdAt: item.pendingSince,
-        priority: 'high',
+        priority: smartPriorityToLegacy(spPssr.level),
+        smartPriority: spPssr,
         navigateTo: `/pssr/${pssrId}/review`,
         isNew: isNewSinceLastLogin(item.pendingSince),
         kanbanColumn: 'todo',
