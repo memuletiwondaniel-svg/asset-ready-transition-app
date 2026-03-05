@@ -5,6 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TaskDetailSheet } from './TaskDetailSheet';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   AlertTriangle,
   Calendar,
@@ -12,6 +13,7 @@ import {
   CheckCircle2,
   Clock,
   ChevronDown,
+  Zap,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, isPast, isToday, differenceInDays } from 'date-fns';
