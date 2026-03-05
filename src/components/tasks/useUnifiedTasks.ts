@@ -186,6 +186,10 @@ export function useUnifiedTasks(userId: string) {
 
     (approvals || []).forEach(item => {
       if (tasks.some(t => t.userTask?.metadata?.plan_id === item.handover_id)) return;
+      const spP2a = computeSmartPriority({
+        category: 'p2a', categoryLabel: 'P2A Approval',
+        createdAt: item.created_at,
+      });
       tasks.push({
         id: `p2a-${item.id}`,
         category: 'p2a',
@@ -196,7 +200,8 @@ export function useUnifiedTasks(userId: string) {
         project: item.project_number || undefined,
         status: item.stage,
         createdAt: item.created_at,
-        priority: 'medium',
+        priority: smartPriorityToLegacy(spP2a.level),
+        smartPriority: spP2a,
         navigateTo: `/p2a-handover/${item.handover_id}`,
         isNew: isNewSinceLastLogin(item.created_at),
         kanbanColumn: 'todo',
