@@ -281,17 +281,19 @@ export function useUnifiedTasks(userId: string) {
       });
     });
 
-    // Default sort: by date (soonest due first, then by created)
+    // Sort by smart priority score (highest first), then by due date, then by created
     return tasks.sort((a, b) => {
       if (a.isWaiting && !b.isWaiting) return 1;
       if (!a.isWaiting && b.isWaiting) return -1;
-      // Sort by due date first if available
-      if (a.dueDate && b.dueDate) return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
-      if (a.dueDate && !b.dueDate) return -1;
-      if (!a.dueDate && b.dueDate) return 1;
-      // Then by priority
-      const prio = { high: 0, medium: 1, low: 2 };
-      if (prio[a.priority] !== prio[b.priority]) return prio[a.priority] - prio[b.priority];
+      // Primary: smart priority score (descending — higher score = more urgent)
+      const scoreDiff = b.smartPriority.score - a.smartPriority.score;
+      if (Math.abs(scoreDiff) >= 5) return scoreDiff;
+      // Secondary: due date
+      const aDue = a.dueDate || a.endDate;
+      const bDue = b.dueDate || b.endDate;
+      if (aDue && bDue) return new Date(aDue).getTime() - new Date(bDue).getTime();
+      if (aDue && !bDue) return -1;
+      if (!aDue && bDue) return 1;
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
   }, [pssrs, approvals, activities, owlItems, bundleTasks, userTasks, isNewSinceLastLogin]);
