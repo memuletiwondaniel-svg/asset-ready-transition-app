@@ -5,12 +5,14 @@ import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { TaskDetailSheet } from './TaskDetailSheet';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   AlertTriangle,
   Calendar,
   ChevronDown,
   ChevronRight,
   Clock,
+  Zap,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, isPast, isToday, differenceInDays } from 'date-fns';
