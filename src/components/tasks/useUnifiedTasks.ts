@@ -14,6 +14,7 @@ import { useUserOWLItems } from '@/hooks/useUserOWLItems';
 import { useUserVCRBundleTasks } from '@/hooks/useUserVCRBundleTasks';
 import { useUserTasks, type UserTask } from '@/hooks/useUserTasks';
 import { useUserLastLogin } from '@/hooks/useUserLastLogin';
+import { computeSmartPriority, smartPriorityToLegacy, type SmartPriorityResult, type SmartPriorityLevel } from './smartPriority';
 import React from 'react';
 
 export type CategoryFilter = 'all' | 'pssr' | 'ora' | 'owl' | 'vcr' | 'p2a' | 'action';
