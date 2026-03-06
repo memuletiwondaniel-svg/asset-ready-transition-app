@@ -436,7 +436,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
     }
   };
 
-
+  const handleCreate = async () => {
     try {
       setIsCreating(true);
       const { data: user } = await supabase.auth.getUser();
