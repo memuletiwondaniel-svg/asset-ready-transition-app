@@ -869,7 +869,6 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                                 onMouseDown={(e) => handleMouseDown(e, 'right', deliverable.id, barPos.left, barPos.width, parseISO(deliverable.start_date), parseISO(deliverable.end_date))}
                               />
                             </div>
-                            </div>
                           );
                         })()}
                       </div>
