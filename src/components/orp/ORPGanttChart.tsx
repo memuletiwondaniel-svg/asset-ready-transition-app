@@ -701,15 +701,6 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
       </CardContent>
 
       {showAddItem && <CreateORPModal open={showAddItem} onOpenChange={setShowAddItem} onSuccess={() => setShowAddItem(false)} />}
-      {selectedDeliverable && (
-        <ORPDeliverableModal
-          open={!!selectedDeliverable}
-          onOpenChange={(open) => !open && setSelectedDeliverable(null)}
-          deliverable={selectedDeliverable}
-          allDeliverables={deliverables}
-          planId={planId}
-        />
-      )}
       <ORAActivityTaskSheet
         task={selectedOraActivity}
         open={!!selectedOraActivity}
