@@ -20,9 +20,19 @@ interface UseGanttBarResizeOptions {
 export function useGanttBarResize({ minDate, dayWidth, onResize }: UseGanttBarResizeOptions) {
   const dragRef = useRef<DragState | null>(null);
   const didDragRef = useRef(false);
+  const previewLeftRef = useRef<number | null>(null);
+  const previewWidthRef = useRef<number | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [previewLeft, setPreviewLeft] = useState<number | null>(null);
   const [previewWidth, setPreviewWidth] = useState<number | null>(null);
+
+  // Keep refs in sync for closure access
+  const minDateRef = useRef(minDate);
+  const dayWidthRef = useRef(dayWidth);
+  const onResizeRef = useRef(onResize);
+  minDateRef.current = minDate;
+  dayWidthRef.current = dayWidth;
+  onResizeRef.current = onResize;
 
   const handleMouseDown = useCallback((
     e: React.MouseEvent,
@@ -45,6 +55,8 @@ export function useGanttBarResize({ minDate, dayWidth, onResize }: UseGanttBarRe
       initialStartDate: startDate,
       initialEndDate: endDate,
     };
+    previewLeftRef.current = barLeft;
+    previewWidthRef.current = barWidth;
     setDraggingId(activityId);
     setPreviewLeft(barLeft);
     setPreviewWidth(barWidth);
@@ -57,60 +69,65 @@ export function useGanttBarResize({ minDate, dayWidth, onResize }: UseGanttBarRe
     const handleMouseMove = (e: MouseEvent) => {
       const drag = dragRef.current;
       if (!drag) return;
+      const dw = dayWidthRef.current;
       const dx = e.clientX - drag.initialMouseX;
 
-      // Only count as a real drag if moved more than 3px
       if (Math.abs(dx) > 3) {
         didDragRef.current = true;
       }
 
       if (drag.edge === 'right') {
-        const newWidth = Math.max(dayWidth, drag.initialWidth + dx);
+        const newWidth = Math.max(dw, drag.initialWidth + dx);
+        previewWidthRef.current = newWidth;
         setPreviewWidth(newWidth);
       } else if (drag.edge === 'left') {
         const newLeft = drag.initialLeft + dx;
-        const newWidth = Math.max(dayWidth, drag.initialWidth - dx);
+        const newWidth = Math.max(dw, drag.initialWidth - dx);
+        previewLeftRef.current = newLeft;
+        previewWidthRef.current = newWidth;
         setPreviewLeft(newLeft);
         setPreviewWidth(newWidth);
       } else {
-        // move: shift both left, keep width
-        setPreviewLeft(drag.initialLeft + dx);
+        const newLeft = drag.initialLeft + dx;
+        previewLeftRef.current = newLeft;
+        setPreviewLeft(newLeft);
       }
     };
 
     const handleMouseUp = () => {
       const drag = dragRef.current;
       if (!drag) return;
+      const dw = dayWidthRef.current;
+      const md = minDateRef.current;
 
-      // Only fire onResize if user actually dragged
       if (didDragRef.current) {
         if (drag.edge === 'right') {
-          const finalWidth = previewWidth ?? drag.initialWidth;
-          const newDays = Math.max(1, Math.round(finalWidth / dayWidth));
+          const finalWidth = previewWidthRef.current ?? drag.initialWidth;
+          const newDays = Math.max(1, Math.round(finalWidth / dw));
           const newEnd = addDays(drag.initialStartDate, newDays);
-          onResize(drag.activityId, drag.initialStartDate, newEnd);
+          onResizeRef.current(drag.activityId, drag.initialStartDate, newEnd);
         } else if (drag.edge === 'left') {
-          const finalLeft = previewLeft ?? drag.initialLeft;
-          const dayOffset = Math.round(finalLeft / dayWidth);
-          const newStart = addDays(minDate, dayOffset);
+          const finalLeft = previewLeftRef.current ?? drag.initialLeft;
+          const dayOffset = Math.round(finalLeft / dw);
+          const newStart = addDays(md, dayOffset);
           if (newStart < drag.initialEndDate) {
-            onResize(drag.activityId, newStart, drag.initialEndDate);
+            onResizeRef.current(drag.activityId, newStart, drag.initialEndDate);
           }
         } else {
-          // move
-          const finalLeft = previewLeft ?? drag.initialLeft;
-          const dayOffset = Math.round((finalLeft - drag.initialLeft) / dayWidth);
+          const finalLeft = previewLeftRef.current ?? drag.initialLeft;
+          const dayOffset = Math.round((finalLeft - drag.initialLeft) / dw);
           const newStart = addDays(drag.initialStartDate, dayOffset);
           const newEnd = addDays(drag.initialEndDate, dayOffset);
-          onResize(drag.activityId, newStart, newEnd);
+          onResizeRef.current(drag.activityId, newStart, newEnd);
         }
       }
 
       dragRef.current = null;
+      previewLeftRef.current = null;
+      previewWidthRef.current = null;
       setDraggingId(null);
       setPreviewLeft(null);
       setPreviewWidth(null);
-      // Keep didDragRef.current true briefly so the click handler can check it
       setTimeout(() => { didDragRef.current = false; }, 0);
     };
 
@@ -120,7 +137,7 @@ export function useGanttBarResize({ minDate, dayWidth, onResize }: UseGanttBarRe
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [dayWidth, minDate, onResize, previewLeft, previewWidth]);
+  }, []); // No dependencies - uses refs only
 
   return {
     draggingId,

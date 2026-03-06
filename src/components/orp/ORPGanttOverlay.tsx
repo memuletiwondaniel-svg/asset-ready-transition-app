@@ -136,75 +136,77 @@ export const ORPGanttOverlay: React.FC<ORPGanttOverlayProps> = ({
               </div>
             </div>
 
-            {/* Progress Summary */}
-            <div className="mt-4 p-3 bg-muted/30 rounded-lg">
-              <div className="flex items-center justify-between text-sm mb-1.5">
-                <span className="text-muted-foreground">Overall Progress</span>
-                <span className="font-semibold">{overallProgress}%</span>
+            {/* Compact metrics row: Overall Progress (wider) + SPI + At Risk + Slippage */}
+            <div className="mt-3 flex gap-2">
+              {/* Overall Progress - wider card */}
+              <div className="flex-1 p-2.5 bg-muted/30 rounded-lg min-w-0">
+                <div className="flex items-center justify-between text-xs mb-1">
+                  <span className="text-muted-foreground">Overall Progress</span>
+                  <span className="font-semibold">{overallProgress}%</span>
+                </div>
+                <Progress value={overallProgress} className="h-1.5" />
+                <p className="text-[10px] text-muted-foreground mt-1.5 leading-relaxed line-clamp-2">
+                  {completedCount}/{totalCount} done · {inProgressCount} active · {notStartedCount} pending
+                  {vcrCount > 0 && ` · P2A ${p2aProgress}%`}
+                </p>
               </div>
-              <Progress value={overallProgress} className="h-2" />
-              
-              <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
-                {completedCount} of {totalCount} activities completed. {inProgressCount} in progress, {notStartedCount} not started.
-                {vcrCount > 0 && ` P2A readiness across ${vcrCount} VCR${vcrCount !== 1 ? 's' : ''} is at ${p2aProgress}%.`}
-                {overallProgress >= 85 ? ' The plan is on track for completion.' :
-                 overallProgress >= 50 ? ' Steady progress — focus on completing in-progress items.' :
-                 overallProgress > 0 ? ' Early stages — prioritize critical path activities.' :
-                 ' Plan activities have not yet started.'}
-              </p>
 
-              {/* Schedule Performance Metrics */}
+              {/* SPI */}
               {scheduleMetrics && (
-                <div className="grid grid-cols-3 gap-3 mt-3 pt-3 border-t border-border/40">
-                  <div className="flex items-center gap-2 p-2 rounded-md bg-background/60">
+                <>
+                  <div className="flex items-center gap-1.5 p-2.5 rounded-lg bg-muted/30 shrink-0">
                     <div className={cn(
-                      "w-7 h-7 rounded-md flex items-center justify-center",
+                      "w-6 h-6 rounded flex items-center justify-center",
                       scheduleMetrics.spi >= 80 ? "bg-green-500/10" : scheduleMetrics.spi >= 50 ? "bg-amber-500/10" : "bg-destructive/10"
                     )}>
                       {scheduleMetrics.spi >= 50
-                        ? <TrendingUp className={cn("h-3.5 w-3.5", scheduleMetrics.spi >= 80 ? "text-green-600" : "text-amber-600")} />
-                        : <TrendingDown className="h-3.5 w-3.5 text-destructive" />
+                        ? <TrendingUp className={cn("h-3 w-3", scheduleMetrics.spi >= 80 ? "text-green-600" : "text-amber-600")} />
+                        : <TrendingDown className="h-3 w-3 text-destructive" />
                       }
                     </div>
                     <div>
-                      <p className="text-[10px] text-muted-foreground">SPI</p>
+                      <p className="text-[9px] text-muted-foreground leading-none">SPI</p>
                       <p className={cn(
-                        "text-sm font-bold",
+                        "text-sm font-bold leading-tight",
                         scheduleMetrics.spi >= 80 ? "text-green-600" : scheduleMetrics.spi >= 50 ? "text-amber-600" : "text-destructive"
                       )}>{scheduleMetrics.spi}%</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 p-2 rounded-md bg-background/60">
+
+                  {/* At Risk */}
+                  <div className="flex items-center gap-1.5 p-2.5 rounded-lg bg-muted/30 shrink-0">
                     <div className={cn(
-                      "w-7 h-7 rounded-md flex items-center justify-center",
+                      "w-6 h-6 rounded flex items-center justify-center",
                       scheduleMetrics.atRisk === 0 ? "bg-green-500/10" : "bg-destructive/10"
                     )}>
-                      <AlertTriangle className={cn("h-3.5 w-3.5", scheduleMetrics.atRisk === 0 ? "text-green-600" : "text-destructive")} />
+                      <AlertTriangle className={cn("h-3 w-3", scheduleMetrics.atRisk === 0 ? "text-green-600" : "text-destructive")} />
                     </div>
                     <div>
-                      <p className="text-[10px] text-muted-foreground">At Risk</p>
+                      <p className="text-[9px] text-muted-foreground leading-none">At Risk</p>
                       <p className={cn(
-                        "text-sm font-bold",
+                        "text-sm font-bold leading-tight",
                         scheduleMetrics.atRisk === 0 ? "text-green-600" : "text-destructive"
                       )}>{scheduleMetrics.atRisk}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 p-2 rounded-md bg-background/60">
+
+                  {/* Avg Slippage */}
+                  <div className="flex items-center gap-1.5 p-2.5 rounded-lg bg-muted/30 shrink-0">
                     <div className={cn(
-                      "w-7 h-7 rounded-md flex items-center justify-center",
+                      "w-6 h-6 rounded flex items-center justify-center",
                       scheduleMetrics.avgSlippage === 0 ? "bg-green-500/10" : "bg-amber-500/10"
                     )}>
-                      <Clock className={cn("h-3.5 w-3.5", scheduleMetrics.avgSlippage === 0 ? "text-green-600" : "text-amber-600")} />
+                      <Clock className={cn("h-3 w-3", scheduleMetrics.avgSlippage === 0 ? "text-green-600" : "text-amber-600")} />
                     </div>
                     <div>
-                      <p className="text-[10px] text-muted-foreground">Avg Slippage</p>
+                      <p className="text-[9px] text-muted-foreground leading-none">Slippage</p>
                       <p className={cn(
-                        "text-sm font-bold",
+                        "text-sm font-bold leading-tight",
                         scheduleMetrics.avgSlippage === 0 ? "text-green-600" : "text-amber-600"
                       )}>{scheduleMetrics.avgSlippage}d</p>
                     </div>
                   </div>
-                </div>
+                </>
               )}
             </div>
           </DialogHeader>
