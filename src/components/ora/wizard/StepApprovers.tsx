@@ -173,9 +173,6 @@ export const StepApprovers: React.FC<Props> = ({ approvers, onApproversChange, p
                   <p className="text-sm font-medium truncate">{approver.full_name}</p>
                   <p className="text-xs text-muted-foreground truncate">{approver.position || 'No position'}</p>
                 </div>
-                <Badge variant="secondary" className="text-[10px] shrink-0">
-                  {approver.role_label}
-                </Badge>
                 <button
                   onClick={() => removeApprover(approver.user_id)}
                   className="shrink-0 p-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
