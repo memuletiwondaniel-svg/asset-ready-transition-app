@@ -205,6 +205,8 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
   const [selectedActivityId, setSelectedActivityId] = useState<string | null>(null);
   const [showRelationships, setShowRelationships] = useState(false);
   const [originalSnapshot, setOriginalSnapshot] = useState<{ description: string; startDate: string; endDate: string; durationDays: number | null; status: string } | null>(null);
+  const [showCatalogDialog, setShowCatalogDialog] = useState(false);
+  const [isAddingCustom, setIsAddingCustom] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const selectedActivities = useMemo(() => activities.filter(a => a.selected), [activities]);
