@@ -110,9 +110,10 @@ export function useGanttBarResize({ minDate, dayWidth, onResize }: UseGanttBarRe
           const finalLeft = previewLeftRef.current ?? drag.initialLeft;
           const dayOffset = Math.round(finalLeft / dw);
           const newStart = addDays(md, dayOffset);
-          if (newStart < drag.initialEndDate) {
-            onResizeRef.current(drag.activityId, newStart, drag.initialEndDate);
-          }
+          const finalWidth = previewWidthRef.current ?? drag.initialWidth;
+          const endDayOffset = Math.round((finalLeft + finalWidth) / dw);
+          const newEnd = addDays(md, endDayOffset);
+          onResizeRef.current(drag.activityId, newStart, newEnd);
         } else {
           const finalLeft = previewLeftRef.current ?? drag.initialLeft;
           const dayOffset = Math.round((finalLeft - drag.initialLeft) / dw);
