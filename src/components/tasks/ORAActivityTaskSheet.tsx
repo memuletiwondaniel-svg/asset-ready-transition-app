@@ -95,11 +95,22 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
     ? ID_BADGE_PALETTE[hashCode(activityCode) % ID_BADGE_PALETTE.length]
     : ID_BADGE_PALETTE[0];
 
+  // Derive the real DB id (strip "ora-" or "ws-" prefix if present)
+  const realOraActivityId = useMemo(() => {
+    const raw = oraActivityId || '';
+    if (raw.startsWith('ora-')) return raw.slice(4);
+    if (raw.startsWith('ws-')) return raw.slice(3);
+    return raw;
+  }, [oraActivityId]);
+
   // Initialize values when sheet opens
   useEffect(() => {
     if (open && task) {
       const initDesc = metadata?.description || task?.description || '';
-      const initStatus: ActivityStatus = 'NOT_STARTED';
+      // Map the task status back to ActivityStatus
+      const taskStatus = task?.status;
+      const initStatus: ActivityStatus = taskStatus === 'completed' ? 'COMPLETED'
+        : taskStatus === 'in_progress' ? 'IN_PROGRESS' : 'NOT_STARTED';
       setDescription(initDesc);
       setOriginalDescription(initDesc);
       setStatus(initStatus);
