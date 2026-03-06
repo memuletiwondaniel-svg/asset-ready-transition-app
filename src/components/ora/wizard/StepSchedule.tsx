@@ -201,6 +201,7 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
   const [visibleCols, setVisibleCols] = useState<Set<ColKey>>(new Set(DEFAULT_VISIBLE));
   const [selectedActivityId, setSelectedActivityId] = useState<string | null>(null);
   const [showRelationships, setShowRelationships] = useState(false);
+  const [originalSnapshot, setOriginalSnapshot] = useState<{ description: string; startDate: string; endDate: string; durationDays: number | null; status: string } | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const selectedActivities = useMemo(() => activities.filter(a => a.selected), [activities]);
@@ -222,6 +223,31 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
     () => selectedActivityId ? activities.find(a => a.id === selectedActivityId) : null,
     [selectedActivityId, activities]
   );
+
+  const isDirty = useMemo(() => {
+    if (!selectedActivity || !originalSnapshot) return false;
+    return (
+      (selectedActivity.description || '') !== originalSnapshot.description ||
+      (selectedActivity.startDate || '') !== originalSnapshot.startDate ||
+      (selectedActivity.endDate || '') !== originalSnapshot.endDate ||
+      (selectedActivity.durationDays ?? null) !== originalSnapshot.durationDays ||
+      ((selectedActivity as any).status || 'NOT_STARTED') !== originalSnapshot.status
+    );
+  }, [selectedActivity, originalSnapshot]);
+
+  const openActivitySheet = useCallback((id: string) => {
+    const act = activities.find(a => a.id === id);
+    if (act) {
+      setOriginalSnapshot({
+        description: act.description || '',
+        startDate: act.startDate || '',
+        endDate: act.endDate || '',
+        durationDays: act.durationDays ?? null,
+        status: (act as any).status || 'NOT_STARTED',
+      });
+    }
+    setSelectedActivityId(id);
+  }, [activities]);
 
   const leftPanelWidth = useMemo(() => {
     return ALL_COLS.filter(k => visibleCols.has(k)).reduce((sum, k) => sum + COL_DEFS[k].width, 0);
@@ -471,7 +497,7 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                       isParent && 'font-medium'
                     )}
                     style={{ minHeight: ROW_HEIGHT }}
-                    onClick={() => setSelectedActivityId(activity.id)}
+                    onClick={() => openActivitySheet(activity.id)}
                   >
                     {isColVisible('id') && (
                       <div className="px-1.5 flex items-center justify-center border-r border-border/40" style={{ width: COL_DEFS.id.width }}>
@@ -822,8 +848,8 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                   </div>
                 </div>
 
-                {/* Delete Activity */}
-                <div className="pt-2 border-t">
+                {/* Footer: Delete (left) + Smart Save (right) */}
+                <div className="flex items-center justify-between pt-3 border-t">
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button
@@ -832,7 +858,7 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                         className="text-destructive hover:text-destructive hover:bg-destructive/10 gap-1.5"
                       >
                         <Trash2 className="h-4 w-4" />
-                        Delete Activity
+                        Delete
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
@@ -856,6 +882,27 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
+
+                  <div className={cn(
+                    "transition-all duration-200",
+                    isDirty ? "opacity-100 translate-x-0" : "opacity-0 translate-x-2 pointer-events-none"
+                  )}>
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        setOriginalSnapshot({
+                          description: selectedActivity.description || '',
+                          startDate: selectedActivity.startDate || '',
+                          endDate: selectedActivity.endDate || '',
+                          durationDays: selectedActivity.durationDays ?? null,
+                          status: (selectedActivity as any).status || 'NOT_STARTED',
+                        });
+                        setSelectedActivityId(null);
+                      }}
+                    >
+                      Done
+                    </Button>
+                  </div>
                 </div>
               </div>
             </>
