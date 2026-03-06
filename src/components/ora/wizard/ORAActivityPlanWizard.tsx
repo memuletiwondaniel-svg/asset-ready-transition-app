@@ -566,7 +566,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
     <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
       <DialogContent className={cn(
         "max-h-[85vh] overflow-hidden flex flex-col",
-      currentStep === 4 ? "max-w-7xl w-[98vw]" : "max-w-2xl"
+        (currentStep === 4 || isReviewMode) ? "max-w-7xl w-[98vw]" : "max-w-2xl"
       )}>
         <DialogHeader className={cn("border-b pb-4", isReviewMode && "pb-2")}>
           <DialogTitle className="flex items-center gap-2 text-xl font-semibold">
