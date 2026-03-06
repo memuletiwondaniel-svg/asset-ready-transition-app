@@ -787,8 +787,8 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                           ? 'Click another date to set end' 
                           : 'Click to change start date, then end date'}
                     </div>
-                    <div className="border rounded-lg flex justify-center [&_.rdp]:scale-90 [&_.rdp]:origin-top">
-                      <Calendar
+                    <div className="border rounded-lg flex justify-center">
+                      <DrillDownCalendar
                         mode="range"
                         selected={
                           selectedActivity.startDate
@@ -815,7 +815,7 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                         }}
                         numberOfMonths={1}
                         initialFocus
-                        className={cn("p-3 pointer-events-auto")}
+                        className="scale-[0.88] origin-top"
                       />
                     </div>
 
