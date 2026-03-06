@@ -8,6 +8,7 @@ import { StepPhaseSelection } from './StepPhaseSelection';
 import { StepProjectType } from './StepProjectType';
 import { StepActivities } from './StepActivities';
 import { StepSchedule } from './StepSchedule';
+import { StepApprovers, type WizardApprover } from './StepApprovers';
 import { StepReview } from './StepReview';
 import { WizardActivity, catalogToWizardActivity } from './types';
 import { useORAActivityCatalog, useORPPhases } from '@/hooks/useORAActivityCatalog';
