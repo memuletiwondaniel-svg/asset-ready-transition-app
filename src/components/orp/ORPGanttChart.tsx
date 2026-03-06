@@ -490,8 +490,10 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                             metadata: {
                               activity_name: deliverable.deliverable?.name,
                               activity_code: deliverable.deliverable?.activity_code,
+                              description: deliverable.deliverable?.description || '',
                               plan_id: planId,
                               deliverable_id: deliverable.deliverable?.id,
+                              ora_plan_activity_id: deliverable.id,
                               start_date: deliverable.start_date,
                               end_date: deliverable.end_date,
                             },
