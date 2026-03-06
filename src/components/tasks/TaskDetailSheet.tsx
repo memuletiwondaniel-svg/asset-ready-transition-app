@@ -235,7 +235,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
             {/* ORA Plan Review CTA */}
             {isOraReviewTask && oraPlanId && (
               <Button
-                className="w-full gap-2 bg-muted hover:bg-muted/80 text-foreground font-medium border border-border"
+                className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
                 onClick={() => {
                   onOpenChange(false);
                   navigate(`/operation-readiness/${oraPlanId}`);
