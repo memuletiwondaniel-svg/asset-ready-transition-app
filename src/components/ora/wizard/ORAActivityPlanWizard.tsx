@@ -684,16 +684,18 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
-              onClick={handleClose}
+              onClick={() => {
+                if (isReviewMode) {
+                  handleClose();
+                } else if (currentStep > 1) {
+                  handleBack();
+                } else {
+                  handleClose();
+                }
+              }}
             >
               {isReviewMode ? 'Close' : (currentStep === 1 ? 'Cancel' : 'Back')}
             </Button>
-
-            {!isReviewMode && currentStep > 1 && (
-              <Button variant="outline" onClick={handleBack}>
-                Back
-              </Button>
-            )}
 
             {draftPlanId && !isReviewMode && (
               <Button
