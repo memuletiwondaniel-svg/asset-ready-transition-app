@@ -256,7 +256,7 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
   const [visibleCols, setVisibleCols] = useState<Set<ColKey>>(new Set(DEFAULT_VISIBLE));
   const [selectedActivityId, setSelectedActivityId] = useState<string | null>(null);
   const [showRelationships, setShowRelationships] = useState(false);
-  const [originalSnapshot, setOriginalSnapshot] = useState<{ description: string; startDate: string; endDate: string; durationDays: number | null; status: string } | null>(null);
+  const [originalSnapshot, setOriginalSnapshot] = useState<{ activity: string; description: string; startDate: string; endDate: string; durationDays: number | null; status: string; predecessorIds: string[] } | null>(null);
   const [showCatalogDialog, setShowCatalogDialog] = useState(false);
   const [isAddingCustom, setIsAddingCustom] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -284,11 +284,13 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
   const isDirty = useMemo(() => {
     if (!selectedActivity || !originalSnapshot) return false;
     return (
+      (selectedActivity.activity || '') !== originalSnapshot.activity ||
       (selectedActivity.description || '') !== originalSnapshot.description ||
       (selectedActivity.startDate || '') !== originalSnapshot.startDate ||
       (selectedActivity.endDate || '') !== originalSnapshot.endDate ||
       (selectedActivity.durationDays ?? null) !== originalSnapshot.durationDays ||
-      ((selectedActivity as any).status || 'NOT_STARTED') !== originalSnapshot.status
+      ((selectedActivity as any).status || 'NOT_STARTED') !== originalSnapshot.status ||
+      JSON.stringify(selectedActivity.predecessorIds) !== JSON.stringify(originalSnapshot.predecessorIds)
     );
   }, [selectedActivity, originalSnapshot]);
 
@@ -296,11 +298,13 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
     const act = activities.find(a => a.id === id);
     if (act) {
       setOriginalSnapshot({
+        activity: act.activity || '',
         description: act.description || '',
         startDate: act.startDate || '',
         endDate: act.endDate || '',
         durationDays: act.durationDays ?? null,
         status: (act as any).status || 'NOT_STARTED',
+        predecessorIds: [...(act.predecessorIds || [])],
       });
     }
     setSelectedActivityId(id);
@@ -955,22 +959,69 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                   <div className="space-y-3 mt-1.5">
                     {/* Date summary row */}
                     <div className="flex items-center gap-3 text-xs">
-                      <div className="flex-1 rounded-md border p-2 text-center">
-                        <div className="text-[10px] text-muted-foreground mb-0.5">Start</div>
-                        <div className={cn("font-medium", selectedActivity.startDate ? "text-foreground" : "text-muted-foreground/50")}>
-                          {selectedActivity.startDate ? format(parseISO(selectedActivity.startDate), 'dd MMM yyyy') : '—'}
-                        </div>
-                      </div>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <button className="flex-1 rounded-md border p-2 text-center cursor-pointer hover:bg-accent/30 transition-colors">
+                            <div className="text-[10px] text-primary font-semibold mb-0.5">Start</div>
+                            <div className={cn("font-medium", selectedActivity.startDate ? "text-foreground" : "text-muted-foreground/50")}>
+                              {selectedActivity.startDate ? format(parseISO(selectedActivity.startDate), 'dd MMM yyyy') : '—'}
+                            </div>
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={selectedActivity.startDate ? parseISO(selectedActivity.startDate) : undefined}
+                            onSelect={(date) => {
+                              if (date) {
+                                const updates: Partial<WizardActivity> = { startDate: format(date, 'yyyy-MM-dd') };
+                                if (selectedActivity.durationDays) {
+                                  updates.endDate = format(addDays(date, selectedActivity.durationDays), 'yyyy-MM-dd');
+                                }
+                                updateActivity(selectedActivity.id, updates);
+                              }
+                            }}
+                            initialFocus
+                            className="p-3 pointer-events-auto"
+                          />
+                        </PopoverContent>
+                      </Popover>
                       <span className="text-muted-foreground">→</span>
-                      <div className="flex-1 rounded-md border p-2 text-center">
-                        <div className="text-[10px] text-muted-foreground mb-0.5">End</div>
-                        <div className={cn("font-medium", selectedActivity.endDate ? "text-foreground" : "text-muted-foreground/50")}>
-                          {selectedActivity.endDate ? format(parseISO(selectedActivity.endDate), 'dd MMM yyyy') : '—'}
-                        </div>
-                      </div>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <button className="flex-1 rounded-md border p-2 text-center cursor-pointer hover:bg-accent/30 transition-colors">
+                            <div className="text-[10px] text-primary font-semibold mb-0.5">End</div>
+                            <div className={cn("font-medium", selectedActivity.endDate ? "text-foreground" : "text-muted-foreground/50")}>
+                              {selectedActivity.endDate ? format(parseISO(selectedActivity.endDate), 'dd MMM yyyy') : '—'}
+                            </div>
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="end">
+                          <Calendar
+                            mode="single"
+                            selected={selectedActivity.endDate ? parseISO(selectedActivity.endDate) : undefined}
+                            onSelect={(date) => {
+                              if (date) {
+                                updateActivity(selectedActivity.id, { endDate: format(date, 'yyyy-MM-dd') });
+                              }
+                            }}
+                            initialFocus
+                            className="p-3 pointer-events-auto"
+                          />
+                        </PopoverContent>
+                      </Popover>
                       <div className="w-16 rounded-md border p-2 text-center">
                         <div className="text-[10px] text-muted-foreground mb-0.5">Days</div>
-                        <div className="font-medium">{selectedActivity.durationDays ?? '—'}</div>
+                        <Input
+                          type="number" min={1}
+                          value={selectedActivity.durationDays ?? ''}
+                          onChange={(e) => {
+                            const days = parseInt(e.target.value) || null;
+                            updateActivity(selectedActivity.id, { durationDays: days });
+                          }}
+                          className="h-6 w-full text-xs text-center border-0 p-0 font-medium bg-transparent focus-visible:ring-0"
+                          placeholder="—"
+                        />
                       </div>
                     </div>
 
@@ -1014,17 +1065,7 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                       />
                     </div>
 
-                    {/* Duration manual input */}
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">Duration (days)</span>
-                      <Input
-                        type="number" min={1}
-                        value={selectedActivity.durationDays ?? ''}
-                        onChange={(e) => updateActivity(selectedActivity.id, { durationDays: parseInt(e.target.value) || null })}
-                        className="h-7 w-20 text-xs text-center"
-                        placeholder="—"
-                      />
-                    </div>
+                    {/* Status */}
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">Status</span>
                       <Select
@@ -1149,11 +1190,13 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                       size="sm"
                       onClick={() => {
                         setOriginalSnapshot({
+                          activity: selectedActivity.activity || '',
                           description: selectedActivity.description || '',
                           startDate: selectedActivity.startDate || '',
                           endDate: selectedActivity.endDate || '',
                           durationDays: selectedActivity.durationDays ?? null,
                           status: (selectedActivity as any).status || 'NOT_STARTED',
+                          predecessorIds: [...(selectedActivity.predecessorIds || [])],
                         });
                         setSelectedActivityId(null);
                       }}
