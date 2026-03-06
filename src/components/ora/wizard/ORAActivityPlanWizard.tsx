@@ -161,22 +161,21 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
         .eq('id', draftPlanId);
       if (error) throw error;
     } else {
-      // Only check for existing DRAFT plans — not PENDING_APPROVAL or other statuses
-      const { data: existingDrafts } = await (supabase as any)
+      // Check for ANY existing active plan for this project (draft or otherwise)
+      const { data: existingPlans } = await (supabase as any)
         .from('orp_plans')
-        .select('id')
+        .select('id, status')
         .eq('project_id', projectId)
-        .eq('status', 'DRAFT')
         .eq('is_active', true)
         .limit(1);
 
-      if (existingDrafts && existingDrafts.length > 0) {
-        // Reuse the existing draft
-        const existingId = existingDrafts[0].id;
+      if (existingPlans && existingPlans.length > 0) {
+        // Reuse the existing plan — update its wizard_state
+        const existingId = existingPlans[0].id;
         setDraftPlanId(existingId);
         const { error } = await (supabase as any)
           .from('orp_plans')
-          .update({ phase: orpPhase, wizard_state: wizardState })
+          .update({ phase: orpPhase, wizard_state: wizardState, status: 'DRAFT' })
           .eq('id', existingId);
         if (error) throw error;
         return;
