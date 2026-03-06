@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { CalendarCheck, Loader2, Check, AlertCircle, Save, Trash2 } from 'lucide-react';
+import { CalendarCheck, Loader2, Check, AlertCircle, Save, Trash2, CheckCircle, XCircle } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 import { StepPhaseSelection } from './StepPhaseSelection';
@@ -15,6 +15,8 @@ import { useORAActivityCatalog, useORPPhases } from '@/hooks/useORAActivityCatal
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Progress } from '@/components/ui/progress';
+import { Textarea } from '@/components/ui/textarea';
+import { Separator } from '@/components/ui/separator';
 import { useQueryClient } from '@tanstack/react-query';
 import { useORPPlans } from '@/hooks/useORPPlans';
 
@@ -61,6 +63,8 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [draftPlanId, setDraftPlanId] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [reviewComment, setReviewComment] = useState('');
+  const [isApprovingOrRejecting, setIsApprovingOrRejecting] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { deletePlan, isDeletingPlan } = useORPPlans();
@@ -112,6 +116,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
     setActivities([]);
     setApprovers([]);
     setDraftPlanId(null);
+    setReviewComment('');
   };
 
   // Check for existing draft on open (or load specific plan in review mode)
@@ -328,6 +333,107 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
       toast({ title: 'Save failed', description: err.message, variant: 'destructive' });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  // Review mode: save changes to wizard_state without re-inserting deliverables
+  const handleReviewSave = async () => {
+    if (!draftPlanId) return;
+    try {
+      setIsSaving(true);
+      const wizardState = {
+        phase,
+        projectType,
+        activities,
+        approvers,
+        currentStep: 4,
+        visitedSteps: [1, 2, 3, 4, 5, 6],
+      };
+      const { error } = await (supabase as any)
+        .from('orp_plans')
+        .update({ wizard_state: wizardState })
+        .eq('id', draftPlanId);
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ['project-orp-plans'] });
+      queryClient.invalidateQueries({ queryKey: ['orp-plans'] });
+      toast({ title: 'Changes saved', description: 'Your edits to the ORA Plan have been saved.' });
+    } catch (err: any) {
+      toast({ title: 'Save failed', description: err.message, variant: 'destructive' });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Review mode: approve or reject the plan
+  const handleReviewDecision = async (decision: 'APPROVED' | 'REJECTED') => {
+    if (!draftPlanId) return;
+    try {
+      setIsApprovingOrRejecting(true);
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) throw new Error('Not authenticated');
+
+      // Save any schedule edits first
+      await handleReviewSave();
+
+      // Update the approver's record in orp_approvals
+      const { error: approvalError } = await supabase
+        .from('orp_approvals')
+        .update({
+          status: decision,
+          comments: reviewComment || null,
+          approved_at: new Date().toISOString(),
+        } as any)
+        .eq('orp_plan_id', draftPlanId)
+        .eq('approver_user_id', user.user.id);
+
+      if (approvalError) throw approvalError;
+
+      // Check if ALL approvers have approved → update plan status
+      const { data: allApprovals } = await supabase
+        .from('orp_approvals')
+        .select('status')
+        .eq('orp_plan_id', draftPlanId);
+
+      const allApproved = allApprovals?.every((a: any) => a.status === 'APPROVED');
+      const anyRejected = allApprovals?.some((a: any) => a.status === 'REJECTED');
+
+      if (anyRejected) {
+        await (supabase as any)
+          .from('orp_plans')
+          .update({ status: 'DRAFT' })
+          .eq('id', draftPlanId);
+      } else if (allApproved) {
+        await (supabase as any)
+          .from('orp_plans')
+          .update({ status: 'APPROVED' })
+          .eq('id', draftPlanId);
+      }
+
+      // Mark the reviewer's task as completed
+      await supabase
+        .from('user_tasks')
+        .update({ status: 'completed' } as any)
+        .eq('user_id', user.user.id)
+        .eq('type', 'ora_plan_review')
+        .filter('metadata->>plan_id', 'eq', draftPlanId);
+
+      queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['orp-plans'] });
+      queryClient.invalidateQueries({ queryKey: ['project-orp-plans'] });
+
+      toast({
+        title: decision === 'APPROVED' ? 'Plan Approved' : 'Plan Rejected',
+        description: decision === 'APPROVED'
+          ? 'The ORA Plan has been approved.'
+          : 'The ORA Plan has been rejected and returned to draft.',
+      });
+      onOpenChange(false);
+      resetForm();
+      onSuccess?.();
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    } finally {
+      setIsApprovingOrRejecting(false);
     }
   };
 
@@ -679,39 +785,99 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
           )}
         </div>
 
-        {/* Navigation */}
-        <div className="flex items-center justify-between pt-4 border-t">
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              onClick={() => {
-                if (isReviewMode) {
-                  handleClose();
-                } else if (currentStep > 1) {
-                  handleBack();
-                } else {
-                  handleClose();
-                }
-              }}
-            >
-              {isReviewMode ? 'Close' : (currentStep === 1 ? 'Cancel' : 'Back')}
-            </Button>
-
-            {draftPlanId && !isReviewMode && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10"
-                onClick={() => setDeleteDialogOpen(true)}
-              >
-                <Trash2 className="w-4 h-4" />
-                Delete Draft
+        {/* Review mode: Comments + Approve/Reject/Save */}
+        {isReviewMode && (
+          <div className="pt-4 border-t space-y-4">
+            <div>
+              <label className="text-sm font-medium text-foreground mb-2 block">
+                Comments <span className="text-muted-foreground font-normal">(optional)</span>
+              </label>
+              <Textarea
+                placeholder="Add any comments or notes about your review..."
+                value={reviewComment}
+                onChange={(e) => setReviewComment(e.target.value)}
+                className="min-h-[80px] resize-none"
+              />
+            </div>
+            <Separator />
+            <div className="flex items-center justify-between">
+              <Button variant="outline" onClick={handleClose}>
+                Close
               </Button>
-            )}
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  onClick={handleReviewSave}
+                  disabled={isSaving || isApprovingOrRejecting}
+                  className="gap-1.5 text-muted-foreground"
+                >
+                  {isSaving ? (
+                    <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>
+                  ) : (
+                    <><Save className="w-4 h-4" /> Save Changes</>
+                  )}
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => handleReviewDecision('REJECTED')}
+                  disabled={isApprovingOrRejecting || isSaving}
+                  className="gap-2"
+                >
+                  {isApprovingOrRejecting ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <XCircle className="w-4 h-4" />
+                  )}
+                  Reject
+                </Button>
+                <Button
+                  onClick={() => handleReviewDecision('APPROVED')}
+                  disabled={isApprovingOrRejecting || isSaving}
+                  className="gap-2 bg-green-600 hover:bg-green-700 text-white"
+                >
+                  {isApprovingOrRejecting ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <CheckCircle className="w-4 h-4" />
+                  )}
+                  Approve
+                </Button>
+              </div>
+            </div>
           </div>
+        )}
 
-          <div className="flex items-center gap-2">
-            {!isReviewMode && (
+        {/* Navigation - create mode only */}
+        {!isReviewMode && (
+          <div className="flex items-center justify-between pt-4 border-t">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (currentStep > 1) {
+                    handleBack();
+                  } else {
+                    handleClose();
+                  }
+                }}
+              >
+                {currentStep === 1 ? 'Cancel' : 'Back'}
+              </Button>
+
+              {draftPlanId && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10"
+                  onClick={() => setDeleteDialogOpen(true)}
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Delete Draft
+                </Button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
                 onClick={handleSaveDraft}
@@ -724,31 +890,23 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
                   <><Save className="w-4 h-4" /> Save & Exit</>
                 )}
               </Button>
-            )}
 
-            {isReviewMode ? (
-              <Button onClick={handleCreate} disabled={isCreating} className="gap-2">
-                {isCreating ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>
-                ) : (
-                  'Save Changes'
-                )}
-              </Button>
-            ) : currentStep < 6 ? (
-              <Button onClick={handleNext} disabled={!validateStep(currentStep)}>
-                Next
-              </Button>
-            ) : (
-              <Button onClick={handleCreate} disabled={isCreating} className="gap-2">
-                {isCreating ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" /> Submitting...</>
-                ) : (
-                  'Submit for Approval'
-                )}
-              </Button>
-            )}
+              {currentStep < 6 ? (
+                <Button onClick={handleNext} disabled={!validateStep(currentStep)}>
+                  Next
+                </Button>
+              ) : (
+                <Button onClick={handleCreate} disabled={isCreating} className="gap-2">
+                  {isCreating ? (
+                    <><Loader2 className="w-4 h-4 animate-spin" /> Submitting...</>
+                  ) : (
+                    'Submit for Approval'
+                  )}
+                </Button>
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </DialogContent>
     </Dialog>
 
