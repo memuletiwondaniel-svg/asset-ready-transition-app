@@ -213,7 +213,7 @@ export const StepApprovers: React.FC<Props> = ({ approvers, onApproversChange, p
                       className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md hover:bg-accent/50 transition-colors text-left"
                     >
                       <Avatar className="h-7 w-7">
-                        <AvatarImage src={profile.avatar_url || undefined} />
+                        <AvatarImage src={getFullAvatarUrl(profile.avatar_url)} />
                         <AvatarFallback className="text-[10px] bg-muted">
                           {getInitials(profile.full_name || '?')}
                         </AvatarFallback>
