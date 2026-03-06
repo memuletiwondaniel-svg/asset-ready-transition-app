@@ -395,6 +395,20 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
     const startStr = format(newStart, 'yyyy-MM-dd');
     const endStr = format(newEnd, 'yyyy-MM-dd');
     const durationDays = differenceInDays(newEnd, newStart);
+
+    // Optimistically update the query cache so bars don't snap back
+    queryClient.setQueriesData({ queryKey: ['orp-plan'] }, (old: any) => {
+      if (!old?.deliverables) return old;
+      return {
+        ...old,
+        deliverables: old.deliverables.map((d: any) =>
+          d.id === activityId
+            ? { ...d, start_date: startStr, end_date: endStr, duration_days: durationDays }
+            : d
+        ),
+      };
+    });
+
     await supabase
       .from('ora_plan_activities')
       .update({ start_date: startStr, end_date: endStr, duration_days: durationDays })
@@ -637,7 +651,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
       <CardContent>
         <div className="border rounded-lg overflow-hidden bg-background">
           {/* Scrollable area with sticky header */}
-          <div className="max-h-[60vh] overflow-y-auto" ref={scrollContainerRef}>
+          <div className="max-h-[70vh] overflow-y-auto" ref={scrollContainerRef}>
             {/* Sticky header row */}
             <div className="flex sticky top-0 z-20 bg-background">
               <div className="shrink-0 border-r bg-muted/30" style={{ width: leftPanelWidth }}>
