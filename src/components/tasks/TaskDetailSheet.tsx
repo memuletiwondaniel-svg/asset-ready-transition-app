@@ -346,6 +346,20 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
         />
       )}
 
+      {/* ORA Plan Review Wizard */}
+      {isOraReviewTask && oraPlanId && oraProjectId && (
+        <ORAActivityPlanWizard
+          open={oraReviewWizardOpen}
+          onOpenChange={setOraReviewWizardOpen}
+          projectId={oraProjectId}
+          planId={oraPlanId}
+          mode="review"
+          onSuccess={() => {
+            setOraReviewWizardOpen(false);
+            onOpenChange(false);
+          }}
+        />
+      )}
 
       {/* ORA Activity Task Sheet */}
       {isOraActivityTask && (
