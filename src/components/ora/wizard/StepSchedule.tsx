@@ -9,8 +9,10 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { WizardActivity } from './types';
+import { WizardActivity, catalogToWizardActivity } from './types';
 import { format, parseISO, addDays, differenceInDays, startOfDay } from 'date-fns';
+import { useORAActivityCatalog } from '@/hooks/useORAActivityCatalog';
+import { AddFromCatalogDialog } from './AddFromCatalogDialog';
 import { cn } from '@/lib/utils';
 import { useGanttBarResize } from '@/hooks/useGanttBarResize';
 import {
