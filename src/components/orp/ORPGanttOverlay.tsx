@@ -104,9 +104,28 @@ export const ORPGanttOverlay: React.FC<ORPGanttOverlayProps> = ({
                   <CalendarCheck className="h-3.5 w-3.5 text-white" />
                 </div>
                 <div>
-                  <DialogTitle className="text-sm font-bold">
-                    ORA Plan
-                  </DialogTitle>
+                  <div className="flex items-center gap-2">
+                    <DialogTitle className="text-sm font-bold">
+                      ORA Plan
+                    </DialogTitle>
+                    {statusConfig && (
+                      <button
+                        onClick={() => setApprovalsOpen(true)}
+                        className="focus:outline-none"
+                      >
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "text-[10px] gap-1 cursor-pointer hover:opacity-80 transition-opacity",
+                            statusConfig.className
+                          )}
+                        >
+                          <StatusIcon className="h-3 w-3" />
+                          {statusConfig.label}
+                        </Badge>
+                      </button>
+                    )}
+                  </div>
                   <DialogDescription className="sr-only">
                     View ORA Plan schedule and approval status
                   </DialogDescription>
@@ -118,7 +137,7 @@ export const ORPGanttOverlay: React.FC<ORPGanttOverlayProps> = ({
             </div>
 
             {/* Metrics row */}
-            <div className="mt-2.5 grid grid-cols-[minmax(180px,0.6fr)_auto_auto_auto_1fr] gap-2 items-stretch">
+            <div className="mt-2.5 grid grid-cols-[minmax(180px,0.6fr)_auto_auto_auto] gap-2 items-stretch">
               {/* Overall Progress */}
               <div className="p-3 bg-muted/30 rounded-xl border border-border/30 min-w-0">
                 <div className="flex items-center justify-between text-xs mb-1.5">
@@ -199,27 +218,6 @@ export const ORPGanttOverlay: React.FC<ORPGanttOverlayProps> = ({
                     <p className="text-[9px] text-muted-foreground mt-0.5 font-medium">Slippage</p>
                   </div>
                 </>
-              )}
-
-              {/* Status badge - positioned as last item */}
-              {statusConfig && (
-                <div className="flex items-start justify-center pt-1">
-                  <button
-                    onClick={() => setApprovalsOpen(true)}
-                    className="focus:outline-none"
-                  >
-                    <Badge
-                      variant="outline"
-                      className={cn(
-                        "text-[10px] gap-1 cursor-pointer hover:opacity-80 transition-opacity",
-                        statusConfig.className
-                      )}
-                    >
-                      <StatusIcon className="h-3 w-3" />
-                      {statusConfig.label}
-                    </Badge>
-                  </button>
-                </div>
               )}
             </div>
           </DialogHeader>
