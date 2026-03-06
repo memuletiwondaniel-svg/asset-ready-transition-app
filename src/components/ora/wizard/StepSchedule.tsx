@@ -611,7 +611,7 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
             <div className="shrink-0 border-r" style={{ width: leftPanelWidth }}>
               {visibleRows.map((row, index) => {
                 const { activity, depth, hasChildren } = row;
-                const idColors = getIdBadgeClasses(activity.activityCode);
+                const idColors = getActivityBadgeClasses(index);
                 const status = (activity as any).status || 'NOT_STARTED';
                 const isExpanded = expandedIds.has(activity.id);
                 const isParent = hasChildren;
