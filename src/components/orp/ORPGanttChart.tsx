@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import { useGanttBarResize } from '@/hooks/useGanttBarResize';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 
 interface ORPGanttChartProps {
   planId: string;
@@ -431,31 +432,42 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
           <CardTitle>Gantt Chart</CardTitle>
           <div className="flex items-center gap-2">
             {/* Expand/Collapse toggle */}
-            <Button variant="outline" size="sm" className="h-7 px-2 text-[10px] font-medium gap-1" onClick={isAllExpanded ? collapseAll : expandAll}>
-              <ChevronsUpDown className="w-3 h-3" /> {isAllExpanded ? 'Collapse' : 'Expand'}
-            </Button>
+            <TooltipProvider delayDuration={300}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline" size="icon" className="h-7 w-7" onClick={isAllExpanded ? collapseAll : expandAll}>
+                    <ChevronsUpDown className="w-3.5 h-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom"><p>{isAllExpanded ? 'Collapse All' : 'Expand All'}</p></TooltipContent>
+              </Tooltip>
 
-            <div className="w-px h-5 bg-border" />
+              <div className="w-px h-5 bg-border" />
 
-            {/* Relationships toggle */}
-            <Button
-              variant={showRelationships ? 'secondary' : 'outline'}
-              size="sm"
-              className="h-7 px-2 text-[10px] font-medium gap-1"
-              onClick={() => setShowRelationships(!showRelationships)}
-            >
-              <GitBranch className="w-3 h-3" />
-              Relations
-            </Button>
+              {/* Relationships toggle */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant={showRelationships ? 'default' : 'outline'}
+                    size="icon"
+                    className={cn("h-7 w-7", showRelationships && "bg-primary text-primary-foreground")}
+                    onClick={() => setShowRelationships(!showRelationships)}
+                  >
+                    <GitBranch className="w-3.5 h-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom"><p>Relations</p></TooltipContent>
+              </Tooltip>
 
-            {/* Column visibility toggle */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="h-7 px-2 text-[10px] font-medium gap-1">
-                  <Columns3 className="w-3 h-3" />
-                  Columns
-                </Button>
-              </PopoverTrigger>
+              {/* Column visibility toggle */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="icon" className="h-7 w-7">
+                        <Columns3 className="w-3.5 h-3.5" />
+                      </Button>
+                    </PopoverTrigger>
               <PopoverContent className="w-40 p-2" align="end">
                 <div className="space-y-1">
                   {TOGGLEABLE_COLUMNS.map(col => (
@@ -470,7 +482,11 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                   ))}
                 </div>
               </PopoverContent>
-            </Popover>
+                  </Popover>
+                </TooltipTrigger>
+                <TooltipContent side="bottom"><p>Columns</p></TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
 
             {/* Zoom presets */}
             <div className="flex items-center gap-1">
@@ -699,19 +715,29 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                           <div className="absolute top-0 bottom-0 border-l-2 border-dashed border-primary/60 z-10" style={{ left: todayPosition }} />
                         )}
 
-                        {barPos && isParent && (
-                          <div
-                            className={cn(
-                              "absolute rounded-sm transition-all border-2",
-                              barColor.replace('bg-', 'border-'),
-                              "bg-transparent opacity-60"
-                            )}
-                            style={{ left: barPos.left, width: barPos.width, top: ROW_HEIGHT / 2 - 4, height: 8 }}
-                            title={`${deliverable.deliverable?.name} (summary)`}
-                          >
-                            <div className={cn("h-full rounded-sm", barColor, "opacity-30")} />
-                          </div>
-                        )}
+                        {barPos && isParent && (() => {
+                          const mutedColor = BAR_COLORS_MUTED[prefix] || 'bg-muted';
+                          const range = getParentDateRange(activityCode, childrenMap);
+                          const parentDuration = range.minStart && range.maxEnd ? differenceInDays(range.maxEnd, range.minStart) : null;
+
+                          return (
+                            <div
+                              className={cn(
+                                "absolute top-2 rounded shadow-sm overflow-hidden",
+                                mutedColor
+                              )}
+                              style={{ left: barPos.left, width: barPos.width, height: ROW_HEIGHT - 16 }}
+                              title={`${deliverable.deliverable?.name} (summary)`}
+                            >
+                              <div className={cn("absolute h-full rounded-l", barColor, "opacity-40")} style={{ width: '100%' }} />
+                              <div className="absolute inset-0 flex items-center justify-center z-10">
+                                <span className="text-[9px] text-white font-medium drop-shadow-sm">
+                                  {parentDuration !== null ? `${parentDuration}d` : ''}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })()}
 
                         {barPos && !isParent && (() => {
                           const isDragging = draggingId === deliverable.id;
@@ -779,6 +805,62 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                       </div>
                     );
                   })}
+                  {/* Relationship arrows SVG overlay */}
+                  {showRelationships && (
+                    <svg
+                      className="absolute top-0 left-0 pointer-events-none z-20"
+                      style={{ width: timelineWidth, height: visibleRows.length * ROW_HEIGHT }}
+                    >
+                      <defs>
+                        <marker id="rel-arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                          <path d="M0,0 L6,3 L0,6 Z" fill="hsl(var(--destructive))" />
+                        </marker>
+                      </defs>
+                      {visibleRows.map((row, rowIdx) => {
+                        const predecessorIds = row.deliverable._predecessorIds || [];
+                        if (!predecessorIds.length) return null;
+
+                        // Find this row's bar position
+                        const hasDates = row.deliverable.start_date && row.deliverable.end_date;
+                        if (!hasDates) return null;
+                        const toPos = getBarPosition(row.deliverable.start_date, row.deliverable.end_date);
+                        const toY = rowIdx * ROW_HEIGHT + ROW_HEIGHT / 2;
+                        const toX = toPos.left;
+
+                        return predecessorIds.map((predCode: string) => {
+                          // Find predecessor row
+                          const predIdx = visibleRows.findIndex(r => {
+                            const code = r.deliverable.deliverable?.activity_code;
+                            const id = r.deliverable.deliverable?.id || r.deliverable.id;
+                            return code === predCode || id === predCode;
+                          });
+                          if (predIdx === -1) return null;
+                          const predRow = visibleRows[predIdx];
+                          const predHasDates = predRow.deliverable.start_date && predRow.deliverable.end_date;
+                          if (!predHasDates) return null;
+                          const fromPos = getBarPosition(predRow.deliverable.start_date, predRow.deliverable.end_date);
+                          const fromX = fromPos.left + fromPos.width;
+                          const fromY = predIdx * ROW_HEIGHT + ROW_HEIGHT / 2;
+
+                          // L-shaped path: right from predecessor end, then down/up to successor start
+                          const midX = fromX + 10;
+                          const path = `M${fromX},${fromY} L${midX},${fromY} L${midX},${toY} L${toX},${toY}`;
+
+                          return (
+                            <path
+                              key={`${predCode}-${row.activityCode}`}
+                              d={path}
+                              fill="none"
+                              stroke="hsl(var(--destructive))"
+                              strokeWidth="1.5"
+                              markerEnd="url(#rel-arrow)"
+                              opacity="0.7"
+                            />
+                          );
+                        });
+                      })}
+                    </svg>
+                  )}
                 </div>
               </div>
             </div>

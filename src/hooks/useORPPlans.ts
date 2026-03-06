@@ -532,6 +532,18 @@ export const useORPPlanDetails = (planId: string) => {
         .eq('orp_plan_id', planId)
         .order('activity_code');
 
+      // Extract predecessorIds from wizard_state for matching
+      const ws = (data as any).wizard_state;
+      const wsActivities = ws?.activities && Array.isArray(ws.activities) ? ws.activities : [];
+      const predecessorMap = new Map<string, string[]>();
+      wsActivities.forEach((a: any) => {
+        const code = a.activityCode || a.activity_code || '';
+        const preds = a.predecessorIds || [];
+        if (code && preds.length > 0) predecessorMap.set(code, preds);
+        // Also map by id
+        if (a.id && preds.length > 0) predecessorMap.set(a.id, preds);
+      });
+
       // Convert ora_plan_activities into deliverable-compatible format
       const activityDeliverables = (oraActivities || []).map((a: any) => ({
         id: `ora-${a.id}`,
@@ -550,6 +562,7 @@ export const useORPPlanDetails = (planId: string) => {
         dependencies: [],
         _isOraActivity: true,
         _sourceType: a.source_type,
+        _predecessorIds: predecessorMap.get(a.activity_code) || predecessorMap.get(a.source_ref_id) || [],
       }));
 
       // Fallback: if no ora_plan_activities AND no orp_plan_deliverables, use wizard_state
@@ -576,6 +589,7 @@ export const useORPPlanDetails = (planId: string) => {
               collaborators: [],
               dependencies: [],
               _isWizardState: true,
+              _predecessorIds: a.predecessorIds || [],
             }));
         }
       }
