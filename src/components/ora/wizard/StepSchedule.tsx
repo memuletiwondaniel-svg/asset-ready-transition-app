@@ -287,6 +287,33 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
 
   const collapseAll = () => setExpandedIds(new Set());
 
+  const handleAddFromCatalog = (newActivities: WizardActivity[]) => {
+    onActivitiesChange([...activities, ...newActivities]);
+    setShowCatalogDialog(false);
+  };
+
+  const handleAddCustom = () => {
+    const customActivity: WizardActivity = {
+      id: `custom-${Date.now()}`,
+      activityCode: `CUSTOM-${Date.now()}`,
+      activity: 'New Custom Activity',
+      description: null,
+      phaseId: null,
+      parentActivityId: null,
+      durationHigh: null,
+      durationMed: null,
+      durationLow: null,
+      selected: true,
+      durationDays: null,
+      startDate: '',
+      endDate: '',
+      predecessorIds: [],
+    };
+    onActivitiesChange([...activities, customActivity]);
+    // Open the sheet immediately so user can edit details
+    setTimeout(() => openActivitySheet(customActivity.id), 50);
+  };
+
   const updateActivity = useCallback((id: string, updates: Partial<WizardActivity & { status?: string }>) => {
     onActivitiesChange(activities.map(a => {
       if (a.id !== id) return a;
