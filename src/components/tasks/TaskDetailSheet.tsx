@@ -236,7 +236,10 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
             {isOraReviewTask && oraPlanId && (
               <Button
                 className="w-full gap-2 bg-muted hover:bg-muted/80 text-foreground font-medium border border-border"
-                onClick={() => setOraReviewOpen(true)}
+                onClick={() => {
+                  onOpenChange(false);
+                  navigate(`/operation-readiness/${oraPlanId}`);
+                }}
               >
                 <CalendarCheck className="h-4 w-4" />
                 Review ORA Plan
