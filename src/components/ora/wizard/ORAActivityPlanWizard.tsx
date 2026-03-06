@@ -340,13 +340,21 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
       let planId = draftPlanId;
 
       if (draftPlanId) {
-        // Upgrade draft to PENDING_APPROVAL
+        // Upgrade draft to PENDING_APPROVAL (preserve wizard_state for reviewers)
+        const wizardState = {
+          phase,
+          projectType,
+          activities,
+          approvers,
+          currentStep,
+          visitedSteps: Array.from(visitedSteps),
+        };
         const { error } = await (supabase as any)
           .from('orp_plans')
           .update({
             phase: orpPhase,
             status: 'PENDING_APPROVAL',
-            wizard_state: null,
+            wizard_state: wizardState,
           })
           .eq('id', draftPlanId);
         if (error) throw error;
