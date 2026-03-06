@@ -1,77 +1,67 @@
 
 
-# Plan: ORIP Scoring Engine Using Existing VCR Item Categories
+## Plan: Fix Relations, Add Critical Path & Metrics, Sticky Toolbar, Editable Dates, Remove "View Full Plan"
 
-## Impact Assessment: Zero Breaking Changes
+### 1. Fix Relationship Arrows (Currently Broken)
 
-**No existing workflows will be affected.** The approach reuses the existing `vcr_item_categories` table (Design Integrity, Technical Integrity, Operating Integrity, Management Systems, Health & Safety) as the readiness dimensions for ORI scoring. All changes are additive:
+The relationship arrows use `_predecessorIds` from deliverable data (line 819), but this array is likely not populated correctly from wizard_state predecessors. The arrows render as L-shaped SVG paths between predecessor end and successor start — but the predecessor lookup (line 831-835) matches by `activity_code` or `id`, which may not align with how predecessors are stored in wizard_state.
 
-- The `vcr_item_categories` table gets a `tenant_id` column and weight/confidence fields -- existing rows remain intact
-- The `readiness_nodes` table gets a new nullable `dimension_id` column pointing to `vcr_item_categories`
-- The `sync_readiness_nodes` and `calculate_ori_score` functions are replaced with enhanced versions that use category-based dimensions instead of module-based grouping
-- Existing P2A, ORA, PSSR, ORM workflows are untouched -- the ontology layer only reads from them
+**Fix in `ORPGanttChart.tsx`**:
+- Debug the predecessor data flow from `useORPPlanDetails` → ensure `_predecessorIds` contains valid activity codes
+- Fix the matching logic to handle prefixed IDs and code formats consistently
+- Need to check `useORPPlans.ts` to see how `_predecessorIds` is populated on deliverables
 
-## Current VCR Item Categories (Become Readiness Dimensions)
+### 2. Critical Path Highlighting
 
-| Code | Name | Active |
-|------|------|--------|
-| DI2 | Design Integrity | Yes |
-| TI | Technical Integrity | Yes |
-| OI | Operating Integrity | Yes |
-| MS | Management Systems | Yes |
-| HS | Health & Safety | Yes |
+Add a "Critical Path" toggle button next to the Relations button in the toolbar. Critical path = the longest chain of dependent activities (using predecessors) that determines the minimum project duration.
 
-These become the tenant-configurable readiness dimensions. Different tenants can add/rename/reweight their own categories.
+**Logic**:
+- Build a dependency graph from predecessor relationships
+- Forward-pass to compute earliest start/finish, backward-pass for latest start/finish
+- Activities where earliest == latest are on the critical path (zero float)
+- Highlight critical path bars with a red/orange border or distinct styling
+- Add a `Route` icon toggle button in the toolbar
 
-## Implementation Tasks
+**File**: `ORPGanttChart.tsx` — add toggle state, compute critical path in `useMemo`, apply styling to bars
 
-### Task 1: Extend `vcr_item_categories` for ORI Scoring
-Add columns to make categories serve double duty as readiness dimensions:
-- `tenant_id UUID` (nullable, defaults via trigger -- existing rows get current tenant)
-- `default_weight NUMERIC(5,4)` (e.g., 0.20 = 20%)
-- `confidence_factor_default NUMERIC(3,2)` (default 0.8)
-- `risk_severity_multiplier NUMERIC(3,1)` (default 1.0)
-- `is_readiness_dimension BOOLEAN DEFAULT true`
+### 3. Schedule Performance Metrics
 
-Add `dimension_id UUID REFERENCES vcr_item_categories(id)` to `readiness_nodes`.
+Add a small metrics row below the progress bar in the overlay showing:
+- **SPI (Schedule Performance Index)**: % of activities on/ahead of schedule vs behind
+- **Activities at Risk**: count of activities past their end date but not completed
+- **Average Slippage**: mean days behind for overdue activities
 
-### Task 2: Enhanced ORI Formula
-Replace `calculate_ori_score()` with the full ORIP formula:
+**File**: `ORPGanttOverlay.tsx` — compute from deliverables data, render as small stat cards below the narrative
 
-```
-DS_i = (Σ Subcomponent_Weight × Completion%) × Confidence_Factor
-RP_i = Σ (Risk_Severity × Impact_Multiplier)  -- capped at 15%
-ORI  = Σ (Dimension_Weight_i × DS_i) − Global_Risk_Penalty
-SCS  = ORI × Schedule_Adherence × Critical_Path_Stability
-```
+### 4. Sticky Toolbar Row
 
-Add columns to `ori_scores`: `dimension_scores JSONB`, `risk_penalty_total NUMERIC`, `startup_confidence_score NUMERIC`, `schedule_adherence_index NUMERIC`, `critical_path_stability_index NUMERIC`.
+Currently the toolbar (expand, columns, relations, 6M/12M/24M, zoom) is inside `CardHeader` while content scrolls inside `CardContent > div.max-h-[60vh].overflow-y-auto`. The header row with column labels (line 530-558) scrolls away.
 
-Add `confidence_factor NUMERIC(3,2) DEFAULT 0.8` and `risk_severity TEXT DEFAULT 'none'` to `readiness_nodes`.
+**Fix**: Make the toolbar + column header row sticky so they remain visible when scrolling vertically through activities.
 
-### Task 3: Update Sync Function
-Update `sync_readiness_nodes()` to auto-assign `dimension_id` by mapping:
-- P2A VCR prerequisites → mapped via their `vcr_items.category_id` directly to `vcr_item_categories`
-- ORA activities → default to "Operating Integrity" or map via metadata
-- PSSR items → map via PSSR checklist category → nearest VCR category
-- ORM deliverables → default to "Management Systems"
-- Training → default to "Operating Integrity"
+**File**: `ORPGanttChart.tsx` — restructure so:
+- `CardHeader` with toolbar remains outside the scroll container (already is)
+- The column header row (line 530-558) gets `sticky top-0 z-20 bg-background` so it pins when scrolling the activity rows
 
-Set confidence factors: completed/approved = 1.0, in-progress = 0.8, not-started = 0.7.
+### 5. Editable Start/End Dates in Activity Sheet
 
-### Task 4: Executive Dashboard Enhancement
-Redesign `ExecutiveDashboard.tsx` to match the strategic layout:
-- **Top Banner**: Large ORI + SCS + color coding (Green >85, Amber 70-85, Red <70)
-- **Dimension Breakdown**: Bar/table showing each VCR category's score, trend arrow, risk level
-- **Top 5 Startup Blockers**: Blocked/critical nodes with severity
-- **Predictive Trend**: ORI line chart with dashed target curve
-- **Risk Impact Summary**: 4 stat boxes (Open High Risks, Startup-blocking, Dimensions below 70%, Systems below 60%)
+Currently dates display as static text (lines 338-354 in `ORAActivityTaskSheet.tsx`). Need to make them clickable to open a calendar popover for editing.
 
-### Task 5: Tenant-Configurable Weight Profiles
-Update the existing `ori_weight_profiles` to store dimension-based weights keyed by `vcr_item_categories.id` instead of module names. Add a simple admin UI for editing weights per tenant.
+**Fix in `ORAActivityTaskSheet.tsx`**:
+- Add state for `editStartDate` and `editEndDate`
+- Replace static date display with `Popover` + `Calendar` component (drill-down calendar pattern)
+- On date change, update local state and mark as dirty
+- On save, include updated dates in the upsert to `ora_plan_activities` and update `wizard_state`
+- Auto-compute duration when dates change
 
-### Task 6: Update Living Documents
-- **Security & Compliance Doc**: Add rows for Readiness Dimensions, Risk Penalty Engine, Startup Confidence Score (mark as Active)
-- **Platform Guide**: Add "Readiness Ontology & Scoring Engine" section documenting the 6 dimensions, ORI formula, SCS
-- **Strategic North Star**: Update scoring engine status from Planned to Active, add dimension-based architecture detail
+### 6. Remove "View Full Plan" Button
+
+**File**: `ORPGanttOverlay.tsx` — remove lines 110-113 (the Button with ExternalLink icon and "View Full Plan" text). Also remove the `useNavigate` import and `handleViewFullPlan` function if no longer needed.
+
+### Files to Modify
+
+1. **`src/components/orp/ORPGanttChart.tsx`** — Fix relations, add critical path toggle, sticky header row
+2. **`src/components/orp/ORPGanttOverlay.tsx`** — Add schedule metrics, remove "View Full Plan" button
+3. **`src/components/tasks/ORAActivityTaskSheet.tsx`** — Editable dates with calendar popovers
+4. **`src/hooks/useORPPlans.ts`** — Verify `_predecessorIds` propagation to deliverables (may need fix)
 
