@@ -4,13 +4,14 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
+import { Slider } from '@/components/ui/slider';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { 
-  CalendarCheck, Clock, CheckCircle2, Play, Upload, MessageSquare, 
+  Clock, CheckCircle2, Play, Upload, MessageSquare, 
   Calendar, Paperclip, X, Loader2, AlertTriangle, Trash2 
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -36,6 +37,29 @@ const STATUS_STEPS: { value: ActivityStatus; label: string; icon: React.ElementT
   { value: 'COMPLETED', label: 'Completed', icon: CheckCircle2 },
 ];
 
+// Same palette as Gantt chart for consistency
+const ID_BADGE_PALETTE = [
+  { bg: 'bg-blue-100', text: 'text-blue-700' },
+  { bg: 'bg-emerald-100', text: 'text-emerald-700' },
+  { bg: 'bg-violet-100', text: 'text-violet-700' },
+  { bg: 'bg-amber-100', text: 'text-amber-700' },
+  { bg: 'bg-rose-100', text: 'text-rose-700' },
+  { bg: 'bg-cyan-100', text: 'text-cyan-700' },
+  { bg: 'bg-orange-100', text: 'text-orange-700' },
+  { bg: 'bg-indigo-100', text: 'text-indigo-700' },
+  { bg: 'bg-teal-100', text: 'text-teal-700' },
+  { bg: 'bg-pink-100', text: 'text-pink-700' },
+];
+
+function hashCode(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+}
+
 export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
   task,
   open,
@@ -50,6 +74,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
   const [files, setFiles] = useState<File[]>([]);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [progressPct, setProgressPct] = useState(50);
 
   // Original values for dirty tracking
   const [originalStatus, setOriginalStatus] = useState<ActivityStatus>('NOT_STARTED');
@@ -65,6 +90,11 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
   const oraActivityId = metadata?.ora_plan_activity_id as string | undefined;
   const isOverdue = endDate && isPast(parseISO(endDate)) && status !== 'COMPLETED';
 
+  // Deterministic color from activity code
+  const idColors = activityCode
+    ? ID_BADGE_PALETTE[hashCode(activityCode) % ID_BADGE_PALETTE.length]
+    : ID_BADGE_PALETTE[0];
+
   // Initialize values when sheet opens
   useEffect(() => {
     if (open && task) {
@@ -77,6 +107,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
       setComments([]);
       setFiles([]);
       setComment('');
+      setProgressPct(50);
     }
   }, [open, task?.id]);
 
@@ -135,7 +166,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
 
       // Update deliverable status if we have a deliverable ID
       if (deliverableId) {
-        const completionPct = status === 'COMPLETED' ? 100 : status === 'IN_PROGRESS' ? 50 : 0;
+        const completionPct = status === 'COMPLETED' ? 100 : status === 'IN_PROGRESS' ? progressPct : 0;
         await supabase
           .from('orp_plan_deliverables')
           .update({ 
@@ -175,12 +206,9 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
     setDeleting(true);
 
     try {
-      // Delete the ora_plan_activities record if we have its ID
       if (oraActivityId) {
         await supabase.from('ora_plan_activities').delete().eq('id', oraActivityId);
       }
-
-      // Delete the user_tasks entry
       await supabase.from('user_tasks').delete().eq('id', task.id);
 
       queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
@@ -201,167 +229,197 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-lg overflow-y-auto">
-        <SheetHeader className="pb-4">
-          <div className="flex items-center gap-2 flex-wrap">
-            <Badge variant="secondary" className="text-xs bg-purple-500/10 text-purple-600 gap-1">
-              <CalendarCheck className="h-3 w-3" />
-              ORA Activity
-            </Badge>
-            {activityCode && (
-              <Badge variant="outline" className="text-[10px] font-mono">{activityCode}</Badge>
-            )}
-            {isOverdue && (
-              <Badge variant="destructive" className="text-[10px] gap-1">
-                <AlertTriangle className="h-3 w-3" />
-                Overdue
-              </Badge>
-            )}
-          </div>
-          <SheetTitle className="text-left text-lg leading-snug mt-2">
-            {activityName}
-          </SheetTitle>
-        </SheetHeader>
+      <SheetContent className="sm:max-w-lg p-0 flex flex-col h-full">
+        {/* Scrollable content area */}
+        <div className="flex-1 overflow-y-auto px-6 pt-6 pb-4">
+          {/* Header */}
+          <SheetHeader className="pb-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              {activityCode && (
+                <Badge className={cn(
+                  "text-[11px] font-mono font-semibold border-0 px-2.5 py-0.5",
+                  idColors.bg, idColors.text
+                )}>
+                  {activityCode}
+                </Badge>
+              )}
+              {isOverdue && (
+                <Badge variant="destructive" className="text-[10px] gap-1">
+                  <AlertTriangle className="h-3 w-3" />
+                  Overdue
+                </Badge>
+              )}
+            </div>
+            <SheetTitle className="text-left text-lg leading-snug mt-1.5">
+              {activityName}
+            </SheetTitle>
+          </SheetHeader>
 
-        <div className="space-y-5">
-          {/* Editable Description */}
-          <div>
-            <p className="text-sm font-medium mb-2">Description</p>
-            <Textarea
-              placeholder="Add a description for this activity..."
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="min-h-[80px] resize-none text-sm"
-            />
-          </div>
+          <div className="space-y-5 mt-4">
+            {/* Description */}
+            <div>
+              <p className="text-sm font-medium mb-2 text-muted-foreground">Description</p>
+              <Textarea
+                placeholder="Add a description for this activity..."
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="min-h-[140px] resize-none text-sm border-primary/20 focus-visible:ring-primary/30"
+              />
+            </div>
 
-          {/* Date info */}
-          <div className="flex items-center gap-4 text-sm">
-            {startDate && (
-              <div className="flex items-center gap-1.5 text-muted-foreground">
-                <Calendar className="h-3.5 w-3.5" />
-                <span>Start: {format(parseISO(startDate), 'MMM d, yyyy')}</span>
+            {/* Date info */}
+            <div className="flex items-center gap-4 text-sm">
+              {startDate && (
+                <div className="flex items-center gap-1.5 text-muted-foreground">
+                  <Calendar className="h-3.5 w-3.5" />
+                  <span>Start: {format(parseISO(startDate), 'MMM d, yyyy')}</span>
+                </div>
+              )}
+              {endDate && (
+                <div className={cn(
+                  "flex items-center gap-1.5",
+                  isOverdue ? "text-destructive" : "text-muted-foreground"
+                )}>
+                  <Calendar className="h-3.5 w-3.5" />
+                  <span>Due: {format(parseISO(endDate), 'MMM d, yyyy')}</span>
+                </div>
+              )}
+            </div>
+
+            <Separator />
+
+            {/* Status Toggle — extra top spacing */}
+            <div className="pt-2">
+              <p className="text-sm font-medium mb-3 text-muted-foreground">Status</p>
+              <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg">
+                {STATUS_STEPS.map((step) => {
+                  const Icon = step.icon;
+                  const isActive = status === step.value;
+                  return (
+                    <button
+                      key={step.value}
+                      onClick={() => setStatus(step.value)}
+                      className={cn(
+                        "flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-md text-xs font-medium transition-all",
+                        isActive && step.value === 'NOT_STARTED' && "bg-gray-200 text-gray-700 shadow-sm",
+                        isActive && step.value === 'IN_PROGRESS' && "bg-amber-500 text-white shadow-sm",
+                        isActive && step.value === 'COMPLETED' && "bg-green-500 text-white shadow-sm",
+                        !isActive && "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                      )}
+                    >
+                      <Icon className="h-3.5 w-3.5" />
+                      {step.label}
+                    </button>
+                  );
+                })}
               </div>
-            )}
-            {endDate && (
-              <div className={cn(
-                "flex items-center gap-1.5",
-                isOverdue ? "text-destructive" : "text-muted-foreground"
-              )}>
-                <Calendar className="h-3.5 w-3.5" />
-                <span>Due: {format(parseISO(endDate), 'MMM d, yyyy')}</span>
-              </div>
-            )}
-          </div>
 
-          <Separator />
+              {/* In Progress → slider */}
+              {status === 'IN_PROGRESS' && (
+                <div className="mt-4 space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-muted-foreground">Progress</p>
+                    <span className="text-sm font-semibold text-amber-600">{progressPct}%</span>
+                  </div>
+                  <Slider
+                    value={[progressPct]}
+                    onValueChange={(val) => setProgressPct(val[0])}
+                    max={100}
+                    step={5}
+                    className="[&_[role=slider]]:border-amber-500 [&_[role=slider]]:bg-background [&_.bg-primary]:bg-amber-500"
+                  />
+                  <div className="flex justify-between text-[10px] text-muted-foreground/60">
+                    <span>0%</span>
+                    <span>50%</span>
+                    <span>100%</span>
+                  </div>
+                </div>
+              )}
+            </div>
 
-          {/* Status Toggle */}
-          <div>
-            <p className="text-sm font-medium mb-3">Status</p>
-            <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg">
-              {STATUS_STEPS.map((step) => {
-                const Icon = step.icon;
-                const isActive = status === step.value;
-                return (
-                  <button
-                    key={step.value}
-                    onClick={() => setStatus(step.value)}
+            {/* Completed → Evidence upload */}
+            {status === 'COMPLETED' && (
+              <div className="animate-in fade-in slide-in-from-top-1 duration-200">
+                <Separator className="mb-5" />
+                <div>
+                  <p className="text-sm font-medium mb-2 flex items-center gap-1.5 text-muted-foreground">
+                    <Paperclip className="h-4 w-4" />
+                    Supporting Evidence
+                  </p>
+                  <div
+                    {...getRootProps()}
                     className={cn(
-                      "flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-md text-xs font-medium transition-all",
-                      isActive && step.value === 'NOT_STARTED' && "bg-background shadow-sm text-foreground",
-                      isActive && step.value === 'IN_PROGRESS' && "bg-blue-500 text-white shadow-sm",
-                      isActive && step.value === 'COMPLETED' && "bg-green-500 text-white shadow-sm",
-                      !isActive && "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                      "border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors",
+                      isDragActive ? "border-green-500 bg-green-500/5" : "border-border hover:border-green-400/60"
                     )}
                   >
-                    <Icon className="h-3.5 w-3.5" />
-                    {step.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Comments */}
-          <div>
-            <p className="text-sm font-medium mb-2 flex items-center gap-1.5">
-              <MessageSquare className="h-4 w-4" />
-              Comments
-            </p>
-            {comments.length > 0 && (
-              <div className="space-y-2 mb-3 max-h-40 overflow-y-auto">
-                {comments.map((c, i) => (
-                  <div key={i} className="p-2.5 bg-muted/40 rounded-lg text-sm">
-                    <p>{c.text}</p>
-                    <p className="text-[10px] text-muted-foreground mt-1">
-                      {format(parseISO(c.date), 'MMM d, yyyy HH:mm')}
+                    <input {...getInputProps()} />
+                    <Upload className="h-5 w-5 mx-auto mb-1.5 text-muted-foreground" />
+                    <p className="text-xs text-muted-foreground">
+                      Drop files or click to upload
+                    </p>
+                    <p className="text-[10px] text-muted-foreground/70 mt-0.5">
+                      PDF, images, Word, Excel (max 10MB)
                     </p>
                   </div>
-                ))}
+                  {files.length > 0 && (
+                    <div className="mt-2 space-y-1.5">
+                      {files.map((file, idx) => (
+                        <div key={idx} className="flex items-center gap-2 p-2 bg-muted/40 rounded-md text-xs">
+                          <Paperclip className="h-3 w-3 text-muted-foreground shrink-0" />
+                          <span className="truncate flex-1">{file.name}</span>
+                          <span className="text-muted-foreground shrink-0">
+                            {(file.size / 1024).toFixed(0)}KB
+                          </span>
+                          <button onClick={() => removeFile(idx)} className="text-muted-foreground hover:text-destructive">
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
-            <div className="flex gap-2">
-              <Textarea
-                placeholder="Add a comment..."
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                className="min-h-[60px] resize-none text-sm"
-              />
-              <Button size="sm" variant="secondary" onClick={addComment} disabled={!comment.trim()}>
-                Add
-              </Button>
-            </div>
-          </div>
 
-          <Separator />
+            <Separator />
 
-          {/* Evidence Upload */}
-          <div>
-            <p className="text-sm font-medium mb-2 flex items-center gap-1.5">
-              <Paperclip className="h-4 w-4" />
-              Evidence
-            </p>
-            <div
-              {...getRootProps()}
-              className={cn(
-                "border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors",
-                isDragActive ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
+            {/* Comments — always visible */}
+            <div>
+              <p className="text-sm font-medium mb-2 flex items-center gap-1.5 text-muted-foreground">
+                <MessageSquare className="h-4 w-4" />
+                Comments
+              </p>
+              {comments.length > 0 && (
+                <div className="space-y-2 mb-3 max-h-40 overflow-y-auto">
+                  {comments.map((c, i) => (
+                    <div key={i} className="p-2.5 bg-muted/40 rounded-lg text-sm">
+                      <p>{c.text}</p>
+                      <p className="text-[10px] text-muted-foreground mt-1">
+                        {format(parseISO(c.date), 'MMM d, yyyy HH:mm')}
+                      </p>
+                    </div>
+                  ))}
+                </div>
               )}
-            >
-              <input {...getInputProps()} />
-              <Upload className="h-5 w-5 mx-auto mb-1.5 text-muted-foreground" />
-              <p className="text-xs text-muted-foreground">
-                Drop files or click to upload
-              </p>
-              <p className="text-[10px] text-muted-foreground/70 mt-0.5">
-                PDF, images, Word, Excel (max 10MB)
-              </p>
-            </div>
-            {files.length > 0 && (
-              <div className="mt-2 space-y-1.5">
-                {files.map((file, idx) => (
-                  <div key={idx} className="flex items-center gap-2 p-2 bg-muted/40 rounded-md text-xs">
-                    <Paperclip className="h-3 w-3 text-muted-foreground shrink-0" />
-                    <span className="truncate flex-1">{file.name}</span>
-                    <span className="text-muted-foreground shrink-0">
-                      {(file.size / 1024).toFixed(0)}KB
-                    </span>
-                    <button onClick={() => removeFile(idx)} className="text-muted-foreground hover:text-destructive">
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                ))}
+              <div className="flex gap-2">
+                <Textarea
+                  placeholder="Add a comment..."
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  className="min-h-[60px] resize-none text-sm"
+                />
+                <Button size="sm" variant="secondary" onClick={addComment} disabled={!comment.trim()}>
+                  Add
+                </Button>
               </div>
-            )}
+            </div>
           </div>
+        </div>
 
-          <Separator />
-
-          {/* Footer: Delete (left) + Cancel/Save (right) */}
-          <div className="flex items-center justify-between pb-4">
+        {/* Pinned footer */}
+        <div className="border-t bg-background px-6 py-4 shrink-0">
+          <div className="flex items-center justify-between">
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button
@@ -401,16 +459,15 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
               >
                 Cancel
               </Button>
-              <div className={cn(
-                "transition-all duration-200",
-                isDirty ? "opacity-100 translate-x-0" : "opacity-0 translate-x-2 pointer-events-none"
-              )}>
+
+              {/* Save / Confirm Completed — only when dirty */}
+              {isDirty && (
                 <Button
                   size="sm"
                   className={cn(
-                    "gap-1.5",
-                    status === 'COMPLETED' 
-                      ? "bg-green-600 hover:bg-green-700 text-white" 
+                    "gap-1.5 animate-in fade-in slide-in-from-right-2 duration-200",
+                    status === 'COMPLETED'
+                      ? "bg-green-600 hover:bg-green-700 text-white"
                       : ""
                   )}
                   onClick={handleSave}
@@ -420,13 +477,13 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                   {status === 'COMPLETED' ? (
                     <>
                       <CheckCircle2 className="h-4 w-4" />
-                      Mark Complete
+                      Confirm Completed
                     </>
                   ) : (
                     'Save'
                   )}
                 </Button>
-              </div>
+              )}
             </div>
           </div>
         </div>
