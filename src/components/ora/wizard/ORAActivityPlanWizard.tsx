@@ -141,50 +141,62 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
 
   // Silent auto-save of wizard state (no toast, no close)
   const autoSaveWizardState = useCallback(async () => {
-    try {
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) return;
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) throw new Error('Not authenticated');
 
-      const orpPhase = PHASE_TO_ORP[phase] || 'ASSESS_SELECT';
-      const wizardState = {
-        phase,
-        projectType,
-        activities,
-        approvers,
-        currentStep,
-        visitedSteps: Array.from(visitedSteps),
-      };
+    const orpPhase = PHASE_TO_ORP[phase] || 'ASSESS_SELECT';
+    const wizardState = {
+      phase,
+      projectType,
+      activities,
+      approvers,
+      currentStep,
+      visitedSteps: Array.from(visitedSteps),
+    };
 
-      if (draftPlanId) {
-        await (supabase as any)
+    if (draftPlanId) {
+      const { error } = await (supabase as any)
+        .from('orp_plans')
+        .update({ phase: orpPhase, wizard_state: wizardState })
+        .eq('id', draftPlanId);
+      if (error) throw error;
+    } else {
+      // Only check for existing DRAFT plans — not PENDING_APPROVAL or other statuses
+      const { data: existingDrafts } = await (supabase as any)
+        .from('orp_plans')
+        .select('id')
+        .eq('project_id', projectId)
+        .eq('status', 'DRAFT')
+        .eq('is_active', true)
+        .limit(1);
+
+      if (existingDrafts && existingDrafts.length > 0) {
+        // Reuse the existing draft
+        const existingId = existingDrafts[0].id;
+        setDraftPlanId(existingId);
+        const { error } = await (supabase as any)
           .from('orp_plans')
           .update({ phase: orpPhase, wizard_state: wizardState })
-          .eq('id', draftPlanId);
-      } else {
-        const { data: existingPlans } = await supabase
-          .from('orp_plans')
-          .select('id')
-          .eq('project_id', projectId)
-          .eq('is_active', true)
-          .limit(1);
-
-        if (existingPlans && existingPlans.length > 0) return;
-
-        const { data: plan, error } = await (supabase as any)
-          .from('orp_plans')
-          .insert({
-            project_id: projectId,
-            phase: orpPhase,
-            created_by: user.user.id,
-            ora_engineer_id: user.user.id,
-            status: 'DRAFT',
-            wizard_state: wizardState,
-          })
-          .select()
-          .single();
-        if (!error && plan) setDraftPlanId(plan.id);
+          .eq('id', existingId);
+        if (error) throw error;
+        return;
       }
-    } catch {}
+
+      const { data: plan, error } = await (supabase as any)
+        .from('orp_plans')
+        .insert({
+          project_id: projectId,
+          phase: orpPhase,
+          created_by: user.user.id,
+          ora_engineer_id: user.user.id,
+          status: 'DRAFT',
+          wizard_state: wizardState,
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      if (plan) setDraftPlanId(plan.id);
+    }
   }, [phase, projectType, activities, approvers, currentStep, visitedSteps, draftPlanId, projectId]);
 
   const handleSaveDraft = async () => {
@@ -281,7 +293,8 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
         .from('user_tasks')
         .update({ status: 'completed' })
         .eq('user_id', user.user.id)
-        .eq('type', 'ora_plan_creation')
+        .eq('type', 'task')
+        .filter('metadata->>source', 'eq', 'ora_workflow')
         .filter('metadata->>project_id', 'eq', projectId);
 
       if (taskCompleteError) {
