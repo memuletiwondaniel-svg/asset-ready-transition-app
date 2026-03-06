@@ -972,6 +972,14 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
           )}
         </SheetContent>
       </Sheet>
+
+      {/* Add from Catalog Dialog */}
+      <AddFromCatalogDialog
+        open={showCatalogDialog}
+        onOpenChange={setShowCatalogDialog}
+        existingIds={activities.map(a => a.id)}
+        onAdd={handleAddFromCatalog}
+      />
     </div>
   );
 };
