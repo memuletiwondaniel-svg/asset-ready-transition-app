@@ -88,7 +88,20 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
     (Date.now() - new Date(task.created_at).getTime()) / (1000 * 60 * 60 * 24)
   );
 
-  
+      {/* ORA Plan Review Wizard */}
+      {isOraReviewTask && oraPlanId && oraProjectId && (
+        <ORAActivityPlanWizard
+          open={oraReviewWizardOpen}
+          onOpenChange={setOraReviewWizardOpen}
+          projectId={oraProjectId}
+          planId={oraPlanId}
+          mode="review"
+          onSuccess={() => {
+            setOraReviewWizardOpen(false);
+            onOpenChange(false);
+          }}
+        />
+      )}
 
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
