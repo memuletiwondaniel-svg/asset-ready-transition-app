@@ -565,32 +565,45 @@ export const useORPPlanDetails = (planId: string) => {
         _predecessorIds: predecessorMap.get(a.activity_code) || predecessorMap.get(a.source_ref_id) || [],
       }));
 
+      // Build a lookup of ora_plan_activities by id for merging status/progress
+      const oraActivityMap = new Map<string, any>();
+      (oraActivities || []).forEach((a: any) => {
+        oraActivityMap.set(a.id, a);
+        if (a.source_ref_id) oraActivityMap.set(a.source_ref_id, a);
+      });
+
       // Fallback: if no ora_plan_activities AND no orp_plan_deliverables, use wizard_state
+      // BUT overlay any ora_plan_activities status/progress onto wizard_state entries
       let wizardStateDeliverables: any[] = [];
       const hasRealDeliverables = (data.deliverables && data.deliverables.length > 0);
       if (activityDeliverables.length === 0 && !hasRealDeliverables) {
-        const ws = (data as any).wizard_state;
-        if (ws?.activities && Array.isArray(ws.activities)) {
-          wizardStateDeliverables = (ws.activities as any[])
+        const ws2 = (data as any).wizard_state;
+        if (ws2?.activities && Array.isArray(ws2.activities)) {
+          wizardStateDeliverables = (ws2.activities as any[])
             .filter((a: any) => a.selected !== false)
-            .map((a: any) => ({
-              id: `ws-${a.id}`,
-              orp_plan_id: planId,
-              start_date: a.startDate || a.start_date || null,
-              end_date: a.endDate || a.end_date || null,
-              status: 'NOT_STARTED',
-              completion_percentage: 0,
-              deliverable: {
-                id: a.id,
-                name: a.activity || a.name || 'Unnamed',
-                activity_code: a.activityCode || a.activity_code || '',
-                description: a.description || null,
-              },
-              collaborators: [],
-              dependencies: [],
-              _isWizardState: true,
-              _predecessorIds: a.predecessorIds || [],
-            }));
+            .map((a: any) => {
+              // Check if there's an ora_plan_activities row for this wizard activity
+              const oraRow = oraActivityMap.get(a.id);
+              return {
+                id: oraRow ? `ora-${oraRow.id}` : `ws-${a.id}`,
+                orp_plan_id: planId,
+                start_date: a.startDate || a.start_date || null,
+                end_date: oraRow?.end_date || a.endDate || a.end_date || null,
+                status: oraRow?.status || 'NOT_STARTED',
+                completion_percentage: oraRow?.completion_percentage || 0,
+                deliverable: {
+                  id: a.id,
+                  name: a.activity || a.name || 'Unnamed',
+                  activity_code: a.activityCode || a.activity_code || '',
+                  description: oraRow?.description || a.description || null,
+                },
+                collaborators: [],
+                dependencies: [],
+                _isWizardState: !oraRow,
+                _isOraActivity: !!oraRow,
+                _predecessorIds: a.predecessorIds || [],
+              };
+            });
         }
       }
 
