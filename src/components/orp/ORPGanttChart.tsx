@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Search, ZoomIn, ZoomOut, Maximize2, ChevronRight, ChevronDown, ChevronsUpDown, GitBranch } from 'lucide-react';
 import { CreateORPModal } from './CreateORPModal';
-import { ORPDeliverableModal } from './ORPDeliverableModal';
+
 import { ORAActivityTaskSheet } from '@/components/tasks/ORAActivityTaskSheet';
 import { getStatusLabel, getStatusBadgeClasses } from './utils/statusStyles';
 import { cn } from '@/lib/utils';
@@ -171,7 +171,7 @@ function getParentDateRange(
 export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverables, searchQuery: externalSearchQuery, hideToolbar }) => {
   const [internalSearchQuery, setInternalSearchQuery] = useState('');
   const [showAddItem, setShowAddItem] = useState(false);
-  const [selectedDeliverable, setSelectedDeliverable] = useState<any>(null);
+  
   const [selectedOraActivity, setSelectedOraActivity] = useState<any>(null);
   const [zoomLevel, setZoomLevel] = useState(1);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -192,15 +192,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
   const { childrenMap } = useMemo(() => buildHierarchyFromCodes(filteredDeliverables), [filteredDeliverables]);
 
   // Default expand: top-level parents expanded so activities are visible
-  const [expandedCodes, setExpandedCodes] = useState<Set<string>>(() => {
-    const roots = (childrenMap.get(null) || []);
-    const rootCodes = new Set<string>();
-    roots.forEach(d => {
-      const code = d.deliverable?.activity_code || '';
-      if (code && (childrenMap.get(code) || []).length > 0) rootCodes.add(code);
-    });
-    return rootCodes;
-  });
+  const [expandedCodes, setExpandedCodes] = useState<Set<string>>(() => new Set<string>());
 
   const visibleRows = useMemo(
     () => buildVisibleRows(childrenMap, expandedCodes),
@@ -501,7 +493,26 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                             created_at: deliverable.created_at || new Date().toISOString(),
                           });
                         } else {
-                          setSelectedDeliverable(deliverable);
+                          // Also open as side sheet for consistent UX
+                          setSelectedOraActivity({
+                            id: deliverable.id,
+                            title: deliverable.deliverable?.name || '',
+                            description: deliverable.deliverable?.description || '',
+                            type: 'ora_activity',
+                            status: deliverable.status === 'COMPLETED' ? 'completed' : deliverable.status === 'IN_PROGRESS' ? 'in_progress' : 'pending',
+                            metadata: {
+                              activity_name: deliverable.deliverable?.name,
+                              activity_code: deliverable.deliverable?.activity_code,
+                              description: deliverable.deliverable?.description || '',
+                              plan_id: planId,
+                              deliverable_id: deliverable.deliverable?.id || deliverable.id,
+                              ora_plan_activity_id: deliverable.id,
+                              start_date: deliverable.start_date,
+                              end_date: deliverable.end_date,
+                            },
+                            priority: 'medium',
+                            created_at: deliverable.created_at || new Date().toISOString(),
+                          });
                         }
                       }}
                     >
@@ -630,7 +641,29 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                                 isDragging && "ring-2 ring-primary/50 shadow-lg"
                               )}
                               style={{ left: barL, width: barW, height: ROW_HEIGHT - 16 }}
-                              onClick={() => !isDragging && setSelectedDeliverable(deliverable)}
+                              onClick={() => {
+                                if (!isDragging) {
+                                  setSelectedOraActivity({
+                                    id: deliverable.id,
+                                    title: deliverable.deliverable?.name || '',
+                                    description: deliverable.deliverable?.description || '',
+                                    type: 'ora_activity',
+                                    status: deliverable.status === 'COMPLETED' ? 'completed' : deliverable.status === 'IN_PROGRESS' ? 'in_progress' : 'pending',
+                                    metadata: {
+                                      activity_name: deliverable.deliverable?.name,
+                                      activity_code: deliverable.deliverable?.activity_code,
+                                      description: deliverable.deliverable?.description || '',
+                                      plan_id: planId,
+                                      deliverable_id: deliverable.deliverable?.id || deliverable.id,
+                                      ora_plan_activity_id: deliverable.id,
+                                      start_date: deliverable.start_date,
+                                      end_date: deliverable.end_date,
+                                    },
+                                    priority: 'medium',
+                                    created_at: deliverable.created_at || new Date().toISOString(),
+                                  });
+                                }
+                              }}
                             >
                               {/* Progress fill */}
                               <div
@@ -665,27 +698,9 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
           </div>
         </div>
 
-        {/* Legend */}
-        <div className="flex items-center gap-4 pt-3 mt-3 border-t text-[10px] text-muted-foreground">
-          <span className="font-medium">Phases:</span>
-          {Object.entries(PHASE_COLORS).map(([key, colors]) => (
-            <span key={key} className={cn("inline-flex items-center rounded px-1.5 py-0.5 font-mono font-semibold", colors.bg, colors.text)}>
-              {key}
-            </span>
-          ))}
-        </div>
       </CardContent>
 
       {showAddItem && <CreateORPModal open={showAddItem} onOpenChange={setShowAddItem} onSuccess={() => setShowAddItem(false)} />}
-      {selectedDeliverable && (
-        <ORPDeliverableModal
-          open={!!selectedDeliverable}
-          onOpenChange={(open) => !open && setSelectedDeliverable(null)}
-          deliverable={selectedDeliverable}
-          allDeliverables={deliverables}
-          planId={planId}
-        />
-      )}
       <ORAActivityTaskSheet
         task={selectedOraActivity}
         open={!!selectedOraActivity}
