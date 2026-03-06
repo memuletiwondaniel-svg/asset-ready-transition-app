@@ -208,15 +208,18 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
           .eq('id', deliverableId);
       }
 
-      // Update task status
-      const taskStatus = status === 'COMPLETED' ? 'completed' : status === 'IN_PROGRESS' ? 'in_progress' : 'pending';
-      await supabase
-        .from('user_tasks')
-        .update({ 
-          status: taskStatus, 
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', task.id);
+      // Update task status (only if task.id is a valid UUID, not a prefixed virtual ID)
+      const isRealTaskId = task.id && !task.id.startsWith('ws-') && !task.id.startsWith('ora-');
+      if (isRealTaskId) {
+        const taskStatus = status === 'COMPLETED' ? 'completed' : status === 'IN_PROGRESS' ? 'in_progress' : 'pending';
+        await supabase
+          .from('user_tasks')
+          .update({ 
+            status: taskStatus, 
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', task.id);
+      }
 
       queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
       queryClient.invalidateQueries({ queryKey: ['project-orp-plans'] });
