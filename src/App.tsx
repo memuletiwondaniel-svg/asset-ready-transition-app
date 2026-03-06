@@ -18,8 +18,6 @@ import { ORPLandingPage } from "@/components/orp/ORPLandingPage";
 import ExecutiveDashboardPage from "@/pages/ExecutiveDashboardPage";
 import { ORPDetailsPage } from "@/components/orp/ORPDetailsPage";
 import { ORPAnalyticsPage } from "@/components/orp/ORPAnalyticsPage";
-import { P2ALandingPage } from "@/components/p2a/P2ALandingPage";
-import { P2ADetailsPage } from "@/components/p2a/P2ADetailsPage";
 
 import { ORMLandingPage } from "@/components/orm/ORMLandingPage";
 import { ORMDetailsPage } from "@/components/orm/ORMDetailsPage";
