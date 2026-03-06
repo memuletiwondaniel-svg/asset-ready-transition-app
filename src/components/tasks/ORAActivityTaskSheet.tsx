@@ -236,10 +236,11 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
           .from('ora_plan_activities')
           .upsert(upsertData, { onConflict: 'id' });
 
-        // Also update wizard_state dates if changed
+        // Also update wizard_state if dates or predecessors changed
         const datesChanged = editStartDate?.getTime() !== originalStartDate?.getTime() ||
                              editEndDate?.getTime() !== originalEndDate?.getTime();
-        if (datesChanged) {
+        const predsChanged = JSON.stringify(predecessorIds) !== JSON.stringify(originalPredecessorIds);
+        if (datesChanged || predsChanged) {
           const { data: planRow } = await (supabase as any)
             .from('orp_plans')
             .select('wizard_state')
@@ -252,13 +253,17 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
             const updatedActivities = wsActivities.map((a: any) => {
               const aId = String(a.id || '');
               if (aId === realOraActivityId || aId === `ora-${realOraActivityId}` || aId === `ws-${realOraActivityId}` || aId === (oraActivityId || '__none__')) {
-                return {
-                  ...a,
-                  startDate: editStartDate ? format(editStartDate, 'yyyy-MM-dd') : a.startDate,
-                  start_date: editStartDate ? format(editStartDate, 'yyyy-MM-dd') : a.start_date,
-                  endDate: editEndDate ? format(editEndDate, 'yyyy-MM-dd') : a.endDate,
-                  end_date: editEndDate ? format(editEndDate, 'yyyy-MM-dd') : a.end_date,
-                };
+                const updated: any = { ...a };
+                if (datesChanged) {
+                  updated.startDate = editStartDate ? format(editStartDate, 'yyyy-MM-dd') : a.startDate;
+                  updated.start_date = editStartDate ? format(editStartDate, 'yyyy-MM-dd') : a.start_date;
+                  updated.endDate = editEndDate ? format(editEndDate, 'yyyy-MM-dd') : a.endDate;
+                  updated.end_date = editEndDate ? format(editEndDate, 'yyyy-MM-dd') : a.end_date;
+                }
+                if (predsChanged) {
+                  updated.predecessorIds = predecessorIds;
+                }
+                return updated;
               }
               return a;
             });
