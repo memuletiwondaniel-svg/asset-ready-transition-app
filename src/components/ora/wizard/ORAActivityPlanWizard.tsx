@@ -360,10 +360,12 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
     }
     setVisitedSteps(prev => new Set([...prev, nextStep]));
     setCurrentStep(nextStep);
+    autoSaveWizardState();
   };
 
   const handleBack = () => {
     setCurrentStep(Math.max(currentStep - 1, 1));
+    autoSaveWizardState();
   };
 
   const handleClose = () => {
