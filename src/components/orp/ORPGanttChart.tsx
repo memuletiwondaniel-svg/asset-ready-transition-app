@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Search, ZoomIn, ZoomOut, Maximize2, ChevronRight, ChevronDown, ChevronsUpDown, GitBranch } from 'lucide-react';
 import { CreateORPModal } from './CreateORPModal';
-import { ORPDeliverableModal } from './ORPDeliverableModal';
+
 import { ORAActivityTaskSheet } from '@/components/tasks/ORAActivityTaskSheet';
 import { getStatusLabel, getStatusBadgeClasses } from './utils/statusStyles';
 import { cn } from '@/lib/utils';
