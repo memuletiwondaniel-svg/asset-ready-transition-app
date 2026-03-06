@@ -22,8 +22,6 @@ export const useUserP2AApprovals = () => {
 
   const query = useQuery({
     queryKey: ['user-p2a-approvals', user?.id],
-    staleTime: 2 * 60 * 1000,
-    refetchOnWindowFocus: false,
     queryFn: async () => {
       if (!user?.id) return [];
 
