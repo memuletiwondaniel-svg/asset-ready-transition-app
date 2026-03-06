@@ -554,22 +554,23 @@ export const useORPPlanDetails = (planId: string) => {
 
       // Fallback: if no ora_plan_activities AND no orp_plan_deliverables, use wizard_state
       let wizardStateDeliverables: any[] = [];
-      if (activityDeliverables.length === 0 && (!data.deliverables || data.deliverables.length === 0)) {
+      const hasRealDeliverables = (data.deliverables && data.deliverables.length > 0);
+      if (activityDeliverables.length === 0 && !hasRealDeliverables) {
         const ws = (data as any).wizard_state;
-        if (ws?.activities) {
+        if (ws?.activities && Array.isArray(ws.activities)) {
           wizardStateDeliverables = (ws.activities as any[])
-            .filter((a: any) => a.selected)
+            .filter((a: any) => a.selected !== false)
             .map((a: any) => ({
               id: `ws-${a.id}`,
               orp_plan_id: planId,
-              start_date: a.startDate || null,
-              end_date: a.endDate || null,
+              start_date: a.startDate || a.start_date || null,
+              end_date: a.endDate || a.end_date || null,
               status: 'NOT_STARTED',
               completion_percentage: 0,
               deliverable: {
                 id: a.id,
                 name: a.activity || a.name || 'Unnamed',
-                activity_code: a.activityCode || '',
+                activity_code: a.activityCode || a.activity_code || '',
                 description: a.description || null,
               },
               collaborators: [],
