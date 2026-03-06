@@ -69,7 +69,7 @@ export const ORPApprovalsTab: React.FC<ORPApprovalsTabProps> = ({ planId }) => {
   const getAvatarUrl = (profile: any) => {
     if (!profile?.avatar_url) return undefined;
     if (profile.avatar_url.startsWith('http')) return profile.avatar_url;
-    const { data } = supabase.storage.from('avatars').getPublicUrl(profile.avatar_url);
+    const { data } = supabase.storage.from('user-avatars').getPublicUrl(profile.avatar_url);
     return data?.publicUrl;
   };
 
