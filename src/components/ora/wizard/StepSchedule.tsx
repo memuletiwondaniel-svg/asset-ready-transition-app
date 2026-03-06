@@ -868,9 +868,9 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                     className="absolute top-0 left-0 pointer-events-none"
                     style={{ width: timelineWidth, height: visibleRows.length * ROW_HEIGHT }}
                   >
-                    <defs>
+                <defs>
                       <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
-                        <polygon points="0 0, 8 3, 0 6" fill="hsl(var(--primary))" opacity="0.7" />
+                        <polygon points="0 0, 8 3, 0 6" fill="hsl(var(--destructive))" opacity="0.8" />
                       </marker>
                     </defs>
                     {visibleRows.map((row, toIndex) => {
