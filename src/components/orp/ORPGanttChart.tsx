@@ -657,15 +657,6 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
           </div>
         </div>
 
-        {/* Legend */}
-        <div className="flex items-center gap-4 pt-3 mt-3 border-t text-[10px] text-muted-foreground">
-          <span className="font-medium">Phases:</span>
-          {Object.entries(PHASE_COLORS).map(([key, colors]) => (
-            <span key={key} className={cn("inline-flex items-center rounded px-1.5 py-0.5 font-mono font-semibold", colors.bg, colors.text)}>
-              {key}
-            </span>
-          ))}
-        </div>
       </CardContent>
 
       {showAddItem && <CreateORPModal open={showAddItem} onOpenChange={setShowAddItem} onSuccess={() => setShowAddItem(false)} />}
