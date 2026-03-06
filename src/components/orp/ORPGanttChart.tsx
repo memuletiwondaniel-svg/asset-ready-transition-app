@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Plus, Search, ZoomIn, ZoomOut, Maximize2, ChevronRight, ChevronDown, ChevronsUpDown, GitBranch, Columns3 } from 'lucide-react';
+import { Plus, Search, ZoomIn, ZoomOut, ChevronRight, ChevronDown, ChevronsUpDown, GitBranch, Columns3 } from 'lucide-react';
 import { CreateORPModal } from './CreateORPModal';
 
 import { ORAActivityTaskSheet } from '@/components/tasks/ORAActivityTaskSheet';
@@ -488,6 +488,8 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
               </Tooltip>
             </TooltipProvider>
 
+            <div className="flex-1 min-w-8" />
+
             {/* Zoom presets */}
             <div className="flex items-center gap-1">
               {ZOOM_PRESETS.map(p => (
@@ -505,9 +507,6 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
               <span className="text-xs font-medium w-10 text-center">{Math.round(zoomLevel * 100)}%</span>
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleZoomIn} disabled={zoomLevel === ZOOM_LEVELS[ZOOM_LEVELS.length - 1]}>
                 <ZoomIn className="h-4 w-4" />
-              </Button>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setZoomLevel(1)} title="Fit to screen">
-                <Maximize2 className="h-4 w-4" />
               </Button>
             </div>
 

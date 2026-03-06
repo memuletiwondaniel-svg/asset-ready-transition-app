@@ -26,6 +26,10 @@ interface ORPGanttOverlayProps {
   overallProgress: number;
   completedCount: number;
   totalCount: number;
+  inProgressCount?: number;
+  notStartedCount?: number;
+  p2aProgress?: number;
+  vcrCount?: number;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; icon: React.ElementType; className: string }> = {
@@ -45,6 +49,10 @@ export const ORPGanttOverlay: React.FC<ORPGanttOverlayProps> = ({
   overallProgress,
   completedCount,
   totalCount,
+  inProgressCount = 0,
+  notStartedCount = 0,
+  p2aProgress = 0,
+  vcrCount = 0,
 }) => {
   const navigate = useNavigate();
   const [approvalsOpen, setApprovalsOpen] = useState(false);
@@ -116,6 +124,14 @@ export const ORPGanttOverlay: React.FC<ORPGanttOverlayProps> = ({
               <div className="text-xs text-muted-foreground mt-1">
                 {completedCount} of {totalCount} activities completed
               </div>
+              <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
+                {completedCount} of {totalCount} activities completed. {inProgressCount} in progress, {notStartedCount} not started.
+                {vcrCount > 0 && ` P2A readiness across ${vcrCount} VCR${vcrCount !== 1 ? 's' : ''} is at ${p2aProgress}%.`}
+                {overallProgress >= 85 ? ' The plan is on track for completion.' :
+                 overallProgress >= 50 ? ' Steady progress — focus on completing in-progress items.' :
+                 overallProgress > 0 ? ' Early stages — prioritize critical path activities.' :
+                 ' Plan activities have not yet started.'}
+              </p>
             </div>
           </DialogHeader>
 
