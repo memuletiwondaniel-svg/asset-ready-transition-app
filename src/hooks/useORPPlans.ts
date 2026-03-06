@@ -589,6 +589,7 @@ export const useORPPlanDetails = (planId: string) => {
               collaborators: [],
               dependencies: [],
               _isWizardState: true,
+              _predecessorIds: a.predecessorIds || [],
             }));
         }
       }
