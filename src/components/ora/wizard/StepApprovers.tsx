@@ -9,7 +9,6 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Users, Plus, X, Loader2, UserCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { supabase } from '@/integrations/supabase/client';
 
 const getFullAvatarUrl = (avatarUrl: string | null): string | undefined => {
   if (!avatarUrl) return undefined;
