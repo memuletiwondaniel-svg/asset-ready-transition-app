@@ -750,7 +750,7 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                     placeholder="Add a description for this activity..."
                     value={selectedActivity.description || ''}
                     onChange={(e) => updateActivity(selectedActivity.id, { description: e.target.value })}
-                    className="mt-1.5 min-h-[100px] resize-none text-sm"
+                    className="mt-1.5 min-h-[140px] resize-none text-sm border-primary/30 focus:border-primary"
                   />
                 </div>
 
@@ -786,7 +786,7 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                           ? 'Click another date to set end' 
                           : 'Click to change start date, then end date'}
                     </div>
-                    <div className="border rounded-lg flex justify-center">
+                    <div className="border rounded-lg flex justify-center [&_.rdp]:scale-90 [&_.rdp]:origin-top">
                       <Calendar
                         mode="range"
                         selected={
