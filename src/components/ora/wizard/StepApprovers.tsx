@@ -10,6 +10,12 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Users, Plus, X, Loader2, UserCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+const getFullAvatarUrl = (avatarUrl: string | null): string | undefined => {
+  if (!avatarUrl) return undefined;
+  if (avatarUrl.startsWith('http')) return avatarUrl;
+  return supabase.storage.from('user-avatars').getPublicUrl(avatarUrl).data.publicUrl;
+};
+
 export interface WizardApprover {
   user_id: string;
   full_name: string;
@@ -158,7 +164,7 @@ export const StepApprovers: React.FC<Props> = ({ approvers, onApproversChange, p
             <Card key={approver.user_id} className="p-3">
               <div className="flex items-center gap-3">
                 <Avatar className="h-10 w-10">
-                  <AvatarImage src={approver.avatar_url || undefined} alt={approver.full_name} />
+                  <AvatarImage src={getFullAvatarUrl(approver.avatar_url)} alt={approver.full_name} />
                   <AvatarFallback className="text-xs bg-primary/10 text-primary font-semibold">
                     {getInitials(approver.full_name)}
                   </AvatarFallback>
@@ -207,7 +213,7 @@ export const StepApprovers: React.FC<Props> = ({ approvers, onApproversChange, p
                       className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md hover:bg-accent/50 transition-colors text-left"
                     >
                       <Avatar className="h-7 w-7">
-                        <AvatarImage src={profile.avatar_url || undefined} />
+                        <AvatarImage src={getFullAvatarUrl(profile.avatar_url)} />
                         <AvatarFallback className="text-[10px] bg-muted">
                           {getInitials(profile.full_name || '?')}
                         </AvatarFallback>
