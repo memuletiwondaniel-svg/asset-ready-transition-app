@@ -104,9 +104,28 @@ export const ORPGanttOverlay: React.FC<ORPGanttOverlayProps> = ({
                   <CalendarCheck className="h-3.5 w-3.5 text-white" />
                 </div>
                 <div>
-                  <DialogTitle className="text-sm font-bold">
-                    ORA Plan
-                  </DialogTitle>
+                  <div className="flex items-center gap-2">
+                    <DialogTitle className="text-sm font-bold">
+                      ORA Plan
+                    </DialogTitle>
+                    {statusConfig && (
+                      <button
+                        onClick={() => setApprovalsOpen(true)}
+                        className="focus:outline-none"
+                      >
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "text-[10px] gap-1 cursor-pointer hover:opacity-80 transition-opacity",
+                            statusConfig.className
+                          )}
+                        >
+                          <StatusIcon className="h-3 w-3" />
+                          {statusConfig.label}
+                        </Badge>
+                      </button>
+                    )}
+                  </div>
                   <DialogDescription className="sr-only">
                     View ORA Plan schedule and approval status
                   </DialogDescription>
