@@ -49,6 +49,10 @@ export const ORPGanttOverlay: React.FC<ORPGanttOverlayProps> = ({
   overallProgress,
   completedCount,
   totalCount,
+  inProgressCount = 0,
+  notStartedCount = 0,
+  p2aProgress = 0,
+  vcrCount = 0,
 }) => {
   const navigate = useNavigate();
   const [approvalsOpen, setApprovalsOpen] = useState(false);
