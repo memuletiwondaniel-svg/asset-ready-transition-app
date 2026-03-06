@@ -334,7 +334,8 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
         }
       }
 
-      // Create review tasks for ALL selected approvers (with duplicate prevention)
+      // Create review tasks for ALL selected approvers using security-definer RPC
+      // (Direct inserts are blocked by RLS when creating tasks for other users)
       for (const approver of approvers) {
         // Check if a pending review task already exists for this user + plan
         const { data: existingTask } = await supabase
@@ -348,24 +349,26 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
 
         if (existingTask && existingTask.length > 0) continue; // Skip duplicates
 
-        await supabase
-          .from('user_tasks')
-          .insert({
-            user_id: approver.user_id,
-            title: `Review ORA Plan – ${projectName}`,
-            description: `You have been assigned as ${approver.role_label} to review and approve the ORA Plan for project ${projectName}.`,
-            type: 'ora_plan_review',
-            status: 'pending',
-            priority: 'high',
-            metadata: {
-              source: 'ora_workflow',
-              project_id: projectId,
-              plan_id: planId,
-              project_name: projectName,
-              approver_role: approver.role_label,
-              action: 'review_ora_plan',
-            }
-          });
+        const { error: rpcError } = await supabase.rpc('create_user_task', {
+          p_user_id: approver.user_id,
+          p_title: `Review ORA Plan – ${projectName}`,
+          p_description: `You have been assigned as ${approver.role_label} to review and approve the ORA Plan for project ${projectName}.`,
+          p_type: 'ora_plan_review',
+          p_status: 'pending',
+          p_priority: 'high',
+          p_metadata: {
+            source: 'ora_workflow',
+            project_id: projectId,
+            plan_id: planId,
+            project_name: projectName,
+            approver_role: approver.role_label,
+            action: 'review_ora_plan',
+          },
+        });
+
+        if (rpcError) {
+          console.error(`Failed to create task for ${approver.full_name}:`, rpcError.message);
+        }
       }
 
       // Invalidate caches so task disappears from tray immediately
