@@ -133,82 +133,55 @@ export const useProjectORPPlans = (projectId: string) => {
             .eq('orp_plan_id', plan.id)
             .order('activity_code');
 
-          const hasActivities = activities && activities.length > 0;
+          const ws = plan.wizard_state as any;
+          const wsActivities: any[] = (ws?.activities || []).filter((a: any) => a.selected);
 
-          if (hasActivities) {
-            // Use materialized activities
-            const leafActivities = activities.filter((a: any) => {
-              // Leaf = no other activity has this as parent
-              return !activities.some((other: any) => other.parent_id === a.id);
+          // Build a merged activity list: wizard_state as base, DB overrides on top
+          const dbMap = new Map<string, any>();
+          if (activities && activities.length > 0) {
+            activities.forEach((a: any) => {
+              dbMap.set(a.id, a);
             });
-
-            const totalCount = leafActivities.length;
-            const stats = computeWeightedProgress(leafActivities);
-
-            // Get date range
-            const allDates = activities
-              .filter((a: any) => a.start_date || a.end_date)
-              .flatMap((a: any) => [a.start_date, a.end_date].filter(Boolean));
-            const planStartDate = allDates.length > 0 ? allDates.sort()[0] : null;
-            const planEndDate = allDates.length > 0 ? allDates.sort().reverse()[0] : null;
-
-            // Upcoming: not completed, sorted by start_date
-            const upcoming: ProjectORPActivity[] = activities
-              .filter((a: any) => a.status !== 'COMPLETED')
-              .sort((a: any, b: any) => {
-                if (!a.start_date && !b.start_date) return 0;
-                if (!a.start_date) return 1;
-                if (!b.start_date) return -1;
-                return new Date(a.start_date).getTime() - new Date(b.start_date).getTime();
-              })
-              .slice(0, 10);
-
-            return {
-              id: plan.id,
-              project_id: plan.project_id,
-              phase: plan.phase,
-              status: plan.status,
-              created_at: plan.created_at,
-              updated_at: plan.updated_at,
-              overall_progress: stats.overallProgress,
-              deliverable_count: totalCount,
-              completed_count: stats.completedCount,
-              in_progress_count: stats.inProgressCount,
-              not_started_count: stats.notStartedCount,
-              p2a_progress: stats.p2aProgress,
-              vcr_count: stats.vcrCount,
-              upcoming_activities: upcoming,
-              plan_start_date: planStartDate,
-              plan_end_date: planEndDate,
-            };
           }
 
-          // Fallback: use wizard_state for counts
-          const ws = plan.wizard_state as any;
-          const wsActivities = ws?.activities || [];
-          const selectedCount = wsActivities.filter((a: any) => a.selected).length;
+          // Merge: use wsActivities as the canonical list, overlay DB data
+          const mergedActivities = wsActivities.map((wsA: any) => {
+            const rawId = String(wsA.id || '').replace(/^(ora-|ws-)/, '');
+            const dbRow = dbMap.get(rawId);
+            return {
+              id: rawId,
+              name: dbRow?.name || wsA.activity || wsA.name || 'Unnamed',
+              status: dbRow?.status || 'NOT_STARTED',
+              start_date: dbRow?.start_date || wsA.startDate || null,
+              end_date: dbRow?.end_date || wsA.endDate || null,
+              completion_percentage: dbRow?.completion_percentage || 0,
+              activity_code: dbRow?.activity_code || wsA.activityCode || '',
+              parent_id: dbRow?.parent_id || wsA.parentActivityId || null,
+            };
+          });
 
-          // Extract dates from wizard_state activities
-          const wsDates = wsActivities
-            .filter((a: any) => a.selected && (a.startDate || a.endDate))
-            .flatMap((a: any) => [a.startDate, a.endDate].filter(Boolean));
-          const planStartDate = wsDates.length > 0 ? wsDates.sort()[0] : null;
-          const planEndDate = wsDates.length > 0 ? wsDates.sort().reverse()[0] : null;
+          // If no wizard_state activities, fall back to DB activities
+          const sourceActivities = mergedActivities.length > 0 ? mergedActivities : (activities || []);
 
-          // Convert wizard_state activities to upcoming list
-          const wsUpcoming: ProjectORPActivity[] = wsActivities
-            .filter((a: any) => a.selected)
-            .map((a: any) => ({
-              id: a.id,
-              name: a.activity || a.name || 'Unnamed',
-              status: 'NOT_STARTED',
-              start_date: a.startDate || null,
-              end_date: a.endDate || null,
-              completion_percentage: 0,
-              activity_code: a.activityCode || '',
-              parent_id: a.parentActivityId || null,
-            }))
-            .sort((a: ProjectORPActivity, b: ProjectORPActivity) => {
+          // Filter to leaf activities (no children)
+          const leafActivities = sourceActivities.filter((a: any) => {
+            return !sourceActivities.some((other: any) => other.parent_id === a.id);
+          });
+
+          const totalCount = leafActivities.length;
+          const stats = computeWeightedProgress(leafActivities);
+
+          // Get date range
+          const allDates = sourceActivities
+            .filter((a: any) => a.start_date || a.end_date)
+            .flatMap((a: any) => [a.start_date, a.end_date].filter(Boolean));
+          const planStartDate = allDates.length > 0 ? allDates.sort()[0] : null;
+          const planEndDate = allDates.length > 0 ? allDates.sort().reverse()[0] : null;
+
+          // Upcoming: not completed, sorted by start_date
+          const upcoming: ProjectORPActivity[] = sourceActivities
+            .filter((a: any) => a.status !== 'COMPLETED')
+            .sort((a: any, b: any) => {
               if (!a.start_date && !b.start_date) return 0;
               if (!a.start_date) return 1;
               if (!b.start_date) return -1;
@@ -223,17 +196,18 @@ export const useProjectORPPlans = (projectId: string) => {
             status: plan.status,
             created_at: plan.created_at,
             updated_at: plan.updated_at,
-            overall_progress: 0,
-            deliverable_count: selectedCount,
-            completed_count: 0,
-            in_progress_count: 0,
-            not_started_count: selectedCount,
-            p2a_progress: 0,
-            vcr_count: 0,
-            upcoming_activities: wsUpcoming,
+            overall_progress: stats.overallProgress,
+            deliverable_count: totalCount,
+            completed_count: stats.completedCount,
+            in_progress_count: stats.inProgressCount,
+            not_started_count: stats.notStartedCount,
+            p2a_progress: stats.p2aProgress,
+            vcr_count: stats.vcrCount,
+            upcoming_activities: upcoming,
             plan_start_date: planStartDate,
             plan_end_date: planEndDate,
           };
+
         })
       );
 

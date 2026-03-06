@@ -241,10 +241,41 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
     setDeleting(true);
 
     try {
+      // Delete from ora_plan_activities DB table
       if (realOraActivityId) {
         await (supabase as any).from('ora_plan_activities').delete().eq('id', realOraActivityId);
       }
-      await supabase.from('user_tasks').delete().eq('id', task.id);
+      // Delete from user_tasks DB table
+      const isRealTaskId = task.id && !task.id.startsWith('ws-') && !task.id.startsWith('ora-');
+      if (isRealTaskId) {
+        await supabase.from('user_tasks').delete().eq('id', task.id);
+      }
+
+      // Also remove from wizard_state so the Gantt table reflects the deletion
+      if (planId) {
+        const { data: planRow } = await (supabase as any)
+          .from('orp_plans')
+          .select('wizard_state')
+          .eq('id', planId)
+          .single();
+
+        if (planRow?.wizard_state) {
+          const ws = planRow.wizard_state as any;
+          const wsActivities: any[] = ws.activities || [];
+          // Filter out the deleted activity by matching its id (with or without prefix)
+          const updatedActivities = wsActivities.filter((a: any) => {
+            const aId = String(a.id || '');
+            return aId !== realOraActivityId &&
+                   aId !== `ora-${realOraActivityId}` &&
+                   aId !== `ws-${realOraActivityId}` &&
+                   aId !== (oraActivityId || '__none__');
+          });
+          await (supabase as any)
+            .from('orp_plans')
+            .update({ wizard_state: { ...ws, activities: updatedActivities } })
+            .eq('id', planId);
+        }
+      }
 
       queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
       queryClient.invalidateQueries({ queryKey: ['project-orp-plans'] });
