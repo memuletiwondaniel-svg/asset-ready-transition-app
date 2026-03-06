@@ -106,7 +106,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   const isVcrDeliveryPlanTask = (task.type === 'vcr_delivery_plan' || task.metadata?.action === 'create_vcr_delivery_plan');
   const oraPlanId = task.metadata?.plan_id as string | undefined;
 
-  const isReviewTask = ['review', 'approval', 'ora_plan_review'].includes(task.type) || !!pssrId;
+  const isReviewTask = (['review', 'approval', 'ora_plan_review'].includes(task.type) || !!pssrId) && !isOraReviewTask;
   const isActionTask = isOraTask || isOraActivityTask || isVcrDeliveryPlanTask;
 
   const oraCtaLabel = hasExistingOraDraft ? 'Continue Creating ORA Plan' : 'Create ORA Plan';
