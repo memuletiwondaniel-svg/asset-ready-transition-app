@@ -298,11 +298,13 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
     const act = activities.find(a => a.id === id);
     if (act) {
       setOriginalSnapshot({
+        activity: act.activity || '',
         description: act.description || '',
         startDate: act.startDate || '',
         endDate: act.endDate || '',
         durationDays: act.durationDays ?? null,
         status: (act as any).status || 'NOT_STARTED',
+        predecessorIds: [...(act.predecessorIds || [])],
       });
     }
     setSelectedActivityId(id);
