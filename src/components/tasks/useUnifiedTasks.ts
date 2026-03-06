@@ -234,7 +234,7 @@ export function useUnifiedTasks(userId: string) {
         createdAt: item.created_at,
         priority: smartPriorityToLegacy(spP2a.level),
         smartPriority: spP2a,
-        navigateTo: `/p2a-handover/${item.handover_id}`,
+        navigateTo: `/my-tasks`,
         isNew: isNewSinceLastLogin(item.created_at),
         kanbanColumn: 'todo',
       });
