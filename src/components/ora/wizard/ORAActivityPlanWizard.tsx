@@ -105,6 +105,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
     setPhase('');
     setProjectType('');
     setActivities([]);
+    setApprovers([]);
     setDraftPlanId(null);
   };
 
