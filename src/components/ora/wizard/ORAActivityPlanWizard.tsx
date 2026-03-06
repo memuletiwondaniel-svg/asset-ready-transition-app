@@ -30,7 +30,8 @@ const STEPS = [
   { id: 2, title: 'Type', description: 'Project complexity' },
   { id: 3, title: 'Activities', description: 'Select activities' },
   { id: 4, title: 'Schedule', description: 'Set dates' },
-  { id: 5, title: 'Review', description: 'Review & create' },
+  { id: 5, title: 'Approvers', description: 'Select approvers' },
+  { id: 6, title: 'Review', description: 'Review & create' },
 ];
 
 // Map wizard phases to orp_phase enum values
