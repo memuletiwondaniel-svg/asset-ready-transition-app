@@ -287,6 +287,16 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
         }
       }
 
+      // Fetch project info for task descriptions
+      const { data: projectInfo } = await supabase
+        .from('projects')
+        .select('project_id_prefix, project_id_number, project_title')
+        .eq('id', projectId)
+        .single();
+      const projectName = projectInfo
+        ? `${projectInfo.project_id_prefix || ''}${projectInfo.project_id_number || ''} - ${projectInfo.project_title || ''}`
+        : projectId;
+
       // Mark the Snr ORA Engr's creation task as completed
       const { error: taskCompleteError } = await supabase
         .from('user_tasks')
@@ -300,24 +310,50 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
         console.warn('Could not complete creation task:', taskCompleteError.message);
       }
 
-      // Find ORA Lead from project team to create review task
-      const { data: teamMembers } = await supabase
-        .from('project_team_members')
-        .select('user_id, role')
-        .eq('project_id', projectId);
+      // Write approvers to orp_approvals table
+      if (approvers.length > 0 && planId) {
+        // Clear any existing approvals for this plan to avoid duplicates on resubmit
+        await supabase
+          .from('orp_approvals')
+          .delete()
+          .eq('orp_plan_id', planId);
 
-      // Also try to find ORA Lead from profiles
-      const ORA_LEAD_ROLES = ['ORA Lead'];
-      const oraLeadMember = teamMembers?.find(m => ORA_LEAD_ROLES.includes(m.role));
+        const approvalRows = approvers.map(a => ({
+          orp_plan_id: planId!,
+          approver_role: a.role_label,
+          approver_user_id: a.user_id,
+          status: 'PENDING' as any,
+        }));
 
-      if (oraLeadMember) {
-        // Create review task for ORA Lead
+        const { error: approvalError } = await supabase
+          .from('orp_approvals')
+          .insert(approvalRows);
+
+        if (approvalError) {
+          console.warn('Could not create approval records:', approvalError.message);
+        }
+      }
+
+      // Create review tasks for ALL selected approvers (with duplicate prevention)
+      for (const approver of approvers) {
+        // Check if a pending review task already exists for this user + plan
+        const { data: existingTask } = await supabase
+          .from('user_tasks')
+          .select('id')
+          .eq('user_id', approver.user_id)
+          .eq('type', 'ora_plan_review')
+          .filter('metadata->>plan_id', 'eq', planId!)
+          .not('status', 'in', '("completed","cancelled")')
+          .limit(1);
+
+        if (existingTask && existingTask.length > 0) continue; // Skip duplicates
+
         await supabase
           .from('user_tasks')
           .insert({
-            user_id: oraLeadMember.user_id,
-            title: 'Review ORA Plan',
-            description: `Review and approve the ORA Plan for project`,
+            user_id: approver.user_id,
+            title: `Review ORA Plan – ${projectName}`,
+            description: `You have been assigned as ${approver.role_label} to review and approve the ORA Plan for project ${projectName}.`,
             type: 'ora_plan_review',
             status: 'pending',
             priority: 'high',
@@ -325,6 +361,8 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
               source: 'ora_workflow',
               project_id: projectId,
               plan_id: planId,
+              project_name: projectName,
+              approver_role: approver.role_label,
               action: 'review_ora_plan',
             }
           });
