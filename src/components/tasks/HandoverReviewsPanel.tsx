@@ -110,7 +110,7 @@ export const HandoverReviewsPanel: React.FC<HandoverReviewsPanelProps> = ({
       isLoading={isLoading}
       isEmpty={approvals.length === 0}
       emptyMessage="No handover reviews pending"
-      onViewAll={() => navigate('/p2a-handover')}
+      onViewAll={() => navigate('/my-tasks')}
     >
       {approvals.map((approval, index) => {
         const isNew = isNewSinceLastLogin(approval.created_at);
