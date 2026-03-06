@@ -355,7 +355,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
           p_description: `You have been assigned as ${approver.role_label} to review and approve the ORA Plan for project ${projectName}.`,
           p_type: 'ora_plan_review',
           p_status: 'pending',
-          p_priority: 'high',
+          p_priority: 'High',
           p_metadata: {
             source: 'ora_workflow',
             project_id: projectId,
