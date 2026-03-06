@@ -455,7 +455,6 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
             <GitBranch className="w-3 h-3" />
             Relations
           </Button>
-        </div>
           <div className="w-px h-4 bg-border mx-1" />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -472,6 +471,7 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
               </DropdownMenuCheckboxItem>
             </DropdownMenuContent>
           </DropdownMenu>
+        </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="h-7 px-2 text-[10px] gap-1">
