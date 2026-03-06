@@ -523,7 +523,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
               )}
             </Button>
 
-            {currentStep < 5 ? (
+            {currentStep < 6 ? (
               <Button onClick={handleNext} disabled={!validateStep(currentStep)}>
                 Next
               </Button>
