@@ -450,7 +450,7 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange, 
     updateActivity(activityId, { startDate: startStr, endDate: endStr, durationDays });
   }, [updateActivity]);
 
-  const { draggingId, previewLeft, previewWidth, handleMouseDown } = useGanttBarResize({
+  const { draggingId, previewLeft, previewWidth, handleMouseDown, wasDragging } = useGanttBarResize({
     minDate: timelineStart,
     dayWidth,
     onResize: handleBarResize,

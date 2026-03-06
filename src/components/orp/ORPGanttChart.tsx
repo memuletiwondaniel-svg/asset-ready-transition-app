@@ -402,7 +402,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
     queryClient.invalidateQueries({ queryKey: ['orp-plan'] });
   }, [queryClient]);
 
-  const { draggingId, previewLeft, previewWidth, handleMouseDown } = useGanttBarResize({
+  const { draggingId, previewLeft, previewWidth, handleMouseDown, wasDragging } = useGanttBarResize({
     minDate,
     dayWidth,
     onResize: handleBarResize,
@@ -829,14 +829,24 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                           return (
                             <div
                               className={cn(
-                                "absolute top-2 rounded shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-all group",
+                                "absolute top-2 rounded shadow-sm overflow-hidden cursor-grab hover:shadow-md transition-all group",
                                 mutedColor,
-                                isDragging && "ring-2 ring-primary/50 shadow-lg",
+                                isDragging && "ring-2 ring-primary/50 shadow-lg cursor-grabbing",
                                 isCritical && "ring-2 ring-destructive/70"
                               )}
                               style={{ left: barL, width: barW, height: ROW_HEIGHT - 16 }}
-                              onClick={() => {
-                                if (!isDragging) openActivitySheet(deliverable);
+                              onMouseDown={(e) => {
+                                // Only initiate move-drag from the bar body (not edge handles)
+                                if (!(e.target as HTMLElement).dataset.edge) {
+                                  handleMouseDown(e, 'move', deliverable.id, barPos.left, barPos.width, parseISO(deliverable.start_date), parseISO(deliverable.end_date));
+                                }
+                              }}
+                              onClick={(e) => {
+                                if (wasDragging()) {
+                                  e.stopPropagation();
+                                  return;
+                                }
+                                openActivitySheet(deliverable);
                               }}
                             >
                               <div
@@ -849,10 +859,12 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                                 </span>
                               </div>
                               <div
+                                data-edge="left"
                                 className="absolute left-0 top-0 bottom-0 w-[6px] cursor-col-resize z-20 hover:bg-white/30"
                                 onMouseDown={(e) => handleMouseDown(e, 'left', deliverable.id, barPos.left, barPos.width, parseISO(deliverable.start_date), parseISO(deliverable.end_date))}
                               />
                               <div
+                                data-edge="right"
                                 className="absolute right-0 top-0 bottom-0 w-[6px] cursor-col-resize z-20 hover:bg-white/30"
                                 onMouseDown={(e) => handleMouseDown(e, 'right', deliverable.id, barPos.left, barPos.width, parseISO(deliverable.start_date), parseISO(deliverable.end_date))}
                               />
