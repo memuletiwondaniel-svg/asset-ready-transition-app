@@ -33,11 +33,11 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   onApprove,
   onReject,
 }) => {
+  const navigate = useNavigate();
   const [comment, setComment] = useState('');
   const [action, setAction] = useState<'approve' | 'reject' | null>(null);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [oraWizardOpen, setOraWizardOpen] = useState(false);
-  const [oraReviewOpen, setOraReviewOpen] = useState(false);
   const [oraActivityOpen, setOraActivityOpen] = useState(false);
   const [vcrWizardOpen, setVcrWizardOpen] = useState(false);
 
