@@ -482,7 +482,8 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
             )
           )}
           {currentStep === 4 && <StepSchedule activities={activities} onActivitiesChange={setActivities} />}
-          {currentStep === 5 && <StepReview phase={phase} projectType={projectType} activities={activities} />}
+          {currentStep === 5 && <StepApprovers approvers={approvers} onApproversChange={setApprovers} projectId={projectId} />}
+          {currentStep === 6 && <StepReview phase={phase} projectType={projectType} activities={activities} />}
         </div>
 
         {/* Navigation */}
