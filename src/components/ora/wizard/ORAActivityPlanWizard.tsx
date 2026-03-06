@@ -8,6 +8,7 @@ import { StepPhaseSelection } from './StepPhaseSelection';
 import { StepProjectType } from './StepProjectType';
 import { StepActivities } from './StepActivities';
 import { StepSchedule } from './StepSchedule';
+import { StepApprovers, type WizardApprover } from './StepApprovers';
 import { StepReview } from './StepReview';
 import { WizardActivity, catalogToWizardActivity } from './types';
 import { useORAActivityCatalog, useORPPhases } from '@/hooks/useORAActivityCatalog';
@@ -29,7 +30,8 @@ const STEPS = [
   { id: 2, title: 'Type', description: 'Project complexity' },
   { id: 3, title: 'Activities', description: 'Select activities' },
   { id: 4, title: 'Schedule', description: 'Set dates' },
-  { id: 5, title: 'Review', description: 'Review & create' },
+  { id: 5, title: 'Approvers', description: 'Select approvers' },
+  { id: 6, title: 'Review', description: 'Review & create' },
 ];
 
 // Map wizard phases to orp_phase enum values
@@ -49,6 +51,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
   const [phase, setPhase] = useState('');
   const [projectType, setProjectType] = useState('');
   const [activities, setActivities] = useState<WizardActivity[]>([]);
+  const [approvers, setApprovers] = useState<WizardApprover[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [draftPlanId, setDraftPlanId] = useState<string | null>(null);
@@ -102,6 +105,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
     setPhase('');
     setProjectType('');
     setActivities([]);
+    setApprovers([]);
     setDraftPlanId(null);
   };
 
@@ -125,6 +129,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
           setPhase(ws.phase || '');
           setProjectType(ws.projectType || '');
           setActivities(ws.activities || []);
+          setApprovers(ws.approvers || []);
           setCurrentStep(ws.currentStep || 1);
           const visited = new Set<number>(ws.visitedSteps || [1]);
           setVisitedSteps(visited);
@@ -145,6 +150,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
         phase,
         projectType,
         activities,
+        approvers,
         currentStep,
         visitedSteps: Array.from(visitedSteps),
       };
@@ -332,6 +338,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
       case 1: return !!phase;
       case 2: return !!projectType;
       case 3: return activities.some(a => a.selected);
+      case 5: return approvers.length > 0;
       default: return true;
     }
   };
@@ -375,7 +382,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
     <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
       <DialogContent className={cn(
         "max-h-[85vh] overflow-hidden flex flex-col",
-        currentStep === 4 ? "max-w-7xl w-[98vw]" : "max-w-2xl"
+      currentStep === 4 ? "max-w-7xl w-[98vw]" : "max-w-2xl"
       )}>
         <DialogHeader className="border-b pb-4">
           <DialogTitle className="flex items-center gap-2 text-xl font-semibold">
@@ -475,7 +482,8 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
             )
           )}
           {currentStep === 4 && <StepSchedule activities={activities} onActivitiesChange={setActivities} />}
-          {currentStep === 5 && <StepReview phase={phase} projectType={projectType} activities={activities} />}
+          {currentStep === 5 && <StepApprovers approvers={approvers} onApproversChange={setApprovers} projectId={projectId} />}
+          {currentStep === 6 && <StepReview phase={phase} projectType={projectType} activities={activities} />}
         </div>
 
         {/* Navigation */}
@@ -515,7 +523,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
               )}
             </Button>
 
-            {currentStep < 5 ? (
+            {currentStep < 6 ? (
               <Button onClick={handleNext} disabled={!validateStep(currentStep)}>
                 Next
               </Button>

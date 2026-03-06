@@ -644,19 +644,35 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                       {weekMarkers.map((left, i) => (
                         <div key={i} className="absolute top-0 bottom-0 border-l border-border/15" style={{ left }} />
                       ))}
-                      {barPos && isParent && (
-                        <div
-                          className={cn(
-                            "absolute rounded-sm transition-all border-2",
-                            getBarColor(activity.activityCode).replace('bg-', 'border-'),
-                            "bg-transparent opacity-60"
-                          )}
-                          style={{ left: barPos.left, width: barPos.width, top: ROW_HEIGHT / 2 - 4, height: 8 }}
-                          title={`${activity.activity} (summary)`}
-                        >
-                          <div className={cn("h-full rounded-sm", getBarColor(activity.activityCode), "opacity-30")} />
-                        </div>
-                      )}
+                      {barPos && isParent && (() => {
+                        const prefix = getPhasePrefix(activity.activityCode);
+                        const mutedColor = BAR_COLORS_MUTED[prefix] || 'bg-muted';
+                        const barColorSolid = getBarColor(activity.activityCode);
+
+                        return (
+                          <div
+                            className={cn(
+                              "absolute top-2 rounded shadow-sm overflow-hidden",
+                              mutedColor,
+                            )}
+                            style={{ left: barPos.left, width: barPos.width, height: ROW_HEIGHT - 16 }}
+                            title={`${activity.activity} (summary)`}
+                          >
+                            <div className={cn("h-full rounded", barColorSolid, "opacity-50")} style={{ width: '100%' }} />
+                            {barPos.width > 24 && (
+                              <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-white drop-shadow-sm">
+                                {(() => {
+                                  const range = getParentDateRange(activity.id, selectedActivities, childrenMap);
+                                  if (range.minStart && range.maxEnd) {
+                                    return `${differenceInDays(parseISO(range.maxEnd), parseISO(range.minStart))}d`;
+                                  }
+                                  return '';
+                                })()}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })()}
                       {barPos && !isParent && (() => {
                         const isDragging = draggingId === activity.id;
                         const barL = isDragging && previewLeft !== null ? previewLeft : barPos.left;
