@@ -848,8 +848,8 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                   </div>
                 </div>
 
-                {/* Delete Activity */}
-                <div className="pt-2 border-t">
+                {/* Footer: Delete (left) + Smart Save (right) */}
+                <div className="flex items-center justify-between pt-3 border-t">
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button
@@ -858,7 +858,7 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                         className="text-destructive hover:text-destructive hover:bg-destructive/10 gap-1.5"
                       >
                         <Trash2 className="h-4 w-4" />
-                        Delete Activity
+                        Delete
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
@@ -882,6 +882,27 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
+
+                  <div className={cn(
+                    "transition-all duration-200",
+                    isDirty ? "opacity-100 translate-x-0" : "opacity-0 translate-x-2 pointer-events-none"
+                  )}>
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        setOriginalSnapshot({
+                          description: selectedActivity.description || '',
+                          startDate: selectedActivity.startDate || '',
+                          endDate: selectedActivity.endDate || '',
+                          durationDays: selectedActivity.durationDays ?? null,
+                          status: (selectedActivity as any).status || 'NOT_STARTED',
+                        });
+                        setSelectedActivityId(null);
+                      }}
+                    >
+                      Done
+                    </Button>
+                  </div>
                 </div>
               </div>
             </>
