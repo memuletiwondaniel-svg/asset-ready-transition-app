@@ -270,7 +270,7 @@ const PredecessorPicker: React.FC<{
   );
 };
 
-export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }) => {
+export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange, isReviewMode = false }) => {
   const [zoomLevel, setZoomLevel] = useState(1);
   const [visibleCols, setVisibleCols] = useState<Set<ColKey>>(new Set(DEFAULT_VISIBLE));
   const [selectedActivityId, setSelectedActivityId] = useState<string | null>(null);
