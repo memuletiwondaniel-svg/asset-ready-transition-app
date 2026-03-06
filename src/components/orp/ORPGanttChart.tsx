@@ -35,7 +35,30 @@ const COL_WIDTHS = {
   duration: 48,
   status: 96,
 };
-const LEFT_PANEL_WIDTH = Object.values(COL_WIDTHS).reduce((a, b) => a + b, 0);
+
+// Sequential hue rotation palette for ID badges
+const ID_BADGE_PALETTE = [
+  { bg: 'bg-blue-500/15', text: 'text-blue-700 dark:text-blue-400' },
+  { bg: 'bg-emerald-500/15', text: 'text-emerald-700 dark:text-emerald-400' },
+  { bg: 'bg-purple-500/15', text: 'text-purple-700 dark:text-purple-400' },
+  { bg: 'bg-amber-500/15', text: 'text-amber-700 dark:text-amber-400' },
+  { bg: 'bg-rose-500/15', text: 'text-rose-700 dark:text-rose-400' },
+  { bg: 'bg-teal-500/15', text: 'text-teal-700 dark:text-teal-400' },
+  { bg: 'bg-indigo-500/15', text: 'text-indigo-700 dark:text-indigo-400' },
+  { bg: 'bg-orange-500/15', text: 'text-orange-700 dark:text-orange-400' },
+  { bg: 'bg-cyan-500/15', text: 'text-cyan-700 dark:text-cyan-400' },
+  { bg: 'bg-pink-500/15', text: 'text-pink-700 dark:text-pink-400' },
+];
+
+type ColumnKey = 'index' | 'id' | 'start' | 'end' | 'duration' | 'status';
+const TOGGLEABLE_COLUMNS: { key: ColumnKey; label: string }[] = [
+  { key: 'index', label: '#' },
+  { key: 'id', label: 'ID' },
+  { key: 'start', label: 'Start' },
+  { key: 'end', label: 'End' },
+  { key: 'duration', label: 'Days' },
+  { key: 'status', label: 'Status' },
+];
 
 const PHASE_COLORS: Record<string, { bg: string; text: string }> = {
   IDN: { bg: 'bg-blue-500/15', text: 'text-blue-700 dark:text-blue-400' },
