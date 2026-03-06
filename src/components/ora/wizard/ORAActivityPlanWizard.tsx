@@ -256,8 +256,9 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
     loadPlan();
   }, [open, projectId, externalPlanId, isReviewMode]);
 
-  // Silent auto-save of wizard state (no toast, no close)
+  // Silent auto-save of wizard state (no toast, no close) - skip in review mode
   const autoSaveWizardState = useCallback(async () => {
+    if (isReviewMode) return; // Don't auto-save in review mode
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) throw new Error('Not authenticated');
 
