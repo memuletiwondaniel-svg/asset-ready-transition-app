@@ -430,12 +430,9 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
         <div className="flex items-center justify-between">
           <CardTitle>Gantt Chart</CardTitle>
           <div className="flex items-center gap-2">
-            {/* Expand/Collapse */}
-            <Button variant="outline" size="sm" className="h-7 px-2 text-[10px] font-medium gap-1" onClick={expandAll}>
-              <ChevronsUpDown className="w-3 h-3" /> Expand
-            </Button>
-            <Button variant="outline" size="sm" className="h-7 px-2 text-[10px] font-medium" onClick={collapseAll}>
-              Collapse
+            {/* Expand/Collapse toggle */}
+            <Button variant="outline" size="sm" className="h-7 px-2 text-[10px] font-medium gap-1" onClick={isAllExpanded ? collapseAll : expandAll}>
+              <ChevronsUpDown className="w-3 h-3" /> {isAllExpanded ? 'Collapse' : 'Expand'}
             </Button>
 
             <div className="w-px h-5 bg-border" />
@@ -451,7 +448,29 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
               Relations
             </Button>
 
-            <div className="w-px h-5 bg-border" />
+            {/* Column visibility toggle */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="h-7 px-2 text-[10px] font-medium gap-1">
+                  <Columns3 className="w-3 h-3" />
+                  Columns
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-40 p-2" align="end">
+                <div className="space-y-1">
+                  {TOGGLEABLE_COLUMNS.map(col => (
+                    <label key={col.key} className="flex items-center gap-2 px-1 py-1 rounded hover:bg-muted/50 cursor-pointer text-xs">
+                      <Checkbox
+                        checked={visibleColumns.has(col.key)}
+                        onCheckedChange={() => toggleColumn(col.key)}
+                        className="h-3.5 w-3.5"
+                      />
+                      {col.label}
+                    </label>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
 
             {/* Zoom presets */}
             <div className="flex items-center gap-1">
