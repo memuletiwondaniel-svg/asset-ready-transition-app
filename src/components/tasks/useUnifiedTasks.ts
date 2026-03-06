@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   ClipboardCheck,
   RefreshCw,
@@ -7,6 +8,7 @@ import {
   ClipboardList,
 } from 'lucide-react';
 import { isPast } from 'date-fns';
+import { supabase } from '@/integrations/supabase/client';
 import { usePSSRsAwaitingReview } from '@/hooks/usePSSRItemApprovals';
 import { useUserP2AApprovals } from '@/hooks/useUserP2AApprovals';
 import { useUserORPActivities } from '@/hooks/useUserORPActivities';
@@ -77,6 +79,31 @@ export function useUnifiedTasks(userId: string) {
   const { bundleTasks, isLoading: bundleLoading } = useUserVCRBundleTasks();
   const { tasks: userTasks, loading: tasksLoading, updateTaskStatus } = useUserTasks();
 
+  // Fetch ORA plan activity dates for tasks that reference an ora_plan_activity_id
+  const oraActivityIds = useMemo(() => {
+    return (userTasks || [])
+      .map(t => (t.metadata as Record<string, any>)?.ora_plan_activity_id)
+      .filter(Boolean) as string[];
+  }, [userTasks]);
+
+  const { data: oraActivityDates } = useQuery({
+    queryKey: ['ora-activity-dates', oraActivityIds],
+    queryFn: async () => {
+      if (oraActivityIds.length === 0) return {};
+      const { data, error } = await supabase
+        .from('ora_plan_activities')
+        .select('id, start_date, end_date, duration_days')
+        .in('id', oraActivityIds);
+      if (error) throw error;
+      const map: Record<string, { start_date: string | null; end_date: string | null; duration_days: number | null }> = {};
+      (data || []).forEach((a: any) => { map[a.id] = a; });
+      return map;
+    },
+    enabled: oraActivityIds.length > 0,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
   const isLoading = pssrLoading || handoverLoading || oraLoading || owlLoading || bundleLoading || tasksLoading;
 
   const allTasks = useMemo<UnifiedTask[]>(() => {
@@ -120,12 +147,17 @@ export function useUnifiedTasks(userId: string) {
       }
 
       const isWaiting = t.status === 'waiting';
-      const durationDays = meta?.duration_days || meta?.duration_med || undefined;
+      // Enrich ORA tasks with dates from ora_plan_activities if not in metadata
+      const oraActId = meta?.ora_plan_activity_id;
+      const oraAct = oraActId && oraActivityDates ? oraActivityDates[oraActId] : null;
+      const startDate = meta?.start_date || oraAct?.start_date || undefined;
+      const endDate = meta?.end_date || oraAct?.end_date || undefined;
+      const durationDays = meta?.duration_days || meta?.duration_med || oraAct?.duration_days || undefined;
       const sp = computeSmartPriority({
         category,
         categoryLabel,
-        startDate: meta?.start_date,
-        endDate: meta?.end_date,
+        startDate,
+        endDate,
         dueDate: t.due_date || undefined,
         durationDays,
         progressPercentage: undefined,
@@ -144,8 +176,8 @@ export function useUnifiedTasks(userId: string) {
         projectId: meta?.project_id || undefined,
         status: t.status,
         dueDate: t.due_date || undefined,
-        startDate: meta?.start_date || undefined,
-        endDate: meta?.end_date || undefined,
+        startDate,
+        endDate,
         createdAt: t.created_at,
         priority: smartPriorityToLegacy(sp.level),
         smartPriority: sp,
@@ -296,7 +328,7 @@ export function useUnifiedTasks(userId: string) {
       if (!aDue && bDue) return 1;
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
-  }, [pssrs, approvals, activities, owlItems, bundleTasks, userTasks, isNewSinceLastLogin]);
+  }, [pssrs, approvals, activities, owlItems, bundleTasks, userTasks, oraActivityDates, isNewSinceLastLogin]);
 
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = { all: allTasks.length };
