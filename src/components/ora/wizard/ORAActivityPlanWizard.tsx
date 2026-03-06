@@ -403,6 +403,9 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
           .update({ status: 'DRAFT' })
           .eq('id', draftPlanId);
       } else if (allApproved) {
+        // Materialize activities from wizard_state into ora_plan_activities
+        await materializeActivities(draftPlanId);
+
         await (supabase as any)
           .from('orp_plans')
           .update({ status: 'APPROVED' })
