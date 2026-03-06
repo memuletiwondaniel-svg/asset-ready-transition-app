@@ -363,6 +363,34 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
     setZoomLevel(closest);
   };
 
+  // Default to 6M view on mount
+  useEffect(() => {
+    if (!hasInitialZoom && scrollContainerRef.current && dates.length > 0) {
+      // Use a small delay to ensure the container has rendered
+      const timer = setTimeout(() => {
+        setZoomToFitDays(180);
+        setHasInitialZoom(true);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [dates.length, hasInitialZoom]);
+
+  const isAllExpanded = useMemo(() => {
+    const parentCodes: string[] = [];
+    filteredDeliverables.forEach(d => {
+      const code = d.deliverable?.activity_code;
+      if (code && (childrenMap.get(code) || []).length > 0) parentCodes.push(code);
+    });
+    return parentCodes.length > 0 && parentCodes.every(c => expandedCodes.has(c));
+  }, [expandedCodes, filteredDeliverables, childrenMap]);
+
+  // Today line position
+  const todayPosition = useMemo(() => {
+    const today = new Date();
+    const offset = differenceInDays(today, minDate) * dayWidth;
+    return offset;
+  }, [minDate, dayWidth]);
+
   // Early return - no data
   if (!dates.length) {
     return (
