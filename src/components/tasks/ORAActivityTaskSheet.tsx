@@ -128,6 +128,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
       const taskStatus = task?.status;
       const initStatus: ActivityStatus = taskStatus === 'completed' ? 'COMPLETED'
         : taskStatus === 'in_progress' ? 'IN_PROGRESS' : 'NOT_STARTED';
+      const initProgress = metadata?.completion_percentage ?? (initStatus === 'COMPLETED' ? 100 : initStatus === 'IN_PROGRESS' ? 50 : 0);
       setDescription(initDesc);
       setOriginalDescription(initDesc);
       setStatus(initStatus);
@@ -135,7 +136,9 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
       setComments([]);
       setFiles([]);
       setComment('');
-      setProgressPct(50);
+      setProgressPct(initProgress);
+      setOriginalProgressPct(initProgress);
+      setShowCalendar(false);
 
       const sd = startDate ? parseISO(startDate) : undefined;
       const ed = endDate ? parseISO(endDate) : undefined;
@@ -143,18 +146,26 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
       setEditEndDate(ed);
       setOriginalStartDate(sd);
       setOriginalEndDate(ed);
+
+      const preds: string[] = metadata?.predecessor_ids || [];
+      setPredecessorIds(preds);
+      setOriginalPredecessorIds(preds);
     }
   }, [open, task?.id]);
 
   const isDirty = useMemo(() => {
     const datesChanged = editStartDate?.getTime() !== originalStartDate?.getTime() ||
                          editEndDate?.getTime() !== originalEndDate?.getTime();
+    const progressChanged = progressPct !== originalProgressPct;
+    const predsChanged = JSON.stringify(predecessorIds) !== JSON.stringify(originalPredecessorIds);
     return status !== originalStatus || 
            description !== originalDescription || 
            files.length > 0 || 
            comments.length > 0 ||
-           datesChanged;
-  }, [status, originalStatus, description, originalDescription, files.length, comments.length, editStartDate, editEndDate, originalStartDate, originalEndDate]);
+           datesChanged ||
+           progressChanged ||
+           predsChanged;
+  }, [status, originalStatus, description, originalDescription, files.length, comments.length, editStartDate, editEndDate, originalStartDate, originalEndDate, progressPct, originalProgressPct, predecessorIds, originalPredecessorIds]);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     setFiles(prev => [...prev, ...acceptedFiles]);
