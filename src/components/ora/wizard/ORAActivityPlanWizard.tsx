@@ -294,7 +294,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
         .eq('id', projectId)
         .single();
       const projectCode = projectInfo
-        ? `${projectInfo.project_id_prefix || ''}${projectInfo.project_id_number || ''}`.trim()
+        ? `${projectInfo.project_id_prefix || ''}-${projectInfo.project_id_number || ''}`.trim()
         : '';
       const projectTitle = projectInfo?.project_title || '';
       const projectName = projectCode ? `${projectCode} - ${projectTitle}` : projectId;
