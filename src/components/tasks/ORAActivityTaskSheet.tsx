@@ -13,8 +13,9 @@ import {
 import { Calendar } from '@/components/ui/calendar';
 import { 
   Clock, CheckCircle2, Play, Upload, MessageSquare, 
-  Paperclip, X, Loader2, AlertTriangle, Trash2 
+  Paperclip, X, Loader2, AlertTriangle, Trash2, GitBranch, Plus
 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { format, parseISO, isPast, differenceInDays, addDays } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
@@ -74,18 +75,23 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
   const [files, setFiles] = useState<File[]>([]);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [progressPct, setProgressPct] = useState(50);
+  const [progressPct, setProgressPct] = useState(0);
 
   // Editable dates
   const [editStartDate, setEditStartDate] = useState<Date | undefined>();
   const [editEndDate, setEditEndDate] = useState<Date | undefined>();
   const [showCalendar, setShowCalendar] = useState(false);
 
+  // Prerequisites
+  const [predecessorIds, setPredecessorIds] = useState<string[]>([]);
+  const [originalPredecessorIds, setOriginalPredecessorIds] = useState<string[]>([]);
+
   // Original values for dirty tracking
   const [originalStatus, setOriginalStatus] = useState<ActivityStatus>('NOT_STARTED');
   const [originalDescription, setOriginalDescription] = useState('');
   const [originalStartDate, setOriginalStartDate] = useState<Date | undefined>();
   const [originalEndDate, setOriginalEndDate] = useState<Date | undefined>();
+  const [originalProgressPct, setOriginalProgressPct] = useState(0);
 
   const metadata = task?.metadata as Record<string, any> | undefined;
   const activityName = metadata?.activity_name || task?.title || '';
@@ -123,6 +129,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
       const taskStatus = task?.status;
       const initStatus: ActivityStatus = taskStatus === 'completed' ? 'COMPLETED'
         : taskStatus === 'in_progress' ? 'IN_PROGRESS' : 'NOT_STARTED';
+      const initProgress = metadata?.completion_percentage ?? (initStatus === 'COMPLETED' ? 100 : initStatus === 'IN_PROGRESS' ? 50 : 0);
       setDescription(initDesc);
       setOriginalDescription(initDesc);
       setStatus(initStatus);
@@ -130,7 +137,9 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
       setComments([]);
       setFiles([]);
       setComment('');
-      setProgressPct(50);
+      setProgressPct(initProgress);
+      setOriginalProgressPct(initProgress);
+      setShowCalendar(false);
 
       const sd = startDate ? parseISO(startDate) : undefined;
       const ed = endDate ? parseISO(endDate) : undefined;
@@ -138,18 +147,26 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
       setEditEndDate(ed);
       setOriginalStartDate(sd);
       setOriginalEndDate(ed);
+
+      const preds: string[] = metadata?.predecessor_ids || [];
+      setPredecessorIds(preds);
+      setOriginalPredecessorIds(preds);
     }
   }, [open, task?.id]);
 
   const isDirty = useMemo(() => {
     const datesChanged = editStartDate?.getTime() !== originalStartDate?.getTime() ||
                          editEndDate?.getTime() !== originalEndDate?.getTime();
+    const progressChanged = progressPct !== originalProgressPct;
+    const predsChanged = JSON.stringify(predecessorIds) !== JSON.stringify(originalPredecessorIds);
     return status !== originalStatus || 
            description !== originalDescription || 
            files.length > 0 || 
            comments.length > 0 ||
-           datesChanged;
-  }, [status, originalStatus, description, originalDescription, files.length, comments.length, editStartDate, editEndDate, originalStartDate, originalEndDate]);
+           datesChanged ||
+           progressChanged ||
+           predsChanged;
+  }, [status, originalStatus, description, originalDescription, files.length, comments.length, editStartDate, editEndDate, originalStartDate, originalEndDate, progressPct, originalProgressPct, predecessorIds, originalPredecessorIds]);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     setFiles(prev => [...prev, ...acceptedFiles]);
@@ -219,10 +236,11 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
           .from('ora_plan_activities')
           .upsert(upsertData, { onConflict: 'id' });
 
-        // Also update wizard_state dates if changed
+        // Also update wizard_state if dates or predecessors changed
         const datesChanged = editStartDate?.getTime() !== originalStartDate?.getTime() ||
                              editEndDate?.getTime() !== originalEndDate?.getTime();
-        if (datesChanged) {
+        const predsChanged = JSON.stringify(predecessorIds) !== JSON.stringify(originalPredecessorIds);
+        if (datesChanged || predsChanged) {
           const { data: planRow } = await (supabase as any)
             .from('orp_plans')
             .select('wizard_state')
@@ -235,13 +253,17 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
             const updatedActivities = wsActivities.map((a: any) => {
               const aId = String(a.id || '');
               if (aId === realOraActivityId || aId === `ora-${realOraActivityId}` || aId === `ws-${realOraActivityId}` || aId === (oraActivityId || '__none__')) {
-                return {
-                  ...a,
-                  startDate: editStartDate ? format(editStartDate, 'yyyy-MM-dd') : a.startDate,
-                  start_date: editStartDate ? format(editStartDate, 'yyyy-MM-dd') : a.start_date,
-                  endDate: editEndDate ? format(editEndDate, 'yyyy-MM-dd') : a.endDate,
-                  end_date: editEndDate ? format(editEndDate, 'yyyy-MM-dd') : a.end_date,
-                };
+                const updated: any = { ...a };
+                if (datesChanged) {
+                  updated.startDate = editStartDate ? format(editStartDate, 'yyyy-MM-dd') : a.startDate;
+                  updated.start_date = editStartDate ? format(editStartDate, 'yyyy-MM-dd') : a.start_date;
+                  updated.endDate = editEndDate ? format(editEndDate, 'yyyy-MM-dd') : a.endDate;
+                  updated.end_date = editEndDate ? format(editEndDate, 'yyyy-MM-dd') : a.end_date;
+                }
+                if (predsChanged) {
+                  updated.predecessorIds = predecessorIds;
+                }
+                return updated;
               }
               return a;
             });
@@ -528,6 +550,68 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                   </div>
                 </div>
               )}
+            </div>
+
+            <Separator />
+
+            {/* Prerequisites */}
+            <div>
+              <p className="text-sm font-medium mb-2 flex items-center gap-1.5 text-muted-foreground">
+                <GitBranch className="h-4 w-4" />
+                Prerequisites
+              </p>
+              {predecessorIds.length > 0 && (
+                <div className="space-y-1.5 mb-2">
+                  {predecessorIds.map((predId) => {
+                    const siblings: any[] = metadata?.sibling_activities || [];
+                    const match = siblings.find((s: any) => s.id === predId || s.activity_code === predId);
+                    return (
+                      <div key={predId} className="flex items-center gap-2 p-2 bg-muted/40 rounded-md text-xs">
+                        {match?.activity_code && (
+                          <Badge variant="outline" className="text-[9px] font-mono shrink-0">{match.activity_code}</Badge>
+                        )}
+                        <span className="truncate flex-1">{match?.name || predId}</span>
+                        <button
+                          onClick={() => setPredecessorIds(prev => prev.filter(p => p !== predId))}
+                          className="text-muted-foreground hover:text-destructive shrink-0"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              {(() => {
+                const siblings: any[] = metadata?.sibling_activities || [];
+                const available = siblings.filter((s: any) => !predecessorIds.includes(s.id) && !predecessorIds.includes(s.activity_code));
+                if (available.length === 0) return <p className="text-[10px] text-muted-foreground">No activities available to add as prerequisites.</p>;
+                return (
+                  <Select
+                    value=""
+                    onValueChange={(val) => {
+                      if (val && !predecessorIds.includes(val)) {
+                        setPredecessorIds(prev => [...prev, val]);
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="h-8 text-xs">
+                      <div className="flex items-center gap-1 text-muted-foreground">
+                        <Plus className="h-3 w-3" />
+                        <span>Add prerequisite...</span>
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {available.map((s: any) => (
+                        <SelectItem key={s.id} value={s.activity_code || s.id} className="text-xs">
+                          <span className="font-mono text-muted-foreground mr-1">{s.activity_code}</span>
+                          {s.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                );
+              })()}
             </div>
 
             {/* Completed → Evidence upload */}
