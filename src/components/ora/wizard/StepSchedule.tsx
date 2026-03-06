@@ -786,7 +786,7 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                           ? 'Click another date to set end' 
                           : 'Click to change start date, then end date'}
                     </div>
-                    <div className="border rounded-lg flex justify-center">
+                    <div className="border rounded-lg flex justify-center [&_.rdp]:scale-90 [&_.rdp]:origin-top">
                       <Calendar
                         mode="range"
                         selected={
