@@ -1,10 +1,12 @@
-import React, { useState, useMemo, useRef, useCallback } from 'react';
+import React, { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { format, differenceInDays, parseISO, addDays } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Search, ZoomIn, ZoomOut, Maximize2, ChevronRight, ChevronDown, ChevronsUpDown, GitBranch } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Plus, Search, ZoomIn, ZoomOut, Maximize2, ChevronRight, ChevronDown, ChevronsUpDown, GitBranch, Columns3 } from 'lucide-react';
 import { CreateORPModal } from './CreateORPModal';
 
 import { ORAActivityTaskSheet } from '@/components/tasks/ORAActivityTaskSheet';
@@ -33,7 +35,30 @@ const COL_WIDTHS = {
   duration: 48,
   status: 96,
 };
-const LEFT_PANEL_WIDTH = Object.values(COL_WIDTHS).reduce((a, b) => a + b, 0);
+
+// Sequential hue rotation palette for ID badges
+const ID_BADGE_PALETTE = [
+  { bg: 'bg-blue-500/15', text: 'text-blue-700 dark:text-blue-400' },
+  { bg: 'bg-emerald-500/15', text: 'text-emerald-700 dark:text-emerald-400' },
+  { bg: 'bg-purple-500/15', text: 'text-purple-700 dark:text-purple-400' },
+  { bg: 'bg-amber-500/15', text: 'text-amber-700 dark:text-amber-400' },
+  { bg: 'bg-rose-500/15', text: 'text-rose-700 dark:text-rose-400' },
+  { bg: 'bg-teal-500/15', text: 'text-teal-700 dark:text-teal-400' },
+  { bg: 'bg-indigo-500/15', text: 'text-indigo-700 dark:text-indigo-400' },
+  { bg: 'bg-orange-500/15', text: 'text-orange-700 dark:text-orange-400' },
+  { bg: 'bg-cyan-500/15', text: 'text-cyan-700 dark:text-cyan-400' },
+  { bg: 'bg-pink-500/15', text: 'text-pink-700 dark:text-pink-400' },
+];
+
+type ColumnKey = 'index' | 'id' | 'start' | 'end' | 'duration' | 'status';
+const TOGGLEABLE_COLUMNS: { key: ColumnKey; label: string }[] = [
+  { key: 'index', label: '#' },
+  { key: 'id', label: 'ID' },
+  { key: 'start', label: 'Start' },
+  { key: 'end', label: 'End' },
+  { key: 'duration', label: 'Days' },
+  { key: 'status', label: 'Status' },
+];
 
 const PHASE_COLORS: Record<string, { bg: string; text: string }> = {
   IDN: { bg: 'bg-blue-500/15', text: 'text-blue-700 dark:text-blue-400' },
@@ -177,6 +202,24 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const [showRelationships, setShowRelationships] = useState(false);
+  const [visibleColumns, setVisibleColumns] = useState<Set<ColumnKey>>(() => new Set(['index', 'id', 'start', 'status']));
+  const [hasInitialZoom, setHasInitialZoom] = useState(false);
+
+  const toggleColumn = (key: ColumnKey) => {
+    setVisibleColumns(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  };
+
+  const leftPanelWidth = useMemo(() => {
+    let w = COL_WIDTHS.name; // Activity column always visible
+    for (const key of visibleColumns) {
+      w += COL_WIDTHS[key];
+    }
+    return w;
+  }, [visibleColumns]);
 
   const searchQuery = externalSearchQuery ?? internalSearchQuery;
 
@@ -320,6 +363,34 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
     setZoomLevel(closest);
   };
 
+  // Default to 6M view on mount
+  useEffect(() => {
+    if (!hasInitialZoom && scrollContainerRef.current && dates.length > 0) {
+      // Use a small delay to ensure the container has rendered
+      const timer = setTimeout(() => {
+        setZoomToFitDays(180);
+        setHasInitialZoom(true);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [dates.length, hasInitialZoom]);
+
+  const isAllExpanded = useMemo(() => {
+    const parentCodes: string[] = [];
+    filteredDeliverables.forEach(d => {
+      const code = d.deliverable?.activity_code;
+      if (code && (childrenMap.get(code) || []).length > 0) parentCodes.push(code);
+    });
+    return parentCodes.length > 0 && parentCodes.every(c => expandedCodes.has(c));
+  }, [expandedCodes, filteredDeliverables, childrenMap]);
+
+  // Today line position
+  const todayPosition = useMemo(() => {
+    const today = new Date();
+    const offset = differenceInDays(today, minDate) * dayWidth;
+    return offset;
+  }, [minDate, dayWidth]);
+
   // Early return - no data
   if (!dates.length) {
     return (
@@ -359,12 +430,9 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
         <div className="flex items-center justify-between">
           <CardTitle>Gantt Chart</CardTitle>
           <div className="flex items-center gap-2">
-            {/* Expand/Collapse */}
-            <Button variant="outline" size="sm" className="h-7 px-2 text-[10px] font-medium gap-1" onClick={expandAll}>
-              <ChevronsUpDown className="w-3 h-3" /> Expand
-            </Button>
-            <Button variant="outline" size="sm" className="h-7 px-2 text-[10px] font-medium" onClick={collapseAll}>
-              Collapse
+            {/* Expand/Collapse toggle */}
+            <Button variant="outline" size="sm" className="h-7 px-2 text-[10px] font-medium gap-1" onClick={isAllExpanded ? collapseAll : expandAll}>
+              <ChevronsUpDown className="w-3 h-3" /> {isAllExpanded ? 'Collapse' : 'Expand'}
             </Button>
 
             <div className="w-px h-5 bg-border" />
@@ -380,7 +448,29 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
               Relations
             </Button>
 
-            <div className="w-px h-5 bg-border" />
+            {/* Column visibility toggle */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="h-7 px-2 text-[10px] font-medium gap-1">
+                  <Columns3 className="w-3 h-3" />
+                  Columns
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-40 p-2" align="end">
+                <div className="space-y-1">
+                  {TOGGLEABLE_COLUMNS.map(col => (
+                    <label key={col.key} className="flex items-center gap-2 px-1 py-1 rounded hover:bg-muted/50 cursor-pointer text-xs">
+                      <Checkbox
+                        checked={visibleColumns.has(col.key)}
+                        onCheckedChange={() => toggleColumn(col.key)}
+                        className="h-3.5 w-3.5"
+                      />
+                      {col.label}
+                    </label>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
 
             {/* Zoom presets */}
             <div className="flex items-center gap-1">
@@ -423,15 +513,15 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
         <div className="border rounded-lg overflow-hidden bg-background">
           {/* Header row */}
           <div className="flex">
-            <div className="shrink-0 border-r bg-muted/30" style={{ width: LEFT_PANEL_WIDTH }}>
+            <div className="shrink-0 border-r bg-muted/30" style={{ width: leftPanelWidth }}>
               <div className="flex items-center h-9 border-b text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
-                <div className="px-1 text-center" style={{ width: COL_WIDTHS.index }}>#</div>
-                <div className="px-1 border-r border-border/40" style={{ width: COL_WIDTHS.id }}>ID</div>
+                {visibleColumns.has('index') && <div className="px-1 text-center" style={{ width: COL_WIDTHS.index }}>#</div>}
+                {visibleColumns.has('id') && <div className="px-1 border-r border-border/40" style={{ width: COL_WIDTHS.id }}>ID</div>}
                 <div className="px-1.5 border-r border-border/40" style={{ width: COL_WIDTHS.name }}>Activity</div>
-                <div className="px-1 text-center" style={{ width: COL_WIDTHS.start }}>Start</div>
-                <div className="px-1 text-center" style={{ width: COL_WIDTHS.end }}>End</div>
-                <div className="px-1 text-center" style={{ width: COL_WIDTHS.duration }}>Days</div>
-                <div className="px-1 text-center" style={{ width: COL_WIDTHS.status }}>Status</div>
+                {visibleColumns.has('start') && <div className="px-1 text-center" style={{ width: COL_WIDTHS.start }}>Start</div>}
+                {visibleColumns.has('end') && <div className="px-1 text-center" style={{ width: COL_WIDTHS.end }}>End</div>}
+                {visibleColumns.has('duration') && <div className="px-1 text-center" style={{ width: COL_WIDTHS.duration }}>Days</div>}
+                {visibleColumns.has('status') && <div className="px-1 text-center" style={{ width: COL_WIDTHS.status }}>Status</div>}
               </div>
             </div>
             <div className="flex-1 overflow-hidden">
@@ -442,6 +532,12 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                       <span className="text-[10px] font-medium text-muted-foreground whitespace-nowrap">{m.label}</span>
                     </div>
                   ))}
+                  {/* Today indicator in header */}
+                  {todayPosition > 0 && todayPosition < timelineWidth && (
+                    <div className="absolute top-0 h-full flex flex-col items-center justify-end pb-0.5" style={{ left: todayPosition }}>
+                      <span className="text-[8px] font-bold text-primary whitespace-nowrap bg-primary/10 px-1 rounded">{format(new Date(), 'dd MMM')}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -451,11 +547,10 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
           <div className="max-h-[60vh] overflow-y-auto" ref={scrollContainerRef}>
             <div className="flex">
               {/* Left panel rows */}
-              <div className="shrink-0 border-r" style={{ width: LEFT_PANEL_WIDTH }}>
+              <div className="shrink-0 border-r" style={{ width: leftPanelWidth }}>
                 {visibleRows.map((row, index) => {
                   const { deliverable, depth, hasChildren, activityCode } = row;
-                  const prefix = getPhasePrefix(activityCode);
-                  const idColors = PHASE_COLORS[prefix] || { bg: 'bg-muted', text: 'text-foreground' };
+                  const idColors = ID_BADGE_PALETTE[index % ID_BADGE_PALETTE.length];
                   const isExpanded = expandedCodes.has(activityCode);
                   const isParent = hasChildren;
                   const hasDates = deliverable.start_date && deliverable.end_date;
@@ -471,63 +566,43 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                       )}
                       style={{ height: ROW_HEIGHT }}
                       onClick={() => {
-                        if (deliverable._isOraActivity) {
-                          // Convert to UserTask-like shape for ORAActivityTaskSheet
-                          setSelectedOraActivity({
-                            id: deliverable.id,
-                            title: deliverable.deliverable?.name || '',
+                        setSelectedOraActivity({
+                          id: deliverable.id,
+                          title: deliverable.deliverable?.name || '',
+                          description: deliverable.deliverable?.description || '',
+                          type: 'ora_activity',
+                          status: deliverable.status === 'COMPLETED' ? 'completed' : deliverable.status === 'IN_PROGRESS' ? 'in_progress' : 'pending',
+                          metadata: {
+                            activity_name: deliverable.deliverable?.name,
+                            activity_code: deliverable.deliverable?.activity_code,
                             description: deliverable.deliverable?.description || '',
-                            type: 'ora_activity',
-                            status: deliverable.status === 'COMPLETED' ? 'completed' : deliverable.status === 'IN_PROGRESS' ? 'in_progress' : 'pending',
-                            metadata: {
-                              activity_name: deliverable.deliverable?.name,
-                              activity_code: deliverable.deliverable?.activity_code,
-                              description: deliverable.deliverable?.description || '',
-                              plan_id: planId,
-                              deliverable_id: deliverable.deliverable?.id,
-                              ora_plan_activity_id: deliverable.id,
-                              start_date: deliverable.start_date,
-                              end_date: deliverable.end_date,
-                            },
-                            priority: 'medium',
-                            created_at: deliverable.created_at || new Date().toISOString(),
-                          });
-                        } else {
-                          // Also open as side sheet for consistent UX
-                          setSelectedOraActivity({
-                            id: deliverable.id,
-                            title: deliverable.deliverable?.name || '',
-                            description: deliverable.deliverable?.description || '',
-                            type: 'ora_activity',
-                            status: deliverable.status === 'COMPLETED' ? 'completed' : deliverable.status === 'IN_PROGRESS' ? 'in_progress' : 'pending',
-                            metadata: {
-                              activity_name: deliverable.deliverable?.name,
-                              activity_code: deliverable.deliverable?.activity_code,
-                              description: deliverable.deliverable?.description || '',
-                              plan_id: planId,
-                              deliverable_id: deliverable.deliverable?.id || deliverable.id,
-                              ora_plan_activity_id: deliverable.id,
-                              start_date: deliverable.start_date,
-                              end_date: deliverable.end_date,
-                            },
-                            priority: 'medium',
-                            created_at: deliverable.created_at || new Date().toISOString(),
-                          });
-                        }
+                            plan_id: planId,
+                            deliverable_id: deliverable.deliverable?.id || deliverable.id,
+                            ora_plan_activity_id: deliverable.id,
+                            start_date: deliverable.start_date,
+                            end_date: deliverable.end_date,
+                          },
+                          priority: 'medium',
+                          created_at: deliverable.created_at || new Date().toISOString(),
+                        });
                       }}
                     >
-                      <div className="px-1 text-center text-[10px] text-muted-foreground" style={{ width: COL_WIDTHS.index }}>
-                        {index + 1}
-                      </div>
-                      <div className="px-1 flex items-center border-r border-border/40" style={{ width: COL_WIDTHS.id }}>
-                        {activityCode ? (
-                          <span className={cn("inline-flex items-center rounded px-1.5 py-0.5 text-[9px] font-mono font-semibold whitespace-nowrap", idColors.bg, idColors.text)}>
-                            {activityCode}
-                          </span>
-                        ) : (
-                          <span className="text-[10px] text-muted-foreground">—</span>
-                        )}
-                      </div>
+                      {visibleColumns.has('index') && (
+                        <div className="px-1 text-center text-[10px] text-muted-foreground" style={{ width: COL_WIDTHS.index }}>
+                          {index + 1}
+                        </div>
+                      )}
+                      {visibleColumns.has('id') && (
+                        <div className="px-1 flex items-center border-r border-border/40" style={{ width: COL_WIDTHS.id }}>
+                          {activityCode ? (
+                            <span className={cn("inline-flex items-center rounded px-1.5 py-0.5 text-[9px] font-mono font-semibold whitespace-nowrap", idColors.bg, idColors.text)}>
+                              {activityCode}
+                            </span>
+                          ) : (
+                            <span className="text-[10px] text-muted-foreground">—</span>
+                          )}
+                        </div>
+                      )}
                       <div className="px-1.5 overflow-hidden flex items-center gap-0.5 border-r border-border/40" style={{ width: COL_WIDTHS.name }}>
                         <div style={{ paddingLeft: depth * 16 }} className="flex items-center gap-1 min-w-0">
                           {hasChildren ? (
@@ -551,24 +626,32 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                           </span>
                         </div>
                       </div>
-                      <div className="px-1 text-center" style={{ width: COL_WIDTHS.start }}>
-                        <span className="text-[10px] text-muted-foreground">
-                          {hasDates ? format(parseISO(deliverable.start_date), 'dd MMM') : '—'}
-                        </span>
-                      </div>
-                      <div className="px-1 text-center" style={{ width: COL_WIDTHS.end }}>
-                        <span className="text-[10px] text-muted-foreground">
-                          {hasDates ? format(parseISO(deliverable.end_date), 'dd MMM') : '—'}
-                        </span>
-                      </div>
-                      <div className="px-1 text-center" style={{ width: COL_WIDTHS.duration }}>
-                        <span className="text-[10px] font-medium">{durationDays !== null ? `${durationDays}d` : '—'}</span>
-                      </div>
-                      <div className="px-1 flex items-center justify-center" style={{ width: COL_WIDTHS.status }}>
-                        <Badge variant="outline" className={cn("text-[9px] px-1.5 py-0 h-5", getStatusBadgeClasses(deliverable.status))}>
-                          {getStatusLabel(deliverable.status)}
-                        </Badge>
-                      </div>
+                      {visibleColumns.has('start') && (
+                        <div className="px-1 text-center" style={{ width: COL_WIDTHS.start }}>
+                          <span className="text-[10px] text-muted-foreground">
+                            {hasDates ? format(parseISO(deliverable.start_date), 'dd MMM') : '—'}
+                          </span>
+                        </div>
+                      )}
+                      {visibleColumns.has('end') && (
+                        <div className="px-1 text-center" style={{ width: COL_WIDTHS.end }}>
+                          <span className="text-[10px] text-muted-foreground">
+                            {hasDates ? format(parseISO(deliverable.end_date), 'dd MMM') : '—'}
+                          </span>
+                        </div>
+                      )}
+                      {visibleColumns.has('duration') && (
+                        <div className="px-1 text-center" style={{ width: COL_WIDTHS.duration }}>
+                          <span className="text-[10px] font-medium">{durationDays !== null ? `${durationDays}d` : '—'}</span>
+                        </div>
+                      )}
+                      {visibleColumns.has('status') && (
+                        <div className="px-1 flex items-center justify-center" style={{ width: COL_WIDTHS.status }}>
+                          <Badge variant="outline" className={cn("text-[9px] px-1.5 py-0 h-5", getStatusBadgeClasses(deliverable.status))}>
+                            {getStatusLabel(deliverable.status)}
+                          </Badge>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -611,6 +694,10 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                         {weekMarkers.map((left, i) => (
                           <div key={i} className="absolute top-0 bottom-0 border-l border-border/15" style={{ left }} />
                         ))}
+                        {/* Today line */}
+                        {todayPosition > 0 && todayPosition < timelineWidth && (
+                          <div className="absolute top-0 bottom-0 border-l-2 border-dashed border-primary/60 z-10" style={{ left: todayPosition }} />
+                        )}
 
                         {barPos && isParent && (
                           <div
