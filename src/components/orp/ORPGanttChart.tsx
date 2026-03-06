@@ -508,9 +508,6 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleZoomIn} disabled={zoomLevel === ZOOM_LEVELS[ZOOM_LEVELS.length - 1]}>
                 <ZoomIn className="h-4 w-4" />
               </Button>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setZoomLevel(1)} title="Fit to screen">
-                <Maximize2 className="h-4 w-4" />
-              </Button>
             </div>
 
             {!hideToolbar && (

@@ -250,6 +250,10 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
         overallProgress={overallProgress}
         completedCount={completedDeliverables}
         totalCount={totalDeliverables}
+        inProgressCount={primaryPlan?.in_progress_count || 0}
+        notStartedCount={primaryPlan?.not_started_count || 0}
+        p2aProgress={primaryPlan?.p2a_progress || 0}
+        vcrCount={primaryPlan?.vcr_count || 0}
       />
 
       <ORAActivityPlanWizard
