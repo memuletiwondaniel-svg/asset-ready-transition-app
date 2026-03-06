@@ -605,6 +605,19 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                     <span className="text-[10px] font-medium text-muted-foreground whitespace-nowrap">{m.label}</span>
                   </div>
                 ))}
+                {/* Today marker label */}
+                {(() => {
+                  const todayOffset = differenceInDays(startOfDay(new Date()), timelineStart);
+                  if (todayOffset < 0 || todayOffset > totalDays) return null;
+                  const todayLeft = todayOffset * dayWidth;
+                  return (
+                    <div className="absolute top-0 h-full flex items-end pb-0.5 z-10" style={{ left: todayLeft }}>
+                      <span className="text-[8px] font-bold text-destructive bg-destructive/10 rounded px-1 py-px -translate-x-1/2 whitespace-nowrap">
+                        {format(new Date(), 'dd MMM')}
+                      </span>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           </div>
