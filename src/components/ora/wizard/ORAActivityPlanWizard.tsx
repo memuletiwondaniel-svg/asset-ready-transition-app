@@ -318,6 +318,11 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
           });
       }
 
+      // Invalidate caches so task disappears from tray immediately
+      queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['orp-plans'] });
+      queryClient.invalidateQueries({ queryKey: ['project-orp-plans'] });
+
       toast({ title: 'Submitted', description: 'ORA Plan submitted for approval' });
       onOpenChange(false);
       resetForm();
