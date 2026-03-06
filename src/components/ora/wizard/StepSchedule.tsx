@@ -472,6 +472,7 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+        <div className="flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="h-7 px-2 text-[10px] gap-1">
