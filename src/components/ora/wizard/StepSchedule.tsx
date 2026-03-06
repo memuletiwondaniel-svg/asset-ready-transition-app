@@ -1065,17 +1065,7 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                       />
                     </div>
 
-                    {/* Duration manual input */}
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">Duration (days)</span>
-                      <Input
-                        type="number" min={1}
-                        value={selectedActivity.durationDays ?? ''}
-                        onChange={(e) => updateActivity(selectedActivity.id, { durationDays: parseInt(e.target.value) || null })}
-                        className="h-7 w-20 text-xs text-center"
-                        placeholder="—"
-                      />
-                    </div>
+                    {/* Status */}
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">Status</span>
                       <Select
