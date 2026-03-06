@@ -2,8 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Settings2, Clock, CheckCircle2, Plus, FileEdit, Send, AlertTriangle, ChevronRight, Trash2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Settings2, Clock, CheckCircle2, Plus, FileEdit, Send, AlertTriangle, ChevronRight, Trash2, CalendarRange, ExternalLink } from 'lucide-react';
 import { StyledWidgetIcon } from './StyledWidgetIcon';
 import { useProjectORPPlans } from '@/hooks/useProjectORPPlans';
 import { useORPPlans } from '@/hooks/useORPPlans';
@@ -11,7 +10,7 @@ import { Progress } from '@/components/ui/progress';
 import { ORPGanttOverlay } from '@/components/orp/ORPGanttOverlay';
 import { ORAActivityPlanWizard } from '@/components/ora/wizard/ORAActivityPlanWizard';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { format, parseISO, isPast, isToday, addDays } from 'date-fns';
+import { format, parseISO, isPast, isToday } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 interface ORPActivityPlanWidgetProps {
@@ -35,7 +34,6 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
   dragListeners, 
   onHide 
 }) => {
-  const navigate = useNavigate();
   const [overlayOpen, setOverlayOpen] = useState(false);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -46,15 +44,10 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
   const planStatus = primaryPlan?.status || '';
   const statusConfig = STATUS_CONFIG[planStatus];
 
-  const allUpcomingActivities = useMemo(() => {
-    return plans.flatMap(plan => plan.upcoming_activities || []);
-  }, [plans]);
-
-  const totalDeliverables = plans.reduce((sum, p) => sum + p.deliverable_count, 0);
-  const completedDeliverables = plans.reduce((sum, p) => sum + p.completed_count, 0);
-  const overallProgress = totalDeliverables > 0 
-    ? Math.round((completedDeliverables / totalDeliverables) * 100) 
-    : 0;
+  const totalDeliverables = primaryPlan?.deliverable_count || 0;
+  const completedDeliverables = primaryPlan?.completed_count || 0;
+  const overallProgress = primaryPlan?.overall_progress || 0;
+  const upcomingActivities = primaryPlan?.upcoming_activities || [];
 
   const getActivityStatus = (activity: { end_date: string | null; status: string }) => {
     if (activity.status === 'COMPLETED') return 'completed';
@@ -63,82 +56,71 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
     return 'upcoming';
   };
 
-  const handleOpenOverlay = () => {
-    if (primaryPlan) {
-      setOverlayOpen(true);
-    }
-  };
-
   const isDraft = planStatus === 'DRAFT';
 
-  // No plan state OR draft state → show creation/resume UI
-  if (!primaryPlan || isDraft) {
+  // No plan state → show creation UI
+  if (!primaryPlan) {
     return (
       <>
         <Card className="h-full transition-all duration-300 group">
-          <CardHeader 
-            {...dragAttributes} 
-            {...dragListeners} 
-            className="cursor-grab active:cursor-grabbing"
-          >
-            <CardTitle className="text-lg flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <StyledWidgetIcon 
-                  Icon={Settings2}
-                  gradientFrom="from-purple-500"
-                  gradientTo="to-violet-500"
-                  glowFrom="from-purple-500/40"
-                  glowTo="to-violet-500/40"
-                />
-                <span>ORA Activities</span>
-              </div>
-              {isDraft && (
-                <Badge variant="outline" className="text-[10px] gap-1 bg-muted text-muted-foreground border-border">
-                  <FileEdit className="h-3 w-3" />
-                  Draft
-                </Badge>
-              )}
+          <CardHeader {...dragAttributes} {...dragListeners} className="cursor-grab active:cursor-grabbing">
+            <CardTitle className="text-lg flex items-center gap-3">
+              <StyledWidgetIcon Icon={Settings2} gradientFrom="from-purple-500" gradientTo="to-violet-500" glowFrom="from-purple-500/40" glowTo="to-violet-500/40" />
+              <span>ORA Activities</span>
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent>
             <div className="text-center py-8 text-muted-foreground">
-              <p className="text-sm font-medium mb-1">{isDraft ? 'Draft in Progress' : 'No ORA Plan'}</p>
-              <p className="text-xs opacity-70 mb-4">
-                {isDraft ? 'You have an unsaved draft. Continue where you left off.' : 'Operation Readiness activities will appear here'}
-              </p>
+              <p className="text-sm font-medium mb-1">No ORA Plan</p>
+              <p className="text-xs opacity-70 mb-4">Operation Readiness activities will appear here</p>
+              <Button variant="secondary" size="sm" onClick={(e) => { e.stopPropagation(); setWizardOpen(true); }}>
+                Create ORA Plan
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+        <ORAActivityPlanWizard open={wizardOpen} onOpenChange={setWizardOpen} projectId={projectId} />
+      </>
+    );
+  }
+
+  // Draft state → show resume UI
+  if (isDraft) {
+    return (
+      <>
+        <Card className="h-full transition-all duration-300 group">
+          <CardHeader {...dragAttributes} {...dragListeners} className="cursor-grab active:cursor-grabbing">
+            <CardTitle className="text-lg flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <StyledWidgetIcon Icon={Settings2} gradientFrom="from-purple-500" gradientTo="to-violet-500" glowFrom="from-purple-500/40" glowTo="to-violet-500/40" />
+                <span>ORA Activities</span>
+              </div>
+              <Badge variant="outline" className="text-[10px] gap-1 bg-muted text-muted-foreground border-border">
+                <FileEdit className="h-3 w-3" />
+                Draft
+              </Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-8 text-muted-foreground">
+              <p className="text-sm font-medium mb-1">Draft in Progress</p>
+              <p className="text-xs opacity-70 mb-4">You have an unsaved draft. Continue where you left off.</p>
               <div className="flex items-center justify-center gap-2">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setWizardOpen(true);
-                  }}
-                >
-                  {isDraft ? 'Continue Setup' : 'Create ORA Plan'}
+                <Button variant="secondary" size="sm" onClick={(e) => { e.stopPropagation(); setWizardOpen(true); }}>
+                  Continue Setup
                 </Button>
-                {isDraft && primaryPlan && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setDeleteDialogOpen(true);
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
+                <Button
+                  variant="ghost" size="icon"
+                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                  onClick={(e) => { e.stopPropagation(); setDeleteDialogOpen(true); }}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
             </div>
           </CardContent>
         </Card>
-        <ORAActivityPlanWizard
-          open={wizardOpen}
-          onOpenChange={setWizardOpen}
-          projectId={projectId}
-        />
+        <ORAActivityPlanWizard open={wizardOpen} onOpenChange={setWizardOpen} projectId={projectId} />
         <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
@@ -152,12 +134,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
               <AlertDialogAction
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 disabled={isDeletingPlan}
-                onClick={() => {
-                  if (primaryPlan) {
-                    deletePlan(primaryPlan.id);
-                    setDeleteDialogOpen(false);
-                  }
-                }}
+                onClick={() => { deletePlan(primaryPlan.id); setDeleteDialogOpen(false); }}
               >
                 {isDeletingPlan ? 'Deleting...' : 'Delete Plan'}
               </AlertDialogAction>
@@ -168,32 +145,14 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
     );
   }
 
-  const isApproved = planStatus === 'APPROVED' || planStatus === 'COMPLETED' || planStatus === 'IN_PROGRESS';
-
+  // Active plan (PENDING_APPROVAL, APPROVED, IN_PROGRESS, COMPLETED)
   return (
     <>
-      <Card 
-        className={cn(
-          "h-full transition-all duration-300 group cursor-pointer",
-          "hover:shadow-lg hover:scale-[1.02] hover:border-purple-500/20"
-        )}
-        onClick={handleOpenOverlay}
-      >
-        <CardHeader 
-          {...dragAttributes} 
-          {...dragListeners} 
-          className="cursor-grab active:cursor-grabbing"
-          onClick={(e) => e.stopPropagation()}
-        >
+      <Card className="h-full transition-all duration-300 group">
+        <CardHeader {...dragAttributes} {...dragListeners} className="cursor-grab active:cursor-grabbing">
           <CardTitle className="text-lg flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <StyledWidgetIcon 
-                Icon={Settings2}
-                gradientFrom="from-purple-500"
-                gradientTo="to-violet-500"
-                glowFrom="from-purple-500/40"
-                glowTo="to-violet-500/40"
-              />
+              <StyledWidgetIcon Icon={Settings2} gradientFrom="from-purple-500" gradientTo="to-violet-500" glowFrom="from-purple-500/40" glowTo="to-violet-500/40" />
               <span>ORA Activities</span>
             </div>
             {statusConfig && (
@@ -206,6 +165,20 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
         </CardHeader>
         
         <CardContent className="space-y-3">
+          {/* ORA Plan CTA */}
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full justify-between text-xs h-8 hover:border-purple-500/30 hover:bg-purple-500/5"
+            onClick={() => setOverlayOpen(true)}
+          >
+            <span className="flex items-center gap-1.5">
+              <CalendarRange className="h-3.5 w-3.5 text-purple-500" />
+              ORA Plan
+            </span>
+            <ChevronRight className="h-3 w-3 text-muted-foreground" />
+          </Button>
+
           {/* Progress bar */}
           <div>
             <div className="flex items-center justify-between text-xs mb-1.5">
@@ -217,10 +190,20 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
             <Progress value={overallProgress} className="h-1.5" />
           </div>
 
-          {/* Activity list for approved plans */}
-          {isApproved && allUpcomingActivities.length > 0 && (
+          {/* Key dates */}
+          {primaryPlan.plan_start_date && primaryPlan.plan_end_date && (
+            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+              <CalendarRange className="h-3 w-3" />
+              <span>
+                {format(parseISO(primaryPlan.plan_start_date), 'MMM d, yyyy')} — {format(parseISO(primaryPlan.plan_end_date), 'MMM d, yyyy')}
+              </span>
+            </div>
+          )}
+
+          {/* Activity list */}
+          {upcomingActivities.length > 0 && (
             <div className="space-y-1.5 pt-1">
-              {allUpcomingActivities.slice(0, 4).map((activity) => {
+              {upcomingActivities.slice(0, 6).map((activity) => {
                 const actStatus = getActivityStatus(activity);
                 return (
                   <div
@@ -252,26 +235,20 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
                   </div>
                 );
               })}
-              {allUpcomingActivities.length > 4 && (
-                <p className="text-[10px] text-muted-foreground text-center pt-0.5">
-                  +{allUpcomingActivities.length - 4} more
-                </p>
+              {upcomingActivities.length > 6 && (
+                <button
+                  onClick={() => setOverlayOpen(true)}
+                  className="text-[10px] text-muted-foreground text-center w-full pt-0.5 hover:text-foreground transition-colors"
+                >
+                  +{upcomingActivities.length - 6} more
+                </button>
               )}
-            </div>
-          )}
-
-          {/* CTA for non-approved plans */}
-          {!isApproved && (
-            <div className="flex items-center justify-center pt-2">
-              <span className="text-xs text-muted-foreground flex items-center gap-1">
-                Click to view plan details <ChevronRight className="h-3 w-3" />
-              </span>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Gantt Chart Overlay */}
+      {/* Gantt Chart + Approvals Overlay */}
       <ORPGanttOverlay
         open={overlayOpen}
         onOpenChange={setOverlayOpen}
