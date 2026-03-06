@@ -346,19 +346,6 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
         />
       )}
 
-      {/* ORA Plan Review Overlay */}
-      {isOraReviewTask && oraPlanId && (
-        <ORAActivityPlanReviewOverlay
-          open={oraReviewOpen}
-          onOpenChange={setOraReviewOpen}
-          planId={oraPlanId}
-          taskId={task.id}
-          onApproved={() => {
-            setOraReviewOpen(false);
-            onOpenChange(false);
-          }}
-        />
-      )}
 
       {/* ORA Activity Task Sheet */}
       {isOraActivityTask && (
