@@ -563,7 +563,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
         <DialogHeader className="border-b pb-4">
           <DialogTitle className="flex items-center gap-2 text-xl font-semibold">
             <CalendarCheck className="w-5 h-5 text-primary" />
-            Create ORA Plan
+            {isReviewMode ? 'Review ORA Plan' : 'Create ORA Plan'}
           </DialogTitle>
 
           {/* Progress Indicator - PSSR pattern */}
