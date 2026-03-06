@@ -385,87 +385,99 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
               />
             </div>
 
-            {/* Editable Date info with range calendar */}
+            {/* Schedule: Start, End, Duration on one row */}
             <div className="space-y-3">
               <p className="text-sm font-medium text-muted-foreground">Schedule</p>
-              <div className="grid grid-cols-2 gap-3">
-                {/* Start Date display */}
-                <div>
+              <div className="flex items-center gap-2">
+                {/* Start Date */}
+                <div className="flex-1">
                   <p className="text-[10px] text-muted-foreground mb-1 uppercase tracking-wide font-medium">Start Date</p>
-                  <div className={cn(
-                    "flex items-center gap-2 h-9 px-3 rounded-md border text-sm",
-                    editStartDate ? "text-foreground" : "text-muted-foreground"
-                  )}>
-                    <CalendarIcon className="h-3.5 w-3.5 text-muted-foreground" />
-                    {editStartDate ? format(editStartDate, 'MMM d, yyyy') : 'Not set'}
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowCalendar(v => !v)}
+                    className={cn(
+                      "w-full h-9 px-3 rounded-md border text-sm text-left transition-colors hover:bg-muted/50",
+                      editStartDate ? "text-foreground" : "text-muted-foreground",
+                      showCalendar && "ring-1 ring-primary/40"
+                    )}
+                  >
+                    {editStartDate ? format(editStartDate, 'MMM d, yyyy') : 'Set date'}
+                  </button>
                 </div>
 
-                {/* End Date display */}
-                <div>
+                {/* End Date */}
+                <div className="flex-1">
                   <p className="text-[10px] text-muted-foreground mb-1 uppercase tracking-wide font-medium">End Date</p>
-                  <div className={cn(
-                    "flex items-center gap-2 h-9 px-3 rounded-md border text-sm",
-                    editEndDate ? "text-foreground" : "text-muted-foreground",
-                    isOverdue && "border-destructive/50 text-destructive"
-                  )}>
-                    <CalendarIcon className="h-3.5 w-3.5 text-muted-foreground" />
-                    {editEndDate ? format(editEndDate, 'MMM d, yyyy') : 'Not set'}
+                  <button
+                    type="button"
+                    onClick={() => setShowCalendar(v => !v)}
+                    className={cn(
+                      "w-full h-9 px-3 rounded-md border text-sm text-left transition-colors hover:bg-muted/50",
+                      editEndDate ? "text-foreground" : "text-muted-foreground",
+                      isOverdue && "border-destructive/50 text-destructive",
+                      showCalendar && "ring-1 ring-primary/40"
+                    )}
+                  >
+                    {editEndDate ? format(editEndDate, 'MMM d, yyyy') : 'Set date'}
+                  </button>
+                </div>
+
+                {/* Duration */}
+                <div className="shrink-0">
+                  <p className="text-[10px] text-muted-foreground mb-1 uppercase tracking-wide font-medium">Duration</p>
+                  <div className="flex items-center gap-0.5 h-9">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-7 w-7 text-xs"
+                      disabled={!editStartDate || !editEndDate || (durationDays !== null && durationDays <= 1)}
+                      onClick={() => {
+                        if (editStartDate && editEndDate && durationDays && durationDays > 1) {
+                          setEditEndDate(addDays(editEndDate, -1));
+                        }
+                      }}
+                    >
+                      −
+                    </Button>
+                    <span className="font-semibold text-sm text-foreground w-8 text-center">{durationDays !== null ? `${durationDays}d` : '—'}</span>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-7 w-7 text-xs"
+                      disabled={!editStartDate || !editEndDate}
+                      onClick={() => {
+                        if (editStartDate && editEndDate) {
+                          setEditEndDate(addDays(editEndDate, 1));
+                        }
+                      }}
+                    >
+                      +
+                    </Button>
                   </div>
                 </div>
               </div>
 
-              {/* Duration with +/- controls */}
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Clock className="h-3.5 w-3.5" />
-                <span>Duration:</span>
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-6 w-6 text-xs"
-                    disabled={!editStartDate || !editEndDate || (durationDays !== null && durationDays <= 1)}
-                    onClick={() => {
-                      if (editStartDate && editEndDate && durationDays && durationDays > 1) {
-                        setEditEndDate(addDays(editEndDate, -1));
-                      }
+              {/* Collapsible range calendar */}
+              {showCalendar && (
+                <div className="border rounded-lg p-1 animate-in fade-in slide-in-from-top-1 duration-200">
+                  <Calendar
+                    mode="range"
+                    selected={editStartDate && editEndDate ? { from: editStartDate, to: editEndDate } : editStartDate ? { from: editStartDate, to: undefined } : undefined}
+                    onSelect={(range) => {
+                      if (range?.from) setEditStartDate(range.from);
+                      else setEditStartDate(undefined);
+                      if (range?.to) setEditEndDate(range.to);
+                      else if (range?.from && !range?.to) setEditEndDate(undefined);
+                      else setEditEndDate(undefined);
                     }}
-                  >
-                    −
-                  </Button>
-                  <span className="font-semibold text-foreground w-10 text-center">{durationDays !== null ? `${durationDays}d` : '—'}</span>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-6 w-6 text-xs"
-                    disabled={!editStartDate || !editEndDate}
-                    onClick={() => {
-                      if (editStartDate && editEndDate) {
-                        setEditEndDate(addDays(editEndDate, 1));
-                      }
+                    numberOfMonths={1}
+                    className="p-2 pointer-events-auto"
+                    classNames={{
+                      day_today: "bg-muted text-muted-foreground font-medium",
                     }}
-                  >
-                    +
-                  </Button>
+                  />
                 </div>
-              </div>
-
-              {/* Range calendar */}
-              <div className="border rounded-lg p-1">
-                <Calendar
-                  mode="range"
-                  selected={editStartDate && editEndDate ? { from: editStartDate, to: editEndDate } : editStartDate ? { from: editStartDate, to: undefined } : undefined}
-                  onSelect={(range) => {
-                    if (range?.from) setEditStartDate(range.from);
-                    else setEditStartDate(undefined);
-                    if (range?.to) setEditEndDate(range.to);
-                    else if (range?.from && !range?.to) setEditEndDate(undefined);
-                    else setEditEndDate(undefined);
-                  }}
-                  numberOfMonths={1}
-                  className="p-2 pointer-events-auto"
-                />
-              </div>
+              )}
             </div>
 
             <Separator />
