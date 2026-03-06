@@ -493,7 +493,26 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                             created_at: deliverable.created_at || new Date().toISOString(),
                           });
                         } else {
-                          setSelectedDeliverable(deliverable);
+                          // Also open as side sheet for consistent UX
+                          setSelectedOraActivity({
+                            id: deliverable.id,
+                            title: deliverable.deliverable?.name || '',
+                            description: deliverable.deliverable?.description || '',
+                            type: 'ora_activity',
+                            status: deliverable.status === 'COMPLETED' ? 'completed' : deliverable.status === 'IN_PROGRESS' ? 'in_progress' : 'pending',
+                            metadata: {
+                              activity_name: deliverable.deliverable?.name,
+                              activity_code: deliverable.deliverable?.activity_code,
+                              description: deliverable.deliverable?.description || '',
+                              plan_id: planId,
+                              deliverable_id: deliverable.deliverable?.id || deliverable.id,
+                              ora_plan_activity_id: deliverable.id,
+                              start_date: deliverable.start_date,
+                              end_date: deliverable.end_date,
+                            },
+                            priority: 'medium',
+                            created_at: deliverable.created_at || new Date().toISOString(),
+                          });
                         }
                       }}
                     >
