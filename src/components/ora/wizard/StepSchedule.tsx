@@ -199,6 +199,58 @@ function getParentDateRange(
   };
 }
 
+// Predecessor picker sub-component
+const PredecessorPicker: React.FC<{
+  activities: WizardActivity[];
+  currentId: string;
+  selectedIds: string[];
+  onToggle: (id: string) => void;
+}> = ({ activities, currentId, selectedIds, onToggle }) => {
+  const [search, setSearch] = useState('');
+  const available = activities.filter(a =>
+    a.id !== currentId &&
+    a.activity.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div className="flex flex-col max-h-[280px]">
+      <div className="p-2 border-b">
+        <Input
+          placeholder="Search activities..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="h-7 text-xs"
+        />
+      </div>
+      <div className="overflow-y-auto p-1 space-y-0.5">
+        {available.length === 0 && (
+          <p className="text-xs text-muted-foreground text-center py-4">No activities found</p>
+        )}
+        {available.map(a => {
+          const isSelected = selectedIds.includes(a.id);
+          const colors = getIdBadgeClasses(a.activityCode);
+          return (
+            <button
+              key={a.id}
+              className={cn(
+                "w-full flex items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors",
+                isSelected ? "bg-primary/10 border border-primary/30" : "hover:bg-accent/50 border border-transparent"
+              )}
+              onClick={() => onToggle(a.id)}
+            >
+              <span className={cn("text-[9px] font-mono font-semibold rounded px-1 py-0.5 whitespace-nowrap shrink-0", colors.bg, colors.text)}>
+                {a.activityCode}
+              </span>
+              <span className="text-[11px] truncate flex-1">{a.activity}</span>
+              {isSelected && <Check className="w-3 h-3 text-primary shrink-0" />}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }) => {
   const [zoomLevel, setZoomLevel] = useState(1);
   const [visibleCols, setVisibleCols] = useState<Set<ColKey>>(new Set(DEFAULT_VISIBLE));
