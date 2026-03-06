@@ -715,19 +715,29 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                           <div className="absolute top-0 bottom-0 border-l-2 border-dashed border-primary/60 z-10" style={{ left: todayPosition }} />
                         )}
 
-                        {barPos && isParent && (
-                          <div
-                            className={cn(
-                              "absolute rounded-sm transition-all border-2",
-                              barColor.replace('bg-', 'border-'),
-                              "bg-transparent opacity-60"
-                            )}
-                            style={{ left: barPos.left, width: barPos.width, top: ROW_HEIGHT / 2 - 4, height: 8 }}
-                            title={`${deliverable.deliverable?.name} (summary)`}
-                          >
-                            <div className={cn("h-full rounded-sm", barColor, "opacity-30")} />
-                          </div>
-                        )}
+                        {barPos && isParent && (() => {
+                          const mutedColor = BAR_COLORS_MUTED[prefix] || 'bg-muted';
+                          const range = getParentDateRange(activityCode, childrenMap);
+                          const parentDuration = range.minStart && range.maxEnd ? differenceInDays(range.maxEnd, range.minStart) : null;
+
+                          return (
+                            <div
+                              className={cn(
+                                "absolute top-2 rounded shadow-sm overflow-hidden",
+                                mutedColor
+                              )}
+                              style={{ left: barPos.left, width: barPos.width, height: ROW_HEIGHT - 16 }}
+                              title={`${deliverable.deliverable?.name} (summary)`}
+                            >
+                              <div className={cn("absolute h-full rounded-l", barColor, "opacity-40")} style={{ width: '100%' }} />
+                              <div className="absolute inset-0 flex items-center justify-center z-10">
+                                <span className="text-[9px] text-white font-medium drop-shadow-sm">
+                                  {parentDuration !== null ? `${parentDuration}d` : ''}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })()}
 
                         {barPos && !isParent && (() => {
                           const isDragging = draggingId === deliverable.id;
