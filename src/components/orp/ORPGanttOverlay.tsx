@@ -137,7 +137,7 @@ export const ORPGanttOverlay: React.FC<ORPGanttOverlayProps> = ({
             </div>
 
             {/* Metrics row */}
-            <div className="mt-2.5 grid grid-cols-[minmax(180px,0.6fr)_auto_auto_auto] gap-2 items-stretch">
+            <div className="mt-4 grid grid-cols-[minmax(180px,0.6fr)_auto_auto_auto] gap-2 items-stretch">
               {/* Overall Progress */}
               <div className="p-3 bg-muted/30 rounded-xl border border-border/30 min-w-0">
                 <div className="flex items-center justify-between text-xs mb-1.5">
@@ -154,8 +154,8 @@ export const ORPGanttOverlay: React.FC<ORPGanttOverlayProps> = ({
               {/* SPI */}
               {scheduleMetrics && (
                 <>
-                  <div className={cn(
-                    "flex flex-col items-center justify-center px-3 py-1.5 rounded-lg border min-w-[70px]",
+                   <div className={cn(
+                    "flex flex-col items-center justify-center px-2 py-1 rounded-lg border min-w-[56px]",
                     scheduleMetrics.spi >= 80
                       ? "bg-green-500/5 border-green-500/20"
                       : scheduleMetrics.spi >= 50
@@ -163,39 +163,39 @@ export const ORPGanttOverlay: React.FC<ORPGanttOverlayProps> = ({
                         : "bg-destructive/5 border-destructive/20"
                   )}>
                     {scheduleMetrics.spi >= 50
-                      ? <TrendingUp className={cn("h-3.5 w-3.5 mb-0.5", scheduleMetrics.spi >= 80 ? "text-green-600" : "text-amber-600")} />
-                      : <TrendingDown className="h-3.5 w-3.5 mb-0.5 text-destructive" />
+                      ? <TrendingUp className={cn("h-3 w-3 mb-0.5", scheduleMetrics.spi >= 80 ? "text-green-600" : "text-amber-600")} />
+                      : <TrendingDown className="h-3 w-3 mb-0.5 text-destructive" />
                     }
                     <p className={cn(
-                      "text-sm font-bold leading-none",
+                      "text-xs font-bold leading-none",
                       scheduleMetrics.spi >= 80 ? "text-green-600" : scheduleMetrics.spi >= 50 ? "text-amber-600" : "text-destructive"
                     )}>{scheduleMetrics.spi}%</p>
                     <p className="text-[8px] text-muted-foreground mt-0.5 font-medium">SPI</p>
                   </div>
 
                   <div className={cn(
-                    "flex flex-col items-center justify-center px-3 py-1.5 rounded-lg border min-w-[70px]",
+                    "flex flex-col items-center justify-center px-2 py-1 rounded-lg border min-w-[56px]",
                     scheduleMetrics.atRisk === 0
                       ? "bg-green-500/5 border-green-500/20"
                       : "bg-destructive/5 border-destructive/20"
                   )}>
-                    <AlertTriangle className={cn("h-3.5 w-3.5 mb-0.5", scheduleMetrics.atRisk === 0 ? "text-green-600" : "text-destructive")} />
+                    <AlertTriangle className={cn("h-3 w-3 mb-0.5", scheduleMetrics.atRisk === 0 ? "text-green-600" : "text-destructive")} />
                     <p className={cn(
-                      "text-sm font-bold leading-none",
+                      "text-xs font-bold leading-none",
                       scheduleMetrics.atRisk === 0 ? "text-green-600" : "text-destructive"
                     )}>{scheduleMetrics.atRisk}</p>
                     <p className="text-[8px] text-muted-foreground mt-0.5 font-medium">At Risk</p>
                   </div>
 
                   <div className={cn(
-                    "flex flex-col items-center justify-center px-3 py-1.5 rounded-lg border min-w-[70px]",
+                    "flex flex-col items-center justify-center px-2 py-1 rounded-lg border min-w-[56px]",
                     scheduleMetrics.avgSlippage === 0
                       ? "bg-green-500/5 border-green-500/20"
                       : "bg-amber-500/5 border-amber-500/20"
                   )}>
-                    <Clock className={cn("h-3.5 w-3.5 mb-0.5", scheduleMetrics.avgSlippage === 0 ? "text-green-600" : "text-amber-600")} />
+                    <Clock className={cn("h-3 w-3 mb-0.5", scheduleMetrics.avgSlippage === 0 ? "text-green-600" : "text-amber-600")} />
                     <p className={cn(
-                      "text-sm font-bold leading-none",
+                      "text-xs font-bold leading-none",
                       scheduleMetrics.avgSlippage === 0 ? "text-green-600" : "text-amber-600"
                     )}>{scheduleMetrics.avgSlippage}d</p>
                     <p className="text-[8px] text-muted-foreground mt-0.5 font-medium">Slippage</p>

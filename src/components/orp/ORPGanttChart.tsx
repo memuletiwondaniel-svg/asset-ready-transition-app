@@ -400,6 +400,9 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
     const dbId = activityId.replace(/^(ora-|ws-)/, '');
     const isWizardActivity = activityId.startsWith('ws-');
 
+    // Cancel in-flight queries to prevent stale data from overwriting optimistic updates
+    await queryClient.cancelQueries({ queryKey: ['orp-plan'] });
+
     // Optimistically update the query cache so bars don't snap back
     queryClient.setQueriesData({ queryKey: ['orp-plan'] }, (old: any) => {
       if (!old?.deliverables) return old;
@@ -414,28 +417,30 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
     });
 
     try {
-      if (isWizardActivity) {
-        // For wizard-state activities, update wizard_state JSON
-        const { data: plan } = await supabase
-          .from('orp_plans')
-          .select('wizard_state')
-          .eq('id', planId)
-          .single();
-        if (plan?.wizard_state) {
-          const ws = plan.wizard_state as any;
-          if (ws.activities && Array.isArray(ws.activities)) {
-            const updated = ws.activities.map((a: any) =>
-              a.id === dbId
-                ? { ...a, startDate: startStr, start_date: startStr, endDate: endStr, end_date: endStr }
-                : a
-            );
-            await supabase
-              .from('orp_plans')
-              .update({ wizard_state: { ...ws, activities: updated } })
-              .eq('id', planId);
-          }
+      // Always update wizard_state for both ora- and ws- activities
+      const { data: plan } = await supabase
+        .from('orp_plans')
+        .select('wizard_state')
+        .eq('id', planId)
+        .single();
+
+      if (plan?.wizard_state) {
+        const ws = plan.wizard_state as any;
+        if (ws.activities && Array.isArray(ws.activities)) {
+          const updated = ws.activities.map((a: any) =>
+            a.id === dbId
+              ? { ...a, startDate: startStr, start_date: startStr, endDate: endStr, end_date: endStr }
+              : a
+          );
+          await supabase
+            .from('orp_plans')
+            .update({ wizard_state: { ...ws, activities: updated } })
+            .eq('id', planId);
         }
-        // Also upsert into ora_plan_activities for persistence
+      }
+
+      // Also persist to ora_plan_activities table
+      if (isWizardActivity) {
         await supabase
           .from('ora_plan_activities')
           .upsert({
@@ -450,7 +455,6 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
             duration_days: durationDays,
           }, { onConflict: 'id' });
       } else {
-        // For ora- activities, update the DB table directly
         await supabase
           .from('ora_plan_activities')
           .update({ start_date: startStr, end_date: endStr, duration_days: durationDays })
@@ -458,12 +462,9 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
       }
     } catch (err) {
       console.error('Failed to update activity dates:', err);
-    }
-
-    // Delay invalidation slightly to avoid overwriting optimistic data before DB write propagates
-    setTimeout(() => {
+      // On error, invalidate to refetch correct state
       queryClient.invalidateQueries({ queryKey: ['orp-plan'] });
-    }, 500);
+    }
   }, [queryClient, planId]);
 
   const { draggingId, previewLeft, previewWidth, handleMouseDown, wasDragging } = useGanttBarResize({

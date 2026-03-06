@@ -566,7 +566,7 @@ export const useORPPlanDetails = (planId: string) => {
             return {
               id: oraRow ? `ora-${oraRow.id}` : `ws-${a.id}`,
               orp_plan_id: planId,
-              start_date: a.startDate || a.start_date || null,
+              start_date: oraRow?.start_date || a.startDate || a.start_date || null,
               end_date: oraRow?.end_date || a.endDate || a.end_date || null,
               status: oraRow?.status || 'NOT_STARTED',
               completion_percentage: oraRow?.completion_percentage || 0,
