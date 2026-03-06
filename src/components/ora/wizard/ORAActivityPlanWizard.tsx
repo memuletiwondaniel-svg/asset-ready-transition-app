@@ -139,11 +139,11 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
     loadDraft();
   }, [open, projectId]);
 
-  const handleSaveDraft = async () => {
+  // Silent auto-save of wizard state (no toast, no close)
+  const autoSaveWizardState = useCallback(async () => {
     try {
-      setIsSaving(true);
       const { data: user } = await supabase.auth.getUser();
-      if (!user.user) throw new Error('Not authenticated');
+      if (!user.user) return;
 
       const orpPhase = PHASE_TO_ORP[phase] || 'ASSESS_SELECT';
       const wizardState = {
@@ -156,16 +156,11 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
       };
 
       if (draftPlanId) {
-        const { error } = await (supabase as any)
+        await (supabase as any)
           .from('orp_plans')
-          .update({
-            phase: orpPhase,
-            wizard_state: wizardState,
-          })
+          .update({ phase: orpPhase, wizard_state: wizardState })
           .eq('id', draftPlanId);
-        if (error) throw error;
       } else {
-        // Check no active plan exists
         const { data: existingPlans } = await supabase
           .from('orp_plans')
           .select('id')
@@ -173,11 +168,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
           .eq('is_active', true)
           .limit(1);
 
-        if (existingPlans && existingPlans.length > 0) {
-          toast({ title: 'Plan already exists', description: 'This project already has an active ORA Plan.', variant: 'destructive' });
-          setIsSaving(false);
-          return;
-        }
+        if (existingPlans && existingPlans.length > 0) return;
 
         const { data: plan, error } = await (supabase as any)
           .from('orp_plans')
@@ -191,10 +182,15 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
           })
           .select()
           .single();
-        if (error) throw error;
-        setDraftPlanId(plan.id);
+        if (!error && plan) setDraftPlanId(plan.id);
       }
+    } catch {}
+  }, [phase, projectType, activities, approvers, currentStep, visitedSteps, draftPlanId, projectId]);
 
+  const handleSaveDraft = async () => {
+    try {
+      setIsSaving(true);
+      await autoSaveWizardState();
       queryClient.invalidateQueries({ queryKey: ['project-orp-plans'] });
       toast({ title: 'Draft saved', description: 'Your progress has been saved. You can resume anytime.' });
       onOpenChange(false);
