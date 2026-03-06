@@ -9511,6 +9511,19 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: string
       }
+      create_user_task: {
+        Args: {
+          p_description?: string
+          p_due_date?: string
+          p_metadata?: Json
+          p_priority?: string
+          p_status?: string
+          p_title: string
+          p_type?: string
+          p_user_id: string
+        }
+        Returns: string
+      }
       delete_user_account: { Args: { target_user_id: string }; Returns: Json }
       find_deputy_plant_director: {
         Args: { plant_name_param: string }
