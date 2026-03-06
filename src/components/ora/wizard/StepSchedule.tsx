@@ -456,7 +456,22 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
             Relations
           </Button>
         </div>
-        <div className="flex items-center gap-2">
+          <div className="w-px h-4 bg-border mx-1" />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="h-6 px-2 text-[10px] font-medium gap-1 border-primary/30 text-primary hover:bg-primary/10">
+                <Plus className="w-3 h-3" /> Add Activity
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-48">
+              <DropdownMenuCheckboxItem checked={false} onCheckedChange={() => setShowCatalogDialog(true)} className="text-xs gap-2">
+                <Library className="w-3.5 h-3.5" /> From Catalog
+              </DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem checked={false} onCheckedChange={handleAddCustom} className="text-xs gap-2">
+                <PenLine className="w-3.5 h-3.5" /> Custom Activity
+              </DropdownMenuCheckboxItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="h-7 px-2 text-[10px] gap-1">
