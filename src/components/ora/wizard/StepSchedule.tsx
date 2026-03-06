@@ -3,14 +3,16 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { CalendarDays, ZoomIn, ZoomOut, ChevronRight, ChevronDown, Columns3, ChevronsUpDown, GitBranch, Trash2 } from 'lucide-react';
+import { CalendarDays, ZoomIn, ZoomOut, ChevronRight, ChevronDown, Columns3, ChevronsUpDown, GitBranch, Trash2, Plus, Library, PenLine } from 'lucide-react';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { WizardActivity } from './types';
+import { WizardActivity, catalogToWizardActivity } from './types';
 import { format, parseISO, addDays, differenceInDays, startOfDay } from 'date-fns';
+import { useORAActivityCatalog } from '@/hooks/useORAActivityCatalog';
+import { AddFromCatalogDialog } from './AddFromCatalogDialog';
 import { cn } from '@/lib/utils';
 import { useGanttBarResize } from '@/hooks/useGanttBarResize';
 import {
@@ -203,6 +205,8 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
   const [selectedActivityId, setSelectedActivityId] = useState<string | null>(null);
   const [showRelationships, setShowRelationships] = useState(false);
   const [originalSnapshot, setOriginalSnapshot] = useState<{ description: string; startDate: string; endDate: string; durationDays: number | null; status: string } | null>(null);
+  const [showCatalogDialog, setShowCatalogDialog] = useState(false);
+  const [isAddingCustom, setIsAddingCustom] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const selectedActivities = useMemo(() => activities.filter(a => a.selected), [activities]);
@@ -282,6 +286,33 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
   };
 
   const collapseAll = () => setExpandedIds(new Set());
+
+  const handleAddFromCatalog = (newActivities: WizardActivity[]) => {
+    onActivitiesChange([...activities, ...newActivities]);
+    setShowCatalogDialog(false);
+  };
+
+  const handleAddCustom = () => {
+    const customActivity: WizardActivity = {
+      id: `custom-${Date.now()}`,
+      activityCode: `CUSTOM-${Date.now()}`,
+      activity: 'New Custom Activity',
+      description: null,
+      phaseId: null,
+      parentActivityId: null,
+      durationHigh: null,
+      durationMed: null,
+      durationLow: null,
+      selected: true,
+      durationDays: null,
+      startDate: '',
+      endDate: '',
+      predecessorIds: [],
+    };
+    onActivitiesChange([...activities, customActivity]);
+    // Open the sheet immediately so user can edit details
+    setTimeout(() => openActivitySheet(customActivity.id), 50);
+  };
 
   const updateActivity = useCallback((id: string, updates: Partial<WizardActivity & { status?: string }>) => {
     onActivitiesChange(activities.map(a => {
@@ -424,6 +455,22 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
             <GitBranch className="w-3 h-3" />
             Relations
           </Button>
+          <div className="w-px h-4 bg-border mx-1" />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="h-6 px-2 text-[10px] font-medium gap-1 border-primary/30 text-primary hover:bg-primary/10">
+                <Plus className="w-3 h-3" /> Add Activity
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-48">
+              <DropdownMenuCheckboxItem checked={false} onCheckedChange={() => setShowCatalogDialog(true)} className="text-xs gap-2">
+                <Library className="w-3.5 h-3.5" /> From Catalog
+              </DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem checked={false} onCheckedChange={handleAddCustom} className="text-xs gap-2">
+                <PenLine className="w-3.5 h-3.5" /> Custom Activity
+              </DropdownMenuCheckboxItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         <div className="flex items-center gap-2">
           <DropdownMenu>
@@ -926,6 +973,14 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
           )}
         </SheetContent>
       </Sheet>
+
+      {/* Add from Catalog Dialog */}
+      <AddFromCatalogDialog
+        open={showCatalogDialog}
+        onOpenChange={setShowCatalogDialog}
+        existingIds={activities.map(a => a.id)}
+        onAdd={handleAddFromCatalog}
+      />
     </div>
   );
 };
