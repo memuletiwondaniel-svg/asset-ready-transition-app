@@ -612,7 +612,7 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                   const todayLeft = todayOffset * dayWidth;
                   return (
                     <div className="absolute top-0 h-full flex items-end pb-0.5 z-10" style={{ left: todayLeft }}>
-                      <span className="text-[8px] font-bold text-destructive bg-destructive/10 rounded px-1 py-px -translate-x-1/2 whitespace-nowrap">
+                      <span className="text-[8px] font-semibold text-primary bg-primary/10 rounded px-1 py-px -translate-x-1/2 whitespace-nowrap">
                         {format(new Date(), 'dd MMM')}
                       </span>
                     </div>
