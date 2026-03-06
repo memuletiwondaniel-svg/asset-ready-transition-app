@@ -44,10 +44,13 @@ function computeWeightedProgress(leafActivities: any[]): { overallProgress: numb
   const p2aActivities = leafActivities.filter((a: any) => (a.activity_code || '').startsWith('VCR-'));
   const nonP2aActivities = leafActivities.filter((a: any) => !(a.activity_code || '').startsWith('VCR-'));
 
-  // If no P2A activities, fall back to simple average
+  // P2A always takes 50% of overall progress, even if none exist (p2aProgress = 0)
   if (p2aActivities.length === 0) {
-    const avg = leafActivities.reduce((s: number, a: any) => s + (a.completion_percentage || 0), 0) / leafActivities.length;
-    return { overallProgress: Math.round(avg), completedCount, inProgressCount, notStartedCount, p2aProgress: 0, vcrCount: 0 };
+    const nonP2aAvg = leafActivities.length > 0
+      ? leafActivities.reduce((s: number, a: any) => s + (a.completion_percentage || 0), 0) / leafActivities.length / 100
+      : 0;
+    const overallProgress = Math.round(nonP2aAvg * 0.5 * 100);
+    return { overallProgress, completedCount, inProgressCount, notStartedCount, p2aProgress: 0, vcrCount: 0 };
   }
 
   // Group P2A by top-level VCR code (e.g. VCR-001)
