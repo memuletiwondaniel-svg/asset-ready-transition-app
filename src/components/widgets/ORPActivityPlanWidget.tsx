@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Settings2, Clock, CheckCircle2, Plus, FileEdit, Send, AlertTriangle, ChevronRight, Trash2, CalendarRange, ExternalLink } from 'lucide-react';
+import { Settings2, Clock, CheckCircle2, FileEdit, Send, AlertTriangle, ChevronRight, Trash2, CalendarRange } from 'lucide-react';
 import { StyledWidgetIcon } from './StyledWidgetIcon';
 import { useProjectORPPlans } from '@/hooks/useProjectORPPlans';
 import { useORPPlans } from '@/hooks/useORPPlans';
@@ -90,15 +90,9 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
       <>
         <Card className="h-full transition-all duration-300 group">
           <CardHeader {...dragAttributes} {...dragListeners} className="cursor-grab active:cursor-grabbing">
-            <CardTitle className="text-lg flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <StyledWidgetIcon Icon={Settings2} gradientFrom="from-purple-500" gradientTo="to-violet-500" glowFrom="from-purple-500/40" glowTo="to-violet-500/40" />
-                <span>ORA Activities</span>
-              </div>
-              <Badge variant="outline" className="text-[10px] gap-1 bg-muted text-muted-foreground border-border">
-                <FileEdit className="h-3 w-3" />
-                Draft
-              </Badge>
+            <CardTitle className="text-lg flex items-center gap-3">
+              <StyledWidgetIcon Icon={Settings2} gradientFrom="from-purple-500" gradientTo="to-violet-500" glowFrom="from-purple-500/40" glowTo="to-violet-500/40" />
+              <span>ORA Activities</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -150,33 +144,32 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
     <>
       <Card className="h-full transition-all duration-300 group">
         <CardHeader {...dragAttributes} {...dragListeners} className="cursor-grab active:cursor-grabbing">
-          <CardTitle className="text-lg flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <StyledWidgetIcon Icon={Settings2} gradientFrom="from-purple-500" gradientTo="to-violet-500" glowFrom="from-purple-500/40" glowTo="to-violet-500/40" />
-              <span>ORA Activities</span>
-            </div>
-            {statusConfig && (
-              <Badge variant="outline" className={cn("text-[10px] gap-1", statusConfig.className)}>
-                <statusConfig.icon className="h-3 w-3" />
-                {statusConfig.label}
-              </Badge>
-            )}
+          <CardTitle className="text-lg flex items-center gap-3">
+            <StyledWidgetIcon Icon={Settings2} gradientFrom="from-purple-500" gradientTo="to-violet-500" glowFrom="from-purple-500/40" glowTo="to-violet-500/40" />
+            <span>ORA Activities</span>
           </CardTitle>
         </CardHeader>
         
         <CardContent className="space-y-3">
-          {/* ORA Plan CTA */}
+          {/* ORA Plan CTA with inline status badge */}
           <Button
             variant="outline"
             size="sm"
-            className="w-full justify-between text-xs h-8 hover:border-purple-500/30 hover:bg-purple-500/5"
+            className="w-full justify-between text-xs h-8"
             onClick={() => setOverlayOpen(true)}
           >
             <span className="flex items-center gap-1.5">
-              <CalendarRange className="h-3.5 w-3.5 text-purple-500" />
               ORA Plan
             </span>
-            <ChevronRight className="h-3 w-3 text-muted-foreground" />
+            <span className="flex items-center gap-1.5">
+              {statusConfig && (
+                <Badge variant="outline" className={cn("text-[9px] gap-0.5 h-5 px-1.5", statusConfig.className)}>
+                  <statusConfig.icon className="h-2.5 w-2.5" />
+                  {statusConfig.label}
+                </Badge>
+              )}
+              <ChevronRight className="h-3 w-3 text-muted-foreground" />
+            </span>
           </Button>
 
           {/* Progress bar */}
@@ -248,11 +241,12 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
         </CardContent>
       </Card>
 
-      {/* Gantt Chart + Approvals Overlay */}
+      {/* Gantt Chart Overlay with status badge + approvals side panel */}
       <ORPGanttOverlay
         open={overlayOpen}
         onOpenChange={setOverlayOpen}
         planId={primaryPlan.id}
+        planStatus={planStatus}
         overallProgress={overallProgress}
         completedCount={completedDeliverables}
         totalCount={totalDeliverables}

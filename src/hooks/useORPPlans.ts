@@ -548,15 +548,42 @@ export const useORPPlanDetails = (planId: string) => {
         },
         collaborators: [],
         dependencies: [],
-        // Extra metadata for identification
         _isOraActivity: true,
         _sourceType: a.source_type,
       }));
 
-      // Merge: existing deliverables first, then ORA activities
+      // Fallback: if no ora_plan_activities AND no orp_plan_deliverables, use wizard_state
+      let wizardStateDeliverables: any[] = [];
+      if (activityDeliverables.length === 0 && (!data.deliverables || data.deliverables.length === 0)) {
+        const ws = (data as any).wizard_state;
+        if (ws?.activities) {
+          wizardStateDeliverables = (ws.activities as any[])
+            .filter((a: any) => a.selected)
+            .map((a: any) => ({
+              id: `ws-${a.id}`,
+              orp_plan_id: planId,
+              start_date: a.startDate || null,
+              end_date: a.endDate || null,
+              status: 'NOT_STARTED',
+              completion_percentage: 0,
+              deliverable: {
+                id: a.id,
+                name: a.activity || a.name || 'Unnamed',
+                activity_code: a.activityCode || '',
+                description: a.description || null,
+              },
+              collaborators: [],
+              dependencies: [],
+              _isWizardState: true,
+            }));
+        }
+      }
+
+      // Merge: existing deliverables first, then ORA activities, then wizard_state fallback
       const mergedDeliverables = [
         ...(data.deliverables || []),
         ...activityDeliverables,
+        ...wizardStateDeliverables,
       ];
 
       return { ...data, ora_engineer, deliverables: mergedDeliverables };
