@@ -150,6 +150,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
         phase,
         projectType,
         activities,
+        approvers,
         currentStep,
         visitedSteps: Array.from(visitedSteps),
       };
