@@ -488,6 +488,8 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
               </Tooltip>
             </TooltipProvider>
 
+            <div className="flex-1 min-w-8" />
+
             {/* Zoom presets */}
             <div className="flex items-center gap-1">
               {ZOOM_PRESETS.map(p => (
