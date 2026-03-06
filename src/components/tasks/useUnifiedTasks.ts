@@ -234,7 +234,7 @@ export function useUnifiedTasks(userId: string) {
         createdAt: item.created_at,
         priority: smartPriorityToLegacy(spP2a.level),
         smartPriority: spP2a,
-        navigateTo: `/p2a-handover/${item.handover_id}`,
+        navigateTo: `/my-tasks`,
         isNew: isNewSinceLastLogin(item.created_at),
         kanbanColumn: 'todo',
       });
@@ -308,7 +308,7 @@ export function useUnifiedTasks(userId: string) {
         isWaiting,
         navigateTo: isPSSR
           ? (task.metadata?.pssr_id ? `/pssr/${task.metadata.pssr_id}/review` : '/my-tasks')
-          : (task.metadata?.vcr_id ? `/p2a-handover?vcr=${task.metadata.vcr_id}` : '/p2a-handover'),
+          : '/my-tasks',
         kanbanColumn: mapToKanbanColumn({ status: task.status, isWaiting, progressPercentage: pct }),
       });
     });

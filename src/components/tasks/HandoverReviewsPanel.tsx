@@ -110,7 +110,7 @@ export const HandoverReviewsPanel: React.FC<HandoverReviewsPanelProps> = ({
       isLoading={isLoading}
       isEmpty={approvals.length === 0}
       emptyMessage="No handover reviews pending"
-      onViewAll={() => navigate('/p2a-handover')}
+      onViewAll={() => navigate('/my-tasks')}
     >
       {approvals.map((approval, index) => {
         const isNew = isNewSinceLastLogin(approval.created_at);
@@ -125,7 +125,7 @@ export const HandoverReviewsPanel: React.FC<HandoverReviewsPanelProps> = ({
               "animate-fade-in"
             )}
             style={{ animationDelay: `${index * 50}ms` }}
-            onClick={() => navigate(`/p2a-handover/${approval.handover_id}`)}
+            onClick={() => navigate(`/my-tasks`)}
           >
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0">
@@ -159,7 +159,7 @@ export const HandoverReviewsPanel: React.FC<HandoverReviewsPanelProps> = ({
                   className="h-6 text-xs px-2 opacity-0 group-hover/item:opacity-100 transition-opacity"
                   onClick={(e) => {
                     e.stopPropagation();
-                    navigate(`/p2a-handover/${approval.handover_id}`);
+                    navigate(`/my-tasks`);
                   }}
                 >
                   Review

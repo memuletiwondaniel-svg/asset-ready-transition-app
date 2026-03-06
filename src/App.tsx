@@ -18,8 +18,6 @@ import { ORPLandingPage } from "@/components/orp/ORPLandingPage";
 import ExecutiveDashboardPage from "@/pages/ExecutiveDashboardPage";
 import { ORPDetailsPage } from "@/components/orp/ORPDetailsPage";
 import { ORPAnalyticsPage } from "@/components/orp/ORPAnalyticsPage";
-import { P2ALandingPage } from "@/components/p2a/P2ALandingPage";
-import { P2ADetailsPage } from "@/components/p2a/P2ADetailsPage";
 
 import { ORMLandingPage } from "@/components/orm/ORMLandingPage";
 import { ORMDetailsPage } from "@/components/orm/ORMDetailsPage";
@@ -91,8 +89,6 @@ const App = () => (
                       <Route path="/operation-readiness" element={<ORPLandingPage />} />
                       <Route path="/operation-readiness/analytics" element={<ORPAnalyticsPage />} />
                       <Route path="/operation-readiness/:id" element={<ORPDetailsPage />} />
-                      <Route path="/p2a-handover" element={<P2ALandingPage />} />
-                      <Route path="/p2a-handover/:id" element={<P2ADetailsPage />} />
                       <Route path="/or-maintenance" element={<ORMLandingPage />} />
                       <Route path="/or-maintenance/analytics" element={<ORMAnalyticsDashboard />} />
                       <Route path="/or-maintenance/resources" element={<ORMResourceCapacityDashboard />} />

@@ -45,15 +45,6 @@ export const WorkspacesWidget: React.FC<WorkspacesWidgetProps> = ({ onNavigate, 
       iconColor: 'text-white'
     },
     {
-      id: 'p2a-handover',
-      title: 'P2A Plan',
-      description: 'Project-to-Asset Transition',
-      icon: Key,
-      gradient: 'from-purple-500/20 to-pink-500/20',
-      iconBg: 'bg-gradient-to-br from-purple-500 to-pink-500',
-      iconColor: 'text-white'
-    },
-    {
       id: 'admin-tools',
       title: 'Admin Tools',
       description: 'Users, Roles & Permissions',

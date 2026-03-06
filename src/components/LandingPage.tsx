@@ -40,7 +40,7 @@ const FAVORITE_ICON_MAP: Record<string, { icon: React.ComponentType<any>; color:
   '/or-maintenance': { icon: Wrench, color: 'bg-slate-500' },
   '/ask-orsh': { icon: MessageSquare, color: 'bg-violet-500' },
   '/operation-readiness': { icon: GanttChart, color: 'bg-emerald-500' },
-  '/p2a-handover': { icon: Key, color: 'bg-blue-500' },
+  
   
   // Standalone pages
   '/users': { icon: Users, color: 'bg-blue-500' },

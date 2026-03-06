@@ -135,7 +135,7 @@ export const AllTasksTable: React.FC<AllTasksTableProps> = ({ searchQuery, userI
         project: item.project_number || 'Unknown Project',
         status: item.stage,
         createdAt: item.created_at,
-        navigateTo: `/p2a-handover/${item.handover_id}`,
+        navigateTo: `/my-tasks`,
         isNew: isNewSinceLastLogin(item.created_at),
       });
     });
@@ -207,7 +207,7 @@ export const AllTasksTable: React.FC<AllTasksTableProps> = ({ searchQuery, userI
 
       const navigatePath = isPSSR
         ? (task.metadata?.pssr_id ? `/pssr/${task.metadata.pssr_id}/review` : '/my-tasks')
-        : (task.metadata?.vcr_id ? `/p2a-handover?vcr=${task.metadata.vcr_id}` : '/p2a-handover');
+        : '/my-tasks';
 
       tasks.push({
         id: `${task.type}-${task.id}`,

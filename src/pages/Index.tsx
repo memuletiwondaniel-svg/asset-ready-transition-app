@@ -43,7 +43,7 @@ const Index = () => {
     const routes: Record<string, string> = {
       'home': '/home',
       'operation-readiness': '/operation-readiness',
-      'p2a-handover': '/p2a-handover',
+      
     };
     const route = routes[section] || `/${section}`;
     navigate(route);

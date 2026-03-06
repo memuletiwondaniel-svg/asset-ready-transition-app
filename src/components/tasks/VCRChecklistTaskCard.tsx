@@ -34,7 +34,7 @@ export const VCRChecklistTaskCard: React.FC<VCRChecklistTaskCardProps> = ({ task
   const handleNavigateToVCR = () => {
     const vcrId = task.metadata?.vcr_id;
     if (vcrId) {
-      navigate(`/p2a-handover?vcr=${vcrId}`);
+      navigate(`/my-tasks`);
     }
   };
 
