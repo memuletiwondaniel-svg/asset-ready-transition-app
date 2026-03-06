@@ -282,7 +282,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
         .update({ status: 'completed' })
         .eq('user_id', user.user.id)
         .eq('type', 'ora_plan_creation')
-        .match({ 'metadata->>project_id': projectId } as any);
+        .filter('metadata->>project_id', 'eq', projectId);
 
       if (taskCompleteError) {
         console.warn('Could not complete creation task:', taskCompleteError.message);
@@ -317,6 +317,11 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
             }
           });
       }
+
+      // Invalidate caches so task disappears from tray immediately
+      queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['orp-plans'] });
+      queryClient.invalidateQueries({ queryKey: ['project-orp-plans'] });
 
       toast({ title: 'Submitted', description: 'ORA Plan submitted for approval' });
       onOpenChange(false);
