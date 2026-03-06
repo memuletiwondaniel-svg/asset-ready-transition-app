@@ -1153,11 +1153,13 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                       size="sm"
                       onClick={() => {
                         setOriginalSnapshot({
+                          activity: selectedActivity.activity || '',
                           description: selectedActivity.description || '',
                           startDate: selectedActivity.startDate || '',
                           endDate: selectedActivity.endDate || '',
                           durationDays: selectedActivity.durationDays ?? null,
                           status: (selectedActivity as any).status || 'NOT_STARTED',
+                          predecessorIds: [...(selectedActivity.predecessorIds || [])],
                         });
                         setSelectedActivityId(null);
                       }}
