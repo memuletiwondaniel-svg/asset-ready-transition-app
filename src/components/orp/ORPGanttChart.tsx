@@ -694,6 +694,10 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                         {weekMarkers.map((left, i) => (
                           <div key={i} className="absolute top-0 bottom-0 border-l border-border/15" style={{ left }} />
                         ))}
+                        {/* Today line */}
+                        {todayPosition > 0 && todayPosition < timelineWidth && (
+                          <div className="absolute top-0 bottom-0 border-l-2 border-dashed border-primary/60 z-10" style={{ left: todayPosition }} />
+                        )}
 
                         {barPos && isParent && (
                           <div
