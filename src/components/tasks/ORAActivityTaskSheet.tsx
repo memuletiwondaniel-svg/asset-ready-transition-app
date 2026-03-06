@@ -74,18 +74,23 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
   const [files, setFiles] = useState<File[]>([]);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [progressPct, setProgressPct] = useState(50);
+  const [progressPct, setProgressPct] = useState(0);
 
   // Editable dates
   const [editStartDate, setEditStartDate] = useState<Date | undefined>();
   const [editEndDate, setEditEndDate] = useState<Date | undefined>();
   const [showCalendar, setShowCalendar] = useState(false);
 
+  // Prerequisites
+  const [predecessorIds, setPredecessorIds] = useState<string[]>([]);
+  const [originalPredecessorIds, setOriginalPredecessorIds] = useState<string[]>([]);
+
   // Original values for dirty tracking
   const [originalStatus, setOriginalStatus] = useState<ActivityStatus>('NOT_STARTED');
   const [originalDescription, setOriginalDescription] = useState('');
   const [originalStartDate, setOriginalStartDate] = useState<Date | undefined>();
   const [originalEndDate, setOriginalEndDate] = useState<Date | undefined>();
+  const [originalProgressPct, setOriginalProgressPct] = useState(0);
 
   const metadata = task?.metadata as Record<string, any> | undefined;
   const activityName = metadata?.activity_name || task?.title || '';
