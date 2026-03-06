@@ -205,7 +205,13 @@ export default function ProjectDetailsPage() {
   return (
     <div className="flex-1 min-h-0 overflow-auto">
       <div className="container mx-auto p-4 md:p-6 space-y-6 pb-12">
-          <BreadcrumbNavigation currentPageLabel={project ? `${getProjectId()}` : 'Project'} />
+          <BreadcrumbNavigation 
+            currentPageLabel={project ? `${getProjectId()}` : 'Project'}
+            customBreadcrumbs={[
+              { label: 'Home', path: '/', onClick: () => navigate('/') },
+              { label: 'P2A Handover', path: '/p2a-handover', onClick: () => navigate('/p2a-handover') },
+            ]}
+          />
 
           {/* Header - standardized design */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
