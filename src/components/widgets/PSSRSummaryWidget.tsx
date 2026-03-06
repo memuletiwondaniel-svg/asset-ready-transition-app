@@ -98,6 +98,8 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
 
   // Get the first (active) ORA plan for this project
   const oraPlanId = orpPlans?.[0]?.id || '';
+  const oraStatus = orpPlans?.[0]?.status;
+  const oraApproved = oraStatus === 'APPROVED' || oraStatus === 'IN_PROGRESS' || oraStatus === 'COMPLETED';
   const { plan: p2aPlan } = useP2AHandoverPlan(oraPlanId);
   const { data: p2aPlanByProject, isLoading: p2aPlanLoading } = useP2APlanByProject(projectId);
   const isLoading = pssrsLoading || vcrsLoading || p2aPlanLoading;
