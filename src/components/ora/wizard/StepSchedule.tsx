@@ -526,7 +526,10 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
           <Button
             variant={showRelationships ? 'secondary' : 'outline'}
             size="sm"
-            className="h-6 px-2 text-[10px] font-medium gap-1"
+            className={cn(
+              "h-6 px-2 text-[10px] font-medium gap-1",
+              showRelationships && "border-primary text-primary bg-primary/10 ring-1 ring-primary/30"
+            )}
             onClick={() => setShowRelationships(!showRelationships)}
           >
             <GitBranch className="w-3 h-3" />
