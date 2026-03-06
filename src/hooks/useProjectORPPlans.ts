@@ -143,10 +143,7 @@ export const useProjectORPPlans = (projectId: string) => {
             });
 
             const totalCount = leafActivities.length;
-            const completedCount = leafActivities.filter((a: any) => a.status === 'COMPLETED').length;
-            const overallProgress = totalCount > 0
-              ? Math.round(leafActivities.reduce((sum: number, a: any) => sum + (a.completion_percentage || 0), 0) / totalCount)
-              : 0;
+            const stats = computeWeightedProgress(leafActivities);
 
             // Get date range
             const allDates = activities
