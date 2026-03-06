@@ -912,9 +912,9 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                             key={`${predId}-${successor.id}`}
                             d={path}
                             fill="none"
-                            stroke="hsl(var(--primary))"
+                            stroke="hsl(var(--destructive))"
                             strokeWidth="1.5"
-                            strokeOpacity="0.6"
+                            strokeOpacity="0.65"
                             strokeDasharray={toIndex < fromIndex ? "4 2" : "none"}
                             markerEnd="url(#arrowhead)"
                           />
