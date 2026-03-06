@@ -52,6 +52,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
   const [projectType, setProjectType] = useState('');
   const [activities, setActivities] = useState<WizardActivity[]>([]);
   const [approvers, setApprovers] = useState<WizardApprover[]>([]);
+  const [isCreating, setIsCreating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [draftPlanId, setDraftPlanId] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
