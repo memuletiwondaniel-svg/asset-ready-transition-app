@@ -237,6 +237,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
       queryClient.invalidateQueries({ queryKey: ['project-orp-plans'] });
       queryClient.invalidateQueries({ queryKey: ['user-orp-activities'] });
       queryClient.invalidateQueries({ queryKey: ['ora-plan-activities'] });
+      queryClient.invalidateQueries({ queryKey: ['orp-plan'] });
 
       toast.success('Activity deleted');
       onOpenChange(false);
