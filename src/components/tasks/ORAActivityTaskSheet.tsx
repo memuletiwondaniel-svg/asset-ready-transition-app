@@ -547,6 +547,68 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
               )}
             </div>
 
+            <Separator />
+
+            {/* Prerequisites */}
+            <div>
+              <p className="text-sm font-medium mb-2 flex items-center gap-1.5 text-muted-foreground">
+                <GitBranch className="h-4 w-4" />
+                Prerequisites
+              </p>
+              {predecessorIds.length > 0 && (
+                <div className="space-y-1.5 mb-2">
+                  {predecessorIds.map((predId) => {
+                    const siblings: any[] = metadata?.sibling_activities || [];
+                    const match = siblings.find((s: any) => s.id === predId || s.activity_code === predId);
+                    return (
+                      <div key={predId} className="flex items-center gap-2 p-2 bg-muted/40 rounded-md text-xs">
+                        {match?.activity_code && (
+                          <Badge variant="outline" className="text-[9px] font-mono shrink-0">{match.activity_code}</Badge>
+                        )}
+                        <span className="truncate flex-1">{match?.name || predId}</span>
+                        <button
+                          onClick={() => setPredecessorIds(prev => prev.filter(p => p !== predId))}
+                          className="text-muted-foreground hover:text-destructive shrink-0"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              {(() => {
+                const siblings: any[] = metadata?.sibling_activities || [];
+                const available = siblings.filter((s: any) => !predecessorIds.includes(s.id) && !predecessorIds.includes(s.activity_code));
+                if (available.length === 0) return <p className="text-[10px] text-muted-foreground">No activities available to add as prerequisites.</p>;
+                return (
+                  <Select
+                    value=""
+                    onValueChange={(val) => {
+                      if (val && !predecessorIds.includes(val)) {
+                        setPredecessorIds(prev => [...prev, val]);
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="h-8 text-xs">
+                      <div className="flex items-center gap-1 text-muted-foreground">
+                        <Plus className="h-3 w-3" />
+                        <span>Add prerequisite...</span>
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {available.map((s: any) => (
+                        <SelectItem key={s.id} value={s.activity_code || s.id} className="text-xs">
+                          <span className="font-mono text-muted-foreground mr-1">{s.activity_code}</span>
+                          {s.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                );
+              })()}
+            </div>
+
             {/* Completed → Evidence upload */}
             {status === 'COMPLETED' && (
               <div className="animate-in fade-in slide-in-from-top-1 duration-200">
