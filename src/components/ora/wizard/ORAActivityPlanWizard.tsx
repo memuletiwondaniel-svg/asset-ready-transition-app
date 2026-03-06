@@ -796,7 +796,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
                 placeholder="Add any comments or notes about your review..."
                 value={reviewComment}
                 onChange={(e) => setReviewComment(e.target.value)}
-                className="min-h-[80px] resize-none"
+                className="min-h-[48px] h-12 resize-none"
               />
             </div>
             <Separator />

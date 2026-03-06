@@ -45,6 +45,7 @@ import {
 interface Props {
   activities: WizardActivity[];
   onActivitiesChange: (activities: WizardActivity[]) => void;
+  isReviewMode?: boolean;
 }
 
 const DAY_WIDTH_BASE = 28;
