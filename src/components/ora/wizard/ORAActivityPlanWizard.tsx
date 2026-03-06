@@ -706,9 +706,9 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
             ) : (
               <Button onClick={handleCreate} disabled={isCreating} className="gap-2">
                 {isCreating ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" /> Submitting...</>
+                  <><Loader2 className="w-4 h-4 animate-spin" /> {isReviewMode ? 'Saving...' : 'Submitting...'}</>
                 ) : (
-                  'Submit for Approval'
+                  isReviewMode ? 'Save Changes' : 'Submit for Approval'
                 )}
               </Button>
             )}
