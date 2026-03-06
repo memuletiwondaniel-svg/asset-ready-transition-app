@@ -171,7 +171,7 @@ function getParentDateRange(
 export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverables, searchQuery: externalSearchQuery, hideToolbar }) => {
   const [internalSearchQuery, setInternalSearchQuery] = useState('');
   const [showAddItem, setShowAddItem] = useState(false);
-  const [selectedDeliverable, setSelectedDeliverable] = useState<any>(null);
+  
   const [selectedOraActivity, setSelectedOraActivity] = useState<any>(null);
   const [zoomLevel, setZoomLevel] = useState(1);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
