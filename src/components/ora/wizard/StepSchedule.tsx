@@ -726,7 +726,7 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
 
             {/* Timeline rows */}
             <div className="flex-1 overflow-x-auto">
-              <div style={{ width: timelineWidth, minWidth: '100%' }}>
+              <div style={{ width: timelineWidth, minWidth: '100%', position: 'relative' }}>
                 {visibleRows.map((row, index) => {
                   const { activity, hasChildren } = row;
                   const isParent = hasChildren;
@@ -839,6 +839,68 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                     </div>
                   );
                 })}
+
+                {/* Relationship arrows SVG overlay */}
+                {showRelationships && (
+                  <svg
+                    className="absolute top-0 left-0 pointer-events-none"
+                    style={{ width: timelineWidth, height: visibleRows.length * ROW_HEIGHT }}
+                  >
+                    <defs>
+                      <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                        <polygon points="0 0, 8 3, 0 6" fill="hsl(var(--primary))" opacity="0.7" />
+                      </marker>
+                    </defs>
+                    {visibleRows.map((row, toIndex) => {
+                      const successor = row.activity;
+                      if (!successor.predecessorIds || successor.predecessorIds.length === 0) return null;
+
+                      return successor.predecessorIds.map(predId => {
+                        const fromIndex = visibleRows.findIndex(r => r.activity.id === predId);
+                        if (fromIndex === -1) return null;
+
+                        const pred = visibleRows[fromIndex].activity;
+                        // Get end position of predecessor bar
+                        let predBarEnd: number | null = null;
+                        if (pred.startDate) {
+                          const predPos = getBarPosition(pred.startDate, pred.durationDays || 14);
+                          if (predPos) predBarEnd = predPos.left + predPos.width;
+                        }
+
+                        // Get start position of successor bar
+                        let succBarStart: number | null = null;
+                        if (successor.startDate) {
+                          const succPos = getBarPosition(successor.startDate, successor.durationDays || 14);
+                          if (succPos) succBarStart = succPos.left;
+                        }
+
+                        if (predBarEnd === null || succBarStart === null) return null;
+
+                        const fromY = fromIndex * ROW_HEIGHT + ROW_HEIGHT / 2;
+                        const toY = toIndex * ROW_HEIGHT + ROW_HEIGHT / 2;
+
+                        // Draw a path: horizontal from pred end, then vertical, then horizontal to successor start
+                        const midX = predBarEnd + 8;
+                        const path = toIndex === fromIndex
+                          ? `M ${predBarEnd} ${fromY} L ${succBarStart} ${toY}`
+                          : `M ${predBarEnd} ${fromY} L ${midX} ${fromY} L ${midX} ${toY} L ${succBarStart} ${toY}`;
+
+                        return (
+                          <path
+                            key={`${predId}-${successor.id}`}
+                            d={path}
+                            fill="none"
+                            stroke="hsl(var(--primary))"
+                            strokeWidth="1.5"
+                            strokeOpacity="0.6"
+                            strokeDasharray={toIndex < fromIndex ? "4 2" : "none"}
+                            markerEnd="url(#arrowhead)"
+                          />
+                        );
+                      });
+                    })}
+                  </svg>
+                )}
               </div>
             </div>
           </div>
