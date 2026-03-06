@@ -717,29 +717,15 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
               </SheetHeader>
 
               <div className="space-y-5 pt-4">
-                {selectedActivity.description && (
-                  <div>
-                    <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wide">Description</label>
-                    <p className="text-sm text-foreground mt-1">{selectedActivity.description}</p>
-                  </div>
-                )}
-
+                {/* Editable Description */}
                 <div>
-                  <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wide">Duration Estimates (days)</label>
-                  <div className="grid grid-cols-3 gap-2 mt-1.5">
-                    <div className="rounded-md border p-2 text-center">
-                      <div className="text-[10px] text-muted-foreground">Low</div>
-                      <div className="text-sm font-semibold">{selectedActivity.durationLow ?? '—'}</div>
-                    </div>
-                    <div className="rounded-md border p-2 text-center bg-primary/5">
-                      <div className="text-[10px] text-muted-foreground">Med</div>
-                      <div className="text-sm font-semibold">{selectedActivity.durationMed ?? '—'}</div>
-                    </div>
-                    <div className="rounded-md border p-2 text-center">
-                      <div className="text-[10px] text-muted-foreground">High</div>
-                      <div className="text-sm font-semibold">{selectedActivity.durationHigh ?? '—'}</div>
-                    </div>
-                  </div>
+                  <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wide">Description</label>
+                  <Textarea
+                    placeholder="Add a description for this activity..."
+                    value={selectedActivity.description || ''}
+                    onChange={(e) => updateActivity(selectedActivity.id, { description: e.target.value })}
+                    className="mt-1.5 min-h-[100px] resize-none text-sm"
+                  />
                 </div>
 
                 <div>
@@ -795,7 +781,6 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                             updates.endDate = format(range.to, 'yyyy-MM-dd');
                             updates.durationDays = differenceInDays(range.to, range.from);
                           } else if (range.from && !range.to && selectedActivity.durationDays) {
-                            // Only start picked and duration exists → auto-compute end
                             const computedEnd = addDays(range.from, selectedActivity.durationDays);
                             updates.endDate = format(computedEnd, 'yyyy-MM-dd');
                           }
@@ -835,6 +820,42 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                       </Select>
                     </div>
                   </div>
+                </div>
+
+                {/* Delete Activity */}
+                <div className="pt-2 border-t">
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10 gap-1.5"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Delete Activity
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Activity</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This will remove "{selectedActivity.activity}" from the plan. This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => {
+                            onActivitiesChange(activities.filter(a => a.id !== selectedActivity.id));
+                            setSelectedActivityId(null);
+                          }}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </div>
             </>
