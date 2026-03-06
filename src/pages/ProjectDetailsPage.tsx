@@ -209,7 +209,7 @@ export default function ProjectDetailsPage() {
             currentPageLabel={project ? `${getProjectId()}` : 'Project'}
             customBreadcrumbs={[
               { label: 'Home', path: '/', onClick: () => navigate('/') },
-              { label: 'P2A', path: '/', onClick: () => navigate('/') },
+              { label: 'Projects', path: '/projects', onClick: () => navigate('/projects') },
             ]}
           />
 
