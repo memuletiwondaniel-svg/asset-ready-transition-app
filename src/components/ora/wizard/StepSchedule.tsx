@@ -497,7 +497,7 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                       isParent && 'font-medium'
                     )}
                     style={{ minHeight: ROW_HEIGHT }}
-                    onClick={() => setSelectedActivityId(activity.id)}
+                    onClick={() => openActivitySheet(activity.id)}
                   >
                     {isColVisible('id') && (
                       <div className="px-1.5 flex items-center justify-center border-r border-border/40" style={{ width: COL_DEFS.id.width }}>
