@@ -605,6 +605,19 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                     <span className="text-[10px] font-medium text-muted-foreground whitespace-nowrap">{m.label}</span>
                   </div>
                 ))}
+                {/* Today marker label */}
+                {(() => {
+                  const todayOffset = differenceInDays(startOfDay(new Date()), timelineStart);
+                  if (todayOffset < 0 || todayOffset > totalDays) return null;
+                  const todayLeft = todayOffset * dayWidth;
+                  return (
+                    <div className="absolute top-0 h-full flex items-end pb-0.5 z-10" style={{ left: todayLeft }}>
+                      <span className="text-[8px] font-bold text-destructive bg-destructive/10 rounded px-1 py-px -translate-x-1/2 whitespace-nowrap">
+                        {format(new Date(), 'dd MMM')}
+                      </span>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           </div>
@@ -776,6 +789,17 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                       {weekMarkers.map((left, i) => (
                         <div key={i} className="absolute top-0 bottom-0 border-l border-border/15" style={{ left }} />
                       ))}
+                      {/* Today vertical line */}
+                      {(() => {
+                        const todayOffset = differenceInDays(startOfDay(new Date()), timelineStart);
+                        if (todayOffset < 0 || todayOffset > totalDays) return null;
+                        return (
+                          <div
+                            className="absolute top-0 bottom-0 w-px bg-destructive/60 z-10"
+                            style={{ left: todayOffset * dayWidth }}
+                          />
+                        );
+                      })()}
                       {barPos && isParent && (() => {
                         const prefix = getPhasePrefix(activity.activityCode);
                         const mutedColor = BAR_COLORS_MUTED[prefix] || 'bg-muted';
@@ -868,9 +892,9 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                     className="absolute top-0 left-0 pointer-events-none"
                     style={{ width: timelineWidth, height: visibleRows.length * ROW_HEIGHT }}
                   >
-                    <defs>
+                <defs>
                       <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
-                        <polygon points="0 0, 8 3, 0 6" fill="hsl(var(--primary))" opacity="0.7" />
+                        <polygon points="0 0, 8 3, 0 6" fill="hsl(var(--destructive))" opacity="0.8" />
                       </marker>
                     </defs>
                     {visibleRows.map((row, toIndex) => {
@@ -912,9 +936,9 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                             key={`${predId}-${successor.id}`}
                             d={path}
                             fill="none"
-                            stroke="hsl(var(--primary))"
+                            stroke="hsl(var(--destructive))"
                             strokeWidth="1.5"
-                            strokeOpacity="0.6"
+                            strokeOpacity="0.65"
                             strokeDasharray={toIndex < fromIndex ? "4 2" : "none"}
                             markerEnd="url(#arrowhead)"
                           />
