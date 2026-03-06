@@ -233,13 +233,13 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
               </Button>
             )}
 
-            {/* ORA Plan Review CTA */}
+            {/* ORA Plan Review CTA - opens wizard in review mode */}
             {isOraReviewTask && oraPlanId && (
               <Button
                 className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
                 onClick={() => {
                   onOpenChange(false);
-                  navigate(`/operation-readiness/${oraPlanId}`);
+                  setOraReviewWizardOpen(true);
                 }}
               >
                 <CalendarCheck className="h-4 w-4" />
