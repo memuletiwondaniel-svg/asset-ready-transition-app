@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import { useGanttBarResize } from '@/hooks/useGanttBarResize';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 
 interface ORPGanttChartProps {
   planId: string;
