@@ -1,52 +1,77 @@
 
 
-## Analysis
+# Plan: ORIP Scoring Engine Using Existing VCR Item Categories
 
-After reviewing the codebase, here are the 5 issues and their solutions:
+## Impact Assessment: Zero Breaking Changes
 
-### 1. ID Label Colors — Use Per-Activity Hue Rotation (Best Modern Approach)
+**No existing workflows will be affected.** The approach reuses the existing `vcr_item_categories` table (Design Integrity, Technical Integrity, Operating Integrity, Management Systems, Health & Safety) as the readiness dimensions for ORI scoring. All changes are additive:
 
-The modern approach for same-phase activities is **sequential hue rotation within a harmonious palette**. Since all activities share the same prefix (e.g., EXE), they all get the same color. Instead, we'll assign each activity a **unique but cohesive color** using its sequential index mapped to a curated palette of 8-10 distinct but harmonious colors (e.g., indigo, sky, violet, rose, teal, amber, emerald, fuchsia). This provides visual scanability without implying semantic meaning — a pattern used by Linear, Notion, and Asana.
+- The `vcr_item_categories` table gets a `tenant_id` column and weight/confidence fields -- existing rows remain intact
+- The `readiness_nodes` table gets a new nullable `dimension_id` column pointing to `vcr_item_categories`
+- The `sync_readiness_nodes` and `calculate_ori_score` functions are replaced with enhanced versions that use category-based dimensions instead of module-based grouping
+- Existing P2A, ORA, PSSR, ORM workflows are untouched -- the ontology layer only reads from them
 
-**Implementation:** Replace `getIdBadgeClasses(code)` with `getActivityBadgeClasses(index)` using a rotating palette array in `StepSchedule.tsx`.
+## Current VCR Item Categories (Become Readiness Dimensions)
 
-### 2. Progress Indicator — Numbered Steps (Best Modern Approach)
+| Code | Name | Active |
+|------|------|--------|
+| DI2 | Design Integrity | Yes |
+| TI | Technical Integrity | Yes |
+| OI | Operating Integrity | Yes |
+| MS | Management Systems | Yes |
+| HS | Health & Safety | Yes |
 
-Modern wizard patterns (Stripe, Linear, Vercel) show the **number inside the circle** for incomplete steps and a **checkmark for completed** ones. The current implementation already does this. Adding "1. Phase" as a label below is redundant since the number is in the circle. The current approach is already best practice. **No change needed.**
+These become the tenant-configurable readiness dimensions. Different tenants can add/rename/reweight their own categories.
 
-### 3. Default Collapsed State for Parent Activities
+## Implementation Tasks
 
-Currently, the `expandedIds` state initializer expands all root parents by default (line 269-272). Change it to initialize as an **empty Set** so all parents start collapsed.
+### Task 1: Extend `vcr_item_categories` for ORI Scoring
+Add columns to make categories serve double duty as readiness dimensions:
+- `tenant_id UUID` (nullable, defaults via trigger -- existing rows get current tenant)
+- `default_weight NUMERIC(5,4)` (e.g., 0.20 = 20%)
+- `confidence_factor_default NUMERIC(3,2)` (default 0.8)
+- `risk_severity_multiplier NUMERIC(3,1)` (default 1.0)
+- `is_readiness_dimension BOOLEAN DEFAULT true`
 
-**File:** `StepSchedule.tsx`, line 269-272 — change to `new Set()`.
+Add `dimension_id UUID REFERENCES vcr_item_categories(id)` to `readiness_nodes`.
 
-### 4. Custom Activity Not Persisting on Save & Return
+### Task 2: Enhanced ORI Formula
+Replace `calculate_ori_score()` with the full ORIP formula:
 
-The draft save (`handleSaveDraft` in `ORAActivityPlanWizard.tsx`) correctly serializes all `activities` to `wizard_state`. However, the draft restore (line 70-100) has a bug: when `currentStep === 3` AND `activities.length === 0`, it **overwrites** loaded activities with catalog defaults. But when restoring from draft, activities are loaded *before* step 3 renders. The issue is that the effect at line 71 checks `activities.length === 0` — but if the user navigates back to step 3 after loading a draft with custom activities, the condition fails (correctly). 
+```
+DS_i = (Σ Subcomponent_Weight × Completion%) × Confidence_Factor
+RP_i = Σ (Risk_Severity × Impact_Multiplier)  -- capped at 15%
+ORI  = Σ (Dimension_Weight_i × DS_i) − Global_Risk_Penalty
+SCS  = ORI × Schedule_Adherence × Critical_Path_Stability
+```
 
-The real bug: when draft loads activities at line 131, and then user navigates to step 4, then back to step 3 — `currentStep === 3` triggers but `activities.length > 0` so it's fine. But if the user added a custom activity on step 4, went back, the effect won't overwrite.
+Add columns to `ori_scores`: `dimension_scores JSONB`, `risk_penalty_total NUMERIC`, `startup_confidence_score NUMERIC`, `schedule_adherence_index NUMERIC`, `critical_path_stability_index NUMERIC`.
 
-Actually, the more likely issue: the `useEffect` at line 70-100 fires when `currentStep` changes to 3. If the draft was loaded with activities already populated, `activities.length === 0` is false, so it won't overwrite. This should work correctly.
+Add `confidence_factor NUMERIC(3,2) DEFAULT 0.8` and `risk_severity TEXT DEFAULT 'none'` to `readiness_nodes`.
 
-Let me re-examine: the user says "Saved Custom activity is not saving when I return back." This likely means the auto-save on step transition is not happening. Currently, save only happens when user clicks "Save & Exit". We should add **auto-save on step transitions** (when navigating between steps).
+### Task 3: Update Sync Function
+Update `sync_readiness_nodes()` to auto-assign `dimension_id` by mapping:
+- P2A VCR prerequisites → mapped via their `vcr_items.category_id` directly to `vcr_item_categories`
+- ORA activities → default to "Operating Integrity" or map via metadata
+- PSSR items → map via PSSR checklist category → nearest VCR category
+- ORM deliverables → default to "Management Systems"
+- Training → default to "Operating Integrity"
 
-**Fix:** In `ORAActivityPlanWizard.tsx`, add auto-save of wizard state to draft when stepping forward/backward, so custom activities added in Step 4 persist automatically.
+Set confidence factors: completed/approved = 1.0, in-progress = 0.8, not-started = 0.7.
 
-### 5. Relations Button Active State
+### Task 4: Executive Dashboard Enhancement
+Redesign `ExecutiveDashboard.tsx` to match the strategic layout:
+- **Top Banner**: Large ORI + SCS + color coding (Green >85, Amber 70-85, Red <70)
+- **Dimension Breakdown**: Bar/table showing each VCR category's score, trend arrow, risk level
+- **Top 5 Startup Blockers**: Blocked/critical nodes with severity
+- **Predictive Trend**: ORI line chart with dashed target curve
+- **Risk Impact Summary**: 4 stat boxes (Open High Risks, Startup-blocking, Dimensions below 70%, Systems below 60%)
 
-The Relations button already uses `variant={showRelationships ? 'secondary' : 'outline'}` (line 517). But `secondary` variant may not look distinct enough. Enhance with a more visible active state — add primary ring/border styling when active.
+### Task 5: Tenant-Configurable Weight Profiles
+Update the existing `ori_weight_profiles` to store dimension-based weights keyed by `vcr_item_categories.id` instead of module names. Add a simple admin UI for editing weights per tenant.
 
-**File:** `StepSchedule.tsx`, line 516-524 — add `border-primary text-primary bg-primary/10` when active.
-
----
-
-## Summary of Changes
-
-| # | Change | File |
-|---|--------|------|
-| 1 | Per-activity color rotation for ID badges | `StepSchedule.tsx` |
-| 2 | No change needed (current approach is best practice) | — |
-| 3 | Default parent activities to collapsed | `StepSchedule.tsx` |
-| 4 | Auto-save wizard state on step transitions | `ORAActivityPlanWizard.tsx` |
-| 5 | Enhanced active state for Relations button | `StepSchedule.tsx` |
+### Task 6: Update Living Documents
+- **Security & Compliance Doc**: Add rows for Readiness Dimensions, Risk Penalty Engine, Startup Confidence Score (mark as Active)
+- **Platform Guide**: Add "Readiness Ontology & Scoring Engine" section documenting the 6 dimensions, ORI formula, SCS
+- **Strategic North Star**: Update scoring engine status from Planned to Active, add dimension-based architecture detail
 

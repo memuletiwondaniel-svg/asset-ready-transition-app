@@ -103,12 +103,30 @@ const ZOOM_PRESETS = [
   { label: '24M', days: 730 },
 ];
 
+// Per-activity hue rotation palette for visual distinction
+const ACTIVITY_BADGE_PALETTE = [
+  { bg: 'bg-indigo-500/15', text: 'text-indigo-700 dark:text-indigo-400' },
+  { bg: 'bg-sky-500/15', text: 'text-sky-700 dark:text-sky-400' },
+  { bg: 'bg-rose-500/15', text: 'text-rose-700 dark:text-rose-400' },
+  { bg: 'bg-violet-500/15', text: 'text-violet-700 dark:text-violet-400' },
+  { bg: 'bg-teal-500/15', text: 'text-teal-700 dark:text-teal-400' },
+  { bg: 'bg-amber-500/15', text: 'text-amber-700 dark:text-amber-400' },
+  { bg: 'bg-emerald-500/15', text: 'text-emerald-700 dark:text-emerald-400' },
+  { bg: 'bg-fuchsia-500/15', text: 'text-fuchsia-700 dark:text-fuchsia-400' },
+  { bg: 'bg-cyan-500/15', text: 'text-cyan-700 dark:text-cyan-400' },
+  { bg: 'bg-orange-500/15', text: 'text-orange-700 dark:text-orange-400' },
+];
+
 function getPhasePrefix(code: string): string {
   return code.split('-')[0];
 }
 function getBarColor(code: string): string {
   return BAR_COLORS[getPhasePrefix(code)] || 'bg-primary';
 }
+function getActivityBadgeClasses(index: number) {
+  return ACTIVITY_BADGE_PALETTE[index % ACTIVITY_BADGE_PALETTE.length];
+}
+// Phase-based fallback for contexts without row index
 function getIdBadgeClasses(code: string) {
   const prefix = getPhasePrefix(code);
   return PHASE_COLORS[prefix] || { bg: 'bg-muted', text: 'text-foreground' };
@@ -265,11 +283,8 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
 
   const childrenMap = useMemo(() => buildChildrenMap(selectedActivities), [selectedActivities]);
 
-  // Default expand: show top-level parents expanded so activities are visible
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(() => {
-    const roots = (childrenMap.get(null) || []).filter(a => (childrenMap.get(a.id) || []).length > 0);
-    return new Set(roots.map(a => a.id));
-  });
+  // Default: all parents collapsed
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
   const visibleRows = useMemo(
     () => buildVisibleRows(selectedActivities, childrenMap, expandedIds),
@@ -516,7 +531,10 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
           <Button
             variant={showRelationships ? 'secondary' : 'outline'}
             size="sm"
-            className="h-6 px-2 text-[10px] font-medium gap-1"
+            className={cn(
+              "h-6 px-2 text-[10px] font-medium gap-1",
+              showRelationships && "border-primary text-primary bg-primary/10 ring-1 ring-primary/30"
+            )}
             onClick={() => setShowRelationships(!showRelationships)}
           >
             <GitBranch className="w-3 h-3" />
@@ -598,7 +616,7 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
             <div className="shrink-0 border-r" style={{ width: leftPanelWidth }}>
               {visibleRows.map((row, index) => {
                 const { activity, depth, hasChildren } = row;
-                const idColors = getIdBadgeClasses(activity.activityCode);
+                const idColors = getActivityBadgeClasses(index);
                 const status = (activity as any).status || 'NOT_STARTED';
                 const isExpanded = expandedIds.has(activity.id);
                 const isParent = hasChildren;
