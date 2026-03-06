@@ -167,23 +167,33 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
         if (!error) uploadedPaths.push(path);
       }
 
-      // Update ora_plan_activities for description, status, and progress
-      if (realOraActivityId) {
+      // Upsert ora_plan_activities for description, status, and progress
+      if (realOraActivityId && planId) {
         const completionPct = status === 'COMPLETED' ? 100 : status === 'IN_PROGRESS' ? progressPct : 0;
-        const updateData: Record<string, any> = {
+        const upsertData: Record<string, any> = {
+          id: realOraActivityId,
+          orp_plan_id: planId,
+          activity_code: activityCode || 'UNKNOWN',
+          name: task.title || 'Unnamed',
           status,
           completion_percentage: completionPct,
+          source_type: 'wizard',
         };
         if (description !== originalDescription) {
-          updateData.description = description;
+          upsertData.description = description;
         }
         if (status === 'COMPLETED') {
-          updateData.end_date = new Date().toISOString().split('T')[0];
+          upsertData.end_date = new Date().toISOString().split('T')[0];
+        }
+        if (startDate) {
+          upsertData.start_date = startDate;
+        }
+        if (endDate) {
+          upsertData.end_date = upsertData.end_date || endDate;
         }
         await (supabase as any)
           .from('ora_plan_activities')
-          .update(updateData)
-          .eq('id', realOraActivityId);
+          .upsert(upsertData, { onConflict: 'id' });
       }
 
       // Also update orp_plan_deliverables if it exists (legacy path)
@@ -198,15 +208,18 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
           .eq('id', deliverableId);
       }
 
-      // Update task status
-      const taskStatus = status === 'COMPLETED' ? 'completed' : status === 'IN_PROGRESS' ? 'in_progress' : 'pending';
-      await supabase
-        .from('user_tasks')
-        .update({ 
-          status: taskStatus, 
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', task.id);
+      // Update task status (only if task.id is a valid UUID, not a prefixed virtual ID)
+      const isRealTaskId = task.id && !task.id.startsWith('ws-') && !task.id.startsWith('ora-');
+      if (isRealTaskId) {
+        const taskStatus = status === 'COMPLETED' ? 'completed' : status === 'IN_PROGRESS' ? 'in_progress' : 'pending';
+        await supabase
+          .from('user_tasks')
+          .update({ 
+            status: taskStatus, 
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', task.id);
+      }
 
       queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
       queryClient.invalidateQueries({ queryKey: ['project-orp-plans'] });
