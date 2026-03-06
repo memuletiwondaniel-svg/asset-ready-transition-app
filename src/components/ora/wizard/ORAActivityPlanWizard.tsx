@@ -568,66 +568,68 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
         "max-h-[85vh] overflow-hidden flex flex-col",
       currentStep === 4 ? "max-w-7xl w-[98vw]" : "max-w-2xl"
       )}>
-        <DialogHeader className="border-b pb-4">
+        <DialogHeader className={cn("border-b pb-4", isReviewMode && "pb-2")}>
           <DialogTitle className="flex items-center gap-2 text-xl font-semibold">
             <CalendarCheck className="w-5 h-5 text-primary" />
             {isReviewMode ? 'Review ORA Plan' : 'Create ORA Plan'}
           </DialogTitle>
 
-          {/* Progress Indicator - PSSR pattern */}
-          <div className="mt-4 space-y-3">
-            <div className="flex items-center justify-between text-sm">
-              <span className="font-medium">Step {currentStep} of {STEPS.length}</span>
-              <span className="text-muted-foreground">{STEPS[currentStep - 1].title}</span>
-            </div>
-            <Progress value={progressPercentage} className="h-2" />
-            
-            {/* Step Indicators */}
-            <div className="flex justify-between mt-2">
-              {STEPS.map((step) => {
-                const isActive = step.id === currentStep;
-                const isVisited = visitedSteps.has(step.id);
-                const isComplete = step.id < currentStep || (isVisited && isStepComplete(step.id));
-                const isClickable = isVisited || step.id <= currentStep;
+          {/* Progress Indicator - hidden in review mode */}
+          {!isReviewMode && (
+            <div className="mt-4 space-y-3">
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-medium">Step {currentStep} of {STEPS.length}</span>
+                <span className="text-muted-foreground">{STEPS[currentStep - 1].title}</span>
+              </div>
+              <Progress value={progressPercentage} className="h-2" />
+              
+              {/* Step Indicators */}
+              <div className="flex justify-between mt-2">
+                {STEPS.map((step) => {
+                  const isActive = step.id === currentStep;
+                  const isVisited = visitedSteps.has(step.id);
+                  const isComplete = step.id < currentStep || (isVisited && isStepComplete(step.id));
+                  const isClickable = isVisited || step.id <= currentStep;
 
-                return (
-                  <button
-                    key={step.id}
-                    type="button"
-                    onClick={() => handleStepClick(step.id)}
-                    disabled={!isClickable}
-                    className={cn(
-                      "flex flex-col items-center flex-1 transition-colors",
-                      isClickable ? "cursor-pointer" : "cursor-default",
-                      isActive
-                        ? "text-primary"
-                        : isComplete
-                          ? "text-primary/60"
-                          : "text-muted-foreground"
-                    )}
-                  >
-                    <div
+                  return (
+                    <button
+                      key={step.id}
+                      type="button"
+                      onClick={() => handleStepClick(step.id)}
+                      disabled={!isClickable}
                       className={cn(
-                        "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium border-2 transition-colors",
+                        "flex flex-col items-center flex-1 transition-colors",
+                        isClickable ? "cursor-pointer" : "cursor-default",
                         isActive
-                          ? "border-primary bg-primary text-primary-foreground"
+                          ? "text-primary"
                           : isComplete
-                            ? "border-primary bg-primary/10 text-primary"
-                            : "border-muted-foreground/30 bg-muted/30"
+                            ? "text-primary/60"
+                            : "text-muted-foreground"
                       )}
                     >
-                      {isComplete ? (
-                        <Check className="h-4 w-4" />
-                      ) : (
-                        step.id
-                      )}
-                    </div>
-                    <span className="text-xs mt-1 text-center hidden sm:block">{step.title}</span>
-                  </button>
-                );
-              })}
+                      <div
+                        className={cn(
+                          "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium border-2 transition-colors",
+                          isActive
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : isComplete
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "border-muted-foreground/30 bg-muted/30"
+                        )}
+                      >
+                        {isComplete ? (
+                          <Check className="h-4 w-4" />
+                        ) : (
+                          step.id
+                        )}
+                      </div>
+                      <span className="text-xs mt-1 text-center hidden sm:block">{step.title}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
         </DialogHeader>
 
         {/* Phase context banner - shown from Step 2 onwards */}
