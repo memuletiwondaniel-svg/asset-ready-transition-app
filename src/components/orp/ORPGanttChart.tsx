@@ -454,6 +454,15 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
   }, [minDate, dayWidth]);
 
   const openActivitySheet = useCallback((deliverable: any) => {
+    // Build list of sibling activities for prerequisite picker
+    const siblingActivities = filteredDeliverables
+      .filter(d => d.deliverable?.activity_code && d.id !== deliverable.id)
+      .map(d => ({
+        id: d.id,
+        activity_code: d.deliverable?.activity_code,
+        name: d.deliverable?.name,
+      }));
+
     setSelectedOraActivity({
       id: deliverable.id,
       title: deliverable.deliverable?.name || '',
@@ -469,11 +478,14 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
         ora_plan_activity_id: deliverable.id,
         start_date: deliverable.start_date,
         end_date: deliverable.end_date,
+        completion_percentage: deliverable.completion_percentage || 0,
+        predecessor_ids: deliverable._predecessorIds || [],
+        sibling_activities: siblingActivities,
       },
       priority: 'medium',
       created_at: deliverable.created_at || new Date().toISOString(),
     });
-  }, [planId]);
+  }, [planId, filteredDeliverables]);
 
   // Early return - no data
   if (!dates.length) {
