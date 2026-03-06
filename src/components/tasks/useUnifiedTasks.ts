@@ -328,7 +328,7 @@ export function useUnifiedTasks(userId: string) {
       if (!aDue && bDue) return 1;
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
-  }, [pssrs, approvals, activities, owlItems, bundleTasks, userTasks, isNewSinceLastLogin]);
+  }, [pssrs, approvals, activities, owlItems, bundleTasks, userTasks, oraActivityDates, isNewSinceLastLogin]);
 
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = { all: allTasks.length };
