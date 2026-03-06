@@ -103,15 +103,28 @@ const ZOOM_PRESETS = [
   { label: '24M', days: 730 },
 ];
 
+// Per-activity hue rotation palette for visual distinction
+const ACTIVITY_BADGE_PALETTE = [
+  { bg: 'bg-indigo-500/15', text: 'text-indigo-700 dark:text-indigo-400' },
+  { bg: 'bg-sky-500/15', text: 'text-sky-700 dark:text-sky-400' },
+  { bg: 'bg-rose-500/15', text: 'text-rose-700 dark:text-rose-400' },
+  { bg: 'bg-violet-500/15', text: 'text-violet-700 dark:text-violet-400' },
+  { bg: 'bg-teal-500/15', text: 'text-teal-700 dark:text-teal-400' },
+  { bg: 'bg-amber-500/15', text: 'text-amber-700 dark:text-amber-400' },
+  { bg: 'bg-emerald-500/15', text: 'text-emerald-700 dark:text-emerald-400' },
+  { bg: 'bg-fuchsia-500/15', text: 'text-fuchsia-700 dark:text-fuchsia-400' },
+  { bg: 'bg-cyan-500/15', text: 'text-cyan-700 dark:text-cyan-400' },
+  { bg: 'bg-orange-500/15', text: 'text-orange-700 dark:text-orange-400' },
+];
+
 function getPhasePrefix(code: string): string {
   return code.split('-')[0];
 }
 function getBarColor(code: string): string {
   return BAR_COLORS[getPhasePrefix(code)] || 'bg-primary';
 }
-function getIdBadgeClasses(code: string) {
-  const prefix = getPhasePrefix(code);
-  return PHASE_COLORS[prefix] || { bg: 'bg-muted', text: 'text-foreground' };
+function getActivityBadgeClasses(index: number) {
+  return ACTIVITY_BADGE_PALETTE[index % ACTIVITY_BADGE_PALETTE.length];
 }
 
 // Hierarchy helpers
