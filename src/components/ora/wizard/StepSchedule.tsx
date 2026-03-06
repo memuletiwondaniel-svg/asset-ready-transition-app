@@ -278,11 +278,8 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
 
   const childrenMap = useMemo(() => buildChildrenMap(selectedActivities), [selectedActivities]);
 
-  // Default expand: show top-level parents expanded so activities are visible
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(() => {
-    const roots = (childrenMap.get(null) || []).filter(a => (childrenMap.get(a.id) || []).length > 0);
-    return new Set(roots.map(a => a.id));
-  });
+  // Default: all parents collapsed
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
   const visibleRows = useMemo(
     () => buildVisibleRows(selectedActivities, childrenMap, expandedIds),
