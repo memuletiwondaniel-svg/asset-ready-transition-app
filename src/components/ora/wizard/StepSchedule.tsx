@@ -284,11 +284,13 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
   const isDirty = useMemo(() => {
     if (!selectedActivity || !originalSnapshot) return false;
     return (
+      (selectedActivity.activity || '') !== originalSnapshot.activity ||
       (selectedActivity.description || '') !== originalSnapshot.description ||
       (selectedActivity.startDate || '') !== originalSnapshot.startDate ||
       (selectedActivity.endDate || '') !== originalSnapshot.endDate ||
       (selectedActivity.durationDays ?? null) !== originalSnapshot.durationDays ||
-      ((selectedActivity as any).status || 'NOT_STARTED') !== originalSnapshot.status
+      ((selectedActivity as any).status || 'NOT_STARTED') !== originalSnapshot.status ||
+      JSON.stringify(selectedActivity.predecessorIds) !== JSON.stringify(originalSnapshot.predecessorIds)
     );
   }, [selectedActivity, originalSnapshot]);
 
