@@ -116,6 +116,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
     setActivities([]);
     setApprovers([]);
     setDraftPlanId(null);
+    setReviewComment('');
   };
 
   // Check for existing draft on open (or load specific plan in review mode)
