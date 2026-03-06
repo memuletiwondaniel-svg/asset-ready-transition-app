@@ -129,6 +129,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
           setPhase(ws.phase || '');
           setProjectType(ws.projectType || '');
           setActivities(ws.activities || []);
+          setApprovers(ws.approvers || []);
           setCurrentStep(ws.currentStep || 1);
           const visited = new Set<number>(ws.visitedSteps || [1]);
           setVisitedSteps(visited);
