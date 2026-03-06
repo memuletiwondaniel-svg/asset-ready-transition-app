@@ -228,8 +228,8 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
     setDeleting(true);
 
     try {
-      if (oraActivityId) {
-        await supabase.from('ora_plan_activities').delete().eq('id', oraActivityId);
+      if (realOraActivityId) {
+        await (supabase as any).from('ora_plan_activities').delete().eq('id', realOraActivityId);
       }
       await supabase.from('user_tasks').delete().eq('id', task.id);
 
