@@ -513,15 +513,15 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
         <div className="border rounded-lg overflow-hidden bg-background">
           {/* Header row */}
           <div className="flex">
-            <div className="shrink-0 border-r bg-muted/30" style={{ width: LEFT_PANEL_WIDTH }}>
+            <div className="shrink-0 border-r bg-muted/30" style={{ width: leftPanelWidth }}>
               <div className="flex items-center h-9 border-b text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
-                <div className="px-1 text-center" style={{ width: COL_WIDTHS.index }}>#</div>
-                <div className="px-1 border-r border-border/40" style={{ width: COL_WIDTHS.id }}>ID</div>
+                {visibleColumns.has('index') && <div className="px-1 text-center" style={{ width: COL_WIDTHS.index }}>#</div>}
+                {visibleColumns.has('id') && <div className="px-1 border-r border-border/40" style={{ width: COL_WIDTHS.id }}>ID</div>}
                 <div className="px-1.5 border-r border-border/40" style={{ width: COL_WIDTHS.name }}>Activity</div>
-                <div className="px-1 text-center" style={{ width: COL_WIDTHS.start }}>Start</div>
-                <div className="px-1 text-center" style={{ width: COL_WIDTHS.end }}>End</div>
-                <div className="px-1 text-center" style={{ width: COL_WIDTHS.duration }}>Days</div>
-                <div className="px-1 text-center" style={{ width: COL_WIDTHS.status }}>Status</div>
+                {visibleColumns.has('start') && <div className="px-1 text-center" style={{ width: COL_WIDTHS.start }}>Start</div>}
+                {visibleColumns.has('end') && <div className="px-1 text-center" style={{ width: COL_WIDTHS.end }}>End</div>}
+                {visibleColumns.has('duration') && <div className="px-1 text-center" style={{ width: COL_WIDTHS.duration }}>Days</div>}
+                {visibleColumns.has('status') && <div className="px-1 text-center" style={{ width: COL_WIDTHS.status }}>Status</div>}
               </div>
             </div>
             <div className="flex-1 overflow-hidden">
@@ -532,6 +532,12 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                       <span className="text-[10px] font-medium text-muted-foreground whitespace-nowrap">{m.label}</span>
                     </div>
                   ))}
+                  {/* Today indicator in header */}
+                  {todayPosition > 0 && todayPosition < timelineWidth && (
+                    <div className="absolute top-0 h-full flex flex-col items-center justify-end pb-0.5" style={{ left: todayPosition }}>
+                      <span className="text-[8px] font-bold text-primary whitespace-nowrap bg-primary/10 px-1 rounded">{format(new Date(), 'dd MMM')}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
