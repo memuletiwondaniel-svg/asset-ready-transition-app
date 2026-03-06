@@ -432,31 +432,42 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
           <CardTitle>Gantt Chart</CardTitle>
           <div className="flex items-center gap-2">
             {/* Expand/Collapse toggle */}
-            <Button variant="outline" size="sm" className="h-7 px-2 text-[10px] font-medium gap-1" onClick={isAllExpanded ? collapseAll : expandAll}>
-              <ChevronsUpDown className="w-3 h-3" /> {isAllExpanded ? 'Collapse' : 'Expand'}
-            </Button>
+            <TooltipProvider delayDuration={300}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline" size="icon" className="h-7 w-7" onClick={isAllExpanded ? collapseAll : expandAll}>
+                    <ChevronsUpDown className="w-3.5 h-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom"><p>{isAllExpanded ? 'Collapse All' : 'Expand All'}</p></TooltipContent>
+              </Tooltip>
 
-            <div className="w-px h-5 bg-border" />
+              <div className="w-px h-5 bg-border" />
 
-            {/* Relationships toggle */}
-            <Button
-              variant={showRelationships ? 'secondary' : 'outline'}
-              size="sm"
-              className="h-7 px-2 text-[10px] font-medium gap-1"
-              onClick={() => setShowRelationships(!showRelationships)}
-            >
-              <GitBranch className="w-3 h-3" />
-              Relations
-            </Button>
+              {/* Relationships toggle */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant={showRelationships ? 'default' : 'outline'}
+                    size="icon"
+                    className={cn("h-7 w-7", showRelationships && "bg-primary text-primary-foreground")}
+                    onClick={() => setShowRelationships(!showRelationships)}
+                  >
+                    <GitBranch className="w-3.5 h-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom"><p>Relations</p></TooltipContent>
+              </Tooltip>
 
-            {/* Column visibility toggle */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="h-7 px-2 text-[10px] font-medium gap-1">
-                  <Columns3 className="w-3 h-3" />
-                  Columns
-                </Button>
-              </PopoverTrigger>
+              {/* Column visibility toggle */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="icon" className="h-7 w-7">
+                        <Columns3 className="w-3.5 h-3.5" />
+                      </Button>
+                    </PopoverTrigger>
               <PopoverContent className="w-40 p-2" align="end">
                 <div className="space-y-1">
                   {TOGGLEABLE_COLUMNS.map(col => (
