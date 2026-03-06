@@ -8,7 +8,7 @@ export const SIDEBAR_ROUTES: Record<string, string> = {
   'my-tasks': '/my-tasks',
   'operation-readiness': '/operation-readiness',
   'or-maintenance': '/or-maintenance',
-  'p2a-handover': '/p2a-handover',
+  
   'projects': '/projects',
   'project-management': '/project-management',
   'admin-tools': '/admin-tools',

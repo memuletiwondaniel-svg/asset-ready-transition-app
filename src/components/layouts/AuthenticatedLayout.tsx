@@ -26,7 +26,7 @@ export const AuthenticatedLayout: React.FC = () => {
     const path = location.pathname;
     if (path === '/') return 'home';
     if (path.startsWith('/operation-readiness')) return 'operation-readiness';
-    if (path.startsWith('/p2a-handover')) return 'p2a-handover';
+    
     if (path.startsWith('/or-maintenance')) return 'or-maintenance';
     if (path.startsWith('/pssr')) return 'pssr';
     if (path.startsWith('/my-tasks')) return 'my-tasks';

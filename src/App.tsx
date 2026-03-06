@@ -89,8 +89,6 @@ const App = () => (
                       <Route path="/operation-readiness" element={<ORPLandingPage />} />
                       <Route path="/operation-readiness/analytics" element={<ORPAnalyticsPage />} />
                       <Route path="/operation-readiness/:id" element={<ORPDetailsPage />} />
-                      <Route path="/p2a-handover" element={<P2ALandingPage />} />
-                      <Route path="/p2a-handover/:id" element={<P2ADetailsPage />} />
                       <Route path="/or-maintenance" element={<ORMLandingPage />} />
                       <Route path="/or-maintenance/analytics" element={<ORMAnalyticsDashboard />} />
                       <Route path="/or-maintenance/resources" element={<ORMResourceCapacityDashboard />} />

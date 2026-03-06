@@ -207,7 +207,7 @@ export const AllTasksTable: React.FC<AllTasksTableProps> = ({ searchQuery, userI
 
       const navigatePath = isPSSR
         ? (task.metadata?.pssr_id ? `/pssr/${task.metadata.pssr_id}/review` : '/my-tasks')
-        : (task.metadata?.vcr_id ? `/p2a-handover?vcr=${task.metadata.vcr_id}` : '/p2a-handover');
+        : '/my-tasks';
 
       tasks.push({
         id: `${task.type}-${task.id}`,

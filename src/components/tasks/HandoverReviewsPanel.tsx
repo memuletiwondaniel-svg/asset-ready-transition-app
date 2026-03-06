@@ -125,7 +125,7 @@ export const HandoverReviewsPanel: React.FC<HandoverReviewsPanelProps> = ({
               "animate-fade-in"
             )}
             style={{ animationDelay: `${index * 50}ms` }}
-            onClick={() => navigate(`/p2a-handover/${approval.handover_id}`)}
+            onClick={() => navigate(`/my-tasks`)}
           >
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0">
