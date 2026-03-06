@@ -40,6 +40,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   const [oraWizardOpen, setOraWizardOpen] = useState(false);
   const [oraActivityOpen, setOraActivityOpen] = useState(false);
   const [vcrWizardOpen, setVcrWizardOpen] = useState(false);
+  const [oraReviewWizardOpen, setOraReviewWizardOpen] = useState(false);
 
   const oraProjectId = task?.metadata?.project_id as string | undefined;
   const isOraTask = task ? (task.type === 'ora_plan_creation' || (task.metadata?.action === 'create_ora_plan' && task.metadata?.source === 'ora_workflow')) : false;
