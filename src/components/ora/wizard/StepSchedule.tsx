@@ -345,15 +345,16 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
   };
 
   const handleAddCustom = () => {
-    // Generate next sequential activity code based on existing activities
-    const existingCodes = selectedActivities.map(a => a.activityCode);
+    // Determine phase prefix from existing root-level activities
+    const rootActivities = selectedActivities.filter(a => !a.parentActivityId);
+    const firstPrefix = rootActivities.length > 0 ? getPhasePrefix(rootActivities[0].activityCode) : 'GEN';
+
+    // Find max root-level number for this prefix (only match PREFIX-NN pattern, not sub-activities)
     let maxNum = 0;
-    existingCodes.forEach(code => {
-      const match = code.match(/-(\d+)$/);
+    rootActivities.forEach(a => {
+      const match = a.activityCode.match(new RegExp(`^${firstPrefix}-(\\d+)$`));
       if (match) maxNum = Math.max(maxNum, parseInt(match[1]));
     });
-    // Determine phase prefix from existing activities or default
-    const firstPrefix = existingCodes.length > 0 ? getPhasePrefix(existingCodes[0]) : 'GEN';
     const nextCode = `${firstPrefix}-${String(maxNum + 1).padStart(2, '0')}`;
 
     const customActivity: WizardActivity = {
