@@ -750,7 +750,7 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                     placeholder="Add a description for this activity..."
                     value={selectedActivity.description || ''}
                     onChange={(e) => updateActivity(selectedActivity.id, { description: e.target.value })}
-                    className="mt-1.5 min-h-[100px] resize-none text-sm"
+                    className="mt-1.5 min-h-[140px] resize-none text-sm border-primary/30 focus:border-primary"
                   />
                 </div>
 
