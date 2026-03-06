@@ -805,6 +805,62 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                       </div>
                     );
                   })}
+                  {/* Relationship arrows SVG overlay */}
+                  {showRelationships && (
+                    <svg
+                      className="absolute top-0 left-0 pointer-events-none z-20"
+                      style={{ width: timelineWidth, height: visibleRows.length * ROW_HEIGHT }}
+                    >
+                      <defs>
+                        <marker id="rel-arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                          <path d="M0,0 L6,3 L0,6 Z" fill="hsl(var(--destructive))" />
+                        </marker>
+                      </defs>
+                      {visibleRows.map((row, rowIdx) => {
+                        const predecessorIds = row.deliverable._predecessorIds || [];
+                        if (!predecessorIds.length) return null;
+
+                        // Find this row's bar position
+                        const hasDates = row.deliverable.start_date && row.deliverable.end_date;
+                        if (!hasDates) return null;
+                        const toPos = getBarPosition(row.deliverable.start_date, row.deliverable.end_date);
+                        const toY = rowIdx * ROW_HEIGHT + ROW_HEIGHT / 2;
+                        const toX = toPos.left;
+
+                        return predecessorIds.map((predCode: string) => {
+                          // Find predecessor row
+                          const predIdx = visibleRows.findIndex(r => {
+                            const code = r.deliverable.deliverable?.activity_code;
+                            const id = r.deliverable.deliverable?.id || r.deliverable.id;
+                            return code === predCode || id === predCode;
+                          });
+                          if (predIdx === -1) return null;
+                          const predRow = visibleRows[predIdx];
+                          const predHasDates = predRow.deliverable.start_date && predRow.deliverable.end_date;
+                          if (!predHasDates) return null;
+                          const fromPos = getBarPosition(predRow.deliverable.start_date, predRow.deliverable.end_date);
+                          const fromX = fromPos.left + fromPos.width;
+                          const fromY = predIdx * ROW_HEIGHT + ROW_HEIGHT / 2;
+
+                          // L-shaped path: right from predecessor end, then down/up to successor start
+                          const midX = fromX + 10;
+                          const path = `M${fromX},${fromY} L${midX},${fromY} L${midX},${toY} L${toX},${toY}`;
+
+                          return (
+                            <path
+                              key={`${predCode}-${row.activityCode}`}
+                              d={path}
+                              fill="none"
+                              stroke="hsl(var(--destructive))"
+                              strokeWidth="1.5"
+                              markerEnd="url(#rel-arrow)"
+                              opacity="0.7"
+                            />
+                          );
+                        });
+                      })}
+                    </svg>
+                  )}
                 </div>
               </div>
             </div>
