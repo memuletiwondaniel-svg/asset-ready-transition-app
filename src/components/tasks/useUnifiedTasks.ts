@@ -147,12 +147,17 @@ export function useUnifiedTasks(userId: string) {
       }
 
       const isWaiting = t.status === 'waiting';
-      const durationDays = meta?.duration_days || meta?.duration_med || undefined;
+      // Enrich ORA tasks with dates from ora_plan_activities if not in metadata
+      const oraActId = meta?.ora_plan_activity_id;
+      const oraAct = oraActId && oraActivityDates ? oraActivityDates[oraActId] : null;
+      const startDate = meta?.start_date || oraAct?.start_date || undefined;
+      const endDate = meta?.end_date || oraAct?.end_date || undefined;
+      const durationDays = meta?.duration_days || meta?.duration_med || oraAct?.duration_days || undefined;
       const sp = computeSmartPriority({
         category,
         categoryLabel,
-        startDate: meta?.start_date,
-        endDate: meta?.end_date,
+        startDate,
+        endDate,
         dueDate: t.due_date || undefined,
         durationDays,
         progressPercentage: undefined,
@@ -171,8 +176,8 @@ export function useUnifiedTasks(userId: string) {
         projectId: meta?.project_id || undefined,
         status: t.status,
         dueDate: t.due_date || undefined,
-        startDate: meta?.start_date || undefined,
-        endDate: meta?.end_date || undefined,
+        startDate,
+        endDate,
         createdAt: t.created_at,
         priority: smartPriorityToLegacy(sp.level),
         smartPriority: sp,
