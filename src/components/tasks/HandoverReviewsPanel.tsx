@@ -159,7 +159,7 @@ export const HandoverReviewsPanel: React.FC<HandoverReviewsPanelProps> = ({
                   className="h-6 text-xs px-2 opacity-0 group-hover/item:opacity-100 transition-opacity"
                   onClick={(e) => {
                     e.stopPropagation();
-                    navigate(`/p2a-handover/${approval.handover_id}`);
+                    navigate(`/my-tasks`);
                   }}
                 >
                   Review
