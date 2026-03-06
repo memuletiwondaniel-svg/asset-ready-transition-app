@@ -98,12 +98,12 @@ export const ORPApprovalsTab: React.FC<ORPApprovalsTabProps> = ({ planId }) => {
                 <span className="font-medium text-sm">
                   {profile?.full_name || 'Unassigned'}
                 </span>
-                <Badge variant="outline" className="text-[10px]">
-                  {approval.approver_role}
-                </Badge>
               </div>
               {profile?.position && (
                 <p className="text-xs text-muted-foreground mt-0.5">{profile.position}</p>
+              )}
+              {!profile?.position && (
+                <p className="text-xs text-muted-foreground mt-0.5">{approval.approver_role}</p>
               )}
 
               {approval.comments && (
