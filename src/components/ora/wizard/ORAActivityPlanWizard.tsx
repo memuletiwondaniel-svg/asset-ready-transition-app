@@ -335,7 +335,108 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
     }
   };
 
-  const handleCreate = async () => {
+  // Review mode: save changes to wizard_state without re-inserting deliverables
+  const handleReviewSave = async () => {
+    if (!draftPlanId) return;
+    try {
+      setIsSaving(true);
+      const wizardState = {
+        phase,
+        projectType,
+        activities,
+        approvers,
+        currentStep: 4,
+        visitedSteps: [1, 2, 3, 4, 5, 6],
+      };
+      const { error } = await (supabase as any)
+        .from('orp_plans')
+        .update({ wizard_state: wizardState })
+        .eq('id', draftPlanId);
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ['project-orp-plans'] });
+      queryClient.invalidateQueries({ queryKey: ['orp-plans'] });
+      toast({ title: 'Changes saved', description: 'Your edits to the ORA Plan have been saved.' });
+    } catch (err: any) {
+      toast({ title: 'Save failed', description: err.message, variant: 'destructive' });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Review mode: approve or reject the plan
+  const handleReviewDecision = async (decision: 'APPROVED' | 'REJECTED') => {
+    if (!draftPlanId) return;
+    try {
+      setIsApprovingOrRejecting(true);
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) throw new Error('Not authenticated');
+
+      // Save any schedule edits first
+      await handleReviewSave();
+
+      // Update the approver's record in orp_approvals
+      const { error: approvalError } = await supabase
+        .from('orp_approvals')
+        .update({
+          status: decision,
+          comments: reviewComment || null,
+          approved_at: new Date().toISOString(),
+        } as any)
+        .eq('orp_plan_id', draftPlanId)
+        .eq('approver_user_id', user.user.id);
+
+      if (approvalError) throw approvalError;
+
+      // Check if ALL approvers have approved → update plan status
+      const { data: allApprovals } = await supabase
+        .from('orp_approvals')
+        .select('status')
+        .eq('orp_plan_id', draftPlanId);
+
+      const allApproved = allApprovals?.every((a: any) => a.status === 'APPROVED');
+      const anyRejected = allApprovals?.some((a: any) => a.status === 'REJECTED');
+
+      if (anyRejected) {
+        await (supabase as any)
+          .from('orp_plans')
+          .update({ status: 'DRAFT' })
+          .eq('id', draftPlanId);
+      } else if (allApproved) {
+        await (supabase as any)
+          .from('orp_plans')
+          .update({ status: 'APPROVED' })
+          .eq('id', draftPlanId);
+      }
+
+      // Mark the reviewer's task as completed
+      await supabase
+        .from('user_tasks')
+        .update({ status: 'completed' } as any)
+        .eq('user_id', user.user.id)
+        .eq('type', 'ora_plan_review')
+        .filter('metadata->>plan_id', 'eq', draftPlanId);
+
+      queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['orp-plans'] });
+      queryClient.invalidateQueries({ queryKey: ['project-orp-plans'] });
+
+      toast({
+        title: decision === 'APPROVED' ? 'Plan Approved' : 'Plan Rejected',
+        description: decision === 'APPROVED'
+          ? 'The ORA Plan has been approved.'
+          : 'The ORA Plan has been rejected and returned to draft.',
+      });
+      onOpenChange(false);
+      resetForm();
+      onSuccess?.();
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    } finally {
+      setIsApprovingOrRejecting(false);
+    }
+  };
+
+
     try {
       setIsCreating(true);
       const { data: user } = await supabase.auth.getUser();
