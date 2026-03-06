@@ -634,7 +634,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
         </DialogHeader>
 
         {/* Phase context banner - shown from Step 2 onwards */}
-        {currentStep >= 2 && phase && (
+        {!isReviewMode && currentStep >= 2 && phase && (
           <div className="mx-1 mb-0 px-4 py-2.5 rounded-lg bg-muted/60 border border-border/50">
             <div className="flex items-center gap-3">
               <div>
