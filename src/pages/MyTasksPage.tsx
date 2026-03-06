@@ -31,7 +31,7 @@ const MyTasksPage: React.FC = () => {
   const { data: isDirector, isLoading: isDirectorLoading } = useUserIsDirector();
   const [createTaskModalOpen, setCreateTaskModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [viewMode, setViewMode] = useState<ViewMode>('kanban');
   const [groupBy, setGroupBy] = useState<GroupBy>('none');
 
   useEffect(() => {

@@ -207,6 +207,8 @@ export const usePSSRItemApprovals = (pssrId: string | undefined, approverRole?: 
 export const usePSSRsAwaitingReview = (userId: string | undefined) => {
   return useQuery({
     queryKey: ['pssrs-awaiting-review', userId],
+    staleTime: 2 * 60 * 1000,
+    refetchOnWindowFocus: false,
     queryFn: async () => {
       if (!userId) return [];
 

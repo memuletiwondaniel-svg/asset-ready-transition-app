@@ -37,6 +37,8 @@ export function useUserOWLItems() {
 
   const query = useQuery({
     queryKey: ['user-owl-items', user?.id],
+    staleTime: 2 * 60 * 1000,
+    refetchOnWindowFocus: false,
     queryFn: async () => {
       if (!user?.id) return [];
 
