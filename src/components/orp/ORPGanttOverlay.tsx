@@ -137,7 +137,7 @@ export const ORPGanttOverlay: React.FC<ORPGanttOverlayProps> = ({
             </div>
 
             {/* Metrics row */}
-            <div className="mt-2.5 grid grid-cols-[minmax(180px,0.6fr)_auto_auto_auto] gap-2 items-stretch">
+            <div className="mt-4 grid grid-cols-[minmax(180px,0.6fr)_auto_auto_auto] gap-2 items-stretch">
               {/* Overall Progress */}
               <div className="p-3 bg-muted/30 rounded-xl border border-border/30 min-w-0">
                 <div className="flex items-center justify-between text-xs mb-1.5">
