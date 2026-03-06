@@ -547,11 +547,10 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
           <div className="max-h-[60vh] overflow-y-auto" ref={scrollContainerRef}>
             <div className="flex">
               {/* Left panel rows */}
-              <div className="shrink-0 border-r" style={{ width: LEFT_PANEL_WIDTH }}>
+              <div className="shrink-0 border-r" style={{ width: leftPanelWidth }}>
                 {visibleRows.map((row, index) => {
                   const { deliverable, depth, hasChildren, activityCode } = row;
-                  const prefix = getPhasePrefix(activityCode);
-                  const idColors = PHASE_COLORS[prefix] || { bg: 'bg-muted', text: 'text-foreground' };
+                  const idColors = ID_BADGE_PALETTE[index % ID_BADGE_PALETTE.length];
                   const isExpanded = expandedCodes.has(activityCode);
                   const isParent = hasChildren;
                   const hasDates = deliverable.start_date && deliverable.end_date;
@@ -567,63 +566,43 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                       )}
                       style={{ height: ROW_HEIGHT }}
                       onClick={() => {
-                        if (deliverable._isOraActivity) {
-                          // Convert to UserTask-like shape for ORAActivityTaskSheet
-                          setSelectedOraActivity({
-                            id: deliverable.id,
-                            title: deliverable.deliverable?.name || '',
+                        setSelectedOraActivity({
+                          id: deliverable.id,
+                          title: deliverable.deliverable?.name || '',
+                          description: deliverable.deliverable?.description || '',
+                          type: 'ora_activity',
+                          status: deliverable.status === 'COMPLETED' ? 'completed' : deliverable.status === 'IN_PROGRESS' ? 'in_progress' : 'pending',
+                          metadata: {
+                            activity_name: deliverable.deliverable?.name,
+                            activity_code: deliverable.deliverable?.activity_code,
                             description: deliverable.deliverable?.description || '',
-                            type: 'ora_activity',
-                            status: deliverable.status === 'COMPLETED' ? 'completed' : deliverable.status === 'IN_PROGRESS' ? 'in_progress' : 'pending',
-                            metadata: {
-                              activity_name: deliverable.deliverable?.name,
-                              activity_code: deliverable.deliverable?.activity_code,
-                              description: deliverable.deliverable?.description || '',
-                              plan_id: planId,
-                              deliverable_id: deliverable.deliverable?.id,
-                              ora_plan_activity_id: deliverable.id,
-                              start_date: deliverable.start_date,
-                              end_date: deliverable.end_date,
-                            },
-                            priority: 'medium',
-                            created_at: deliverable.created_at || new Date().toISOString(),
-                          });
-                        } else {
-                          // Also open as side sheet for consistent UX
-                          setSelectedOraActivity({
-                            id: deliverable.id,
-                            title: deliverable.deliverable?.name || '',
-                            description: deliverable.deliverable?.description || '',
-                            type: 'ora_activity',
-                            status: deliverable.status === 'COMPLETED' ? 'completed' : deliverable.status === 'IN_PROGRESS' ? 'in_progress' : 'pending',
-                            metadata: {
-                              activity_name: deliverable.deliverable?.name,
-                              activity_code: deliverable.deliverable?.activity_code,
-                              description: deliverable.deliverable?.description || '',
-                              plan_id: planId,
-                              deliverable_id: deliverable.deliverable?.id || deliverable.id,
-                              ora_plan_activity_id: deliverable.id,
-                              start_date: deliverable.start_date,
-                              end_date: deliverable.end_date,
-                            },
-                            priority: 'medium',
-                            created_at: deliverable.created_at || new Date().toISOString(),
-                          });
-                        }
+                            plan_id: planId,
+                            deliverable_id: deliverable.deliverable?.id || deliverable.id,
+                            ora_plan_activity_id: deliverable.id,
+                            start_date: deliverable.start_date,
+                            end_date: deliverable.end_date,
+                          },
+                          priority: 'medium',
+                          created_at: deliverable.created_at || new Date().toISOString(),
+                        });
                       }}
                     >
-                      <div className="px-1 text-center text-[10px] text-muted-foreground" style={{ width: COL_WIDTHS.index }}>
-                        {index + 1}
-                      </div>
-                      <div className="px-1 flex items-center border-r border-border/40" style={{ width: COL_WIDTHS.id }}>
-                        {activityCode ? (
-                          <span className={cn("inline-flex items-center rounded px-1.5 py-0.5 text-[9px] font-mono font-semibold whitespace-nowrap", idColors.bg, idColors.text)}>
-                            {activityCode}
-                          </span>
-                        ) : (
-                          <span className="text-[10px] text-muted-foreground">—</span>
-                        )}
-                      </div>
+                      {visibleColumns.has('index') && (
+                        <div className="px-1 text-center text-[10px] text-muted-foreground" style={{ width: COL_WIDTHS.index }}>
+                          {index + 1}
+                        </div>
+                      )}
+                      {visibleColumns.has('id') && (
+                        <div className="px-1 flex items-center border-r border-border/40" style={{ width: COL_WIDTHS.id }}>
+                          {activityCode ? (
+                            <span className={cn("inline-flex items-center rounded px-1.5 py-0.5 text-[9px] font-mono font-semibold whitespace-nowrap", idColors.bg, idColors.text)}>
+                              {activityCode}
+                            </span>
+                          ) : (
+                            <span className="text-[10px] text-muted-foreground">—</span>
+                          )}
+                        </div>
+                      )}
                       <div className="px-1.5 overflow-hidden flex items-center gap-0.5 border-r border-border/40" style={{ width: COL_WIDTHS.name }}>
                         <div style={{ paddingLeft: depth * 16 }} className="flex items-center gap-1 min-w-0">
                           {hasChildren ? (
@@ -647,24 +626,32 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                           </span>
                         </div>
                       </div>
-                      <div className="px-1 text-center" style={{ width: COL_WIDTHS.start }}>
-                        <span className="text-[10px] text-muted-foreground">
-                          {hasDates ? format(parseISO(deliverable.start_date), 'dd MMM') : '—'}
-                        </span>
-                      </div>
-                      <div className="px-1 text-center" style={{ width: COL_WIDTHS.end }}>
-                        <span className="text-[10px] text-muted-foreground">
-                          {hasDates ? format(parseISO(deliverable.end_date), 'dd MMM') : '—'}
-                        </span>
-                      </div>
-                      <div className="px-1 text-center" style={{ width: COL_WIDTHS.duration }}>
-                        <span className="text-[10px] font-medium">{durationDays !== null ? `${durationDays}d` : '—'}</span>
-                      </div>
-                      <div className="px-1 flex items-center justify-center" style={{ width: COL_WIDTHS.status }}>
-                        <Badge variant="outline" className={cn("text-[9px] px-1.5 py-0 h-5", getStatusBadgeClasses(deliverable.status))}>
-                          {getStatusLabel(deliverable.status)}
-                        </Badge>
-                      </div>
+                      {visibleColumns.has('start') && (
+                        <div className="px-1 text-center" style={{ width: COL_WIDTHS.start }}>
+                          <span className="text-[10px] text-muted-foreground">
+                            {hasDates ? format(parseISO(deliverable.start_date), 'dd MMM') : '—'}
+                          </span>
+                        </div>
+                      )}
+                      {visibleColumns.has('end') && (
+                        <div className="px-1 text-center" style={{ width: COL_WIDTHS.end }}>
+                          <span className="text-[10px] text-muted-foreground">
+                            {hasDates ? format(parseISO(deliverable.end_date), 'dd MMM') : '—'}
+                          </span>
+                        </div>
+                      )}
+                      {visibleColumns.has('duration') && (
+                        <div className="px-1 text-center" style={{ width: COL_WIDTHS.duration }}>
+                          <span className="text-[10px] font-medium">{durationDays !== null ? `${durationDays}d` : '—'}</span>
+                        </div>
+                      )}
+                      {visibleColumns.has('status') && (
+                        <div className="px-1 flex items-center justify-center" style={{ width: COL_WIDTHS.status }}>
+                          <Badge variant="outline" className={cn("text-[9px] px-1.5 py-0 h-5", getStatusBadgeClasses(deliverable.status))}>
+                            {getStatusLabel(deliverable.status)}
+                          </Badge>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
