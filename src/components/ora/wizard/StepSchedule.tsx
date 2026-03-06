@@ -912,6 +912,68 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                   </div>
                 </div>
 
+                {/* Prerequisites / Relationships */}
+                <div>
+                  <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wide flex items-center gap-1.5">
+                    <Link2 className="w-3 h-3" /> Prerequisites
+                  </label>
+                  <p className="text-[10px] text-muted-foreground mt-0.5 mb-2">
+                    Select activities that must complete before this one can start.
+                  </p>
+
+                  {/* Current predecessors */}
+                  {selectedActivity.predecessorIds.length > 0 && (
+                    <div className="space-y-1 mb-2">
+                      {selectedActivity.predecessorIds.map(predId => {
+                        const pred = activities.find(a => a.id === predId);
+                        if (!pred) return null;
+                        const predColors = getIdBadgeClasses(pred.activityCode);
+                        return (
+                          <div key={predId} className="flex items-center gap-2 rounded-md border border-border/50 bg-muted/30 px-2 py-1.5 group">
+                            <span className={cn("text-[9px] font-mono font-semibold rounded px-1 py-0.5 whitespace-nowrap", predColors.bg, predColors.text)}>
+                              {pred.activityCode}
+                            </span>
+                            <span className="text-xs text-foreground/80 truncate flex-1">{pred.activity}</span>
+                            <button
+                              className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-destructive/10"
+                              onClick={() => {
+                                updateActivity(selectedActivity.id, {
+                                  predecessorIds: selectedActivity.predecessorIds.filter(id => id !== predId)
+                                });
+                              }}
+                            >
+                              <X className="w-3 h-3 text-destructive" />
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Add predecessor popover */}
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className="h-7 text-[10px] gap-1 w-full border-dashed">
+                        <Plus className="w-3 h-3" /> Add Predecessor
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-72 p-0" align="start" side="bottom">
+                      <PredecessorPicker
+                        activities={selectedActivities}
+                        currentId={selectedActivity.id}
+                        selectedIds={selectedActivity.predecessorIds}
+                        onToggle={(predId) => {
+                          const current = selectedActivity.predecessorIds;
+                          const updated = current.includes(predId)
+                            ? current.filter(id => id !== predId)
+                            : [...current, predId];
+                          updateActivity(selectedActivity.id, { predecessorIds: updated });
+                        }}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
                 {/* Footer: Delete (left) + Smart Save (right) */}
                 <div className="flex items-center justify-between pt-3 border-t">
                   <AlertDialog>
