@@ -40,6 +40,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   const [oraWizardOpen, setOraWizardOpen] = useState(false);
   const [oraActivityOpen, setOraActivityOpen] = useState(false);
   const [vcrWizardOpen, setVcrWizardOpen] = useState(false);
+  const [oraReviewWizardOpen, setOraReviewWizardOpen] = useState(false);
 
   const oraProjectId = task?.metadata?.project_id as string | undefined;
   const isOraTask = task ? (task.type === 'ora_plan_creation' || (task.metadata?.action === 'create_ora_plan' && task.metadata?.source === 'ora_workflow')) : false;
@@ -87,7 +88,6 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
     (Date.now() - new Date(task.created_at).getTime()) / (1000 * 60 * 60 * 24)
   );
 
-  
 
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
@@ -232,13 +232,13 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
               </Button>
             )}
 
-            {/* ORA Plan Review CTA */}
+            {/* ORA Plan Review CTA - opens wizard in review mode */}
             {isOraReviewTask && oraPlanId && (
               <Button
                 className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
                 onClick={() => {
                   onOpenChange(false);
-                  navigate(`/operation-readiness/${oraPlanId}`);
+                  setOraReviewWizardOpen(true);
                 }}
               >
                 <CalendarCheck className="h-4 w-4" />
@@ -346,6 +346,20 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
         />
       )}
 
+      {/* ORA Plan Review Wizard */}
+      {isOraReviewTask && oraPlanId && oraProjectId && (
+        <ORAActivityPlanWizard
+          open={oraReviewWizardOpen}
+          onOpenChange={setOraReviewWizardOpen}
+          projectId={oraProjectId}
+          planId={oraPlanId}
+          mode="review"
+          onSuccess={() => {
+            setOraReviewWizardOpen(false);
+            onOpenChange(false);
+          }}
+        />
+      )}
 
       {/* ORA Activity Task Sheet */}
       {isOraActivityTask && (
