@@ -164,7 +164,7 @@ export const StepApprovers: React.FC<Props> = ({ approvers, onApproversChange, p
             <Card key={approver.user_id} className="p-3">
               <div className="flex items-center gap-3">
                 <Avatar className="h-10 w-10">
-                  <AvatarImage src={approver.avatar_url || undefined} alt={approver.full_name} />
+                  <AvatarImage src={getFullAvatarUrl(approver.avatar_url)} alt={approver.full_name} />
                   <AvatarFallback className="text-xs bg-primary/10 text-primary font-semibold">
                     {getInitials(approver.full_name)}
                   </AvatarFallback>
