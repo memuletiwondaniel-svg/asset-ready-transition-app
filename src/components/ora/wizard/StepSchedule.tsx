@@ -45,6 +45,7 @@ import {
 interface Props {
   activities: WizardActivity[];
   onActivitiesChange: (activities: WizardActivity[]) => void;
+  isReviewMode?: boolean;
 }
 
 const DAY_WIDTH_BASE = 28;
@@ -269,7 +270,7 @@ const PredecessorPicker: React.FC<{
   );
 };
 
-export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }) => {
+export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange, isReviewMode = false }) => {
   const [zoomLevel, setZoomLevel] = useState(1);
   const [visibleCols, setVisibleCols] = useState<Set<ColKey>>(new Set(DEFAULT_VISIBLE));
   const [selectedActivityId, setSelectedActivityId] = useState<string | null>(null);
@@ -504,16 +505,19 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
 
   return (
     <div className="space-y-3 p-1">
-      <div className="text-center space-y-2 pb-1">
-        <div className="mx-auto w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-          <CalendarDays className="w-5 h-5 text-primary" />
+      {!isReviewMode && (
+        <div className="text-center space-y-2 pb-1">
+          <div className="mx-auto w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+            <CalendarDays className="w-5 h-5 text-primary" />
+          </div>
+          <h3 className="text-base font-semibold">Schedule & Timeline</h3>
+          <p className="text-xs text-muted-foreground">Click dates to pick from calendar. Click activity rows for details.</p>
         </div>
-        <h3 className="text-base font-semibold">Schedule & Timeline</h3>
-        <p className="text-xs text-muted-foreground">Click dates to pick from calendar. Click activity rows for details.</p>
-      </div>
+      )}
 
       {/* Toolbar */}
-      <div className="flex items-center justify-between">
+      <div className={cn("flex items-center justify-between", isReviewMode && "sticky top-0 z-10 bg-background py-1")}>
+
         <div className="flex items-center gap-1">
           {ZOOM_PRESETS.map(p => (
             <Button key={p.label} variant="outline" size="sm" className="h-6 px-2 text-[10px] font-medium" onClick={() => setZoomToFitDays(p.days)}>
