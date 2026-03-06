@@ -79,6 +79,31 @@ export function useUnifiedTasks(userId: string) {
   const { bundleTasks, isLoading: bundleLoading } = useUserVCRBundleTasks();
   const { tasks: userTasks, loading: tasksLoading, updateTaskStatus } = useUserTasks();
 
+  // Fetch ORA plan activity dates for tasks that reference an ora_plan_activity_id
+  const oraActivityIds = useMemo(() => {
+    return (userTasks || [])
+      .map(t => (t.metadata as Record<string, any>)?.ora_plan_activity_id)
+      .filter(Boolean) as string[];
+  }, [userTasks]);
+
+  const { data: oraActivityDates } = useQuery({
+    queryKey: ['ora-activity-dates', oraActivityIds],
+    queryFn: async () => {
+      if (oraActivityIds.length === 0) return {};
+      const { data, error } = await supabase
+        .from('ora_plan_activities')
+        .select('id, start_date, end_date, duration_days')
+        .in('id', oraActivityIds);
+      if (error) throw error;
+      const map: Record<string, { start_date: string | null; end_date: string | null; duration_days: number | null }> = {};
+      (data || []).forEach((a: any) => { map[a.id] = a; });
+      return map;
+    },
+    enabled: oraActivityIds.length > 0,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
   const isLoading = pssrLoading || handoverLoading || oraLoading || owlLoading || bundleLoading || tasksLoading;
 
   const allTasks = useMemo<UnifiedTask[]>(() => {
