@@ -155,67 +155,50 @@ export const ORPGanttOverlay: React.FC<ORPGanttOverlayProps> = ({
               {scheduleMetrics && (
                 <>
                   <div className={cn(
-                    "flex flex-col items-center justify-center p-3 rounded-xl border min-w-[90px]",
+                    "flex flex-col items-center justify-center px-3 py-1.5 rounded-lg border min-w-[70px]",
                     scheduleMetrics.spi >= 80
                       ? "bg-green-500/5 border-green-500/20"
                       : scheduleMetrics.spi >= 50
                         ? "bg-amber-500/5 border-amber-500/20"
                         : "bg-destructive/5 border-destructive/20"
                   )}>
-                    <div className={cn(
-                      "w-8 h-8 rounded-lg flex items-center justify-center mb-1",
-                      scheduleMetrics.spi >= 80 ? "bg-green-500/10" : scheduleMetrics.spi >= 50 ? "bg-amber-500/10" : "bg-destructive/10"
-                    )}>
-                      {scheduleMetrics.spi >= 50
-                        ? <TrendingUp className={cn("h-4 w-4", scheduleMetrics.spi >= 80 ? "text-green-600" : "text-amber-600")} />
-                        : <TrendingDown className="h-4 w-4 text-destructive" />
-                      }
-                    </div>
+                    {scheduleMetrics.spi >= 50
+                      ? <TrendingUp className={cn("h-3.5 w-3.5 mb-0.5", scheduleMetrics.spi >= 80 ? "text-green-600" : "text-amber-600")} />
+                      : <TrendingDown className="h-3.5 w-3.5 mb-0.5 text-destructive" />
+                    }
                     <p className={cn(
-                      "text-lg font-bold leading-none",
+                      "text-sm font-bold leading-none",
                       scheduleMetrics.spi >= 80 ? "text-green-600" : scheduleMetrics.spi >= 50 ? "text-amber-600" : "text-destructive"
                     )}>{scheduleMetrics.spi}%</p>
-                    <p className="text-[9px] text-muted-foreground mt-0.5 font-medium">SPI</p>
+                    <p className="text-[8px] text-muted-foreground mt-0.5 font-medium">SPI</p>
                   </div>
 
-                  {/* At Risk */}
                   <div className={cn(
-                    "flex flex-col items-center justify-center p-3 rounded-xl border min-w-[90px]",
+                    "flex flex-col items-center justify-center px-3 py-1.5 rounded-lg border min-w-[70px]",
                     scheduleMetrics.atRisk === 0
                       ? "bg-green-500/5 border-green-500/20"
                       : "bg-destructive/5 border-destructive/20"
                   )}>
-                    <div className={cn(
-                      "w-8 h-8 rounded-lg flex items-center justify-center mb-1",
-                      scheduleMetrics.atRisk === 0 ? "bg-green-500/10" : "bg-destructive/10"
-                    )}>
-                      <AlertTriangle className={cn("h-4 w-4", scheduleMetrics.atRisk === 0 ? "text-green-600" : "text-destructive")} />
-                    </div>
+                    <AlertTriangle className={cn("h-3.5 w-3.5 mb-0.5", scheduleMetrics.atRisk === 0 ? "text-green-600" : "text-destructive")} />
                     <p className={cn(
-                      "text-lg font-bold leading-none",
+                      "text-sm font-bold leading-none",
                       scheduleMetrics.atRisk === 0 ? "text-green-600" : "text-destructive"
                     )}>{scheduleMetrics.atRisk}</p>
-                    <p className="text-[9px] text-muted-foreground mt-0.5 font-medium">At Risk</p>
+                    <p className="text-[8px] text-muted-foreground mt-0.5 font-medium">At Risk</p>
                   </div>
 
-                  {/* Slippage */}
                   <div className={cn(
-                    "flex flex-col items-center justify-center p-3 rounded-xl border min-w-[90px]",
+                    "flex flex-col items-center justify-center px-3 py-1.5 rounded-lg border min-w-[70px]",
                     scheduleMetrics.avgSlippage === 0
                       ? "bg-green-500/5 border-green-500/20"
                       : "bg-amber-500/5 border-amber-500/20"
                   )}>
-                    <div className={cn(
-                      "w-8 h-8 rounded-lg flex items-center justify-center mb-1",
-                      scheduleMetrics.avgSlippage === 0 ? "bg-green-500/10" : "bg-amber-500/10"
-                    )}>
-                      <Clock className={cn("h-4 w-4", scheduleMetrics.avgSlippage === 0 ? "text-green-600" : "text-amber-600")} />
-                    </div>
+                    <Clock className={cn("h-3.5 w-3.5 mb-0.5", scheduleMetrics.avgSlippage === 0 ? "text-green-600" : "text-amber-600")} />
                     <p className={cn(
-                      "text-lg font-bold leading-none",
+                      "text-sm font-bold leading-none",
                       scheduleMetrics.avgSlippage === 0 ? "text-green-600" : "text-amber-600"
                     )}>{scheduleMetrics.avgSlippage}d</p>
-                    <p className="text-[9px] text-muted-foreground mt-0.5 font-medium">Slippage</p>
+                    <p className="text-[8px] text-muted-foreground mt-0.5 font-medium">Slippage</p>
                   </div>
                 </>
               )}
