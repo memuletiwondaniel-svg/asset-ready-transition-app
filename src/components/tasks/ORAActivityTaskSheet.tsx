@@ -95,11 +95,22 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
     ? ID_BADGE_PALETTE[hashCode(activityCode) % ID_BADGE_PALETTE.length]
     : ID_BADGE_PALETTE[0];
 
+  // Derive the real DB id (strip "ora-" or "ws-" prefix if present)
+  const realOraActivityId = useMemo(() => {
+    const raw = oraActivityId || '';
+    if (raw.startsWith('ora-')) return raw.slice(4);
+    if (raw.startsWith('ws-')) return raw.slice(3);
+    return raw;
+  }, [oraActivityId]);
+
   // Initialize values when sheet opens
   useEffect(() => {
     if (open && task) {
       const initDesc = metadata?.description || task?.description || '';
-      const initStatus: ActivityStatus = 'NOT_STARTED';
+      // Map the task status back to ActivityStatus
+      const taskStatus = task?.status;
+      const initStatus: ActivityStatus = taskStatus === 'completed' ? 'COMPLETED'
+        : taskStatus === 'in_progress' ? 'IN_PROGRESS' : 'NOT_STARTED';
       setDescription(initDesc);
       setOriginalDescription(initDesc);
       setStatus(initStatus);
@@ -156,23 +167,33 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
         if (!error) uploadedPaths.push(path);
       }
 
-      // Update activity description if changed
-      if (oraActivityId && description !== originalDescription) {
-        await supabase
+      // Update ora_plan_activities for description, status, and progress
+      if (realOraActivityId) {
+        const completionPct = status === 'COMPLETED' ? 100 : status === 'IN_PROGRESS' ? progressPct : 0;
+        const updateData: Record<string, any> = {
+          status,
+          completion_percentage: completionPct,
+        };
+        if (description !== originalDescription) {
+          updateData.description = description;
+        }
+        if (status === 'COMPLETED') {
+          updateData.end_date = new Date().toISOString().split('T')[0];
+        }
+        await (supabase as any)
           .from('ora_plan_activities')
-          .update({ description })
-          .eq('id', oraActivityId);
+          .update(updateData)
+          .eq('id', realOraActivityId);
       }
 
-      // Update deliverable status if we have a deliverable ID
-      if (deliverableId) {
+      // Also update orp_plan_deliverables if it exists (legacy path)
+      if (deliverableId && deliverableId !== realOraActivityId) {
         const completionPct = status === 'COMPLETED' ? 100 : status === 'IN_PROGRESS' ? progressPct : 0;
         await supabase
           .from('orp_plan_deliverables')
           .update({ 
             status, 
             completion_percentage: completionPct,
-            ...(status === 'COMPLETED' ? { end_date: new Date().toISOString().split('T')[0] } : {}),
           })
           .eq('id', deliverableId);
       }
@@ -191,6 +212,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
       queryClient.invalidateQueries({ queryKey: ['project-orp-plans'] });
       queryClient.invalidateQueries({ queryKey: ['user-orp-activities'] });
       queryClient.invalidateQueries({ queryKey: ['ora-plan-activities'] });
+      queryClient.invalidateQueries({ queryKey: ['orp-plan'] });
 
       toast.success(status === 'COMPLETED' ? 'Activity marked as completed' : 'Activity progress saved');
       onOpenChange(false);
@@ -206,8 +228,8 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
     setDeleting(true);
 
     try {
-      if (oraActivityId) {
-        await supabase.from('ora_plan_activities').delete().eq('id', oraActivityId);
+      if (realOraActivityId) {
+        await (supabase as any).from('ora_plan_activities').delete().eq('id', realOraActivityId);
       }
       await supabase.from('user_tasks').delete().eq('id', task.id);
 
@@ -215,6 +237,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
       queryClient.invalidateQueries({ queryKey: ['project-orp-plans'] });
       queryClient.invalidateQueries({ queryKey: ['user-orp-activities'] });
       queryClient.invalidateQueries({ queryKey: ['ora-plan-activities'] });
+      queryClient.invalidateQueries({ queryKey: ['orp-plan'] });
 
       toast.success('Activity deleted');
       onOpenChange(false);
