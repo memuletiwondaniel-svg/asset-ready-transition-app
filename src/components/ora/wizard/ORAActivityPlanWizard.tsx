@@ -293,7 +293,8 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
         .from('user_tasks')
         .update({ status: 'completed' })
         .eq('user_id', user.user.id)
-        .eq('type', 'ora_plan_creation')
+        .eq('type', 'task')
+        .filter('metadata->>source', 'eq', 'ora_workflow')
         .filter('metadata->>project_id', 'eq', projectId);
 
       if (taskCompleteError) {
