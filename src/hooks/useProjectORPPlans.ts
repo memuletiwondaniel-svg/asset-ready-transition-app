@@ -208,57 +208,6 @@ export const useProjectORPPlans = (projectId: string) => {
             plan_end_date: planEndDate,
           };
 
-          // Fallback: use wizard_state for counts
-          const ws = plan.wizard_state as any;
-          const wsActivities = ws?.activities || [];
-          const selectedCount = wsActivities.filter((a: any) => a.selected).length;
-
-          // Extract dates from wizard_state activities
-          const wsDates = wsActivities
-            .filter((a: any) => a.selected && (a.startDate || a.endDate))
-            .flatMap((a: any) => [a.startDate, a.endDate].filter(Boolean));
-          const planStartDate = wsDates.length > 0 ? wsDates.sort()[0] : null;
-          const planEndDate = wsDates.length > 0 ? wsDates.sort().reverse()[0] : null;
-
-          // Convert wizard_state activities to upcoming list
-          const wsUpcoming: ProjectORPActivity[] = wsActivities
-            .filter((a: any) => a.selected)
-            .map((a: any) => ({
-              id: a.id,
-              name: a.activity || a.name || 'Unnamed',
-              status: 'NOT_STARTED',
-              start_date: a.startDate || null,
-              end_date: a.endDate || null,
-              completion_percentage: 0,
-              activity_code: a.activityCode || '',
-              parent_id: a.parentActivityId || null,
-            }))
-            .sort((a: ProjectORPActivity, b: ProjectORPActivity) => {
-              if (!a.start_date && !b.start_date) return 0;
-              if (!a.start_date) return 1;
-              if (!b.start_date) return -1;
-              return new Date(a.start_date).getTime() - new Date(b.start_date).getTime();
-            })
-            .slice(0, 10);
-
-          return {
-            id: plan.id,
-            project_id: plan.project_id,
-            phase: plan.phase,
-            status: plan.status,
-            created_at: plan.created_at,
-            updated_at: plan.updated_at,
-            overall_progress: 0,
-            deliverable_count: selectedCount,
-            completed_count: 0,
-            in_progress_count: 0,
-            not_started_count: selectedCount,
-            p2a_progress: 0,
-            vcr_count: 0,
-            upcoming_activities: wsUpcoming,
-            plan_start_date: planStartDate,
-            plan_end_date: planEndDate,
-          };
         })
       );
 
