@@ -784,39 +784,99 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
           )}
         </div>
 
-        {/* Navigation */}
-        <div className="flex items-center justify-between pt-4 border-t">
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              onClick={() => {
-                if (isReviewMode) {
-                  handleClose();
-                } else if (currentStep > 1) {
-                  handleBack();
-                } else {
-                  handleClose();
-                }
-              }}
-            >
-              {isReviewMode ? 'Close' : (currentStep === 1 ? 'Cancel' : 'Back')}
-            </Button>
-
-            {draftPlanId && !isReviewMode && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10"
-                onClick={() => setDeleteDialogOpen(true)}
-              >
-                <Trash2 className="w-4 h-4" />
-                Delete Draft
+        {/* Review mode: Comments + Approve/Reject/Save */}
+        {isReviewMode && (
+          <div className="pt-4 border-t space-y-4">
+            <div>
+              <label className="text-sm font-medium text-foreground mb-2 block">
+                Comments <span className="text-muted-foreground font-normal">(optional)</span>
+              </label>
+              <Textarea
+                placeholder="Add any comments or notes about your review..."
+                value={reviewComment}
+                onChange={(e) => setReviewComment(e.target.value)}
+                className="min-h-[80px] resize-none"
+              />
+            </div>
+            <Separator />
+            <div className="flex items-center justify-between">
+              <Button variant="outline" onClick={handleClose}>
+                Close
               </Button>
-            )}
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  onClick={handleReviewSave}
+                  disabled={isSaving || isApprovingOrRejecting}
+                  className="gap-1.5 text-muted-foreground"
+                >
+                  {isSaving ? (
+                    <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>
+                  ) : (
+                    <><Save className="w-4 h-4" /> Save Changes</>
+                  )}
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => handleReviewDecision('REJECTED')}
+                  disabled={isApprovingOrRejecting || isSaving}
+                  className="gap-2"
+                >
+                  {isApprovingOrRejecting ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <XCircle className="w-4 h-4" />
+                  )}
+                  Reject
+                </Button>
+                <Button
+                  onClick={() => handleReviewDecision('APPROVED')}
+                  disabled={isApprovingOrRejecting || isSaving}
+                  className="gap-2 bg-green-600 hover:bg-green-700 text-white"
+                >
+                  {isApprovingOrRejecting ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <CheckCircle className="w-4 h-4" />
+                  )}
+                  Approve
+                </Button>
+              </div>
+            </div>
           </div>
+        )}
 
-          <div className="flex items-center gap-2">
-            {!isReviewMode && (
+        {/* Navigation - create mode only */}
+        {!isReviewMode && (
+          <div className="flex items-center justify-between pt-4 border-t">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (currentStep > 1) {
+                    handleBack();
+                  } else {
+                    handleClose();
+                  }
+                }}
+              >
+                {currentStep === 1 ? 'Cancel' : 'Back'}
+              </Button>
+
+              {draftPlanId && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10"
+                  onClick={() => setDeleteDialogOpen(true)}
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Delete Draft
+                </Button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
                 onClick={handleSaveDraft}
@@ -829,31 +889,23 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
                   <><Save className="w-4 h-4" /> Save & Exit</>
                 )}
               </Button>
-            )}
 
-            {isReviewMode ? (
-              <Button onClick={handleCreate} disabled={isCreating} className="gap-2">
-                {isCreating ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>
-                ) : (
-                  'Save Changes'
-                )}
-              </Button>
-            ) : currentStep < 6 ? (
-              <Button onClick={handleNext} disabled={!validateStep(currentStep)}>
-                Next
-              </Button>
-            ) : (
-              <Button onClick={handleCreate} disabled={isCreating} className="gap-2">
-                {isCreating ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" /> Submitting...</>
-                ) : (
-                  'Submit for Approval'
-                )}
-              </Button>
-            )}
+              {currentStep < 6 ? (
+                <Button onClick={handleNext} disabled={!validateStep(currentStep)}>
+                  Next
+                </Button>
+              ) : (
+                <Button onClick={handleCreate} disabled={isCreating} className="gap-2">
+                  {isCreating ? (
+                    <><Loader2 className="w-4 h-4 animate-spin" /> Submitting...</>
+                  ) : (
+                    'Submit for Approval'
+                  )}
+                </Button>
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </DialogContent>
     </Dialog>
 
