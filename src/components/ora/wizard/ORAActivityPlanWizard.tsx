@@ -293,9 +293,11 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
         .select('project_id_prefix, project_id_number, project_title')
         .eq('id', projectId)
         .single();
-      const projectName = projectInfo
-        ? `${projectInfo.project_id_prefix || ''}${projectInfo.project_id_number || ''} - ${projectInfo.project_title || ''}`
-        : projectId;
+      const projectCode = projectInfo
+        ? `${projectInfo.project_id_prefix || ''}${projectInfo.project_id_number || ''}`.trim()
+        : '';
+      const projectTitle = projectInfo?.project_title || '';
+      const projectName = projectCode ? `${projectCode} - ${projectTitle}` : projectId;
 
       // Mark the Snr ORA Engr's creation task as completed
       const { error: taskCompleteError } = await supabase
@@ -360,7 +362,8 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
             source: 'ora_workflow',
             project_id: projectId,
             plan_id: planId,
-            project_name: projectName,
+            project_code: projectCode,
+            project_name: projectTitle,
             approver_role: approver.role_label,
             action: 'review_ora_plan',
           },

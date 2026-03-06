@@ -106,7 +106,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   const isVcrDeliveryPlanTask = (task.type === 'vcr_delivery_plan' || task.metadata?.action === 'create_vcr_delivery_plan');
   const oraPlanId = task.metadata?.plan_id as string | undefined;
 
-  const isReviewTask = ['review', 'approval', 'ora_plan_review'].includes(task.type) || !!pssrId;
+  const isReviewTask = (['review', 'approval', 'ora_plan_review'].includes(task.type) || !!pssrId) && !isOraReviewTask;
   const isActionTask = isOraTask || isOraActivityTask || isVcrDeliveryPlanTask;
 
   const oraCtaLabel = hasExistingOraDraft ? 'Continue Creating ORA Plan' : 'Create ORA Plan';
@@ -235,7 +235,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
             {/* ORA Plan Review CTA */}
             {isOraReviewTask && oraPlanId && (
               <Button
-                className="w-full gap-2 bg-muted hover:bg-muted/80 text-foreground font-medium border border-border"
+                className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
                 onClick={() => {
                   onOpenChange(false);
                   navigate(`/operation-readiness/${oraPlanId}`);
