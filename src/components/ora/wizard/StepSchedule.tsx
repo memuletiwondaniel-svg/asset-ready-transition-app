@@ -789,6 +789,17 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                       {weekMarkers.map((left, i) => (
                         <div key={i} className="absolute top-0 bottom-0 border-l border-border/15" style={{ left }} />
                       ))}
+                      {/* Today vertical line */}
+                      {(() => {
+                        const todayOffset = differenceInDays(startOfDay(new Date()), timelineStart);
+                        if (todayOffset < 0 || todayOffset > totalDays) return null;
+                        return (
+                          <div
+                            className="absolute top-0 bottom-0 w-px bg-destructive/60 z-10"
+                            style={{ left: todayOffset * dayWidth }}
+                          />
+                        );
+                      })()}
                       {barPos && isParent && (() => {
                         const prefix = getPhasePrefix(activity.activityCode);
                         const mutedColor = BAR_COLORS_MUTED[prefix] || 'bg-muted';
