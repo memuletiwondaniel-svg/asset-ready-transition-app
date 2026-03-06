@@ -763,7 +763,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
         {/* Step content */}
         <div className="flex-1 overflow-auto py-2">
           {isReviewMode ? (
-            <StepSchedule activities={activities} onActivitiesChange={setActivities} />
+            <StepSchedule activities={activities} onActivitiesChange={setActivities} isReviewMode />
           ) : (
             <>
               {currentStep === 1 && <StepPhaseSelection phase={phase} onPhaseChange={setPhase} />}
