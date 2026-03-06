@@ -226,17 +226,26 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
               </div>
             ) : (
               <div className="text-center py-10 text-muted-foreground">
-                <p className="text-sm font-medium mb-1">No P2A Plan</p>
-                <p className="text-xs opacity-70 mb-5">Set up your handover workflow with systems and VCRs</p>
-                {canCreateVCR && (
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="text-xs"
-                    onClick={() => setShowP2APlanWizard(true)}
-                  >
-                    Create P2A Plan
-                  </Button>
+                {oraApproved ? (
+                  <>
+                    <p className="text-sm font-medium mb-1">No P2A Plan</p>
+                    <p className="text-xs opacity-70 mb-5">Set up your handover workflow with systems and VCRs</p>
+                    {canCreateVCR && (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="text-xs"
+                        onClick={() => setShowP2APlanWizard(true)}
+                      >
+                        Create P2A Plan
+                      </Button>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm font-medium mb-1">No P2A Plan</p>
+                    <p className="text-xs opacity-70">ORA Plan must be approved before creating a P2A Plan</p>
+                  </>
                 )}
               </div>
             )}
