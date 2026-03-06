@@ -345,10 +345,21 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
   };
 
   const handleAddCustom = () => {
+    // Generate next sequential activity code based on existing activities
+    const existingCodes = selectedActivities.map(a => a.activityCode);
+    let maxNum = 0;
+    existingCodes.forEach(code => {
+      const match = code.match(/-(\d+)$/);
+      if (match) maxNum = Math.max(maxNum, parseInt(match[1]));
+    });
+    // Determine phase prefix from existing activities or default
+    const firstPrefix = existingCodes.length > 0 ? getPhasePrefix(existingCodes[0]) : 'GEN';
+    const nextCode = `${firstPrefix}-${String(maxNum + 1).padStart(2, '0')}`;
+
     const customActivity: WizardActivity = {
       id: `custom-${Date.now()}`,
-      activityCode: `CUSTOM-${Date.now()}`,
-      activity: 'New Custom Activity',
+      activityCode: nextCode,
+      activity: '',
       description: null,
       phaseId: null,
       parentActivityId: null,
@@ -362,7 +373,6 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
       predecessorIds: [],
     };
     onActivitiesChange([...activities, customActivity]);
-    // Open the sheet immediately so user can edit details
     setTimeout(() => openActivitySheet(customActivity.id), 50);
   };
 
@@ -855,7 +865,14 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                     {selectedActivity.activityCode}
                   </span>
                 </div>
-                <SheetTitle className="text-sm">{selectedActivity.activity}</SheetTitle>
+                <SheetTitle className="text-sm">
+                  <Input
+                    value={selectedActivity.activity}
+                    onChange={(e) => updateActivity(selectedActivity.id, { activity: e.target.value })}
+                    placeholder="Enter activity name..."
+                    className="text-sm font-semibold border-dashed h-8 px-2"
+                  />
+                </SheetTitle>
               </SheetHeader>
 
               <div className="space-y-5 pt-4">
