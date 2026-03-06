@@ -402,7 +402,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
     queryClient.invalidateQueries({ queryKey: ['orp-plan'] });
   }, [queryClient]);
 
-  const { draggingId, previewLeft, previewWidth, handleMouseDown } = useGanttBarResize({
+  const { draggingId, previewLeft, previewWidth, handleMouseDown, wasDragging } = useGanttBarResize({
     minDate,
     dayWidth,
     onResize: handleBarResize,
