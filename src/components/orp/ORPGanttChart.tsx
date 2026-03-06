@@ -202,6 +202,24 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const [showRelationships, setShowRelationships] = useState(false);
+  const [visibleColumns, setVisibleColumns] = useState<Set<ColumnKey>>(() => new Set(['index', 'id', 'start', 'status']));
+  const [hasInitialZoom, setHasInitialZoom] = useState(false);
+
+  const toggleColumn = (key: ColumnKey) => {
+    setVisibleColumns(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  };
+
+  const leftPanelWidth = useMemo(() => {
+    let w = COL_WIDTHS.name; // Activity column always visible
+    for (const key of visibleColumns) {
+      w += COL_WIDTHS[key];
+    }
+    return w;
+  }, [visibleColumns]);
 
   const searchQuery = externalSearchQuery ?? internalSearchQuery;
 
