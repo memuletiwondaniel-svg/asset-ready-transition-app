@@ -126,6 +126,11 @@ function getBarColor(code: string): string {
 function getActivityBadgeClasses(index: number) {
   return ACTIVITY_BADGE_PALETTE[index % ACTIVITY_BADGE_PALETTE.length];
 }
+// Phase-based fallback for contexts without row index
+function getIdBadgeClasses(code: string) {
+  const prefix = getPhasePrefix(code);
+  return PHASE_COLORS[prefix] || { bg: 'bg-muted', text: 'text-foreground' };
+}
 
 // Hierarchy helpers
 function buildChildrenMap(activities: WizardActivity[]): Map<string | null, WizardActivity[]> {
