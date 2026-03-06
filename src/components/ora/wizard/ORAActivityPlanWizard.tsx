@@ -338,6 +338,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
       case 1: return !!phase;
       case 2: return !!projectType;
       case 3: return activities.some(a => a.selected);
+      case 5: return approvers.length > 0;
       default: return true;
     }
   };
