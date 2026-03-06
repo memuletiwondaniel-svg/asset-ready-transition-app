@@ -22,6 +22,10 @@ interface ORAActivityPlanWizardProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   projectId: string;
+  /** When provided, loads this specific plan (regardless of status) instead of searching for drafts */
+  planId?: string;
+  /** 'review' mode opens on Step 4, adjusts labels, hides delete draft */
+  mode?: 'create' | 'review';
   onSuccess?: () => void;
 }
 
