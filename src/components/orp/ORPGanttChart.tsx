@@ -482,7 +482,11 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                   ))}
                 </div>
               </PopoverContent>
-            </Popover>
+                  </Popover>
+                </TooltipTrigger>
+                <TooltipContent side="bottom"><p>Columns</p></TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
 
             {/* Zoom presets */}
             <div className="flex items-center gap-1">
