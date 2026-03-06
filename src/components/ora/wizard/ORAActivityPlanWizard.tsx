@@ -114,10 +114,122 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
     setDraftPlanId(null);
   };
 
-  // Check for existing draft on open
+  // Check for existing draft on open (or load specific plan in review mode)
   useEffect(() => {
     if (!open) return;
-    const loadDraft = async () => {
+
+    const loadPlan = async () => {
+      // If an explicit planId is provided (review mode), load that plan and reconstruct state
+      if (externalPlanId) {
+        // Load plan + deliverables + approvals
+        const [planRes, deliverablesRes, approvalsRes] = await Promise.all([
+          (supabase as any).from('orp_plans').select('id, phase, wizard_state, status').eq('id', externalPlanId).single(),
+          (supabase as any).from('orp_plan_deliverables')
+            .select('id, deliverable_id, start_date, end_date, estimated_manhours, status')
+            .eq('orp_plan_id', externalPlanId),
+          supabase.from('orp_approvals')
+            .select('approver_user_id, approver_role, status')
+            .eq('orp_plan_id', externalPlanId),
+        ]);
+
+        const plan = planRes.data;
+        if (!plan) return;
+
+        setDraftPlanId(plan.id);
+
+        // If wizard_state exists (e.g. draft), use it directly
+        if (plan.wizard_state) {
+          const ws = plan.wizard_state as any;
+          setPhase(ws.phase || '');
+          setProjectType(ws.projectType || '');
+          setActivities(ws.activities || []);
+          setApprovers(ws.approvers || []);
+          if (isReviewMode) {
+            setCurrentStep(4);
+            setVisitedSteps(new Set([1, 2, 3, 4, 5, 6]));
+          } else {
+            setCurrentStep(ws.currentStep || 1);
+            setVisitedSteps(new Set(ws.visitedSteps || [1]));
+          }
+          return;
+        }
+
+        // Reconstruct state from DB records (wizard_state was cleared on submission)
+        // Reverse-map orp_phase to wizard phase
+        const ORP_TO_PHASE: Record<string, string> = {
+          'ASSESS_SELECT': 'ASSESS',
+          'DEFINE': 'DEFINE',
+          'EXECUTE': 'EXECUTE',
+        };
+        setPhase(ORP_TO_PHASE[plan.phase] || 'ASSESS');
+
+        // Reconstruct activities from deliverables + catalog
+        const deliverables = deliverablesRes.data || [];
+        if (deliverables.length > 0) {
+          const catalogIds = deliverables.map((d: any) => d.deliverable_id);
+          // Fetch matching catalog entries
+          const { data: catalogEntries } = await (supabase as any)
+            .from('ora_activity_catalog')
+            .select('*')
+            .in('id', catalogIds);
+
+          if (catalogEntries) {
+            const reconstructed: WizardActivity[] = catalogEntries.map((cat: any) => {
+              const del = deliverables.find((d: any) => d.deliverable_id === cat.id);
+              return {
+                id: cat.id,
+                activityCode: cat.activity_code,
+                activity: cat.activity,
+                description: cat.description,
+                phaseId: cat.phase_id,
+                parentActivityId: cat.parent_activity_id,
+                durationHigh: cat.duration_high,
+                durationMed: cat.duration_med,
+                durationLow: cat.duration_low,
+                selected: true,
+                durationDays: del?.estimated_manhours ? Math.round(del.estimated_manhours / 8) : cat.duration_med,
+                startDate: del?.start_date || '',
+                endDate: del?.end_date || '',
+                predecessorIds: [],
+              };
+            });
+            setActivities(reconstructed);
+          }
+        }
+
+        // Reconstruct approvers
+        const approvalRows = approvalsRes.data || [];
+        if (approvalRows.length > 0) {
+          const userIds = approvalRows.map((a: any) => a.approver_user_id).filter(Boolean);
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('user_id, full_name, position, avatar_url')
+            .in('user_id', userIds);
+
+          const reconstructedApprovers: WizardApprover[] = approvalRows
+            .filter((a: any) => a.approver_user_id)
+            .map((a: any) => {
+              const profile = profiles?.find((p: any) => p.user_id === a.approver_user_id);
+              return {
+                user_id: a.approver_user_id,
+                full_name: profile?.full_name || 'Unknown',
+                position: profile?.position || null,
+                avatar_url: profile?.avatar_url || null,
+                role_label: a.approver_role,
+              };
+            });
+          setApprovers(reconstructedApprovers);
+        }
+
+        // In review mode, start on Schedule step with all steps visited
+        if (isReviewMode) {
+          setCurrentStep(4);
+          setVisitedSteps(new Set([1, 2, 3, 4, 5, 6]));
+        }
+        return;
+      }
+
+      // Default: search for existing draft by project
       const { data: drafts } = await (supabase as any)
         .from('orp_plans')
         .select('id, wizard_state')
@@ -141,8 +253,8 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
         }
       }
     };
-    loadDraft();
-  }, [open, projectId]);
+    loadPlan();
+  }, [open, projectId, externalPlanId, isReviewMode]);
 
   // Silent auto-save of wizard state (no toast, no close)
   const autoSaveWizardState = useCallback(async () => {
