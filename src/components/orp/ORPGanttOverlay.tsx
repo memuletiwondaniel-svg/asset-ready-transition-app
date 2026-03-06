@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -10,12 +10,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { ExternalLink, Loader2, CalendarCheck, CheckCircle2, Clock, FileEdit, Send, X } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Loader2, CalendarCheck, CheckCircle2, Clock, FileEdit, Send, AlertTriangle, TrendingUp, TrendingDown } from 'lucide-react';
 import { ORPGanttChart } from '@/components/orp/ORPGanttChart';
 import { ORPApprovalsTab } from '@/components/orp/ORPApprovalsTab';
 import { useORPPlanDetails } from '@/hooks/useORPPlans';
 import { cn } from '@/lib/utils';
+import { parseISO, differenceInDays, isPast } from 'date-fns';
 
 interface ORPGanttOverlayProps {
   open: boolean;
@@ -54,17 +54,44 @@ export const ORPGanttOverlay: React.FC<ORPGanttOverlayProps> = ({
   p2aProgress = 0,
   vcrCount = 0,
 }) => {
-  const navigate = useNavigate();
   const [approvalsOpen, setApprovalsOpen] = useState(false);
   const { data: planDetails, isLoading } = useORPPlanDetails(open ? planId : '');
 
-  const handleViewFullPlan = () => {
-    onOpenChange(false);
-    navigate(`/operation-readiness/${planId}`);
-  };
-
   const statusConfig = planStatus ? STATUS_CONFIG[planStatus] : null;
   const StatusIcon = statusConfig?.icon || Clock;
+
+  // Compute schedule metrics from deliverables
+  const scheduleMetrics = useMemo(() => {
+    if (!planDetails?.deliverables) return null;
+    const today = new Date();
+    const leafActivities = planDetails.deliverables.filter((d: any) => d.start_date && d.end_date);
+    if (leafActivities.length === 0) return null;
+
+    let onTrack = 0;
+    let atRisk = 0;
+    let totalSlippage = 0;
+    let overdueCount = 0;
+
+    leafActivities.forEach((d: any) => {
+      const endDate = parseISO(d.end_date);
+      const isCompleted = d.status === 'COMPLETED';
+      const isOverdue = isPast(endDate) && !isCompleted;
+
+      if (isOverdue) {
+        atRisk++;
+        const slippage = differenceInDays(today, endDate);
+        totalSlippage += slippage;
+        overdueCount++;
+      } else {
+        onTrack++;
+      }
+    });
+
+    const spi = leafActivities.length > 0 ? Math.round((onTrack / leafActivities.length) * 100) : 0;
+    const avgSlippage = overdueCount > 0 ? Math.round(totalSlippage / overdueCount) : 0;
+
+    return { spi, atRisk, avgSlippage, total: leafActivities.length };
+  }, [planDetails?.deliverables]);
 
   return (
     <>
@@ -89,7 +116,6 @@ export const ORPGanttOverlay: React.FC<ORPGanttOverlayProps> = ({
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                {/* Clickable status badge → opens approvals side panel */}
                 {statusConfig && (
                   <button
                     onClick={() => setApprovalsOpen(true)}
@@ -107,10 +133,6 @@ export const ORPGanttOverlay: React.FC<ORPGanttOverlayProps> = ({
                     </Badge>
                   </button>
                 )}
-                <Button onClick={handleViewFullPlan} size="sm" variant="outline">
-                  <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
-                  View Full Plan
-                </Button>
               </div>
             </div>
 
@@ -130,6 +152,60 @@ export const ORPGanttOverlay: React.FC<ORPGanttOverlayProps> = ({
                  overallProgress > 0 ? ' Early stages — prioritize critical path activities.' :
                  ' Plan activities have not yet started.'}
               </p>
+
+              {/* Schedule Performance Metrics */}
+              {scheduleMetrics && (
+                <div className="grid grid-cols-3 gap-3 mt-3 pt-3 border-t border-border/40">
+                  <div className="flex items-center gap-2 p-2 rounded-md bg-background/60">
+                    <div className={cn(
+                      "w-7 h-7 rounded-md flex items-center justify-center",
+                      scheduleMetrics.spi >= 80 ? "bg-green-500/10" : scheduleMetrics.spi >= 50 ? "bg-amber-500/10" : "bg-destructive/10"
+                    )}>
+                      {scheduleMetrics.spi >= 50
+                        ? <TrendingUp className={cn("h-3.5 w-3.5", scheduleMetrics.spi >= 80 ? "text-green-600" : "text-amber-600")} />
+                        : <TrendingDown className="h-3.5 w-3.5 text-destructive" />
+                      }
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">SPI</p>
+                      <p className={cn(
+                        "text-sm font-bold",
+                        scheduleMetrics.spi >= 80 ? "text-green-600" : scheduleMetrics.spi >= 50 ? "text-amber-600" : "text-destructive"
+                      )}>{scheduleMetrics.spi}%</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 p-2 rounded-md bg-background/60">
+                    <div className={cn(
+                      "w-7 h-7 rounded-md flex items-center justify-center",
+                      scheduleMetrics.atRisk === 0 ? "bg-green-500/10" : "bg-destructive/10"
+                    )}>
+                      <AlertTriangle className={cn("h-3.5 w-3.5", scheduleMetrics.atRisk === 0 ? "text-green-600" : "text-destructive")} />
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">At Risk</p>
+                      <p className={cn(
+                        "text-sm font-bold",
+                        scheduleMetrics.atRisk === 0 ? "text-green-600" : "text-destructive"
+                      )}>{scheduleMetrics.atRisk}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 p-2 rounded-md bg-background/60">
+                    <div className={cn(
+                      "w-7 h-7 rounded-md flex items-center justify-center",
+                      scheduleMetrics.avgSlippage === 0 ? "bg-green-500/10" : "bg-amber-500/10"
+                    )}>
+                      <Clock className={cn("h-3.5 w-3.5", scheduleMetrics.avgSlippage === 0 ? "text-green-600" : "text-amber-600")} />
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Avg Slippage</p>
+                      <p className={cn(
+                        "text-sm font-bold",
+                        scheduleMetrics.avgSlippage === 0 ? "text-green-600" : "text-amber-600"
+                      )}>{scheduleMetrics.avgSlippage}d</p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </DialogHeader>
 

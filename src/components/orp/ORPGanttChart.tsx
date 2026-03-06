@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Plus, Search, ZoomIn, ZoomOut, ChevronRight, ChevronDown, ChevronsUpDown, GitBranch, Columns3 } from 'lucide-react';
+import { Plus, Search, ZoomIn, ZoomOut, ChevronRight, ChevronDown, ChevronsUpDown, GitBranch, Columns3, Route } from 'lucide-react';
 import { CreateORPModal } from './CreateORPModal';
 
 import { ORAActivityTaskSheet } from '@/components/tasks/ORAActivityTaskSheet';
@@ -99,23 +99,19 @@ const ZOOM_PRESETS = [
 
 function getPhasePrefix(code: string): string {
   if (!code) return '';
-  // VCR activity codes start with "VCR-"
   if (code.startsWith('VCR-')) return 'VCR';
   return code.split('-')[0];
 }
 
-// Build hierarchy from activity_code dot notation
-// IDN-01 is parent of IDN-01.01, which is parent of IDN-01.01.01
 function getParentCode(code: string): string | null {
   if (!code) return null;
   const lastDotIdx = code.lastIndexOf('.');
-  if (lastDotIdx === -1) return null; // top-level
+  if (lastDotIdx === -1) return null;
   return code.substring(0, lastDotIdx);
 }
 
 function getCodeDepth(code: string): number {
   if (!code) return 0;
-  // Count dots: IDN-01 = 0, IDN-01.01 = 1, IDN-01.01.01 = 2
   return (code.match(/\./g) || []).length;
 }
 
@@ -140,7 +136,6 @@ function buildHierarchyFromCodes(deliverables: any[]): {
   deliverables.forEach(d => {
     const code = d.deliverable?.activity_code || '';
     const parentCode = getParentCode(code);
-    // If parent exists in our list, nest under it; otherwise it's a root
     const parentKey = parentCode && codeToDeliverable.has(parentCode) ? parentCode : null;
     if (!childrenMap.has(parentKey)) childrenMap.set(parentKey, []);
     childrenMap.get(parentKey)!.push(d);
@@ -194,6 +189,85 @@ function getParentDateRange(
   return { minStart, maxEnd };
 }
 
+// Critical path computation
+function computeCriticalPath(rows: FlatRow[], getBarPos: (s: string, e: string) => { left: number; width: number }): Set<string> {
+  // Build leaf activities with dates and predecessor info
+  const leaves = rows.filter(r => !r.hasChildren && r.deliverable.start_date && r.deliverable.end_date);
+  if (leaves.length === 0) return new Set();
+
+  // Build code/id lookup
+  const codeToIdx = new Map<string, number>();
+  leaves.forEach((r, i) => {
+    const code = r.deliverable.deliverable?.activity_code;
+    const id = r.deliverable.deliverable?.id || r.deliverable.id;
+    if (code) codeToIdx.set(code, i);
+    if (id) codeToIdx.set(id, i);
+    // Also strip prefixes
+    if (id && typeof id === 'string') {
+      const stripped = id.replace(/^(ora-|ws-)/, '');
+      codeToIdx.set(stripped, i);
+    }
+  });
+
+  const n = leaves.length;
+  const durations: number[] = leaves.map(r => differenceInDays(parseISO(r.deliverable.end_date), parseISO(r.deliverable.start_date)));
+  const successors: number[][] = Array.from({ length: n }, () => []);
+  const predecessors: number[][] = Array.from({ length: n }, () => []);
+
+  leaves.forEach((r, i) => {
+    const predIds: string[] = r.deliverable._predecessorIds || [];
+    predIds.forEach(predCode => {
+      const predIdx = codeToIdx.get(predCode);
+      if (predIdx !== undefined && predIdx !== i) {
+        predecessors[i].push(predIdx);
+        successors[predIdx].push(i);
+      }
+    });
+  });
+
+  // Forward pass: earliest start/finish
+  const es = new Array(n).fill(0);
+  const ef = new Array(n).fill(0);
+  // Topological order (BFS using in-degree)
+  const inDeg = predecessors.map(p => p.length);
+  const queue: number[] = [];
+  for (let i = 0; i < n; i++) if (inDeg[i] === 0) queue.push(i);
+  const order: number[] = [];
+  while (queue.length > 0) {
+    const u = queue.shift()!;
+    order.push(u);
+    for (const v of successors[u]) {
+      es[v] = Math.max(es[v], es[u] + durations[u]);
+      inDeg[v]--;
+      if (inDeg[v] === 0) queue.push(v);
+    }
+  }
+  for (let i = 0; i < n; i++) ef[i] = es[i] + durations[i];
+
+  // Project end
+  const projectEnd = Math.max(...ef);
+
+  // Backward pass: latest start/finish
+  const lf = new Array(n).fill(projectEnd);
+  const ls = new Array(n).fill(0);
+  for (let i = order.length - 1; i >= 0; i--) {
+    const u = order[i];
+    for (const v of successors[u]) {
+      lf[u] = Math.min(lf[u], ls[v]);
+    }
+    ls[u] = lf[u] - durations[u];
+  }
+
+  // Critical = zero float
+  const criticalSet = new Set<string>();
+  for (let i = 0; i < n; i++) {
+    if (Math.abs(es[i] - ls[i]) < 1) {
+      criticalSet.add(leaves[i].deliverable.id);
+    }
+  }
+  return criticalSet;
+}
+
 export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverables, searchQuery: externalSearchQuery, hideToolbar }) => {
   const [internalSearchQuery, setInternalSearchQuery] = useState('');
   const [showAddItem, setShowAddItem] = useState(false);
@@ -203,6 +277,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const [showRelationships, setShowRelationships] = useState(false);
+  const [showCriticalPath, setShowCriticalPath] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState<Set<ColumnKey>>(() => new Set(['index', 'id', 'start', 'status']));
   const [hasInitialZoom, setHasInitialZoom] = useState(false);
 
@@ -215,7 +290,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
   };
 
   const leftPanelWidth = useMemo(() => {
-    let w = COL_WIDTHS.name; // Activity column always visible
+    let w = COL_WIDTHS.name;
     for (const key of visibleColumns) {
       w += COL_WIDTHS[key];
     }
@@ -235,7 +310,6 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
 
   const { childrenMap } = useMemo(() => buildHierarchyFromCodes(filteredDeliverables), [filteredDeliverables]);
 
-  // Default expand: top-level parents expanded so activities are visible
   const [expandedCodes, setExpandedCodes] = useState<Set<string>>(() => new Set<string>());
 
   const visibleRows = useMemo(
@@ -252,26 +326,10 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
   };
 
   const expandAll = () => {
-    const allParents = new Set<string>();
-    for (const [key] of childrenMap) {
-      if (key !== null) {
-        // check if this key is itself a parent
-        const parentCode = getParentCode(key);
-        if (parentCode !== null) allParents.add(parentCode);
-      }
-    }
-    // Add all codes that have children
-    for (const [key, children] of childrenMap) {
-      if (key !== null && children.length > 0) {
-        // key is activity code of parent - but we need to add codes that ARE parents
-      }
-    }
-    // Simpler: just add all keys that are non-null
     const codes = new Set<string>();
     for (const [key] of childrenMap) {
       if (key !== null) codes.add(key);
     }
-    // Also add all activity codes that have children
     filteredDeliverables.forEach(d => {
       const code = d.deliverable?.activity_code;
       if (code && (childrenMap.get(code) || []).length > 0) codes.add(code);
@@ -327,6 +385,12 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
     return { left, width };
   }, [minDate, dayWidth]);
 
+  // Critical path IDs
+  const criticalPathIds = useMemo(() => {
+    if (!showCriticalPath) return new Set<string>();
+    return computeCriticalPath(visibleRows, getBarPosition);
+  }, [showCriticalPath, visibleRows, getBarPosition]);
+
   const handleBarResize = useCallback(async (activityId: string, newStart: Date, newEnd: Date) => {
     const startStr = format(newStart, 'yyyy-MM-dd');
     const endStr = format(newEnd, 'yyyy-MM-dd');
@@ -364,10 +428,8 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
     setZoomLevel(closest);
   };
 
-  // Default to 6M view on mount
   useEffect(() => {
     if (!hasInitialZoom && scrollContainerRef.current && dates.length > 0) {
-      // Use a small delay to ensure the container has rendered
       const timer = setTimeout(() => {
         setZoomToFitDays(180);
         setHasInitialZoom(true);
@@ -385,12 +447,33 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
     return parentCodes.length > 0 && parentCodes.every(c => expandedCodes.has(c));
   }, [expandedCodes, filteredDeliverables, childrenMap]);
 
-  // Today line position
   const todayPosition = useMemo(() => {
     const today = new Date();
     const offset = differenceInDays(today, minDate) * dayWidth;
     return offset;
   }, [minDate, dayWidth]);
+
+  const openActivitySheet = useCallback((deliverable: any) => {
+    setSelectedOraActivity({
+      id: deliverable.id,
+      title: deliverable.deliverable?.name || '',
+      description: deliverable.deliverable?.description || '',
+      type: 'ora_activity',
+      status: deliverable.status === 'COMPLETED' ? 'completed' : deliverable.status === 'IN_PROGRESS' ? 'in_progress' : 'pending',
+      metadata: {
+        activity_name: deliverable.deliverable?.name,
+        activity_code: deliverable.deliverable?.activity_code,
+        description: deliverable.deliverable?.description || '',
+        plan_id: planId,
+        deliverable_id: deliverable.deliverable?.id || deliverable.id,
+        ora_plan_activity_id: deliverable.id,
+        start_date: deliverable.start_date,
+        end_date: deliverable.end_date,
+      },
+      priority: 'medium',
+      created_at: deliverable.created_at || new Date().toISOString(),
+    });
+  }, [planId]);
 
   // Early return - no data
   if (!dates.length) {
@@ -457,6 +540,21 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="bottom"><p>Relations</p></TooltipContent>
+              </Tooltip>
+
+              {/* Critical Path toggle */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant={showCriticalPath ? 'default' : 'outline'}
+                    size="icon"
+                    className={cn("h-7 w-7", showCriticalPath && "bg-destructive text-destructive-foreground hover:bg-destructive/90")}
+                    onClick={() => setShowCriticalPath(!showCriticalPath)}
+                  >
+                    <Route className="w-3.5 h-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom"><p>Critical Path</p></TooltipContent>
               </Tooltip>
 
               {/* Column visibility toggle */}
@@ -526,40 +624,40 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
       </CardHeader>
       <CardContent>
         <div className="border rounded-lg overflow-hidden bg-background">
-          {/* Header row */}
-          <div className="flex">
-            <div className="shrink-0 border-r bg-muted/30" style={{ width: leftPanelWidth }}>
-              <div className="flex items-center h-9 border-b text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
-                {visibleColumns.has('index') && <div className="px-1 text-center" style={{ width: COL_WIDTHS.index }}>#</div>}
-                {visibleColumns.has('id') && <div className="px-1 border-r border-border/40" style={{ width: COL_WIDTHS.id }}>ID</div>}
-                <div className="px-1.5 border-r border-border/40" style={{ width: COL_WIDTHS.name }}>Activity</div>
-                {visibleColumns.has('start') && <div className="px-1 text-center" style={{ width: COL_WIDTHS.start }}>Start</div>}
-                {visibleColumns.has('end') && <div className="px-1 text-center" style={{ width: COL_WIDTHS.end }}>End</div>}
-                {visibleColumns.has('duration') && <div className="px-1 text-center" style={{ width: COL_WIDTHS.duration }}>Days</div>}
-                {visibleColumns.has('status') && <div className="px-1 text-center" style={{ width: COL_WIDTHS.status }}>Status</div>}
+          {/* Scrollable area with sticky header */}
+          <div className="max-h-[60vh] overflow-y-auto" ref={scrollContainerRef}>
+            {/* Sticky header row */}
+            <div className="flex sticky top-0 z-20 bg-background">
+              <div className="shrink-0 border-r bg-muted/30" style={{ width: leftPanelWidth }}>
+                <div className="flex items-center h-9 border-b text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
+                  {visibleColumns.has('index') && <div className="px-1 text-center" style={{ width: COL_WIDTHS.index }}>#</div>}
+                  {visibleColumns.has('id') && <div className="px-1 border-r border-border/40" style={{ width: COL_WIDTHS.id }}>ID</div>}
+                  <div className="px-1.5 border-r border-border/40" style={{ width: COL_WIDTHS.name }}>Activity</div>
+                  {visibleColumns.has('start') && <div className="px-1 text-center" style={{ width: COL_WIDTHS.start }}>Start</div>}
+                  {visibleColumns.has('end') && <div className="px-1 text-center" style={{ width: COL_WIDTHS.end }}>End</div>}
+                  {visibleColumns.has('duration') && <div className="px-1 text-center" style={{ width: COL_WIDTHS.duration }}>Days</div>}
+                  {visibleColumns.has('status') && <div className="px-1 text-center" style={{ width: COL_WIDTHS.status }}>Status</div>}
+                </div>
               </div>
-            </div>
-            <div className="flex-1 overflow-hidden">
-              <div style={{ width: timelineWidth, minWidth: '100%' }}>
-                <div className="h-9 relative border-b bg-muted/20">
-                  {monthMarkers.map((m, i) => (
-                    <div key={i} className="absolute top-0 h-full flex items-center px-2 border-l border-border/40" style={{ left: m.left }}>
-                      <span className="text-[10px] font-medium text-muted-foreground whitespace-nowrap">{m.label}</span>
-                    </div>
-                  ))}
-                  {/* Today indicator in header */}
-                  {todayPosition > 0 && todayPosition < timelineWidth && (
-                    <div className="absolute top-0 h-full flex flex-col items-center justify-end pb-0.5" style={{ left: todayPosition }}>
-                      <span className="text-[8px] font-bold text-primary whitespace-nowrap bg-primary/10 px-1 rounded">{format(new Date(), 'dd MMM')}</span>
-                    </div>
-                  )}
+              <div className="flex-1 overflow-hidden">
+                <div style={{ width: timelineWidth, minWidth: '100%' }}>
+                  <div className="h-9 relative border-b bg-muted/20">
+                    {monthMarkers.map((m, i) => (
+                      <div key={i} className="absolute top-0 h-full flex items-center px-2 border-l border-border/40" style={{ left: m.left }}>
+                        <span className="text-[10px] font-medium text-muted-foreground whitespace-nowrap">{m.label}</span>
+                      </div>
+                    ))}
+                    {todayPosition > 0 && todayPosition < timelineWidth && (
+                      <div className="absolute top-0 h-full flex flex-col items-center justify-end pb-0.5" style={{ left: todayPosition }}>
+                        <span className="text-[8px] font-bold text-primary whitespace-nowrap bg-primary/10 px-1 rounded">{format(new Date(), 'dd MMM')}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Activity rows */}
-          <div className="max-h-[60vh] overflow-y-auto" ref={scrollContainerRef}>
+            {/* Activity rows */}
             <div className="flex">
               {/* Left panel rows */}
               <div className="shrink-0 border-r" style={{ width: leftPanelWidth }}>
@@ -570,6 +668,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                   const isParent = hasChildren;
                   const hasDates = deliverable.start_date && deliverable.end_date;
                   const durationDays = hasDates ? differenceInDays(parseISO(deliverable.end_date), parseISO(deliverable.start_date)) : null;
+                  const isCritical = showCriticalPath && criticalPathIds.has(deliverable.id);
 
                   return (
                     <div
@@ -577,30 +676,11 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                       className={cn(
                         "flex items-center border-b last:border-b-0 cursor-pointer hover:bg-muted/30 transition-colors",
                         index % 2 === 0 ? 'bg-background' : 'bg-muted/10',
-                        isParent && 'font-medium'
+                        isParent && 'font-medium',
+                        isCritical && 'bg-destructive/5'
                       )}
                       style={{ height: ROW_HEIGHT }}
-                      onClick={() => {
-                        setSelectedOraActivity({
-                          id: deliverable.id,
-                          title: deliverable.deliverable?.name || '',
-                          description: deliverable.deliverable?.description || '',
-                          type: 'ora_activity',
-                          status: deliverable.status === 'COMPLETED' ? 'completed' : deliverable.status === 'IN_PROGRESS' ? 'in_progress' : 'pending',
-                          metadata: {
-                            activity_name: deliverable.deliverable?.name,
-                            activity_code: deliverable.deliverable?.activity_code,
-                            description: deliverable.deliverable?.description || '',
-                            plan_id: planId,
-                            deliverable_id: deliverable.deliverable?.id || deliverable.id,
-                            ora_plan_activity_id: deliverable.id,
-                            start_date: deliverable.start_date,
-                            end_date: deliverable.end_date,
-                          },
-                          priority: 'medium',
-                          created_at: deliverable.created_at || new Date().toISOString(),
-                        });
-                      }}
+                      onClick={() => openActivitySheet(deliverable)}
                     >
                       {visibleColumns.has('index') && (
                         <div className="px-1 text-center text-[10px] text-muted-foreground" style={{ width: COL_WIDTHS.index }}>
@@ -635,7 +715,8 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                           )}
                           <span className={cn(
                             "text-[11px] leading-snug",
-                            isParent ? "font-semibold text-foreground" : "text-foreground/90"
+                            isParent ? "font-semibold text-foreground" : "text-foreground/90",
+                            isCritical && "text-destructive font-semibold"
                           )} title={deliverable.deliverable?.name}>
                             {deliverable.deliverable?.name}
                           </span>
@@ -674,15 +755,15 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
 
               {/* Timeline rows */}
               <div className="flex-1 overflow-x-auto">
-                <div style={{ width: timelineWidth, minWidth: '100%' }}>
+                <div style={{ width: timelineWidth, minWidth: '100%' }} className="relative">
                   {visibleRows.map((row, index) => {
                     const { deliverable, hasChildren, activityCode } = row;
                     const prefix = getPhasePrefix(activityCode);
                     const barColor = BAR_COLORS[prefix] || 'bg-primary';
                     const isParent = hasChildren;
                     const hasDates = deliverable.start_date && deliverable.end_date;
+                    const isCritical = showCriticalPath && criticalPathIds.has(deliverable.id);
 
-                    // Parent summary bar from children date range
                     let barPos: { left: number; width: number } | null = null;
                     if (isParent) {
                       const range = getParentDateRange(activityCode, childrenMap);
@@ -702,14 +783,14 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                         key={deliverable.id}
                         className={cn(
                           "relative border-b last:border-b-0",
-                          index % 2 === 0 ? 'bg-background' : 'bg-muted/10'
+                          index % 2 === 0 ? 'bg-background' : 'bg-muted/10',
+                          isCritical && 'bg-destructive/5'
                         )}
                         style={{ height: ROW_HEIGHT }}
                       >
                         {weekMarkers.map((left, i) => (
                           <div key={i} className="absolute top-0 bottom-0 border-l border-border/15" style={{ left }} />
                         ))}
-                        {/* Today line */}
                         {todayPosition > 0 && todayPosition < timelineWidth && (
                           <div className="absolute top-0 bottom-0 border-l-2 border-dashed border-primary/60 z-10" style={{ left: todayPosition }} />
                         )}
@@ -750,50 +831,27 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                               className={cn(
                                 "absolute top-2 rounded shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-all group",
                                 mutedColor,
-                                isDragging && "ring-2 ring-primary/50 shadow-lg"
+                                isDragging && "ring-2 ring-primary/50 shadow-lg",
+                                isCritical && "ring-2 ring-destructive/70"
                               )}
                               style={{ left: barL, width: barW, height: ROW_HEIGHT - 16 }}
                               onClick={() => {
-                                if (!isDragging) {
-                                  setSelectedOraActivity({
-                                    id: deliverable.id,
-                                    title: deliverable.deliverable?.name || '',
-                                    description: deliverable.deliverable?.description || '',
-                                    type: 'ora_activity',
-                                    status: deliverable.status === 'COMPLETED' ? 'completed' : deliverable.status === 'IN_PROGRESS' ? 'in_progress' : 'pending',
-                                    metadata: {
-                                      activity_name: deliverable.deliverable?.name,
-                                      activity_code: deliverable.deliverable?.activity_code,
-                                      description: deliverable.deliverable?.description || '',
-                                      plan_id: planId,
-                                      deliverable_id: deliverable.deliverable?.id || deliverable.id,
-                                      ora_plan_activity_id: deliverable.id,
-                                      start_date: deliverable.start_date,
-                                      end_date: deliverable.end_date,
-                                    },
-                                    priority: 'medium',
-                                    created_at: deliverable.created_at || new Date().toISOString(),
-                                  });
-                                }
+                                if (!isDragging) openActivitySheet(deliverable);
                               }}
                             >
-                              {/* Progress fill */}
                               <div
                                 className={cn("absolute h-full rounded-l", barColor)}
                                 style={{ width: `${completion}%` }}
                               />
-                              {/* Label */}
                               <div className="absolute inset-0 flex items-center justify-center z-10">
                                 <span className="text-[9px] text-white font-medium drop-shadow-sm">
                                   {completion}%
                                 </span>
                               </div>
-                              {/* Left resize handle */}
                               <div
                                 className="absolute left-0 top-0 bottom-0 w-[6px] cursor-col-resize z-20 hover:bg-white/30"
                                 onMouseDown={(e) => handleMouseDown(e, 'left', deliverable.id, barPos.left, barPos.width, parseISO(deliverable.start_date), parseISO(deliverable.end_date))}
                               />
-                              {/* Right resize handle */}
                               <div
                                 className="absolute right-0 top-0 bottom-0 w-[6px] cursor-col-resize z-20 hover:bg-white/30"
                                 onMouseDown={(e) => handleMouseDown(e, 'right', deliverable.id, barPos.left, barPos.width, parseISO(deliverable.start_date), parseISO(deliverable.end_date))}
@@ -819,7 +877,6 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                         const predecessorIds = row.deliverable._predecessorIds || [];
                         if (!predecessorIds.length) return null;
 
-                        // Find this row's bar position
                         const hasDates = row.deliverable.start_date && row.deliverable.end_date;
                         if (!hasDates) return null;
                         const toPos = getBarPosition(row.deliverable.start_date, row.deliverable.end_date);
@@ -827,11 +884,13 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                         const toX = toPos.left;
 
                         return predecessorIds.map((predCode: string) => {
-                          // Find predecessor row
+                          // Find predecessor row by matching activity_code, id, or stripped id
                           const predIdx = visibleRows.findIndex(r => {
                             const code = r.deliverable.deliverable?.activity_code;
                             const id = r.deliverable.deliverable?.id || r.deliverable.id;
-                            return code === predCode || id === predCode;
+                            const strippedId = typeof id === 'string' ? id.replace(/^(ora-|ws-)/, '') : '';
+                            return code === predCode || id === predCode || strippedId === predCode ||
+                                   predCode === `ora-${strippedId}` || predCode === `ws-${strippedId}`;
                           });
                           if (predIdx === -1) return null;
                           const predRow = visibleRows[predIdx];
@@ -841,7 +900,6 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                           const fromX = fromPos.left + fromPos.width;
                           const fromY = predIdx * ROW_HEIGHT + ROW_HEIGHT / 2;
 
-                          // L-shaped path: right from predecessor end, then down/up to successor start
                           const midX = fromX + 10;
                           const path = `M${fromX},${fromY} L${midX},${fromY} L${midX},${toY} L${toX},${toY}`;
 
