@@ -22,9 +22,83 @@ export interface ProjectORPPlan {
   overall_progress: number;
   deliverable_count: number;
   completed_count: number;
+  in_progress_count: number;
+  not_started_count: number;
+  p2a_progress: number;
+  vcr_count: number;
   upcoming_activities: ProjectORPActivity[];
   plan_start_date: string | null;
   plan_end_date: string | null;
+}
+
+function computeWeightedProgress(leafActivities: any[]): { overallProgress: number; completedCount: number; inProgressCount: number; notStartedCount: number; p2aProgress: number; vcrCount: number } {
+  if (leafActivities.length === 0) {
+    return { overallProgress: 0, completedCount: 0, inProgressCount: 0, notStartedCount: 0, p2aProgress: 0, vcrCount: 0 };
+  }
+
+  const completedCount = leafActivities.filter((a: any) => a.status === 'COMPLETED').length;
+  const inProgressCount = leafActivities.filter((a: any) => a.status === 'IN_PROGRESS').length;
+  const notStartedCount = leafActivities.filter((a: any) => a.status !== 'COMPLETED' && a.status !== 'IN_PROGRESS').length;
+
+  // Separate P2A (VCR-) activities from non-P2A
+  const p2aActivities = leafActivities.filter((a: any) => (a.activity_code || '').startsWith('VCR-'));
+  const nonP2aActivities = leafActivities.filter((a: any) => !(a.activity_code || '').startsWith('VCR-'));
+
+  // If no P2A activities, fall back to simple average
+  if (p2aActivities.length === 0) {
+    const avg = leafActivities.reduce((s: number, a: any) => s + (a.completion_percentage || 0), 0) / leafActivities.length;
+    return { overallProgress: Math.round(avg), completedCount, inProgressCount, notStartedCount, p2aProgress: 0, vcrCount: 0 };
+  }
+
+  // Group P2A by top-level VCR code (e.g. VCR-001)
+  const vcrGroups: Record<string, any[]> = {};
+  p2aActivities.forEach((a: any) => {
+    const parts = (a.activity_code || '').split('-');
+    const vcrKey = parts.length >= 2 ? `${parts[0]}-${parts[1]}` : a.activity_code;
+    if (!vcrGroups[vcrKey]) vcrGroups[vcrKey] = [];
+    vcrGroups[vcrKey].push(a);
+  });
+
+  const vcrKeys = Object.keys(vcrGroups);
+  const vcrCount = vcrKeys.length;
+  const perVcrWeight = 1 / vcrCount;
+
+  let p2aScore = 0;
+  vcrKeys.forEach(key => {
+    const acts = vcrGroups[key];
+    const sysReadiness = acts.filter((a: any) => /system[s]?\s*readiness/i.test(a.name || ''));
+    const others = acts.filter((a: any) => !/system[s]?\s*readiness/i.test(a.name || ''));
+
+    const sysAvg = sysReadiness.length > 0
+      ? sysReadiness.reduce((s: number, a: any) => s + (a.completion_percentage || 0), 0) / sysReadiness.length / 100
+      : 0;
+    const othersAvg = others.length > 0
+      ? others.reduce((s: number, a: any) => s + (a.completion_percentage || 0), 0) / others.length / 100
+      : 0;
+
+    // If only one category exists, give it full weight
+    let vcrScore: number;
+    if (sysReadiness.length > 0 && others.length > 0) {
+      vcrScore = (sysAvg * 0.2) + (othersAvg * 0.8);
+    } else if (sysReadiness.length > 0) {
+      vcrScore = sysAvg;
+    } else {
+      vcrScore = othersAvg;
+    }
+
+    p2aScore += vcrScore * perVcrWeight;
+  });
+
+  const p2aProgress = Math.round(p2aScore * 100);
+
+  // Non-P2A average
+  const nonP2aAvg = nonP2aActivities.length > 0
+    ? nonP2aActivities.reduce((s: number, a: any) => s + (a.completion_percentage || 0), 0) / nonP2aActivities.length / 100
+    : 0;
+
+  const overallProgress = Math.round((p2aScore * 0.5 + nonP2aAvg * 0.5) * 100);
+
+  return { overallProgress, completedCount, inProgressCount, notStartedCount, p2aProgress, vcrCount };
 }
 
 const PHASE_LABELS: Record<string, string> = {
