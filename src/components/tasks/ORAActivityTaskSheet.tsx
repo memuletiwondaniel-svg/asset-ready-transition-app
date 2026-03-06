@@ -17,7 +17,7 @@ import {
   Calendar as CalendarIcon, Paperclip, X, Loader2, AlertTriangle, Trash2 
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { format, parseISO, isPast, differenceInDays } from 'date-fns';
+import { format, parseISO, isPast, differenceInDays, addDays } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 import { useQueryClient } from '@tanstack/react-query';
