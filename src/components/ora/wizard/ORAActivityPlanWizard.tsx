@@ -672,7 +672,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
               {currentStep === 1 ? 'Cancel' : 'Back'}
             </Button>
 
-            {draftPlanId && (
+            {draftPlanId && !isReviewMode && (
               <Button
                 variant="ghost"
                 size="sm"
