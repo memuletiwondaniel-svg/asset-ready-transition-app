@@ -79,6 +79,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
   // Editable dates
   const [editStartDate, setEditStartDate] = useState<Date | undefined>();
   const [editEndDate, setEditEndDate] = useState<Date | undefined>();
+  const [showCalendar, setShowCalendar] = useState(false);
 
   // Original values for dirty tracking
   const [originalStatus, setOriginalStatus] = useState<ActivityStatus>('NOT_STARTED');
