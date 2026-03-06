@@ -1,77 +1,57 @@
 
 
-# Plan: ORIP Scoring Engine Using Existing VCR Item Categories
+## Investigation Summary
 
-## Impact Assessment: Zero Breaking Changes
+I traced the full data and code flow. There are two distinct problems:
 
-**No existing workflows will be affected.** The approach reuses the existing `vcr_item_categories` table (Design Integrity, Technical Integrity, Operating Integrity, Management Systems, Health & Safety) as the readiness dimensions for ORI scoring. All changes are additive:
+### Problem 1: Task Card Shows Full Project Name Instead of Project Code
 
-- The `vcr_item_categories` table gets a `tenant_id` column and weight/confidence fields -- existing rows remain intact
-- The `readiness_nodes` table gets a new nullable `dimension_id` column pointing to `vcr_item_categories`
-- The `sync_readiness_nodes` and `calculate_ori_score` functions are replaced with enhanced versions that use category-based dimensions instead of module-based grouping
-- Existing P2A, ORA, PSSR, ORM workflows are untouched -- the ontology layer only reads from them
+The task metadata stored in the database is:
+```
+project_name: "DP300 - HM Additional Compressors"
+```
+There is **no separate `project_code` field**. The KanbanCard uses `task.project` for the `ProjectIdBadge`, which comes from `meta?.project_name || meta?.project_code` in `useUnifiedTasks.ts`. So the badge displays the full concatenated string instead of just "DP300".
 
-## Current VCR Item Categories (Become Readiness Dimensions)
+**Fix (3 places):**
 
-| Code | Name | Active |
+1. **`ORAActivityPlanWizard.tsx`** (line ~359): Add `project_code` to metadata when creating review tasks. The project prefix and number are available from the wizard context.
+   ```
+   project_code: `${prefix}-${number}`,   // e.g. "DP-300"
+   project_name: projectTitle,             // e.g. "HM Additional Compressors"
+   ```
+
+2. **`useUnifiedTasks.ts`** (line 175): Prefer `project_code` over `project_name` for the badge:
+   ```
+   project: meta?.project_code || meta?.project_name || undefined
+   ```
+
+3. **Database migration**: Update the existing task's metadata to split the fields:
+   ```sql
+   UPDATE user_tasks
+   SET metadata = jsonb_set(
+     jsonb_set(metadata::jsonb, '{project_code}', '"DP-300"'),
+     '{project_name}', '"HM Additional Compressors"'
+   )
+   WHERE id = '6c77b7ff-83ee-414b-9a0c-dd41d8705790';
+   ```
+
+### Problem 2: "Review ORA Plan" Opens Wrong UI
+
+The current `TaskDetailSheet.tsx` code already has the correct navigate (`/operation-readiness/${oraPlanId}`) and the `ORAActivityPlanReviewOverlay` is NOT imported anywhere. The code is correct. However, the user reports no change is visible.
+
+This likely means the **`isOraReviewTask` condition** (line 236: `isOraReviewTask && oraPlanId`) is failing because `ora_plan_review` is being caught first by the `isReviewTask` check (line 109), which triggers the generic approve/reject UI instead. But more critically, `isOraReviewTask` is `true` AND `oraPlanId` exists (`plan_id: "2b88ecdf-..."`), so the button SHOULD render.
+
+The real issue: the `isReviewTask` flag (line 109) includes `'ora_plan_review'`, which means the TaskDetailSheet shows BOTH the "Review ORA Plan" navigate button AND the generic approve/reject section below it. For ORA review tasks, the approval should happen on the ORA Plan details page (which has an Approvals tab), NOT inline in the task sheet.
+
+**Fix:**
+- **`TaskDetailSheet.tsx`**: Exclude `ora_plan_review` from `isReviewTask` when `oraPlanId` is present, since the approval happens on the dedicated plan page. Change the CTA to be more prominent (primary variant) and the intent message to direct users to the full plan view.
+
+### Implementation Plan
+
+| Step | File | Change |
 |------|------|--------|
-| DI2 | Design Integrity | Yes |
-| TI | Technical Integrity | Yes |
-| OI | Operating Integrity | Yes |
-| MS | Management Systems | Yes |
-| HS | Health & Safety | Yes |
-
-These become the tenant-configurable readiness dimensions. Different tenants can add/rename/reweight their own categories.
-
-## Implementation Tasks
-
-### Task 1: Extend `vcr_item_categories` for ORI Scoring
-Add columns to make categories serve double duty as readiness dimensions:
-- `tenant_id UUID` (nullable, defaults via trigger -- existing rows get current tenant)
-- `default_weight NUMERIC(5,4)` (e.g., 0.20 = 20%)
-- `confidence_factor_default NUMERIC(3,2)` (default 0.8)
-- `risk_severity_multiplier NUMERIC(3,1)` (default 1.0)
-- `is_readiness_dimension BOOLEAN DEFAULT true`
-
-Add `dimension_id UUID REFERENCES vcr_item_categories(id)` to `readiness_nodes`.
-
-### Task 2: Enhanced ORI Formula
-Replace `calculate_ori_score()` with the full ORIP formula:
-
-```
-DS_i = (Σ Subcomponent_Weight × Completion%) × Confidence_Factor
-RP_i = Σ (Risk_Severity × Impact_Multiplier)  -- capped at 15%
-ORI  = Σ (Dimension_Weight_i × DS_i) − Global_Risk_Penalty
-SCS  = ORI × Schedule_Adherence × Critical_Path_Stability
-```
-
-Add columns to `ori_scores`: `dimension_scores JSONB`, `risk_penalty_total NUMERIC`, `startup_confidence_score NUMERIC`, `schedule_adherence_index NUMERIC`, `critical_path_stability_index NUMERIC`.
-
-Add `confidence_factor NUMERIC(3,2) DEFAULT 0.8` and `risk_severity TEXT DEFAULT 'none'` to `readiness_nodes`.
-
-### Task 3: Update Sync Function
-Update `sync_readiness_nodes()` to auto-assign `dimension_id` by mapping:
-- P2A VCR prerequisites → mapped via their `vcr_items.category_id` directly to `vcr_item_categories`
-- ORA activities → default to "Operating Integrity" or map via metadata
-- PSSR items → map via PSSR checklist category → nearest VCR category
-- ORM deliverables → default to "Management Systems"
-- Training → default to "Operating Integrity"
-
-Set confidence factors: completed/approved = 1.0, in-progress = 0.8, not-started = 0.7.
-
-### Task 4: Executive Dashboard Enhancement
-Redesign `ExecutiveDashboard.tsx` to match the strategic layout:
-- **Top Banner**: Large ORI + SCS + color coding (Green >85, Amber 70-85, Red <70)
-- **Dimension Breakdown**: Bar/table showing each VCR category's score, trend arrow, risk level
-- **Top 5 Startup Blockers**: Blocked/critical nodes with severity
-- **Predictive Trend**: ORI line chart with dashed target curve
-- **Risk Impact Summary**: 4 stat boxes (Open High Risks, Startup-blocking, Dimensions below 70%, Systems below 60%)
-
-### Task 5: Tenant-Configurable Weight Profiles
-Update the existing `ori_weight_profiles` to store dimension-based weights keyed by `vcr_item_categories.id` instead of module names. Add a simple admin UI for editing weights per tenant.
-
-### Task 6: Update Living Documents
-- **Security & Compliance Doc**: Add rows for Readiness Dimensions, Risk Penalty Engine, Startup Confidence Score (mark as Active)
-- **Platform Guide**: Add "Readiness Ontology & Scoring Engine" section documenting the 6 dimensions, ORI formula, SCS
-- **Strategic North Star**: Update scoring engine status from Planned to Active, add dimension-based architecture detail
+| 1 | `useUnifiedTasks.ts` | Prefer `project_code` over `project_name` for `project` field |
+| 2 | `ORAActivityPlanWizard.tsx` | Store `project_code` and `project_name` as separate metadata fields |
+| 3 | `TaskDetailSheet.tsx` | Exclude ORA review tasks from showing inline approve/reject when they have a plan_id (redirect to plan page instead) |
+| 4 | Migration SQL | Fix existing task metadata to split project_code and project_name |
 
