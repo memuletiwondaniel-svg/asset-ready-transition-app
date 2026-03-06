@@ -256,8 +256,9 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
     loadPlan();
   }, [open, projectId, externalPlanId, isReviewMode]);
 
-  // Silent auto-save of wizard state (no toast, no close)
+  // Silent auto-save of wizard state (no toast, no close) - skip in review mode
   const autoSaveWizardState = useCallback(async () => {
+    if (isReviewMode) return; // Don't auto-save in review mode
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) throw new Error('Not authenticated');
 
@@ -340,13 +341,21 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
       let planId = draftPlanId;
 
       if (draftPlanId) {
-        // Upgrade draft to PENDING_APPROVAL
+        // Upgrade draft to PENDING_APPROVAL (preserve wizard_state for reviewers)
+        const wizardState = {
+          phase,
+          projectType,
+          activities,
+          approvers,
+          currentStep,
+          visitedSteps: Array.from(visitedSteps),
+        };
         const { error } = await (supabase as any)
           .from('orp_plans')
           .update({
             phase: orpPhase,
             status: 'PENDING_APPROVAL',
-            wizard_state: null,
+            wizard_state: wizardState,
           })
           .eq('id', draftPlanId);
         if (error) throw error;
@@ -558,72 +567,74 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
     <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
       <DialogContent className={cn(
         "max-h-[85vh] overflow-hidden flex flex-col",
-      currentStep === 4 ? "max-w-7xl w-[98vw]" : "max-w-2xl"
+        (currentStep === 4 || isReviewMode) ? "max-w-7xl w-[98vw]" : "max-w-2xl"
       )}>
-        <DialogHeader className="border-b pb-4">
+        <DialogHeader className={cn("border-b pb-4", isReviewMode && "pb-2")}>
           <DialogTitle className="flex items-center gap-2 text-xl font-semibold">
             <CalendarCheck className="w-5 h-5 text-primary" />
             {isReviewMode ? 'Review ORA Plan' : 'Create ORA Plan'}
           </DialogTitle>
 
-          {/* Progress Indicator - PSSR pattern */}
-          <div className="mt-4 space-y-3">
-            <div className="flex items-center justify-between text-sm">
-              <span className="font-medium">Step {currentStep} of {STEPS.length}</span>
-              <span className="text-muted-foreground">{STEPS[currentStep - 1].title}</span>
-            </div>
-            <Progress value={progressPercentage} className="h-2" />
-            
-            {/* Step Indicators */}
-            <div className="flex justify-between mt-2">
-              {STEPS.map((step) => {
-                const isActive = step.id === currentStep;
-                const isVisited = visitedSteps.has(step.id);
-                const isComplete = step.id < currentStep || (isVisited && isStepComplete(step.id));
-                const isClickable = isVisited || step.id <= currentStep;
+          {/* Progress Indicator - hidden in review mode */}
+          {!isReviewMode && (
+            <div className="mt-4 space-y-3">
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-medium">Step {currentStep} of {STEPS.length}</span>
+                <span className="text-muted-foreground">{STEPS[currentStep - 1].title}</span>
+              </div>
+              <Progress value={progressPercentage} className="h-2" />
+              
+              {/* Step Indicators */}
+              <div className="flex justify-between mt-2">
+                {STEPS.map((step) => {
+                  const isActive = step.id === currentStep;
+                  const isVisited = visitedSteps.has(step.id);
+                  const isComplete = step.id < currentStep || (isVisited && isStepComplete(step.id));
+                  const isClickable = isVisited || step.id <= currentStep;
 
-                return (
-                  <button
-                    key={step.id}
-                    type="button"
-                    onClick={() => handleStepClick(step.id)}
-                    disabled={!isClickable}
-                    className={cn(
-                      "flex flex-col items-center flex-1 transition-colors",
-                      isClickable ? "cursor-pointer" : "cursor-default",
-                      isActive
-                        ? "text-primary"
-                        : isComplete
-                          ? "text-primary/60"
-                          : "text-muted-foreground"
-                    )}
-                  >
-                    <div
+                  return (
+                    <button
+                      key={step.id}
+                      type="button"
+                      onClick={() => handleStepClick(step.id)}
+                      disabled={!isClickable}
                       className={cn(
-                        "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium border-2 transition-colors",
+                        "flex flex-col items-center flex-1 transition-colors",
+                        isClickable ? "cursor-pointer" : "cursor-default",
                         isActive
-                          ? "border-primary bg-primary text-primary-foreground"
+                          ? "text-primary"
                           : isComplete
-                            ? "border-primary bg-primary/10 text-primary"
-                            : "border-muted-foreground/30 bg-muted/30"
+                            ? "text-primary/60"
+                            : "text-muted-foreground"
                       )}
                     >
-                      {isComplete ? (
-                        <Check className="h-4 w-4" />
-                      ) : (
-                        step.id
-                      )}
-                    </div>
-                    <span className="text-xs mt-1 text-center hidden sm:block">{step.title}</span>
-                  </button>
-                );
-              })}
+                      <div
+                        className={cn(
+                          "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium border-2 transition-colors",
+                          isActive
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : isComplete
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "border-muted-foreground/30 bg-muted/30"
+                        )}
+                      >
+                        {isComplete ? (
+                          <Check className="h-4 w-4" />
+                        ) : (
+                          step.id
+                        )}
+                      </div>
+                      <span className="text-xs mt-1 text-center hidden sm:block">{step.title}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
         </DialogHeader>
 
         {/* Phase context banner - shown from Step 2 onwards */}
-        {currentStep >= 2 && phase && (
+        {!isReviewMode && currentStep >= 2 && phase && (
           <div className="mx-1 mb-0 px-4 py-2.5 rounded-lg bg-muted/60 border border-border/50">
             <div className="flex items-center gap-3">
               <div>
@@ -645,21 +656,27 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
 
         {/* Step content */}
         <div className="flex-1 overflow-auto py-2">
-          {currentStep === 1 && <StepPhaseSelection phase={phase} onPhaseChange={setPhase} />}
-          {currentStep === 2 && <StepProjectType projectType={projectType} onProjectTypeChange={setProjectType} />}
-          {currentStep === 3 && (
-            catalogLoading ? (
-              <div className="flex items-center justify-center py-20">
-                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                <span className="ml-2 text-sm text-muted-foreground">Loading activities...</span>
-              </div>
-            ) : (
-              <StepActivities activities={activities} phase={phase} onActivitiesChange={setActivities} />
-            )
+          {isReviewMode ? (
+            <StepSchedule activities={activities} onActivitiesChange={setActivities} />
+          ) : (
+            <>
+              {currentStep === 1 && <StepPhaseSelection phase={phase} onPhaseChange={setPhase} />}
+              {currentStep === 2 && <StepProjectType projectType={projectType} onProjectTypeChange={setProjectType} />}
+              {currentStep === 3 && (
+                catalogLoading ? (
+                  <div className="flex items-center justify-center py-20">
+                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                    <span className="ml-2 text-sm text-muted-foreground">Loading activities...</span>
+                  </div>
+                ) : (
+                  <StepActivities activities={activities} phase={phase} onActivitiesChange={setActivities} />
+                )
+              )}
+              {currentStep === 4 && <StepSchedule activities={activities} onActivitiesChange={setActivities} />}
+              {currentStep === 5 && <StepApprovers approvers={approvers} onApproversChange={setApprovers} projectId={projectId} />}
+              {currentStep === 6 && <StepReview phase={phase} projectType={projectType} activities={activities} />}
+            </>
           )}
-          {currentStep === 4 && <StepSchedule activities={activities} onActivitiesChange={setActivities} />}
-          {currentStep === 5 && <StepApprovers approvers={approvers} onApproversChange={setApprovers} projectId={projectId} />}
-          {currentStep === 6 && <StepReview phase={phase} projectType={projectType} activities={activities} />}
         </div>
 
         {/* Navigation */}
@@ -667,9 +684,17 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
-              onClick={() => currentStep > 1 ? handleBack() : handleClose()}
+              onClick={() => {
+                if (isReviewMode) {
+                  handleClose();
+                } else if (currentStep > 1) {
+                  handleBack();
+                } else {
+                  handleClose();
+                }
+              }}
             >
-              {currentStep === 1 ? 'Cancel' : 'Back'}
+              {isReviewMode ? 'Close' : (currentStep === 1 ? 'Cancel' : 'Back')}
             </Button>
 
             {draftPlanId && !isReviewMode && (
@@ -686,29 +711,39 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              onClick={handleSaveDraft}
-              disabled={isSaving}
-              className="gap-1.5 text-muted-foreground"
-            >
-              {isSaving ? (
-                <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>
-              ) : (
-                <><Save className="w-4 h-4" /> Save & Exit</>
-              )}
-            </Button>
+            {!isReviewMode && (
+              <Button
+                variant="ghost"
+                onClick={handleSaveDraft}
+                disabled={isSaving}
+                className="gap-1.5 text-muted-foreground"
+              >
+                {isSaving ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>
+                ) : (
+                  <><Save className="w-4 h-4" /> Save & Exit</>
+                )}
+              </Button>
+            )}
 
-            {currentStep < 6 ? (
+            {isReviewMode ? (
+              <Button onClick={handleCreate} disabled={isCreating} className="gap-2">
+                {isCreating ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>
+                ) : (
+                  'Save Changes'
+                )}
+              </Button>
+            ) : currentStep < 6 ? (
               <Button onClick={handleNext} disabled={!validateStep(currentStep)}>
                 Next
               </Button>
             ) : (
               <Button onClick={handleCreate} disabled={isCreating} className="gap-2">
                 {isCreating ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" /> {isReviewMode ? 'Saving...' : 'Submitting...'}</>
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Submitting...</>
                 ) : (
-                  isReviewMode ? 'Save Changes' : 'Submit for Approval'
+                  'Submit for Approval'
                 )}
               </Button>
             )}
