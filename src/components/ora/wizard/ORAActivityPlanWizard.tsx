@@ -364,6 +364,115 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
     }
   };
 
+  // Materialize wizard_state activities into ora_plan_activities table
+  const materializeActivities = async (planIdToMaterialize: string) => {
+    const { data: planData } = await (supabase as any)
+      .from('orp_plans')
+      .select('wizard_state, project_id')
+      .eq('id', planIdToMaterialize)
+      .single();
+
+    if (!planData?.wizard_state) return;
+
+    const ws = planData.wizard_state as any;
+    const wsActivities = (ws.activities || []).filter((a: any) => a.selected);
+    if (wsActivities.length === 0) return;
+
+    // Check if already materialized
+    const { data: existing } = await (supabase as any)
+      .from('ora_plan_activities')
+      .select('id')
+      .eq('orp_plan_id', planIdToMaterialize)
+      .limit(1);
+    if (existing && existing.length > 0) return;
+
+    // Sort parents before children
+    const sorted = [...wsActivities].sort((a: any, b: any) => {
+      const depthA = (a.activityCode || '').split('.').length;
+      const depthB = (b.activityCode || '').split('.').length;
+      return depthA - depthB;
+    });
+
+    const idMap = new Map<string, string>();
+    for (const act of sorted) {
+      const parentDbId = act.parentActivityId ? idMap.get(act.parentActivityId) || null : null;
+      const { data: inserted } = await (supabase as any)
+        .from('ora_plan_activities')
+        .insert({
+          orp_plan_id: planIdToMaterialize,
+          name: act.activity || act.name || 'Unnamed',
+          activity_code: act.activityCode || '',
+          description: act.description || null,
+          source_type: 'catalog',
+          source_ref_id: act.id?.startsWith('custom-') ? null : act.id,
+          source_ref_table: act.id?.startsWith('custom-') ? null : 'ora_activity_catalog',
+          parent_id: parentDbId,
+          start_date: act.startDate || null,
+          end_date: act.endDate || null,
+          duration_days: act.durationDays || act.durationMed || null,
+          status: 'NOT_STARTED',
+          completion_percentage: 0,
+        })
+        .select('id')
+        .single();
+      if (inserted) idMap.set(act.id, inserted.id);
+    }
+
+    // Add "Create P2A Plan" activity assigned to Sr. ORA Engineer
+    const { data: projectTeam } = await supabase
+      .from('project_team_members')
+      .select('user_id, role')
+      .eq('project_id', planData.project_id);
+
+    const srOraEngr = (projectTeam || []).find((m: any) => {
+      const role = (m.role || '').toLowerCase();
+      return role.includes('snr ora') || role.includes('senior ora') || role.includes('sr. ora') || role.includes('sr ora');
+    });
+
+    const { data: p2aAct } = await (supabase as any)
+      .from('ora_plan_activities')
+      .insert({
+        orp_plan_id: planIdToMaterialize,
+        name: 'Create P2A Plan',
+        activity_code: 'P2A-01',
+        description: 'Create the Project to Asset (P2A) handover plan.',
+        source_type: 'system',
+        start_date: new Date().toISOString().split('T')[0],
+        status: 'NOT_STARTED',
+        completion_percentage: 0,
+        assigned_to: srOraEngr?.user_id || null,
+      })
+      .select('id')
+      .single();
+
+    // Create user task for Sr. ORA Engineer
+    if (srOraEngr?.user_id && p2aAct) {
+      const { data: projInfo } = await supabase
+        .from('projects')
+        .select('project_id_prefix, project_id_number, project_title')
+        .eq('id', planData.project_id)
+        .single();
+      const projName = projInfo
+        ? `${projInfo.project_id_prefix || ''}-${projInfo.project_id_number || ''} - ${projInfo.project_title || ''}`
+        : '';
+      await supabase.rpc('create_user_task', {
+        p_user_id: srOraEngr.user_id,
+        p_title: `Create P2A Plan – ${projName}`,
+        p_description: `The ORA Plan has been approved. Create the P2A handover plan for project ${projName}.`,
+        p_type: 'task',
+        p_status: 'pending',
+        p_priority: 'High',
+        p_metadata: {
+          source: 'ora_workflow',
+          project_id: planData.project_id,
+          plan_id: planIdToMaterialize,
+          action: 'create_p2a_plan',
+          ora_activity_id: p2aAct.id,
+        },
+      });
+    }
+  };
+
   // Review mode: approve or reject the plan
   const handleReviewDecision = async (decision: 'APPROVED' | 'REJECTED') => {
     if (!draftPlanId) return;
