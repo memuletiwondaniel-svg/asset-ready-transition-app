@@ -1,77 +1,50 @@
 
 
-# Plan: ORIP Scoring Engine Using Existing VCR Item Categories
+## Plan: Fix Activity Deletion, Remove Duplicate Narrative, Fix Progress Formula
 
-## Impact Assessment: Zero Breaking Changes
+### 1. Activity deletion not removing from Gantt table
 
-**No existing workflows will be affected.** The approach reuses the existing `vcr_item_categories` table (Design Integrity, Technical Integrity, Operating Integrity, Management Systems, Health & Safety) as the readiness dimensions for ORI scoring. All changes are additive:
+**Root cause**: `handleDelete` in `ORAActivityTaskSheet.tsx` deletes from `ora_plan_activities` and `user_tasks` DB tables, but the Gantt is built from `wizard_state` JSON (line 560 in `useORPPlans.ts`). The wizard_state is never updated, so the activity reappears on refetch.
 
-- The `vcr_item_categories` table gets a `tenant_id` column and weight/confidence fields -- existing rows remain intact
-- The `readiness_nodes` table gets a new nullable `dimension_id` column pointing to `vcr_item_categories`
-- The `sync_readiness_nodes` and `calculate_ori_score` functions are replaced with enhanced versions that use category-based dimensions instead of module-based grouping
-- Existing P2A, ORA, PSSR, ORM workflows are untouched -- the ontology layer only reads from them
+**Fix**: After deleting DB rows, also update the `wizard_state` JSON on the `orp_plans` row to remove (or mark as deselected) the deleted activity. Steps:
+- In `handleDelete`, fetch the current `wizard_state` from the plan
+- Filter out the deleted activity from `wizard_state.activities` (or set `selected: false`)
+- Update the `orp_plans` row with the modified `wizard_state`
+- The existing cache invalidation will then correctly exclude the activity
 
-## Current VCR Item Categories (Become Readiness Dimensions)
+**File**: `src/components/tasks/ORAActivityTaskSheet.tsx`
 
-| Code | Name | Active |
-|------|------|--------|
-| DI2 | Design Integrity | Yes |
-| TI | Technical Integrity | Yes |
-| OI | Operating Integrity | Yes |
-| MS | Management Systems | Yes |
-| HS | Health & Safety | Yes |
+### 2. Duplicate narrative under progress bar
 
-These become the tenant-configurable readiness dimensions. Different tenants can add/rename/reweight their own categories.
+**Root cause**: In `ORPGanttOverlay.tsx`, lines 124-126 show "X of Y activities completed" as a simple text line, then lines 127-134 show a full narrative paragraph that starts with the same "X of Y activities completed..." text.
 
-## Implementation Tasks
+**Fix**: Remove the first duplicate line (lines 124-126) and keep only the full narrative paragraph.
 
-### Task 1: Extend `vcr_item_categories` for ORI Scoring
-Add columns to make categories serve double duty as readiness dimensions:
-- `tenant_id UUID` (nullable, defaults via trigger -- existing rows get current tenant)
-- `default_weight NUMERIC(5,4)` (e.g., 0.20 = 20%)
-- `confidence_factor_default NUMERIC(3,2)` (default 0.8)
-- `risk_severity_multiplier NUMERIC(3,1)` (default 1.0)
-- `is_readiness_dimension BOOLEAN DEFAULT true`
+**File**: `src/components/orp/ORPGanttOverlay.tsx` — remove lines 124-126.
 
-Add `dimension_id UUID REFERENCES vcr_item_categories(id)` to `readiness_nodes`.
+### 3. Unrealistic progress formula (showing 61% with only 2 completions)
 
-### Task 2: Enhanced ORI Formula
-Replace `calculate_ori_score()` with the full ORIP formula:
+**Root cause**: When no P2A/VCR activities exist (the current case in the screenshot — activity codes are `EXE-xx`, not `VCR-xx`), the formula falls back to a simple average of `completion_percentage` across all leaf activities. With activities at 60%, 95%, 100%, 100% and others at 0%, the average inflates to ~30-60% despite most activities being untouched.
 
-```
-DS_i = (Σ Subcomponent_Weight × Completion%) × Confidence_Factor
-RP_i = Σ (Risk_Severity × Impact_Multiplier)  -- capped at 15%
-ORI  = Σ (Dimension_Weight_i × DS_i) − Global_Risk_Penalty
-SCS  = ORI × Schedule_Adherence × Critical_Path_Stability
-```
+**Fix**: Revise the fallback (no-P2A) formula to be more realistic by using equal weight per activity but also factoring in status:
+- Each activity contributes `1 / totalCount` of the total weight
+- Its contribution = `completion_percentage / 100` (so 0% = 0, 100% = 1)
+- This is already how it works — the real issue is the denominator. Currently it divides by `leafActivities.length` which counts ALL activities. But looking at the screenshot: 12 activities, with completions at 60+10+0+0+0+0+100+0+0+95+0+0 = 265, divided by 12 = 22%, not 61%.
 
-Add columns to `ori_scores`: `dimension_scores JSONB`, `risk_penalty_total NUMERIC`, `startup_confidence_score NUMERIC`, `schedule_adherence_index NUMERIC`, `critical_path_stability_index NUMERIC`.
+The 61% discrepancy suggests the overlay is using a different count — likely "2 of 6" (from `useProjectORPPlans` counting only 6 leaf activities due to parent filtering). With 6 leaves: 265/6 = 44%. Still not 61%.
 
-Add `confidence_factor NUMERIC(3,2) DEFAULT 0.8` and `risk_severity TEXT DEFAULT 'none'` to `readiness_nodes`.
+The most likely cause: the `useProjectORPPlans` hook fetches from `ora_plan_activities` table (which may have fewer rows than wizard_state), while the overlay shows all wizard_state activities. The formula runs on the DB subset, producing inflated results.
 
-### Task 3: Update Sync Function
-Update `sync_readiness_nodes()` to auto-assign `dimension_id` by mapping:
-- P2A VCR prerequisites → mapped via their `vcr_items.category_id` directly to `vcr_item_categories`
-- ORA activities → default to "Operating Integrity" or map via metadata
-- PSSR items → map via PSSR checklist category → nearest VCR category
-- ORM deliverables → default to "Management Systems"
-- Training → default to "Operating Integrity"
+**Revised formula** (for both P2A and non-P2A cases):
+- When P2A activities exist: keep the 50/50 weighted split as designed
+- When NO P2A activities exist: use simple average but ensure we count ALL activities from wizard_state, not just DB rows
+- Additionally, in `useProjectORPPlans`, use wizard_state as the source of truth for activity count (same as the overlay does), merging in DB status/progress data
 
-Set confidence factors: completed/approved = 1.0, in-progress = 0.8, not-started = 0.7.
+**Files**: `src/hooks/useProjectORPPlans.ts` — update the plan-level progress computation to merge wizard_state + ora_plan_activities (similar to `useORPPlanDetails`) before computing weighted progress. This ensures the denominator matches the actual activity count shown in the Gantt.
 
-### Task 4: Executive Dashboard Enhancement
-Redesign `ExecutiveDashboard.tsx` to match the strategic layout:
-- **Top Banner**: Large ORI + SCS + color coding (Green >85, Amber 70-85, Red <70)
-- **Dimension Breakdown**: Bar/table showing each VCR category's score, trend arrow, risk level
-- **Top 5 Startup Blockers**: Blocked/critical nodes with severity
-- **Predictive Trend**: ORI line chart with dashed target curve
-- **Risk Impact Summary**: 4 stat boxes (Open High Risks, Startup-blocking, Dimensions below 70%, Systems below 60%)
+### Files to modify
 
-### Task 5: Tenant-Configurable Weight Profiles
-Update the existing `ori_weight_profiles` to store dimension-based weights keyed by `vcr_item_categories.id` instead of module names. Add a simple admin UI for editing weights per tenant.
-
-### Task 6: Update Living Documents
-- **Security & Compliance Doc**: Add rows for Readiness Dimensions, Risk Penalty Engine, Startup Confidence Score (mark as Active)
-- **Platform Guide**: Add "Readiness Ontology & Scoring Engine" section documenting the 6 dimensions, ORI formula, SCS
-- **Strategic North Star**: Update scoring engine status from Planned to Active, add dimension-based architecture detail
+1. **`src/components/tasks/ORAActivityTaskSheet.tsx`** — Update wizard_state on delete
+2. **`src/components/orp/ORPGanttOverlay.tsx`** — Remove duplicate narrative line
+3. **`src/hooks/useProjectORPPlans.ts`** — Fix progress denominator by using wizard_state as source of truth for activity list
 
