@@ -612,7 +612,7 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                   const todayLeft = todayOffset * dayWidth;
                   return (
                     <div className="absolute top-0 h-full flex items-end pb-0.5 z-10" style={{ left: todayLeft }}>
-                      <span className="text-[8px] font-bold text-destructive bg-destructive/10 rounded px-1 py-px -translate-x-1/2 whitespace-nowrap">
+                      <span className="text-[8px] font-semibold text-primary bg-primary/10 rounded px-1 py-px -translate-x-1/2 whitespace-nowrap">
                         {format(new Date(), 'dd MMM')}
                       </span>
                     </div>
@@ -795,8 +795,12 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                         if (todayOffset < 0 || todayOffset > totalDays) return null;
                         return (
                           <div
-                            className="absolute top-0 bottom-0 w-px bg-destructive/60 z-10"
-                            style={{ left: todayOffset * dayWidth }}
+                            className="absolute top-0 bottom-0 z-10 pointer-events-none"
+                            style={{
+                              left: todayOffset * dayWidth,
+                              width: '1px',
+                              backgroundImage: 'repeating-linear-gradient(to bottom, hsl(var(--primary)) 0px, hsl(var(--primary)) 4px, transparent 4px, transparent 8px)',
+                            }}
                           />
                         );
                       })()}
