@@ -396,6 +396,10 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
     const endStr = format(newEnd, 'yyyy-MM-dd');
     const durationDays = differenceInDays(newEnd, newStart);
 
+    // Strip prefix to get the real DB id
+    const dbId = activityId.replace(/^(ora-|ws-)/, '');
+    const isWizardActivity = activityId.startsWith('ws-');
+
     // Optimistically update the query cache so bars don't snap back
     queryClient.setQueriesData({ queryKey: ['orp-plan'] }, (old: any) => {
       if (!old?.deliverables) return old;
@@ -409,21 +413,9 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
       };
     });
 
-    // Strip prefix to get the real DB id
-    const dbId = activityId.replace(/^(ora-|ws-)/, '');
-
     try {
-      await supabase
-        .from('ora_plan_activities')
-        .update({ start_date: startStr, end_date: endStr, duration_days: durationDays })
-        .eq('id', dbId);
-    } catch (err) {
-      console.error('Failed to update activity dates:', err);
-    }
-
-    // Also update wizard_state dates for ws- activities
-    if (activityId.startsWith('ws-')) {
-      try {
+      if (isWizardActivity) {
+        // For wizard-state activities, update wizard_state JSON
         const { data: plan } = await supabase
           .from('orp_plans')
           .select('wizard_state')
@@ -443,12 +435,35 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
               .eq('id', planId);
           }
         }
-      } catch (err) {
-        console.error('Failed to update wizard_state dates:', err);
+        // Also upsert into ora_plan_activities for persistence
+        await supabase
+          .from('ora_plan_activities')
+          .upsert({
+            id: dbId,
+            orp_plan_id: planId,
+            name: '',
+            activity_code: '',
+            source_type: 'wizard',
+            status: 'NOT_STARTED',
+            start_date: startStr,
+            end_date: endStr,
+            duration_days: durationDays,
+          }, { onConflict: 'id' });
+      } else {
+        // For ora- activities, update the DB table directly
+        await supabase
+          .from('ora_plan_activities')
+          .update({ start_date: startStr, end_date: endStr, duration_days: durationDays })
+          .eq('id', dbId);
       }
+    } catch (err) {
+      console.error('Failed to update activity dates:', err);
     }
 
-    queryClient.invalidateQueries({ queryKey: ['orp-plan'] });
+    // Delay invalidation slightly to avoid overwriting optimistic data before DB write propagates
+    setTimeout(() => {
+      queryClient.invalidateQueries({ queryKey: ['orp-plan'] });
+    }, 500);
   }, [queryClient, planId]);
 
   const { draggingId, previewLeft, previewWidth, handleMouseDown, wasDragging } = useGanttBarResize({
