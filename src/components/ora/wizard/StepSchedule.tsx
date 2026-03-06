@@ -224,6 +224,31 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
     [selectedActivityId, activities]
   );
 
+  const isDirty = useMemo(() => {
+    if (!selectedActivity || !originalSnapshot) return false;
+    return (
+      (selectedActivity.description || '') !== originalSnapshot.description ||
+      (selectedActivity.startDate || '') !== originalSnapshot.startDate ||
+      (selectedActivity.endDate || '') !== originalSnapshot.endDate ||
+      (selectedActivity.durationDays ?? null) !== originalSnapshot.durationDays ||
+      ((selectedActivity as any).status || 'NOT_STARTED') !== originalSnapshot.status
+    );
+  }, [selectedActivity, originalSnapshot]);
+
+  const openActivitySheet = useCallback((id: string) => {
+    const act = activities.find(a => a.id === id);
+    if (act) {
+      setOriginalSnapshot({
+        description: act.description || '',
+        startDate: act.startDate || '',
+        endDate: act.endDate || '',
+        durationDays: act.durationDays ?? null,
+        status: (act as any).status || 'NOT_STARTED',
+      });
+    }
+    setSelectedActivityId(id);
+  }, [activities]);
+
   const leftPanelWidth = useMemo(() => {
     return ALL_COLS.filter(k => visibleCols.has(k)).reduce((sum, k) => sum + COL_DEFS[k].width, 0);
   }, [visibleCols]);
