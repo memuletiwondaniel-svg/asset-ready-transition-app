@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { CheckCircle, X, Calendar, AlertTriangle, ChevronRight, Pencil, CalendarCheck, ClipboardList } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,7 +12,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import CreatePSSRWizard from '@/components/pssr/CreatePSSRWizard';
 import { ORAActivityPlanWizard } from '@/components/ora/wizard/ORAActivityPlanWizard';
-import { ORAActivityPlanReviewOverlay } from '@/components/ora/ORAActivityPlanReviewOverlay';
+
 import { ORAActivityTaskSheet } from './ORAActivityTaskSheet';
 import { VCRExecutionPlanWizard } from '@/components/widgets/vcr-wizard/VCRExecutionPlanWizard';
 import type { UserTask } from '@/hooks/useUserTasks';
@@ -32,11 +33,11 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   onApprove,
   onReject,
 }) => {
+  const navigate = useNavigate();
   const [comment, setComment] = useState('');
   const [action, setAction] = useState<'approve' | 'reject' | null>(null);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [oraWizardOpen, setOraWizardOpen] = useState(false);
-  const [oraReviewOpen, setOraReviewOpen] = useState(false);
   const [oraActivityOpen, setOraActivityOpen] = useState(false);
   const [vcrWizardOpen, setVcrWizardOpen] = useState(false);
 
@@ -235,7 +236,10 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
             {isOraReviewTask && oraPlanId && (
               <Button
                 className="w-full gap-2 bg-muted hover:bg-muted/80 text-foreground font-medium border border-border"
-                onClick={() => setOraReviewOpen(true)}
+                onClick={() => {
+                  onOpenChange(false);
+                  navigate(`/operation-readiness/${oraPlanId}`);
+                }}
               >
                 <CalendarCheck className="h-4 w-4" />
                 Review ORA Plan
@@ -342,19 +346,6 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
         />
       )}
 
-      {/* ORA Plan Review Overlay */}
-      {isOraReviewTask && oraPlanId && (
-        <ORAActivityPlanReviewOverlay
-          open={oraReviewOpen}
-          onOpenChange={setOraReviewOpen}
-          planId={oraPlanId}
-          taskId={task.id}
-          onApproved={() => {
-            setOraReviewOpen(false);
-            onOpenChange(false);
-          }}
-        />
-      )}
 
       {/* ORA Activity Task Sheet */}
       {isOraActivityTask && (
