@@ -874,6 +874,50 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                       </div>
                     );
                   })}
+                  {/* Critical path red connecting line */}
+                  {showCriticalPath && criticalPathIds.size > 0 && (() => {
+                    // Collect critical path bar centers sorted by left position
+                    const criticalBars: { x: number; y: number; left: number; right: number }[] = [];
+                    visibleRows.forEach((row, rowIdx) => {
+                      if (!criticalPathIds.has(row.deliverable.id)) return;
+                      if (row.hasChildren || !row.deliverable.start_date || !row.deliverable.end_date) return;
+                      const pos = getBarPosition(row.deliverable.start_date, row.deliverable.end_date);
+                      criticalBars.push({
+                        x: pos.left + pos.width / 2,
+                        y: rowIdx * ROW_HEIGHT + ROW_HEIGHT / 2,
+                        left: pos.left,
+                        right: pos.left + pos.width,
+                      });
+                    });
+                    criticalBars.sort((a, b) => a.left - b.left);
+
+                    if (criticalBars.length < 2) return null;
+
+                    // Build path connecting end of one bar to start of next, through center
+                    let pathD = '';
+                    for (let i = 0; i < criticalBars.length - 1; i++) {
+                      const from = criticalBars[i];
+                      const to = criticalBars[i + 1];
+                      pathD += `M${from.right},${from.y} L${to.left},${to.y} `;
+                    }
+
+                    return (
+                      <svg
+                        className="absolute top-0 left-0 pointer-events-none z-15"
+                        style={{ width: timelineWidth, height: visibleRows.length * ROW_HEIGHT }}
+                      >
+                        <path
+                          d={pathD}
+                          fill="none"
+                          stroke="hsl(var(--destructive))"
+                          strokeWidth="2"
+                          strokeDasharray="6,3"
+                          opacity="0.8"
+                        />
+                      </svg>
+                    );
+                  })()}
+
                   {/* Relationship arrows SVG overlay */}
                   {showRelationships && (
                     <svg
@@ -896,7 +940,6 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                         const toX = toPos.left;
 
                         return predecessorIds.map((predCode: string) => {
-                          // Find predecessor row by matching activity_code, id, or stripped id
                           const predIdx = visibleRows.findIndex(r => {
                             const code = r.deliverable.deliverable?.activity_code;
                             const id = r.deliverable.deliverable?.id || r.deliverable.id;

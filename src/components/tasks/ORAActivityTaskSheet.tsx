@@ -385,82 +385,87 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
               />
             </div>
 
-            {/* Editable Date info */}
+            {/* Editable Date info with range calendar */}
             <div className="space-y-3">
               <p className="text-sm font-medium text-muted-foreground">Schedule</p>
               <div className="grid grid-cols-2 gap-3">
-                {/* Start Date Picker */}
+                {/* Start Date display */}
                 <div>
                   <p className="text-[10px] text-muted-foreground mb-1 uppercase tracking-wide font-medium">Start Date</p>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal h-9 text-sm",
-                          !editStartDate && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
-                        {editStartDate ? format(editStartDate, 'MMM d, yyyy') : 'Set start date'}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={editStartDate}
-                        onSelect={(d) => {
-                          setEditStartDate(d || undefined);
-                          // If end date is before start, adjust it
-                          if (d && editEndDate && d > editEndDate) {
-                            setEditEndDate(d);
-                          }
-                        }}
-                        initialFocus
-                        className="p-3 pointer-events-auto"
-                      />
-                    </PopoverContent>
-                  </Popover>
+                  <div className={cn(
+                    "flex items-center gap-2 h-9 px-3 rounded-md border text-sm",
+                    editStartDate ? "text-foreground" : "text-muted-foreground"
+                  )}>
+                    <CalendarIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                    {editStartDate ? format(editStartDate, 'MMM d, yyyy') : 'Not set'}
+                  </div>
                 </div>
 
-                {/* End Date Picker */}
+                {/* End Date display */}
                 <div>
                   <p className="text-[10px] text-muted-foreground mb-1 uppercase tracking-wide font-medium">End Date</p>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal h-9 text-sm",
-                          !editEndDate && "text-muted-foreground",
-                          isOverdue && "border-destructive/50 text-destructive"
-                        )}
-                      >
-                        <CalendarIcon className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
-                        {editEndDate ? format(editEndDate, 'MMM d, yyyy') : 'Set end date'}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={editEndDate}
-                        onSelect={(d) => setEditEndDate(d || undefined)}
-                        disabled={(date) => editStartDate ? date < editStartDate : false}
-                        initialFocus
-                        className="p-3 pointer-events-auto"
-                      />
-                    </PopoverContent>
-                  </Popover>
+                  <div className={cn(
+                    "flex items-center gap-2 h-9 px-3 rounded-md border text-sm",
+                    editEndDate ? "text-foreground" : "text-muted-foreground",
+                    isOverdue && "border-destructive/50 text-destructive"
+                  )}>
+                    <CalendarIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                    {editEndDate ? format(editEndDate, 'MMM d, yyyy') : 'Not set'}
+                  </div>
                 </div>
               </div>
 
-              {/* Duration display */}
-              {durationDays !== null && (
-                <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <Clock className="h-3.5 w-3.5" />
-                  <span>Duration: <span className="font-semibold text-foreground">{durationDays} days</span></span>
+              {/* Duration with +/- controls */}
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Clock className="h-3.5 w-3.5" />
+                <span>Duration:</span>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-6 w-6 text-xs"
+                    disabled={!editStartDate || !editEndDate || (durationDays !== null && durationDays <= 1)}
+                    onClick={() => {
+                      if (editStartDate && editEndDate && durationDays && durationDays > 1) {
+                        setEditEndDate(addDays(editEndDate, -1));
+                      }
+                    }}
+                  >
+                    −
+                  </Button>
+                  <span className="font-semibold text-foreground w-10 text-center">{durationDays !== null ? `${durationDays}d` : '—'}</span>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-6 w-6 text-xs"
+                    disabled={!editStartDate || !editEndDate}
+                    onClick={() => {
+                      if (editStartDate && editEndDate) {
+                        setEditEndDate(addDays(editEndDate, 1));
+                      }
+                    }}
+                  >
+                    +
+                  </Button>
                 </div>
-              )}
+              </div>
+
+              {/* Range calendar */}
+              <div className="border rounded-lg p-1">
+                <Calendar
+                  mode="range"
+                  selected={editStartDate && editEndDate ? { from: editStartDate, to: editEndDate } : editStartDate ? { from: editStartDate, to: undefined } : undefined}
+                  onSelect={(range) => {
+                    if (range?.from) setEditStartDate(range.from);
+                    else setEditStartDate(undefined);
+                    if (range?.to) setEditEndDate(range.to);
+                    else if (range?.from && !range?.to) setEditEndDate(undefined);
+                    else setEditEndDate(undefined);
+                  }}
+                  numberOfMonths={1}
+                  className="p-2 pointer-events-auto"
+                />
+              </div>
             </div>
 
             <Separator />
