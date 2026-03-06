@@ -10,12 +10,14 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import { 
   Clock, CheckCircle2, Play, Upload, MessageSquare, 
-  Calendar, Paperclip, X, Loader2, AlertTriangle, Trash2 
+  Calendar as CalendarIcon, Paperclip, X, Loader2, AlertTriangle, Trash2 
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { format, parseISO, isPast } from 'date-fns';
+import { format, parseISO, isPast, differenceInDays } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 import { useQueryClient } from '@tanstack/react-query';
@@ -37,7 +39,6 @@ const STATUS_STEPS: { value: ActivityStatus; label: string; icon: React.ElementT
   { value: 'COMPLETED', label: 'Completed', icon: CheckCircle2 },
 ];
 
-// Same palette as Gantt chart for consistency
 const ID_BADGE_PALETTE = [
   { bg: 'bg-blue-100', text: 'text-blue-700' },
   { bg: 'bg-emerald-100', text: 'text-emerald-700' },
@@ -76,9 +77,15 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
   const [deleting, setDeleting] = useState(false);
   const [progressPct, setProgressPct] = useState(50);
 
+  // Editable dates
+  const [editStartDate, setEditStartDate] = useState<Date | undefined>();
+  const [editEndDate, setEditEndDate] = useState<Date | undefined>();
+
   // Original values for dirty tracking
   const [originalStatus, setOriginalStatus] = useState<ActivityStatus>('NOT_STARTED');
   const [originalDescription, setOriginalDescription] = useState('');
+  const [originalStartDate, setOriginalStartDate] = useState<Date | undefined>();
+  const [originalEndDate, setOriginalEndDate] = useState<Date | undefined>();
 
   const metadata = task?.metadata as Record<string, any> | undefined;
   const activityName = metadata?.activity_name || task?.title || '';
@@ -88,14 +95,20 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
   const planId = metadata?.plan_id as string | undefined;
   const deliverableId = metadata?.deliverable_id as string | undefined;
   const oraActivityId = metadata?.ora_plan_activity_id as string | undefined;
-  const isOverdue = endDate && isPast(parseISO(endDate)) && status !== 'COMPLETED';
+  const isOverdue = editEndDate && isPast(editEndDate) && status !== 'COMPLETED';
 
-  // Deterministic color from activity code
+  // Duration computed from editable dates
+  const durationDays = useMemo(() => {
+    if (editStartDate && editEndDate) {
+      return differenceInDays(editEndDate, editStartDate);
+    }
+    return null;
+  }, [editStartDate, editEndDate]);
+
   const idColors = activityCode
     ? ID_BADGE_PALETTE[hashCode(activityCode) % ID_BADGE_PALETTE.length]
     : ID_BADGE_PALETTE[0];
 
-  // Derive the real DB id (strip "ora-" or "ws-" prefix if present)
   const realOraActivityId = useMemo(() => {
     const raw = oraActivityId || '';
     if (raw.startsWith('ora-')) return raw.slice(4);
@@ -107,7 +120,6 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
   useEffect(() => {
     if (open && task) {
       const initDesc = metadata?.description || task?.description || '';
-      // Map the task status back to ActivityStatus
       const taskStatus = task?.status;
       const initStatus: ActivityStatus = taskStatus === 'completed' ? 'COMPLETED'
         : taskStatus === 'in_progress' ? 'IN_PROGRESS' : 'NOT_STARTED';
@@ -119,15 +131,25 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
       setFiles([]);
       setComment('');
       setProgressPct(50);
+
+      const sd = startDate ? parseISO(startDate) : undefined;
+      const ed = endDate ? parseISO(endDate) : undefined;
+      setEditStartDate(sd);
+      setEditEndDate(ed);
+      setOriginalStartDate(sd);
+      setOriginalEndDate(ed);
     }
   }, [open, task?.id]);
 
   const isDirty = useMemo(() => {
+    const datesChanged = editStartDate?.getTime() !== originalStartDate?.getTime() ||
+                         editEndDate?.getTime() !== originalEndDate?.getTime();
     return status !== originalStatus || 
            description !== originalDescription || 
            files.length > 0 || 
-           comments.length > 0;
-  }, [status, originalStatus, description, originalDescription, files.length, comments.length]);
+           comments.length > 0 ||
+           datesChanged;
+  }, [status, originalStatus, description, originalDescription, files.length, comments.length, editStartDate, editEndDate, originalStartDate, originalEndDate]);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     setFiles(prev => [...prev, ...acceptedFiles]);
@@ -159,7 +181,6 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
     setSaving(true);
 
     try {
-      // Upload evidence files
       const uploadedPaths: string[] = [];
       for (const file of files) {
         const path = `ora-evidence/${planId}/${deliverableId}/${Date.now()}-${file.name}`;
@@ -167,7 +188,6 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
         if (!error) uploadedPaths.push(path);
       }
 
-      // Upsert ora_plan_activities for description, status, and progress
       if (realOraActivityId && planId) {
         const completionPct = status === 'COMPLETED' ? 100 : status === 'IN_PROGRESS' ? progressPct : 0;
         const upsertData: Record<string, any> = {
@@ -182,21 +202,57 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
         if (description !== originalDescription) {
           upsertData.description = description;
         }
-        if (status === 'COMPLETED') {
+        // Use editable dates
+        if (editStartDate) {
+          upsertData.start_date = format(editStartDate, 'yyyy-MM-dd');
+        }
+        if (editEndDate) {
+          upsertData.end_date = format(editEndDate, 'yyyy-MM-dd');
+        }
+        if (editStartDate && editEndDate) {
+          upsertData.duration_days = differenceInDays(editEndDate, editStartDate);
+        }
+        if (status === 'COMPLETED' && !editEndDate) {
           upsertData.end_date = new Date().toISOString().split('T')[0];
-        }
-        if (startDate) {
-          upsertData.start_date = startDate;
-        }
-        if (endDate) {
-          upsertData.end_date = upsertData.end_date || endDate;
         }
         await (supabase as any)
           .from('ora_plan_activities')
           .upsert(upsertData, { onConflict: 'id' });
+
+        // Also update wizard_state dates if changed
+        const datesChanged = editStartDate?.getTime() !== originalStartDate?.getTime() ||
+                             editEndDate?.getTime() !== originalEndDate?.getTime();
+        if (datesChanged) {
+          const { data: planRow } = await (supabase as any)
+            .from('orp_plans')
+            .select('wizard_state')
+            .eq('id', planId)
+            .single();
+
+          if (planRow?.wizard_state) {
+            const ws = planRow.wizard_state as any;
+            const wsActivities: any[] = ws.activities || [];
+            const updatedActivities = wsActivities.map((a: any) => {
+              const aId = String(a.id || '');
+              if (aId === realOraActivityId || aId === `ora-${realOraActivityId}` || aId === `ws-${realOraActivityId}` || aId === (oraActivityId || '__none__')) {
+                return {
+                  ...a,
+                  startDate: editStartDate ? format(editStartDate, 'yyyy-MM-dd') : a.startDate,
+                  start_date: editStartDate ? format(editStartDate, 'yyyy-MM-dd') : a.start_date,
+                  endDate: editEndDate ? format(editEndDate, 'yyyy-MM-dd') : a.endDate,
+                  end_date: editEndDate ? format(editEndDate, 'yyyy-MM-dd') : a.end_date,
+                };
+              }
+              return a;
+            });
+            await (supabase as any)
+              .from('orp_plans')
+              .update({ wizard_state: { ...ws, activities: updatedActivities } })
+              .eq('id', planId);
+          }
+        }
       }
 
-      // Also update orp_plan_deliverables if it exists (legacy path)
       if (deliverableId && deliverableId !== realOraActivityId) {
         const completionPct = status === 'COMPLETED' ? 100 : status === 'IN_PROGRESS' ? progressPct : 0;
         await supabase
@@ -208,7 +264,6 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
           .eq('id', deliverableId);
       }
 
-      // Update task status (only if task.id is a valid UUID, not a prefixed virtual ID)
       const isRealTaskId = task.id && !task.id.startsWith('ws-') && !task.id.startsWith('ora-');
       if (isRealTaskId) {
         const taskStatus = status === 'COMPLETED' ? 'completed' : status === 'IN_PROGRESS' ? 'in_progress' : 'pending';
@@ -241,17 +296,14 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
     setDeleting(true);
 
     try {
-      // Delete from ora_plan_activities DB table
       if (realOraActivityId) {
         await (supabase as any).from('ora_plan_activities').delete().eq('id', realOraActivityId);
       }
-      // Delete from user_tasks DB table
       const isRealTaskId = task.id && !task.id.startsWith('ws-') && !task.id.startsWith('ora-');
       if (isRealTaskId) {
         await supabase.from('user_tasks').delete().eq('id', task.id);
       }
 
-      // Also remove from wizard_state so the Gantt table reflects the deletion
       if (planId) {
         const { data: planRow } = await (supabase as any)
           .from('orp_plans')
@@ -262,7 +314,6 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
         if (planRow?.wizard_state) {
           const ws = planRow.wizard_state as any;
           const wsActivities: any[] = ws.activities || [];
-          // Filter out the deleted activity by matching its id (with or without prefix)
           const updatedActivities = wsActivities.filter((a: any) => {
             const aId = String(a.id || '');
             return aId !== realOraActivityId &&
@@ -334,28 +385,87 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
               />
             </div>
 
-            {/* Date info */}
-            <div className="flex items-center gap-4 text-sm">
-              {startDate && (
-                <div className="flex items-center gap-1.5 text-muted-foreground">
-                  <Calendar className="h-3.5 w-3.5" />
-                  <span>Start: {format(parseISO(startDate), 'MMM d, yyyy')}</span>
+            {/* Editable Date info */}
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-muted-foreground">Schedule</p>
+              <div className="grid grid-cols-2 gap-3">
+                {/* Start Date Picker */}
+                <div>
+                  <p className="text-[10px] text-muted-foreground mb-1 uppercase tracking-wide font-medium">Start Date</p>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal h-9 text-sm",
+                          !editStartDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
+                        {editStartDate ? format(editStartDate, 'MMM d, yyyy') : 'Set start date'}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={editStartDate}
+                        onSelect={(d) => {
+                          setEditStartDate(d || undefined);
+                          // If end date is before start, adjust it
+                          if (d && editEndDate && d > editEndDate) {
+                            setEditEndDate(d);
+                          }
+                        }}
+                        initialFocus
+                        className="p-3 pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
-              )}
-              {endDate && (
-                <div className={cn(
-                  "flex items-center gap-1.5",
-                  isOverdue ? "text-destructive" : "text-muted-foreground"
-                )}>
-                  <Calendar className="h-3.5 w-3.5" />
-                  <span>Due: {format(parseISO(endDate), 'MMM d, yyyy')}</span>
+
+                {/* End Date Picker */}
+                <div>
+                  <p className="text-[10px] text-muted-foreground mb-1 uppercase tracking-wide font-medium">End Date</p>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal h-9 text-sm",
+                          !editEndDate && "text-muted-foreground",
+                          isOverdue && "border-destructive/50 text-destructive"
+                        )}
+                      >
+                        <CalendarIcon className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
+                        {editEndDate ? format(editEndDate, 'MMM d, yyyy') : 'Set end date'}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={editEndDate}
+                        onSelect={(d) => setEditEndDate(d || undefined)}
+                        disabled={(date) => editStartDate ? date < editStartDate : false}
+                        initialFocus
+                        className="p-3 pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </div>
+
+              {/* Duration display */}
+              {durationDays !== null && (
+                <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <Clock className="h-3.5 w-3.5" />
+                  <span>Duration: <span className="font-semibold text-foreground">{durationDays} days</span></span>
                 </div>
               )}
             </div>
 
             <Separator />
 
-            {/* Status Toggle — extra top spacing */}
+            {/* Status Toggle */}
             <div className="pt-2">
               <p className="text-sm font-medium mb-3 text-muted-foreground">Status</p>
               <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg">
@@ -381,7 +491,6 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                 })}
               </div>
 
-              {/* In Progress → slider */}
               {status === 'IN_PROGRESS' && (
                 <div className="mt-4 space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
                   <div className="flex items-center justify-between">
@@ -451,7 +560,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
 
             <Separator />
 
-            {/* Comments — always visible */}
+            {/* Comments */}
             <div>
               <p className="text-sm font-medium mb-2 flex items-center gap-1.5 text-muted-foreground">
                 <MessageSquare className="h-4 w-4" />
@@ -527,7 +636,6 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                 Cancel
               </Button>
 
-              {/* Save / Confirm Completed — only when dirty */}
               {isDirty && (
                 <Button
                   size="sm"
