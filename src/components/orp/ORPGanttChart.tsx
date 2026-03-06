@@ -409,12 +409,47 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
       };
     });
 
-    await supabase
-      .from('ora_plan_activities')
-      .update({ start_date: startStr, end_date: endStr, duration_days: durationDays })
-      .eq('id', activityId);
+    // Strip prefix to get the real DB id
+    const dbId = activityId.replace(/^(ora-|ws-)/, '');
+
+    try {
+      await supabase
+        .from('ora_plan_activities')
+        .update({ start_date: startStr, end_date: endStr, duration_days: durationDays })
+        .eq('id', dbId);
+    } catch (err) {
+      console.error('Failed to update activity dates:', err);
+    }
+
+    // Also update wizard_state dates for ws- activities
+    if (activityId.startsWith('ws-')) {
+      try {
+        const { data: plan } = await supabase
+          .from('orp_plans')
+          .select('wizard_state')
+          .eq('id', planId)
+          .single();
+        if (plan?.wizard_state) {
+          const ws = plan.wizard_state as any;
+          if (ws.activities && Array.isArray(ws.activities)) {
+            const updated = ws.activities.map((a: any) =>
+              a.id === dbId
+                ? { ...a, startDate: startStr, start_date: startStr, endDate: endStr, end_date: endStr }
+                : a
+            );
+            await supabase
+              .from('orp_plans')
+              .update({ wizard_state: { ...ws, activities: updated } })
+              .eq('id', planId);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to update wizard_state dates:', err);
+      }
+    }
+
     queryClient.invalidateQueries({ queryKey: ['orp-plan'] });
-  }, [queryClient]);
+  }, [queryClient, planId]);
 
   const { draggingId, previewLeft, previewWidth, handleMouseDown, wasDragging } = useGanttBarResize({
     minDate,
