@@ -229,7 +229,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
         if (editStartDate && editEndDate) {
           upsertData.duration_days = differenceInDays(editEndDate, editStartDate);
         }
-        if (status === 'COMPLETED' && !editEndDate) {
+        if (status === 'COMPLETED') {
           upsertData.end_date = new Date().toISOString().split('T')[0];
         }
         await (supabase as any)
