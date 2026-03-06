@@ -865,7 +865,14 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange }
                     {selectedActivity.activityCode}
                   </span>
                 </div>
-                <SheetTitle className="text-sm">{selectedActivity.activity}</SheetTitle>
+                <SheetTitle className="text-sm">
+                  <Input
+                    value={selectedActivity.activity}
+                    onChange={(e) => updateActivity(selectedActivity.id, { activity: e.target.value })}
+                    placeholder="Enter activity name..."
+                    className="text-sm font-semibold border-dashed h-8 px-2"
+                  />
+                </SheetTitle>
               </SheetHeader>
 
               <div className="space-y-5 pt-4">
