@@ -48,8 +48,9 @@ const PHASE_TO_ORP: Record<string, string> = {
 };
 
 export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
-  open, onOpenChange, projectId, onSuccess
+  open, onOpenChange, projectId, planId: externalPlanId, mode = 'create', onSuccess
 }) => {
+  const isReviewMode = mode === 'review';
   const [currentStep, setCurrentStep] = useState(1);
   const [visitedSteps, setVisitedSteps] = useState<Set<number>>(new Set([1]));
   const [phase, setPhase] = useState('');
