@@ -13,7 +13,7 @@ import {
 import { Calendar } from '@/components/ui/calendar';
 import { 
   Clock, CheckCircle2, Play, Upload, MessageSquare, 
-  Calendar as CalendarIcon, Paperclip, X, Loader2, AlertTriangle, Trash2 
+  Paperclip, X, Loader2, AlertTriangle, Trash2 
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, parseISO, isPast, differenceInDays, addDays } from 'date-fns';
