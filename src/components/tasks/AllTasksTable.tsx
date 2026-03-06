@@ -135,7 +135,7 @@ export const AllTasksTable: React.FC<AllTasksTableProps> = ({ searchQuery, userI
         project: item.project_number || 'Unknown Project',
         status: item.stage,
         createdAt: item.created_at,
-        navigateTo: `/p2a-handover/${item.handover_id}`,
+        navigateTo: `/my-tasks`,
         isNew: isNewSinceLastLogin(item.created_at),
       });
     });
