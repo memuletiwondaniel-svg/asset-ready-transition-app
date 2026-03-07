@@ -432,7 +432,7 @@ export const useUserTasks = () => {
       if (refreshTimerRef.current) window.clearTimeout(refreshTimerRef.current);
       refreshTimerRef.current = window.setTimeout(() => {
         queryClient.invalidateQueries({ queryKey: ['user-tasks', user.id] });
-      }, 250);
+      }, 800); // Debounce 800ms to let optimistic updates settle before refetching
     };
 
     const channel = supabase
