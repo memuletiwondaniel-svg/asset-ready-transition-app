@@ -197,7 +197,7 @@ export const BreadcrumbNavigation: React.FC<BreadcrumbNavigationProps> = ({
             </span>
           ))}
           <BreadcrumbItem>
-            <BreadcrumbPage className="font-semibold text-foreground text-xs">
+            <BreadcrumbPage className="font-semibold text-foreground text-[10px] sm:text-xs whitespace-nowrap">
               {currentPageLabel}
             </BreadcrumbPage>
           </BreadcrumbItem>
