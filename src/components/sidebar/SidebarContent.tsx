@@ -224,6 +224,11 @@ export const SidebarContent = memo<SidebarContentProps>(({
                           {unreadChatCount}
                         </span>
                       )}
+                      {item.section === 'my-tasks' && newTaskCount > 0 && (
+                        <span className="ml-auto flex h-5 min-w-5 px-1 items-center justify-center rounded-full bg-destructive text-[10px] font-semibold text-destructive-foreground">
+                          {newTaskCount}
+                        </span>
+                      )}
                     </Button>
                   );
                 })}
