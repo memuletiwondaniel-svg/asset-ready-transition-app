@@ -461,7 +461,7 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
             <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm">
               <div className="min-w-0">
                 <p className="text-xs text-muted-foreground font-medium">Project</p>
-                <p className="font-semibold text-foreground/90">
+                <p className="font-semibold text-foreground/90 truncate">
                   {formData.project_id_prefix}{formData.project_id_number}
                   {formData.project_title ? ` – ${formData.project_title}` : ''}
                 </p>
