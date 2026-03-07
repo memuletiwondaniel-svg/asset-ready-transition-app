@@ -55,6 +55,8 @@ export const ORPGanttOverlay: React.FC<ORPGanttOverlayProps> = ({
   notStartedCount = 0,
   p2aProgress = 0,
   vcrCount = 0,
+  projectCode,
+  projectName,
 }) => {
   const [approvalsOpen, setApprovalsOpen] = useState(false);
   const { data: planDetails, isLoading } = useORPPlanDetails(open ? planId : '');
