@@ -27,6 +27,7 @@ export interface ProjectORPPlan {
   p2a_progress: number;
   vcr_count: number;
   upcoming_activities: ProjectORPActivity[];
+  completed_activities: ProjectORPActivity[];
   plan_start_date: string | null;
   plan_end_date: string | null;
 }
@@ -192,6 +193,17 @@ export const useProjectORPPlans = (projectId: string) => {
             })
             .slice(0, 10);
 
+          // Completed: sorted by end_date descending
+          const completed: ProjectORPActivity[] = sourceActivities
+            .filter((a: any) => a.status === 'COMPLETED')
+            .sort((a: any, b: any) => {
+              if (!a.end_date && !b.end_date) return 0;
+              if (!a.end_date) return 1;
+              if (!b.end_date) return -1;
+              return new Date(b.end_date).getTime() - new Date(a.end_date).getTime();
+            })
+            .slice(0, 10);
+
           return {
             id: plan.id,
             project_id: plan.project_id,
@@ -207,6 +219,7 @@ export const useProjectORPPlans = (projectId: string) => {
             p2a_progress: stats.p2aProgress,
             vcr_count: stats.vcrCount,
             upcoming_activities: upcoming,
+            completed_activities: completed,
             plan_start_date: planStartDate,
             plan_end_date: planEndDate,
           };

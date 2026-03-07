@@ -1,55 +1,77 @@
 
 
-## Plan: Redesign ORA Activities Card
+# Plan: ORIP Scoring Engine Using Existing VCR Item Categories
 
-### Current State
-- The ORA Activities card has a fixed compact layout regardless of plan state
-- Activities are shown in a flat list (up to 6, no categorization)
-- The `upcoming_activities` from the hook only includes non-completed activities
-- The Project Overview card uses `lg:h-[calc(100vh-180px)]` for height
+## Impact Assessment: Zero Breaking Changes
 
-### Changes
+**No existing workflows will be affected.** The approach reuses the existing `vcr_item_categories` table (Design Integrity, Technical Integrity, Operating Integrity, Management Systems, Health & Safety) as the readiness dimensions for ORI scoring. All changes are additive:
 
-#### 1. Update `useProjectORPPlans.ts` — add `completed_activities` to the data
-- Add a new field `completed_activities: ProjectORPActivity[]` to `ProjectORPPlan`
-- Query completed activities sorted by `end_date` descending, limited to 10
-- Return alongside existing `upcoming_activities`
+- The `vcr_item_categories` table gets a `tenant_id` column and weight/confidence fields -- existing rows remain intact
+- The `readiness_nodes` table gets a new nullable `dimension_id` column pointing to `vcr_item_categories`
+- The `sync_readiness_nodes` and `calculate_ori_score` functions are replaced with enhanced versions that use category-based dimensions instead of module-based grouping
+- Existing P2A, ORA, PSSR, ORM workflows are untouched -- the ontology layer only reads from them
 
-#### 2. Redesign `ORPActivityPlanWidget.tsx` — expanded card with 4 sections
-Once a plan exists (non-null), the card expands to match the Project Overview height using `h-full` and flex layout with overflow scroll.
+## Current VCR Item Categories (Become Readiness Dimensions)
 
-**Section 1 — ORA Plan CTA with Status** (top, non-collapsible)
-- Keep the existing button-style CTA row with status badge and chevron
-- Add plan date range below it (already exists, just keep)
+| Code | Name | Active |
+|------|------|--------|
+| DI2 | Design Integrity | Yes |
+| TI | Technical Integrity | Yes |
+| OI | Operating Integrity | Yes |
+| MS | Management Systems | Yes |
+| HS | Health & Safety | Yes |
 
-**Section 2 — Progress Summary** (non-collapsible)
-- Progress bar with percentage and counts
-- Summary note: e.g. "3 completed · 5 in progress · 2 not started"
+These become the tenant-configurable readiness dimensions. Different tenants can add/rename/reweight their own categories.
 
-**Section 3 — Ongoing / Upcoming Activities** (collapsible, default open)
-- Use `Collapsible` component with a header showing count badge
-- List in-progress and upcoming activities with status icons
-- Show activity name, status icon, and due date
+## Implementation Tasks
 
-**Section 4 — Recently Completed** (collapsible, default collapsed)
-- Use `Collapsible` component
-- Show completed activities with green checkmark and completion date
-- Strikethrough styling on names
+### Task 1: Extend `vcr_item_categories` for ORI Scoring
+Add columns to make categories serve double duty as readiness dimensions:
+- `tenant_id UUID` (nullable, defaults via trigger -- existing rows get current tenant)
+- `default_weight NUMERIC(5,4)` (e.g., 0.20 = 20%)
+- `confidence_factor_default NUMERIC(3,2)` (default 0.8)
+- `risk_severity_multiplier NUMERIC(3,1)` (default 1.0)
+- `is_readiness_dimension BOOLEAN DEFAULT true`
 
-#### 3. Update `ProjectDetailsPage.tsx` — match heights
-- The right-column widgets grid already uses `flex-1 min-h-0` but cards don't stretch. Add `h-full` propagation so when only one widget is visible or ORP card is present, it fills the available vertical space matching the left column.
-- When both widgets exist in a 2-col grid, use `md:grid-rows-[1fr]` or `items-stretch` so cards expand equally.
+Add `dimension_id UUID REFERENCES vcr_item_categories(id)` to `readiness_nodes`.
 
-### UI/UX Design Details
-- Card uses `flex flex-col h-full` with `overflow-hidden`
-- Content area uses `flex-1 overflow-y-auto` for scrolling when content exceeds card height
-- Collapsible sections use `ChevronDown`/`ChevronRight` toggle icons
-- Section headers: `text-xs uppercase tracking-wider font-semibold text-muted-foreground` with activity count badges
-- Activity rows: compact `py-1.5 px-2` with hover state, icon + name + date layout
-- Smooth `Collapsible` animations from Radix
+### Task 2: Enhanced ORI Formula
+Replace `calculate_ori_score()` with the full ORIP formula:
 
-### Files to modify
-- `src/hooks/useProjectORPPlans.ts` — add `completed_activities` field
-- `src/components/widgets/ORPActivityPlanWidget.tsx` — full redesign of active plan view
-- `src/pages/ProjectDetailsPage.tsx` — ensure height matching with left column
+```
+DS_i = (Σ Subcomponent_Weight × Completion%) × Confidence_Factor
+RP_i = Σ (Risk_Severity × Impact_Multiplier)  -- capped at 15%
+ORI  = Σ (Dimension_Weight_i × DS_i) − Global_Risk_Penalty
+SCS  = ORI × Schedule_Adherence × Critical_Path_Stability
+```
+
+Add columns to `ori_scores`: `dimension_scores JSONB`, `risk_penalty_total NUMERIC`, `startup_confidence_score NUMERIC`, `schedule_adherence_index NUMERIC`, `critical_path_stability_index NUMERIC`.
+
+Add `confidence_factor NUMERIC(3,2) DEFAULT 0.8` and `risk_severity TEXT DEFAULT 'none'` to `readiness_nodes`.
+
+### Task 3: Update Sync Function
+Update `sync_readiness_nodes()` to auto-assign `dimension_id` by mapping:
+- P2A VCR prerequisites → mapped via their `vcr_items.category_id` directly to `vcr_item_categories`
+- ORA activities → default to "Operating Integrity" or map via metadata
+- PSSR items → map via PSSR checklist category → nearest VCR category
+- ORM deliverables → default to "Management Systems"
+- Training → default to "Operating Integrity"
+
+Set confidence factors: completed/approved = 1.0, in-progress = 0.8, not-started = 0.7.
+
+### Task 4: Executive Dashboard Enhancement
+Redesign `ExecutiveDashboard.tsx` to match the strategic layout:
+- **Top Banner**: Large ORI + SCS + color coding (Green >85, Amber 70-85, Red <70)
+- **Dimension Breakdown**: Bar/table showing each VCR category's score, trend arrow, risk level
+- **Top 5 Startup Blockers**: Blocked/critical nodes with severity
+- **Predictive Trend**: ORI line chart with dashed target curve
+- **Risk Impact Summary**: 4 stat boxes (Open High Risks, Startup-blocking, Dimensions below 70%, Systems below 60%)
+
+### Task 5: Tenant-Configurable Weight Profiles
+Update the existing `ori_weight_profiles` to store dimension-based weights keyed by `vcr_item_categories.id` instead of module names. Add a simple admin UI for editing weights per tenant.
+
+### Task 6: Update Living Documents
+- **Security & Compliance Doc**: Add rows for Readiness Dimensions, Risk Penalty Engine, Startup Confidence Score (mark as Active)
+- **Platform Guide**: Add "Readiness Ontology & Scoring Engine" section documenting the 6 dimensions, ORI formula, SCS
+- **Strategic North Star**: Update scoring engine status from Planned to Active, add dimension-based architecture detail
 
