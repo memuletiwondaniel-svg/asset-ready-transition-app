@@ -482,7 +482,8 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                   <p className="text-[10px] text-muted-foreground mb-1 uppercase tracking-wide font-medium">Start Date</p>
                   <button
                     type="button"
-                    onClick={() => setShowCalendar(v => !v)}
+                    onClick={() => !isReadOnly && setShowCalendar(v => !v)}
+                    disabled={isReadOnly}
                     className={cn(
                       "w-full h-9 px-3 rounded-md border text-sm text-left transition-colors hover:bg-muted/50",
                       editStartDate ? "text-foreground" : "text-muted-foreground",
