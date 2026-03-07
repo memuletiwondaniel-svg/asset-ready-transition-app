@@ -1265,6 +1265,20 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
         open={!!selectedOraActivity}
         onOpenChange={(open) => !open && setSelectedOraActivity(null)}
       />
+      {planData?.project_id && (
+        <P2APlanCreationWizard
+          open={showP2AWizard}
+          onOpenChange={setShowP2AWizard}
+          projectId={planData.project_id}
+          projectCode={projectCode}
+          projectName={projectName}
+          onSuccess={() => {
+            setShowP2AWizard(false);
+            queryClient.invalidateQueries({ queryKey: ['orp-plan'] });
+            queryClient.invalidateQueries({ queryKey: ['p2a-plan-exists'] });
+          }}
+        />
+      )}
     </Card>
   );
 };
