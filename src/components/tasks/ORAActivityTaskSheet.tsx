@@ -565,39 +565,59 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
 
             <Separator />
 
-            {/* Status Toggle */}
-            <div className="pt-2">
-              <p className="text-sm font-medium mb-3 text-muted-foreground">Status</p>
-              <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg">
-                {STATUS_STEPS.map((step) => {
-                  const Icon = step.icon;
-                  const isActive = status === step.value;
-                  return (
-                    <button
-                      key={step.value}
-                      onClick={() => setStatus(step.value)}
-                      className={cn(
-                        "flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-md text-xs font-medium transition-all",
-                        isActive && step.value === 'NOT_STARTED' && "bg-gray-200 text-gray-700 shadow-sm",
-                        isActive && step.value === 'IN_PROGRESS' && "bg-amber-500 text-white shadow-sm",
-                        isActive && step.value === 'COMPLETED' && "bg-green-500 text-white shadow-sm",
-                        !isActive && "text-muted-foreground hover:text-foreground hover:bg-background/50"
-                      )}
-                    >
-                      <Icon className="h-3.5 w-3.5" />
-                      {step.label}
-                    </button>
-                  );
-                })}
+            {/* P2A Activity: Show wizard CTA instead of status toggle */}
+            {isP2AActivity ? (
+              <div className="pt-2 space-y-3">
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  This activity requires creating the Project to Asset (P2A) handover plan. Click below to launch the P2A planning wizard.
+                </p>
+                <Button
+                  className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
+                  onClick={() => {
+                    onOpenChange(false);
+                    setShowP2AWizard(true);
+                  }}
+                >
+                  <FileText className="h-4 w-4" />
+                  {p2aSheetCtaLabel}
+                  <ChevronRight className="h-4 w-4 ml-auto" />
+                </Button>
               </div>
-
-              {status === 'IN_PROGRESS' && (
-                <div className="mt-4 space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium text-muted-foreground">Progress</p>
-                    <span className="text-sm font-semibold text-amber-600">{progressPct}%</span>
+            ) : (
+              <>
+                {/* Status Toggle */}
+                <div className="pt-2">
+                  <p className="text-sm font-medium mb-3 text-muted-foreground">Status</p>
+                  <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg">
+                    {STATUS_STEPS.map((step) => {
+                      const Icon = step.icon;
+                      const isActive = status === step.value;
+                      return (
+                        <button
+                          key={step.value}
+                          onClick={() => setStatus(step.value)}
+                          className={cn(
+                            "flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-md text-xs font-medium transition-all",
+                            isActive && step.value === 'NOT_STARTED' && "bg-gray-200 text-gray-700 shadow-sm",
+                            isActive && step.value === 'IN_PROGRESS' && "bg-amber-500 text-white shadow-sm",
+                            isActive && step.value === 'COMPLETED' && "bg-green-500 text-white shadow-sm",
+                            !isActive && "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                          )}
+                        >
+                          <Icon className="h-3.5 w-3.5" />
+                          {step.label}
+                        </button>
+                      );
+                    })}
                   </div>
-                  <Slider
+
+                  {status === 'IN_PROGRESS' && (
+                    <div className="mt-4 space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium text-muted-foreground">Progress</p>
+                        <span className="text-sm font-semibold text-amber-600">{progressPct}%</span>
+                      </div>
+                      <Slider
                     value={[progressPct]}
                     onValueChange={(val) => setProgressPct(val[0])}
                     max={100}
