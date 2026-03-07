@@ -738,7 +738,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                   <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground text-center mb-4">
                     Favorites
                   </h2>
-                  <div className="flex flex-wrap justify-center gap-3">
+                  <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
                     {favorites.map((fav) => {
                       const IconComponent = getFavoriteIcon(fav.path, fav.label);
                       const colorClass = getFavoriteColor(fav.path, fav.label);
