@@ -1,77 +1,56 @@
 
 
-# Plan: ORIP Scoring Engine Using Existing VCR Item Categories
+## Plan: Post-Approval Task Generation, P2A Activity Special Handling, and Cross-Linkage
 
-## Impact Assessment: Zero Breaking Changes
+### Problem
+1. After ORA Plan approval, only a P2A task is generated — no tasks for leaf-level activities
+2. The "Develop P2A Plan" activity in the Gantt chart shows standard status buttons (Not Started / In Progress / Completed) instead of a P2A wizard CTA
+3. Completing a task in My Tasks doesn't update the Gantt chart activity status, and vice versa
 
-**No existing workflows will be affected.** The approach reuses the existing `vcr_item_categories` table (Design Integrity, Technical Integrity, Operating Integrity, Management Systems, Health & Safety) as the readiness dimensions for ORI scoring. All changes are additive:
+---
 
-- The `vcr_item_categories` table gets a `tenant_id` column and weight/confidence fields -- existing rows remain intact
-- The `readiness_nodes` table gets a new nullable `dimension_id` column pointing to `vcr_item_categories`
-- The `sync_readiness_nodes` and `calculate_ori_score` functions are replaced with enhanced versions that use category-based dimensions instead of module-based grouping
-- Existing P2A, ORA, PSSR, ORM workflows are untouched -- the ontology layer only reads from them
+### Changes
 
-## Current VCR Item Categories (Become Readiness Dimensions)
+#### 1. Generate leaf-level tasks during materialization (`ORAActivityPlanWizard.tsx`)
 
-| Code | Name | Active |
-|------|------|--------|
-| DI2 | Design Integrity | Yes |
-| TI | Technical Integrity | Yes |
-| OI | Operating Integrity | Yes |
-| MS | Management Systems | Yes |
-| HS | Health & Safety | Yes |
+In `materializeActivities()`, after inserting all activities into `ora_plan_activities`, identify leaf-level activities (those whose IDs do not appear as any other activity's `parent_id`). For each leaf activity (excluding the P2A-01 activity which already has its own task):
 
-These become the tenant-configurable readiness dimensions. Different tenants can add/rename/reweight their own categories.
+- Create a `user_task` via `create_user_task` RPC assigned to the Sr. ORA Engineer
+- Order by `start_date`, first task gets `High` priority, rest get `Medium`
+- Task type: `ora_activity`, metadata includes `plan_id`, `ora_activity_id`, `project_id`, `action: 'complete_ora_activity'`, `activity_code`, `activity_name`
 
-## Implementation Tasks
+This goes after the existing P2A task creation block (~line 473).
 
-### Task 1: Extend `vcr_item_categories` for ORI Scoring
-Add columns to make categories serve double duty as readiness dimensions:
-- `tenant_id UUID` (nullable, defaults via trigger -- existing rows get current tenant)
-- `default_weight NUMERIC(5,4)` (e.g., 0.20 = 20%)
-- `confidence_factor_default NUMERIC(3,2)` (default 0.8)
-- `risk_severity_multiplier NUMERIC(3,1)` (default 1.0)
-- `is_readiness_dimension BOOLEAN DEFAULT true`
+#### 2. Special P2A activity handling in Gantt chart (`ORPGanttChart.tsx`)
 
-Add `dimension_id UUID REFERENCES vcr_item_categories(id)` to `readiness_nodes`.
+In `openActivitySheet()`, detect if the clicked activity is the P2A activity (activity_code === 'P2A-01' or name contains 'P2A Plan'). If so, instead of opening the `ORAActivityTaskSheet`, set state to open the `P2APlanCreationWizard`.
 
-### Task 2: Enhanced ORI Formula
-Replace `calculate_ori_score()` with the full ORIP formula:
+Add state: `showP2AWizard` boolean. Render `P2APlanCreationWizard` at the bottom of the component (needs `projectId` and `projectCode` props — derive from plan data).
 
-```
-DS_i = (Σ Subcomponent_Weight × Completion%) × Confidence_Factor
-RP_i = Σ (Risk_Severity × Impact_Multiplier)  -- capped at 15%
-ORI  = Σ (Dimension_Weight_i × DS_i) − Global_Risk_Penalty
-SCS  = ORI × Schedule_Adherence × Critical_Path_Stability
-```
+Fetch existing P2A plan status to determine CTA label: "Create P2A Plan" vs "Continue P2A Plan".
 
-Add columns to `ori_scores`: `dimension_scores JSONB`, `risk_penalty_total NUMERIC`, `startup_confidence_score NUMERIC`, `schedule_adherence_index NUMERIC`, `critical_path_stability_index NUMERIC`.
+#### 3. Special P2A status in Gantt chart status column (`ORPGanttChart.tsx`)
 
-Add `confidence_factor NUMERIC(3,2) DEFAULT 0.8` and `risk_severity TEXT DEFAULT 'none'` to `readiness_nodes`.
+For the P2A-01 row in the status column, instead of the standard status badge, render a small CTA button "Create P2A Plan" / "Continue P2A Plan" that opens the P2A wizard.
 
-### Task 3: Update Sync Function
-Update `sync_readiness_nodes()` to auto-assign `dimension_id` by mapping:
-- P2A VCR prerequisites → mapped via their `vcr_items.category_id` directly to `vcr_item_categories`
-- ORA activities → default to "Operating Integrity" or map via metadata
-- PSSR items → map via PSSR checklist category → nearest VCR category
-- ORM deliverables → default to "Management Systems"
-- Training → default to "Operating Integrity"
+#### 4. Special P2A handling in ORAActivityTaskSheet (`ORAActivityTaskSheet.tsx`)
 
-Set confidence factors: completed/approved = 1.0, in-progress = 0.8, not-started = 0.7.
+Detect if the activity is P2A (via `activity_code === 'P2A-01'` or metadata `action === 'create_p2a_plan'`). If so, replace the standard status toggle section with a single CTA button for the P2A wizard. Render `P2APlanCreationWizard` inside the sheet.
 
-### Task 4: Executive Dashboard Enhancement
-Redesign `ExecutiveDashboard.tsx` to match the strategic layout:
-- **Top Banner**: Large ORI + SCS + color coding (Green >85, Amber 70-85, Red <70)
-- **Dimension Breakdown**: Bar/table showing each VCR category's score, trend arrow, risk level
-- **Top 5 Startup Blockers**: Blocked/critical nodes with severity
-- **Predictive Trend**: ORI line chart with dashed target curve
-- **Risk Impact Summary**: 4 stat boxes (Open High Risks, Startup-blocking, Dimensions below 70%, Systems below 60%)
+#### 5. P2A task in TaskDetailSheet — already handled
+The `TaskDetailSheet` already detects `action === 'create_p2a_plan'` tasks but currently shows them as generic tasks. Need to add specific handling: detect this action, show "Create P2A Plan" / "Continue P2A Plan" CTA that opens `P2APlanCreationWizard`. Requires fetching project info (projectCode, projectName) from `project_id` in metadata.
 
-### Task 5: Tenant-Configurable Weight Profiles
-Update the existing `ori_weight_profiles` to store dimension-based weights keyed by `vcr_item_categories.id` instead of module names. Add a simple admin UI for editing weights per tenant.
+#### 6. Cross-linkage: Task ↔ Gantt activity sync
 
-### Task 6: Update Living Documents
-- **Security & Compliance Doc**: Add rows for Readiness Dimensions, Risk Penalty Engine, Startup Confidence Score (mark as Active)
-- **Platform Guide**: Add "Readiness Ontology & Scoring Engine" section documenting the 6 dimensions, ORI formula, SCS
-- **Strategic North Star**: Update scoring engine status from Planned to Active, add dimension-based architecture detail
+**Task → Activity (already partially done):** `ORAActivityTaskSheet.handleSave()` already updates both `ora_plan_activities` and `user_tasks` tables. Verify it also invalidates Gantt queries — it does (`orp-plan-details`).
+
+**Activity → Task:** When status changes in the Gantt (via `ORAActivityTaskSheet`), find the matching `user_task` by metadata `ora_activity_id` and update its status. This is partially done (lines 309-318) but only for real task IDs. Add: when saving from Gantt context (task ID starts with `ora-` or `ws-`), query `user_tasks` by `metadata->>ora_plan_activity_id` matching `realOraActivityId` and update that task's status too.
+
+---
+
+### Files to modify
+- `src/components/ora/wizard/ORAActivityPlanWizard.tsx` — add leaf-level task generation in `materializeActivities()`
+- `src/components/orp/ORPGanttChart.tsx` — P2A activity special handling in click + status column, add P2A wizard render
+- `src/components/tasks/ORAActivityTaskSheet.tsx` — P2A activity detection + CTA, cross-linkage for Gantt-originated saves
+- `src/components/tasks/TaskDetailSheet.tsx` — P2A task CTA with P2APlanCreationWizard
 
