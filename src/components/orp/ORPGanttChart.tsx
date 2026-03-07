@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Plus, Search, ZoomIn, ZoomOut, ChevronRight, ChevronDown, ChevronsUpDown, GitBranch, Columns3, Route, BookOpen, PenLine } from 'lucide-react';
+import { Plus, Search, ZoomIn, ZoomOut, ChevronRight, ChevronDown, ChevronsUpDown, GitBranch, Columns3, Route, BookOpen, PenLine, FileText } from 'lucide-react';
 import { AddFromCatalogDialog } from '@/components/ora/wizard/AddFromCatalogDialog';
 
 import { WizardActivity } from '@/components/ora/wizard/types';
@@ -14,11 +14,12 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useToast } from '@/hooks/use-toast';
 
 import { ORAActivityTaskSheet } from '@/components/tasks/ORAActivityTaskSheet';
+import { P2APlanCreationWizard } from '@/components/widgets/p2a-wizard/P2APlanCreationWizard';
 import { getStatusLabel, getStatusBadgeClasses } from './utils/statusStyles';
 import { cn } from '@/lib/utils';
 import { useGanttBarResize } from '@/hooks/useGanttBarResize';
 import { supabase } from '@/integrations/supabase/client';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 
 interface ORPGanttChartProps {
