@@ -254,7 +254,8 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
         const datesChanged = editStartDate?.getTime() !== originalStartDate?.getTime() ||
                              editEndDate?.getTime() !== originalEndDate?.getTime();
         const predsChanged = JSON.stringify(predecessorIds) !== JSON.stringify(originalPredecessorIds);
-        if (datesChanged || predsChanged) {
+        const nameChanged = editName !== originalName;
+        if (datesChanged || predsChanged || nameChanged) {
           const { data: planRow } = await (supabase as any)
             .from('orp_plans')
             .select('wizard_state')
