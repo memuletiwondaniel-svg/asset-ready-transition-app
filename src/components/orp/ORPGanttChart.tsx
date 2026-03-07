@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Plus, Search, ZoomIn, ZoomOut, ChevronRight, ChevronDown, ChevronsUpDown, GitBranch, Columns3, Route, BookOpen, PenLine } from 'lucide-react';
+import { Plus, Search, ZoomIn, ZoomOut, ChevronRight, ChevronDown, ChevronsUpDown, GitBranch, Columns3, Route, BookOpen, PenLine, FileText } from 'lucide-react';
 import { AddFromCatalogDialog } from '@/components/ora/wizard/AddFromCatalogDialog';
 
 import { WizardActivity } from '@/components/ora/wizard/types';
@@ -14,11 +14,12 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useToast } from '@/hooks/use-toast';
 
 import { ORAActivityTaskSheet } from '@/components/tasks/ORAActivityTaskSheet';
+import { P2APlanCreationWizard } from '@/components/widgets/p2a-wizard/P2APlanCreationWizard';
 import { getStatusLabel, getStatusBadgeClasses } from './utils/statusStyles';
 import { cn } from '@/lib/utils';
 import { useGanttBarResize } from '@/hooks/useGanttBarResize';
 import { supabase } from '@/integrations/supabase/client';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 
 interface ORPGanttChartProps {
@@ -276,6 +277,7 @@ function computeCriticalPath(rows: FlatRow[], getBarPos: (s: string, e: string) 
 export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverables, searchQuery: externalSearchQuery, hideToolbar, readOnly = false }) => {
   const [internalSearchQuery, setInternalSearchQuery] = useState('');
   const [showCatalogDialog, setShowCatalogDialog] = useState(false);
+  const [showP2AWizard, setShowP2AWizard] = useState(false);
   
   const { toast } = useToast();
   
@@ -287,6 +289,43 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
   const [showCriticalPath, setShowCriticalPath] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState<Set<ColumnKey>>(() => new Set(['index', 'id', 'start', 'status']));
   const [hasInitialZoom, setHasInitialZoom] = useState(false);
+
+  // Fetch plan data for project info (needed for P2A wizard)
+  const { data: planData } = useQuery({
+    queryKey: ['orp-plan-basic', planId],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from('orp_plans')
+        .select('project_id, project:projects(id, project_id_prefix, project_id_number, project_title)')
+        .eq('id', planId)
+        .single();
+      return data;
+    },
+    enabled: !!planId,
+    staleTime: 60_000,
+  });
+
+  // Check if P2A plan exists for "Continue" vs "Create" CTA
+  const { data: existingP2APlan } = useQuery({
+    queryKey: ['p2a-plan-exists', planData?.project_id],
+    queryFn: async () => {
+      if (!planData?.project_id) return null;
+      const { data } = await (supabase as any)
+        .from('p2a_handover_plans')
+        .select('id, status')
+        .eq('project_id', planData.project_id)
+        .limit(1);
+      return data?.[0] || null;
+    },
+    enabled: !!planData?.project_id,
+    staleTime: 30_000,
+  });
+
+  const p2aCtaLabel = existingP2APlan ? 'Continue P2A Plan' : 'Create P2A Plan';
+  const projectCode = planData?.project
+    ? `${planData.project.project_id_prefix || ''}-${planData.project.project_id_number || ''}`
+    : '';
+  const projectName = planData?.project?.project_title || '';
 
   // Get existing activity IDs for catalog exclusion
   const existingActivityIds = useMemo(() => deliverables.map((d: any) => d.id?.replace('ora-', '') || d.id), [deliverables]);
@@ -632,7 +671,15 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
   }, [minDate, dayWidth]);
 
   const openActivitySheet = useCallback((deliverable: any) => {
-    if (readOnly) return; // Don't open activity sheet in read-only mode
+    if (readOnly) return;
+    const actCode = deliverable.deliverable?.activity_code || '';
+    
+    // Special handling for P2A-01 activity: open P2A wizard instead
+    if (actCode === 'P2A-01') {
+      setShowP2AWizard(true);
+      return;
+    }
+
     // Build list of sibling activities for prerequisite picker
     const siblingActivities = filteredDeliverables
       .filter(d => d.deliverable?.activity_code && d.id !== deliverable.id)
@@ -957,9 +1004,21 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                       )}
                       {visibleColumns.has('status') && (
                         <div className="px-1 flex items-center justify-center" style={{ width: COL_WIDTHS.status }}>
-                          <Badge variant="outline" className={cn("text-[9px] px-1.5 py-0 h-5", getStatusBadgeClasses(deliverable.status))}>
-                            {getStatusLabel(deliverable.status)}
-                          </Badge>
+                          {activityCode === 'P2A-01' ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-5 px-1.5 text-[9px] font-medium gap-0.5 border-primary/30 text-primary hover:bg-primary/10"
+                              onClick={(e) => { e.stopPropagation(); setShowP2AWizard(true); }}
+                            >
+                              <FileText className="w-3 h-3" />
+                              {p2aCtaLabel}
+                            </Button>
+                          ) : (
+                            <Badge variant="outline" className={cn("text-[9px] px-1.5 py-0 h-5", getStatusBadgeClasses(deliverable.status))}>
+                              {getStatusLabel(deliverable.status)}
+                            </Badge>
+                          )}
                         </div>
                       )}
                     </div>
@@ -1206,6 +1265,20 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
         open={!!selectedOraActivity}
         onOpenChange={(open) => !open && setSelectedOraActivity(null)}
       />
+      {planData?.project_id && (
+        <P2APlanCreationWizard
+          open={showP2AWizard}
+          onOpenChange={setShowP2AWizard}
+          projectId={planData.project_id}
+          projectCode={projectCode}
+          projectName={projectName}
+          onSuccess={() => {
+            setShowP2AWizard(false);
+            queryClient.invalidateQueries({ queryKey: ['orp-plan'] });
+            queryClient.invalidateQueries({ queryKey: ['p2a-plan-exists'] });
+          }}
+        />
+      )}
     </Card>
   );
 };

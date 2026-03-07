@@ -445,16 +445,21 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
       .select('id')
       .single();
 
-    // Create user task for Sr. ORA Engineer
+    // Fetch project info for task titles
+    const { data: projInfo } = await supabase
+      .from('projects')
+      .select('project_id_prefix, project_id_number, project_title')
+      .eq('id', planData.project_id)
+      .single();
+    const projName = projInfo
+      ? `${projInfo.project_id_prefix || ''}-${projInfo.project_id_number || ''} - ${projInfo.project_title || ''}`
+      : '';
+    const projCode = projInfo
+      ? `${projInfo.project_id_prefix || ''}-${projInfo.project_id_number || ''}`
+      : '';
+
+    // Create user task for P2A Plan (Sr. ORA Engineer)
     if (srOraEngr?.user_id && p2aAct) {
-      const { data: projInfo } = await supabase
-        .from('projects')
-        .select('project_id_prefix, project_id_number, project_title')
-        .eq('id', planData.project_id)
-        .single();
-      const projName = projInfo
-        ? `${projInfo.project_id_prefix || ''}-${projInfo.project_id_number || ''} - ${projInfo.project_title || ''}`
-        : '';
       await supabase.rpc('create_user_task', {
         p_user_id: srOraEngr.user_id,
         p_title: `Create P2A Plan – ${projName}`,
@@ -465,11 +470,76 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
         p_metadata: {
           source: 'ora_workflow',
           project_id: planData.project_id,
+          project_code: projCode,
           plan_id: planIdToMaterialize,
           action: 'create_p2a_plan',
           ora_activity_id: p2aAct.id,
         },
       });
+    }
+
+    // Generate leaf-level tasks for all non-P2A activities
+    if (srOraEngr?.user_id) {
+      // Identify all inserted IDs
+      const allInsertedIds = new Set(Array.from(idMap.values()));
+      // Also add P2A activity
+      const p2aActId = p2aAct?.id;
+
+      // Find leaf activities: those whose DB IDs do not appear as parent_id of any other
+      const parentIds = new Set<string>();
+      for (const act of sorted) {
+        const parentDbId = act.parentActivityId ? idMap.get(act.parentActivityId) || null : null;
+        if (parentDbId) parentIds.add(parentDbId);
+      }
+
+      // Collect leaf activities with their start_date for ordering
+      const leafActivities: { dbId: string; act: any }[] = [];
+      for (const act of sorted) {
+        const dbId = idMap.get(act.id);
+        if (!dbId) continue;
+        if (dbId === p2aActId) continue; // Skip P2A – already has its own task
+        if (parentIds.has(dbId)) continue; // Not a leaf
+        leafActivities.push({ dbId, act });
+      }
+
+      // Sort by start_date
+      leafActivities.sort((a, b) => {
+        const aDate = a.act.startDate || a.act.start_date || '';
+        const bDate = b.act.startDate || b.act.start_date || '';
+        return aDate.localeCompare(bDate);
+      });
+
+      // Create tasks for each leaf activity
+      for (let i = 0; i < leafActivities.length; i++) {
+        const { dbId, act } = leafActivities[i];
+        const actName = act.activity || act.name || 'Unnamed Activity';
+        const actCode = act.activityCode || act.activity_code || '';
+        try {
+          await supabase.rpc('create_user_task', {
+            p_user_id: srOraEngr.user_id,
+            p_title: `${actName} – ${projCode}`,
+            p_description: `Complete the ORA activity "${actName}" for project ${projName}.`,
+            p_type: 'ora_activity',
+            p_status: 'pending',
+            p_priority: i === 0 ? 'High' : 'Medium',
+            p_metadata: {
+              source: 'ora_workflow',
+              project_id: planData.project_id,
+              project_code: projCode,
+              plan_id: planIdToMaterialize,
+              action: 'complete_ora_activity',
+              ora_plan_activity_id: dbId,
+              ora_activity_id: dbId,
+              activity_code: actCode,
+              activity_name: actName,
+              start_date: act.startDate || act.start_date || null,
+              end_date: act.endDate || act.end_date || null,
+            },
+          });
+        } catch (taskErr) {
+          console.error('Failed to create leaf task for', actCode, taskErr);
+        }
+      }
     }
   };
 

@@ -16,16 +16,17 @@ import {
 import { Calendar } from '@/components/ui/calendar';
 import { 
   Clock, CheckCircle2, Play, Upload, MessageSquare, 
-  Paperclip, X, Loader2, AlertTriangle, Trash2, GitBranch, Plus
+  Paperclip, X, Loader2, AlertTriangle, Trash2, GitBranch, Plus, FileText, ChevronRight
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { format, parseISO, isPast, differenceInDays, addDays, formatDistanceToNow } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useDropzone } from 'react-dropzone';
+import { P2APlanCreationWizard } from '@/components/widgets/p2a-wizard/P2APlanCreationWizard';
 import type { UserTask } from '@/hooks/useUserTasks';
 
 interface ORAActivityTaskSheetProps {
@@ -80,6 +81,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
   const [progressPct, setProgressPct] = useState(0);
   const [editName, setEditName] = useState('');
   const [originalName, setOriginalName] = useState('');
+  const [showP2AWizard, setShowP2AWizard] = useState(false);
 
   // Editable dates
   const [editStartDate, setEditStartDate] = useState<Date | undefined>();
@@ -105,7 +107,27 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
   const planId = metadata?.plan_id as string | undefined;
   const deliverableId = metadata?.deliverable_id as string | undefined;
   const oraActivityId = metadata?.ora_plan_activity_id as string | undefined;
+  const projectId = metadata?.project_id as string | undefined;
+  const projectCode = metadata?.project_code as string | undefined;
+  const isP2AActivity = activityCode === 'P2A-01' || metadata?.action === 'create_p2a_plan';
   const isOverdue = editEndDate && isPast(editEndDate) && status !== 'COMPLETED';
+
+  // Check if P2A plan exists for "Continue" vs "Create" label
+  const { data: existingP2APlan } = useQuery({
+    queryKey: ['p2a-plan-exists-sheet', projectId],
+    queryFn: async () => {
+      if (!projectId) return null;
+      const { data } = await (supabase as any)
+        .from('p2a_handover_plans')
+        .select('id, status')
+        .eq('project_id', projectId)
+        .limit(1);
+      return data?.[0] || null;
+    },
+    enabled: !!projectId && isP2AActivity,
+    staleTime: 30_000,
+  });
+  const p2aSheetCtaLabel = existingP2APlan ? 'Continue P2A Plan' : 'Create P2A Plan';
 
   // Duration computed from editable dates
   const durationDays = useMemo(() => {
@@ -306,9 +328,9 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
           .eq('id', deliverableId);
       }
 
+      const taskStatus = status === 'COMPLETED' ? 'completed' : status === 'IN_PROGRESS' ? 'in_progress' : 'pending';
       const isRealTaskId = task.id && !task.id.startsWith('ws-') && !task.id.startsWith('ora-');
       if (isRealTaskId) {
-        const taskStatus = status === 'COMPLETED' ? 'completed' : status === 'IN_PROGRESS' ? 'in_progress' : 'pending';
         await supabase
           .from('user_tasks')
           .update({ 
@@ -316,6 +338,20 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
             updated_at: new Date().toISOString(),
           })
           .eq('id', task.id);
+      } else if (realOraActivityId) {
+        // Cross-linkage: when saving from Gantt context (ws-/ora- prefixed IDs),
+        // find the matching user_task by ora_plan_activity_id metadata
+        try {
+          await supabase
+            .from('user_tasks')
+            .update({
+              status: taskStatus,
+              updated_at: new Date().toISOString(),
+            })
+            .filter('metadata->>ora_plan_activity_id', 'eq', realOraActivityId);
+        } catch (syncErr) {
+          console.error('Cross-linkage sync failed:', syncErr);
+        }
       }
 
       queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
@@ -389,6 +425,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
   if (!task) return null;
 
   return (
+    <>
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="sm:max-w-lg p-0 flex flex-col h-full">
         {/* Scrollable content area */}
@@ -529,39 +566,59 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
 
             <Separator />
 
-            {/* Status Toggle */}
-            <div className="pt-2">
-              <p className="text-sm font-medium mb-3 text-muted-foreground">Status</p>
-              <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg">
-                {STATUS_STEPS.map((step) => {
-                  const Icon = step.icon;
-                  const isActive = status === step.value;
-                  return (
-                    <button
-                      key={step.value}
-                      onClick={() => setStatus(step.value)}
-                      className={cn(
-                        "flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-md text-xs font-medium transition-all",
-                        isActive && step.value === 'NOT_STARTED' && "bg-gray-200 text-gray-700 shadow-sm",
-                        isActive && step.value === 'IN_PROGRESS' && "bg-amber-500 text-white shadow-sm",
-                        isActive && step.value === 'COMPLETED' && "bg-green-500 text-white shadow-sm",
-                        !isActive && "text-muted-foreground hover:text-foreground hover:bg-background/50"
-                      )}
-                    >
-                      <Icon className="h-3.5 w-3.5" />
-                      {step.label}
-                    </button>
-                  );
-                })}
+            {/* P2A Activity: Show wizard CTA instead of status toggle */}
+            {isP2AActivity ? (
+              <div className="pt-2 space-y-3">
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  This activity requires creating the Project to Asset (P2A) handover plan. Click below to launch the P2A planning wizard.
+                </p>
+                <Button
+                  className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
+                  onClick={() => {
+                    onOpenChange(false);
+                    setShowP2AWizard(true);
+                  }}
+                >
+                  <FileText className="h-4 w-4" />
+                  {p2aSheetCtaLabel}
+                  <ChevronRight className="h-4 w-4 ml-auto" />
+                </Button>
               </div>
-
-              {status === 'IN_PROGRESS' && (
-                <div className="mt-4 space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium text-muted-foreground">Progress</p>
-                    <span className="text-sm font-semibold text-amber-600">{progressPct}%</span>
+            ) : (
+              <>
+                {/* Status Toggle */}
+                <div className="pt-2">
+                  <p className="text-sm font-medium mb-3 text-muted-foreground">Status</p>
+                  <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg">
+                    {STATUS_STEPS.map((step) => {
+                      const Icon = step.icon;
+                      const isActive = status === step.value;
+                      return (
+                        <button
+                          key={step.value}
+                          onClick={() => setStatus(step.value)}
+                          className={cn(
+                            "flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-md text-xs font-medium transition-all",
+                            isActive && step.value === 'NOT_STARTED' && "bg-gray-200 text-gray-700 shadow-sm",
+                            isActive && step.value === 'IN_PROGRESS' && "bg-amber-500 text-white shadow-sm",
+                            isActive && step.value === 'COMPLETED' && "bg-green-500 text-white shadow-sm",
+                            !isActive && "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                          )}
+                        >
+                          <Icon className="h-3.5 w-3.5" />
+                          {step.label}
+                        </button>
+                      );
+                    })}
                   </div>
-                  <Slider
+
+                  {status === 'IN_PROGRESS' && (
+                    <div className="mt-4 space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium text-muted-foreground">Progress</p>
+                        <span className="text-sm font-semibold text-amber-600">{progressPct}%</span>
+                      </div>
+                      <Slider
                     value={[progressPct]}
                     onValueChange={(val) => setProgressPct(val[0])}
                     max={100}
@@ -576,6 +633,8 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                 </div>
               )}
             </div>
+              </>
+            )}
 
             <Separator />
 
@@ -808,5 +867,22 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
         </div>
       </SheetContent>
     </Sheet>
+
+    {/* P2A Plan Creation Wizard */}
+    {isP2AActivity && projectId && (
+      <P2APlanCreationWizard
+        open={showP2AWizard}
+        onOpenChange={setShowP2AWizard}
+        projectId={projectId}
+        projectCode={projectCode || ''}
+        onSuccess={() => {
+          setShowP2AWizard(false);
+          queryClient.invalidateQueries({ queryKey: ['orp-plan'] });
+          queryClient.invalidateQueries({ queryKey: ['p2a-plan-exists-sheet'] });
+          queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+        }}
+      />
+    )}
+    </>
   );
 };
