@@ -366,7 +366,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
                   <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{col.tasks.length}</Badge>
                 </div>
                 {/* Cards */}
-                <ScrollArea className="flex-1 max-h-[calc(100vh-320px)]">
+                <ScrollArea className="flex-1 max-h-[50vh] sm:max-h-[calc(100vh-320px)]">
                   <div className="p-2 space-y-2">
                     {renderColumnContent(col.tasks)}
                   </div>

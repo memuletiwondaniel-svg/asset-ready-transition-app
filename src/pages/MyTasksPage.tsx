@@ -80,15 +80,15 @@ const MyTasksPage: React.FC = () => {
 
   return (
     <div className="min-h-screen">
-      <div className="border-b border-border/40 bg-card/30 backdrop-blur-xl p-4 md:p-6">
+        <div className="border-b border-border/40 bg-card/30 backdrop-blur-xl p-3 sm:p-4 md:p-6">
         <BreadcrumbNavigation currentPageLabel="My Tasks" />
-        <div className="flex items-center gap-3 mt-4">
-          <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500">
-            <CalendarCheck className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+        <div className="flex items-center gap-2 sm:gap-3 mt-3 sm:mt-4">
+          <div className="p-2 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 shrink-0">
+            <CalendarCheck className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
           </div>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">My Tasks</h1>
-            <p className="text-sm text-muted-foreground mt-1">Your pending work across all modules</p>
+          <div className="min-w-0">
+            <h1 className="text-lg sm:text-2xl font-bold text-foreground truncate">My Tasks</h1>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 sm:mt-1 hidden sm:block">Your pending work across all modules</p>
           </div>
         </div>
       </div>
