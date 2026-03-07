@@ -176,7 +176,7 @@ export const BreadcrumbNavigation: React.FC<BreadcrumbNavigationProps> = ({
       </TooltipProvider>
 
       {/* Vertical Separator */}
-      <div className="h-6 w-px bg-border" />
+      <div className="h-5 sm:h-6 w-px bg-border shrink-0" />
 
       {/* Breadcrumb Trail */}
       <Breadcrumb>
