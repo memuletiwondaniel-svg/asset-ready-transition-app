@@ -773,6 +773,44 @@ export type Database = {
           },
         ]
       }
+      ora_activity_comments: {
+        Row: {
+          comment: string
+          created_at: string | null
+          id: string
+          ora_plan_activity_id: string
+          orp_plan_id: string
+          tenant_id: string | null
+          user_id: string
+        }
+        Insert: {
+          comment: string
+          created_at?: string | null
+          id?: string
+          ora_plan_activity_id: string
+          orp_plan_id: string
+          tenant_id?: string | null
+          user_id: string
+        }
+        Update: {
+          comment?: string
+          created_at?: string | null
+          id?: string
+          ora_plan_activity_id?: string
+          orp_plan_id?: string
+          tenant_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ora_activity_comments_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ora_cost_categories: {
         Row: {
           created_at: string | null
