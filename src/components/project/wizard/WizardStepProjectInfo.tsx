@@ -102,7 +102,7 @@ const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
       </div>
 
       {/* Portfolio, Hub, and Locations */}
-      <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
         <div className="space-y-2">
           <Label htmlFor="region">Portfolio (Region)</Label>
           <EnhancedCombobox
