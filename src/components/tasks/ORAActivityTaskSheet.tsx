@@ -328,9 +328,9 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
           .eq('id', deliverableId);
       }
 
+      const taskStatus = status === 'COMPLETED' ? 'completed' : status === 'IN_PROGRESS' ? 'in_progress' : 'pending';
       const isRealTaskId = task.id && !task.id.startsWith('ws-') && !task.id.startsWith('ora-');
       if (isRealTaskId) {
-        const taskStatus = status === 'COMPLETED' ? 'completed' : status === 'IN_PROGRESS' ? 'in_progress' : 'pending';
         await supabase
           .from('user_tasks')
           .update({ 
@@ -338,6 +338,20 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
             updated_at: new Date().toISOString(),
           })
           .eq('id', task.id);
+      } else if (realOraActivityId) {
+        // Cross-linkage: when saving from Gantt context (ws-/ora- prefixed IDs),
+        // find the matching user_task by ora_plan_activity_id metadata
+        try {
+          await supabase
+            .from('user_tasks')
+            .update({
+              status: taskStatus,
+              updated_at: new Date().toISOString(),
+            })
+            .filter('metadata->>ora_plan_activity_id', 'eq', realOraActivityId);
+        } catch (syncErr) {
+          console.error('Cross-linkage sync failed:', syncErr);
+        }
       }
 
       queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
