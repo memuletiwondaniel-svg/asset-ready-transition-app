@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils';
 import { useGanttBarResize } from '@/hooks/useGanttBarResize';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
+import { generateLeafTasks } from '@/utils/generateLeafTasks';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 
 interface ORPGanttChartProps {
