@@ -435,6 +435,21 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
           projectCode={task.metadata?.project_code}
         />
       )}
+
+      {/* P2A Plan Creation Wizard */}
+      {isP2aTask && p2aProjectId && (
+        <P2APlanCreationWizard
+          open={p2aWizardOpen}
+          onOpenChange={setP2aWizardOpen}
+          projectId={p2aProjectId}
+          projectCode={resolvedP2aProjectCode}
+          projectName={resolvedP2aProjectName}
+          onSuccess={() => {
+            setP2aWizardOpen(false);
+            onOpenChange(false);
+          }}
+        />
+      )}
     </>
   );
 };
