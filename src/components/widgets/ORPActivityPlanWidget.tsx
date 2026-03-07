@@ -39,7 +39,7 @@ const getActivityStatus = (activity: { end_date: string | null; status: string }
   return 'upcoming';
 };
 
-const ActivityRow: React.FC<{ activity: ProjectORPActivity; isCompleted?: boolean }> = ({ activity, isCompleted }) => {
+const ActivityRow: React.FC<{ activity: ProjectORPActivity; isCompleted?: boolean; onClick?: () => void }> = ({ activity, isCompleted, onClick }) => {
   const actStatus = getActivityStatus(activity);
   return (
     <div className="flex items-center gap-2 text-xs py-1.5 px-2 rounded-md bg-muted/40 hover:bg-muted/60 transition-colors">
