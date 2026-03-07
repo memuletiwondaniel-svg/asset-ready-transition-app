@@ -707,7 +707,6 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
           </div>
         </CardContent>
         <AddFromCatalogDialog open={showCatalogDialog} onOpenChange={setShowCatalogDialog} existingIds={existingActivityIds} onAdd={handleAddFromCatalog} />
-        <AddCustomActivityDialog open={showCustomDialog} onOpenChange={setShowCustomDialog} phase="" onAdd={handleAddCustom} />
       </Card>
     );
   }
