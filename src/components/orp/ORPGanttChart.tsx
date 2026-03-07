@@ -275,7 +275,9 @@ function computeCriticalPath(rows: FlatRow[], getBarPos: (s: string, e: string) 
 
 export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverables, searchQuery: externalSearchQuery, hideToolbar, readOnly = false }) => {
   const [internalSearchQuery, setInternalSearchQuery] = useState('');
-  const [showAddItem, setShowAddItem] = useState(false);
+  const [showCatalogDialog, setShowCatalogDialog] = useState(false);
+  const [showCustomDialog, setShowCustomDialog] = useState(false);
+  const { toast } = useToast();
   
   const [selectedOraActivity, setSelectedOraActivity] = useState<any>(null);
   const [zoomLevel, setZoomLevel] = useState(1);
