@@ -42,7 +42,7 @@ const getActivityStatus = (activity: { end_date: string | null; status: string }
 const ActivityRow: React.FC<{ activity: ProjectORPActivity; isCompleted?: boolean; onClick?: () => void }> = ({ activity, isCompleted, onClick }) => {
   const actStatus = getActivityStatus(activity);
   return (
-    <div className="flex items-center gap-2 text-xs py-1.5 px-2 rounded-md bg-muted/40 hover:bg-muted/60 transition-colors">
+    <div className="flex items-center gap-2 text-xs py-1.5 px-2 rounded-md bg-muted/40 hover:bg-muted/60 transition-colors cursor-pointer" onClick={onClick}>
       {isCompleted ? (
         <CheckCircle2 className="h-3 w-3 text-green-500 shrink-0" />
       ) : actStatus === 'overdue' ? (
