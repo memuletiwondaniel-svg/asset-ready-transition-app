@@ -665,7 +665,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                       <>{getGreeting()}, {userProfile?.full_name?.split(' ')[0] || 'User'}!</>
                     )}
                   </h1>
-                  <p className="text-muted-foreground mb-6">
+                  <p className="text-sm text-muted-foreground mb-4 sm:mb-6">
                     {t.askBobAnything || 'Ask Bob anything about ORSH'}
                   </p>
                   
