@@ -118,13 +118,15 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
             <div className="text-center py-8 text-muted-foreground">
               <p className="text-sm font-medium mb-1">No ORA Plan</p>
               <p className="text-xs opacity-70 mb-4">Operation Readiness activities will appear here</p>
-              <Button variant="secondary" size="sm" onClick={(e) => { e.stopPropagation(); setWizardOpen(true); }}>
-                Create ORA Plan
-              </Button>
+              {!isReadOnly && (
+                <Button variant="secondary" size="sm" onClick={(e) => { e.stopPropagation(); setWizardOpen(true); }}>
+                  Create ORA Plan
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
-        <ORAActivityPlanWizard open={wizardOpen} onOpenChange={setWizardOpen} projectId={projectId} />
+        {!isReadOnly && <ORAActivityPlanWizard open={wizardOpen} onOpenChange={setWizardOpen} projectId={projectId} />}
       </>
     );
   }
