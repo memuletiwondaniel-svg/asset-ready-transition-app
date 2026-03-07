@@ -457,9 +457,9 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
 
         {/* Context banner - shown from step 2 onwards when project info is filled */}
         {currentStep >= 2 && formData.project_id_prefix && formData.project_id_number && (
-          <div className="mx-6 mt-2 mb-0 px-4 py-2.5 rounded-lg bg-muted/60 border border-border/50">
-            <div className="flex items-center gap-4 text-sm">
-              <div>
+          <div className="mx-3 sm:mx-6 mt-2 mb-0 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg bg-muted/60 border border-border/50">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm">
+              <div className="min-w-0">
                 <p className="text-xs text-muted-foreground font-medium">Project</p>
                 <p className="font-semibold text-foreground/90">
                   {formData.project_id_prefix}{formData.project_id_number}
