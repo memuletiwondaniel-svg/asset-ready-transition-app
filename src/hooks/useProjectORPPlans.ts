@@ -27,6 +27,7 @@ export interface ProjectORPPlan {
   p2a_progress: number;
   vcr_count: number;
   upcoming_activities: ProjectORPActivity[];
+  completed_activities: ProjectORPActivity[];
   plan_start_date: string | null;
   plan_end_date: string | null;
 }
