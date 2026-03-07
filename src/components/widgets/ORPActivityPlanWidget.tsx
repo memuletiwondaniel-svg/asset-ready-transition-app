@@ -39,10 +39,10 @@ const getActivityStatus = (activity: { end_date: string | null; status: string }
   return 'upcoming';
 };
 
-const ActivityRow: React.FC<{ activity: ProjectORPActivity; isCompleted?: boolean }> = ({ activity, isCompleted }) => {
+const ActivityRow: React.FC<{ activity: ProjectORPActivity; isCompleted?: boolean; onClick?: () => void }> = ({ activity, isCompleted, onClick }) => {
   const actStatus = getActivityStatus(activity);
   return (
-    <div className="flex items-center gap-2 text-xs py-1.5 px-2 rounded-md bg-muted/40 hover:bg-muted/60 transition-colors">
+    <div className="flex items-center gap-2 text-xs py-1.5 px-2 rounded-md bg-muted/40 hover:bg-muted/60 transition-colors cursor-pointer" onClick={onClick}>
       {isCompleted ? (
         <CheckCircle2 className="h-3 w-3 text-green-500 shrink-0" />
       ) : actStatus === 'overdue' ? (
@@ -226,7 +226,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
           </div>
 
           {/* Section 2: Progress Summary */}
-          <div className="flex-shrink-0 rounded-lg border border-border bg-muted/30 p-3">
+          <div className="flex-shrink-0 rounded-lg border border-border bg-muted/30 p-3 cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setOverlayOpen(true)}>
             <div className="flex items-center justify-between text-xs mb-2">
               <span className="text-muted-foreground font-medium">Overall Progress</span>
               <span className="font-bold text-sm">{overallProgress}%</span>
@@ -263,7 +263,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
                 </CollapsibleTrigger>
                 <CollapsibleContent className="space-y-1 mt-1">
                   {upcomingActivities.map((activity) => (
-                    <ActivityRow key={activity.id} activity={activity} />
+                    <ActivityRow key={activity.id} activity={activity} onClick={() => setOverlayOpen(true)} />
                   ))}
                 </CollapsibleContent>
               </Collapsible>
@@ -289,7 +289,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
                 </CollapsibleTrigger>
                 <CollapsibleContent className="space-y-1 mt-1">
                   {completedActivities.map((activity) => (
-                    <ActivityRow key={activity.id} activity={activity} isCompleted />
+                    <ActivityRow key={activity.id} activity={activity} isCompleted onClick={() => setOverlayOpen(true)} />
                   ))}
                 </CollapsibleContent>
               </Collapsible>
