@@ -866,5 +866,22 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
         </div>
       </SheetContent>
     </Sheet>
+
+    {/* P2A Plan Creation Wizard */}
+    {isP2AActivity && projectId && (
+      <P2APlanCreationWizard
+        open={showP2AWizard}
+        onOpenChange={setShowP2AWizard}
+        projectId={projectId}
+        projectCode={projectCode || ''}
+        onSuccess={() => {
+          setShowP2AWizard(false);
+          queryClient.invalidateQueries({ queryKey: ['orp-plan'] });
+          queryClient.invalidateQueries({ queryKey: ['p2a-plan-exists-sheet'] });
+          queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+        }}
+      />
+    )}
+    </>
   );
 };
