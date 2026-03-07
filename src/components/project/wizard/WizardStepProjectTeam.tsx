@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { ProjectTeamSection } from '../ProjectTeamSection';
 import { useAutoPopulateTeam } from '@/hooks/useAutoPopulateTeam';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Info, RefreshCw, Sparkles } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { RefreshCw, Sparkles, Users, CheckCircle2, AlertCircle } from 'lucide-react';
 
 interface TeamMember {
   user_id: string;
@@ -11,6 +12,8 @@ interface TeamMember {
   is_lead: boolean;
   user_name?: string;
   user_email?: string;
+  avatar_url?: string;
+  position?: string;
   is_auto_populated?: boolean;
 }
 
@@ -21,6 +24,13 @@ interface WizardStepProjectTeamProps {
   hubName?: string | null;
   hubId?: string | null;
 }
+
+const REQUIRED_ROLES = [
+  'Project Hub Lead',
+  'Construction Lead',
+  'Commissioning Lead',
+  'Snr. ORA Engr.',
+];
 
 const WizardStepProjectTeam: React.FC<WizardStepProjectTeamProps> = ({
   teamMembers,
@@ -42,7 +52,6 @@ const WizardStepProjectTeam: React.FC<WizardStepProjectTeamProps> = ({
 
   const handleAutoPopulate = () => {
     if (suggestedTeam.length > 0) {
-      // Merge: keep manually assigned roles, add/replace with suggested ones
       const manualMembers = teamMembers.filter(m => !m.is_auto_populated);
       const suggestedRoles = suggestedTeam.map(s => s.role);
       const filteredManual = manualMembers.filter(m => !suggestedRoles.includes(m.role));
@@ -54,33 +63,44 @@ const WizardStepProjectTeam: React.FC<WizardStepProjectTeamProps> = ({
 
   const autoPopulatedCount = teamMembers.filter(m => m.is_auto_populated).length;
 
+  // Check which required roles are filled
+  const getRequiredRoleStatus = () => {
+    return REQUIRED_ROLES.map(role => {
+      const member = teamMembers.find(m => m.role === role);
+      return { role, member, assigned: !!member };
+    });
+  };
+
+  const roleStatuses = getRequiredRoleStatus();
+  const allRequiredFilled = roleStatuses.every(r => r.assigned);
+
+  const getInitials = (name?: string) => {
+    if (!name) return '?';
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div>
         <h3 className="text-lg font-medium mb-1">Project Team</h3>
         <p className="text-sm text-muted-foreground">
-          Assign team members to required roles and add any additional team members.
+          Assign team members to required roles. Members are auto-resolved based on your Portfolio and Hub selection.
         </p>
       </div>
 
-      {/* Auto-population info banner */}
+      {/* Auto-resolved summary cards */}
       {(regionName || hubName) && (
-        <Alert className="bg-blue-50 border-blue-200">
-          <Info className="h-4 w-4 text-blue-600" />
-          <AlertDescription className="flex items-center justify-between">
-            <div className="text-blue-800">
-              {autoPopulatedCount > 0 ? (
-                <>
-                  <span className="font-medium">{autoPopulatedCount} team member(s)</span> auto-populated based on{' '}
-                  {regionName && <span className="font-medium">{regionName}</span>}
-                  {regionName && hubName && ' and '}
-                  {hubName && <span className="font-medium">{hubName}</span>} selection.
-                  You can modify or add more members below.
-                </>
-              ) : suggestedTeam.length > 0 ? (
-                <>Team members can be auto-populated based on your Portfolio and Hub selection.</>
-              ) : (
-                <>No matching team members found for the selected Portfolio/Hub. Please assign manually.</>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm">
+              <Sparkles className="h-4 w-4 text-amber-500" />
+              <span className="font-medium text-foreground">
+                Auto-resolved Team
+              </span>
+              {autoPopulatedCount > 0 && (
+                <Badge variant="secondary" className="text-xs">
+                  {autoPopulatedCount} member{autoPopulatedCount !== 1 ? 's' : ''}
+                </Badge>
               )}
             </div>
             {suggestedTeam.length > 0 && (
@@ -88,21 +108,72 @@ const WizardStepProjectTeam: React.FC<WizardStepProjectTeamProps> = ({
                 variant="outline"
                 size="sm"
                 onClick={handleAutoPopulate}
-                className="ml-4 shrink-0 border-blue-300 text-blue-700 hover:bg-blue-100"
+                className="gap-1.5 text-xs"
               >
-                <RefreshCw className="h-3 w-3 mr-1" />
+                <RefreshCw className="h-3 w-3" />
                 Re-populate
               </Button>
             )}
-          </AlertDescription>
-        </Alert>
+          </div>
+
+          {/* Required role cards with auto-resolved members */}
+          <div className="grid grid-cols-2 gap-3">
+            {roleStatuses.map(({ role, member, assigned }) => (
+              <div
+                key={role}
+                className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
+                  assigned
+                    ? 'bg-emerald-50/50 border-emerald-200 dark:bg-emerald-950/20 dark:border-emerald-800'
+                    : 'bg-muted/30 border-border/50'
+                }`}
+              >
+                {assigned && member ? (
+                  <Avatar className="h-9 w-9 border-2 border-emerald-300 dark:border-emerald-700">
+                    <AvatarImage src={(member as any).avatar_url} alt={member.user_name} />
+                    <AvatarFallback className="text-xs bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300">
+                      {getInitials(member.user_name)}
+                    </AvatarFallback>
+                  </Avatar>
+                ) : (
+                  <div className="h-9 w-9 rounded-full border-2 border-dashed border-muted-foreground/30 flex items-center justify-center">
+                    <AlertCircle className="h-4 w-4 text-muted-foreground/50" />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-muted-foreground">{role}</p>
+                  {assigned && member ? (
+                    <p className="text-sm font-semibold text-foreground truncate">{member.user_name}</p>
+                  ) : (
+                    <p className="text-sm text-muted-foreground/60 italic">Not assigned</p>
+                  )}
+                </div>
+                {assigned && (
+                  <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                )}
+              </div>
+            ))}
+          </div>
+
+          {!allRequiredFilled && (regionName || hubName) && (
+            <p className="text-xs text-muted-foreground">
+              {!regionName && !hubName
+                ? 'Select a Portfolio and Hub in Step 1 to auto-resolve team members.'
+                : !regionName
+                  ? 'Select a Portfolio to auto-resolve Construction Lead, Commissioning Lead, and Snr. ORA Engr.'
+                  : !hubName
+                    ? 'Select a Hub to auto-resolve the Project Hub Lead.'
+                    : 'Some roles could not be auto-resolved. Please assign them manually below.'}
+            </p>
+          )}
+        </div>
       )}
 
-      {/* Show sparkle indicator when auto-population happened */}
-      {autoPopulatedCount > 0 && (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Sparkles className="h-4 w-4 text-amber-500" />
-          <span>Members marked with a sparkle were auto-assigned and can be changed</span>
+      {!regionName && !hubName && (
+        <div className="flex items-center gap-3 p-4 rounded-lg bg-amber-50/50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-800">
+          <AlertCircle className="h-5 w-5 text-amber-500 shrink-0" />
+          <p className="text-sm text-amber-800 dark:text-amber-300">
+            Go back to Step 1 and select a <strong>Portfolio</strong> and <strong>Hub</strong> to automatically resolve team members.
+          </p>
         </div>
       )}
 
