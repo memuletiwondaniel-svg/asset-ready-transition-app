@@ -1,46 +1,77 @@
 
 
-## Plan: Fix Missing Post-Approval Task Creation for ORA Plans
+# Plan: ORIP Scoring Engine Using Existing VCR Item Categories
 
-### Root Cause
-The leaf-level task generation code (creating `ora_activity` tasks for the Sr. ORA Engineer) and the P2A task creation were added to `materializeActivities()` **after** DP300's plan was already approved and materialized. The function has an early-return guard:
+## Impact Assessment: Zero Breaking Changes
+
+**No existing workflows will be affected.** The approach reuses the existing `vcr_item_categories` table (Design Integrity, Technical Integrity, Operating Integrity, Management Systems, Health & Safety) as the readiness dimensions for ORI scoring. All changes are additive:
+
+- The `vcr_item_categories` table gets a `tenant_id` column and weight/confidence fields -- existing rows remain intact
+- The `readiness_nodes` table gets a new nullable `dimension_id` column pointing to `vcr_item_categories`
+- The `sync_readiness_nodes` and `calculate_ori_score` functions are replaced with enhanced versions that use category-based dimensions instead of module-based grouping
+- Existing P2A, ORA, PSSR, ORM workflows are untouched -- the ontology layer only reads from them
+
+## Current VCR Item Categories (Become Readiness Dimensions)
+
+| Code | Name | Active |
+|------|------|--------|
+| DI2 | Design Integrity | Yes |
+| TI | Technical Integrity | Yes |
+| OI | Operating Integrity | Yes |
+| MS | Management Systems | Yes |
+| HS | Health & Safety | Yes |
+
+These become the tenant-configurable readiness dimensions. Different tenants can add/rename/reweight their own categories.
+
+## Implementation Tasks
+
+### Task 1: Extend `vcr_item_categories` for ORI Scoring
+Add columns to make categories serve double duty as readiness dimensions:
+- `tenant_id UUID` (nullable, defaults via trigger -- existing rows get current tenant)
+- `default_weight NUMERIC(5,4)` (e.g., 0.20 = 20%)
+- `confidence_factor_default NUMERIC(3,2)` (default 0.8)
+- `risk_severity_multiplier NUMERIC(3,1)` (default 1.0)
+- `is_readiness_dimension BOOLEAN DEFAULT true`
+
+Add `dimension_id UUID REFERENCES vcr_item_categories(id)` to `readiness_nodes`.
+
+### Task 2: Enhanced ORI Formula
+Replace `calculate_ori_score()` with the full ORIP formula:
+
 ```
-if (existing && existing.length > 0) return;
+DS_i = (Σ Subcomponent_Weight × Completion%) × Confidence_Factor
+RP_i = Σ (Risk_Severity × Impact_Multiplier)  -- capped at 15%
+ORI  = Σ (Dimension_Weight_i × DS_i) − Global_Risk_Penalty
+SCS  = ORI × Schedule_Adherence × Critical_Path_Stability
 ```
-This correctly prevents duplicate activity rows, but it also skips all the task-creation logic that runs after the insert loop. For DP300, activities exist (11 rows) but 0 tasks were created.
 
-### Changes
+Add columns to `ori_scores`: `dimension_scores JSONB`, `risk_penalty_total NUMERIC`, `startup_confidence_score NUMERIC`, `schedule_adherence_index NUMERIC`, `critical_path_stability_index NUMERIC`.
 
-#### 1. Separate task generation from materialization (`ORAActivityPlanWizard.tsx`)
+Add `confidence_factor NUMERIC(3,2) DEFAULT 0.8` and `risk_severity TEXT DEFAULT 'none'` to `readiness_nodes`.
 
-Refactor `materializeActivities()` to split into two concerns:
-- **Activity insertion** (guarded by the existing check — only runs once)
-- **Task generation** (separate function `generateLeafTasks()` that checks for existing tasks independently)
+### Task 3: Update Sync Function
+Update `sync_readiness_nodes()` to auto-assign `dimension_id` by mapping:
+- P2A VCR prerequisites → mapped via their `vcr_items.category_id` directly to `vcr_item_categories`
+- ORA activities → default to "Operating Integrity" or map via metadata
+- PSSR items → map via PSSR checklist category → nearest VCR category
+- ORM deliverables → default to "Management Systems"
+- Training → default to "Operating Integrity"
 
-The new `generateLeafTasks(planId)` function will:
-- Query `ora_plan_activities` for this plan to find leaf activities (no children)
-- Check if tasks already exist for this plan (`user_tasks` where `metadata->>'plan_id' = planId AND type = 'ora_activity'`)
-- If no tasks exist, look up the Snr ORA Engr from `project_team_members` and create tasks via `create_user_task` RPC
-- Also check/create the P2A task if missing
+Set confidence factors: completed/approved = 1.0, in-progress = 0.8, not-started = 0.7.
 
-This way, even for already-materialized plans, calling `generateLeafTasks()` will create the missing tasks.
+### Task 4: Executive Dashboard Enhancement
+Redesign `ExecutiveDashboard.tsx` to match the strategic layout:
+- **Top Banner**: Large ORI + SCS + color coding (Green >85, Amber 70-85, Red <70)
+- **Dimension Breakdown**: Bar/table showing each VCR category's score, trend arrow, risk level
+- **Top 5 Startup Blockers**: Blocked/critical nodes with severity
+- **Predictive Trend**: ORI line chart with dashed target curve
+- **Risk Impact Summary**: 4 stat boxes (Open High Risks, Startup-blocking, Dimensions below 70%, Systems below 60%)
 
-#### 2. Call `generateLeafTasks` after approval in `handleReviewDecision`
+### Task 5: Tenant-Configurable Weight Profiles
+Update the existing `ori_weight_profiles` to store dimension-based weights keyed by `vcr_item_categories.id` instead of module names. Add a simple admin UI for editing weights per tenant.
 
-After `materializeActivities()` completes (or skips due to existing activities), call `generateLeafTasks()` to ensure tasks always exist. This handles both new and retroactive cases.
-
-#### 3. Add a one-time backfill for DP300
-
-Since DP300 is already approved and won't go through the approval flow again, add a "Generate Tasks" button to the Gantt chart toolbar (visible only when plan is APPROVED and no leaf tasks exist). Clicking it calls `generateLeafTasks()`. Alternatively, we can trigger this automatically when the Gantt chart loads for an approved plan with 0 tasks.
-
-**Automatic approach (preferred):** In the Gantt chart component, when loading an APPROVED plan, check if leaf tasks exist. If not, auto-generate them. This is a self-healing pattern that fixes all past and future gaps.
-
-#### 4. Clean up dead code (`ORAActivityPlanReviewOverlay.tsx`)
-
-This component is not imported anywhere. It contains stale approval logic (wrong priority casing, direct insert bypassing RLS, no consensus check). Remove it to prevent accidental future use.
-
-### Files to Modify
-- `src/components/ora/wizard/ORAActivityPlanWizard.tsx` — extract `generateLeafTasks()`, call it after materialization
-- `src/components/orp/ORPGanttChart.tsx` — add auto-heal: generate missing tasks on load for approved plans
-- `src/components/ora/ORAActivityPlanReviewOverlay.tsx` — delete (dead code)
+### Task 6: Update Living Documents
+- **Security & Compliance Doc**: Add rows for Readiness Dimensions, Risk Penalty Engine, Startup Confidence Score (mark as Active)
+- **Platform Guide**: Add "Readiness Ontology & Scoring Engine" section documenting the 6 dimensions, ORI formula, SCS
+- **Strategic North Star**: Update scoring engine status from Planned to Active, add dimension-based architecture detail
 
