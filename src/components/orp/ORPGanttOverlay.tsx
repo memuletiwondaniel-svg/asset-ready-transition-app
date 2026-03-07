@@ -65,7 +65,7 @@ export const ORPGanttOverlay: React.FC<ORPGanttOverlayProps> = ({
 
   const statusConfig = planStatus ? STATUS_CONFIG[planStatus] : null;
   const StatusIcon = statusConfig?.icon || Clock;
-  const isReadOnly = planStatus !== 'APPROVED' && planStatus !== 'IN_PROGRESS' && planStatus !== 'COMPLETED';
+  const isReadOnly = externalReadOnly || (planStatus !== 'APPROVED' && planStatus !== 'IN_PROGRESS' && planStatus !== 'COMPLETED');
 
   const projectSubtitle = [projectCode, projectName].filter(Boolean).join(' · ');
 
