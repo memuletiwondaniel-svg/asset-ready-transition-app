@@ -625,9 +625,10 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                       </div>
                       <Slider
                     value={[progressPct]}
-                    onValueChange={(val) => setProgressPct(val[0])}
+                    onValueChange={(val) => !isReadOnly && setProgressPct(val[0])}
                     max={100}
                     step={5}
+                    disabled={isReadOnly}
                     className="[&_[role=slider]]:border-amber-500 [&_[role=slider]]:bg-background [&_.bg-primary]:bg-amber-500"
                   />
                   <div className="flex justify-between text-[10px] text-muted-foreground/60">
