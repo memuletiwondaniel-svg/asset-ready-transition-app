@@ -30,7 +30,7 @@ export const useORAActivityComments = (activityId: string | undefined, planId: s
       if (!data || data.length === 0) return [];
 
       // Fetch profiles for all unique user_ids
-      const userIds = [...new Set(data.map((c: any) => c.user_id))];
+      const userIds = [...new Set(data.map((c: any) => c.user_id))] as string[];
       const { data: profiles } = await supabase
         .from('profiles')
         .select('user_id, full_name, avatar_url')
