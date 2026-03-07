@@ -936,6 +936,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                       className={cn(
                         "flex items-center border-b last:border-b-0 transition-colors",
                         !readOnly && "cursor-pointer hover:bg-muted/30",
+                        readOnly && "cursor-pointer hover:bg-muted/20",
                         index % 2 === 0 ? 'bg-background' : 'bg-muted/10',
                         isParent && 'font-medium',
                         isCritical && 'bg-destructive/5'
