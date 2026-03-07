@@ -323,6 +323,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
       queryClient.invalidateQueries({ queryKey: ['user-orp-activities'] });
       queryClient.invalidateQueries({ queryKey: ['ora-plan-activities'] });
       queryClient.invalidateQueries({ queryKey: ['orp-plan'] });
+      queryClient.invalidateQueries({ queryKey: ['orp-plan-details'] });
 
       toast.success(status === 'COMPLETED' ? 'Activity marked as completed' : 'Activity progress saved');
       onOpenChange(false);
