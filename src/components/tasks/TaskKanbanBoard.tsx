@@ -72,34 +72,47 @@ const KanbanCard: React.FC<{
       <Card
         onClick={onClick}
         className={cn(
-          "p-3 cursor-pointer transition-all hover:shadow-md hover:border-primary/20 border-l-2",
+          "p-1.5 px-2 cursor-pointer transition-all hover:shadow-md hover:border-primary/20 border-l-2",
           borderColor,
           task.isWaiting && 'opacity-50',
           task.isNew && 'ring-1 ring-primary/20',
-          sp.isOverdue && 'bg-destructive/[0.03] animate-pulse-subtle'
+          sp.isOverdue && 'bg-destructive/[0.03]'
         )}
       >
-        {/* Project + badges */}
-        <div className="flex items-center justify-between gap-2 mb-1.5">
-          {task.project ? (
-            <ProjectIdBadge size="sm" projectId={task.project}>{task.project}</ProjectIdBadge>
-          ) : (
-            <span className="text-[10px] text-muted-foreground">{task.categoryLabel}</span>
-          )}
-          <div className="flex items-center gap-1">
-            {task.isNew && (
-              <Badge variant="secondary" className="text-[10px] px-1 py-0 bg-primary/10 text-primary">NEW</Badge>
+        {/* Row 1: Project ID + status badge + priority dot */}
+        <div className="flex items-center justify-between gap-1 mb-0.5">
+          <div className="flex items-center gap-1.5 min-w-0">
+            {task.project ? (
+              <ProjectIdBadge size="sm" projectId={task.project}>{task.project}</ProjectIdBadge>
+            ) : (
+              <span className="text-[9px] text-muted-foreground">{task.categoryLabel}</span>
             )}
+            {dateAnnotation && (
+              <span className={cn(
+                "inline-flex items-center gap-0.5 text-[9px] px-1 py-0 rounded-full font-medium whitespace-nowrap",
+                dateAnnotation.variant === 'overdue' && 'bg-destructive/10 text-destructive',
+                dateAnnotation.variant === 'today' && 'bg-amber-500/10 text-amber-600',
+                dateAnnotation.variant === 'upcoming' && 'bg-blue-500/10 text-blue-600',
+              )}>
+                {dateAnnotation.variant === 'overdue' && <AlertTriangle className="h-2.5 w-2.5" />}
+                {dateAnnotation.variant === 'today' && <Clock className="h-2.5 w-2.5" />}
+                {dateAnnotation.label}
+              </span>
+            )}
+            {task.isNew && (
+              <Badge variant="secondary" className="text-[9px] px-1 py-0 h-auto bg-primary/10 text-primary">NEW</Badge>
+            )}
+          </div>
+          <div className="flex items-center gap-1">
             {sp.isStartingSoon && (
-              <Badge variant="outline" className="text-[10px] px-1 py-0 border-amber-500/30 bg-amber-500/10 text-amber-600 gap-0.5">
-                <Zap className="h-2.5 w-2.5" />Soon
+              <Badge variant="outline" className="text-[9px] px-1 py-0 h-auto border-amber-500/30 bg-amber-500/10 text-amber-600 gap-0.5">
+                <Zap className="h-2 w-2" />Soon
               </Badge>
             )}
-            {/* Priority tooltip on hover */}
             <Tooltip>
               <TooltipTrigger asChild>
                 <div className={cn(
-                  "w-2 h-2 rounded-full cursor-help shrink-0",
+                  "w-1.5 h-1.5 rounded-full cursor-help shrink-0",
                   sp.level === 'critical' ? 'bg-destructive' : sp.level === 'high' ? 'bg-destructive/70' : sp.level === 'medium' ? 'bg-amber-500' : 'bg-muted-foreground/30'
                 )} />
               </TooltipTrigger>
@@ -113,13 +126,13 @@ const KanbanCard: React.FC<{
           </div>
         </div>
 
-        {/* Title */}
-        <p className="text-sm font-medium text-foreground leading-snug mb-1 line-clamp-2">{task.title}</p>
+        {/* Title - full display, smaller font */}
+        <p className="text-[11px] font-medium text-foreground leading-tight mb-0.5">{task.title}</p>
 
-        {/* Dates row */}
+        {/* Dates row - compact */}
         {(task.startDate || task.endDate || task.dueDate) && (
-          <div className="flex items-center gap-1.5 text-[11px] mb-1.5">
-            <Calendar className="h-3 w-3 shrink-0 text-muted-foreground/50" />
+          <div className="flex items-center gap-1 text-[9px]">
+            <Calendar className="h-2.5 w-2.5 shrink-0 text-muted-foreground/50" />
             {task.startDate && <span className="text-muted-foreground/50">{format(new Date(task.startDate), 'MMM d')}</span>}
             {task.startDate && task.endDate && <span className="text-muted-foreground/40">→</span>}
             {(task.endDate || task.dueDate) && (
@@ -134,25 +147,11 @@ const KanbanCard: React.FC<{
           </div>
         )}
 
-        {/* Date urgency badge */}
-        {dateAnnotation && (
-          <div className={cn(
-            "inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full font-medium mb-1.5",
-            dateAnnotation.variant === 'overdue' && 'bg-destructive/10 text-destructive',
-            dateAnnotation.variant === 'today' && 'bg-amber-500/10 text-amber-600',
-            dateAnnotation.variant === 'upcoming' && 'bg-blue-500/10 text-blue-600',
-          )}>
-            {dateAnnotation.variant === 'overdue' && <AlertTriangle className="h-3 w-3" />}
-            {dateAnnotation.variant === 'today' && <Clock className="h-3 w-3" />}
-            {dateAnnotation.label}
-          </div>
-        )}
-
         {/* Progress bar for bundles */}
         {task.totalItems != null && task.totalItems > 0 && (
-          <div className="flex items-center gap-2 mt-1">
-            <Progress value={task.progressPercentage || 0} className="h-1.5 flex-1" />
-            <span className="text-[10px] text-muted-foreground">{task.completedItems}/{task.totalItems}</span>
+          <div className="flex items-center gap-1.5 mt-0.5">
+            <Progress value={task.progressPercentage || 0} className="h-1 flex-1" />
+            <span className="text-[9px] text-muted-foreground">{task.completedItems}/{task.totalItems}</span>
           </div>
         )}
       </Card>
