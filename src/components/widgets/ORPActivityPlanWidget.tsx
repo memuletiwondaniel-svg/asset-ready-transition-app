@@ -54,7 +54,7 @@ const ActivityRow: React.FC<{ activity: ProjectORPActivity; isCompleted?: boolea
       )}
       <span className={cn(
         "truncate flex-1",
-        isCompleted && "text-muted-foreground line-through",
+        isCompleted && "text-muted-foreground",
         actStatus === 'overdue' && !isCompleted && "text-destructive font-medium"
       )}>
         {activity.name}

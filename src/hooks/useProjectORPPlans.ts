@@ -187,9 +187,6 @@ export const useProjectORPPlans = (projectId: string) => {
           const upcoming: ProjectORPActivity[] = sourceActivities
             .filter((a: any) => a.status !== 'COMPLETED')
             .sort((a: any, b: any) => {
-              // IN_PROGRESS first
-              if (a.status === 'IN_PROGRESS' && b.status !== 'IN_PROGRESS') return -1;
-              if (a.status !== 'IN_PROGRESS' && b.status === 'IN_PROGRESS') return 1;
               if (!a.start_date && !b.start_date) return 0;
               if (!a.start_date) return 1;
               if (!b.start_date) return -1;
