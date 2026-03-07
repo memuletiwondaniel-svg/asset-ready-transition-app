@@ -241,7 +241,7 @@ export const ORPGanttOverlay: React.FC<ORPGanttOverlayProps> = ({
               <ORPGanttChart
                 planId={planId}
                 deliverables={planDetails.deliverables}
-                hideToolbar
+                hideToolbar={isReadOnly}
                 readOnly={isReadOnly}
               />
             ) : (
