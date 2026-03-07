@@ -600,7 +600,8 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                       return (
                         <button
                           key={step.value}
-                          onClick={() => setStatus(step.value)}
+                          onClick={() => !isReadOnly && setStatus(step.value)}
+                          disabled={isReadOnly}
                           className={cn(
                             "flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-md text-xs font-medium transition-all",
                             isActive && step.value === 'NOT_STARTED' && "bg-gray-200 text-gray-700 shadow-sm",
