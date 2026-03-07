@@ -153,7 +153,7 @@ export default function ProjectDetailsPage() {
   const renderWidget = (widgetId: string) => {
     switch (widgetId) {
       case 'orp':
-        return <ORPActivityPlanWidget projectId={id || ''} />;
+        return <ORPActivityPlanWidget projectId={id || ''} projectCode={projectCode} projectName={project?.project_title} />;
       case 'pssr':
         return <PSSRSummaryWidget projectId={id || ''} projectCode={projectCode} projectName={project?.project_title} />;
       default:

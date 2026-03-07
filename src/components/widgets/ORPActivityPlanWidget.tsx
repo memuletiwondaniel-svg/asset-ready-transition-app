@@ -258,6 +258,8 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
         notStartedCount={primaryPlan?.not_started_count || 0}
         p2aProgress={primaryPlan?.p2a_progress || 0}
         vcrCount={primaryPlan?.vcr_count || 0}
+        projectCode={projectCode}
+        projectName={projectName}
       />
 
       <ORAActivityPlanWizard
