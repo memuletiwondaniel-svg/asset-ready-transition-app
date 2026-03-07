@@ -291,13 +291,13 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
   const [visibleColumns, setVisibleColumns] = useState<Set<ColumnKey>>(() => new Set(['index', 'id', 'start', 'status']));
   const [hasInitialZoom, setHasInitialZoom] = useState(false);
 
-  // Fetch plan data for project info (needed for P2A wizard)
+  // Fetch plan data for project info (needed for P2A wizard) and status (for auto-heal)
   const { data: planData } = useQuery({
     queryKey: ['orp-plan-basic', planId],
     queryFn: async () => {
       const { data } = await (supabase as any)
         .from('orp_plans')
-        .select('project_id, project:projects(id, project_id_prefix, project_id_number, project_title)')
+        .select('project_id, status, project:projects(id, project_id_prefix, project_id_number, project_title)')
         .eq('id', planId)
         .single();
       return data;
@@ -305,6 +305,24 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
     enabled: !!planId,
     staleTime: 60_000,
   });
+
+  // Auto-heal: generate missing leaf tasks for approved plans (handles retroactive gaps)
+  const autoHealRanRef = useRef(false);
+  useEffect(() => {
+    if (autoHealRanRef.current) return;
+    if (!planData || planData.status !== 'APPROVED') return;
+    if (!deliverables || deliverables.length === 0) return;
+
+    autoHealRanRef.current = true;
+    generateLeafTasks(planId).then(({ created }) => {
+      if (created > 0) {
+        queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+        toast({ title: 'Tasks Generated', description: `${created} activity task(s) have been created for the Sr. ORA Engineer.` });
+      }
+    }).catch(err => {
+      console.error('Auto-heal task generation failed:', err);
+    });
+  }, [planData, deliverables, planId, queryClient, toast]);
 
   // Check if P2A plan exists for "Continue" vs "Create" CTA
   const { data: existingP2APlan } = useQuery({
