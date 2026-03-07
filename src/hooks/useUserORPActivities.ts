@@ -58,11 +58,11 @@ export const useUserORPActivities = () => {
       if (planIds.length > 0) {
         const { data: deliverables, error: delError } = await supabase
           .from('orp_plan_deliverables')
-          .select('orp_plan_id, status');
+          .select('orp_plan_id, status')
+          .in('orp_plan_id', planIds);
 
         if (!delError && deliverables) {
-          const filtered = deliverables.filter((d: any) => planIds.includes(d.orp_plan_id));
-          filtered.forEach((d: any) => {
+          deliverables.forEach((d: any) => {
             if (!deliverableStats[d.orp_plan_id]) {
               deliverableStats[d.orp_plan_id] = { total: 0, completed: 0 };
             }
