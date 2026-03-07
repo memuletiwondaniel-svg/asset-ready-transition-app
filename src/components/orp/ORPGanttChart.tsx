@@ -22,6 +22,7 @@ interface ORPGanttChartProps {
   deliverables: any[];
   searchQuery?: string;
   hideToolbar?: boolean;
+  readOnly?: boolean;
 }
 
 const ZOOM_LEVELS = [0.15, 0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4];
@@ -268,7 +269,7 @@ function computeCriticalPath(rows: FlatRow[], getBarPos: (s: string, e: string) 
   return criticalSet;
 }
 
-export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverables, searchQuery: externalSearchQuery, hideToolbar }) => {
+export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverables, searchQuery: externalSearchQuery, hideToolbar, readOnly = false }) => {
   const [internalSearchQuery, setInternalSearchQuery] = useState('');
   const [showAddItem, setShowAddItem] = useState(false);
   
@@ -519,6 +520,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
   }, [minDate, dayWidth]);
 
   const openActivitySheet = useCallback((deliverable: any) => {
+    if (readOnly) return; // Don't open activity sheet in read-only mode
     // Build list of sibling activities for prerequisite picker
     const siblingActivities = filteredDeliverables
       .filter(d => d.deliverable?.activity_code && d.id !== deliverable.id)
@@ -550,7 +552,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
       priority: 'medium',
       created_at: deliverable.created_at || new Date().toISOString(),
     });
-  }, [planId, filteredDeliverables]);
+  }, [planId, filteredDeliverables, readOnly]);
 
   // Early return - no data
   if (!dates.length) {
@@ -685,7 +687,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
               </Button>
             </div>
 
-            {!hideToolbar && (
+            {!hideToolbar && !readOnly && (
               <>
                 <div className="relative w-64">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -748,16 +750,17 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                   const isCritical = showCriticalPath && criticalPathIds.has(deliverable.id);
 
                   return (
-                    <div
+                      <div
                       key={deliverable.id}
                       className={cn(
-                        "flex items-center border-b last:border-b-0 cursor-pointer hover:bg-muted/30 transition-colors",
+                        "flex items-center border-b last:border-b-0 transition-colors",
+                        !readOnly && "cursor-pointer hover:bg-muted/30",
                         index % 2 === 0 ? 'bg-background' : 'bg-muted/10',
                         isParent && 'font-medium',
                         isCritical && 'bg-destructive/5'
                       )}
                       style={{ height: ROW_HEIGHT }}
-                      onClick={() => openActivitySheet(deliverable)}
+                      onClick={() => !readOnly && openActivitySheet(deliverable)}
                     >
                       {visibleColumns.has('index') && (
                         <div className="px-1 text-center text-[10px] text-muted-foreground" style={{ width: COL_WIDTHS.index }}>
@@ -906,14 +909,15 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                           return (
                             <div
                               className={cn(
-                                "absolute top-2 rounded shadow-sm overflow-hidden cursor-grab hover:shadow-md transition-all group",
+                                "absolute top-2 rounded shadow-sm overflow-hidden transition-all group",
                                 mutedColor,
+                                !readOnly && "cursor-grab hover:shadow-md",
                                 isDragging && "ring-2 ring-primary/50 shadow-lg cursor-grabbing",
                                 isCritical && "ring-2 ring-destructive/70"
                               )}
                               style={{ left: barL, width: barW, height: ROW_HEIGHT - 16 }}
                               onMouseDown={(e) => {
-                                // Only initiate move-drag from the bar body (not edge handles)
+                                if (readOnly) return;
                                 if (!(e.target as HTMLElement).dataset.edge) {
                                   handleMouseDown(e, 'move', deliverable.id, barPos.left, barPos.width, parseISO(deliverable.start_date), parseISO(deliverable.end_date));
                                 }
@@ -935,16 +939,20 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                                   {completion}%
                                 </span>
                               </div>
-                              <div
-                                data-edge="left"
-                                className="absolute left-0 top-0 bottom-0 w-[6px] cursor-col-resize z-20 hover:bg-white/30"
-                                onMouseDown={(e) => handleMouseDown(e, 'left', deliverable.id, barPos.left, barPos.width, parseISO(deliverable.start_date), parseISO(deliverable.end_date))}
-                              />
-                              <div
-                                data-edge="right"
-                                className="absolute right-0 top-0 bottom-0 w-[6px] cursor-col-resize z-20 hover:bg-white/30"
-                                onMouseDown={(e) => handleMouseDown(e, 'right', deliverable.id, barPos.left, barPos.width, parseISO(deliverable.start_date), parseISO(deliverable.end_date))}
-                              />
+                              {!readOnly && (
+                                <>
+                                  <div
+                                    data-edge="left"
+                                    className="absolute left-0 top-0 bottom-0 w-[6px] cursor-col-resize z-20 hover:bg-white/30"
+                                    onMouseDown={(e) => handleMouseDown(e, 'left', deliverable.id, barPos.left, barPos.width, parseISO(deliverable.start_date), parseISO(deliverable.end_date))}
+                                  />
+                                  <div
+                                    data-edge="right"
+                                    className="absolute right-0 top-0 bottom-0 w-[6px] cursor-col-resize z-20 hover:bg-white/30"
+                                    onMouseDown={(e) => handleMouseDown(e, 'right', deliverable.id, barPos.left, barPos.width, parseISO(deliverable.start_date), parseISO(deliverable.end_date))}
+                                  />
+                                </>
+                              )}
                             </div>
                           );
                         })()}

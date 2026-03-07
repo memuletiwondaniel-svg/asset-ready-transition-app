@@ -15,6 +15,8 @@ import { cn } from '@/lib/utils';
 
 interface ORPActivityPlanWidgetProps {
   projectId: string;
+  projectCode?: string;
+  projectName?: string;
   dragAttributes?: any;
   dragListeners?: any;
   onHide?: () => void;
@@ -30,6 +32,8 @@ const STATUS_CONFIG: Record<string, { label: string; icon: React.ElementType; cl
 
 export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({ 
   projectId, 
+  projectCode,
+  projectName,
   dragAttributes, 
   dragListeners, 
   onHide 
@@ -254,6 +258,8 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
         notStartedCount={primaryPlan?.not_started_count || 0}
         p2aProgress={primaryPlan?.p2a_progress || 0}
         vcrCount={primaryPlan?.vcr_count || 0}
+        projectCode={projectCode}
+        projectName={projectName}
       />
 
       <ORAActivityPlanWizard

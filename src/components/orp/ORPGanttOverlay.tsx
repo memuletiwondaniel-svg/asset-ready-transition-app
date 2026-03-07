@@ -30,6 +30,8 @@ interface ORPGanttOverlayProps {
   notStartedCount?: number;
   p2aProgress?: number;
   vcrCount?: number;
+  projectCode?: string;
+  projectName?: string;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; icon: React.ElementType; className: string }> = {
@@ -53,12 +55,17 @@ export const ORPGanttOverlay: React.FC<ORPGanttOverlayProps> = ({
   notStartedCount = 0,
   p2aProgress = 0,
   vcrCount = 0,
+  projectCode,
+  projectName,
 }) => {
   const [approvalsOpen, setApprovalsOpen] = useState(false);
   const { data: planDetails, isLoading } = useORPPlanDetails(open ? planId : '');
 
   const statusConfig = planStatus ? STATUS_CONFIG[planStatus] : null;
   const StatusIcon = statusConfig?.icon || Clock;
+  const isReadOnly = planStatus !== 'APPROVED' && planStatus !== 'IN_PROGRESS' && planStatus !== 'COMPLETED';
+
+  const projectSubtitle = [projectCode, projectName].filter(Boolean).join(' · ');
 
   // Compute schedule metrics from deliverables
   const scheduleMetrics = useMemo(() => {
@@ -132,12 +139,15 @@ export const ORPGanttOverlay: React.FC<ORPGanttOverlayProps> = ({
                   {planName && (
                     <p className="text-[11px] text-muted-foreground">{planName}</p>
                   )}
+                  {projectSubtitle && (
+                    <p className="text-[10px] text-muted-foreground/70">{projectSubtitle}</p>
+                  )}
                 </div>
               </div>
             </div>
 
             {/* Metrics row */}
-            <div className="mt-4 grid grid-cols-[minmax(180px,0.6fr)_auto_auto_auto] gap-2 items-stretch">
+            <div className="mt-4 grid grid-cols-[1fr_auto_auto_auto] gap-2 items-stretch">
               {/* Overall Progress */}
               <div className="p-3 bg-muted/30 rounded-xl border border-border/30 min-w-0">
                 <div className="flex items-center justify-between text-xs mb-1.5">
@@ -155,54 +165,70 @@ export const ORPGanttOverlay: React.FC<ORPGanttOverlayProps> = ({
               {scheduleMetrics && (
                 <>
                    <div className={cn(
-                    "flex flex-col items-center justify-center px-2 py-1 rounded-lg border min-w-[56px]",
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-lg border min-w-[48px]",
                     scheduleMetrics.spi >= 80
                       ? "bg-green-500/5 border-green-500/20"
                       : scheduleMetrics.spi >= 50
                         ? "bg-amber-500/5 border-amber-500/20"
                         : "bg-destructive/5 border-destructive/20"
                   )}>
-                    {scheduleMetrics.spi >= 50
-                      ? <TrendingUp className={cn("h-3 w-3 mb-0.5", scheduleMetrics.spi >= 80 ? "text-green-600" : "text-amber-600")} />
-                      : <TrendingDown className="h-3 w-3 mb-0.5 text-destructive" />
-                    }
-                    <p className={cn(
-                      "text-xs font-bold leading-none",
-                      scheduleMetrics.spi >= 80 ? "text-green-600" : scheduleMetrics.spi >= 50 ? "text-amber-600" : "text-destructive"
-                    )}>{scheduleMetrics.spi}%</p>
-                    <p className="text-[8px] text-muted-foreground mt-0.5 font-medium">SPI</p>
+                    <div className="flex flex-col items-center">
+                      {scheduleMetrics.spi >= 50
+                        ? <TrendingUp className={cn("h-3.5 w-3.5", scheduleMetrics.spi >= 80 ? "text-green-600" : "text-amber-600")} />
+                        : <TrendingDown className="h-3.5 w-3.5 text-destructive" />
+                      }
+                    </div>
+                    <div className="flex flex-col">
+                      <p className={cn(
+                        "text-sm font-bold leading-none",
+                        scheduleMetrics.spi >= 80 ? "text-green-600" : scheduleMetrics.spi >= 50 ? "text-amber-600" : "text-destructive"
+                      )}>{scheduleMetrics.spi}%</p>
+                      <p className="text-[8px] text-muted-foreground font-medium">SPI</p>
+                    </div>
                   </div>
 
                   <div className={cn(
-                    "flex flex-col items-center justify-center px-2 py-1 rounded-lg border min-w-[56px]",
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-lg border min-w-[48px]",
                     scheduleMetrics.atRisk === 0
                       ? "bg-green-500/5 border-green-500/20"
                       : "bg-destructive/5 border-destructive/20"
                   )}>
-                    <AlertTriangle className={cn("h-3 w-3 mb-0.5", scheduleMetrics.atRisk === 0 ? "text-green-600" : "text-destructive")} />
-                    <p className={cn(
-                      "text-xs font-bold leading-none",
-                      scheduleMetrics.atRisk === 0 ? "text-green-600" : "text-destructive"
-                    )}>{scheduleMetrics.atRisk}</p>
-                    <p className="text-[8px] text-muted-foreground mt-0.5 font-medium">At Risk</p>
+                    <AlertTriangle className={cn("h-3.5 w-3.5", scheduleMetrics.atRisk === 0 ? "text-green-600" : "text-destructive")} />
+                    <div className="flex flex-col">
+                      <p className={cn(
+                        "text-sm font-bold leading-none",
+                        scheduleMetrics.atRisk === 0 ? "text-green-600" : "text-destructive"
+                      )}>{scheduleMetrics.atRisk}</p>
+                      <p className="text-[8px] text-muted-foreground font-medium">At Risk</p>
+                    </div>
                   </div>
 
                   <div className={cn(
-                    "flex flex-col items-center justify-center px-2 py-1 rounded-lg border min-w-[56px]",
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-lg border min-w-[48px]",
                     scheduleMetrics.avgSlippage === 0
                       ? "bg-green-500/5 border-green-500/20"
                       : "bg-amber-500/5 border-amber-500/20"
                   )}>
-                    <Clock className={cn("h-3 w-3 mb-0.5", scheduleMetrics.avgSlippage === 0 ? "text-green-600" : "text-amber-600")} />
-                    <p className={cn(
-                      "text-xs font-bold leading-none",
-                      scheduleMetrics.avgSlippage === 0 ? "text-green-600" : "text-amber-600"
-                    )}>{scheduleMetrics.avgSlippage}d</p>
-                    <p className="text-[8px] text-muted-foreground mt-0.5 font-medium">Slippage</p>
+                    <Clock className={cn("h-3.5 w-3.5", scheduleMetrics.avgSlippage === 0 ? "text-green-600" : "text-amber-600")} />
+                    <div className="flex flex-col">
+                      <p className={cn(
+                        "text-sm font-bold leading-none",
+                        scheduleMetrics.avgSlippage === 0 ? "text-green-600" : "text-amber-600"
+                      )}>{scheduleMetrics.avgSlippage}d</p>
+                      <p className="text-[8px] text-muted-foreground font-medium">Slippage</p>
+                    </div>
                   </div>
                 </>
               )}
             </div>
+
+            {/* Read-only banner */}
+            {isReadOnly && (
+              <div className="mt-3 flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400">
+                <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                <p className="text-[11px] font-medium">This plan is under review — view only</p>
+              </div>
+            )}
           </DialogHeader>
 
           <div className="flex-1 overflow-auto p-5 pt-2">
@@ -216,6 +242,7 @@ export const ORPGanttOverlay: React.FC<ORPGanttOverlayProps> = ({
                 planId={planId}
                 deliverables={planDetails.deliverables}
                 hideToolbar
+                readOnly={isReadOnly}
               />
             ) : (
               <div className="text-center py-16 text-muted-foreground">
