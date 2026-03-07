@@ -775,7 +775,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            )
+            )}
           </div>
         </div>
       </CardHeader>
