@@ -12,6 +12,7 @@ import { ProfileCompletionIndicator } from '@/components/sidebar/ProfileCompleti
 import { OnlineUsersIndicator } from '@/components/sidebar/OnlineUsersIndicator';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useNewTaskCount } from '@/hooks/useNewTaskCount';
 
 interface NavigationItem {
   labelKey: string;
@@ -105,6 +106,7 @@ export const SidebarContent = memo<SidebarContentProps>(({
 }) => {
   const { translations: t } = useLanguage();
   const { hasPermission } = usePermissions();
+  const newTaskCount = useNewTaskCount();
   
   const DANIEL_USER_ID = '05b44255-4358-450c-8aa4-0558b31df70b';
   const visibleNavItems = navigationItems.filter(item => 
@@ -222,6 +224,11 @@ export const SidebarContent = memo<SidebarContentProps>(({
                           {unreadChatCount}
                         </span>
                       )}
+                      {item.section === 'my-tasks' && newTaskCount > 0 && (
+                        <span className="ml-auto flex h-5 min-w-5 px-1 items-center justify-center rounded-full bg-destructive text-[10px] font-semibold text-destructive-foreground">
+                          {newTaskCount}
+                        </span>
+                      )}
                     </Button>
                   );
                 })}
@@ -254,6 +261,11 @@ export const SidebarContent = memo<SidebarContentProps>(({
                     {item.section === 'ask-orsh' && unreadChatCount > 0 && (
                       <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] font-semibold text-primary-foreground">
                         {unreadChatCount}
+                      </span>
+                    )}
+                    {item.section === 'my-tasks' && newTaskCount > 0 && (
+                      <span className="absolute -top-1 -right-1 flex h-4 min-w-4 px-0.5 items-center justify-center rounded-full bg-destructive text-[9px] font-semibold text-destructive-foreground">
+                        {newTaskCount}
                       </span>
                     )}
                   </Button>
