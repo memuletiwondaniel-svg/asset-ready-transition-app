@@ -768,7 +768,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                             }}
                             className="flex flex-col items-center gap-2.5 w-full"
                           >
-                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${colorClass} transition-transform duration-200 group-hover/fav:scale-110`}>
+                            <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center ${colorClass} transition-transform duration-200 group-hover/fav:scale-110`}>
                               <IconComponent className="w-5 h-5 text-white" />
                             </div>
                             <span className="text-xs font-medium text-foreground/80 group-hover/fav:text-foreground transition-colors line-clamp-1 max-w-[100px] text-center">
