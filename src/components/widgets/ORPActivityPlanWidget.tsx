@@ -226,7 +226,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
           </div>
 
           {/* Section 2: Progress Summary */}
-          <div className="flex-shrink-0 rounded-lg border border-border bg-muted/30 p-3">
+          <div className="flex-shrink-0 rounded-lg border border-border bg-muted/30 p-3 cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setOverlayOpen(true)}>
             <div className="flex items-center justify-between text-xs mb-2">
               <span className="text-muted-foreground font-medium">Overall Progress</span>
               <span className="font-bold text-sm">{overallProgress}%</span>
