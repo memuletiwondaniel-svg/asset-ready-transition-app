@@ -393,7 +393,7 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
   return (
     <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
       <DialogContent className="sm:max-w-3xl max-h-full sm:max-h-[85vh] overflow-hidden flex flex-col p-0">
-        <DialogHeader className="border-b px-6 pt-6 pb-4">
+        <DialogHeader className="border-b px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4">
           <DialogTitle className="flex items-center gap-2 text-xl font-semibold">
             <FolderPlus className="w-5 h-5 text-primary" />
             Create New Project
