@@ -580,13 +580,14 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                 </p>
                 <Button
                   className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
+                  disabled={isReadOnly}
                   onClick={() => {
                     onOpenChange(false);
                     setShowP2AWizard(true);
                   }}
                 >
                   <FileText className="h-4 w-4" />
-                  {p2aSheetCtaLabel}
+                  {isReadOnly ? 'View Only' : p2aSheetCtaLabel}
                   <ChevronRight className="h-4 w-4 ml-auto" />
                 </Button>
               </div>
