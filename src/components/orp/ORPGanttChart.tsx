@@ -671,7 +671,15 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
   }, [minDate, dayWidth]);
 
   const openActivitySheet = useCallback((deliverable: any) => {
-    if (readOnly) return; // Don't open activity sheet in read-only mode
+    if (readOnly) return;
+    const actCode = deliverable.deliverable?.activity_code || '';
+    
+    // Special handling for P2A-01 activity: open P2A wizard instead
+    if (actCode === 'P2A-01') {
+      setShowP2AWizard(true);
+      return;
+    }
+
     // Build list of sibling activities for prerequisite picker
     const siblingActivities = filteredDeliverables
       .filter(d => d.deliverable?.activity_code && d.id !== deliverable.id)
