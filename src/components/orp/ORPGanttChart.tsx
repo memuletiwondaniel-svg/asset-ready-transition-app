@@ -942,7 +942,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                         isCritical && 'bg-destructive/5'
                       )}
                       style={{ height: ROW_HEIGHT }}
-                      onClick={() => !readOnly && openActivitySheet(deliverable)}
+                      onClick={() => openActivitySheet(deliverable)}
                     >
                       {visibleColumns.has('index') && (
                         <div className="px-1 text-center text-[10px] text-muted-foreground" style={{ width: COL_WIDTHS.index }}>
