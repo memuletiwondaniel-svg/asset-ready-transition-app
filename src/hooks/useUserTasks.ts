@@ -27,10 +27,13 @@ export interface UserTask {
 }
 
 // Fetch active tasks (pending, in_progress, waiting) for the kanban board
+const BUNDLE_TYPES = ['vcr_checklist_bundle', 'vcr_approval_bundle', 'pssr_checklist_bundle', 'pssr_approval_bundle'];
+
 const fetchUserTasks = async (userId: string): Promise<{ tasks: UserTask[]; dependencies: TaskDependency[] }> => {
+  // Single query fetches both regular tasks AND bundle tasks (previously two separate queries)
   const { data: tasksData, error: tasksError } = await supabase
     .from('user_tasks')
-    .select('id,title,description,due_date,priority,type,status,display_order,created_at,metadata')
+    .select('id,title,description,due_date,priority,type,status,display_order,created_at,metadata,sub_items,progress_percentage')
     .eq('user_id', userId)
     .in('status', ['pending', 'in_progress', 'waiting'])
     .order('display_order', { ascending: true })
