@@ -520,7 +520,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                       variant="outline"
                       size="icon"
                       className="h-7 w-7 text-xs"
-                      disabled={!editStartDate || !editEndDate || (durationDays !== null && durationDays <= 1)}
+                      disabled={isReadOnly || !editStartDate || !editEndDate || (durationDays !== null && durationDays <= 1)}
                       onClick={() => {
                         if (editStartDate && editEndDate && durationDays && durationDays > 1) {
                           setEditEndDate(addDays(editEndDate, -1));
