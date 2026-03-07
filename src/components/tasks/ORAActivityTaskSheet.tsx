@@ -73,7 +73,6 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
   const [status, setStatus] = useState<ActivityStatus>('NOT_STARTED');
   const [description, setDescription] = useState('');
   const [comment, setComment] = useState('');
-  const [comments, setComments] = useState<{ text: string; date: string }[]>([]);
   const [files, setFiles] = useState<File[]>([]);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
