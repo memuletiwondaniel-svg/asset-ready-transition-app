@@ -76,7 +76,7 @@ export const BreadcrumbNavigation: React.FC<BreadcrumbNavigationProps> = ({
     <div className={cn("flex items-center gap-1.5 sm:gap-3 overflow-x-auto min-w-0", className)}>
       {/* Back/Forward Navigation Buttons */}
       <TooltipProvider>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
           {/* Back Button with Dropdown */}
           <DropdownMenu>
             <Tooltip>
