@@ -771,7 +771,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                             <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center ${colorClass} transition-transform duration-200 group-hover/fav:scale-110`}>
                               <IconComponent className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                             </div>
-                            <span className="text-xs font-medium text-foreground/80 group-hover/fav:text-foreground transition-colors line-clamp-1 max-w-[100px] text-center">
+                            <span className="text-[10px] sm:text-xs font-medium text-foreground/80 group-hover/fav:text-foreground transition-colors line-clamp-1 max-w-[80px] sm:max-w-[100px] text-center">
                               {fav.label}
                             </span>
                           </button>
