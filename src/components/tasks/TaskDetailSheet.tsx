@@ -169,6 +169,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   const intentMessage = getIntentMessage();
 
   const getTypeBadge = () => {
+    if (isP2aTask) return <Badge variant="secondary" className="text-xs bg-emerald-500/10 text-emerald-600">P2A Plan</Badge>;
     if (isOraTask) return <Badge variant="secondary" className="text-xs bg-violet-500/10 text-violet-600">ORA Plan</Badge>;
     if (isOraReviewTask) return <Badge variant="secondary" className="text-xs bg-amber-500/10 text-amber-600">ORA Review</Badge>;
     if (isOraActivityTask) return <Badge variant="secondary" className="text-xs bg-purple-500/10 text-purple-600">ORA Activity</Badge>;
