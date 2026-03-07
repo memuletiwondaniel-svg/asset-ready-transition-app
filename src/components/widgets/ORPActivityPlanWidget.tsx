@@ -289,7 +289,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
                 </CollapsibleTrigger>
                 <CollapsibleContent className="space-y-1 mt-1">
                   {completedActivities.map((activity) => (
-                    <ActivityRow key={activity.id} activity={activity} isCompleted />
+                    <ActivityRow key={activity.id} activity={activity} isCompleted onClick={() => setOverlayOpen(true)} />
                   ))}
                 </CollapsibleContent>
               </Collapsible>
