@@ -277,6 +277,7 @@ function computeCriticalPath(rows: FlatRow[], getBarPos: (s: string, e: string) 
 export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverables, searchQuery: externalSearchQuery, hideToolbar, readOnly = false }) => {
   const [internalSearchQuery, setInternalSearchQuery] = useState('');
   const [showCatalogDialog, setShowCatalogDialog] = useState(false);
+  const [showP2AWizard, setShowP2AWizard] = useState(false);
   
   const { toast } = useToast();
   
@@ -288,6 +289,43 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
   const [showCriticalPath, setShowCriticalPath] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState<Set<ColumnKey>>(() => new Set(['index', 'id', 'start', 'status']));
   const [hasInitialZoom, setHasInitialZoom] = useState(false);
+
+  // Fetch plan data for project info (needed for P2A wizard)
+  const { data: planData } = useQuery({
+    queryKey: ['orp-plan-basic', planId],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from('orp_plans')
+        .select('project_id, project:projects(id, project_id_prefix, project_id_number, project_title)')
+        .eq('id', planId)
+        .single();
+      return data;
+    },
+    enabled: !!planId,
+    staleTime: 60_000,
+  });
+
+  // Check if P2A plan exists for "Continue" vs "Create" CTA
+  const { data: existingP2APlan } = useQuery({
+    queryKey: ['p2a-plan-exists', planData?.project_id],
+    queryFn: async () => {
+      if (!planData?.project_id) return null;
+      const { data } = await (supabase as any)
+        .from('p2a_handover_plans')
+        .select('id, status')
+        .eq('project_id', planData.project_id)
+        .limit(1);
+      return data?.[0] || null;
+    },
+    enabled: !!planData?.project_id,
+    staleTime: 30_000,
+  });
+
+  const p2aCtaLabel = existingP2APlan ? 'Continue P2A Plan' : 'Create P2A Plan';
+  const projectCode = planData?.project
+    ? `${planData.project.project_id_prefix || ''}-${planData.project.project_id_number || ''}`
+    : '';
+  const projectName = planData?.project?.project_title || '';
 
   // Get existing activity IDs for catalog exclusion
   const existingActivityIds = useMemo(() => deliverables.map((d: any) => d.id?.replace('ora-', '') || d.id), [deliverables]);
