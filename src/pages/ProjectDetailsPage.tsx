@@ -97,6 +97,7 @@ export default function ProjectDetailsPage() {
   const hub = hubs.find(h => h.id === project?.hub_id);
   const { regions } = useProjectRegions();
   const region = regions.find(r => r.id === project?.region_id);
+  const { isReadOnly } = useProjectAccess(id);
 
   useEffect(() => {
     if (project) {
