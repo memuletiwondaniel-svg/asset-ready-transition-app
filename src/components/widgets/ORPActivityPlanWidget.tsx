@@ -83,7 +83,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
   const [wizardOpen, setWizardOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [upcomingOpen, setUpcomingOpen] = useState(true);
-  const [completedOpen, setCompletedOpen] = useState(true);
+  const [completedOpen, setCompletedOpen] = useState(false);
   const { data: plans = [], isLoading } = useProjectORPPlans(projectId);
   const { deletePlan, isDeletingPlan } = useORPPlans();
   
