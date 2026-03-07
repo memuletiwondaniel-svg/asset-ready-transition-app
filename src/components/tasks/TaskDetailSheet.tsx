@@ -140,42 +140,8 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   const isOraReviewTask = task.type === 'ora_plan_review';
   const isOraActivityTask = task.type === 'ora_activity' || task.metadata?.action === 'complete_ora_activity';
   const isVcrDeliveryPlanTask = (task.type === 'vcr_delivery_plan' || task.metadata?.action === 'create_vcr_delivery_plan');
-  const isP2aTask = task.metadata?.action === 'create_p2a_plan';
   const oraPlanId = task.metadata?.plan_id as string | undefined;
-  const p2aProjectId = task.metadata?.project_id as string | undefined;
   const p2aProjectCode = task.metadata?.project_code as string | undefined;
-
-  // Fetch project info for P2A wizard (if needed)
-  const { data: p2aProjectInfo } = useQuery({
-    queryKey: ['p2a-project-info', p2aProjectId],
-    queryFn: async () => {
-      if (!p2aProjectId) return null;
-      const { data } = await supabase
-        .from('projects')
-        .select('project_id_prefix, project_id_number, project_title')
-        .eq('id', p2aProjectId)
-        .single();
-      return data;
-    },
-    enabled: !!p2aProjectId && isP2aTask,
-    staleTime: 60_000,
-  });
-
-  // Check if P2A plan draft exists
-  const { data: hasExistingP2aDraft } = useQuery({
-    queryKey: ['p2a-plan-exists-task', p2aProjectId],
-    queryFn: async () => {
-      if (!p2aProjectId) return false;
-      const { data } = await (supabase as any)
-        .from('p2a_handover_plans')
-        .select('id')
-        .eq('project_id', p2aProjectId)
-        .limit(1);
-      return data && data.length > 0;
-    },
-    enabled: !!p2aProjectId && isP2aTask,
-    staleTime: 30_000,
-  });
 
   const p2aCtaLabel = hasExistingP2aDraft ? 'Continue P2A Plan' : 'Create P2A Plan';
   const resolvedP2aProjectCode = p2aProjectCode || (p2aProjectInfo ? `${p2aProjectInfo.project_id_prefix || ''}-${p2aProjectInfo.project_id_number || ''}` : '');
