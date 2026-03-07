@@ -762,9 +762,21 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input placeholder="Search deliverables..." value={internalSearchQuery} onChange={(e) => setInternalSearchQuery(e.target.value)} className="pl-9" />
                 </div>
-                <Button onClick={() => setShowAddItem(true)}>
-                  <Plus className="w-4 h-4 mr-2" /> Add ORA Item
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="text-muted-foreground">
+                      <Plus className="w-4 h-4 mr-2" /> Add Activity
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => setShowCatalogDialog(true)}>
+                      <BookOpen className="w-4 h-4 mr-2" /> From Catalog
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setShowCustomDialog(true)}>
+                      <PenLine className="w-4 h-4 mr-2" /> Custom Activity
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </>
             )}
           </div>
