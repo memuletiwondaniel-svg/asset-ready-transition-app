@@ -495,7 +495,7 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
         )}
 
         {/* Step Content */}
-        <div className="flex-1 overflow-y-auto py-4 px-6">
+        <div className="flex-1 overflow-y-auto py-3 sm:py-4 px-4 sm:px-6">
           {renderStepContent()}
         </div>
 
