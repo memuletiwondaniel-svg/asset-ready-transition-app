@@ -324,6 +324,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
         vcrCount={primaryPlan?.vcr_count || 0}
         projectCode={projectCode}
         projectName={projectName}
+        isReadOnly={isReadOnly}
       />
 
       <ORAActivityPlanWizard
