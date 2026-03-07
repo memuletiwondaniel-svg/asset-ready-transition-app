@@ -91,7 +91,7 @@ export const BreadcrumbNavigation: React.FC<BreadcrumbNavigationProps> = ({
                       }
                     }}
                     disabled={!canGoBack}
-                    className="h-8 w-8 rounded-lg disabled:opacity-30"
+                    className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg disabled:opacity-30"
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
