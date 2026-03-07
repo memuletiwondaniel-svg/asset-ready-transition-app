@@ -78,7 +78,8 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
   projectName,
   dragAttributes, 
   dragListeners, 
-  onHide 
+  onHide,
+  isReadOnly = false,
 }) => {
   const [overlayOpen, setOverlayOpen] = useState(false);
   const [wizardOpen, setWizardOpen] = useState(false);
