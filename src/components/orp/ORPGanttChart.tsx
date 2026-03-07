@@ -662,6 +662,14 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
         <div className="flex items-center justify-between">
           <CardTitle>Gantt Chart</CardTitle>
           <div className="flex items-center gap-2">
+            {/* Search first */}
+            {!hideToolbar && !readOnly && (
+              <div className="relative w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input placeholder="Search deliverables..." value={internalSearchQuery} onChange={(e) => setInternalSearchQuery(e.target.value)} className="pl-9" />
+              </div>
+            )}
+
             {/* Expand/Collapse toggle */}
             <TooltipProvider delayDuration={300}>
               <Tooltip>
@@ -675,7 +683,6 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
 
               <div className="w-px h-5 bg-border" />
 
-              {/* Relationships toggle */}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -690,7 +697,6 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                 <TooltipContent side="bottom"><p>Relations</p></TooltipContent>
               </Tooltip>
 
-              {/* Critical Path toggle */}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -705,7 +711,6 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                 <TooltipContent side="bottom"><p>Critical Path</p></TooltipContent>
               </Tooltip>
 
-              {/* Column visibility toggle */}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Popover>
@@ -736,7 +741,6 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
 
             <div className="flex-1 min-w-8" />
 
-            {/* Zoom presets */}
             <div className="flex items-center gap-1">
               {ZOOM_PRESETS.map(p => (
                 <Button key={p.label} variant="outline" size="sm" className="h-6 px-2 text-[10px] font-medium" onClick={() => setZoomToFitDays(p.days)}>
@@ -745,7 +749,6 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
               ))}
             </div>
 
-            {/* Zoom controls */}
             <div className="flex items-center gap-1 border rounded-md p-1">
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleZoomOut} disabled={zoomLevel === ZOOM_LEVELS[0]}>
                 <ZoomOut className="h-4 w-4" />
@@ -757,27 +760,21 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
             </div>
 
             {!hideToolbar && !readOnly && (
-              <>
-                <div className="relative w-64">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input placeholder="Search deliverables..." value={internalSearchQuery} onChange={(e) => setInternalSearchQuery(e.target.value)} className="pl-9" />
-                </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="text-muted-foreground">
-                      <Plus className="w-4 h-4 mr-2" /> Add Activity
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => setShowCatalogDialog(true)}>
-                      <BookOpen className="w-4 h-4 mr-2" /> From Catalog
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setShowCustomDialog(true)}>
-                      <PenLine className="w-4 h-4 mr-2" /> Custom Activity
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="text-muted-foreground">
+                    <Plus className="w-4 h-4 mr-2" /> Add Activity
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setShowCatalogDialog(true)}>
+                    <BookOpen className="w-4 h-4 mr-2" /> From Catalog
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setShowCustomDialog(true)}>
+                    <PenLine className="w-4 h-4 mr-2" /> Custom Activity
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
           </div>
         </div>
