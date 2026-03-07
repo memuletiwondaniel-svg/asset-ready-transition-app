@@ -1,5 +1,4 @@
 import { useMemo, useRef } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import {
   ClipboardCheck,
   RefreshCw,
@@ -8,12 +7,10 @@ import {
   ClipboardList,
 } from 'lucide-react';
 import { isPast } from 'date-fns';
-import { supabase } from '@/integrations/supabase/client';
 import { usePSSRsAwaitingReview } from '@/hooks/usePSSRItemApprovals';
 import { useUserP2AApprovals } from '@/hooks/useUserP2AApprovals';
 import { useUserORPActivities } from '@/hooks/useUserORPActivities';
 import { useUserOWLItems } from '@/hooks/useUserOWLItems';
-import { useUserVCRBundleTasks } from '@/hooks/useUserVCRBundleTasks';
 import { useUserTasks, type UserTask } from '@/hooks/useUserTasks';
 import { useUserLastLogin } from '@/hooks/useUserLastLogin';
 import { computeSmartPriority, smartPriorityToLegacy, type SmartPriorityResult, type SmartPriorityLevel } from './smartPriority';
@@ -76,38 +73,13 @@ export function useUnifiedTasks(userId: string) {
   const { approvals, isLoading: handoverLoading } = useUserP2AApprovals();
   const { activities, isLoading: oraLoading } = useUserORPActivities();
   const { items: owlItems, isLoading: owlLoading } = useUserOWLItems();
-  const { bundleTasks, isLoading: bundleLoading } = useUserVCRBundleTasks();
-  const { tasks: userTasks, loading: tasksLoading, updateTaskStatus } = useUserTasks();
-
-  // Fetch ORA plan activity dates for tasks that reference an ora_plan_activity_id
-  const oraActivityIds = useMemo(() => {
-    return (userTasks || [])
-      .map(t => (t.metadata as Record<string, any>)?.ora_plan_activity_id)
-      .filter(Boolean) as string[];
-  }, [userTasks]);
-
-  const { data: oraActivityDates } = useQuery({
-    queryKey: ['ora-activity-dates', oraActivityIds],
-    queryFn: async () => {
-      if (oraActivityIds.length === 0) return {};
-      const { data, error } = await supabase
-        .from('ora_plan_activities')
-        .select('id, start_date, end_date, duration_days')
-        .in('id', oraActivityIds);
-      if (error) throw error;
-      const map: Record<string, { start_date: string | null; end_date: string | null; duration_days: number | null }> = {};
-      (data || []).forEach((a: any) => { map[a.id] = a; });
-      return map;
-    },
-    enabled: oraActivityIds.length > 0,
-    staleTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: false,
-  });
+  // Bundle tasks and ORA activity dates now come from the same useUserTasks query (no extra network calls)
+  const { tasks: userTasks, bundleTasks, oraActivityDates, loading: tasksLoading, updateTaskStatus } = useUserTasks();
 
   // Only show loading skeleton on the very first load (no data at all yet)
   const hasLoadedOnce = useRef(false);
-  const isLoading = !hasLoadedOnce.current && (pssrLoading || handoverLoading || oraLoading || owlLoading || bundleLoading || tasksLoading);
-  if (!isLoading && (pssrLoading === false || handoverLoading === false || oraLoading === false || owlLoading === false || bundleLoading === false || tasksLoading === false)) {
+  const isLoading = !hasLoadedOnce.current && (pssrLoading || handoverLoading || oraLoading || owlLoading || tasksLoading);
+  if (!isLoading && (pssrLoading === false || handoverLoading === false || oraLoading === false || owlLoading === false || tasksLoading === false)) {
     hasLoadedOnce.current = true;
   }
 
@@ -152,7 +124,7 @@ export function useUnifiedTasks(userId: string) {
       }
 
       const isWaiting = t.status === 'waiting';
-      // Enrich ORA tasks with dates from ora_plan_activities if not in metadata
+      // Use pre-fetched ORA activity dates (no waterfall query)
       const oraActId = meta?.ora_plan_activity_id;
       const oraAct = oraActId && oraActivityDates ? oraActivityDates[oraActId] : null;
       const startDate = meta?.start_date || oraAct?.start_date || undefined;
@@ -274,13 +246,16 @@ export function useUnifiedTasks(userId: string) {
       });
     });
 
-    (bundleTasks || []).forEach(task => {
+    // Bundle tasks now come from the same useUserTasks query (no separate hook)
+    (bundleTasks || []).forEach((task: any) => {
       const isPSSR = task.type === 'pssr_checklist_bundle' || task.type === 'pssr_approval_bundle';
       const isApproval = task.type === 'vcr_approval_bundle' || task.type === 'pssr_approval_bundle';
       const isWaiting = task.status === 'waiting';
-      const completed = task.sub_items.filter(i => i.completed).length;
-      const total = task.sub_items.length;
-      const pct = task.progress_percentage;
+      const subItems = (task.sub_items || []) as any[];
+      const completed = subItems.filter((i: any) => i.completed).length;
+      const total = subItems.length;
+      const pct = task.progress_percentage || 0;
+      const meta = (task.metadata || {}) as Record<string, any>;
 
       const bundleCat: CategoryFilter = isPSSR ? 'pssr' : 'vcr';
       const bundleLabel = isPSSR
@@ -301,7 +276,7 @@ export function useUnifiedTasks(userId: string) {
           : 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
         icon: isApproval ? ClipboardCheck : ClipboardList,
         title: task.title,
-        project: isPSSR ? task.metadata?.project_name : task.metadata?.project_code,
+        project: isPSSR ? meta?.project_name : meta?.project_code,
         status: `${completed}/${total}`,
         createdAt: task.created_at,
         priority: smartPriorityToLegacy(spBundle.level),
@@ -312,7 +287,7 @@ export function useUnifiedTasks(userId: string) {
         totalItems: total,
         isWaiting,
         navigateTo: isPSSR
-          ? (task.metadata?.pssr_id ? `/pssr/${task.metadata.pssr_id}/review` : '/my-tasks')
+          ? (meta?.pssr_id ? `/pssr/${meta.pssr_id}/review` : '/my-tasks')
           : '/my-tasks',
         kanbanColumn: mapToKanbanColumn({ status: task.status, isWaiting, progressPercentage: pct }),
       });
@@ -322,10 +297,8 @@ export function useUnifiedTasks(userId: string) {
     return tasks.sort((a, b) => {
       if (a.isWaiting && !b.isWaiting) return 1;
       if (!a.isWaiting && b.isWaiting) return -1;
-      // Primary: smart priority score (descending — higher score = more urgent)
       const scoreDiff = b.smartPriority.score - a.smartPriority.score;
       if (Math.abs(scoreDiff) >= 5) return scoreDiff;
-      // Secondary: due date
       const aDue = a.dueDate || a.endDate;
       const bDue = b.dueDate || b.endDate;
       if (aDue && bDue) return new Date(aDue).getTime() - new Date(bDue).getTime();
@@ -336,14 +309,12 @@ export function useUnifiedTasks(userId: string) {
   }, [pssrs, approvals, activities, owlItems, bundleTasks, userTasks, oraActivityDates, isNewSinceLastLogin]);
 
   // Stabilization: never return an empty array if we previously had data
-  // This prevents the board from blanking during background refetches
   const stableTasksRef = useRef<UnifiedTask[]>([]);
   const stableTasks = useMemo(() => {
     if (allTasks.length > 0) {
       stableTasksRef.current = allTasks;
       return allTasks;
     }
-    // If allTasks is empty but we had data before, keep showing old data
     if (stableTasksRef.current.length > 0 && !isLoading) {
       return stableTasksRef.current;
     }

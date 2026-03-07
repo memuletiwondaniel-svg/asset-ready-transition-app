@@ -27,10 +27,13 @@ export interface UserTask {
 }
 
 // Fetch active tasks (pending, in_progress, waiting) for the kanban board
-const fetchUserTasks = async (userId: string): Promise<{ tasks: UserTask[]; dependencies: TaskDependency[] }> => {
+const BUNDLE_TYPES = ['vcr_checklist_bundle', 'vcr_approval_bundle', 'pssr_checklist_bundle', 'pssr_approval_bundle'];
+
+const fetchUserTasks = async (userId: string): Promise<{ tasks: UserTask[]; dependencies: TaskDependency[]; bundleTasks: any[]; oraActivityDates: Record<string, { start_date: string | null; end_date: string | null; duration_days: number | null }> }> => {
+  // Single query fetches both regular tasks AND bundle tasks (previously two separate queries)
   const { data: tasksData, error: tasksError } = await supabase
     .from('user_tasks')
-    .select('id,title,description,due_date,priority,type,status,display_order,created_at,metadata')
+    .select('id,title,description,due_date,priority,type,status,display_order,created_at,metadata,sub_items,progress_percentage')
     .eq('user_id', userId)
     .in('status', ['pending', 'in_progress', 'waiting'])
     .order('display_order', { ascending: true })
@@ -70,8 +73,28 @@ const fetchUserTasks = async (userId: string): Promise<{ tasks: UserTask[]; depe
     });
   }
 
+  // Split into regular tasks and bundle tasks
+  const regularTasks = (tasksData || []).filter(t => !BUNDLE_TYPES.includes(t.type));
+  const bundleTasks = (tasksData || []).filter(t => BUNDLE_TYPES.includes(t.type));
+
+  // Fetch ORA activity dates for tasks referencing ora_plan_activity_id (avoids waterfall query)
+  const oraActivityIds = regularTasks
+    .map(t => (t.metadata as Record<string, any>)?.ora_plan_activity_id)
+    .filter(Boolean) as string[];
+
+  let oraActivityDates: Record<string, { start_date: string | null; end_date: string | null; duration_days: number | null }> = {};
+  if (oraActivityIds.length > 0) {
+    const { data: oraData } = await supabase
+      .from('ora_plan_activities')
+      .select('id, start_date, end_date, duration_days')
+      .in('id', oraActivityIds);
+    if (oraData) {
+      oraData.forEach((a: any) => { oraActivityDates[a.id] = a; });
+    }
+  }
+
   // Enrich tasks with dependency information
-  const enrichedTasks = (tasksData || []).map(task => {
+  const enrichedTasks = regularTasks.map(task => {
     const blockingTasks = depsData
       .filter(dep => dep.depends_on_task_id === task.id)
       .map(dep => dep.task_id);
@@ -87,7 +110,7 @@ const fetchUserTasks = async (userId: string): Promise<{ tasks: UserTask[]; depe
     };
   });
 
-  return { tasks: enrichedTasks, dependencies: depsData };
+  return { tasks: enrichedTasks, dependencies: depsData, bundleTasks, oraActivityDates };
 };
 
 /**
@@ -602,6 +625,8 @@ export const useUserTasks = () => {
   return {
     tasks: data?.tasks || [],
     dependencies: data?.dependencies || [],
+    bundleTasks: data?.bundleTasks || [],
+    oraActivityDates: data?.oraActivityDates || {},
     loading: isLoading,
     updateTaskStatus: (taskId: string, status: 'completed' | 'cancelled') =>
       updateStatusMutation.mutate({ taskId, status }),
