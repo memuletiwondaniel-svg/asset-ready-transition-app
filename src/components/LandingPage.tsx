@@ -783,7 +783,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
               ) : (
                 <>
                   <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground text-center mb-4">{t.quickActions || 'Quick Actions'}</h2>
-                  <div className="flex flex-wrap justify-center gap-3">
+                  <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
                     <button
                       onClick={() => onNavigate('pssr')}
                       className="group flex flex-col items-center gap-2.5 p-4 rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-200 min-w-[100px]"
