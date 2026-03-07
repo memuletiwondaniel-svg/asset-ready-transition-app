@@ -481,7 +481,8 @@ export const useUserTasks = () => {
       }
     },
     onSuccess: (_, { status }) => {
-      queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+      // Use specific key to avoid broad invalidation that causes blanking
+      queryClient.invalidateQueries({ queryKey: ['user-tasks', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['completed-tasks'] });
       toast({ title: "Success", description: `Task ${status}` });
     },
