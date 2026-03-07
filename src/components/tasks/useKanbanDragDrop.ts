@@ -47,6 +47,10 @@ export function useKanbanDragDrop() {
 
     // ── Optimistic update: patch the cached user-tasks data immediately ──
     const userTasksKey = ['user-tasks', user?.id];
+
+    // Cancel any in-flight refetches so they don't overwrite our optimistic update
+    await queryClient.cancelQueries({ queryKey: userTasksKey });
+
     const previousData = queryClient.getQueryData(userTasksKey);
 
     queryClient.setQueryData(userTasksKey, (old: any) => {

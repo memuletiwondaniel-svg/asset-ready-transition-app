@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { keepPreviousData } from '@tanstack/react-query';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
@@ -420,6 +421,7 @@ export const useUserTasks = () => {
     enabled: !!user?.id,
     staleTime: 2 * 60 * 1000, // 2 minutes cache
     refetchOnWindowFocus: false,
+    placeholderData: keepPreviousData,
   });
 
   // Real-time subscription with debounced refresh
