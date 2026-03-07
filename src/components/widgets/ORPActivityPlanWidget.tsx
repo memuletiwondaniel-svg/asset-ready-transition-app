@@ -21,6 +21,7 @@ interface ORPActivityPlanWidgetProps {
   dragAttributes?: any;
   dragListeners?: any;
   onHide?: () => void;
+  isReadOnly?: boolean;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; icon: React.ElementType; className: string }> = {
