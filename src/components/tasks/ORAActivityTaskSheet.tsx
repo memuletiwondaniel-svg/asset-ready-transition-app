@@ -225,7 +225,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
           id: realOraActivityId,
           orp_plan_id: planId,
           activity_code: activityCode || 'UNKNOWN',
-          name: task.title || 'Unnamed',
+          name: editName || task.title || 'Unnamed',
           status,
           completion_percentage: completionPct,
           source_type: 'wizard',
