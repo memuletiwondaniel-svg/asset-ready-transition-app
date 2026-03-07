@@ -187,7 +187,7 @@ export const BreadcrumbNavigation: React.FC<BreadcrumbNavigationProps> = ({
                 <BreadcrumbLink asChild>
                   <span 
                     onClick={crumb.onClick}
-                    className="cursor-pointer hover:text-foreground transition-colors text-xs"
+                    className="cursor-pointer hover:text-foreground transition-colors text-[10px] sm:text-xs whitespace-nowrap"
                   >
                     {crumb.label}
                   </span>
