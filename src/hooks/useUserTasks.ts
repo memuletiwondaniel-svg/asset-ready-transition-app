@@ -30,7 +30,7 @@ const fetchUserTasks = async (userId: string): Promise<{ tasks: UserTask[]; depe
     .from('user_tasks')
     .select('id,title,description,due_date,priority,type,status,display_order,created_at,metadata')
     .eq('user_id', userId)
-    .eq('status', 'pending')
+    .in('status', ['pending', 'in_progress', 'waiting'])
     .order('display_order', { ascending: true })
     .order('priority', { ascending: false })
     .order('due_date', { ascending: true });
