@@ -4,6 +4,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Slider } from '@/components/ui/slider';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -77,6 +78,8 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [progressPct, setProgressPct] = useState(0);
+  const [editName, setEditName] = useState('');
+  const [originalName, setOriginalName] = useState('');
 
   // Editable dates
   const [editStartDate, setEditStartDate] = useState<Date | undefined>();
@@ -134,6 +137,9 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
       const initStatus: ActivityStatus = taskStatus === 'completed' ? 'COMPLETED'
         : taskStatus === 'in_progress' ? 'IN_PROGRESS' : 'NOT_STARTED';
       const initProgress = metadata?.completion_percentage ?? (initStatus === 'COMPLETED' ? 100 : initStatus === 'IN_PROGRESS' ? 50 : 0);
+      const initName = metadata?.activity_name || task?.title || '';
+      setEditName(initName);
+      setOriginalName(initName);
       setDescription(initDesc);
       setOriginalDescription(initDesc);
       setStatus(initStatus);
@@ -163,13 +169,15 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                          editEndDate?.getTime() !== originalEndDate?.getTime();
     const progressChanged = progressPct !== originalProgressPct;
     const predsChanged = JSON.stringify(predecessorIds) !== JSON.stringify(originalPredecessorIds);
+    const nameChanged = editName !== originalName;
     return status !== originalStatus || 
            description !== originalDescription || 
            files.length > 0 || 
            datesChanged ||
            progressChanged ||
-           predsChanged;
-  }, [status, originalStatus, description, originalDescription, files.length, editStartDate, editEndDate, originalStartDate, originalEndDate, progressPct, originalProgressPct, predecessorIds, originalPredecessorIds]);
+           predsChanged ||
+           nameChanged;
+  }, [status, originalStatus, description, originalDescription, files.length, editStartDate, editEndDate, originalStartDate, originalEndDate, progressPct, originalProgressPct, predecessorIds, originalPredecessorIds, editName, originalName]);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     setFiles(prev => [...prev, ...acceptedFiles]);
@@ -218,7 +226,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
           id: realOraActivityId,
           orp_plan_id: planId,
           activity_code: activityCode || 'UNKNOWN',
-          name: task.title || 'Unnamed',
+          name: editName || task.title || 'Unnamed',
           status,
           completion_percentage: completionPct,
           source_type: 'wizard',
@@ -247,7 +255,8 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
         const datesChanged = editStartDate?.getTime() !== originalStartDate?.getTime() ||
                              editEndDate?.getTime() !== originalEndDate?.getTime();
         const predsChanged = JSON.stringify(predecessorIds) !== JSON.stringify(originalPredecessorIds);
-        if (datesChanged || predsChanged) {
+        const nameChanged = editName !== originalName;
+        if (datesChanged || predsChanged || nameChanged) {
           const { data: planRow } = await (supabase as any)
             .from('orp_plans')
             .select('wizard_state')
@@ -261,6 +270,10 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
               const aId = String(a.id || '');
               if (aId === realOraActivityId || aId === `ora-${realOraActivityId}` || aId === `ws-${realOraActivityId}` || aId === (oraActivityId || '__none__')) {
                 const updated: any = { ...a };
+                if (nameChanged) {
+                  updated.activity = editName;
+                  updated.name = editName;
+                }
                 if (datesChanged) {
                   updated.startDate = editStartDate ? format(editStartDate, 'yyyy-MM-dd') : a.startDate;
                   updated.start_date = editStartDate ? format(editStartDate, 'yyyy-MM-dd') : a.start_date;
@@ -310,6 +323,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
       queryClient.invalidateQueries({ queryKey: ['user-orp-activities'] });
       queryClient.invalidateQueries({ queryKey: ['ora-plan-activities'] });
       queryClient.invalidateQueries({ queryKey: ['orp-plan'] });
+      queryClient.invalidateQueries({ queryKey: ['orp-plan-details'] });
 
       toast.success(status === 'COMPLETED' ? 'Activity marked as completed' : 'Activity progress saved');
       onOpenChange(false);
@@ -397,9 +411,13 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                 </Badge>
               )}
             </div>
-            <SheetTitle className="text-left text-lg leading-snug mt-1.5">
-              {activityName}
-            </SheetTitle>
+            <SheetTitle className="sr-only">Activity Details</SheetTitle>
+            <Input
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              placeholder="Activity name..."
+              className="text-lg font-semibold leading-snug mt-1.5 border-0 shadow-none px-0 h-auto focus-visible:ring-0 bg-transparent"
+            />
           </SheetHeader>
 
           <div className="space-y-5 mt-4">
