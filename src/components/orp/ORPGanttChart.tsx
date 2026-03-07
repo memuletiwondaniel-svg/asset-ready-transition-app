@@ -6,8 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Plus, Search, ZoomIn, ZoomOut, ChevronRight, ChevronDown, ChevronsUpDown, GitBranch, Columns3, Route } from 'lucide-react';
-import { CreateORPModal } from './CreateORPModal';
+import { Plus, Search, ZoomIn, ZoomOut, ChevronRight, ChevronDown, ChevronsUpDown, GitBranch, Columns3, Route, BookOpen, PenLine } from 'lucide-react';
+import { AddFromCatalogDialog } from '@/components/ora/wizard/AddFromCatalogDialog';
+import { AddCustomActivityDialog } from '@/components/ora/wizard/AddCustomActivityDialog';
+import { WizardActivity } from '@/components/ora/wizard/types';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { useToast } from '@/hooks/use-toast';
 
 import { ORAActivityTaskSheet } from '@/components/tasks/ORAActivityTaskSheet';
 import { getStatusLabel, getStatusBadgeClasses } from './utils/statusStyles';
