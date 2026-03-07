@@ -268,7 +268,7 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
                 isAutoPopulated ? 'bg-amber-50/50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800' : 'bg-background border-border/60'
               }`}>
                 {/* Role Header */}
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex flex-wrap items-center justify-between gap-1 mb-2 sm:mb-3">
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className="text-xs bg-muted/50">
                       {func}
