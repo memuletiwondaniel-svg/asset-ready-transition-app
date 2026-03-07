@@ -104,7 +104,12 @@ export function useUnifiedTasks(userId: string) {
     refetchOnWindowFocus: false,
   });
 
-  const isLoading = pssrLoading || handoverLoading || oraLoading || owlLoading || bundleLoading || tasksLoading;
+  // Only show loading skeleton on the very first load (no data at all yet)
+  const hasLoadedOnce = useRef(false);
+  const isLoading = !hasLoadedOnce.current && (pssrLoading || handoverLoading || oraLoading || owlLoading || bundleLoading || tasksLoading);
+  if (!isLoading && (pssrLoading === false || handoverLoading === false || oraLoading === false || owlLoading === false || bundleLoading === false || tasksLoading === false)) {
+    hasLoadedOnce.current = true;
+  }
 
   const allTasks = useMemo<UnifiedTask[]>(() => {
     const tasks: UnifiedTask[] = [];
