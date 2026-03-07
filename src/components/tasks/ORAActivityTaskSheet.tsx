@@ -138,7 +138,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
       setOriginalDescription(initDesc);
       setStatus(initStatus);
       setOriginalStatus(initStatus);
-      setComments([]);
+      setComment('');
       setFiles([]);
       setComment('');
       setProgressPct(initProgress);
