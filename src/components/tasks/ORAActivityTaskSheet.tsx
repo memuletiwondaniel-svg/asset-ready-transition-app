@@ -190,10 +190,14 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
     setFiles(prev => prev.filter((_, i) => i !== index));
   };
 
-  const addComment = () => {
+  const handleAddComment = async () => {
     if (!comment.trim()) return;
-    setComments(prev => [...prev, { text: comment, date: new Date().toISOString() }]);
-    setComment('');
+    try {
+      await addDbComment(comment.trim());
+      setComment('');
+    } catch {
+      // error handled by hook
+    }
   };
 
   const handleSave = async () => {
