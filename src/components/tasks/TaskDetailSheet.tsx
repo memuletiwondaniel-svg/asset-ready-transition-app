@@ -106,10 +106,49 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   const isOraReviewTask = task.type === 'ora_plan_review';
   const isOraActivityTask = task.type === 'ora_activity' || task.metadata?.action === 'complete_ora_activity';
   const isVcrDeliveryPlanTask = (task.type === 'vcr_delivery_plan' || task.metadata?.action === 'create_vcr_delivery_plan');
+  const isP2aTask = task.metadata?.action === 'create_p2a_plan';
   const oraPlanId = task.metadata?.plan_id as string | undefined;
+  const p2aProjectId = task.metadata?.project_id as string | undefined;
+  const p2aProjectCode = task.metadata?.project_code as string | undefined;
+
+  // Fetch project info for P2A wizard (if needed)
+  const { data: p2aProjectInfo } = useQuery({
+    queryKey: ['p2a-project-info', p2aProjectId],
+    queryFn: async () => {
+      if (!p2aProjectId) return null;
+      const { data } = await supabase
+        .from('projects')
+        .select('project_id_prefix, project_id_number, project_title')
+        .eq('id', p2aProjectId)
+        .single();
+      return data;
+    },
+    enabled: !!p2aProjectId && isP2aTask,
+    staleTime: 60_000,
+  });
+
+  // Check if P2A plan draft exists
+  const { data: hasExistingP2aDraft } = useQuery({
+    queryKey: ['p2a-plan-exists-task', p2aProjectId],
+    queryFn: async () => {
+      if (!p2aProjectId) return false;
+      const { data } = await (supabase as any)
+        .from('p2a_handover_plans')
+        .select('id')
+        .eq('project_id', p2aProjectId)
+        .limit(1);
+      return data && data.length > 0;
+    },
+    enabled: !!p2aProjectId && isP2aTask,
+    staleTime: 30_000,
+  });
+
+  const p2aCtaLabel = hasExistingP2aDraft ? 'Continue P2A Plan' : 'Create P2A Plan';
+  const resolvedP2aProjectCode = p2aProjectCode || (p2aProjectInfo ? `${p2aProjectInfo.project_id_prefix || ''}-${p2aProjectInfo.project_id_number || ''}` : '');
+  const resolvedP2aProjectName = p2aProjectInfo?.project_title || '';
 
   const isReviewTask = (['review', 'approval', 'ora_plan_review'].includes(task.type) || !!pssrId) && !isOraReviewTask;
-  const isActionTask = isOraTask || isOraActivityTask || isVcrDeliveryPlanTask;
+  const isActionTask = isOraTask || isOraActivityTask || isVcrDeliveryPlanTask || isP2aTask;
 
   const oraCtaLabel = hasExistingOraDraft ? 'Continue Creating ORA Plan' : 'Create ORA Plan';
   const oraIntentMessage = hasExistingOraDraft
@@ -117,6 +156,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
     : 'You have been assigned to create the ORA Activity Plan for this project. Click below to launch the planning wizard.';
 
   const getIntentMessage = () => {
+    if (isP2aTask) return 'The ORA Plan has been approved. Create the Project to Asset (P2A) handover plan for this project.';
     if (isOraTask) return oraIntentMessage;
     if (isVcrDeliveryPlanTask) return 'You need to set up the VCR Delivery Plan for this item. Click below to configure the execution plan.';
     if (isOraActivityTask) return 'You have an ORA activity to complete. Click below to open the activity details and update progress.';
