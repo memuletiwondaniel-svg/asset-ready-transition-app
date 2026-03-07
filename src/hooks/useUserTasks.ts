@@ -25,6 +25,7 @@ export interface UserTask {
   blocked_by_tasks?: string[];
 }
 
+// Fetch active tasks (pending, in_progress, waiting) for the kanban board
 const fetchUserTasks = async (userId: string): Promise<{ tasks: UserTask[]; dependencies: TaskDependency[] }> => {
   const { data: tasksData, error: tasksError } = await supabase
     .from('user_tasks')
