@@ -179,8 +179,8 @@ export const BreadcrumbNavigation: React.FC<BreadcrumbNavigationProps> = ({
       <div className="h-5 sm:h-6 w-px bg-border shrink-0" />
 
       {/* Breadcrumb Trail */}
-      <Breadcrumb>
-        <BreadcrumbList className="text-xs">
+      <Breadcrumb className="min-w-0">
+        <BreadcrumbList className="text-[10px] sm:text-xs flex-nowrap">
           {crumbsToShow.map((crumb, index) => (
             <span key={`crumb-${index}`} className="contents">
               <BreadcrumbItem>
