@@ -456,6 +456,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
               onChange={(e) => setEditName(e.target.value)}
               placeholder="Activity name..."
               className="text-lg font-semibold leading-snug mt-1.5 border-0 shadow-none px-0 h-auto focus-visible:ring-0 bg-transparent"
+              disabled={isReadOnly}
             />
           </SheetHeader>
 
