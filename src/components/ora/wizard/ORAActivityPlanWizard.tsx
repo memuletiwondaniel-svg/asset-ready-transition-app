@@ -19,6 +19,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { useQueryClient } from '@tanstack/react-query';
 import { useORPPlans } from '@/hooks/useORPPlans';
+import { generateLeafTasks } from '@/utils/generateLeafTasks';
 
 interface ORAActivityPlanWizardProps {
   open: boolean;
