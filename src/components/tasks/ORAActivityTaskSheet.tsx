@@ -632,6 +632,8 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                 </div>
               )}
             </div>
+              </>
+            )}
 
             <Separator />
 
