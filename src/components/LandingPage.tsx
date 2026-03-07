@@ -648,17 +648,17 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
   return (
     <div className="flex-1 overflow-y-auto">
       {/* Main Content Area */}
-      <div className="flex flex-col lg:flex-row gap-4 md:gap-6 p-4 md:p-6 relative">
-          <div className="flex-1 flex flex-col items-center justify-center gap-6 transition-all duration-500 relative z-10">
+      <div className="flex flex-col lg:flex-row gap-3 sm:gap-4 md:gap-6 p-3 sm:p-4 md:p-6 relative">
+          <div className="flex-1 flex flex-col items-center justify-center gap-4 sm:gap-6 transition-all duration-500 relative z-10">
             {/* Spacer for vertical centering */}
-            <div className="flex-1 min-h-[10vh] md:min-h-[15vh]" />
+            <div className="flex-1 min-h-[5vh] sm:min-h-[10vh] md:min-h-[15vh]" />
             
             {/* Bob AI Hero Section - Centered */}
-            <Card className="w-full max-w-3xl glass-card overflow-hidden animate-fade-in border border-border/40 shadow-xl rounded-3xl">
-              <div className="p-10 md:p-16 min-h-[200px] md:min-h-[280px]">
+            <Card className="w-full max-w-3xl glass-card overflow-hidden animate-fade-in border border-border/40 shadow-xl rounded-2xl sm:rounded-3xl">
+              <div className="p-6 sm:p-10 md:p-16 min-h-[160px] sm:min-h-[200px] md:min-h-[280px]">
                 <div className="flex flex-col items-center text-center max-w-2xl mx-auto">
                   {/* Greeting */}
-                  <h1 className="text-2xl md:text-3xl font-bold mb-1 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                  <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-1 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
                     {isProfileLoading ? (
                       <span className="inline-block animate-pulse bg-muted rounded h-8 w-48" />
                     ) : (
