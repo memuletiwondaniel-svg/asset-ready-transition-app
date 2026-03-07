@@ -410,6 +410,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                 </Badge>
               )}
             </div>
+            <SheetTitle className="sr-only">Activity Details</SheetTitle>
             <Input
               value={editName}
               onChange={(e) => setEditName(e.target.value)}
