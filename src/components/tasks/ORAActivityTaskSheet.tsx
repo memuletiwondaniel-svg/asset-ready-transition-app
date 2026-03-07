@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import { format, parseISO, isPast, differenceInDays, addDays } from 'date-fns';
+import { format, parseISO, isPast, differenceInDays, addDays, formatDistanceToNow } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 import { useQueryClient } from '@tanstack/react-query';
