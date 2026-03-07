@@ -12,6 +12,7 @@ import { ProfileCompletionIndicator } from '@/components/sidebar/ProfileCompleti
 import { OnlineUsersIndicator } from '@/components/sidebar/OnlineUsersIndicator';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useNewTaskCount } from '@/hooks/useNewTaskCount';
 
 interface NavigationItem {
   labelKey: string;
