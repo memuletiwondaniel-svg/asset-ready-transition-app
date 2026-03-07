@@ -258,7 +258,7 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
         </div>
 
         {/* Required Roles Assignment */}
-        <div className="space-y-4 p-4 rounded-lg bg-muted/30 border border-border/40">
+        <div className="space-y-3 sm:space-y-4 p-3 sm:p-4 rounded-lg bg-muted/30 border border-border/40">
           <h4 className="text-sm font-semibold text-foreground border-b border-border/40 pb-2">Assign Team Members</h4>
           {REQUIRED_ROLES.map(({ role, required, function: func }) => {
             const assignedMember = getRoleMember(role);
