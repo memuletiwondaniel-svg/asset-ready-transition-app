@@ -264,7 +264,7 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
             const assignedMember = getRoleMember(role);
             const isAutoPopulated = assignedMember?.is_auto_populated;
             return (
-              <div key={role} className={`p-4 border rounded-lg transition-colors ${
+              <div key={role} className={`p-3 sm:p-4 border rounded-lg transition-colors ${
                 isAutoPopulated ? 'bg-amber-50/50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800' : 'bg-background border-border/60'
               }`}>
                 {/* Role Header */}
