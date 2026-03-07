@@ -48,7 +48,7 @@ const ActivityRow: React.FC<{ activity: ProjectORPActivity; isCompleted?: boolea
       ) : actStatus === 'overdue' ? (
         <AlertTriangle className="h-3 w-3 text-destructive shrink-0" />
       ) : actStatus === 'in-progress' ? (
-        <CircleDot className="h-3 w-3 text-blue-500 shrink-0" />
+        <CircleDot className="h-3 w-3 text-amber-500 shrink-0" />
       ) : (
         <Clock className="h-3 w-3 text-muted-foreground shrink-0" />
       )}
@@ -83,7 +83,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
   const [wizardOpen, setWizardOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [upcomingOpen, setUpcomingOpen] = useState(true);
-  const [completedOpen, setCompletedOpen] = useState(false);
+  const [completedOpen, setCompletedOpen] = useState(true);
   const { data: plans = [], isLoading } = useProjectORPPlans(projectId);
   const { deletePlan, isDeletingPlan } = useORPPlans();
   
