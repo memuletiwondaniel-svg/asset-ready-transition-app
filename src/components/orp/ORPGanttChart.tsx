@@ -6,8 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Plus, Search, ZoomIn, ZoomOut, ChevronRight, ChevronDown, ChevronsUpDown, GitBranch, Columns3, Route } from 'lucide-react';
-import { CreateORPModal } from './CreateORPModal';
+import { Plus, Search, ZoomIn, ZoomOut, ChevronRight, ChevronDown, ChevronsUpDown, GitBranch, Columns3, Route, BookOpen, PenLine } from 'lucide-react';
+import { AddFromCatalogDialog } from '@/components/ora/wizard/AddFromCatalogDialog';
+import { AddCustomActivityDialog } from '@/components/ora/wizard/AddCustomActivityDialog';
+import { WizardActivity } from '@/components/ora/wizard/types';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { useToast } from '@/hooks/use-toast';
 
 import { ORAActivityTaskSheet } from '@/components/tasks/ORAActivityTaskSheet';
 import { getStatusLabel, getStatusBadgeClasses } from './utils/statusStyles';
@@ -271,7 +275,9 @@ function computeCriticalPath(rows: FlatRow[], getBarPos: (s: string, e: string) 
 
 export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverables, searchQuery: externalSearchQuery, hideToolbar, readOnly = false }) => {
   const [internalSearchQuery, setInternalSearchQuery] = useState('');
-  const [showAddItem, setShowAddItem] = useState(false);
+  const [showCatalogDialog, setShowCatalogDialog] = useState(false);
+  const [showCustomDialog, setShowCustomDialog] = useState(false);
+  const { toast } = useToast();
   
   const [selectedOraActivity, setSelectedOraActivity] = useState<any>(null);
   const [zoomLevel, setZoomLevel] = useState(1);
@@ -281,6 +287,56 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
   const [showCriticalPath, setShowCriticalPath] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState<Set<ColumnKey>>(() => new Set(['index', 'id', 'start', 'status']));
   const [hasInitialZoom, setHasInitialZoom] = useState(false);
+
+  // Get existing activity IDs for catalog exclusion
+  const existingActivityIds = useMemo(() => deliverables.map((d: any) => d.id?.replace('ora-', '') || d.id), [deliverables]);
+
+  const handleAddFromCatalog = useCallback(async (newActivities: WizardActivity[]) => {
+    const client = supabase as any;
+    for (const a of newActivities) {
+      await client.from('ora_plan_activities').insert({
+        orp_plan_id: planId,
+        name: a.activity,
+        activity_code: a.activityCode,
+        description: a.description,
+        source_type: 'catalog',
+        source_ref_id: a.id,
+        status: 'NOT_STARTED',
+        duration_days: a.durationDays,
+        parent_id: a.parentActivityId,
+      });
+    }
+    // Also append to wizard_state
+    const { data: plan } = await client.from('orp_plans').select('wizard_state').eq('id', planId).single();
+    if (plan?.wizard_state?.activities) {
+      const updatedActivities = [...plan.wizard_state.activities, ...newActivities.map(a => ({ ...a, selected: true }))];
+      await client.from('orp_plans').update({ wizard_state: { ...plan.wizard_state, activities: updatedActivities } }).eq('id', planId);
+    }
+    queryClient.invalidateQueries({ queryKey: ['orp-plan-details'] });
+    setShowCatalogDialog(false);
+    toast({ title: `${newActivities.length} activit${newActivities.length > 1 ? 'ies' : 'y'} added` });
+  }, [planId, queryClient, toast]);
+
+  const handleAddCustom = useCallback(async (activity: WizardActivity) => {
+    const client = supabase as any;
+    await client.from('ora_plan_activities').insert({
+      orp_plan_id: planId,
+      name: activity.activity,
+      activity_code: activity.activityCode,
+      description: activity.description,
+      source_type: 'custom',
+      status: 'NOT_STARTED',
+    });
+    // Also append to wizard_state
+    const { data: plan } = await client.from('orp_plans').select('wizard_state').eq('id', planId).single();
+    if (plan?.wizard_state?.activities) {
+      const updatedActivities = [...plan.wizard_state.activities, { ...activity, selected: true }];
+      await client.from('orp_plans').update({ wizard_state: { ...plan.wizard_state, activities: updatedActivities } }).eq('id', planId);
+    }
+    queryClient.invalidateQueries({ queryKey: ['orp-plan-details'] });
+    setShowCustomDialog(false);
+    toast({ title: 'Custom activity added' });
+  }, [planId, queryClient, toast]);
 
   const toggleColumn = (key: ColumnKey) => {
     setVisibleColumns(prev => {
@@ -567,9 +623,21 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input placeholder="Search deliverables..." value={internalSearchQuery} onChange={(e) => setInternalSearchQuery(e.target.value)} className="pl-9" />
                 </div>
-                <Button onClick={() => setShowAddItem(true)}>
-                  <Plus className="w-4 h-4 mr-2" /> Add ORA Item
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="text-muted-foreground">
+                      <Plus className="w-4 h-4 mr-2" /> Add Activity
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => setShowCatalogDialog(true)}>
+                      <BookOpen className="w-4 h-4 mr-2" /> From Catalog
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setShowCustomDialog(true)}>
+                      <PenLine className="w-4 h-4 mr-2" /> Custom Activity
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             )}
           </div>
@@ -582,7 +650,8 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
             </div>
           </div>
         </CardContent>
-        {showAddItem && <CreateORPModal open={showAddItem} onOpenChange={setShowAddItem} onSuccess={() => setShowAddItem(false)} />}
+        <AddFromCatalogDialog open={showCatalogDialog} onOpenChange={setShowCatalogDialog} existingIds={existingActivityIds} onAdd={handleAddFromCatalog} />
+        <AddCustomActivityDialog open={showCustomDialog} onOpenChange={setShowCustomDialog} phase="" onAdd={handleAddCustom} />
       </Card>
     );
   }
@@ -693,9 +762,21 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input placeholder="Search deliverables..." value={internalSearchQuery} onChange={(e) => setInternalSearchQuery(e.target.value)} className="pl-9" />
                 </div>
-                <Button onClick={() => setShowAddItem(true)}>
-                  <Plus className="w-4 h-4 mr-2" /> Add ORA Item
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="text-muted-foreground">
+                      <Plus className="w-4 h-4 mr-2" /> Add Activity
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => setShowCatalogDialog(true)}>
+                      <BookOpen className="w-4 h-4 mr-2" /> From Catalog
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setShowCustomDialog(true)}>
+                      <PenLine className="w-4 h-4 mr-2" /> Custom Activity
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </>
             )}
           </div>
@@ -1066,7 +1147,8 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
 
       </CardContent>
 
-      {showAddItem && <CreateORPModal open={showAddItem} onOpenChange={setShowAddItem} onSuccess={() => setShowAddItem(false)} />}
+      <AddFromCatalogDialog open={showCatalogDialog} onOpenChange={setShowCatalogDialog} existingIds={existingActivityIds} onAdd={handleAddFromCatalog} />
+      <AddCustomActivityDialog open={showCustomDialog} onOpenChange={setShowCustomDialog} phase="" onAdd={handleAddCustom} />
       <ORAActivityTaskSheet
         task={selectedOraActivity}
         open={!!selectedOraActivity}
