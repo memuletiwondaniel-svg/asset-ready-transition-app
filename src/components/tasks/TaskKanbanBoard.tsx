@@ -79,13 +79,23 @@ const KanbanCard: React.FC<{
           sp.isOverdue && 'bg-destructive/[0.03]'
         )}
       >
-        {/* Row 1: Project ID + status badge + priority dot */}
+        {/* Row 1: Project ID + status label on right */}
         <div className="flex items-center justify-between gap-1 mb-0.5">
           <div className="flex items-center gap-1.5 min-w-0">
             {task.project ? (
               <ProjectIdBadge size="sm" projectId={task.project}>{task.project}</ProjectIdBadge>
             ) : (
               <span className="text-[9px] text-muted-foreground">{task.categoryLabel}</span>
+            )}
+            {task.isNew && (
+              <Badge variant="secondary" className="text-[9px] px-1 py-0 h-auto bg-primary/10 text-primary">NEW</Badge>
+            )}
+          </div>
+          <div className="flex items-center gap-1">
+            {sp.isStartingSoon && (
+              <Badge variant="outline" className="text-[9px] px-1 py-0 h-auto border-amber-500/30 bg-amber-500/10 text-amber-600 gap-0.5">
+                <Zap className="h-2 w-2" />Soon
+              </Badge>
             )}
             {dateAnnotation && (
               <span className={cn(
@@ -99,30 +109,6 @@ const KanbanCard: React.FC<{
                 {dateAnnotation.label}
               </span>
             )}
-            {task.isNew && (
-              <Badge variant="secondary" className="text-[9px] px-1 py-0 h-auto bg-primary/10 text-primary">NEW</Badge>
-            )}
-          </div>
-          <div className="flex items-center gap-1">
-            {sp.isStartingSoon && (
-              <Badge variant="outline" className="text-[9px] px-1 py-0 h-auto border-amber-500/30 bg-amber-500/10 text-amber-600 gap-0.5">
-                <Zap className="h-2 w-2" />Soon
-              </Badge>
-            )}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className={cn(
-                  "w-1.5 h-1.5 rounded-full cursor-help shrink-0",
-                  sp.level === 'critical' ? 'bg-destructive' : sp.level === 'high' ? 'bg-destructive/70' : sp.level === 'medium' ? 'bg-amber-500' : 'bg-muted-foreground/30'
-                )} />
-              </TooltipTrigger>
-              <TooltipContent side="top" className="max-w-[180px]">
-                <div className="text-xs space-y-0.5">
-                  <p className="font-semibold capitalize">{sp.level} Priority</p>
-                  {sp.reasons.length > 0 && <p className="text-muted-foreground">{sp.reasons.join(' · ')}</p>}
-                </div>
-              </TooltipContent>
-            </Tooltip>
           </div>
         </div>
 
