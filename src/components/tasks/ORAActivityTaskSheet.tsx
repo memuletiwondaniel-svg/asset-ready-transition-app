@@ -534,7 +534,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                       variant="outline"
                       size="icon"
                       className="h-7 w-7 text-xs"
-                      disabled={!editStartDate || !editEndDate}
+                      disabled={isReadOnly || !editStartDate || !editEndDate}
                       onClick={() => {
                         if (editStartDate && editEndDate) {
                           setEditEndDate(addDays(editEndDate, 1));
