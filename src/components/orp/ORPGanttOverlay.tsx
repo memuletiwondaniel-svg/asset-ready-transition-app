@@ -30,6 +30,8 @@ interface ORPGanttOverlayProps {
   notStartedCount?: number;
   p2aProgress?: number;
   vcrCount?: number;
+  projectCode?: string;
+  projectName?: string;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; icon: React.ElementType; className: string }> = {
