@@ -32,6 +32,8 @@ const STATUS_CONFIG: Record<string, { label: string; icon: React.ElementType; cl
 
 export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({ 
   projectId, 
+  projectCode,
+  projectName,
   dragAttributes, 
   dragListeners, 
   onHide 
