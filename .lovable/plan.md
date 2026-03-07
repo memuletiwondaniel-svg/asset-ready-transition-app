@@ -1,77 +1,48 @@
 
 
-# Plan: ORIP Scoring Engine Using Existing VCR Item Categories
+## Investigation Results
 
-## Impact Assessment: Zero Breaking Changes
+### Pending Approver
+The ORA Plan for **DP-300 - HM Additional Compressors** has two approvers:
+- **Roaa Abdullah** (ORA Lead) — **APPROVED**
+- **Victor Liew** (Project Hub Lead) — **PENDING**
 
-**No existing workflows will be affected.** The approach reuses the existing `vcr_item_categories` table (Design Integrity, Technical Integrity, Operating Integrity, Management Systems, Health & Safety) as the readiness dimensions for ORI scoring. All changes are additive:
+Victor Liew **does have a task** assigned: `"Review ORA Plan – DP-300 - HM Additional Compressors"` (type: `ora_plan_review`, status: `pending`).
 
-- The `vcr_item_categories` table gets a `tenant_id` column and weight/confidence fields -- existing rows remain intact
-- The `readiness_nodes` table gets a new nullable `dimension_id` column pointing to `vcr_item_categories`
-- The `sync_readiness_nodes` and `calculate_ori_score` functions are replaced with enhanced versions that use category-based dimensions instead of module-based grouping
-- Existing P2A, ORA, PSSR, ORM workflows are untouched -- the ontology layer only reads from them
+### UI/UX Assessment: Metric Card Icon Layout
+Placing the icon **inline with the number on the same row** (horizontal layout) is the modern best practice for compact KPI cards. It reduces vertical height, improves scannability, and follows dashboard patterns used by Linear, Notion, and Vercel. The current stacked layout wastes vertical space. Icon and number sizes should be kept small for these compact indicator cards — increasing them would make them compete visually with the primary "Overall Progress" card.
 
-## Current VCR Item Categories (Become Readiness Dimensions)
+---
 
-| Code | Name | Active |
-|------|------|--------|
-| DI2 | Design Integrity | Yes |
-| TI | Technical Integrity | Yes |
-| OI | Operating Integrity | Yes |
-| MS | Management Systems | Yes |
-| HS | Health & Safety | Yes |
+## Plan
 
-These become the tenant-configurable readiness dimensions. Different tenants can add/rename/reweight their own categories.
+### 1. Read-only mode for non-approved plans
+- Add a `readOnly` prop to `ORPGanttChart` (default `false`)
+- Pass `readOnly={planStatus !== 'APPROVED' && planStatus !== 'IN_PROGRESS'}` from `ORPGanttOverlay`
+- When `readOnly` is true:
+  - Disable bar dragging (skip `handleMouseDown` calls)
+  - Disable row click → activity sheet opening (or open in view-only mode)
+  - Hide "Add ORA Item" button
+  - Show a subtle banner: "This plan is under review — view only"
+- In `ORAActivityTaskSheet`, pass `readOnly` to disable Save/Delete/status changes
 
-## Implementation Tasks
+### 2. Add project ID and name under "ORA Plan" title
+- Pass `projectTitle` and `projectCode` (e.g. "DP-300") to `ORPGanttOverlay` from `ORPActivityPlanWidget`
+- Render under "ORA Plan" as a muted subtitle: `DP-300 · HM Additional Compressors`
+- Fetch project info in the widget (it already has `projectId`) or query it in the overlay
 
-### Task 1: Extend `vcr_item_categories` for ORI Scoring
-Add columns to make categories serve double duty as readiness dimensions:
-- `tenant_id UUID` (nullable, defaults via trigger -- existing rows get current tenant)
-- `default_weight NUMERIC(5,4)` (e.g., 0.20 = 20%)
-- `confidence_factor_default NUMERIC(3,2)` (default 0.8)
-- `risk_severity_multiplier NUMERIC(3,1)` (default 1.0)
-- `is_readiness_dimension BOOLEAN DEFAULT true`
+### 3. Metric cards: icon + number inline, narrower width
+- Restructure the 3 metric cards to use a **horizontal row layout**: icon on left, value on right, label below
+- Reduce card `min-w` from `56px` to `48px`
+- Change grid from `grid-cols-[minmax(180px,0.6fr)_auto_auto_auto]` to `grid-cols-[1fr_auto_auto_auto]` so the Overall Progress card fills remaining space
+- Keep icon at `h-3.5 w-3.5` and value at `text-sm font-bold` (slight increase from current `text-xs`)
 
-Add `dimension_id UUID REFERENCES vcr_item_categories(id)` to `readiness_nodes`.
+### 4. Ensure approver edits reflect in final plan
+- Already handled: the review wizard writes to `wizard_state` and `orp_approvals`. The `useORPPlanDetails` hook merges `oraRow` DB data over wizard state. After approval + materialization, all activities are written to `ora_plan_activities`. No additional changes needed — edits by approvers during review are persisted in `wizard_state` which feeds the materialization process.
 
-### Task 2: Enhanced ORI Formula
-Replace `calculate_ori_score()` with the full ORIP formula:
-
-```
-DS_i = (Σ Subcomponent_Weight × Completion%) × Confidence_Factor
-RP_i = Σ (Risk_Severity × Impact_Multiplier)  -- capped at 15%
-ORI  = Σ (Dimension_Weight_i × DS_i) − Global_Risk_Penalty
-SCS  = ORI × Schedule_Adherence × Critical_Path_Stability
-```
-
-Add columns to `ori_scores`: `dimension_scores JSONB`, `risk_penalty_total NUMERIC`, `startup_confidence_score NUMERIC`, `schedule_adherence_index NUMERIC`, `critical_path_stability_index NUMERIC`.
-
-Add `confidence_factor NUMERIC(3,2) DEFAULT 0.8` and `risk_severity TEXT DEFAULT 'none'` to `readiness_nodes`.
-
-### Task 3: Update Sync Function
-Update `sync_readiness_nodes()` to auto-assign `dimension_id` by mapping:
-- P2A VCR prerequisites → mapped via their `vcr_items.category_id` directly to `vcr_item_categories`
-- ORA activities → default to "Operating Integrity" or map via metadata
-- PSSR items → map via PSSR checklist category → nearest VCR category
-- ORM deliverables → default to "Management Systems"
-- Training → default to "Operating Integrity"
-
-Set confidence factors: completed/approved = 1.0, in-progress = 0.8, not-started = 0.7.
-
-### Task 4: Executive Dashboard Enhancement
-Redesign `ExecutiveDashboard.tsx` to match the strategic layout:
-- **Top Banner**: Large ORI + SCS + color coding (Green >85, Amber 70-85, Red <70)
-- **Dimension Breakdown**: Bar/table showing each VCR category's score, trend arrow, risk level
-- **Top 5 Startup Blockers**: Blocked/critical nodes with severity
-- **Predictive Trend**: ORI line chart with dashed target curve
-- **Risk Impact Summary**: 4 stat boxes (Open High Risks, Startup-blocking, Dimensions below 70%, Systems below 60%)
-
-### Task 5: Tenant-Configurable Weight Profiles
-Update the existing `ori_weight_profiles` to store dimension-based weights keyed by `vcr_item_categories.id` instead of module names. Add a simple admin UI for editing weights per tenant.
-
-### Task 6: Update Living Documents
-- **Security & Compliance Doc**: Add rows for Readiness Dimensions, Risk Penalty Engine, Startup Confidence Score (mark as Active)
-- **Platform Guide**: Add "Readiness Ontology & Scoring Engine" section documenting the 6 dimensions, ORI formula, SCS
-- **Strategic North Star**: Update scoring engine status from Planned to Active, add dimension-based architecture detail
+### Files to modify
+- `src/components/orp/ORPGanttChart.tsx` — add `readOnly` prop, gate interactions
+- `src/components/orp/ORPGanttOverlay.tsx` — pass `readOnly`, add project subtitle, adjust metric card layout
+- `src/components/widgets/ORPActivityPlanWidget.tsx` — pass project info to overlay
+- `src/components/tasks/ORAActivityTaskSheet.tsx` — respect `readOnly` prop
 
