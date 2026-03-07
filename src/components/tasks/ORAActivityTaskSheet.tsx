@@ -34,6 +34,8 @@ interface ORAActivityTaskSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   isReadOnly?: boolean;
+  /** When set, overrides the initial status (e.g. pre-select "COMPLETED" when dragged to Done) */
+  initialStatusOverride?: ActivityStatus;
 }
 
 type ActivityStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
@@ -71,6 +73,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
   open,
   onOpenChange,
   isReadOnly = false,
+  initialStatusOverride,
 }) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -158,7 +161,9 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
     if (open && task) {
       const initDesc = metadata?.description || task?.description || '';
       const taskStatus = task?.status;
-      const initStatus: ActivityStatus = taskStatus === 'completed' ? 'COMPLETED'
+      const initStatus: ActivityStatus = initialStatusOverride 
+        ? initialStatusOverride
+        : taskStatus === 'completed' ? 'COMPLETED'
         : taskStatus === 'in_progress' ? 'IN_PROGRESS' : 'NOT_STARTED';
       const initProgress = metadata?.completion_percentage ?? (initStatus === 'COMPLETED' ? 100 : initStatus === 'IN_PROGRESS' ? 50 : 0);
       const initName = metadata?.activity_name || task?.title || '';
