@@ -34,6 +34,8 @@ interface ORAActivityTaskSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   isReadOnly?: boolean;
+  /** When set, overrides the initial status (e.g. pre-select "COMPLETED" when dragged to Done) */
+  initialStatusOverride?: ActivityStatus;
 }
 
 type ActivityStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
