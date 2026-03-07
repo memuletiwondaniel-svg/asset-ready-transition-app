@@ -242,6 +242,7 @@ export const ORPGanttOverlay: React.FC<ORPGanttOverlayProps> = ({
                 planId={planId}
                 deliverables={planDetails.deliverables}
                 hideToolbar
+                readOnly={isReadOnly}
               />
             ) : (
               <div className="text-center py-16 text-muted-foreground">

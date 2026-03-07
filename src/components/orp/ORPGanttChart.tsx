@@ -520,6 +520,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
   }, [minDate, dayWidth]);
 
   const openActivitySheet = useCallback((deliverable: any) => {
+    if (readOnly) return; // Don't open activity sheet in read-only mode
     // Build list of sibling activities for prerequisite picker
     const siblingActivities = filteredDeliverables
       .filter(d => d.deliverable?.activity_code && d.id !== deliverable.id)
@@ -551,7 +552,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
       priority: 'medium',
       created_at: deliverable.created_at || new Date().toISOString(),
     });
-  }, [planId, filteredDeliverables]);
+  }, [planId, filteredDeliverables, readOnly]);
 
   // Early return - no data
   if (!dates.length) {
