@@ -304,7 +304,21 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
               </Button>
             )}
 
-            {/* VCR Delivery Plan CTA - prominent for action tasks */}
+            {/* P2A Plan Creation CTA */}
+            {isP2aTask && p2aProjectId && (
+              <Button
+                className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
+                onClick={() => {
+                  onOpenChange(false);
+                  setP2aWizardOpen(true);
+                }}
+              >
+                <FileText className="h-4 w-4" />
+                {p2aCtaLabel}
+                <ChevronRight className="h-4 w-4 ml-auto" />
+              </Button>
+            )}
+
             {isVcrDeliveryPlanTask && vcrForWizard && (
               <Button
                 className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
