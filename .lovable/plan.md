@@ -1,77 +1,33 @@
 
 
-# Plan: ORIP Scoring Engine Using Existing VCR Item Categories
+## Plan: Fix Recently Completed section visibility and improve activity icon colors
 
-## Impact Assessment: Zero Breaking Changes
+### Issues identified
+1. **Recently Completed not visible**: The hook filters `upcoming_activities` to exclude parent activities but includes parents in `completed_activities`. The issue is that the `sourceActivities` list includes parent rows which may not have `status === 'COMPLETED'` even when children are. Also, the current sorting puts ongoing/upcoming activities first, and if the card doesn't scroll far enough, completed section stays hidden. The `completedOpen` defaults to `false`, so even if data exists, the section header may be off-screen.
+2. **Icon colors**: Currently in-progress uses blue (`CircleDot`), upcoming uses grey (`Clock`). User wants: ongoing = amber, upcoming = grey, overdue/delayed = red.
 
-**No existing workflows will be affected.** The approach reuses the existing `vcr_item_categories` table (Design Integrity, Technical Integrity, Operating Integrity, Management Systems, Health & Safety) as the readiness dimensions for ORI scoring. All changes are additive:
+### Changes
 
-- The `vcr_item_categories` table gets a `tenant_id` column and weight/confidence fields -- existing rows remain intact
-- The `readiness_nodes` table gets a new nullable `dimension_id` column pointing to `vcr_item_categories`
-- The `sync_readiness_nodes` and `calculate_ori_score` functions are replaced with enhanced versions that use category-based dimensions instead of module-based grouping
-- Existing P2A, ORA, PSSR, ORM workflows are untouched -- the ontology layer only reads from them
+#### 1. Sort upcoming activities: ongoing first, then upcoming
+In `useProjectORPPlans.ts`, update the upcoming sort to put `IN_PROGRESS` activities before `NOT_STARTED`:
+- Primary sort: `IN_PROGRESS` before others
+- Secondary sort: by `start_date` ascending
 
-## Current VCR Item Categories (Become Readiness Dimensions)
+#### 2. Update icon colors in `ActivityRow`
+- `in-progress` → amber `CircleDot` icon (`text-amber-500`)
+- `upcoming` (not started) → grey `Clock` icon (`text-muted-foreground`) — already correct
+- `overdue` → red `AlertTriangle` icon (`text-destructive`) — already correct
 
-| Code | Name | Active |
-|------|------|--------|
-| DI2 | Design Integrity | Yes |
-| TI | Technical Integrity | Yes |
-| OI | Operating Integrity | Yes |
-| MS | Management Systems | Yes |
-| HS | Health & Safety | Yes |
+#### 3. Ensure completed section is visible
+- Include parent activities in the completed filter (they currently get filtered out since they have children)
+- Actually the issue is the hook filters `sourceActivities` which includes parents. The completed filter `a.status === 'COMPLETED'` should work. Let me check: the hook doesn't exclude parents from upcoming/completed lists. So the data should be there. The real issue is likely that no activities have `COMPLETED` status in the DB yet, OR the `completedOpen` state defaults to `false` so the section is collapsed — but the header with count badge should still show. From the screenshot, the user drew "Completed" at the bottom suggesting they can't see it at all — likely no completed activities exist in the data, or they're scrolled out of view.
+- To improve visibility: always show the "Recently Completed" section header even when collapsed (it already does this via `completedActivities.length > 0` check). If there truly are 3 completed (as shown in progress summary), the issue might be that parent activities are completed but their children aren't individually marked.
 
-These become the tenant-configurable readiness dimensions. Different tenants can add/rename/reweight their own categories.
+Looking more carefully: the `computeWeightedProgress` counts completed from `leafActivities`, but the `completed` list filters from `sourceActivities` (all activities including parents). So if 3 leaf activities are completed, they should appear. The guard `completedActivities.length > 0` should pass. Most likely the section is just collapsed and below the fold.
 
-## Implementation Tasks
+**Fix**: Default `completedOpen` to `true` so it's visible, and ensure the section always renders even with 0 items (show "No completed activities yet").
 
-### Task 1: Extend `vcr_item_categories` for ORI Scoring
-Add columns to make categories serve double duty as readiness dimensions:
-- `tenant_id UUID` (nullable, defaults via trigger -- existing rows get current tenant)
-- `default_weight NUMERIC(5,4)` (e.g., 0.20 = 20%)
-- `confidence_factor_default NUMERIC(3,2)` (default 0.8)
-- `risk_severity_multiplier NUMERIC(3,1)` (default 1.0)
-- `is_readiness_dimension BOOLEAN DEFAULT true`
-
-Add `dimension_id UUID REFERENCES vcr_item_categories(id)` to `readiness_nodes`.
-
-### Task 2: Enhanced ORI Formula
-Replace `calculate_ori_score()` with the full ORIP formula:
-
-```
-DS_i = (Σ Subcomponent_Weight × Completion%) × Confidence_Factor
-RP_i = Σ (Risk_Severity × Impact_Multiplier)  -- capped at 15%
-ORI  = Σ (Dimension_Weight_i × DS_i) − Global_Risk_Penalty
-SCS  = ORI × Schedule_Adherence × Critical_Path_Stability
-```
-
-Add columns to `ori_scores`: `dimension_scores JSONB`, `risk_penalty_total NUMERIC`, `startup_confidence_score NUMERIC`, `schedule_adherence_index NUMERIC`, `critical_path_stability_index NUMERIC`.
-
-Add `confidence_factor NUMERIC(3,2) DEFAULT 0.8` and `risk_severity TEXT DEFAULT 'none'` to `readiness_nodes`.
-
-### Task 3: Update Sync Function
-Update `sync_readiness_nodes()` to auto-assign `dimension_id` by mapping:
-- P2A VCR prerequisites → mapped via their `vcr_items.category_id` directly to `vcr_item_categories`
-- ORA activities → default to "Operating Integrity" or map via metadata
-- PSSR items → map via PSSR checklist category → nearest VCR category
-- ORM deliverables → default to "Management Systems"
-- Training → default to "Operating Integrity"
-
-Set confidence factors: completed/approved = 1.0, in-progress = 0.8, not-started = 0.7.
-
-### Task 4: Executive Dashboard Enhancement
-Redesign `ExecutiveDashboard.tsx` to match the strategic layout:
-- **Top Banner**: Large ORI + SCS + color coding (Green >85, Amber 70-85, Red <70)
-- **Dimension Breakdown**: Bar/table showing each VCR category's score, trend arrow, risk level
-- **Top 5 Startup Blockers**: Blocked/critical nodes with severity
-- **Predictive Trend**: ORI line chart with dashed target curve
-- **Risk Impact Summary**: 4 stat boxes (Open High Risks, Startup-blocking, Dimensions below 70%, Systems below 60%)
-
-### Task 5: Tenant-Configurable Weight Profiles
-Update the existing `ori_weight_profiles` to store dimension-based weights keyed by `vcr_item_categories.id` instead of module names. Add a simple admin UI for editing weights per tenant.
-
-### Task 6: Update Living Documents
-- **Security & Compliance Doc**: Add rows for Readiness Dimensions, Risk Penalty Engine, Startup Confidence Score (mark as Active)
-- **Platform Guide**: Add "Readiness Ontology & Scoring Engine" section documenting the 6 dimensions, ORI formula, SCS
-- **Strategic North Star**: Update scoring engine status from Planned to Active, add dimension-based architecture detail
+### Files to modify
+- `src/components/widgets/ORPActivityPlanWidget.tsx` — change icon color for in-progress to amber, sort ongoing before upcoming, default completedOpen to true
+- `src/hooks/useProjectORPPlans.ts` — sort upcoming: IN_PROGRESS first, then by start_date
 
