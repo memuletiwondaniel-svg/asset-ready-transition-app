@@ -157,7 +157,7 @@ export default function ProjectDetailsPage() {
       case 'orp':
         return <ORPActivityPlanWidget projectId={id || ''} projectCode={projectCode} projectName={project?.project_title} isReadOnly={isReadOnly} />;
       case 'pssr':
-        return <PSSRSummaryWidget projectId={id || ''} projectCode={projectCode} projectName={project?.project_title} />;
+        return <PSSRSummaryWidget projectId={id || ''} projectCode={projectCode} projectName={project?.project_title} isReadOnly={isReadOnly} />;
       default:
         return null;
     }
