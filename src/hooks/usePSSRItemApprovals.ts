@@ -265,6 +265,7 @@ export const usePSSRsAwaitingReview = (userId: string | undefined) => {
     enabled: !!userId,
     staleTime: 2 * 60 * 1000, // 2 minutes cache
     refetchOnWindowFocus: false,
+    placeholderData: keepPreviousData,
   });
 };
 
