@@ -288,6 +288,56 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
   const [visibleColumns, setVisibleColumns] = useState<Set<ColumnKey>>(() => new Set(['index', 'id', 'start', 'status']));
   const [hasInitialZoom, setHasInitialZoom] = useState(false);
 
+  // Get existing activity IDs for catalog exclusion
+  const existingActivityIds = useMemo(() => deliverables.map((d: any) => d.id?.replace('ora-', '') || d.id), [deliverables]);
+
+  const handleAddFromCatalog = useCallback(async (newActivities: WizardActivity[]) => {
+    const client = supabase as any;
+    for (const a of newActivities) {
+      await client.from('ora_plan_activities').insert({
+        orp_plan_id: planId,
+        name: a.activity,
+        activity_code: a.activityCode,
+        description: a.description,
+        source_type: 'catalog',
+        source_ref_id: a.id,
+        status: 'NOT_STARTED',
+        duration_days: a.durationDays,
+        parent_id: a.parentActivityId,
+      });
+    }
+    // Also append to wizard_state
+    const { data: plan } = await client.from('orp_plans').select('wizard_state').eq('id', planId).single();
+    if (plan?.wizard_state?.activities) {
+      const updatedActivities = [...plan.wizard_state.activities, ...newActivities.map(a => ({ ...a, selected: true }))];
+      await client.from('orp_plans').update({ wizard_state: { ...plan.wizard_state, activities: updatedActivities } }).eq('id', planId);
+    }
+    queryClient.invalidateQueries({ queryKey: ['orp-plan-details'] });
+    setShowCatalogDialog(false);
+    toast({ title: `${newActivities.length} activit${newActivities.length > 1 ? 'ies' : 'y'} added` });
+  }, [planId, queryClient, toast]);
+
+  const handleAddCustom = useCallback(async (activity: WizardActivity) => {
+    const client = supabase as any;
+    await client.from('ora_plan_activities').insert({
+      orp_plan_id: planId,
+      name: activity.activity,
+      activity_code: activity.activityCode,
+      description: activity.description,
+      source_type: 'custom',
+      status: 'NOT_STARTED',
+    });
+    // Also append to wizard_state
+    const { data: plan } = await client.from('orp_plans').select('wizard_state').eq('id', planId).single();
+    if (plan?.wizard_state?.activities) {
+      const updatedActivities = [...plan.wizard_state.activities, { ...activity, selected: true }];
+      await client.from('orp_plans').update({ wizard_state: { ...plan.wizard_state, activities: updatedActivities } }).eq('id', planId);
+    }
+    queryClient.invalidateQueries({ queryKey: ['orp-plan-details'] });
+    setShowCustomDialog(false);
+    toast({ title: 'Custom activity added' });
+  }, [planId, queryClient, toast]);
+
   const toggleColumn = (key: ColumnKey) => {
     setVisibleColumns(prev => {
       const next = new Set(prev);
