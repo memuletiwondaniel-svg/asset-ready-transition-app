@@ -402,6 +402,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
           setOraActivityOpen(open);
           if (!open) setOraActivityTask(null);
         }}
+        initialStatusOverride="COMPLETED"
       />
     </>
   );
