@@ -317,26 +317,82 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
     toast({ title: `${newActivities.length} activit${newActivities.length > 1 ? 'ies' : 'y'} added` });
   }, [planId, queryClient, toast]);
 
-  const handleAddCustom = useCallback(async (activity: WizardActivity) => {
+  const handleAddCustom = useCallback(async () => {
+    // Auto-generate activity code from existing activities
+    const existingCodes = deliverables.map((d: any) => d.deliverable?.activity_code || '').filter(Boolean);
+    let maxNum = 0;
+    let prefix = 'CUSTOM';
+    for (const code of existingCodes) {
+      const match = code.match(/^([A-Z]+)-(\d+)/);
+      if (match) {
+        prefix = match[1];
+        maxNum = Math.max(maxNum, parseInt(match[2]));
+      }
+    }
+    const newCode = `${prefix}-${String(maxNum + 1).padStart(3, '0')}`;
+    const newName = 'New Custom Activity';
+
     const client = supabase as any;
-    await client.from('ora_plan_activities').insert({
+    const { data: inserted } = await client.from('ora_plan_activities').insert({
       orp_plan_id: planId,
-      name: activity.activity,
-      activity_code: activity.activityCode,
-      description: activity.description,
+      name: newName,
+      activity_code: newCode,
+      description: '',
       source_type: 'custom',
       status: 'NOT_STARTED',
-    });
+    }).select().single();
+
     // Also append to wizard_state
     const { data: plan } = await client.from('orp_plans').select('wizard_state').eq('id', planId).single();
     if (plan?.wizard_state?.activities) {
-      const updatedActivities = [...plan.wizard_state.activities, { ...activity, selected: true }];
+      const newActivity = {
+        id: inserted?.id || `custom-${Date.now()}`,
+        activityCode: newCode,
+        activity: newName,
+        description: '',
+        phaseId: null,
+        parentActivityId: null,
+        durationHigh: null,
+        durationMed: null,
+        durationLow: null,
+        selected: true,
+        durationDays: null,
+        startDate: '',
+        endDate: '',
+        predecessorIds: [],
+      };
+      const updatedActivities = [...plan.wizard_state.activities, newActivity];
       await client.from('orp_plans').update({ wizard_state: { ...plan.wizard_state, activities: updatedActivities } }).eq('id', planId);
     }
-    queryClient.invalidateQueries({ queryKey: ['orp-plan-details'] });
-    setShowCustomDialog(false);
+
+    await queryClient.invalidateQueries({ queryKey: ['orp-plan-details'] });
     toast({ title: 'Custom activity added' });
-  }, [planId, queryClient, toast]);
+
+    // Open the activity sheet for editing
+    if (inserted) {
+      const siblingActivities = deliverables.map((d: any) => ({
+        id: d.deliverable?.id || d.id,
+        name: d.deliverable?.name || 'Unnamed',
+        activity_code: d.deliverable?.activity_code || '',
+      }));
+      setSelectedOraActivity({
+        id: `gantt-${inserted.id}`,
+        title: newName,
+        status: 'not_started',
+        metadata: {
+          deliverable_id: inserted.id,
+          ora_plan_activity_id: inserted.id,
+          start_date: null,
+          end_date: null,
+          completion_percentage: 0,
+          predecessor_ids: [],
+          sibling_activities: siblingActivities,
+        },
+        priority: 'medium',
+        created_at: new Date().toISOString(),
+      });
+    }
+  }, [planId, queryClient, toast, deliverables]);
 
   const toggleColumn = (key: ColumnKey) => {
     setVisibleColumns(prev => {
