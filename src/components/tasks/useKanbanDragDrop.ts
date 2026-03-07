@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 import type { UnifiedTask } from './useUnifiedTasks';
 
 type KanbanColumn = 'todo' | 'in_progress' | 'waiting' | 'done';
@@ -22,6 +23,7 @@ const COLUMN_TO_ORA_STATUS: Record<KanbanColumn, string> = {
 
 export function useKanbanDragDrop() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   /**
    * Move a task to a new column, syncing user_tasks + ora_plan_activities.
@@ -42,6 +44,20 @@ export function useKanbanDragDrop() {
     const newTaskStatus = COLUMN_TO_TASK_STATUS[targetColumn];
     const meta = userTask.metadata as Record<string, any> | undefined;
     const oraActivityId = meta?.ora_plan_activity_id;
+
+    // ── Optimistic update: patch the cached user-tasks data immediately ──
+    const userTasksKey = ['user-tasks', user?.id];
+    const previousData = queryClient.getQueryData(userTasksKey);
+
+    queryClient.setQueryData(userTasksKey, (old: any) => {
+      if (!old?.tasks) return old;
+      return {
+        ...old,
+        tasks: old.tasks.map((t: any) =>
+          t.id === userTask.id ? { ...t, status: newTaskStatus } : t
+        ),
+      };
+    });
 
     try {
       // Update user_tasks status
@@ -64,12 +80,12 @@ export function useKanbanDragDrop() {
           .from('ora_plan_activities')
           .update({
             status: newOraStatus,
-            completion_percentage: targetColumn === 'in_progress' ? 0 : 0,
+            completion_percentage: 0,
           })
           .eq('id', realId);
       }
 
-      // Invalidate caches
+      // Background invalidation (won't blank the UI since staleTime keeps old data)
       queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
       queryClient.invalidateQueries({ queryKey: ['user-orp-activities'] });
       queryClient.invalidateQueries({ queryKey: ['ora-plan-activities'] });
@@ -86,10 +102,12 @@ export function useKanbanDragDrop() {
       return true;
     } catch (err) {
       console.error('Failed to move task:', err);
+      // Rollback optimistic update
+      queryClient.setQueryData(userTasksKey, previousData);
       toast.error('Failed to move task');
       return false;
     }
-  }, [queryClient]);
+  }, [queryClient, user?.id]);
 
   return { moveTaskToColumn };
 }
