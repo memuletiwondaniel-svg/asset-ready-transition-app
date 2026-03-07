@@ -803,36 +803,38 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
         {/* Pinned footer */}
         <div className="border-t bg-background px-6 py-4 shrink-0">
           <div className="flex items-center justify-between">
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-destructive hover:text-destructive hover:bg-destructive/10 gap-1.5"
-                  disabled={deleting}
-                >
-                  {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                  Delete
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Delete Activity</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This will permanently remove this activity and its associated task. This action cannot be undone.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={handleDelete}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            {!isReadOnly ? (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10 gap-1.5"
+                    disabled={deleting}
                   >
+                    {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                     Delete
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Activity</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will permanently remove this activity and its associated task. This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDelete}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            ) : <div />}
 
             <div className="flex items-center gap-2">
               <Button
@@ -840,10 +842,10 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                 size="sm"
                 onClick={() => onOpenChange(false)}
               >
-                Cancel
+                {isReadOnly ? 'Close' : 'Cancel'}
               </Button>
 
-              {isDirty && (
+              {!isReadOnly && isDirty && (
                 <Button
                   size="sm"
                   className={cn(
