@@ -15,6 +15,8 @@ import { cn } from '@/lib/utils';
 
 interface ORPActivityPlanWidgetProps {
   projectId: string;
+  projectCode?: string;
+  projectName?: string;
   dragAttributes?: any;
   dragListeners?: any;
   onHide?: () => void;
