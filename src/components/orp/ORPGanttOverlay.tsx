@@ -139,6 +139,9 @@ export const ORPGanttOverlay: React.FC<ORPGanttOverlayProps> = ({
                   {planName && (
                     <p className="text-[11px] text-muted-foreground">{planName}</p>
                   )}
+                  {projectSubtitle && (
+                    <p className="text-[10px] text-muted-foreground/70">{projectSubtitle}</p>
+                  )}
                 </div>
               </div>
             </div>
