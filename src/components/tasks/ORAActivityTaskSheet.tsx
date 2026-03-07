@@ -136,6 +136,9 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
       const initStatus: ActivityStatus = taskStatus === 'completed' ? 'COMPLETED'
         : taskStatus === 'in_progress' ? 'IN_PROGRESS' : 'NOT_STARTED';
       const initProgress = metadata?.completion_percentage ?? (initStatus === 'COMPLETED' ? 100 : initStatus === 'IN_PROGRESS' ? 50 : 0);
+      const initName = metadata?.activity_name || task?.title || '';
+      setEditName(initName);
+      setOriginalName(initName);
       setDescription(initDesc);
       setOriginalDescription(initDesc);
       setStatus(initStatus);
