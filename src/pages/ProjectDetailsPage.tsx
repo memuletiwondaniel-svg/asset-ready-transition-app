@@ -16,6 +16,7 @@ import { usePlants } from '@/hooks/usePlants';
 import { useStations } from '@/hooks/useStations';
 import { useHubs } from '@/hooks/useHubs';
 import { useProjectRegions } from '@/hooks/useProjectRegions';
+import { useProjectAccess } from '@/hooks/useProjectAccess';
 import { EditProjectModal } from '@/components/project/EditProjectModal';
 import { ViewProjectModal } from '@/components/project/ViewProjectModal';
 import { supabase } from '@/integrations/supabase/client';
@@ -96,6 +97,7 @@ export default function ProjectDetailsPage() {
   const hub = hubs.find(h => h.id === project?.hub_id);
   const { regions } = useProjectRegions();
   const region = regions.find(r => r.id === project?.region_id);
+  const { isReadOnly } = useProjectAccess(id);
 
   useEffect(() => {
     if (project) {
@@ -153,9 +155,9 @@ export default function ProjectDetailsPage() {
   const renderWidget = (widgetId: string) => {
     switch (widgetId) {
       case 'orp':
-        return <ORPActivityPlanWidget projectId={id || ''} projectCode={projectCode} projectName={project?.project_title} />;
+        return <ORPActivityPlanWidget projectId={id || ''} projectCode={projectCode} projectName={project?.project_title} isReadOnly={isReadOnly} />;
       case 'pssr':
-        return <PSSRSummaryWidget projectId={id || ''} projectCode={projectCode} projectName={project?.project_title} />;
+        return <PSSRSummaryWidget projectId={id || ''} projectCode={projectCode} projectName={project?.project_title} isReadOnly={isReadOnly} />;
       default:
         return null;
     }

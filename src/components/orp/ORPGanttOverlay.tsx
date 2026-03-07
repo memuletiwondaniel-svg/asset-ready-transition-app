@@ -32,6 +32,7 @@ interface ORPGanttOverlayProps {
   vcrCount?: number;
   projectCode?: string;
   projectName?: string;
+  isReadOnly?: boolean;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; icon: React.ElementType; className: string }> = {
@@ -57,13 +58,14 @@ export const ORPGanttOverlay: React.FC<ORPGanttOverlayProps> = ({
   vcrCount = 0,
   projectCode,
   projectName,
+  isReadOnly: externalReadOnly,
 }) => {
   const [approvalsOpen, setApprovalsOpen] = useState(false);
   const { data: planDetails, isLoading } = useORPPlanDetails(open ? planId : '');
 
   const statusConfig = planStatus ? STATUS_CONFIG[planStatus] : null;
   const StatusIcon = statusConfig?.icon || Clock;
-  const isReadOnly = planStatus !== 'APPROVED' && planStatus !== 'IN_PROGRESS' && planStatus !== 'COMPLETED';
+  const isReadOnly = externalReadOnly || (planStatus !== 'APPROVED' && planStatus !== 'IN_PROGRESS' && planStatus !== 'COMPLETED');
 
   const projectSubtitle = [projectCode, projectName].filter(Boolean).join(' · ');
 

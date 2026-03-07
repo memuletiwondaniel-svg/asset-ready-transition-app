@@ -21,6 +21,7 @@ interface ORPActivityPlanWidgetProps {
   dragAttributes?: any;
   dragListeners?: any;
   onHide?: () => void;
+  isReadOnly?: boolean;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; icon: React.ElementType; className: string }> = {
@@ -77,7 +78,8 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
   projectName,
   dragAttributes, 
   dragListeners, 
-  onHide 
+  onHide,
+  isReadOnly = false,
 }) => {
   const [overlayOpen, setOverlayOpen] = useState(false);
   const [wizardOpen, setWizardOpen] = useState(false);
@@ -116,13 +118,15 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
             <div className="text-center py-8 text-muted-foreground">
               <p className="text-sm font-medium mb-1">No ORA Plan</p>
               <p className="text-xs opacity-70 mb-4">Operation Readiness activities will appear here</p>
-              <Button variant="secondary" size="sm" onClick={(e) => { e.stopPropagation(); setWizardOpen(true); }}>
-                Create ORA Plan
-              </Button>
+              {!isReadOnly && (
+                <Button variant="secondary" size="sm" onClick={(e) => { e.stopPropagation(); setWizardOpen(true); }}>
+                  Create ORA Plan
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
-        <ORAActivityPlanWizard open={wizardOpen} onOpenChange={setWizardOpen} projectId={projectId} />
+        {!isReadOnly && <ORAActivityPlanWizard open={wizardOpen} onOpenChange={setWizardOpen} projectId={projectId} />}
       </>
     );
   }
@@ -141,43 +145,51 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
           <CardContent>
             <div className="text-center py-8 text-muted-foreground">
               <p className="text-sm font-medium mb-1">Draft in Progress</p>
-              <p className="text-xs opacity-70 mb-4">You have an unsaved draft. Continue where you left off.</p>
-              <div className="flex items-center justify-center gap-2">
-                <Button variant="secondary" size="sm" onClick={(e) => { e.stopPropagation(); setWizardOpen(true); }}>
-                  Continue Setup
-                </Button>
-                <Button
-                  variant="ghost" size="icon"
-                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                  onClick={(e) => { e.stopPropagation(); setDeleteDialogOpen(true); }}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
+              <p className="text-xs opacity-70 mb-4">
+                {isReadOnly ? 'A draft plan is being prepared.' : 'You have an unsaved draft. Continue where you left off.'}
+              </p>
+              {!isReadOnly && (
+                <div className="flex items-center justify-center gap-2">
+                  <Button variant="secondary" size="sm" onClick={(e) => { e.stopPropagation(); setWizardOpen(true); }}>
+                    Continue Setup
+                  </Button>
+                  <Button
+                    variant="ghost" size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                    onClick={(e) => { e.stopPropagation(); setDeleteDialogOpen(true); }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
-        <ORAActivityPlanWizard open={wizardOpen} onOpenChange={setWizardOpen} projectId={projectId} />
-        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Delete Draft ORA Plan?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This will permanently delete the draft plan including all deliverables, resources, and approvals. This action cannot be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                disabled={isDeletingPlan}
-                onClick={() => { deletePlan(primaryPlan.id); setDeleteDialogOpen(false); }}
-              >
-                {isDeletingPlan ? 'Deleting...' : 'Delete Plan'}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        {!isReadOnly && (
+          <>
+            <ORAActivityPlanWizard open={wizardOpen} onOpenChange={setWizardOpen} projectId={projectId} />
+            <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete Draft ORA Plan?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will permanently delete the draft plan including all deliverables, resources, and approvals. This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    disabled={isDeletingPlan}
+                    onClick={() => { deletePlan(primaryPlan.id); setDeleteDialogOpen(false); }}
+                  >
+                    {isDeletingPlan ? 'Deleting...' : 'Delete Plan'}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </>
+        )}
       </>
     );
   }
@@ -312,6 +324,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
         vcrCount={primaryPlan?.vcr_count || 0}
         projectCode={projectCode}
         projectName={projectName}
+        isReadOnly={isReadOnly}
       />
 
       <ORAActivityPlanWizard

@@ -671,11 +671,11 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
   }, [minDate, dayWidth]);
 
   const openActivitySheet = useCallback((deliverable: any) => {
-    if (readOnly) return;
+    // Allow opening in view-only mode too (readOnly is enforced in the sheet)
     const actCode = deliverable.deliverable?.activity_code || '';
     
-    // Special handling for P2A-01 activity: open P2A wizard instead
-    if (actCode === 'P2A-01') {
+    // Special handling for P2A-01 activity: open P2A wizard instead (only if not read-only)
+    if (actCode === 'P2A-01' && !readOnly) {
       setShowP2AWizard(true);
       return;
     }
@@ -936,12 +936,13 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                       className={cn(
                         "flex items-center border-b last:border-b-0 transition-colors",
                         !readOnly && "cursor-pointer hover:bg-muted/30",
+                        readOnly && "cursor-pointer hover:bg-muted/20",
                         index % 2 === 0 ? 'bg-background' : 'bg-muted/10',
                         isParent && 'font-medium',
                         isCritical && 'bg-destructive/5'
                       )}
                       style={{ height: ROW_HEIGHT }}
-                      onClick={() => !readOnly && openActivitySheet(deliverable)}
+                      onClick={() => openActivitySheet(deliverable)}
                     >
                       {visibleColumns.has('index') && (
                         <div className="px-1 text-center text-[10px] text-muted-foreground" style={{ width: COL_WIDTHS.index }}>
@@ -1264,6 +1265,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
         task={selectedOraActivity}
         open={!!selectedOraActivity}
         onOpenChange={(open) => !open && setSelectedOraActivity(null)}
+        isReadOnly={readOnly}
       />
       {planData?.project_id && (
         <P2APlanCreationWizard

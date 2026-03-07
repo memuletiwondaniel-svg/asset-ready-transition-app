@@ -1,59 +1,77 @@
 
 
-## Plan: Portfolio-Based Access Control for Projects and Task Ownership Enforcement
+# Plan: ORIP Scoring Engine Using Existing VCR Item Categories
 
-### Problem
-Currently, any authenticated user can view and modify any project's ORA Plan, Gantt chart activities, P2A plans, etc. A Senior ORA Engineer assigned to Central (KAZ) portfolio can complete tasks and modify activities for UQ projects (DP354, DP83C) they don't belong to. Tasks should only be completable by their assigned owner.
+## Impact Assessment: Zero Breaking Changes
 
-### Current State (What Already Works)
-- **Task visibility**: `useUserTasks` already filters by `user_id = userId` — tasks only show in the assigned user's tray.
-- **Task mutation RLS**: The `user_tasks` table has RLS policies enforcing `auth.uid() = user_id` for UPDATE/DELETE — so at the database level, only the task owner can modify their own tasks. This is already secure.
-- **Task assignment**: The `auto_create_ora_plan_task` trigger and `materializeActivities()` correctly assign tasks to the specific Sr. ORA Engineer on the project team.
+**No existing workflows will be affected.** The approach reuses the existing `vcr_item_categories` table (Design Integrity, Technical Integrity, Operating Integrity, Management Systems, Health & Safety) as the readiness dimensions for ORI scoring. All changes are additive:
 
-### What Needs to Change
+- The `vcr_item_categories` table gets a `tenant_id` column and weight/confidence fields -- existing rows remain intact
+- The `readiness_nodes` table gets a new nullable `dimension_id` column pointing to `vcr_item_categories`
+- The `sync_readiness_nodes` and `calculate_ori_score` functions are replaced with enhanced versions that use category-based dimensions instead of module-based grouping
+- Existing P2A, ORA, PSSR, ORM workflows are untouched -- the ontology layer only reads from them
 
-#### 1. Create a `useProjectAccess` hook
-A new hook that checks whether the current user is a team member of a given project. Returns `{ isTeamMember, isLoading }`.
+## Current VCR Item Categories (Become Readiness Dimensions)
+
+| Code | Name | Active |
+|------|------|--------|
+| DI2 | Design Integrity | Yes |
+| TI | Technical Integrity | Yes |
+| OI | Operating Integrity | Yes |
+| MS | Management Systems | Yes |
+| HS | Health & Safety | Yes |
+
+These become the tenant-configurable readiness dimensions. Different tenants can add/rename/reweight their own categories.
+
+## Implementation Tasks
+
+### Task 1: Extend `vcr_item_categories` for ORI Scoring
+Add columns to make categories serve double duty as readiness dimensions:
+- `tenant_id UUID` (nullable, defaults via trigger -- existing rows get current tenant)
+- `default_weight NUMERIC(5,4)` (e.g., 0.20 = 20%)
+- `confidence_factor_default NUMERIC(3,2)` (default 0.8)
+- `risk_severity_multiplier NUMERIC(3,1)` (default 1.0)
+- `is_readiness_dimension BOOLEAN DEFAULT true`
+
+Add `dimension_id UUID REFERENCES vcr_item_categories(id)` to `readiness_nodes`.
+
+### Task 2: Enhanced ORI Formula
+Replace `calculate_ori_score()` with the full ORIP formula:
 
 ```
-src/hooks/useProjectAccess.ts
+DS_i = (Σ Subcomponent_Weight × Completion%) × Confidence_Factor
+RP_i = Σ (Risk_Severity × Impact_Multiplier)  -- capped at 15%
+ORI  = Σ (Dimension_Weight_i × DS_i) − Global_Risk_Penalty
+SCS  = ORI × Schedule_Adherence × Critical_Path_Stability
 ```
 
-Queries `project_team_members` for the current `user.id` and `projectId`. If found, the user has write access. If not, they have view-only access. Admins and project creators always get write access.
+Add columns to `ori_scores`: `dimension_scores JSONB`, `risk_penalty_total NUMERIC`, `startup_confidence_score NUMERIC`, `schedule_adherence_index NUMERIC`, `critical_path_stability_index NUMERIC`.
 
-#### 2. Add read-only mode to ProjectDetailsPage
-Pass the `isTeamMember` flag down to child widgets. When `false`:
-- Hide the "Edit" button on project details
-- The ORA Gantt chart hides "Add Activity" button and disables drag-resize on bars
-- The P2A and PSSR widgets show data but hide creation/modification CTAs
+Add `confidence_factor NUMERIC(3,2) DEFAULT 0.8` and `risk_severity TEXT DEFAULT 'none'` to `readiness_nodes`.
 
-#### 3. Add read-only mode to ORPGanttChart
-Accept an `isReadOnly` prop. When `true`:
-- Hide the "Add Activity" dropdown button
-- Disable the status column edit buttons (show badges only)
-- The activity task sheet opens in view-only mode (no Save button)
-- Disable Gantt bar drag/resize
+### Task 3: Update Sync Function
+Update `sync_readiness_nodes()` to auto-assign `dimension_id` by mapping:
+- P2A VCR prerequisites → mapped via their `vcr_items.category_id` directly to `vcr_item_categories`
+- ORA activities → default to "Operating Integrity" or map via metadata
+- PSSR items → map via PSSR checklist category → nearest VCR category
+- ORM deliverables → default to "Management Systems"
+- Training → default to "Operating Integrity"
 
-#### 4. Add read-only mode to ORAActivityTaskSheet
-Accept an `isReadOnly` prop. When `true`:
-- Hide the Save button
-- Make all form fields disabled/read-only
-- Hide status toggle buttons
+Set confidence factors: completed/approved = 1.0, in-progress = 0.8, not-started = 0.7.
 
-#### 5. Frontend guard on task completion actions
-In `MyTasksPanel`, `UnifiedTaskList`, `ReviewTasksPanel`, and other panels where tasks are displayed — these already only show the current user's own tasks (filtered by `user_id`), so no change needed. The RLS already prevents cross-user task mutations.
+### Task 4: Executive Dashboard Enhancement
+Redesign `ExecutiveDashboard.tsx` to match the strategic layout:
+- **Top Banner**: Large ORI + SCS + color coding (Green >85, Amber 70-85, Red <70)
+- **Dimension Breakdown**: Bar/table showing each VCR category's score, trend arrow, risk level
+- **Top 5 Startup Blockers**: Blocked/critical nodes with severity
+- **Predictive Trend**: ORI line chart with dashed target curve
+- **Risk Impact Summary**: 4 stat boxes (Open High Risks, Startup-blocking, Dimensions below 70%, Systems below 60%)
 
-The key enforcement point is the **project detail page** — preventing a non-team-member from modifying project artifacts directly through the Gantt chart or widget CTAs.
+### Task 5: Tenant-Configurable Weight Profiles
+Update the existing `ori_weight_profiles` to store dimension-based weights keyed by `vcr_item_categories.id` instead of module names. Add a simple admin UI for editing weights per tenant.
 
-### Files to Create
-- `src/hooks/useProjectAccess.ts` — new hook
-
-### Files to Modify
-- `src/pages/ProjectDetailsPage.tsx` — use `useProjectAccess`, pass `isReadOnly` to widgets
-- `src/components/orp/ORPGanttChart.tsx` — accept and enforce `isReadOnly` prop
-- `src/components/tasks/ORAActivityTaskSheet.tsx` — accept and enforce `isReadOnly` prop
-- `src/components/widgets/ORPActivityPlanWidget.tsx` — pass through `isReadOnly`
-
-### No Database Changes Needed
-The existing RLS policies on `user_tasks` already enforce task ownership. The `project_team_members` table is already readable by all authenticated users, so the frontend hook can query it directly.
+### Task 6: Update Living Documents
+- **Security & Compliance Doc**: Add rows for Readiness Dimensions, Risk Penalty Engine, Startup Confidence Score (mark as Active)
+- **Platform Guide**: Add "Readiness Ontology & Scoring Engine" section documenting the 6 dimensions, ORI formula, SCS
+- **Strategic North Star**: Update scoring engine status from Planned to Active, add dimension-based architecture detail
 

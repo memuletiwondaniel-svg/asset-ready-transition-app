@@ -29,6 +29,7 @@ interface PSSRSummaryWidgetProps {
   dragAttributes?: any;
   dragListeners?: any;
   onHide?: () => void;
+  isReadOnly?: boolean;
 }
 
 // Circular progress component for compact display

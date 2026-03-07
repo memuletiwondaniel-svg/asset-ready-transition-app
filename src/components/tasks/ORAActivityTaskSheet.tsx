@@ -33,6 +33,7 @@ interface ORAActivityTaskSheetProps {
   task: UserTask | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  isReadOnly?: boolean;
 }
 
 type ActivityStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
@@ -69,6 +70,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
   task,
   open,
   onOpenChange,
+  isReadOnly = false,
 }) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -454,6 +456,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
               onChange={(e) => setEditName(e.target.value)}
               placeholder="Activity name..."
               className="text-lg font-semibold leading-snug mt-1.5 border-0 shadow-none px-0 h-auto focus-visible:ring-0 bg-transparent"
+              disabled={isReadOnly}
             />
           </SheetHeader>
 
@@ -466,6 +469,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 className="min-h-[140px] resize-none text-sm border-primary/20 focus-visible:ring-primary/30"
+                disabled={isReadOnly}
               />
             </div>
 
@@ -478,7 +482,8 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                   <p className="text-[10px] text-muted-foreground mb-1 uppercase tracking-wide font-medium">Start Date</p>
                   <button
                     type="button"
-                    onClick={() => setShowCalendar(v => !v)}
+                    onClick={() => !isReadOnly && setShowCalendar(v => !v)}
+                    disabled={isReadOnly}
                     className={cn(
                       "w-full h-9 px-3 rounded-md border text-sm text-left transition-colors hover:bg-muted/50",
                       editStartDate ? "text-foreground" : "text-muted-foreground",
@@ -494,7 +499,8 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                   <p className="text-[10px] text-muted-foreground mb-1 uppercase tracking-wide font-medium">End Date</p>
                   <button
                     type="button"
-                    onClick={() => setShowCalendar(v => !v)}
+                    onClick={() => !isReadOnly && setShowCalendar(v => !v)}
+                    disabled={isReadOnly}
                     className={cn(
                       "w-full h-9 px-3 rounded-md border text-sm text-left transition-colors hover:bg-muted/50",
                       editEndDate ? "text-foreground" : "text-muted-foreground",
@@ -514,7 +520,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                       variant="outline"
                       size="icon"
                       className="h-7 w-7 text-xs"
-                      disabled={!editStartDate || !editEndDate || (durationDays !== null && durationDays <= 1)}
+                      disabled={isReadOnly || !editStartDate || !editEndDate || (durationDays !== null && durationDays <= 1)}
                       onClick={() => {
                         if (editStartDate && editEndDate && durationDays && durationDays > 1) {
                           setEditEndDate(addDays(editEndDate, -1));
@@ -528,7 +534,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                       variant="outline"
                       size="icon"
                       className="h-7 w-7 text-xs"
-                      disabled={!editStartDate || !editEndDate}
+                      disabled={isReadOnly || !editStartDate || !editEndDate}
                       onClick={() => {
                         if (editStartDate && editEndDate) {
                           setEditEndDate(addDays(editEndDate, 1));
@@ -574,13 +580,14 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                 </p>
                 <Button
                   className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
+                  disabled={isReadOnly}
                   onClick={() => {
                     onOpenChange(false);
                     setShowP2AWizard(true);
                   }}
                 >
                   <FileText className="h-4 w-4" />
-                  {p2aSheetCtaLabel}
+                  {isReadOnly ? 'View Only' : p2aSheetCtaLabel}
                   <ChevronRight className="h-4 w-4 ml-auto" />
                 </Button>
               </div>
@@ -596,7 +603,8 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                       return (
                         <button
                           key={step.value}
-                          onClick={() => setStatus(step.value)}
+                          onClick={() => !isReadOnly && setStatus(step.value)}
+                          disabled={isReadOnly}
                           className={cn(
                             "flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-md text-xs font-medium transition-all",
                             isActive && step.value === 'NOT_STARTED' && "bg-gray-200 text-gray-700 shadow-sm",
@@ -620,9 +628,10 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                       </div>
                       <Slider
                     value={[progressPct]}
-                    onValueChange={(val) => setProgressPct(val[0])}
+                    onValueChange={(val) => !isReadOnly && setProgressPct(val[0])}
                     max={100}
                     step={5}
+                    disabled={isReadOnly}
                     className="[&_[role=slider]]:border-amber-500 [&_[role=slider]]:bg-background [&_.bg-primary]:bg-amber-500"
                   />
                   <div className="flex justify-between text-[10px] text-muted-foreground/60">
@@ -799,36 +808,38 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
         {/* Pinned footer */}
         <div className="border-t bg-background px-6 py-4 shrink-0">
           <div className="flex items-center justify-between">
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-destructive hover:text-destructive hover:bg-destructive/10 gap-1.5"
-                  disabled={deleting}
-                >
-                  {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                  Delete
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Delete Activity</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This will permanently remove this activity and its associated task. This action cannot be undone.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={handleDelete}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            {!isReadOnly ? (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10 gap-1.5"
+                    disabled={deleting}
                   >
+                    {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                     Delete
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Activity</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will permanently remove this activity and its associated task. This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDelete}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            ) : <div />}
 
             <div className="flex items-center gap-2">
               <Button
@@ -836,10 +847,10 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                 size="sm"
                 onClick={() => onOpenChange(false)}
               >
-                Cancel
+                {isReadOnly ? 'Close' : 'Cancel'}
               </Button>
 
-              {isDirty && (
+              {!isReadOnly && isDirty && (
                 <Button
                   size="sm"
                   className={cn(
