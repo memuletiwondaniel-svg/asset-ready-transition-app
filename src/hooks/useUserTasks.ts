@@ -73,8 +73,28 @@ const fetchUserTasks = async (userId: string): Promise<{ tasks: UserTask[]; depe
     });
   }
 
+  // Split into regular tasks and bundle tasks
+  const regularTasks = (tasksData || []).filter(t => !BUNDLE_TYPES.includes(t.type));
+  const bundleTasks = (tasksData || []).filter(t => BUNDLE_TYPES.includes(t.type));
+
+  // Fetch ORA activity dates for tasks referencing ora_plan_activity_id (avoids waterfall query)
+  const oraActivityIds = regularTasks
+    .map(t => (t.metadata as Record<string, any>)?.ora_plan_activity_id)
+    .filter(Boolean) as string[];
+
+  let oraActivityDates: Record<string, { start_date: string | null; end_date: string | null; duration_days: number | null }> = {};
+  if (oraActivityIds.length > 0) {
+    const { data: oraData } = await supabase
+      .from('ora_plan_activities')
+      .select('id, start_date, end_date, duration_days')
+      .in('id', oraActivityIds);
+    if (oraData) {
+      oraData.forEach((a: any) => { oraActivityDates[a.id] = a; });
+    }
+  }
+
   // Enrich tasks with dependency information
-  const enrichedTasks = (tasksData || []).map(task => {
+  const enrichedTasks = regularTasks.map(task => {
     const blockingTasks = depsData
       .filter(dep => dep.depends_on_task_id === task.id)
       .map(dep => dep.task_id);
@@ -90,7 +110,7 @@ const fetchUserTasks = async (userId: string): Promise<{ tasks: UserTask[]; depe
     };
   });
 
-  return { tasks: enrichedTasks, dependencies: depsData };
+  return { tasks: enrichedTasks, dependencies: depsData, bundleTasks, oraActivityDates };
 };
 
 /**
