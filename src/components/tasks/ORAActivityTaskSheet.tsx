@@ -269,6 +269,10 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
               const aId = String(a.id || '');
               if (aId === realOraActivityId || aId === `ora-${realOraActivityId}` || aId === `ws-${realOraActivityId}` || aId === (oraActivityId || '__none__')) {
                 const updated: any = { ...a };
+                if (nameChanged) {
+                  updated.activity = editName;
+                  updated.name = editName;
+                }
                 if (datesChanged) {
                   updated.startDate = editStartDate ? format(editStartDate, 'yyyy-MM-dd') : a.startDate;
                   updated.start_date = editStartDate ? format(editStartDate, 'yyyy-MM-dd') : a.start_date;
