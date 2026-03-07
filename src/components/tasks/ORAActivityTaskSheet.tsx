@@ -107,7 +107,27 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
   const planId = metadata?.plan_id as string | undefined;
   const deliverableId = metadata?.deliverable_id as string | undefined;
   const oraActivityId = metadata?.ora_plan_activity_id as string | undefined;
+  const projectId = metadata?.project_id as string | undefined;
+  const projectCode = metadata?.project_code as string | undefined;
+  const isP2AActivity = activityCode === 'P2A-01' || metadata?.action === 'create_p2a_plan';
   const isOverdue = editEndDate && isPast(editEndDate) && status !== 'COMPLETED';
+
+  // Check if P2A plan exists for "Continue" vs "Create" label
+  const { data: existingP2APlan } = useQuery({
+    queryKey: ['p2a-plan-exists-sheet', projectId],
+    queryFn: async () => {
+      if (!projectId) return null;
+      const { data } = await (supabase as any)
+        .from('p2a_handover_plans')
+        .select('id, status')
+        .eq('project_id', projectId)
+        .limit(1);
+      return data?.[0] || null;
+    },
+    enabled: !!projectId && isP2AActivity,
+    staleTime: 30_000,
+  });
+  const p2aSheetCtaLabel = existingP2APlan ? 'Continue P2A Plan' : 'Create P2A Plan';
 
   // Duration computed from editable dates
   const durationDays = useMemo(() => {
