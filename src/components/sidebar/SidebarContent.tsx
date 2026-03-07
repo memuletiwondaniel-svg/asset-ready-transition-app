@@ -106,6 +106,7 @@ export const SidebarContent = memo<SidebarContentProps>(({
 }) => {
   const { translations: t } = useLanguage();
   const { hasPermission } = usePermissions();
+  const newTaskCount = useNewTaskCount();
   
   const DANIEL_USER_ID = '05b44255-4358-450c-8aa4-0558b31df70b';
   const visibleNavItems = navigationItems.filter(item => 
