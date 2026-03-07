@@ -73,6 +73,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
   open,
   onOpenChange,
   isReadOnly = false,
+  initialStatusOverride,
 }) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
