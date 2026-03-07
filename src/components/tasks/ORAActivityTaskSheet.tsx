@@ -673,30 +673,48 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
               <p className="text-sm font-medium mb-2 flex items-center gap-1.5 text-muted-foreground">
                 <MessageSquare className="h-4 w-4" />
                 Comments
+                {dbComments.length > 0 && (
+                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 ml-1">{dbComments.length}</Badge>
+                )}
               </p>
-              {comments.length > 0 && (
-                <div className="space-y-2 mb-3 max-h-40 overflow-y-auto">
-                  {comments.map((c, i) => (
-                    <div key={i} className="p-2.5 bg-muted/40 rounded-lg text-sm">
-                      <p>{c.text}</p>
-                      <p className="text-[10px] text-muted-foreground mt-1">
-                        {format(parseISO(c.date), 'MMM d, yyyy HH:mm')}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <div className="flex gap-2">
+              <div className="flex gap-2 mb-3">
                 <Textarea
                   placeholder="Add a comment..."
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
                   className="min-h-[60px] resize-none text-sm"
                 />
-                <Button size="sm" variant="secondary" onClick={addComment} disabled={!comment.trim()}>
-                  Add
+                <Button size="sm" variant="secondary" onClick={handleAddComment} disabled={!comment.trim() || isAdding}>
+                  {isAdding ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Add'}
                 </Button>
               </div>
+              {commentsLoading ? (
+                <div className="flex items-center justify-center py-4">
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                </div>
+              ) : dbComments.length > 0 ? (
+                <div className="space-y-2.5 max-h-60 overflow-y-auto">
+                  {dbComments.map((c) => (
+                    <div key={c.id} className="flex gap-2.5 p-2.5 bg-muted/40 rounded-lg">
+                      <Avatar className="h-7 w-7 shrink-0 mt-0.5">
+                        {c.avatar_url && <AvatarImage src={c.avatar_url} />}
+                        <AvatarFallback className="text-[10px] font-medium">
+                          {(c.full_name || '?').slice(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className="text-xs font-medium truncate">{c.full_name}</span>
+                          <span className="text-[10px] text-muted-foreground shrink-0">
+                            {formatDistanceToNow(parseISO(c.created_at), { addSuffix: true })}
+                          </span>
+                        </div>
+                        <p className="text-sm text-foreground/90 whitespace-pre-wrap">{c.comment}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
             </div>
           </div>
         </div>
