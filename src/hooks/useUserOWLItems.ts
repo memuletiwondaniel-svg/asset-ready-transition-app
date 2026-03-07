@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from './use-toast';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
@@ -69,6 +69,7 @@ export function useUserOWLItems() {
     enabled: !!user?.id,
     staleTime: 2 * 60 * 1000, // 2 minutes cache
     refetchOnWindowFocus: false,
+    placeholderData: keepPreviousData,
   });
 
   // Set up real-time subscription

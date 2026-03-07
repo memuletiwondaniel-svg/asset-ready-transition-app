@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 
@@ -98,6 +98,7 @@ export const useUserORPActivities = () => {
     enabled: !!user?.id,
     staleTime: 2 * 60 * 1000,
     refetchOnWindowFocus: false,
+    placeholderData: keepPreviousData,
   });
 
   // Calculate stats
