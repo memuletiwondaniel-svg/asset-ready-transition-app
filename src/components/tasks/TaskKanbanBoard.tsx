@@ -356,7 +356,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {columnData.map(col => (
             <DroppableColumn key={col.key} columnKey={col.key}>
               <div className={cn("bg-muted/30 rounded-xl border border-border/50 border-t-2 flex flex-col h-full", col.color)}>
