@@ -104,9 +104,8 @@ const KanbanCard: React.FC<{
                 dateAnnotation.variant === 'today' && 'bg-amber-500/10 text-amber-600',
                 dateAnnotation.variant === 'upcoming' && 'bg-blue-500/10 text-blue-600',
               )}>
-                {dateAnnotation.variant === 'overdue' && <AlertTriangle className="h-2.5 w-2.5" />}
                 {dateAnnotation.variant === 'today' && <Clock className="h-2.5 w-2.5" />}
-                {dateAnnotation.label}
+                {dateAnnotation.variant === 'overdue' ? 'Overdue' : dateAnnotation.label}
               </span>
             )}
           </div>
