@@ -786,39 +786,39 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                   <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
                     <button
                       onClick={() => onNavigate('pssr')}
-                      className="group flex flex-col items-center gap-2.5 p-4 rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-200 min-w-[100px]"
+                      className="group flex flex-col items-center gap-2 sm:gap-2.5 p-3 sm:p-4 rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-200 min-w-[75px] sm:min-w-[100px]"
                     >
-                      <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-primary transition-transform duration-200 group-hover:scale-110">
-                        <Zap className="w-5 h-5 text-primary-foreground" />
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center bg-primary transition-transform duration-200 group-hover:scale-110">
+                        <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-primary-foreground" />
                       </div>
-                      <span className="text-xs font-medium text-foreground/80 group-hover:text-foreground transition-colors">{t.createAPSSR || 'Create PSSR'}</span>
+                      <span className="text-[10px] sm:text-xs font-medium text-foreground/80 group-hover:text-foreground transition-colors">{t.createAPSSR || 'Create PSSR'}</span>
                     </button>
                     <button
                       onClick={() => onNavigate('pssr')}
-                      className="group flex flex-col items-center gap-2.5 p-4 rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-200 min-w-[100px]"
+                      className="group flex flex-col items-center gap-2 sm:gap-2.5 p-3 sm:p-4 rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-200 min-w-[75px] sm:min-w-[100px]"
                     >
-                      <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-emerald-500 transition-transform duration-200 group-hover:scale-110">
-                        <CheckCircle className="w-5 h-5 text-white" />
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center bg-emerald-500 transition-transform duration-200 group-hover:scale-110">
+                        <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                       </div>
-                      <span className="text-xs font-medium text-foreground/80 group-hover:text-foreground transition-colors">{t.approveAPSSR || 'Approve PSSR'}</span>
+                      <span className="text-[10px] sm:text-xs font-medium text-foreground/80 group-hover:text-foreground transition-colors">{t.approveAPSSR || 'Approve PSSR'}</span>
                     </button>
                     <button
                       onClick={() => onNavigate('projects')}
-                      className="group flex flex-col items-center gap-2.5 p-4 rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-200 min-w-[100px]"
+                      className="group flex flex-col items-center gap-2 sm:gap-2.5 p-3 sm:p-4 rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-200 min-w-[75px] sm:min-w-[100px]"
                     >
-                      <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-violet-500 transition-transform duration-200 group-hover:scale-110">
-                        <Key className="w-5 h-5 text-white" />
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center bg-violet-500 transition-transform duration-200 group-hover:scale-110">
+                        <Key className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                       </div>
-                      <span className="text-xs font-medium text-foreground/80 group-hover:text-foreground transition-colors">{t.addNewProject || 'Add Project'}</span>
+                      <span className="text-[10px] sm:text-xs font-medium text-foreground/80 group-hover:text-foreground transition-colors">{t.addNewProject || 'Add Project'}</span>
                     </button>
                     <button
                       onClick={() => onNavigate('my-tasks')}
-                      className="group flex flex-col items-center gap-2.5 p-4 rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-200 min-w-[100px]"
+                      className="group flex flex-col items-center gap-2 sm:gap-2.5 p-3 sm:p-4 rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-200 min-w-[75px] sm:min-w-[100px]"
                     >
-                      <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-amber-500 transition-transform duration-200 group-hover:scale-110">
-                        <ListChecks className="w-5 h-5 text-white" />
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center bg-amber-500 transition-transform duration-200 group-hover:scale-110">
+                        <ListChecks className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                       </div>
-                      <span className="text-xs font-medium text-foreground/80 group-hover:text-foreground transition-colors">{t.myTasks || 'My Tasks'}</span>
+                      <span className="text-[10px] sm:text-xs font-medium text-foreground/80 group-hover:text-foreground transition-colors">{t.myTasks || 'My Tasks'}</span>
                     </button>
                   </div>
                 </>
