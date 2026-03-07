@@ -123,6 +123,9 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
     return raw;
   }, [oraActivityId]);
 
+  // Database-persisted comments
+  const { comments: dbComments, isLoading: commentsLoading, addComment: addDbComment, isAdding } = useORAActivityComments(realOraActivityId || undefined, planId);
+
   // Initialize values when sheet opens
   useEffect(() => {
     if (open && task) {
