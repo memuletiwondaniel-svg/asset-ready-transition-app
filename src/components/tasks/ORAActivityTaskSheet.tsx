@@ -33,6 +33,7 @@ interface ORAActivityTaskSheetProps {
   task: UserTask | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  isReadOnly?: boolean;
 }
 
 type ActivityStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
