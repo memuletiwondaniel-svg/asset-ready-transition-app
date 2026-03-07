@@ -650,7 +650,8 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
             </div>
           </div>
         </CardContent>
-        {showAddItem && <CreateORPModal open={showAddItem} onOpenChange={setShowAddItem} onSuccess={() => setShowAddItem(false)} />}
+        <AddFromCatalogDialog open={showCatalogDialog} onOpenChange={setShowCatalogDialog} existingIds={existingActivityIds} onAdd={handleAddFromCatalog} />
+        <AddCustomActivityDialog open={showCustomDialog} onOpenChange={setShowCustomDialog} phase="" onAdd={handleAddCustom} />
       </Card>
     );
   }
