@@ -72,6 +72,7 @@ export const useUserVCRBundleTasks = () => {
       })) as VCRBundleTask[];
     },
     enabled: !!user?.id,
+    placeholderData: keepPreviousData,
   });
 
   return {

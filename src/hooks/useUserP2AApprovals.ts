@@ -60,6 +60,7 @@ export const useUserP2AApprovals = () => {
     enabled: !!user?.id,
     staleTime: 2 * 60 * 1000,
     refetchOnWindowFocus: false,
+    placeholderData: keepPreviousData,
   });
 
   // Calculate stats
