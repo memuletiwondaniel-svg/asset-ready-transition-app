@@ -335,13 +335,28 @@ export function useUnifiedTasks(userId: string) {
     });
   }, [pssrs, approvals, activities, owlItems, bundleTasks, userTasks, oraActivityDates, isNewSinceLastLogin]);
 
+  // Stabilization: never return an empty array if we previously had data
+  // This prevents the board from blanking during background refetches
+  const stableTasksRef = useRef<UnifiedTask[]>([]);
+  const stableTasks = useMemo(() => {
+    if (allTasks.length > 0) {
+      stableTasksRef.current = allTasks;
+      return allTasks;
+    }
+    // If allTasks is empty but we had data before, keep showing old data
+    if (stableTasksRef.current.length > 0 && !isLoading) {
+      return stableTasksRef.current;
+    }
+    return allTasks;
+  }, [allTasks, isLoading]);
+
   const categoryCounts = useMemo(() => {
-    const counts: Record<string, number> = { all: allTasks.length };
-    allTasks.forEach(t => {
+    const counts: Record<string, number> = { all: stableTasks.length };
+    stableTasks.forEach(t => {
       counts[t.category] = (counts[t.category] || 0) + 1;
     });
     return counts;
-  }, [allTasks]);
+  }, [stableTasks]);
 
-  return { allTasks, isLoading, categoryCounts, updateTaskStatus };
+  return { allTasks: stableTasks, isLoading, categoryCounts, updateTaskStatus };
 }
