@@ -59,28 +59,20 @@ const KanbanCard: React.FC<{
   const dateAnnotation = getDateAnnotation(task);
   const sp = task.smartPriority;
 
-  const borderColor = sp.level === 'critical'
-    ? 'border-l-destructive'
-    : sp.level === 'high'
-    ? 'border-l-destructive'
-    : sp.level === 'medium'
-    ? 'border-l-amber-500'
-    : 'border-l-muted-foreground/30';
-
   return (
     <TooltipProvider delayDuration={300}>
       <Card
         onClick={onClick}
         className={cn(
-          "p-1.5 px-2 cursor-pointer transition-all hover:shadow-md hover:border-primary/20 border-l-2",
-          borderColor,
+          "p-2 px-2.5 cursor-pointer transition-all duration-150 border border-border/60 rounded-lg",
+          "hover:shadow-sm hover:bg-accent/30",
           task.isWaiting && 'opacity-50',
-          task.isNew && 'ring-1 ring-primary/20',
-          sp.isOverdue && 'bg-destructive/[0.03]'
+          task.isNew && 'ring-1 ring-primary/15',
+          sp.isOverdue && 'bg-destructive/[0.02]'
         )}
       >
-        {/* Row 1: Project ID + status label on right */}
-        <div className="flex items-center justify-between gap-1 mb-0.5">
+        {/* Row 1: Project ID left, status right */}
+        <div className="flex items-center justify-between gap-1 mb-1">
           <div className="flex items-center gap-1.5 min-w-0">
             {task.project ? (
               <ProjectIdBadge size="sm" projectId={task.project}>{task.project}</ProjectIdBadge>
@@ -88,43 +80,41 @@ const KanbanCard: React.FC<{
               <span className="text-[9px] text-muted-foreground">{task.categoryLabel}</span>
             )}
             {task.isNew && (
-              <Badge variant="secondary" className="text-[9px] px-1 py-0 h-auto bg-primary/10 text-primary">NEW</Badge>
+              <span className="text-[8px] font-semibold text-primary bg-primary/8 px-1 rounded">NEW</span>
             )}
           </div>
           <div className="flex items-center gap-1">
             {sp.isStartingSoon && (
-              <Badge variant="outline" className="text-[9px] px-1 py-0 h-auto border-amber-500/30 bg-amber-500/10 text-amber-600 gap-0.5">
-                <Zap className="h-2 w-2" />Soon
-              </Badge>
+              <span className="text-[9px] font-medium text-amber-600 bg-amber-500/8 px-1.5 py-0 rounded">
+                Soon
+              </span>
             )}
             {dateAnnotation && (
               <span className={cn(
-                "inline-flex items-center gap-0.5 text-[9px] px-1 py-0 rounded-full font-medium whitespace-nowrap",
-                dateAnnotation.variant === 'overdue' && 'bg-destructive/10 text-destructive',
-                dateAnnotation.variant === 'today' && 'bg-amber-500/10 text-amber-600',
-                dateAnnotation.variant === 'upcoming' && 'bg-blue-500/10 text-blue-600',
+                "text-[9px] font-medium px-1.5 py-0 rounded whitespace-nowrap",
+                dateAnnotation.variant === 'overdue' && 'text-destructive bg-destructive/8',
+                dateAnnotation.variant === 'today' && 'text-amber-600 bg-amber-500/8',
+                dateAnnotation.variant === 'upcoming' && 'text-muted-foreground bg-muted',
               )}>
-                {dateAnnotation.variant === 'today' && <Clock className="h-2.5 w-2.5" />}
                 {dateAnnotation.variant === 'overdue' ? 'Overdue' : dateAnnotation.label}
               </span>
             )}
           </div>
         </div>
 
-        {/* Title - full display, smaller font */}
-        <p className="text-[11px] font-medium text-foreground leading-tight mb-0.5">{task.title}</p>
+        {/* Title */}
+        <p className="text-[11px] font-medium text-foreground leading-snug mb-1">{task.title}</p>
 
-        {/* Dates row - compact */}
+        {/* Dates row */}
         {(task.startDate || task.endDate || task.dueDate) && (
-          <div className="flex items-center gap-1 text-[9px]">
-            <Calendar className="h-2.5 w-2.5 shrink-0 text-muted-foreground/50" />
-            {task.startDate && <span className="text-muted-foreground/50">{format(new Date(task.startDate), 'MMM d')}</span>}
-            {task.startDate && task.endDate && <span className="text-muted-foreground/40">→</span>}
+          <div className="flex items-center gap-1 text-[9px] text-muted-foreground/70">
+            <Calendar className="h-2.5 w-2.5 shrink-0" />
+            {task.startDate && <span>{format(new Date(task.startDate), 'MMM d')}</span>}
+            {task.startDate && task.endDate && <span>→</span>}
             {(task.endDate || task.dueDate) && (
               <span className={cn(
-                "text-muted-foreground",
-                dateAnnotation?.variant === 'overdue' && 'text-destructive font-medium',
-                dateAnnotation?.variant === 'today' && 'text-amber-600 font-medium',
+                dateAnnotation?.variant === 'overdue' && 'text-destructive',
+                dateAnnotation?.variant === 'today' && 'text-amber-600',
               )}>
                 {format(new Date((task.endDate || task.dueDate)!), 'MMM d')}
               </span>
@@ -132,9 +122,9 @@ const KanbanCard: React.FC<{
           </div>
         )}
 
-        {/* Progress bar for bundles */}
+        {/* Progress bar */}
         {task.totalItems != null && task.totalItems > 0 && (
-          <div className="flex items-center gap-1.5 mt-0.5">
+          <div className="flex items-center gap-1.5 mt-1">
             <Progress value={task.progressPercentage || 0} className="h-1 flex-1" />
             <span className="text-[9px] text-muted-foreground">{task.completedItems}/{task.totalItems}</span>
           </div>
