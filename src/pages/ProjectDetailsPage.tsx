@@ -16,6 +16,7 @@ import { usePlants } from '@/hooks/usePlants';
 import { useStations } from '@/hooks/useStations';
 import { useHubs } from '@/hooks/useHubs';
 import { useProjectRegions } from '@/hooks/useProjectRegions';
+import { useProjectAccess } from '@/hooks/useProjectAccess';
 import { EditProjectModal } from '@/components/project/EditProjectModal';
 import { ViewProjectModal } from '@/components/project/ViewProjectModal';
 import { supabase } from '@/integrations/supabase/client';
