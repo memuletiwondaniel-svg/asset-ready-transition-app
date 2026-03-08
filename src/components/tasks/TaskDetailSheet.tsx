@@ -207,7 +207,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
               {getTypeBadge()}
               {getPriorityBadge(task.priority)}
             </div>
-             <SheetTitle className="text-left text-lg leading-snug mt-2">
+             <SheetTitle className="text-left text-base sm:text-lg leading-snug mt-2 break-words">
               {task.title}
             </SheetTitle>
             {task.description && (

@@ -436,7 +436,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="sm:max-w-lg p-0 flex flex-col h-full">
         {/* Scrollable content area */}
-        <div className="flex-1 overflow-y-auto px-6 pt-6 pb-4">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-6 pt-6 pb-4">
           {/* Header */}
           <SheetHeader className="pb-2">
             <div className="flex items-center gap-2 flex-wrap">
@@ -456,11 +456,11 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
               )}
             </div>
             <SheetTitle className="sr-only">Activity Details</SheetTitle>
-            <Input
+             <Input
               value={editName}
               onChange={(e) => setEditName(e.target.value)}
               placeholder="Activity name..."
-              className="text-lg font-semibold leading-snug mt-1.5 border-0 shadow-none px-0 h-auto focus-visible:ring-0 bg-transparent"
+              className="text-base sm:text-lg font-semibold leading-snug mt-1.5 border-0 shadow-none px-0 h-auto focus-visible:ring-0 bg-transparent w-full truncate"
               disabled={isReadOnly}
             />
           </SheetHeader>
@@ -481,16 +481,16 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
             {/* Schedule: Start, End, Duration on one row */}
             <div className="space-y-3">
               <p className="text-sm font-medium text-muted-foreground">Schedule</p>
-              <div className="flex items-center gap-2">
+              <div className="grid grid-cols-[1fr_1fr_auto] gap-2 items-end">
                 {/* Start Date */}
-                <div className="flex-1">
+                <div className="min-w-0">
                   <p className="text-[10px] text-muted-foreground mb-1 uppercase tracking-wide font-medium">Start Date</p>
                   <button
                     type="button"
                     onClick={() => !isReadOnly && setShowCalendar(v => !v)}
                     disabled={isReadOnly}
                     className={cn(
-                      "w-full h-9 px-3 rounded-md border text-sm text-left transition-colors hover:bg-muted/50",
+                      "w-full h-9 px-2 sm:px-3 rounded-md border text-xs sm:text-sm text-left transition-colors hover:bg-muted/50 truncate",
                       editStartDate ? "text-foreground" : "text-muted-foreground",
                       showCalendar && "ring-1 ring-primary/40"
                     )}
@@ -500,14 +500,14 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                 </div>
 
                 {/* End Date */}
-                <div className="flex-1">
+                <div className="min-w-0">
                   <p className="text-[10px] text-muted-foreground mb-1 uppercase tracking-wide font-medium">End Date</p>
                   <button
                     type="button"
                     onClick={() => !isReadOnly && setShowCalendar(v => !v)}
                     disabled={isReadOnly}
                     className={cn(
-                      "w-full h-9 px-3 rounded-md border text-sm text-left transition-colors hover:bg-muted/50",
+                      "w-full h-9 px-2 sm:px-3 rounded-md border text-xs sm:text-sm text-left transition-colors hover:bg-muted/50 truncate",
                       editEndDate ? "text-foreground" : "text-muted-foreground",
                       isOverdue && "border-destructive/50 text-destructive",
                       showCalendar && "ring-1 ring-primary/40"
@@ -611,15 +611,15 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                           onClick={() => !isReadOnly && setStatus(step.value)}
                           disabled={isReadOnly}
                           className={cn(
-                            "flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-md text-xs font-medium transition-all",
+                            "flex-1 flex items-center justify-center gap-1 sm:gap-1.5 py-2 px-1.5 sm:px-3 rounded-md text-[10px] sm:text-xs font-medium transition-all whitespace-nowrap overflow-hidden",
                             isActive && step.value === 'NOT_STARTED' && "bg-gray-200 text-gray-700 shadow-sm",
                             isActive && step.value === 'IN_PROGRESS' && "bg-amber-500 text-white shadow-sm",
                             isActive && step.value === 'COMPLETED' && "bg-green-500 text-white shadow-sm",
                             !isActive && "text-muted-foreground hover:text-foreground hover:bg-background/50"
                           )}
                         >
-                          <Icon className="h-3.5 w-3.5" />
-                          {step.label}
+                          <Icon className="h-3.5 w-3.5 shrink-0" />
+                          <span className="truncate">{step.label}</span>
                         </button>
                       );
                     })}
@@ -811,7 +811,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
         </div>
 
         {/* Pinned footer */}
-        <div className="border-t bg-background px-6 py-4 shrink-0">
+        <div className="border-t bg-background px-4 sm:px-6 py-4 shrink-0">
           <div className="flex items-center justify-between">
             {!isReadOnly ? (
               <AlertDialog>
