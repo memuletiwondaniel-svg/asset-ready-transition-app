@@ -153,7 +153,7 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
   }
 
   return (
-    <Card className="h-full flex flex-col glass-card glass-card-hover overflow-hidden group">
+    <Card className="lg:h-full flex flex-col glass-card glass-card-hover lg:overflow-hidden overflow-visible group">
       {/* Hero Header */}
       <CardHeader className="pb-3 cursor-pointer relative overflow-hidden" onClick={onViewDetails}>
         {/* Subtle shine effect on hover */}
