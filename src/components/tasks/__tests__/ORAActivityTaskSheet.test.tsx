@@ -36,10 +36,13 @@ const createWrapper = () => {
 const baseTask = {
   id: "task-1",
   title: "Test Activity",
+  description: null,
   type: "ora_activity" as const,
   status: "in_progress" as const,
   priority: "medium" as const,
   created_at: new Date().toISOString(),
+  due_date: null,
+  display_order: 0,
   metadata: {
     ora_plan_activity_id: "act-1",
     orp_plan_id: "plan-1",
