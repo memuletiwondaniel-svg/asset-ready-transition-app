@@ -86,7 +86,7 @@ const fetchUserTasks = async (userId: string): Promise<{ tasks: UserTask[]; depe
   if (oraActivityIds.length > 0) {
     const { data: oraData } = await supabase
       .from('ora_plan_activities')
-      .select('id, start_date, end_date, duration_days')
+      .select('id, start_date, end_date, duration_days, completion_percentage')
       .in('id', oraActivityIds);
     if (oraData) {
       oraData.forEach((a: any) => { oraActivityDates[a.id] = a; });
