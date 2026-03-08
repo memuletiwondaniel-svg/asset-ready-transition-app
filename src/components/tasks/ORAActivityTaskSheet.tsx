@@ -456,11 +456,11 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
               )}
             </div>
             <SheetTitle className="sr-only">Activity Details</SheetTitle>
-            <Input
+             <Input
               value={editName}
               onChange={(e) => setEditName(e.target.value)}
               placeholder="Activity name..."
-              className="text-lg font-semibold leading-snug mt-1.5 border-0 shadow-none px-0 h-auto focus-visible:ring-0 bg-transparent"
+              className="text-base sm:text-lg font-semibold leading-snug mt-1.5 border-0 shadow-none px-0 h-auto focus-visible:ring-0 bg-transparent w-full truncate"
               disabled={isReadOnly}
             />
           </SheetHeader>
