@@ -162,7 +162,8 @@ export function useUnifiedTasks(userId: string) {
         userTask: t,
         isWaiting,
         durationDays,
-        kanbanColumn: mapToKanbanColumn({ status: t.status, isWaiting }),
+        progressPercentage: oraAct?.completion_percentage ?? meta?.completion_percentage ?? undefined,
+        kanbanColumn: mapToKanbanColumn({ status: t.status, isWaiting, progressPercentage: oraAct?.completion_percentage ?? meta?.completion_percentage }),
       });
     });
 
