@@ -445,6 +445,8 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
         className="w-full sm:max-w-lg p-0 flex flex-col h-full !z-[60]" 
         style={{ pointerEvents: 'auto' }}
       >
+        {/* Scrollable content area */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-6 pt-6 pb-4">
           {/* Header */}
           <SheetHeader className="pb-2">
             <div className="flex items-center gap-2 flex-wrap">
