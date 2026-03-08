@@ -294,11 +294,6 @@
   }
 }
 
-/* Ensure ORA Activity sheet overlay renders above Dialog overlays on mobile */
-[data-ora-activity-sheet] ~ [data-state] {
-  z-index: 60 !important;
-}
-
 
 @layer base {
   * {
