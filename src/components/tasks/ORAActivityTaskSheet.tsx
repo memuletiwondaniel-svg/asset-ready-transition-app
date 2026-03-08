@@ -481,16 +481,16 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
             {/* Schedule: Start, End, Duration on one row */}
             <div className="space-y-3">
               <p className="text-sm font-medium text-muted-foreground">Schedule</p>
-              <div className="flex items-center gap-2">
+              <div className="grid grid-cols-[1fr_1fr_auto] gap-2 items-end">
                 {/* Start Date */}
-                <div className="flex-1">
+                <div className="min-w-0">
                   <p className="text-[10px] text-muted-foreground mb-1 uppercase tracking-wide font-medium">Start Date</p>
                   <button
                     type="button"
                     onClick={() => !isReadOnly && setShowCalendar(v => !v)}
                     disabled={isReadOnly}
                     className={cn(
-                      "w-full h-9 px-3 rounded-md border text-sm text-left transition-colors hover:bg-muted/50",
+                      "w-full h-9 px-2 sm:px-3 rounded-md border text-xs sm:text-sm text-left transition-colors hover:bg-muted/50 truncate",
                       editStartDate ? "text-foreground" : "text-muted-foreground",
                       showCalendar && "ring-1 ring-primary/40"
                     )}
@@ -500,14 +500,14 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                 </div>
 
                 {/* End Date */}
-                <div className="flex-1">
+                <div className="min-w-0">
                   <p className="text-[10px] text-muted-foreground mb-1 uppercase tracking-wide font-medium">End Date</p>
                   <button
                     type="button"
                     onClick={() => !isReadOnly && setShowCalendar(v => !v)}
                     disabled={isReadOnly}
                     className={cn(
-                      "w-full h-9 px-3 rounded-md border text-sm text-left transition-colors hover:bg-muted/50",
+                      "w-full h-9 px-2 sm:px-3 rounded-md border text-xs sm:text-sm text-left transition-colors hover:bg-muted/50 truncate",
                       editEndDate ? "text-foreground" : "text-muted-foreground",
                       isOverdue && "border-destructive/50 text-destructive",
                       showCalendar && "ring-1 ring-primary/40"
