@@ -117,7 +117,7 @@ const WizardStepProjectTeam: React.FC<WizardStepProjectTeamProps> = ({
           </div>
 
           {/* Required role cards with auto-resolved members */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
             {roleStatuses.map(({ role, member, assigned }) => (
               <div
                 key={role}

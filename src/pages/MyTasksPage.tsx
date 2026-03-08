@@ -80,33 +80,33 @@ const MyTasksPage: React.FC = () => {
 
   return (
     <div className="min-h-screen">
-      <div className="border-b border-border/40 bg-card/30 backdrop-blur-xl p-4 md:p-6">
+        <div className="border-b border-border/40 bg-card/30 backdrop-blur-xl p-3 sm:p-4 md:p-6">
         <BreadcrumbNavigation currentPageLabel="My Tasks" />
-        <div className="flex items-center gap-3 mt-4">
-          <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500">
-            <CalendarCheck className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+        <div className="flex items-center gap-2 sm:gap-3 mt-3 sm:mt-4">
+          <div className="p-2 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 shrink-0">
+            <CalendarCheck className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
           </div>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">My Tasks</h1>
-            <p className="text-sm text-muted-foreground mt-1">Your pending work across all modules</p>
+          <div className="min-w-0">
+            <h1 className="text-lg sm:text-2xl font-bold text-foreground truncate">My Tasks</h1>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 sm:mt-1 hidden sm:block">Your pending work across all modules</p>
           </div>
         </div>
       </div>
 
-      <div className={cn("mx-auto px-6 py-6", viewMode === 'kanban' ? 'max-w-[1400px]' : 'max-w-4xl')}>
+      <div className={cn("mx-auto px-3 sm:px-6 py-4 sm:py-6", viewMode === 'kanban' ? 'max-w-[1400px]' : 'max-w-4xl')}>
         {/* Toolbar */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-6">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search tasks..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+              className="pl-10 h-9 sm:h-10 text-sm"
             />
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto">
             {/* Group by dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -193,9 +193,9 @@ const KanbanView: React.FC<{ userId: string; searchQuery: string; groupBy: Group
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {[1, 2, 3, 4].map(i => (
-          <Skeleton key={i} className="h-64 w-full rounded-xl" />
+          <Skeleton key={i} className="h-48 sm:h-64 w-full rounded-xl" />
         ))}
       </div>
     );

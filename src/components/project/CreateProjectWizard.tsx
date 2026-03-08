@@ -392,10 +392,10 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
-      <DialogContent className="max-w-3xl max-h-[85vh] overflow-hidden flex flex-col p-0">
-        <DialogHeader className="border-b px-6 pt-6 pb-4">
+      <DialogContent className="sm:max-w-3xl max-h-full sm:max-h-[85vh] overflow-hidden flex flex-col p-0">
+        <DialogHeader className="border-b px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4">
           <DialogTitle className="flex items-center gap-2 text-xl font-semibold">
-            <FolderPlus className="w-5 h-5 text-primary" />
+            <FolderPlus className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
             Create New Project
           </DialogTitle>
 
@@ -457,11 +457,11 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
 
         {/* Context banner - shown from step 2 onwards when project info is filled */}
         {currentStep >= 2 && formData.project_id_prefix && formData.project_id_number && (
-          <div className="mx-6 mt-2 mb-0 px-4 py-2.5 rounded-lg bg-muted/60 border border-border/50">
-            <div className="flex items-center gap-4 text-sm">
-              <div>
+          <div className="mx-3 sm:mx-6 mt-2 mb-0 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg bg-muted/60 border border-border/50">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm">
+              <div className="min-w-0">
                 <p className="text-xs text-muted-foreground font-medium">Project</p>
-                <p className="font-semibold text-foreground/90">
+                <p className="font-semibold text-foreground/90 truncate">
                   {formData.project_id_prefix}{formData.project_id_number}
                   {formData.project_title ? ` – ${formData.project_title}` : ''}
                 </p>
@@ -495,12 +495,12 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
         )}
 
         {/* Step Content */}
-        <div className="flex-1 overflow-y-auto py-4 px-6">
+        <div className="flex-1 overflow-y-auto py-3 sm:py-4 px-4 sm:px-6">
           {renderStepContent()}
         </div>
 
         {/* Navigation Buttons */}
-        <div className="flex items-center justify-between px-6 py-4 border-t">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-t">
           <Button
             variant="outline"
             onClick={currentStep === 1 ? handleClose : handleBack}

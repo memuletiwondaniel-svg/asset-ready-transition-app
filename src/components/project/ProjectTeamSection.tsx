@@ -258,17 +258,17 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
         </div>
 
         {/* Required Roles Assignment */}
-        <div className="space-y-4 p-4 rounded-lg bg-muted/30 border border-border/40">
+        <div className="space-y-3 sm:space-y-4 p-3 sm:p-4 rounded-lg bg-muted/30 border border-border/40">
           <h4 className="text-sm font-semibold text-foreground border-b border-border/40 pb-2">Assign Team Members</h4>
           {REQUIRED_ROLES.map(({ role, required, function: func }) => {
             const assignedMember = getRoleMember(role);
             const isAutoPopulated = assignedMember?.is_auto_populated;
             return (
-              <div key={role} className={`p-4 border rounded-lg transition-colors ${
+              <div key={role} className={`p-3 sm:p-4 border rounded-lg transition-colors ${
                 isAutoPopulated ? 'bg-amber-50/50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800' : 'bg-background border-border/60'
               }`}>
                 {/* Role Header */}
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex flex-wrap items-center justify-between gap-1 mb-2 sm:mb-3">
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className="text-xs bg-muted/50">
                       {func}

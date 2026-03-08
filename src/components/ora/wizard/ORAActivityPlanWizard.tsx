@@ -758,10 +758,10 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
   return (
     <>
     <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
-      <DialogContent className={cn(
-        "max-h-[85vh] overflow-hidden flex flex-col",
-        (currentStep === 4 || isReviewMode) ? "max-w-7xl w-[98vw]" : "max-w-2xl"
-      )}>
+        <DialogContent className={cn(
+          "max-h-full sm:max-h-[85vh] overflow-hidden flex flex-col",
+          (currentStep === 4 || isReviewMode) ? "sm:max-w-7xl sm:w-[98vw]" : "sm:max-w-2xl"
+        )}>
         <DialogHeader className={cn("border-b pb-4", isReviewMode && "pb-2")}>
           <DialogTitle className="flex items-center gap-2 text-xl font-semibold">
             <CalendarCheck className="w-5 h-5 text-primary" />

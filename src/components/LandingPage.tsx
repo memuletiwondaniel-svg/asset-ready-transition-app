@@ -648,24 +648,24 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
   return (
     <div className="flex-1 overflow-y-auto">
       {/* Main Content Area */}
-      <div className="flex flex-col lg:flex-row gap-4 md:gap-6 p-4 md:p-6 relative">
-          <div className="flex-1 flex flex-col items-center justify-center gap-6 transition-all duration-500 relative z-10">
+      <div className="flex flex-col lg:flex-row gap-3 sm:gap-4 md:gap-6 p-3 sm:p-4 md:p-6 relative">
+          <div className="flex-1 flex flex-col items-center justify-center gap-4 sm:gap-6 transition-all duration-500 relative z-10">
             {/* Spacer for vertical centering */}
-            <div className="flex-1 min-h-[10vh] md:min-h-[15vh]" />
+            <div className="flex-1 min-h-[5vh] sm:min-h-[10vh] md:min-h-[15vh]" />
             
             {/* Bob AI Hero Section - Centered */}
-            <Card className="w-full max-w-3xl glass-card overflow-hidden animate-fade-in border border-border/40 shadow-xl rounded-3xl">
-              <div className="p-10 md:p-16 min-h-[200px] md:min-h-[280px]">
+            <Card className="w-full max-w-3xl glass-card overflow-hidden animate-fade-in border border-border/40 shadow-xl rounded-2xl sm:rounded-3xl">
+              <div className="p-6 sm:p-10 md:p-16 min-h-[160px] sm:min-h-[200px] md:min-h-[280px]">
                 <div className="flex flex-col items-center text-center max-w-2xl mx-auto">
                   {/* Greeting */}
-                  <h1 className="text-2xl md:text-3xl font-bold mb-1 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                  <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-1 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
                     {isProfileLoading ? (
                       <span className="inline-block animate-pulse bg-muted rounded h-8 w-48" />
                     ) : (
                       <>{getGreeting()}, {userProfile?.full_name?.split(' ')[0] || 'User'}!</>
                     )}
                   </h1>
-                  <p className="text-muted-foreground mb-6">
+                  <p className="text-sm text-muted-foreground mb-4 sm:mb-6">
                     {t.askBobAnything || 'Ask Bob anything about ORSH'}
                   </p>
                   
@@ -738,14 +738,14 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                   <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground text-center mb-4">
                     Favorites
                   </h2>
-                  <div className="flex flex-wrap justify-center gap-3">
+                  <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
                     {favorites.map((fav) => {
                       const IconComponent = getFavoriteIcon(fav.path, fav.label);
                       const colorClass = getFavoriteColor(fav.path, fav.label);
                       return (
                         <div
                           key={fav.path}
-                          className="group/fav relative flex flex-col items-center gap-2.5 p-4 rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-200 min-w-[100px]"
+                          className="group/fav relative flex flex-col items-center gap-2 sm:gap-2.5 p-3 sm:p-4 rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-200 min-w-[80px] sm:min-w-[100px]"
                         >
                           <button
                             onClick={(e) => {
@@ -768,10 +768,10 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                             }}
                             className="flex flex-col items-center gap-2.5 w-full"
                           >
-                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${colorClass} transition-transform duration-200 group-hover/fav:scale-110`}>
-                              <IconComponent className="w-5 h-5 text-white" />
+                            <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center ${colorClass} transition-transform duration-200 group-hover/fav:scale-110`}>
+                              <IconComponent className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                             </div>
-                            <span className="text-xs font-medium text-foreground/80 group-hover/fav:text-foreground transition-colors line-clamp-1 max-w-[100px] text-center">
+                            <span className="text-[10px] sm:text-xs font-medium text-foreground/80 group-hover/fav:text-foreground transition-colors line-clamp-1 max-w-[80px] sm:max-w-[100px] text-center">
                               {fav.label}
                             </span>
                           </button>
@@ -783,42 +783,42 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
               ) : (
                 <>
                   <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground text-center mb-4">{t.quickActions || 'Quick Actions'}</h2>
-                  <div className="flex flex-wrap justify-center gap-3">
+                  <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
                     <button
                       onClick={() => onNavigate('pssr')}
-                      className="group flex flex-col items-center gap-2.5 p-4 rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-200 min-w-[100px]"
+                      className="group flex flex-col items-center gap-2 sm:gap-2.5 p-3 sm:p-4 rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-200 min-w-[75px] sm:min-w-[100px]"
                     >
-                      <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-primary transition-transform duration-200 group-hover:scale-110">
-                        <Zap className="w-5 h-5 text-primary-foreground" />
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center bg-primary transition-transform duration-200 group-hover:scale-110">
+                        <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-primary-foreground" />
                       </div>
-                      <span className="text-xs font-medium text-foreground/80 group-hover:text-foreground transition-colors">{t.createAPSSR || 'Create PSSR'}</span>
+                      <span className="text-[10px] sm:text-xs font-medium text-foreground/80 group-hover:text-foreground transition-colors">{t.createAPSSR || 'Create PSSR'}</span>
                     </button>
                     <button
                       onClick={() => onNavigate('pssr')}
-                      className="group flex flex-col items-center gap-2.5 p-4 rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-200 min-w-[100px]"
+                      className="group flex flex-col items-center gap-2 sm:gap-2.5 p-3 sm:p-4 rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-200 min-w-[75px] sm:min-w-[100px]"
                     >
-                      <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-emerald-500 transition-transform duration-200 group-hover:scale-110">
-                        <CheckCircle className="w-5 h-5 text-white" />
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center bg-emerald-500 transition-transform duration-200 group-hover:scale-110">
+                        <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                       </div>
-                      <span className="text-xs font-medium text-foreground/80 group-hover:text-foreground transition-colors">{t.approveAPSSR || 'Approve PSSR'}</span>
+                      <span className="text-[10px] sm:text-xs font-medium text-foreground/80 group-hover:text-foreground transition-colors">{t.approveAPSSR || 'Approve PSSR'}</span>
                     </button>
                     <button
                       onClick={() => onNavigate('projects')}
-                      className="group flex flex-col items-center gap-2.5 p-4 rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-200 min-w-[100px]"
+                      className="group flex flex-col items-center gap-2 sm:gap-2.5 p-3 sm:p-4 rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-200 min-w-[75px] sm:min-w-[100px]"
                     >
-                      <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-violet-500 transition-transform duration-200 group-hover:scale-110">
-                        <Key className="w-5 h-5 text-white" />
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center bg-violet-500 transition-transform duration-200 group-hover:scale-110">
+                        <Key className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                       </div>
-                      <span className="text-xs font-medium text-foreground/80 group-hover:text-foreground transition-colors">{t.addNewProject || 'Add Project'}</span>
+                      <span className="text-[10px] sm:text-xs font-medium text-foreground/80 group-hover:text-foreground transition-colors">{t.addNewProject || 'Add Project'}</span>
                     </button>
                     <button
                       onClick={() => onNavigate('my-tasks')}
-                      className="group flex flex-col items-center gap-2.5 p-4 rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-200 min-w-[100px]"
+                      className="group flex flex-col items-center gap-2 sm:gap-2.5 p-3 sm:p-4 rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-200 min-w-[75px] sm:min-w-[100px]"
                     >
-                      <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-amber-500 transition-transform duration-200 group-hover:scale-110">
-                        <ListChecks className="w-5 h-5 text-white" />
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center bg-amber-500 transition-transform duration-200 group-hover:scale-110">
+                        <ListChecks className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                       </div>
-                      <span className="text-xs font-medium text-foreground/80 group-hover:text-foreground transition-colors">{t.myTasks || 'My Tasks'}</span>
+                      <span className="text-[10px] sm:text-xs font-medium text-foreground/80 group-hover:text-foreground transition-colors">{t.myTasks || 'My Tasks'}</span>
                     </button>
                   </div>
                 </>

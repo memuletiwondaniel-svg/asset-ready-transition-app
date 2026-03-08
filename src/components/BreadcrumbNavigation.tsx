@@ -73,10 +73,10 @@ export const BreadcrumbNavigation: React.FC<BreadcrumbNavigationProps> = ({
   };
 
   return (
-    <div className={cn("flex items-center gap-3", className)}>
+    <div className={cn("flex items-center gap-1.5 sm:gap-3 overflow-x-auto min-w-0", className)}>
       {/* Back/Forward Navigation Buttons */}
       <TooltipProvider>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
           {/* Back Button with Dropdown */}
           <DropdownMenu>
             <Tooltip>
@@ -91,7 +91,7 @@ export const BreadcrumbNavigation: React.FC<BreadcrumbNavigationProps> = ({
                       }
                     }}
                     disabled={!canGoBack}
-                    className="h-8 w-8 rounded-lg disabled:opacity-30"
+                    className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg disabled:opacity-30"
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
@@ -139,7 +139,7 @@ export const BreadcrumbNavigation: React.FC<BreadcrumbNavigationProps> = ({
                       }
                     }}
                     disabled={!canGoForward}
-                    className="h-8 w-8 rounded-lg disabled:opacity-30"
+                    className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg disabled:opacity-30"
                   >
                     <ChevronRight className="h-4 w-4" />
                   </Button>
@@ -176,18 +176,18 @@ export const BreadcrumbNavigation: React.FC<BreadcrumbNavigationProps> = ({
       </TooltipProvider>
 
       {/* Vertical Separator */}
-      <div className="h-6 w-px bg-border" />
+      <div className="h-5 sm:h-6 w-px bg-border shrink-0" />
 
       {/* Breadcrumb Trail */}
-      <Breadcrumb>
-        <BreadcrumbList className="text-xs">
+      <Breadcrumb className="min-w-0">
+        <BreadcrumbList className="text-[10px] sm:text-xs flex-nowrap">
           {crumbsToShow.map((crumb, index) => (
             <span key={`crumb-${index}`} className="contents">
               <BreadcrumbItem>
                 <BreadcrumbLink asChild>
                   <span 
                     onClick={crumb.onClick}
-                    className="cursor-pointer hover:text-foreground transition-colors text-xs"
+                    className="cursor-pointer hover:text-foreground transition-colors text-[10px] sm:text-xs whitespace-nowrap"
                   >
                     {crumb.label}
                   </span>
@@ -197,7 +197,7 @@ export const BreadcrumbNavigation: React.FC<BreadcrumbNavigationProps> = ({
             </span>
           ))}
           <BreadcrumbItem>
-            <BreadcrumbPage className="font-semibold text-foreground text-xs">
+            <BreadcrumbPage className="font-semibold text-foreground text-[10px] sm:text-xs whitespace-nowrap">
               {currentPageLabel}
             </BreadcrumbPage>
           </BreadcrumbItem>
