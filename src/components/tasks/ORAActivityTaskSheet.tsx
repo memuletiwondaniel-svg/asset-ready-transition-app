@@ -161,10 +161,9 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
     if (open && task) {
       const initDesc = metadata?.description || task?.description || '';
       const taskStatus = task?.status;
-      const initStatus: ActivityStatus = initialStatusOverride 
-        ? initialStatusOverride
-        : taskStatus === 'completed' ? 'COMPLETED'
+      const baseStatus: ActivityStatus = taskStatus === 'completed' ? 'COMPLETED'
         : taskStatus === 'in_progress' ? 'IN_PROGRESS' : 'NOT_STARTED';
+      const initStatus: ActivityStatus = initialStatusOverride || baseStatus;
       const initProgress = metadata?.completion_percentage ?? (initStatus === 'COMPLETED' ? 100 : initStatus === 'IN_PROGRESS' ? 50 : 0);
       const initName = metadata?.activity_name || task?.title || '';
       setEditName(initName);
@@ -172,7 +171,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
       setDescription(initDesc);
       setOriginalDescription(initDesc);
       setStatus(initStatus);
-      setOriginalStatus(initStatus);
+      setOriginalStatus(baseStatus);
       setComment('');
       setFiles([]);
       setComment('');

@@ -256,6 +256,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
   // ORA Activity sheet opened when dragging to "Done"
   const [oraActivityTask, setOraActivityTask] = useState<UserTask | null>(null);
   const [oraActivityOpen, setOraActivityOpen] = useState(false);
+  const [oraActivityDragComplete, setOraActivityDragComplete] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -270,6 +271,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
       // ORA activity tasks skip the intermediate detail sheet and go straight to the activity overlay
       if (isOraActivity && !task.navigateTo) {
         setOraActivityTask(task.userTask);
+        setOraActivityDragComplete(false);
         setOraActivityOpen(true);
         return;
       }
@@ -309,6 +311,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
 
       if (isOraActivity) {
         setOraActivityTask(task.userTask);
+        setOraActivityDragComplete(true);
         setOraActivityOpen(true);
       } else {
         // For non-ORA tasks, open the regular detail sheet
@@ -419,9 +422,12 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
         open={oraActivityOpen}
         onOpenChange={(open) => {
           setOraActivityOpen(open);
-          if (!open) setOraActivityTask(null);
+          if (!open) {
+            setOraActivityTask(null);
+            setOraActivityDragComplete(false);
+          }
         }}
-        initialStatusOverride="COMPLETED"
+        initialStatusOverride={oraActivityDragComplete ? "COMPLETED" : undefined}
       />
     </>
   );
