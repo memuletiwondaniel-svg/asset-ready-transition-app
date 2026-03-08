@@ -611,15 +611,15 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                           onClick={() => !isReadOnly && setStatus(step.value)}
                           disabled={isReadOnly}
                           className={cn(
-                            "flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-md text-xs font-medium transition-all",
+                            "flex-1 flex items-center justify-center gap-1 sm:gap-1.5 py-2 px-1.5 sm:px-3 rounded-md text-[10px] sm:text-xs font-medium transition-all whitespace-nowrap overflow-hidden",
                             isActive && step.value === 'NOT_STARTED' && "bg-gray-200 text-gray-700 shadow-sm",
                             isActive && step.value === 'IN_PROGRESS' && "bg-amber-500 text-white shadow-sm",
                             isActive && step.value === 'COMPLETED' && "bg-green-500 text-white shadow-sm",
                             !isActive && "text-muted-foreground hover:text-foreground hover:bg-background/50"
                           )}
                         >
-                          <Icon className="h-3.5 w-3.5" />
-                          {step.label}
+                          <Icon className="h-3.5 w-3.5 shrink-0" />
+                          <span className="truncate">{step.label}</span>
                         </button>
                       );
                     })}
