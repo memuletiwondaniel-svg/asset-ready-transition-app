@@ -187,7 +187,10 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
       </CardHeader>
       
       <CardContent className="flex-1 overflow-hidden pt-0">
-        <ScrollArea className="h-full pr-4 overscroll-contain">
+        <div className="lg:hidden space-y-6 pr-1">
+          {/* Mobile: no ScrollArea, content flows naturally with page scroll */}
+        </div>
+        <ScrollArea className="h-full pr-4 overscroll-contain hidden lg:block">
           <div className="space-y-6">
             {/* Project Scope */}
             {project?.project_scope && (
