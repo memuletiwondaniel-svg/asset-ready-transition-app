@@ -157,7 +157,7 @@ const KanbanCardContent: React.FC<{
       </div>
 
       {/* Title – strip redundant project ID suffix */}
-      <p className="text-[11px] font-medium text-foreground leading-snug mb-1">
+      <p className="text-[11px] font-medium text-foreground leading-snug mb-1 break-words overflow-hidden">
         {task.project ? task.title.replace(new RegExp(`\\s*[–\\-]\\s*${task.project.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`), '') : task.title}
       </p>
 
