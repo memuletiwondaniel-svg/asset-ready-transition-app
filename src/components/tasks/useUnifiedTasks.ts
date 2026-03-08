@@ -137,7 +137,7 @@ export function useUnifiedTasks(userId: string) {
         endDate,
         dueDate: t.due_date || undefined,
         durationDays,
-        progressPercentage: undefined,
+        progressPercentage: oraAct?.completion_percentage ?? meta?.completion_percentage ?? undefined,
         isWaiting,
         createdAt: t.created_at,
       });
