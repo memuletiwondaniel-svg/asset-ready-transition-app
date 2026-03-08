@@ -152,8 +152,160 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
     );
   }
 
+  const widgetContent = (
+    <div className="space-y-6">
+      {/* Project Scope */}
+      {project?.project_scope && (
+        <div className="space-y-3">
+          <h3 className="font-semibold text-sm text-muted-foreground flex items-center gap-2">
+            Project Scope
+          </h3>
+          <div className="pl-1 space-y-2">
+            <div className="p-4 rounded-xl bg-muted/30 border border-border/40">
+              <p className={`text-xs text-foreground/90 leading-relaxed ${!isScopeExpanded ? 'line-clamp-4' : ''}`}>
+                {project.project_scope}
+              </p>
+              {project.project_scope.length > 200 && (
+                <Button 
+                  variant="link" 
+                  size="sm" 
+                  className="p-0 h-auto text-primary mt-2"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsScopeExpanded(!isScopeExpanded);
+                  }}
+                >
+                  {isScopeExpanded ? 'Show Less' : 'Read More'}
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Project Image */}
+      {project?.project_scope_image_url && (
+        <div className="space-y-3">
+          <div 
+            className="relative rounded-xl overflow-hidden border border-border/40 shadow-lg cursor-pointer group/image"
+            onClick={onViewDetails}
+          >
+            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover/image:opacity-100 transition-opacity z-10" />
+            <img 
+              src={project.project_scope_image_url} 
+              alt={project.project_title}
+              className="w-full h-48 object-cover group-hover/image:scale-105 transition-transform duration-500"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Team Members - Required Roles Only */}
+      {(() => {
+        const CANONICAL_REQUIRED_ROLES = [
+          'Project Hub Lead',
+          'Construction Lead',
+          'Commissioning Lead',
+          'Snr. ORA Engr.',
+        ];
+        
+        const ROLE_VARIATIONS: Record<string, string[]> = {
+          'Project Hub Lead': ['Project Hub Lead'],
+          'Construction Lead': ['Construction Lead'],
+          'Commissioning Lead': ['Commissioning Lead'],
+          'Snr. ORA Engr.': ['Snr ORA Engr', 'Snr ORA Engr.', 'Snr. ORA Engr.', 'Snr. ORA Engr', 'Senior ORA Engr.', 'Senior ORA Engineer'],
+        };
+        
+        const roleDisplayData = CANONICAL_REQUIRED_ROLES.map(role => {
+          const variations = ROLE_VARIATIONS[role];
+          const assignedMember = teamMembers.find(member => variations.includes(member.role));
+          return {
+            role,
+            member: assignedMember || null,
+            profile: assignedMember?.profiles || null,
+          };
+        });
+        
+        const assignedCount = roleDisplayData.filter(r => r.member).length;
+        
+        return (
+          <div className="space-y-3">
+            <h3 className="font-semibold text-sm text-muted-foreground flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-violet-500/10">
+                <Users className="h-4 w-4 text-violet-600" />
+              </div>
+              Team Members
+              <Badge variant="secondary" className="ml-auto text-xs font-medium">
+                {assignedCount}/{CANONICAL_REQUIRED_ROLES.length}
+              </Badge>
+            </h3>
+            <div className="space-y-2 pl-1">
+              {roleDisplayData.map((data) => (
+                <div 
+                  key={data.role} 
+                  className={cn(
+                    "flex items-center gap-3 p-3 rounded-xl border transition-all duration-200",
+                    data.member 
+                      ? "bg-muted/30 border-border/40 hover:bg-muted/50 hover:border-primary/20" 
+                      : "bg-muted/10 border-dashed border-border/30"
+                  )}
+                >
+                  <Avatar className={cn(
+                    "h-10 w-10 ring-2 ring-background shadow-md",
+                    data.member?.is_lead && "ring-primary/30"
+                  )}>
+                    {data.profile?.avatar_url ? (
+                      <AvatarImage src={getAvatarUrl(data.profile.avatar_url)} alt={data.profile?.full_name} />
+                    ) : (
+                      <AvatarFallback className={cn(
+                        "text-sm font-medium",
+                        data.member ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                      )}>
+                        {data.profile?.full_name 
+                          ? data.profile.full_name.split(' ').map(n => n[0]).join('').slice(0, 2)
+                          : <UserCircle className="h-5 w-5" />
+                        }
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className={cn(
+                      "text-sm font-medium truncate",
+                      !data.member && "text-muted-foreground/60 italic"
+                    )}>
+                      {data.profile?.full_name || 'Unassigned'}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">{data.role}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Milestones Timeline */}
+      <div className="space-y-3">
+        <h3 className="font-semibold text-sm text-muted-foreground flex items-center gap-2">
+          <div className="p-1.5 rounded-lg bg-rose-500/10">
+            <Target className="h-4 w-4 text-rose-600" />
+          </div>
+          Milestones
+          {milestones.length > 0 && (
+            <Badge variant="secondary" className="ml-auto text-xs font-medium">
+              {milestones.filter(m => m.status === 'completed').length}/{milestones.length}
+            </Badge>
+          )}
+        </h3>
+        <div className="pl-1">
+          <MilestonesTimeline milestones={milestones} />
+        </div>
+      </div>
+    </div>
+  );
+
   return (
-    <Card className="lg:h-full flex flex-col glass-card glass-card-hover lg:overflow-hidden overflow-visible group">
+    <Card className="lg:h-full flex flex-col glass-card glass-card-hover lg:overflow-hidden group">
       {/* Hero Header */}
       <CardHeader className="pb-3 cursor-pointer relative overflow-hidden" onClick={onViewDetails}>
         {/* Subtle shine effect on hover */}
@@ -186,161 +338,14 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
         </div>
       </CardHeader>
       
-      <CardContent className="flex-1 lg:overflow-hidden overflow-visible pt-0">
-        {/* On mobile: render content directly for natural page scrolling */}
-        {/* On desktop: use ScrollArea since widget has fixed height */}
-        <div className="lg:hidden space-y-6 pr-1">
-            {/* Project Scope */}
-            {project?.project_scope && (
-              <div className="space-y-3">
-                <h3 className="font-semibold text-sm text-muted-foreground flex items-center gap-2">
-                  Project Scope
-                </h3>
-                <div className="pl-1 space-y-2">
-                  <div className="p-4 rounded-xl bg-muted/30 border border-border/40">
-                    <p className={`text-xs text-foreground/90 leading-relaxed ${!isScopeExpanded ? 'line-clamp-4' : ''}`}>
-                      {project.project_scope}
-                    </p>
-                    {project.project_scope.length > 200 && (
-                      <Button 
-                        variant="link" 
-                        size="sm" 
-                        className="p-0 h-auto text-primary mt-2"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setIsScopeExpanded(!isScopeExpanded);
-                        }}
-                      >
-                        {isScopeExpanded ? 'Show Less' : 'Read More'}
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Project Image */}
-            {project?.project_scope_image_url && (
-              <div className="space-y-3">
-                <div 
-                  className="relative rounded-xl overflow-hidden border border-border/40 shadow-lg cursor-pointer group/image"
-                  onClick={onViewDetails}
-                >
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover/image:opacity-100 transition-opacity z-10" />
-                  <img 
-                    src={project.project_scope_image_url} 
-                    alt={project.project_title}
-                    className="w-full h-48 object-cover group-hover/image:scale-105 transition-transform duration-500"
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Team Members - Required Roles Only */}
-            {(() => {
-              // Canonical required roles that should always appear
-              const CANONICAL_REQUIRED_ROLES = [
-                'Project Hub Lead',
-                'Construction Lead',
-                'Commissioning Lead',
-                'Snr. ORA Engr.',
-              ];
-              
-              // Variations for matching existing team members
-              const ROLE_VARIATIONS: Record<string, string[]> = {
-                'Project Hub Lead': ['Project Hub Lead'],
-                'Construction Lead': ['Construction Lead'],
-                'Commissioning Lead': ['Commissioning Lead'],
-                'Snr. ORA Engr.': ['Snr ORA Engr', 'Snr ORA Engr.', 'Snr. ORA Engr.', 'Snr. ORA Engr', 'Senior ORA Engr.', 'Senior ORA Engineer'],
-              };
-              
-              // Build display data - always show all 4 roles
-              const roleDisplayData = CANONICAL_REQUIRED_ROLES.map(role => {
-                const variations = ROLE_VARIATIONS[role];
-                const assignedMember = teamMembers.find(member => variations.includes(member.role));
-                return {
-                  role,
-                  member: assignedMember || null,
-                  profile: assignedMember?.profiles || null,
-                };
-              });
-              
-              const assignedCount = roleDisplayData.filter(r => r.member).length;
-              
-              return (
-                <div className="space-y-3">
-                  <h3 className="font-semibold text-sm text-muted-foreground flex items-center gap-2">
-                    <div className="p-1.5 rounded-lg bg-violet-500/10">
-                      <Users className="h-4 w-4 text-violet-600" />
-                    </div>
-                    Team Members
-                    <Badge variant="secondary" className="ml-auto text-xs font-medium">
-                      {assignedCount}/{CANONICAL_REQUIRED_ROLES.length}
-                    </Badge>
-                  </h3>
-                  <div className="space-y-2 pl-1">
-                    {roleDisplayData.map((data, index) => (
-                      <div 
-                        key={data.role} 
-                        className={cn(
-                          "flex items-center gap-3 p-3 rounded-xl border transition-all duration-200",
-                          data.member 
-                            ? "bg-muted/30 border-border/40 hover:bg-muted/50 hover:border-primary/20" 
-                            : "bg-muted/10 border-dashed border-border/30"
-                        )}
-                      >
-                        <Avatar className={cn(
-                          "h-10 w-10 ring-2 ring-background shadow-md",
-                          data.member?.is_lead && "ring-primary/30"
-                        )}>
-                          {data.profile?.avatar_url ? (
-                            <AvatarImage src={getAvatarUrl(data.profile.avatar_url)} alt={data.profile?.full_name} />
-                          ) : (
-                            <AvatarFallback className={cn(
-                              "text-sm font-medium",
-                              data.member ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
-                            )}>
-                              {data.profile?.full_name 
-                                ? data.profile.full_name.split(' ').map(n => n[0]).join('').slice(0, 2)
-                                : <UserCircle className="h-5 w-5" />
-                              }
-                            </AvatarFallback>
-                          )}
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <p className={cn(
-                            "text-sm font-medium truncate",
-                            !data.member && "text-muted-foreground/60 italic"
-                          )}>
-                            {data.profile?.full_name || 'Unassigned'}
-                          </p>
-                          <p className="text-xs text-muted-foreground truncate">{data.role}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })()}
-
-            {/* Milestones Timeline */}
-            <div className="space-y-3">
-              <h3 className="font-semibold text-sm text-muted-foreground flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-rose-500/10">
-                  <Target className="h-4 w-4 text-rose-600" />
-                </div>
-                Milestones
-                {milestones.length > 0 && (
-                  <Badge variant="secondary" className="ml-auto text-xs font-medium">
-                    {milestones.filter(m => m.status === 'completed').length}/{milestones.length}
-                  </Badge>
-                )}
-              </h3>
-              <div className="pl-1">
-                <MilestonesTimeline milestones={milestones} />
-              </div>
-            </div>
-          </div>
+      <CardContent className="flex-1 lg:overflow-hidden pt-0">
+        {/* Mobile: content flows naturally for page scrolling */}
+        <div className="lg:hidden pr-1">
+          {widgetContent}
+        </div>
+        {/* Desktop: ScrollArea for fixed-height widget */}
+        <ScrollArea className="h-full pr-4 overscroll-contain hidden lg:block">
+          {widgetContent}
         </ScrollArea>
       </CardContent>
     </Card>
