@@ -43,6 +43,8 @@ export const UnifiedTaskList: React.FC<UnifiedTaskListProps> = ({
   const [activeFilter, setActiveFilter] = useState<CategoryFilter>('all');
   const [selectedTask, setSelectedTask] = useState<UserTask | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [oraActivityTask, setOraActivityTask] = useState<UserTask | null>(null);
+  const [oraActivityOpen, setOraActivityOpen] = useState(false);
 
   // Report total count
   useEffect(() => {
