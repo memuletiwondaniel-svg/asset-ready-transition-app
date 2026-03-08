@@ -443,6 +443,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
     <Sheet open={open} onOpenChange={onOpenChange} modal={true}>
       <SheetContent 
         className="w-full sm:max-w-lg p-0 flex flex-col h-full !z-[60]" 
+        overlayClassName="!z-[60]"
         style={{ pointerEvents: 'auto' }}
       >
         {/* Scrollable content area */}
