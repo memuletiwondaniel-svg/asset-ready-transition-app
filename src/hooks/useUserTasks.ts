@@ -29,7 +29,7 @@ export interface UserTask {
 // Fetch active tasks (pending, in_progress, waiting) for the kanban board
 const BUNDLE_TYPES = ['vcr_checklist_bundle', 'vcr_approval_bundle', 'pssr_checklist_bundle', 'pssr_approval_bundle'];
 
-const fetchUserTasks = async (userId: string): Promise<{ tasks: UserTask[]; dependencies: TaskDependency[]; bundleTasks: any[]; oraActivityDates: Record<string, { start_date: string | null; end_date: string | null; duration_days: number | null }> }> => {
+const fetchUserTasks = async (userId: string): Promise<{ tasks: UserTask[]; dependencies: TaskDependency[]; bundleTasks: any[]; oraActivityDates: Record<string, { start_date: string | null; end_date: string | null; duration_days: number | null; completion_percentage: number | null }> }> => {
   // Single query fetches both regular tasks AND bundle tasks (previously two separate queries)
   const { data: tasksData, error: tasksError } = await supabase
     .from('user_tasks')
@@ -82,11 +82,11 @@ const fetchUserTasks = async (userId: string): Promise<{ tasks: UserTask[]; depe
     .map(t => (t.metadata as Record<string, any>)?.ora_plan_activity_id)
     .filter(Boolean) as string[];
 
-  let oraActivityDates: Record<string, { start_date: string | null; end_date: string | null; duration_days: number | null }> = {};
+  let oraActivityDates: Record<string, { start_date: string | null; end_date: string | null; duration_days: number | null; completion_percentage: number | null }> = {};
   if (oraActivityIds.length > 0) {
     const { data: oraData } = await supabase
       .from('ora_plan_activities')
-      .select('id, start_date, end_date, duration_days')
+      .select('id, start_date, end_date, duration_days, completion_percentage')
       .in('id', oraActivityIds);
     if (oraData) {
       oraData.forEach((a: any) => { oraActivityDates[a.id] = a; });
