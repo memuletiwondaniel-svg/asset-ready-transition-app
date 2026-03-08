@@ -112,7 +112,7 @@ const KanbanCardContent: React.FC<{
         "hover:shadow-sm hover:bg-accent/30",
         task.isWaiting && 'opacity-50',
         task.isNew && 'ring-1 ring-primary/15',
-        sp.isOverdue && 'bg-destructive/[0.02]',
+        
         isOverlay && 'shadow-lg ring-2 ring-primary/20 rotate-[2deg] scale-[1.02]',
       )}
     >
