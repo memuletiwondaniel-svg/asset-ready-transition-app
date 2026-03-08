@@ -336,12 +336,20 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
       }
 
       const taskStatus = status === 'COMPLETED' ? 'completed' : status === 'IN_PROGRESS' ? 'in_progress' : 'pending';
+      const completionPctForMeta = status === 'COMPLETED' ? 100 : status === 'IN_PROGRESS' ? progressPct : 0;
+      const updatedMetadata = {
+        ...(metadata || {}),
+        completion_percentage: completionPctForMeta,
+        ...(editStartDate ? { start_date: format(editStartDate, 'yyyy-MM-dd') } : {}),
+        ...(editEndDate ? { end_date: format(editEndDate, 'yyyy-MM-dd') } : {}),
+      };
       const isRealTaskId = task.id && !task.id.startsWith('ws-') && !task.id.startsWith('ora-');
       if (isRealTaskId) {
         await supabase
           .from('user_tasks')
           .update({ 
             status: taskStatus, 
+            metadata: updatedMetadata,
             updated_at: new Date().toISOString(),
           })
           .eq('id', task.id);
