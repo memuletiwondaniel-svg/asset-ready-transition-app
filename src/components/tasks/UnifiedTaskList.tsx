@@ -5,6 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TaskDetailSheet } from './TaskDetailSheet';
+import { ORAActivityTaskSheet } from './ORAActivityTaskSheet';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   AlertTriangle,
@@ -42,6 +43,8 @@ export const UnifiedTaskList: React.FC<UnifiedTaskListProps> = ({
   const [activeFilter, setActiveFilter] = useState<CategoryFilter>('all');
   const [selectedTask, setSelectedTask] = useState<UserTask | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [oraActivityTask, setOraActivityTask] = useState<UserTask | null>(null);
+  const [oraActivityOpen, setOraActivityOpen] = useState(false);
 
   // Report total count
   useEffect(() => {
@@ -85,6 +88,15 @@ export const UnifiedTaskList: React.FC<UnifiedTaskListProps> = ({
   const handleTaskClick = (task: UnifiedTask) => {
     if (task.isWaiting) return;
     if (task.userTask) {
+      const meta = task.userTask.metadata as Record<string, any> | undefined;
+      const isOraActivity = task.userTask.type === 'ora_activity' || meta?.action === 'complete_ora_activity' || meta?.ora_plan_activity_id;
+
+      if (isOraActivity && !task.navigateTo) {
+        setOraActivityTask(task.userTask);
+        setOraActivityOpen(true);
+        return;
+      }
+
       setSelectedTask(task.userTask);
       setDetailOpen(true);
     } else if (task.navigateTo) {
@@ -169,6 +181,15 @@ export const UnifiedTaskList: React.FC<UnifiedTaskListProps> = ({
         onOpenChange={setDetailOpen}
         onApprove={handleApprove}
         onReject={handleReject}
+      />
+
+      <ORAActivityTaskSheet
+        task={oraActivityTask}
+        open={oraActivityOpen}
+        onOpenChange={(open) => {
+          setOraActivityOpen(open);
+          if (!open) setOraActivityTask(null);
+        }}
       />
     </>
   );
