@@ -256,6 +256,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
   // ORA Activity sheet opened when dragging to "Done"
   const [oraActivityTask, setOraActivityTask] = useState<UserTask | null>(null);
   const [oraActivityOpen, setOraActivityOpen] = useState(false);
+  const [oraActivityDragComplete, setOraActivityDragComplete] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
