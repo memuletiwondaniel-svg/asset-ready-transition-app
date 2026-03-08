@@ -60,6 +60,7 @@
     "html2canvas": "^1.4.1",
     "i18next": "^25.5.2",
     "input-otp": "^1.2.4",
+    "jsdom": "^20.0.3",
     "jspdf": "^4.0.0",
     "jspdf-autotable": "^5.0.7",
     "lucide-react": "^0.462.0",
