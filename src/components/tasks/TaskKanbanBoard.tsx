@@ -311,6 +311,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
 
       if (isOraActivity) {
         setOraActivityTask(task.userTask);
+        setOraActivityDragComplete(true);
         setOraActivityOpen(true);
       } else {
         // For non-ORA tasks, open the regular detail sheet
