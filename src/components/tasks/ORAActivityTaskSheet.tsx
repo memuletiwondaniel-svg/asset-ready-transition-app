@@ -442,7 +442,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
   return (
     <>
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-lg p-0 flex flex-col h-full">
+      <SheetContent className="w-full sm:max-w-lg p-0 flex flex-col h-full"  style={{ pointerEvents: 'auto' }}>
         {/* Scrollable content area */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-6 pt-6 pb-4">
           {/* Header */}
@@ -617,9 +617,15 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                         <button
                           key={step.value}
                           onClick={() => !isReadOnly && setStatus(step.value)}
+                          onTouchEnd={(e) => {
+                            if (!isReadOnly) {
+                              e.preventDefault();
+                              setStatus(step.value);
+                            }
+                          }}
                           disabled={isReadOnly}
                           className={cn(
-                            "flex-1 flex items-center justify-center gap-1 sm:gap-1.5 py-2 px-1.5 sm:px-3 rounded-md text-[10px] sm:text-xs font-medium transition-all whitespace-nowrap overflow-hidden",
+                            "flex-1 flex items-center justify-center gap-1 sm:gap-1.5 py-3 sm:py-2 px-2 sm:px-3 rounded-md text-xs sm:text-xs font-medium transition-all whitespace-nowrap touch-manipulation",
                             isActive && step.value === 'NOT_STARTED' && "bg-gray-200 text-gray-700 shadow-sm",
                             isActive && step.value === 'IN_PROGRESS' && "bg-amber-500 text-white shadow-sm",
                             isActive && step.value === 'COMPLETED' && "bg-green-500 text-white shadow-sm",
