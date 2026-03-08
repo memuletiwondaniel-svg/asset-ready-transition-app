@@ -422,9 +422,12 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
         open={oraActivityOpen}
         onOpenChange={(open) => {
           setOraActivityOpen(open);
-          if (!open) setOraActivityTask(null);
+          if (!open) {
+            setOraActivityTask(null);
+            setOraActivityDragComplete(false);
+          }
         }}
-        initialStatusOverride="COMPLETED"
+        initialStatusOverride={oraActivityDragComplete ? "COMPLETED" : undefined}
       />
     </>
   );
