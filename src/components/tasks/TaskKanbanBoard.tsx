@@ -156,8 +156,10 @@ const KanbanCardContent: React.FC<{
         </div>
       </div>
 
-      {/* Title */}
-      <p className="text-[11px] font-medium text-foreground leading-snug mb-1">{task.title}</p>
+      {/* Title – strip redundant project ID suffix */}
+      <p className="text-[11px] font-medium text-foreground leading-snug mb-1">
+        {task.project ? task.title.replace(new RegExp(`\\s*[–\\-]\\s*${task.project.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`), '') : task.title}
+      </p>
 
       {/* Dates row */}
       {(task.startDate || task.endDate || task.dueDate) && (
