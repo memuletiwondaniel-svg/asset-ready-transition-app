@@ -82,7 +82,7 @@ const fetchUserTasks = async (userId: string): Promise<{ tasks: UserTask[]; depe
     .map(t => (t.metadata as Record<string, any>)?.ora_plan_activity_id)
     .filter(Boolean) as string[];
 
-  let oraActivityDates: Record<string, { start_date: string | null; end_date: string | null; duration_days: number | null }> = {};
+  let oraActivityDates: Record<string, { start_date: string | null; end_date: string | null; duration_days: number | null; completion_percentage: number | null }> = {};
   if (oraActivityIds.length > 0) {
     const { data: oraData } = await supabase
       .from('ora_plan_activities')
