@@ -182,6 +182,15 @@ export const UnifiedTaskList: React.FC<UnifiedTaskListProps> = ({
         onApprove={handleApprove}
         onReject={handleReject}
       />
+
+      <ORAActivityTaskSheet
+        task={oraActivityTask}
+        open={oraActivityOpen}
+        onOpenChange={(open) => {
+          setOraActivityOpen(open);
+          if (!open) setOraActivityTask(null);
+        }}
+      />
     </>
   );
 };
