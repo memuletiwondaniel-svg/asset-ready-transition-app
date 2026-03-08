@@ -271,6 +271,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
       // ORA activity tasks skip the intermediate detail sheet and go straight to the activity overlay
       if (isOraActivity && !task.navigateTo) {
         setOraActivityTask(task.userTask);
+        setOraActivityDragComplete(false);
         setOraActivityOpen(true);
         return;
       }
