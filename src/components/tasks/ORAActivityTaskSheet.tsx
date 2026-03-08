@@ -205,8 +205,9 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
            datesChanged ||
            progressChanged ||
            predsChanged ||
-           nameChanged;
-  }, [status, originalStatus, description, originalDescription, files.length, editStartDate, editEndDate, originalStartDate, originalEndDate, progressPct, originalProgressPct, predecessorIds, originalPredecessorIds, editName, originalName]);
+           nameChanged ||
+           comment.trim().length > 0;
+  }, [status, originalStatus, description, originalDescription, files.length, editStartDate, editEndDate, originalStartDate, originalEndDate, progressPct, originalProgressPct, predecessorIds, originalPredecessorIds, editName, originalName, comment]);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     setFiles(prev => [...prev, ...acceptedFiles]);
