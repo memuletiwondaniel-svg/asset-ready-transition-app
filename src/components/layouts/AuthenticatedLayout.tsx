@@ -69,10 +69,14 @@ export const AuthenticatedLayout: React.FC = () => {
     return <Navigate to="/" replace />;
   }
 
+  const { language, setLanguage } = useLanguage();
+
   return (
     <div className="h-screen flex w-full overflow-hidden">
       <OrshSidebar
         currentPage={currentPage}
+        language={language}
+        onLanguageChange={setLanguage}
         onNavigate={handleNavigate}
         onLogout={handleLogout}
       />
