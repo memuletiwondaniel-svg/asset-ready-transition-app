@@ -78,9 +78,11 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  // If the current user is the task assignee, they can always edit regardless of project-level readOnly
-  const isTaskAssignee = !!(user?.id && task?.assigned_to === user.id);
-  const isReadOnly = externalReadOnly && !isTaskAssignee;
+  // If the task exists and belongs to the current user (fetched via user_id filter),
+  // they should always be able to edit it regardless of project-level readOnly.
+  // Tasks from the Gantt chart (ws-/ora- prefixed) opened by the assignee should also be editable.
+  const isTaskOwner = !!task;
+  const isReadOnly = externalReadOnly && !isTaskOwner;
   const [status, setStatus] = useState<ActivityStatus>('NOT_STARTED');
   const [description, setDescription] = useState('');
   const [comment, setComment] = useState('');
