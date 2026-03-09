@@ -181,6 +181,11 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
 
       setP2aOriginalStartDate(p2aStartDate);
       setP2aOriginalEndDate(p2aEndDate);
+      
+      // Invalidate task queries so cards reflect updated dates
+      queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['ora-plan-activities'] });
+      
       toast.success('Schedule updated');
     } catch {
       toast.error('Failed to save schedule');
