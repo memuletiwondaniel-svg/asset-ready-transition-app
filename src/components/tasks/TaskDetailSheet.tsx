@@ -525,18 +525,19 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                 {p2aDatesDirty && (
                   <Button
                     size="sm"
-                    className="w-full gap-2"
+                    variant="outline"
+                    className="w-full gap-2 text-xs border-primary/30 text-primary hover:bg-primary/5"
                     onClick={handleSaveP2aDates}
                     disabled={isSavingP2aDates}
                   >
                     {isSavingP2aDates ? (
                       <>
-                        <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                        <span className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
                         Saving...
                       </>
                     ) : (
                       <>
-                        <CheckCircle className="h-3.5 w-3.5" />
+                        <CheckCircle className="h-3 w-3" />
                         Save Schedule
                       </>
                     )}
