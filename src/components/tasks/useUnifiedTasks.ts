@@ -16,6 +16,15 @@ import { useUserLastLogin } from '@/hooks/useUserLastLogin';
 import { computeSmartPriority, smartPriorityToLegacy, type SmartPriorityResult, type SmartPriorityLevel } from './smartPriority';
 import React from 'react';
 
+/** Normalize project codes like "DP200" → "DP-200", strip project names */
+function normalizeProjectCode(code?: string): string | undefined {
+  if (!code) return undefined;
+  // If it contains " - " (e.g. "DP200 - Test a Test"), take only the code part
+  const raw = code.includes(' - ') ? code.split(' - ')[0].trim() : code.trim();
+  // Insert hyphen if missing between letters and digits (e.g. DP200 → DP-200)
+  return raw.replace(/^([A-Za-z]+)(\d+)$/, '$1-$2');
+}
+
 export type CategoryFilter = 'all' | 'pssr' | 'ora' | 'owl' | 'vcr' | 'p2a' | 'action';
 
 export interface UnifiedTask {
@@ -174,7 +183,7 @@ export function useUnifiedTasks(userId: string) {
         icon,
         title: t.title,
         subtitle: t.description || undefined,
-        project: meta?.project_code || meta?.project_name || undefined,
+        project: normalizeProjectCode(meta?.project_code) || undefined,
         projectId: meta?.project_id || undefined,
         status: t.status,
         dueDate: t.due_date || undefined,
@@ -239,7 +248,7 @@ export function useUnifiedTasks(userId: string) {
         categoryColor: 'bg-teal-500/10 text-teal-600 border-teal-500/20',
         icon: RefreshCw,
         title: item.handover_name || 'Handover Approval',
-        project: item.project_number || undefined,
+        project: normalizeProjectCode(item.project_number) || undefined,
         status: item.stage,
         createdAt: item.created_at,
         priority: smartPriorityToLegacy(spP2a.level),
@@ -309,7 +318,7 @@ export function useUnifiedTasks(userId: string) {
           : 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
         icon: isApproval ? ClipboardCheck : ClipboardList,
         title: task.title,
-        project: isPSSR ? meta?.project_name : meta?.project_code,
+        project: isPSSR ? meta?.project_name : normalizeProjectCode(meta?.project_code),
         status: `${completed}/${total}`,
         createdAt: task.created_at,
         priority: smartPriorityToLegacy(spBundle.level),
