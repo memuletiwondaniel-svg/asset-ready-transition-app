@@ -36,9 +36,23 @@ export const useORAActivityComments = (activityId: string | undefined, planId: s
         .select('user_id, full_name, avatar_url')
         .in('user_id', userIds);
 
-      const profileMap = new Map(
-        (profiles || []).map(p => [p.user_id, p])
-      );
+      // Build profile map with resolved avatar URLs
+      const profileMap = new Map<string, { full_name: string | null; avatar_url: string | null }>();
+      for (const p of profiles || []) {
+        let resolvedAvatarUrl: string | null = null;
+        if (p.avatar_url) {
+          // If already a full URL, use as-is; otherwise resolve from storage
+          if (p.avatar_url.startsWith('http')) {
+            resolvedAvatarUrl = p.avatar_url;
+          } else {
+            const { data: urlData } = supabase.storage
+              .from('user-avatars')
+              .getPublicUrl(p.avatar_url);
+            resolvedAvatarUrl = urlData?.publicUrl || null;
+          }
+        }
+        profileMap.set(p.user_id, { full_name: p.full_name, avatar_url: resolvedAvatarUrl });
+      }
 
       return data.map((c: any) => {
         const profile = profileMap.get(c.user_id);
