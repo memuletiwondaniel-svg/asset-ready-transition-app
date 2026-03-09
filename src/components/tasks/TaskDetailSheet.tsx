@@ -233,7 +233,12 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                   <Calendar className="h-3.5 w-3.5" />
                   <span>Created {format(new Date(task.created_at), 'MMM d, yyyy')}</span>
                 </div>
-                {daysPending > 0 && (
+                {isCompleted ? (
+                  <div className="flex items-center gap-1.5 text-green-600">
+                    <CheckCircle className="h-3.5 w-3.5" />
+                    <span>Completed {format(new Date(task.updated_at || task.created_at), 'MMM d, yyyy')}</span>
+                  </div>
+                ) : daysPending > 0 ? (
                   <div className={cn(
                     "flex items-center gap-1.5",
                     daysPending >= 7 ? "text-destructive" : daysPending >= 3 ? "text-amber-600" : "text-muted-foreground"
@@ -241,7 +246,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                     {daysPending >= 7 && <AlertTriangle className="h-3.5 w-3.5" />}
                     <span>{daysPending} day{daysPending !== 1 ? 's' : ''} pending</span>
                   </div>
-                )}
+                ) : null}
               </div>
 
               {task.due_date && (
