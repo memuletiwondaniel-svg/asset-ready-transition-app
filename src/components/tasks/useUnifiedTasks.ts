@@ -183,7 +183,7 @@ export function useUnifiedTasks(userId: string) {
         icon,
         title: t.title,
         subtitle: t.description || undefined,
-        project: meta?.project_code || meta?.project_name || undefined,
+        project: normalizeProjectCode(meta?.project_code) || undefined,
         projectId: meta?.project_id || undefined,
         status: t.status,
         dueDate: t.due_date || undefined,
