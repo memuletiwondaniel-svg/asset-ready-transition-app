@@ -22,6 +22,7 @@ interface CompletedTask {
 
 export const RecentlyCompletedTasks: React.FC<{ searchQuery?: string }> = ({ searchQuery = '' }) => {
   const { user } = useAuth();
+  const { translations: t } = useLanguage();
   const [expanded, setExpanded] = React.useState(false);
 
   const { data: tasks = [], isLoading } = useQuery({
