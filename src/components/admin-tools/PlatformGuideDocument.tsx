@@ -859,6 +859,51 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
             ]} />
           </Section>
 
+          <Separator />
+
+          {/* Appendix A */}
+          <Section id="appendix-a" icon={<Users className="h-5 w-5 text-primary" />} title="Appendix A — Customer Journey Maps">
+            <Card className="border-primary/20 bg-primary/5">
+              <CardContent className="pt-5">
+                <p className="text-sm text-muted-foreground leading-relaxed mb-3">
+                  Detailed Customer Journey Maps are available as a separate living document within Admin Tools. These maps cover all configured roles with:
+                </p>
+                <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
+                  <li><strong className="text-foreground">8 Role Personas:</strong> Director, Ops Manager, Hub Lead, ORA Lead/Coach, Sr. ORA Engineer, Team Lead, Admin, Engineer</li>
+                  <li><strong className="text-foreground">Real User Data:</strong> Profile pictures and names pulled live from the platform</li>
+                  <li><strong className="text-foreground">Goals & Pain Points:</strong> Documented for each persona to guide UX improvement</li>
+                  <li><strong className="text-foreground">Step-by-Step Journeys:</strong> Phase-by-phase interaction maps with touchpoints, actions, emotions, and outcomes</li>
+                </ul>
+                <p className="text-xs text-muted-foreground mt-3 italic">
+                  → Access via Admin Tools → Customer Journey Maps
+                </p>
+              </CardContent>
+            </Card>
+          </Section>
+
+          <Separator />
+
+          {/* Appendix B */}
+          <Section id="appendix-b" icon={<GitBranch className="h-5 w-5 text-primary" />} title="Appendix B — Process Flow Maps">
+            <Card className="border-primary/20 bg-primary/5">
+              <CardContent className="pt-5">
+                <p className="text-sm text-muted-foreground leading-relaxed mb-3">
+                  Comprehensive Process Flow Maps are available as a separate living document within Admin Tools. These maps document:
+                </p>
+                <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
+                  <li><strong className="text-foreground">12 Core Processes:</strong> User Lifecycle, Project Creation, ORA Workflow, P2A Handover, VCR Lifecycle, PSSR Workflow, Certificates, ORM, Training, Task Automation, Approval Chains, ORI Scoring</li>
+                  <li><strong className="text-foreground">Visual Flow Diagrams:</strong> Step-by-step process flows with decision points and automation triggers</li>
+                  <li><strong className="text-foreground">Swim Lane Diagrams:</strong> Role-based responsibility mapping for cross-functional processes</li>
+                  <li><strong className="text-foreground">State Machines:</strong> Status transition tables for all major entities</li>
+                  <li><strong className="text-foreground">Automation Reference:</strong> Complete listing of database triggers, auto-generated tasks, and progressive activation logic</li>
+                </ul>
+                <p className="text-xs text-muted-foreground mt-3 italic">
+                  → Access via Admin Tools → Process Flow Maps
+                </p>
+              </CardContent>
+            </Card>
+          </Section>
+
           {/* Footer */}
           <div className="text-center text-xs text-muted-foreground py-6 border-t border-border">
             <p>This is a living document maintained within the ORSH platform.</p>
