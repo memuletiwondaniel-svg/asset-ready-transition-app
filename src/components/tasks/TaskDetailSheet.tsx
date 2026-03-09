@@ -236,7 +236,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                 {isCompleted ? (
                   <div className="flex items-center gap-1.5 text-green-600">
                     <CheckCircle className="h-3.5 w-3.5" />
-                    <span>Completed {format(new Date(task.updated_at || task.created_at), 'MMM d, yyyy')}</span>
+                    <span>Completed {format(new Date(task.metadata?.completed_at || task.created_at), 'MMM d, yyyy')}</span>
                   </div>
                 ) : daysPending > 0 ? (
                   <div className={cn(
