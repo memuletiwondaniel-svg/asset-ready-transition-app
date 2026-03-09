@@ -82,7 +82,7 @@ export const RecentlyCompletedTasks: React.FC<{ searchQuery?: string }> = ({ sea
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-            Recent Activities
+            {t.recentActivitiesLabel || 'Recent Activities'}
           </h3>
           <Badge variant="outline" className="text-[10px] text-muted-foreground">
             {filtered.length}
