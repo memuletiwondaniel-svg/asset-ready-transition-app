@@ -776,12 +776,12 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
     if (!validateStep(currentStep)) return;
     const nextStep = Math.min(currentStep + 1, STEPS.length);
     if (currentStep === 2 && activities.length === 0) {
-      // Reset so they reload in step 3
       setActivities([]);
     }
     setVisitedSteps(prev => new Set([...prev, nextStep]));
     setCurrentStep(nextStep);
     autoSaveWizardState();
+    syncOraWizardProgress(nextStep);
   };
 
   const handleBack = () => {
