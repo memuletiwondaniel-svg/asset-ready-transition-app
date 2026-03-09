@@ -900,9 +900,9 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
         </div>
       </CardHeader>
       <CardContent>
-        <div className="border rounded-lg overflow-hidden bg-background">
+        <div className="border rounded-lg bg-background">
           {/* Scrollable area with sticky header */}
-          <div className="max-h-[calc(95vh-280px)] overflow-y-auto" ref={scrollContainerRef}>
+          <div className="max-h-[calc(95vh-280px)] overflow-auto rounded-lg" ref={scrollContainerRef}>
             {/* Sticky header row */}
             <div className="flex sticky top-0 z-20 bg-background">
               <div className="shrink-0 border-r bg-muted/30" style={{ width: leftPanelWidth }}>
