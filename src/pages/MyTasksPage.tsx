@@ -146,15 +146,15 @@ const MyTasksPage: React.FC = () => {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="gap-1.5 text-xs border-primary/30 text-primary hover:bg-primary/10">
-                  <Plus className="h-3.5 w-3.5" /> Add Activity
+                  <Plus className="h-3.5 w-3.5" /> {t.addActivity || 'Add Activity'}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => { setAddActivityMode('catalog'); setAddActivityOpen(true); }}>
-                  <BookOpen className="h-4 w-4 mr-2" /> From Catalog
+                  <BookOpen className="h-4 w-4 mr-2" /> {t.fromCatalog || 'From Catalog'}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => { setAddActivityMode('custom'); setAddActivityOpen(true); }}>
-                  <PenLine className="h-4 w-4 mr-2" /> Custom Activity
+                  <PenLine className="h-4 w-4 mr-2" /> {t.customActivity || 'Custom Activity'}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
