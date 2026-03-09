@@ -440,12 +440,14 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     setWarningState(null);
   }, []);
 
+  const COLUMNS = useMemo(() => getColumns(t), [t]);
+
   const columnData = useMemo(() => {
     return COLUMNS.map(col => ({
       ...col,
       tasks: tasks.filter(t => t.kanbanColumn === col.key),
     }));
-  }, [tasks]);
+  }, [tasks, COLUMNS]);
 
   const renderColumnContent = (columnTasks: UnifiedTask[], col: typeof columnData[number]) => {
     if (columnTasks.length === 0) {
