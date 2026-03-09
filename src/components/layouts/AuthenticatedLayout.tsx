@@ -3,6 +3,7 @@ import { Outlet, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { OrshSidebar } from '@/components/OrshSidebar';
 import { createSidebarNavigator } from '@/utils/sidebarNavigation';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useDirectorRedirect } from '@/hooks/useDirectorRedirect';
 import { Loader2 } from 'lucide-react';
 import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
@@ -68,10 +69,14 @@ export const AuthenticatedLayout: React.FC = () => {
     return <Navigate to="/" replace />;
   }
 
+  const { language, setLanguage } = useLanguage();
+
   return (
     <div className="h-screen flex w-full overflow-hidden">
       <OrshSidebar
         currentPage={currentPage}
+        language={language}
+        onLanguageChange={setLanguage}
         onNavigate={handleNavigate}
         onLogout={handleLogout}
       />
