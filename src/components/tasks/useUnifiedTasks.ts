@@ -45,6 +45,8 @@ export interface UnifiedTask {
   durationDays?: number;
   // Kanban status mapping
   kanbanColumn: 'todo' | 'in_progress' | 'waiting' | 'done';
+  // Flag for tasks that went through external approval (ORA Plan, P2A Plan)
+  isApprovalProtected?: boolean;
 }
 
 export const FILTER_OPTIONS: { value: CategoryFilter; label: string }[] = [
@@ -57,7 +59,22 @@ export const FILTER_OPTIONS: { value: CategoryFilter; label: string }[] = [
   { value: 'p2a', label: 'P2A' },
 ];
 
-function mapToKanbanColumn(task: { status: string; isWaiting?: boolean; progressPercentage?: number }): 'todo' | 'in_progress' | 'waiting' | 'done' {
+interface KanbanMappingInput {
+  status: string;
+  isWaiting?: boolean;
+  progressPercentage?: number;
+  // For workflow tasks, the underlying plan status overrides task status
+  planStatus?: string;
+  isWorkflowTask?: boolean;
+}
+
+function mapToKanbanColumn(task: KanbanMappingInput): 'todo' | 'in_progress' | 'waiting' | 'done' {
+  // For workflow tasks (Create ORA Plan, etc.), check the plan status first
+  if (task.isWorkflowTask && task.planStatus) {
+    const ps = task.planStatus.toUpperCase();
+    if (['APPROVED', 'COMPLETED'].includes(ps)) return 'done';
+  }
+
   if (task.isWaiting) return 'waiting';
   const s = task.status.toLowerCase();
   if (['completed', 'done', 'approved', 'closed', 'sof_approved'].includes(s)) return 'done';
