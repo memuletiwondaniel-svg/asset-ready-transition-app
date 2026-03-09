@@ -72,7 +72,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
   task,
   open,
   onOpenChange,
-  isReadOnly = false,
+  isReadOnly: externalReadOnly = false,
   initialStatusOverride,
 }) => {
   const { user } = useAuth();
