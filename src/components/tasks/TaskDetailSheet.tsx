@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { CheckCircle, X, Calendar, AlertTriangle, ChevronRight, Pencil, CalendarCheck, ClipboardList, FileText } from 'lucide-react';
+import { CheckCircle, X, Calendar, AlertTriangle, ChevronRight, Pencil, CalendarCheck, ClipboardList, FileText, Eye } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +13,7 @@ import { format } from 'date-fns';
 import CreatePSSRWizard from '@/components/pssr/CreatePSSRWizard';
 import { ORAActivityPlanWizard } from '@/components/ora/wizard/ORAActivityPlanWizard';
 import { P2APlanCreationWizard } from '@/components/widgets/p2a-wizard/P2APlanCreationWizard';
+import { ProjectIdBadge } from '@/components/ui/project-id-badge';
 
 import { ORAActivityTaskSheet } from './ORAActivityTaskSheet';
 import { VCRExecutionPlanWizard } from '@/components/widgets/vcr-wizard/VCRExecutionPlanWizard';
@@ -120,7 +121,10 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
 
   if (!task) return null;
 
-  const daysPending = Math.floor(
+  const planStatus = (task.metadata?.plan_status as string || '').toUpperCase();
+  const isCompleted = task.status === 'completed' || ['APPROVED', 'COMPLETED'].includes(planStatus);
+
+  const daysPending = isCompleted ? 0 : Math.floor(
     (Date.now() - new Date(task.created_at).getTime()) / (1000 * 60 * 60 * 24)
   );
 
@@ -150,10 +154,12 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   const isReviewTask = (['review', 'approval', 'ora_plan_review'].includes(task.type) || !!pssrId) && !isOraReviewTask;
   const isActionTask = isOraTask || isOraActivityTask || isVcrDeliveryPlanTask || isP2aTask;
 
-  const oraCtaLabel = hasExistingOraDraft ? 'Continue Creating ORA Plan' : 'Create ORA Plan';
-  const oraIntentMessage = hasExistingOraDraft
-    ? 'You have a saved draft for this ORA Activity Plan. Click below to continue where you left off.'
-    : 'You have been assigned to create the ORA Activity Plan for this project. Click below to launch the planning wizard.';
+  const oraCtaLabel = isCompleted ? 'View ORA Plan' : hasExistingOraDraft ? 'Continue Creating ORA Plan' : 'Create ORA Plan';
+  const oraIntentMessage = isCompleted
+    ? 'The ORA Activity Plan has been approved. Click below to view the finalized plan.'
+    : hasExistingOraDraft
+      ? 'You have a saved draft for this ORA Activity Plan. Click below to continue where you left off.'
+      : 'You have been assigned to create the ORA Activity Plan for this project. Click below to launch the planning wizard.';
 
   const getIntentMessage = () => {
     if (isP2aTask) return 'The ORA Plan has been approved. Create the Project to Asset (P2A) handover plan for this project.';
@@ -168,7 +174,11 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
 
   const intentMessage = getIntentMessage();
 
+  const projectCode = task.metadata?.project_code as string | undefined;
+
   const getTypeBadge = () => {
+    if (isOraTask && projectCode) return <ProjectIdBadge size="sm">{projectCode}</ProjectIdBadge>;
+    if (isP2aTask && projectCode) return <ProjectIdBadge size="sm">{projectCode}</ProjectIdBadge>;
     if (isP2aTask) return <Badge variant="secondary" className="text-xs bg-emerald-500/10 text-emerald-600">P2A Plan</Badge>;
     if (isOraTask) return <Badge variant="secondary" className="text-xs bg-violet-500/10 text-violet-600">ORA Plan</Badge>;
     if (isOraReviewTask) return <Badge variant="secondary" className="text-xs bg-amber-500/10 text-amber-600">ORA Review</Badge>;
@@ -223,7 +233,12 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                   <Calendar className="h-3.5 w-3.5" />
                   <span>Created {format(new Date(task.created_at), 'MMM d, yyyy')}</span>
                 </div>
-                {daysPending > 0 && (
+                {isCompleted ? (
+                  <div className="flex items-center gap-1.5 text-green-600">
+                    <CheckCircle className="h-3.5 w-3.5" />
+                    <span>Completed {format(new Date(task.metadata?.completed_at || task.created_at), 'MMM d, yyyy')}</span>
+                  </div>
+                ) : daysPending > 0 ? (
                   <div className={cn(
                     "flex items-center gap-1.5",
                     daysPending >= 7 ? "text-destructive" : daysPending >= 3 ? "text-amber-600" : "text-muted-foreground"
@@ -231,7 +246,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                     {daysPending >= 7 && <AlertTriangle className="h-3.5 w-3.5" />}
                     <span>{daysPending} day{daysPending !== 1 ? 's' : ''} pending</span>
                   </div>
-                )}
+                ) : null}
               </div>
 
               {task.due_date && (
@@ -266,10 +281,15 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
             {/* ORA Plan Creation CTA - prominent for action tasks */}
             {isOraTask && oraProjectId && (
               <Button
-                className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
+                className={cn(
+                  "w-full gap-2 font-medium",
+                  isCompleted
+                    ? "bg-muted hover:bg-muted/80 text-foreground border border-border"
+                    : "bg-primary hover:bg-primary/90 text-primary-foreground"
+                )}
                 onClick={() => setOraWizardOpen(true)}
               >
-                <CalendarCheck className="h-4 w-4" />
+                {isCompleted ? <Eye className="h-4 w-4" /> : <CalendarCheck className="h-4 w-4" />}
                 {oraCtaLabel}
                 <ChevronRight className="h-4 w-4 ml-auto" />
               </Button>
