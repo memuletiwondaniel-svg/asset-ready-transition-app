@@ -67,10 +67,10 @@ interface ApprovalWarningState {
 }
 
 const COLUMNS = [
-  { key: 'todo' as const, label: 'To Do', color: 'border-t-blue-500' },
-  { key: 'in_progress' as const, label: 'In Progress', color: 'border-t-amber-500' },
-  { key: 'waiting' as const, label: 'Waiting', color: 'border-t-muted-foreground' },
-  { key: 'done' as const, label: 'Done', color: 'border-t-green-500' },
+  { key: 'todo' as const, label: 'To Do', icon: Circle, accent: 'border-l-blue-500', headerBg: 'bg-blue-50/70 dark:bg-blue-950/20', dotColor: 'bg-blue-500', emptyIcon: Inbox, emptyMsg: 'Nothing to do — nice!' },
+  { key: 'in_progress' as const, label: 'In Progress', icon: Loader2, accent: 'border-l-amber-500', headerBg: 'bg-amber-50/70 dark:bg-amber-950/20', dotColor: 'bg-amber-500', emptyIcon: Circle, emptyMsg: 'No tasks in progress' },
+  { key: 'waiting' as const, label: 'Waiting', icon: Clock, accent: 'border-l-slate-400', headerBg: 'bg-slate-50/70 dark:bg-slate-900/20', dotColor: 'bg-slate-400', emptyIcon: Clock, emptyMsg: 'Nothing waiting' },
+  { key: 'done' as const, label: 'Done', icon: CheckCircle2, accent: 'border-l-emerald-500', headerBg: 'bg-emerald-50/70 dark:bg-emerald-950/20', dotColor: 'bg-emerald-500', emptyIcon: CheckCircle2, emptyMsg: 'All clear!' },
 ];
 
 // ─── Approval Void Warning Dialog ──────────────────────────────────
