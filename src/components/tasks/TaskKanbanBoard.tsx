@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -66,11 +67,12 @@ interface ApprovalWarningState {
   targetColumn: KanbanColumn;
 }
 
-const COLUMNS = [
-  { key: 'todo' as const, label: 'To Do', icon: Circle, accent: 'border-l-blue-500', headerBg: 'bg-blue-50/70 dark:bg-blue-950/20', dotColor: 'bg-blue-500', emptyIcon: Inbox, emptyMsg: 'Nothing to do — nice!' },
-  { key: 'in_progress' as const, label: 'In Progress', icon: Loader2, accent: 'border-l-amber-500', headerBg: 'bg-amber-50/70 dark:bg-amber-950/20', dotColor: 'bg-amber-500', emptyIcon: Circle, emptyMsg: 'No tasks in progress' },
-  { key: 'waiting' as const, label: 'Waiting', icon: Clock, accent: 'border-l-slate-400', headerBg: 'bg-slate-50/70 dark:bg-slate-900/20', dotColor: 'bg-slate-400', emptyIcon: Clock, emptyMsg: 'Nothing waiting' },
-  { key: 'done' as const, label: 'Done', icon: CheckCircle2, accent: 'border-l-emerald-500', headerBg: 'bg-emerald-50/70 dark:bg-emerald-950/20', dotColor: 'bg-emerald-500', emptyIcon: CheckCircle2, emptyMsg: 'All clear!' },
+
+const getColumns = (t: any) => [
+  { key: 'todo' as const, label: t.kanbanToDo || 'To Do', icon: Circle, accent: 'border-l-blue-500', headerBg: 'bg-blue-50/70 dark:bg-blue-950/20', dotColor: 'bg-blue-500', emptyIcon: Inbox, emptyMsg: t.kanbanEmptyToDo || 'Nothing to do — nice!' },
+  { key: 'in_progress' as const, label: t.kanbanInProgress || 'In Progress', icon: Loader2, accent: 'border-l-amber-500', headerBg: 'bg-amber-50/70 dark:bg-amber-950/20', dotColor: 'bg-amber-500', emptyIcon: Circle, emptyMsg: t.kanbanEmptyInProgress || 'No tasks in progress' },
+  { key: 'waiting' as const, label: t.kanbanWaiting || 'Waiting', icon: Clock, accent: 'border-l-slate-400', headerBg: 'bg-slate-50/70 dark:bg-slate-900/20', dotColor: 'bg-slate-400', emptyIcon: Clock, emptyMsg: t.kanbanEmptyWaiting || 'Nothing waiting' },
+  { key: 'done' as const, label: t.kanbanDone || 'Done', icon: CheckCircle2, accent: 'border-l-emerald-500', headerBg: 'bg-emerald-50/70 dark:bg-emerald-950/20', dotColor: 'bg-emerald-500', emptyIcon: CheckCircle2, emptyMsg: t.kanbanEmptyDone || 'All clear!' },
 ];
 
 // ─── Approval Void Warning Dialog ──────────────────────────────────
@@ -192,6 +194,7 @@ const KanbanCardContent: React.FC<{
 }> = ({ task, onClick, dragHandleProps, isOverlay, accentClass }) => {
   const dateAnnotation = getDateAnnotation(task);
   const sp = task.smartPriority;
+  const { translations: t } = useLanguage();
 
   return (
     <Card
@@ -230,12 +233,12 @@ const KanbanCardContent: React.FC<{
         <div className="flex items-center gap-1">
           {sp.isStartingSoon && (
             <span className="text-[9px] font-medium text-amber-600 bg-amber-500/8 px-1.5 py-0 rounded">
-              Soon
+              {t.kanbanSoon || 'Soon'}
             </span>
           )}
           {task.kanbanColumn === 'done' ? (
             <span className="text-[9px] font-medium text-emerald-600 bg-emerald-500/8 px-1.5 py-0 rounded whitespace-nowrap">
-              Completed
+              {t.kanbanCompleted || 'Completed'}
             </span>
           ) : dateAnnotation ? (
             <span className={cn(
@@ -244,7 +247,7 @@ const KanbanCardContent: React.FC<{
               dateAnnotation.variant === 'today' && 'text-amber-600 bg-amber-500/8',
               dateAnnotation.variant === 'upcoming' && 'text-muted-foreground bg-muted',
             )}>
-              {dateAnnotation.variant === 'overdue' ? 'Overdue' : dateAnnotation.label}
+              {dateAnnotation.variant === 'overdue' ? (t.kanbanOverdue || 'Overdue') : dateAnnotation.label}
             </span>
           ) : null}
         </div>
@@ -342,6 +345,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
   onUpdateTaskStatus,
 }) => {
   const navigate = useNavigate();
+  const { translations: t } = useLanguage();
   const [selectedTask, setSelectedTask] = useState<UserTask | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [activeTask, setActiveTask] = useState<UnifiedTask | null>(null);
@@ -437,12 +441,14 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     setWarningState(null);
   }, []);
 
+  const COLUMNS = useMemo(() => getColumns(t), [t]);
+
   const columnData = useMemo(() => {
     return COLUMNS.map(col => ({
       ...col,
       tasks: tasks.filter(t => t.kanbanColumn === col.key),
     }));
-  }, [tasks]);
+  }, [tasks, COLUMNS]);
 
   const renderColumnContent = (columnTasks: UnifiedTask[], col: typeof columnData[number]) => {
     if (columnTasks.length === 0) {

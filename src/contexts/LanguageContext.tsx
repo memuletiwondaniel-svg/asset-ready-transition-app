@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { getCurrentTranslations } from '@/utils/translations';
+import { getCurrentTranslations, isRTL } from '@/utils/translations';
 
 interface LanguageContextType {
   language: string;
@@ -18,16 +18,16 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const setLanguage = (newLanguage: string) => {
     if (newLanguage === language) return;
     
-    // Trigger fade out
     setIsChangingLanguage(true);
     
-    // Wait for fade out animation, then change language
     setTimeout(() => {
       setLanguageState(newLanguage);
       const newTranslations = getCurrentTranslations(newLanguage);
       setTranslations(newTranslations);
       
-      // Trigger fade in
+      // Set RTL direction for Arabic
+      document.documentElement.dir = isRTL(newLanguage) ? 'rtl' : 'ltr';
+      
       setTimeout(() => {
         setIsChangingLanguage(false);
       }, 50);

@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import { format, formatDistanceToNow } from 'date-fns';
 
@@ -21,6 +22,7 @@ interface CompletedTask {
 
 export const RecentlyCompletedTasks: React.FC<{ searchQuery?: string }> = ({ searchQuery = '' }) => {
   const { user } = useAuth();
+  const { translations: t } = useLanguage();
   const [expanded, setExpanded] = React.useState(false);
 
   const { data: tasks = [], isLoading } = useQuery({
@@ -80,7 +82,7 @@ export const RecentlyCompletedTasks: React.FC<{ searchQuery?: string }> = ({ sea
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-            Recent Activities
+            {t.recentActivitiesLabel || 'Recent Activities'}
           </h3>
           <Badge variant="outline" className="text-[10px] text-muted-foreground">
             {filtered.length}
@@ -94,9 +96,9 @@ export const RecentlyCompletedTasks: React.FC<{ searchQuery?: string }> = ({ sea
             onClick={() => setExpanded(!expanded)}
           >
             {expanded ? (
-              <>Show less <ChevronUp className="h-3 w-3" /></>
+              <>{t.showLessLabel || 'Show less'} <ChevronUp className="h-3 w-3" /></>
             ) : (
-              <>Show all <ChevronDown className="h-3 w-3" /></>
+              <>{t.showAll || 'Show all'} <ChevronDown className="h-3 w-3" /></>
             )}
           </Button>
         )}

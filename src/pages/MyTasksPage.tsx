@@ -4,6 +4,7 @@ import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { AddActivityDialog } from '@/components/tasks/AddActivityDialog';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { UnifiedTaskList } from '@/components/tasks/UnifiedTaskList';
 import { TaskKanbanBoard } from '@/components/tasks/TaskKanbanBoard';
 import { RecentlyCompletedTasks } from '@/components/tasks/RecentlyCompletedTasks';
@@ -29,6 +30,7 @@ const MyTasksPage: React.FC = () => {
   const { user } = useAuth();
   const { updateLastLogin } = useUserLastLogin();
   const { data: isDirector, isLoading: isDirectorLoading } = useUserIsDirector();
+  const { translations: t } = useLanguage();
   const [addActivityOpen, setAddActivityOpen] = useState(false);
   const [addActivityMode, setAddActivityMode] = useState<'catalog' | 'custom'>('catalog');
   const [searchQuery, setSearchQuery] = useState('');
@@ -61,14 +63,14 @@ const MyTasksPage: React.FC = () => {
     return (
       <div className="min-h-screen">
         <div className="border-b border-border/40 bg-card/30 backdrop-blur-xl p-4 md:p-6">
-          <BreadcrumbNavigation currentPageLabel="My Tasks" />
+          <BreadcrumbNavigation currentPageLabel={t.myTasksPageTitle || 'My Tasks'} />
           <div className="flex items-center gap-3 mt-4">
             <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500">
               <CalendarCheck className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">My Tasks</h1>
-              <p className="text-sm text-muted-foreground mt-1">Your pending work across all modules</p>
+              <h1 className="text-2xl font-bold text-foreground">{t.myTasksPageTitle || 'My Tasks'}</h1>
+              <p className="text-sm text-muted-foreground mt-1">{t.myTasksPageSubtitle || 'Your pending work across all modules'}</p>
             </div>
           </div>
         </div>
@@ -82,14 +84,14 @@ const MyTasksPage: React.FC = () => {
   return (
     <div className="min-h-screen">
         <div className="border-b border-border/40 bg-card/30 backdrop-blur-xl p-3 sm:p-4 md:p-6">
-        <BreadcrumbNavigation currentPageLabel="My Tasks" />
+        <BreadcrumbNavigation currentPageLabel={t.myTasksPageTitle || 'My Tasks'} />
         <div className="flex items-center gap-2 sm:gap-3 mt-3 sm:mt-4">
           <div className="p-2 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 shrink-0">
             <CalendarCheck className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
           </div>
           <div className="min-w-0">
-            <h1 className="text-lg sm:text-2xl font-bold text-foreground truncate">My Tasks</h1>
-            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 sm:mt-1 hidden sm:block">Your pending work across all modules</p>
+            <h1 className="text-lg sm:text-2xl font-bold text-foreground truncate">{t.myTasksPageTitle || 'My Tasks'}</h1>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 sm:mt-1 hidden sm:block">{t.myTasksPageSubtitle || 'Your pending work across all modules'}</p>
           </div>
         </div>
       </div>
@@ -100,7 +102,7 @@ const MyTasksPage: React.FC = () => {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search tasks..."
+              placeholder={t.searchTasksPlaceholder || 'Search tasks...'}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 h-9 sm:h-10 text-sm"
@@ -113,30 +115,30 @@ const MyTasksPage: React.FC = () => {
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="gap-1.5 text-xs">
                   {groupBy === 'project' ? <FolderOpen className="h-3.5 w-3.5" /> : groupBy === 'category' ? <Layers className="h-3.5 w-3.5" /> : <Layers className="h-3.5 w-3.5" />}
-                  {groupBy === 'none' ? 'Group' : groupBy === 'project' ? 'By Project' : 'By Category'}
+                  {groupBy === 'none' ? (t.groupLabel || 'Group') : groupBy === 'project' ? (t.groupByProject || 'By Project') : (t.groupByCategory || 'By Category')}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => setGroupBy('none')}>
-                  No Grouping
+                  {t.noGrouping || 'No Grouping'}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setGroupBy('project')}>
                   <FolderOpen className="h-3.5 w-3.5 mr-2" />
-                  By Project
+                  {t.groupByProject || 'By Project'}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setGroupBy('category')}>
                   <Layers className="h-3.5 w-3.5 mr-2" />
-                  By Category
+                  {t.groupByCategory || 'By Category'}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
             {/* View toggle */}
             <ToggleGroup type="single" value={viewMode} onValueChange={(v) => v && setViewMode(v as ViewMode)} size="sm">
-              <ToggleGroupItem value="list" aria-label="List view" className="px-2">
+              <ToggleGroupItem value="list" aria-label={t.listView || 'List view'} className="px-2">
                 <LayoutList className="h-4 w-4" />
               </ToggleGroupItem>
-              <ToggleGroupItem value="kanban" aria-label="Board view" className="px-2">
+              <ToggleGroupItem value="kanban" aria-label={t.boardView || 'Board view'} className="px-2">
                 <Kanban className="h-4 w-4" />
               </ToggleGroupItem>
             </ToggleGroup>
@@ -144,15 +146,15 @@ const MyTasksPage: React.FC = () => {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="gap-1.5 text-xs border-primary/30 text-primary hover:bg-primary/10">
-                  <Plus className="h-3.5 w-3.5" /> Add Activity
+                  <Plus className="h-3.5 w-3.5" /> {t.addActivity || 'Add Activity'}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => { setAddActivityMode('catalog'); setAddActivityOpen(true); }}>
-                  <BookOpen className="h-4 w-4 mr-2" /> From Catalog
+                  <BookOpen className="h-4 w-4 mr-2" /> {t.fromCatalog || 'From Catalog'}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => { setAddActivityMode('custom'); setAddActivityOpen(true); }}>
-                  <PenLine className="h-4 w-4 mr-2" /> Custom Activity
+                  <PenLine className="h-4 w-4 mr-2" /> {t.customActivity || 'Custom Activity'}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
