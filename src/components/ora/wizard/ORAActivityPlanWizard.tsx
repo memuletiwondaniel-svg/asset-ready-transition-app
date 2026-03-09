@@ -739,6 +739,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
       queryClient.invalidateQueries({ queryKey: ['orp-plans'] });
       queryClient.invalidateQueries({ queryKey: ['project-orp-plans'] });
 
+      await syncOraWizardProgress(STEPS.length, true);
       toast({ title: 'Submitted', description: 'ORA Plan submitted for approval' });
       onOpenChange(false);
       resetForm();
