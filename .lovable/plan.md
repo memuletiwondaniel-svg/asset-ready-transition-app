@@ -1,77 +1,94 @@
 
+## Problem Analysis
 
-# Plan: ORIP Scoring Engine Using Existing VCR Item Categories
+**Issue 1: "Create ORA Plan" task showing in "In Progress" instead of "Done"**
+- The `useUserTasks` hook fetches tasks with statuses: `pending`, `in_progress`, `waiting`, `completed`
+- When a plan gets approved, the ORA plan task (`type: ora_plan_creation`) should be automatically marked `completed` — but its `status` may still be `in_progress` or `pending` in `user_tasks` if the DB trigger didn't update it
+- The `mapToKanbanColumn` function in `useUnifiedTasks.ts` maps `completed` → `done`, but if `user_tasks.status = 'in_progress'`, the card stays in "In Progress"
+- **Root cause**: The `kanbanColumn` for `create_ora_plan` type tasks doesn't check the actual ORA plan's approval status (`orp_plans.status = 'APPROVED'`) — it only looks at `user_tasks.status`
 
-## Impact Assessment: Zero Breaking Changes
+**Issue 2: No guard against reverting approved workflow tasks**
+- The `useKanbanDragDrop.ts` allows any task to be dragged to `todo`, `in_progress`, or `waiting` without checking if it's an approval-backed workflow task
+- `TaskDetailSheet.tsx` renders but doesn't guard against status downgrades for approved plans
 
-**No existing workflows will be affected.** The approach reuses the existing `vcr_item_categories` table (Design Integrity, Technical Integrity, Operating Integrity, Management Systems, Health & Safety) as the readiness dimensions for ORI scoring. All changes are additive:
+## Solution Plan
 
-- The `vcr_item_categories` table gets a `tenant_id` column and weight/confidence fields -- existing rows remain intact
-- The `readiness_nodes` table gets a new nullable `dimension_id` column pointing to `vcr_item_categories`
-- The `sync_readiness_nodes` and `calculate_ori_score` functions are replaced with enhanced versions that use category-based dimensions instead of module-based grouping
-- Existing P2A, ORA, PSSR, ORM workflows are untouched -- the ontology layer only reads from them
+### Part 1 — Fix the "Create ORA Plan" task showing in "In Progress"
+The `mapToKanbanColumn` logic needs to detect workflow-completion tasks whose underlying plan is approved. This can be done by:
+1. Fetching the ORA plan status in `useUnifiedTasks.ts` (it already has `oraActivityDates` from `useUserTasks`) — or more precisely, checking `orp_plans` status in the `useUserTasks` hook alongside existing fetching
+2. Alternatively: in the `useUnifiedTasks.ts` `useMemo`, check if a task with `action === 'create_ora_plan'` has `meta.plan_status === 'APPROVED'` or if there's a linked plan that is approved — and force `kanbanColumn: 'done'`
 
-## Current VCR Item Categories (Become Readiness Dimensions)
+**Simpler approach (no extra query)**: In `useUserTasks.ts`, when fetching regular tasks, also fetch the linked ORA plan status from `orp_plans` for plan-creation tasks and set `metadata.plan_status` accordingly. Or, in `useUnifiedTasks.ts`, if `t.type === 'ora_plan_creation'` and we can detect plan is approved, force column to `done`. 
 
-| Code | Name | Active |
-|------|------|--------|
-| DI2 | Design Integrity | Yes |
-| TI | Technical Integrity | Yes |
-| OI | Operating Integrity | Yes |
-| MS | Management Systems | Yes |
-| HS | Health & Safety | Yes |
+Since the task `status` in `user_tasks` should already be `completed` when the plan is approved (the submission flow in `ORAActivityPlanWizard.tsx` marks the task completed), the real issue is the task is still showing as `in_progress`. The fix should check: for `ora_plan_creation` tasks, also check `orp_plans` status. I'll add a query to fetch linked plan statuses in `useUserTasks.ts`.
 
-These become the tenant-configurable readiness dimensions. Different tenants can add/rename/reweight their own categories.
+### Part 2 — Warning dialog for reverting approved workflow tasks
 
-## Implementation Tasks
+Define "protected workflow tasks" = tasks that have gone through external approval:
+- `action === 'create_ora_plan'` (ORA Plan approved)
+- `action === 'create_p2a_plan'` (P2A Plan completed)
+- `type === 'ora_plan_review'` (approved plans)
+- Any task with `kanbanColumn === 'done'`
 
-### Task 1: Extend `vcr_item_categories` for ORI Scoring
-Add columns to make categories serve double duty as readiness dimensions:
-- `tenant_id UUID` (nullable, defaults via trigger -- existing rows get current tenant)
-- `default_weight NUMERIC(5,4)` (e.g., 0.20 = 20%)
-- `confidence_factor_default NUMERIC(3,2)` (default 0.8)
-- `risk_severity_multiplier NUMERIC(3,1)` (default 1.0)
-- `is_readiness_dimension BOOLEAN DEFAULT true`
+**Implementation in `useKanbanDragDrop.ts`**:
+- Add logic to detect if a task is a "protected workflow task" (has underlying approved plan)
+- If dragging such a task backward (done → in_progress/todo/waiting, or any approved plan task to a lower state), return `'needs_warning'` instead of proceeding
+- In `TaskKanbanBoard.tsx`, intercept this and show a warning dialog
 
-Add `dimension_id UUID REFERENCES vcr_item_categories(id)` to `readiness_nodes`.
+**Warning Dialog Design (modern UX)**:
+- Destructive alert dialog with:
+  - Red/amber warning icon
+  - Title: "Void All Approvals?"
+  - Body: explains that moving this task will void the existing approval chain and the workflow will need to restart
+  - Two actions: "Cancel" (safe, keeps current position) and "Move Anyway – Void Approvals" (destructive, red)
+  - Checkbox: "I understand this will void all approvals and require a new review cycle"
 
-### Task 2: Enhanced ORI Formula
-Replace `calculate_ori_score()` with the full ORIP formula:
+### Files to Modify
 
+1. **`src/hooks/useUserTasks.ts`** — Add fetching of linked plan status for `ora_plan_creation` tasks so that approved plans show `status: 'completed'` or `kanbanColumn: 'done'`
+
+2. **`src/components/tasks/useUnifiedTasks.ts`** — In `mapToKanbanColumn`, add a check for plan-creation task types where the plan is `APPROVED`/`COMPLETED` → force `done`
+
+3. **`src/components/tasks/useKanbanDragDrop.ts`** — Add:
+   - `isProtectedWorkflowTask(task)` helper — detects tasks backed by external approvals
+   - `checkIfApprovalWouldBeVoided(task, targetColumn)` — returns `true` if moving would void approvals
+   - Return a new status `'needs_warning'` from `moveTaskToColumn` instead of proceeding
+
+4. **`src/components/tasks/TaskKanbanBoard.tsx`** — Add:
+   - `ApprovalVoidWarningDialog` component — the warning dialog with destructive styling, explanatory copy, and a confirmation checkbox
+   - State: `[warningState, setWarningState]` holding `{ task, targetColumn }` when warning is triggered
+   - Hook: intercept `handleDragEnd` to check if warning needed before moving
+   - On confirm: call `moveTaskToColumn` forcefully, bypassing the guard
+
+### Warning Dialog Specification
+
+```text
+┌─────────────────────────────────────────────┐
+│  🚨  Void All Approvals?                    │
+│                                             │
+│  "Create ORA Plan" has already been        │
+│  approved through a formal review process. │
+│                                             │
+│  Moving this task back will:               │
+│  • Void all existing approvals             │
+│  • Require a completely new review cycle   │
+│  • Notify all approvers of the change      │
+│                                             │
+│  ☐ I understand this action cannot be      │
+│    easily undone                            │
+│                                             │
+│  [Cancel]  [Move Anyway – Void Approvals]   │
+└─────────────────────────────────────────────┘
 ```
-DS_i = (Σ Subcomponent_Weight × Completion%) × Confidence_Factor
-RP_i = Σ (Risk_Severity × Impact_Multiplier)  -- capped at 15%
-ORI  = Σ (Dimension_Weight_i × DS_i) − Global_Risk_Penalty
-SCS  = ORI × Schedule_Adherence × Critical_Path_Stability
-```
 
-Add columns to `ori_scores`: `dimension_scores JSONB`, `risk_penalty_total NUMERIC`, `startup_confidence_score NUMERIC`, `schedule_adherence_index NUMERIC`, `critical_path_stability_index NUMERIC`.
+### How to detect "is a workflow-approved task"
 
-Add `confidence_factor NUMERIC(3,2) DEFAULT 0.8` and `risk_severity TEXT DEFAULT 'none'` to `readiness_nodes`.
+In `useUnifiedTasks.ts`, when building the unified task list for `ora_plan_creation` type tasks, add a flag `isApprovalProtected: true` if:
+- `task.category === 'ora'` AND `meta.action === 'create_ora_plan'` AND `meta.plan_status` is `APPROVED` or `COMPLETED`
+- OR `task.category === 'p2a'` AND `meta.action === 'create_p2a_plan'`
 
-### Task 3: Update Sync Function
-Update `sync_readiness_nodes()` to auto-assign `dimension_id` by mapping:
-- P2A VCR prerequisites → mapped via their `vcr_items.category_id` directly to `vcr_item_categories`
-- ORA activities → default to "Operating Integrity" or map via metadata
-- PSSR items → map via PSSR checklist category → nearest VCR category
-- ORM deliverables → default to "Management Systems"
-- Training → default to "Operating Integrity"
+Add `isApprovalProtected?: boolean` field to `UnifiedTask` interface.
 
-Set confidence factors: completed/approved = 1.0, in-progress = 0.8, not-started = 0.7.
+In `useKanbanDragDrop.ts`, check `task.isApprovalProtected` and if `targetColumn` is not `done`, trigger the warning.
 
-### Task 4: Executive Dashboard Enhancement
-Redesign `ExecutiveDashboard.tsx` to match the strategic layout:
-- **Top Banner**: Large ORI + SCS + color coding (Green >85, Amber 70-85, Red <70)
-- **Dimension Breakdown**: Bar/table showing each VCR category's score, trend arrow, risk level
-- **Top 5 Startup Blockers**: Blocked/critical nodes with severity
-- **Predictive Trend**: ORI line chart with dashed target curve
-- **Risk Impact Summary**: 4 stat boxes (Open High Risks, Startup-blocking, Dimensions below 70%, Systems below 60%)
-
-### Task 5: Tenant-Configurable Weight Profiles
-Update the existing `ori_weight_profiles` to store dimension-based weights keyed by `vcr_item_categories.id` instead of module names. Add a simple admin UI for editing weights per tenant.
-
-### Task 6: Update Living Documents
-- **Security & Compliance Doc**: Add rows for Readiness Dimensions, Risk Penalty Engine, Startup Confidence Score (mark as Active)
-- **Platform Guide**: Add "Readiness Ontology & Scoring Engine" section documenting the 6 dimensions, ORI formula, SCS
-- **Strategic North Star**: Update scoring engine status from Planned to Active, add dimension-based architecture detail
-
+For Part 1 fix, the cleanest solution is: in `useUserTasks.ts`, after fetching tasks, identify `ora_plan_creation` tasks and batch-fetch the plan status from `orp_plans` using the `project_id` from metadata, then annotate the task's metadata with `plan_status`. Then in `useUnifiedTasks.ts`, if `plan_status === 'APPROVED'`, override `kanbanColumn` to `done`.
