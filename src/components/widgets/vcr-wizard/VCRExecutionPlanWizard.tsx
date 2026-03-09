@@ -22,8 +22,10 @@ import {
   ChevronRight,
   ChevronLeft,
   UserCheck,
+  X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { ProjectVCR } from '@/hooks/useProjectVCRs';
 import { getVCRColor } from '@/components/p2a-workspace/utils/vcrColors';
 import { VCRItemsStep } from './steps/VCRItemsStep';
@@ -61,6 +63,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
 }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [visitedSteps, setVisitedSteps] = useState<Set<number>>(new Set([0]));
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (open) {
@@ -147,7 +150,12 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl h-[min(90vh,780px)] flex flex-col p-0 gap-0 [&>button]:hidden">
+      <DialogContent className={cn(
+        "flex flex-col p-0 gap-0 [&>button]:hidden",
+        isMobile
+          ? "max-w-full h-full w-full rounded-none border-0 inset-0 translate-x-0 translate-y-0 top-0 left-0"
+          : "max-w-5xl h-[min(90vh,780px)]"
+      )}>
         <VisuallyHidden>
           <DialogHeader>
             <DialogTitle>VCR Execution Plan Wizard</DialogTitle>
@@ -155,100 +163,155 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
           </DialogHeader>
         </VisuallyHidden>
 
-        <div className="flex h-full overflow-hidden gap-2">
-          {/* Left Sidebar - Step Navigation */}
-          <div className="w-56 shrink-0 bg-muted/30 border-r border-border/60 p-4 flex flex-col">
-            <div className="mb-6">
-              <div className="flex items-center gap-2 mb-0.5">
-                {shortVcrId && (
-                  <Badge
-                    className="text-[10px] font-mono font-semibold border-0 px-1.5 py-0"
-                    style={{
-                      backgroundColor: vcrColor?.background,
-                      color: vcrColor?.border,
-                    }}
-                  >
-                    {shortVcrId}
-                  </Badge>
-                )}
-                <h3 className="text-sm font-semibold truncate">{vcr.name}</h3>
+        <div className={cn("flex h-full overflow-hidden", isMobile ? "flex-col" : "gap-2")}>
+          {/* Mobile Header with step selector */}
+          {isMobile ? (
+            <div className="shrink-0 bg-muted/30 border-b border-border/60 px-3 pt-3 pb-2">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  {shortVcrId && (
+                    <Badge
+                      className="text-[10px] font-mono font-semibold border-0 px-1.5 py-0 shrink-0"
+                      style={{
+                        backgroundColor: vcrColor?.background,
+                        color: vcrColor?.border,
+                      }}
+                    >
+                      {shortVcrId}
+                    </Badge>
+                  )}
+                  <span className="text-xs font-semibold truncate">{vcr.name}</span>
+                </div>
+                <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => onOpenChange(false)}>
+                  <X className="w-4 h-4" />
+                </Button>
               </div>
-              <p className="text-[10px] text-muted-foreground mt-0.5">Setup VCR Delivery Plan</p>
+              {/* Horizontal scrollable step pills */}
+              <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                {STEPS.map((step, idx) => {
+                  const isActive = idx === currentStep;
+                  const isComplete = isStepComplete(idx);
+                  return (
+                    <button
+                      key={step.id}
+                      onClick={() => goToStep(idx)}
+                      className={cn(
+                        'flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px] font-medium whitespace-nowrap shrink-0 transition-all',
+                        isActive
+                          ? 'bg-primary text-primary-foreground shadow-sm'
+                          : isComplete
+                            ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20'
+                            : 'bg-muted text-muted-foreground'
+                      )}
+                    >
+                      {isComplete && !isActive ? <Check className="w-3 h-3" /> : <span className="text-[10px]">{idx + 1}</span>}
+                      {isActive && step.label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
+          ) : (
+            /* Desktop Left Sidebar */
+            <div className="w-56 shrink-0 bg-muted/30 border-r border-border/60 p-4 flex flex-col">
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-0.5">
+                  {shortVcrId && (
+                    <Badge
+                      className="text-[10px] font-mono font-semibold border-0 px-1.5 py-0"
+                      style={{
+                        backgroundColor: vcrColor?.background,
+                        color: vcrColor?.border,
+                      }}
+                    >
+                      {shortVcrId}
+                    </Badge>
+                  )}
+                  <h3 className="text-sm font-semibold truncate">{vcr.name}</h3>
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-0.5">Setup VCR Delivery Plan</p>
+              </div>
 
-            <div className="flex-1 space-y-1">
-              {STEPS.map((step, idx) => {
-                const isActive = idx === currentStep;
-                const isVisited = visitedSteps.has(idx);
-                const isComplete = isStepComplete(idx);
-                const Icon = step.icon;
+              <div className="flex-1 space-y-1">
+                {STEPS.map((step, idx) => {
+                  const isActive = idx === currentStep;
+                  const isVisited = visitedSteps.has(idx);
+                  const isComplete = isStepComplete(idx);
 
-                return (
-                  <button
-                    key={step.id}
-                    onClick={() => goToStep(idx)}
-                    className={cn(
-                      'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all text-sm',
-                      isActive
-                        ? 'bg-primary text-primary-foreground shadow-sm'
-                        : isVisited
-                          ? 'hover:bg-muted/60 text-foreground'
-                          : 'hover:bg-muted/40 text-muted-foreground'
-                    )}
-                  >
-                    <div className={cn(
-                      'w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-xs font-medium',
-                      isActive
-                        ? 'bg-primary-foreground/20 text-primary-foreground'
-                        : isComplete
-                          ? 'bg-emerald-500/10 text-emerald-500'
-                          : 'bg-muted text-muted-foreground'
-                    )}>
-                      {isComplete && !isActive ? <Check className="w-3 h-3" /> : idx + 1}
-                    </div>
-                    <span className="truncate text-xs font-medium">{step.label}</span>
-                  </button>
-                );
-              })}
+                  return (
+                    <button
+                      key={step.id}
+                      onClick={() => goToStep(idx)}
+                      className={cn(
+                        'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all text-sm',
+                        isActive
+                          ? 'bg-primary text-primary-foreground shadow-sm'
+                          : isVisited
+                            ? 'hover:bg-muted/60 text-foreground'
+                            : 'hover:bg-muted/40 text-muted-foreground'
+                      )}
+                    >
+                      <div className={cn(
+                        'w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-xs font-medium',
+                        isActive
+                          ? 'bg-primary-foreground/20 text-primary-foreground'
+                          : isComplete
+                            ? 'bg-emerald-500/10 text-emerald-500'
+                            : 'bg-muted text-muted-foreground'
+                      )}>
+                        {isComplete && !isActive ? <Check className="w-3 h-3" /> : idx + 1}
+                      </div>
+                      <span className="truncate text-xs font-medium">{step.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="mt-auto pt-4 border-t border-border/60">
+                <p className="text-[10px] text-muted-foreground">
+                  Step {currentStep + 1} of {STEPS.length}
+                </p>
+              </div>
             </div>
+          )}
 
-            {/* Connector lines between steps */}
-            <div className="mt-auto pt-4 border-t border-border/60">
-              <p className="text-[10px] text-muted-foreground">
-                Step {currentStep + 1} of {STEPS.length}
-              </p>
-            </div>
-          </div>
-
-          {/* Right Content Area */}
+          {/* Content Area */}
           <div className="flex-1 flex flex-col min-w-0 min-h-0">
             {/* Step Header */}
-            <div className="px-6 py-4 border-b border-border/60 flex items-center justify-between shrink-0">
-              <div className="flex items-center gap-3">
+            <div className={cn(
+              "border-b border-border/60 flex items-center justify-between shrink-0",
+              isMobile ? "px-4 py-3" : "px-6 py-4"
+            )}>
+              <div className="flex items-center gap-3 min-w-0">
                 {React.createElement(STEPS[currentStep].icon, {
-                  className: cn('w-5 h-5', STEPS[currentStep].color),
+                  className: cn('w-5 h-5 shrink-0', STEPS[currentStep].color),
                 })}
-                <div>
-                  <h2 className="text-base font-semibold">{STEPS[currentStep].label}</h2>
-                  <p className="text-xs text-muted-foreground">
+                <div className="min-w-0">
+                  <h2 className={cn("font-semibold truncate", isMobile ? "text-sm" : "text-base")}>{STEPS[currentStep].label}</h2>
+                  <p className="text-xs text-muted-foreground line-clamp-1">
                     {getStepDescription(currentStep)}
                   </p>
                 </div>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)} className="text-xs">
-                Close
-              </Button>
+              {!isMobile && (
+                <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)} className="text-xs">
+                  Close
+                </Button>
+              )}
             </div>
 
             {/* Step Content */}
             <div className="flex-1 min-h-0 overflow-y-auto">
-              <div className="p-6">
+              <div className={cn(isMobile ? "p-3" : "p-6")}>
                 {renderStep()}
               </div>
             </div>
 
             {/* Footer Navigation */}
-            <div className="px-6 py-3 border-t border-border/60 flex items-center justify-between">
+            <div className={cn(
+              "border-t border-border/60 flex items-center justify-between",
+              isMobile ? "px-3 py-2" : "px-6 py-3"
+            )}>
               <Button
                 variant="outline"
                 size="sm"
@@ -257,27 +320,34 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
                 className="gap-1.5"
               >
                 <ChevronLeft className="w-4 h-4" />
-                Back
+                {!isMobile && 'Back'}
               </Button>
-              <div className="flex items-center gap-1.5">
-                {STEPS.map((_, idx) => (
-                  <div
-                    key={idx}
-                    className={cn(
-                      'w-2 h-2 rounded-full transition-colors cursor-pointer',
-                      idx === currentStep
-                        ? 'bg-primary'
-                        : isStepComplete(idx)
-                          ? 'bg-emerald-500'
-                          : 'bg-muted-foreground/20'
-                    )}
-                    onClick={() => goToStep(idx)}
-                  />
-                ))}
-              </div>
+              {!isMobile && (
+                <div className="flex items-center gap-1.5">
+                  {STEPS.map((_, idx) => (
+                    <div
+                      key={idx}
+                      className={cn(
+                        'w-2 h-2 rounded-full transition-colors cursor-pointer',
+                        idx === currentStep
+                          ? 'bg-primary'
+                          : isStepComplete(idx)
+                            ? 'bg-emerald-500'
+                            : 'bg-muted-foreground/20'
+                      )}
+                      onClick={() => goToStep(idx)}
+                    />
+                  ))}
+                </div>
+              )}
+              {isMobile && (
+                <span className="text-[10px] text-muted-foreground">
+                  {currentStep + 1}/{STEPS.length}
+                </span>
+              )}
               {currentStep < STEPS.length - 1 ? (
                 <Button size="sm" onClick={handleNext} className="gap-1.5">
-                  Next
+                  {!isMobile && 'Next'}
                   <ChevronRight className="w-4 h-4" />
                 </Button>
               ) : (
