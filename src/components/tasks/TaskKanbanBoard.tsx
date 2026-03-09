@@ -188,7 +188,8 @@ const KanbanCardContent: React.FC<{
   onClick: () => void;
   dragHandleProps?: Record<string, any>;
   isOverlay?: boolean;
-}> = ({ task, onClick, dragHandleProps, isOverlay }) => {
+  accentClass?: string;
+}> = ({ task, onClick, dragHandleProps, isOverlay, accentClass }) => {
   const dateAnnotation = getDateAnnotation(task);
   const sp = task.smartPriority;
 
@@ -196,30 +197,31 @@ const KanbanCardContent: React.FC<{
     <Card
       onClick={onClick}
       className={cn(
-        "p-2 px-2.5 cursor-pointer transition-all duration-150 border border-border/60 rounded-lg group",
-        "hover:shadow-sm hover:bg-accent/30",
+        "p-3 cursor-pointer transition-all duration-200 rounded-lg group border-l-[3px]",
+        "border border-border/60 bg-card shadow-sm",
+        "hover:-translate-y-0.5 hover:shadow-md hover:border-border",
+        accentClass || 'border-l-border',
         task.isWaiting && 'opacity-50',
         task.isNew && 'ring-1 ring-primary/15',
-        
-        isOverlay && 'shadow-lg ring-2 ring-primary/20 rotate-[2deg] scale-[1.02]',
+        isOverlay && 'shadow-xl ring-2 ring-primary/20 rotate-[2deg] scale-[1.03]',
       )}
     >
       {/* Row 1: drag handle + project ID left, status right */}
-      <div className="flex items-center justify-between gap-1 mb-1">
-        <div className="flex items-center gap-1 min-w-0">
+      <div className="flex items-center justify-between gap-1.5 mb-1.5">
+        <div className="flex items-center gap-1.5 min-w-0">
           {dragHandleProps && (
             <button
               {...dragHandleProps}
               onClick={(e) => e.stopPropagation()}
-              className="touch-none p-0.5 -ml-1 opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
+              className="touch-none p-0.5 -ml-1 opacity-30 group-hover:opacity-60 hover:!opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
             >
-              <GripVertical className="h-3 w-3 text-muted-foreground" />
+              <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
             </button>
           )}
           {task.project ? (
             <ProjectIdBadge size="sm" projectId={task.project}>{task.project}</ProjectIdBadge>
           ) : (
-            <span className="text-[9px] text-muted-foreground">{task.categoryLabel}</span>
+            <span className="text-[10px] text-muted-foreground">{task.categoryLabel}</span>
           )}
           {task.isNew && (
             <span className="text-[8px] font-semibold text-primary bg-primary/8 px-1 rounded">NEW</span>
@@ -248,14 +250,14 @@ const KanbanCardContent: React.FC<{
         </div>
       </div>
 
-      {/* Title – strip redundant project ID suffix */}
-      <p className="text-[11px] font-medium text-foreground leading-snug mb-1 break-words overflow-hidden">
+      {/* Title */}
+      <p className="text-xs font-medium text-foreground leading-snug mb-1.5 break-words overflow-hidden">
         {task.project ? task.title.replace(new RegExp(`\\s*[–\\-]\\s*${task.project.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`), '') : task.title}
       </p>
 
       {/* Dates row */}
       {(task.startDate || task.endDate || task.dueDate) && (
-        <div className="flex items-center gap-1 text-[9px] text-muted-foreground/70">
+        <div className="flex items-center gap-1 text-[10px] text-muted-foreground/70">
           <Calendar className="h-2.5 w-2.5 shrink-0" />
           {task.startDate && <span>{format(new Date(task.startDate), 'MMM d')}</span>}
           {task.startDate && task.endDate && <span>→</span>}
@@ -270,18 +272,18 @@ const KanbanCardContent: React.FC<{
         </div>
       )}
 
-      {/* Progress for in-progress tasks – always show % */}
+      {/* Progress for in-progress tasks */}
       {task.kanbanColumn === 'in_progress' && (
-        <div className="flex items-center gap-1.5 mt-1">
+        <div className="flex items-center gap-1.5 mt-1.5">
           <Progress value={task.progressPercentage ?? 0} className="h-1 flex-1 bg-muted/40" indicatorClassName="bg-muted-foreground/40" />
-          <span className="text-[9px] font-medium text-muted-foreground">{Math.round(task.progressPercentage ?? 0)}%</span>
+          <span className="text-[10px] font-medium text-muted-foreground">{Math.round(task.progressPercentage ?? 0)}%</span>
         </div>
       )}
-      {/* Item counts for bundle tasks (shown in any column) */}
+      {/* Item counts for bundle tasks */}
       {task.kanbanColumn !== 'in_progress' && task.totalItems != null && task.totalItems > 0 && (
-        <div className="flex items-center gap-1.5 mt-1">
+        <div className="flex items-center gap-1.5 mt-1.5">
           <Progress value={task.progressPercentage || 0} className="h-1 flex-1" />
-          <span className="text-[9px] text-muted-foreground">{task.completedItems}/{task.totalItems}</span>
+          <span className="text-[10px] text-muted-foreground">{task.completedItems}/{task.totalItems}</span>
         </div>
       )}
     </Card>
