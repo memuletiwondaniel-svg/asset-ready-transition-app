@@ -154,10 +154,12 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   const isReviewTask = (['review', 'approval', 'ora_plan_review'].includes(task.type) || !!pssrId) && !isOraReviewTask;
   const isActionTask = isOraTask || isOraActivityTask || isVcrDeliveryPlanTask || isP2aTask;
 
-  const oraCtaLabel = hasExistingOraDraft ? 'Continue Creating ORA Plan' : 'Create ORA Plan';
-  const oraIntentMessage = hasExistingOraDraft
-    ? 'You have a saved draft for this ORA Activity Plan. Click below to continue where you left off.'
-    : 'You have been assigned to create the ORA Activity Plan for this project. Click below to launch the planning wizard.';
+  const oraCtaLabel = isCompleted ? 'View ORA Plan' : hasExistingOraDraft ? 'Continue Creating ORA Plan' : 'Create ORA Plan';
+  const oraIntentMessage = isCompleted
+    ? 'The ORA Activity Plan has been approved. Click below to view the finalized plan.'
+    : hasExistingOraDraft
+      ? 'You have a saved draft for this ORA Activity Plan. Click below to continue where you left off.'
+      : 'You have been assigned to create the ORA Activity Plan for this project. Click below to launch the planning wizard.';
 
   const getIntentMessage = () => {
     if (isP2aTask) return 'The ORA Plan has been approved. Create the Project to Asset (P2A) handover plan for this project.';
