@@ -1284,7 +1284,6 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
         task={selectedOraActivity}
         open={!!selectedOraActivity}
         onOpenChange={(open) => !open && setSelectedOraActivity(null)}
-        isReadOnly={readOnly}
       />
       {planData?.project_id && (
         <P2APlanCreationWizard
