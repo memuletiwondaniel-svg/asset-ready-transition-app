@@ -395,7 +395,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl w-[95vw] p-0 gap-0 h-[min(88vh,800px)] flex flex-col overflow-hidden [&>button]:hidden">
+      <DialogContent className="max-w-6xl w-[95vw] p-0 gap-0 h-[min(88vh,800px)] flex flex-col overflow-hidden [&>button]:hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b shrink-0 bg-gradient-to-br from-primary/5 via-accent/5 to-transparent">
           <div className="flex items-center gap-3">
