@@ -65,7 +65,9 @@ export const ORPGanttOverlay: React.FC<ORPGanttOverlayProps> = ({
 
   const statusConfig = planStatus ? STATUS_CONFIG[planStatus] : null;
   const StatusIcon = statusConfig?.icon || Clock;
-  const isReadOnly = externalReadOnly || (planStatus !== 'APPROVED' && planStatus !== 'IN_PROGRESS' && planStatus !== 'COMPLETED');
+  const isStatusReadOnly = planStatus !== 'APPROVED' && planStatus !== 'IN_PROGRESS' && planStatus !== 'COMPLETED';
+  const isReadOnly = externalReadOnly || isStatusReadOnly;
+  const showUnderReviewBanner = isStatusReadOnly && (planStatus === 'PENDING_APPROVAL' || planStatus === 'DRAFT');
 
   const projectSubtitle = [projectCode, projectName].filter(Boolean).join(' · ');
 
@@ -225,7 +227,7 @@ export const ORPGanttOverlay: React.FC<ORPGanttOverlayProps> = ({
             </div>
 
             {/* Read-only banner */}
-            {isReadOnly && (
+            {showUnderReviewBanner && (
               <div className="mt-3 flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400">
                 <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
                 <p className="text-[11px] font-medium">This plan is under review — view only</p>
