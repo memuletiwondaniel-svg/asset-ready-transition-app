@@ -528,6 +528,14 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
         }}
         initialStatusOverride={oraActivityDragComplete ? "COMPLETED" : undefined}
       />
+
+      {/* Warning dialog for reverting approval-protected tasks */}
+      <ApprovalVoidWarningDialog
+        open={!!warningState}
+        taskTitle={warningState?.task.title || ''}
+        onCancel={handleWarningCancel}
+        onConfirm={handleWarningConfirm}
+      />
     </>
   );
 };
