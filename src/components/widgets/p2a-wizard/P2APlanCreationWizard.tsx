@@ -66,6 +66,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
   const [useWizard, setUseWizard] = useState<boolean | null>(null);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
   const [isLoadingDraft, setIsLoadingDraft] = useState(false);
+  const queryClient = useQueryClient();
   
   const { data: existingPlan } = useP2APlanByProject(projectId);
 
@@ -82,6 +83,123 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
     isSubmitting,
     isDeleting,
   } = useP2APlanWizard(projectId, projectCode);
+
+  // Total wizard steps (excluding overview which is step 1 / entry point)
+  const TOTAL_CREATION_STEPS = WIZARD_STEPS.length; // 7
+
+  /**
+   * Sync wizard step progress to ora_plan_activities and user_tasks.
+   * Maps wizard steps: step 1=0%, step 2=14%, ... step 7=86%, submitted=100%
+   */
+  const syncWizardProgress = useCallback(async (step: number, isSubmitted = false) => {
+    const percentage = isSubmitted ? 100 : Math.round(((step - 1) / TOTAL_CREATION_STEPS) * 100);
+    
+    try {
+      // Find the P2A activity linked to this project
+      const { data: activity } = await (supabase as any)
+        .from('ora_plan_activities')
+        .select('id, task_id')
+        .eq('activity_code', 'P2A-01')
+        .ilike('name', '%P2A%')
+        .limit(10);
+
+      // Filter to the correct project by checking the orp_plan's project_id
+      let matchedActivity: any = null;
+      if (activity?.length) {
+        for (const act of activity) {
+          const { data: plan } = await (supabase as any)
+            .from('orp_plans')
+            .select('project_id')
+            .eq('id', act.orp_plan_id || '')
+            .single();
+          if (plan?.project_id === projectId) {
+            matchedActivity = act;
+            break;
+          }
+        }
+      }
+
+      if (!matchedActivity) {
+        // Try direct lookup via orp_plans for this project
+        const { data: plans } = await (supabase as any)
+          .from('orp_plans')
+          .select('id')
+          .eq('project_id', projectId)
+          .limit(1);
+        if (plans?.[0]) {
+          const { data: act } = await (supabase as any)
+            .from('ora_plan_activities')
+            .select('id, task_id')
+            .eq('orp_plan_id', plans[0].id)
+            .eq('activity_code', 'P2A-01')
+            .single();
+          matchedActivity = act;
+        }
+      }
+
+      if (matchedActivity) {
+        // Update ora_plan_activities
+        await (supabase as any)
+          .from('ora_plan_activities')
+          .update({
+            completion_percentage: percentage,
+            status: isSubmitted ? 'COMPLETED' : percentage > 0 ? 'IN_PROGRESS' : 'NOT_STARTED',
+          })
+          .eq('id', matchedActivity.id);
+
+        // Update linked user_task
+        if (matchedActivity.task_id) {
+          const { data: taskRow } = await supabase
+            .from('user_tasks')
+            .select('metadata')
+            .eq('id', matchedActivity.task_id)
+            .single();
+
+          await supabase
+            .from('user_tasks')
+            .update({
+              metadata: {
+                ...((taskRow?.metadata as Record<string, any>) || {}),
+                completion_percentage: percentage,
+              } as any,
+              status: isSubmitted ? 'completed' : percentage > 0 ? 'in_progress' : 'pending',
+            })
+            .eq('id', matchedActivity.task_id);
+        }
+
+        // Also check for standalone P2A tasks (create_p2a_plan action)
+        const { data: p2aTasks } = await supabase
+          .from('user_tasks')
+          .select('id, metadata')
+          .eq('status', isSubmitted ? 'pending' : 'pending')  // catch any status
+          .limit(50);
+
+        const p2aTask = p2aTasks?.find((t: any) => {
+          const meta = t.metadata as Record<string, any>;
+          return meta?.action === 'create_p2a_plan' && meta?.project_id === projectId;
+        });
+
+        if (p2aTask) {
+          await supabase
+            .from('user_tasks')
+            .update({
+              metadata: {
+                ...((p2aTask.metadata as Record<string, any>) || {}),
+                completion_percentage: percentage,
+              } as any,
+              status: isSubmitted ? 'completed' : percentage > 0 ? 'in_progress' : 'pending',
+            })
+            .eq('id', p2aTask.id);
+        }
+
+        // Invalidate caches
+        queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+        queryClient.invalidateQueries({ queryKey: ['user-orp-activities'] });
+      }
+    } catch (err) {
+      console.error('Failed to sync wizard progress:', err);
+    }
+  }, [projectId, queryClient]);
 
   // When the wizard opens and a draft plan exists, auto-load and resume
   useEffect(() => {
