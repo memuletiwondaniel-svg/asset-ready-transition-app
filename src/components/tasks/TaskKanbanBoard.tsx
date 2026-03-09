@@ -339,6 +339,9 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
   const [oraActivityOpen, setOraActivityOpen] = useState(false);
   const [oraActivityDragComplete, setOraActivityDragComplete] = useState(false);
 
+  // Approval void warning dialog state
+  const [warningState, setWarningState] = useState<ApprovalWarningState | null>(null);
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
   );
@@ -402,9 +405,24 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
       return;
     }
 
-    // For other columns, move immediately
-    await moveTaskToColumn(task, targetColumn);
+    // For other columns, check if this would void approvals
+    const result = await moveTaskToColumn(task, targetColumn);
+    if (result === 'needs_warning') {
+      setWarningState({ task, targetColumn });
+    }
   }, [moveTaskToColumn]);
+
+  // Handle confirmation from the warning dialog
+  const handleWarningConfirm = useCallback(async () => {
+    if (!warningState) return;
+    setWarningState(null);
+    // Force move, bypassing approval protection
+    await moveTaskToColumn(warningState.task, warningState.targetColumn, true);
+  }, [warningState, moveTaskToColumn]);
+
+  const handleWarningCancel = useCallback(() => {
+    setWarningState(null);
+  }, []);
 
   const columnData = useMemo(() => {
     return COLUMNS.map(col => ({
