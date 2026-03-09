@@ -139,29 +139,44 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
     }
   }, [open, task?.id]);
 
-  // Save P2A schedule dates
+  // Save P2A schedule dates — syncs to both user_tasks AND ora_plan_activities (Gantt)
   const handleSaveP2aDates = async () => {
     if (!task) return;
     setIsSavingP2aDates(true);
     try {
-      const updates: Record<string, any> = {};
-      if (p2aStartDate) updates.start_date = format(p2aStartDate, 'yyyy-MM-dd');
-      if (p2aEndDate) updates.due_date = format(p2aEndDate, 'yyyy-MM-dd');
+      const startStr = p2aStartDate ? format(p2aStartDate, 'yyyy-MM-dd') : null;
+      const endStr = p2aEndDate ? format(p2aEndDate, 'yyyy-MM-dd') : null;
 
       // Update metadata with new dates
       const newMetadata = {
         ...(task.metadata || {}),
-        start_date: p2aStartDate ? format(p2aStartDate, 'yyyy-MM-dd') : null,
-        end_date: p2aEndDate ? format(p2aEndDate, 'yyyy-MM-dd') : null,
+        start_date: startStr,
+        end_date: endStr,
       };
 
+      // 1. Update user_tasks
       await supabase
         .from('user_tasks')
         .update({
-          due_date: p2aEndDate ? format(p2aEndDate, 'yyyy-MM-dd') : null,
+          due_date: endStr,
           metadata: newMetadata as any,
         })
         .eq('id', task.id);
+
+      // 2. Sync to ora_plan_activities so the Gantt chart reflects the change
+      const oraActivityId = task.metadata?.ora_activity_id as string | undefined;
+      if (oraActivityId) {
+        const resolvedId = oraActivityId.startsWith('ora-') ? oraActivityId.slice(4)
+          : oraActivityId.startsWith('ws-') ? oraActivityId.slice(3) : oraActivityId;
+        await (supabase as any)
+          .from('ora_plan_activities')
+          .update({
+            start_date: startStr,
+            end_date: endStr,
+            duration_days: p2aStartDate && p2aEndDate ? differenceInDays(p2aEndDate, p2aStartDate) : null,
+          })
+          .eq('id', resolvedId);
+      }
 
       setP2aOriginalStartDate(p2aStartDate);
       setP2aOriginalEndDate(p2aEndDate);
@@ -510,18 +525,19 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                 {p2aDatesDirty && (
                   <Button
                     size="sm"
-                    className="w-full gap-2"
+                    variant="outline"
+                    className="w-full gap-2 text-xs border-primary/30 text-primary hover:bg-primary/5"
                     onClick={handleSaveP2aDates}
                     disabled={isSavingP2aDates}
                   >
                     {isSavingP2aDates ? (
                       <>
-                        <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                        <span className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
                         Saving...
                       </>
                     ) : (
                       <>
-                        <CheckCircle className="h-3.5 w-3.5" />
+                        <CheckCircle className="h-3 w-3" />
                         Save Schedule
                       </>
                     )}
