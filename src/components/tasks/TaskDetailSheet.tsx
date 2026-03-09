@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import CreatePSSRWizard from '@/components/pssr/CreatePSSRWizard';
 import { ORAActivityPlanWizard } from '@/components/ora/wizard/ORAActivityPlanWizard';
+import { ORPGanttOverlay } from '@/components/orp/ORPGanttOverlay';
 import { P2APlanCreationWizard } from '@/components/widgets/p2a-wizard/P2APlanCreationWizard';
 import { ProjectIdBadge } from '@/components/ui/project-id-badge';
 
@@ -40,6 +41,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   const [action, setAction] = useState<'approve' | 'reject' | null>(null);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [oraWizardOpen, setOraWizardOpen] = useState(false);
+  const [oraGanttOpen, setOraGanttOpen] = useState(false);
   const [oraActivityOpen, setOraActivityOpen] = useState(false);
   const [vcrWizardOpen, setVcrWizardOpen] = useState(false);
   const [oraReviewWizardOpen, setOraReviewWizardOpen] = useState(false);
@@ -50,22 +52,25 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   const isP2aTask = task?.metadata?.action === 'create_p2a_plan';
   const p2aProjectId = task?.metadata?.project_id as string | undefined;
 
-  // Check if an ORA plan draft already exists for this project
-  const { data: hasExistingOraDraft } = useQuery({
-    queryKey: ['ora-draft-exists', oraProjectId],
+  // Check if an ORA plan exists for this project (draft or approved)
+  const { data: existingOraPlan } = useQuery({
+    queryKey: ['ora-plan-exists', oraProjectId],
     queryFn: async () => {
-      if (!oraProjectId) return false;
+      if (!oraProjectId) return null;
       const { data } = await (supabase as any)
         .from('orp_plans')
-        .select('id')
+        .select('id, status')
         .eq('project_id', oraProjectId)
-        .eq('status', 'DRAFT')
+        .order('created_at', { ascending: false })
         .limit(1);
-      return data && data.length > 0;
+      return data && data.length > 0 ? data[0] : null;
     },
     enabled: !!oraProjectId && isOraTask,
     staleTime: 30_000,
   });
+
+  const hasExistingOraDraft = existingOraPlan?.status === 'DRAFT';
+  const resolvedOraPlanId = (task?.metadata?.plan_id as string) || existingOraPlan?.id;
 
   // Fetch project info for P2A wizard
   const { data: p2aProjectInfo } = useQuery({
@@ -287,7 +292,14 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                     ? "bg-muted hover:bg-muted/80 text-foreground border border-border"
                     : "bg-primary hover:bg-primary/90 text-primary-foreground"
                 )}
-                onClick={() => setOraWizardOpen(true)}
+                onClick={() => {
+                  if (isCompleted && resolvedOraPlanId) {
+                    onOpenChange(false);
+                    setOraGanttOpen(true);
+                  } else {
+                    setOraWizardOpen(true);
+                  }
+                }}
               >
                 {isCompleted ? <Eye className="h-4 w-4" /> : <CalendarCheck className="h-4 w-4" />}
                 {oraCtaLabel}
@@ -420,6 +432,21 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
             setOraWizardOpen(false);
             onOpenChange(false);
           }}
+        />
+      )}
+
+      {/* ORA Gantt Overlay for completed/approved plans */}
+      {isOraTask && isCompleted && resolvedOraPlanId && (
+        <ORPGanttOverlay
+          open={oraGanttOpen}
+          onOpenChange={setOraGanttOpen}
+          planId={resolvedOraPlanId}
+          planStatus={planStatus || 'APPROVED'}
+          overallProgress={0}
+          completedCount={0}
+          totalCount={0}
+          projectCode={projectCode}
+          isReadOnly
         />
       )}
 
