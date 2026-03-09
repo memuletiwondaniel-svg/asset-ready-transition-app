@@ -105,7 +105,7 @@ export const ORPGanttOverlay: React.FC<ORPGanttOverlayProps> = ({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-[95vw] w-[95vw] max-h-[95vh] h-[95vh] flex flex-col p-0">
+        <DialogContent className="max-w-[95vw] w-[95vw] sm:max-w-[95vw] max-h-[95vh] h-[95vh] flex flex-col p-0">
           <DialogHeader className="px-5 pt-4 pb-3 border-b border-border/40">
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
