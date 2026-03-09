@@ -11,6 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format, parseISO, differenceInDays, addDays } from 'date-fns';
+import { toast } from 'sonner';
 import CreatePSSRWizard from '@/components/pssr/CreatePSSRWizard';
 import { ORAActivityPlanWizard } from '@/components/ora/wizard/ORAActivityPlanWizard';
 import { ORPGanttOverlay } from '@/components/orp/ORPGanttOverlay';
@@ -51,7 +52,10 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   // P2A schedule state
   const [p2aStartDate, setP2aStartDate] = useState<Date | undefined>();
   const [p2aEndDate, setP2aEndDate] = useState<Date | undefined>();
+  const [p2aOriginalStartDate, setP2aOriginalStartDate] = useState<Date | undefined>();
+  const [p2aOriginalEndDate, setP2aOriginalEndDate] = useState<Date | undefined>();
   const [showP2aCalendar, setShowP2aCalendar] = useState(false);
+  const [isSavingP2aDates, setIsSavingP2aDates] = useState(false);
 
   const oraProjectId = task?.metadata?.project_id as string | undefined;
   const isOraTask = task ? (task.type === 'ora_plan_creation' || (task.metadata?.action === 'create_ora_plan' && task.metadata?.source === 'ora_workflow')) : false;
@@ -116,6 +120,12 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
     return null;
   }, [p2aStartDate, p2aEndDate]);
 
+  // Detect if P2A dates changed
+  const p2aDatesDirty = useMemo(() => {
+    return p2aStartDate?.getTime() !== p2aOriginalStartDate?.getTime() ||
+           p2aEndDate?.getTime() !== p2aOriginalEndDate?.getTime();
+  }, [p2aStartDate, p2aEndDate, p2aOriginalStartDate, p2aOriginalEndDate]);
+
   // Initialize P2A dates from task metadata when sheet opens
   React.useEffect(() => {
     if (open && task && isP2aTask) {
@@ -123,9 +133,45 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
       const ed = task.metadata?.end_date ? parseISO(task.metadata.end_date as string) : task.due_date ? parseISO(task.due_date) : undefined;
       setP2aStartDate(sd);
       setP2aEndDate(ed);
+      setP2aOriginalStartDate(sd);
+      setP2aOriginalEndDate(ed);
       setShowP2aCalendar(false);
     }
   }, [open, task?.id]);
+
+  // Save P2A schedule dates
+  const handleSaveP2aDates = async () => {
+    if (!task) return;
+    setIsSavingP2aDates(true);
+    try {
+      const updates: Record<string, any> = {};
+      if (p2aStartDate) updates.start_date = format(p2aStartDate, 'yyyy-MM-dd');
+      if (p2aEndDate) updates.due_date = format(p2aEndDate, 'yyyy-MM-dd');
+
+      // Update metadata with new dates
+      const newMetadata = {
+        ...(task.metadata || {}),
+        start_date: p2aStartDate ? format(p2aStartDate, 'yyyy-MM-dd') : null,
+        end_date: p2aEndDate ? format(p2aEndDate, 'yyyy-MM-dd') : null,
+      };
+
+      await supabase
+        .from('user_tasks')
+        .update({
+          due_date: p2aEndDate ? format(p2aEndDate, 'yyyy-MM-dd') : null,
+          metadata: newMetadata as any,
+        })
+        .eq('id', task.id);
+
+      setP2aOriginalStartDate(p2aStartDate);
+      setP2aOriginalEndDate(p2aEndDate);
+      toast.success('Schedule updated');
+    } catch {
+      toast.error('Failed to save schedule');
+    } finally {
+      setIsSavingP2aDates(false);
+    }
+  };
 
   const handleAction = (type: 'approve' | 'reject') => {
     if (!task) return;
@@ -458,6 +504,28 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                       }}
                     />
                   </div>
+                )}
+
+                {/* Save button - only when dates changed */}
+                {p2aDatesDirty && (
+                  <Button
+                    size="sm"
+                    className="w-full gap-2"
+                    onClick={handleSaveP2aDates}
+                    disabled={isSavingP2aDates}
+                  >
+                    {isSavingP2aDates ? (
+                      <>
+                        <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="h-3.5 w-3.5" />
+                        Save Schedule
+                      </>
+                    )}
+                  </Button>
                 )}
               </div>
             )}
