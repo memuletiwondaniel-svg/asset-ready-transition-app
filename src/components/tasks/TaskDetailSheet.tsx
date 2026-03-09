@@ -13,6 +13,7 @@ import { format } from 'date-fns';
 import CreatePSSRWizard from '@/components/pssr/CreatePSSRWizard';
 import { ORAActivityPlanWizard } from '@/components/ora/wizard/ORAActivityPlanWizard';
 import { P2APlanCreationWizard } from '@/components/widgets/p2a-wizard/P2APlanCreationWizard';
+import { ProjectIdBadge } from '@/components/ui/project-id-badge';
 
 import { ORAActivityTaskSheet } from './ORAActivityTaskSheet';
 import { VCRExecutionPlanWizard } from '@/components/widgets/vcr-wizard/VCRExecutionPlanWizard';
