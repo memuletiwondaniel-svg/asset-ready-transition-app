@@ -51,7 +51,10 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   // P2A schedule state
   const [p2aStartDate, setP2aStartDate] = useState<Date | undefined>();
   const [p2aEndDate, setP2aEndDate] = useState<Date | undefined>();
+  const [p2aOriginalStartDate, setP2aOriginalStartDate] = useState<Date | undefined>();
+  const [p2aOriginalEndDate, setP2aOriginalEndDate] = useState<Date | undefined>();
   const [showP2aCalendar, setShowP2aCalendar] = useState(false);
+  const [isSavingP2aDates, setIsSavingP2aDates] = useState(false);
 
   const oraProjectId = task?.metadata?.project_id as string | undefined;
   const isOraTask = task ? (task.type === 'ora_plan_creation' || (task.metadata?.action === 'create_ora_plan' && task.metadata?.source === 'ora_workflow')) : false;
