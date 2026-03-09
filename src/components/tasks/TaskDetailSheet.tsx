@@ -364,6 +364,104 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
               </Button>
             )}
 
+            {/* P2A Schedule: Start, End, Duration */}
+            {isP2aTask && p2aProjectId && !isCompleted && (
+              <div className="space-y-3">
+                <p className="text-sm font-medium text-muted-foreground">Schedule</p>
+                <div className="grid grid-cols-[1fr_1fr_auto] gap-2 items-end">
+                  {/* Start Date */}
+                  <div className="min-w-0">
+                    <p className="text-[10px] text-muted-foreground mb-1 uppercase tracking-wide font-medium">Start Date</p>
+                    <button
+                      type="button"
+                      onClick={() => setShowP2aCalendar(v => !v)}
+                      className={cn(
+                        "w-full h-9 px-2 sm:px-3 rounded-md border text-xs sm:text-sm text-left transition-colors hover:bg-muted/50 truncate",
+                        p2aStartDate ? "text-foreground" : "text-muted-foreground",
+                        showP2aCalendar && "ring-1 ring-primary/40"
+                      )}
+                    >
+                      {p2aStartDate ? format(p2aStartDate, 'MMM d, yyyy') : 'Set date'}
+                    </button>
+                  </div>
+
+                  {/* End Date */}
+                  <div className="min-w-0">
+                    <p className="text-[10px] text-muted-foreground mb-1 uppercase tracking-wide font-medium">End Date</p>
+                    <button
+                      type="button"
+                      onClick={() => setShowP2aCalendar(v => !v)}
+                      className={cn(
+                        "w-full h-9 px-2 sm:px-3 rounded-md border text-xs sm:text-sm text-left transition-colors hover:bg-muted/50 truncate",
+                        p2aEndDate ? "text-foreground" : "text-muted-foreground",
+                        showP2aCalendar && "ring-1 ring-primary/40"
+                      )}
+                    >
+                      {p2aEndDate ? format(p2aEndDate, 'MMM d, yyyy') : 'Set date'}
+                    </button>
+                  </div>
+
+                  {/* Duration */}
+                  <div className="shrink-0">
+                    <p className="text-[10px] text-muted-foreground mb-1 uppercase tracking-wide font-medium">Duration</p>
+                    <div className="flex items-center gap-0.5 h-9">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-7 w-7 text-xs"
+                        disabled={!p2aStartDate || !p2aEndDate || (p2aDurationDays !== null && p2aDurationDays <= 1)}
+                        onClick={() => {
+                          if (p2aStartDate && p2aEndDate && p2aDurationDays && p2aDurationDays > 1) {
+                            setP2aEndDate(addDays(p2aEndDate, -1));
+                          }
+                        }}
+                      >
+                        −
+                      </Button>
+                      <span className="font-semibold text-sm text-foreground w-8 text-center">
+                        {p2aDurationDays !== null ? `${p2aDurationDays}d` : '—'}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-7 w-7 text-xs"
+                        disabled={!p2aStartDate || !p2aEndDate}
+                        onClick={() => {
+                          if (p2aStartDate && p2aEndDate) {
+                            setP2aEndDate(addDays(p2aEndDate, 1));
+                          }
+                        }}
+                      >
+                        +
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Collapsible range calendar */}
+                {showP2aCalendar && (
+                  <div className="border rounded-lg p-1 animate-in fade-in slide-in-from-top-1 duration-200">
+                    <Calendar
+                      mode="range"
+                      selected={p2aStartDate && p2aEndDate ? { from: p2aStartDate, to: p2aEndDate } : p2aStartDate ? { from: p2aStartDate, to: undefined } : undefined}
+                      onSelect={(range) => {
+                        if (range?.from) setP2aStartDate(range.from);
+                        else setP2aStartDate(undefined);
+                        if (range?.to) setP2aEndDate(range.to);
+                        else if (range?.from && !range?.to) setP2aEndDate(undefined);
+                        else setP2aEndDate(undefined);
+                      }}
+                      numberOfMonths={1}
+                      className="p-2 pointer-events-auto"
+                      classNames={{
+                        day_today: "bg-muted text-muted-foreground font-medium",
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* P2A Plan Creation CTA */}
             {isP2aTask && p2aProjectId && (
               <Button
