@@ -282,17 +282,21 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
   // Auto-save when clicking Next
   const handleNext = async () => {
     recalculateCompletedSteps();
+    const nextStep = Math.min(currentStep + 1, WIZARD_STEPS.length);
     try {
       await saveDraft();
+      // Fire-and-forget progress sync (don't block navigation)
+      syncWizardProgress(nextStep);
     } catch (error) {
       // Continue navigation even if save fails silently
     }
-    setCurrentStep(prev => Math.min(prev + 1, WIZARD_STEPS.length));
+    setCurrentStep(nextStep);
   };
 
   const handleSaveAndExit = async () => {
     try {
       await saveDraft();
+      syncWizardProgress(currentStep);
       handleClose();
     } catch (error) {
       // Error handled in hook
@@ -311,6 +315,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
   const handleSubmit = async () => {
     try {
       await submitForApproval();
+      await syncWizardProgress(WIZARD_STEPS.length, true);
       handleClose();
       onSuccess?.();
       toast.success('P2A Plan submitted for approval!');
