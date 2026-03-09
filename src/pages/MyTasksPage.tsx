@@ -176,9 +176,10 @@ const MyTasksPage: React.FC = () => {
         )}
       </div>
 
-      <NewTaskModal
-        open={createTaskModalOpen}
-        onOpenChange={setCreateTaskModalOpen}
+      <AddActivityDialog
+        open={addActivityOpen}
+        onOpenChange={setAddActivityOpen}
+        mode={addActivityMode}
       />
     </div>
   );
