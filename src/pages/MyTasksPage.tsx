@@ -135,10 +135,10 @@ const MyTasksPage: React.FC = () => {
 
             {/* View toggle */}
             <ToggleGroup type="single" value={viewMode} onValueChange={(v) => v && setViewMode(v as ViewMode)} size="sm">
-              <ToggleGroupItem value="list" aria-label="List view" className="px-2">
+              <ToggleGroupItem value="list" aria-label={t.listView || 'List view'} className="px-2">
                 <LayoutList className="h-4 w-4" />
               </ToggleGroupItem>
-              <ToggleGroupItem value="kanban" aria-label="Board view" className="px-2">
+              <ToggleGroupItem value="kanban" aria-label={t.boardView || 'Board view'} className="px-2">
                 <Kanban className="h-4 w-4" />
               </ToggleGroupItem>
             </ToggleGroup>
