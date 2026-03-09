@@ -3,6 +3,7 @@ import { Outlet, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { OrshSidebar } from '@/components/OrshSidebar';
 import { createSidebarNavigator } from '@/utils/sidebarNavigation';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useDirectorRedirect } from '@/hooks/useDirectorRedirect';
 import { Loader2 } from 'lucide-react';
 import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
