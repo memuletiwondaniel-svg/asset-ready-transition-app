@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { CalendarCheck, Plus, Search, LayoutList, Kanban, FolderOpen, Layers } from 'lucide-react';
+import { CalendarCheck, Plus, Search, LayoutList, Kanban, FolderOpen, Layers, BookOpen, PenLine } from 'lucide-react';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { NewTaskModal } from '@/components/tasks/NewTaskModal';
+import { AddActivityDialog } from '@/components/tasks/AddActivityDialog';
 import { UnifiedTaskList } from '@/components/tasks/UnifiedTaskList';
 import { TaskKanbanBoard } from '@/components/tasks/TaskKanbanBoard';
 import { RecentlyCompletedTasks } from '@/components/tasks/RecentlyCompletedTasks';
@@ -29,7 +29,8 @@ const MyTasksPage: React.FC = () => {
   const { user } = useAuth();
   const { updateLastLogin } = useUserLastLogin();
   const { data: isDirector, isLoading: isDirectorLoading } = useUserIsDirector();
-  const [createTaskModalOpen, setCreateTaskModalOpen] = useState(false);
+  const [addActivityOpen, setAddActivityOpen] = useState(false);
+  const [addActivityMode, setAddActivityMode] = useState<'catalog' | 'custom'>('catalog');
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('kanban');
   const [groupBy, setGroupBy] = useState<GroupBy>('none');
@@ -140,14 +141,21 @@ const MyTasksPage: React.FC = () => {
               </ToggleGroupItem>
             </ToggleGroup>
 
-            <Button
-              size="sm"
-              onClick={() => setCreateTaskModalOpen(true)}
-              className="gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              New Task
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-1.5 text-xs border-primary/30 text-primary hover:bg-primary/10">
+                  <Plus className="h-3.5 w-3.5" /> Add Activity
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => { setAddActivityMode('catalog'); setAddActivityOpen(true); }}>
+                  <BookOpen className="h-4 w-4 mr-2" /> From Catalog
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => { setAddActivityMode('custom'); setAddActivityOpen(true); }}>
+                  <PenLine className="h-4 w-4 mr-2" /> Custom Activity
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
@@ -168,9 +176,10 @@ const MyTasksPage: React.FC = () => {
         )}
       </div>
 
-      <NewTaskModal
-        open={createTaskModalOpen}
-        onOpenChange={setCreateTaskModalOpen}
+      <AddActivityDialog
+        open={addActivityOpen}
+        onOpenChange={setAddActivityOpen}
+        mode={addActivityMode}
       />
     </div>
   );
