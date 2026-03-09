@@ -24,6 +24,11 @@ import {
   ChevronRight,
   GripVertical,
   AlertTriangle,
+  Circle,
+  Loader2,
+  Clock,
+  CheckCircle2,
+  Inbox,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, isPast, isToday, differenceInDays } from 'date-fns';
