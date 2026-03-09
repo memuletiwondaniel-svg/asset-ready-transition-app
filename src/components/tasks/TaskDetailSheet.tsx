@@ -436,7 +436,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
       )}
 
       {/* ORA Gantt Overlay for completed/approved plans */}
-      {isOraTask && isCompleted && oraPlanId && (
+      {isOraTask && isCompleted && resolvedOraPlanId && (
         <ORPGanttOverlay
           open={oraGanttOpen}
           onOpenChange={setOraGanttOpen}
