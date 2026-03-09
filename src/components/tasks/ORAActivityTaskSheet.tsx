@@ -802,23 +802,20 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                   <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                 </div>
               ) : dbComments.length > 0 ? (
-                <div className="space-y-2.5 max-h-60 overflow-y-auto">
+                <div className="space-y-3 max-h-60 overflow-y-auto">
                   {dbComments.map((c) => (
-                    <div key={c.id} className="flex gap-2.5 p-2.5 bg-muted/40 rounded-lg">
-                      <Avatar className="h-7 w-7 shrink-0 mt-0.5">
+                    <div key={c.id} className="flex gap-2.5">
+                      <Avatar className="h-6 w-6 shrink-0 mt-0.5">
                         {c.avatar_url && <AvatarImage src={c.avatar_url} />}
-                        <AvatarFallback className="text-[10px] font-medium">
+                        <AvatarFallback className="text-[9px] font-medium bg-muted">
                           {(c.full_name || '?').slice(0, 2).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <span className="text-xs font-medium truncate">{c.full_name}</span>
-                          <span className="text-[10px] text-muted-foreground shrink-0">
-                            {formatDistanceToNow(parseISO(c.created_at), { addSuffix: true })}
-                          </span>
-                        </div>
-                        <p className="text-sm text-foreground/90 whitespace-pre-wrap">{c.comment}</p>
+                        <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{c.comment}</p>
+                        <p className="text-[10px] text-muted-foreground/60 mt-1">
+                          {c.full_name} · {formatDistanceToNow(parseISO(c.created_at), { addSuffix: true })}
+                        </p>
                       </div>
                     </div>
                   ))}
