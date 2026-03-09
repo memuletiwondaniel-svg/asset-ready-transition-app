@@ -439,6 +439,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
 
   if (!task) return null;
 
+  return (
     <>
     <Sheet open={open} onOpenChange={onOpenChange} modal={true}>
       <SheetContent 
