@@ -120,15 +120,15 @@ const MyTasksPage: React.FC = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => setGroupBy('none')}>
-                  No Grouping
+                  {t.noGrouping || 'No Grouping'}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setGroupBy('project')}>
                   <FolderOpen className="h-3.5 w-3.5 mr-2" />
-                  By Project
+                  {t.groupByProject || 'By Project'}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setGroupBy('category')}>
                   <Layers className="h-3.5 w-3.5 mr-2" />
-                  By Category
+                  {t.groupByCategory || 'By Category'}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
