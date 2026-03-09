@@ -174,7 +174,11 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
 
   const intentMessage = getIntentMessage();
 
+  const projectCode = task.metadata?.project_code as string | undefined;
+
   const getTypeBadge = () => {
+    if (isOraTask && projectCode) return <ProjectIdBadge size="sm">{projectCode}</ProjectIdBadge>;
+    if (isP2aTask && projectCode) return <ProjectIdBadge size="sm">{projectCode}</ProjectIdBadge>;
     if (isP2aTask) return <Badge variant="secondary" className="text-xs bg-emerald-500/10 text-emerald-600">P2A Plan</Badge>;
     if (isOraTask) return <Badge variant="secondary" className="text-xs bg-violet-500/10 text-violet-600">ORA Plan</Badge>;
     if (isOraReviewTask) return <Badge variant="secondary" className="text-xs bg-amber-500/10 text-amber-600">ORA Review</Badge>;
