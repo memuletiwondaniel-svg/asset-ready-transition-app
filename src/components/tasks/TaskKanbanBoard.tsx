@@ -194,6 +194,7 @@ const KanbanCardContent: React.FC<{
 }> = ({ task, onClick, dragHandleProps, isOverlay, accentClass }) => {
   const dateAnnotation = getDateAnnotation(task);
   const sp = task.smartPriority;
+  const { translations: t } = useLanguage();
 
   return (
     <Card
