@@ -440,7 +440,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
         <ORPGanttOverlay
           open={oraGanttOpen}
           onOpenChange={setOraGanttOpen}
-          planId={oraPlanId}
+          planId={resolvedOraPlanId}
           planStatus={planStatus || 'APPROVED'}
           overallProgress={0}
           completedCount={0}
