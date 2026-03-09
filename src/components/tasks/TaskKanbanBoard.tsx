@@ -198,7 +198,7 @@ const KanbanCardContent: React.FC<{
       onClick={onClick}
       className={cn(
         "p-3 cursor-pointer transition-all duration-200 rounded-lg group border-l-[3px]",
-        "border border-border/60 bg-card shadow-sm",
+        "border border-border/60 bg-card shadow-[0_1px_3px_0_rgb(0,0,0,0.04)]",
         "hover:-translate-y-0.5 hover:shadow-md hover:border-border",
         accentClass || 'border-l-border',
         task.isWaiting && 'opacity-50',
