@@ -49,6 +49,8 @@ const PlatformGuideDocument = lazy(() => import("./admin-tools/PlatformGuideDocu
 const StrategicNorthstarDocument = lazy(() => import("./admin-tools/StrategicNorthstarDocument"));
 const IncidentResponseRunbook = lazy(() => import("./admin-tools/IncidentResponseRunbook"));
 const DeploymentConfigs = lazy(() => import("./admin-tools/DeploymentConfigs"));
+const CustomerJourneyMaps = lazy(() => import("./admin-tools/CustomerJourneyMaps"));
+const ProcessFlowMaps = lazy(() => import("./admin-tools/ProcessFlowMaps"));
 
 // Loading fallback component
 const ViewLoadingFallback = () => (
