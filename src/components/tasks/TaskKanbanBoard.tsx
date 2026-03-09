@@ -67,7 +67,7 @@ interface ApprovalWarningState {
   targetColumn: KanbanColumn;
 }
 
-const COLUMNS = [
+
 const getColumns = (t: any) => [
   { key: 'todo' as const, label: t.kanbanToDo || 'To Do', icon: Circle, accent: 'border-l-blue-500', headerBg: 'bg-blue-50/70 dark:bg-blue-950/20', dotColor: 'bg-blue-500', emptyIcon: Inbox, emptyMsg: t.kanbanEmptyToDo || 'Nothing to do — nice!' },
   { key: 'in_progress' as const, label: t.kanbanInProgress || 'In Progress', icon: Loader2, accent: 'border-l-amber-500', headerBg: 'bg-amber-50/70 dark:bg-amber-950/20', dotColor: 'bg-amber-500', emptyIcon: Circle, emptyMsg: t.kanbanEmptyInProgress || 'No tasks in progress' },
