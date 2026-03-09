@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { CheckCircle, X, Calendar as CalendarIcon, AlertTriangle, ChevronRight, Pencil, CalendarCheck, ClipboardList, FileText, Eye } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -39,6 +39,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   onReject,
 }) => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [comment, setComment] = useState('');
   const [action, setAction] = useState<'approve' | 'reject' | null>(null);
   const [wizardOpen, setWizardOpen] = useState(false);
@@ -180,6 +181,11 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
 
       setP2aOriginalStartDate(p2aStartDate);
       setP2aOriginalEndDate(p2aEndDate);
+      
+      // Invalidate task queries so cards reflect updated dates
+      queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['ora-plan-activities'] });
+      
       toast.success('Schedule updated');
     } catch {
       toast.error('Failed to save schedule');
