@@ -70,6 +70,8 @@ const FAVORITE_ICON_MAP: Record<string, { icon: React.ComponentType<any>; color:
   '/admin-tools/northstar-document': { icon: Compass, color: 'bg-amber-600' },
   '/admin-tools/incident-response': { icon: AlertTriangle, color: 'bg-red-600' },
   '/admin-tools/deployment-configs': { icon: Container, color: 'bg-cyan-600' },
+  '/admin-tools/journey-maps': { icon: MapPin, color: 'bg-pink-600' },
+  '/admin-tools/process-flows': { icon: GitBranch, color: 'bg-emerald-600' },
 };
 
 // Label-based fallback for stale localStorage entries
