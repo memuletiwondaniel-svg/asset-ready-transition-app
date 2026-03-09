@@ -224,7 +224,11 @@ const KanbanCardContent: React.FC<{
               Soon
             </span>
           )}
-          {dateAnnotation && (
+          {task.kanbanColumn === 'done' ? (
+            <span className="text-[9px] font-medium text-emerald-600 bg-emerald-500/8 px-1.5 py-0 rounded whitespace-nowrap">
+              Completed
+            </span>
+          ) : dateAnnotation ? (
             <span className={cn(
               "text-[9px] font-medium px-1.5 py-0 rounded whitespace-nowrap",
               dateAnnotation.variant === 'overdue' && 'text-destructive bg-destructive/8',
@@ -233,7 +237,7 @@ const KanbanCardContent: React.FC<{
             )}>
               {dateAnnotation.variant === 'overdue' ? 'Overdue' : dateAnnotation.label}
             </span>
-          )}
+          ) : null}
         </div>
       </div>
 
