@@ -127,6 +127,25 @@ const fetchUserTasks = async (userId: string): Promise<FetchResult> => {
     }
   }
 
+  // Resolve project codes for tasks that have project_id but no project_code
+  let projectCodeMap: Record<string, string> = {};
+  const tasksNeedingCode = regularTasks.filter(t => {
+    const m = t.metadata as Record<string, any>;
+    return m?.project_id && !m?.project_code;
+  });
+  if (tasksNeedingCode.length > 0) {
+    const pIds = [...new Set(tasksNeedingCode.map(t => (t.metadata as Record<string, any>).project_id))] as string[];
+    const { data: projData } = await supabase
+      .from('projects')
+      .select('id, project_id_prefix, project_id_number')
+      .in('id', pIds);
+    if (projData) {
+      projData.forEach((p: any) => {
+        projectCodeMap[p.id] = `${p.project_id_prefix}-${p.project_id_number}`;
+      });
+    }
+  }
+
   // Enrich tasks with dependency information
   const enrichedTasks = regularTasks.map(task => {
     const blockingTasks = depsData
@@ -143,11 +162,15 @@ const fetchUserTasks = async (userId: string): Promise<FetchResult> => {
     const projectId = meta?.project_id;
     const planStatus = isOraPlanCreation && projectId ? oraPlanStatuses[projectId] : undefined;
 
+    // Inject resolved project_code if missing
+    const resolvedCode = !meta?.project_code && projectId ? projectCodeMap[projectId] : undefined;
+
+    const needsEnrichment = planStatus || resolvedCode;
     return {
       ...task,
       blocking_tasks: blockingTasks,
       blocked_by_tasks: blockedByTasks,
-      metadata: planStatus ? { ...meta, plan_status: planStatus } : task.metadata,
+      metadata: needsEnrichment ? { ...meta, ...(planStatus && { plan_status: planStatus }), ...(resolvedCode && { project_code: resolvedCode }) } : task.metadata,
     };
   });
 
