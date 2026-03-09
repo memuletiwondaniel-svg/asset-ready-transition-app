@@ -266,8 +266,8 @@ const KanbanCardContent: React.FC<{
       {/* Progress for in-progress tasks – always show % */}
       {task.kanbanColumn === 'in_progress' && (
         <div className="flex items-center gap-1.5 mt-1">
-          <Progress value={task.progressPercentage ?? 0} className="h-1 flex-1" />
-          <span className="text-[9px] font-medium text-primary">{Math.round(task.progressPercentage ?? 0)}%</span>
+          <Progress value={task.progressPercentage ?? 0} className="h-1 flex-1 bg-muted/40" indicatorClassName="bg-muted-foreground/40" />
+          <span className="text-[9px] font-medium text-muted-foreground">{Math.round(task.progressPercentage ?? 0)}%</span>
         </div>
       )}
       {/* Item counts for bundle tasks (shown in any column) */}
