@@ -39,6 +39,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   onReject,
 }) => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [comment, setComment] = useState('');
   const [action, setAction] = useState<'approve' | 'reject' | null>(null);
   const [wizardOpen, setWizardOpen] = useState(false);
