@@ -4,6 +4,7 @@ import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { AddActivityDialog } from '@/components/tasks/AddActivityDialog';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { UnifiedTaskList } from '@/components/tasks/UnifiedTaskList';
 import { TaskKanbanBoard } from '@/components/tasks/TaskKanbanBoard';
 import { RecentlyCompletedTasks } from '@/components/tasks/RecentlyCompletedTasks';
