@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Users, FolderOpen, Folder, Settings, ArrowLeft, ClipboardList, CheckCircle, Home, Search, X, Star, Activity, Sliders, Building2, LayoutTemplate, Key, Loader2, Upload, Plug, Shield, FileSearch, Timer, ShieldAlert, Database, Archive, BookOpen, KeyRound, Webhook, HeartPulse, UserMinus, ClipboardCheck, Rocket, Flag, FileText, Compass, AlertTriangle, Container } from 'lucide-react';
+import { Users, FolderOpen, Folder, Settings, ArrowLeft, ClipboardList, CheckCircle, Home, Search, X, Star, Activity, Sliders, Building2, LayoutTemplate, Key, Loader2, Upload, Plug, Shield, FileSearch, Timer, ShieldAlert, Database, Archive, BookOpen, KeyRound, Webhook, HeartPulse, UserMinus, ClipboardCheck, Rocket, Flag, FileText, Compass, AlertTriangle, Container, MapPin, GitBranch } from 'lucide-react';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
@@ -49,6 +49,8 @@ const PlatformGuideDocument = lazy(() => import("./admin-tools/PlatformGuideDocu
 const StrategicNorthstarDocument = lazy(() => import("./admin-tools/StrategicNorthstarDocument"));
 const IncidentResponseRunbook = lazy(() => import("./admin-tools/IncidentResponseRunbook"));
 const DeploymentConfigs = lazy(() => import("./admin-tools/DeploymentConfigs"));
+const CustomerJourneyMaps = lazy(() => import("./admin-tools/CustomerJourneyMaps"));
+const ProcessFlowMaps = lazy(() => import("./admin-tools/ProcessFlowMaps"));
 
 // Loading fallback component
 const ViewLoadingFallback = () => (
@@ -79,7 +81,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   const location = useLocation();
 
   // State management - consolidated for cleaner code
-  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'activity-log' | 'ora-configuration' | 'handover-management' | 'bulk-upload' | 'apis' | 'sso' | 'roles-permissions' | 'audit-logs' | 'session-timeout' | 'brute-force' | 'data-export' | 'audit-retention' | 'disaster-recovery' | 'api-keys' | 'webhook-security' | 'integration-health' | 'user-offboarding' | 'permission-review' | 'deployment-log' | 'feature-flags' | 'security-document' | 'platform-guide' | 'northstar-document' | 'incident-response' | 'deployment-configs'>(() => {
+  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'activity-log' | 'ora-configuration' | 'handover-management' | 'bulk-upload' | 'apis' | 'sso' | 'roles-permissions' | 'audit-logs' | 'session-timeout' | 'brute-force' | 'data-export' | 'audit-retention' | 'disaster-recovery' | 'api-keys' | 'webhook-security' | 'integration-health' | 'user-offboarding' | 'permission-review' | 'deployment-log' | 'feature-flags' | 'security-document' | 'platform-guide' | 'northstar-document' | 'incident-response' | 'deployment-configs' | 'journey-maps' | 'process-flows'>(() => {
     // Check if navigated with a specific activeView from favorites
     const state = location.state as any;
     return state?.activeView || 'dashboard';
@@ -471,6 +473,26 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     stats: {},
     height: 'md:row-span-2',
     onClick: () => setActiveView('deployment-configs')
+  }, {
+    id: 'journey-maps',
+    title: 'Customer Journey Maps',
+    description: 'Role-based journey maps with real user personas, goals, pain points, and platform interaction flows',
+    icon: MapPin,
+    gradient: 'from-pink-600 to-rose-700',
+    tooltip: 'View enhanced customer journey maps for all configured roles with real profiles',
+    stats: {},
+    height: 'md:row-span-2',
+    onClick: () => setActiveView('journey-maps')
+  }, {
+    id: 'process-flows',
+    title: 'Process Flow Maps',
+    description: 'Complete process documentation covering all ORSH workflows, approval chains, and automation triggers',
+    icon: GitBranch,
+    gradient: 'from-emerald-600 to-teal-700',
+    tooltip: 'View detailed process flow maps explaining every ORSH process',
+    stats: {},
+    height: 'md:row-span-2',
+    onClick: () => setActiveView('process-flows')
   }];
 
   // Filter admin tools based on search query
@@ -723,6 +745,20 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     return <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
         <Suspense fallback={<ViewLoadingFallback />}>
           <DeploymentConfigs onBack={() => setActiveView('dashboard')} />
+        </Suspense>
+      </div>;
+  }
+  if (activeView === 'journey-maps') {
+    return <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
+        <Suspense fallback={<ViewLoadingFallback />}>
+          <CustomerJourneyMaps onBack={() => setActiveView('dashboard')} />
+        </Suspense>
+      </div>;
+  }
+  if (activeView === 'process-flows') {
+    return <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
+        <Suspense fallback={<ViewLoadingFallback />}>
+          <ProcessFlowMaps onBack={() => setActiveView('dashboard')} />
         </Suspense>
       </div>;
   }
