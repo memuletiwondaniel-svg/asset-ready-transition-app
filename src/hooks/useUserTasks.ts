@@ -29,7 +29,15 @@ export interface UserTask {
 // Fetch active tasks (pending, in_progress, waiting) for the kanban board
 const BUNDLE_TYPES = ['vcr_checklist_bundle', 'vcr_approval_bundle', 'pssr_checklist_bundle', 'pssr_approval_bundle'];
 
-const fetchUserTasks = async (userId: string): Promise<{ tasks: UserTask[]; dependencies: TaskDependency[]; bundleTasks: any[]; oraActivityDates: Record<string, { start_date: string | null; end_date: string | null; duration_days: number | null; completion_percentage: number | null }> }> => {
+interface FetchResult {
+  tasks: UserTask[];
+  dependencies: TaskDependency[];
+  bundleTasks: any[];
+  oraActivityDates: Record<string, { start_date: string | null; end_date: string | null; duration_days: number | null; completion_percentage: number | null }>;
+  oraPlanStatuses: Record<string, string>; // projectId -> plan status
+}
+
+const fetchUserTasks = async (userId: string): Promise<FetchResult> => {
   // Single query fetches both regular tasks AND bundle tasks (previously two separate queries)
   const { data: tasksData, error: tasksError } = await supabase
     .from('user_tasks')
@@ -93,6 +101,32 @@ const fetchUserTasks = async (userId: string): Promise<{ tasks: UserTask[]; depe
     }
   }
 
+  // Fetch ORA plan statuses for ora_plan_creation tasks (to map approved plans to Done)
+  const oraPlanCreationTasks = regularTasks.filter(t => {
+    const meta = t.metadata as Record<string, any>;
+    return t.type === 'ora_plan_creation' || meta?.action === 'create_ora_plan';
+  });
+
+  let oraPlanStatuses: Record<string, string> = {};
+  if (oraPlanCreationTasks.length > 0) {
+    const projectIds = oraPlanCreationTasks
+      .map(t => (t.metadata as Record<string, any>)?.project_id)
+      .filter(Boolean) as string[];
+
+    if (projectIds.length > 0) {
+      const { data: planData } = await supabase
+        .from('orp_plans')
+        .select('id, project_id, status')
+        .in('project_id', projectIds);
+
+      if (planData) {
+        planData.forEach((p: any) => {
+          oraPlanStatuses[p.project_id] = p.status;
+        });
+      }
+    }
+  }
+
   // Enrich tasks with dependency information
   const enrichedTasks = regularTasks.map(task => {
     const blockingTasks = depsData
@@ -103,14 +137,21 @@ const fetchUserTasks = async (userId: string): Promise<{ tasks: UserTask[]; depe
       .filter(dep => dep.task_id === task.id)
       .map(dep => dep.depends_on_task_id);
 
+    // For ORA plan creation tasks, inject the plan status into metadata
+    const meta = task.metadata as Record<string, any>;
+    const isOraPlanCreation = task.type === 'ora_plan_creation' || meta?.action === 'create_ora_plan';
+    const projectId = meta?.project_id;
+    const planStatus = isOraPlanCreation && projectId ? oraPlanStatuses[projectId] : undefined;
+
     return {
       ...task,
       blocking_tasks: blockingTasks,
       blocked_by_tasks: blockedByTasks,
+      metadata: planStatus ? { ...meta, plan_status: planStatus } : task.metadata,
     };
   });
 
-  return { tasks: enrichedTasks, dependencies: depsData, bundleTasks, oraActivityDates };
+  return { tasks: enrichedTasks, dependencies: depsData, bundleTasks, oraActivityDates, oraPlanStatuses };
 };
 
 /**

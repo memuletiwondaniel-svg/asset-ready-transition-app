@@ -158,6 +158,14 @@ export function useUnifiedTasks(userId: string) {
         isWaiting,
         createdAt: t.created_at,
       });
+
+      // Detect workflow tasks backed by external approvals
+      const isOraPlanCreation = action === 'create_ora_plan' || t.type === 'ora_plan_creation';
+      const isP2aPlanCreation = action === 'create_p2a_plan' || t.type === 'p2a_plan_creation';
+      const planStatus = meta?.plan_status;
+      const isWorkflowTask = isOraPlanCreation || isP2aPlanCreation;
+      const isApprovalProtected = isWorkflowTask && ['APPROVED', 'COMPLETED'].includes(planStatus?.toUpperCase?.() || '');
+
       tasks.push({
         id: `ut-${t.id}`,
         category,
@@ -180,7 +188,14 @@ export function useUnifiedTasks(userId: string) {
         isWaiting,
         durationDays,
         progressPercentage: (oraAct as any)?.completion_percentage ?? meta?.completion_percentage ?? undefined,
-        kanbanColumn: mapToKanbanColumn({ status: t.status, isWaiting, progressPercentage: (oraAct as any)?.completion_percentage ?? meta?.completion_percentage }),
+        kanbanColumn: mapToKanbanColumn({
+          status: t.status,
+          isWaiting,
+          progressPercentage: (oraAct as any)?.completion_percentage ?? meta?.completion_percentage,
+          planStatus,
+          isWorkflowTask,
+        }),
+        isApprovalProtected,
       });
     });
 
