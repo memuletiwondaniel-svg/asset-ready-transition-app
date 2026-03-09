@@ -30,6 +30,7 @@ const MyTasksPage: React.FC = () => {
   const { user } = useAuth();
   const { updateLastLogin } = useUserLastLogin();
   const { data: isDirector, isLoading: isDirectorLoading } = useUserIsDirector();
+  const { translations: t } = useLanguage();
   const [addActivityOpen, setAddActivityOpen] = useState(false);
   const [addActivityMode, setAddActivityMode] = useState<'catalog' | 'custom'>('catalog');
   const [searchQuery, setSearchQuery] = useState('');
