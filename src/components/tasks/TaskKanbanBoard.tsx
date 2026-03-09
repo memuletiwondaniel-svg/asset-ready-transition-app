@@ -155,7 +155,8 @@ function getDateAnnotation(task: UnifiedTask): { label: string; variant: 'overdu
 const DraggableKanbanCard: React.FC<{
   task: UnifiedTask;
   onClick: () => void;
-}> = ({ task, onClick }) => {
+  accentClass?: string;
+}> = ({ task, onClick, accentClass }) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: task.id,
     data: { task },
@@ -175,6 +176,7 @@ const DraggableKanbanCard: React.FC<{
         task={task}
         onClick={onClick}
         dragHandleProps={{ ...attributes, ...listeners }}
+        accentClass={accentClass}
       />
     </div>
   );
