@@ -115,7 +115,7 @@ const MyTasksPage: React.FC = () => {
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="gap-1.5 text-xs">
                   {groupBy === 'project' ? <FolderOpen className="h-3.5 w-3.5" /> : groupBy === 'category' ? <Layers className="h-3.5 w-3.5" /> : <Layers className="h-3.5 w-3.5" />}
-                  {groupBy === 'none' ? 'Group' : groupBy === 'project' ? 'By Project' : 'By Category'}
+                  {groupBy === 'none' ? (t.groupLabel || 'Group') : groupBy === 'project' ? (t.groupByProject || 'By Project') : (t.groupByCategory || 'By Category')}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
