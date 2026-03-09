@@ -783,13 +783,11 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
         <div className="flex items-center justify-between">
           <CardTitle>Gantt Chart</CardTitle>
           <div className="flex items-center gap-2">
-            {/* Search first - always visible when toolbar is shown */}
-            {!hideToolbar && (
-              <div className="relative w-80">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Search deliverables..." value={internalSearchQuery} onChange={(e) => setInternalSearchQuery(e.target.value)} className="pl-9" />
-              </div>
-            )}
+            {/* Search - always visible */}
+            <div className="relative w-80">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="Search deliverables..." value={internalSearchQuery} onChange={(e) => setInternalSearchQuery(e.target.value)} className="pl-9" />
+            </div>
 
             <div className="w-2" />
             {/* Expand/Collapse toggle */}
