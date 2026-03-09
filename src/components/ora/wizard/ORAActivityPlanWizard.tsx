@@ -366,6 +366,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
     try {
       setIsSaving(true);
       await autoSaveWizardState();
+      syncOraWizardProgress(currentStep);
       queryClient.invalidateQueries({ queryKey: ['project-orp-plans'] });
       toast({ title: 'Draft saved', description: 'Your progress has been saved. You can resume anytime.' });
       onOpenChange(false);
