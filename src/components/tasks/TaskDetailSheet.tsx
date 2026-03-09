@@ -52,21 +52,25 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   const isP2aTask = task?.metadata?.action === 'create_p2a_plan';
   const p2aProjectId = task?.metadata?.project_id as string | undefined;
 
-  // Check if an ORA plan draft already exists for this project
-  const { data: hasExistingOraDraft } = useQuery({
-    queryKey: ['ora-draft-exists', oraProjectId],
+  // Check if an ORA plan exists for this project (draft or approved)
+  const { data: existingOraPlan } = useQuery({
+    queryKey: ['ora-plan-exists', oraProjectId],
     queryFn: async () => {
-      if (!oraProjectId) return false;
+      if (!oraProjectId) return null;
       const { data } = await (supabase as any)
         .from('orp_plans')
-        .select('id')
+        .select('id, status')
         .eq('project_id', oraProjectId)
-        .eq('status', 'DRAFT')
+        .order('created_at', { ascending: false })
         .limit(1);
-      return data && data.length > 0;
+      return data && data.length > 0 ? data[0] : null;
     },
     enabled: !!oraProjectId && isOraTask,
     staleTime: 30_000,
+  });
+
+  const hasExistingOraDraft = existingOraPlan?.status === 'DRAFT';
+  const resolvedOraPlanId = (task?.metadata?.plan_id as string) || existingOraPlan?.id;
   });
 
   // Fetch project info for P2A wizard
