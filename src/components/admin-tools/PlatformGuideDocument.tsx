@@ -74,6 +74,8 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
     { id: 'integrations', label: 'External Integrations' },
     { id: 'admin-tools', label: 'Admin Tools Reference' },
     { id: 'deployment-portability', label: 'Deployment Architecture & Portability' },
+    { id: 'appendix-a', label: 'Appendix A — Customer Journey Maps' },
+    { id: 'appendix-b', label: 'Appendix B — Process Flow Maps' },
   ];
 
   return (
