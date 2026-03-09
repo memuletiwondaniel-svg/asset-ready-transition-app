@@ -281,10 +281,15 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
             {/* ORA Plan Creation CTA - prominent for action tasks */}
             {isOraTask && oraProjectId && (
               <Button
-                className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
+                className={cn(
+                  "w-full gap-2 font-medium",
+                  isCompleted
+                    ? "bg-muted hover:bg-muted/80 text-foreground border border-border"
+                    : "bg-primary hover:bg-primary/90 text-primary-foreground"
+                )}
                 onClick={() => setOraWizardOpen(true)}
               >
-                <CalendarCheck className="h-4 w-4" />
+                {isCompleted ? <Eye className="h-4 w-4" /> : <CalendarCheck className="h-4 w-4" />}
                 {oraCtaLabel}
                 <ChevronRight className="h-4 w-4 ml-auto" />
               </Button>
