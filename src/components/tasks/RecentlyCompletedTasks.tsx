@@ -96,9 +96,9 @@ export const RecentlyCompletedTasks: React.FC<{ searchQuery?: string }> = ({ sea
             onClick={() => setExpanded(!expanded)}
           >
             {expanded ? (
-              <>Show less <ChevronUp className="h-3 w-3" /></>
+              <>{t.showLessLabel || 'Show less'} <ChevronUp className="h-3 w-3" /></>
             ) : (
-              <>Show all <ChevronDown className="h-3 w-3" /></>
+              <>{t.showAll || 'Show all'} <ChevronDown className="h-3 w-3" /></>
             )}
           </Button>
         )}

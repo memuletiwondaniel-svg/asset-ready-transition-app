@@ -247,7 +247,7 @@ const KanbanCardContent: React.FC<{
               dateAnnotation.variant === 'today' && 'text-amber-600 bg-amber-500/8',
               dateAnnotation.variant === 'upcoming' && 'text-muted-foreground bg-muted',
             )}>
-              {dateAnnotation.variant === 'overdue' ? 'Overdue' : dateAnnotation.label}
+              {dateAnnotation.variant === 'overdue' ? (t.kanbanOverdue || 'Overdue') : dateAnnotation.label}
             </span>
           ) : null}
         </div>
