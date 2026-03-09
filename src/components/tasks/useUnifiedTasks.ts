@@ -318,7 +318,7 @@ export function useUnifiedTasks(userId: string) {
           : 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
         icon: isApproval ? ClipboardCheck : ClipboardList,
         title: task.title,
-        project: isPSSR ? meta?.project_name : meta?.project_code,
+        project: isPSSR ? meta?.project_name : normalizeProjectCode(meta?.project_code),
         status: `${completed}/${total}`,
         createdAt: task.created_at,
         priority: smartPriorityToLegacy(spBundle.level),
