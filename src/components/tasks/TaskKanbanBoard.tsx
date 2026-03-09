@@ -496,24 +496,31 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          {columnData.map(col => (
-            <DroppableColumn key={col.key} columnKey={col.key}>
-              <div className={cn("bg-muted/30 rounded-xl border border-border/50 border-t-2 flex flex-col h-full", col.color)}>
-                {/* Column header */}
-                <div className="flex items-center justify-between px-3 py-2.5 border-b border-border/30">
-                  <span className="text-sm font-semibold text-foreground">{col.label}</span>
-                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{col.tasks.length}</Badge>
-                </div>
-                {/* Cards */}
-                <ScrollArea className="flex-1 max-h-[50vh] sm:max-h-[calc(100vh-320px)]">
-                  <div className="p-2 space-y-2">
-                    {renderColumnContent(col.tasks)}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+          {columnData.map(col => {
+            const ColIcon = col.icon;
+            return (
+              <DroppableColumn key={col.key} columnKey={col.key}>
+                <div className="bg-card rounded-xl border border-border shadow-sm flex flex-col h-full overflow-hidden">
+                  {/* Column header – tinted background */}
+                  <div className={cn("flex items-center justify-between px-3 py-2.5 border-b border-border/40", col.headerBg)}>
+                    <div className="flex items-center gap-2">
+                      <div className={cn("w-2 h-2 rounded-full", col.dotColor)} />
+                      <ColIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span className="text-sm font-bold text-foreground">{col.label}</span>
+                    </div>
+                    <Badge variant="secondary" className="text-xs font-semibold px-2 py-0.5 min-w-[1.5rem] text-center">{col.tasks.length}</Badge>
                   </div>
-                </ScrollArea>
-              </div>
-            </DroppableColumn>
-          ))}
+                  {/* Cards */}
+                  <ScrollArea className="flex-1 max-h-[50vh] sm:max-h-[calc(100vh-320px)]">
+                    <div className="p-2.5 space-y-2.5">
+                      {renderColumnContent(col.tasks, col)}
+                    </div>
+                  </ScrollArea>
+                </div>
+              </DroppableColumn>
+            );
+          })}
         </div>
 
         {/* Drag overlay - floating card that follows cursor */}
