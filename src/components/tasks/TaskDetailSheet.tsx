@@ -110,6 +110,23 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
     staleTime: 30_000,
   });
 
+  // P2A duration
+  const p2aDurationDays = useMemo(() => {
+    if (p2aStartDate && p2aEndDate) return differenceInDays(p2aEndDate, p2aStartDate);
+    return null;
+  }, [p2aStartDate, p2aEndDate]);
+
+  // Initialize P2A dates from task metadata when sheet opens
+  React.useEffect(() => {
+    if (open && task && isP2aTask) {
+      const sd = task.metadata?.start_date ? parseISO(task.metadata.start_date as string) : undefined;
+      const ed = task.metadata?.end_date ? parseISO(task.metadata.end_date as string) : task.due_date ? parseISO(task.due_date) : undefined;
+      setP2aStartDate(sd);
+      setP2aEndDate(ed);
+      setShowP2aCalendar(false);
+    }
+  }, [open, task?.id]);
+
   const handleAction = (type: 'approve' | 'reject') => {
     if (!task) return;
     if (type === 'approve') {
