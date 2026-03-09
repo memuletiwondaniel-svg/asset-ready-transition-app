@@ -4342,6 +4342,49 @@ export const translations = {
     approversSummary: '审批人摘要',
     modifiedFromTemplate: '已从模板修改',
     validationNote: '请确保已选择所有必填项',
+    
+    // Kanban Board
+    kanbanToDo: '待办',
+    kanbanInProgress: '进行中',
+    kanbanWaiting: '等待中',
+    kanbanDone: '已完成',
+    kanbanEmptyToDo: '没有待办事项 — 太好了！',
+    kanbanEmptyInProgress: '没有进行中的任务',
+    kanbanEmptyWaiting: '没有等待中的任务',
+    kanbanEmptyDone: '一切清空！',
+    kanbanCompleted: '已完成',
+    kanbanOverdue: '已逾期',
+    kanbanSoon: '即将',
+    kanbanDueToday: '今天到期',
+    kanbanDaysLeft: '还剩{n}天',
+    kanbanDaysOverdue: '逾期{n}天',
+    
+    // My Tasks Page
+    myTasksPageTitle: '我的任务',
+    myTasksPageSubtitle: '所有模块中待处理的工作',
+    searchTasksPlaceholder: '搜索任务...',
+    groupLabel: '分组',
+    groupByProject: '按项目',
+    groupByCategory: '按类别',
+    noGrouping: '不分组',
+    addActivity: '添加活动',
+    fromCatalog: '从目录',
+    customActivity: '自定义活动',
+    listView: '列表视图',
+    boardView: '看板视图',
+    recentActivitiesLabel: '最近活动',
+    showAll: '显示全部',
+    showLessLabel: '显示更少',
+    
+    // Approval Warning
+    voidApprovals: '撤销所有审批？',
+    voidApprovalsDesc: '已通过正式审查流程获得批准。',
+    movingBackWill: '移回此任务将：',
+    voidExistingApprovals: '撤销所有现有审批',
+    requireNewReview: '需要全新的审查周期',
+    notifyApprovers: '通知所有审批人变更',
+    understandAction: '我理解此操作不能轻易撤销',
+    moveAnywayVoid: '仍然移动 – 撤销审批',
   }
 };
 
