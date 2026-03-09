@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Key, Loader2, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,8 @@ import { ApprovalSetupStep, WizardApprover } from './steps/ApprovalSetupStep';
 import { ConfirmationStep } from './steps/ConfirmationStep';
 import { useP2APlanWizard } from '@/hooks/useP2APlanWizard';
 import { useP2APlanByProject } from '@/hooks/useP2APlanByProject';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
   AlertDialog,
@@ -64,6 +66,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
   const [useWizard, setUseWizard] = useState<boolean | null>(null);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
   const [isLoadingDraft, setIsLoadingDraft] = useState(false);
+  const queryClient = useQueryClient();
   
   const { data: existingPlan } = useP2APlanByProject(projectId);
 
@@ -80,6 +83,97 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
     isSubmitting,
     isDeleting,
   } = useP2APlanWizard(projectId, projectCode);
+
+  // Total wizard steps (excluding overview which is step 1 / entry point)
+  const TOTAL_CREATION_STEPS = WIZARD_STEPS.length; // 7
+
+  /**
+   * Sync wizard step progress to ora_plan_activities and user_tasks.
+   * Maps wizard steps: step 1=0%, step 2=14%, ... step 7=86%, submitted=100%
+   */
+  const syncWizardProgress = useCallback(async (step: number, isSubmitted = false) => {
+    const percentage = isSubmitted ? 100 : Math.round(((step - 1) / TOTAL_CREATION_STEPS) * 100);
+    
+    try {
+      // Find ORP plan for this project
+      const { data: plans } = await (supabase as any)
+        .from('orp_plans')
+        .select('id')
+        .eq('project_id', projectId)
+        .limit(1);
+
+      if (plans?.[0]) {
+        // Find the P2A-01 activity
+        const { data: activity } = await (supabase as any)
+          .from('ora_plan_activities')
+          .select('id, task_id')
+          .eq('orp_plan_id', plans[0].id)
+          .eq('activity_code', 'P2A-01')
+          .single();
+
+        if (activity) {
+          // Update ora_plan_activities
+          await (supabase as any)
+            .from('ora_plan_activities')
+            .update({
+              completion_percentage: percentage,
+              status: isSubmitted ? 'COMPLETED' : percentage > 0 ? 'IN_PROGRESS' : 'NOT_STARTED',
+            })
+            .eq('id', activity.id);
+
+          // Update linked user_task via task_id
+          if (activity.task_id) {
+            const { data: taskRow } = await supabase
+              .from('user_tasks')
+              .select('metadata')
+              .eq('id', activity.task_id)
+              .single();
+
+            await supabase
+              .from('user_tasks')
+              .update({
+                metadata: {
+                  ...((taskRow?.metadata as Record<string, any>) || {}),
+                  completion_percentage: percentage,
+                } as any,
+                status: isSubmitted ? 'completed' : percentage > 0 ? 'in_progress' : 'pending',
+              })
+              .eq('id', activity.task_id);
+          }
+        }
+      }
+
+      // Also update standalone P2A tasks (create_p2a_plan action tasks)
+      const { data: allTasks } = await supabase
+        .from('user_tasks')
+        .select('id, metadata')
+        .limit(100);
+
+      const p2aTask = allTasks?.find((t: any) => {
+        const meta = t.metadata as Record<string, any>;
+        return meta?.action === 'create_p2a_plan' && meta?.project_id === projectId;
+      });
+
+      if (p2aTask) {
+        await supabase
+          .from('user_tasks')
+          .update({
+            metadata: {
+              ...((p2aTask.metadata as Record<string, any>) || {}),
+              completion_percentage: percentage,
+            } as any,
+            status: isSubmitted ? 'completed' : percentage > 0 ? 'in_progress' : 'pending',
+          })
+          .eq('id', p2aTask.id);
+      }
+
+      // Invalidate caches so Kanban/Gantt reflect changes
+      queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['user-orp-activities'] });
+    } catch (err) {
+      console.error('Failed to sync wizard progress:', err);
+    }
+  }, [projectId, queryClient]);
 
   // When the wizard opens and a draft plan exists, auto-load and resume
   useEffect(() => {
@@ -162,17 +256,21 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
   // Auto-save when clicking Next
   const handleNext = async () => {
     recalculateCompletedSteps();
+    const nextStep = Math.min(currentStep + 1, WIZARD_STEPS.length);
     try {
       await saveDraft();
+      // Fire-and-forget progress sync (don't block navigation)
+      syncWizardProgress(nextStep);
     } catch (error) {
       // Continue navigation even if save fails silently
     }
-    setCurrentStep(prev => Math.min(prev + 1, WIZARD_STEPS.length));
+    setCurrentStep(nextStep);
   };
 
   const handleSaveAndExit = async () => {
     try {
       await saveDraft();
+      syncWizardProgress(currentStep);
       handleClose();
     } catch (error) {
       // Error handled in hook
@@ -191,6 +289,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
   const handleSubmit = async () => {
     try {
       await submitForApproval();
+      await syncWizardProgress(WIZARD_STEPS.length, true);
       handleClose();
       onSuccess?.();
       toast.success('P2A Plan submitted for approval!');
