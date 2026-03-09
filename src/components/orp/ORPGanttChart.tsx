@@ -739,12 +739,12 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Gantt Chart</CardTitle>
-            {!hideToolbar && (
-              <div className="flex items-center gap-4">
-                <div className="relative w-80">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input placeholder="Search deliverables..." value={internalSearchQuery} onChange={(e) => setInternalSearchQuery(e.target.value)} className="pl-9" />
-                </div>
+            <div className="flex items-center gap-4">
+              <div className="relative w-80">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input placeholder="Search deliverables..." value={internalSearchQuery} onChange={(e) => setInternalSearchQuery(e.target.value)} className="pl-9" />
+              </div>
+              {!hideToolbar && !readOnly && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="sm" className="h-6 px-2 text-[10px] font-medium gap-1 border-primary/30 text-primary hover:bg-primary/10">
@@ -760,8 +760,8 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -783,13 +783,11 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
         <div className="flex items-center justify-between">
           <CardTitle>Gantt Chart</CardTitle>
           <div className="flex items-center gap-2">
-            {/* Search first - always visible when toolbar is shown */}
-            {!hideToolbar && (
-              <div className="relative w-80">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Search deliverables..." value={internalSearchQuery} onChange={(e) => setInternalSearchQuery(e.target.value)} className="pl-9" />
-              </div>
-            )}
+            {/* Search - always visible */}
+            <div className="relative w-80">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="Search deliverables..." value={internalSearchQuery} onChange={(e) => setInternalSearchQuery(e.target.value)} className="pl-9" />
+            </div>
 
             <div className="w-2" />
             {/* Expand/Collapse toggle */}
@@ -904,7 +902,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
       <CardContent>
         <div className="border rounded-lg overflow-hidden bg-background">
           {/* Scrollable area with sticky header */}
-          <div className="max-h-[70vh] overflow-y-auto" ref={scrollContainerRef}>
+          <div className="max-h-[calc(95vh-280px)] overflow-y-auto" ref={scrollContainerRef}>
             {/* Sticky header row */}
             <div className="flex sticky top-0 z-20 bg-background">
               <div className="shrink-0 border-r bg-muted/30" style={{ width: leftPanelWidth }}>
