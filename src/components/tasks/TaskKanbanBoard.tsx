@@ -219,7 +219,7 @@ const KanbanCardContent: React.FC<{
             </button>
           )}
           {task.project ? (
-            <ProjectIdBadge size="sm" projectId={task.project}>{task.project}</ProjectIdBadge>
+            <span className="text-[10px] font-medium font-mono text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded truncate max-w-[100px]">{task.project}</span>
           ) : (
             <span className="text-[10px] text-muted-foreground">{task.categoryLabel}</span>
           )}
