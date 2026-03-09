@@ -248,7 +248,7 @@ export function useUnifiedTasks(userId: string) {
         categoryColor: 'bg-teal-500/10 text-teal-600 border-teal-500/20',
         icon: RefreshCw,
         title: item.handover_name || 'Handover Approval',
-        project: item.project_number || undefined,
+        project: normalizeProjectCode(item.project_number) || undefined,
         status: item.stage,
         createdAt: item.created_at,
         priority: smartPriorityToLegacy(spP2a.level),
