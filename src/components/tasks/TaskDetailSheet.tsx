@@ -121,7 +121,10 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
 
   if (!task) return null;
 
-  const daysPending = Math.floor(
+  const planStatus = (task.metadata?.plan_status as string || '').toUpperCase();
+  const isCompleted = task.status === 'completed' || ['APPROVED', 'COMPLETED'].includes(planStatus);
+
+  const daysPending = isCompleted ? 0 : Math.floor(
     (Date.now() - new Date(task.created_at).getTime()) / (1000 * 60 * 60 * 24)
   );
 
