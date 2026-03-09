@@ -34,7 +34,7 @@ import { cn } from '@/lib/utils';
 import { format, isPast, isToday, differenceInDays } from 'date-fns';
 import type { UnifiedTask, CategoryFilter } from './useUnifiedTasks';
 import type { UserTask } from '@/hooks/useUserTasks';
-import { ProjectIdBadge } from '@/components/ui/project-id-badge';
+
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useKanbanDragDrop, type MoveResult } from './useKanbanDragDrop';
 
@@ -198,7 +198,7 @@ const KanbanCardContent: React.FC<{
       onClick={onClick}
       className={cn(
         "p-3 cursor-pointer transition-all duration-200 rounded-lg group border-l-[3px]",
-        "border border-border/60 bg-card shadow-sm",
+        "border border-border/60 bg-card shadow-[0_1px_3px_0_rgb(0,0,0,0.04)]",
         "hover:-translate-y-0.5 hover:shadow-md hover:border-border",
         accentClass || 'border-l-border',
         task.isWaiting && 'opacity-50',
@@ -219,7 +219,7 @@ const KanbanCardContent: React.FC<{
             </button>
           )}
           {task.project ? (
-            <ProjectIdBadge size="sm" projectId={task.project}>{task.project}</ProjectIdBadge>
+            <span className="text-[10px] font-medium font-mono text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded truncate max-w-[100px]">{task.project}</span>
           ) : (
             <span className="text-[10px] text-muted-foreground">{task.categoryLabel}</span>
           )}
@@ -501,7 +501,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
             const ColIcon = col.icon;
             return (
               <DroppableColumn key={col.key} columnKey={col.key}>
-                <div className="bg-card rounded-xl border border-border shadow-sm flex flex-col h-full overflow-hidden">
+                <div className="bg-muted/40 rounded-xl border border-border shadow-sm flex flex-col h-full overflow-hidden">
                   {/* Column header – tinted background */}
                   <div className={cn("flex items-center justify-between px-3 py-2.5 border-b border-border/40", col.headerBg)}>
                     <div className="flex items-center gap-2">
