@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { CalendarCheck, Plus, Search, LayoutList, Kanban, FolderOpen, Layers } from 'lucide-react';
+import { CalendarCheck, Plus, Search, LayoutList, Kanban, FolderOpen, Layers, BookOpen, PenLine } from 'lucide-react';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { NewTaskModal } from '@/components/tasks/NewTaskModal';
+import { AddActivityDialog } from '@/components/tasks/AddActivityDialog';
 import { UnifiedTaskList } from '@/components/tasks/UnifiedTaskList';
 import { TaskKanbanBoard } from '@/components/tasks/TaskKanbanBoard';
 import { RecentlyCompletedTasks } from '@/components/tasks/RecentlyCompletedTasks';
