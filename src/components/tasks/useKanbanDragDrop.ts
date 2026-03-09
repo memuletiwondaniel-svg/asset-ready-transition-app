@@ -21,25 +21,54 @@ const COLUMN_TO_ORA_STATUS: Record<KanbanColumn, string> = {
   done: 'COMPLETED',
 };
 
+export type MoveResult = 'moved' | 'blocked' | 'needs_warning' | 'skipped';
+
+/**
+ * Check if a task is protected by external approvals (ORA Plan, P2A Plan)
+ */
+function isProtectedWorkflowTask(task: UnifiedTask): boolean {
+  return task.isApprovalProtected === true;
+}
+
+/**
+ * Check if moving a task would void its approvals (moving a protected task backward)
+ */
+function checkIfApprovalWouldBeVoided(task: UnifiedTask, targetColumn: KanbanColumn): boolean {
+  if (!isProtectedWorkflowTask(task)) return false;
+  // If moving out of "done" to any other column, approvals would be voided
+  if (task.kanbanColumn === 'done' && targetColumn !== 'done') return true;
+  return false;
+}
+
 export function useKanbanDragDrop() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
   /**
    * Move a task to a new column, syncing user_tasks + ora_plan_activities.
-   * Returns true if the move was applied, false if it should be handled externally (e.g. "done" column).
+   * Returns:
+   * - 'moved': task was moved successfully
+   * - 'blocked': task cannot be moved to "done" (caller should open detail sheet)
+   * - 'needs_warning': task is protected and would void approvals (caller should show warning)
+   * - 'skipped': no action taken (same column or no userTask)
    */
   const moveTaskToColumn = useCallback(async (
     task: UnifiedTask,
     targetColumn: KanbanColumn,
-  ): Promise<boolean> => {
-    if (task.kanbanColumn === targetColumn) return false;
+    forceMove?: boolean, // bypass approval protection check
+  ): Promise<MoveResult> => {
+    if (task.kanbanColumn === targetColumn) return 'skipped';
 
     // For "done", we DON'T auto-complete — caller should open the detail sheet
-    if (targetColumn === 'done') return false;
+    if (targetColumn === 'done') return 'blocked';
 
     const userTask = task.userTask;
-    if (!userTask) return false;
+    if (!userTask) return 'skipped';
+
+    // Check if this move would void approvals (unless forced)
+    if (!forceMove && checkIfApprovalWouldBeVoided(task, targetColumn)) {
+      return 'needs_warning';
+    }
 
     const newTaskStatus = COLUMN_TO_TASK_STATUS[targetColumn];
     const meta = userTask.metadata as Record<string, any> | undefined;
@@ -101,15 +130,15 @@ export function useKanbanDragDrop() {
         waiting: 'Waiting',
       };
       toast.success(`Task moved to ${labels[targetColumn]}`);
-      return true;
+      return 'moved';
     } catch (err) {
       console.error('Failed to move task:', err);
       // Rollback optimistic update
       queryClient.setQueryData(userTasksKey, previousData);
       toast.error('Failed to move task');
-      return false;
+      return 'skipped';
     }
   }, [queryClient, user?.id]);
 
-  return { moveTaskToColumn };
+  return { moveTaskToColumn, isProtectedWorkflowTask, checkIfApprovalWouldBeVoided };
 }

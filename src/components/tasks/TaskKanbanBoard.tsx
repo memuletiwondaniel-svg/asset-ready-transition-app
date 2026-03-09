@@ -1,17 +1,29 @@
 import React, { useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { TaskDetailSheet } from './TaskDetailSheet';
 import { ORAActivityTaskSheet } from './ORAActivityTaskSheet';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import {
   Calendar,
   ChevronDown,
   ChevronRight,
   GripVertical,
+  AlertTriangle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, isPast, isToday, differenceInDays } from 'date-fns';
@@ -19,7 +31,7 @@ import type { UnifiedTask, CategoryFilter } from './useUnifiedTasks';
 import type { UserTask } from '@/hooks/useUserTasks';
 import { ProjectIdBadge } from '@/components/ui/project-id-badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { useKanbanDragDrop } from './useKanbanDragDrop';
+import { useKanbanDragDrop, type MoveResult } from './useKanbanDragDrop';
 
 // DnD Kit
 import {
@@ -44,12 +56,81 @@ interface TaskKanbanBoardProps {
   onUpdateTaskStatus: (taskId: string, status: string) => void;
 }
 
+interface ApprovalWarningState {
+  task: UnifiedTask;
+  targetColumn: KanbanColumn;
+}
+
 const COLUMNS = [
   { key: 'todo' as const, label: 'To Do', color: 'border-t-blue-500' },
   { key: 'in_progress' as const, label: 'In Progress', color: 'border-t-amber-500' },
   { key: 'waiting' as const, label: 'Waiting', color: 'border-t-muted-foreground' },
   { key: 'done' as const, label: 'Done', color: 'border-t-green-500' },
 ];
+
+// ─── Approval Void Warning Dialog ──────────────────────────────────
+const ApprovalVoidWarningDialog: React.FC<{
+  open: boolean;
+  taskTitle: string;
+  onCancel: () => void;
+  onConfirm: () => void;
+}> = ({ open, taskTitle, onCancel, onConfirm }) => {
+  const [acknowledged, setAcknowledged] = useState(false);
+
+  // Reset acknowledgment when dialog opens
+  React.useEffect(() => {
+    if (open) setAcknowledged(false);
+  }, [open]);
+
+  return (
+    <AlertDialog open={open} onOpenChange={(o) => !o && onCancel()}>
+      <AlertDialogContent className="max-w-md">
+        <AlertDialogHeader>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="flex items-center justify-center w-10 h-10 rounded-full bg-destructive/10">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+            </div>
+            <AlertDialogTitle className="text-lg">Void All Approvals?</AlertDialogTitle>
+          </div>
+          <AlertDialogDescription asChild>
+            <div className="space-y-3 text-sm">
+              <p>
+                <span className="font-medium text-foreground">"{taskTitle}"</span> has already been 
+                approved through a formal review process.
+              </p>
+              <p className="text-muted-foreground">Moving this task back will:</p>
+              <ul className="list-disc list-inside space-y-1 text-muted-foreground ml-1">
+                <li>Void all existing approvals</li>
+                <li>Require a completely new review cycle</li>
+                <li>Notify all approvers of the change</li>
+              </ul>
+              <label className="flex items-start gap-2.5 pt-3 cursor-pointer select-none">
+                <Checkbox 
+                  checked={acknowledged} 
+                  onCheckedChange={(c) => setAcknowledged(!!c)}
+                  className="mt-0.5"
+                />
+                <span className="text-xs text-muted-foreground leading-relaxed">
+                  I understand this action cannot be easily undone
+                </span>
+              </label>
+            </div>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter className="gap-2 sm:gap-2">
+          <AlertDialogCancel onClick={onCancel}>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={onConfirm}
+            disabled={!acknowledged}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Move Anyway – Void Approvals
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+};
 
 function getDateAnnotation(task: UnifiedTask): { label: string; variant: 'overdue' | 'today' | 'upcoming' | 'none' } | null {
   const date = task.dueDate || task.endDate;
@@ -258,6 +339,9 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
   const [oraActivityOpen, setOraActivityOpen] = useState(false);
   const [oraActivityDragComplete, setOraActivityDragComplete] = useState(false);
 
+  // Approval void warning dialog state
+  const [warningState, setWarningState] = useState<ApprovalWarningState | null>(null);
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
   );
@@ -321,9 +405,24 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
       return;
     }
 
-    // For other columns, move immediately
-    await moveTaskToColumn(task, targetColumn);
+    // For other columns, check if this would void approvals
+    const result = await moveTaskToColumn(task, targetColumn);
+    if (result === 'needs_warning') {
+      setWarningState({ task, targetColumn });
+    }
   }, [moveTaskToColumn]);
+
+  // Handle confirmation from the warning dialog
+  const handleWarningConfirm = useCallback(async () => {
+    if (!warningState) return;
+    setWarningState(null);
+    // Force move, bypassing approval protection
+    await moveTaskToColumn(warningState.task, warningState.targetColumn, true);
+  }, [warningState, moveTaskToColumn]);
+
+  const handleWarningCancel = useCallback(() => {
+    setWarningState(null);
+  }, []);
 
   const columnData = useMemo(() => {
     return COLUMNS.map(col => ({
@@ -428,6 +527,14 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
           }
         }}
         initialStatusOverride={oraActivityDragComplete ? "COMPLETED" : undefined}
+      />
+
+      {/* Warning dialog for reverting approval-protected tasks */}
+      <ApprovalVoidWarningDialog
+        open={!!warningState}
+        taskTitle={warningState?.task.title || ''}
+        onCancel={handleWarningCancel}
+        onConfirm={handleWarningConfirm}
       />
     </>
   );

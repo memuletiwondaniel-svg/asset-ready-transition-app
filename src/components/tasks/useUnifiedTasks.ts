@@ -45,6 +45,8 @@ export interface UnifiedTask {
   durationDays?: number;
   // Kanban status mapping
   kanbanColumn: 'todo' | 'in_progress' | 'waiting' | 'done';
+  // Flag for tasks that went through external approval (ORA Plan, P2A Plan)
+  isApprovalProtected?: boolean;
 }
 
 export const FILTER_OPTIONS: { value: CategoryFilter; label: string }[] = [
@@ -57,7 +59,22 @@ export const FILTER_OPTIONS: { value: CategoryFilter; label: string }[] = [
   { value: 'p2a', label: 'P2A' },
 ];
 
-function mapToKanbanColumn(task: { status: string; isWaiting?: boolean; progressPercentage?: number }): 'todo' | 'in_progress' | 'waiting' | 'done' {
+interface KanbanMappingInput {
+  status: string;
+  isWaiting?: boolean;
+  progressPercentage?: number;
+  // For workflow tasks, the underlying plan status overrides task status
+  planStatus?: string;
+  isWorkflowTask?: boolean;
+}
+
+function mapToKanbanColumn(task: KanbanMappingInput): 'todo' | 'in_progress' | 'waiting' | 'done' {
+  // For workflow tasks (Create ORA Plan, etc.), check the plan status first
+  if (task.isWorkflowTask && task.planStatus) {
+    const ps = task.planStatus.toUpperCase();
+    if (['APPROVED', 'COMPLETED'].includes(ps)) return 'done';
+  }
+
   if (task.isWaiting) return 'waiting';
   const s = task.status.toLowerCase();
   if (['completed', 'done', 'approved', 'closed', 'sof_approved'].includes(s)) return 'done';
@@ -141,6 +158,14 @@ export function useUnifiedTasks(userId: string) {
         isWaiting,
         createdAt: t.created_at,
       });
+
+      // Detect workflow tasks backed by external approvals
+      const isOraPlanCreation = action === 'create_ora_plan' || t.type === 'ora_plan_creation';
+      const isP2aPlanCreation = action === 'create_p2a_plan' || t.type === 'p2a_plan_creation';
+      const planStatus = meta?.plan_status;
+      const isWorkflowTask = isOraPlanCreation || isP2aPlanCreation;
+      const isApprovalProtected = isWorkflowTask && ['APPROVED', 'COMPLETED'].includes(planStatus?.toUpperCase?.() || '');
+
       tasks.push({
         id: `ut-${t.id}`,
         category,
@@ -163,7 +188,14 @@ export function useUnifiedTasks(userId: string) {
         isWaiting,
         durationDays,
         progressPercentage: (oraAct as any)?.completion_percentage ?? meta?.completion_percentage ?? undefined,
-        kanbanColumn: mapToKanbanColumn({ status: t.status, isWaiting, progressPercentage: (oraAct as any)?.completion_percentage ?? meta?.completion_percentage }),
+        kanbanColumn: mapToKanbanColumn({
+          status: t.status,
+          isWaiting,
+          progressPercentage: (oraAct as any)?.completion_percentage ?? meta?.completion_percentage,
+          planStatus,
+          isWorkflowTask,
+        }),
+        isApprovalProtected,
       });
     });
 
