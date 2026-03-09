@@ -444,9 +444,15 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     }));
   }, [tasks]);
 
-  const renderColumnContent = (columnTasks: UnifiedTask[]) => {
+  const renderColumnContent = (columnTasks: UnifiedTask[], col: typeof columnData[number]) => {
     if (columnTasks.length === 0) {
-      return <p className="text-xs text-muted-foreground/50 text-center py-6">No tasks</p>;
+      const EmptyIcon = col.emptyIcon;
+      return (
+        <div className="flex flex-col items-center justify-center py-8 gap-2 text-muted-foreground/40">
+          <EmptyIcon className="h-5 w-5" />
+          <p className="text-xs">{col.emptyMsg}</p>
+        </div>
+      );
     }
 
     if (groupBy === 'project') {
@@ -479,7 +485,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     }
 
     return columnTasks.map(task => (
-      <DraggableKanbanCard key={task.id} task={task} onClick={() => handleTaskClick(task)} />
+      <DraggableKanbanCard key={task.id} task={task} onClick={() => handleTaskClick(task)} accentClass={col.accent} />
     ));
   };
 
