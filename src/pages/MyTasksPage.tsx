@@ -141,14 +141,21 @@ const MyTasksPage: React.FC = () => {
               </ToggleGroupItem>
             </ToggleGroup>
 
-            <Button
-              size="sm"
-              onClick={() => setCreateTaskModalOpen(true)}
-              className="gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              New Task
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-1.5 text-xs border-primary/30 text-primary hover:bg-primary/10">
+                  <Plus className="h-3.5 w-3.5" /> Add Activity
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => { setAddActivityMode('catalog'); setAddActivityOpen(true); }}>
+                  <BookOpen className="h-4 w-4 mr-2" /> From Catalog
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => { setAddActivityMode('custom'); setAddActivityOpen(true); }}>
+                  <PenLine className="h-4 w-4 mr-2" /> Custom Activity
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
