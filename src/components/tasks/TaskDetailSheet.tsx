@@ -41,6 +41,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   const [action, setAction] = useState<'approve' | 'reject' | null>(null);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [oraWizardOpen, setOraWizardOpen] = useState(false);
+  const [oraGanttOpen, setOraGanttOpen] = useState(false);
   const [oraActivityOpen, setOraActivityOpen] = useState(false);
   const [vcrWizardOpen, setVcrWizardOpen] = useState(false);
   const [oraReviewWizardOpen, setOraReviewWizardOpen] = useState(false);
