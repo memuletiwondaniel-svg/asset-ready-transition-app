@@ -293,7 +293,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                     : "bg-primary hover:bg-primary/90 text-primary-foreground"
                 )}
                 onClick={() => {
-                  if (isCompleted && oraPlanId) {
+                  if (isCompleted && resolvedOraPlanId) {
                     onOpenChange(false);
                     setOraGanttOpen(true);
                   } else {
