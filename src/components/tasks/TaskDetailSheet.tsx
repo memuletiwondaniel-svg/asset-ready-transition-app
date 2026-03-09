@@ -432,6 +432,21 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
         />
       )}
 
+      {/* ORA Gantt Overlay for completed/approved plans */}
+      {isOraTask && isCompleted && oraPlanId && (
+        <ORPGanttOverlay
+          open={oraGanttOpen}
+          onOpenChange={setOraGanttOpen}
+          planId={oraPlanId}
+          planStatus={planStatus || 'APPROVED'}
+          overallProgress={0}
+          completedCount={0}
+          totalCount={0}
+          projectCode={projectCode}
+          isReadOnly
+        />
+      )}
+
       {/* ORA Plan Review Wizard */}
       {isOraReviewTask && oraPlanId && oraProjectId && (
         <ORAActivityPlanWizard
