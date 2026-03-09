@@ -70,6 +70,8 @@ export async function generateLeafTasks(planId: string): Promise<{ created: numb
   const leafActivities = activities.filter((a: any) => {
     if (parentIds.has(a.id)) return false; // is a parent
     if (a.activity_code === 'P2A-01') return false; // P2A has its own task
+    const nameLower = (a.name || '').toLowerCase();
+    if (nameLower.includes('p2a plan') || nameLower.includes('p2a handover')) return false; // P2A activity variant
     return true;
   });
 
