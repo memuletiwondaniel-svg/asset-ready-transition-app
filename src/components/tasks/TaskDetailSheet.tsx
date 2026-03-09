@@ -190,7 +190,11 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
       : 'You have been assigned to create the ORA Activity Plan for this project. Click below to launch the planning wizard.';
 
   const getIntentMessage = () => {
-    if (isP2aTask) return 'The ORA Plan has been approved. Create the Project to Asset (P2A) handover plan for this project.';
+    if (isP2aTask) {
+      if (isCompleted) return 'The P2A Plan has been completed. Click below to view the finalized plan.';
+      if (hasExistingP2aDraft) return 'You have a saved draft for the P2A Plan. Click below to continue where you left off.';
+      return 'Create the Project to Asset (P2A) handover plan for this project. Click below to launch the P2A planning wizard.';
+    }
     if (isOraTask) return oraIntentMessage;
     if (isVcrDeliveryPlanTask) return 'You need to set up the VCR Delivery Plan for this item. Click below to configure the execution plan.';
     if (isOraActivityTask) return 'You have an ORA activity to complete. Click below to open the activity details and update progress.';
