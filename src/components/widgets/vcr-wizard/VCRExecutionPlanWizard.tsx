@@ -22,8 +22,10 @@ import {
   ChevronRight,
   ChevronLeft,
   UserCheck,
+  X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { ProjectVCR } from '@/hooks/useProjectVCRs';
 import { getVCRColor } from '@/components/p2a-workspace/utils/vcrColors';
 import { VCRItemsStep } from './steps/VCRItemsStep';
