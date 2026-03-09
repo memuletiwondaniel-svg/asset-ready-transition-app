@@ -262,6 +262,46 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
     loadPlan();
   }, [open, projectId, externalPlanId, isReviewMode]);
 
+  // Sync wizard step progress to user_tasks so Kanban cards show real-time %
+  const TOTAL_ORA_STEPS = STEPS.length; // 6
+  const syncOraWizardProgress = useCallback(async (step: number, isSubmitted = false) => {
+    const percentage = isSubmitted ? 100 : Math.round(((step - 1) / TOTAL_ORA_STEPS) * 100);
+    try {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) return;
+
+      // Find the ORA creation task for this project
+      const { data: tasks } = await supabase
+        .from('user_tasks')
+        .select('id, metadata')
+        .eq('user_id', user.user.id)
+        .eq('type', 'task')
+        .limit(100);
+
+      const oraTask = tasks?.find((t: any) => {
+        const meta = t.metadata as Record<string, any>;
+        return meta?.source === 'ora_workflow' && meta?.project_id === projectId && meta?.action === 'create_ora_plan';
+      });
+
+      if (oraTask) {
+        await supabase
+          .from('user_tasks')
+          .update({
+            metadata: {
+              ...((oraTask.metadata as Record<string, any>) || {}),
+              completion_percentage: percentage,
+            } as any,
+            status: isSubmitted ? 'completed' : percentage > 0 ? 'in_progress' : 'pending',
+          })
+          .eq('id', oraTask.id);
+
+        queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+      }
+    } catch (err) {
+      console.error('Failed to sync ORA wizard progress:', err);
+    }
+  }, [projectId, queryClient]);
+
   // Silent auto-save of wizard state (no toast, no close) - skip in review mode
   const autoSaveWizardState = useCallback(async () => {
     if (isReviewMode) return; // Don't auto-save in review mode
@@ -326,6 +366,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
     try {
       setIsSaving(true);
       await autoSaveWizardState();
+      syncOraWizardProgress(currentStep);
       queryClient.invalidateQueries({ queryKey: ['project-orp-plans'] });
       toast({ title: 'Draft saved', description: 'Your progress has been saved. You can resume anytime.' });
       onOpenChange(false);
@@ -698,6 +739,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
       queryClient.invalidateQueries({ queryKey: ['orp-plans'] });
       queryClient.invalidateQueries({ queryKey: ['project-orp-plans'] });
 
+      await syncOraWizardProgress(STEPS.length, true);
       toast({ title: 'Submitted', description: 'ORA Plan submitted for approval' });
       onOpenChange(false);
       resetForm();
@@ -735,12 +777,12 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
     if (!validateStep(currentStep)) return;
     const nextStep = Math.min(currentStep + 1, STEPS.length);
     if (currentStep === 2 && activities.length === 0) {
-      // Reset so they reload in step 3
       setActivities([]);
     }
     setVisitedSteps(prev => new Set([...prev, nextStep]));
     setCurrentStep(nextStep);
     autoSaveWizardState();
+    syncOraWizardProgress(nextStep);
   };
 
   const handleBack = () => {
