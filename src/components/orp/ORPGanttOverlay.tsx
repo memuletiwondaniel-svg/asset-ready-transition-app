@@ -245,7 +245,7 @@ export const ORPGanttOverlay: React.FC<ORPGanttOverlayProps> = ({
               <ORPGanttChart
                 planId={planId}
                 deliverables={planDetails.deliverables}
-                readOnly={isReadOnly}
+                readOnly={isStatusReadOnly}
               />
             ) : (
               <div className="text-center py-16 text-muted-foreground">
