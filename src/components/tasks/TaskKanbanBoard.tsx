@@ -344,6 +344,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
   onUpdateTaskStatus,
 }) => {
   const navigate = useNavigate();
+  const { translations: t } = useLanguage();
   const [selectedTask, setSelectedTask] = useState<UserTask | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [activeTask, setActiveTask] = useState<UnifiedTask | null>(null);
