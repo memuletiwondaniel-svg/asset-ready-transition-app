@@ -473,6 +473,26 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     stats: {},
     height: 'md:row-span-2',
     onClick: () => setActiveView('deployment-configs')
+  }, {
+    id: 'journey-maps',
+    title: 'Customer Journey Maps',
+    description: 'Role-based journey maps with real user personas, goals, pain points, and platform interaction flows',
+    icon: MapPin,
+    gradient: 'from-pink-600 to-rose-700',
+    tooltip: 'View enhanced customer journey maps for all configured roles with real profiles',
+    stats: {},
+    height: 'md:row-span-2',
+    onClick: () => setActiveView('journey-maps')
+  }, {
+    id: 'process-flows',
+    title: 'Process Flow Maps',
+    description: 'Complete process documentation covering all ORSH workflows, approval chains, and automation triggers',
+    icon: GitBranch,
+    gradient: 'from-emerald-600 to-teal-700',
+    tooltip: 'View detailed process flow maps explaining every ORSH process',
+    stats: {},
+    height: 'md:row-span-2',
+    onClick: () => setActiveView('process-flows')
   }];
 
   // Filter admin tools based on search query
