@@ -262,7 +262,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
             <div className="space-y-3">
               <div className="flex items-center gap-4 text-sm">
                 <div className="flex items-center gap-1.5 text-muted-foreground">
-                  <Calendar className="h-3.5 w-3.5" />
+                  <CalendarIcon className="h-3.5 w-3.5" />
                   <span>Created {format(new Date(task.created_at), 'MMM d, yyyy')}</span>
                 </div>
                 {isCompleted ? (
@@ -283,7 +283,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
 
               {task.due_date && (
                 <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <Calendar className="h-3.5 w-3.5" />
+                  <CalendarIcon className="h-3.5 w-3.5" />
                   <span>Due {format(new Date(task.due_date), 'MMM d, yyyy')}</span>
                 </div>
               )}
