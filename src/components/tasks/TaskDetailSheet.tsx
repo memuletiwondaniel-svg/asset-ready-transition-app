@@ -71,7 +71,6 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
 
   const hasExistingOraDraft = existingOraPlan?.status === 'DRAFT';
   const resolvedOraPlanId = (task?.metadata?.plan_id as string) || existingOraPlan?.id;
-  });
 
   // Fetch project info for P2A wizard
   const { data: p2aProjectInfo } = useQuery({
