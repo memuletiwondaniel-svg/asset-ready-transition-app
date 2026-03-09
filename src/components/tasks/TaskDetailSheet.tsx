@@ -252,7 +252,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
              <SheetTitle className="text-left text-base sm:text-lg leading-snug mt-2 break-words">
               {task.title}
             </SheetTitle>
-            {task.description && (
+            {task.description && !isActionTask && (
               <p className="text-sm text-muted-foreground mt-1">{task.description}</p>
             )}
           </SheetHeader>
