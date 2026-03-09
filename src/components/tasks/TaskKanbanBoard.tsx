@@ -233,7 +233,7 @@ const KanbanCardContent: React.FC<{
         <div className="flex items-center gap-1">
           {sp.isStartingSoon && (
             <span className="text-[9px] font-medium text-amber-600 bg-amber-500/8 px-1.5 py-0 rounded">
-              Soon
+              {t.kanbanSoon || 'Soon'}
             </span>
           )}
           {task.kanbanColumn === 'done' ? (
