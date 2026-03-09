@@ -1,15 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { CheckCircle, X, Calendar, AlertTriangle, ChevronRight, Pencil, CalendarCheck, ClipboardList, FileText, Eye } from 'lucide-react';
+import { CheckCircle, X, Calendar as CalendarIcon, AlertTriangle, ChevronRight, Pencil, CalendarCheck, ClipboardList, FileText, Eye } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
+import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
+import { format, parseISO, differenceInDays, addDays } from 'date-fns';
 import CreatePSSRWizard from '@/components/pssr/CreatePSSRWizard';
 import { ORAActivityPlanWizard } from '@/components/ora/wizard/ORAActivityPlanWizard';
 import { ORPGanttOverlay } from '@/components/orp/ORPGanttOverlay';
@@ -46,6 +47,11 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   const [vcrWizardOpen, setVcrWizardOpen] = useState(false);
   const [oraReviewWizardOpen, setOraReviewWizardOpen] = useState(false);
   const [p2aWizardOpen, setP2aWizardOpen] = useState(false);
+  
+  // P2A schedule state
+  const [p2aStartDate, setP2aStartDate] = useState<Date | undefined>();
+  const [p2aEndDate, setP2aEndDate] = useState<Date | undefined>();
+  const [showP2aCalendar, setShowP2aCalendar] = useState(false);
 
   const oraProjectId = task?.metadata?.project_id as string | undefined;
   const isOraTask = task ? (task.type === 'ora_plan_creation' || (task.metadata?.action === 'create_ora_plan' && task.metadata?.source === 'ora_workflow')) : false;
@@ -103,6 +109,23 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
     enabled: !!p2aProjectId && isP2aTask,
     staleTime: 30_000,
   });
+
+  // P2A duration
+  const p2aDurationDays = useMemo(() => {
+    if (p2aStartDate && p2aEndDate) return differenceInDays(p2aEndDate, p2aStartDate);
+    return null;
+  }, [p2aStartDate, p2aEndDate]);
+
+  // Initialize P2A dates from task metadata when sheet opens
+  React.useEffect(() => {
+    if (open && task && isP2aTask) {
+      const sd = task.metadata?.start_date ? parseISO(task.metadata.start_date as string) : undefined;
+      const ed = task.metadata?.end_date ? parseISO(task.metadata.end_date as string) : task.due_date ? parseISO(task.due_date) : undefined;
+      setP2aStartDate(sd);
+      setP2aEndDate(ed);
+      setShowP2aCalendar(false);
+    }
+  }, [open, task?.id]);
 
   const handleAction = (type: 'approve' | 'reject') => {
     if (!task) return;
@@ -167,7 +190,11 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
       : 'You have been assigned to create the ORA Activity Plan for this project. Click below to launch the planning wizard.';
 
   const getIntentMessage = () => {
-    if (isP2aTask) return 'The ORA Plan has been approved. Create the Project to Asset (P2A) handover plan for this project.';
+    if (isP2aTask) {
+      if (isCompleted) return 'The P2A Plan has been completed. Click below to view the finalized plan.';
+      if (hasExistingP2aDraft) return 'You have a saved draft for the P2A Plan. Click below to continue where you left off.';
+      return 'Create the Project to Asset (P2A) handover plan for this project. Click below to launch the P2A planning wizard.';
+    }
     if (isOraTask) return oraIntentMessage;
     if (isVcrDeliveryPlanTask) return 'You need to set up the VCR Delivery Plan for this item. Click below to configure the execution plan.';
     if (isOraActivityTask) return 'You have an ORA activity to complete. Click below to open the activity details and update progress.';
@@ -225,7 +252,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
              <SheetTitle className="text-left text-base sm:text-lg leading-snug mt-2 break-words">
               {task.title}
             </SheetTitle>
-            {task.description && (
+            {task.description && !isActionTask && (
               <p className="text-sm text-muted-foreground mt-1">{task.description}</p>
             )}
           </SheetHeader>
@@ -235,7 +262,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
             <div className="space-y-3">
               <div className="flex items-center gap-4 text-sm">
                 <div className="flex items-center gap-1.5 text-muted-foreground">
-                  <Calendar className="h-3.5 w-3.5" />
+                  <CalendarIcon className="h-3.5 w-3.5" />
                   <span>Created {format(new Date(task.created_at), 'MMM d, yyyy')}</span>
                 </div>
                 {isCompleted ? (
@@ -256,7 +283,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
 
               {task.due_date && (
                 <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <Calendar className="h-3.5 w-3.5" />
+                  <CalendarIcon className="h-3.5 w-3.5" />
                   <span>Due {format(new Date(task.due_date), 'MMM d, yyyy')}</span>
                 </div>
               )}
@@ -335,6 +362,104 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                 Open Activity Details
                 <ChevronRight className="h-4 w-4 ml-auto" />
               </Button>
+            )}
+
+            {/* P2A Schedule: Start, End, Duration */}
+            {isP2aTask && p2aProjectId && !isCompleted && (
+              <div className="space-y-3">
+                <p className="text-sm font-medium text-muted-foreground">Schedule</p>
+                <div className="grid grid-cols-[1fr_1fr_auto] gap-2 items-end">
+                  {/* Start Date */}
+                  <div className="min-w-0">
+                    <p className="text-[10px] text-muted-foreground mb-1 uppercase tracking-wide font-medium">Start Date</p>
+                    <button
+                      type="button"
+                      onClick={() => setShowP2aCalendar(v => !v)}
+                      className={cn(
+                        "w-full h-9 px-2 sm:px-3 rounded-md border text-xs sm:text-sm text-left transition-colors hover:bg-muted/50 truncate",
+                        p2aStartDate ? "text-foreground" : "text-muted-foreground",
+                        showP2aCalendar && "ring-1 ring-primary/40"
+                      )}
+                    >
+                      {p2aStartDate ? format(p2aStartDate, 'MMM d, yyyy') : 'Set date'}
+                    </button>
+                  </div>
+
+                  {/* End Date */}
+                  <div className="min-w-0">
+                    <p className="text-[10px] text-muted-foreground mb-1 uppercase tracking-wide font-medium">End Date</p>
+                    <button
+                      type="button"
+                      onClick={() => setShowP2aCalendar(v => !v)}
+                      className={cn(
+                        "w-full h-9 px-2 sm:px-3 rounded-md border text-xs sm:text-sm text-left transition-colors hover:bg-muted/50 truncate",
+                        p2aEndDate ? "text-foreground" : "text-muted-foreground",
+                        showP2aCalendar && "ring-1 ring-primary/40"
+                      )}
+                    >
+                      {p2aEndDate ? format(p2aEndDate, 'MMM d, yyyy') : 'Set date'}
+                    </button>
+                  </div>
+
+                  {/* Duration */}
+                  <div className="shrink-0">
+                    <p className="text-[10px] text-muted-foreground mb-1 uppercase tracking-wide font-medium">Duration</p>
+                    <div className="flex items-center gap-0.5 h-9">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-7 w-7 text-xs"
+                        disabled={!p2aStartDate || !p2aEndDate || (p2aDurationDays !== null && p2aDurationDays <= 1)}
+                        onClick={() => {
+                          if (p2aStartDate && p2aEndDate && p2aDurationDays && p2aDurationDays > 1) {
+                            setP2aEndDate(addDays(p2aEndDate, -1));
+                          }
+                        }}
+                      >
+                        −
+                      </Button>
+                      <span className="font-semibold text-sm text-foreground w-8 text-center">
+                        {p2aDurationDays !== null ? `${p2aDurationDays}d` : '—'}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-7 w-7 text-xs"
+                        disabled={!p2aStartDate || !p2aEndDate}
+                        onClick={() => {
+                          if (p2aStartDate && p2aEndDate) {
+                            setP2aEndDate(addDays(p2aEndDate, 1));
+                          }
+                        }}
+                      >
+                        +
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Collapsible range calendar */}
+                {showP2aCalendar && (
+                  <div className="border rounded-lg p-1 animate-in fade-in slide-in-from-top-1 duration-200">
+                    <Calendar
+                      mode="range"
+                      selected={p2aStartDate && p2aEndDate ? { from: p2aStartDate, to: p2aEndDate } : p2aStartDate ? { from: p2aStartDate, to: undefined } : undefined}
+                      onSelect={(range) => {
+                        if (range?.from) setP2aStartDate(range.from);
+                        else setP2aStartDate(undefined);
+                        if (range?.to) setP2aEndDate(range.to);
+                        else if (range?.from && !range?.to) setP2aEndDate(undefined);
+                        else setP2aEndDate(undefined);
+                      }}
+                      numberOfMonths={1}
+                      className="p-2 pointer-events-auto"
+                      classNames={{
+                        day_today: "bg-muted text-muted-foreground font-medium",
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
             )}
 
             {/* P2A Plan Creation CTA */}
