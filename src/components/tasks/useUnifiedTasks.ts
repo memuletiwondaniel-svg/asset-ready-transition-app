@@ -16,6 +16,15 @@ import { useUserLastLogin } from '@/hooks/useUserLastLogin';
 import { computeSmartPriority, smartPriorityToLegacy, type SmartPriorityResult, type SmartPriorityLevel } from './smartPriority';
 import React from 'react';
 
+/** Normalize project codes like "DP200" → "DP-200", strip project names */
+function normalizeProjectCode(code?: string): string | undefined {
+  if (!code) return undefined;
+  // If it contains " - " (e.g. "DP200 - Test a Test"), take only the code part
+  const raw = code.includes(' - ') ? code.split(' - ')[0].trim() : code.trim();
+  // Insert hyphen if missing between letters and digits (e.g. DP200 → DP-200)
+  return raw.replace(/^([A-Za-z]+)(\d+)$/, '$1-$2');
+}
+
 export type CategoryFilter = 'all' | 'pssr' | 'ora' | 'owl' | 'vcr' | 'p2a' | 'action';
 
 export interface UnifiedTask {
