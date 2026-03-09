@@ -1,101 +1,77 @@
 
 
-# Kanban Board UI/UX Audit & Improvement Plan
+# Plan: ORIP Scoring Engine Using Existing VCR Item Categories
 
-## Current State Analysis
+## Impact Assessment: Zero Breaking Changes
 
-The current Kanban board uses:
-- A 4-column grid (`grid-cols-4`) with `bg-muted/30` rounded containers
-- A thin colored `border-t-2` line (blue/amber/grey/green) as the only column identity signal
-- White task cards with subtle borders, compact 9-11px typography
-- Drag handles that appear on hover
-- Gradient/tapered column backgrounds that blur visual boundaries between columns
+**No existing workflows will be affected.** The approach reuses the existing `vcr_item_categories` table (Design Integrity, Technical Integrity, Operating Integrity, Management Systems, Health & Safety) as the readiness dimensions for ORI scoring. All changes are additive:
 
-### Issues Identified (vs. Linear, Notion, Jira, Asana, Monday.com)
+- The `vcr_item_categories` table gets a `tenant_id` column and weight/confidence fields -- existing rows remain intact
+- The `readiness_nodes` table gets a new nullable `dimension_id` column pointing to `vcr_item_categories`
+- The `sync_readiness_nodes` and `calculate_ori_score` functions are replaced with enhanced versions that use category-based dimensions instead of module-based grouping
+- Existing P2A, ORA, PSSR, ORM workflows are untouched -- the ontology layer only reads from them
 
-1. **Weak column identity** — The thin 2px top-border color is the only visual differentiator. The `bg-muted/30` background is identical across all columns, making boundaries hard to read at a glance, especially on wide screens.
+## Current VCR Item Categories (Become Readiness Dimensions)
 
-2. **Cards lack visual weight** — Cards are flat, low-contrast, and dense. Modern boards (Linear, Notion) use slightly elevated cards with more whitespace and a clearer visual hierarchy.
+| Code | Name | Active |
+|------|------|--------|
+| DI2 | Design Integrity | Yes |
+| TI | Technical Integrity | Yes |
+| OI | Operating Integrity | Yes |
+| MS | Management Systems | Yes |
+| HS | Health & Safety | Yes |
 
-3. **No column "swim-lane" feel** — There's no visual gap or separator between columns. The grid gap is only `gap-3/4`, and the similar backgrounds make them merge.
+These become the tenant-configurable readiness dimensions. Different tenants can add/rename/reweight their own categories.
 
-4. **Typography is too small** — Task titles at `text-[11px]` and metadata at `text-[9px]` are below comfortable reading size. Best practice is 13-14px for card titles.
+## Implementation Tasks
 
-5. **Drag affordance is hidden** — The grip handle is `opacity-0` until hover, which breaks discoverability. Modern boards either always show a subtle handle or make the entire card draggable with cursor feedback.
+### Task 1: Extend `vcr_item_categories` for ORI Scoring
+Add columns to make categories serve double duty as readiness dimensions:
+- `tenant_id UUID` (nullable, defaults via trigger -- existing rows get current tenant)
+- `default_weight NUMERIC(5,4)` (e.g., 0.20 = 20%)
+- `confidence_factor_default NUMERIC(3,2)` (default 0.8)
+- `risk_severity_multiplier NUMERIC(3,1)` (default 1.0)
+- `is_readiness_dimension BOOLEAN DEFAULT true`
 
-6. **Drop zone feedback is minimal** — Only a faint `bg-primary/5 ring-1` on hover. Leading apps use a visible placeholder/gap where the card will land.
+Add `dimension_id UUID REFERENCES vcr_item_categories(id)` to `readiness_nodes`.
 
-7. **Empty state is too sparse** — "No tasks" as tiny muted text doesn't convey meaning. Modern apps use illustrations or contextual messages.
+### Task 2: Enhanced ORI Formula
+Replace `calculate_ori_score()` with the full ORIP formula:
 
-8. **Column count badge is too small** — `text-[10px]` badge is hard to read. Should be more prominent.
-
-9. **No card hover micro-interactions** — Cards only get `hover:shadow-sm`. Modern boards lift cards slightly with a translate or show a subtle colored left-border accent.
-
----
-
-## Recommended Improvements
-
-### 1. Column Identity Overhaul
-Replace the thin top-border with a **colored column header pill/banner** — a wider colored bar or a tinted header background (e.g., soft blue tint for "To Do", soft amber for "In Progress"). Remove the identical `bg-muted/30` body and use a very subtle per-column tint or pure white/transparent body with clear column borders.
-
-### 2. Card Elevation & Spacing
-- Increase card padding from `p-2` to `p-3`
-- Add a subtle `shadow-sm` at rest (not just hover)
-- Increase title font to `text-xs` (12px) and metadata to `text-[10px]`
-- Add `hover:-translate-y-0.5 hover:shadow-md` for a lift effect
-- Add a 3px left-border accent colored by status (blue=todo, amber=progress, green=done)
-
-### 3. Column Separation
-- Increase gap from `gap-4` to `gap-5`
-- Give columns a distinct background: white card-like surface with a `shadow-sm` and solid `border`
-- Make column headers sticky with bolder typography (`text-sm font-bold`)
-
-### 4. Drag & Drop Polish
-- Make drag handle always visible at 30% opacity (not hidden)
-- During drag-over, show a dashed placeholder card in the target column indicating the drop position
-- Increase the drag overlay scale to `1.03` with a stronger shadow
-
-### 5. Column Header Enhancement
-- Show count in a more prominent circular badge
-- Add a subtle column-specific icon (e.g., circle for To Do, spinner for In Progress, clock for Waiting, check for Done)
-
-### 6. Empty State
-- Replace "No tasks" with a subtle icon + message (e.g., a check icon with "All clear" for Done, "Nothing waiting" for Waiting)
-
-### 7. Card Status Accent
-- Add a thin left-border to each card matching the column color — this maintains identity even when scrolling long lists
-
----
-
-## Implementation Details
-
-### Files to modify:
-- **`src/components/tasks/TaskKanbanBoard.tsx`** — All visual changes: column container styles, card component, drag overlay, empty states, header layout
-
-### Specific changes:
-
-**COLUMNS config** (line 64-69):
-```typescript
-const COLUMNS = [
-  { key: 'todo', label: 'To Do', accent: 'border-l-blue-500', headerBg: 'bg-blue-50 dark:bg-blue-950/30', icon: Circle },
-  { key: 'in_progress', label: 'In Progress', accent: 'border-l-amber-500', headerBg: 'bg-amber-50 dark:bg-amber-950/30', icon: Loader2 },
-  { key: 'waiting', label: 'Waiting', accent: 'border-l-slate-400', headerBg: 'bg-slate-50 dark:bg-slate-900/30', icon: Clock },
-  { key: 'done', label: 'Done', accent: 'border-l-emerald-500', headerBg: 'bg-emerald-50 dark:bg-emerald-950/30', icon: CheckCircle2 },
-];
+```
+DS_i = (Σ Subcomponent_Weight × Completion%) × Confidence_Factor
+RP_i = Σ (Risk_Severity × Impact_Multiplier)  -- capped at 15%
+ORI  = Σ (Dimension_Weight_i × DS_i) − Global_Risk_Penalty
+SCS  = ORI × Schedule_Adherence × Critical_Path_Stability
 ```
 
-**Column container** (line 487):
-- Replace `bg-muted/30 rounded-xl border border-border/50 border-t-2` with `bg-card rounded-xl border border-border shadow-sm`
-- Use a tinted header row instead of top-border
+Add columns to `ori_scores`: `dimension_scores JSONB`, `risk_penalty_total NUMERIC`, `startup_confidence_score NUMERIC`, `schedule_adherence_index NUMERIC`, `critical_path_stability_index NUMERIC`.
 
-**Card component** (lines 188-281):
-- Increase padding, font sizes, add left-border accent, add hover lift, always-visible drag handle at low opacity
-- Add `border-l-3` using the column accent color passed as a prop
+Add `confidence_factor NUMERIC(3,2) DEFAULT 0.8` and `risk_severity TEXT DEFAULT 'none'` to `readiness_nodes`.
 
-**Empty states** (line 440):
-- Per-column contextual empty messages with small icons
+### Task 3: Update Sync Function
+Update `sync_readiness_nodes()` to auto-assign `dimension_id` by mapping:
+- P2A VCR prerequisites → mapped via their `vcr_items.category_id` directly to `vcr_item_categories`
+- ORA activities → default to "Operating Integrity" or map via metadata
+- PSSR items → map via PSSR checklist category → nearest VCR category
+- ORM deliverables → default to "Management Systems"
+- Training → default to "Operating Integrity"
 
-### No changes to:
-- Drag-and-drop logic, task data model, or any hooks
-- This is purely a visual/CSS refactor
+Set confidence factors: completed/approved = 1.0, in-progress = 0.8, not-started = 0.7.
+
+### Task 4: Executive Dashboard Enhancement
+Redesign `ExecutiveDashboard.tsx` to match the strategic layout:
+- **Top Banner**: Large ORI + SCS + color coding (Green >85, Amber 70-85, Red <70)
+- **Dimension Breakdown**: Bar/table showing each VCR category's score, trend arrow, risk level
+- **Top 5 Startup Blockers**: Blocked/critical nodes with severity
+- **Predictive Trend**: ORI line chart with dashed target curve
+- **Risk Impact Summary**: 4 stat boxes (Open High Risks, Startup-blocking, Dimensions below 70%, Systems below 60%)
+
+### Task 5: Tenant-Configurable Weight Profiles
+Update the existing `ori_weight_profiles` to store dimension-based weights keyed by `vcr_item_categories.id` instead of module names. Add a simple admin UI for editing weights per tenant.
+
+### Task 6: Update Living Documents
+- **Security & Compliance Doc**: Add rows for Readiness Dimensions, Risk Penalty Engine, Startup Confidence Score (mark as Active)
+- **Platform Guide**: Add "Readiness Ontology & Scoring Engine" section documenting the 6 dimensions, ORI formula, SCS
+- **Strategic North Star**: Update scoring engine status from Planned to Active, add dimension-based architecture detail
 

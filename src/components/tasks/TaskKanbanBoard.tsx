@@ -24,6 +24,11 @@ import {
   ChevronRight,
   GripVertical,
   AlertTriangle,
+  Circle,
+  Loader2,
+  Clock,
+  CheckCircle2,
+  Inbox,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, isPast, isToday, differenceInDays } from 'date-fns';
@@ -62,10 +67,10 @@ interface ApprovalWarningState {
 }
 
 const COLUMNS = [
-  { key: 'todo' as const, label: 'To Do', color: 'border-t-blue-500' },
-  { key: 'in_progress' as const, label: 'In Progress', color: 'border-t-amber-500' },
-  { key: 'waiting' as const, label: 'Waiting', color: 'border-t-muted-foreground' },
-  { key: 'done' as const, label: 'Done', color: 'border-t-green-500' },
+  { key: 'todo' as const, label: 'To Do', icon: Circle, accent: 'border-l-blue-500', headerBg: 'bg-blue-50/70 dark:bg-blue-950/20', dotColor: 'bg-blue-500', emptyIcon: Inbox, emptyMsg: 'Nothing to do — nice!' },
+  { key: 'in_progress' as const, label: 'In Progress', icon: Loader2, accent: 'border-l-amber-500', headerBg: 'bg-amber-50/70 dark:bg-amber-950/20', dotColor: 'bg-amber-500', emptyIcon: Circle, emptyMsg: 'No tasks in progress' },
+  { key: 'waiting' as const, label: 'Waiting', icon: Clock, accent: 'border-l-slate-400', headerBg: 'bg-slate-50/70 dark:bg-slate-900/20', dotColor: 'bg-slate-400', emptyIcon: Clock, emptyMsg: 'Nothing waiting' },
+  { key: 'done' as const, label: 'Done', icon: CheckCircle2, accent: 'border-l-emerald-500', headerBg: 'bg-emerald-50/70 dark:bg-emerald-950/20', dotColor: 'bg-emerald-500', emptyIcon: CheckCircle2, emptyMsg: 'All clear!' },
 ];
 
 // ─── Approval Void Warning Dialog ──────────────────────────────────
@@ -150,7 +155,8 @@ function getDateAnnotation(task: UnifiedTask): { label: string; variant: 'overdu
 const DraggableKanbanCard: React.FC<{
   task: UnifiedTask;
   onClick: () => void;
-}> = ({ task, onClick }) => {
+  accentClass?: string;
+}> = ({ task, onClick, accentClass }) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: task.id,
     data: { task },
@@ -170,6 +176,7 @@ const DraggableKanbanCard: React.FC<{
         task={task}
         onClick={onClick}
         dragHandleProps={{ ...attributes, ...listeners }}
+        accentClass={accentClass}
       />
     </div>
   );
@@ -181,7 +188,8 @@ const KanbanCardContent: React.FC<{
   onClick: () => void;
   dragHandleProps?: Record<string, any>;
   isOverlay?: boolean;
-}> = ({ task, onClick, dragHandleProps, isOverlay }) => {
+  accentClass?: string;
+}> = ({ task, onClick, dragHandleProps, isOverlay, accentClass }) => {
   const dateAnnotation = getDateAnnotation(task);
   const sp = task.smartPriority;
 
@@ -189,30 +197,31 @@ const KanbanCardContent: React.FC<{
     <Card
       onClick={onClick}
       className={cn(
-        "p-2 px-2.5 cursor-pointer transition-all duration-150 border border-border/60 rounded-lg group",
-        "hover:shadow-sm hover:bg-accent/30",
+        "p-3 cursor-pointer transition-all duration-200 rounded-lg group border-l-[3px]",
+        "border border-border/60 bg-card shadow-sm",
+        "hover:-translate-y-0.5 hover:shadow-md hover:border-border",
+        accentClass || 'border-l-border',
         task.isWaiting && 'opacity-50',
         task.isNew && 'ring-1 ring-primary/15',
-        
-        isOverlay && 'shadow-lg ring-2 ring-primary/20 rotate-[2deg] scale-[1.02]',
+        isOverlay && 'shadow-xl ring-2 ring-primary/20 rotate-[2deg] scale-[1.03]',
       )}
     >
       {/* Row 1: drag handle + project ID left, status right */}
-      <div className="flex items-center justify-between gap-1 mb-1">
-        <div className="flex items-center gap-1 min-w-0">
+      <div className="flex items-center justify-between gap-1.5 mb-1.5">
+        <div className="flex items-center gap-1.5 min-w-0">
           {dragHandleProps && (
             <button
               {...dragHandleProps}
               onClick={(e) => e.stopPropagation()}
-              className="touch-none p-0.5 -ml-1 opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
+              className="touch-none p-0.5 -ml-1 opacity-30 group-hover:opacity-60 hover:!opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
             >
-              <GripVertical className="h-3 w-3 text-muted-foreground" />
+              <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
             </button>
           )}
           {task.project ? (
             <ProjectIdBadge size="sm" projectId={task.project}>{task.project}</ProjectIdBadge>
           ) : (
-            <span className="text-[9px] text-muted-foreground">{task.categoryLabel}</span>
+            <span className="text-[10px] text-muted-foreground">{task.categoryLabel}</span>
           )}
           {task.isNew && (
             <span className="text-[8px] font-semibold text-primary bg-primary/8 px-1 rounded">NEW</span>
@@ -241,14 +250,14 @@ const KanbanCardContent: React.FC<{
         </div>
       </div>
 
-      {/* Title – strip redundant project ID suffix */}
-      <p className="text-[11px] font-medium text-foreground leading-snug mb-1 break-words overflow-hidden">
+      {/* Title */}
+      <p className="text-xs font-medium text-foreground leading-snug mb-1.5 break-words overflow-hidden">
         {task.project ? task.title.replace(new RegExp(`\\s*[–\\-]\\s*${task.project.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`), '') : task.title}
       </p>
 
       {/* Dates row */}
       {(task.startDate || task.endDate || task.dueDate) && (
-        <div className="flex items-center gap-1 text-[9px] text-muted-foreground/70">
+        <div className="flex items-center gap-1 text-[10px] text-muted-foreground/70">
           <Calendar className="h-2.5 w-2.5 shrink-0" />
           {task.startDate && <span>{format(new Date(task.startDate), 'MMM d')}</span>}
           {task.startDate && task.endDate && <span>→</span>}
@@ -263,18 +272,18 @@ const KanbanCardContent: React.FC<{
         </div>
       )}
 
-      {/* Progress for in-progress tasks – always show % */}
+      {/* Progress for in-progress tasks */}
       {task.kanbanColumn === 'in_progress' && (
-        <div className="flex items-center gap-1.5 mt-1">
+        <div className="flex items-center gap-1.5 mt-1.5">
           <Progress value={task.progressPercentage ?? 0} className="h-1 flex-1 bg-muted/40" indicatorClassName="bg-muted-foreground/40" />
-          <span className="text-[9px] font-medium text-muted-foreground">{Math.round(task.progressPercentage ?? 0)}%</span>
+          <span className="text-[10px] font-medium text-muted-foreground">{Math.round(task.progressPercentage ?? 0)}%</span>
         </div>
       )}
-      {/* Item counts for bundle tasks (shown in any column) */}
+      {/* Item counts for bundle tasks */}
       {task.kanbanColumn !== 'in_progress' && task.totalItems != null && task.totalItems > 0 && (
-        <div className="flex items-center gap-1.5 mt-1">
+        <div className="flex items-center gap-1.5 mt-1.5">
           <Progress value={task.progressPercentage || 0} className="h-1 flex-1" />
-          <span className="text-[9px] text-muted-foreground">{task.completedItems}/{task.totalItems}</span>
+          <span className="text-[10px] text-muted-foreground">{task.completedItems}/{task.totalItems}</span>
         </div>
       )}
     </Card>
@@ -292,8 +301,8 @@ const DroppableColumn: React.FC<{
     <div
       ref={setNodeRef}
       className={cn(
-        "flex-1 transition-colors duration-200 rounded-lg min-h-[60px]",
-        isOver && 'bg-primary/5 ring-1 ring-primary/20',
+        "flex-1 transition-all duration-200 rounded-xl min-h-[60px]",
+        isOver && 'ring-2 ring-primary/30 ring-dashed scale-[1.01]',
       )}
     >
       {children}
@@ -435,9 +444,15 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     }));
   }, [tasks]);
 
-  const renderColumnContent = (columnTasks: UnifiedTask[]) => {
+  const renderColumnContent = (columnTasks: UnifiedTask[], col: typeof columnData[number]) => {
     if (columnTasks.length === 0) {
-      return <p className="text-xs text-muted-foreground/50 text-center py-6">No tasks</p>;
+      const EmptyIcon = col.emptyIcon;
+      return (
+        <div className="flex flex-col items-center justify-center py-8 gap-2 text-muted-foreground/40">
+          <EmptyIcon className="h-5 w-5" />
+          <p className="text-xs">{col.emptyMsg}</p>
+        </div>
+      );
     }
 
     if (groupBy === 'project') {
@@ -470,7 +485,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     }
 
     return columnTasks.map(task => (
-      <DraggableKanbanCard key={task.id} task={task} onClick={() => handleTaskClick(task)} />
+      <DraggableKanbanCard key={task.id} task={task} onClick={() => handleTaskClick(task)} accentClass={col.accent} />
     ));
   };
 
@@ -481,24 +496,31 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          {columnData.map(col => (
-            <DroppableColumn key={col.key} columnKey={col.key}>
-              <div className={cn("bg-muted/30 rounded-xl border border-border/50 border-t-2 flex flex-col h-full", col.color)}>
-                {/* Column header */}
-                <div className="flex items-center justify-between px-3 py-2.5 border-b border-border/30">
-                  <span className="text-sm font-semibold text-foreground">{col.label}</span>
-                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{col.tasks.length}</Badge>
-                </div>
-                {/* Cards */}
-                <ScrollArea className="flex-1 max-h-[50vh] sm:max-h-[calc(100vh-320px)]">
-                  <div className="p-2 space-y-2">
-                    {renderColumnContent(col.tasks)}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+          {columnData.map(col => {
+            const ColIcon = col.icon;
+            return (
+              <DroppableColumn key={col.key} columnKey={col.key}>
+                <div className="bg-card rounded-xl border border-border shadow-sm flex flex-col h-full overflow-hidden">
+                  {/* Column header – tinted background */}
+                  <div className={cn("flex items-center justify-between px-3 py-2.5 border-b border-border/40", col.headerBg)}>
+                    <div className="flex items-center gap-2">
+                      <div className={cn("w-2 h-2 rounded-full", col.dotColor)} />
+                      <ColIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span className="text-sm font-bold text-foreground">{col.label}</span>
+                    </div>
+                    <Badge variant="secondary" className="text-xs font-semibold px-2 py-0.5 min-w-[1.5rem] text-center">{col.tasks.length}</Badge>
                   </div>
-                </ScrollArea>
-              </div>
-            </DroppableColumn>
-          ))}
+                  {/* Cards */}
+                  <ScrollArea className="flex-1 max-h-[50vh] sm:max-h-[calc(100vh-320px)]">
+                    <div className="p-2.5 space-y-2.5">
+                      {renderColumnContent(col.tasks, col)}
+                    </div>
+                  </ScrollArea>
+                </div>
+              </DroppableColumn>
+            );
+          })}
         </div>
 
         {/* Drag overlay - floating card that follows cursor */}
