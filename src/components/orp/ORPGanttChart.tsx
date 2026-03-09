@@ -275,7 +275,7 @@ function computeCriticalPath(rows: FlatRow[], getBarPos: (s: string, e: string) 
   return criticalSet;
 }
 
-export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverables, searchQuery: externalSearchQuery, hideToolbar, readOnly = false }) => {
+export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverables, searchQuery: externalSearchQuery, hideToolbar = false, readOnly = false }) => {
   const [internalSearchQuery, setInternalSearchQuery] = useState('');
   const [showCatalogDialog, setShowCatalogDialog] = useState(false);
   const [showP2AWizard, setShowP2AWizard] = useState(false);
