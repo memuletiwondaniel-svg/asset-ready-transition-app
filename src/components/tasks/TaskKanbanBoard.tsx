@@ -501,7 +501,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
             const ColIcon = col.icon;
             return (
               <DroppableColumn key={col.key} columnKey={col.key}>
-                <div className="bg-card rounded-xl border border-border shadow-sm flex flex-col h-full overflow-hidden">
+                <div className="bg-muted/40 rounded-xl border border-border shadow-sm flex flex-col h-full overflow-hidden">
                   {/* Column header – tinted background */}
                   <div className={cn("flex items-center justify-between px-3 py-2.5 border-b border-border/40", col.headerBg)}>
                     <div className="flex items-center gap-2">
