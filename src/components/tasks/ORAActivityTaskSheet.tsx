@@ -916,6 +916,5 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
         }}
       />
     )}
-    </>
   );
 };
