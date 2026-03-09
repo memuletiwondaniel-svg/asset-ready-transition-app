@@ -289,7 +289,14 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                     ? "bg-muted hover:bg-muted/80 text-foreground border border-border"
                     : "bg-primary hover:bg-primary/90 text-primary-foreground"
                 )}
-                onClick={() => setOraWizardOpen(true)}
+                onClick={() => {
+                  if (isCompleted && oraPlanId) {
+                    onOpenChange(false);
+                    setOraGanttOpen(true);
+                  } else {
+                    setOraWizardOpen(true);
+                  }
+                }}
               >
                 {isCompleted ? <Eye className="h-4 w-4" /> : <CalendarCheck className="h-4 w-4" />}
                 {oraCtaLabel}
