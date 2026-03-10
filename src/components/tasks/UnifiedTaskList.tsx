@@ -42,12 +42,27 @@ export const UnifiedTaskList: React.FC<UnifiedTaskListProps> = ({
   groupBy = 'none',
 }) => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { allTasks, isLoading, categoryCounts, updateTaskStatus } = useUnifiedTasks(userId);
   const [activeFilter, setActiveFilter] = useState<CategoryFilter>('all');
   const [selectedTask, setSelectedTask] = useState<UserTask | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [oraActivityTask, setOraActivityTask] = useState<UserTask | null>(null);
   const [oraActivityOpen, setOraActivityOpen] = useState(false);
+
+  // P2A Wizard state (lifted from ORAActivityTaskSheet)
+  const [p2aWizardOpen, setP2aWizardOpen] = useState(false);
+  const [p2aWorkspaceOpen, setP2aWorkspaceOpen] = useState(false);
+  const [p2aTarget, setP2aTarget] = useState({ projectId: '', projectCode: '' });
+
+  const handleOpenP2AWizard = useCallback((projectId: string, projectCode: string, openWorkspace?: boolean) => {
+    setP2aTarget({ projectId, projectCode });
+    if (openWorkspace) {
+      setP2aWorkspaceOpen(true);
+    } else {
+      setP2aWizardOpen(true);
+    }
+  }, []);
 
   // Report total count
   useEffect(() => {
