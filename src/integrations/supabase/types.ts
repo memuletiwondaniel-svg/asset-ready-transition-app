@@ -9607,6 +9607,7 @@ export type Database = {
           email: string
           first_name: string
           full_name: string
+          functional_email: boolean
           functional_email_address: string
           job_title: string
           last_activity: string
@@ -9617,6 +9618,7 @@ export type Database = {
           manager_name: string
           password_change_required: boolean
           pending_actions: number
+          personal_email: string
           phone_number: string
           position: string
           projects: string[]
