@@ -730,7 +730,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                 <div className="pt-2">
                   <p className="text-sm font-medium mb-3 text-muted-foreground">Status</p>
                   <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg">
-                    {STATUS_STEPS.map((step) => {
+                    {(isP2AActivity ? STATUS_STEPS.filter(s => s.value !== 'COMPLETED') : STATUS_STEPS).map((step) => {
                       const Icon = step.icon;
                       const isActive = status === step.value;
                       return (
@@ -986,7 +986,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                 {isReadOnly ? 'Close' : 'Cancel'}
               </Button>
 
-              {!isReadOnly && isDirty && (
+              {!isReadOnly && isDirty && !(isP2AActivity && status === 'COMPLETED') && (
                 <Button
                   size="sm"
                   className={cn(
