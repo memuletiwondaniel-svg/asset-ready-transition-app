@@ -280,6 +280,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
   const [internalSearchQuery, setInternalSearchQuery] = useState('');
   const [showCatalogDialog, setShowCatalogDialog] = useState(false);
   const [showP2AWizard, setShowP2AWizard] = useState(false);
+  const [showP2AWorkspace, setShowP2AWorkspace] = useState(false);
   
   const { toast } = useToast();
   
