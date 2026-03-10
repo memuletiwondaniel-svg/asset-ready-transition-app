@@ -937,8 +937,8 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
       </SheetContent>
     </Sheet>
 
-    {/* P2A Plan Creation Wizard */}
-    {isP2AActivity && projectId && (
+    {/* P2A Plan Creation Wizard - rendered unconditionally to survive sheet close */}
+    {(showP2AWizard || showP2AWorkspace) && projectId && (
       <>
         <P2APlanCreationWizard
           open={showP2AWizard}
