@@ -178,10 +178,20 @@ const fetchUserTasks = async (userId: string): Promise<FetchResult> => {
   let p2aActivityProgress: Record<string, number> = {};
   if (p2aActivitiesResult && 'data' in p2aActivitiesResult && p2aActivitiesResult.data) {
     const planToProgress: Record<string, number> = {};
-    p2aActivitiesResult.data.forEach((a: any) => { planToProgress[a.orp_plan_id] = a.completion_percentage ?? 0; });
+    const projectToProgress: Record<string, number> = {};
+    p2aActivitiesResult.data.forEach((a: any) => {
+      planToProgress[a.orp_plan_id] = a.completion_percentage ?? 0;
+      if (a._project_id) { projectToProgress[a._project_id] = a.completion_percentage ?? 0; }
+    });
     p2aTasks.forEach(t => {
-      const planId = (t.metadata as Record<string, any>).plan_id;
-      if (planId && planId in planToProgress) { p2aActivityProgress[t.id] = planToProgress[planId]; }
+      const meta = t.metadata as Record<string, any>;
+      const planId = meta.plan_id;
+      const projId = meta.project_id;
+      if (planId && planId in planToProgress) {
+        p2aActivityProgress[t.id] = planToProgress[planId];
+      } else if (projId && projId in projectToProgress) {
+        p2aActivityProgress[t.id] = projectToProgress[projId];
+      }
     });
   }
 
