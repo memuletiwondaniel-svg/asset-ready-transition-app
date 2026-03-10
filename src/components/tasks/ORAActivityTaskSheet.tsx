@@ -106,17 +106,97 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
   const [originalProgressPct, setOriginalProgressPct] = useState(0);
 
   const metadata = task?.metadata as Record<string, any> | undefined;
-  const activityName = metadata?.activity_name || task?.title || '';
-  const activityCode = metadata?.activity_code || '';
-  const startDate = metadata?.start_date as string | undefined;
-  const endDate = metadata?.end_date as string | undefined;
-  const planId = metadata?.plan_id as string | undefined;
+  const metaOraActivityId = metadata?.ora_plan_activity_id as string | undefined;
+  const metaPlanId = metadata?.plan_id as string | undefined;
+  const metaProjectId = metadata?.project_id as string | undefined;
+  const metaProjectCode = metadata?.project_code as string | undefined;
+
+  const rawOraActivityId = useMemo(() => {
+    const raw = metaOraActivityId || '';
+    if (raw.startsWith('ora-')) return raw.slice(4);
+    if (raw.startsWith('ws-')) return raw.slice(3);
+    return raw;
+  }, [metaOraActivityId]);
+
+  // Fetch the actual ora_plan_activities record as single source of truth
+  const { data: dbActivity } = useQuery({
+    queryKey: ['ora-activity-detail', rawOraActivityId, metaProjectId],
+    queryFn: async () => {
+      const client = supabase as any;
+      // Try direct lookup by ID first
+      if (rawOraActivityId) {
+        const { data } = await client
+          .from('ora_plan_activities')
+          .select('id, activity_code, name, description, status, completion_percentage, start_date, end_date, duration_days, orp_plan_id, parent_id, source_ref_id')
+          .eq('id', rawOraActivityId)
+          .maybeSingle();
+        if (data) return data;
+      }
+      // Fallback: find by project_id + P2A activity code/name pattern
+      if (metaProjectId) {
+        const { data: plans } = await client
+          .from('orp_plans')
+          .select('id')
+          .eq('project_id', metaProjectId)
+          .limit(1);
+        if (plans?.[0]) {
+          const { data: activities } = await client
+            .from('ora_plan_activities')
+            .select('id, activity_code, name, description, status, completion_percentage, start_date, end_date, duration_days, orp_plan_id, parent_id, source_ref_id')
+            .eq('orp_plan_id', plans[0].id);
+          const match = activities?.find((a: any) => 
+            a.activity_code === 'P2A-01' || 
+            a.name?.toLowerCase().includes('p2a')
+          );
+          if (match) return match;
+        }
+      }
+      return null;
+    },
+    enabled: open && !!(rawOraActivityId || metaProjectId),
+    staleTime: 30_000,
+  });
+
+  // Fetch predecessors from wizard_state for this activity
+  const resolvedPlanId = dbActivity?.orp_plan_id || metaPlanId;
+  const resolvedActivityId = dbActivity?.id || rawOraActivityId;
+
+  const { data: wizardPredecessors } = useQuery({
+    queryKey: ['ora-activity-predecessors', resolvedPlanId, resolvedActivityId],
+    queryFn: async () => {
+      if (!resolvedPlanId || !resolvedActivityId) return [];
+      const { data: planRow } = await (supabase as any)
+        .from('orp_plans')
+        .select('wizard_state')
+        .eq('id', resolvedPlanId)
+        .single();
+      if (!planRow?.wizard_state) return [];
+      const ws = planRow.wizard_state as any;
+      const wsActivities: any[] = ws.activities || [];
+      const match = wsActivities.find((a: any) => {
+        const aId = String(a.id || '');
+        return aId === resolvedActivityId || aId === `ora-${resolvedActivityId}` || aId === `ws-${resolvedActivityId}`;
+      });
+      return match?.predecessorIds || [];
+    },
+    enabled: open && !!resolvedPlanId && !!resolvedActivityId,
+    staleTime: 30_000,
+  });
+
+  // Use DB activity as source of truth, falling back to task metadata
+  const activityName = dbActivity?.name || metadata?.activity_name || task?.title || '';
+  const activityCode = dbActivity?.activity_code || metadata?.activity_code || '';
+  const startDate = dbActivity?.start_date || metadata?.start_date as string | undefined;
+  const endDate = dbActivity?.end_date || metadata?.end_date as string | undefined;
+  const planId = resolvedPlanId;
   const deliverableId = metadata?.deliverable_id as string | undefined;
-  const oraActivityId = metadata?.ora_plan_activity_id as string | undefined;
-  const projectId = metadata?.project_id as string | undefined;
-  const projectCode = metadata?.project_code as string | undefined;
+  const oraActivityId = metaOraActivityId;
+  const projectId = metaProjectId;
+  const projectCode = metaProjectCode;
   const isP2AActivity = activityCode === 'P2A-01' || metadata?.action === 'create_p2a_plan' || activityName?.toLowerCase().includes('p2a');
   const isOverdue = editEndDate && isPast(editEndDate) && status !== 'COMPLETED';
+
+  const realOraActivityId = resolvedActivityId;
 
   // Check if P2A plan exists for "Continue" vs "Create" label
   const { data: existingP2APlan } = useQuery({
@@ -167,26 +247,21 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
     ? ID_BADGE_PALETTE[hashCode(activityCode) % ID_BADGE_PALETTE.length]
     : ID_BADGE_PALETTE[0];
 
-  const realOraActivityId = useMemo(() => {
-    const raw = oraActivityId || '';
-    if (raw.startsWith('ora-')) return raw.slice(4);
-    if (raw.startsWith('ws-')) return raw.slice(3);
-    return raw;
-  }, [oraActivityId]);
-
   // Database-persisted comments
   const { comments: dbComments, isLoading: commentsLoading, addComment: addDbComment, isAdding } = useORAActivityComments(realOraActivityId || undefined, planId);
 
-  // Initialize values when sheet opens
+  // Initialize values when sheet opens — prefer dbActivity over task metadata
   useEffect(() => {
     if (open && task) {
-      const initDesc = metadata?.description || task?.description || '';
+      const db = dbActivity as any;
+      const initDesc = db?.description || metadata?.description || task?.description || '';
+      const dbStatus = db?.status as ActivityStatus | undefined;
       const taskStatus = task?.status;
-      const baseStatus: ActivityStatus = taskStatus === 'completed' ? 'COMPLETED'
-        : taskStatus === 'in_progress' ? 'IN_PROGRESS' : 'NOT_STARTED';
+      const baseStatus: ActivityStatus = dbStatus || (taskStatus === 'completed' ? 'COMPLETED'
+        : taskStatus === 'in_progress' ? 'IN_PROGRESS' : 'NOT_STARTED');
       const initStatus: ActivityStatus = initialStatusOverride || baseStatus;
-      const initProgress = metadata?.completion_percentage ?? (initStatus === 'COMPLETED' ? 100 : initStatus === 'IN_PROGRESS' ? 50 : 0);
-      const initName = metadata?.activity_name || task?.title || '';
+      const initProgress = db?.completion_percentage ?? metadata?.completion_percentage ?? (initStatus === 'COMPLETED' ? 100 : initStatus === 'IN_PROGRESS' ? 50 : 0);
+      const initName = db?.name || metadata?.activity_name || task?.title || '';
       setEditName(initName);
       setOriginalName(initName);
       setDescription(initDesc);
@@ -195,7 +270,6 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
       setOriginalStatus(baseStatus);
       setComment('');
       setFiles([]);
-      setComment('');
       setProgressPct(initProgress);
       setOriginalProgressPct(initProgress);
       setShowCalendar(false);
@@ -207,11 +281,11 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
       setOriginalStartDate(sd);
       setOriginalEndDate(ed);
 
-      const preds: string[] = metadata?.predecessor_ids || [];
+      const preds: string[] = wizardPredecessors || metadata?.predecessor_ids || [];
       setPredecessorIds(preds);
       setOriginalPredecessorIds(preds);
     }
-  }, [open, task?.id]);
+  }, [open, task?.id, dbActivity?.id, wizardPredecessors]);
 
   const isDirty = useMemo(() => {
     const datesChanged = editStartDate?.getTime() !== originalStartDate?.getTime() ||
