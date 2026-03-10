@@ -225,8 +225,19 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
   useEffect(() => {
     if (draftLoaded && useWizard) {
       recalculateCompletedSteps();
+      // Sync progress to ORA activity based on how far the wizard state has progressed
+      // Determine highest completed step to reflect accurate progress
+      let highestComplete = 1; // At minimum step 1 (systems) if draft exists
+      for (let i = 1; i <= WIZARD_STEPS.length - 1; i++) {
+        if (isStepComplete(i)) {
+          highestComplete = i + 1; // Next step is where the user would resume
+        } else {
+          break;
+        }
+      }
+      syncWizardProgress(Math.min(highestComplete, WIZARD_STEPS.length));
     }
-  }, [draftLoaded, useWizard, state]);
+  }, [draftLoaded, useWizard]);
 
   const handleChooseWizard = () => {
     setUseWizard(true);
