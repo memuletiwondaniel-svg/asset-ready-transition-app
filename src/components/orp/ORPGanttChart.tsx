@@ -342,7 +342,8 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
     staleTime: 30_000,
   });
 
-  const p2aCtaLabel = existingP2APlan ? 'Continue P2A Plan' : 'Create P2A Plan';
+  const p2aPlanIsSubmittedOrApproved = existingP2APlan && ['ACTIVE', 'COMPLETED', 'APPROVED'].includes(existingP2APlan.status);
+  const p2aCtaLabel = p2aPlanIsSubmittedOrApproved ? 'View P2A Plan' : existingP2APlan ? 'Continue P2A Plan' : 'Create P2A Plan';
   const projectCode = planData?.project
     ? `${planData.project.project_id_prefix || ''}-${planData.project.project_id_number || ''}`
     : '';
