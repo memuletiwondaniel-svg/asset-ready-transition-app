@@ -64,9 +64,11 @@ const fetchUserTasks = async (userId: string): Promise<FetchResult> => {
 
   const p2aTasks = regularTasks.filter(t => {
     const meta = t.metadata as Record<string, any>;
-    return meta?.action === 'create_p2a_plan' && meta?.plan_id;
+    return meta?.action === 'create_p2a_plan';
   });
-  const p2aPlanIds = [...new Set(p2aTasks.map(t => (t.metadata as Record<string, any>).plan_id))] as string[];
+  // Collect both plan_id (orp_plan_id) and project_id for flexible lookups
+  const p2aPlanIds = [...new Set(p2aTasks.map(t => (t.metadata as Record<string, any>).plan_id).filter(Boolean))] as string[];
+  const p2aProjectIds = [...new Set(p2aTasks.map(t => (t.metadata as Record<string, any>).project_id).filter(Boolean))] as string[];
 
   const oraPlanCreationTasks = regularTasks.filter(t => {
     const meta = t.metadata as Record<string, any>;
