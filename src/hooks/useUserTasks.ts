@@ -174,6 +174,7 @@ const fetchUserTasks = async (userId: string): Promise<FetchResult> => {
   });
 
   return { tasks: enrichedTasks, dependencies: depsData, bundleTasks, oraActivityDates, oraPlanStatuses, p2aActivityProgress };
+};
 
 /**
  * Core P2A approval sync logic. Extracted so it can be called from both
