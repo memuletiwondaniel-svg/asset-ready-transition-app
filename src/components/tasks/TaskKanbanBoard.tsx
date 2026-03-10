@@ -9,6 +9,9 @@ import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { TaskDetailSheet } from './TaskDetailSheet';
 import { ORAActivityTaskSheet } from './ORAActivityTaskSheet';
+import { P2APlanCreationWizard } from '@/components/widgets/p2a-wizard/P2APlanCreationWizard';
+import { P2AWorkspaceOverlay } from '@/components/widgets/P2AWorkspaceOverlay';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -346,6 +349,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
 }) => {
   const navigate = useNavigate();
   const { translations: t } = useLanguage();
+  const queryClient = useQueryClient();
   const [selectedTask, setSelectedTask] = useState<UserTask | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [activeTask, setActiveTask] = useState<UnifiedTask | null>(null);
@@ -355,6 +359,20 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
   const [oraActivityTask, setOraActivityTask] = useState<UserTask | null>(null);
   const [oraActivityOpen, setOraActivityOpen] = useState(false);
   const [oraActivityDragComplete, setOraActivityDragComplete] = useState(false);
+
+  // P2A Wizard state (lifted from ORAActivityTaskSheet)
+  const [p2aWizardOpen, setP2aWizardOpen] = useState(false);
+  const [p2aWorkspaceOpen, setP2aWorkspaceOpen] = useState(false);
+  const [p2aTarget, setP2aTarget] = useState({ projectId: '', projectCode: '' });
+
+  const handleOpenP2AWizard = useCallback((projectId: string, projectCode: string, openWorkspace?: boolean) => {
+    setP2aTarget({ projectId, projectCode });
+    if (openWorkspace) {
+      setP2aWorkspaceOpen(true);
+    } else {
+      setP2aWizardOpen(true);
+    }
+  }, []);
 
   // Approval void warning dialog state
   const [warningState, setWarningState] = useState<ApprovalWarningState | null>(null);
@@ -559,6 +577,35 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
           }
         }}
         initialStatusOverride={oraActivityDragComplete ? "COMPLETED" : undefined}
+        onOpenP2AWizard={handleOpenP2AWizard}
+      />
+
+      {/* P2A Wizard/Workspace rendered at parent level to survive sheet close */}
+      <P2APlanCreationWizard
+        open={p2aWizardOpen}
+        onOpenChange={setP2aWizardOpen}
+        projectId={p2aTarget.projectId}
+        projectCode={p2aTarget.projectCode}
+        onSuccess={() => {
+          setP2aWizardOpen(false);
+          queryClient.invalidateQueries({ queryKey: ['orp-plan'] });
+          queryClient.invalidateQueries({ queryKey: ['p2a-plan-exists-sheet'] });
+          queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+        }}
+        onOpenWorkspace={() => {
+          setP2aWizardOpen(false);
+          setP2aWorkspaceOpen(true);
+        }}
+      />
+      <P2AWorkspaceOverlay
+        open={p2aWorkspaceOpen}
+        onOpenChange={setP2aWorkspaceOpen}
+        projectId={p2aTarget.projectId}
+        projectNumber={p2aTarget.projectCode}
+        onReturnToWizard={() => {
+          setP2aWorkspaceOpen(false);
+          setP2aWizardOpen(true);
+        }}
       />
 
       {/* Warning dialog for reverting approval-protected tasks */}

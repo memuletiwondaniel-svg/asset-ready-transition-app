@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -6,6 +6,9 @@ import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TaskDetailSheet } from './TaskDetailSheet';
 import { ORAActivityTaskSheet } from './ORAActivityTaskSheet';
+import { P2APlanCreationWizard } from '@/components/widgets/p2a-wizard/P2APlanCreationWizard';
+import { P2AWorkspaceOverlay } from '@/components/widgets/P2AWorkspaceOverlay';
+import { useQueryClient } from '@tanstack/react-query';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   AlertTriangle,
@@ -39,12 +42,27 @@ export const UnifiedTaskList: React.FC<UnifiedTaskListProps> = ({
   groupBy = 'none',
 }) => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { allTasks, isLoading, categoryCounts, updateTaskStatus } = useUnifiedTasks(userId);
   const [activeFilter, setActiveFilter] = useState<CategoryFilter>('all');
   const [selectedTask, setSelectedTask] = useState<UserTask | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [oraActivityTask, setOraActivityTask] = useState<UserTask | null>(null);
   const [oraActivityOpen, setOraActivityOpen] = useState(false);
+
+  // P2A Wizard state (lifted from ORAActivityTaskSheet)
+  const [p2aWizardOpen, setP2aWizardOpen] = useState(false);
+  const [p2aWorkspaceOpen, setP2aWorkspaceOpen] = useState(false);
+  const [p2aTarget, setP2aTarget] = useState({ projectId: '', projectCode: '' });
+
+  const handleOpenP2AWizard = useCallback((projectId: string, projectCode: string, openWorkspace?: boolean) => {
+    setP2aTarget({ projectId, projectCode });
+    if (openWorkspace) {
+      setP2aWorkspaceOpen(true);
+    } else {
+      setP2aWizardOpen(true);
+    }
+  }, []);
 
   // Report total count
   useEffect(() => {
@@ -189,6 +207,35 @@ export const UnifiedTaskList: React.FC<UnifiedTaskListProps> = ({
         onOpenChange={(open) => {
           setOraActivityOpen(open);
           if (!open) setOraActivityTask(null);
+        }}
+        onOpenP2AWizard={handleOpenP2AWizard}
+      />
+
+      {/* P2A Wizard/Workspace rendered at parent level */}
+      <P2APlanCreationWizard
+        open={p2aWizardOpen}
+        onOpenChange={setP2aWizardOpen}
+        projectId={p2aTarget.projectId}
+        projectCode={p2aTarget.projectCode}
+        onSuccess={() => {
+          setP2aWizardOpen(false);
+          queryClient.invalidateQueries({ queryKey: ['orp-plan'] });
+          queryClient.invalidateQueries({ queryKey: ['p2a-plan-exists-sheet'] });
+          queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+        }}
+        onOpenWorkspace={() => {
+          setP2aWizardOpen(false);
+          setP2aWorkspaceOpen(true);
+        }}
+      />
+      <P2AWorkspaceOverlay
+        open={p2aWorkspaceOpen}
+        onOpenChange={setP2aWorkspaceOpen}
+        projectId={p2aTarget.projectId}
+        projectNumber={p2aTarget.projectCode}
+        onReturnToWizard={() => {
+          setP2aWorkspaceOpen(false);
+          setP2aWizardOpen(true);
         }}
       />
     </>

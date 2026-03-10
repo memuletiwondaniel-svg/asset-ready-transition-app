@@ -26,8 +26,6 @@ import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useDropzone } from 'react-dropzone';
-import { P2APlanCreationWizard } from '@/components/widgets/p2a-wizard/P2APlanCreationWizard';
-import { P2AWorkspaceOverlay } from '@/components/widgets/P2AWorkspaceOverlay';
 import type { UserTask } from '@/hooks/useUserTasks';
 
 interface ORAActivityTaskSheetProps {
@@ -37,6 +35,8 @@ interface ORAActivityTaskSheetProps {
   isReadOnly?: boolean;
   /** When set, overrides the initial status (e.g. pre-select "COMPLETED" when dragged to Done) */
   initialStatusOverride?: ActivityStatus;
+  /** Called when user wants to open the P2A wizard/workspace — parent handles rendering */
+  onOpenP2AWizard?: (projectId: string, projectCode: string, openWorkspace?: boolean) => void;
 }
 
 type ActivityStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
@@ -75,6 +75,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
   onOpenChange,
   isReadOnly = false,
   initialStatusOverride,
+  onOpenP2AWizard,
 }) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -87,10 +88,6 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
   const [progressPct, setProgressPct] = useState(0);
   const [editName, setEditName] = useState('');
   const [originalName, setOriginalName] = useState('');
-  const [showP2AWizard, setShowP2AWizard] = useState(false);
-  const [showP2AWorkspace, setShowP2AWorkspace] = useState(false);
-  const [p2aProjectId, setP2aProjectId] = useState<string | undefined>();
-  const [p2aProjectCode, setP2aProjectCode] = useState<string | undefined>();
 
   // Editable dates
   const [editStartDate, setEditStartDate] = useState<Date | undefined>();
@@ -635,18 +632,10 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                 <Button
                   className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
                   onClick={() => {
-                    // Persist project info before closing sheet (task may become null)
-                    setP2aProjectId(projectId);
-                    setP2aProjectCode(projectCode);
-                    // Close sheet first, then open wizard after animation completes
                     onOpenChange(false);
-                    setTimeout(() => {
-                      if (p2aPlanIsFullyApproved) {
-                        setShowP2AWorkspace(true);
-                      } else {
-                        setShowP2AWizard(true);
-                      }
-                    }, 300);
+                    if (onOpenP2AWizard && projectId) {
+                      onOpenP2AWizard(projectId, projectCode || '', !!p2aPlanIsFullyApproved);
+                    }
                   }}
                 >
                   <FileText className="h-4 w-4" />
@@ -945,37 +934,6 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
       </SheetContent>
     </Sheet>
 
-    {/* P2A Plan Creation Wizard - rendered unconditionally to survive sheet close */}
-    {(showP2AWizard || showP2AWorkspace) && (p2aProjectId || projectId) && (
-      <>
-        <P2APlanCreationWizard
-          open={showP2AWizard}
-          onOpenChange={setShowP2AWizard}
-          projectId={(p2aProjectId || projectId)!}
-          projectCode={p2aProjectCode || projectCode || ''}
-          onSuccess={() => {
-            setShowP2AWizard(false);
-            queryClient.invalidateQueries({ queryKey: ['orp-plan'] });
-            queryClient.invalidateQueries({ queryKey: ['p2a-plan-exists-sheet'] });
-            queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
-          }}
-          onOpenWorkspace={() => {
-            setShowP2AWizard(false);
-            setShowP2AWorkspace(true);
-          }}
-        />
-        <P2AWorkspaceOverlay
-          open={showP2AWorkspace}
-          onOpenChange={setShowP2AWorkspace}
-          projectId={(p2aProjectId || projectId)!}
-          projectNumber={p2aProjectCode || projectCode || ''}
-          onReturnToWizard={() => {
-            setShowP2AWorkspace(false);
-            setShowP2AWizard(true);
-          }}
-        />
-      </>
-    )}
     </>
   );
 };
