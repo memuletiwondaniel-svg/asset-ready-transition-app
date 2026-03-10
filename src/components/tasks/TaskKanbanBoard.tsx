@@ -427,10 +427,12 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
       // This forces the user to add evidence/comments before completing
       const meta = task.userTask.metadata as Record<string, any> | undefined;
       const isOraActivity = task.userTask.type === 'ora_activity' || meta?.action === 'complete_ora_activity' || meta?.ora_plan_activity_id;
+      const isP2aTask = meta?.action === 'create_p2a_plan';
 
       if (isOraActivity) {
         setOraActivityTask(task.userTask);
-        setOraActivityDragComplete(true);
+        // P2A tasks should NOT pre-select COMPLETED — completion only happens through the wizard
+        setOraActivityDragComplete(!isP2aTask);
         setOraActivityOpen(true);
       } else {
         // For non-ORA tasks, open the regular detail sheet
