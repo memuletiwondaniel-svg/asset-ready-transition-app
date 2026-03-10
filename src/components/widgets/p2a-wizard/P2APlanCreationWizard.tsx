@@ -517,6 +517,27 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
           />
         )}
 
+        {/* Read-only banner */}
+        {isReadOnly && useWizard && currentStep > 1 && !isLoadingDraft && (
+          <div className="flex items-center gap-3 px-5 py-2.5 border-b bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-200">
+            <AlertTriangle className="h-4 w-4 shrink-0" />
+            <p className="text-xs flex-1">
+              {existingPlan?.status === 'ACTIVE'
+                ? 'This plan has been submitted and is pending approval. Changes are not allowed until the review is complete.'
+                : 'This plan has been approved. Any modifications will require resubmitting for re-approval.'}
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="shrink-0 text-xs gap-1.5 border-amber-300 dark:border-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/50"
+              onClick={() => setRequestChangeOpen(true)}
+            >
+              <Edit3 className="h-3 w-3" />
+              Request Change
+            </Button>
+          </div>
+        )}
+
         {/* Content */}
         <div className="flex-1 min-h-0 overflow-auto">
           {renderStepContent()}
@@ -529,14 +550,63 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
             totalSteps={WIZARD_STEPS.length - 1}
             onBack={handleBack}
             onNext={handleNext}
-            onSaveAndExit={existingPlan && ['ACTIVE', 'COMPLETED', 'APPROVED'].includes(existingPlan.status) ? () => onOpenChange(false) : handleSaveAndExit}
-            onSubmit={currentStep === WIZARD_STEPS.length && (!existingPlan || existingPlan.status === 'DRAFT') ? handleSubmit : undefined}
+            onSaveAndExit={isReadOnly ? () => onOpenChange(false) : handleSaveAndExit}
+            onSubmit={currentStep === WIZARD_STEPS.length && !isReadOnly && (!existingPlan || existingPlan.status === 'DRAFT') ? handleSubmit : undefined}
             isSubmitting={isSubmitting}
             isSaving={isSaving}
             canProceed={canProceed()}
             submitLabel="Submit for Approval"
           />
         )}
+
+        {/* Request Change confirmation dialog */}
+        <AlertDialog open={requestChangeOpen} onOpenChange={setRequestChangeOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center justify-center w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30">
+                  <AlertTriangle className="h-5 w-5 text-amber-600" />
+                </div>
+                <AlertDialogTitle>Request Changes?</AlertDialogTitle>
+              </div>
+              <AlertDialogDescription className="pt-2">
+                Making changes to this plan will revert it to <strong>Draft</strong> status and void all current approvals. 
+                You will need to resubmit the plan for a new approval cycle, and all approvers will be notified.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-amber-600 text-white hover:bg-amber-700"
+                onClick={async () => {
+                  try {
+                    // Revert plan status to DRAFT
+                    if (existingPlan) {
+                      await supabase
+                        .from('p2a_handover_plans')
+                        .update({ status: 'DRAFT' })
+                        .eq('id', existingPlan.id);
+                      // Reset approvals
+                      await supabase
+                        .from('p2a_handover_approvers')
+                        .update({ status: 'PENDING', approved_at: null })
+                        .eq('plan_id', existingPlan.id);
+                    }
+                    queryClient.invalidateQueries({ queryKey: ['p2a-plan-by-project'] });
+                    queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+                    queryClient.invalidateQueries({ queryKey: ['p2a-plan-exists-sheet'] });
+                    toast.success('Plan reverted to draft. You can now make changes.');
+                    setRequestChangeOpen(false);
+                  } catch (err) {
+                    toast.error('Failed to revert plan status.');
+                  }
+                }}
+              >
+                Revert to Draft & Edit
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </DialogContent>
     </Dialog>
   );
