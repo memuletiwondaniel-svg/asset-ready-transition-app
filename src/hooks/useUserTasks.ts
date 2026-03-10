@@ -35,6 +35,7 @@ interface FetchResult {
   bundleTasks: any[];
   oraActivityDates: Record<string, { start_date: string | null; end_date: string | null; duration_days: number | null; completion_percentage: number | null }>;
   oraPlanStatuses: Record<string, string>; // projectId -> plan status
+  p2aActivityProgress: Record<string, number>; // taskId -> P2A-01 completion_percentage
 }
 
 const fetchUserTasks = async (userId: string): Promise<FetchResult> => {
@@ -98,6 +99,32 @@ const fetchUserTasks = async (userId: string): Promise<FetchResult> => {
       .in('id', oraActivityIds);
     if (oraData) {
       oraData.forEach((a: any) => { oraActivityDates[a.id] = a; });
+    }
+  }
+
+  // For create_p2a_plan tasks, fetch the P2A-01 activity's completion_percentage
+  // so the Kanban card shows the real DB value instead of stale metadata
+  const p2aTasks = regularTasks.filter(t => {
+    const meta = t.metadata as Record<string, any>;
+    return meta?.action === 'create_p2a_plan' && meta?.plan_id;
+  });
+  const p2aPlanIds = [...new Set(p2aTasks.map(t => (t.metadata as Record<string, any>).plan_id))] as string[];
+  let p2aActivityProgress: Record<string, number> = {}; // taskId -> completion_percentage
+  if (p2aPlanIds.length > 0) {
+    const { data: p2aActivities } = await supabase
+      .from('ora_plan_activities')
+      .select('orp_plan_id, completion_percentage')
+      .in('orp_plan_id', p2aPlanIds)
+      .eq('activity_code', 'P2A-01');
+    if (p2aActivities) {
+      const planToProgress: Record<string, number> = {};
+      p2aActivities.forEach((a: any) => { planToProgress[a.orp_plan_id] = a.completion_percentage ?? 0; });
+      p2aTasks.forEach(t => {
+        const planId = (t.metadata as Record<string, any>).plan_id;
+        if (planId && planId in planToProgress) {
+          p2aActivityProgress[t.id] = planToProgress[planId];
+        }
+      });
     }
   }
 
@@ -174,7 +201,7 @@ const fetchUserTasks = async (userId: string): Promise<FetchResult> => {
     };
   });
 
-  return { tasks: enrichedTasks, dependencies: depsData, bundleTasks, oraActivityDates, oraPlanStatuses };
+  return { tasks: enrichedTasks, dependencies: depsData, bundleTasks, oraActivityDates, oraPlanStatuses, p2aActivityProgress };
 };
 
 /**
@@ -691,6 +718,7 @@ export const useUserTasks = () => {
     dependencies: data?.dependencies || [],
     bundleTasks: data?.bundleTasks || [],
     oraActivityDates: data?.oraActivityDates || {},
+    p2aActivityProgress: data?.p2aActivityProgress || {},
     loading: isLoading,
     updateTaskStatus: (taskId: string, status: 'completed' | 'cancelled') =>
       updateStatusMutation.mutate({ taskId, status }),

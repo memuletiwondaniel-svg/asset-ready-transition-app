@@ -100,7 +100,7 @@ export function useUnifiedTasks(userId: string) {
   const { activities, isLoading: oraLoading } = useUserORPActivities();
   const { items: owlItems, isLoading: owlLoading } = useUserOWLItems();
   // Bundle tasks and ORA activity dates now come from the same useUserTasks query (no extra network calls)
-  const { tasks: userTasks, bundleTasks, oraActivityDates, loading: tasksLoading, updateTaskStatus } = useUserTasks();
+  const { tasks: userTasks, bundleTasks, oraActivityDates, p2aActivityProgress, loading: tasksLoading, updateTaskStatus } = useUserTasks();
 
   // Only show loading skeleton on the very first load (no data at all yet)
   const hasLoadedOnce = useRef(false);
@@ -156,6 +156,14 @@ export function useUnifiedTasks(userId: string) {
       const startDate = meta?.start_date || oraAct?.start_date || undefined;
       const endDate = meta?.end_date || oraAct?.end_date || undefined;
       const durationDays = meta?.duration_days || meta?.duration_med || oraAct?.duration_days || undefined;
+
+      // For P2A plan creation tasks, prefer the DB-sourced P2A-01 activity progress
+      // over stale metadata (which may not be reset after draft deletion)
+      const isP2aCreationTask = action === 'create_p2a_plan';
+      const resolvedProgress = isP2aCreationTask && t.id in p2aActivityProgress
+        ? p2aActivityProgress[t.id]
+        : (oraAct as any)?.completion_percentage ?? meta?.completion_percentage ?? undefined;
+
       const sp = computeSmartPriority({
         category,
         categoryLabel,
@@ -163,7 +171,7 @@ export function useUnifiedTasks(userId: string) {
         endDate,
         dueDate: t.due_date || undefined,
         durationDays,
-        progressPercentage: (oraAct as any)?.completion_percentage ?? meta?.completion_percentage ?? undefined,
+        progressPercentage: resolvedProgress,
         isWaiting,
         createdAt: t.created_at,
       });
@@ -196,11 +204,11 @@ export function useUnifiedTasks(userId: string) {
         userTask: t,
         isWaiting,
         durationDays,
-        progressPercentage: (oraAct as any)?.completion_percentage ?? meta?.completion_percentage ?? undefined,
+        progressPercentage: resolvedProgress,
         kanbanColumn: mapToKanbanColumn({
           status: t.status,
           isWaiting,
-          progressPercentage: (oraAct as any)?.completion_percentage ?? meta?.completion_percentage,
+          progressPercentage: resolvedProgress,
           planStatus,
           isWorkflowTask,
         }),
@@ -348,7 +356,7 @@ export function useUnifiedTasks(userId: string) {
       if (!aDue && bDue) return 1;
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
-  }, [pssrs, approvals, activities, owlItems, bundleTasks, userTasks, oraActivityDates, isNewSinceLastLogin]);
+  }, [pssrs, approvals, activities, owlItems, bundleTasks, userTasks, oraActivityDates, p2aActivityProgress, isNewSinceLastLogin]);
 
   // Stabilization: never return an empty array if we previously had data
   const stableTasksRef = useRef<UnifiedTask[]>([]);
