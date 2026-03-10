@@ -118,6 +118,61 @@ export function useKanbanDragDrop() {
           .eq('id', realId);
       }
 
+      // ── P2A Plan status revert: when a P2A task is moved back to in_progress,
+      // revert the P2A plan to DRAFT and reset approvers so the user can continue editing ──
+      const isP2aTask = meta?.action === 'create_p2a_plan';
+      const p2aProjectId = meta?.project_id as string | undefined;
+      if (isP2aTask && p2aProjectId && targetColumn === 'in_progress') {
+        const client = supabase as any;
+        // Find the P2A plan for this project
+        const { data: p2aPlans } = await client
+          .from('p2a_handover_plans')
+          .select('id, status')
+          .eq('project_id', p2aProjectId)
+          .limit(1);
+        const p2aPlan = p2aPlans?.[0];
+        if (p2aPlan && ['ACTIVE', 'COMPLETED', 'APPROVED'].includes(p2aPlan.status)) {
+          // Revert plan to DRAFT
+          await client
+            .from('p2a_handover_plans')
+            .update({ status: 'DRAFT', updated_at: new Date().toISOString() })
+            .eq('id', p2aPlan.id);
+          // Reset all approvers to PENDING
+          await client
+            .from('p2a_handover_approvers')
+            .update({ status: 'PENDING', approved_at: null })
+            .eq('plan_id', p2aPlan.id);
+
+          // Reset the user_task metadata to clear submitted plan_status
+          if (isRealTaskId) {
+            const { data: taskRow } = await supabase
+              .from('user_tasks')
+              .select('metadata')
+              .eq('id', userTask.id)
+              .single();
+            if (taskRow) {
+              const currentMeta = (taskRow.metadata as Record<string, any>) || {};
+              await supabase
+                .from('user_tasks')
+                .update({
+                  metadata: {
+                    ...currentMeta,
+                    plan_status: 'DRAFT',
+                  } as any,
+                })
+                .eq('id', userTask.id);
+            }
+          }
+
+          // Invalidate P2A-related queries so sheets/detail views pick up the DRAFT status
+          queryClient.invalidateQueries({ queryKey: ['p2a-plan-exists-sheet'] });
+          queryClient.invalidateQueries({ queryKey: ['p2a-plan-exists-task'] });
+          queryClient.invalidateQueries({ queryKey: ['p2a-plan-by-project'] });
+
+          toast.info('P2A Plan reverted to Draft — approvals have been reset');
+        }
+      }
+
       // Don't invalidate ['user-tasks'] or ['user-orp-activities'] here — the realtime
       // subscription will handle the refetch after the DB settles. Invalidating immediately
       // causes a race condition where the GET returns stale data and overwrites our optimistic update.
