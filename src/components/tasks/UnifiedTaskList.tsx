@@ -208,6 +208,35 @@ export const UnifiedTaskList: React.FC<UnifiedTaskListProps> = ({
           setOraActivityOpen(open);
           if (!open) setOraActivityTask(null);
         }}
+        onOpenP2AWizard={handleOpenP2AWizard}
+      />
+
+      {/* P2A Wizard/Workspace rendered at parent level */}
+      <P2APlanCreationWizard
+        open={p2aWizardOpen}
+        onOpenChange={setP2aWizardOpen}
+        projectId={p2aTarget.projectId}
+        projectCode={p2aTarget.projectCode}
+        onSuccess={() => {
+          setP2aWizardOpen(false);
+          queryClient.invalidateQueries({ queryKey: ['orp-plan'] });
+          queryClient.invalidateQueries({ queryKey: ['p2a-plan-exists-sheet'] });
+          queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+        }}
+        onOpenWorkspace={() => {
+          setP2aWizardOpen(false);
+          setP2aWorkspaceOpen(true);
+        }}
+      />
+      <P2AWorkspaceOverlay
+        open={p2aWorkspaceOpen}
+        onOpenChange={setP2aWorkspaceOpen}
+        projectId={p2aTarget.projectId}
+        projectNumber={p2aTarget.projectCode}
+        onReturnToWizard={() => {
+          setP2aWorkspaceOpen(false);
+          setP2aWizardOpen(true);
+        }}
       />
     </>
   );
