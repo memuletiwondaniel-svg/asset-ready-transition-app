@@ -174,6 +174,9 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
       // Invalidate caches so Kanban/Gantt reflect changes
       queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
       queryClient.invalidateQueries({ queryKey: ['user-orp-activities'] });
+      queryClient.invalidateQueries({ queryKey: ['ora-plan-activities'] });
+      queryClient.invalidateQueries({ queryKey: ['orp-plan-details'] });
+      queryClient.invalidateQueries({ queryKey: ['project-orp-plans'] });
     } catch (err) {
       console.error('Failed to sync wizard progress:', err);
     }
