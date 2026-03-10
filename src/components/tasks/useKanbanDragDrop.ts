@@ -176,6 +176,11 @@ export function useKanbanDragDrop() {
           queryClient.invalidateQueries({ queryKey: ['p2a-plan-exists-task'] });
           queryClient.invalidateQueries({ queryKey: ['p2a-plan-by-project'] });
 
+          // Force refresh user-tasks query so p2aActivityProgress picks up the
+          // updated completion_percentage (86%) from ora_plan_activities.
+          // This is safe here because all DB writes have completed above.
+          queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+
           toast.info('P2A Plan reverted to Draft — approvals have been reset');
         }
       }
