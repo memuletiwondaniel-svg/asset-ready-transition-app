@@ -113,12 +113,16 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
 
         if (activity) {
           // Update ora_plan_activities
+          const activityUpdate: Record<string, any> = {
+            completion_percentage: percentage,
+            status: isSubmitted ? 'COMPLETED' : percentage > 0 ? 'IN_PROGRESS' : 'NOT_STARTED',
+          };
+          if (isSubmitted) {
+            activityUpdate.end_date = new Date().toISOString().split('T')[0];
+          }
           await (supabase as any)
             .from('ora_plan_activities')
-            .update({
-              completion_percentage: percentage,
-              status: isSubmitted ? 'COMPLETED' : percentage > 0 ? 'IN_PROGRESS' : 'NOT_STARTED',
-            })
+            .update(activityUpdate)
             .eq('id', activity.id);
 
           // Update linked user_task via task_id
@@ -170,6 +174,9 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
       // Invalidate caches so Kanban/Gantt reflect changes
       queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
       queryClient.invalidateQueries({ queryKey: ['user-orp-activities'] });
+      queryClient.invalidateQueries({ queryKey: ['ora-plan-activities'] });
+      queryClient.invalidateQueries({ queryKey: ['orp-plan-details'] });
+      queryClient.invalidateQueries({ queryKey: ['project-orp-plans'] });
     } catch (err) {
       console.error('Failed to sync wizard progress:', err);
     }
