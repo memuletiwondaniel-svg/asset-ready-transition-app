@@ -142,10 +142,34 @@ export function useKanbanDragDrop() {
             .from('p2a_handover_approvers')
             .update({ status: 'PENDING', approved_at: null })
             .eq('plan_id', p2aPlan.id);
+
+          // Reset the user_task metadata to clear submitted plan_status
+          if (isRealTaskId) {
+            const { data: taskRow } = await supabase
+              .from('user_tasks')
+              .select('metadata')
+              .eq('id', userTask.id)
+              .single();
+            if (taskRow) {
+              const currentMeta = (taskRow.metadata as Record<string, any>) || {};
+              await supabase
+                .from('user_tasks')
+                .update({
+                  metadata: {
+                    ...currentMeta,
+                    plan_status: 'DRAFT',
+                  } as any,
+                })
+                .eq('id', userTask.id);
+            }
+          }
+
           // Invalidate P2A-related queries so sheets/detail views pick up the DRAFT status
           queryClient.invalidateQueries({ queryKey: ['p2a-plan-exists-sheet'] });
           queryClient.invalidateQueries({ queryKey: ['p2a-plan-exists-task'] });
           queryClient.invalidateQueries({ queryKey: ['p2a-plan-by-project'] });
+
+          toast.info('P2A Plan reverted to Draft — approvals have been reset');
         }
       }
 
