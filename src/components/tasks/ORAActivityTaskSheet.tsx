@@ -635,6 +635,9 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                 <Button
                   className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
                   onClick={() => {
+                    // Persist project info before closing sheet (task may become null)
+                    setP2aProjectId(projectId);
+                    setP2aProjectCode(projectCode);
                     onOpenChange(false);
                     if (p2aPlanIsFullyApproved) {
                       setShowP2AWorkspace(true);
