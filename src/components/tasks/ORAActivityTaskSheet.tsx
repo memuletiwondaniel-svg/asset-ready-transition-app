@@ -222,7 +222,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
       ? 'View P2A Plan'
       : existingP2APlan
         ? 'Continue P2A Plan'
-        : 'Create P2A Plan';
+        : 'Start P2A Plan';
 
   const getP2AStatusBadge = () => {
     if (!p2aPlanStatus) return null;
