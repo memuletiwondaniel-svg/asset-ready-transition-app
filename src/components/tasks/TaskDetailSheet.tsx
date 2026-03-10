@@ -50,6 +50,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   const [vcrWizardOpen, setVcrWizardOpen] = useState(false);
   const [oraReviewWizardOpen, setOraReviewWizardOpen] = useState(false);
   const [p2aWizardOpen, setP2aWizardOpen] = useState(false);
+  const [p2aWorkspaceOpen, setP2aWorkspaceOpen] = useState(false);
   
   // P2A schedule state
   const [p2aStartDate, setP2aStartDate] = useState<Date | undefined>();
