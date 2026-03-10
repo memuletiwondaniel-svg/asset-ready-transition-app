@@ -57,6 +57,83 @@ export async function checkAndCompletePlan(planId: string) {
       .single();
 
     if (plan?.project_id) {
+      // Set the P2A activity to 100% COMPLETED now that all approvers approved
+      try {
+        const { data: orpPlans } = await client
+          .from('orp_plans')
+          .select('id')
+          .eq('project_id', plan.project_id)
+          .limit(1);
+
+        if (orpPlans?.[0]) {
+          const { data: activities } = await client
+            .from('ora_plan_activities')
+            .select('id, task_id, activity_code, name')
+            .eq('orp_plan_id', orpPlans[0].id);
+
+          const p2aActivity = activities?.find((a: any) => a.activity_code === 'P2A-01')
+            || activities?.find((a: any) => a.name?.toLowerCase().includes('p2a plan'))
+            || activities?.find((a: any) => a.name?.toLowerCase().includes('p2a'));
+
+          if (p2aActivity) {
+            await client
+              .from('ora_plan_activities')
+              .update({
+                completion_percentage: 100,
+                status: 'COMPLETED',
+                end_date: new Date().toISOString().split('T')[0],
+              })
+              .eq('id', p2aActivity.id);
+
+            // Update linked user_task metadata
+            if (p2aActivity.task_id) {
+              const { data: taskRow } = await client
+                .from('user_tasks')
+                .select('metadata')
+                .eq('id', p2aActivity.task_id)
+                .single();
+
+              await client
+                .from('user_tasks')
+                .update({
+                  metadata: {
+                    ...((taskRow?.metadata as Record<string, any>) || {}),
+                    completion_percentage: 100,
+                    plan_status: 'COMPLETED',
+                  },
+                })
+                .eq('id', p2aActivity.task_id);
+            }
+          }
+
+          // Also update standalone P2A tasks
+          const { data: allTasks } = await client
+            .from('user_tasks')
+            .select('id, metadata')
+            .limit(100);
+
+          const p2aTask = allTasks?.find((t: any) => {
+            const meta = t.metadata as Record<string, any>;
+            return meta?.action === 'create_p2a_plan' && meta?.project_id === plan.project_id;
+          });
+
+          if (p2aTask) {
+            await client
+              .from('user_tasks')
+              .update({
+                metadata: {
+                  ...((p2aTask.metadata as Record<string, any>) || {}),
+                  completion_percentage: 100,
+                  plan_status: 'COMPLETED',
+                },
+              })
+              .eq('id', p2aTask.id);
+          }
+        }
+      } catch (e) {
+        console.error('[P2A] Failed to update P2A activity to 100%:', e);
+      }
+
       // Generate VCR activities in the ORA Plan
       try {
         const { generateVCRActivitiesFromP2A } = await import('./useORAActivityPlanSync');

@@ -92,7 +92,8 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
    * Maps wizard steps: step 1=0%, step 2=14%, ... step 7=86%, submitted=100%
    */
   const syncWizardProgress = useCallback(async (step: number, isSubmitted = false) => {
-    const percentage = isSubmitted ? 100 : Math.round(((step - 1) / TOTAL_CREATION_STEPS) * 100);
+    // Submitted = 95% (pending approval); 100% only after final approval
+    const percentage = isSubmitted ? 95 : Math.round(((step - 1) / TOTAL_CREATION_STEPS) * 100);
     
     try {
       // Find ORP plan for this project
@@ -123,11 +124,9 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
           // Update ora_plan_activities
           const activityUpdate: Record<string, any> = {
             completion_percentage: percentage,
-            status: isSubmitted ? 'COMPLETED' : percentage > 0 ? 'IN_PROGRESS' : 'NOT_STARTED',
+            // Submitted = still IN_PROGRESS (95%), only COMPLETED at 100% after approval
+            status: isSubmitted ? 'IN_PROGRESS' : percentage > 0 ? 'IN_PROGRESS' : 'NOT_STARTED',
           };
-          if (isSubmitted) {
-            activityUpdate.end_date = new Date().toISOString().split('T')[0];
-          }
           await (supabase as any)
             .from('ora_plan_activities')
             .update(activityUpdate)
@@ -147,7 +146,9 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
                 metadata: {
                   ...((taskRow?.metadata as Record<string, any>) || {}),
                   completion_percentage: percentage,
+                  plan_status: isSubmitted ? 'ACTIVE' : undefined,
                 } as any,
+                // Task moves to completed on submission (no further user action needed)
                 status: isSubmitted ? 'completed' : percentage > 0 ? 'in_progress' : 'pending',
               })
               .eq('id', activity.task_id);
@@ -173,7 +174,9 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
             metadata: {
               ...((p2aTask.metadata as Record<string, any>) || {}),
               completion_percentage: percentage,
+              plan_status: isSubmitted ? 'ACTIVE' : undefined,
             } as any,
+            // Task moves to completed on submission (no further user action needed)
             status: isSubmitted ? 'completed' : percentage > 0 ? 'in_progress' : 'pending',
           })
           .eq('id', p2aTask.id);

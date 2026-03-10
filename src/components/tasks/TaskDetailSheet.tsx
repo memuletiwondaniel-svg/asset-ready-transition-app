@@ -101,21 +101,37 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
     staleTime: 60_000,
   });
 
-  // Check if P2A plan draft exists
-  const { data: hasExistingP2aDraft } = useQuery({
+  // Check if P2A plan exists and get its status
+  const { data: existingP2aPlan } = useQuery({
     queryKey: ['p2a-plan-exists-task', p2aProjectId],
     queryFn: async () => {
-      if (!p2aProjectId) return false;
+      if (!p2aProjectId) return null;
       const { data } = await (supabase as any)
         .from('p2a_handover_plans')
-        .select('id')
+        .select('id, status')
         .eq('project_id', p2aProjectId)
         .limit(1);
-      return data && data.length > 0;
+      return data?.[0] || null;
     },
     enabled: !!p2aProjectId && isP2aTask,
     staleTime: 30_000,
   });
+  const hasExistingP2aDraft = !!existingP2aPlan;
+  const p2aPlanStatus = existingP2aPlan?.status as string | undefined;
+  const p2aPlanIsFullyApproved = existingP2aPlan && ['COMPLETED', 'APPROVED'].includes(existingP2aPlan.status);
+  const p2aPlanIsSubmitted = existingP2aPlan && ['ACTIVE', 'COMPLETED', 'APPROVED'].includes(existingP2aPlan.status);
+
+  const getP2AStatusLabel = () => {
+    if (!p2aPlanStatus) return null;
+    switch (p2aPlanStatus) {
+      case 'DRAFT': return { label: 'Draft', className: 'bg-slate-500/10 text-slate-600 border-slate-500/30' };
+      case 'ACTIVE': return { label: 'Pending Approval', className: 'bg-amber-500/10 text-amber-700 border-amber-500/30' };
+      case 'COMPLETED':
+      case 'APPROVED': return { label: 'Approved', className: 'bg-emerald-500/10 text-emerald-700 border-emerald-500/30' };
+      case 'ARCHIVED': return { label: 'Archived', className: 'bg-muted text-muted-foreground border-border' };
+      default: return null;
+    }
+  };
 
   // P2A duration
   const p2aDurationDays = useMemo(() => {
@@ -244,7 +260,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   const oraPlanId = task.metadata?.plan_id as string | undefined;
   const p2aProjectCode = task.metadata?.project_code as string | undefined;
 
-  const p2aCtaLabel = hasExistingP2aDraft ? 'Continue P2A Plan' : 'Create P2A Plan';
+  const p2aCtaLabel = p2aPlanIsFullyApproved ? 'Open P2A Workspace' : hasExistingP2aDraft ? 'Continue P2A Plan' : 'Create P2A Plan';
   const resolvedP2aProjectCode = p2aProjectCode || (p2aProjectInfo ? `${p2aProjectInfo.project_id_prefix || ''}-${p2aProjectInfo.project_id_number || ''}` : '');
   const resolvedP2aProjectName = p2aProjectInfo?.project_title || '';
 
@@ -260,7 +276,8 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
 
   const getIntentMessage = () => {
     if (isP2aTask) {
-      if (isCompleted) return 'The P2A Plan has been completed. Click below to view the finalized plan.';
+      if (p2aPlanIsFullyApproved) return 'The P2A Plan has been approved. Click below to view the finalized plan.';
+      if (p2aPlanIsSubmitted) return 'The P2A Plan has been submitted and is pending approval. Click below to review progress.';
       if (hasExistingP2aDraft) return 'You have a saved draft for the P2A Plan. Click below to continue where you left off.';
       return 'Create the Project to Asset (P2A) handover plan for this project. Click below to launch the P2A planning wizard.';
     }
@@ -317,6 +334,11 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
             <div className="flex items-center gap-2 flex-wrap">
               {getTypeBadge()}
               {getPriorityBadge(task.priority)}
+              {isP2aTask && getP2AStatusLabel() && (
+                <Badge variant="outline" className={cn("text-xs", getP2AStatusLabel()!.className)}>
+                  {getP2AStatusLabel()!.label}
+                </Badge>
+              )}
             </div>
              <SheetTitle className="text-left text-base sm:text-lg leading-snug mt-2 break-words">
               {task.title}
@@ -554,16 +576,25 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
               </div>
             )}
 
-            {/* P2A Plan Creation CTA */}
+            {/* P2A Plan CTA */}
             {isP2aTask && p2aProjectId && (
               <Button
-                className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
+                className={cn(
+                  "w-full gap-2 font-medium",
+                  p2aPlanIsFullyApproved
+                    ? "bg-muted hover:bg-muted/80 text-foreground border border-border"
+                    : "bg-primary hover:bg-primary/90 text-primary-foreground"
+                )}
                 onClick={() => {
                   onOpenChange(false);
-                  setP2aWizardOpen(true);
+                  if (p2aPlanIsFullyApproved) {
+                    setP2aWorkspaceOpen(true);
+                  } else {
+                    setP2aWizardOpen(true);
+                  }
                 }}
               >
-                <FileText className="h-4 w-4" />
+                {p2aPlanIsFullyApproved ? <Eye className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
                 {p2aCtaLabel}
                 <ChevronRight className="h-4 w-4 ml-auto" />
               </Button>
