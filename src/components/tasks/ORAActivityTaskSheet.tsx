@@ -614,16 +614,27 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
             {/* P2A Activity: Show wizard CTA instead of status toggle */}
             {isP2AActivity ? (
               <div className="pt-2 space-y-3">
+                {/* P2A Plan Status Badge */}
+                {getP2AStatusBadge() && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">P2A Plan Status:</span>
+                    {getP2AStatusBadge()}
+                  </div>
+                )}
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  {p2aPlanIsSubmitted 
-                    ? 'The P2A handover plan has been submitted. Open the workspace to view details.'
-                    : 'This activity requires creating the Project to Asset (P2A) handover plan. Click below to launch the P2A planning wizard.'}
+                  {p2aPlanIsFullyApproved
+                    ? 'The P2A handover plan has been approved. Open the workspace to view details.'
+                    : p2aPlanIsSubmitted
+                      ? 'The P2A handover plan has been submitted and is pending approval. Open the wizard to review progress.'
+                      : existingP2APlan
+                        ? 'You have a saved draft for the P2A Plan. Click below to continue where you left off.'
+                        : 'This activity requires creating the Project to Asset (P2A) handover plan. Click below to launch the P2A planning wizard.'}
                 </p>
                 <Button
                   className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
                   onClick={() => {
                     onOpenChange(false);
-                    if (p2aPlanIsSubmitted) {
+                    if (p2aPlanIsFullyApproved) {
                       setShowP2AWorkspace(true);
                     } else {
                       setShowP2AWizard(true);

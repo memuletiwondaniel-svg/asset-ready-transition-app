@@ -276,7 +276,8 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
 
   const getIntentMessage = () => {
     if (isP2aTask) {
-      if (isCompleted) return 'The P2A Plan has been completed. Click below to view the finalized plan.';
+      if (p2aPlanIsFullyApproved) return 'The P2A Plan has been approved. Click below to view the finalized plan.';
+      if (p2aPlanIsSubmitted) return 'The P2A Plan has been submitted and is pending approval. Click below to review progress.';
       if (hasExistingP2aDraft) return 'You have a saved draft for the P2A Plan. Click below to continue where you left off.';
       return 'Create the Project to Asset (P2A) handover plan for this project. Click below to launch the P2A planning wizard.';
     }

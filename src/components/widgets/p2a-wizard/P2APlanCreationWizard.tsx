@@ -174,7 +174,9 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
             metadata: {
               ...((p2aTask.metadata as Record<string, any>) || {}),
               completion_percentage: percentage,
+              plan_status: isSubmitted ? 'ACTIVE' : undefined,
             } as any,
+            // Task moves to completed on submission (no further user action needed)
             status: isSubmitted ? 'completed' : percentage > 0 ? 'in_progress' : 'pending',
           })
           .eq('id', p2aTask.id);
