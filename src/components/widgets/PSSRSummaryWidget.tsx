@@ -239,8 +239,8 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                       }}
                     >
                       <ExternalLink className="h-3.5 w-3.5" />
-                      {p2aPlanByProject.status === 'COMPLETED'
-                        ? 'Open P2A Workspace'
+                      {['COMPLETED', 'APPROVED', 'ACTIVE'].includes(p2aPlanByProject.status)
+                        ? 'View P2A Plan'
                         : 'Continue P2A Plan'}
                     </Button>
                   </>
