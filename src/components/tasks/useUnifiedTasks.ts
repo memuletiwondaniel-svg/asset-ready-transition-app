@@ -356,7 +356,7 @@ export function useUnifiedTasks(userId: string) {
       if (!aDue && bDue) return 1;
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
-  }, [pssrs, approvals, activities, owlItems, bundleTasks, userTasks, oraActivityDates, isNewSinceLastLogin]);
+  }, [pssrs, approvals, activities, owlItems, bundleTasks, userTasks, oraActivityDates, p2aActivityProgress, isNewSinceLastLogin]);
 
   // Stabilization: never return an empty array if we previously had data
   const stableTasksRef = useRef<UnifiedTask[]>([]);
