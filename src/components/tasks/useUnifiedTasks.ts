@@ -100,7 +100,7 @@ export function useUnifiedTasks(userId: string) {
   const { activities, isLoading: oraLoading } = useUserORPActivities();
   const { items: owlItems, isLoading: owlLoading } = useUserOWLItems();
   // Bundle tasks and ORA activity dates now come from the same useUserTasks query (no extra network calls)
-  const { tasks: userTasks, bundleTasks, oraActivityDates, loading: tasksLoading, updateTaskStatus } = useUserTasks();
+  const { tasks: userTasks, bundleTasks, oraActivityDates, p2aActivityProgress, loading: tasksLoading, updateTaskStatus } = useUserTasks();
 
   // Only show loading skeleton on the very first load (no data at all yet)
   const hasLoadedOnce = useRef(false);
