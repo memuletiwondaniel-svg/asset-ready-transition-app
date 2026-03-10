@@ -582,12 +582,12 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
                   try {
                     // Revert plan status to DRAFT
                     if (existingPlan) {
-                      await supabase
+                      await (supabase as any)
                         .from('p2a_handover_plans')
                         .update({ status: 'DRAFT' })
                         .eq('id', existingPlan.id);
                       // Reset approvals
-                      await supabase
+                      await (supabase as any)
                         .from('p2a_handover_approvers')
                         .update({ status: 'PENDING', approved_at: null })
                         .eq('plan_id', existingPlan.id);
