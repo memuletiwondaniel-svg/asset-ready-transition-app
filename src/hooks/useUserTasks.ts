@@ -201,7 +201,7 @@ const fetchUserTasks = async (userId: string): Promise<FetchResult> => {
     };
   });
 
-  return { tasks: enrichedTasks, dependencies: depsData, bundleTasks, oraActivityDates, oraPlanStatuses };
+  return { tasks: enrichedTasks, dependencies: depsData, bundleTasks, oraActivityDates, oraPlanStatuses, p2aActivityProgress };
 };
 
 /**
