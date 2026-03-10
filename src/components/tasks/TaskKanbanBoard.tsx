@@ -261,8 +261,8 @@ const KanbanCardContent: React.FC<{
         {task.project ? task.title.replace(new RegExp(`\\s*[–\\-]\\s*${task.project.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`), '') : task.title}
       </p>
 
-      {/* Dates row */}
-      {(task.startDate || task.endDate || task.dueDate) && (
+      {/* Dates row — hidden for completed tasks */}
+      {task.kanbanColumn !== 'done' && (task.startDate || task.endDate || task.dueDate) && (
         <div className="flex items-center gap-1 text-[10px] text-muted-foreground/70">
           <Calendar className="h-2.5 w-2.5 shrink-0" />
           {task.startDate && <span>{format(new Date(task.startDate), 'MMM d')}</span>}
