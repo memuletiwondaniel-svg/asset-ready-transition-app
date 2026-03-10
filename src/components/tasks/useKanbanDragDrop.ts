@@ -138,12 +138,12 @@ export function useKanbanDragDrop() {
         // For non-P2A tasks, reset to 0.
         const newCompletion = isP2aRevert ? 86 : (isP2aTask ? undefined : 0);
 
+        const updatePayload: Record<string, any> = { status: newOraStatus };
+        if (newCompletion !== undefined) updatePayload.completion_percentage = newCompletion;
+
         await (supabase as any)
           .from('ora_plan_activities')
-          .update({
-            status: newOraStatus,
-            completion_percentage: newCompletion,
-          })
+          .update(updatePayload)
           .eq('id', realId);
       }
 
