@@ -250,16 +250,18 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
   // Database-persisted comments
   const { comments: dbComments, isLoading: commentsLoading, addComment: addDbComment, isAdding } = useORAActivityComments(realOraActivityId || undefined, planId);
 
-  // Initialize values when sheet opens
+  // Initialize values when sheet opens — prefer dbActivity over task metadata
   useEffect(() => {
     if (open && task) {
-      const initDesc = metadata?.description || task?.description || '';
+      const db = dbActivity as any;
+      const initDesc = db?.description || metadata?.description || task?.description || '';
+      const dbStatus = db?.status as ActivityStatus | undefined;
       const taskStatus = task?.status;
-      const baseStatus: ActivityStatus = taskStatus === 'completed' ? 'COMPLETED'
-        : taskStatus === 'in_progress' ? 'IN_PROGRESS' : 'NOT_STARTED';
+      const baseStatus: ActivityStatus = dbStatus || (taskStatus === 'completed' ? 'COMPLETED'
+        : taskStatus === 'in_progress' ? 'IN_PROGRESS' : 'NOT_STARTED');
       const initStatus: ActivityStatus = initialStatusOverride || baseStatus;
-      const initProgress = metadata?.completion_percentage ?? (initStatus === 'COMPLETED' ? 100 : initStatus === 'IN_PROGRESS' ? 50 : 0);
-      const initName = metadata?.activity_name || task?.title || '';
+      const initProgress = db?.completion_percentage ?? metadata?.completion_percentage ?? (initStatus === 'COMPLETED' ? 100 : initStatus === 'IN_PROGRESS' ? 50 : 0);
+      const initName = db?.name || metadata?.activity_name || task?.title || '';
       setEditName(initName);
       setOriginalName(initName);
       setDescription(initDesc);
@@ -268,7 +270,6 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
       setOriginalStatus(baseStatus);
       setComment('');
       setFiles([]);
-      setComment('');
       setProgressPct(initProgress);
       setOriginalProgressPct(initProgress);
       setShowCalendar(false);
@@ -280,11 +281,11 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
       setOriginalStartDate(sd);
       setOriginalEndDate(ed);
 
-      const preds: string[] = metadata?.predecessor_ids || [];
+      const preds: string[] = wizardPredecessors || metadata?.predecessor_ids || [];
       setPredecessorIds(preds);
       setOriginalPredecessorIds(preds);
     }
-  }, [open, task?.id]);
+  }, [open, task?.id, dbActivity?.id, wizardPredecessors]);
 
   const isDirty = useMemo(() => {
     const datesChanged = editStartDate?.getTime() !== originalStartDate?.getTime() ||
