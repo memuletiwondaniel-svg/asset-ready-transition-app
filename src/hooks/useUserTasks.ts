@@ -103,9 +103,49 @@ const fetchUserTasks = async (userId: string): Promise<FetchResult> => {
     oraActivityIds.length > 0
       ? supabase.from('ora_plan_activities').select('id, start_date, end_date, duration_days, completion_percentage').in('id', oraActivityIds)
       : Promise.resolve(null),
-    // 3. P2A activity progress
-    p2aPlanIds.length > 0
-      ? supabase.from('ora_plan_activities').select('orp_plan_id, completion_percentage').in('orp_plan_id', p2aPlanIds).eq('activity_code', 'P2A-01')
+    // 3. P2A activity progress — look up by orp_plan_id OR by project_id → orp_plans → activities
+    (p2aPlanIds.length > 0 || p2aProjectIds.length > 0)
+      ? (async () => {
+          // Strategy A: direct lookup by orp_plan_id
+          let results: any[] = [];
+          if (p2aPlanIds.length > 0) {
+            const { data } = await supabase.from('ora_plan_activities')
+              .select('orp_plan_id, completion_percentage, activity_code, name')
+              .in('orp_plan_id', p2aPlanIds);
+            if (data) results.push(...data);
+          }
+          // Strategy B: lookup by project_id → orp_plans for tasks missing plan_id
+          if (p2aProjectIds.length > 0) {
+            const coveredPlanIds = new Set(results.map(r => r.orp_plan_id));
+            const uncoveredProjectIds = p2aProjectIds.filter(pid => {
+              // Check if any task with this project_id already has a plan_id covered
+              return !p2aTasks.some(t => {
+                const m = t.metadata as Record<string, any>;
+                return m.project_id === pid && m.plan_id && coveredPlanIds.has(m.plan_id);
+              });
+            });
+            if (uncoveredProjectIds.length > 0) {
+              const { data: plans } = await (supabase as any).from('orp_plans').select('id, project_id').in('project_id', uncoveredProjectIds);
+              if (plans?.length) {
+                const planIds = plans.map((p: any) => p.id);
+                const { data: acts } = await supabase.from('ora_plan_activities')
+                  .select('orp_plan_id, completion_percentage, activity_code, name')
+                  .in('orp_plan_id', planIds);
+                if (acts) {
+                  // Also store the project_id mapping
+                  const planToProject: Record<string, string> = {};
+                  plans.forEach((p: any) => { planToProject[p.id] = p.project_id; });
+                  results.push(...acts.map((a: any) => ({ ...a, _project_id: planToProject[a.orp_plan_id] })));
+                }
+              }
+            }
+          }
+          // Filter to P2A activities (code P2A-01 or name containing 'p2a')
+          const p2aActivities = results.filter((a: any) =>
+            a.activity_code === 'P2A-01' || a.name?.toLowerCase().includes('p2a plan') || a.name?.toLowerCase().includes('p2a')
+          );
+          return { data: p2aActivities };
+        })()
       : Promise.resolve(null),
     // 4. ORA plan statuses
     oraPlanProjectIds.length > 0
