@@ -587,6 +587,78 @@ export function useP2APlanWizard(projectId: string, projectCode: string) {
 
       const planId = plan.id;
 
+      // Reset P2A-01 activity progress back to 0% so Kanban/Gantt reflect "start from scratch"
+      try {
+        const { data: orpPlans } = await client
+          .from('orp_plans')
+          .select('id')
+          .eq('project_id', projectId)
+          .limit(1);
+
+        if (orpPlans?.[0]) {
+          const { data: p2aActivity } = await client
+            .from('ora_plan_activities')
+            .select('id, task_id')
+            .eq('orp_plan_id', orpPlans[0].id)
+            .eq('activity_code', 'P2A-01')
+            .maybeSingle();
+
+          if (p2aActivity) {
+            // Reset the ORA activity to NOT_STARTED / 0%
+            await client
+              .from('ora_plan_activities')
+              .update({ completion_percentage: 0, status: 'NOT_STARTED' })
+              .eq('id', p2aActivity.id);
+
+            // Reset the linked user_task progress
+            if (p2aActivity.task_id) {
+              const { data: taskRow } = await supabase
+                .from('user_tasks')
+                .select('metadata')
+                .eq('id', p2aActivity.task_id)
+                .single();
+
+              await supabase
+                .from('user_tasks')
+                .update({
+                  metadata: {
+                    ...((taskRow?.metadata as Record<string, any>) || {}),
+                    completion_percentage: 0,
+                  } as any,
+                  status: 'pending',
+                })
+                .eq('id', p2aActivity.task_id);
+            }
+          }
+        }
+
+        // Also reset standalone P2A tasks (create_p2a_plan action tasks)
+        const { data: allTasks } = await supabase
+          .from('user_tasks')
+          .select('id, metadata')
+          .limit(100);
+
+        const p2aTask = allTasks?.find((t: any) => {
+          const meta = t.metadata as Record<string, any>;
+          return meta?.action === 'create_p2a_plan' && meta?.project_id === projectId;
+        });
+
+        if (p2aTask) {
+          await supabase
+            .from('user_tasks')
+            .update({
+              metadata: {
+                ...((p2aTask.metadata as Record<string, any>) || {}),
+                completion_percentage: 0,
+              } as any,
+              status: 'pending',
+            })
+            .eq('id', p2aTask.id);
+        }
+      } catch (err) {
+        console.error('Failed to reset P2A activity progress:', err);
+      }
+
       // Delete in order: system mappings -> VCRs -> phases -> systems -> approvers -> plan
       const { data: existingVCRs } = await client
         .from('p2a_handover_points')
@@ -608,6 +680,12 @@ export function useP2APlanWizard(projectId: string, projectCode: string) {
     },
     onSuccess: () => {
       invalidateQueries();
+      // Invalidate task-related caches so task cards reset progress & CTA labels
+      queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['user-orp-activities'] });
+      queryClient.invalidateQueries({ queryKey: ['p2a-plan-exists-task'] });
+      queryClient.invalidateQueries({ queryKey: ['p2a-plan-exists-sheet'] });
+      queryClient.invalidateQueries({ queryKey: ['ora-activity-dates'] });
       setState(initialState);
       setDraftLoaded(false);
       toast({
