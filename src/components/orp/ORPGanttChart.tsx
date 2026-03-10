@@ -735,7 +735,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
       priority: 'medium',
       created_at: deliverable.created_at || new Date().toISOString(),
     });
-  }, [planId, filteredDeliverables, readOnly]);
+  }, [planId, filteredDeliverables, readOnly, planData?.project_id, projectCode]);
 
   // Early return - no data
   if (!dates.length) {
