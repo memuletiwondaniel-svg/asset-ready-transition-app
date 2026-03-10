@@ -134,8 +134,27 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
     enabled: !!projectId && isP2AActivity,
     staleTime: 30_000,
   });
+  const p2aPlanStatus = existingP2APlan?.status as string | undefined;
   const p2aPlanIsSubmitted = existingP2APlan && ['ACTIVE', 'COMPLETED', 'APPROVED'].includes(existingP2APlan.status);
-  const p2aSheetCtaLabel = p2aPlanIsSubmitted ? 'Open P2A Workspace' : existingP2APlan ? 'Continue P2A Plan' : 'Create P2A Plan';
+  const p2aPlanIsFullyApproved = existingP2APlan && ['COMPLETED', 'APPROVED'].includes(existingP2APlan.status);
+  const p2aSheetCtaLabel = p2aPlanIsFullyApproved ? 'Open P2A Workspace' : existingP2APlan ? 'Continue P2A Plan' : 'Create P2A Plan';
+
+  const getP2AStatusBadge = () => {
+    if (!p2aPlanStatus) return null;
+    switch (p2aPlanStatus) {
+      case 'DRAFT':
+        return <Badge variant="outline" className="text-[10px] bg-slate-500/10 text-slate-600 border-slate-500/30">Draft</Badge>;
+      case 'ACTIVE':
+        return <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-700 border-amber-500/30">Pending Approval</Badge>;
+      case 'COMPLETED':
+      case 'APPROVED':
+        return <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-700 border-emerald-500/30">Approved</Badge>;
+      case 'ARCHIVED':
+        return <Badge variant="outline" className="text-[10px] bg-muted text-muted-foreground border-border">Archived</Badge>;
+      default:
+        return null;
+    }
+  };
 
   // Duration computed from editable dates
   const durationDays = useMemo(() => {
