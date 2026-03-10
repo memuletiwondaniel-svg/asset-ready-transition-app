@@ -161,9 +161,16 @@ export function useUnifiedTasks(userId: string) {
       // over stale metadata (which may not be reset after draft deletion).
       // If the DB lookup has no entry, default to 0 rather than trusting stale metadata.
       const isP2aCreationTask = action === 'create_p2a_plan';
-      const resolvedProgress = isP2aCreationTask
+      let resolvedProgress = isP2aCreationTask
         ? (p2aActivityProgress[t.id] ?? 0)
         : (oraAct as any)?.completion_percentage ?? meta?.completion_percentage ?? undefined;
+
+      // Guard: if the P2A plan is in DRAFT status, progress cannot exceed 86%
+      // (95% = submitted, 100% = approved). This prevents stale DB data from showing wrong values.
+      const metaPlanStatus = meta?.plan_status?.toUpperCase?.();
+      if (isP2aCreationTask && metaPlanStatus === 'DRAFT' && resolvedProgress > 86) {
+        resolvedProgress = 86;
+      }
 
       const sp = computeSmartPriority({
         category,
