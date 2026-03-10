@@ -27,6 +27,7 @@ import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useDropzone } from 'react-dropzone';
 import { P2APlanCreationWizard } from '@/components/widgets/p2a-wizard/P2APlanCreationWizard';
+import { P2AWorkspaceOverlay } from '@/components/widgets/P2AWorkspaceOverlay';
 import type { UserTask } from '@/hooks/useUserTasks';
 
 interface ORAActivityTaskSheetProps {
@@ -87,6 +88,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
   const [editName, setEditName] = useState('');
   const [originalName, setOriginalName] = useState('');
   const [showP2AWizard, setShowP2AWizard] = useState(false);
+  const [showP2AWorkspace, setShowP2AWorkspace] = useState(false);
 
   // Editable dates
   const [editStartDate, setEditStartDate] = useState<Date | undefined>();
@@ -901,18 +903,34 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
 
     {/* P2A Plan Creation Wizard */}
     {isP2AActivity && projectId && (
-      <P2APlanCreationWizard
-        open={showP2AWizard}
-        onOpenChange={setShowP2AWizard}
-        projectId={projectId}
-        projectCode={projectCode || ''}
-        onSuccess={() => {
-          setShowP2AWizard(false);
-          queryClient.invalidateQueries({ queryKey: ['orp-plan'] });
-          queryClient.invalidateQueries({ queryKey: ['p2a-plan-exists-sheet'] });
-          queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
-        }}
-      />
+      <>
+        <P2APlanCreationWizard
+          open={showP2AWizard}
+          onOpenChange={setShowP2AWizard}
+          projectId={projectId}
+          projectCode={projectCode || ''}
+          onSuccess={() => {
+            setShowP2AWizard(false);
+            queryClient.invalidateQueries({ queryKey: ['orp-plan'] });
+            queryClient.invalidateQueries({ queryKey: ['p2a-plan-exists-sheet'] });
+            queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+          }}
+          onOpenWorkspace={() => {
+            setShowP2AWizard(false);
+            setShowP2AWorkspace(true);
+          }}
+        />
+        <P2AWorkspaceOverlay
+          open={showP2AWorkspace}
+          onOpenChange={setShowP2AWorkspace}
+          projectId={projectId}
+          projectNumber={projectCode || ''}
+          onReturnToWizard={() => {
+            setShowP2AWorkspace(false);
+            setShowP2AWizard(true);
+          }}
+        />
+      </>
     )}
     </>
   );

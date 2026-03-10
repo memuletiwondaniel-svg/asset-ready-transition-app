@@ -16,6 +16,7 @@ import CreatePSSRWizard from '@/components/pssr/CreatePSSRWizard';
 import { ORAActivityPlanWizard } from '@/components/ora/wizard/ORAActivityPlanWizard';
 import { ORPGanttOverlay } from '@/components/orp/ORPGanttOverlay';
 import { P2APlanCreationWizard } from '@/components/widgets/p2a-wizard/P2APlanCreationWizard';
+import { P2AWorkspaceOverlay } from '@/components/widgets/P2AWorkspaceOverlay';
 import { ProjectIdBadge } from '@/components/ui/project-id-badge';
 
 import { ORAActivityTaskSheet } from './ORAActivityTaskSheet';
@@ -49,6 +50,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   const [vcrWizardOpen, setVcrWizardOpen] = useState(false);
   const [oraReviewWizardOpen, setOraReviewWizardOpen] = useState(false);
   const [p2aWizardOpen, setP2aWizardOpen] = useState(false);
+  const [p2aWorkspaceOpen, setP2aWorkspaceOpen] = useState(false);
   
   // P2A schedule state
   const [p2aStartDate, setP2aStartDate] = useState<Date | undefined>();
@@ -701,17 +703,34 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
 
       {/* P2A Plan Creation Wizard */}
       {isP2aTask && p2aProjectId && (
-        <P2APlanCreationWizard
-          open={p2aWizardOpen}
-          onOpenChange={setP2aWizardOpen}
-          projectId={p2aProjectId}
-          projectCode={resolvedP2aProjectCode}
-          projectName={resolvedP2aProjectName}
-          onSuccess={() => {
-            setP2aWizardOpen(false);
-            onOpenChange(false);
-          }}
-        />
+        <>
+          <P2APlanCreationWizard
+            open={p2aWizardOpen}
+            onOpenChange={setP2aWizardOpen}
+            projectId={p2aProjectId}
+            projectCode={resolvedP2aProjectCode}
+            projectName={resolvedP2aProjectName}
+            onSuccess={() => {
+              setP2aWizardOpen(false);
+              onOpenChange(false);
+            }}
+            onOpenWorkspace={() => {
+              setP2aWizardOpen(false);
+              setP2aWorkspaceOpen(true);
+            }}
+          />
+          <P2AWorkspaceOverlay
+            open={p2aWorkspaceOpen}
+            onOpenChange={setP2aWorkspaceOpen}
+            projectId={p2aProjectId}
+            projectName={resolvedP2aProjectName}
+            projectNumber={resolvedP2aProjectCode}
+            onReturnToWizard={() => {
+              setP2aWorkspaceOpen(false);
+              setP2aWizardOpen(true);
+            }}
+          />
+        </>
       )}
     </>
   );

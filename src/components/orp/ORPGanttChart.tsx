@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 
 import { ORAActivityTaskSheet } from '@/components/tasks/ORAActivityTaskSheet';
 import { P2APlanCreationWizard } from '@/components/widgets/p2a-wizard/P2APlanCreationWizard';
+import { P2AWorkspaceOverlay } from '@/components/widgets/P2AWorkspaceOverlay';
 import { getStatusLabel, getStatusBadgeClasses } from './utils/statusStyles';
 import { cn } from '@/lib/utils';
 import { useGanttBarResize } from '@/hooks/useGanttBarResize';
@@ -279,6 +280,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
   const [internalSearchQuery, setInternalSearchQuery] = useState('');
   const [showCatalogDialog, setShowCatalogDialog] = useState(false);
   const [showP2AWizard, setShowP2AWizard] = useState(false);
+  const [showP2AWorkspace, setShowP2AWorkspace] = useState(false);
   
   const { toast } = useToast();
   
@@ -1284,18 +1286,35 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
         onOpenChange={(open) => !open && setSelectedOraActivity(null)}
       />
       {planData?.project_id && (
-        <P2APlanCreationWizard
-          open={showP2AWizard}
-          onOpenChange={setShowP2AWizard}
-          projectId={planData.project_id}
-          projectCode={projectCode}
-          projectName={projectName}
-          onSuccess={() => {
-            setShowP2AWizard(false);
-            queryClient.invalidateQueries({ queryKey: ['orp-plan'] });
-            queryClient.invalidateQueries({ queryKey: ['p2a-plan-exists'] });
-          }}
-        />
+        <>
+          <P2APlanCreationWizard
+            open={showP2AWizard}
+            onOpenChange={setShowP2AWizard}
+            projectId={planData.project_id}
+            projectCode={projectCode}
+            projectName={projectName}
+            onSuccess={() => {
+              setShowP2AWizard(false);
+              queryClient.invalidateQueries({ queryKey: ['orp-plan'] });
+              queryClient.invalidateQueries({ queryKey: ['p2a-plan-exists'] });
+            }}
+            onOpenWorkspace={() => {
+              setShowP2AWizard(false);
+              setShowP2AWorkspace(true);
+            }}
+          />
+          <P2AWorkspaceOverlay
+            open={showP2AWorkspace}
+            onOpenChange={setShowP2AWorkspace}
+            projectId={planData.project_id}
+            projectName={projectName}
+            projectNumber={projectCode}
+            onReturnToWizard={() => {
+              setShowP2AWorkspace(false);
+              setShowP2AWizard(true);
+            }}
+          />
+        </>
       )}
     </Card>
   );
