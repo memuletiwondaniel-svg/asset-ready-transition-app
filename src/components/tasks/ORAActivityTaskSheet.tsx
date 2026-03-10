@@ -134,7 +134,8 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
     enabled: !!projectId && isP2AActivity,
     staleTime: 30_000,
   });
-  const p2aSheetCtaLabel = existingP2APlan ? 'Continue P2A Plan' : 'Create P2A Plan';
+  const p2aPlanIsSubmitted = existingP2APlan && ['ACTIVE', 'COMPLETED', 'APPROVED'].includes(existingP2APlan.status);
+  const p2aSheetCtaLabel = p2aPlanIsSubmitted ? 'Open P2A Workspace' : existingP2APlan ? 'Continue P2A Plan' : 'Create P2A Plan';
 
   // Duration computed from editable dates
   const durationDays = useMemo(() => {
