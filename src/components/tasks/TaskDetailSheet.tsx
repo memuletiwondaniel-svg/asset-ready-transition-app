@@ -101,21 +101,37 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
     staleTime: 60_000,
   });
 
-  // Check if P2A plan draft exists
-  const { data: hasExistingP2aDraft } = useQuery({
+  // Check if P2A plan exists and get its status
+  const { data: existingP2aPlan } = useQuery({
     queryKey: ['p2a-plan-exists-task', p2aProjectId],
     queryFn: async () => {
-      if (!p2aProjectId) return false;
+      if (!p2aProjectId) return null;
       const { data } = await (supabase as any)
         .from('p2a_handover_plans')
-        .select('id')
+        .select('id, status')
         .eq('project_id', p2aProjectId)
         .limit(1);
-      return data && data.length > 0;
+      return data?.[0] || null;
     },
     enabled: !!p2aProjectId && isP2aTask,
     staleTime: 30_000,
   });
+  const hasExistingP2aDraft = !!existingP2aPlan;
+  const p2aPlanStatus = existingP2aPlan?.status as string | undefined;
+  const p2aPlanIsFullyApproved = existingP2aPlan && ['COMPLETED', 'APPROVED'].includes(existingP2aPlan.status);
+  const p2aPlanIsSubmitted = existingP2aPlan && ['ACTIVE', 'COMPLETED', 'APPROVED'].includes(existingP2aPlan.status);
+
+  const getP2AStatusLabel = () => {
+    if (!p2aPlanStatus) return null;
+    switch (p2aPlanStatus) {
+      case 'DRAFT': return { label: 'Draft', className: 'bg-slate-500/10 text-slate-600 border-slate-500/30' };
+      case 'ACTIVE': return { label: 'Pending Approval', className: 'bg-amber-500/10 text-amber-700 border-amber-500/30' };
+      case 'COMPLETED':
+      case 'APPROVED': return { label: 'Approved', className: 'bg-emerald-500/10 text-emerald-700 border-emerald-500/30' };
+      case 'ARCHIVED': return { label: 'Archived', className: 'bg-muted text-muted-foreground border-border' };
+      default: return null;
+    }
+  };
 
   // P2A duration
   const p2aDurationDays = useMemo(() => {
