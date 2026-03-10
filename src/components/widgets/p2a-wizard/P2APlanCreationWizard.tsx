@@ -197,13 +197,24 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
   useEffect(() => {
     if (open && existingPlan && !draftLoaded && !isLoadingDraft) {
       setIsLoadingDraft(true);
-      loadDraft().then((hasDraft) => {
-        if (hasDraft) {
-          setUseWizard(true);
-          setCurrentStep(2);
-        }
-        setIsLoadingDraft(false);
-      });
+      loadDraft()
+        .then((hasDraft) => {
+          if (hasDraft) {
+            setUseWizard(true);
+            // If plan is submitted (ACTIVE), open on Review step (read-only)
+            if (['ACTIVE', 'COMPLETED', 'APPROVED'].includes(existingPlan.status)) {
+              setCurrentStep(WIZARD_STEPS.length); // Step 7 (Review)
+            } else {
+              setCurrentStep(2);
+            }
+          }
+        })
+        .catch((err) => {
+          console.error('Failed to load draft:', err);
+        })
+        .finally(() => {
+          setIsLoadingDraft(false);
+        });
     }
   }, [open, existingPlan, draftLoaded, isLoadingDraft, loadDraft]);
 
@@ -436,7 +447,11 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
             </div>
             <div>
               <h2 className="text-lg font-semibold">
-                Create P2A Plan
+                {existingPlan && ['ACTIVE'].includes(existingPlan.status)
+                  ? 'P2A Plan — Pending Approval'
+                  : existingPlan && ['COMPLETED', 'APPROVED'].includes(existingPlan.status)
+                    ? 'P2A Plan — Approved'
+                    : 'Create P2A Plan'}
               </h2>
               <p className="text-xs text-muted-foreground">
                 {projectName && projectName !== projectCode 
@@ -510,8 +525,8 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
             totalSteps={WIZARD_STEPS.length - 1}
             onBack={handleBack}
             onNext={handleNext}
-            onSaveAndExit={handleSaveAndExit}
-            onSubmit={currentStep === WIZARD_STEPS.length ? handleSubmit : undefined}
+            onSaveAndExit={existingPlan && ['ACTIVE', 'COMPLETED', 'APPROVED'].includes(existingPlan.status) ? () => onOpenChange(false) : handleSaveAndExit}
+            onSubmit={currentStep === WIZARD_STEPS.length && (!existingPlan || existingPlan.status === 'DRAFT') ? handleSubmit : undefined}
             isSubmitting={isSubmitting}
             isSaving={isSaving}
             canProceed={canProceed()}
