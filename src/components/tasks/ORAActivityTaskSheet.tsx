@@ -116,7 +116,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
   const oraActivityId = metadata?.ora_plan_activity_id as string | undefined;
   const projectId = metadata?.project_id as string | undefined;
   const projectCode = metadata?.project_code as string | undefined;
-  const isP2AActivity = activityCode === 'P2A-01' || metadata?.action === 'create_p2a_plan';
+  const isP2AActivity = activityCode === 'P2A-01' || metadata?.action === 'create_p2a_plan' || activityName?.toLowerCase().includes('p2a');
   const isOverdue = editEndDate && isPast(editEndDate) && status !== 'COMPLETED';
 
   // Check if P2A plan exists for "Continue" vs "Create" label
@@ -134,7 +134,8 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
     enabled: !!projectId && isP2AActivity,
     staleTime: 30_000,
   });
-  const p2aSheetCtaLabel = existingP2APlan ? 'Continue P2A Plan' : 'Create P2A Plan';
+  const p2aPlanIsSubmitted = existingP2APlan && ['ACTIVE', 'COMPLETED', 'APPROVED'].includes(existingP2APlan.status);
+  const p2aSheetCtaLabel = p2aPlanIsSubmitted ? 'Open P2A Workspace' : existingP2APlan ? 'Continue P2A Plan' : 'Create P2A Plan';
 
   // Duration computed from editable dates
   const durationDays = useMemo(() => {
@@ -595,18 +596,23 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
             {isP2AActivity ? (
               <div className="pt-2 space-y-3">
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  This activity requires creating the Project to Asset (P2A) handover plan. Click below to launch the P2A planning wizard.
+                  {p2aPlanIsSubmitted 
+                    ? 'The P2A handover plan has been submitted. Open the workspace to view details.'
+                    : 'This activity requires creating the Project to Asset (P2A) handover plan. Click below to launch the P2A planning wizard.'}
                 </p>
                 <Button
                   className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
-                  disabled={isReadOnly}
                   onClick={() => {
                     onOpenChange(false);
-                    setShowP2AWizard(true);
+                    if (p2aPlanIsSubmitted) {
+                      setShowP2AWorkspace(true);
+                    } else {
+                      setShowP2AWizard(true);
+                    }
                   }}
                 >
                   <FileText className="h-4 w-4" />
-                  {isReadOnly ? 'View Only' : p2aSheetCtaLabel}
+                  {p2aSheetCtaLabel}
                   <ChevronRight className="h-4 w-4 ml-auto" />
                 </Button>
               </div>
