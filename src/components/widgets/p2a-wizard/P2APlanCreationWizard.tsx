@@ -453,7 +453,6 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
                     ? 'P2A Plan — Approved'
                     : 'Create P2A Plan'}
               </h2>
-              </h2>
               <p className="text-xs text-muted-foreground">
                 {projectName && projectName !== projectCode 
                   ? `${projectCode}: ${projectName}` 
