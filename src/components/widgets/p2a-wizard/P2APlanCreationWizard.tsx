@@ -103,13 +103,21 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
         .limit(1);
 
       if (plans?.[0]) {
-        // Find the P2A-01 activity
-        const { data: activity } = await (supabase as any)
+        const orpPlanId = plans[0].id;
+
+        // Find the P2A activity - search by multiple strategies:
+        // 1. activity_code 'P2A-01' (legacy), 2. name containing 'P2A', 3. name 'Develop P2A Plan'
+        let activity: any = null;
+        const { data: activities } = await (supabase as any)
           .from('ora_plan_activities')
-          .select('id, task_id')
-          .eq('orp_plan_id', plans[0].id)
-          .eq('activity_code', 'P2A-01')
-          .single();
+          .select('id, task_id, activity_code, name')
+          .eq('orp_plan_id', orpPlanId);
+
+        if (activities?.length) {
+          activity = activities.find((a: any) => a.activity_code === 'P2A-01')
+            || activities.find((a: any) => a.name?.toLowerCase().includes('p2a plan'))
+            || activities.find((a: any) => a.name?.toLowerCase().includes('p2a'));
+        }
 
         if (activity) {
           // Update ora_plan_activities
@@ -125,7 +133,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
             .update(activityUpdate)
             .eq('id', activity.id);
 
-          // Update linked user_task via task_id
+          // Update linked user_task via task_id if available
           if (activity.task_id) {
             const { data: taskRow } = await supabase
               .from('user_tasks')
@@ -175,7 +183,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
       queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
       queryClient.invalidateQueries({ queryKey: ['user-orp-activities'] });
       queryClient.invalidateQueries({ queryKey: ['ora-plan-activities'] });
-      queryClient.invalidateQueries({ queryKey: ['orp-plan-details'] });
+      queryClient.invalidateQueries({ queryKey: ['orp-plan'] });
       queryClient.invalidateQueries({ queryKey: ['project-orp-plans'] });
     } catch (err) {
       console.error('Failed to sync wizard progress:', err);

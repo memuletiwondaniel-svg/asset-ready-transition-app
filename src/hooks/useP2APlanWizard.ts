@@ -621,12 +621,15 @@ export function useP2APlanWizard(projectId: string, projectCode: string) {
           .limit(1);
 
         if (orpPlans?.[0]) {
-          const { data: p2aActivity } = await client
+          // Find the P2A activity by multiple strategies (name match, not hardcoded code)
+          const { data: allActivities } = await client
             .from('ora_plan_activities')
-            .select('id, task_id')
-            .eq('orp_plan_id', orpPlans[0].id)
-            .eq('activity_code', 'P2A-01')
-            .maybeSingle();
+            .select('id, task_id, activity_code, name')
+            .eq('orp_plan_id', orpPlans[0].id);
+
+          const p2aActivity = allActivities?.find((a: any) => a.activity_code === 'P2A-01')
+            || allActivities?.find((a: any) => a.name?.toLowerCase().includes('p2a plan'))
+            || allActivities?.find((a: any) => a.name?.toLowerCase().includes('p2a'));
 
           if (p2aActivity) {
             // Reset the ORA activity to NOT_STARTED / 0%
