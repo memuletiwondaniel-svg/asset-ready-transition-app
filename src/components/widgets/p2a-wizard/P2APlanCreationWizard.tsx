@@ -92,7 +92,8 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
    * Maps wizard steps: step 1=0%, step 2=14%, ... step 7=86%, submitted=100%
    */
   const syncWizardProgress = useCallback(async (step: number, isSubmitted = false) => {
-    const percentage = isSubmitted ? 100 : Math.round(((step - 1) / TOTAL_CREATION_STEPS) * 100);
+    // Submitted = 95% (pending approval); 100% only after final approval
+    const percentage = isSubmitted ? 95 : Math.round(((step - 1) / TOTAL_CREATION_STEPS) * 100);
     
     try {
       // Find ORP plan for this project
