@@ -14,6 +14,7 @@ interface WizardNavigationProps {
   canProceed?: boolean;
   canGoBack?: boolean;
   submitLabel?: string;
+  saveAndExitLabel?: string;
 }
 
 export const WizardNavigation: React.FC<WizardNavigationProps> = ({
@@ -28,6 +29,7 @@ export const WizardNavigation: React.FC<WizardNavigationProps> = ({
   canProceed = true,
   canGoBack = true,
   submitLabel = 'Submit',
+  saveAndExitLabel,
 }) => {
   const isLastStep = currentStep === totalSteps;
 
@@ -55,7 +57,7 @@ export const WizardNavigation: React.FC<WizardNavigationProps> = ({
             ) : (
               <LogOut className="h-4 w-4 mr-1" />
             )}
-            Save & Exit
+            {saveAndExitLabel || 'Save & Exit'}
           </Button>
         )}
       </div>

@@ -64,9 +64,11 @@ const fetchUserTasks = async (userId: string): Promise<FetchResult> => {
 
   const p2aTasks = regularTasks.filter(t => {
     const meta = t.metadata as Record<string, any>;
-    return meta?.action === 'create_p2a_plan' && meta?.plan_id;
+    return meta?.action === 'create_p2a_plan';
   });
-  const p2aPlanIds = [...new Set(p2aTasks.map(t => (t.metadata as Record<string, any>).plan_id))] as string[];
+  // Collect both plan_id (orp_plan_id) and project_id for flexible lookups
+  const p2aPlanIds = [...new Set(p2aTasks.map(t => (t.metadata as Record<string, any>).plan_id).filter(Boolean))] as string[];
+  const p2aProjectIds = [...new Set(p2aTasks.map(t => (t.metadata as Record<string, any>).project_id).filter(Boolean))] as string[];
 
   const oraPlanCreationTasks = regularTasks.filter(t => {
     const meta = t.metadata as Record<string, any>;
@@ -101,9 +103,49 @@ const fetchUserTasks = async (userId: string): Promise<FetchResult> => {
     oraActivityIds.length > 0
       ? supabase.from('ora_plan_activities').select('id, start_date, end_date, duration_days, completion_percentage').in('id', oraActivityIds)
       : Promise.resolve(null),
-    // 3. P2A activity progress
-    p2aPlanIds.length > 0
-      ? supabase.from('ora_plan_activities').select('orp_plan_id, completion_percentage').in('orp_plan_id', p2aPlanIds).eq('activity_code', 'P2A-01')
+    // 3. P2A activity progress — look up by orp_plan_id OR by project_id → orp_plans → activities
+    (p2aPlanIds.length > 0 || p2aProjectIds.length > 0)
+      ? (async () => {
+          // Strategy A: direct lookup by orp_plan_id
+          let results: any[] = [];
+          if (p2aPlanIds.length > 0) {
+            const { data } = await supabase.from('ora_plan_activities')
+              .select('orp_plan_id, completion_percentage, activity_code, name')
+              .in('orp_plan_id', p2aPlanIds);
+            if (data) results.push(...data);
+          }
+          // Strategy B: lookup by project_id → orp_plans for tasks missing plan_id
+          if (p2aProjectIds.length > 0) {
+            const coveredPlanIds = new Set(results.map(r => r.orp_plan_id));
+            const uncoveredProjectIds = p2aProjectIds.filter(pid => {
+              // Check if any task with this project_id already has a plan_id covered
+              return !p2aTasks.some(t => {
+                const m = t.metadata as Record<string, any>;
+                return m.project_id === pid && m.plan_id && coveredPlanIds.has(m.plan_id);
+              });
+            });
+            if (uncoveredProjectIds.length > 0) {
+              const { data: plans } = await (supabase as any).from('orp_plans').select('id, project_id').in('project_id', uncoveredProjectIds);
+              if (plans?.length) {
+                const planIds = plans.map((p: any) => p.id);
+                const { data: acts } = await supabase.from('ora_plan_activities')
+                  .select('orp_plan_id, completion_percentage, activity_code, name')
+                  .in('orp_plan_id', planIds);
+                if (acts) {
+                  // Also store the project_id mapping
+                  const planToProject: Record<string, string> = {};
+                  plans.forEach((p: any) => { planToProject[p.id] = p.project_id; });
+                  results.push(...acts.map((a: any) => ({ ...a, _project_id: planToProject[a.orp_plan_id] })));
+                }
+              }
+            }
+          }
+          // Filter to P2A activities (code P2A-01 or name containing 'p2a')
+          const p2aActivities = results.filter((a: any) =>
+            a.activity_code === 'P2A-01' || a.name?.toLowerCase().includes('p2a plan') || a.name?.toLowerCase().includes('p2a')
+          );
+          return { data: p2aActivities };
+        })()
       : Promise.resolve(null),
     // 4. ORA plan statuses
     oraPlanProjectIds.length > 0
@@ -136,10 +178,20 @@ const fetchUserTasks = async (userId: string): Promise<FetchResult> => {
   let p2aActivityProgress: Record<string, number> = {};
   if (p2aActivitiesResult && 'data' in p2aActivitiesResult && p2aActivitiesResult.data) {
     const planToProgress: Record<string, number> = {};
-    p2aActivitiesResult.data.forEach((a: any) => { planToProgress[a.orp_plan_id] = a.completion_percentage ?? 0; });
+    const projectToProgress: Record<string, number> = {};
+    p2aActivitiesResult.data.forEach((a: any) => {
+      planToProgress[a.orp_plan_id] = a.completion_percentage ?? 0;
+      if (a._project_id) { projectToProgress[a._project_id] = a.completion_percentage ?? 0; }
+    });
     p2aTasks.forEach(t => {
-      const planId = (t.metadata as Record<string, any>).plan_id;
-      if (planId && planId in planToProgress) { p2aActivityProgress[t.id] = planToProgress[planId]; }
+      const meta = t.metadata as Record<string, any>;
+      const planId = meta.plan_id;
+      const projId = meta.project_id;
+      if (planId && planId in planToProgress) {
+        p2aActivityProgress[t.id] = planToProgress[planId];
+      } else if (projId && projId in projectToProgress) {
+        p2aActivityProgress[t.id] = projectToProgress[projId];
+      }
     });
   }
 
