@@ -198,6 +198,55 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
 
   const realOraActivityId = resolvedActivityId;
 
+  // Check if P2A plan exists for "Continue" vs "Create" label
+  const { data: existingP2APlan } = useQuery({
+    queryKey: ['p2a-plan-exists-sheet', projectId],
+    queryFn: async () => {
+      if (!projectId) return null;
+      const { data } = await (supabase as any)
+        .from('p2a_handover_plans')
+        .select('id, status')
+        .eq('project_id', projectId)
+        .limit(1);
+      return data?.[0] || null;
+    },
+    enabled: !!projectId && isP2AActivity,
+    staleTime: 30_000,
+  });
+  const p2aPlanStatus = existingP2APlan?.status as string | undefined;
+  const p2aPlanIsSubmitted = existingP2APlan && ['ACTIVE', 'COMPLETED', 'APPROVED'].includes(existingP2APlan.status);
+  const p2aPlanIsFullyApproved = existingP2APlan && ['COMPLETED', 'APPROVED'].includes(existingP2APlan.status);
+  const p2aSheetCtaLabel = p2aPlanIsFullyApproved ? 'Open P2A Workspace' : existingP2APlan ? 'Continue P2A Plan' : 'Create P2A Plan';
+
+  const getP2AStatusBadge = () => {
+    if (!p2aPlanStatus) return null;
+    switch (p2aPlanStatus) {
+      case 'DRAFT':
+        return <Badge variant="outline" className="text-[10px] bg-slate-500/10 text-slate-600 border-slate-500/30">Draft</Badge>;
+      case 'ACTIVE':
+        return <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-700 border-amber-500/30">Pending Approval</Badge>;
+      case 'COMPLETED':
+      case 'APPROVED':
+        return <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-700 border-emerald-500/30">Approved</Badge>;
+      case 'ARCHIVED':
+        return <Badge variant="outline" className="text-[10px] bg-muted text-muted-foreground border-border">Archived</Badge>;
+      default:
+        return null;
+    }
+  };
+
+  // Duration computed from editable dates
+  const durationDays = useMemo(() => {
+    if (editStartDate && editEndDate) {
+      return differenceInDays(editEndDate, editStartDate);
+    }
+    return null;
+  }, [editStartDate, editEndDate]);
+
+  const idColors = activityCode
+    ? ID_BADGE_PALETTE[hashCode(activityCode) % ID_BADGE_PALETTE.length]
+    : ID_BADGE_PALETTE[0];
+
   // Database-persisted comments
   const { comments: dbComments, isLoading: commentsLoading, addComment: addDbComment, isAdding } = useORAActivityComments(realOraActivityId || undefined, planId);
 
