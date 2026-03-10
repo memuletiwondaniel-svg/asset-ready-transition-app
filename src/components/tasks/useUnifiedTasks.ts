@@ -158,10 +158,11 @@ export function useUnifiedTasks(userId: string) {
       const durationDays = meta?.duration_days || meta?.duration_med || oraAct?.duration_days || undefined;
 
       // For P2A plan creation tasks, prefer the DB-sourced P2A-01 activity progress
-      // over stale metadata (which may not be reset after draft deletion)
+      // over stale metadata (which may not be reset after draft deletion).
+      // If the DB lookup has no entry, default to 0 rather than trusting stale metadata.
       const isP2aCreationTask = action === 'create_p2a_plan';
-      const resolvedProgress = isP2aCreationTask && t.id in p2aActivityProgress
-        ? p2aActivityProgress[t.id]
+      const resolvedProgress = isP2aCreationTask
+        ? (p2aActivityProgress[t.id] ?? 0)
         : (oraAct as any)?.completion_percentage ?? meta?.completion_percentage ?? undefined;
 
       const sp = computeSmartPriority({
