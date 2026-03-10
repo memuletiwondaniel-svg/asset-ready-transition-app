@@ -165,11 +165,18 @@ export function useUnifiedTasks(userId: string) {
         ? (p2aActivityProgress[t.id] ?? 0)
         : (oraAct as any)?.completion_percentage ?? meta?.completion_percentage ?? undefined;
 
-      // Guard: if the P2A plan is in DRAFT status, progress cannot exceed 86%
-      // (95% = submitted, 100% = approved). This prevents stale DB data from showing wrong values.
+      // Guard: if the P2A plan is in DRAFT status (or ORA activity is IN_PROGRESS),
+      // progress cannot exceed 86% (95% = submitted, 100% = approved).
+      // Check both metadata and ORA activity status to handle stale data.
       const metaPlanStatus = meta?.plan_status?.toUpperCase?.();
-      if (isP2aCreationTask && metaPlanStatus === 'DRAFT' && resolvedProgress > 86) {
+      const oraActStatus = (oraAct as any)?.status;
+      const isDraftOrInProgress = metaPlanStatus === 'DRAFT' || (isP2aCreationTask && oraActStatus === 'IN_PROGRESS' && metaPlanStatus !== 'ACTIVE');
+      if (isP2aCreationTask && isDraftOrInProgress && resolvedProgress > 86) {
         resolvedProgress = 86;
+      }
+      // Ensure P2A tasks with 0% and pending status stay in "todo"
+      if (isP2aCreationTask && t.status === 'pending' && (resolvedProgress === 0 || resolvedProgress === undefined)) {
+        resolvedProgress = 0;
       }
 
       const sp = computeSmartPriority({

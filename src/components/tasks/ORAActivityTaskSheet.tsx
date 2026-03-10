@@ -705,11 +705,16 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                   {p2aPlanIsFullyApproved
                     ? 'The P2A handover plan has been approved. Open the workspace to view details.'
                     : p2aPlanIsSubmitted
-                      ? 'The P2A handover plan has been submitted and is pending approval. Open the wizard to review progress.'
+                      ? 'The P2A handover plan has been submitted and is awaiting approval. No changes are permitted while under review.'
                       : existingP2APlan
                         ? 'You have a saved draft for the P2A Plan. Click below to continue where you left off.'
-                        : 'This activity requires creating the Project to Asset (P2A) handover plan. Click below to launch the P2A planning wizard.'}
+                        : 'This activity requires creating the Project to Asset (P2A) handover plan. Click below to launch the planning wizard and get started.'}
                 </p>
+                {p2aPlanIsSubmitted && !p2aPlanIsFullyApproved && (
+                  <p className="text-xs text-amber-600 bg-amber-500/10 border border-amber-500/20 rounded-md px-3 py-2">
+                    ⏳ The plan is under review. You can view the submitted plan but editing is disabled until the review is complete.
+                  </p>
+                )}
                 <Button
                   className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
                   onClick={() => {

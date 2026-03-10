@@ -422,17 +422,35 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     if (task.kanbanColumn === targetColumn) return;
     if (!task.userTask) return;
 
+    const meta = task.userTask.metadata as Record<string, any> | undefined;
+    const isOraActivity = task.userTask.type === 'ora_activity' || meta?.action === 'complete_ora_activity' || meta?.ora_plan_activity_id;
+    const isP2aTask = meta?.action === 'create_p2a_plan';
+
+    // ── P2A tasks: intercept drags that should go through the wizard ──
+    if (isP2aTask) {
+      // Todo → In Progress: open overlay to guide user to "Start P2A Plan"
+      // In Progress → Done: open overlay to guide user to submit via wizard
+      // Any drag on P2A tasks should open the overlay, not silently move
+      if (targetColumn === 'in_progress' && task.kanbanColumn === 'todo') {
+        setOraActivityTask(task.userTask);
+        setOraActivityDragComplete(false);
+        setOraActivityOpen(true);
+        return;
+      }
+      if (targetColumn === 'done') {
+        setOraActivityTask(task.userTask);
+        setOraActivityDragComplete(false);
+        setOraActivityOpen(true);
+        return;
+      }
+    }
+
     if (targetColumn === 'done') {
       // Open the activity detail sheet with "Completed" status pre-selected
       // This forces the user to add evidence/comments before completing
-      const meta = task.userTask.metadata as Record<string, any> | undefined;
-      const isOraActivity = task.userTask.type === 'ora_activity' || meta?.action === 'complete_ora_activity' || meta?.ora_plan_activity_id;
-      const isP2aTask = meta?.action === 'create_p2a_plan';
-
       if (isOraActivity) {
         setOraActivityTask(task.userTask);
-        // P2A tasks should NOT pre-select COMPLETED — completion only happens through the wizard
-        setOraActivityDragComplete(!isP2aTask);
+        setOraActivityDragComplete(true);
         setOraActivityOpen(true);
       } else {
         // For non-ORA tasks, open the regular detail sheet
