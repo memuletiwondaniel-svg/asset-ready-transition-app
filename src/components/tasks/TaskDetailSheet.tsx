@@ -334,6 +334,11 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
             <div className="flex items-center gap-2 flex-wrap">
               {getTypeBadge()}
               {getPriorityBadge(task.priority)}
+              {isP2aTask && getP2AStatusLabel() && (
+                <Badge variant="outline" className={cn("text-xs", getP2AStatusLabel()!.className)}>
+                  {getP2AStatusLabel()!.label}
+                </Badge>
+              )}
             </div>
              <SheetTitle className="text-left text-base sm:text-lg leading-snug mt-2 break-words">
               {task.title}
