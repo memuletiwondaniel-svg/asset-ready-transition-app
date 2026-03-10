@@ -216,7 +216,13 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
   const p2aPlanStatus = existingP2APlan?.status as string | undefined;
   const p2aPlanIsSubmitted = existingP2APlan && ['ACTIVE', 'COMPLETED', 'APPROVED'].includes(existingP2APlan.status);
   const p2aPlanIsFullyApproved = existingP2APlan && ['COMPLETED', 'APPROVED'].includes(existingP2APlan.status);
-  const p2aSheetCtaLabel = p2aPlanIsFullyApproved ? 'Open P2A Workspace' : existingP2APlan ? 'Continue P2A Plan' : 'Create P2A Plan';
+  const p2aSheetCtaLabel = p2aPlanIsFullyApproved
+    ? 'View P2A Plan'
+    : p2aPlanIsSubmitted
+      ? 'View P2A Plan'
+      : existingP2APlan
+        ? 'Continue P2A Plan'
+        : 'Create P2A Plan';
 
   const getP2AStatusBadge = () => {
     if (!p2aPlanStatus) return null;
