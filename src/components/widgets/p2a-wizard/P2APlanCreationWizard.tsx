@@ -525,8 +525,8 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
             totalSteps={WIZARD_STEPS.length - 1}
             onBack={handleBack}
             onNext={handleNext}
-            onSaveAndExit={handleSaveAndExit}
-            onSubmit={currentStep === WIZARD_STEPS.length ? handleSubmit : undefined}
+            onSaveAndExit={existingPlan && ['ACTIVE', 'COMPLETED', 'APPROVED'].includes(existingPlan.status) ? () => onOpenChange(false) : handleSaveAndExit}
+            onSubmit={currentStep === WIZARD_STEPS.length && (!existingPlan || existingPlan.status === 'DRAFT') ? handleSubmit : undefined}
             isSubmitting={isSubmitting}
             isSaving={isSaving}
             canProceed={canProceed()}
