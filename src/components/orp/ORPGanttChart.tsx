@@ -728,7 +728,11 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
         ora_plan_activity_id: deliverable.id,
         start_date: deliverable.start_date,
         end_date: deliverable.end_date,
-        completion_percentage: deliverable.completion_percentage || 0,
+        completion_percentage: (() => {
+          const raw = deliverable.completion_percentage || 0;
+          const isP2a = deliverable.deliverable?.activity_code === 'P2A-01' || deliverable.deliverable?.activity_code === 'EXE-10' || deliverable.deliverable?.name?.toLowerCase().includes('p2a');
+          return (isP2a && existingP2APlan?.status === 'DRAFT' && raw > 86) ? 86 : raw;
+        })(),
         predecessor_ids: deliverable._predecessorIds || [],
         sibling_activities: siblingActivities,
       },
