@@ -14,6 +14,7 @@ interface WizardNavigationProps {
   canProceed?: boolean;
   canGoBack?: boolean;
   submitLabel?: string;
+  saveAndExitLabel?: string;
 }
 
 export const WizardNavigation: React.FC<WizardNavigationProps> = ({
