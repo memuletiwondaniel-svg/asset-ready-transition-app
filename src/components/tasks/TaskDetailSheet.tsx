@@ -16,6 +16,7 @@ import CreatePSSRWizard from '@/components/pssr/CreatePSSRWizard';
 import { ORAActivityPlanWizard } from '@/components/ora/wizard/ORAActivityPlanWizard';
 import { ORPGanttOverlay } from '@/components/orp/ORPGanttOverlay';
 import { P2APlanCreationWizard } from '@/components/widgets/p2a-wizard/P2APlanCreationWizard';
+import { P2AWorkspaceOverlay } from '@/components/widgets/P2AWorkspaceOverlay';
 import { ProjectIdBadge } from '@/components/ui/project-id-badge';
 
 import { ORAActivityTaskSheet } from './ORAActivityTaskSheet';
