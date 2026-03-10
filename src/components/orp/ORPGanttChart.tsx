@@ -342,13 +342,38 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
     staleTime: 30_000,
   });
 
-  const p2aCtaLabel = existingP2APlan ? 'Continue P2A Plan' : 'Create P2A Plan';
+  const p2aPlanIsSubmitted = existingP2APlan && ['ACTIVE', 'COMPLETED', 'APPROVED'].includes(existingP2APlan.status);
+  const p2aCtaLabel = p2aPlanIsSubmitted ? 'Open P2A' : existingP2APlan ? 'Continue P2A Plan' : 'Create P2A Plan';
+
+  // Helper to detect P2A activity by code or name
+  const isP2AActivityCode = (code: string, name?: string) =>
+    code === 'P2A-01' || name?.toLowerCase().includes('p2a');
   const projectCode = planData?.project
     ? `${planData.project.project_id_prefix || ''}-${planData.project.project_id_number || ''}`
     : '';
   const projectName = planData?.project?.project_title || '';
 
-  // Get existing activity IDs for catalog exclusion
+  // Auto-heal: sync P2A activity status when plan is submitted but activity is still IN_PROGRESS
+  const p2aHealRanRef = useRef(false);
+  useEffect(() => {
+    if (p2aHealRanRef.current || !p2aPlanIsSubmitted || !deliverables?.length) return;
+    const p2aActivity = deliverables.find((d: any) => 
+      isP2AActivityCode(d.deliverable?.activity_code || '', d.deliverable?.name)
+    );
+    if (!p2aActivity || p2aActivity.status === 'COMPLETED') return;
+    
+    p2aHealRanRef.current = true;
+    const actId = p2aActivity.id?.replace('ora-', '') || p2aActivity.id;
+    (supabase as any)
+      .from('ora_plan_activities')
+      .update({ completion_percentage: 100, status: 'COMPLETED', end_date: new Date().toISOString().split('T')[0] })
+      .eq('id', actId)
+      .then(() => {
+        queryClient.invalidateQueries({ queryKey: ['orp-plan-activities'] });
+        queryClient.invalidateQueries({ queryKey: ['orp-deliverables'] });
+      });
+  }, [p2aPlanIsSubmitted, deliverables, queryClient]);
+
   const existingActivityIds = useMemo(() => deliverables.map((d: any) => d.id?.replace('ora-', '') || d.id), [deliverables]);
 
   const handleAddFromCatalog = useCallback(async (newActivities: WizardActivity[]) => {
@@ -695,9 +720,14 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
     // Allow opening in view-only mode too (readOnly is enforced in the sheet)
     const actCode = deliverable.deliverable?.activity_code || '';
     
-    // Special handling for P2A-01 activity: open P2A wizard instead (only if not read-only)
-    if (actCode === 'P2A-01' && !readOnly) {
-      setShowP2AWizard(true);
+    // Special handling for P2A activity: open P2A wizard or workspace
+    const actName = deliverable.deliverable?.name || '';
+    if (isP2AActivityCode(actCode, actName) && !readOnly) {
+      if (p2aPlanIsSubmitted) {
+        setShowP2AWorkspace(true);
+      } else {
+        setShowP2AWizard(true);
+      }
       return;
     }
 
@@ -1026,12 +1056,24 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                       )}
                       {visibleColumns.has('status') && (
                         <div className="px-1 flex items-center justify-center" style={{ width: COL_WIDTHS.status }}>
-                          {activityCode === 'P2A-01' ? (
+                          {isP2AActivityCode(activityCode, deliverable.deliverable?.name) ? (
                             <Button
                               variant="outline"
                               size="sm"
-                              className="h-5 px-1.5 text-[9px] font-medium gap-0.5 border-primary/30 text-primary hover:bg-primary/10"
-                              onClick={(e) => { e.stopPropagation(); setShowP2AWizard(true); }}
+                              className={cn(
+                                "h-5 px-1.5 text-[9px] font-medium gap-0.5",
+                                p2aPlanIsSubmitted
+                                  ? "border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                                  : "border-primary/30 text-primary hover:bg-primary/10"
+                              )}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (p2aPlanIsSubmitted) {
+                                  setShowP2AWorkspace(true);
+                                } else {
+                                  setShowP2AWizard(true);
+                                }
+                              }}
                             >
                               <FileText className="w-3 h-3" />
                               {p2aCtaLabel}
@@ -1119,7 +1161,9 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                           const barL = isDragging && previewLeft !== null ? previewLeft : barPos.left;
                           const barW = isDragging && previewWidth !== null ? previewWidth : barPos.width;
                           const mutedColor = BAR_COLORS_MUTED[prefix] || 'bg-muted';
-                          const completion = deliverable.completion_percentage || 0;
+                          // Override completion for P2A activity when plan is submitted
+                          const isP2ARow = isP2AActivityCode(activityCode, deliverable.deliverable?.name);
+                          const completion = (isP2ARow && p2aPlanIsSubmitted) ? 100 : (deliverable.completion_percentage || 0);
 
                           return (
                             <div
