@@ -184,7 +184,9 @@ export function useKanbanDragDrop() {
       // subscription will handle the refetch after the DB settles. Invalidating immediately
       // causes a race condition where the GET returns stale data and overwrites our optimistic update.
       queryClient.invalidateQueries({ queryKey: ['ora-plan-activities'] });
+      queryClient.invalidateQueries({ queryKey: ['orp-plan'] });
       queryClient.invalidateQueries({ queryKey: ['orp-plan-details'] });
+      queryClient.invalidateQueries({ queryKey: ['project-orp-plans'] });
 
       const labels: Record<string, string> = {
         todo: 'To Do',
