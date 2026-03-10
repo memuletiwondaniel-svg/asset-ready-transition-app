@@ -576,16 +576,25 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
               </div>
             )}
 
-            {/* P2A Plan Creation CTA */}
+            {/* P2A Plan CTA */}
             {isP2aTask && p2aProjectId && (
               <Button
-                className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
+                className={cn(
+                  "w-full gap-2 font-medium",
+                  p2aPlanIsFullyApproved
+                    ? "bg-muted hover:bg-muted/80 text-foreground border border-border"
+                    : "bg-primary hover:bg-primary/90 text-primary-foreground"
+                )}
                 onClick={() => {
                   onOpenChange(false);
-                  setP2aWizardOpen(true);
+                  if (p2aPlanIsFullyApproved) {
+                    setP2aWorkspaceOpen(true);
+                  } else {
+                    setP2aWizardOpen(true);
+                  }
                 }}
               >
-                <FileText className="h-4 w-4" />
+                {p2aPlanIsFullyApproved ? <Eye className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
                 {p2aCtaLabel}
                 <ChevronRight className="h-4 w-4 ml-auto" />
               </Button>
