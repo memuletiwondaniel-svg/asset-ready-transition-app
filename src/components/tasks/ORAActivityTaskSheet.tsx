@@ -879,7 +879,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                     Delete
                   </Button>
                 </AlertDialogTrigger>
-                <AlertDialogContent>
+                <AlertDialogContent className="z-[200]">
                   <AlertDialogHeader>
                     <AlertDialogTitle>Delete Activity</AlertDialogTitle>
                     <AlertDialogDescription>
