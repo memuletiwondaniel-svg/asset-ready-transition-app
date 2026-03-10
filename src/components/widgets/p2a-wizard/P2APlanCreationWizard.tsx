@@ -557,6 +557,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
             isSaving={isSaving}
             canProceed={canProceed()}
             submitLabel="Submit for Approval"
+            saveAndExitLabel={isReadOnly ? 'Close' : undefined}
           />
         )}
 
