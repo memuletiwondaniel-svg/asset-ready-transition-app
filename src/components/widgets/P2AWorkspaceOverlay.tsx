@@ -71,9 +71,9 @@ export const P2AWorkspaceOverlay: React.FC<P2AWorkspaceOverlayProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[99vw] w-full h-[99vh] p-0 gap-0 overflow-hidden [&>button]:hidden">
+      <DialogContent className="!inset-2 sm:!inset-2 sm:!max-w-none sm:!max-h-none sm:!translate-x-0 sm:!translate-y-0 sm:!left-2 sm:!top-2 !w-[calc(100vw-16px)] !h-[calc(100vh-16px)] p-0 gap-0 overflow-hidden rounded-xl sm:!rounded-xl [&>button]:hidden border-border/50 shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-2 border-b bg-gradient-to-br from-primary/5 via-accent/5 to-transparent">
+        <div className="flex items-center justify-between px-4 py-2 border-b border-border/40 bg-gradient-to-r from-background via-muted/30 to-background backdrop-blur-sm">
           <div className="flex items-center gap-3">
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-br from-orange-500/40 to-amber-500/40 rounded-lg blur-sm" />
@@ -81,7 +81,7 @@ export const P2AWorkspaceOverlay: React.FC<P2AWorkspaceOverlayProps> = ({
                 <Key className="h-4 w-4 text-white" />
               </div>
             </div>
-            <h2 className="text-lg font-semibold">{readOnly ? 'P2A Plan' : 'Create P2A Plan'}</h2>
+            <h2 className="text-base font-semibold text-foreground">{readOnly ? 'P2A Plan' : 'Create P2A Plan'}</h2>
             <Badge variant="outline" className={cn("text-xs", statusConfig.className)}>
               {statusConfig.label}
             </Badge>
@@ -89,7 +89,7 @@ export const P2AWorkspaceOverlay: React.FC<P2AWorkspaceOverlayProps> = ({
           <div className="flex items-center gap-1">
             <TooltipProvider>
               {/* Zoom Controls */}
-              <div className="flex items-center gap-0.5 mr-2 border-r border-border pr-2">
+              <div className="flex items-center gap-0.5 mr-2 border-r border-border/40 pr-2">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
@@ -174,7 +174,7 @@ export const P2AWorkspaceOverlay: React.FC<P2AWorkspaceOverlayProps> = ({
         </div>
 
         {/* Workspace Content */}
-        <div className="flex-1 overflow-hidden h-[calc(99vh-49px)]">
+        <div className="flex-1 overflow-hidden" style={{ height: 'calc(100vh - 16px - 45px)' }}>
           <P2AHandoverWorkspace
             projectId={projectId}
             projectName={projectName}
