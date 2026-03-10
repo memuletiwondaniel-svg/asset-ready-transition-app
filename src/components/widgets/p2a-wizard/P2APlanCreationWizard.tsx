@@ -447,7 +447,12 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
             </div>
             <div>
               <h2 className="text-lg font-semibold">
-                Create P2A Plan
+                {existingPlan && ['ACTIVE'].includes(existingPlan.status)
+                  ? 'P2A Plan — Pending Approval'
+                  : existingPlan && ['COMPLETED', 'APPROVED'].includes(existingPlan.status)
+                    ? 'P2A Plan — Approved'
+                    : 'Create P2A Plan'}
+              </h2>
               </h2>
               <p className="text-xs text-muted-foreground">
                 {projectName && projectName !== projectCode 
