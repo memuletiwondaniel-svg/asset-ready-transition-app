@@ -723,7 +723,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
         description: deliverable.deliverable?.description || '',
         plan_id: planId,
         project_id: planData?.project_id,
-        project_code: planData?.project_code,
+        project_code: projectCode,
         deliverable_id: deliverable.deliverable?.id || deliverable.id,
         ora_plan_activity_id: deliverable.id,
         start_date: deliverable.start_date,
@@ -735,7 +735,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
       priority: 'medium',
       created_at: deliverable.created_at || new Date().toISOString(),
     });
-  }, [planId, filteredDeliverables, readOnly]);
+  }, [planId, filteredDeliverables, readOnly, planData?.project_id, projectCode]);
 
   // Early return - no data
   if (!dates.length) {
