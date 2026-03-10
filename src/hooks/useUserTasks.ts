@@ -53,145 +53,117 @@ const fetchUserTasks = async (userId: string): Promise<FetchResult> => {
 
   const taskIds = (tasksData || []).map(t => t.id);
 
-  let depsData: TaskDependency[] = [];
-  if (taskIds.length > 0) {
-    const [depsByTaskRes, depsByDependsRes] = await Promise.all([
-      supabase
-        .from('task_dependencies')
-        .select('id,task_id,depends_on_task_id')
-        .in('task_id', taskIds),
-      supabase
-        .from('task_dependencies')
-        .select('id,task_id,depends_on_task_id')
-        .in('depends_on_task_id', taskIds),
-    ]);
-
-    if (depsByTaskRes.error) throw depsByTaskRes.error;
-    if (depsByDependsRes.error) throw depsByDependsRes.error;
-
-    const combined = [
-      ...(depsByTaskRes.data || []),
-      ...(depsByDependsRes.data || []),
-    ];
-
-    const seen = new Set<string>();
-    depsData = combined.filter(d => {
-      if (seen.has(d.id)) return false;
-      seen.add(d.id);
-      return true;
-    });
-  }
-
   // Split into regular tasks and bundle tasks
   const regularTasks = (tasksData || []).filter(t => !BUNDLE_TYPES.includes(t.type));
   const bundleTasks = (tasksData || []).filter(t => BUNDLE_TYPES.includes(t.type));
 
-  // Fetch ORA activity dates for tasks referencing ora_plan_activity_id (avoids waterfall query)
+  // Collect IDs needed for parallel lookups
   const oraActivityIds = regularTasks
     .map(t => (t.metadata as Record<string, any>)?.ora_plan_activity_id)
     .filter(Boolean) as string[];
 
-  let oraActivityDates: Record<string, { start_date: string | null; end_date: string | null; duration_days: number | null; completion_percentage: number | null }> = {};
-  if (oraActivityIds.length > 0) {
-    const { data: oraData } = await supabase
-      .from('ora_plan_activities')
-      .select('id, start_date, end_date, duration_days, completion_percentage')
-      .in('id', oraActivityIds);
-    if (oraData) {
-      oraData.forEach((a: any) => { oraActivityDates[a.id] = a; });
-    }
-  }
-
-  // For create_p2a_plan tasks, fetch the P2A-01 activity's completion_percentage
-  // so the Kanban card shows the real DB value instead of stale metadata
   const p2aTasks = regularTasks.filter(t => {
     const meta = t.metadata as Record<string, any>;
     return meta?.action === 'create_p2a_plan' && meta?.plan_id;
   });
   const p2aPlanIds = [...new Set(p2aTasks.map(t => (t.metadata as Record<string, any>).plan_id))] as string[];
-  let p2aActivityProgress: Record<string, number> = {}; // taskId -> completion_percentage
-  if (p2aPlanIds.length > 0) {
-    const { data: p2aActivities } = await supabase
-      .from('ora_plan_activities')
-      .select('orp_plan_id, completion_percentage')
-      .in('orp_plan_id', p2aPlanIds)
-      .eq('activity_code', 'P2A-01');
-    if (p2aActivities) {
-      const planToProgress: Record<string, number> = {};
-      p2aActivities.forEach((a: any) => { planToProgress[a.orp_plan_id] = a.completion_percentage ?? 0; });
-      p2aTasks.forEach(t => {
-        const planId = (t.metadata as Record<string, any>).plan_id;
-        if (planId && planId in planToProgress) {
-          p2aActivityProgress[t.id] = planToProgress[planId];
-        }
-      });
-    }
-  }
 
-  // Fetch ORA plan statuses for ora_plan_creation tasks (to map approved plans to Done)
   const oraPlanCreationTasks = regularTasks.filter(t => {
     const meta = t.metadata as Record<string, any>;
     return t.type === 'ora_plan_creation' || meta?.action === 'create_ora_plan';
   });
+  const oraPlanProjectIds = oraPlanCreationTasks
+    .map(t => (t.metadata as Record<string, any>)?.project_id)
+    .filter(Boolean) as string[];
 
-  let oraPlanStatuses: Record<string, string> = {};
-  if (oraPlanCreationTasks.length > 0) {
-    const projectIds = oraPlanCreationTasks
-      .map(t => (t.metadata as Record<string, any>)?.project_id)
-      .filter(Boolean) as string[];
-
-    if (projectIds.length > 0) {
-      const { data: planData } = await supabase
-        .from('orp_plans')
-        .select('id, project_id, status')
-        .in('project_id', projectIds);
-
-      if (planData) {
-        planData.forEach((p: any) => {
-          oraPlanStatuses[p.project_id] = p.status;
-        });
-      }
-    }
-  }
-
-  // Resolve project codes for tasks that have project_id but no project_code
-  let projectCodeMap: Record<string, string> = {};
   const tasksNeedingCode = regularTasks.filter(t => {
     const m = t.metadata as Record<string, any>;
     return m?.project_id && !m?.project_code;
   });
-  if (tasksNeedingCode.length > 0) {
-    const pIds = [...new Set(tasksNeedingCode.map(t => (t.metadata as Record<string, any>).project_id))] as string[];
-    const { data: projData } = await supabase
-      .from('projects')
-      .select('id, project_id_prefix, project_id_number')
-      .in('id', pIds);
-    if (projData) {
-      projData.forEach((p: any) => {
-        projectCodeMap[p.id] = `${p.project_id_prefix}-${p.project_id_number}`;
-      });
-    }
+  const projectIdsForCode = [...new Set(tasksNeedingCode.map(t => (t.metadata as Record<string, any>).project_id))] as string[];
+
+  // Run ALL secondary queries in parallel
+  const [
+    depsResult,
+    oraActivitiesResult,
+    p2aActivitiesResult,
+    oraPlanStatusResult,
+    projectCodeResult,
+  ] = await Promise.all([
+    // 1. Task dependencies
+    taskIds.length > 0
+      ? Promise.all([
+          supabase.from('task_dependencies').select('id,task_id,depends_on_task_id').in('task_id', taskIds),
+          supabase.from('task_dependencies').select('id,task_id,depends_on_task_id').in('depends_on_task_id', taskIds),
+        ])
+      : Promise.resolve(null),
+    // 2. ORA activity dates
+    oraActivityIds.length > 0
+      ? supabase.from('ora_plan_activities').select('id, start_date, end_date, duration_days, completion_percentage').in('id', oraActivityIds)
+      : Promise.resolve(null),
+    // 3. P2A activity progress
+    p2aPlanIds.length > 0
+      ? supabase.from('ora_plan_activities').select('orp_plan_id, completion_percentage').in('orp_plan_id', p2aPlanIds).eq('activity_code', 'P2A-01')
+      : Promise.resolve(null),
+    // 4. ORA plan statuses
+    oraPlanProjectIds.length > 0
+      ? supabase.from('orp_plans').select('id, project_id, status').in('project_id', oraPlanProjectIds)
+      : Promise.resolve(null),
+    // 5. Project codes
+    projectIdsForCode.length > 0
+      ? supabase.from('projects').select('id, project_id_prefix, project_id_number').in('id', projectIdsForCode)
+      : Promise.resolve(null),
+  ]);
+
+  // Process dependencies
+  let depsData: TaskDependency[] = [];
+  if (depsResult) {
+    const [depsByTaskRes, depsByDependsRes] = depsResult;
+    if (depsByTaskRes.error) throw depsByTaskRes.error;
+    if (depsByDependsRes.error) throw depsByDependsRes.error;
+    const combined = [...(depsByTaskRes.data || []), ...(depsByDependsRes.data || [])];
+    const seen = new Set<string>();
+    depsData = combined.filter(d => { if (seen.has(d.id)) return false; seen.add(d.id); return true; });
+  }
+
+  // Process ORA activity dates
+  let oraActivityDates: Record<string, { start_date: string | null; end_date: string | null; duration_days: number | null; completion_percentage: number | null }> = {};
+  if (oraActivitiesResult && 'data' in oraActivitiesResult && oraActivitiesResult.data) {
+    oraActivitiesResult.data.forEach((a: any) => { oraActivityDates[a.id] = a; });
+  }
+
+  // Process P2A activity progress
+  let p2aActivityProgress: Record<string, number> = {};
+  if (p2aActivitiesResult && 'data' in p2aActivitiesResult && p2aActivitiesResult.data) {
+    const planToProgress: Record<string, number> = {};
+    p2aActivitiesResult.data.forEach((a: any) => { planToProgress[a.orp_plan_id] = a.completion_percentage ?? 0; });
+    p2aTasks.forEach(t => {
+      const planId = (t.metadata as Record<string, any>).plan_id;
+      if (planId && planId in planToProgress) { p2aActivityProgress[t.id] = planToProgress[planId]; }
+    });
+  }
+
+  // Process ORA plan statuses
+  let oraPlanStatuses: Record<string, string> = {};
+  if (oraPlanStatusResult && 'data' in oraPlanStatusResult && oraPlanStatusResult.data) {
+    oraPlanStatusResult.data.forEach((p: any) => { oraPlanStatuses[p.project_id] = p.status; });
+  }
+
+  // Process project codes
+  let projectCodeMap: Record<string, string> = {};
+  if (projectCodeResult && 'data' in projectCodeResult && projectCodeResult.data) {
+    projectCodeResult.data.forEach((p: any) => { projectCodeMap[p.id] = `${p.project_id_prefix}-${p.project_id_number}`; });
   }
 
   // Enrich tasks with dependency information
   const enrichedTasks = regularTasks.map(task => {
-    const blockingTasks = depsData
-      .filter(dep => dep.depends_on_task_id === task.id)
-      .map(dep => dep.task_id);
-
-    const blockedByTasks = depsData
-      .filter(dep => dep.task_id === task.id)
-      .map(dep => dep.depends_on_task_id);
-
-    // For ORA plan creation tasks, inject the plan status into metadata
+    const blockingTasks = depsData.filter(dep => dep.depends_on_task_id === task.id).map(dep => dep.task_id);
+    const blockedByTasks = depsData.filter(dep => dep.task_id === task.id).map(dep => dep.depends_on_task_id);
     const meta = task.metadata as Record<string, any>;
     const isOraPlanCreation = task.type === 'ora_plan_creation' || meta?.action === 'create_ora_plan';
     const projectId = meta?.project_id;
     const planStatus = isOraPlanCreation && projectId ? oraPlanStatuses[projectId] : undefined;
-
-    // Inject resolved project_code if missing
     const resolvedCode = !meta?.project_code && projectId ? projectCodeMap[projectId] : undefined;
-
     const needsEnrichment = planStatus || resolvedCode;
     return {
       ...task,
