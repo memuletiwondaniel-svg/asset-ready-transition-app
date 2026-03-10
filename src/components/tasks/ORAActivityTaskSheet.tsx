@@ -943,13 +943,13 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
     </Sheet>
 
     {/* P2A Plan Creation Wizard - rendered unconditionally to survive sheet close */}
-    {(showP2AWizard || showP2AWorkspace) && projectId && (
+    {(showP2AWizard || showP2AWorkspace) && (p2aProjectId || projectId) && (
       <>
         <P2APlanCreationWizard
           open={showP2AWizard}
           onOpenChange={setShowP2AWizard}
-          projectId={projectId}
-          projectCode={projectCode || ''}
+          projectId={(p2aProjectId || projectId)!}
+          projectCode={p2aProjectCode || projectCode || ''}
           onSuccess={() => {
             setShowP2AWizard(false);
             queryClient.invalidateQueries({ queryKey: ['orp-plan'] });
@@ -964,8 +964,8 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
         <P2AWorkspaceOverlay
           open={showP2AWorkspace}
           onOpenChange={setShowP2AWorkspace}
-          projectId={projectId}
-          projectNumber={projectCode || ''}
+          projectId={(p2aProjectId || projectId)!}
+          projectNumber={p2aProjectCode || projectCode || ''}
           onReturnToWizard={() => {
             setShowP2AWorkspace(false);
             setShowP2AWizard(true);
