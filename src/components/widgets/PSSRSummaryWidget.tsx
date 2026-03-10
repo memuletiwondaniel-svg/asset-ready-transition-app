@@ -231,7 +231,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                       size="sm"
                       className="text-xs gap-1.5"
                       onClick={() => {
-                        if (p2aPlanByProject.status === 'COMPLETED' || p2aPlanByProject.status === 'APPROVED') {
+                        if (p2aPlanByProject.status === 'COMPLETED') {
                           setShowP2AWorkspace(true);
                         } else {
                           setShowP2APlanWizard(true);
@@ -239,7 +239,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                       }}
                     >
                       <ExternalLink className="h-3.5 w-3.5" />
-                      {p2aPlanByProject.status === 'COMPLETED' || p2aPlanByProject.status === 'APPROVED'
+                      {p2aPlanByProject.status === 'COMPLETED'
                         ? 'Open P2A Workspace'
                         : 'Continue P2A Plan'}
                     </Button>
