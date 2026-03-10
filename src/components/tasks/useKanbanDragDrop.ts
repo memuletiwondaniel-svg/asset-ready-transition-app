@@ -82,14 +82,36 @@ export function useKanbanDragDrop() {
 
     const previousData = queryClient.getQueryData(userTasksKey);
 
+    // Determine if this is a P2A revert (moving P2A task away from done)
+    const isP2aTask = meta?.action === 'create_p2a_plan';
+    const isP2aRevert = isP2aTask && task.kanbanColumn === 'done' && targetColumn === 'in_progress';
+
     queryClient.setQueryData(userTasksKey, (old: any) => {
       if (!old?.tasks) return old;
-      return {
+      const updated: any = {
         ...old,
-        tasks: old.tasks.map((t: any) =>
-          t.id === userTask.id ? { ...t, status: newTaskStatus } : t
-        ),
+        tasks: old.tasks.map((t: any) => {
+          if (t.id !== userTask.id) return t;
+          const updatedTask = { ...t, status: newTaskStatus };
+          // For P2A reverts, also patch metadata so progress resolves to 86%
+          if (isP2aRevert && t.metadata) {
+            updatedTask.metadata = {
+              ...t.metadata,
+              plan_status: 'DRAFT',
+              completion_percentage: 86,
+            };
+          }
+          return updatedTask;
+        }),
       };
+      // Also patch the p2aActivityProgress map if present
+      if (isP2aRevert && old.p2aActivityProgress) {
+        updated.p2aActivityProgress = {
+          ...old.p2aActivityProgress,
+          [userTask.id]: 86,
+        };
+      }
+      return updated;
     });
 
     try {
