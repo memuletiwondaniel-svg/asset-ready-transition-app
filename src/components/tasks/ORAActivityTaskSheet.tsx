@@ -634,18 +634,10 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                 <Button
                   className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
                   onClick={() => {
-                    // Persist project info before closing sheet (task may become null)
-                    setP2aProjectId(projectId);
-                    setP2aProjectCode(projectCode);
-                    // Close sheet first, then open wizard after animation completes
                     onOpenChange(false);
-                    setTimeout(() => {
-                      if (p2aPlanIsFullyApproved) {
-                        setShowP2AWorkspace(true);
-                      } else {
-                        setShowP2AWizard(true);
-                      }
-                    }, 300);
+                    if (onOpenP2AWizard && projectId) {
+                      onOpenP2AWizard(projectId, projectCode || '', !!p2aPlanIsFullyApproved);
+                    }
                   }}
                 >
                   <FileText className="h-4 w-4" />
