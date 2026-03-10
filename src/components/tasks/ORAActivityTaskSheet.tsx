@@ -77,6 +77,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
   onOpenChange,
   isReadOnly = false,
   initialStatusOverride,
+  onOpenP2AWizard,
 }) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -89,10 +90,6 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
   const [progressPct, setProgressPct] = useState(0);
   const [editName, setEditName] = useState('');
   const [originalName, setOriginalName] = useState('');
-  const [showP2AWizard, setShowP2AWizard] = useState(false);
-  const [showP2AWorkspace, setShowP2AWorkspace] = useState(false);
-  const [p2aProjectId, setP2aProjectId] = useState<string | undefined>();
-  const [p2aProjectCode, setP2aProjectCode] = useState<string | undefined>();
 
   // Editable dates
   const [editStartDate, setEditStartDate] = useState<Date | undefined>();
