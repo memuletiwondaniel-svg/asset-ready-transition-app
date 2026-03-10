@@ -14,7 +14,7 @@ export const useUserLastLogin = () => {
       const { data, error } = await supabase
         .from('profiles')
         .select('last_login_at')
-        .eq('id', user.id)
+        .eq('user_id', user.id)
         .maybeSingle();
 
       if (error) throw error;
