@@ -1141,7 +1141,9 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                           const barL = isDragging && previewLeft !== null ? previewLeft : barPos.left;
                           const barW = isDragging && previewWidth !== null ? previewWidth : barPos.width;
                           const mutedColor = BAR_COLORS_MUTED[prefix] || 'bg-muted';
-                          const completion = deliverable.completion_percentage || 0;
+                          // Override completion for P2A activity when plan is submitted
+                          const isP2ARow = isP2AActivityCode(activityCode, deliverable.deliverable?.name);
+                          const completion = (isP2ARow && p2aPlanIsSubmitted) ? 100 : (deliverable.completion_percentage || 0);
 
                           return (
                             <div
