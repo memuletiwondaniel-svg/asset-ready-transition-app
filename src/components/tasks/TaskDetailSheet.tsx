@@ -735,7 +735,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
       )}
 
       {/* P2A Plan Creation Wizard */}
-      {isP2aTask && p2aProjectId && (
+      {(p2aWizardOpen || p2aWorkspaceOpen) && p2aProjectId && (
         <>
           <P2APlanCreationWizard
             open={p2aWizardOpen}
