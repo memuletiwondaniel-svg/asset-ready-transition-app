@@ -156,6 +156,14 @@ export function useUnifiedTasks(userId: string) {
       const startDate = meta?.start_date || oraAct?.start_date || undefined;
       const endDate = meta?.end_date || oraAct?.end_date || undefined;
       const durationDays = meta?.duration_days || meta?.duration_med || oraAct?.duration_days || undefined;
+
+      // For P2A plan creation tasks, prefer the DB-sourced P2A-01 activity progress
+      // over stale metadata (which may not be reset after draft deletion)
+      const isP2aCreationTask = action === 'create_p2a_plan';
+      const resolvedProgress = isP2aCreationTask && t.id in p2aActivityProgress
+        ? p2aActivityProgress[t.id]
+        : (oraAct as any)?.completion_percentage ?? meta?.completion_percentage ?? undefined;
+
       const sp = computeSmartPriority({
         category,
         categoryLabel,
@@ -163,7 +171,7 @@ export function useUnifiedTasks(userId: string) {
         endDate,
         dueDate: t.due_date || undefined,
         durationDays,
-        progressPercentage: (oraAct as any)?.completion_percentage ?? meta?.completion_percentage ?? undefined,
+        progressPercentage: resolvedProgress,
         isWaiting,
         createdAt: t.created_at,
       });
