@@ -175,7 +175,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
       queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
       queryClient.invalidateQueries({ queryKey: ['user-orp-activities'] });
       queryClient.invalidateQueries({ queryKey: ['ora-plan-activities'] });
-      queryClient.invalidateQueries({ queryKey: ['orp-plan-details'] });
+      queryClient.invalidateQueries({ queryKey: ['orp-plan'] });
       queryClient.invalidateQueries({ queryKey: ['project-orp-plans'] });
     } catch (err) {
       console.error('Failed to sync wizard progress:', err);
