@@ -936,37 +936,6 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
       </SheetContent>
     </Sheet>
 
-    {/* P2A Plan Creation Wizard - rendered unconditionally to survive sheet close */}
-    {(showP2AWizard || showP2AWorkspace) && (p2aProjectId || projectId) && (
-      <>
-        <P2APlanCreationWizard
-          open={showP2AWizard}
-          onOpenChange={setShowP2AWizard}
-          projectId={(p2aProjectId || projectId)!}
-          projectCode={p2aProjectCode || projectCode || ''}
-          onSuccess={() => {
-            setShowP2AWizard(false);
-            queryClient.invalidateQueries({ queryKey: ['orp-plan'] });
-            queryClient.invalidateQueries({ queryKey: ['p2a-plan-exists-sheet'] });
-            queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
-          }}
-          onOpenWorkspace={() => {
-            setShowP2AWizard(false);
-            setShowP2AWorkspace(true);
-          }}
-        />
-        <P2AWorkspaceOverlay
-          open={showP2AWorkspace}
-          onOpenChange={setShowP2AWorkspace}
-          projectId={(p2aProjectId || projectId)!}
-          projectNumber={p2aProjectCode || projectCode || ''}
-          onReturnToWizard={() => {
-            setShowP2AWorkspace(false);
-            setShowP2AWizard(true);
-          }}
-        />
-      </>
-    )}
     </>
   );
 };
