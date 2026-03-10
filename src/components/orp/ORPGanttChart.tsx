@@ -353,7 +353,27 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
     : '';
   const projectName = planData?.project?.project_title || '';
 
-  // Get existing activity IDs for catalog exclusion
+  // Auto-heal: sync P2A activity status when plan is submitted but activity is still IN_PROGRESS
+  const p2aHealRanRef = useRef(false);
+  useEffect(() => {
+    if (p2aHealRanRef.current || !p2aPlanIsSubmitted || !deliverables?.length) return;
+    const p2aActivity = deliverables.find((d: any) => 
+      isP2AActivityCode(d.deliverable?.activity_code || '', d.deliverable?.name)
+    );
+    if (!p2aActivity || p2aActivity.status === 'COMPLETED') return;
+    
+    p2aHealRanRef.current = true;
+    const actId = p2aActivity.id?.replace('ora-', '') || p2aActivity.id;
+    (supabase as any)
+      .from('ora_plan_activities')
+      .update({ completion_percentage: 100, status: 'COMPLETED', end_date: new Date().toISOString().split('T')[0] })
+      .eq('id', actId)
+      .then(() => {
+        queryClient.invalidateQueries({ queryKey: ['orp-plan-activities'] });
+        queryClient.invalidateQueries({ queryKey: ['orp-deliverables'] });
+      });
+  }, [p2aPlanIsSubmitted, deliverables, queryClient]);
+
   const existingActivityIds = useMemo(() => deliverables.map((d: any) => d.id?.replace('ora-', '') || d.id), [deliverables]);
 
   const handleAddFromCatalog = useCallback(async (newActivities: WizardActivity[]) => {
