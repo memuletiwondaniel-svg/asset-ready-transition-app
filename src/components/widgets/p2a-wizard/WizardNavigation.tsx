@@ -57,7 +57,7 @@ export const WizardNavigation: React.FC<WizardNavigationProps> = ({
             ) : (
               <LogOut className="h-4 w-4 mr-1" />
             )}
-            Save & Exit
+            {saveAndExitLabel || 'Save & Exit'}
           </Button>
         )}
       </div>
