@@ -471,6 +471,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
       }
 
       queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['ora-activity-detail'] });
       queryClient.invalidateQueries({ queryKey: ['project-orp-plans'] });
       queryClient.invalidateQueries({ queryKey: ['user-orp-activities'] });
       queryClient.invalidateQueries({ queryKey: ['ora-plan-activities'] });
