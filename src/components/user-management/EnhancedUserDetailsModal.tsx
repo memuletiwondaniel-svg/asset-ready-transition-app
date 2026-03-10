@@ -596,7 +596,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
         first_name: user.first_name || '',
         last_name: user.last_name || '',
         email: user.email || '',
-        functional_email_address: user.personal_email || '',
+        functional_email_address: user.personal_email || user.functional_email_address || '',
         phone_number: user.phone_number || '',
         primary_phone: user.primary_phone || '',
         secondary_phone: user.secondary_phone || '',
