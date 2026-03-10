@@ -718,6 +718,7 @@ export const useUserTasks = () => {
     dependencies: data?.dependencies || [],
     bundleTasks: data?.bundleTasks || [],
     oraActivityDates: data?.oraActivityDates || {},
+    p2aActivityProgress: data?.p2aActivityProgress || {},
     loading: isLoading,
     updateTaskStatus: (taskId: string, status: 'completed' | 'cancelled') =>
       updateStatusMutation.mutate({ taskId, status }),
