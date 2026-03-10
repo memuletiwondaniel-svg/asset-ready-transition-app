@@ -596,18 +596,23 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
             {isP2AActivity ? (
               <div className="pt-2 space-y-3">
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  This activity requires creating the Project to Asset (P2A) handover plan. Click below to launch the P2A planning wizard.
+                  {p2aPlanIsSubmitted 
+                    ? 'The P2A handover plan has been submitted. Open the workspace to view details.'
+                    : 'This activity requires creating the Project to Asset (P2A) handover plan. Click below to launch the P2A planning wizard.'}
                 </p>
                 <Button
                   className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
-                  disabled={isReadOnly}
                   onClick={() => {
                     onOpenChange(false);
-                    setShowP2AWizard(true);
+                    if (p2aPlanIsSubmitted) {
+                      setShowP2AWorkspace(true);
+                    } else {
+                      setShowP2AWizard(true);
+                    }
                   }}
                 >
                   <FileText className="h-4 w-4" />
-                  {isReadOnly ? 'View Only' : p2aSheetCtaLabel}
+                  {p2aSheetCtaLabel}
                   <ChevronRight className="h-4 w-4 ml-auto" />
                 </Button>
               </div>
