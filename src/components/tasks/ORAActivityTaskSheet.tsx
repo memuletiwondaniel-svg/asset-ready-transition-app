@@ -37,6 +37,8 @@ interface ORAActivityTaskSheetProps {
   isReadOnly?: boolean;
   /** When set, overrides the initial status (e.g. pre-select "COMPLETED" when dragged to Done) */
   initialStatusOverride?: ActivityStatus;
+  /** Called when user wants to open the P2A wizard/workspace — parent handles rendering */
+  onOpenP2AWizard?: (projectId: string, projectCode: string, openWorkspace?: boolean) => void;
 }
 
 type ActivityStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
