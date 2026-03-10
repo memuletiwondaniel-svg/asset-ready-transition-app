@@ -89,6 +89,8 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
   const [originalName, setOriginalName] = useState('');
   const [showP2AWizard, setShowP2AWizard] = useState(false);
   const [showP2AWorkspace, setShowP2AWorkspace] = useState(false);
+  const [p2aProjectId, setP2aProjectId] = useState<string | undefined>();
+  const [p2aProjectCode, setP2aProjectCode] = useState<string | undefined>();
 
   // Editable dates
   const [editStartDate, setEditStartDate] = useState<Date | undefined>();
@@ -633,6 +635,9 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                 <Button
                   className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
                   onClick={() => {
+                    // Persist project info before closing sheet (task may become null)
+                    setP2aProjectId(projectId);
+                    setP2aProjectCode(projectCode);
                     onOpenChange(false);
                     if (p2aPlanIsFullyApproved) {
                       setShowP2AWorkspace(true);
@@ -879,7 +884,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                     Delete
                   </Button>
                 </AlertDialogTrigger>
-                <AlertDialogContent>
+                <AlertDialogContent className="z-[200]">
                   <AlertDialogHeader>
                     <AlertDialogTitle>Delete Activity</AlertDialogTitle>
                     <AlertDialogDescription>
@@ -937,14 +942,14 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
       </SheetContent>
     </Sheet>
 
-    {/* P2A Plan Creation Wizard */}
-    {isP2AActivity && projectId && (
+    {/* P2A Plan Creation Wizard - rendered unconditionally to survive sheet close */}
+    {(showP2AWizard || showP2AWorkspace) && (p2aProjectId || projectId) && (
       <>
         <P2APlanCreationWizard
           open={showP2AWizard}
           onOpenChange={setShowP2AWizard}
-          projectId={projectId}
-          projectCode={projectCode || ''}
+          projectId={(p2aProjectId || projectId)!}
+          projectCode={p2aProjectCode || projectCode || ''}
           onSuccess={() => {
             setShowP2AWizard(false);
             queryClient.invalidateQueries({ queryKey: ['orp-plan'] });
@@ -959,8 +964,8 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
         <P2AWorkspaceOverlay
           open={showP2AWorkspace}
           onOpenChange={setShowP2AWorkspace}
-          projectId={projectId}
-          projectNumber={projectCode || ''}
+          projectId={(p2aProjectId || projectId)!}
+          projectNumber={p2aProjectCode || projectCode || ''}
           onReturnToWizard={() => {
             setShowP2AWorkspace(false);
             setShowP2AWizard(true);
