@@ -131,24 +131,24 @@ export function useKanbanDragDrop() {
           : oraActivityId;
 
         const newOraStatus = COLUMN_TO_ORA_STATUS[targetColumn];
-        const isP2aRevert = meta?.action === 'create_p2a_plan' && task.kanbanColumn === 'done' && targetColumn === 'in_progress';
+        const isP2aRevert = isP2aTask && task.kanbanColumn === 'done' && targetColumn === 'in_progress';
 
-        // For P2A tasks reverting from Done, preserve wizard progress (86% = 6/7 steps completed)
-        // instead of resetting to 0. For all other moves, reset to 0.
-        const newCompletion = isP2aRevert ? 86 : 0;
+        // For P2A tasks: when reverting from Done → In Progress, set 86% (6/7 wizard steps).
+        // For P2A tasks in any other non-done move, preserve current progress (don't reset to 0).
+        // For non-P2A tasks, reset to 0.
+        const newCompletion = isP2aRevert ? 86 : (isP2aTask ? undefined : 0);
+
+        const updatePayload: Record<string, any> = { status: newOraStatus };
+        if (newCompletion !== undefined) updatePayload.completion_percentage = newCompletion;
 
         await (supabase as any)
           .from('ora_plan_activities')
-          .update({
-            status: newOraStatus,
-            completion_percentage: newCompletion,
-          })
+          .update(updatePayload)
           .eq('id', realId);
       }
 
       // ── P2A Plan status revert: when a P2A task is moved back to in_progress,
       // revert the P2A plan to DRAFT and reset approvers so the user can continue editing ──
-      const isP2aTask = meta?.action === 'create_p2a_plan';
       const p2aProjectId = meta?.project_id as string | undefined;
       if (isP2aTask && p2aProjectId && targetColumn === 'in_progress') {
         const client = supabase as any;

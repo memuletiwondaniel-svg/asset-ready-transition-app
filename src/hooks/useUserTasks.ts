@@ -140,9 +140,9 @@ const fetchUserTasks = async (userId: string): Promise<FetchResult> => {
               }
             }
           }
-          // Filter to P2A activities (code P2A-01 or name containing 'p2a')
+          // Filter to P2A activities (code P2A-01, EXE-10, or name containing 'p2a')
           const p2aActivities = results.filter((a: any) =>
-            a.activity_code === 'P2A-01' || a.name?.toLowerCase().includes('p2a plan') || a.name?.toLowerCase().includes('p2a')
+            a.activity_code === 'P2A-01' || a.activity_code === 'EXE-10' || a.name?.toLowerCase().includes('p2a plan') || a.name?.toLowerCase().includes('p2a')
           );
           return { data: p2aActivities };
         })()
