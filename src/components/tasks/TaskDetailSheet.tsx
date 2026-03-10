@@ -703,17 +703,34 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
 
       {/* P2A Plan Creation Wizard */}
       {isP2aTask && p2aProjectId && (
-        <P2APlanCreationWizard
-          open={p2aWizardOpen}
-          onOpenChange={setP2aWizardOpen}
-          projectId={p2aProjectId}
-          projectCode={resolvedP2aProjectCode}
-          projectName={resolvedP2aProjectName}
-          onSuccess={() => {
-            setP2aWizardOpen(false);
-            onOpenChange(false);
-          }}
-        />
+        <>
+          <P2APlanCreationWizard
+            open={p2aWizardOpen}
+            onOpenChange={setP2aWizardOpen}
+            projectId={p2aProjectId}
+            projectCode={resolvedP2aProjectCode}
+            projectName={resolvedP2aProjectName}
+            onSuccess={() => {
+              setP2aWizardOpen(false);
+              onOpenChange(false);
+            }}
+            onOpenWorkspace={() => {
+              setP2aWizardOpen(false);
+              setP2aWorkspaceOpen(true);
+            }}
+          />
+          <P2AWorkspaceOverlay
+            open={p2aWorkspaceOpen}
+            onOpenChange={setP2aWorkspaceOpen}
+            projectId={p2aProjectId}
+            projectName={resolvedP2aProjectName}
+            projectNumber={resolvedP2aProjectCode}
+            onReturnToWizard={() => {
+              setP2aWorkspaceOpen(false);
+              setP2aWizardOpen(true);
+            }}
+          />
+        </>
       )}
     </>
   );
