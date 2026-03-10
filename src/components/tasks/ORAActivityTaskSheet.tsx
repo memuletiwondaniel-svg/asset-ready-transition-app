@@ -89,6 +89,8 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
   const [originalName, setOriginalName] = useState('');
   const [showP2AWizard, setShowP2AWizard] = useState(false);
   const [showP2AWorkspace, setShowP2AWorkspace] = useState(false);
+  const [p2aProjectId, setP2aProjectId] = useState<string | undefined>();
+  const [p2aProjectCode, setP2aProjectCode] = useState<string | undefined>();
 
   // Editable dates
   const [editStartDate, setEditStartDate] = useState<Date | undefined>();
