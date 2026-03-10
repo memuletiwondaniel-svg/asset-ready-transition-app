@@ -1120,7 +1120,11 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                           const barL = isDragging && previewLeft !== null ? previewLeft : barPos.left;
                           const barW = isDragging && previewWidth !== null ? previewWidth : barPos.width;
                           const mutedColor = BAR_COLORS_MUTED[prefix] || 'bg-muted';
-                          const completion = deliverable.completion_percentage || 0;
+                          const isP2aActivity = deliverable.deliverable?.activity_code === 'P2A-01' || deliverable.deliverable?.activity_code === 'EXE-10' || deliverable.deliverable?.name?.toLowerCase().includes('p2a');
+                          const p2aPlanIsDraft = existingP2APlan && existingP2APlan.status === 'DRAFT';
+                          // Guard: cap P2A activity progress at 86% when plan is still in DRAFT
+                          const rawCompletion = deliverable.completion_percentage || 0;
+                          const completion = (isP2aActivity && p2aPlanIsDraft && rawCompletion > 86) ? 86 : rawCompletion;
 
                           return (
                             <div
