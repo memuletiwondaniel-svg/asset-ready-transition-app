@@ -1286,18 +1286,35 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
         onOpenChange={(open) => !open && setSelectedOraActivity(null)}
       />
       {planData?.project_id && (
-        <P2APlanCreationWizard
-          open={showP2AWizard}
-          onOpenChange={setShowP2AWizard}
-          projectId={planData.project_id}
-          projectCode={projectCode}
-          projectName={projectName}
-          onSuccess={() => {
-            setShowP2AWizard(false);
-            queryClient.invalidateQueries({ queryKey: ['orp-plan'] });
-            queryClient.invalidateQueries({ queryKey: ['p2a-plan-exists'] });
-          }}
-        />
+        <>
+          <P2APlanCreationWizard
+            open={showP2AWizard}
+            onOpenChange={setShowP2AWizard}
+            projectId={planData.project_id}
+            projectCode={projectCode}
+            projectName={projectName}
+            onSuccess={() => {
+              setShowP2AWizard(false);
+              queryClient.invalidateQueries({ queryKey: ['orp-plan'] });
+              queryClient.invalidateQueries({ queryKey: ['p2a-plan-exists'] });
+            }}
+            onOpenWorkspace={() => {
+              setShowP2AWizard(false);
+              setShowP2AWorkspace(true);
+            }}
+          />
+          <P2AWorkspaceOverlay
+            open={showP2AWorkspace}
+            onOpenChange={setShowP2AWorkspace}
+            projectId={planData.project_id}
+            projectName={projectName}
+            projectNumber={projectCode}
+            onReturnToWizard={() => {
+              setShowP2AWorkspace(false);
+              setShowP2AWizard(true);
+            }}
+          />
+        </>
       )}
     </Card>
   );
