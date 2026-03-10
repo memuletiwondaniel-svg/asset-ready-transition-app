@@ -1036,12 +1036,24 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                       )}
                       {visibleColumns.has('status') && (
                         <div className="px-1 flex items-center justify-center" style={{ width: COL_WIDTHS.status }}>
-                          {activityCode === 'P2A-01' ? (
+                          {isP2AActivityCode(activityCode, deliverable.deliverable?.name) ? (
                             <Button
                               variant="outline"
                               size="sm"
-                              className="h-5 px-1.5 text-[9px] font-medium gap-0.5 border-primary/30 text-primary hover:bg-primary/10"
-                              onClick={(e) => { e.stopPropagation(); setShowP2AWizard(true); }}
+                              className={cn(
+                                "h-5 px-1.5 text-[9px] font-medium gap-0.5",
+                                p2aPlanIsSubmitted
+                                  ? "border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                                  : "border-primary/30 text-primary hover:bg-primary/10"
+                              )}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (p2aPlanIsSubmitted) {
+                                  setShowP2AWorkspace(true);
+                                } else {
+                                  setShowP2AWizard(true);
+                                }
+                              }}
                             >
                               <FileText className="w-3 h-3" />
                               {p2aCtaLabel}
