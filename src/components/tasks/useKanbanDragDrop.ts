@@ -164,6 +164,7 @@ export function useKanbanDragDrop() {
                   metadata: {
                     ...currentMeta,
                     plan_status: 'DRAFT',
+                    completion_percentage: 86,
                   } as any,
                 })
                 .eq('id', userTask.id);
