@@ -109,11 +109,17 @@ export function useKanbanDragDrop() {
           : oraActivityId;
 
         const newOraStatus = COLUMN_TO_ORA_STATUS[targetColumn];
+        const isP2aRevert = meta?.action === 'create_p2a_plan' && task.kanbanColumn === 'done' && targetColumn === 'in_progress';
+
+        // For P2A tasks reverting from Done, preserve wizard progress (86% = 6/7 steps completed)
+        // instead of resetting to 0. For all other moves, reset to 0.
+        const newCompletion = isP2aRevert ? 86 : 0;
+
         await (supabase as any)
           .from('ora_plan_activities')
           .update({
             status: newOraStatus,
-            completion_percentage: 0,
+            completion_percentage: newCompletion,
           })
           .eq('id', realId);
       }
@@ -158,6 +164,7 @@ export function useKanbanDragDrop() {
                   metadata: {
                     ...currentMeta,
                     plan_status: 'DRAFT',
+                    completion_percentage: 86,
                   } as any,
                 })
                 .eq('id', userTask.id);
