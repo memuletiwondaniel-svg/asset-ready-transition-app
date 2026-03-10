@@ -124,11 +124,9 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
           // Update ora_plan_activities
           const activityUpdate: Record<string, any> = {
             completion_percentage: percentage,
-            status: isSubmitted ? 'COMPLETED' : percentage > 0 ? 'IN_PROGRESS' : 'NOT_STARTED',
+            // Submitted = still IN_PROGRESS (95%), only COMPLETED at 100% after approval
+            status: isSubmitted ? 'IN_PROGRESS' : percentage > 0 ? 'IN_PROGRESS' : 'NOT_STARTED',
           };
-          if (isSubmitted) {
-            activityUpdate.end_date = new Date().toISOString().split('T')[0];
-          }
           await (supabase as any)
             .from('ora_plan_activities')
             .update(activityUpdate)
