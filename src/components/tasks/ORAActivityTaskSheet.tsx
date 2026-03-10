@@ -116,7 +116,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
   const oraActivityId = metadata?.ora_plan_activity_id as string | undefined;
   const projectId = metadata?.project_id as string | undefined;
   const projectCode = metadata?.project_code as string | undefined;
-  const isP2AActivity = activityCode === 'P2A-01' || metadata?.action === 'create_p2a_plan';
+  const isP2AActivity = activityCode === 'P2A-01' || metadata?.action === 'create_p2a_plan' || activityName?.toLowerCase().includes('p2a');
   const isOverdue = editEndDate && isPast(editEndDate) && status !== 'COMPLETED';
 
   // Check if P2A plan exists for "Continue" vs "Create" label
