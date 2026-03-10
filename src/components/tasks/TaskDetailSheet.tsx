@@ -587,11 +587,13 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                 )}
                 onClick={() => {
                   onOpenChange(false);
-                  if (p2aPlanIsFullyApproved) {
-                    setP2aWorkspaceOpen(true);
-                  } else {
-                    setP2aWizardOpen(true);
-                  }
+                  setTimeout(() => {
+                    if (p2aPlanIsFullyApproved) {
+                      setP2aWorkspaceOpen(true);
+                    } else {
+                      setP2aWizardOpen(true);
+                    }
+                  }, 300);
                 }}
               >
                 {p2aPlanIsFullyApproved ? <Eye className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
