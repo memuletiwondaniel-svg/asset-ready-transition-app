@@ -106,73 +106,97 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
   const [originalProgressPct, setOriginalProgressPct] = useState(0);
 
   const metadata = task?.metadata as Record<string, any> | undefined;
-  const activityName = metadata?.activity_name || task?.title || '';
-  const activityCode = metadata?.activity_code || '';
-  const startDate = metadata?.start_date as string | undefined;
-  const endDate = metadata?.end_date as string | undefined;
-  const planId = metadata?.plan_id as string | undefined;
-  const deliverableId = metadata?.deliverable_id as string | undefined;
-  const oraActivityId = metadata?.ora_plan_activity_id as string | undefined;
-  const projectId = metadata?.project_id as string | undefined;
-  const projectCode = metadata?.project_code as string | undefined;
-  const isP2AActivity = activityCode === 'P2A-01' || metadata?.action === 'create_p2a_plan' || activityName?.toLowerCase().includes('p2a');
-  const isOverdue = editEndDate && isPast(editEndDate) && status !== 'COMPLETED';
+  const metaOraActivityId = metadata?.ora_plan_activity_id as string | undefined;
+  const metaPlanId = metadata?.plan_id as string | undefined;
+  const metaProjectId = metadata?.project_id as string | undefined;
+  const metaProjectCode = metadata?.project_code as string | undefined;
 
-  // Check if P2A plan exists for "Continue" vs "Create" label
-  const { data: existingP2APlan } = useQuery({
-    queryKey: ['p2a-plan-exists-sheet', projectId],
-    queryFn: async () => {
-      if (!projectId) return null;
-      const { data } = await (supabase as any)
-        .from('p2a_handover_plans')
-        .select('id, status')
-        .eq('project_id', projectId)
-        .limit(1);
-      return data?.[0] || null;
-    },
-    enabled: !!projectId && isP2AActivity,
-    staleTime: 30_000,
-  });
-  const p2aPlanStatus = existingP2APlan?.status as string | undefined;
-  const p2aPlanIsSubmitted = existingP2APlan && ['ACTIVE', 'COMPLETED', 'APPROVED'].includes(existingP2APlan.status);
-  const p2aPlanIsFullyApproved = existingP2APlan && ['COMPLETED', 'APPROVED'].includes(existingP2APlan.status);
-  const p2aSheetCtaLabel = p2aPlanIsFullyApproved ? 'Open P2A Workspace' : existingP2APlan ? 'Continue P2A Plan' : 'Create P2A Plan';
-
-  const getP2AStatusBadge = () => {
-    if (!p2aPlanStatus) return null;
-    switch (p2aPlanStatus) {
-      case 'DRAFT':
-        return <Badge variant="outline" className="text-[10px] bg-slate-500/10 text-slate-600 border-slate-500/30">Draft</Badge>;
-      case 'ACTIVE':
-        return <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-700 border-amber-500/30">Pending Approval</Badge>;
-      case 'COMPLETED':
-      case 'APPROVED':
-        return <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-700 border-emerald-500/30">Approved</Badge>;
-      case 'ARCHIVED':
-        return <Badge variant="outline" className="text-[10px] bg-muted text-muted-foreground border-border">Archived</Badge>;
-      default:
-        return null;
-    }
-  };
-
-  // Duration computed from editable dates
-  const durationDays = useMemo(() => {
-    if (editStartDate && editEndDate) {
-      return differenceInDays(editEndDate, editStartDate);
-    }
-    return null;
-  }, [editStartDate, editEndDate]);
-
-  const idColors = activityCode
-    ? ID_BADGE_PALETTE[hashCode(activityCode) % ID_BADGE_PALETTE.length]
-    : ID_BADGE_PALETTE[0];
-
-  const realOraActivityId = useMemo(() => {
-    const raw = oraActivityId || '';
+  const rawOraActivityId = useMemo(() => {
+    const raw = metaOraActivityId || '';
     if (raw.startsWith('ora-')) return raw.slice(4);
     if (raw.startsWith('ws-')) return raw.slice(3);
     return raw;
-  }, [oraActivityId]);
+  }, [metaOraActivityId]);
+
+  // Fetch the actual ora_plan_activities record as single source of truth
+  const { data: dbActivity } = useQuery({
+    queryKey: ['ora-activity-detail', rawOraActivityId, metaProjectId],
+    queryFn: async () => {
+      const client = supabase as any;
+      // Try direct lookup by ID first
+      if (rawOraActivityId) {
+        const { data } = await client
+          .from('ora_plan_activities')
+          .select('id, activity_code, name, description, status, completion_percentage, start_date, end_date, duration_days, orp_plan_id, parent_id, source_ref_id')
+          .eq('id', rawOraActivityId)
+          .maybeSingle();
+        if (data) return data;
+      }
+      // Fallback: find by project_id + P2A activity code/name pattern
+      if (metaProjectId) {
+        const { data: plans } = await client
+          .from('orp_plans')
+          .select('id')
+          .eq('project_id', metaProjectId)
+          .limit(1);
+        if (plans?.[0]) {
+          const { data: activities } = await client
+            .from('ora_plan_activities')
+            .select('id, activity_code, name, description, status, completion_percentage, start_date, end_date, duration_days, orp_plan_id, parent_id, source_ref_id')
+            .eq('orp_plan_id', plans[0].id);
+          const match = activities?.find((a: any) => 
+            a.activity_code === 'P2A-01' || 
+            a.name?.toLowerCase().includes('p2a')
+          );
+          if (match) return match;
+        }
+      }
+      return null;
+    },
+    enabled: open && !!(rawOraActivityId || metaProjectId),
+    staleTime: 30_000,
+  });
+
+  // Fetch predecessors from wizard_state for this activity
+  const resolvedPlanId = dbActivity?.orp_plan_id || metaPlanId;
+  const resolvedActivityId = dbActivity?.id || rawOraActivityId;
+
+  const { data: wizardPredecessors } = useQuery({
+    queryKey: ['ora-activity-predecessors', resolvedPlanId, resolvedActivityId],
+    queryFn: async () => {
+      if (!resolvedPlanId || !resolvedActivityId) return [];
+      const { data: planRow } = await (supabase as any)
+        .from('orp_plans')
+        .select('wizard_state')
+        .eq('id', resolvedPlanId)
+        .single();
+      if (!planRow?.wizard_state) return [];
+      const ws = planRow.wizard_state as any;
+      const wsActivities: any[] = ws.activities || [];
+      const match = wsActivities.find((a: any) => {
+        const aId = String(a.id || '');
+        return aId === resolvedActivityId || aId === `ora-${resolvedActivityId}` || aId === `ws-${resolvedActivityId}`;
+      });
+      return match?.predecessorIds || [];
+    },
+    enabled: open && !!resolvedPlanId && !!resolvedActivityId,
+    staleTime: 30_000,
+  });
+
+  // Use DB activity as source of truth, falling back to task metadata
+  const activityName = dbActivity?.name || metadata?.activity_name || task?.title || '';
+  const activityCode = dbActivity?.activity_code || metadata?.activity_code || '';
+  const startDate = dbActivity?.start_date || metadata?.start_date as string | undefined;
+  const endDate = dbActivity?.end_date || metadata?.end_date as string | undefined;
+  const planId = resolvedPlanId;
+  const deliverableId = metadata?.deliverable_id as string | undefined;
+  const oraActivityId = metaOraActivityId;
+  const projectId = metaProjectId;
+  const projectCode = metaProjectCode;
+  const isP2AActivity = activityCode === 'P2A-01' || metadata?.action === 'create_p2a_plan' || activityName?.toLowerCase().includes('p2a');
+  const isOverdue = editEndDate && isPast(editEndDate) && status !== 'COMPLETED';
+
+  const realOraActivityId = resolvedActivityId;
 
   // Database-persisted comments
   const { comments: dbComments, isLoading: commentsLoading, addComment: addDbComment, isAdding } = useORAActivityComments(realOraActivityId || undefined, planId);
