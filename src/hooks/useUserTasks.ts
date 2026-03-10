@@ -35,6 +35,7 @@ interface FetchResult {
   bundleTasks: any[];
   oraActivityDates: Record<string, { start_date: string | null; end_date: string | null; duration_days: number | null; completion_percentage: number | null }>;
   oraPlanStatuses: Record<string, string>; // projectId -> plan status
+  p2aActivityProgress: Record<string, number>; // taskId -> P2A-01 completion_percentage
 }
 
 const fetchUserTasks = async (userId: string): Promise<FetchResult> => {
