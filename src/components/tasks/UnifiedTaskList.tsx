@@ -107,7 +107,7 @@ export const UnifiedTaskList: React.FC<UnifiedTaskListProps> = ({
     if (task.isWaiting) return;
     if (task.userTask) {
       const meta = task.userTask.metadata as Record<string, any> | undefined;
-      const isOraActivity = task.userTask.type === 'ora_activity' || meta?.action === 'complete_ora_activity' || meta?.ora_plan_activity_id;
+      const isOraActivity = task.userTask.type === 'ora_activity' || meta?.action === 'complete_ora_activity' || meta?.action === 'create_p2a_plan' || meta?.ora_plan_activity_id;
 
       if (isOraActivity && !task.navigateTo) {
         setOraActivityTask(task.userTask);
