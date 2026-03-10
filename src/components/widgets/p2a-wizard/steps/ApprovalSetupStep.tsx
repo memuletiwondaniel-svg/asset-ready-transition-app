@@ -187,6 +187,8 @@ export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
         // Always populate from fixed roles on first load, or if there are issues
         const deputyApprover = approvers.find(a => a.role_name === 'Deputy Plant Director');
         const deputyNeedsUpdate = deputyApprover && !deputyApprover.user_id && deputyProfile;
+        // Check if approvers exist but are missing profile data (loaded from draft)
+        const approversMissingProfiles = approvers.length > 0 && approvers.some(a => a.user_id && !a.user_name);
 
         if (approvers.length === 0 || shouldRepopulate(approvers) || deputyNeedsUpdate) {
           populateApproversFromTeam(members, deputyProfile ? {
@@ -194,6 +196,35 @@ export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
             full_name: profilesMap[deputyProfile.user_id]?.full_name || deputyProfile.full_name,
             avatar_url: profilesMap[deputyProfile.user_id]?.avatar_url || deputyProfile.avatar_url,
           } : null);
+        } else if (approversMissingProfiles) {
+          // Enrich existing approvers with profile data without resetting them
+          const enriched = approvers.map(a => {
+            if (a.user_id && !a.user_name) {
+              const profile = profilesMap[a.user_id];
+              if (profile) {
+                return { ...a, user_name: profile.full_name, user_avatar: profile.avatar_url };
+              }
+              // Try matching from team members
+              const teamMatch = members.find(m => m.user_id === a.user_id);
+              if (teamMatch?.profile) {
+                return { ...a, user_name: teamMatch.profile.full_name, user_avatar: teamMatch.profile.avatar_url };
+              }
+            }
+            return a;
+          });
+          // Also handle deputy if needed
+          if (deputyNeedsUpdate && deputyProfile) {
+            const idx = enriched.findIndex(a => a.role_name === 'Deputy Plant Director');
+            if (idx >= 0) {
+              enriched[idx] = {
+                ...enriched[idx],
+                user_id: deputyProfile.user_id,
+                user_name: profilesMap[deputyProfile.user_id]?.full_name || deputyProfile.full_name,
+                user_avatar: profilesMap[deputyProfile.user_id]?.avatar_url || deputyProfile.avatar_url,
+              };
+            }
+          }
+          onApproversChange(enriched);
         }
       } catch (error) {
         console.error('Error fetching team members:', error);

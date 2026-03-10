@@ -198,12 +198,37 @@ async function loadDraftFromDatabase(projectId: string): Promise<{ state: P2APla
     .eq('handover_id', planId)
     .order('display_order', { ascending: true });
 
-  const approvers: WizardApprover[] = (dbApprovers || []).map((a: any) => ({
-    id: a.id,
-    role_name: a.role_name,
-    display_order: a.display_order,
-    user_id: a.user_id || undefined,
-  }));
+  // Resolve user profiles for approvers that have user_id
+  const approverUserIds = (dbApprovers || [])
+    .map((a: any) => a.user_id)
+    .filter(Boolean) as string[];
+  
+  let approverProfilesMap: Record<string, { full_name: string; avatar_url?: string }> = {};
+  if (approverUserIds.length > 0) {
+    const profileResults = await Promise.all(
+      approverUserIds.map(async (userId: string) => {
+        const { data } = await client.rpc('get_safe_profile_data', { target_user_id: userId });
+        const row = Array.isArray(data) ? data?.[0] : data;
+        if (!row?.user_id) return null;
+        return { user_id: row.user_id as string, full_name: row.full_name as string, avatar_url: row.avatar_url as string | undefined };
+      })
+    );
+    for (const p of profileResults) {
+      if (p) approverProfilesMap[p.user_id] = { full_name: p.full_name, avatar_url: p.avatar_url };
+    }
+  }
+
+  const approvers: WizardApprover[] = (dbApprovers || []).map((a: any) => {
+    const profile = a.user_id ? approverProfilesMap[a.user_id] : undefined;
+    return {
+      id: a.id,
+      role_name: a.role_name,
+      display_order: a.display_order,
+      user_id: a.user_id || undefined,
+      user_name: profile?.full_name,
+      user_avatar: profile?.avatar_url,
+    };
+  });
 
   return {
     state: {
