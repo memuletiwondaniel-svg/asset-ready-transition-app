@@ -70,6 +70,9 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
   const queryClient = useQueryClient();
   
   const { data: existingPlan } = useP2APlanByProject(projectId);
+  
+  // Read-only when plan is submitted (ACTIVE) or fully approved (COMPLETED/APPROVED)
+  const isReadOnly = existingPlan ? ['ACTIVE', 'COMPLETED', 'APPROVED'].includes(existingPlan.status) : false;
 
   const {
     state,
