@@ -700,9 +700,14 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
     // Allow opening in view-only mode too (readOnly is enforced in the sheet)
     const actCode = deliverable.deliverable?.activity_code || '';
     
-    // Special handling for P2A-01 activity: open P2A wizard instead (only if not read-only)
-    if (actCode === 'P2A-01' && !readOnly) {
-      setShowP2AWizard(true);
+    // Special handling for P2A activity: open P2A wizard or workspace
+    const actName = deliverable.deliverable?.name || '';
+    if (isP2AActivityCode(actCode, actName) && !readOnly) {
+      if (p2aPlanIsSubmitted) {
+        setShowP2AWorkspace(true);
+      } else {
+        setShowP2AWizard(true);
+      }
       return;
     }
 
