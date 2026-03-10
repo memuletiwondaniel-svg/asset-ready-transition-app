@@ -342,7 +342,12 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
     staleTime: 30_000,
   });
 
-  const p2aCtaLabel = existingP2APlan ? 'Continue P2A Plan' : 'Create P2A Plan';
+  const p2aPlanIsSubmitted = existingP2APlan && ['ACTIVE', 'COMPLETED', 'APPROVED'].includes(existingP2APlan.status);
+  const p2aCtaLabel = p2aPlanIsSubmitted ? 'Open P2A' : existingP2APlan ? 'Continue P2A Plan' : 'Create P2A Plan';
+
+  // Helper to detect P2A activity by code or name
+  const isP2AActivityCode = (code: string, name?: string) =>
+    code === 'P2A-01' || name?.toLowerCase().includes('p2a');
   const projectCode = planData?.project
     ? `${planData.project.project_id_prefix || ''}-${planData.project.project_id_number || ''}`
     : '';
