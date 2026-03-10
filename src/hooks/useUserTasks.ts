@@ -101,6 +101,32 @@ const fetchUserTasks = async (userId: string): Promise<FetchResult> => {
     }
   }
 
+  // For create_p2a_plan tasks, fetch the P2A-01 activity's completion_percentage
+  // so the Kanban card shows the real DB value instead of stale metadata
+  const p2aTasks = regularTasks.filter(t => {
+    const meta = t.metadata as Record<string, any>;
+    return meta?.action === 'create_p2a_plan' && meta?.plan_id;
+  });
+  const p2aPlanIds = [...new Set(p2aTasks.map(t => (t.metadata as Record<string, any>).plan_id))] as string[];
+  let p2aActivityProgress: Record<string, number> = {}; // taskId -> completion_percentage
+  if (p2aPlanIds.length > 0) {
+    const { data: p2aActivities } = await supabase
+      .from('ora_plan_activities')
+      .select('orp_plan_id, completion_percentage')
+      .in('orp_plan_id', p2aPlanIds)
+      .eq('activity_code', 'P2A-01');
+    if (p2aActivities) {
+      const planToProgress: Record<string, number> = {};
+      p2aActivities.forEach((a: any) => { planToProgress[a.orp_plan_id] = a.completion_percentage ?? 0; });
+      p2aTasks.forEach(t => {
+        const planId = (t.metadata as Record<string, any>).plan_id;
+        if (planId && planId in planToProgress) {
+          p2aActivityProgress[t.id] = planToProgress[planId];
+        }
+      });
+    }
+  }
+
   // Fetch ORA plan statuses for ora_plan_creation tasks (to map approved plans to Done)
   const oraPlanCreationTasks = regularTasks.filter(t => {
     const meta = t.metadata as Record<string, any>;
