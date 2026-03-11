@@ -211,9 +211,13 @@ export function useKanbanDragDrop() {
           queryClient.invalidateQueries({ queryKey: ['p2a-plan-by-project'] });
           queryClient.invalidateQueries({ queryKey: ['ora-activity-detail'] });
 
-          // Force refresh user-tasks query so p2aActivityProgress picks up the
-          // updated completion_percentage (86%) from ora_plan_activities.
-          queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+          // NOTE: Do NOT invalidate ['user-tasks'] here — it causes a race condition
+          // where the refetch returns stale data and overwrites the optimistic update,
+          // snapping the card back to "Done". Instead, delay the invalidation to let
+          // DB writes settle before refetching.
+          setTimeout(() => {
+            queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+          }, 1500);
 
           toast.info('P2A Plan reverted to Draft — approvals have been reset');
         }
