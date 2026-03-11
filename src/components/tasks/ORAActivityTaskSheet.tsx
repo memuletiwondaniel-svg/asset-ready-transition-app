@@ -193,7 +193,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
   const oraActivityId = metaOraActivityId;
   const projectId = metaProjectId;
   const projectCode = metaProjectCode;
-  const isP2AActivity = activityCode === 'P2A-01' || metadata?.action === 'create_p2a_plan' || activityName?.toLowerCase().includes('p2a');
+  const isP2AActivity = activityCode === 'EXE-10' || activityCode === 'P2A-01' || metadata?.action === 'create_p2a_plan' || activityName?.toLowerCase().includes('p2a');
   const isOverdue = editEndDate && isPast(editEndDate) && status !== 'COMPLETED';
 
   const realOraActivityId = resolvedActivityId;
