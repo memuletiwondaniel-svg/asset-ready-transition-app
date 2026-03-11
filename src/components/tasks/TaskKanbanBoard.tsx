@@ -564,7 +564,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
                   </div>
                   {/* Cards */}
                   <ScrollArea className="flex-1 max-h-[50vh] sm:max-h-[calc(100vh-320px)]">
-                    <div className="p-2.5 space-y-2.5">
+                    <div className="px-4 py-2.5 space-y-2.5">
                       {renderColumnContent(col.tasks, col)}
                     </div>
                   </ScrollArea>
