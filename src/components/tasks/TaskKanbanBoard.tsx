@@ -72,9 +72,9 @@ interface ApprovalWarningState {
 
 
 const getColumns = (t: any) => [
-  { key: 'todo' as const, label: t.kanbanToDo || 'To Do', icon: Circle, accent: 'border-l-blue-500', headerBg: 'bg-gradient-to-r from-blue-200/90 to-blue-100/60 dark:from-blue-900/50 dark:to-blue-950/20', iconColor: 'text-blue-600', emptyIcon: Inbox, emptyMsg: t.kanbanEmptyToDo || 'Nothing to do — nice!' },
-  { key: 'in_progress' as const, label: t.kanbanInProgress || 'In Progress', icon: Timer, accent: 'border-l-amber-500', headerBg: 'bg-gradient-to-r from-amber-200/90 to-amber-100/60 dark:from-amber-900/50 dark:to-amber-950/20', iconColor: 'text-amber-600', emptyIcon: Circle, emptyMsg: t.kanbanEmptyInProgress || 'No tasks in progress' },
-  { key: 'done' as const, label: t.kanbanDone || 'Done', icon: CheckCircle2, accent: 'border-l-emerald-500', headerBg: 'bg-gradient-to-r from-emerald-200/90 to-emerald-100/60 dark:from-emerald-900/50 dark:to-emerald-950/20', iconColor: 'text-emerald-600', emptyIcon: CheckCircle2, emptyMsg: t.kanbanEmptyDone || 'All clear!' },
+  { key: 'todo' as const, label: t.kanbanToDo || 'To Do', icon: Circle, accent: 'border-l-blue-500', headerBg: 'bg-gradient-to-r from-blue-200/90 to-blue-100/60 dark:from-blue-900/50 dark:to-blue-950/20', iconColor: 'text-blue-600', headerText: 'text-foreground', emptyIcon: Inbox, emptyMsg: t.kanbanEmptyToDo || 'Nothing to do — nice!' },
+  { key: 'in_progress' as const, label: t.kanbanInProgress || 'In Progress', icon: Timer, accent: 'border-l-amber-500', headerBg: 'bg-gradient-to-r from-amber-200/90 to-amber-100/60 dark:from-amber-900/50 dark:to-amber-950/20', iconColor: 'text-amber-600', headerText: 'text-foreground', emptyIcon: Circle, emptyMsg: t.kanbanEmptyInProgress || 'No tasks in progress' },
+  { key: 'done' as const, label: t.kanbanDone || 'Done', icon: CheckCircle2, accent: 'border-l-emerald-500', headerBg: 'bg-gradient-to-r from-slate-700/90 to-emerald-600/80 dark:from-slate-800/90 dark:to-emerald-800/70', iconColor: 'text-white', headerText: 'text-white', emptyIcon: CheckCircle2, emptyMsg: t.kanbanEmptyDone || 'All clear!' },
 ];
 
 // ─── Approval Void Warning Dialog ──────────────────────────────────
@@ -558,7 +558,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
                   <div className={cn("relative flex items-center justify-center px-3 py-3 border-b border-border/40", col.headerBg)}>
                     <div className="flex items-center gap-3">
                       <ColIcon className={cn("h-4 w-4", col.iconColor)} strokeWidth={2.25} />
-                      <span className="text-sm font-black uppercase tracking-wider text-foreground">{col.label}</span>
+                      <span className={cn("text-sm font-black uppercase tracking-wider", col.headerText)}>{col.label}</span>
                     </div>
                     <Badge variant="secondary" className="absolute right-3 text-[10px] font-medium px-1.5 py-0 min-w-[1.25rem] text-center text-muted-foreground bg-muted/60">{col.tasks.length}</Badge>
                   </div>
