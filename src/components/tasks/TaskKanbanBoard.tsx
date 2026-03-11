@@ -29,7 +29,7 @@ import {
   GripVertical,
   AlertTriangle,
   Circle,
-  Loader2,
+  Timer,
   Clock,
   CheckCircle2,
   Inbox,
