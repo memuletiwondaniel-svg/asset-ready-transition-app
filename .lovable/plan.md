@@ -1,45 +1,77 @@
 
 
-## Root Cause Analysis
+# Plan: ORIP Scoring Engine Using Existing VCR Item Categories
 
-The bug keeps recurring because there are **two competing sources of truth** that get out of sync:
+## Impact Assessment: Zero Breaking Changes
 
-1. **`user_tasks.status`** — determines which Kanban column the card appears in
-2. **`p2a_handover_plans.status`** — determines the badge ("Draft"/"Pending Approval"), CTA label ("Continue"/"View"), and intent text in the detail sheet
+**No existing workflows will be affected.** The approach reuses the existing `vcr_item_categories` table (Design Integrity, Technical Integrity, Operating Integrity, Management Systems, Health & Safety) as the readiness dimensions for ORI scoring. All changes are additive:
 
-Previous migrations fixed `user_tasks.status` (moving the card to "In Progress") but left `p2a_handover_plans.status` as `ACTIVE`, or vice versa. The frontend reads the plan status directly from `p2a_handover_plans`, so whenever the card is in "In Progress" but the plan is `ACTIVE`, the detail sheet shows "Pending Approval" + "View P2A Plan".
+- The `vcr_item_categories` table gets a `tenant_id` column and weight/confidence fields -- existing rows remain intact
+- The `readiness_nodes` table gets a new nullable `dimension_id` column pointing to `vcr_item_categories`
+- The `sync_readiness_nodes` and `calculate_ori_score` functions are replaced with enhanced versions that use category-based dimensions instead of module-based grouping
+- Existing P2A, ORA, PSSR, ORM workflows are untouched -- the ontology layer only reads from them
 
-Additionally, `user_tasks.metadata.plan_status` is `null` and `completion_percentage` is `71` — both stale.
+## Current VCR Item Categories (Become Readiness Dimensions)
 
-## Current Database State (Inconsistent)
-- `p2a_handover_plans.status` = **ACTIVE** (wrong — should be DRAFT)
-- `user_tasks.status` = **in_progress** (correct for Kanban)
-- `user_tasks.metadata.plan_status` = **null** (should be DRAFT)
-- `user_tasks.metadata.completion_percentage` = **71** (should be 86)
-- `ora_plan_activities.completion_percentage` = **71** (should be 86)
-- `ora_plan_activities.status` = **IN_PROGRESS** (correct)
+| Code | Name | Active |
+|------|------|--------|
+| DI2 | Design Integrity | Yes |
+| TI | Technical Integrity | Yes |
+| OI | Operating Integrity | Yes |
+| MS | Management Systems | Yes |
+| HS | Health & Safety | Yes |
 
-## Plan
+These become the tenant-configurable readiness dimensions. Different tenants can add/rename/reweight their own categories.
 
-### 1. Database Migration — Fix all three tables atomically
-Single migration to synchronize:
-- `p2a_handover_plans.status` → `DRAFT`
-- `user_tasks.metadata` → `plan_status: 'DRAFT'`, `completion_percentage: 86`
-- `ora_plan_activities.completion_percentage` → `86`
-- Reset `p2a_handover_approvers` to `PENDING` status (since the plan is being reverted to draft)
+## Implementation Tasks
 
-### 2. Frontend Guard — Prevent recurrence
-Add a **reconciliation guard** in `ORAActivityTaskSheet` that detects when the `user_tasks.status` is `in_progress` or `pending` but the plan status is `ACTIVE`, and overrides the displayed plan status to `DRAFT`. This ensures even if the DB gets out of sync again (e.g., from a partial migration or race condition), the UI stays consistent with the Kanban column.
+### Task 1: Extend `vcr_item_categories` for ORI Scoring
+Add columns to make categories serve double duty as readiness dimensions:
+- `tenant_id UUID` (nullable, defaults via trigger -- existing rows get current tenant)
+- `default_weight NUMERIC(5,4)` (e.g., 0.20 = 20%)
+- `confidence_factor_default NUMERIC(3,2)` (default 0.8)
+- `risk_severity_multiplier NUMERIC(3,1)` (default 1.0)
+- `is_readiness_dimension BOOLEAN DEFAULT true`
 
-Specifically in `ORAActivityTaskSheet.tsx` (~line 216-225):
-- After fetching `existingP2APlan`, check if the task's own status indicates the card is NOT in the Done column (i.e., `task.status !== 'completed'`). If so, treat the plan as `DRAFT` regardless of what `p2a_handover_plans.status` says — because moving out of Done should have reverted it.
-- This acts as a safety net: the canonical revert logic in `useKanbanDragDrop` should handle the DB update, but if it didn't fire (e.g., migration-based move), the UI still shows the correct state.
+Add `dimension_id UUID REFERENCES vcr_item_categories(id)` to `readiness_nodes`.
 
-### 3. Same guard in `TaskDetailSheet.tsx` (~line 120-122)
-Apply the identical reconciliation logic so both entry points are protected.
+### Task 2: Enhanced ORI Formula
+Replace `calculate_ori_score()` with the full ORIP formula:
 
-### Files to Change
-- **New migration SQL** — fix DB state
-- **`src/components/tasks/ORAActivityTaskSheet.tsx`** — add reconciliation guard (~5 lines near line 216)
-- **`src/components/tasks/TaskDetailSheet.tsx`** — add matching guard (~5 lines near line 120)
+```
+DS_i = (Σ Subcomponent_Weight × Completion%) × Confidence_Factor
+RP_i = Σ (Risk_Severity × Impact_Multiplier)  -- capped at 15%
+ORI  = Σ (Dimension_Weight_i × DS_i) − Global_Risk_Penalty
+SCS  = ORI × Schedule_Adherence × Critical_Path_Stability
+```
+
+Add columns to `ori_scores`: `dimension_scores JSONB`, `risk_penalty_total NUMERIC`, `startup_confidence_score NUMERIC`, `schedule_adherence_index NUMERIC`, `critical_path_stability_index NUMERIC`.
+
+Add `confidence_factor NUMERIC(3,2) DEFAULT 0.8` and `risk_severity TEXT DEFAULT 'none'` to `readiness_nodes`.
+
+### Task 3: Update Sync Function
+Update `sync_readiness_nodes()` to auto-assign `dimension_id` by mapping:
+- P2A VCR prerequisites → mapped via their `vcr_items.category_id` directly to `vcr_item_categories`
+- ORA activities → default to "Operating Integrity" or map via metadata
+- PSSR items → map via PSSR checklist category → nearest VCR category
+- ORM deliverables → default to "Management Systems"
+- Training → default to "Operating Integrity"
+
+Set confidence factors: completed/approved = 1.0, in-progress = 0.8, not-started = 0.7.
+
+### Task 4: Executive Dashboard Enhancement
+Redesign `ExecutiveDashboard.tsx` to match the strategic layout:
+- **Top Banner**: Large ORI + SCS + color coding (Green >85, Amber 70-85, Red <70)
+- **Dimension Breakdown**: Bar/table showing each VCR category's score, trend arrow, risk level
+- **Top 5 Startup Blockers**: Blocked/critical nodes with severity
+- **Predictive Trend**: ORI line chart with dashed target curve
+- **Risk Impact Summary**: 4 stat boxes (Open High Risks, Startup-blocking, Dimensions below 70%, Systems below 60%)
+
+### Task 5: Tenant-Configurable Weight Profiles
+Update the existing `ori_weight_profiles` to store dimension-based weights keyed by `vcr_item_categories.id` instead of module names. Add a simple admin UI for editing weights per tenant.
+
+### Task 6: Update Living Documents
+- **Security & Compliance Doc**: Add rows for Readiness Dimensions, Risk Penalty Engine, Startup Confidence Score (mark as Active)
+- **Platform Guide**: Add "Readiness Ontology & Scoring Engine" section documenting the 6 dimensions, ORI formula, SCS
+- **Strategic North Star**: Update scoring engine status from Planned to Active, add dimension-based architecture detail
 

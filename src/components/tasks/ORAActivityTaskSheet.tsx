@@ -213,9 +213,16 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
     enabled: !!projectId && isP2AActivity,
     staleTime: 30_000,
   });
-  const p2aPlanStatus = existingP2APlan?.status as string | undefined;
-  const p2aPlanIsSubmitted = existingP2APlan && ['ACTIVE', 'COMPLETED', 'APPROVED'].includes(existingP2APlan.status);
-  const p2aPlanIsFullyApproved = existingP2APlan && ['COMPLETED', 'APPROVED'].includes(existingP2APlan.status);
+  // Reconciliation guard: if the task is NOT in the Done column (i.e., status !== 'completed'),
+  // treat the plan as DRAFT regardless of what p2a_handover_plans says. This prevents
+  // stale ACTIVE/COMPLETED status from showing "Pending Approval" when the card was reverted.
+  const rawP2aPlanStatus = existingP2APlan?.status as string | undefined;
+  const taskIsNotDone = task?.status !== 'completed';
+  const p2aPlanStatus = (taskIsNotDone && rawP2aPlanStatus && ['ACTIVE', 'COMPLETED', 'APPROVED'].includes(rawP2aPlanStatus))
+    ? 'DRAFT'
+    : rawP2aPlanStatus;
+  const p2aPlanIsSubmitted = existingP2APlan && p2aPlanStatus && ['ACTIVE', 'COMPLETED', 'APPROVED'].includes(p2aPlanStatus);
+  const p2aPlanIsFullyApproved = existingP2APlan && p2aPlanStatus && ['COMPLETED', 'APPROVED'].includes(p2aPlanStatus);
   const p2aSheetCtaLabel = p2aPlanIsFullyApproved
     ? 'View P2A Plan'
     : p2aPlanIsSubmitted
