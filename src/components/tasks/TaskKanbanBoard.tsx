@@ -35,7 +35,7 @@ import {
   Inbox,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { format, isPast, isToday, differenceInDays } from 'date-fns';
+import { isPast, isToday } from 'date-fns';
 import type { UnifiedTask, CategoryFilter } from './useUnifiedTasks';
 import type { UserTask } from '@/hooks/useUserTasks';
 
