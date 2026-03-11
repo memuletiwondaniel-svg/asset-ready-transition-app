@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 
-type ViewMode = 'list' | 'kanban';
+type ViewMode = 'list' | 'kanban' | 'table';
 type GroupBy = 'none' | 'project' | 'category';
 
 const MyTasksPage: React.FC = () => {
