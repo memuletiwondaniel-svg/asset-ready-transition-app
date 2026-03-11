@@ -163,17 +163,12 @@ const ApprovalVoidWarningDialog: React.FC<{
   );
 };
 
-function getDateAnnotation(task: UnifiedTask): { label: string; variant: 'overdue' | 'today' | 'upcoming' | 'none' } | null {
+function getDateAnnotation(task: UnifiedTask): { variant: 'overdue' | 'today' } | null {
   const date = task.dueDate || task.endDate;
   if (!date) return null;
   const d = new Date(date);
-  if (isPast(d) && !isToday(d)) {
-    const days = differenceInDays(new Date(), d);
-    return { label: `${days}d overdue`, variant: 'overdue' };
-  }
-  if (isToday(d)) return { label: 'Due today', variant: 'today' };
-  const days = differenceInDays(d, new Date());
-  if (days <= 7) return { label: `${days}d left`, variant: 'upcoming' };
+  if (isPast(d) && !isToday(d)) return { variant: 'overdue' };
+  if (isToday(d)) return { variant: 'today' };
   return null;
 }
 
