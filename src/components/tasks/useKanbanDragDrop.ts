@@ -147,10 +147,10 @@ export function useKanbanDragDrop() {
           .eq('id', realId);
       }
 
-      // ── P2A Plan status revert: when a P2A task is moved back to in_progress,
+      // ── P2A Plan status revert: when a P2A task is moved back to in_progress or todo,
       // revert the P2A plan to DRAFT and reset approvers so the user can continue editing ──
       const p2aProjectId = meta?.project_id as string | undefined;
-      if (isP2aTask && p2aProjectId && targetColumn === 'in_progress') {
+      if (isP2aTask && p2aProjectId && (targetColumn === 'in_progress' || targetColumn === 'todo')) {
         const client = supabase as any;
         // Find the P2A plan for this project
         const { data: p2aPlans } = await client
@@ -165,11 +165,11 @@ export function useKanbanDragDrop() {
             .from('p2a_handover_plans')
             .update({ status: 'DRAFT', updated_at: new Date().toISOString() })
             .eq('id', p2aPlan.id);
-          // Reset all approvers to PENDING
+          // Reset all approvers to PENDING (correct column: handover_id)
           await client
             .from('p2a_handover_approvers')
             .update({ status: 'PENDING', approved_at: null })
-            .eq('plan_id', p2aPlan.id);
+            .eq('handover_id', p2aPlan.id);
 
           // Reset the user_task metadata to clear submitted plan_status
           if (isRealTaskId) {
@@ -193,14 +193,25 @@ export function useKanbanDragDrop() {
             }
           }
 
+          // Also reset the ora_plan_activities P2A-01 row
+          if (oraActivityId) {
+            const realId = oraActivityId.startsWith('ora-') ? oraActivityId.slice(4)
+              : oraActivityId.startsWith('ws-') ? oraActivityId.slice(3)
+              : oraActivityId;
+            await client
+              .from('ora_plan_activities')
+              .update({ status: 'IN_PROGRESS', completion_percentage: 86 })
+              .eq('id', realId);
+          }
+
           // Invalidate P2A-related queries so sheets/detail views pick up the DRAFT status
           queryClient.invalidateQueries({ queryKey: ['p2a-plan-exists-sheet'] });
           queryClient.invalidateQueries({ queryKey: ['p2a-plan-exists-task'] });
           queryClient.invalidateQueries({ queryKey: ['p2a-plan-by-project'] });
+          queryClient.invalidateQueries({ queryKey: ['ora-activity-detail'] });
 
           // Force refresh user-tasks query so p2aActivityProgress picks up the
           // updated completion_percentage (86%) from ora_plan_activities.
-          // This is safe here because all DB writes have completed above.
           queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
 
           toast.info('P2A Plan reverted to Draft — approvals have been reset');

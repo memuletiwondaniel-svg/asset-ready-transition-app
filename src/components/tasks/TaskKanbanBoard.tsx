@@ -428,15 +428,25 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
 
     // ── P2A tasks: intercept drags that should go through the wizard ──
     if (isP2aTask) {
+      // Done → In Progress / Todo: show approval void warning (same as ORA plan)
+      if (task.kanbanColumn === 'done' && (targetColumn === 'in_progress' || targetColumn === 'todo')) {
+        // Check if this task is approval-protected (has been submitted/approved)
+        if (task.isApprovalProtected) {
+          setWarningState({ task, targetColumn });
+          return;
+        }
+        // Not protected — just do the move with force
+        await moveTaskToColumn(task, targetColumn, true);
+        return;
+      }
       // Todo → In Progress: open overlay to guide user to "Start P2A Plan"
-      // In Progress → Done: open overlay to guide user to submit via wizard
-      // Any drag on P2A tasks should open the overlay, not silently move
       if (targetColumn === 'in_progress' && task.kanbanColumn === 'todo') {
         setOraActivityTask(task.userTask);
         setOraActivityDragComplete(false);
         setOraActivityOpen(true);
         return;
       }
+      // Any → Done: open overlay to guide user to submit via wizard
       if (targetColumn === 'done') {
         setOraActivityTask(task.userTask);
         setOraActivityDragComplete(false);
