@@ -72,7 +72,7 @@ interface ApprovalWarningState {
 
 
 const getColumns = (t: any) => [
-  { key: 'todo' as const, label: t.kanbanToDo || 'To Do', icon: Circle, accent: 'border-l-blue-500', headerBg: 'bg-gradient-to-r from-blue-200/90 to-blue-100/60 dark:from-blue-900/50 dark:to-blue-950/20', iconColor: 'text-blue-600', headerText: 'text-foreground', emptyIcon: Inbox, emptyMsg: t.kanbanEmptyToDo || 'Nothing to do — nice!' },
+  { key: 'todo' as const, label: t.kanbanToDo || 'To Do', icon: Circle, accent: 'border-l-slate-400', headerBg: 'bg-gradient-to-r from-slate-200/90 to-slate-100/60 dark:from-slate-800/50 dark:to-slate-900/20', iconColor: 'text-slate-500', headerText: 'text-foreground', emptyIcon: Inbox, emptyMsg: t.kanbanEmptyToDo || 'Nothing to do — nice!' },
   { key: 'in_progress' as const, label: t.kanbanInProgress || 'In Progress', icon: Timer, accent: 'border-l-amber-500', headerBg: 'bg-gradient-to-r from-amber-200/90 to-amber-100/60 dark:from-amber-900/50 dark:to-amber-950/20', iconColor: 'text-amber-600', headerText: 'text-foreground', emptyIcon: Circle, emptyMsg: t.kanbanEmptyInProgress || 'No tasks in progress' },
   { key: 'done' as const, label: t.kanbanDone || 'Done', icon: CheckCircle2, accent: 'border-l-emerald-500', headerBg: 'bg-gradient-to-r from-emerald-200/90 to-emerald-100/60 dark:from-emerald-900/50 dark:to-emerald-950/20', iconColor: 'text-emerald-600', headerText: 'text-foreground', emptyIcon: CheckCircle2, emptyMsg: t.kanbanEmptyDone || 'All clear!' },
 ];
