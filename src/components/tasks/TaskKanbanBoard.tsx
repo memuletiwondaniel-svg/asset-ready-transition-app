@@ -556,7 +556,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
                 <div className="bg-muted/40 rounded-xl border border-border shadow-sm flex flex-col h-full overflow-hidden">
                   {/* Column header – tinted background */}
                   <div className={cn("relative flex items-center justify-center px-3 py-3 border-b border-border/40", col.headerBg)}>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3">
                       <ColIcon className={cn("h-4 w-4", col.iconColor)} strokeWidth={2.25} />
                       <span className="text-sm font-black uppercase tracking-wider text-foreground">{col.label}</span>
                     </div>
