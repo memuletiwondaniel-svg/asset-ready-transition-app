@@ -34,7 +34,7 @@ const MyTasksPage: React.FC = () => {
   const [addActivityOpen, setAddActivityOpen] = useState(false);
   const [addActivityMode, setAddActivityMode] = useState<'catalog' | 'custom'>('catalog');
   const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode] = useState<ViewMode>('table');
+  const [viewMode, setViewMode] = useState<ViewMode>('kanban');
   const [groupBy, setGroupBy] = useState<GroupBy>('none');
 
   useEffect(() => {
