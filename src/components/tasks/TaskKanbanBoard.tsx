@@ -250,23 +250,17 @@ const KanbanCardContent: React.FC<{
           )}
         </div>
         <div className="flex items-center gap-1">
-          {sp.isStartingSoon && (
-            <span className="text-[9px] font-medium text-amber-600 bg-amber-500/8 px-1.5 py-0 rounded">
-              {t.kanbanSoon || 'Soon'}
-            </span>
-          )}
           {task.kanbanColumn === 'done' ? (
-            <span className="text-[9px] font-medium text-emerald-600 bg-emerald-500/8 px-1.5 py-0 rounded whitespace-nowrap">
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
               {t.kanbanCompleted || 'Completed'}
             </span>
           ) : dateAnnotation ? (
             <span className={cn(
-              "text-[9px] font-medium px-1.5 py-0 rounded whitespace-nowrap",
-              dateAnnotation.variant === 'overdue' && 'text-destructive bg-destructive/8',
-              dateAnnotation.variant === 'today' && 'text-amber-600 bg-amber-500/8',
-              dateAnnotation.variant === 'upcoming' && 'text-muted-foreground bg-muted',
+              "text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap",
+              dateAnnotation.variant === 'overdue' && 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+              dateAnnotation.variant === 'today' && 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
             )}>
-              {dateAnnotation.variant === 'overdue' ? (t.kanbanOverdue || 'Overdue') : dateAnnotation.label}
+              {dateAnnotation.variant === 'overdue' ? (t.kanbanOverdue || 'Overdue') : 'Due today'}
             </span>
           ) : null}
         </div>
