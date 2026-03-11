@@ -515,7 +515,11 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
   const columnData = useMemo(() => {
     return COLUMNS.map(col => ({
       ...col,
-      tasks: tasks.filter(t => t.kanbanColumn === col.key),
+      tasks: tasks.filter(t => 
+        col.key === 'todo' 
+          ? (t.kanbanColumn === 'todo' || t.kanbanColumn === 'waiting')
+          : t.kanbanColumn === col.key
+      ),
     }));
   }, [tasks, COLUMNS]);
 
