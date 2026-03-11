@@ -53,7 +53,7 @@ const MyTasksPage: React.FC = () => {
         <div className="border-b border-border/40 bg-card/30 backdrop-blur-xl p-4 md:p-6">
           <BreadcrumbNavigation currentPageLabel={t.myTasksPageTitle || 'My Tasks'} />
           <div className="flex items-center gap-3 mt-4">
-            <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500">
+            <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-primary to-primary/80">
               <CalendarCheck className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
             </div>
             <div>
@@ -74,8 +74,8 @@ const MyTasksPage: React.FC = () => {
         <div className="border-b border-border/40 bg-card/30 backdrop-blur-xl p-3 sm:p-4 md:p-6">
         <BreadcrumbNavigation currentPageLabel={t.myTasksPageTitle || 'My Tasks'} />
         <div className="flex items-center gap-2 sm:gap-3 mt-3 sm:mt-4">
-          <div className="p-2 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 shrink-0">
-            <CalendarCheck className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+           <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-primary to-primary/80 shrink-0">
+            <CalendarCheck className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
           </div>
           <div className="min-w-0">
             <h1 className="text-lg sm:text-2xl font-bold text-foreground truncate">{t.myTasksPageTitle || 'My Tasks'}</h1>
@@ -101,9 +101,8 @@ const MyTasksPage: React.FC = () => {
             {/* Group by dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-1.5 text-xs">
-                  {groupBy === 'project' ? <FolderOpen className="h-3.5 w-3.5" /> : groupBy === 'category' ? <Layers className="h-3.5 w-3.5" /> : <Layers className="h-3.5 w-3.5" />}
-                  {groupBy === 'none' ? (t.groupLabel || 'Group') : groupBy === 'project' ? (t.groupByProject || 'By Project') : (t.groupByCategory || 'By Category')}
+                <Button variant="outline" size="icon" className="h-8 w-8">
+                  {groupBy === 'project' ? <FolderOpen className="h-4 w-4" /> : <Layers className="h-4 w-4" />}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -131,9 +130,12 @@ const MyTasksPage: React.FC = () => {
               </ToggleGroupItem>
             </ToggleGroup>
 
+            {/* Spacer */}
+            <div className="w-4" />
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-1.5 text-xs border-primary/30 text-primary hover:bg-primary/10">
+                <Button variant="outline" size="sm" className="gap-1.5 text-xs">
                   <Plus className="h-3.5 w-3.5" /> {t.addActivity || 'Add Activity'}
                 </Button>
               </DropdownMenuTrigger>
