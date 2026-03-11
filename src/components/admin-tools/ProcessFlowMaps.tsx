@@ -245,7 +245,7 @@ const ProcessFlowMaps: React.FC<ProcessFlowMapsProps> = ({ onBack }) => {
           {/* 4. P2A Workflow */}
           <ProcessSection id="p2a-workflow" icon={<Layers className="h-5 w-5 text-primary" />} title="4. P2A Handover Plan Workflow" description="Project-to-Asset handover plan creation">
             <FlowDiagram steps={[
-              { label: 'Task: Create P2A Plan', type: 'start' },
+              { label: 'Task: Develop P2A Plan', type: 'start' },
               { label: 'Open P2A Wizard', type: 'process' },
               { label: 'Step 1: Select Systems', type: 'process' },
               { label: 'Step 2: Create VCRs', type: 'process' },
