@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { AddActivityDialog } from '@/components/tasks/AddActivityDialog';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { UnifiedTaskList } from '@/components/tasks/UnifiedTaskList';
+import { TaskTableView } from '@/components/tasks/TaskTableView';
 import { TaskKanbanBoard } from '@/components/tasks/TaskKanbanBoard';
 import { RecentlyCompletedTasks } from '@/components/tasks/RecentlyCompletedTasks';
 import { DirectorSoFView } from '@/components/tasks/DirectorSoFView';
