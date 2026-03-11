@@ -117,9 +117,15 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
     staleTime: 30_000,
   });
   const hasExistingP2aDraft = !!existingP2aPlan;
-  const p2aPlanStatus = existingP2aPlan?.status as string | undefined;
-  const p2aPlanIsFullyApproved = existingP2aPlan && ['COMPLETED', 'APPROVED'].includes(existingP2aPlan.status);
-  const p2aPlanIsSubmitted = existingP2aPlan && ['ACTIVE', 'COMPLETED', 'APPROVED'].includes(existingP2aPlan.status);
+  // Reconciliation guard: if the task is NOT in the Done column (i.e., status !== 'completed'),
+  // treat the plan as DRAFT regardless of what p2a_handover_plans says.
+  const rawP2aPlanStatus = existingP2aPlan?.status as string | undefined;
+  const taskNotDone = task?.status !== 'completed';
+  const p2aPlanStatus = (taskNotDone && rawP2aPlanStatus && ['ACTIVE', 'COMPLETED', 'APPROVED'].includes(rawP2aPlanStatus))
+    ? 'DRAFT'
+    : rawP2aPlanStatus;
+  const p2aPlanIsFullyApproved = existingP2aPlan && p2aPlanStatus && ['COMPLETED', 'APPROVED'].includes(p2aPlanStatus);
+  const p2aPlanIsSubmitted = existingP2aPlan && p2aPlanStatus && ['ACTIVE', 'COMPLETED', 'APPROVED'].includes(p2aPlanStatus);
 
   const getP2AStatusLabel = () => {
     if (!p2aPlanStatus) return null;
