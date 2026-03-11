@@ -1069,21 +1069,9 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                       )}
                       {visibleColumns.has('status') && (
                         <div className="px-1 flex items-center justify-center" style={{ width: COL_WIDTHS.status }}>
-                          {activityCode === 'P2A-01' ? (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-5 px-1.5 text-[9px] font-medium gap-0.5 border-primary/30 text-primary hover:bg-primary/10"
-                              onClick={(e) => { e.stopPropagation(); setShowP2AWizard(true); }}
-                            >
-                              <FileText className="w-3 h-3" />
-                              {p2aCtaLabel}
-                            </Button>
-                          ) : (
-                            <Badge variant="outline" className={cn("text-[9px] px-1.5 py-0 h-5", getStatusBadgeClasses(deliverable.status))}>
-                              {getStatusLabel(deliverable.status)}
-                            </Badge>
-                          )}
+                          <Badge variant="outline" className={cn("text-[9px] px-1.5 py-0 h-5", getStatusBadgeClasses(deliverable.status))}>
+                            {getStatusLabel(deliverable.status)}
+                          </Badge>
                         </div>
                       )}
                     </div>

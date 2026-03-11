@@ -475,8 +475,8 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
       .from('ora_plan_activities')
       .insert({
         orp_plan_id: planIdToMaterialize,
-        name: 'Create P2A Plan',
-        activity_code: 'P2A-01',
+        name: 'Develop P2A Plan',
+        activity_code: 'EXE-10',
         description: 'Create the Project to Asset (P2A) handover plan.',
         source_type: 'system',
         start_date: new Date().toISOString().split('T')[0],

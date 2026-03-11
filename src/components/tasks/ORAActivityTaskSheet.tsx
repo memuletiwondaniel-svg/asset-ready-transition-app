@@ -145,7 +145,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
             .select('id, activity_code, name, description, status, completion_percentage, start_date, end_date, duration_days, orp_plan_id, parent_id, source_ref_id')
             .eq('orp_plan_id', plans[0].id);
           const match = activities?.find((a: any) => 
-            a.activity_code === 'P2A-01' || 
+            a.activity_code === 'EXE-10' || a.activity_code === 'P2A-01' || 
             a.name?.toLowerCase().includes('p2a')
           );
           if (match) return match;
@@ -193,7 +193,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
   const oraActivityId = metaOraActivityId;
   const projectId = metaProjectId;
   const projectCode = metaProjectCode;
-  const isP2AActivity = activityCode === 'P2A-01' || metadata?.action === 'create_p2a_plan' || activityName?.toLowerCase().includes('p2a');
+  const isP2AActivity = activityCode === 'EXE-10' || activityCode === 'P2A-01' || metadata?.action === 'create_p2a_plan' || activityName?.toLowerCase().includes('p2a');
   const isOverdue = editEndDate && isPast(editEndDate) && status !== 'COMPLETED';
 
   const realOraActivityId = resolvedActivityId;
