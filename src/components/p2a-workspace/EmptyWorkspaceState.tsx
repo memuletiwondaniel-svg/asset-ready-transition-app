@@ -90,7 +90,7 @@ export const EmptyWorkspaceState: React.FC<EmptyWorkspaceStateProps> = ({
               className="gap-2 px-8"
             >
               <Plus className="w-5 h-5" />
-              Create P2A Plan
+              Develop P2A Plan
             </Button>
           </CardContent>
         </Card>
