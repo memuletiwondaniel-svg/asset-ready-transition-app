@@ -343,7 +343,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
   });
 
   const p2aPlanIsSubmittedOrApproved = existingP2APlan && ['ACTIVE', 'COMPLETED', 'APPROVED'].includes(existingP2APlan.status);
-  const p2aCtaLabel = p2aPlanIsSubmittedOrApproved ? 'View P2A Plan' : existingP2APlan ? 'Continue P2A Plan' : 'Create P2A Plan';
+  const p2aCtaLabel = p2aPlanIsSubmittedOrApproved ? 'View P2A Plan' : existingP2APlan ? 'Continue P2A Plan' : 'Develop P2A Plan';
   const projectCode = planData?.project
     ? `${planData.project.project_id_prefix || ''}-${planData.project.project_id_number || ''}`
     : '';
@@ -714,7 +714,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
 
       setSelectedOraActivity({
         id: deliverable.id,
-        title: 'Create P2A Plan',
+        title: 'Develop P2A Plan',
         description: deliverable.deliverable?.description || '',
         type: 'ora_activity',
         status: deliverable.status === 'COMPLETED' ? 'completed' : deliverable.status === 'IN_PROGRESS' ? 'in_progress' : 'pending',

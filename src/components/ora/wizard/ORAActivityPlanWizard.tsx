@@ -460,7 +460,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
       if (inserted) idMap.set(act.id, inserted.id);
     }
 
-    // Add "Create P2A Plan" activity assigned to Sr. ORA Engineer
+    // Add "Develop P2A Plan" activity assigned to Sr. ORA Engineer
     const { data: projectTeam } = await supabase
       .from('project_team_members')
       .select('user_id, role')
@@ -475,7 +475,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
       .from('ora_plan_activities')
       .insert({
         orp_plan_id: planIdToMaterialize,
-        name: 'Create P2A Plan',
+        name: 'Develop P2A Plan',
         activity_code: 'EXE-10',
         description: 'Create the Project to Asset (P2A) handover plan.',
         source_type: 'system',

@@ -217,7 +217,7 @@ const ProcessFlowMaps: React.FC<ProcessFlowMapsProps> = ({ onBack }) => {
               { label: 'All Approved?', type: 'decision' },
               { label: '⚡ Materialize Activities', type: 'auto' },
               { label: '⚡ Generate Leaf Tasks', type: 'auto' },
-              { label: '⚡ Create P2A Task', type: 'auto' },
+              { label: '⚡ Develop P2A Task', type: 'auto' },
               { label: 'APPROVED', type: 'end' },
             ]} />
             <Card className="bg-muted/30">
@@ -245,7 +245,7 @@ const ProcessFlowMaps: React.FC<ProcessFlowMapsProps> = ({ onBack }) => {
           {/* 4. P2A Workflow */}
           <ProcessSection id="p2a-workflow" icon={<Layers className="h-5 w-5 text-primary" />} title="4. P2A Handover Plan Workflow" description="Project-to-Asset handover plan creation">
             <FlowDiagram steps={[
-              { label: 'Task: Create P2A Plan', type: 'start' },
+              { label: 'Task: Develop P2A Plan', type: 'start' },
               { label: 'Open P2A Wizard', type: 'process' },
               { label: 'Step 1: Select Systems', type: 'process' },
               { label: 'Step 2: Create VCRs', type: 'process' },
@@ -255,7 +255,7 @@ const ProcessFlowMaps: React.FC<ProcessFlowMapsProps> = ({ onBack }) => {
               { label: 'Step 6: Review & Submit', type: 'process' },
               { label: 'SUBMITTED', type: 'end' },
             ]} />
-            <SwimLane role="Sr ORA Engr" color="bg-emerald-600" steps={['Create P2A Plan', 'Define Systems', 'Create VCRs', 'Submit']} />
+            <SwimLane role="Sr ORA Engr" color="bg-emerald-600" steps={['Develop P2A Plan', 'Define Systems', 'Create VCRs', 'Submit']} />
             <SwimLane role="Reviewers" color="bg-blue-600" steps={['Review P2A Plan', 'Approve / Reject', 'Add Comments']} />
             <SwimLane role="Dir/DPD" color="bg-violet-600" steps={['Final Approval (Phase 2)', 'Sign-off']} />
             <SwimLane role="System" color="bg-slate-600" steps={['Create Approval Tasks', 'Progressive Activation', 'Update Status']} />
