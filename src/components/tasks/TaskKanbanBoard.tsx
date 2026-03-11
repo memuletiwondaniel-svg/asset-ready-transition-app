@@ -81,16 +81,24 @@ const getColumns = (t: any) => [
 // ─── Approval Void Warning Dialog ──────────────────────────────────
 const ApprovalVoidWarningDialog: React.FC<{
   open: boolean;
-  taskTitle: string;
+  task: UnifiedTask | null;
   onCancel: () => void;
   onConfirm: () => void;
-}> = ({ open, taskTitle, onCancel, onConfirm }) => {
+}> = ({ open, task, onCancel, onConfirm }) => {
   const [acknowledged, setAcknowledged] = useState(false);
 
   // Reset acknowledgment when dialog opens
   React.useEffect(() => {
     if (open) setAcknowledged(false);
   }, [open]);
+
+  // Determine if the plan is fully approved vs just submitted/under review
+  const meta = task?.userTask?.metadata as Record<string, any> | undefined;
+  const planStatus = meta?.plan_status?.toUpperCase?.() || '';
+  const isFullyApproved = ['COMPLETED', 'APPROVED'].includes(planStatus);
+  const isUnderReview = planStatus === 'ACTIVE';
+
+  const taskTitle = task?.title || '';
 
   return (
     <AlertDialog open={open} onOpenChange={(o) => !o && onCancel()}>
@@ -100,19 +108,33 @@ const ApprovalVoidWarningDialog: React.FC<{
             <div className="flex items-center justify-center w-10 h-10 rounded-full bg-destructive/10">
               <AlertTriangle className="h-5 w-5 text-destructive" />
             </div>
-            <AlertDialogTitle className="text-lg">Void All Approvals?</AlertDialogTitle>
+            <AlertDialogTitle className="text-lg">
+              {isFullyApproved ? 'Void All Approvals?' : 'Cancel Approval Review?'}
+            </AlertDialogTitle>
           </div>
           <AlertDialogDescription asChild>
             <div className="space-y-3 text-sm">
               <p>
-                <span className="font-medium text-foreground">"{taskTitle}"</span> has already been 
-                approved through a formal review process.
+                <span className="font-medium text-foreground">"{taskTitle}"</span>{' '}
+                {isFullyApproved
+                  ? 'has been approved through a formal review process.'
+                  : 'has been submitted and is currently under approval review.'}
               </p>
               <p className="text-muted-foreground">Moving this task back will:</p>
               <ul className="list-disc list-inside space-y-1 text-muted-foreground ml-1">
-                <li>Void all existing approvals</li>
-                <li>Require a completely new review cycle</li>
-                <li>Notify all approvers of the change</li>
+                {isFullyApproved ? (
+                  <>
+                    <li>Void all existing approvals</li>
+                    <li>Require a completely new review cycle</li>
+                    <li>Notify all approvers of the change</li>
+                  </>
+                ) : (
+                  <>
+                    <li>Cancel the ongoing approval review</li>
+                    <li>Reset any approvals already received</li>
+                    <li>Revert the plan to Draft for further editing</li>
+                  </>
+                )}
               </ul>
               <label className="flex items-start gap-2.5 pt-3 cursor-pointer select-none">
                 <Checkbox 
@@ -134,7 +156,7 @@ const ApprovalVoidWarningDialog: React.FC<{
             disabled={!acknowledged}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Move Anyway – Void Approvals
+            {isFullyApproved ? 'Move Anyway – Void Approvals' : 'Move Anyway – Cancel Review'}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -641,7 +663,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
       {/* Warning dialog for reverting approval-protected tasks */}
       <ApprovalVoidWarningDialog
         open={!!warningState}
-        taskTitle={warningState?.task.title || ''}
+        task={warningState?.task || null}
         onCancel={handleWarningCancel}
         onConfirm={handleWarningConfirm}
       />
