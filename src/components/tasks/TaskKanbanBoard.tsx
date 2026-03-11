@@ -271,22 +271,6 @@ const KanbanCardContent: React.FC<{
         {task.project ? task.title.replace(new RegExp(`\\s*[–\\-]\\s*${task.project.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`), '') : task.title}
       </p>
 
-      {/* Dates row — hidden for completed tasks */}
-      {task.kanbanColumn !== 'done' && (task.startDate || task.endDate || task.dueDate) && (
-        <div className="flex items-center gap-1 text-[10px] text-muted-foreground/70">
-          <Calendar className="h-2.5 w-2.5 shrink-0" />
-          {task.startDate && <span>{format(new Date(task.startDate), 'MMM d')}</span>}
-          {task.startDate && task.endDate && <span>→</span>}
-          {(task.endDate || task.dueDate) && (
-            <span className={cn(
-              dateAnnotation?.variant === 'overdue' && 'text-destructive',
-              dateAnnotation?.variant === 'today' && 'text-amber-600',
-            )}>
-              {format(new Date((task.endDate || task.dueDate)!), 'MMM d')}
-            </span>
-          )}
-        </div>
-      )}
 
       {/* Progress for in-progress tasks */}
       {task.kanbanColumn === 'in_progress' && (
