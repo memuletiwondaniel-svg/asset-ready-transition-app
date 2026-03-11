@@ -29,7 +29,7 @@ import {
   GripVertical,
   AlertTriangle,
   Circle,
-  Loader2,
+  Timer,
   Clock,
   CheckCircle2,
   Inbox,
@@ -73,7 +73,7 @@ interface ApprovalWarningState {
 
 const getColumns = (t: any) => [
   { key: 'todo' as const, label: t.kanbanToDo || 'To Do', icon: Circle, accent: 'border-l-blue-500', headerBg: 'bg-blue-100/70 dark:bg-blue-950/30', iconColor: 'text-blue-600', emptyIcon: Inbox, emptyMsg: t.kanbanEmptyToDo || 'Nothing to do — nice!' },
-  { key: 'in_progress' as const, label: t.kanbanInProgress || 'In Progress', icon: Loader2, accent: 'border-l-amber-500', headerBg: 'bg-amber-100/70 dark:bg-amber-950/30', iconColor: 'text-amber-600', emptyIcon: Circle, emptyMsg: t.kanbanEmptyInProgress || 'No tasks in progress' },
+  { key: 'in_progress' as const, label: t.kanbanInProgress || 'In Progress', icon: Timer, accent: 'border-l-amber-500', headerBg: 'bg-amber-100/70 dark:bg-amber-950/30', iconColor: 'text-amber-600', emptyIcon: Circle, emptyMsg: t.kanbanEmptyInProgress || 'No tasks in progress' },
   { key: 'done' as const, label: t.kanbanDone || 'Done', icon: CheckCircle2, accent: 'border-l-emerald-500', headerBg: 'bg-emerald-100/70 dark:bg-emerald-950/30', iconColor: 'text-emerald-600', emptyIcon: CheckCircle2, emptyMsg: t.kanbanEmptyDone || 'All clear!' },
 ];
 
