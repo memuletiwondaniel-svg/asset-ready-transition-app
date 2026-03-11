@@ -485,11 +485,67 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
   const { childrenMap } = useMemo(() => buildHierarchyFromCodes(filteredDeliverables), [filteredDeliverables]);
 
   const [expandedCodes, setExpandedCodes] = useState<Set<string>>(() => new Set<string>());
+  const [sortColumn, setSortColumn] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
-  const visibleRows = useMemo(
+  const handleSortColumn = useCallback((col: string) => {
+    if (sortColumn === col) {
+      if (sortDirection === 'asc') setSortDirection('desc');
+      else { setSortColumn(null); setSortDirection('asc'); }
+    } else {
+      setSortColumn(col);
+      setSortDirection('asc');
+    }
+  }, [sortColumn, sortDirection]);
+
+  const STATUS_ORDER: Record<string, number> = { COMPLETED: 0, IN_PROGRESS: 1, NOT_STARTED: 2 };
+
+  const unsortedRows = useMemo(
     () => buildVisibleRows(childrenMap, expandedCodes),
     [childrenMap, expandedCodes]
   );
+
+  const visibleRows = useMemo(() => {
+    if (!sortColumn) return unsortedRows;
+    // Only sort leaf (non-parent) rows at root level when sorting
+    const sorted = [...unsortedRows];
+    sorted.sort((a, b) => {
+      const da = a.deliverable;
+      const db = b.deliverable;
+      let cmp = 0;
+      switch (sortColumn) {
+        case 'index':
+          cmp = 0; // keep original order
+          break;
+        case 'id':
+          cmp = (da.deliverable?.activity_code || '').localeCompare(db.deliverable?.activity_code || '');
+          break;
+        case 'activity':
+          cmp = (da.deliverable?.name || '').localeCompare(db.deliverable?.name || '');
+          break;
+        case 'start':
+          cmp = (da.start_date || '').localeCompare(db.start_date || '');
+          break;
+        case 'end':
+          cmp = (da.end_date || '').localeCompare(db.end_date || '');
+          break;
+        case 'duration': {
+          const durA = da.start_date && da.end_date ? differenceInDays(parseISO(da.end_date), parseISO(da.start_date)) : 0;
+          const durB = db.start_date && db.end_date ? differenceInDays(parseISO(db.end_date), parseISO(db.start_date)) : 0;
+          cmp = durA - durB;
+          break;
+        }
+        case 'status': {
+          const sA = STATUS_ORDER[(da.deliverable?.status || 'NOT_STARTED').toUpperCase()] ?? 2;
+          const sB = STATUS_ORDER[(db.deliverable?.status || 'NOT_STARTED').toUpperCase()] ?? 2;
+          cmp = sA - sB;
+          break;
+        }
+      }
+      return sortDirection === 'asc' ? cmp : -cmp;
+    });
+    return sorted;
+  }, [unsortedRows, sortColumn, sortDirection]);
 
   const toggleExpand = (code: string) => {
     setExpandedCodes(prev => {
