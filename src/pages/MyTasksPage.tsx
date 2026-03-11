@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { CalendarCheck, Plus, Search, LayoutList, Kanban, FolderOpen, Layers, BookOpen, PenLine, TableProperties } from 'lucide-react';
+import { CalendarCheck, Plus, Search, Kanban, FolderOpen, Layers, BookOpen, PenLine, TableProperties } from 'lucide-react';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { AddActivityDialog } from '@/components/tasks/AddActivityDialog';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { UnifiedTaskList } from '@/components/tasks/UnifiedTaskList';
 import { TaskTableView } from '@/components/tasks/TaskTableView';
 import { TaskKanbanBoard } from '@/components/tasks/TaskKanbanBoard';
 import { RecentlyCompletedTasks } from '@/components/tasks/RecentlyCompletedTasks';
@@ -24,7 +23,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 
-type ViewMode = 'list' | 'kanban' | 'table';
+type ViewMode = 'kanban' | 'table';
 type GroupBy = 'none' | 'project' | 'category';
 
 const MyTasksPage: React.FC = () => {
@@ -35,7 +34,7 @@ const MyTasksPage: React.FC = () => {
   const [addActivityOpen, setAddActivityOpen] = useState(false);
   const [addActivityMode, setAddActivityMode] = useState<'catalog' | 'custom'>('catalog');
   const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode] = useState<ViewMode>('table');
+  const [viewMode, setViewMode] = useState<ViewMode>('kanban');
   const [groupBy, setGroupBy] = useState<GroupBy>('none');
 
   useEffect(() => {
@@ -124,14 +123,11 @@ const MyTasksPage: React.FC = () => {
 
             {/* View toggle */}
             <ToggleGroup type="single" value={viewMode} onValueChange={(v) => v && setViewMode(v as ViewMode)} size="sm">
-              <ToggleGroupItem value="list" aria-label={t.listView || 'List view'} className="px-2">
-                <LayoutList className="h-4 w-4" />
+              <ToggleGroupItem value="kanban" aria-label={t.boardView || 'Board view'} className="px-2">
+                <Kanban className="h-4 w-4" />
               </ToggleGroupItem>
               <ToggleGroupItem value="table" aria-label="Table view" className="px-2">
                 <TableProperties className="h-4 w-4" />
-              </ToggleGroupItem>
-              <ToggleGroupItem value="kanban" aria-label={t.boardView || 'Board view'} className="px-2">
-                <Kanban className="h-4 w-4" />
               </ToggleGroupItem>
             </ToggleGroup>
 
@@ -160,17 +156,6 @@ const MyTasksPage: React.FC = () => {
             userId={user.id}
             groupBy={groupBy}
           />
-        ) : viewMode === 'list' ? (
-          <>
-            <UnifiedTaskList
-              searchQuery={searchQuery}
-              userId={user.id}
-              groupBy={groupBy}
-            />
-            <div className="mt-8">
-              <RecentlyCompletedTasks searchQuery={searchQuery} />
-            </div>
-          </>
         ) : (
           <KanbanView userId={user.id} searchQuery={searchQuery} groupBy={groupBy} />
         )}
