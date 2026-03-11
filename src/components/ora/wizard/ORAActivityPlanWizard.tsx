@@ -460,7 +460,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
       if (inserted) idMap.set(act.id, inserted.id);
     }
 
-    // Add "Create P2A Plan" activity assigned to Sr. ORA Engineer
+    // Add "Develop P2A Plan" activity assigned to Sr. ORA Engineer
     const { data: projectTeam } = await supabase
       .from('project_team_members')
       .select('user_id, role')
