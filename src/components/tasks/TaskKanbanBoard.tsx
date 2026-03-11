@@ -451,7 +451,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     // ── P2A tasks: intercept drags that should go through the wizard ──
     if (isP2aTask) {
       // Done → In Progress / Todo: show approval void warning (same as ORA plan)
-      if (task.kanbanColumn === 'done' && (targetColumn === 'in_progress' || targetColumn === 'todo' || targetColumn === 'waiting')) {
+      if (task.kanbanColumn === 'done' && (targetColumn === 'in_progress' || targetColumn === 'todo')) {
         // Check if this task is approval-protected (has been submitted/approved)
         if (task.isApprovalProtected) {
           setWarningState({ task, targetColumn });

@@ -84,7 +84,7 @@ export function useKanbanDragDrop() {
 
     // Determine if this is a P2A revert (moving P2A task away from done)
     const isP2aTask = meta?.action === 'create_p2a_plan';
-    const isP2aRevert = isP2aTask && task.kanbanColumn === 'done' && (targetColumn === 'in_progress' || targetColumn === 'todo' || targetColumn === 'waiting');
+    const isP2aRevert = isP2aTask && task.kanbanColumn === 'done' && (targetColumn === 'in_progress' || targetColumn === 'todo');
 
     queryClient.setQueryData(userTasksKey, (old: any) => {
       if (!old?.tasks) return old;
@@ -118,11 +118,10 @@ export function useKanbanDragDrop() {
       // Update user_tasks status
       const isRealTaskId = userTask.id && !userTask.id.startsWith('ws-') && !userTask.id.startsWith('ora-');
       if (isRealTaskId) {
-        const { error: taskErr } = await supabase
+        await supabase
           .from('user_tasks')
           .update({ status: newTaskStatus, updated_at: new Date().toISOString() })
           .eq('id', userTask.id);
-        if (taskErr) console.error('[KanbanDrag] user_tasks update failed:', taskErr);
       }
 
       // Sync ORA plan activity status if applicable
@@ -132,8 +131,9 @@ export function useKanbanDragDrop() {
           : oraActivityId;
 
         const newOraStatus = COLUMN_TO_ORA_STATUS[targetColumn];
+        const isP2aRevert = isP2aTask && task.kanbanColumn === 'done' && targetColumn === 'in_progress';
 
-        // For P2A tasks: when reverting from Done, set 86% (6/7 wizard steps).
+        // For P2A tasks: when reverting from Done → In Progress, set 86% (6/7 wizard steps).
         // For P2A tasks in any other non-done move, preserve current progress (don't reset to 0).
         // For non-P2A tasks, reset to 0.
         const newCompletion = isP2aRevert ? 86 : (isP2aTask ? undefined : 0);
@@ -141,17 +141,16 @@ export function useKanbanDragDrop() {
         const updatePayload: Record<string, any> = { status: newOraStatus };
         if (newCompletion !== undefined) updatePayload.completion_percentage = newCompletion;
 
-        const { error: oraErr } = await (supabase as any)
+        await (supabase as any)
           .from('ora_plan_activities')
           .update(updatePayload)
           .eq('id', realId);
-        if (oraErr) console.error('[KanbanDrag] ora_plan_activities update failed:', oraErr);
       }
 
       // ── P2A Plan status revert: when a P2A task is moved back to in_progress or todo,
       // revert the P2A plan to DRAFT and reset approvers so the user can continue editing ──
       const p2aProjectId = meta?.project_id as string | undefined;
-      if (isP2aTask && p2aProjectId && (targetColumn === 'in_progress' || targetColumn === 'todo' || targetColumn === 'waiting')) {
+      if (isP2aTask && p2aProjectId && (targetColumn === 'in_progress' || targetColumn === 'todo')) {
         const client = supabase as any;
         // Find the P2A plan for this project
         const { data: p2aPlans } = await client
@@ -211,13 +210,9 @@ export function useKanbanDragDrop() {
           queryClient.invalidateQueries({ queryKey: ['p2a-plan-by-project'] });
           queryClient.invalidateQueries({ queryKey: ['ora-activity-detail'] });
 
-          // NOTE: Do NOT invalidate ['user-tasks'] here — it causes a race condition
-          // where the refetch returns stale data and overwrites the optimistic update,
-          // snapping the card back to "Done". Instead, delay the invalidation to let
-          // DB writes settle before refetching.
-          setTimeout(() => {
-            queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
-          }, 1500);
+          // Force refresh user-tasks query so p2aActivityProgress picks up the
+          // updated completion_percentage (86%) from ora_plan_activities.
+          queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
 
           toast.info('P2A Plan reverted to Draft — approvals have been reset');
         }
