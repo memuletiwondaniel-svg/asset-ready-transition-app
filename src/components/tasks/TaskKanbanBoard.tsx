@@ -579,13 +579,12 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
               <DroppableColumn key={col.key} columnKey={col.key}>
                 <div className="bg-muted/40 rounded-xl border border-border shadow-sm flex flex-col h-full overflow-hidden">
                   {/* Column header – tinted background */}
-                  <div className={cn("flex items-center justify-between px-3 py-2.5 border-b border-border/40", col.headerBg)}>
+                  <div className={cn("relative flex items-center justify-center px-3 py-3 border-b border-border/40", col.headerBg)}>
                     <div className="flex items-center gap-2">
-                      <div className={cn("w-2 h-2 rounded-full", col.dotColor)} />
-                      <ColIcon className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span className="text-sm font-bold text-foreground">{col.label}</span>
+                      <ColIcon className={cn("h-4 w-4", col.iconColor)} />
+                      <span className="text-xs font-bold uppercase tracking-wider text-foreground">{col.label}</span>
                     </div>
-                    <Badge variant="secondary" className="text-xs font-semibold px-2 py-0.5 min-w-[1.5rem] text-center">{col.tasks.length}</Badge>
+                    <Badge variant="secondary" className="absolute right-3 text-xs font-semibold px-2 py-0.5 min-w-[1.5rem] text-center">{col.tasks.length}</Badge>
                   </div>
                   {/* Cards */}
                   <ScrollArea className="flex-1 max-h-[50vh] sm:max-h-[calc(100vh-320px)]">
