@@ -714,6 +714,7 @@ export function useP2APlanWizard(projectId: string, projectCode: string) {
       queryClient.invalidateQueries({ queryKey: ['user-orp-activities'] });
       queryClient.invalidateQueries({ queryKey: ['p2a-plan-exists-task'] });
       queryClient.invalidateQueries({ queryKey: ['p2a-plan-exists-sheet'] });
+      queryClient.invalidateQueries({ queryKey: ['p2a-plan-exists'] });
       queryClient.invalidateQueries({ queryKey: ['ora-activity-dates'] });
       setState(initialState);
       setDraftLoaded(false);
