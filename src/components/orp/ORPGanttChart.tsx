@@ -717,7 +717,9 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
         title: 'Develop P2A Plan',
         description: deliverable.deliverable?.description || '',
         type: 'ora_activity',
-        status: deliverable.status === 'COMPLETED' ? 'completed' : deliverable.status === 'IN_PROGRESS' ? 'in_progress' : 'pending',
+        status: existingP2APlan?.status === 'ACTIVE' || existingP2APlan?.status === 'COMPLETED'
+          ? 'completed'
+          : deliverable.status === 'COMPLETED' ? 'completed' : deliverable.status === 'IN_PROGRESS' ? 'in_progress' : 'pending',
         metadata: {
           action: 'create_p2a_plan',
           activity_name: deliverable.deliverable?.name,
