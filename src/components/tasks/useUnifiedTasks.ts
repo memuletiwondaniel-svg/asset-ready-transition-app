@@ -102,10 +102,11 @@ export function useUnifiedTasks(userId: string) {
   // Bundle tasks and ORA activity dates now come from the same useUserTasks query (no extra network calls)
   const { tasks: userTasks, bundleTasks, oraActivityDates, p2aActivityProgress, loading: tasksLoading, updateTaskStatus } = useUserTasks();
 
-  // Only show loading skeleton on the very first load (no data at all yet)
+  // Show cards incrementally: only block on the primary user_tasks hook for first load.
+  // Other hooks (PSSR, P2A approvals, ORA, OWL) add cards as they resolve.
   const hasLoadedOnce = useRef(false);
-  const isLoading = !hasLoadedOnce.current && (pssrLoading || handoverLoading || oraLoading || owlLoading || tasksLoading);
-  if (!isLoading && (pssrLoading === false || handoverLoading === false || oraLoading === false || owlLoading === false || tasksLoading === false)) {
+  const isLoading = !hasLoadedOnce.current && tasksLoading;
+  if (!tasksLoading) {
     hasLoadedOnce.current = true;
   }
 
