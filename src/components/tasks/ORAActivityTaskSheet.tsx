@@ -956,7 +956,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
         {/* Pinned footer */}
         <div className="border-t bg-background px-4 sm:px-6 py-4 shrink-0">
           <div className="flex items-center justify-between">
-            {!isReadOnly ? (
+            {!isReadOnly && metadata?.source !== 'ora_workflow' ? (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button
