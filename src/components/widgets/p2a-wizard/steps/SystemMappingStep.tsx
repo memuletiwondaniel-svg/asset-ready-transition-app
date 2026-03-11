@@ -108,7 +108,7 @@ const VCRPillSelector: React.FC<{
         </button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-48 p-1"
+        className="w-48 p-1 z-[150]"
         align="end"
         sideOffset={4}
         onClick={(e) => e.stopPropagation()}
