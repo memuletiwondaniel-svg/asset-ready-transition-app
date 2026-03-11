@@ -316,7 +316,7 @@ export const VCREditOverlay: React.FC<VCREditOverlayProps> = ({
             <SelectTrigger className="h-8 text-sm">
               <SelectValue placeholder="Unassigned" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="z-[150]">
               <SelectItem value="none">Unassigned</SelectItem>
               {phases.map(p => (
                 <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
