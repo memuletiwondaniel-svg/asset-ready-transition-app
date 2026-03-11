@@ -11,7 +11,6 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   DropdownMenu,
@@ -26,7 +25,6 @@ import { ORAActivityTaskSheet } from './ORAActivityTaskSheet';
 import { P2APlanCreationWizard } from '@/components/widgets/p2a-wizard/P2APlanCreationWizard';
 import { P2AWorkspaceOverlay } from '@/components/widgets/P2AWorkspaceOverlay';
 import { useQueryClient } from '@tanstack/react-query';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ProjectIdBadge } from '@/components/ui/project-id-badge';
 import {
   ArrowUpDown,
@@ -34,41 +32,31 @@ import {
   ArrowDown,
   Columns3,
   CheckCircle2,
-  Calendar,
-  Clock,
   AlertTriangle,
-  Zap,
   ChevronRight,
-  SlidersHorizontal,
-  ExternalLink,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, isPast, isToday, differenceInDays } from 'date-fns';
 import type { UserTask } from '@/hooks/useUserTasks';
 import { useUnifiedTasks, FILTER_OPTIONS, type CategoryFilter, type UnifiedTask } from './useUnifiedTasks';
 
-type SortField = 'priority' | 'title' | 'project' | 'category' | 'status' | 'dueDate' | 'progress' | 'created';
+type SortField = 'title' | 'project' | 'category' | 'dueDate' | 'created';
 type SortDirection = 'asc' | 'desc';
 
-interface ColumnDef {
+interface ColumnConfig {
   id: string;
   label: string;
   visible: boolean;
-  sortable: boolean;
   sortField?: SortField;
-  minWidth?: string;
 }
 
-const DEFAULT_COLUMNS: ColumnDef[] = [
-  { id: 'priority', label: 'Priority', visible: true, sortable: true, sortField: 'priority', minWidth: 'w-[90px]' },
-  { id: 'title', label: 'Task', visible: true, sortable: true, sortField: 'title', minWidth: 'min-w-[240px]' },
-  { id: 'project', label: 'Project', visible: true, sortable: true, sortField: 'project', minWidth: 'w-[120px]' },
-  { id: 'category', label: 'Category', visible: true, sortable: true, sortField: 'category', minWidth: 'w-[130px]' },
-  { id: 'status', label: 'Status', visible: true, sortable: true, sortField: 'status', minWidth: 'w-[140px]' },
-  { id: 'dueDate', label: 'Due Date', visible: true, sortable: true, sortField: 'dueDate', minWidth: 'w-[120px]' },
-  { id: 'progress', label: 'Progress', visible: true, sortable: true, sortField: 'progress', minWidth: 'w-[140px]' },
-  { id: 'created', label: 'Created', visible: false, sortable: true, sortField: 'created', minWidth: 'w-[110px]' },
-  { id: 'actions', label: '', visible: true, sortable: false, minWidth: 'w-[60px]' },
+const DEFAULT_COLUMNS: ColumnConfig[] = [
+  { id: 'task', label: 'Task', visible: true, sortField: 'title' },
+  { id: 'project', label: 'Project', visible: true, sortField: 'project' },
+  { id: 'category', label: 'Type', visible: true, sortField: 'category' },
+  { id: 'due', label: 'Due', visible: true, sortField: 'dueDate' },
+  { id: 'progress', label: 'Progress', visible: true },
+  { id: 'created', label: 'Created', visible: false, sortField: 'created' },
 ];
 
 interface TaskTableViewProps {
@@ -77,17 +65,16 @@ interface TaskTableViewProps {
   groupBy?: 'none' | 'project' | 'category';
 }
 
-export const TaskTableView: React.FC<TaskTableViewProps> = ({ searchQuery, userId, groupBy = 'none' }) => {
+export const TaskTableView: React.FC<TaskTableViewProps> = ({ searchQuery, userId }) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { allTasks, isLoading, categoryCounts, updateTaskStatus } = useUnifiedTasks(userId);
 
   const [activeFilter, setActiveFilter] = useState<CategoryFilter>('all');
-  const [columns, setColumns] = useState<ColumnDef[]>(DEFAULT_COLUMNS);
-  const [sortField, setSortField] = useState<SortField>('priority');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [columns, setColumns] = useState<ColumnConfig[]>(DEFAULT_COLUMNS);
+  const [sortField, setSortField] = useState<SortField | null>(null);
+  const [sortDir, setSortDir] = useState<SortDirection>('asc');
 
-  // Detail sheets
   const [selectedTask, setSelectedTask] = useState<UserTask | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [oraActivityTask, setOraActivityTask] = useState<UserTask | null>(null);
@@ -102,27 +89,18 @@ export const TaskTableView: React.FC<TaskTableViewProps> = ({ searchQuery, userI
     else setP2aWizardOpen(true);
   }, []);
 
-  const toggleColumnVisibility = (columnId: string) => {
-    setColumns(prev => prev.map(col =>
-      col.id === columnId ? { ...col, visible: !col.visible } : col
-    ));
+  const toggleCol = (id: string) => {
+    setColumns(prev => prev.map(c => c.id === id ? { ...c, visible: !c.visible } : c));
   };
 
   const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortDirection(d => d === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('desc');
-    }
+    if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortField(field); setSortDir('asc'); }
   };
 
-  // Filter & sort
-  const processedTasks = useMemo(() => {
+  const tasks = useMemo(() => {
     let result = allTasks;
-    if (activeFilter !== 'all') {
-      result = result.filter(t => t.category === activeFilter);
-    }
+    if (activeFilter !== 'all') result = result.filter(t => t.category === activeFilter);
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter(t =>
@@ -132,38 +110,28 @@ export const TaskTableView: React.FC<TaskTableViewProps> = ({ searchQuery, userI
         t.categoryLabel.toLowerCase().includes(q)
       );
     }
-    // Sort
-    const sorted = [...result].sort((a, b) => {
-      const dir = sortDirection === 'asc' ? 1 : -1;
-      switch (sortField) {
-        case 'priority': return (b.smartPriority.score - a.smartPriority.score) * dir;
-        case 'title': return a.title.localeCompare(b.title) * dir;
-        case 'project': return (a.project || '').localeCompare(b.project || '') * dir;
-        case 'category': return a.categoryLabel.localeCompare(b.categoryLabel) * dir;
-        case 'status': return a.status.localeCompare(b.status) * dir;
-        case 'dueDate': {
-          const aD = a.dueDate || a.endDate || '';
-          const bD = b.dueDate || b.endDate || '';
-          return aD.localeCompare(bD) * dir;
+    if (sortField) {
+      const dir = sortDir === 'asc' ? 1 : -1;
+      result = [...result].sort((a, b) => {
+        switch (sortField) {
+          case 'title': return a.title.localeCompare(b.title) * dir;
+          case 'project': return (a.project || '').localeCompare(b.project || '') * dir;
+          case 'category': return a.categoryLabel.localeCompare(b.categoryLabel) * dir;
+          case 'dueDate': return ((a.dueDate || a.endDate || '') .localeCompare(b.dueDate || b.endDate || '')) * dir;
+          case 'created': return a.createdAt.localeCompare(b.createdAt) * dir;
+          default: return 0;
         }
-        case 'progress': return ((a.progressPercentage || 0) - (b.progressPercentage || 0)) * dir;
-        case 'created': return a.createdAt.localeCompare(b.createdAt) * dir;
-        default: return 0;
-      }
-    });
-    return sorted;
-  }, [allTasks, activeFilter, searchQuery, sortField, sortDirection]);
+      });
+    }
+    return result;
+  }, [allTasks, activeFilter, searchQuery, sortField, sortDir]);
 
   const handleTaskClick = (task: UnifiedTask) => {
     if (task.isWaiting) return;
     if (task.userTask) {
       const meta = task.userTask.metadata as Record<string, any> | undefined;
-      const isOraActivity = task.userTask.type === 'ora_activity' || meta?.action === 'complete_ora_activity' || meta?.action === 'create_p2a_plan' || meta?.ora_plan_activity_id;
-      if (isOraActivity && !task.navigateTo) {
-        setOraActivityTask(task.userTask);
-        setOraActivityOpen(true);
-        return;
-      }
+      const isOra = task.userTask.type === 'ora_activity' || meta?.action === 'complete_ora_activity' || meta?.action === 'create_p2a_plan' || meta?.ora_plan_activity_id;
+      if (isOra && !task.navigateTo) { setOraActivityTask(task.userTask); setOraActivityOpen(true); return; }
       setSelectedTask(task.userTask);
       setDetailOpen(true);
     } else if (task.navigateTo) {
@@ -171,31 +139,20 @@ export const TaskTableView: React.FC<TaskTableViewProps> = ({ searchQuery, userI
     }
   };
 
-  const visibleColumns = columns.filter(c => c.visible);
-  const toggleableColumns = columns.filter(c => c.id !== 'actions');
-
-  const SortIcon = ({ field }: { field: SortField }) => {
-    if (sortField !== field) return <ArrowUpDown className="h-3 w-3 ml-1 opacity-40" />;
-    return sortDirection === 'asc'
-      ? <ArrowUp className="h-3 w-3 ml-1 text-primary" />
-      : <ArrowDown className="h-3 w-3 ml-1 text-primary" />;
-  };
+  const visible = columns.filter(c => c.visible);
 
   if (isLoading) {
     return (
-      <div className="space-y-3">
-        <Skeleton className="h-10 w-full rounded-lg" />
-        {[1, 2, 3, 4, 5].map(i => (
-          <Skeleton key={i} className="h-14 w-full rounded-lg" />
-        ))}
+      <div className="space-y-2">
+        {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-12 w-full rounded-lg" />)}
       </div>
     );
   }
 
   return (
     <>
-      {/* Filter bar + Column toggle */}
-      <div className="flex items-center justify-between gap-3 mb-4">
+      {/* Top bar: filters + columns toggle */}
+      <div className="flex items-center justify-between gap-3 mb-5">
         <div className="flex items-center gap-1.5 flex-wrap">
           {FILTER_OPTIONS.map(opt => {
             const count = categoryCounts[opt.value] || 0;
@@ -213,264 +170,153 @@ export const TaskTableView: React.FC<TaskTableViewProps> = ({ searchQuery, userI
               >
                 {opt.label}
                 <span className={cn(
-                  "text-[10px] rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-semibold",
-                  activeFilter === opt.value
-                    ? "bg-primary-foreground/20 text-primary-foreground"
-                    : "bg-background/80 text-muted-foreground"
-                )}>
-                  {count}
-                </span>
+                  "text-[10px] rounded-full px-1.5 min-w-[18px] text-center font-semibold",
+                  activeFilter === opt.value ? "bg-primary-foreground/20 text-primary-foreground" : "bg-background/80 text-muted-foreground"
+                )}>{count}</span>
               </button>
             );
           })}
         </div>
 
-        <div className="flex items-center gap-1.5">
-          {/* Column visibility */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8">
-                <Columns3 className="h-3.5 w-3.5" />
-                Columns
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuLabel className="text-xs">Toggle columns</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {toggleableColumns.map(col => (
-                <DropdownMenuCheckboxItem
-                  key={col.id}
-                  checked={col.visible}
-                  onCheckedChange={() => toggleColumnVisibility(col.id)}
-                  className="text-xs"
-                >
-                  {col.label}
-                </DropdownMenuCheckboxItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8">
+              <Columns3 className="h-3.5 w-3.5" /> Columns
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-44">
+            <DropdownMenuLabel className="text-xs">Show / Hide</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {columns.map(col => (
+              <DropdownMenuCheckboxItem key={col.id} checked={col.visible} onCheckedChange={() => toggleCol(col.id)} className="text-xs">
+                {col.label}
+              </DropdownMenuCheckboxItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
-      {/* Results count */}
-      <p className="text-xs text-muted-foreground mb-3">
-        {processedTasks.length} task{processedTasks.length !== 1 ? 's' : ''}
-      </p>
-
-      {/* Table */}
-      {processedTasks.length === 0 ? (
+      {/* Empty state */}
+      {tasks.length === 0 ? (
         <div className="flex items-center justify-center py-16">
-          <div className="text-center max-w-md">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-muted/50 mb-4">
-              <CheckCircle2 className="h-7 w-7 text-muted-foreground" />
-            </div>
-            <p className="text-muted-foreground">
+          <div className="text-center">
+            <CheckCircle2 className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
+            <p className="text-sm text-muted-foreground">
               {searchQuery ? 'No tasks match your search.' : activeFilter !== 'all' ? 'No tasks in this category.' : "You're all caught up!"}
             </p>
           </div>
         </div>
       ) : (
-        <div className="rounded-xl border border-border/60 bg-card/50 backdrop-blur-sm overflow-hidden shadow-sm">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/30 hover:bg-muted/30 border-b border-border/50">
-                  {visibleColumns.map(col => (
-                    <TableHead
-                      key={col.id}
-                      className={cn(
-                        "h-10 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70",
-                        col.minWidth,
-                        col.sortable && "cursor-pointer select-none hover:text-foreground transition-colors"
+        <div className="rounded-xl border border-border/50 bg-card overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/40 hover:bg-muted/40">
+                {visible.map(col => (
+                  <TableHead
+                    key={col.id}
+                    className={cn(
+                      "h-9 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground",
+                      col.sortField && "cursor-pointer select-none hover:text-foreground transition-colors"
+                    )}
+                    onClick={() => col.sortField && handleSort(col.sortField)}
+                  >
+                    <span className="inline-flex items-center gap-0.5">
+                      {col.label}
+                      {col.sortField && (
+                        sortField === col.sortField
+                          ? (sortDir === 'asc' ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />)
+                          : <ArrowUpDown className="h-3 w-3 opacity-30" />
                       )}
-                      onClick={() => col.sortable && col.sortField && handleSort(col.sortField)}
-                    >
-                      <div className="flex items-center">
-                        {col.label}
-                        {col.sortable && col.sortField && <SortIcon field={col.sortField} />}
-                      </div>
-                    </TableHead>
-                  ))}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {processedTasks.map((task, idx) => (
-                  <TaskTableRow
-                    key={task.id}
-                    task={task}
-                    visibleColumns={visibleColumns}
-                    onClick={() => handleTaskClick(task)}
-                    isLast={idx === processedTasks.length - 1}
-                  />
+                    </span>
+                  </TableHead>
                 ))}
-              </TableBody>
-            </Table>
-          </div>
+                <TableHead className="w-10" />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {tasks.map(task => (
+                <SimpleRow key={task.id} task={task} visible={visible} onClick={() => handleTaskClick(task)} />
+              ))}
+            </TableBody>
+          </Table>
         </div>
       )}
 
-      {/* Detail Sheets */}
-      <TaskDetailSheet
-        task={selectedTask}
-        open={detailOpen}
-        onOpenChange={setDetailOpen}
-        onApprove={(id) => updateTaskStatus(id, 'completed')}
-        onReject={(id) => updateTaskStatus(id, 'cancelled')}
-      />
-      <ORAActivityTaskSheet
-        task={oraActivityTask}
-        open={oraActivityOpen}
+      {/* Sheets */}
+      <TaskDetailSheet task={selectedTask} open={detailOpen} onOpenChange={setDetailOpen}
+        onApprove={(id) => updateTaskStatus(id, 'completed')} onReject={(id) => updateTaskStatus(id, 'cancelled')} />
+      <ORAActivityTaskSheet task={oraActivityTask} open={oraActivityOpen}
         onOpenChange={(open) => { setOraActivityOpen(open); if (!open) setOraActivityTask(null); }}
-        onOpenP2AWizard={handleOpenP2AWizard}
-      />
-      <P2APlanCreationWizard
-        open={p2aWizardOpen}
-        onOpenChange={setP2aWizardOpen}
-        projectId={p2aTarget.projectId}
-        projectCode={p2aTarget.projectCode}
-        onSuccess={() => {
-          setP2aWizardOpen(false);
-          queryClient.invalidateQueries({ queryKey: ['orp-plan'] });
-          queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
-        }}
-        onOpenWorkspace={() => { setP2aWizardOpen(false); setP2aWorkspaceOpen(true); }}
-      />
-      <P2AWorkspaceOverlay
-        open={p2aWorkspaceOpen}
-        onOpenChange={setP2aWorkspaceOpen}
-        projectId={p2aTarget.projectId}
-        projectNumber={p2aTarget.projectCode}
-        onReturnToWizard={() => { setP2aWorkspaceOpen(false); setP2aWizardOpen(true); }}
-      />
+        onOpenP2AWizard={handleOpenP2AWizard} />
+      <P2APlanCreationWizard open={p2aWizardOpen} onOpenChange={setP2aWizardOpen}
+        projectId={p2aTarget.projectId} projectCode={p2aTarget.projectCode}
+        onSuccess={() => { setP2aWizardOpen(false); queryClient.invalidateQueries({ queryKey: ['orp-plan'] }); queryClient.invalidateQueries({ queryKey: ['user-tasks'] }); }}
+        onOpenWorkspace={() => { setP2aWizardOpen(false); setP2aWorkspaceOpen(true); }} />
+      <P2AWorkspaceOverlay open={p2aWorkspaceOpen} onOpenChange={setP2aWorkspaceOpen}
+        projectId={p2aTarget.projectId} projectNumber={p2aTarget.projectCode}
+        onReturnToWizard={() => { setP2aWorkspaceOpen(false); setP2aWizardOpen(true); }} />
     </>
   );
 };
 
-// ─── Row Component ───
+// ─── Simple Row ───
 
-const TaskTableRow: React.FC<{
+const SimpleRow: React.FC<{
   task: UnifiedTask;
-  visibleColumns: ColumnDef[];
+  visible: ColumnConfig[];
   onClick: () => void;
-  isLast: boolean;
-}> = ({ task, visibleColumns, onClick, isLast }) => {
+}> = ({ task, visible, onClick }) => {
   const Icon = task.icon;
-  const sp = task.smartPriority;
   const dueDate = task.dueDate || task.endDate;
   const isOverdue = dueDate && isPast(new Date(dueDate)) && !isToday(new Date(dueDate));
   const isDueToday = dueDate && isToday(new Date(dueDate));
 
-  const priorityConfig = {
-    critical: { label: 'Critical', className: 'bg-destructive/10 text-destructive border-destructive/20' },
-    high: { label: 'High', className: 'bg-destructive/10 text-destructive border-destructive/20' },
-    medium: { label: 'Medium', className: 'bg-amber-500/10 text-amber-600 border-amber-500/20' },
-    low: { label: 'Low', className: 'bg-muted text-muted-foreground border-border/50' },
-  };
-  const pConfig = priorityConfig[sp.level] || priorityConfig.low;
-
-  const renderCell = (col: ColumnDef) => {
+  const renderCell = (col: ColumnConfig) => {
     switch (col.id) {
-      case 'priority':
-        return (
-          <TooltipProvider delayDuration={300}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Badge variant="outline" className={cn("text-[10px] font-semibold px-2 py-0.5", pConfig.className)}>
-                  {pConfig.label}
-                </Badge>
-              </TooltipTrigger>
-              <TooltipContent side="right" className="max-w-[200px]">
-                <div className="text-xs space-y-1">
-                  <p className="font-semibold capitalize">{sp.level} Priority</p>
-                  {sp.reasons.length > 0 && <p className="text-muted-foreground">{sp.reasons.join(' · ')}</p>}
-                  <p className="text-muted-foreground/70">Score: {sp.score}/100</p>
-                </div>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        );
-
-      case 'title':
+      case 'task':
         return (
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className={cn("w-7 h-7 rounded-md flex items-center justify-center shrink-0", task.categoryColor)}>
+            <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center shrink-0", task.categoryColor)}>
               <Icon className="h-3.5 w-3.5" />
             </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5">
-                <span className="font-medium text-sm text-foreground truncate">
-                  {task.project ? task.title.replace(new RegExp(`\\s*[–\\-]\\s*${task.project.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`), '') : task.title}
-                </span>
-                {task.isNew && (
-                  <Badge variant="secondary" className="text-[9px] px-1 py-0 bg-primary/10 text-primary shrink-0">NEW</Badge>
-                )}
-                {sp.isStartingSoon && (
-                  <Badge variant="outline" className="text-[9px] px-1 py-0 border-amber-500/30 bg-amber-500/10 text-amber-600 shrink-0 gap-0.5">
-                    <Zap className="h-2.5 w-2.5" />Soon
-                  </Badge>
-                )}
-              </div>
+            <div className="min-w-0">
+              <span className="font-medium text-sm text-foreground truncate block">
+                {task.title}
+              </span>
               {task.subtitle && (
-                <p className="text-[11px] text-muted-foreground/60 truncate mt-0.5">{task.subtitle}</p>
+                <span className="text-[11px] text-muted-foreground truncate block">{task.subtitle}</span>
               )}
             </div>
+            {task.isNew && (
+              <Badge variant="secondary" className="text-[9px] px-1 py-0 bg-primary/10 text-primary shrink-0">NEW</Badge>
+            )}
           </div>
         );
 
       case 'project':
-        return task.project ? (
-          <ProjectIdBadge size="sm" projectId={task.project}>{task.project}</ProjectIdBadge>
-        ) : (
-          <span className="text-xs text-muted-foreground/50">—</span>
-        );
+        return task.project
+          ? <ProjectIdBadge size="sm" projectId={task.project}>{task.project}</ProjectIdBadge>
+          : <span className="text-muted-foreground/40 text-xs">—</span>;
 
       case 'category':
         return (
-          <Badge variant="outline" className={cn("text-[10px] font-medium gap-1", task.categoryColor)}>
-            <Icon className="h-2.5 w-2.5" />
-            {task.categoryLabel}
-          </Badge>
+          <span className="text-xs text-muted-foreground">{task.categoryLabel}</span>
         );
 
-      case 'status':
-        if (task.isWaiting) {
-          return (
-            <Badge variant="outline" className="text-[10px] text-muted-foreground border-muted-foreground/20 gap-1">
-              <Clock className="h-2.5 w-2.5" />Waiting
-            </Badge>
-          );
-        }
-        return <span className="text-xs text-foreground capitalize">{task.status.replace(/_/g, ' ')}</span>;
-
-      case 'dueDate':
-        if (!dueDate && !task.startDate) return <span className="text-xs text-muted-foreground/40">—</span>;
+      case 'due':
+        if (!dueDate) return <span className="text-muted-foreground/40 text-xs">—</span>;
         return (
-          <div className="flex flex-col gap-0.5">
-            {task.startDate && dueDate ? (
-              <div className="flex items-center gap-1 text-[11px]">
-                <Calendar className="h-3 w-3 text-muted-foreground/50" />
-                <span className="text-muted-foreground">{format(new Date(task.startDate), 'MMM d')}</span>
-                <span className="text-muted-foreground/40">→</span>
-                <span className={cn(isOverdue && 'text-destructive font-medium', isDueToday && 'text-amber-600 font-medium')}>
-                  {format(new Date(dueDate), 'MMM d')}
-                </span>
-              </div>
-            ) : dueDate ? (
-              <span className={cn(
-                "text-xs",
-                isOverdue && "text-destructive font-medium",
-                isDueToday && "text-amber-600 font-medium",
-                !isOverdue && !isDueToday && "text-muted-foreground"
-              )}>
-                {isOverdue && <AlertTriangle className="h-3 w-3 inline mr-1" />}
-                {format(new Date(dueDate), 'MMM d')}
-              </span>
-            ) : null}
-            {isOverdue && dueDate && (
-              <span className="text-[10px] text-destructive">{differenceInDays(new Date(), new Date(dueDate))}d overdue</span>
-            )}
-            {isDueToday && <span className="text-[10px] text-amber-600">Due today</span>}
-          </div>
+          <span className={cn(
+            "text-xs",
+            isOverdue && "text-destructive font-medium",
+            isDueToday && "text-amber-600 font-medium",
+            !isOverdue && !isDueToday && "text-muted-foreground"
+          )}>
+            {isOverdue && <AlertTriangle className="h-3 w-3 inline mr-1" />}
+            {format(new Date(dueDate), 'MMM d')}
+            {isOverdue && <span className="ml-1 text-[10px]">({differenceInDays(new Date(), new Date(dueDate))}d late)</span>}
+            {isDueToday && <span className="ml-1 text-[10px]">(today)</span>}
+          </span>
         );
 
       case 'progress':
@@ -478,7 +324,7 @@ const TaskTableRow: React.FC<{
           return (
             <div className="flex items-center gap-2">
               <Progress value={task.progressPercentage || 0} className="h-1.5 w-16 bg-muted/50" />
-              <span className="text-[11px] text-muted-foreground whitespace-nowrap">{task.completedItems}/{task.totalItems}</span>
+              <span className="text-[11px] text-muted-foreground">{task.completedItems}/{task.totalItems}</span>
             </div>
           );
         }
@@ -490,22 +336,10 @@ const TaskTableRow: React.FC<{
             </div>
           );
         }
-        return <span className="text-xs text-muted-foreground/40">—</span>;
+        return <span className="text-muted-foreground/40 text-xs">—</span>;
 
       case 'created':
         return <span className="text-xs text-muted-foreground">{format(new Date(task.createdAt), 'MMM d')}</span>;
-
-      case 'actions':
-        return (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
-            onClick={(e) => { e.stopPropagation(); }}
-          >
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-          </Button>
-        );
 
       default:
         return null;
@@ -516,19 +350,20 @@ const TaskTableRow: React.FC<{
     <TableRow
       onClick={onClick}
       className={cn(
-        "group cursor-pointer transition-colors border-border/30",
-        "hover:bg-accent/50",
+        "group cursor-pointer transition-colors",
+        "hover:bg-accent/40",
         task.isWaiting && "opacity-50 cursor-default",
         task.isNew && "bg-primary/[0.02]",
-        sp.isOverdue && "bg-destructive/[0.02]",
-        isLast && "border-b-0"
       )}
     >
-      {visibleColumns.map(col => (
-        <TableCell key={col.id} className={cn("py-3 px-4", col.minWidth)}>
+      {visible.map(col => (
+        <TableCell key={col.id} className="py-2.5 px-4">
           {renderCell(col)}
         </TableCell>
       ))}
+      <TableCell className="py-2.5 px-2 w-10">
+        <ChevronRight className="h-4 w-4 text-muted-foreground/30 group-hover:text-muted-foreground transition-colors" />
+      </TableCell>
     </TableRow>
   );
 };
