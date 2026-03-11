@@ -72,10 +72,9 @@ interface ApprovalWarningState {
 
 
 const getColumns = (t: any) => [
-  { key: 'todo' as const, label: t.kanbanToDo || 'To Do', icon: Circle, accent: 'border-l-blue-500', headerBg: 'bg-blue-50/50 dark:bg-blue-950/15', iconColor: 'text-blue-500', emptyIcon: Inbox, emptyMsg: t.kanbanEmptyToDo || 'Nothing to do — nice!' },
-  { key: 'in_progress' as const, label: t.kanbanInProgress || 'In Progress', icon: Loader2, accent: 'border-l-amber-500', headerBg: 'bg-amber-50/50 dark:bg-amber-950/15', iconColor: 'text-amber-500', emptyIcon: Circle, emptyMsg: t.kanbanEmptyInProgress || 'No tasks in progress' },
-  { key: 'waiting' as const, label: t.kanbanWaiting || 'Waiting', icon: Clock, accent: 'border-l-slate-400', headerBg: 'bg-slate-50/50 dark:bg-slate-900/15', iconColor: 'text-slate-400', emptyIcon: Clock, emptyMsg: t.kanbanEmptyWaiting || 'Nothing waiting' },
-  { key: 'done' as const, label: t.kanbanDone || 'Done', icon: CheckCircle2, accent: 'border-l-emerald-500', headerBg: 'bg-emerald-50/50 dark:bg-emerald-950/15', iconColor: 'text-emerald-500', emptyIcon: CheckCircle2, emptyMsg: t.kanbanEmptyDone || 'All clear!' },
+  { key: 'todo' as const, label: t.kanbanToDo || 'To Do', icon: Circle, accent: 'border-l-blue-500', headerBg: 'bg-blue-100/70 dark:bg-blue-950/30', iconColor: 'text-blue-600', emptyIcon: Inbox, emptyMsg: t.kanbanEmptyToDo || 'Nothing to do — nice!' },
+  { key: 'in_progress' as const, label: t.kanbanInProgress || 'In Progress', icon: Loader2, accent: 'border-l-amber-500', headerBg: 'bg-amber-100/70 dark:bg-amber-950/30', iconColor: 'text-amber-600', emptyIcon: Circle, emptyMsg: t.kanbanEmptyInProgress || 'No tasks in progress' },
+  { key: 'done' as const, label: t.kanbanDone || 'Done', icon: CheckCircle2, accent: 'border-l-emerald-500', headerBg: 'bg-emerald-100/70 dark:bg-emerald-950/30', iconColor: 'text-emerald-600', emptyIcon: CheckCircle2, emptyMsg: t.kanbanEmptyDone || 'All clear!' },
 ];
 
 // ─── Approval Void Warning Dialog ──────────────────────────────────
@@ -516,7 +515,11 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
   const columnData = useMemo(() => {
     return COLUMNS.map(col => ({
       ...col,
-      tasks: tasks.filter(t => t.kanbanColumn === col.key),
+      tasks: tasks.filter(t => 
+        col.key === 'todo' 
+          ? (t.kanbanColumn === 'todo' || t.kanbanColumn === 'waiting')
+          : t.kanbanColumn === col.key
+      ),
     }));
   }, [tasks, COLUMNS]);
 
@@ -572,7 +575,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
           {columnData.map(col => {
             const ColIcon = col.icon;
             return (
@@ -582,9 +585,9 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
                   <div className={cn("relative flex items-center justify-center px-3 py-3 border-b border-border/40", col.headerBg)}>
                     <div className="flex items-center gap-2">
                       <ColIcon className={cn("h-4 w-4", col.iconColor)} />
-                      <span className="text-xs font-bold uppercase tracking-wider text-foreground">{col.label}</span>
+                      <span className="text-xs font-extrabold uppercase tracking-wider text-foreground">{col.label}</span>
                     </div>
-                    <Badge variant="secondary" className="absolute right-3 text-xs font-semibold px-2 py-0.5 min-w-[1.5rem] text-center">{col.tasks.length}</Badge>
+                    <Badge variant="secondary" className="absolute right-3 text-[10px] font-medium px-1.5 py-0 min-w-[1.25rem] text-center text-muted-foreground bg-muted/60">{col.tasks.length}</Badge>
                   </div>
                   {/* Cards */}
                   <ScrollArea className="flex-1 max-h-[50vh] sm:max-h-[calc(100vh-320px)]">
