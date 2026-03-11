@@ -1011,14 +1011,36 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
             {/* Sticky header row */}
             <div className="flex sticky top-0 z-20 bg-background">
               <div className="shrink-0 border-r bg-muted/30" style={{ width: leftPanelWidth }}>
-                <div className="flex items-center h-9 border-b text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
-                  {visibleColumns.has('index') && <div className="px-1 text-center" style={{ width: COL_WIDTHS.index }}>#</div>}
-                  {visibleColumns.has('id') && <div className="px-1 border-r border-border/40" style={{ width: COL_WIDTHS.id }}>ID</div>}
-                  <div className="px-1.5 border-r border-border/40" style={{ width: COL_WIDTHS.name }}>Activity</div>
-                  {visibleColumns.has('start') && <div className="px-1 text-center" style={{ width: COL_WIDTHS.start }}>Start</div>}
-                  {visibleColumns.has('end') && <div className="px-1 text-center" style={{ width: COL_WIDTHS.end }}>End</div>}
-                  {visibleColumns.has('duration') && <div className="px-1 text-center" style={{ width: COL_WIDTHS.duration }}>Days</div>}
-                  {visibleColumns.has('status') && <div className="px-1 text-center" style={{ width: COL_WIDTHS.status }}>Status</div>}
+                <div className="flex items-center h-9 border-b text-[10px] font-semibold text-muted-foreground uppercase tracking-wide select-none">
+                  {visibleColumns.has('index') && <div className="px-1 text-center cursor-pointer hover:text-foreground transition-colors" style={{ width: COL_WIDTHS.index }} onClick={() => handleSortColumn('index')}>#</div>}
+                  {visibleColumns.has('id') && (
+                    <div className="px-1 border-r border-border/40 cursor-pointer hover:text-foreground transition-colors flex items-center gap-0.5" style={{ width: COL_WIDTHS.id }} onClick={() => handleSortColumn('id')}>
+                      ID {sortColumn === 'id' ? (sortDirection === 'asc' ? <ArrowUp className="h-2.5 w-2.5" /> : <ArrowDown className="h-2.5 w-2.5" />) : <ArrowUpDown className="h-2.5 w-2.5 opacity-30" />}
+                    </div>
+                  )}
+                  <div className="px-1.5 border-r border-border/40 cursor-pointer hover:text-foreground transition-colors flex items-center gap-0.5" style={{ width: COL_WIDTHS.name }} onClick={() => handleSortColumn('activity')}>
+                    Activity {sortColumn === 'activity' ? (sortDirection === 'asc' ? <ArrowUp className="h-2.5 w-2.5" /> : <ArrowDown className="h-2.5 w-2.5" />) : <ArrowUpDown className="h-2.5 w-2.5 opacity-30" />}
+                  </div>
+                  {visibleColumns.has('start') && (
+                    <div className="px-1 text-center cursor-pointer hover:text-foreground transition-colors flex items-center justify-center gap-0.5" style={{ width: COL_WIDTHS.start }} onClick={() => handleSortColumn('start')}>
+                      Start {sortColumn === 'start' ? (sortDirection === 'asc' ? <ArrowUp className="h-2.5 w-2.5" /> : <ArrowDown className="h-2.5 w-2.5" />) : <ArrowUpDown className="h-2.5 w-2.5 opacity-30" />}
+                    </div>
+                  )}
+                  {visibleColumns.has('end') && (
+                    <div className="px-1 text-center cursor-pointer hover:text-foreground transition-colors flex items-center justify-center gap-0.5" style={{ width: COL_WIDTHS.end }} onClick={() => handleSortColumn('end')}>
+                      End {sortColumn === 'end' ? (sortDirection === 'asc' ? <ArrowUp className="h-2.5 w-2.5" /> : <ArrowDown className="h-2.5 w-2.5" />) : <ArrowUpDown className="h-2.5 w-2.5 opacity-30" />}
+                    </div>
+                  )}
+                  {visibleColumns.has('duration') && (
+                    <div className="px-1 text-center cursor-pointer hover:text-foreground transition-colors flex items-center justify-center gap-0.5" style={{ width: COL_WIDTHS.duration }} onClick={() => handleSortColumn('duration')}>
+                      Days {sortColumn === 'duration' ? (sortDirection === 'asc' ? <ArrowUp className="h-2.5 w-2.5" /> : <ArrowDown className="h-2.5 w-2.5" />) : <ArrowUpDown className="h-2.5 w-2.5 opacity-30" />}
+                    </div>
+                  )}
+                  {visibleColumns.has('status') && (
+                    <div className="px-1 text-center cursor-pointer hover:text-foreground transition-colors flex items-center justify-center gap-0.5" style={{ width: COL_WIDTHS.status }} onClick={() => handleSortColumn('status')}>
+                      Status {sortColumn === 'status' ? (sortDirection === 'asc' ? <ArrowUp className="h-2.5 w-2.5" /> : <ArrowDown className="h-2.5 w-2.5" />) : <ArrowUpDown className="h-2.5 w-2.5 opacity-30" />}
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="flex-1 overflow-hidden">
