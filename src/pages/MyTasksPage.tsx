@@ -127,6 +127,9 @@ const MyTasksPage: React.FC = () => {
               <ToggleGroupItem value="list" aria-label={t.listView || 'List view'} className="px-2">
                 <LayoutList className="h-4 w-4" />
               </ToggleGroupItem>
+              <ToggleGroupItem value="table" aria-label="Table view" className="px-2">
+                <TableProperties className="h-4 w-4" />
+              </ToggleGroupItem>
               <ToggleGroupItem value="kanban" aria-label={t.boardView || 'Board view'} className="px-2">
                 <Kanban className="h-4 w-4" />
               </ToggleGroupItem>
