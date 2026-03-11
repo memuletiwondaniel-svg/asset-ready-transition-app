@@ -217,7 +217,7 @@ const ProcessFlowMaps: React.FC<ProcessFlowMapsProps> = ({ onBack }) => {
               { label: 'All Approved?', type: 'decision' },
               { label: '⚡ Materialize Activities', type: 'auto' },
               { label: '⚡ Generate Leaf Tasks', type: 'auto' },
-              { label: '⚡ Create P2A Task', type: 'auto' },
+              { label: '⚡ Develop P2A Task', type: 'auto' },
               { label: 'APPROVED', type: 'end' },
             ]} />
             <Card className="bg-muted/30">
