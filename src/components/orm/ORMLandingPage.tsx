@@ -124,8 +124,8 @@ export const ORMLandingPage: React.FC = () => {
   // Get unique ORM leads from plans
   const ormLeads = useMemo(() => {
     if (!plans || !users) return [];
-    const leadIds = new Set(plans.map(p => p.orm_lead_id).filter(Boolean));
-    return Array.from(leadIds).map(leadId => {
+    const leadIds = new Set(plans.map((p: any) => p.orm_lead_id as string).filter(Boolean));
+    return Array.from(leadIds).map((leadId: string) => {
       const user = users.find(u => u.user_id === leadId);
       return {
         id: leadId,
