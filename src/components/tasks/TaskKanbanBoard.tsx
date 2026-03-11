@@ -23,7 +23,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import {
-  Calendar,
+  
   ChevronDown,
   ChevronRight,
   GripVertical,
@@ -35,7 +35,7 @@ import {
   Inbox,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { format, isPast, isToday, differenceInDays } from 'date-fns';
+import { isPast, isToday } from 'date-fns';
 import type { UnifiedTask, CategoryFilter } from './useUnifiedTasks';
 import type { UserTask } from '@/hooks/useUserTasks';
 
@@ -163,17 +163,12 @@ const ApprovalVoidWarningDialog: React.FC<{
   );
 };
 
-function getDateAnnotation(task: UnifiedTask): { label: string; variant: 'overdue' | 'today' | 'upcoming' | 'none' } | null {
+function getDateAnnotation(task: UnifiedTask): { variant: 'overdue' | 'today' } | null {
   const date = task.dueDate || task.endDate;
   if (!date) return null;
   const d = new Date(date);
-  if (isPast(d) && !isToday(d)) {
-    const days = differenceInDays(new Date(), d);
-    return { label: `${days}d overdue`, variant: 'overdue' };
-  }
-  if (isToday(d)) return { label: 'Due today', variant: 'today' };
-  const days = differenceInDays(d, new Date());
-  if (days <= 7) return { label: `${days}d left`, variant: 'upcoming' };
+  if (isPast(d) && !isToday(d)) return { variant: 'overdue' };
+  if (isToday(d)) return { variant: 'today' };
   return null;
 }
 
@@ -255,23 +250,17 @@ const KanbanCardContent: React.FC<{
           )}
         </div>
         <div className="flex items-center gap-1">
-          {sp.isStartingSoon && (
-            <span className="text-[9px] font-medium text-amber-600 bg-amber-500/8 px-1.5 py-0 rounded">
-              {t.kanbanSoon || 'Soon'}
-            </span>
-          )}
           {task.kanbanColumn === 'done' ? (
-            <span className="text-[9px] font-medium text-emerald-600 bg-emerald-500/8 px-1.5 py-0 rounded whitespace-nowrap">
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
               {t.kanbanCompleted || 'Completed'}
             </span>
           ) : dateAnnotation ? (
             <span className={cn(
-              "text-[9px] font-medium px-1.5 py-0 rounded whitespace-nowrap",
-              dateAnnotation.variant === 'overdue' && 'text-destructive bg-destructive/8',
-              dateAnnotation.variant === 'today' && 'text-amber-600 bg-amber-500/8',
-              dateAnnotation.variant === 'upcoming' && 'text-muted-foreground bg-muted',
+              "text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap",
+              dateAnnotation.variant === 'overdue' && 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+              dateAnnotation.variant === 'today' && 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
             )}>
-              {dateAnnotation.variant === 'overdue' ? (t.kanbanOverdue || 'Overdue') : dateAnnotation.label}
+              {dateAnnotation.variant === 'overdue' ? (t.kanbanOverdue || 'Overdue') : 'Due today'}
             </span>
           ) : null}
         </div>
@@ -282,22 +271,6 @@ const KanbanCardContent: React.FC<{
         {task.project ? task.title.replace(new RegExp(`\\s*[–\\-]\\s*${task.project.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`), '') : task.title}
       </p>
 
-      {/* Dates row — hidden for completed tasks */}
-      {task.kanbanColumn !== 'done' && (task.startDate || task.endDate || task.dueDate) && (
-        <div className="flex items-center gap-1 text-[10px] text-muted-foreground/70">
-          <Calendar className="h-2.5 w-2.5 shrink-0" />
-          {task.startDate && <span>{format(new Date(task.startDate), 'MMM d')}</span>}
-          {task.startDate && task.endDate && <span>→</span>}
-          {(task.endDate || task.dueDate) && (
-            <span className={cn(
-              dateAnnotation?.variant === 'overdue' && 'text-destructive',
-              dateAnnotation?.variant === 'today' && 'text-amber-600',
-            )}>
-              {format(new Date((task.endDate || task.dueDate)!), 'MMM d')}
-            </span>
-          )}
-        </div>
-      )}
 
       {/* Progress for in-progress tasks */}
       {task.kanbanColumn === 'in_progress' && (
