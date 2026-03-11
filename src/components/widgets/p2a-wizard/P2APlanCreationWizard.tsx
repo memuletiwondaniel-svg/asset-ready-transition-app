@@ -119,7 +119,8 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
           .eq('orp_plan_id', orpPlanId);
 
         if (activities?.length) {
-          activity = activities.find((a: any) => a.activity_code === 'P2A-01')
+          activity = activities.find((a: any) => a.activity_code === 'EXE-10')
+            || activities.find((a: any) => a.activity_code === 'P2A-01')
             || activities.find((a: any) => a.name?.toLowerCase().includes('p2a plan'))
             || activities.find((a: any) => a.name?.toLowerCase().includes('p2a'));
         }
