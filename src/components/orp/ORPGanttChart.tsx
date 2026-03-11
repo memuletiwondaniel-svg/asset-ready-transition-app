@@ -515,7 +515,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
       let cmp = 0;
       switch (sortColumn) {
         case 'index':
-          cmp = 0; // keep original order
+          cmp = 0;
           break;
         case 'id':
           cmp = (da.deliverable?.activity_code || '').localeCompare(db.deliverable?.activity_code || '');
@@ -536,8 +536,8 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
           break;
         }
         case 'status': {
-          const sA = STATUS_ORDER[(da.deliverable?.status || 'NOT_STARTED').toUpperCase()] ?? 2;
-          const sB = STATUS_ORDER[(db.deliverable?.status || 'NOT_STARTED').toUpperCase()] ?? 2;
+          const sA = STATUS_ORDER[(da.status || 'NOT_STARTED').toUpperCase()] ?? 2;
+          const sB = STATUS_ORDER[(db.status || 'NOT_STARTED').toUpperCase()] ?? 2;
           cmp = sA - sB;
           break;
         }
