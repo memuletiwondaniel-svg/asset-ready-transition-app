@@ -154,7 +154,13 @@ const MyTasksPage: React.FC = () => {
         </div>
 
         {/* Content */}
-        {viewMode === 'list' ? (
+        {viewMode === 'table' ? (
+          <TaskTableView
+            searchQuery={searchQuery}
+            userId={user.id}
+            groupBy={groupBy}
+          />
+        ) : viewMode === 'list' ? (
           <>
             <UnifiedTaskList
               searchQuery={searchQuery}
