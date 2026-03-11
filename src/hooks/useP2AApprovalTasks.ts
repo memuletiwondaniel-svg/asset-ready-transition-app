@@ -71,7 +71,7 @@ export async function checkAndCompletePlan(planId: string) {
             .select('id, task_id, activity_code, name')
             .eq('orp_plan_id', orpPlans[0].id);
 
-          const p2aActivity = activities?.find((a: any) => a.activity_code === 'P2A-01')
+          const p2aActivity = activities?.find((a: any) => a.activity_code === 'EXE-10' || a.activity_code === 'P2A-01')
             || activities?.find((a: any) => a.name?.toLowerCase().includes('p2a plan'))
             || activities?.find((a: any) => a.name?.toLowerCase().includes('p2a'));
 
