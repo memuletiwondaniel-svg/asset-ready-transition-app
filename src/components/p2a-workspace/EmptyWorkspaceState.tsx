@@ -55,7 +55,7 @@ export const EmptyWorkspaceState: React.FC<EmptyWorkspaceStateProps> = ({
             </div>
 
             <h2 className="text-2xl font-bold text-foreground mb-2">
-              Create P2A Plan
+              Develop P2A Plan
             </h2>
             <p className="text-muted-foreground text-center max-w-md mb-8">
               Set up your Project-to-Asset handover workspace to manage systems, 
