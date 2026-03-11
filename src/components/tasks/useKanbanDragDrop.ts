@@ -151,7 +151,7 @@ export function useKanbanDragDrop() {
       // ── P2A Plan status revert: when a P2A task is moved back to in_progress or todo,
       // revert the P2A plan to DRAFT and reset approvers so the user can continue editing ──
       const p2aProjectId = meta?.project_id as string | undefined;
-      if (isP2aTask && p2aProjectId && (targetColumn === 'in_progress' || targetColumn === 'todo')) {
+      if (isP2aTask && p2aProjectId && (targetColumn === 'in_progress' || targetColumn === 'todo' || targetColumn === 'waiting')) {
         const client = supabase as any;
         // Find the P2A plan for this project
         const { data: p2aPlans } = await client
