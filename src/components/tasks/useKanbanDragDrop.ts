@@ -118,10 +118,11 @@ export function useKanbanDragDrop() {
       // Update user_tasks status
       const isRealTaskId = userTask.id && !userTask.id.startsWith('ws-') && !userTask.id.startsWith('ora-');
       if (isRealTaskId) {
-        await supabase
+        const { error: taskErr } = await supabase
           .from('user_tasks')
           .update({ status: newTaskStatus, updated_at: new Date().toISOString() })
           .eq('id', userTask.id);
+        if (taskErr) console.error('[KanbanDrag] user_tasks update failed:', taskErr);
       }
 
       // Sync ORA plan activity status if applicable
@@ -131,9 +132,8 @@ export function useKanbanDragDrop() {
           : oraActivityId;
 
         const newOraStatus = COLUMN_TO_ORA_STATUS[targetColumn];
-        const isP2aRevert = isP2aTask && task.kanbanColumn === 'done' && targetColumn === 'in_progress';
 
-        // For P2A tasks: when reverting from Done → In Progress, set 86% (6/7 wizard steps).
+        // For P2A tasks: when reverting from Done, set 86% (6/7 wizard steps).
         // For P2A tasks in any other non-done move, preserve current progress (don't reset to 0).
         // For non-P2A tasks, reset to 0.
         const newCompletion = isP2aRevert ? 86 : (isP2aTask ? undefined : 0);
@@ -141,10 +141,11 @@ export function useKanbanDragDrop() {
         const updatePayload: Record<string, any> = { status: newOraStatus };
         if (newCompletion !== undefined) updatePayload.completion_percentage = newCompletion;
 
-        await (supabase as any)
+        const { error: oraErr } = await (supabase as any)
           .from('ora_plan_activities')
           .update(updatePayload)
           .eq('id', realId);
+        if (oraErr) console.error('[KanbanDrag] ora_plan_activities update failed:', oraErr);
       }
 
       // ── P2A Plan status revert: when a P2A task is moved back to in_progress or todo,
