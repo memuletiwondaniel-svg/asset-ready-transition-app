@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { CalendarCheck, Plus, Search, LayoutList, Kanban, FolderOpen, Layers, BookOpen, PenLine } from 'lucide-react';
+import { CalendarCheck, Plus, Search, LayoutList, Kanban, FolderOpen, Layers, BookOpen, PenLine, TableProperties } from 'lucide-react';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { AddActivityDialog } from '@/components/tasks/AddActivityDialog';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { UnifiedTaskList } from '@/components/tasks/UnifiedTaskList';
+import { TaskTableView } from '@/components/tasks/TaskTableView';
 import { TaskKanbanBoard } from '@/components/tasks/TaskKanbanBoard';
 import { RecentlyCompletedTasks } from '@/components/tasks/RecentlyCompletedTasks';
 import { DirectorSoFView } from '@/components/tasks/DirectorSoFView';
@@ -23,7 +24,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 
-type ViewMode = 'list' | 'kanban';
+type ViewMode = 'list' | 'kanban' | 'table';
 type GroupBy = 'none' | 'project' | 'category';
 
 const MyTasksPage: React.FC = () => {
@@ -34,7 +35,7 @@ const MyTasksPage: React.FC = () => {
   const [addActivityOpen, setAddActivityOpen] = useState(false);
   const [addActivityMode, setAddActivityMode] = useState<'catalog' | 'custom'>('catalog');
   const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode] = useState<ViewMode>('kanban');
+  const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [groupBy, setGroupBy] = useState<GroupBy>('none');
 
   useEffect(() => {
@@ -84,8 +85,8 @@ const MyTasksPage: React.FC = () => {
         </div>
       </div>
 
-      <div className={cn("mx-auto px-3 sm:px-6 py-4 sm:py-6", viewMode === 'kanban' ? 'max-w-[1400px]' : 'max-w-4xl')}>
-        {/* Toolbar */}
+      <div className={cn("mx-auto px-3 sm:px-6 py-4 sm:py-6", viewMode === 'kanban' ? 'max-w-[1400px]' : viewMode === 'table' ? 'max-w-6xl' : 'max-w-4xl')}>
+        {/* Toolbar - hidden for table view since it has its own filters */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -126,6 +127,9 @@ const MyTasksPage: React.FC = () => {
               <ToggleGroupItem value="list" aria-label={t.listView || 'List view'} className="px-2">
                 <LayoutList className="h-4 w-4" />
               </ToggleGroupItem>
+              <ToggleGroupItem value="table" aria-label="Table view" className="px-2">
+                <TableProperties className="h-4 w-4" />
+              </ToggleGroupItem>
               <ToggleGroupItem value="kanban" aria-label={t.boardView || 'Board view'} className="px-2">
                 <Kanban className="h-4 w-4" />
               </ToggleGroupItem>
@@ -150,7 +154,13 @@ const MyTasksPage: React.FC = () => {
         </div>
 
         {/* Content */}
-        {viewMode === 'list' ? (
+        {viewMode === 'table' ? (
+          <TaskTableView
+            searchQuery={searchQuery}
+            userId={user.id}
+            groupBy={groupBy}
+          />
+        ) : viewMode === 'list' ? (
           <>
             <UnifiedTaskList
               searchQuery={searchQuery}
