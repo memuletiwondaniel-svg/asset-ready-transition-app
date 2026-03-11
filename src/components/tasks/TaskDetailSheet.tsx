@@ -266,7 +266,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   const oraPlanId = task.metadata?.plan_id as string | undefined;
   const p2aProjectCode = task.metadata?.project_code as string | undefined;
 
-  const p2aCtaLabel = p2aPlanIsFullyApproved ? 'View P2A Plan' : p2aPlanIsSubmitted ? 'View P2A Plan' : hasExistingP2aDraft ? 'Continue P2A Plan' : 'Create P2A Plan';
+  const p2aCtaLabel = p2aPlanIsFullyApproved ? 'View P2A Plan' : p2aPlanIsSubmitted ? 'View P2A Plan' : hasExistingP2aDraft ? 'Continue P2A Plan' : 'Develop P2A Plan';
   const resolvedP2aProjectCode = p2aProjectCode || (p2aProjectInfo ? `${p2aProjectInfo.project_id_prefix || ''}-${p2aProjectInfo.project_id_number || ''}` : '');
   const resolvedP2aProjectName = p2aProjectInfo?.project_title || '';
 

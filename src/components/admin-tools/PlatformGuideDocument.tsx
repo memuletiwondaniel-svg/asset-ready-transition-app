@@ -178,7 +178,7 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
           {/* 2. Project Lifecycle */}
           <Section id="project-lifecycle" icon={<FolderOpen className="h-5 w-5 text-primary" />} title="2. Project Lifecycle & Workflows">
             <p className="font-medium text-foreground">End-to-End Project Flow</p>
-            <FlowDiagram steps={['Create Project', 'Assign Team', 'Create ORA Plan', 'Create P2A Plan', 'Define VCRs', 'Approve P2A', 'Execute VCRs', 'Conduct PSSR', 'Issue SoF', 'Issue PAC', 'Issue FAC']} />
+            <FlowDiagram steps={['Create Project', 'Assign Team', 'Create ORA Plan', 'Develop P2A Plan', 'Define VCRs', 'Approve P2A', 'Execute VCRs', 'Conduct PSSR', 'Issue SoF', 'Issue PAC', 'Issue FAC']} />
 
             <p className="font-medium text-foreground mt-4">Project Creation</p>
             <ul className="list-disc pl-5 space-y-1">

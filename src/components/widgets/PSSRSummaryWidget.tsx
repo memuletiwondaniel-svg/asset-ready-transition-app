@@ -259,7 +259,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                         className="text-xs"
                         onClick={() => setShowP2APlanWizard(true)}
                       >
-                        Create P2A Plan
+                        Develop P2A Plan
                       </Button>
                     )}
                   </>

@@ -255,7 +255,7 @@ const ProcessFlowMaps: React.FC<ProcessFlowMapsProps> = ({ onBack }) => {
               { label: 'Step 6: Review & Submit', type: 'process' },
               { label: 'SUBMITTED', type: 'end' },
             ]} />
-            <SwimLane role="Sr ORA Engr" color="bg-emerald-600" steps={['Create P2A Plan', 'Define Systems', 'Create VCRs', 'Submit']} />
+            <SwimLane role="Sr ORA Engr" color="bg-emerald-600" steps={['Develop P2A Plan', 'Define Systems', 'Create VCRs', 'Submit']} />
             <SwimLane role="Reviewers" color="bg-blue-600" steps={['Review P2A Plan', 'Approve / Reject', 'Add Comments']} />
             <SwimLane role="Dir/DPD" color="bg-violet-600" steps={['Final Approval (Phase 2)', 'Sign-off']} />
             <SwimLane role="System" color="bg-slate-600" steps={['Create Approval Tasks', 'Progressive Activation', 'Update Status']} />

@@ -100,7 +100,7 @@ export const EmptyWorkspaceState: React.FC<EmptyWorkspaceStateProps> = ({
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Create P2A Plan</DialogTitle>
+            <DialogTitle>Develop P2A Plan</DialogTitle>
             <DialogDescription>
               Set up your handover workspace with project identifiers
             </DialogDescription>

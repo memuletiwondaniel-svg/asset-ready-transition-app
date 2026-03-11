@@ -127,8 +127,8 @@ export async function generateLeafTasks(planId: string): Promise<{ created: numb
     try {
       await supabase.rpc('create_user_task', {
         p_user_id: srOraEngr.user_id,
-        p_title: `Create P2A Plan – ${projName}`,
-        p_description: `The ORA Plan has been approved. Create the P2A handover plan for project ${projName}.`,
+        p_title: `Develop P2A Plan – ${projName}`,
+        p_description: `The ORA Plan has been approved. Develop the P2A handover plan for project ${projName}.`,
         p_type: 'task',
         p_status: 'pending',
         p_priority: 'High',
