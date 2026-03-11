@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Plus, Search, ZoomIn, ZoomOut, ChevronRight, ChevronDown, ChevronsUpDown, GitBranch, Columns3, Route, BookOpen, PenLine, FileText } from 'lucide-react';
+import { Plus, Search, ZoomIn, ZoomOut, ChevronRight, ChevronDown, ChevronsUpDown, GitBranch, Columns3, Route, BookOpen, PenLine, FileText, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { AddFromCatalogDialog } from '@/components/ora/wizard/AddFromCatalogDialog';
 
 import { WizardActivity } from '@/components/ora/wizard/types';
@@ -485,11 +485,67 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
   const { childrenMap } = useMemo(() => buildHierarchyFromCodes(filteredDeliverables), [filteredDeliverables]);
 
   const [expandedCodes, setExpandedCodes] = useState<Set<string>>(() => new Set<string>());
+  const [sortColumn, setSortColumn] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
-  const visibleRows = useMemo(
+  const handleSortColumn = useCallback((col: string) => {
+    if (sortColumn === col) {
+      if (sortDirection === 'asc') setSortDirection('desc');
+      else { setSortColumn(null); setSortDirection('asc'); }
+    } else {
+      setSortColumn(col);
+      setSortDirection('asc');
+    }
+  }, [sortColumn, sortDirection]);
+
+  const STATUS_ORDER: Record<string, number> = { COMPLETED: 0, IN_PROGRESS: 1, NOT_STARTED: 2 };
+
+  const unsortedRows = useMemo(
     () => buildVisibleRows(childrenMap, expandedCodes),
     [childrenMap, expandedCodes]
   );
+
+  const visibleRows = useMemo(() => {
+    if (!sortColumn) return unsortedRows;
+    // Only sort leaf (non-parent) rows at root level when sorting
+    const sorted = [...unsortedRows];
+    sorted.sort((a, b) => {
+      const da = a.deliverable;
+      const db = b.deliverable;
+      let cmp = 0;
+      switch (sortColumn) {
+        case 'index':
+          cmp = 0; // keep original order
+          break;
+        case 'id':
+          cmp = (da.deliverable?.activity_code || '').localeCompare(db.deliverable?.activity_code || '');
+          break;
+        case 'activity':
+          cmp = (da.deliverable?.name || '').localeCompare(db.deliverable?.name || '');
+          break;
+        case 'start':
+          cmp = (da.start_date || '').localeCompare(db.start_date || '');
+          break;
+        case 'end':
+          cmp = (da.end_date || '').localeCompare(db.end_date || '');
+          break;
+        case 'duration': {
+          const durA = da.start_date && da.end_date ? differenceInDays(parseISO(da.end_date), parseISO(da.start_date)) : 0;
+          const durB = db.start_date && db.end_date ? differenceInDays(parseISO(db.end_date), parseISO(db.start_date)) : 0;
+          cmp = durA - durB;
+          break;
+        }
+        case 'status': {
+          const sA = STATUS_ORDER[(da.deliverable?.status || 'NOT_STARTED').toUpperCase()] ?? 2;
+          const sB = STATUS_ORDER[(db.deliverable?.status || 'NOT_STARTED').toUpperCase()] ?? 2;
+          cmp = sA - sB;
+          break;
+        }
+      }
+      return sortDirection === 'asc' ? cmp : -cmp;
+    });
+    return sorted;
+  }, [unsortedRows, sortColumn, sortDirection]);
 
   const toggleExpand = (code: string) => {
     setExpandedCodes(prev => {
@@ -955,14 +1011,36 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
             {/* Sticky header row */}
             <div className="flex sticky top-0 z-20 bg-background">
               <div className="shrink-0 border-r bg-muted/30" style={{ width: leftPanelWidth }}>
-                <div className="flex items-center h-9 border-b text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
-                  {visibleColumns.has('index') && <div className="px-1 text-center" style={{ width: COL_WIDTHS.index }}>#</div>}
-                  {visibleColumns.has('id') && <div className="px-1 border-r border-border/40" style={{ width: COL_WIDTHS.id }}>ID</div>}
-                  <div className="px-1.5 border-r border-border/40" style={{ width: COL_WIDTHS.name }}>Activity</div>
-                  {visibleColumns.has('start') && <div className="px-1 text-center" style={{ width: COL_WIDTHS.start }}>Start</div>}
-                  {visibleColumns.has('end') && <div className="px-1 text-center" style={{ width: COL_WIDTHS.end }}>End</div>}
-                  {visibleColumns.has('duration') && <div className="px-1 text-center" style={{ width: COL_WIDTHS.duration }}>Days</div>}
-                  {visibleColumns.has('status') && <div className="px-1 text-center" style={{ width: COL_WIDTHS.status }}>Status</div>}
+                <div className="flex items-center h-9 border-b text-[10px] font-semibold text-muted-foreground uppercase tracking-wide select-none">
+                  {visibleColumns.has('index') && <div className="px-1 text-center cursor-pointer hover:text-foreground transition-colors" style={{ width: COL_WIDTHS.index }} onClick={() => handleSortColumn('index')}>#</div>}
+                  {visibleColumns.has('id') && (
+                    <div className="px-1 border-r border-border/40 cursor-pointer hover:text-foreground transition-colors flex items-center gap-0.5" style={{ width: COL_WIDTHS.id }} onClick={() => handleSortColumn('id')}>
+                      ID {sortColumn === 'id' ? (sortDirection === 'asc' ? <ArrowUp className="h-2.5 w-2.5" /> : <ArrowDown className="h-2.5 w-2.5" />) : <ArrowUpDown className="h-2.5 w-2.5 opacity-30" />}
+                    </div>
+                  )}
+                  <div className="px-1.5 border-r border-border/40 cursor-pointer hover:text-foreground transition-colors flex items-center gap-0.5" style={{ width: COL_WIDTHS.name }} onClick={() => handleSortColumn('activity')}>
+                    Activity {sortColumn === 'activity' ? (sortDirection === 'asc' ? <ArrowUp className="h-2.5 w-2.5" /> : <ArrowDown className="h-2.5 w-2.5" />) : <ArrowUpDown className="h-2.5 w-2.5 opacity-30" />}
+                  </div>
+                  {visibleColumns.has('start') && (
+                    <div className="px-1 text-center cursor-pointer hover:text-foreground transition-colors flex items-center justify-center gap-0.5" style={{ width: COL_WIDTHS.start }} onClick={() => handleSortColumn('start')}>
+                      Start {sortColumn === 'start' ? (sortDirection === 'asc' ? <ArrowUp className="h-2.5 w-2.5" /> : <ArrowDown className="h-2.5 w-2.5" />) : <ArrowUpDown className="h-2.5 w-2.5 opacity-30" />}
+                    </div>
+                  )}
+                  {visibleColumns.has('end') && (
+                    <div className="px-1 text-center cursor-pointer hover:text-foreground transition-colors flex items-center justify-center gap-0.5" style={{ width: COL_WIDTHS.end }} onClick={() => handleSortColumn('end')}>
+                      End {sortColumn === 'end' ? (sortDirection === 'asc' ? <ArrowUp className="h-2.5 w-2.5" /> : <ArrowDown className="h-2.5 w-2.5" />) : <ArrowUpDown className="h-2.5 w-2.5 opacity-30" />}
+                    </div>
+                  )}
+                  {visibleColumns.has('duration') && (
+                    <div className="px-1 text-center cursor-pointer hover:text-foreground transition-colors flex items-center justify-center gap-0.5" style={{ width: COL_WIDTHS.duration }} onClick={() => handleSortColumn('duration')}>
+                      Days {sortColumn === 'duration' ? (sortDirection === 'asc' ? <ArrowUp className="h-2.5 w-2.5" /> : <ArrowDown className="h-2.5 w-2.5" />) : <ArrowUpDown className="h-2.5 w-2.5 opacity-30" />}
+                    </div>
+                  )}
+                  {visibleColumns.has('status') && (
+                    <div className="px-1 text-center cursor-pointer hover:text-foreground transition-colors flex items-center justify-center gap-0.5" style={{ width: COL_WIDTHS.status }} onClick={() => handleSortColumn('status')}>
+                      Status {sortColumn === 'status' ? (sortDirection === 'asc' ? <ArrowUp className="h-2.5 w-2.5" /> : <ArrowDown className="h-2.5 w-2.5" />) : <ArrowUpDown className="h-2.5 w-2.5 opacity-30" />}
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="flex-1 overflow-hidden">
