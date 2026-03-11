@@ -308,33 +308,21 @@ const SimpleRow: React.FC<{
         return (
           <span className={cn(
             "text-xs",
-            isOverdue && "text-destructive font-medium",
-            isDueToday && "text-amber-600 font-medium",
+            isOverdue && "text-destructive",
+            isDueToday && "text-amber-600",
             !isOverdue && !isDueToday && "text-muted-foreground"
           )}>
-            {isOverdue && <AlertTriangle className="h-3 w-3 inline mr-1" />}
             {format(new Date(dueDate), 'MMM d')}
-            {isOverdue && <span className="ml-1 text-[10px]">({differenceInDays(new Date(), new Date(dueDate))}d late)</span>}
-            {isDueToday && <span className="ml-1 text-[10px]">(today)</span>}
           </span>
         );
 
       case 'progress':
         if (task.totalItems != null && task.totalItems > 0) {
-          return (
-            <div className="flex items-center gap-2">
-              <Progress value={task.progressPercentage || 0} className="h-1.5 w-16 bg-muted/50" />
-              <span className="text-[11px] text-muted-foreground">{task.completedItems}/{task.totalItems}</span>
-            </div>
-          );
+          const pct = task.totalItems > 0 ? Math.round((task.completedItems || 0) / task.totalItems * 100) : 0;
+          return <span className="text-xs text-muted-foreground">{pct}%</span>;
         }
         if (task.progressPercentage != null && task.progressPercentage > 0) {
-          return (
-            <div className="flex items-center gap-2">
-              <Progress value={task.progressPercentage} className="h-1.5 w-16 bg-muted/50" />
-              <span className="text-[11px] text-muted-foreground">{task.progressPercentage}%</span>
-            </div>
-          );
+          return <span className="text-xs text-muted-foreground">{task.progressPercentage}%</span>;
         }
         return <span className="text-muted-foreground/40 text-xs">—</span>;
 
