@@ -156,17 +156,6 @@ const MyTasksPage: React.FC = () => {
             userId={user.id}
             groupBy={groupBy}
           />
-        ) : viewMode === 'list' ? (
-          <>
-            <UnifiedTaskList
-              searchQuery={searchQuery}
-              userId={user.id}
-              groupBy={groupBy}
-            />
-            <div className="mt-8">
-              <RecentlyCompletedTasks searchQuery={searchQuery} />
-            </div>
-          </>
         ) : (
           <KanbanView userId={user.id} searchQuery={searchQuery} groupBy={groupBy} />
         )}
