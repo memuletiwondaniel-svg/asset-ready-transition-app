@@ -267,7 +267,7 @@ const KanbanCardContent: React.FC<{
       </div>
 
       {/* Title */}
-      <p className="text-xs font-medium text-foreground leading-snug mb-1.5 break-words overflow-hidden">
+      <p className="text-sm font-medium text-foreground leading-snug mb-1.5 break-words overflow-hidden">
         {task.project ? task.title.replace(new RegExp(`\\s*[–\\-]\\s*${task.project.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`), '') : task.title}
       </p>
 
