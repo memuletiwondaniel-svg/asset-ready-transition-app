@@ -663,7 +663,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
       {/* Warning dialog for reverting approval-protected tasks */}
       <ApprovalVoidWarningDialog
         open={!!warningState}
-        taskTitle={warningState?.task.title || ''}
+        task={warningState?.task || null}
         onCancel={handleWarningCancel}
         onConfirm={handleWarningConfirm}
       />
