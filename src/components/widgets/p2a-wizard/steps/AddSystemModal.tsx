@@ -63,7 +63,7 @@ export const AddSystemModal: React.FC<AddSystemModalProps> = ({
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent
-        className="sm:max-w-md"
+        className="sm:max-w-md z-[200]"
         onPointerDownOutside={(e) => e.preventDefault()}
         onInteractOutside={(e) => e.preventDefault()}
       >
