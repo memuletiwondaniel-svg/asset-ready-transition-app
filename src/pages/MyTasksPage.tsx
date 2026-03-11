@@ -71,7 +71,7 @@ const MyTasksPage: React.FC = () => {
 
   return (
     <div className="min-h-screen">
-        <div className="border-b border-border/40 bg-card/30 backdrop-blur-xl p-3 sm:p-4 md:p-6">
+        <div className="border-b border-border/50 bg-card/60 backdrop-blur-xl p-3 sm:p-4 md:p-6">
         <BreadcrumbNavigation currentPageLabel={t.myTasksPageTitle || 'My Tasks'} />
         <div className="flex items-center gap-2 sm:gap-3 mt-3 sm:mt-4">
            <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-primary to-primary/80 shrink-0">
