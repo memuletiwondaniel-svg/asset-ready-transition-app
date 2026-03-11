@@ -111,7 +111,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
         const orpPlanId = plans[0].id;
 
         // Find the P2A activity - search by multiple strategies:
-        // 1. activity_code 'P2A-01' (legacy), 2. name containing 'P2A', 3. name 'Develop P2A Plan'
+        // 1. activity_code 'P2A-01' (legacy), 2. name containing 'P2A', 3. name 'Create P2A Plan'
         let activity: any = null;
         const { data: activities } = await (supabase as any)
           .from('ora_plan_activities')
