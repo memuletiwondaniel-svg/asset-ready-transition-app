@@ -85,8 +85,8 @@ const MyTasksPage: React.FC = () => {
         </div>
       </div>
 
-      <div className={cn("mx-auto px-3 sm:px-6 py-4 sm:py-6", viewMode === 'kanban' ? 'max-w-[1400px]' : 'max-w-4xl')}>
-        {/* Toolbar */}
+      <div className={cn("mx-auto px-3 sm:px-6 py-4 sm:py-6", viewMode === 'kanban' ? 'max-w-[1400px]' : viewMode === 'table' ? 'max-w-6xl' : 'max-w-4xl')}>
+        {/* Toolbar - hidden for table view since it has its own filters */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
