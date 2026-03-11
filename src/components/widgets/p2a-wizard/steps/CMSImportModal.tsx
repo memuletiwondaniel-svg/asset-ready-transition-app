@@ -140,7 +140,7 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
   return (
     <Dialog open={open} onOpenChange={resetAndClose}>
       <DialogContent
-        className="sm:max-w-lg"
+        className="sm:max-w-lg z-[200]"
         onPointerDownOutside={(e) => e.preventDefault()}
         onInteractOutside={(e) => e.preventDefault()}
       >
