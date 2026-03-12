@@ -205,7 +205,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
       if (!projectId) return null;
       const { data } = await (supabase as any)
         .from('p2a_handover_plans')
-        .select('id, status')
+        .select('id, status, created_by')
         .eq('project_id', projectId)
         .limit(1);
       return data?.[0] || null;
@@ -267,6 +267,45 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
         full_name: profileMap[d.user_id]?.full_name || d.role_name,
         avatar_url: profileMap[d.user_id]?.avatar_url || null,
       }));
+    },
+    enabled: !!existingP2APlan?.id && isP2AActivity,
+    staleTime: 30_000,
+  });
+
+  // Fetch submission metadata: earliest approver created_at = submission time, submitter = plan.created_by
+  const { data: submissionEntry } = useQuery({
+    queryKey: ['p2a-submission-entry', existingP2APlan?.id],
+    queryFn: async () => {
+      if (!existingP2APlan?.id) return null;
+      // Get earliest approver record created_at as submission timestamp
+      const { data: approvers } = await (supabase as any)
+        .from('p2a_handover_approvers')
+        .select('created_at')
+        .eq('handover_id', existingP2APlan.id)
+        .order('created_at', { ascending: true })
+        .limit(1);
+      const submittedAt = approvers?.[0]?.created_at;
+      if (!submittedAt) return null;
+      // Resolve submitter profile
+      const submitterId = existingP2APlan.created_by;
+      let submitterName = 'Unknown';
+      let submitterAvatar: string | null = null;
+      if (submitterId) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name, avatar_url')
+          .eq('user_id', submitterId)
+          .single();
+        if (profile) {
+          submitterName = profile.full_name || 'Unknown';
+          submitterAvatar = profile.avatar_url
+            ? profile.avatar_url.startsWith('http')
+              ? profile.avatar_url
+              : supabase.storage.from('user-avatars').getPublicUrl(profile.avatar_url).data.publicUrl
+            : null;
+        }
+      }
+      return { submitted_at: submittedAt, full_name: submitterName, avatar_url: submitterAvatar };
     },
     enabled: !!existingP2APlan?.id && isP2AActivity,
     staleTime: 30_000,
@@ -1010,7 +1049,17 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                 avatar_url: c.avatar_url,
                 timestamp: c.created_at,
               }));
-              const activityFeed = [...commentEntries, ...approverEntries]
+              const submissionEntries = submissionEntry ? [{
+                id: 'submission-entry',
+                type: 'submission' as const,
+                status: null,
+                role_name: null,
+                comment: null,
+                full_name: submissionEntry.full_name,
+                avatar_url: submissionEntry.avatar_url,
+                timestamp: submissionEntry.submitted_at,
+              }] : [];
+              const activityFeed = [...commentEntries, ...approverEntries, ...submissionEntries]
                 .filter((e) => e.timestamp)
                 .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
               const feedCount = activityFeed.length;
@@ -1050,7 +1099,16 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                             </AvatarFallback>
                           </Avatar>
                           <div className="flex-1 min-w-0">
-                            {entry.type === 'approval_action' ? (
+                            {entry.type === 'submission' ? (
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <Badge
+                                  variant="outline"
+                                  className="text-[10px] px-1.5 py-0 h-4 border-0 font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                                >
+                                  Submitted for Approval
+                                </Badge>
+                              </div>
+                            ) : entry.type === 'approval_action' ? (
                               <>
                                 <div className="flex items-center gap-1.5 flex-wrap">
                                   <Badge
