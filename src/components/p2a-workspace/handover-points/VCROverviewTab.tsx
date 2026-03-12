@@ -136,6 +136,25 @@ export const VCROverviewTab: React.FC<VCROverviewTabProps> = ({ handoverPoint, o
 
   return (
     <div className="space-y-6">
+      {/* Locked Banner */}
+      {isLocked && (
+        <Card className="border-amber-500/30 bg-amber-500/5">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0 mt-0.5">
+                <Info className="w-4.5 h-4.5 text-amber-500" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-foreground">Execution Plan Not Yet Defined</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Deliverable tracking (Training, Procedures, Documentation, etc.) will be available once the VCR Execution Plan is approved.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Header with Status and Target Date */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Description Card */}
