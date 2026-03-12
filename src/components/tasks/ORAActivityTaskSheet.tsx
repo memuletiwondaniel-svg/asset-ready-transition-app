@@ -745,6 +745,25 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                     {getP2AStatusBadge()}
                   </div>
                 )}
+
+                {/* Rejection feedback for task owner */}
+                {showP2aRejectionBanner && (
+                  <div className="p-3 rounded-lg bg-destructive/5 border border-destructive/20 space-y-1">
+                    <div className="flex items-center gap-2 text-xs font-medium text-destructive">
+                      <AlertTriangle className="h-3.5 w-3.5" />
+                      Plan rejected by {effectiveP2aRejection.role_name || 'approver'}
+                    </div>
+                    <p className="text-xs text-foreground/80 italic pl-5">
+                      "{effectiveP2aRejection.comments || 'No rejection comment was provided.'}"
+                    </p>
+                    {effectiveP2aRejection.approved_at && (
+                      <p className="text-[10px] text-muted-foreground pl-5">
+                        {format(new Date(effectiveP2aRejection.approved_at), 'MMM d, yyyy')}
+                      </p>
+                    )}
+                  </div>
+                )}
+
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   {p2aPlanIsFullyApproved
                     ? 'The P2A handover plan has been approved. Open the workspace to view details.'
