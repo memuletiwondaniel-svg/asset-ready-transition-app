@@ -224,6 +224,7 @@ async function loadDraftFromDatabase(projectId: string): Promise<{ state: P2APla
       id: a.id,
       role_name: a.role_name,
       display_order: a.display_order,
+      status: a.status || 'PENDING',
       user_id: a.user_id || undefined,
       user_name: profile?.full_name,
       user_avatar: profile?.avatar_url,
