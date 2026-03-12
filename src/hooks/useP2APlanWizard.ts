@@ -699,6 +699,15 @@ export function useP2APlanWizard(projectId: string, projectCode: string) {
         console.error('Failed to reset P2A activity progress:', err);
       }
 
+      // Clean up approval tasks BEFORE deleting the plan (belt-and-suspenders with DB trigger)
+      await client
+        .from('user_tasks')
+        .delete()
+        .eq('type', 'approval')
+        .in('status', ['pending', 'waiting'])
+        .filter('metadata->>plan_id', 'eq', planId)
+        .filter('metadata->>source', 'eq', 'p2a_handover');
+
       // Delete in order: system mappings -> VCRs -> phases -> systems -> approvers -> plan
       const { data: existingVCRs } = await client
         .from('p2a_handover_points')
