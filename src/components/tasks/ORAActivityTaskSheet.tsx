@@ -205,7 +205,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
       if (!projectId) return null;
       const { data } = await (supabase as any)
         .from('p2a_handover_plans')
-        .select('id, status')
+        .select('id, status, created_by')
         .eq('project_id', projectId)
         .limit(1);
       return data?.[0] || null;
