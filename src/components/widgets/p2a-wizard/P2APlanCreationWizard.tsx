@@ -614,7 +614,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
               </div>
             </div>
             <div>
-              <h2 className="text-lg font-semibold">
+              <h2 className="text-sm sm:text-lg font-semibold">
                 {isReviewMode
                   ? 'Review P2A Plan'
                   : existingPlan && ['ACTIVE'].includes(existingPlan.status)
