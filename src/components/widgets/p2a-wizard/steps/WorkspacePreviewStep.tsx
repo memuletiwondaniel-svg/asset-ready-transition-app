@@ -51,7 +51,7 @@ export const WorkspacePreviewStep: React.FC<WorkspacePreviewStepProps> = ({
   const activePhases = phases.filter(p => getPhaseVCRs(p.id).length > 0);
 
   return (
-    <div className="flex flex-col gap-4 p-4 h-full">
+    <div className="flex flex-col gap-3 p-4 h-full">
       {/* Header */}
       <div>
         <h3 className="text-sm font-semibold">Plan Summary</h3>
@@ -60,7 +60,7 @@ export const WorkspacePreviewStep: React.FC<WorkspacePreviewStepProps> = ({
         </p>
       </div>
 
-      {/* Stats Row */}
+      {/* Stats Row — compact */}
       <div className="grid grid-cols-4 gap-2">
         {[
           { value: systems.length, label: 'Systems', accent: 'text-blue-600 dark:text-blue-400' },
@@ -68,9 +68,9 @@ export const WorkspacePreviewStep: React.FC<WorkspacePreviewStepProps> = ({
           { value: activePhases.length, label: 'Phases', accent: 'text-emerald-600 dark:text-emerald-400' },
           { value: systems.filter(s => s.is_hydrocarbon).length, label: 'HC Systems', accent: 'text-orange-600 dark:text-orange-400' },
         ].map(stat => (
-          <div key={stat.label} className="rounded-lg border bg-card p-2.5 text-center">
-            <div className={cn('text-xl font-bold tabular-nums', stat.accent)}>{stat.value}</div>
-            <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">{stat.label}</div>
+          <div key={stat.label} className="rounded-lg border bg-card px-2 py-1.5 text-center">
+            <div className={cn('text-lg font-bold tabular-nums leading-tight', stat.accent)}>{stat.value}</div>
+            <div className="text-[9px] text-muted-foreground font-medium uppercase tracking-wider">{stat.label}</div>
           </div>
         ))}
       </div>
