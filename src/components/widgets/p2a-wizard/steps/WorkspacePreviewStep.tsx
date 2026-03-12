@@ -4,7 +4,9 @@ import { Separator } from '@/components/ui/separator';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Flame, AlertCircle, ArrowRight, ChevronDown, Box, Clock, CheckCircle2, XCircle } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Flame, AlertCircle, ArrowRight, ChevronDown, Box, Clock, CheckCircle2, XCircle, MessageSquare } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { getVCRColor } from '@/components/p2a-workspace/utils/vcrColors';
@@ -21,6 +23,8 @@ interface WorkspacePreviewStepProps {
   mappings: Record<string, string[]>;
   vcrPhaseAssignments: Record<string, string>;
   approvers?: WizardApprover[];
+  submissionComment?: string;
+  onCommentChange?: (comment: string) => void;
 }
 
 export const WorkspacePreviewStep: React.FC<WorkspacePreviewStepProps> = ({
@@ -30,6 +34,8 @@ export const WorkspacePreviewStep: React.FC<WorkspacePreviewStepProps> = ({
   mappings,
   vcrPhaseAssignments,
   approvers = [],
+  submissionComment = '',
+  onCommentChange,
 }) => {
   const [unmappedOpen, setUnmappedOpen] = useState(false);
 
@@ -50,17 +56,19 @@ export const WorkspacePreviewStep: React.FC<WorkspacePreviewStepProps> = ({
   const unassignedVCRs = vcrs.filter(vcr => !vcrPhaseAssignments[vcr.id]);
   const activePhases = phases.filter(p => getPhaseVCRs(p.id).length > 0);
 
+  const maxChars = 500;
+
   return (
     <div className="flex flex-col gap-3 p-4 h-full">
       {/* Header */}
       <div>
         <h3 className="text-sm font-semibold">Plan Summary</h3>
         <p className="text-xs text-muted-foreground">
-          Review your handover plan before proceeding
+          Review your handover plan before submitting for approval
         </p>
       </div>
 
-      {/* Stats Row — compact */}
+      {/* Stats Row */}
       <div className="grid grid-cols-4 gap-2">
         {[
           { value: systems.length, label: 'Systems', accent: 'text-blue-600 dark:text-blue-400' },
@@ -77,123 +85,124 @@ export const WorkspacePreviewStep: React.FC<WorkspacePreviewStepProps> = ({
 
       <Separator />
 
-      {/* Phase Flow — horizontal timeline */}
-      <div className="flex-1 min-h-0 overflow-y-auto">
-        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">
-          Delivery Sequence
-        </span>
+      {/* Scrollable content */}
+      <div className="flex-1 min-h-0 overflow-y-auto space-y-4">
+        {/* Phase Flow */}
+        <div>
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">
+            Delivery Sequence
+          </span>
 
-        {activePhases.length > 0 ? (
-          <div className="flex flex-wrap gap-2">
-            {activePhases.map((phase, idx) => {
-              const phaseVCRs = getPhaseVCRs(phase.id);
-              return (
-                <React.Fragment key={phase.id}>
-                  {idx > 0 && (
-                    <div className="flex items-center self-stretch">
-                      <ArrowRight className="h-4 w-4 text-muted-foreground/40" />
-                    </div>
-                  )}
-                  <div className="rounded-lg border bg-card p-3 min-w-[150px] min-h-[120px] flex-1 group/phase">
-                    <div className="flex items-center gap-1.5 mb-2">
-                      <span className="text-[10px] font-bold text-muted-foreground/60">
-                        {idx + 1}
-                      </span>
-                      <span className="text-xs font-semibold truncate">{phase.name}</span>
-                    </div>
-                    <div className="space-y-1.5">
-                      {phaseVCRs.map(vcr => {
-                        const vcrSystems = getVCRSystems(vcr.id);
-                        const hcCount = vcrSystems.filter(s => s.is_hydrocarbon).length;
-                        const vcrColor = getVCRColor(vcr.code);
-                        return (
-                          <div className="transition-opacity duration-150 group-hover/phase:opacity-40 hover:!opacity-100">
-                          <HoverCard openDelay={200} closeDelay={100}>
-                            <HoverCardTrigger asChild>
-                              <div
-                                key={vcr.id}
-                                className="rounded-md px-2 py-1.5 flex items-center justify-between gap-1 border cursor-default transition-shadow hover:shadow-md"
-                                style={{
-                                  background: vcrColor?.background,
-                                  borderColor: vcrColor?.border,
-                                }}
-                              >
-                                <div className="min-w-0">
-                                  <div className="text-[11px] font-medium truncate">{vcr.name}</div>
-                                  <div className="text-[9px] text-muted-foreground font-mono">{shortVCRCode(vcr.code)}</div>
-                                </div>
-                                <div className="flex items-center gap-1 shrink-0">
-                                  {hcCount > 0 && (
-                                    <Flame className="h-3 w-3 text-orange-500" />
-                                  )}
-                                  <Badge variant="secondary" className="text-[9px] px-1 py-0 h-4">
-                                    {vcrSystems.length}
-                                  </Badge>
-                                </div>
-                              </div>
-                            </HoverCardTrigger>
-                            <HoverCardContent
-                              side="bottom"
-                              align="start"
-                              sideOffset={4}
-                              collisionPadding={16}
-                              avoidCollisions
-                              className="w-56 p-2 rounded-xl shadow-xl border overflow-hidden z-[100] max-h-48 overflow-y-auto"
-                            >
-                                {vcrSystems.length === 0 ? (
-                                  <p className="text-[10px] text-muted-foreground text-center py-2">No systems mapped</p>
-                                ) : (
-                                  <div className="space-y-0.5">
-                                    {vcrSystems.map(sys => (
-                                      <div key={sys.id}>
-                                        <div className="flex items-center gap-1.5 px-1.5 py-1 rounded-md hover:bg-muted/50">
-                                          <Box className="h-3 w-3 text-muted-foreground shrink-0" />
-                                          <span className="text-[11px] font-medium truncate flex-1">{sys.name}</span>
-                                          {sys.is_hydrocarbon && (
-                                            <Flame className="h-3 w-3 text-orange-500 shrink-0" />
+          {activePhases.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {activePhases.map((phase, idx) => {
+                const phaseVCRs = getPhaseVCRs(phase.id);
+                return (
+                  <React.Fragment key={phase.id}>
+                    {idx > 0 && (
+                      <div className="flex items-center self-stretch">
+                        <ArrowRight className="h-4 w-4 text-muted-foreground/40" />
+                      </div>
+                    )}
+                    <div className="rounded-lg border bg-card p-3 min-w-[150px] min-h-[120px] flex-1 group/phase">
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <span className="text-[10px] font-bold text-muted-foreground/60">
+                          {idx + 1}
+                        </span>
+                        <span className="text-xs font-semibold truncate">{phase.name}</span>
+                      </div>
+                      <div className="space-y-1.5">
+                        {phaseVCRs.map(vcr => {
+                          const vcrSystems = getVCRSystems(vcr.id);
+                          const hcCount = vcrSystems.filter(s => s.is_hydrocarbon).length;
+                          const vcrColor = getVCRColor(vcr.code);
+                          return (
+                            <div key={vcr.id} className="transition-opacity duration-150 group-hover/phase:opacity-40 hover:!opacity-100">
+                              <HoverCard openDelay={200} closeDelay={100}>
+                                <HoverCardTrigger asChild>
+                                  <div
+                                    className="rounded-md px-2 py-1.5 flex items-center justify-between gap-1 border cursor-default transition-shadow hover:shadow-md"
+                                    style={{
+                                      background: vcrColor?.background,
+                                      borderColor: vcrColor?.border,
+                                    }}
+                                  >
+                                    <div className="min-w-0">
+                                      <div className="text-[11px] font-medium truncate">{vcr.name}</div>
+                                      <div className="text-[9px] text-muted-foreground font-mono">{shortVCRCode(vcr.code)}</div>
+                                    </div>
+                                    <div className="flex items-center gap-1 shrink-0">
+                                      {hcCount > 0 && (
+                                        <Flame className="h-3 w-3 text-orange-500" />
+                                      )}
+                                      <Badge variant="secondary" className="text-[9px] px-1 py-0 h-4">
+                                        {vcrSystems.length}
+                                      </Badge>
+                                    </div>
+                                  </div>
+                                </HoverCardTrigger>
+                                <HoverCardContent
+                                  side="bottom"
+                                  align="start"
+                                  sideOffset={4}
+                                  collisionPadding={16}
+                                  avoidCollisions
+                                  className="w-56 p-2 rounded-xl shadow-xl border overflow-hidden z-[100] max-h-48 overflow-y-auto"
+                                >
+                                  {vcrSystems.length === 0 ? (
+                                    <p className="text-[10px] text-muted-foreground text-center py-2">No systems mapped</p>
+                                  ) : (
+                                    <div className="space-y-0.5">
+                                      {vcrSystems.map(sys => (
+                                        <div key={sys.id}>
+                                          <div className="flex items-center gap-1.5 px-1.5 py-1 rounded-md hover:bg-muted/50">
+                                            <Box className="h-3 w-3 text-muted-foreground shrink-0" />
+                                            <span className="text-[11px] font-medium truncate flex-1">{sys.name}</span>
+                                            {sys.is_hydrocarbon && (
+                                              <Flame className="h-3 w-3 text-orange-500 shrink-0" />
+                                            )}
+                                          </div>
+                                          {sys.subsystems && sys.subsystems.length > 0 && (
+                                            <div className="ml-5 space-y-0.5">
+                                              {sys.subsystems
+                                                .filter(sub => {
+                                                  const keys = mappings[vcr.id] || [];
+                                                  return keys.includes(`${sys.id}::sub::${sub.system_id}`);
+                                                })
+                                                .map(sub => (
+                                                  <div key={sub.system_id} className="flex items-center gap-1.5 px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                                                    <span className="w-1 h-1 rounded-full bg-muted-foreground/40 shrink-0" />
+                                                    <span className="truncate">{sub.name}</span>
+                                                  </div>
+                                                ))
+                                              }
+                                            </div>
                                           )}
                                         </div>
-                                        {/* Show subsystems if mapped individually */}
-                                        {sys.subsystems && sys.subsystems.length > 0 && (
-                                          <div className="ml-5 space-y-0.5">
-                                            {sys.subsystems
-                                              .filter(sub => {
-                                                const keys = mappings[vcr.id] || [];
-                                                return keys.includes(`${sys.id}::sub::${sub.system_id}`);
-                                              })
-                                              .map(sub => (
-                                                <div key={sub.system_id} className="flex items-center gap-1.5 px-1.5 py-0.5 text-[10px] text-muted-foreground">
-                                                  <span className="w-1 h-1 rounded-full bg-muted-foreground/40 shrink-0" />
-                                                  <span className="truncate">{sub.name}</span>
-                                                </div>
-                                              ))
-                                            }
-                                          </div>
-                                        )}
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
-                            </HoverCardContent>
-                          </HoverCard>
-                          </div>
-                        );
-                      })}
+                                      ))}
+                                    </div>
+                                  )}
+                                </HoverCardContent>
+                              </HoverCard>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
-                </React.Fragment>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="text-center py-6 text-muted-foreground">
-            <p className="text-xs">No phases with assigned VCRs yet</p>
-          </div>
-        )}
+                  </React.Fragment>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-6 text-muted-foreground">
+              <p className="text-xs">No phases with assigned VCRs yet</p>
+            </div>
+          )}
+        </div>
 
-        {/* Unassigned VCRs warning */}
+        {/* Warnings */}
         {unassignedVCRs.length > 0 && (
-          <div className="mt-3 rounded-lg border border-dashed border-amber-300 dark:border-amber-700 bg-amber-50/50 dark:bg-amber-950/20 p-2.5">
+          <div className="rounded-lg border border-dashed border-amber-300 dark:border-amber-700 bg-amber-50/50 dark:bg-amber-950/20 p-2.5">
             <div className="flex items-center gap-1.5 mb-1.5">
               <AlertCircle className="h-3.5 w-3.5 text-amber-500" />
               <span className="text-xs font-medium text-amber-700 dark:text-amber-400">
@@ -210,9 +219,8 @@ export const WorkspacePreviewStep: React.FC<WorkspacePreviewStepProps> = ({
           </div>
         )}
 
-        {/* Unmapped systems — expandable */}
         {unmappedSystems.length > 0 && (
-          <Collapsible open={unmappedOpen} onOpenChange={setUnmappedOpen} className="mt-3">
+          <Collapsible open={unmappedOpen} onOpenChange={setUnmappedOpen}>
             <div className="rounded-lg border border-dashed border-amber-300 dark:border-amber-700 bg-amber-50/50 dark:bg-amber-950/20 p-2.5">
               <CollapsibleTrigger className="flex items-center justify-between w-full">
                 <div className="flex items-center gap-1.5">
@@ -239,55 +247,90 @@ export const WorkspacePreviewStep: React.FC<WorkspacePreviewStepProps> = ({
           </Collapsible>
         )}
 
-        {/* Selected Approvers */}
-        {approvers.length > 0 && (
+        {/* Approvers + Submission Notes — 2-column enterprise layout */}
+        {(approvers.length > 0 || onCommentChange) && (
           <>
-            <Separator className="my-3" />
-            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">
-              Selected Approvers
-            </span>
-            <div className="space-y-1.5">
-              {approvers.map((approver) => {
-                const avatarUrl = approver.user_avatar
-                  ? (approver.user_avatar.startsWith('http')
-                      ? approver.user_avatar
-                      : supabase.storage.from('user-avatars').getPublicUrl(approver.user_avatar).data.publicUrl)
-                  : undefined;
-                const initials = approver.user_name
-                  ? approver.user_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-                  : '?';
-                const hasUser = !!approver.user_id;
-                return (
-                  <div key={approver.id} className="flex items-center gap-2.5 p-2.5 rounded-lg border bg-card">
-                    <Avatar className="h-7 w-7 shrink-0">
-                      <AvatarImage src={avatarUrl} />
-                      <AvatarFallback className="text-[9px] bg-muted">{initials}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      {hasUser ? (
-                        <>
-                          <span className="text-xs font-medium">{approver.user_name}</span>
-                          <p className="text-[10px] text-muted-foreground truncate">{approver.role_name}</p>
-                        </>
-                      ) : (
-                        <>
-                          <span className="text-xs font-medium text-muted-foreground">{approver.role_name}</span>
-                          <p className="text-[10px] text-amber-600">Not assigned</p>
-                        </>
-                      )}
-                    </div>
-                    {!hasUser ? (
-                      <AlertCircle className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                    ) : approver.status === 'APPROVED' ? (
-                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                    ) : approver.status === 'REJECTED' ? (
-                      <XCircle className="h-3.5 w-3.5 text-destructive shrink-0" />
-                    ) : (
-                      <Clock className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
-                    )}
+            <Separator />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Left: Approvers in compact 2-col grid */}
+              {approvers.length > 0 && (
+                <section>
+                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2.5 block">
+                    Selected Approvers
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                    {approvers.map((approver) => {
+                      const avatarUrl = approver.user_avatar
+                        ? (approver.user_avatar.startsWith('http')
+                            ? approver.user_avatar
+                            : supabase.storage.from('user-avatars').getPublicUrl(approver.user_avatar).data.publicUrl)
+                        : undefined;
+                      const initials = approver.user_name
+                        ? approver.user_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+                        : '?';
+                      const hasUser = !!approver.user_id;
+                      return (
+                        <div key={approver.id} className="flex items-center gap-2 p-2 rounded-lg border bg-card">
+                          <Avatar className="h-6 w-6 shrink-0">
+                            <AvatarImage src={avatarUrl} />
+                            <AvatarFallback className="text-[8px] bg-muted">{initials}</AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            {hasUser ? (
+                              <div className="truncate">
+                                <span className="text-[11px] font-medium">{approver.user_name}</span>
+                                <span className="text-[10px] text-muted-foreground ml-1">· {approver.role_name}</span>
+                              </div>
+                            ) : (
+                              <div className="truncate">
+                                <span className="text-[11px] font-medium text-muted-foreground">{approver.role_name}</span>
+                                <span className="text-[10px] text-amber-600 ml-1">· Unassigned</span>
+                              </div>
+                            )}
+                          </div>
+                          {!hasUser ? (
+                            <AlertCircle className="h-3 w-3 text-muted-foreground shrink-0" />
+                          ) : approver.status === 'APPROVED' ? (
+                            <CheckCircle2 className="h-3 w-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                          ) : approver.status === 'REJECTED' ? (
+                            <XCircle className="h-3 w-3 text-destructive shrink-0" />
+                          ) : (
+                            <Clock className="h-3 w-3 text-amber-600 dark:text-amber-400 shrink-0" />
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
-                );
-              })}
+                </section>
+              )}
+
+              {/* Right: Submission Notes */}
+              {onCommentChange && (
+                <section>
+                  <div className="flex items-center gap-1.5 mb-2.5">
+                    <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
+                    <Label htmlFor="submission-comment" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Notes for Approvers
+                    </Label>
+                    <span className="text-[10px] text-muted-foreground ml-auto">(optional)</span>
+                  </div>
+                  <Textarea
+                    id="submission-comment"
+                    placeholder="Add any context, instructions, or key decisions for the approval team..."
+                    value={submissionComment}
+                    onChange={(e) => onCommentChange(e.target.value.slice(0, maxChars))}
+                    className="min-h-[120px] text-xs resize-none"
+                  />
+                  <div className="flex justify-end mt-1">
+                    <span className={cn(
+                      "text-[10px] tabular-nums",
+                      submissionComment.length >= maxChars ? "text-destructive" : "text-muted-foreground"
+                    )}>
+                      {submissionComment.length}/{maxChars}
+                    </span>
+                  </div>
+                </section>
+              )}
             </div>
           </>
         )}

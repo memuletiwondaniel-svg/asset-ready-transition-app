@@ -80,6 +80,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
   const [requestChangeOpen, setRequestChangeOpen] = useState(false);
   const [reviewVisitedSteps, setReviewVisitedSteps] = useState<Set<number>>(new Set());
   const [reviewComment, setReviewComment] = useState('');
+  const [submissionComment, setSubmissionComment] = useState('');
   const [isApproving, setIsApproving] = useState(false);
   const queryClient = useQueryClient();
   
