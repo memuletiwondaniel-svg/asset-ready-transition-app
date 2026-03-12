@@ -161,18 +161,22 @@ export const VCRDetailOverlay: React.FC<VCRDetailOverlayProps> = ({
     }
   };
 
-  const NavButton: React.FC<{ id: string; label: string; icon: React.ComponentType<any> }> = ({ id, label, icon: Icon }) => (
+  const NavButton: React.FC<{ id: string; label: string; icon: React.ComponentType<any>; locked?: boolean }> = ({ id, label, icon: Icon, locked }) => (
     <button
       onClick={() => handleTabChange(id)}
+      disabled={locked}
       className={cn(
         "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors text-left",
-        activeTab === id
-          ? "bg-primary text-primary-foreground font-medium"
-          : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+        locked
+          ? "opacity-40 cursor-not-allowed pointer-events-none"
+          : activeTab === id
+            ? "bg-primary text-primary-foreground font-medium"
+            : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
       )}
     >
       <Icon className="w-4 h-4 shrink-0" />
-      <span className="truncate">{label}</span>
+      <span className="truncate flex-1">{label}</span>
+      {locked && <Lock className="w-3 h-3 shrink-0 text-muted-foreground" />}
     </button>
   );
 
