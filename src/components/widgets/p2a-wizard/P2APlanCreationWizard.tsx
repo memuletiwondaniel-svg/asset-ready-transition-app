@@ -80,6 +80,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
   const [requestChangeOpen, setRequestChangeOpen] = useState(false);
   const [reviewVisitedSteps, setReviewVisitedSteps] = useState<Set<number>>(new Set());
   const [reviewComment, setReviewComment] = useState('');
+  const [submissionComment, setSubmissionComment] = useState('');
   const [isApproving, setIsApproving] = useState(false);
   const queryClient = useQueryClient();
   
@@ -312,6 +313,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
     setCompletedSteps(new Set());
     setReviewVisitedSteps(new Set());
     setReviewComment('');
+    setSubmissionComment('');
     setIsApproving(false);
     onOpenChange(false);
   };
@@ -496,7 +498,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
 
   const handleSubmit = async () => {
     try {
-      await submitForApproval();
+      await submitForApproval(submissionComment || undefined);
       await syncWizardProgress(WIZARD_STEPS.length, true);
       handleClose();
       onSuccess?.();
@@ -594,6 +596,8 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
             mappings={state.mappings}
             vcrPhaseAssignments={state.vcrPhaseAssignments}
             approvers={state.approvers}
+            submissionComment={submissionComment}
+            onCommentChange={isReadOnly || isReviewMode ? undefined : setSubmissionComment}
           />
         );
       default:
