@@ -248,7 +248,7 @@ export const VCRDetailOverlay: React.FC<VCRDetailOverlayProps> = ({
                   </span>
                 </div>
                 {buildingBlockTabs.map((tab) => (
-                  <NavButton key={tab.id} {...tab} />
+                  <NavButton key={tab.id} {...tab} locked={!isExecutionPlanApproved} />
                 ))}
               </div>
             </ScrollArea>

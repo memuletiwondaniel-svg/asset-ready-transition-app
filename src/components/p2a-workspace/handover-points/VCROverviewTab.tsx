@@ -236,8 +236,13 @@ export const VCROverviewTab: React.FC<VCROverviewTabProps> = ({ handoverPoint, o
               return (
                 <div 
                   key={item.label} 
-                  className="p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors cursor-pointer group"
-                  onClick={() => onNavigateToTab?.(item.tabId)}
+                  className={cn(
+                    "p-3 rounded-lg border bg-card transition-colors",
+                    isLocked 
+                      ? "opacity-40 cursor-default" 
+                      : "hover:bg-muted/50 cursor-pointer group"
+                  )}
+                  onClick={() => !isLocked && onNavigateToTab?.(item.tabId)}
                 >
                   <div className="flex items-center gap-2 mb-2">
                     <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", item.bgColor)}>
