@@ -47,6 +47,19 @@ export const WizardNavigation: React.FC<WizardNavigationProps> = ({
           <ChevronLeft className="h-4 w-4 mr-1" />
           Back
         </Button>
+        {onSave && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onSave}
+            disabled={isSaving || isSubmitting}
+          >
+            {isSaving ? (
+              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+            ) : null}
+            Save
+          </Button>
+        )}
         {onSaveAndExit && (
           <Button
             variant="ghost"
