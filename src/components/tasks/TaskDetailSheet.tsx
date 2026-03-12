@@ -63,7 +63,8 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   const oraProjectId = task?.metadata?.project_id as string | undefined;
   const isOraTask = task ? (task.type === 'ora_plan_creation' || (task.metadata?.action === 'create_ora_plan' && task.metadata?.source === 'ora_workflow')) : false;
   const isP2aTask = task?.metadata?.action === 'create_p2a_plan';
-  const p2aProjectId = task?.metadata?.project_id as string | undefined;
+  const isP2aApprovalTask = task?.type === 'approval' && task?.metadata?.source === 'p2a_handover';
+  const p2aProjectId = (task?.metadata?.project_id as string | undefined) || (isP2aApprovalTask ? task?.metadata?.project_id as string : undefined);
 
   // Check if an ORA plan exists for this project (draft or approved)
   const { data: existingOraPlan } = useQuery({
@@ -85,7 +86,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   const hasExistingOraDraft = existingOraPlan?.status === 'DRAFT';
   const resolvedOraPlanId = (task?.metadata?.plan_id as string) || existingOraPlan?.id;
 
-  // Fetch project info for P2A wizard
+  // Fetch project info for P2A wizard or P2A approval review
   const { data: p2aProjectInfo } = useQuery({
     queryKey: ['p2a-project-info', p2aProjectId],
     queryFn: async () => {
@@ -97,7 +98,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
         .single();
       return data;
     },
-    enabled: !!p2aProjectId && isP2aTask,
+    enabled: !!p2aProjectId && (isP2aTask || isP2aApprovalTask),
     staleTime: 60_000,
   });
 
@@ -270,8 +271,13 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   const resolvedP2aProjectCode = p2aProjectCode || (p2aProjectInfo ? `${p2aProjectInfo.project_id_prefix || ''}-${p2aProjectInfo.project_id_number || ''}` : '');
   const resolvedP2aProjectName = p2aProjectInfo?.project_title || '';
 
-  const isReviewTask = (['review', 'approval', 'ora_plan_review'].includes(task.type) || !!pssrId) && !isOraReviewTask;
+  const isReviewTask = (['review', 'approval', 'ora_plan_review'].includes(task.type) || !!pssrId) && !isOraReviewTask && !isP2aApprovalTask;
   const isActionTask = isOraTask || isOraActivityTask || isVcrDeliveryPlanTask || isP2aTask;
+
+  // Resolve P2A approval task project details
+  const p2aApprovalPlanId = isP2aApprovalTask ? (task.metadata?.plan_id as string) : undefined;
+  const p2aApprovalProjectCode = isP2aApprovalTask ? (p2aProjectCode || (p2aProjectInfo ? `${p2aProjectInfo.project_id_prefix || ''}-${p2aProjectInfo.project_id_number || ''}` : '')) : '';
+  const p2aApprovalProjectName = isP2aApprovalTask ? (p2aProjectInfo?.project_title || '') : '';
 
   const oraCtaLabel = isCompleted ? 'View ORA Plan' : hasExistingOraDraft ? 'Continue Creating ORA Plan' : 'Create ORA Plan';
   const oraIntentMessage = isCompleted
@@ -281,6 +287,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
       : 'You have been assigned to create the ORA Activity Plan for this project. Click below to launch the planning wizard.';
 
   const getIntentMessage = () => {
+    if (isP2aApprovalTask) return 'You have been asked to review and approve a P2A Handover Plan. Use the button below to review the plan, then approve or reject.';
     if (isP2aTask) {
       if (p2aPlanIsFullyApproved) return 'The P2A Plan has been approved. Click below to view the finalized plan.';
       if (p2aPlanIsSubmitted) return 'The P2A Plan has been submitted and is pending approval. Click below to review progress.';
@@ -302,6 +309,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
 
   const getTypeBadge = () => {
     if (isOraTask && projectCode) return <ProjectIdBadge size="sm">{projectCode}</ProjectIdBadge>;
+    if (isP2aApprovalTask && projectCode) return <ProjectIdBadge size="sm">{projectCode}</ProjectIdBadge>;
     if (isP2aTask && projectCode) return <ProjectIdBadge size="sm">{projectCode}</ProjectIdBadge>;
     if (isP2aTask) return <Badge variant="secondary" className="text-xs bg-emerald-500/10 text-emerald-600">P2A Plan</Badge>;
     if (isOraTask) return <Badge variant="secondary" className="text-xs bg-violet-500/10 text-violet-600">ORA Plan</Badge>;
@@ -446,7 +454,21 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
               </Button>
             )}
 
-            {/* ORA Activity Task CTA - prominent for action tasks */}
+            {/* P2A Approval Review CTA - opens workspace in read-only mode */}
+            {isP2aApprovalTask && p2aProjectId && (
+              <Button
+                className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
+                onClick={() => {
+                  onOpenChange(false);
+                  setP2aWorkspaceOpen(true);
+                }}
+              >
+                <Eye className="h-4 w-4" />
+                Review P2A Plan
+                <ChevronRight className="h-4 w-4 ml-auto" />
+              </Button>
+            )}
+
             {isOraActivityTask && (
               <Button
                 className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
@@ -618,7 +640,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
             )}
 
             {/* Comment & Approve/Reject - only for review tasks */}
-            {isReviewTask && (
+            {(isReviewTask || isP2aApprovalTask) && (
               <>
                 <Separator />
 
@@ -739,33 +761,36 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
       )}
 
       {/* P2A Plan Creation Wizard */}
-      {(p2aWizardOpen || p2aWorkspaceOpen) && p2aProjectId && (
+      {(p2aWizardOpen || p2aWorkspaceOpen) && p2aProjectId && (isP2aTask || isP2aApprovalTask) && (
         <>
-          <P2APlanCreationWizard
-            open={p2aWizardOpen}
-            onOpenChange={setP2aWizardOpen}
-            projectId={p2aProjectId}
-            projectCode={resolvedP2aProjectCode}
-            projectName={resolvedP2aProjectName}
-            onSuccess={() => {
-              setP2aWizardOpen(false);
-              onOpenChange(false);
-            }}
-            onOpenWorkspace={() => {
-              setP2aWizardOpen(false);
-              setP2aWorkspaceOpen(true);
-            }}
-          />
+          {isP2aTask && (
+            <P2APlanCreationWizard
+              open={p2aWizardOpen}
+              onOpenChange={setP2aWizardOpen}
+              projectId={p2aProjectId}
+              projectCode={resolvedP2aProjectCode}
+              projectName={resolvedP2aProjectName}
+              onSuccess={() => {
+                setP2aWizardOpen(false);
+                onOpenChange(false);
+              }}
+              onOpenWorkspace={() => {
+                setP2aWizardOpen(false);
+                setP2aWorkspaceOpen(true);
+              }}
+            />
+          )}
           <P2AWorkspaceOverlay
             open={p2aWorkspaceOpen}
             onOpenChange={setP2aWorkspaceOpen}
             projectId={p2aProjectId}
-            projectName={resolvedP2aProjectName}
-            projectNumber={resolvedP2aProjectCode}
-            onReturnToWizard={() => {
+            projectName={isP2aApprovalTask ? p2aApprovalProjectName : resolvedP2aProjectName}
+            projectNumber={isP2aApprovalTask ? p2aApprovalProjectCode : resolvedP2aProjectCode}
+            readOnly={isP2aApprovalTask}
+            onReturnToWizard={isP2aTask ? () => {
               setP2aWorkspaceOpen(false);
               setP2aWizardOpen(true);
-            }}
+            } : undefined}
           />
         </>
       )}
