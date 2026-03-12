@@ -697,8 +697,8 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
         {/* Content */}
         <div className="flex-1 min-h-0 overflow-auto">
           {renderStepContent()}
-          {/* Review comment box — always visible in review mode */}
-          {isReviewMode && (
+          {/* Review comment box — visible on last step in review mode */}
+          {isReviewMode && currentStep === WIZARD_STEPS.length && (
             <div className="px-6 py-4 border-t bg-muted/30">
               <label className="text-sm font-medium text-foreground mb-2 block">
                 Review Comments <span className="text-muted-foreground font-normal">(optional)</span>

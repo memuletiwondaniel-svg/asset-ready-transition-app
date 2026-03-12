@@ -84,8 +84,8 @@ export const WizardNavigation: React.FC<WizardNavigationProps> = ({
       </div>
 
       <div className="flex items-center gap-2">
-        {/* Review mode: show Approve/Reject on any step */}
-        {isReviewMode && onApprove && onReject ? (
+        {/* Review mode: show Approve/Reject only on last step */}
+        {isReviewMode && isLastStep && onApprove && onReject ? (
           <>
             <Button
               variant="destructive"
