@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Key, Loader2, Trash2, AlertTriangle, Edit3 } from 'lucide-react';
+import { Key, Loader2, Trash2, AlertTriangle, Edit3, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { WizardProgress, WizardStep } from './WizardProgress';
 import { WizardNavigation } from './WizardNavigation';
@@ -39,6 +39,12 @@ interface P2APlanCreationWizardProps {
   milestones?: Array<{ id: string; name: string; target_date?: string }>;
   onSuccess?: () => void;
   onOpenWorkspace?: () => void;
+  /** When set, wizard operates in review mode for an approver task */
+  reviewTaskId?: string;
+  /** Callback when reviewer approves */
+  onApprove?: (comment: string) => void;
+  /** Callback when reviewer rejects */
+  onReject?: (comment: string) => void;
 }
 
 const WIZARD_STEPS: WizardStep[] = [
@@ -61,12 +67,19 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
   milestones = [],
   onSuccess,
   onOpenWorkspace,
+  reviewTaskId,
+  onApprove,
+  onReject,
 }) => {
+  const isReviewMode = !!reviewTaskId;
   const [currentStep, setCurrentStep] = useState(1);
   const [useWizard, setUseWizard] = useState<boolean | null>(null);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
   const [isLoadingDraft, setIsLoadingDraft] = useState(false);
   const [requestChangeOpen, setRequestChangeOpen] = useState(false);
+  const [reviewVisitedSteps, setReviewVisitedSteps] = useState<Set<number>>(new Set());
+  const [reviewComment, setReviewComment] = useState('');
+  const [isApproving, setIsApproving] = useState(false);
   const queryClient = useQueryClient();
   
   const { data: existingPlan } = useP2APlanByProject(projectId);
@@ -199,6 +212,53 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
     }
   }, [projectId, queryClient]);
 
+  /**
+   * Sync review progress to the reviewer's user_task.
+   * Each of the 6 wizard steps (2-7) = ~14%, capped at 85%. Approval = 100%.
+   */
+  const syncReviewProgress = useCallback(async (visitedCount: number) => {
+    if (!reviewTaskId) return;
+    const REVIEW_STEPS = 6; // steps 2-7
+    const percentage = Math.min(Math.round((visitedCount / REVIEW_STEPS) * 85), 85);
+    try {
+      const { data: taskRow } = await supabase
+        .from('user_tasks')
+        .select('metadata')
+        .eq('id', reviewTaskId)
+        .single();
+      
+      await supabase
+        .from('user_tasks')
+        .update({
+          metadata: {
+            ...((taskRow?.metadata as Record<string, any>) || {}),
+            completion_percentage: percentage,
+          } as any,
+          status: percentage > 0 ? 'in_progress' : 'pending',
+        })
+        .eq('id', reviewTaskId);
+      
+      queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+    } catch (err) {
+      console.error('Failed to sync review progress:', err);
+    }
+  }, [reviewTaskId, queryClient]);
+
+  // Track step visits in review mode and sync progress
+  useEffect(() => {
+    if (isReviewMode && currentStep > 1) {
+      setReviewVisitedSteps(prev => {
+        const next = new Set(prev);
+        if (!next.has(currentStep)) {
+          next.add(currentStep);
+          // Fire async progress sync (don't block)
+          syncReviewProgress(next.size);
+        }
+        return next;
+      });
+    }
+  }, [currentStep, isReviewMode, syncReviewProgress]);
+
   // When the wizard opens and a draft plan exists, auto-load and resume
   useEffect(() => {
     if (open && existingPlan && !draftLoaded && !isLoadingDraft) {
@@ -207,8 +267,10 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
         .then((hasDraft) => {
           if (hasDraft) {
             setUseWizard(true);
-            // If plan is submitted (ACTIVE), open on Review step (read-only)
-            if (['ACTIVE', 'COMPLETED', 'APPROVED'].includes(existingPlan.status)) {
+            // Review mode: start at step 2 (first content step)
+            if (isReviewMode) {
+              setCurrentStep(2);
+            } else if (['ACTIVE', 'COMPLETED', 'APPROVED'].includes(existingPlan.status)) {
               setCurrentStep(WIZARD_STEPS.length); // Step 7 (Review)
             } else {
               setCurrentStep(2);
@@ -222,14 +284,76 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
           setIsLoadingDraft(false);
         });
     }
-  }, [open, existingPlan, draftLoaded, isLoadingDraft, loadDraft]);
+  }, [open, existingPlan, draftLoaded, isLoadingDraft, loadDraft, isReviewMode]);
 
   const handleClose = () => {
     resetState();
     setCurrentStep(1);
     setUseWizard(null);
     setCompletedSteps(new Set());
+    setReviewVisitedSteps(new Set());
+    setReviewComment('');
+    setIsApproving(false);
     onOpenChange(false);
+  };
+
+  const handleReviewApprove = async () => {
+    if (!onApprove) return;
+    setIsApproving(true);
+    try {
+      // Set review task to 100%
+      if (reviewTaskId) {
+        const { data: taskRow } = await supabase
+          .from('user_tasks')
+          .select('metadata')
+          .eq('id', reviewTaskId)
+          .single();
+        await supabase
+          .from('user_tasks')
+          .update({
+            metadata: {
+              ...((taskRow?.metadata as Record<string, any>) || {}),
+              completion_percentage: 100,
+            } as any,
+          })
+          .eq('id', reviewTaskId);
+      }
+      onApprove(reviewComment);
+      handleClose();
+    } catch (err) {
+      console.error('Approve failed:', err);
+    } finally {
+      setIsApproving(false);
+    }
+  };
+
+  const handleReviewReject = async () => {
+    if (!onReject) return;
+    setIsApproving(true);
+    try {
+      if (reviewTaskId) {
+        const { data: taskRow } = await supabase
+          .from('user_tasks')
+          .select('metadata')
+          .eq('id', reviewTaskId)
+          .single();
+        await supabase
+          .from('user_tasks')
+          .update({
+            metadata: {
+              ...((taskRow?.metadata as Record<string, any>) || {}),
+              completion_percentage: 100,
+            } as any,
+          })
+          .eq('id', reviewTaskId);
+      }
+      onReject(reviewComment);
+      handleClose();
+    } catch (err) {
+      console.error('Reject failed:', err);
+    } finally {
+      setIsApproving(false);
+    }
   };
 
   const isStepComplete = (displayStep: number): boolean => {
@@ -468,11 +592,13 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
             </div>
             <div>
               <h2 className="text-lg font-semibold">
-                {existingPlan && ['ACTIVE'].includes(existingPlan.status)
-                  ? 'P2A Plan — Pending Approval'
-                  : existingPlan && ['COMPLETED', 'APPROVED'].includes(existingPlan.status)
-                    ? 'P2A Plan — Approved'
-                    : 'Develop P2A Plan'}
+                {isReviewMode
+                  ? 'Review P2A Plan'
+                  : existingPlan && ['ACTIVE'].includes(existingPlan.status)
+                    ? 'P2A Plan — Pending Approval'
+                    : existingPlan && ['COMPLETED', 'APPROVED'].includes(existingPlan.status)
+                      ? 'P2A Plan — Approved'
+                      : 'Develop P2A Plan'}
               </h2>
               <p className="text-xs text-muted-foreground">
                 {projectName && projectName !== projectCode 
@@ -534,8 +660,21 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
           />
         )}
 
-        {/* Read-only banner */}
-        {isReadOnly && useWizard && currentStep > 1 && !isLoadingDraft && (
+        {/* Review mode banner */}
+        {isReviewMode && useWizard && currentStep > 1 && !isLoadingDraft && (
+          <div className="flex items-center gap-3 px-5 py-2.5 border-b bg-primary/5 dark:bg-primary/10 text-primary">
+            <Eye className="h-4 w-4 shrink-0" />
+            <p className="text-xs flex-1">
+              You are reviewing this plan as an approver. Navigate through each section to review, then approve or reject on the final step.
+              <span className="ml-2 font-medium">
+                ({reviewVisitedSteps.size}/6 sections reviewed)
+              </span>
+            </p>
+          </div>
+        )}
+
+        {/* Read-only banner (non-review mode) */}
+        {!isReviewMode && isReadOnly && useWizard && currentStep > 1 && !isLoadingDraft && (
           <div className="flex items-center gap-3 px-5 py-2.5 border-b bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-200">
             <AlertTriangle className="h-4 w-4 shrink-0" />
             <p className="text-xs flex-1">
@@ -558,6 +697,20 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
         {/* Content */}
         <div className="flex-1 min-h-0 overflow-auto">
           {renderStepContent()}
+          {/* Review comment box on last step in review mode */}
+          {isReviewMode && currentStep === WIZARD_STEPS.length && (
+            <div className="px-6 py-4 border-t bg-muted/30">
+              <label className="text-sm font-medium text-foreground mb-2 block">
+                Review Comments <span className="text-muted-foreground font-normal">(optional)</span>
+              </label>
+              <textarea
+                placeholder="Add any comments or notes about your review decision..."
+                value={reviewComment}
+                onChange={(e) => setReviewComment(e.target.value)}
+                className="w-full min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+          )}
         </div>
 
         {/* Navigation */}
@@ -567,14 +720,17 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
             totalSteps={WIZARD_STEPS.length - 1}
             onBack={handleBack}
             onNext={handleNext}
-            onSave={isReadOnly ? undefined : handleSave}
-            onSaveAndExit={isReadOnly ? () => onOpenChange(false) : handleSaveAndExit}
-            onSubmit={currentStep === WIZARD_STEPS.length && !isReadOnly && (!existingPlan || existingPlan.status === 'DRAFT') ? handleSubmit : undefined}
-            isSubmitting={isSubmitting}
+            onSave={isReadOnly && !isReviewMode ? undefined : (!isReviewMode ? handleSave : undefined)}
+            onSaveAndExit={isReviewMode ? () => onOpenChange(false) : (isReadOnly ? () => onOpenChange(false) : handleSaveAndExit)}
+            onSubmit={!isReviewMode && currentStep === WIZARD_STEPS.length && !isReadOnly && (!existingPlan || existingPlan.status === 'DRAFT') ? handleSubmit : undefined}
+            onApprove={isReviewMode ? handleReviewApprove : undefined}
+            onReject={isReviewMode ? handleReviewReject : undefined}
+            isSubmitting={isSubmitting || isApproving}
             isSaving={isSaving}
             canProceed={canProceed()}
             submitLabel="Submit for Approval"
-            saveAndExitLabel={isReadOnly ? 'Close' : undefined}
+            saveAndExitLabel={isReadOnly || isReviewMode ? 'Close' : undefined}
+            isReviewMode={isReviewMode}
           />
         )}
 

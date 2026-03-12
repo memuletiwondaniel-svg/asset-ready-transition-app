@@ -451,13 +451,13 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
               </Button>
             )}
 
-            {/* P2A Approval Review CTA - opens workspace in read-only mode */}
+            {/* P2A Approval Review CTA - opens wizard in review mode */}
             {isP2aApprovalTask && p2aProjectId && (
               <Button
                 className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
                 onClick={() => {
                   onOpenChange(false);
-                  setP2aWorkspaceOpen(true);
+                  setP2aWizardOpen(true);
                 }}
               >
                 <Eye className="h-4 w-4" />
@@ -636,8 +636,8 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
               </Button>
             )}
 
-            {/* Comment & Approve/Reject - only for review tasks */}
-            {(isReviewTask || isP2aApprovalTask) && (
+            {/* Comment & Approve/Reject - only for non-P2A review tasks (P2A has approve/reject in the wizard) */}
+            {(isReviewTask) && (
               <>
                 <Separator />
 
@@ -757,7 +757,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
         />
       )}
 
-      {/* P2A Plan Creation Wizard */}
+      {/* P2A Plan Creation Wizard / Review Wizard */}
       {(p2aWizardOpen || p2aWorkspaceOpen) && p2aProjectId && (isP2aTask || isP2aApprovalTask) && (
         <>
           {isP2aTask && (
@@ -774,6 +774,26 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
               onOpenWorkspace={() => {
                 setP2aWizardOpen(false);
                 setP2aWorkspaceOpen(true);
+              }}
+            />
+          )}
+          {isP2aApprovalTask && (
+            <P2APlanCreationWizard
+              open={p2aWizardOpen}
+              onOpenChange={setP2aWizardOpen}
+              projectId={p2aProjectId}
+              projectCode={p2aApprovalProjectCode}
+              projectName={p2aApprovalProjectName}
+              reviewTaskId={task?.id}
+              onApprove={(reviewComment) => {
+                onApprove(task!.id, reviewComment);
+                setP2aWizardOpen(false);
+                onOpenChange(false);
+              }}
+              onReject={(reviewComment) => {
+                onReject(task!.id, reviewComment);
+                setP2aWizardOpen(false);
+                onOpenChange(false);
               }}
             />
           )}
