@@ -157,7 +157,7 @@ export const VCRDetailOverlay: React.FC<VCRDetailOverlayProps> = ({
       case 'spares':
         return <PlaceholderTab title="Spares" icon={<Package className="w-8 h-8 text-orange-500" />} />;
       default:
-        return <VCROverviewTab handoverPoint={handoverPoint} onNavigateToTab={handleTabChange} />;
+        return <VCROverviewTab handoverPoint={handoverPoint} onNavigateToTab={handleTabChange} isLocked={!isExecutionPlanApproved} />;
     }
   };
 
