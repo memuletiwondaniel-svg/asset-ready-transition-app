@@ -228,6 +228,52 @@ const fetchUserTasks = async (userId: string): Promise<FetchResult> => {
 };
 
 /**
+ * Enrich all completed P2A approval tasks for a plan with approver progress counts.
+ * This updates task metadata so Kanban cards can show "2 of 4 Approvers" without extra queries.
+ */
+async function enrichP2ATasksWithApproverCounts(planId: string) {
+  try {
+    const { data: allApprovers } = await supabase
+      .from('p2a_handover_approvers')
+      .select('status')
+      .eq('handover_id', planId);
+
+    if (!allApprovers) return;
+
+    const totalApprovers = allApprovers.length;
+    const approvedCount = allApprovers.filter((a: any) => a.status === 'APPROVED').length;
+
+    // Find all completed P2A approval tasks for this plan
+    const { data: completedTasks } = await supabase
+      .from('user_tasks')
+      .select('id, metadata')
+      .eq('type', 'approval')
+      .eq('status', 'completed');
+
+    const p2aTasks = (completedTasks || []).filter((t: any) => {
+      const m = t.metadata as Record<string, any>;
+      return m?.source === 'p2a_handover' && m?.plan_id === planId;
+    });
+
+    for (const task of p2aTasks) {
+      const existingMeta = (task.metadata as Record<string, any>) || {};
+      await supabase
+        .from('user_tasks')
+        .update({
+          metadata: {
+            ...existingMeta,
+            total_approvers: totalApprovers,
+            approved_count: approvedCount,
+          } as any,
+        })
+        .eq('id', task.id);
+    }
+  } catch (e) {
+    console.warn('[P2A] Failed to enrich approver counts:', e);
+  }
+}
+
+/**
  * Core P2A approval sync logic. Extracted so it can be called from both
  * single-task and bulk-task completion paths.
  */
