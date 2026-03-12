@@ -475,6 +475,16 @@ async function persistPlanToDatabase(
 
   // Save approvers
   if (state.approvers.length > 0) {
+    // Clean up any existing approval tasks for this plan before re-creating approvers
+    // This prevents duplicates when a plan is re-submitted after draft revert
+    await client
+      .from('user_tasks')
+      .delete()
+      .eq('type', 'approval')
+      .in('status', ['pending', 'waiting'])
+      .filter('metadata->>plan_id', 'eq', planId)
+      .filter('metadata->>source', 'eq', 'p2a_handover');
+
     await client.from('p2a_handover_approvers').delete().eq('handover_id', planId);
 
     const approverRecords = state.approvers.map(a => ({
