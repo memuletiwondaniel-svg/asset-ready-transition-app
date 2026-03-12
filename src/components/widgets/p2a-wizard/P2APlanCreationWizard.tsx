@@ -335,6 +335,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
             metadata: {
               ...((taskRow?.metadata as Record<string, any>) || {}),
               completion_percentage: 100,
+              review_comment: reviewComment || undefined,
             } as any,
           })
           .eq('id', reviewTaskId);
