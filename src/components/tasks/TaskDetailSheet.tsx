@@ -309,6 +309,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
 
   const getTypeBadge = () => {
     if (isOraTask && projectCode) return <ProjectIdBadge size="sm">{projectCode}</ProjectIdBadge>;
+    if (isP2aApprovalTask && projectCode) return <ProjectIdBadge size="sm">{projectCode}</ProjectIdBadge>;
     if (isP2aTask && projectCode) return <ProjectIdBadge size="sm">{projectCode}</ProjectIdBadge>;
     if (isP2aTask) return <Badge variant="secondary" className="text-xs bg-emerald-500/10 text-emerald-600">P2A Plan</Badge>;
     if (isOraTask) return <Badge variant="secondary" className="text-xs bg-violet-500/10 text-violet-600">ORA Plan</Badge>;
