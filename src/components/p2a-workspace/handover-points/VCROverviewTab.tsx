@@ -40,7 +40,7 @@ const getStatusConfig = (status: string) => {
   }
 };
 
-export const VCROverviewTab: React.FC<VCROverviewTabProps> = ({ handoverPoint, onNavigateToTab }) => {
+export const VCROverviewTab: React.FC<VCROverviewTabProps> = ({ handoverPoint, onNavigateToTab, isLocked }) => {
   const { systems, isLoading: systemsLoading } = useHandoverPointSystems(handoverPoint.id);
   const { prerequisites, progress, isLoading: prereqLoading } = useVCRPrerequisites(handoverPoint.id);
 
