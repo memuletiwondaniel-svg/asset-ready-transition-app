@@ -77,6 +77,9 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
   const [isLoadingDraft, setIsLoadingDraft] = useState(false);
   const [requestChangeOpen, setRequestChangeOpen] = useState(false);
+  const [reviewVisitedSteps, setReviewVisitedSteps] = useState<Set<number>>(new Set());
+  const [reviewComment, setReviewComment] = useState('');
+  const [isApproving, setIsApproving] = useState(false);
   const queryClient = useQueryClient();
   
   const { data: existingPlan } = useP2APlanByProject(projectId);
