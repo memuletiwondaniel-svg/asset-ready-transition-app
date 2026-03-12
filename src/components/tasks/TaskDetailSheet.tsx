@@ -451,13 +451,13 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
               </Button>
             )}
 
-            {/* P2A Approval Review CTA - opens workspace in read-only mode */}
+            {/* P2A Approval Review CTA - opens wizard in review mode */}
             {isP2aApprovalTask && p2aProjectId && (
               <Button
                 className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
                 onClick={() => {
                   onOpenChange(false);
-                  setP2aWorkspaceOpen(true);
+                  setP2aWizardOpen(true);
                 }}
               >
                 <Eye className="h-4 w-4" />
