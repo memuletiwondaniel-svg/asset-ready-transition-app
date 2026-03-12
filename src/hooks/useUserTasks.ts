@@ -466,6 +466,9 @@ async function syncP2AApproval(
       console.error('[P2A] Failed to reset ORA activity on rejection:', e);
     }
 
+    // Enrich rejected task with approver counts for Kanban card display
+    await enrichP2ATasksWithApproverCounts(planId);
+
     console.log('[P2A] Rejection cascade completed for plan:', planId);
   }
 
