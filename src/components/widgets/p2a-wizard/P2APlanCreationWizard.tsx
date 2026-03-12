@@ -603,7 +603,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-6xl sm:w-[95vw] p-0 gap-0 !inset-0 !max-h-full !translate-x-0 !translate-y-0 !rounded-none sm:!inset-auto sm:!left-[50%] sm:!top-[50%] sm:!translate-x-[-50%] sm:!translate-y-[-50%] sm:!rounded-lg sm:h-[min(88vh,800px)] sm:!max-h-[88vh] h-[100dvh] flex flex-col overflow-hidden [&>button]:hidden z-[100]">
+      <DialogContent className="sm:max-w-6xl sm:w-[95vw] !p-0 sm:!p-0 !gap-0 !inset-0 !max-h-full !translate-x-0 !translate-y-0 !rounded-none !overflow-hidden sm:!inset-auto sm:!left-[50%] sm:!top-[50%] sm:!translate-x-[-50%] sm:!translate-y-[-50%] sm:!rounded-lg sm:h-[min(88vh,800px)] sm:!max-h-[88vh] h-[100dvh] flex flex-col [&>button]:hidden z-[100]">
         {/* Header */}
         <div className="flex items-center justify-between px-3 sm:px-5 py-3 sm:py-4 border-b shrink-0 bg-gradient-to-br from-primary/5 via-accent/5 to-transparent">
           <div className="flex items-center gap-3">
@@ -648,7 +648,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
                     )}
                   </Button>
                 </AlertDialogTrigger>
-                <AlertDialogContent>
+                <AlertDialogContent className="z-[150]">
                   <AlertDialogHeader>
                     <AlertDialogTitle>Delete Draft Plan?</AlertDialogTitle>
                     <AlertDialogDescription>
@@ -783,7 +783,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
 
         {/* Request Change confirmation dialog */}
         <AlertDialog open={requestChangeOpen} onOpenChange={setRequestChangeOpen}>
-          <AlertDialogContent>
+          <AlertDialogContent className="z-[150]">
             <AlertDialogHeader>
               <div className="flex items-center gap-3">
                 <div className="flex items-center justify-center w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30">

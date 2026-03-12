@@ -139,7 +139,7 @@ export const VCRCreationStep: React.FC<VCRCreationStepProps> = ({
                           </p>
                         )}
                       </div>
-                      <div className="flex gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex gap-1 shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                         <Button
                           size="icon"
                           variant="ghost"
