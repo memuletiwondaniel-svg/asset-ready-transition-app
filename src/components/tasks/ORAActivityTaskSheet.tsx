@@ -1188,6 +1188,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                             <p className="text-[10px] text-muted-foreground/60 mt-1">
                               {entry.full_name}
                               {entry.role_name ? ` · ${entry.role_name}` : ''}
+                              {entry.cycle ? ` · Round ${entry.cycle}` : ''}
                               {' · '}
                               {formatDistanceToNow(parseISO(entry.timestamp), { addSuffix: true })}
                             </p>
