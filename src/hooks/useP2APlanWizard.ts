@@ -273,7 +273,7 @@ async function persistPlanToDatabase(
     planId = existingPlan.id;
     await client
       .from('p2a_handover_plans')
-      .update({ status, updated_at: new Date().toISOString() })
+      .update({ status, project_code: projectCode, updated_at: new Date().toISOString() })
       .eq('id', planId);
   } else {
     const { data: newPlan, error: planError } = await client
