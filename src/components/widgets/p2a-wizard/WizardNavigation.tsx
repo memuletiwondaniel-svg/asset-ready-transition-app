@@ -42,16 +42,17 @@ export const WizardNavigation: React.FC<WizardNavigationProps> = ({
   const isLastStep = currentStep === totalSteps;
 
   return (
-    <div className="flex items-center justify-between px-4 py-2.5 border-t bg-background">
-      <div className="flex items-center gap-2">
+    <div className="flex items-center justify-between px-3 sm:px-4 py-2 sm:py-2.5 border-t bg-background shrink-0 gap-2">
+      <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
         <Button
           variant="outline"
           size="sm"
           onClick={onBack}
           disabled={!canGoBack || isSubmitting || isSaving}
+          className="h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm"
         >
-          <ChevronLeft className="h-4 w-4 mr-1" />
-          Back
+          <ChevronLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-0.5 sm:mr-1" />
+          <span className="hidden xs:inline">Back</span>
         </Button>
         {onSave && (
           <Button
@@ -59,9 +60,10 @@ export const WizardNavigation: React.FC<WizardNavigationProps> = ({
             size="sm"
             onClick={onSave}
             disabled={isSaving || isSubmitting}
+            className="h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm"
           >
             {isSaving ? (
-              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+              <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-0.5 sm:mr-1 animate-spin" />
             ) : null}
             Save
           </Button>
@@ -72,18 +74,20 @@ export const WizardNavigation: React.FC<WizardNavigationProps> = ({
             size="sm"
             onClick={onSaveAndExit}
             disabled={isSaving || isSubmitting}
+            className="h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm"
           >
             {isSaving ? (
-              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+              <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-0.5 sm:mr-1 animate-spin" />
             ) : (
-              <LogOut className="h-4 w-4 mr-1" />
+              <LogOut className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-0.5 sm:mr-1" />
             )}
-            {saveAndExitLabel || 'Save & Exit'}
+            <span className="hidden sm:inline">{saveAndExitLabel || 'Save & Exit'}</span>
+            <span className="sm:hidden">{saveAndExitLabel === 'Close' ? 'Close' : 'Exit'}</span>
           </Button>
         )}
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5 sm:gap-2">
         {/* Review mode: show Approve/Reject only on last step */}
         {isReviewMode && isLastStep && onApprove && onReject ? (
           <>
@@ -92,23 +96,23 @@ export const WizardNavigation: React.FC<WizardNavigationProps> = ({
               size="sm"
               onClick={onReject}
               disabled={isSubmitting}
-              className="gap-1.5"
+              className="gap-1 sm:gap-1.5 h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm"
             >
-              <XCircle className="h-4 w-4" />
-              Reject
+              <XCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="hidden xs:inline">Reject</span>
             </Button>
             <Button
               size="sm"
               onClick={onApprove}
               disabled={isSubmitting}
-              className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
+              className="gap-1 sm:gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm"
             >
               {isSubmitting ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
               ) : (
-                <CheckCircle className="h-4 w-4" />
+                <CheckCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               )}
-              Approve
+              <span className="hidden xs:inline">Approve</span>
             </Button>
           </>
         ) : isLastStep && onSubmit ? (
@@ -116,11 +120,12 @@ export const WizardNavigation: React.FC<WizardNavigationProps> = ({
             size="sm"
             onClick={onSubmit}
             disabled={isSubmitting || !canProceed}
+            className="h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm"
           >
             {isSubmitting ? (
-              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+              <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-0.5 sm:mr-1 animate-spin" />
             ) : (
-              <Send className="h-4 w-4 mr-1" />
+              <Send className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-0.5 sm:mr-1" />
             )}
             {submitLabel}
           </Button>
@@ -129,12 +134,13 @@ export const WizardNavigation: React.FC<WizardNavigationProps> = ({
             size="sm"
             onClick={onNext}
             disabled={isSubmitting || isSaving || !canProceed}
+            className="h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm"
           >
             {isSaving ? (
-              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+              <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-0.5 sm:mr-1 animate-spin" />
             ) : null}
             Next
-            <ChevronRight className="h-4 w-4 ml-1" />
+            <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4 ml-0.5 sm:ml-1" />
           </Button>
         )}
       </div>

@@ -603,9 +603,9 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-6xl w-[95vw] p-0 gap-0 h-[min(88vh,800px)] flex flex-col overflow-hidden [&>button]:hidden z-[100]">
+      <DialogContent className="sm:max-w-6xl sm:w-[95vw] p-0 gap-0 !inset-0 !max-h-full !translate-x-0 !translate-y-0 !rounded-none sm:!inset-auto sm:!left-[50%] sm:!top-[50%] sm:!translate-x-[-50%] sm:!translate-y-[-50%] sm:!rounded-lg sm:h-[min(88vh,800px)] sm:!max-h-[88vh] h-[100dvh] flex flex-col overflow-hidden [&>button]:hidden z-[100]">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b shrink-0 bg-gradient-to-br from-primary/5 via-accent/5 to-transparent">
+        <div className="flex items-center justify-between px-3 sm:px-5 py-3 sm:py-4 border-b shrink-0 bg-gradient-to-br from-primary/5 via-accent/5 to-transparent">
           <div className="flex items-center gap-3">
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-br from-orange-500/40 to-amber-500/40 rounded-xl blur-sm" />
@@ -614,7 +614,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
               </div>
             </div>
             <div>
-              <h2 className="text-lg font-semibold">
+              <h2 className="text-sm sm:text-lg font-semibold">
                 {isReviewMode
                   ? 'Review P2A Plan'
                   : existingPlan && ['ACTIVE'].includes(existingPlan.status)
@@ -685,11 +685,11 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
 
         {/* Review mode banner */}
         {isReviewMode && useWizard && currentStep > 1 && !isLoadingDraft && (
-          <div className="flex items-center gap-3 px-5 py-2.5 border-b bg-primary/5 dark:bg-primary/10 text-primary">
-            <Eye className="h-4 w-4 shrink-0" />
-            <p className="text-xs flex-1">
+          <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-5 py-2 sm:py-2.5 border-b bg-primary/5 dark:bg-primary/10 text-primary shrink-0">
+            <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+            <p className="text-[11px] sm:text-xs flex-1">
               You are reviewing this plan as an approver. Navigate through each section to review, then approve or reject on the final step.
-              <span className="ml-2 font-medium">
+              <span className="ml-1 sm:ml-2 font-medium">
                 ({reviewVisitedSteps.size}/6 sections reviewed)
               </span>
             </p>
@@ -698,9 +698,9 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
 
         {/* Rejection feedback banner (shown to author when plan was rejected) */}
         {!isReviewMode && rejectionInfo && useWizard && !isLoadingDraft && (
-          <div className="flex items-start gap-3 px-5 py-3 border-b bg-destructive/5 dark:bg-destructive/10 text-destructive">
-            <XCircle className="h-4 w-4 shrink-0 mt-0.5" />
-            <div className="flex-1 text-xs space-y-1">
+          <div className="flex items-start gap-2 sm:gap-3 px-3 sm:px-5 py-2 sm:py-3 border-b bg-destructive/5 dark:bg-destructive/10 text-destructive shrink-0">
+            <XCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 mt-0.5" />
+            <div className="flex-1 text-[11px] sm:text-xs space-y-1">
               <p className="font-medium">
                 Plan was rejected by {rejectionInfo.role_name}
                 {rejectionInfo.approved_at && (
@@ -719,17 +719,19 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
 
 
         {!isReviewMode && isReadOnly && useWizard && currentStep > 1 && !isLoadingDraft && (
-          <div className="flex items-center gap-3 px-5 py-2.5 border-b bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-200">
-            <AlertTriangle className="h-4 w-4 shrink-0" />
-            <p className="text-xs flex-1">
-              {existingPlan?.status === 'ACTIVE'
-                ? 'This plan has been submitted and is pending approval. Changes are not allowed until the review is complete.'
-                : 'This plan has been approved. Any modifications will require resubmitting for re-approval.'}
-            </p>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 px-3 sm:px-5 py-2 sm:py-2.5 border-b bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-200 shrink-0">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <AlertTriangle className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+              <p className="text-[11px] sm:text-xs flex-1">
+                {existingPlan?.status === 'ACTIVE'
+                  ? 'This plan has been submitted and is pending approval. Changes are not allowed until the review is complete.'
+                  : 'This plan has been approved. Any modifications will require resubmitting for re-approval.'}
+              </p>
+            </div>
             <Button
               variant="outline"
               size="sm"
-              className="shrink-0 text-xs gap-1.5 border-amber-300 dark:border-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/50"
+              className="shrink-0 text-[11px] sm:text-xs gap-1.5 border-amber-300 dark:border-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/50 h-7 sm:h-8"
               onClick={() => setRequestChangeOpen(true)}
             >
               <Edit3 className="h-3 w-3" />
@@ -739,21 +741,21 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
         )}
 
         {/* Content */}
-        <div className="flex-1 min-h-0 overflow-auto">
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain touch-pan-y">
           {renderStepContent()}
         </div>
 
         {/* Review comment box — pinned above final actions on last step */}
         {isReviewMode && useWizard && currentStep === WIZARD_STEPS.length && !isLoadingDraft && (
-          <div className="px-5 py-2.5 border-t bg-muted/30 shrink-0">
-            <label className="text-xs font-medium text-foreground mb-1.5 block">
+          <div className="px-3 sm:px-5 py-2 sm:py-2.5 border-t bg-muted/30 shrink-0">
+            <label className="text-[11px] sm:text-xs font-medium text-foreground mb-1 sm:mb-1.5 block">
               Review Comments <span className="text-muted-foreground font-normal">(optional)</span>
             </label>
             <textarea
               placeholder="Add comments about your review decision..."
               value={reviewComment}
               onChange={(e) => setReviewComment(e.target.value)}
-              className="w-full min-h-[48px] max-h-[72px] rounded-md border border-input bg-background px-3 py-1.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full min-h-[40px] sm:min-h-[48px] max-h-[60px] sm:max-h-[72px] rounded-md border border-input bg-background px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
         )}

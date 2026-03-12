@@ -392,7 +392,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   return (
     <>
       <Sheet open={open} onOpenChange={handleOpenChange}>
-        <SheetContent className="sm:max-w-lg overflow-y-auto">
+        <SheetContent className="sm:max-w-lg overflow-y-auto overscroll-contain touch-pan-y">
           <SheetHeader className="pb-4">
             <div className="flex items-center gap-2 flex-wrap">
               {getTypeBadge()}
