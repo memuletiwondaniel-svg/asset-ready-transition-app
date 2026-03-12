@@ -454,7 +454,21 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
               </Button>
             )}
 
-            {/* ORA Activity Task CTA - prominent for action tasks */}
+            {/* P2A Approval Review CTA - opens workspace in read-only mode */}
+            {isP2aApprovalTask && p2aProjectId && (
+              <Button
+                className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
+                onClick={() => {
+                  onOpenChange(false);
+                  setP2aWorkspaceOpen(true);
+                }}
+              >
+                <Eye className="h-4 w-4" />
+                Review P2A Plan
+                <ChevronRight className="h-4 w-4 ml-auto" />
+              </Button>
+            )}
+
             {isOraActivityTask && (
               <Button
                 className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
