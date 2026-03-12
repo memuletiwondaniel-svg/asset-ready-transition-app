@@ -39,6 +39,12 @@ interface P2APlanCreationWizardProps {
   milestones?: Array<{ id: string; name: string; target_date?: string }>;
   onSuccess?: () => void;
   onOpenWorkspace?: () => void;
+  /** When set, wizard operates in review mode for an approver task */
+  reviewTaskId?: string;
+  /** Callback when reviewer approves */
+  onApprove?: (comment: string) => void;
+  /** Callback when reviewer rejects */
+  onReject?: (comment: string) => void;
 }
 
 const WIZARD_STEPS: WizardStep[] = [
