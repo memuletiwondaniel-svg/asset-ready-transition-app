@@ -1078,6 +1078,19 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                 full_name: d.full_name,
                 avatar_url: d.avatar_url,
                 timestamp: d.approved_at,
+                cycle: null as number | null,
+              }));
+              // Add archived history entries with cycle info
+              const historyEntries = (p2aApproverHistory || []).map((d: any) => ({
+                id: `history-${d.id}`,
+                type: 'approval_action' as const,
+                status: d.status,
+                role_name: d.role_name,
+                comment: d.comments,
+                full_name: d.full_name,
+                avatar_url: d.avatar_url,
+                timestamp: d.approved_at,
+                cycle: d.cycle as number | null,
               }));
               const commentEntries = dbComments.map((c) => ({
                 id: c.id,
