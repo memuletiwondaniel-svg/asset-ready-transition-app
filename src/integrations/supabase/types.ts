@@ -3199,6 +3199,59 @@ export type Database = {
           },
         ]
       }
+      p2a_approver_history: {
+        Row: {
+          approved_at: string | null
+          archived_at: string | null
+          comments: string | null
+          created_at: string | null
+          cycle: number
+          display_order: number
+          handover_id: string
+          id: string
+          original_approver_id: string | null
+          role_name: string
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          archived_at?: string | null
+          comments?: string | null
+          created_at?: string | null
+          cycle?: number
+          display_order?: number
+          handover_id: string
+          id?: string
+          original_approver_id?: string | null
+          role_name: string
+          status: string
+          user_id?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          archived_at?: string | null
+          comments?: string | null
+          created_at?: string | null
+          cycle?: number
+          display_order?: number
+          handover_id?: string
+          id?: string
+          original_approver_id?: string | null
+          role_name?: string
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_approver_history_handover_id_fkey"
+            columns: ["handover_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_handover_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       p2a_audit_trail: {
         Row: {
           action_type: string

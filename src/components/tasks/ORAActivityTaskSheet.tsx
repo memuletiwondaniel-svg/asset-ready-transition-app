@@ -266,6 +266,46 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
         ...d,
         full_name: profileMap[d.user_id]?.full_name || d.role_name,
         avatar_url: profileMap[d.user_id]?.avatar_url || null,
+        cycle: null, // current cycle
+      }));
+    },
+    enabled: !!existingP2APlan?.id && isP2AActivity,
+    staleTime: 30_000,
+  });
+
+  // Fetch archived approver history for previous cycles
+  const { data: p2aApproverHistory } = useQuery({
+    queryKey: ['p2a-approver-history', existingP2APlan?.id],
+    queryFn: async () => {
+      if (!existingP2APlan?.id) return [];
+      const { data } = await (supabase as any)
+        .from('p2a_approver_history')
+        .select('id, user_id, role_name, status, comments, approved_at, cycle')
+        .eq('handover_id', existingP2APlan.id)
+        .order('approved_at', { ascending: false });
+      if (!data || data.length === 0) return [];
+      const userIds = [...new Set(data.filter((d: any) => d.user_id).map((d: any) => d.user_id))];
+      let profileMap: Record<string, { full_name: string; avatar_url: string | null }> = {};
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, full_name, avatar_url')
+          .in('user_id', userIds as string[]);
+        if (profiles) {
+          for (const p of profiles) {
+            const avatarUrl = p.avatar_url
+              ? p.avatar_url.startsWith('http')
+                ? p.avatar_url
+                : supabase.storage.from('user-avatars').getPublicUrl(p.avatar_url).data.publicUrl
+              : null;
+            profileMap[p.user_id] = { full_name: p.full_name || '', avatar_url: avatarUrl };
+          }
+        }
+      }
+      return data.map((d: any) => ({
+        ...d,
+        full_name: profileMap[d.user_id]?.full_name || d.role_name,
+        avatar_url: profileMap[d.user_id]?.avatar_url || null,
       }));
     },
     enabled: !!existingP2APlan?.id && isP2AActivity,
@@ -1038,6 +1078,19 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                 full_name: d.full_name,
                 avatar_url: d.avatar_url,
                 timestamp: d.approved_at,
+                cycle: null as number | null,
+              }));
+              // Add archived history entries with cycle info
+              const historyEntries = (p2aApproverHistory || []).map((d: any) => ({
+                id: `history-${d.id}`,
+                type: 'approval_action' as const,
+                status: d.status,
+                role_name: d.role_name,
+                comment: d.comments,
+                full_name: d.full_name,
+                avatar_url: d.avatar_url,
+                timestamp: d.approved_at,
+                cycle: d.cycle as number | null,
               }));
               const commentEntries = dbComments.map((c) => ({
                 id: c.id,
@@ -1048,6 +1101,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                 full_name: c.full_name,
                 avatar_url: c.avatar_url,
                 timestamp: c.created_at,
+                cycle: null as number | null,
               }));
               const submissionEntries = submissionEntry ? [{
                 id: 'submission-entry',
@@ -1058,8 +1112,9 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                 full_name: submissionEntry.full_name,
                 avatar_url: submissionEntry.avatar_url,
                 timestamp: submissionEntry.submitted_at,
+                cycle: null as number | null,
               }] : [];
-              const activityFeed = [...commentEntries, ...approverEntries, ...submissionEntries]
+              const activityFeed = [...commentEntries, ...approverEntries, ...historyEntries, ...submissionEntries]
                 .filter((e) => e.timestamp)
                 .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
               const feedCount = activityFeed.length;
@@ -1133,6 +1188,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                             <p className="text-[10px] text-muted-foreground/60 mt-1">
                               {entry.full_name}
                               {entry.role_name ? ` · ${entry.role_name}` : ''}
+                              {entry.cycle ? ` · Round ${entry.cycle}` : ''}
                               {' · '}
                               {formatDistanceToNow(parseISO(entry.timestamp), { addSuffix: true })}
                             </p>

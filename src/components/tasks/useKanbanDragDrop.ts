@@ -165,10 +165,38 @@ export function useKanbanDragDrop() {
             .from('p2a_handover_plans')
             .update({ status: 'DRAFT', updated_at: new Date().toISOString() })
             .eq('id', p2aPlan.id);
+          // Archive decided approver records before resetting (for audit trail)
+          const { data: decidedApprovers } = await client
+            .from('p2a_handover_approvers')
+            .select('id, user_id, role_name, display_order, status, approved_at, comments')
+            .eq('handover_id', p2aPlan.id)
+            .not('approved_at', 'is', null);
+          if (decidedApprovers && decidedApprovers.length > 0) {
+            const { data: maxCycleRow } = await client
+              .from('p2a_approver_history')
+              .select('cycle')
+              .eq('handover_id', p2aPlan.id)
+              .order('cycle', { ascending: false })
+              .limit(1);
+            const nextCycle = (maxCycleRow?.[0]?.cycle || 0) + 1;
+            const historyRecords = decidedApprovers.map((a: any) => ({
+              handover_id: p2aPlan.id,
+              original_approver_id: a.id,
+              user_id: a.user_id,
+              role_name: a.role_name,
+              display_order: a.display_order,
+              status: a.status,
+              approved_at: a.approved_at,
+              comments: a.comments,
+              cycle: nextCycle,
+            }));
+            await client.from('p2a_approver_history').insert(historyRecords);
+          }
+
           // Reset all approvers to PENDING (correct column: handover_id)
           await client
             .from('p2a_handover_approvers')
-            .update({ status: 'PENDING', approved_at: null })
+            .update({ status: 'PENDING', approved_at: null, comments: null })
             .eq('handover_id', p2aPlan.id);
 
           // Reset the user_task metadata to clear submitted plan_status
