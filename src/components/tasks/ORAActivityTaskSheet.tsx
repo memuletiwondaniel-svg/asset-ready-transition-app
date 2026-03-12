@@ -272,6 +272,45 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
     staleTime: 30_000,
   });
 
+  // Fetch submission metadata: earliest approver created_at = submission time, submitter = plan.created_by
+  const { data: submissionEntry } = useQuery({
+    queryKey: ['p2a-submission-entry', existingP2APlan?.id],
+    queryFn: async () => {
+      if (!existingP2APlan?.id) return null;
+      // Get earliest approver record created_at as submission timestamp
+      const { data: approvers } = await (supabase as any)
+        .from('p2a_handover_approvers')
+        .select('created_at')
+        .eq('handover_id', existingP2APlan.id)
+        .order('created_at', { ascending: true })
+        .limit(1);
+      const submittedAt = approvers?.[0]?.created_at;
+      if (!submittedAt) return null;
+      // Resolve submitter profile
+      const submitterId = existingP2APlan.created_by;
+      let submitterName = 'Unknown';
+      let submitterAvatar: string | null = null;
+      if (submitterId) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name, avatar_url')
+          .eq('user_id', submitterId)
+          .single();
+        if (profile) {
+          submitterName = profile.full_name || 'Unknown';
+          submitterAvatar = profile.avatar_url
+            ? profile.avatar_url.startsWith('http')
+              ? profile.avatar_url
+              : supabase.storage.from('user-avatars').getPublicUrl(profile.avatar_url).data.publicUrl
+            : null;
+        }
+      }
+      return { submitted_at: submittedAt, full_name: submitterName, avatar_url: submitterAvatar };
+    },
+    enabled: !!existingP2APlan?.id && isP2AActivity,
+    staleTime: 30_000,
+  });
+
   const p2aRejectionInfo = p2aApproverDecisions?.find((d: any) => d.status === 'REJECTED') || null;
 
   const p2aRejectionFallback = {
