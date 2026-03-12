@@ -91,11 +91,12 @@ const ApprovalVoidWarningDialog: React.FC<{
     if (open) setAcknowledged(false);
   }, [open]);
 
-  // Determine if the plan is fully approved vs just submitted/under review
+  // Determine if this is an approver's own approval task vs a plan creation task
   const meta = task?.userTask?.metadata as Record<string, any> | undefined;
+  const metaSource = meta?.source;
+  const isApproverTask = metaSource === 'p2a_handover' && meta?.action !== 'create_p2a_plan';
   const planStatus = meta?.plan_status?.toUpperCase?.() || '';
-  const isFullyApproved = ['COMPLETED', 'APPROVED'].includes(planStatus);
-  const isUnderReview = planStatus === 'ACTIVE';
+  const isFullyApproved = !isApproverTask && ['COMPLETED', 'APPROVED'].includes(planStatus);
 
   const taskTitle = task?.title || '';
 
@@ -108,20 +109,28 @@ const ApprovalVoidWarningDialog: React.FC<{
               <AlertTriangle className="h-5 w-5 text-destructive" />
             </div>
             <AlertDialogTitle className="text-lg">
-              {isFullyApproved ? 'Void All Approvals?' : 'Cancel Approval Review?'}
+              {isApproverTask ? 'Void Your Approval?' : isFullyApproved ? 'Void All Approvals?' : 'Cancel Approval Review?'}
             </AlertDialogTitle>
           </div>
           <AlertDialogDescription asChild>
             <div className="space-y-3 text-sm">
               <p>
                 <span className="font-medium text-foreground">"{taskTitle}"</span>{' '}
-                {isFullyApproved
-                  ? 'has been approved through a formal review process.'
-                  : 'has been submitted and is currently under approval review.'}
+                {isApproverTask
+                  ? 'has already been completed — you approved this plan.'
+                  : isFullyApproved
+                    ? 'has been approved through a formal review process.'
+                    : 'has been submitted and is currently under approval review.'}
               </p>
               <p className="text-muted-foreground">Moving this task back will:</p>
               <ul className="list-disc list-inside space-y-1 text-muted-foreground ml-1">
-                {isFullyApproved ? (
+                {isApproverTask ? (
+                  <>
+                    <li>Void your earlier approval of the P2A Plan</li>
+                    <li>Require you to re-review and re-approve</li>
+                    <li>May delay the overall approval process</li>
+                  </>
+                ) : isFullyApproved ? (
                   <>
                     <li>Void all existing approvals</li>
                     <li>Require a completely new review cycle</li>
@@ -155,7 +164,7 @@ const ApprovalVoidWarningDialog: React.FC<{
             disabled={!acknowledged}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isFullyApproved ? 'Move Anyway – Void Approvals' : 'Move Anyway – Cancel Review'}
+            {isApproverTask ? 'Move Anyway – Void Approval' : isFullyApproved ? 'Move Anyway – Void Approvals' : 'Move Anyway – Cancel Review'}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -419,6 +428,13 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     const meta = task.userTask.metadata as Record<string, any> | undefined;
     const isOraActivity = task.userTask.type === 'ora_activity' || meta?.action === 'complete_ora_activity' || meta?.ora_plan_activity_id;
     const isP2aTask = meta?.action === 'create_p2a_plan';
+    const isP2aApprovalTask = meta?.source === 'p2a_handover' && !isP2aTask;
+
+    // ── P2A Approval tasks: intercept done → in_progress to warn about voiding approval ──
+    if (isP2aApprovalTask && task.kanbanColumn === 'done' && (targetColumn === 'in_progress' || targetColumn === 'todo')) {
+      setWarningState({ task, targetColumn });
+      return;
+    }
 
     // ── P2A tasks: intercept drags that should go through the wizard ──
     if (isP2aTask) {
