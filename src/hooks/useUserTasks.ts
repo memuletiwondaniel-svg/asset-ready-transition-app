@@ -292,12 +292,43 @@ async function syncP2AApproval(
       .eq('handover_id', planId)
       .eq('role_name', approverRole);
 
+    // 1b. Move the rejecting reviewer's own task to "completed" with outcome: 'rejected'
+    // This keeps the task visible in the Done column with a "Rejected" badge
+    const { data: rejectingTask } = await supabase
+      .from('user_tasks')
+      .select('id, metadata')
+      .eq('type', 'approval')
+      .eq('status', 'cancelled') // it was just set to cancelled by the mutation caller
+      .limit(200);
+
+    const thisReviewerTask = (rejectingTask || []).find((t: any) => {
+      const m = t.metadata as Record<string, any>;
+      return m?.source === 'p2a_handover' && m?.plan_id === planId && m?.approver_role === approverRole;
+    });
+
+    if (thisReviewerTask) {
+      const existingMeta = (thisReviewerTask.metadata as Record<string, any>) || {};
+      await supabase
+        .from('user_tasks')
+        .update({
+          status: 'completed',
+          metadata: {
+            ...existingMeta,
+            outcome: 'rejected',
+            rejection_comment: rejectionComment,
+            rejected_at: new Date().toISOString(),
+          } as any,
+        })
+        .eq('id', thisReviewerTask.id);
+    }
+
     // 2. Cancel all other PENDING/WAITING approval tasks for this plan
     const { data: otherApprovalTasks } = await supabase
       .from('user_tasks')
       .select('id, metadata')
       .eq('type', 'approval')
-      .neq('status', 'cancelled');
+      .neq('status', 'cancelled')
+      .neq('status', 'completed');
 
     const otherP2aTasks = (otherApprovalTasks || []).filter((t: any) => {
       const m = t.metadata as Record<string, any>;
