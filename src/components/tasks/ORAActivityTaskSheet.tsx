@@ -1204,7 +1204,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
         </div>
 
         {/* Pinned footer */}
-        <div className="border-t bg-background px-4 sm:px-6 py-4 shrink-0">
+        <div className="border-t bg-background px-3 sm:px-6 py-3 sm:py-4 shrink-0 safe-area-inset-bottom">
           <div className="flex items-center justify-between">
             {!isReadOnly && metadata?.source !== 'ora_workflow' ? (
               <AlertDialog>
