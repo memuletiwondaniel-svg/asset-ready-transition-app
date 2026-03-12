@@ -605,7 +605,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-6xl sm:w-[95vw] p-0 gap-0 !inset-0 !max-h-full !translate-x-0 !translate-y-0 !rounded-none sm:!inset-auto sm:!left-[50%] sm:!top-[50%] sm:!translate-x-[-50%] sm:!translate-y-[-50%] sm:!rounded-lg sm:h-[min(88vh,800px)] sm:!max-h-[88vh] h-[100dvh] flex flex-col overflow-hidden [&>button]:hidden z-[100]">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b shrink-0 bg-gradient-to-br from-primary/5 via-accent/5 to-transparent">
+        <div className="flex items-center justify-between px-3 sm:px-5 py-3 sm:py-4 border-b shrink-0 bg-gradient-to-br from-primary/5 via-accent/5 to-transparent">
           <div className="flex items-center gap-3">
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-br from-orange-500/40 to-amber-500/40 rounded-xl blur-sm" />
