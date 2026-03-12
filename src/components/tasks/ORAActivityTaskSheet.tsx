@@ -1155,17 +1155,19 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                           </Avatar>
                           <div className="flex-1 min-w-0">
                             {entry.type === 'submission' || (entry.type === 'approval_action' && entry.status === 'SUBMITTED') ? (
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <Badge
-                                  variant="outline"
-                                  className="text-[10px] px-1.5 py-0 h-4 border-0 font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-                                >
-                                  Submitted
-                                </Badge>
-                              </div>
-                              {entry.comment && (
-                                <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed mt-1">{entry.comment}</p>
-                              )}
+                              <>
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <Badge
+                                    variant="outline"
+                                    className="text-[10px] px-1.5 py-0 h-4 border-0 font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                                  >
+                                    Submitted
+                                  </Badge>
+                                </div>
+                                {entry.comment && (
+                                  <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed mt-1">{entry.comment}</p>
+                                )}
+                              <>
                             ) : entry.type === 'approval_action' && entry.status === 'REVERTED' ? (
                               <div className="flex items-center gap-1.5 flex-wrap">
                                 <Badge
