@@ -658,8 +658,21 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
           />
         )}
 
-        {/* Read-only banner */}
-        {isReadOnly && useWizard && currentStep > 1 && !isLoadingDraft && (
+        {/* Review mode banner */}
+        {isReviewMode && useWizard && currentStep > 1 && !isLoadingDraft && (
+          <div className="flex items-center gap-3 px-5 py-2.5 border-b bg-primary/5 dark:bg-primary/10 text-primary">
+            <Eye className="h-4 w-4 shrink-0" />
+            <p className="text-xs flex-1">
+              You are reviewing this plan as an approver. Navigate through each section to review, then approve or reject on the final step.
+              <span className="ml-2 font-medium">
+                ({reviewVisitedSteps.size}/6 sections reviewed)
+              </span>
+            </p>
+          </div>
+        )}
+
+        {/* Read-only banner (non-review mode) */}
+        {!isReviewMode && isReadOnly && useWizard && currentStep > 1 && !isLoadingDraft && (
           <div className="flex items-center gap-3 px-5 py-2.5 border-b bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-200">
             <AlertTriangle className="h-4 w-4 shrink-0" />
             <p className="text-xs flex-1">
