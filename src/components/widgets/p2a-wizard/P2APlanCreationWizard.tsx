@@ -695,7 +695,28 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
           </div>
         )}
 
-        {/* Read-only banner (non-review mode) */}
+        {/* Rejection feedback banner (shown to author when plan was rejected) */}
+        {!isReviewMode && rejectionInfo && useWizard && !isLoadingDraft && (
+          <div className="flex items-start gap-3 px-5 py-3 border-b bg-destructive/5 dark:bg-destructive/10 text-destructive">
+            <XCircle className="h-4 w-4 shrink-0 mt-0.5" />
+            <div className="flex-1 text-xs space-y-1">
+              <p className="font-medium">
+                Plan was rejected by {rejectionInfo.role_name}
+                {rejectionInfo.approved_at && (
+                  <span className="font-normal text-muted-foreground ml-1">
+                    on {new Date(rejectionInfo.approved_at).toLocaleDateString()}
+                  </span>
+                )}
+              </p>
+              {rejectionInfo.comments && rejectionInfo.comments !== 'Rejected by approver' && (
+                <p className="text-foreground/80 italic">"{rejectionInfo.comments}"</p>
+              )}
+              <p className="text-muted-foreground">Please address the feedback and resubmit for approval.</p>
+            </div>
+          </div>
+        )}
+
+
         {!isReviewMode && isReadOnly && useWizard && currentStep > 1 && !isLoadingDraft && (
           <div className="flex items-center gap-3 px-5 py-2.5 border-b bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-200">
             <AlertTriangle className="h-4 w-4 shrink-0" />
