@@ -128,6 +128,24 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   const p2aPlanIsFullyApproved = existingP2aPlan && p2aPlanStatus && ['COMPLETED', 'APPROVED'].includes(p2aPlanStatus);
   const p2aPlanIsSubmitted = existingP2aPlan && p2aPlanStatus && ['ACTIVE', 'COMPLETED', 'APPROVED'].includes(p2aPlanStatus);
 
+  // Fetch rejection info from p2a_handover_approvers (bypasses RLS issue with task metadata)
+  const { data: p2aRejectionInfo } = useQuery({
+    queryKey: ['p2a-rejection-info-task', existingP2aPlan?.id],
+    queryFn: async () => {
+      if (!existingP2aPlan?.id) return null;
+      const { data } = await (supabase as any)
+        .from('p2a_handover_approvers')
+        .select('role_name, comments, approved_at')
+        .eq('handover_id', existingP2aPlan.id)
+        .eq('status', 'REJECTED')
+        .order('approved_at', { ascending: false })
+        .limit(1);
+      return data?.[0] || null;
+    },
+    enabled: !!existingP2aPlan?.id && isP2aTask && p2aPlanStatus === 'DRAFT',
+    staleTime: 30_000,
+  });
+
   const getP2AStatusLabel = () => {
     if (!p2aPlanStatus) return null;
     switch (p2aPlanStatus) {
@@ -602,18 +620,18 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
             )}
 
             {/* P2A Rejection feedback */}
-            {isP2aTask && task?.metadata?.last_rejection_comment && (
+            {isP2aTask && p2aRejectionInfo?.comments && (
               <div className="p-3 rounded-lg bg-destructive/5 border border-destructive/20 space-y-1">
                 <div className="flex items-center gap-2 text-xs font-medium text-destructive">
                   <AlertTriangle className="h-3.5 w-3.5" />
-                  Plan rejected by {(task.metadata.last_rejection_role as string) || 'approver'}
+                  Plan rejected by {p2aRejectionInfo.role_name || 'approver'}
                 </div>
                 <p className="text-xs text-foreground/80 italic pl-5">
-                  "{task.metadata.last_rejection_comment as string}"
+                  "{p2aRejectionInfo.comments}"
                 </p>
-                {task.metadata.last_rejection_at && (
+                {p2aRejectionInfo.approved_at && (
                   <p className="text-[10px] text-muted-foreground pl-5">
-                    {format(new Date(task.metadata.last_rejection_at as string), 'MMM d, yyyy')}
+                    {format(new Date(p2aRejectionInfo.approved_at), 'MMM d, yyyy')}
                   </p>
                 )}
               </div>
