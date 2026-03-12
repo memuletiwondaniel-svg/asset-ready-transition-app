@@ -318,6 +318,16 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
     setCurrentStep(nextStep);
   };
 
+  const handleSave = async () => {
+    try {
+      await saveDraft();
+      syncWizardProgress(currentStep);
+      toast.success('Changes saved successfully.');
+    } catch (error) {
+      // Error handled in hook
+    }
+  };
+
   const handleSaveAndExit = async () => {
     try {
       await saveDraft();
@@ -557,6 +567,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
             totalSteps={WIZARD_STEPS.length - 1}
             onBack={handleBack}
             onNext={handleNext}
+            onSave={isReadOnly ? undefined : handleSave}
             onSaveAndExit={isReadOnly ? () => onOpenChange(false) : handleSaveAndExit}
             onSubmit={currentStep === WIZARD_STEPS.length && !isReadOnly && (!existingPlan || existingPlan.status === 'DRAFT') ? handleSubmit : undefined}
             isSubmitting={isSubmitting}

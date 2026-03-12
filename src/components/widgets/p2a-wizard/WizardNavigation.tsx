@@ -8,6 +8,7 @@ interface WizardNavigationProps {
   onBack: () => void;
   onNext: () => void;
   onSaveAndExit?: () => void;
+  onSave?: () => void;
   onSubmit?: () => void;
   isSubmitting?: boolean;
   isSaving?: boolean;
@@ -23,6 +24,7 @@ export const WizardNavigation: React.FC<WizardNavigationProps> = ({
   onBack,
   onNext,
   onSaveAndExit,
+  onSave,
   onSubmit,
   isSubmitting = false,
   isSaving = false,
@@ -45,6 +47,19 @@ export const WizardNavigation: React.FC<WizardNavigationProps> = ({
           <ChevronLeft className="h-4 w-4 mr-1" />
           Back
         </Button>
+        {onSave && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onSave}
+            disabled={isSaving || isSubmitting}
+          >
+            {isSaving ? (
+              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+            ) : null}
+            Save
+          </Button>
+        )}
         {onSaveAndExit && (
           <Button
             variant="ghost"
