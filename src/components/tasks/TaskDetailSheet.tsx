@@ -761,33 +761,36 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
       )}
 
       {/* P2A Plan Creation Wizard */}
-      {(p2aWizardOpen || p2aWorkspaceOpen) && p2aProjectId && (
+      {(p2aWizardOpen || p2aWorkspaceOpen) && p2aProjectId && (isP2aTask || isP2aApprovalTask) && (
         <>
-          <P2APlanCreationWizard
-            open={p2aWizardOpen}
-            onOpenChange={setP2aWizardOpen}
-            projectId={p2aProjectId}
-            projectCode={resolvedP2aProjectCode}
-            projectName={resolvedP2aProjectName}
-            onSuccess={() => {
-              setP2aWizardOpen(false);
-              onOpenChange(false);
-            }}
-            onOpenWorkspace={() => {
-              setP2aWizardOpen(false);
-              setP2aWorkspaceOpen(true);
-            }}
-          />
+          {isP2aTask && (
+            <P2APlanCreationWizard
+              open={p2aWizardOpen}
+              onOpenChange={setP2aWizardOpen}
+              projectId={p2aProjectId}
+              projectCode={resolvedP2aProjectCode}
+              projectName={resolvedP2aProjectName}
+              onSuccess={() => {
+                setP2aWizardOpen(false);
+                onOpenChange(false);
+              }}
+              onOpenWorkspace={() => {
+                setP2aWizardOpen(false);
+                setP2aWorkspaceOpen(true);
+              }}
+            />
+          )}
           <P2AWorkspaceOverlay
             open={p2aWorkspaceOpen}
             onOpenChange={setP2aWorkspaceOpen}
             projectId={p2aProjectId}
-            projectName={resolvedP2aProjectName}
-            projectNumber={resolvedP2aProjectCode}
-            onReturnToWizard={() => {
+            projectName={isP2aApprovalTask ? p2aApprovalProjectName : resolvedP2aProjectName}
+            projectNumber={isP2aApprovalTask ? p2aApprovalProjectCode : resolvedP2aProjectCode}
+            readOnly={isP2aApprovalTask}
+            onReturnToWizard={isP2aTask ? () => {
               setP2aWorkspaceOpen(false);
               setP2aWizardOpen(true);
-            }}
+            } : undefined}
           />
         </>
       )}
