@@ -13,7 +13,9 @@ import {
   BookOpen, 
   Settings2,
   AlertTriangle,
-  CheckCircle2
+  CheckCircle2,
+  Lock,
+  Info
 } from 'lucide-react';
 import { P2AHandoverPoint } from '../hooks/useP2AHandoverPoints';
 import { useVCRPrerequisites } from '../hooks/useVCRPrerequisites';
@@ -24,6 +26,7 @@ import { cn } from '@/lib/utils';
 interface VCROverviewTabProps {
   handoverPoint: P2AHandoverPoint;
   onNavigateToTab?: (tabId: string) => void;
+  isLocked?: boolean;
 }
 
 const getStatusConfig = (status: string) => {
@@ -39,7 +42,7 @@ const getStatusConfig = (status: string) => {
   }
 };
 
-export const VCROverviewTab: React.FC<VCROverviewTabProps> = ({ handoverPoint, onNavigateToTab }) => {
+export const VCROverviewTab: React.FC<VCROverviewTabProps> = ({ handoverPoint, onNavigateToTab, isLocked }) => {
   const { systems, isLoading: systemsLoading } = useHandoverPointSystems(handoverPoint.id);
   const { prerequisites, progress, isLoading: prereqLoading } = useVCRPrerequisites(handoverPoint.id);
 
@@ -133,6 +136,25 @@ export const VCROverviewTab: React.FC<VCROverviewTabProps> = ({ handoverPoint, o
 
   return (
     <div className="space-y-6">
+      {/* Locked Banner */}
+      {isLocked && (
+        <Card className="border-amber-500/30 bg-amber-500/5">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0 mt-0.5">
+                <Info className="w-4.5 h-4.5 text-amber-500" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-foreground">Execution Plan Not Yet Defined</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Deliverable tracking (Training, Procedures, Documentation, etc.) will be available once the VCR Execution Plan is approved.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Header with Status and Target Date */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Description Card */}
@@ -214,8 +236,13 @@ export const VCROverviewTab: React.FC<VCROverviewTabProps> = ({ handoverPoint, o
               return (
                 <div 
                   key={item.label} 
-                  className="p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors cursor-pointer group"
-                  onClick={() => onNavigateToTab?.(item.tabId)}
+                  className={cn(
+                    "p-3 rounded-lg border bg-card transition-colors",
+                    isLocked 
+                      ? "opacity-40 cursor-default" 
+                      : "hover:bg-muted/50 cursor-pointer group"
+                  )}
+                  onClick={() => !isLocked && onNavigateToTab?.(item.tabId)}
                 >
                   <div className="flex items-center gap-2 mb-2">
                     <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", item.bgColor)}>

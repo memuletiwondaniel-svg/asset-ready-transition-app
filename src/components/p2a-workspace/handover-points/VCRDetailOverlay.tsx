@@ -22,6 +22,8 @@ import {
   Medal,
   Package,
   FolderOpen,
+  Lock,
+  Info,
 } from 'lucide-react';
 import { P2AHandoverPoint } from '../hooks/useP2AHandoverPoints';
 import { useVCRPrerequisites } from '../hooks/useVCRPrerequisites';
@@ -110,7 +112,11 @@ export const VCRDetailOverlay: React.FC<VCRDetailOverlayProps> = ({
   const { systems } = useHandoverPointSystems(handoverPoint.id);
   const statusConfig = getStatusConfig(handoverPoint.status);
 
+  const isExecutionPlanApproved = (handoverPoint as any).execution_plan_status === 'APPROVED';
+  const lockedTabIds = buildingBlockTabs.map(t => t.id);
+
   const handleTabChange = (tabId: string) => {
+    if (!isExecutionPlanApproved && lockedTabIds.includes(tabId)) return;
     setActiveTab(tabId);
   };
 
@@ -125,7 +131,7 @@ export const VCRDetailOverlay: React.FC<VCRDetailOverlayProps> = ({
   const renderContent = () => {
     switch (activeTab) {
       case 'overview':
-        return <VCROverviewTab handoverPoint={handoverPoint} onNavigateToTab={handleTabChange} />;
+        return <VCROverviewTab handoverPoint={handoverPoint} onNavigateToTab={handleTabChange} isLocked={!isExecutionPlanApproved} />;
       case 'systems':
         return <VCRSystemsTab handoverPoint={handoverPoint} />;
       case 'checklist':
@@ -151,22 +157,26 @@ export const VCRDetailOverlay: React.FC<VCRDetailOverlayProps> = ({
       case 'spares':
         return <PlaceholderTab title="Spares" icon={<Package className="w-8 h-8 text-orange-500" />} />;
       default:
-        return <VCROverviewTab handoverPoint={handoverPoint} onNavigateToTab={handleTabChange} />;
+        return <VCROverviewTab handoverPoint={handoverPoint} onNavigateToTab={handleTabChange} isLocked={!isExecutionPlanApproved} />;
     }
   };
 
-  const NavButton: React.FC<{ id: string; label: string; icon: React.ComponentType<any> }> = ({ id, label, icon: Icon }) => (
+  const NavButton: React.FC<{ id: string; label: string; icon: React.ComponentType<any>; locked?: boolean }> = ({ id, label, icon: Icon, locked }) => (
     <button
       onClick={() => handleTabChange(id)}
+      disabled={locked}
       className={cn(
         "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors text-left",
-        activeTab === id
-          ? "bg-primary text-primary-foreground font-medium"
-          : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+        locked
+          ? "opacity-40 cursor-not-allowed pointer-events-none"
+          : activeTab === id
+            ? "bg-primary text-primary-foreground font-medium"
+            : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
       )}
     >
       <Icon className="w-4 h-4 shrink-0" />
-      <span className="truncate">{label}</span>
+      <span className="truncate flex-1">{label}</span>
+      {locked && <Lock className="w-3 h-3 shrink-0 text-muted-foreground" />}
     </button>
   );
 
@@ -238,7 +248,7 @@ export const VCRDetailOverlay: React.FC<VCRDetailOverlayProps> = ({
                   </span>
                 </div>
                 {buildingBlockTabs.map((tab) => (
-                  <NavButton key={tab.id} {...tab} />
+                  <NavButton key={tab.id} {...tab} locked={!isExecutionPlanApproved} />
                 ))}
               </div>
             </ScrollArea>
