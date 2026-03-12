@@ -20,6 +20,7 @@ import { P2AWorkspaceOverlay } from '@/components/widgets/P2AWorkspaceOverlay';
 import { ProjectIdBadge } from '@/components/ui/project-id-badge';
 
 import { ORAActivityTaskSheet } from './ORAActivityTaskSheet';
+import { P2AActivityFeed } from './P2AActivityFeed';
 import { VCRExecutionPlanWizard } from '@/components/widgets/vcr-wizard/VCRExecutionPlanWizard';
 import type { UserTask } from '@/hooks/useUserTasks';
 import type { ProjectVCR } from '@/hooks/useProjectVCRs';
