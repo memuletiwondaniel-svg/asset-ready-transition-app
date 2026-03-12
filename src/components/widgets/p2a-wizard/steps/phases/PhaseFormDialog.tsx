@@ -69,7 +69,7 @@ export const PhaseFormDialog: React.FC<PhaseFormDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md z-[150]">
         <DialogHeader>
           <DialogTitle className="text-base">
             {isEditing ? 'Edit Phase' : 'Create Phase'}
