@@ -276,6 +276,9 @@ async function syncP2AApproval(
     const { checkAndCompletePlan } = await import('./useP2AApprovalTasks');
     await checkAndCompletePlan(planId);
 
+    // Enrich all completed P2A approval tasks for this plan with approver progress
+    await enrichP2ATasksWithApproverCounts(planId);
+
   } else if (status === 'cancelled') {
     // Rejection: full cascade
     console.log('[P2A] Rejection cascade starting for plan:', planId, 'by role:', approverRole);
