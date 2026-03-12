@@ -747,15 +747,15 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
 
         {/* Review comment box — pinned above final actions on last step */}
         {isReviewMode && useWizard && currentStep === WIZARD_STEPS.length && !isLoadingDraft && (
-          <div className="px-5 py-2.5 border-t bg-muted/30 shrink-0">
-            <label className="text-xs font-medium text-foreground mb-1.5 block">
+          <div className="px-3 sm:px-5 py-2 sm:py-2.5 border-t bg-muted/30 shrink-0">
+            <label className="text-[11px] sm:text-xs font-medium text-foreground mb-1 sm:mb-1.5 block">
               Review Comments <span className="text-muted-foreground font-normal">(optional)</span>
             </label>
             <textarea
               placeholder="Add comments about your review decision..."
               value={reviewComment}
               onChange={(e) => setReviewComment(e.target.value)}
-              className="w-full min-h-[48px] max-h-[72px] rounded-md border border-input bg-background px-3 py-1.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full min-h-[40px] sm:min-h-[48px] max-h-[60px] sm:max-h-[72px] rounded-md border border-input bg-background px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
         )}
