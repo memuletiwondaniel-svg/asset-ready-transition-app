@@ -231,6 +231,43 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
         ? 'Continue P2A Plan'
         : 'Start P2A Plan';
 
+  const { data: p2aRejectionInfo } = useQuery({
+    queryKey: ['p2a-rejection-info-activity-sheet', existingP2APlan?.id],
+    queryFn: async () => {
+      if (!existingP2APlan?.id) return null;
+      const { data } = await (supabase as any)
+        .from('p2a_handover_approvers')
+        .select('role_name, comments, approved_at')
+        .eq('handover_id', existingP2APlan.id)
+        .eq('status', 'REJECTED')
+        .order('approved_at', { ascending: false })
+        .limit(1);
+      return data?.[0] || null;
+    },
+    enabled: !!existingP2APlan?.id && isP2AActivity,
+    staleTime: 30_000,
+  });
+
+  const p2aRejectionFallback = {
+    role_name: (metadata?.last_rejection_role as string | undefined) || null,
+    comments:
+      (metadata?.last_rejection_comment as string | undefined) ||
+      (metadata?.rejection_comment as string | undefined) ||
+      null,
+    approved_at: (metadata?.last_rejection_at as string | undefined) || null,
+  };
+
+  const effectiveP2aRejection = {
+    role_name: p2aRejectionInfo?.role_name || p2aRejectionFallback.role_name,
+    comments: p2aRejectionInfo?.comments || p2aRejectionFallback.comments,
+    approved_at: p2aRejectionInfo?.approved_at || p2aRejectionFallback.approved_at,
+  };
+
+  const showP2aRejectionBanner =
+    isP2AActivity &&
+    p2aPlanStatus === 'DRAFT' &&
+    !!(effectiveP2aRejection.role_name || effectiveP2aRejection.comments);
+
   const getP2AStatusBadge = () => {
     if (!p2aPlanStatus) return null;
     switch (p2aPlanStatus) {
