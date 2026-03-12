@@ -640,7 +640,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
             )}
 
             {/* Comment & Approve/Reject - only for review tasks */}
-            {isReviewTask && (
+            {(isReviewTask || isP2aApprovalTask) && (
               <>
                 <Separator />
 
