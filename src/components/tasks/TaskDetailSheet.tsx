@@ -128,6 +128,24 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   const p2aPlanIsFullyApproved = existingP2aPlan && p2aPlanStatus && ['COMPLETED', 'APPROVED'].includes(p2aPlanStatus);
   const p2aPlanIsSubmitted = existingP2aPlan && p2aPlanStatus && ['ACTIVE', 'COMPLETED', 'APPROVED'].includes(p2aPlanStatus);
 
+  // Fetch rejection info from p2a_handover_approvers (bypasses RLS issue with task metadata)
+  const { data: p2aRejectionInfo } = useQuery({
+    queryKey: ['p2a-rejection-info-task', existingP2aPlan?.id],
+    queryFn: async () => {
+      if (!existingP2aPlan?.id) return null;
+      const { data } = await (supabase as any)
+        .from('p2a_handover_approvers')
+        .select('role_name, comments, approved_at')
+        .eq('handover_id', existingP2aPlan.id)
+        .eq('status', 'REJECTED')
+        .order('approved_at', { ascending: false })
+        .limit(1);
+      return data?.[0] || null;
+    },
+    enabled: !!existingP2aPlan?.id && isP2aTask && p2aPlanStatus === 'DRAFT',
+    staleTime: 30_000,
+  });
+
   const getP2AStatusLabel = () => {
     if (!p2aPlanStatus) return null;
     switch (p2aPlanStatus) {
