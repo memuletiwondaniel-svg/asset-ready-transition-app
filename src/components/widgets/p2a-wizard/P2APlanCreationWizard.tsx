@@ -212,6 +212,53 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
     }
   }, [projectId, queryClient]);
 
+  /**
+   * Sync review progress to the reviewer's user_task.
+   * Each of the 6 wizard steps (2-7) = ~14%, capped at 85%. Approval = 100%.
+   */
+  const syncReviewProgress = useCallback(async (visitedCount: number) => {
+    if (!reviewTaskId) return;
+    const REVIEW_STEPS = 6; // steps 2-7
+    const percentage = Math.min(Math.round((visitedCount / REVIEW_STEPS) * 85), 85);
+    try {
+      const { data: taskRow } = await supabase
+        .from('user_tasks')
+        .select('metadata')
+        .eq('id', reviewTaskId)
+        .single();
+      
+      await supabase
+        .from('user_tasks')
+        .update({
+          metadata: {
+            ...((taskRow?.metadata as Record<string, any>) || {}),
+            completion_percentage: percentage,
+          } as any,
+          status: percentage > 0 ? 'in_progress' : 'pending',
+        })
+        .eq('id', reviewTaskId);
+      
+      queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+    } catch (err) {
+      console.error('Failed to sync review progress:', err);
+    }
+  }, [reviewTaskId, queryClient]);
+
+  // Track step visits in review mode and sync progress
+  useEffect(() => {
+    if (isReviewMode && currentStep > 1) {
+      setReviewVisitedSteps(prev => {
+        const next = new Set(prev);
+        if (!next.has(currentStep)) {
+          next.add(currentStep);
+          // Fire async progress sync (don't block)
+          syncReviewProgress(next.size);
+        }
+        return next;
+      });
+    }
+  }, [currentStep, isReviewMode, syncReviewProgress]);
+
   // When the wizard opens and a draft plan exists, auto-load and resume
   useEffect(() => {
     if (open && existingPlan && !draftLoaded && !isLoadingDraft) {
@@ -220,8 +267,10 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
         .then((hasDraft) => {
           if (hasDraft) {
             setUseWizard(true);
-            // If plan is submitted (ACTIVE), open on Review step (read-only)
-            if (['ACTIVE', 'COMPLETED', 'APPROVED'].includes(existingPlan.status)) {
+            // Review mode: start at step 2 (first content step)
+            if (isReviewMode) {
+              setCurrentStep(2);
+            } else if (['ACTIVE', 'COMPLETED', 'APPROVED'].includes(existingPlan.status)) {
               setCurrentStep(WIZARD_STEPS.length); // Step 7 (Review)
             } else {
               setCurrentStep(2);
@@ -235,7 +284,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
           setIsLoadingDraft(false);
         });
     }
-  }, [open, existingPlan, draftLoaded, isLoadingDraft, loadDraft]);
+  }, [open, existingPlan, draftLoaded, isLoadingDraft, loadDraft, isReviewMode]);
 
   const handleClose = () => {
     resetState();
