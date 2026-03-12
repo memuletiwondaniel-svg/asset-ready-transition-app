@@ -250,7 +250,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
         const { data: profiles } = await supabase
           .from('profiles')
           .select('user_id, full_name, avatar_url')
-          .in('user_id', userIds);
+          .in('user_id', userIds as string[]);
         if (profiles) {
           for (const p of profiles) {
             const avatarUrl = p.avatar_url
