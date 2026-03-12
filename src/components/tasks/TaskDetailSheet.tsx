@@ -287,6 +287,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
       : 'You have been assigned to create the ORA Activity Plan for this project. Click below to launch the planning wizard.';
 
   const getIntentMessage = () => {
+    if (isP2aApprovalTask) return 'You have been asked to review and approve a P2A Handover Plan. Use the button below to review the plan, then approve or reject.';
     if (isP2aTask) {
       if (p2aPlanIsFullyApproved) return 'The P2A Plan has been approved. Click below to view the finalized plan.';
       if (p2aPlanIsSubmitted) return 'The P2A Plan has been submitted and is pending approval. Click below to review progress.';
