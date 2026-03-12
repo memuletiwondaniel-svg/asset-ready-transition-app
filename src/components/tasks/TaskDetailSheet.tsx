@@ -503,17 +503,27 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
 
             {/* P2A Approval Review CTA - opens wizard in review mode */}
             {isP2aApprovalTask && p2aProjectId && (
-              <Button
-                className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
-                onClick={() => {
-                  onOpenChange(false);
-                  setP2aWizardOpen(true);
-                }}
-              >
-                <Eye className="h-4 w-4" />
-                Review P2A Plan
-                <ChevronRight className="h-4 w-4 ml-auto" />
-              </Button>
+              <>
+                <Button
+                  className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
+                  onClick={() => {
+                    onOpenChange(false);
+                    setP2aWizardOpen(true);
+                  }}
+                >
+                  <Eye className="h-4 w-4" />
+                  Review P2A Plan
+                  <ChevronRight className="h-4 w-4 ml-auto" />
+                </Button>
+
+                {/* Activity Feed for reviewer */}
+                {p2aApprovalPlanId && (
+                  <>
+                    <Separator />
+                    <P2AActivityFeed planId={p2aApprovalPlanId} />
+                  </>
+                )}
+              </>
             )}
 
             {isOraActivityTask && (
