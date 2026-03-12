@@ -391,7 +391,37 @@ async function syncP2AApproval(
         .eq('id', otherTask.id);
     }
 
-    // 3. Reset all approvers (except the rejector) to PENDING
+    // 3. Archive all decided approvers (APPROVED + REJECTED) to history before resetting
+    const { data: decidedApprovers } = await (supabase as any)
+      .from('p2a_handover_approvers')
+      .select('user_id, role_name, status, comments, approved_at, display_order')
+      .eq('handover_id', planId)
+      .not('approved_at', 'is', null);
+
+    if (decidedApprovers?.length) {
+      // Determine next cycle number
+      const { data: maxCycleRow } = await (supabase as any)
+        .from('p2a_approver_history')
+        .select('cycle')
+        .eq('handover_id', planId)
+        .order('cycle', { ascending: false })
+        .limit(1);
+      const nextCycle = (maxCycleRow?.[0]?.cycle || 0) + 1;
+
+      const historyRecords = decidedApprovers.map((a: any) => ({
+        handover_id: planId,
+        user_id: a.user_id,
+        role_name: a.role_name,
+        status: a.status,
+        comments: a.comments,
+        approved_at: a.approved_at,
+        display_order: a.display_order,
+        cycle: nextCycle,
+      }));
+      await (supabase as any).from('p2a_approver_history').insert(historyRecords);
+    }
+
+    // 4. Reset all approvers (except the rejector) to PENDING
     // Use neq('status', 'REJECTED') to avoid overwriting the rejection we just set in step 1
     await supabase
       .from('p2a_handover_approvers')
