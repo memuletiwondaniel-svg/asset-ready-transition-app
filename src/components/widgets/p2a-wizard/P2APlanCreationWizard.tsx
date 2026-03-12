@@ -719,17 +719,19 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
 
 
         {!isReviewMode && isReadOnly && useWizard && currentStep > 1 && !isLoadingDraft && (
-          <div className="flex items-center gap-3 px-5 py-2.5 border-b bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-200">
-            <AlertTriangle className="h-4 w-4 shrink-0" />
-            <p className="text-xs flex-1">
-              {existingPlan?.status === 'ACTIVE'
-                ? 'This plan has been submitted and is pending approval. Changes are not allowed until the review is complete.'
-                : 'This plan has been approved. Any modifications will require resubmitting for re-approval.'}
-            </p>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 px-3 sm:px-5 py-2 sm:py-2.5 border-b bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-200 shrink-0">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <AlertTriangle className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+              <p className="text-[11px] sm:text-xs flex-1">
+                {existingPlan?.status === 'ACTIVE'
+                  ? 'This plan has been submitted and is pending approval. Changes are not allowed until the review is complete.'
+                  : 'This plan has been approved. Any modifications will require resubmitting for re-approval.'}
+              </p>
+            </div>
             <Button
               variant="outline"
               size="sm"
-              className="shrink-0 text-xs gap-1.5 border-amber-300 dark:border-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/50"
+              className="shrink-0 text-[11px] sm:text-xs gap-1.5 border-amber-300 dark:border-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/50 h-7 sm:h-8"
               onClick={() => setRequestChangeOpen(true)}
             >
               <Edit3 className="h-3 w-3" />
