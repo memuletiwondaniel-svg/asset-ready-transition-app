@@ -318,6 +318,16 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
     setCurrentStep(nextStep);
   };
 
+  const handleSave = async () => {
+    try {
+      await saveDraft();
+      syncWizardProgress(currentStep);
+      toast.success('Changes saved successfully.');
+    } catch (error) {
+      // Error handled in hook
+    }
+  };
+
   const handleSaveAndExit = async () => {
     try {
       await saveDraft();
