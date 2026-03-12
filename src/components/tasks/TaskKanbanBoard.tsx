@@ -93,7 +93,8 @@ const ApprovalVoidWarningDialog: React.FC<{
 
   // Determine if this is an approver's own approval task vs a plan creation task
   const meta = task?.userTask?.metadata as Record<string, any> | undefined;
-  const isApproverTask = task?.userTask?.source === 'p2a_handover' && meta?.action !== 'create_p2a_plan';
+  const metaSource = meta?.source;
+  const isApproverTask = metaSource === 'p2a_handover' && meta?.action !== 'create_p2a_plan';
   const planStatus = meta?.plan_status?.toUpperCase?.() || '';
   const isFullyApproved = !isApproverTask && ['COMPLETED', 'APPROVED'].includes(planStatus);
 
