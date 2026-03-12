@@ -24,6 +24,7 @@ export const WizardNavigation: React.FC<WizardNavigationProps> = ({
   onBack,
   onNext,
   onSaveAndExit,
+  onSave,
   onSubmit,
   isSubmitting = false,
   isSaving = false,
