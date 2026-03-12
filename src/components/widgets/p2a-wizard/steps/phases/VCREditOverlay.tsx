@@ -266,7 +266,11 @@ export const VCREditOverlay: React.FC<VCREditOverlayProps> = ({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-md p-0 flex flex-col" onClick={(e) => e.stopPropagation()}>
+      <SheetContent
+        overlayClassName="z-[180]"
+        className="sm:max-w-md p-0 flex flex-col z-[200]"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <SheetHeader className="px-4 pt-4 pb-3 border-b shrink-0">
           <div className="flex items-center gap-2">
