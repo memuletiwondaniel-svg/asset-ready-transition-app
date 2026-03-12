@@ -8,6 +8,7 @@ interface WizardNavigationProps {
   onBack: () => void;
   onNext: () => void;
   onSaveAndExit?: () => void;
+  onSave?: () => void;
   onSubmit?: () => void;
   isSubmitting?: boolean;
   isSaving?: boolean;
