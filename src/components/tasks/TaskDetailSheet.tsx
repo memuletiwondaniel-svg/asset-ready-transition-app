@@ -128,27 +128,42 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   const p2aPlanIsFullyApproved = existingP2aPlan && p2aPlanStatus && ['COMPLETED', 'APPROVED'].includes(p2aPlanStatus);
   const p2aPlanIsSubmitted = existingP2aPlan && p2aPlanStatus && ['ACTIVE', 'COMPLETED', 'APPROVED'].includes(p2aPlanStatus);
 
-  // Fetch rejection info from p2a_handover_approvers (bypasses RLS issue with task metadata)
+  // Fetch rejection info with project-based fallback to avoid missing banner due stale/missing plan id linkage
   const { data: p2aRejectionInfo } = useQuery({
-    queryKey: ['p2a-rejection-info-task', existingP2aPlan?.id],
+    queryKey: ['p2a-rejection-info-task', p2aProjectId],
     queryFn: async () => {
-      if (!existingP2aPlan?.id) return null;
+      if (!p2aProjectId) return null;
+
+      const { data: planRow } = await (supabase as any)
+        .from('p2a_handover_plans')
+        .select('id')
+        .eq('project_id', p2aProjectId)
+        .order('updated_at', { ascending: false })
+        .limit(1);
+
+      const planId = planRow?.[0]?.id as string | undefined;
+      if (!planId) return null;
+
       const { data } = await (supabase as any)
         .from('p2a_handover_approvers')
-        .select('role_name, comments, approved_at')
-        .eq('handover_id', existingP2aPlan.id)
-        .eq('status', 'REJECTED')
+        .select('role_name, comments, approved_at, status')
+        .eq('handover_id', planId)
+        .or('status.eq.REJECTED,comments.not.is.null')
         .order('approved_at', { ascending: false })
         .limit(1);
+
       return data?.[0] || null;
     },
-    enabled: !!existingP2aPlan?.id && isP2aTask,
+    enabled: !!p2aProjectId && isP2aTask,
     staleTime: 30_000,
   });
 
   const p2aRejectionFallback = {
     role_name: (task?.metadata?.last_rejection_role as string | undefined) || null,
-    comments: (task?.metadata?.last_rejection_comment as string | undefined) || null,
+    comments:
+      (task?.metadata?.last_rejection_comment as string | undefined) ||
+      (task?.metadata?.rejection_comment as string | undefined) ||
+      null,
     approved_at: (task?.metadata?.last_rejection_at as string | undefined) || null,
   };
 
@@ -160,7 +175,6 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
 
   const showP2aRejectionBanner =
     isP2aTask &&
-    p2aPlanStatus === 'DRAFT' &&
     !!(effectiveP2aRejection.role_name || effectiveP2aRejection.comments);
 
   const getP2AStatusLabel = () => {
