@@ -91,11 +91,11 @@ const ApprovalVoidWarningDialog: React.FC<{
     if (open) setAcknowledged(false);
   }, [open]);
 
-  // Determine if the plan is fully approved vs just submitted/under review
+  // Determine if this is an approver's own approval task vs a plan creation task
   const meta = task?.userTask?.metadata as Record<string, any> | undefined;
+  const isApproverTask = task?.userTask?.source === 'p2a_handover' && meta?.action !== 'create_p2a_plan';
   const planStatus = meta?.plan_status?.toUpperCase?.() || '';
-  const isFullyApproved = ['COMPLETED', 'APPROVED'].includes(planStatus);
-  const isUnderReview = planStatus === 'ACTIVE';
+  const isFullyApproved = !isApproverTask && ['COMPLETED', 'APPROVED'].includes(planStatus);
 
   const taskTitle = task?.title || '';
 
