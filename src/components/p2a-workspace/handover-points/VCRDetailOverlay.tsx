@@ -182,7 +182,7 @@ export const VCRDetailOverlay: React.FC<VCRDetailOverlayProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!max-w-[95vw] sm:!max-w-[95vw] !w-[95vw] h-[95vh] p-0 gap-0 overflow-hidden [&>button]:hidden">
+      <DialogContent className="!max-w-[95vw] sm:!max-w-[95vw] !w-[95vw] h-[95vh] p-0 gap-0 overflow-hidden [&>button]:hidden !z-[200]" style={{ zIndex: 200 }}>
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3 border-b shrink-0">
           <div className="flex items-center gap-3">
