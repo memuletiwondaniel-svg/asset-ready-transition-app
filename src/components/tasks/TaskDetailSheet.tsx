@@ -504,6 +504,26 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
             {/* P2A Approval Review CTA - opens wizard in review mode */}
             {isP2aApprovalTask && p2aProjectId && (
               <>
+                {/* Rejection outcome banner for reviewer */}
+                {task.status === 'completed' && (task.metadata as any)?.outcome === 'rejected' && (
+                  <div className="p-3 rounded-lg bg-destructive/5 border border-destructive/20 space-y-1">
+                    <div className="flex items-center gap-2 text-xs font-medium text-destructive">
+                      <AlertTriangle className="h-3.5 w-3.5" />
+                      You rejected this plan
+                    </div>
+                    {(task.metadata as any)?.rejection_comment && (
+                      <p className="text-xs text-foreground/80 italic pl-5">
+                        "{(task.metadata as any).rejection_comment}"
+                      </p>
+                    )}
+                    {(task.metadata as any)?.rejected_at && (
+                      <p className="text-[10px] text-muted-foreground pl-5">
+                        {format(new Date((task.metadata as any).rejected_at), 'MMM d, yyyy')}
+                      </p>
+                    )}
+                  </div>
+                )}
+
                 <Button
                   className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
                   onClick={() => {
