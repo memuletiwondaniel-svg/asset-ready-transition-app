@@ -563,9 +563,18 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
       ));
     }
 
-    return columnTasks.map(task => (
-      <DraggableKanbanCard key={task.id} task={task} onClick={() => handleTaskClick(task)} accentClass={col.accent} />
-    ));
+    return columnTasks.map(task => {
+      const meta = task.userTask?.metadata as Record<string, any> | undefined;
+      const isRejected = meta?.outcome === 'rejected';
+      return (
+        <DraggableKanbanCard
+          key={task.id}
+          task={task}
+          onClick={() => handleTaskClick(task)}
+          accentClass={isRejected ? 'border-l-destructive' : col.accent}
+        />
+      );
+    });
   };
 
   return (
