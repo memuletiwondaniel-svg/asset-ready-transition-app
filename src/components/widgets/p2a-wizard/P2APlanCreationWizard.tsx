@@ -67,7 +67,11 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
   milestones = [],
   onSuccess,
   onOpenWorkspace,
+  reviewTaskId,
+  onApprove,
+  onReject,
 }) => {
+  const isReviewMode = !!reviewTaskId;
   const [currentStep, setCurrentStep] = useState(1);
   const [useWizard, setUseWizard] = useState<boolean | null>(null);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
