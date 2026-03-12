@@ -312,11 +312,12 @@ async function syncP2AApproval(
     }
 
     // 3. Reset all approvers (except the rejector) to PENDING
+    // Use neq('status', 'REJECTED') to avoid overwriting the rejection we just set in step 1
     await supabase
       .from('p2a_handover_approvers')
-      .update({ status: 'PENDING', approved_at: null })
+      .update({ status: 'PENDING', approved_at: null, comments: null })
       .eq('handover_id', planId)
-      .neq('role_name', approverRole);
+      .neq('status', 'REJECTED');
 
     // 4. Revert plan status to DRAFT
     await (supabase as any)
