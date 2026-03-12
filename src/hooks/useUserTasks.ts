@@ -277,15 +277,115 @@ async function syncP2AApproval(
     await checkAndCompletePlan(planId);
 
   } else if (status === 'cancelled') {
-    // Rejection: sync to REJECTED status
+    // Rejection: full cascade
+    console.log('[P2A] Rejection cascade starting for plan:', planId, 'by role:', approverRole);
+
+    // 1. Mark this approver as REJECTED with comment
+    const rejectionComment = meta.rejection_comment || 'Rejected by approver';
     await supabase
       .from('p2a_handover_approvers')
       .update({
         status: 'REJECTED',
-        comments: 'Rejected by approver',
+        comments: rejectionComment,
+        approved_at: new Date().toISOString(),
       })
       .eq('handover_id', planId)
       .eq('role_name', approverRole);
+
+    // 2. Cancel all other PENDING/WAITING approval tasks for this plan
+    const { data: otherApprovalTasks } = await supabase
+      .from('user_tasks')
+      .select('id, metadata')
+      .eq('type', 'approval')
+      .neq('status', 'cancelled');
+
+    const otherP2aTasks = (otherApprovalTasks || []).filter((t: any) => {
+      const m = t.metadata as Record<string, any>;
+      return m?.source === 'p2a_handover' && m?.plan_id === planId;
+    });
+
+    for (const otherTask of otherP2aTasks) {
+      await supabase
+        .from('user_tasks')
+        .update({ status: 'cancelled' })
+        .eq('id', otherTask.id);
+    }
+
+    // 3. Reset all approvers (except the rejector) to PENDING
+    await supabase
+      .from('p2a_handover_approvers')
+      .update({ status: 'PENDING', approved_at: null })
+      .eq('handover_id', planId)
+      .neq('role_name', approverRole);
+
+    // 4. Revert plan status to DRAFT
+    await (supabase as any)
+      .from('p2a_handover_plans')
+      .update({ status: 'DRAFT', updated_at: new Date().toISOString() })
+      .eq('id', planId);
+
+    // 5. Reset the author's task progress to 86% and plan_status to DRAFT
+    const { data: authorTasks } = await supabase
+      .from('user_tasks')
+      .select('id, metadata')
+      .limit(200);
+
+    const authorTask = (authorTasks || []).find((t: any) => {
+      const m = t.metadata as Record<string, any>;
+      return m?.action === 'create_p2a_plan' && m?.project_id === meta.project_id;
+    });
+
+    if (authorTask) {
+      const authorMeta = (authorTask.metadata as Record<string, any>) || {};
+      await supabase
+        .from('user_tasks')
+        .update({
+          status: 'in_progress',
+          metadata: {
+            ...authorMeta,
+            completion_percentage: 86,
+            plan_status: 'DRAFT',
+            last_rejection_comment: rejectionComment,
+            last_rejection_role: approverRole,
+            last_rejection_at: new Date().toISOString(),
+          } as any,
+        })
+        .eq('id', authorTask.id);
+    }
+
+    // 6. Reset ORA activity to 86%
+    try {
+      const { data: plans } = await (supabase as any)
+        .from('orp_plans')
+        .select('id')
+        .eq('project_id', meta.project_id)
+        .limit(1);
+
+      if (plans?.[0]) {
+        const { data: activities } = await (supabase as any)
+          .from('ora_plan_activities')
+          .select('id, task_id, activity_code, name')
+          .eq('orp_plan_id', plans[0].id);
+
+        const p2aActivity = activities?.find((a: any) => a.activity_code === 'EXE-10' || a.activity_code === 'P2A-01')
+          || activities?.find((a: any) => a.name?.toLowerCase().includes('p2a plan'))
+          || activities?.find((a: any) => a.name?.toLowerCase().includes('p2a'));
+
+        if (p2aActivity) {
+          await (supabase as any)
+            .from('ora_plan_activities')
+            .update({
+              completion_percentage: 86,
+              status: 'IN_PROGRESS',
+            })
+            .eq('id', p2aActivity.id);
+        }
+      }
+    } catch (e) {
+      console.error('[P2A] Failed to reset ORA activity on rejection:', e);
+    }
+
+    console.log('[P2A] Rejection cascade completed for plan:', planId);
   }
 
   // Invalidate relevant queries so UI reflects changes
@@ -293,6 +393,9 @@ async function syncP2AApproval(
   queryClient.invalidateQueries({ queryKey: ['p2a-approval-workflow', planId] });
   queryClient.invalidateQueries({ queryKey: ['p2a-handover-approvers', planId] });
   queryClient.invalidateQueries({ queryKey: ['p2a-handover-plan'] });
+  queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+  queryClient.invalidateQueries({ queryKey: ['p2a-plan-exists'] });
+  queryClient.invalidateQueries({ queryKey: ['p2a-plan-exists-task'] });
 }
 
 /**

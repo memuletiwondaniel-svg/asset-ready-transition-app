@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Key, Loader2, Trash2, AlertTriangle, Edit3, Eye } from 'lucide-react';
+import { Key, Loader2, Trash2, AlertTriangle, Edit3, Eye, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { WizardProgress, WizardStep } from './WizardProgress';
 import { WizardNavigation } from './WizardNavigation';
@@ -15,7 +15,7 @@ import { ConfirmationStep } from './steps/ConfirmationStep';
 import { useP2APlanWizard } from '@/hooks/useP2APlanWizard';
 import { useP2APlanByProject } from '@/hooks/useP2APlanByProject';
 import { supabase } from '@/integrations/supabase/client';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
   AlertDialog,
@@ -83,6 +83,24 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
   const queryClient = useQueryClient();
   
   const { data: existingPlan } = useP2APlanByProject(projectId);
+
+  // Fetch rejection info from approvers table
+  const { data: rejectionInfo } = useQuery({
+    queryKey: ['p2a-rejection-info', existingPlan?.id],
+    queryFn: async () => {
+      if (!existingPlan?.id) return null;
+      const { data } = await (supabase as any)
+        .from('p2a_handover_approvers')
+        .select('role_name, comments, approved_at')
+        .eq('handover_id', existingPlan.id)
+        .eq('status', 'REJECTED')
+        .order('approved_at', { ascending: false })
+        .limit(1);
+      return data?.[0] || null;
+    },
+    enabled: !!existingPlan?.id && existingPlan?.status === 'DRAFT' && !isReviewMode,
+    staleTime: 30_000,
+  });
   
   // Read-only when plan is submitted (ACTIVE) or fully approved (COMPLETED/APPROVED)
   const isReadOnly = existingPlan ? ['ACTIVE', 'COMPLETED', 'APPROVED'].includes(existingPlan.status) : false;
@@ -337,17 +355,21 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
           .select('metadata')
           .eq('id', reviewTaskId)
           .single();
+
+        // Store the rejection comment in the task metadata so the cascade can use it
         await supabase
           .from('user_tasks')
           .update({
             metadata: {
               ...((taskRow?.metadata as Record<string, any>) || {}),
               completion_percentage: 100,
+              rejection_comment: reviewComment || undefined,
             } as any,
           })
           .eq('id', reviewTaskId);
       }
       onReject(reviewComment);
+      toast.success('Plan rejected. The author has been notified and can revise the plan.');
       handleClose();
     } catch (err) {
       console.error('Reject failed:', err);
@@ -673,7 +695,28 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
           </div>
         )}
 
-        {/* Read-only banner (non-review mode) */}
+        {/* Rejection feedback banner (shown to author when plan was rejected) */}
+        {!isReviewMode && rejectionInfo && useWizard && !isLoadingDraft && (
+          <div className="flex items-start gap-3 px-5 py-3 border-b bg-destructive/5 dark:bg-destructive/10 text-destructive">
+            <XCircle className="h-4 w-4 shrink-0 mt-0.5" />
+            <div className="flex-1 text-xs space-y-1">
+              <p className="font-medium">
+                Plan was rejected by {rejectionInfo.role_name}
+                {rejectionInfo.approved_at && (
+                  <span className="font-normal text-muted-foreground ml-1">
+                    on {new Date(rejectionInfo.approved_at).toLocaleDateString()}
+                  </span>
+                )}
+              </p>
+              {rejectionInfo.comments && rejectionInfo.comments !== 'Rejected by approver' && (
+                <p className="text-foreground/80 italic">"{rejectionInfo.comments}"</p>
+              )}
+              <p className="text-muted-foreground">Please address the feedback and resubmit for approval.</p>
+            </div>
+          </div>
+        )}
+
+
         {!isReviewMode && isReadOnly && useWizard && currentStep > 1 && !isLoadingDraft && (
           <div className="flex items-center gap-3 px-5 py-2.5 border-b bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-200">
             <AlertTriangle className="h-4 w-4 shrink-0" />
