@@ -498,7 +498,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
 
   const handleSubmit = async () => {
     try {
-      await submitForApproval();
+      await submitForApproval(submissionComment || undefined);
       await syncWizardProgress(WIZARD_STEPS.length, true);
       handleClose();
       onSuccess?.();
