@@ -142,9 +142,26 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
         .limit(1);
       return data?.[0] || null;
     },
-    enabled: !!existingP2aPlan?.id && isP2aTask && p2aPlanStatus === 'DRAFT',
+    enabled: !!existingP2aPlan?.id && isP2aTask,
     staleTime: 30_000,
   });
+
+  const p2aRejectionFallback = {
+    role_name: (task?.metadata?.last_rejection_role as string | undefined) || null,
+    comments: (task?.metadata?.last_rejection_comment as string | undefined) || null,
+    approved_at: (task?.metadata?.last_rejection_at as string | undefined) || null,
+  };
+
+  const effectiveP2aRejection = {
+    role_name: p2aRejectionInfo?.role_name || p2aRejectionFallback.role_name,
+    comments: p2aRejectionInfo?.comments || p2aRejectionFallback.comments,
+    approved_at: p2aRejectionInfo?.approved_at || p2aRejectionFallback.approved_at,
+  };
+
+  const showP2aRejectionBanner =
+    isP2aTask &&
+    p2aPlanStatus === 'DRAFT' &&
+    !!(effectiveP2aRejection.role_name || effectiveP2aRejection.comments);
 
   const getP2AStatusLabel = () => {
     if (!p2aPlanStatus) return null;
