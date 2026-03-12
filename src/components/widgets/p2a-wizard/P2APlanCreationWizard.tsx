@@ -291,7 +291,69 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
     setCurrentStep(1);
     setUseWizard(null);
     setCompletedSteps(new Set());
+    setReviewVisitedSteps(new Set());
+    setReviewComment('');
+    setIsApproving(false);
     onOpenChange(false);
+  };
+
+  const handleReviewApprove = async () => {
+    if (!onApprove) return;
+    setIsApproving(true);
+    try {
+      // Set review task to 100%
+      if (reviewTaskId) {
+        const { data: taskRow } = await supabase
+          .from('user_tasks')
+          .select('metadata')
+          .eq('id', reviewTaskId)
+          .single();
+        await supabase
+          .from('user_tasks')
+          .update({
+            metadata: {
+              ...((taskRow?.metadata as Record<string, any>) || {}),
+              completion_percentage: 100,
+            } as any,
+          })
+          .eq('id', reviewTaskId);
+      }
+      onApprove(reviewComment);
+      handleClose();
+    } catch (err) {
+      console.error('Approve failed:', err);
+    } finally {
+      setIsApproving(false);
+    }
+  };
+
+  const handleReviewReject = async () => {
+    if (!onReject) return;
+    setIsApproving(true);
+    try {
+      if (reviewTaskId) {
+        const { data: taskRow } = await supabase
+          .from('user_tasks')
+          .select('metadata')
+          .eq('id', reviewTaskId)
+          .single();
+        await supabase
+          .from('user_tasks')
+          .update({
+            metadata: {
+              ...((taskRow?.metadata as Record<string, any>) || {}),
+              completion_percentage: 100,
+            } as any,
+          })
+          .eq('id', reviewTaskId);
+      }
+      onReject(reviewComment);
+      handleClose();
+    } catch (err) {
+      console.error('Reject failed:', err);
+    } finally {
+      setIsApproving(false);
+    }
   };
 
   const isStepComplete = (displayStep: number): boolean => {
