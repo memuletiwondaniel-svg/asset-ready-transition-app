@@ -266,6 +266,46 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
         ...d,
         full_name: profileMap[d.user_id]?.full_name || d.role_name,
         avatar_url: profileMap[d.user_id]?.avatar_url || null,
+        cycle: null, // current cycle
+      }));
+    },
+    enabled: !!existingP2APlan?.id && isP2AActivity,
+    staleTime: 30_000,
+  });
+
+  // Fetch archived approver history for previous cycles
+  const { data: p2aApproverHistory } = useQuery({
+    queryKey: ['p2a-approver-history', existingP2APlan?.id],
+    queryFn: async () => {
+      if (!existingP2APlan?.id) return [];
+      const { data } = await (supabase as any)
+        .from('p2a_approver_history')
+        .select('id, user_id, role_name, status, comments, approved_at, cycle')
+        .eq('handover_id', existingP2APlan.id)
+        .order('approved_at', { ascending: false });
+      if (!data || data.length === 0) return [];
+      const userIds = [...new Set(data.filter((d: any) => d.user_id).map((d: any) => d.user_id))];
+      let profileMap: Record<string, { full_name: string; avatar_url: string | null }> = {};
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, full_name, avatar_url')
+          .in('user_id', userIds as string[]);
+        if (profiles) {
+          for (const p of profiles) {
+            const avatarUrl = p.avatar_url
+              ? p.avatar_url.startsWith('http')
+                ? p.avatar_url
+                : supabase.storage.from('user-avatars').getPublicUrl(p.avatar_url).data.publicUrl
+              : null;
+            profileMap[p.user_id] = { full_name: p.full_name || '', avatar_url: avatarUrl };
+          }
+        }
+      }
+      return data.map((d: any) => ({
+        ...d,
+        full_name: profileMap[d.user_id]?.full_name || d.role_name,
+        avatar_url: profileMap[d.user_id]?.avatar_url || null,
       }));
     },
     enabled: !!existingP2APlan?.id && isP2AActivity,
