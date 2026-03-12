@@ -637,18 +637,18 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
             )}
 
             {/* P2A Rejection feedback */}
-            {isP2aTask && p2aRejectionInfo?.comments && (
+            {showP2aRejectionBanner && (
               <div className="p-3 rounded-lg bg-destructive/5 border border-destructive/20 space-y-1">
                 <div className="flex items-center gap-2 text-xs font-medium text-destructive">
                   <AlertTriangle className="h-3.5 w-3.5" />
-                  Plan rejected by {p2aRejectionInfo.role_name || 'approver'}
+                  Plan rejected by {effectiveP2aRejection.role_name || 'approver'}
                 </div>
                 <p className="text-xs text-foreground/80 italic pl-5">
-                  "{p2aRejectionInfo.comments}"
+                  "{effectiveP2aRejection.comments || 'No rejection comment was provided.'}"
                 </p>
-                {p2aRejectionInfo.approved_at && (
+                {effectiveP2aRejection.approved_at && (
                   <p className="text-[10px] text-muted-foreground pl-5">
-                    {format(new Date(p2aRejectionInfo.approved_at), 'MMM d, yyyy')}
+                    {format(new Date(effectiveP2aRejection.approved_at), 'MMM d, yyyy')}
                   </p>
                 )}
               </div>
