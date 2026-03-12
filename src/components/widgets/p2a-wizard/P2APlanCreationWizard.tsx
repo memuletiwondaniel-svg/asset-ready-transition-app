@@ -783,7 +783,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
 
         {/* Request Change confirmation dialog */}
         <AlertDialog open={requestChangeOpen} onOpenChange={setRequestChangeOpen}>
-          <AlertDialogContent>
+          <AlertDialogContent className="z-[150]">
             <AlertDialogHeader>
               <div className="flex items-center gap-3">
                 <div className="flex items-center justify-center w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30">
