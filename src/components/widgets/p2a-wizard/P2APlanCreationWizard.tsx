@@ -685,11 +685,11 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
 
         {/* Review mode banner */}
         {isReviewMode && useWizard && currentStep > 1 && !isLoadingDraft && (
-          <div className="flex items-center gap-3 px-5 py-2.5 border-b bg-primary/5 dark:bg-primary/10 text-primary">
-            <Eye className="h-4 w-4 shrink-0" />
-            <p className="text-xs flex-1">
+          <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-5 py-2 sm:py-2.5 border-b bg-primary/5 dark:bg-primary/10 text-primary shrink-0">
+            <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+            <p className="text-[11px] sm:text-xs flex-1">
               You are reviewing this plan as an approver. Navigate through each section to review, then approve or reject on the final step.
-              <span className="ml-2 font-medium">
+              <span className="ml-1 sm:ml-2 font-medium">
                 ({reviewVisitedSteps.size}/6 sections reviewed)
               </span>
             </p>
