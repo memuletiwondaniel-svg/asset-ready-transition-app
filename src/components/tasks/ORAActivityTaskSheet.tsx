@@ -1167,7 +1167,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                                 {entry.comment && (
                                   <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed mt-1">{entry.comment}</p>
                                 )}
-                              <>
+                              </>
                             ) : entry.type === 'approval_action' && entry.status === 'REVERTED' ? (
                               <div className="flex items-center gap-1.5 flex-wrap">
                                 <Badge
