@@ -295,6 +295,7 @@ async function syncP2AApproval(
       .from('p2a_handover_approvers')
       .update({
         status: 'APPROVED',
+        comments: meta?.review_comment || null,
         approved_at: new Date().toISOString(),
       })
       .eq('handover_id', planId)
