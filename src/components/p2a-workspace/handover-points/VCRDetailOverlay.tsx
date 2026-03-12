@@ -22,6 +22,8 @@ import {
   Medal,
   Package,
   FolderOpen,
+  Lock,
+  Info,
 } from 'lucide-react';
 import { P2AHandoverPoint } from '../hooks/useP2AHandoverPoints';
 import { useVCRPrerequisites } from '../hooks/useVCRPrerequisites';
