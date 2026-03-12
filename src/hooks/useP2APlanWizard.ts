@@ -280,6 +280,7 @@ async function persistPlanToDatabase(
       .from('p2a_handover_plans')
       .insert({
         project_id: projectId,
+        project_code: projectCode,
         name: `P2A Plan - ${projectCode}`,
         status,
         created_by: user.id,
