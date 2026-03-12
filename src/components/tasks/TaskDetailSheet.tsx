@@ -63,7 +63,8 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   const oraProjectId = task?.metadata?.project_id as string | undefined;
   const isOraTask = task ? (task.type === 'ora_plan_creation' || (task.metadata?.action === 'create_ora_plan' && task.metadata?.source === 'ora_workflow')) : false;
   const isP2aTask = task?.metadata?.action === 'create_p2a_plan';
-  const p2aProjectId = task?.metadata?.project_id as string | undefined;
+  const isP2aApprovalTask = task?.type === 'approval' && task?.metadata?.source === 'p2a_handover';
+  const p2aProjectId = (task?.metadata?.project_id as string | undefined) || (isP2aApprovalTask ? task?.metadata?.project_id as string : undefined);
 
   // Check if an ORA plan exists for this project (draft or approved)
   const { data: existingOraPlan } = useQuery({
