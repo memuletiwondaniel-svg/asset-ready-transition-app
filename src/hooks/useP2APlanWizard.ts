@@ -273,13 +273,14 @@ async function persistPlanToDatabase(
     planId = existingPlan.id;
     await client
       .from('p2a_handover_plans')
-      .update({ status, updated_at: new Date().toISOString() })
+      .update({ status, project_code: projectCode, updated_at: new Date().toISOString() })
       .eq('id', planId);
   } else {
     const { data: newPlan, error: planError } = await client
       .from('p2a_handover_plans')
       .insert({
         project_id: projectId,
+        project_code: projectCode,
         name: `P2A Plan - ${projectCode}`,
         status,
         created_by: user.id,
@@ -697,6 +698,15 @@ export function useP2APlanWizard(projectId: string, projectCode: string) {
       } catch (err) {
         console.error('Failed to reset P2A activity progress:', err);
       }
+
+      // Clean up approval tasks BEFORE deleting the plan (belt-and-suspenders with DB trigger)
+      await client
+        .from('user_tasks')
+        .delete()
+        .eq('type', 'approval')
+        .in('status', ['pending', 'waiting'])
+        .filter('metadata->>plan_id', 'eq', planId)
+        .filter('metadata->>source', 'eq', 'p2a_handover');
 
       // Delete in order: system mappings -> VCRs -> phases -> systems -> approvers -> plan
       const { data: existingVCRs } = await client
