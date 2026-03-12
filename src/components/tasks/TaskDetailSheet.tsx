@@ -86,7 +86,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   const hasExistingOraDraft = existingOraPlan?.status === 'DRAFT';
   const resolvedOraPlanId = (task?.metadata?.plan_id as string) || existingOraPlan?.id;
 
-  // Fetch project info for P2A wizard
+  // Fetch project info for P2A wizard or P2A approval review
   const { data: p2aProjectInfo } = useQuery({
     queryKey: ['p2a-project-info', p2aProjectId],
     queryFn: async () => {
@@ -98,7 +98,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
         .single();
       return data;
     },
-    enabled: !!p2aProjectId && isP2aTask,
+    enabled: !!p2aProjectId && (isP2aTask || isP2aApprovalTask),
     staleTime: 60_000,
   });
 
