@@ -15,7 +15,7 @@ import { ConfirmationStep } from './steps/ConfirmationStep';
 import { useP2APlanWizard } from '@/hooks/useP2APlanWizard';
 import { useP2APlanByProject } from '@/hooks/useP2APlanByProject';
 import { supabase } from '@/integrations/supabase/client';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
   AlertDialog,
