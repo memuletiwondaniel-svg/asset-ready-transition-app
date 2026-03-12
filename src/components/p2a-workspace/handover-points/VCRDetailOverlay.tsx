@@ -266,7 +266,8 @@ export const VCRDetailOverlay: React.FC<VCRDetailOverlayProps> = ({
             </ScrollArea>
           </div>
         </div>
-      </DialogContent>
+      </DialogPrimitive.Content>
+      </DialogPortal>
 
       {/* Delete Confirmation Dialog */}
       <DeleteVCRDialog
