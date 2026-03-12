@@ -697,21 +697,22 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
         {/* Content */}
         <div className="flex-1 min-h-0 overflow-auto">
           {renderStepContent()}
-          {/* Review comment box — visible on last step in review mode */}
-          {isReviewMode && currentStep === WIZARD_STEPS.length && (
-            <div className="px-6 py-4 border-t bg-muted/30">
-              <label className="text-sm font-medium text-foreground mb-2 block">
-                Review Comments <span className="text-muted-foreground font-normal">(optional)</span>
-              </label>
-              <textarea
-                placeholder="Add any comments or notes about your review decision..."
-                value={reviewComment}
-                onChange={(e) => setReviewComment(e.target.value)}
-                className="w-full min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring"
-              />
-            </div>
-          )}
         </div>
+
+        {/* Review comment box — pinned above final actions on last step */}
+        {isReviewMode && useWizard && currentStep === WIZARD_STEPS.length && !isLoadingDraft && (
+          <div className="px-6 py-4 border-t bg-muted/30 shrink-0">
+            <label className="text-sm font-medium text-foreground mb-2 block">
+              Review Comments <span className="text-muted-foreground font-normal">(optional)</span>
+            </label>
+            <textarea
+              placeholder="Add any comments or notes about your review decision..."
+              value={reviewComment}
+              onChange={(e) => setReviewComment(e.target.value)}
+              className="w-full min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+          </div>
+        )}
 
         {/* Navigation */}
         {useWizard && currentStep > 1 && !isLoadingDraft && (
