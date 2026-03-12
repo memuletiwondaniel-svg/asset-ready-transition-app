@@ -648,7 +648,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
                     )}
                   </Button>
                 </AlertDialogTrigger>
-                <AlertDialogContent>
+                <AlertDialogContent className="z-[150]">
                   <AlertDialogHeader>
                     <AlertDialogTitle>Delete Draft Plan?</AlertDialogTitle>
                     <AlertDialogDescription>
