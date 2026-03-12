@@ -1101,6 +1101,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                 full_name: c.full_name,
                 avatar_url: c.avatar_url,
                 timestamp: c.created_at,
+                cycle: null as number | null,
               }));
               const submissionEntries = submissionEntry ? [{
                 id: 'submission-entry',
@@ -1111,8 +1112,9 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                 full_name: submissionEntry.full_name,
                 avatar_url: submissionEntry.avatar_url,
                 timestamp: submissionEntry.submitted_at,
+                cycle: null as number | null,
               }] : [];
-              const activityFeed = [...commentEntries, ...approverEntries, ...submissionEntries]
+              const activityFeed = [...commentEntries, ...approverEntries, ...historyEntries, ...submissionEntries]
                 .filter((e) => e.timestamp)
                 .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
               const feedCount = activityFeed.length;
