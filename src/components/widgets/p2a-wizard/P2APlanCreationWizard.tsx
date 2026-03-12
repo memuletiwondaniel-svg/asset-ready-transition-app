@@ -337,17 +337,21 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
           .select('metadata')
           .eq('id', reviewTaskId)
           .single();
+
+        // Store the rejection comment in the task metadata so the cascade can use it
         await supabase
           .from('user_tasks')
           .update({
             metadata: {
               ...((taskRow?.metadata as Record<string, any>) || {}),
               completion_percentage: 100,
+              rejection_comment: reviewComment || undefined,
             } as any,
           })
           .eq('id', reviewTaskId);
       }
       onReject(reviewComment);
+      toast.success('Plan rejected. The author has been notified and can revise the plan.');
       handleClose();
     } catch (err) {
       console.error('Reject failed:', err);
