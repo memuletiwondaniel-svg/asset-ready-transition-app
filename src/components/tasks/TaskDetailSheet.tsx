@@ -271,8 +271,13 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   const resolvedP2aProjectCode = p2aProjectCode || (p2aProjectInfo ? `${p2aProjectInfo.project_id_prefix || ''}-${p2aProjectInfo.project_id_number || ''}` : '');
   const resolvedP2aProjectName = p2aProjectInfo?.project_title || '';
 
-  const isReviewTask = (['review', 'approval', 'ora_plan_review'].includes(task.type) || !!pssrId) && !isOraReviewTask;
+  const isReviewTask = (['review', 'approval', 'ora_plan_review'].includes(task.type) || !!pssrId) && !isOraReviewTask && !isP2aApprovalTask;
   const isActionTask = isOraTask || isOraActivityTask || isVcrDeliveryPlanTask || isP2aTask;
+
+  // Resolve P2A approval task project details
+  const p2aApprovalPlanId = isP2aApprovalTask ? (task.metadata?.plan_id as string) : undefined;
+  const p2aApprovalProjectCode = isP2aApprovalTask ? (p2aProjectCode || (p2aProjectInfo ? `${p2aProjectInfo.project_id_prefix || ''}-${p2aProjectInfo.project_id_number || ''}` : '')) : '';
+  const p2aApprovalProjectName = isP2aApprovalTask ? (p2aProjectInfo?.project_title || '') : '';
 
   const oraCtaLabel = isCompleted ? 'View ORA Plan' : hasExistingOraDraft ? 'Continue Creating ORA Plan' : 'Create ORA Plan';
   const oraIntentMessage = isCompleted
