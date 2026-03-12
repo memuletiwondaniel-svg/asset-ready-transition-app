@@ -193,6 +193,27 @@ export function useKanbanDragDrop() {
             await client.from('p2a_approver_history').insert(historyRecords);
           }
 
+          // Insert a "Reverted to Draft" audit entry
+          const { data: { user: currentUser } } = await client.auth.getUser();
+          if (currentUser) {
+            const { data: maxCycleRow2 } = await client
+              .from('p2a_approver_history')
+              .select('cycle')
+              .eq('handover_id', p2aPlan.id)
+              .order('cycle', { ascending: false })
+              .limit(1);
+            const revertCycle = maxCycleRow2?.[0]?.cycle || 1;
+            await client.from('p2a_approver_history').insert({
+              handover_id: p2aPlan.id,
+              user_id: currentUser.id,
+              role_name: 'Submitter',
+              status: 'REVERTED',
+              comments: null,
+              cycle: revertCycle,
+              approved_at: new Date().toISOString(),
+            });
+          }
+
           // Reset all approvers to PENDING (correct column: handover_id)
           await client
             .from('p2a_handover_approvers')
