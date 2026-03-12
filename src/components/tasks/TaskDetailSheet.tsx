@@ -142,9 +142,26 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
         .limit(1);
       return data?.[0] || null;
     },
-    enabled: !!existingP2aPlan?.id && isP2aTask && p2aPlanStatus === 'DRAFT',
+    enabled: !!existingP2aPlan?.id && isP2aTask,
     staleTime: 30_000,
   });
+
+  const p2aRejectionFallback = {
+    role_name: (task?.metadata?.last_rejection_role as string | undefined) || null,
+    comments: (task?.metadata?.last_rejection_comment as string | undefined) || null,
+    approved_at: (task?.metadata?.last_rejection_at as string | undefined) || null,
+  };
+
+  const effectiveP2aRejection = {
+    role_name: p2aRejectionInfo?.role_name || p2aRejectionFallback.role_name,
+    comments: p2aRejectionInfo?.comments || p2aRejectionFallback.comments,
+    approved_at: p2aRejectionInfo?.approved_at || p2aRejectionFallback.approved_at,
+  };
+
+  const showP2aRejectionBanner =
+    isP2aTask &&
+    p2aPlanStatus === 'DRAFT' &&
+    !!(effectiveP2aRejection.role_name || effectiveP2aRejection.comments);
 
   const getP2AStatusLabel = () => {
     if (!p2aPlanStatus) return null;
@@ -620,18 +637,18 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
             )}
 
             {/* P2A Rejection feedback */}
-            {isP2aTask && p2aRejectionInfo?.comments && (
+            {showP2aRejectionBanner && (
               <div className="p-3 rounded-lg bg-destructive/5 border border-destructive/20 space-y-1">
                 <div className="flex items-center gap-2 text-xs font-medium text-destructive">
                   <AlertTriangle className="h-3.5 w-3.5" />
-                  Plan rejected by {p2aRejectionInfo.role_name || 'approver'}
+                  Plan rejected by {effectiveP2aRejection.role_name || 'approver'}
                 </div>
                 <p className="text-xs text-foreground/80 italic pl-5">
-                  "{p2aRejectionInfo.comments}"
+                  "{effectiveP2aRejection.comments || 'No rejection comment was provided.'}"
                 </p>
-                {p2aRejectionInfo.approved_at && (
+                {effectiveP2aRejection.approved_at && (
                   <p className="text-[10px] text-muted-foreground pl-5">
-                    {format(new Date(p2aRejectionInfo.approved_at), 'MMM d, yyyy')}
+                    {format(new Date(effectiveP2aRejection.approved_at), 'MMM d, yyyy')}
                   </p>
                 )}
               </div>
