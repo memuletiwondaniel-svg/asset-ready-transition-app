@@ -1099,7 +1099,16 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                             </AvatarFallback>
                           </Avatar>
                           <div className="flex-1 min-w-0">
-                            {entry.type === 'approval_action' ? (
+                            {entry.type === 'submission' ? (
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <Badge
+                                  variant="outline"
+                                  className="text-[10px] px-1.5 py-0 h-4 border-0 font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                                >
+                                  Submitted for Approval
+                                </Badge>
+                              </div>
+                            ) : entry.type === 'approval_action' ? (
                               <>
                                 <div className="flex items-center gap-1.5 flex-wrap">
                                   <Badge
