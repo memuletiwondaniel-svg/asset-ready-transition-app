@@ -313,6 +313,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
     setCompletedSteps(new Set());
     setReviewVisitedSteps(new Set());
     setReviewComment('');
+    setSubmissionComment('');
     setIsApproving(false);
     onOpenChange(false);
   };
