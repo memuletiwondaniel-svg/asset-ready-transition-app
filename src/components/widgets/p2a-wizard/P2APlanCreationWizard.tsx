@@ -567,6 +567,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
             totalSteps={WIZARD_STEPS.length - 1}
             onBack={handleBack}
             onNext={handleNext}
+            onSave={isReadOnly ? undefined : handleSave}
             onSaveAndExit={isReadOnly ? () => onOpenChange(false) : handleSaveAndExit}
             onSubmit={currentStep === WIZARD_STEPS.length && !isReadOnly && (!existingPlan || existingPlan.status === 'DRAFT') ? handleSubmit : undefined}
             isSubmitting={isSubmitting}
