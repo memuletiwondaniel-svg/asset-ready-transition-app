@@ -231,22 +231,48 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
         ? 'Continue P2A Plan'
         : 'Start P2A Plan';
 
-  const { data: p2aRejectionInfo } = useQuery({
-    queryKey: ['p2a-rejection-info-activity-sheet', existingP2APlan?.id],
+  // Fetch ALL approver decisions (not just rejections) for the unified feed
+  const { data: p2aApproverDecisions } = useQuery({
+    queryKey: ['p2a-approver-decisions', existingP2APlan?.id],
     queryFn: async () => {
-      if (!existingP2APlan?.id) return null;
+      if (!existingP2APlan?.id) return [];
       const { data } = await (supabase as any)
         .from('p2a_handover_approvers')
-        .select('role_name, comments, approved_at')
+        .select('id, user_id, role_name, status, comments, approved_at')
         .eq('handover_id', existingP2APlan.id)
-        .eq('status', 'REJECTED')
-        .order('approved_at', { ascending: false })
-        .limit(1);
-      return data?.[0] || null;
+        .not('approved_at', 'is', null)
+        .order('approved_at', { ascending: false });
+      if (!data || data.length === 0) return [];
+      // Resolve profiles for each approver
+      const userIds = [...new Set(data.filter((d: any) => d.user_id).map((d: any) => d.user_id))];
+      let profileMap: Record<string, { full_name: string; avatar_url: string | null }> = {};
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, full_name, avatar_url')
+          .in('user_id', userIds);
+        if (profiles) {
+          for (const p of profiles) {
+            const avatarUrl = p.avatar_url
+              ? p.avatar_url.startsWith('http')
+                ? p.avatar_url
+                : supabase.storage.from('user-avatars').getPublicUrl(p.avatar_url).data.publicUrl
+              : null;
+            profileMap[p.user_id] = { full_name: p.full_name || '', avatar_url: avatarUrl };
+          }
+        }
+      }
+      return data.map((d: any) => ({
+        ...d,
+        full_name: profileMap[d.user_id]?.full_name || d.role_name,
+        avatar_url: profileMap[d.user_id]?.avatar_url || null,
+      }));
     },
     enabled: !!existingP2APlan?.id && isP2AActivity,
     staleTime: 30_000,
   });
+
+  const p2aRejectionInfo = p2aApproverDecisions?.find((d: any) => d.status === 'REJECTED') || null;
 
   const p2aRejectionFallback = {
     role_name: (metadata?.last_rejection_role as string | undefined) || null,
