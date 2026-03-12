@@ -757,7 +757,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
         />
       )}
 
-      {/* P2A Plan Creation Wizard */}
+      {/* P2A Plan Creation Wizard / Review Wizard */}
       {(p2aWizardOpen || p2aWorkspaceOpen) && p2aProjectId && (isP2aTask || isP2aApprovalTask) && (
         <>
           {isP2aTask && (
@@ -774,6 +774,26 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
               onOpenWorkspace={() => {
                 setP2aWizardOpen(false);
                 setP2aWorkspaceOpen(true);
+              }}
+            />
+          )}
+          {isP2aApprovalTask && (
+            <P2APlanCreationWizard
+              open={p2aWizardOpen}
+              onOpenChange={setP2aWizardOpen}
+              projectId={p2aProjectId}
+              projectCode={p2aApprovalProjectCode}
+              projectName={p2aApprovalProjectName}
+              reviewTaskId={task?.id}
+              onApprove={(reviewComment) => {
+                onApprove(task!.id, reviewComment);
+                setP2aWizardOpen(false);
+                onOpenChange(false);
+              }}
+              onReject={(reviewComment) => {
+                onReject(task!.id, reviewComment);
+                setP2aWizardOpen(false);
+                onOpenChange(false);
               }}
             />
           )}

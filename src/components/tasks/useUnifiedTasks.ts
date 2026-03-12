@@ -148,6 +148,10 @@ export function useUnifiedTasks(userId: string) {
         categoryLabel = 'P2A Approval';
         categoryColor = 'bg-teal-500/10 text-teal-600 border-teal-500/20';
         icon = RefreshCw;
+        // Read review progress from metadata if available
+        if (meta?.completion_percentage !== undefined) {
+          resolvedProgress = meta.completion_percentage;
+        }
       }
 
       const isWaiting = t.status === 'waiting';
