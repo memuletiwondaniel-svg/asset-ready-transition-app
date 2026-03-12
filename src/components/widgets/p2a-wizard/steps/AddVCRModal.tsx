@@ -57,7 +57,7 @@ export const AddVCRModal: React.FC<AddVCRModalProps> = ({
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent
-        className="sm:max-w-md"
+        className="sm:max-w-md z-[150]"
         onPointerDownOutside={(e) => e.preventDefault()}
         onInteractOutside={(e) => e.preventDefault()}
       >
