@@ -260,9 +260,20 @@ const KanbanCardContent: React.FC<{
         </div>
         <div className="flex items-center gap-1">
           {task.kanbanColumn === 'done' ? (
-            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
-              {t.kanbanCompleted || 'Completed'}
-            </span>
+            (() => {
+              const meta = task.userTask?.metadata as Record<string, any> | undefined;
+              const isRejected = meta?.outcome === 'rejected';
+              return (
+                <span className={cn(
+                  "text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap",
+                  isRejected
+                    ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                    : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                )}>
+                  {isRejected ? 'Rejected' : (t.kanbanCompleted || 'Completed')}
+                </span>
+              );
+            })()
           ) : dateAnnotation ? (
             <span className={cn(
               "text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap",
