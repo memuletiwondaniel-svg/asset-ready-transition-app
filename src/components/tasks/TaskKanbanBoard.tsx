@@ -108,20 +108,28 @@ const ApprovalVoidWarningDialog: React.FC<{
               <AlertTriangle className="h-5 w-5 text-destructive" />
             </div>
             <AlertDialogTitle className="text-lg">
-              {isFullyApproved ? 'Void All Approvals?' : 'Cancel Approval Review?'}
+              {isApproverTask ? 'Void Your Approval?' : isFullyApproved ? 'Void All Approvals?' : 'Cancel Approval Review?'}
             </AlertDialogTitle>
           </div>
           <AlertDialogDescription asChild>
             <div className="space-y-3 text-sm">
               <p>
                 <span className="font-medium text-foreground">"{taskTitle}"</span>{' '}
-                {isFullyApproved
-                  ? 'has been approved through a formal review process.'
-                  : 'has been submitted and is currently under approval review.'}
+                {isApproverTask
+                  ? 'has already been completed — you approved this plan.'
+                  : isFullyApproved
+                    ? 'has been approved through a formal review process.'
+                    : 'has been submitted and is currently under approval review.'}
               </p>
               <p className="text-muted-foreground">Moving this task back will:</p>
               <ul className="list-disc list-inside space-y-1 text-muted-foreground ml-1">
-                {isFullyApproved ? (
+                {isApproverTask ? (
+                  <>
+                    <li>Void your earlier approval of the P2A Plan</li>
+                    <li>Require you to re-review and re-approve</li>
+                    <li>May delay the overall approval process</li>
+                  </>
+                ) : isFullyApproved ? (
                   <>
                     <li>Void all existing approvals</li>
                     <li>Require a completely new review cycle</li>
@@ -155,7 +163,7 @@ const ApprovalVoidWarningDialog: React.FC<{
             disabled={!acknowledged}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isFullyApproved ? 'Move Anyway – Void Approvals' : 'Move Anyway – Cancel Review'}
+            {isApproverTask ? 'Move Anyway – Void Approval' : isFullyApproved ? 'Move Anyway – Void Approvals' : 'Move Anyway – Cancel Review'}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
