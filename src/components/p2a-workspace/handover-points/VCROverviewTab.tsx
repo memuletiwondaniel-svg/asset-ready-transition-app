@@ -13,7 +13,9 @@ import {
   BookOpen, 
   Settings2,
   AlertTriangle,
-  CheckCircle2
+  CheckCircle2,
+  Lock,
+  Info
 } from 'lucide-react';
 import { P2AHandoverPoint } from '../hooks/useP2AHandoverPoints';
 import { useVCRPrerequisites } from '../hooks/useVCRPrerequisites';
