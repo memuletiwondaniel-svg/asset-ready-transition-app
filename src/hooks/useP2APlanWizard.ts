@@ -486,6 +486,35 @@ async function persistPlanToDatabase(
       .filter('metadata->>plan_id', 'eq', planId)
       .filter('metadata->>source', 'eq', 'p2a_handover');
 
+    // Archive decided approver records before deleting (for audit trail)
+    const { data: existingApprovers } = await client
+      .from('p2a_handover_approvers')
+      .select('id, user_id, role_name, display_order, status, approved_at, comments')
+      .eq('handover_id', planId)
+      .not('approved_at', 'is', null);
+    if (existingApprovers && existingApprovers.length > 0) {
+      // Determine cycle number from existing history
+      const { data: maxCycleRow } = await (client as any)
+        .from('p2a_approver_history')
+        .select('cycle')
+        .eq('handover_id', planId)
+        .order('cycle', { ascending: false })
+        .limit(1);
+      const nextCycle = (maxCycleRow?.[0]?.cycle || 0) + 1;
+      const historyRecords = existingApprovers.map((a: any) => ({
+        handover_id: planId,
+        original_approver_id: a.id,
+        user_id: a.user_id,
+        role_name: a.role_name,
+        display_order: a.display_order,
+        status: a.status,
+        approved_at: a.approved_at,
+        comments: a.comments,
+        cycle: nextCycle,
+      }));
+      await (client as any).from('p2a_approver_history').insert(historyRecords);
+    }
+
     await client.from('p2a_handover_approvers').delete().eq('handover_id', planId);
 
     const approverRecords = state.approvers.map(a => ({
