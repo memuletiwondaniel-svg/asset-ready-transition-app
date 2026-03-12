@@ -194,7 +194,7 @@ async function loadDraftFromDatabase(projectId: string): Promise<{ state: P2APla
   // Load approvers
   const { data: dbApprovers } = await client
     .from('p2a_handover_approvers')
-    .select('id, role_name, display_order, user_id')
+    .select('id, role_name, display_order, user_id, status')
     .eq('handover_id', planId)
     .order('display_order', { ascending: true });
 
@@ -224,6 +224,7 @@ async function loadDraftFromDatabase(projectId: string): Promise<{ state: P2APla
       id: a.id,
       role_name: a.role_name,
       display_order: a.display_order,
+      status: a.status || 'PENDING',
       user_id: a.user_id || undefined,
       user_name: profile?.full_name,
       user_avatar: profile?.avatar_url,

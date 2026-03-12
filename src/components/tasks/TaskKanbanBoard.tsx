@@ -291,6 +291,39 @@ const KanbanCardContent: React.FC<{
         {task.project ? task.title.replace(new RegExp(`\\s*[–\\-]\\s*${task.project.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`), '') : task.title}
       </p>
 
+      {/* Approver progress for P2A tasks in Done */}
+      {task.kanbanColumn === 'done' && (() => {
+        const meta = task.userTask?.metadata as Record<string, any> | undefined;
+        const isP2a = meta?.source === 'p2a_handover';
+        const totalApprovers = meta?.total_approvers as number | undefined;
+        const approvedCount = meta?.approved_count as number | undefined;
+        const isRejected = meta?.outcome === 'rejected';
+        if (!isP2a || totalApprovers == null) return null;
+        return (
+          <div className="flex items-center gap-1.5 mt-0.5 mb-1">
+            <div className="flex -space-x-0.5">
+              {Array.from({ length: totalApprovers }).map((_, i) => (
+                <div
+                  key={i}
+                  className={cn(
+                    "w-1.5 h-1.5 rounded-full border border-card",
+                    isRejected
+                      ? 'bg-destructive/40'
+                      : i < (approvedCount || 0)
+                        ? 'bg-emerald-500'
+                        : 'bg-muted-foreground/20'
+                  )}
+                />
+              ))}
+            </div>
+            <span className="text-[9px] text-muted-foreground">
+              {isRejected
+                ? `${approvedCount || 0} of ${totalApprovers}`
+                : `${approvedCount || 0} of ${totalApprovers} approved`}
+            </span>
+          </div>
+        );
+      })()}
 
       {/* Progress for in-progress tasks */}
       {task.kanbanColumn === 'in_progress' && (
