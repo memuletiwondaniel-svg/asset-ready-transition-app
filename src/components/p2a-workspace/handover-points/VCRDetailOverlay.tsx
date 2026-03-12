@@ -112,7 +112,11 @@ export const VCRDetailOverlay: React.FC<VCRDetailOverlayProps> = ({
   const { systems } = useHandoverPointSystems(handoverPoint.id);
   const statusConfig = getStatusConfig(handoverPoint.status);
 
+  const isExecutionPlanApproved = (handoverPoint as any).execution_plan_status === 'APPROVED';
+  const lockedTabIds = buildingBlockTabs.map(t => t.id);
+
   const handleTabChange = (tabId: string) => {
+    if (!isExecutionPlanApproved && lockedTabIds.includes(tabId)) return;
     setActiveTab(tabId);
   };
 
