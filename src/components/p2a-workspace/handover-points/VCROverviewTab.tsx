@@ -24,6 +24,7 @@ import { cn } from '@/lib/utils';
 interface VCROverviewTabProps {
   handoverPoint: P2AHandoverPoint;
   onNavigateToTab?: (tabId: string) => void;
+  isLocked?: boolean;
 }
 
 const getStatusConfig = (status: string) => {
