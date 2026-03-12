@@ -131,7 +131,7 @@ export const VCRDetailOverlay: React.FC<VCRDetailOverlayProps> = ({
   const renderContent = () => {
     switch (activeTab) {
       case 'overview':
-        return <VCROverviewTab handoverPoint={handoverPoint} onNavigateToTab={handleTabChange} />;
+        return <VCROverviewTab handoverPoint={handoverPoint} onNavigateToTab={handleTabChange} isLocked={!isExecutionPlanApproved} />;
       case 'systems':
         return <VCRSystemsTab handoverPoint={handoverPoint} />;
       case 'checklist':
