@@ -207,11 +207,13 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
         .from('p2a_handover_plans')
         .select('id, status, created_by')
         .eq('project_id', projectId)
+        .order('updated_at', { ascending: false })
         .limit(1);
       return data?.[0] || null;
     },
     enabled: !!projectId && isP2AActivity,
-    staleTime: 30_000,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
   // Reconciliation guard: if the task is NOT in the Done column (i.e., status !== 'completed'),
   // treat the plan as DRAFT regardless of what p2a_handover_plans says. This prevents
@@ -270,7 +272,8 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
       }));
     },
     enabled: !!existingP2APlan?.id && isP2AActivity,
-    staleTime: 30_000,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 
   // Fetch archived approver history for previous cycles
@@ -309,7 +312,8 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
       }));
     },
     enabled: !!existingP2APlan?.id && isP2AActivity,
-    staleTime: 30_000,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 
   // Fetch submission metadata: earliest approver created_at = submission time, submitter = plan.created_by
@@ -348,7 +352,8 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
       return { submitted_at: submittedAt, full_name: submitterName, avatar_url: submitterAvatar };
     },
     enabled: !!existingP2APlan?.id && isP2AActivity,
-    staleTime: 30_000,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 
   const p2aRejectionInfo = p2aApproverDecisions?.find((d: any) => d.status === 'REJECTED') || null;
