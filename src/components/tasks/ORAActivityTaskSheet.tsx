@@ -1037,7 +1037,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
             {/* Comments & Activity Feed */}
             {(() => {
               // Build unified activity feed merging comments + approver decisions
-              const approverEntries = (p2aApproverDecisions || []).map((d: any) => ({
+              const approverEntries = isP2AActivity ? (p2aApproverDecisions || []).map((d: any) => ({
                 id: `approver-${d.id}`,
                 type: 'approval_action' as const,
                 status: d.status,
