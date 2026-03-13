@@ -495,14 +495,8 @@ async function persistPlanToDatabase(
       .eq('handover_id', planId)
       .not('approved_at', 'is', null);
     if (existingApprovers && existingApprovers.length > 0) {
-      // Determine cycle number from existing history
-      const { data: maxCycleRow } = await (client as any)
-        .from('p2a_approver_history')
-        .select('cycle')
-        .eq('handover_id', planId)
-        .order('cycle', { ascending: false })
-        .limit(1);
-      const nextCycle = (maxCycleRow?.[0]?.cycle || 0) + 1;
+      // Keep archived decisions in the currently active review cycle
+      const archiveCycle = await getCurrentP2AReviewCycle(client, planId);
       const historyRecords = existingApprovers.map((a: any) => ({
         handover_id: planId,
         original_approver_id: a.id,
@@ -512,7 +506,7 @@ async function persistPlanToDatabase(
         status: a.status,
         approved_at: a.approved_at,
         comments: a.comments,
-        cycle: nextCycle,
+        cycle: archiveCycle,
       }));
       await (client as any).from('p2a_approver_history').insert(historyRecords);
     }

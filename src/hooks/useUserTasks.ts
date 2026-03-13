@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
+import { getCurrentP2AReviewCycle } from './p2aApprovalCycles';
 
 export interface TaskDependency {
   id: string;

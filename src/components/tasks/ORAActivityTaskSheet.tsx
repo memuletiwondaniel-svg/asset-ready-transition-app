@@ -27,6 +27,7 @@ import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useDropzone } from 'react-dropzone';
 import type { UserTask } from '@/hooks/useUserTasks';
+import { sortP2AFeedEntries } from './p2aActivityFeedUtils';
 
 interface ORAActivityTaskSheetProps {
   task: UserTask | null;
