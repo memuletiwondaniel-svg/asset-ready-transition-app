@@ -39,13 +39,19 @@ export const P2AActivityFeed: React.FC<P2AActivityFeedProps> = ({ planId }) => {
   const { data: approverDecisions } = useQuery({
     queryKey: ['p2a-approver-decisions', planId],
     queryFn: async () => {
+      const { data: plan } = await (supabase as any)
+        .from('p2a_handover_plans')
+        .select('status')
+        .eq('id', planId)
+        .maybeSingle();
+      if (plan?.status === 'DRAFT') return [];
+
       const { data } = await (supabase as any)
         .from('p2a_handover_approvers')
         .select('id, user_id, role_name, status, comments, approved_at')
         .eq('handover_id', planId)
         .not('approved_at', 'is', null)
         .order('approved_at', { ascending: false });
-      if (!data?.length) return [];
       const ids = [...new Set(data.map((d: any) => d.user_id).filter(Boolean))];
       const profileMap = await resolveProfiles(ids as string[]);
       return data.map((d: any) => ({
