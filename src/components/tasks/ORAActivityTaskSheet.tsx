@@ -1057,7 +1057,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
               <TaskReviewersSection
                 taskId={task.id}
                 isReadOnly={isReadOnly}
-                isTaskOwner={task.metadata?.assigned_to === user?.id || user?.id === (task as any).user_id}
+                isTaskOwner={true}
                 onDecisionMade={async (decision, reviewerName) => {
                   // Log decision as activity feed comment
                   if (realOraActivityId && planId && user) {
