@@ -228,6 +228,7 @@ const KanbanCardContent: React.FC<{
   const dateAnnotation = getDateAnnotation(task);
   const sp = task.smartPriority;
   const { translations: t } = useLanguage();
+  const reviewerSummaries = useContext(ReviewerSummaryContext);
 
   return (
     <Card
