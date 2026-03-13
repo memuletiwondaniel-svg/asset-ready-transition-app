@@ -6,6 +6,7 @@ import { WizardSystem } from '@/components/widgets/p2a-wizard/steps/SystemsImpor
 import { WizardVCR } from '@/components/widgets/p2a-wizard/steps/VCRCreationStep';
 import { WizardPhase } from '@/components/widgets/p2a-wizard/steps/PhasesStep';
 import { WizardApprover } from '@/components/widgets/p2a-wizard/steps/ApprovalSetupStep';
+import { getCurrentP2AReviewCycle, getNextP2AHistoryCycle } from './p2aApprovalCycles';
 
 export interface P2APlanWizardState {
   systems: WizardSystem[];
