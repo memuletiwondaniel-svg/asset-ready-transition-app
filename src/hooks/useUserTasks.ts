@@ -446,7 +446,7 @@ async function syncP2AApproval(
       console.warn('[P2A] Could not fetch rejector profile name:', e);
     }
 
-    await (supabase as any)
+    const { error: planUpdateError } = await (supabase as any)
       .from('p2a_handover_plans')
       .update({
         status: 'DRAFT',
@@ -454,8 +454,13 @@ async function syncP2AApproval(
         last_rejection_comment: rejectionComment,
         last_rejected_by_name: rejectorName,
         last_rejected_by_role: approverRole,
+        last_rejected_at: new Date().toISOString(),
       })
       .eq('id', planId);
+
+    if (planUpdateError) {
+      console.error('[P2A] Failed to persist rejection context to plan:', planUpdateError);
+    }
 
     // 5. Reset the author's task progress to 86% and plan_status to DRAFT
     const { data: authorTasks } = await supabase
@@ -531,8 +536,10 @@ async function syncP2AApproval(
   queryClient.invalidateQueries({ queryKey: ['p2a-approver-decisions', planId] });
   queryClient.invalidateQueries({ queryKey: ['p2a-approver-history', planId] });
   queryClient.invalidateQueries({ queryKey: ['p2a-submission-entry', planId] });
+  queryClient.invalidateQueries({ queryKey: ['p2a-rejection-context', planId] });
   queryClient.invalidateQueries({ queryKey: ['p2a-handover-plan'] });
   queryClient.invalidateQueries({ queryKey: ['p2a-plan-exists-sheet', meta?.project_id] });
+  queryClient.invalidateQueries({ queryKey: ['p2a-plan-by-project', meta?.project_id] });
   queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
   queryClient.invalidateQueries({ queryKey: ['p2a-plan-exists'] });
   queryClient.invalidateQueries({ queryKey: ['p2a-plan-exists-task'] });

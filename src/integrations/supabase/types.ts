@@ -3477,6 +3477,7 @@ export type Database = {
           created_by: string | null
           description: string | null
           id: string
+          last_rejected_at: string | null
           last_rejected_by_name: string | null
           last_rejected_by_role: string | null
           last_rejection_comment: string | null
@@ -3494,6 +3495,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           id?: string
+          last_rejected_at?: string | null
           last_rejected_by_name?: string | null
           last_rejected_by_role?: string | null
           last_rejection_comment?: string | null
@@ -3511,6 +3513,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           id?: string
+          last_rejected_at?: string | null
           last_rejected_by_name?: string | null
           last_rejected_by_role?: string | null
           last_rejection_comment?: string | null

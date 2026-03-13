@@ -14,6 +14,7 @@ import { ApprovalSetupStep, WizardApprover } from './steps/ApprovalSetupStep';
 import { ConfirmationStep } from './steps/ConfirmationStep';
 import { useP2APlanWizard } from '@/hooks/useP2APlanWizard';
 import { useP2APlanByProject } from '@/hooks/useP2APlanByProject';
+import { useP2ARejectionContext } from '@/hooks/useP2ARejectionContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -86,23 +87,11 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
   
   const { data: existingPlan } = useP2APlanByProject(projectId);
 
-  // Fetch rejection info from approvers table
-  const { data: rejectionInfo } = useQuery({
-    queryKey: ['p2a-rejection-info', existingPlan?.id],
-    queryFn: async () => {
-      if (!existingPlan?.id) return null;
-      const { data } = await (supabase as any)
-        .from('p2a_handover_approvers')
-        .select('role_name, comments, approved_at')
-        .eq('handover_id', existingPlan.id)
-        .eq('status', 'REJECTED')
-        .order('approved_at', { ascending: false })
-        .limit(1);
-      return data?.[0] || null;
-    },
-    enabled: !!existingPlan?.id && existingPlan?.status === 'DRAFT' && !isReviewMode,
-    staleTime: 30_000,
-  });
+  // Unified rejection context from plan-level fields (persisted by trigger + cascade)
+  const { data: rejectionInfo } = useP2ARejectionContext(
+    existingPlan?.id,
+    !isReviewMode ? existingPlan?.status : undefined
+  );
   
   // Read-only when plan is submitted (ACTIVE) or fully approved (COMPLETED/APPROVED)
   const isReadOnly = existingPlan ? ['ACTIVE', 'COMPLETED', 'APPROVED'].includes(existingPlan.status) : false;
@@ -707,7 +696,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
             <XCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 mt-0.5" />
             <div className="flex-1 text-[11px] sm:text-xs space-y-1">
               <p className="font-medium">
-                Plan was rejected by {rejectionInfo.role_name}
+                Plan was rejected by {rejectionInfo.rejector_name || rejectionInfo.role_name}
                 {rejectionInfo.approved_at && (
                   <span className="font-normal text-muted-foreground ml-1">
                     on {new Date(rejectionInfo.approved_at).toLocaleDateString()}
