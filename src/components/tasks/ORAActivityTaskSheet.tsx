@@ -1059,7 +1059,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                 avatar_url: d.avatar_url,
                 timestamp: d.approved_at,
                 cycle: d.cycle as number | null,
-              }));
+              })) : [];
               const commentEntries = dbComments.map((c) => ({
                 id: c.id,
                 type: 'comment' as const,
