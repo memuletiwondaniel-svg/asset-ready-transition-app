@@ -27,8 +27,10 @@ export function useP2APlanByProject(projectId: string) {
 
       const { data, error } = await client
         .from('p2a_handover_plans')
-        .select('id, name, status, created_at, updated_at, project_id')
+        .select('id, name, status, created_at, updated_at, project_id, last_rejection_comment, last_rejected_by_name, last_rejected_by_role, last_rejected_at')
         .eq('project_id', projectId)
+        .order('updated_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
       if (error) throw error;

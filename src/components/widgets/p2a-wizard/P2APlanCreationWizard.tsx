@@ -696,7 +696,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
             <XCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 mt-0.5" />
             <div className="flex-1 text-[11px] sm:text-xs space-y-1">
               <p className="font-medium">
-                Plan was rejected by {rejectionInfo.role_name}
+                Plan was rejected by {rejectionInfo.rejector_name || rejectionInfo.role_name}
                 {rejectionInfo.approved_at && (
                   <span className="font-normal text-muted-foreground ml-1">
                     on {new Date(rejectionInfo.approved_at).toLocaleDateString()}
