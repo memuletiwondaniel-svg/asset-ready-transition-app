@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useState, useCallback, createContext, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Badge } from '@/components/ui/badge';
@@ -11,7 +11,8 @@ import { TaskDetailSheet } from './TaskDetailSheet';
 import { ORAActivityTaskSheet } from './ORAActivityTaskSheet';
 import { P2APlanCreationWizard } from '@/components/widgets/p2a-wizard/P2APlanCreationWizard';
 import { P2AWorkspaceOverlay } from '@/components/widgets/P2AWorkspaceOverlay';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -69,6 +70,10 @@ interface ApprovalWarningState {
   task: UnifiedTask;
   targetColumn: KanbanColumn;
 }
+
+// Reviewer summary context for kanban cards
+interface ReviewerSummary { total: number; approved: number; rejected: number; }
+const ReviewerSummaryContext = createContext<Map<string, ReviewerSummary>>(new Map());
 
 
 const getColumns = (t: any) => [
@@ -223,6 +228,7 @@ const KanbanCardContent: React.FC<{
   const dateAnnotation = getDateAnnotation(task);
   const sp = task.smartPriority;
   const { translations: t } = useLanguage();
+  const reviewerSummaries = useContext(ReviewerSummaryContext);
 
   return (
     <Card
@@ -329,6 +335,29 @@ const KanbanCardContent: React.FC<{
                 );
               }
 
+              // Check for task_reviewers on simple tasks
+              const reviewerData = task.userTask?.id ? reviewerSummaries.get(task.userTask.id) : undefined;
+              if (reviewerData && reviewerData.total > 0) {
+                if (reviewerData.rejected > 0) {
+                  return (
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                      Rejected
+                    </span>
+                  );
+                }
+                const allApproved = reviewerData.approved >= reviewerData.total;
+                return (
+                  <span className={cn(
+                    "text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap",
+                    allApproved
+                      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                      : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                  )}>
+                    {allApproved ? 'Approved' : `Under Review · ${reviewerData.approved}/${reviewerData.total}`}
+                  </span>
+                );
+              }
+
               return (
                 <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
                   {t.kanbanCompleted || 'Completed'}
@@ -430,6 +459,35 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
   const [detailOpen, setDetailOpen] = useState(false);
   const [activeTask, setActiveTask] = useState<UnifiedTask | null>(null);
   const { moveTaskToColumn } = useKanbanDragDrop();
+
+  // Batch-fetch reviewer summaries for done-column tasks
+  const doneTaskIds = useMemo(() => 
+    tasks.filter(t => t.kanbanColumn === 'done' && t.userTask?.id).map(t => t.userTask!.id),
+    [tasks]
+  );
+
+  const { data: reviewerSummaries } = useQuery({
+    queryKey: ['task-reviewers-summary', doneTaskIds],
+    queryFn: async () => {
+      if (doneTaskIds.length === 0) return new Map<string, ReviewerSummary>();
+      const { data, error } = await (supabase as any)
+        .from('task_reviewers')
+        .select('task_id, status')
+        .in('task_id', doneTaskIds);
+      if (error) throw error;
+      const map = new Map<string, ReviewerSummary>();
+      for (const row of data || []) {
+        const existing = map.get(row.task_id) || { total: 0, approved: 0, rejected: 0 };
+        existing.total++;
+        if (row.status === 'APPROVED') existing.approved++;
+        if (row.status === 'REJECTED') existing.rejected++;
+        map.set(row.task_id, existing);
+      }
+      return map;
+    },
+    enabled: doneTaskIds.length > 0,
+    staleTime: 30_000,
+  });
 
   // ORA Activity sheet opened when dragging to "Done"
   const [oraActivityTask, setOraActivityTask] = useState<UserTask | null>(null);
@@ -639,7 +697,10 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     });
   };
 
+  const reviewerMap = reviewerSummaries || new Map<string, ReviewerSummary>();
+
   return (
+    <ReviewerSummaryContext.Provider value={reviewerMap}>
     <>
       <DndContext
         sensors={sensors}
@@ -741,5 +802,6 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
         onConfirm={handleWarningConfirm}
       />
     </>
+    </ReviewerSummaryContext.Provider>
   );
 };
