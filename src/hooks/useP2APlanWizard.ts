@@ -582,6 +582,7 @@ export function useP2APlanWizard(projectId: string, projectCode: string) {
   const invalidateQueries = () => {
     queryClient.invalidateQueries({ queryKey: ['p2a-handover-plan'] });
     queryClient.invalidateQueries({ queryKey: ['p2a-plan-by-project', projectId] });
+    queryClient.invalidateQueries({ queryKey: ['p2a-plan-exists-sheet', projectId] });
     queryClient.invalidateQueries({ queryKey: ['project-vcrs', projectId] });
     queryClient.invalidateQueries({ queryKey: ['project-orp-plans', projectId] });
     // Invalidate workspace queries so systems/VCRs reflect wizard assignments
