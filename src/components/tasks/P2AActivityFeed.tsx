@@ -73,6 +73,7 @@ export const P2AActivityFeed: React.FC<P2AActivityFeedProps> = ({ planId }) => {
         .from('p2a_approver_history')
         .select('id, user_id, role_name, status, comments, approved_at, cycle')
         .eq('handover_id', planId)
+        .order('cycle', { ascending: false })
         .order('approved_at', { ascending: false });
       if (!data?.length) return [];
       const ids = [...new Set(data.map((d: any) => d.user_id).filter(Boolean))];

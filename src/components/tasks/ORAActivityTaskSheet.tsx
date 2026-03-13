@@ -239,6 +239,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
     queryKey: ['p2a-approver-decisions', existingP2APlan?.id],
     queryFn: async () => {
       if (!existingP2APlan?.id) return [];
+      if (existingP2APlan.status === 'DRAFT') return [];
       const { data } = await (supabase as any)
         .from('p2a_handover_approvers')
         .select('id, user_id, role_name, status, comments, approved_at')
