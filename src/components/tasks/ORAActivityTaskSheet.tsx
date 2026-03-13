@@ -590,7 +590,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
       // Auto-log status change as a system comment in the activity feed
       if (status !== originalStatus && realOraActivityId && planId && user) {
         const statusLabel = STATUS_STEPS.find(s => s.value === status)?.label || status;
-        const systemComment = `Status changed to ${statusLabel}`;
+        const systemComment = statusLabel;
         try {
           await (supabase as any)
             .from('ora_activity_comments')
