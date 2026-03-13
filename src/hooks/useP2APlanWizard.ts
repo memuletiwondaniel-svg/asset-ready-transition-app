@@ -582,6 +582,7 @@ export function useP2APlanWizard(projectId: string, projectCode: string) {
   const invalidateQueries = () => {
     queryClient.invalidateQueries({ queryKey: ['p2a-handover-plan'] });
     queryClient.invalidateQueries({ queryKey: ['p2a-plan-by-project', projectId] });
+    queryClient.invalidateQueries({ queryKey: ['p2a-plan-exists-sheet', projectId] });
     queryClient.invalidateQueries({ queryKey: ['project-vcrs', projectId] });
     queryClient.invalidateQueries({ queryKey: ['project-orp-plans', projectId] });
     // Invalidate workspace queries so systems/VCRs reflect wizard assignments
@@ -697,10 +698,13 @@ export function useP2APlanWizard(projectId: string, projectCode: string) {
 
       return planId;
     },
-    onSuccess: () => {
+    onSuccess: (planId) => {
       invalidateQueries();
       queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
       queryClient.invalidateQueries({ queryKey: ['p2a-plan-exists'] });
+      queryClient.invalidateQueries({ queryKey: ['p2a-approver-decisions', planId] });
+      queryClient.invalidateQueries({ queryKey: ['p2a-approver-history', planId] });
+      queryClient.invalidateQueries({ queryKey: ['p2a-submission-entry', planId] });
       toast({
         title: 'Plan submitted for approval',
         description: 'Approvers have been notified and can review the plan.',

@@ -54,7 +54,8 @@ export const P2AActivityFeed: React.FC<P2AActivityFeedProps> = ({ planId }) => {
         cycle: null as number | null,
       }));
     },
-    staleTime: 30_000,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 
   // Archived history (previous cycles + submissions/reverts)
@@ -75,7 +76,8 @@ export const P2AActivityFeed: React.FC<P2AActivityFeedProps> = ({ planId }) => {
         avatar_url: profileMap[d.user_id]?.avatar_url || null,
       }));
     },
-    staleTime: 30_000,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 
   // Submission entry
@@ -99,7 +101,8 @@ export const P2AActivityFeed: React.FC<P2AActivityFeedProps> = ({ planId }) => {
       const profile = profileMap[plan.created_by];
       return { submitted_at: submittedAt, full_name: profile?.full_name || 'Unknown', avatar_url: profile?.avatar_url || null };
     },
-    staleTime: 30_000,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 
   // Build unified feed
