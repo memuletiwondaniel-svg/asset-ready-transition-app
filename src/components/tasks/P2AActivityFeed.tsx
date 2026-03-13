@@ -3,9 +3,10 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, MessageSquare } from 'lucide-react';
+import { MessageSquare } from 'lucide-react';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { sortP2AFeedEntries } from './p2aActivityFeedUtils';
 
 interface P2AActivityFeedProps {
   planId: string;
@@ -38,13 +39,19 @@ export const P2AActivityFeed: React.FC<P2AActivityFeedProps> = ({ planId }) => {
   const { data: approverDecisions } = useQuery({
     queryKey: ['p2a-approver-decisions', planId],
     queryFn: async () => {
+      const { data: plan } = await (supabase as any)
+        .from('p2a_handover_plans')
+        .select('status')
+        .eq('id', planId)
+        .maybeSingle();
+      if (plan?.status === 'DRAFT') return [];
+
       const { data } = await (supabase as any)
         .from('p2a_handover_approvers')
         .select('id, user_id, role_name, status, comments, approved_at')
         .eq('handover_id', planId)
         .not('approved_at', 'is', null)
         .order('approved_at', { ascending: false });
-      if (!data?.length) return [];
       const ids = [...new Set(data.map((d: any) => d.user_id).filter(Boolean))];
       const profileMap = await resolveProfiles(ids as string[]);
       return data.map((d: any) => ({
@@ -66,6 +73,7 @@ export const P2AActivityFeed: React.FC<P2AActivityFeedProps> = ({ planId }) => {
         .from('p2a_approver_history')
         .select('id, user_id, role_name, status, comments, approved_at, cycle')
         .eq('handover_id', planId)
+        .order('cycle', { ascending: false })
         .order('approved_at', { ascending: false });
       if (!data?.length) return [];
       const ids = [...new Set(data.map((d: any) => d.user_id).filter(Boolean))];
@@ -80,30 +88,6 @@ export const P2AActivityFeed: React.FC<P2AActivityFeedProps> = ({ planId }) => {
     refetchOnMount: 'always',
   });
 
-  // Submission entry
-  const { data: submissionEntry } = useQuery({
-    queryKey: ['p2a-submission-entry', planId],
-    queryFn: async () => {
-      const { data: plan } = await (supabase as any)
-        .from('p2a_handover_plans')
-        .select('created_by')
-        .eq('id', planId)
-        .single();
-      const { data: approvers } = await (supabase as any)
-        .from('p2a_handover_approvers')
-        .select('created_at')
-        .eq('handover_id', planId)
-        .order('created_at', { ascending: true })
-        .limit(1);
-      const submittedAt = approvers?.[0]?.created_at;
-      if (!submittedAt || !plan?.created_by) return null;
-      const profileMap = await resolveProfiles([plan.created_by]);
-      const profile = profileMap[plan.created_by];
-      return { submitted_at: submittedAt, full_name: profile?.full_name || 'Unknown', avatar_url: profile?.avatar_url || null };
-    },
-    staleTime: 0,
-    refetchOnMount: 'always',
-  });
 
   // Build unified feed
   const feed = React.useMemo(() => {
@@ -148,24 +132,10 @@ export const P2AActivityFeed: React.FC<P2AActivityFeedProps> = ({ planId }) => {
       });
     });
 
-    if (submissionEntry) {
-      entries.push({
-        id: 'submission-entry',
-        type: 'submission',
-        status: null,
-        role_name: null,
-        comment: null,
-        full_name: submissionEntry.full_name,
-        avatar_url: submissionEntry.avatar_url,
-        timestamp: submissionEntry.submitted_at,
-        cycle: null,
-      });
-    }
-
-    return entries
-      .filter(e => e.timestamp)
-      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-  }, [approverDecisions, approverHistory, submissionEntry]);
+    return sortP2AFeedEntries(
+      entries.filter(e => e.timestamp)
+    );
+  }, [approverDecisions, approverHistory]);
 
   if (feed.length === 0) return null;
 

@@ -27,6 +27,7 @@ import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useDropzone } from 'react-dropzone';
 import type { UserTask } from '@/hooks/useUserTasks';
+import { sortP2AFeedEntries } from './p2aActivityFeedUtils';
 
 interface ORAActivityTaskSheetProps {
   task: UserTask | null;
@@ -238,6 +239,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
     queryKey: ['p2a-approver-decisions', existingP2APlan?.id],
     queryFn: async () => {
       if (!existingP2APlan?.id) return [];
+      if (existingP2APlan.status === 'DRAFT') return [];
       const { data } = await (supabase as any)
         .from('p2a_handover_approvers')
         .select('id, user_id, role_name, status, comments, approved_at')
@@ -316,45 +318,6 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
     refetchOnMount: 'always',
   });
 
-  // Fetch submission metadata: earliest approver created_at = submission time, submitter = plan.created_by
-  const { data: submissionEntry } = useQuery({
-    queryKey: ['p2a-submission-entry', existingP2APlan?.id],
-    queryFn: async () => {
-      if (!existingP2APlan?.id) return null;
-      // Get earliest approver record created_at as submission timestamp
-      const { data: approvers } = await (supabase as any)
-        .from('p2a_handover_approvers')
-        .select('created_at')
-        .eq('handover_id', existingP2APlan.id)
-        .order('created_at', { ascending: true })
-        .limit(1);
-      const submittedAt = approvers?.[0]?.created_at;
-      if (!submittedAt) return null;
-      // Resolve submitter profile
-      const submitterId = existingP2APlan.created_by;
-      let submitterName = 'Unknown';
-      let submitterAvatar: string | null = null;
-      if (submitterId) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('full_name, avatar_url')
-          .eq('user_id', submitterId)
-          .single();
-        if (profile) {
-          submitterName = profile.full_name || 'Unknown';
-          submitterAvatar = profile.avatar_url
-            ? profile.avatar_url.startsWith('http')
-              ? profile.avatar_url
-              : supabase.storage.from('user-avatars').getPublicUrl(profile.avatar_url).data.publicUrl
-            : null;
-        }
-      }
-      return { submitted_at: submittedAt, full_name: submitterName, avatar_url: submitterAvatar };
-    },
-    enabled: !!existingP2APlan?.id && isP2AActivity,
-    staleTime: 0,
-    refetchOnMount: 'always',
-  });
 
   const p2aRejectionInfo = p2aApproverDecisions?.find((d: any) => d.status === 'REJECTED') || null;
 
@@ -1108,20 +1071,10 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                 timestamp: c.created_at,
                 cycle: null as number | null,
               }));
-              const submissionEntries = submissionEntry ? [{
-                id: 'submission-entry',
-                type: 'submission' as const,
-                status: null,
-                role_name: null,
-                comment: null,
-                full_name: submissionEntry.full_name,
-                avatar_url: submissionEntry.avatar_url,
-                timestamp: submissionEntry.submitted_at,
-                cycle: null as number | null,
-              }] : [];
-              const activityFeed = [...commentEntries, ...approverEntries, ...historyEntries, ...submissionEntries]
-                .filter((e) => e.timestamp)
-                .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+              const activityFeed = sortP2AFeedEntries(
+                [...commentEntries, ...approverEntries, ...historyEntries]
+                  .filter((e) => e.timestamp)
+              );
               const feedCount = activityFeed.length;
 
               return (
