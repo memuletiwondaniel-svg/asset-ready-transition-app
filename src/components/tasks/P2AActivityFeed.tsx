@@ -99,8 +99,8 @@ export const P2AActivityFeed: React.FC<P2AActivityFeedProps> = ({ planId }) => {
       const profile = profileMap[plan.created_by];
       return { submitted_at: submittedAt, full_name: profile?.full_name || 'Unknown', avatar_url: profile?.avatar_url || null };
     },
-    staleTime: 30_000,
-  });
+    staleTime: 0,
+    refetchOnMount: 'always',
 
   // Build unified feed
   const feed = React.useMemo(() => {

@@ -697,10 +697,13 @@ export function useP2APlanWizard(projectId: string, projectCode: string) {
 
       return planId;
     },
-    onSuccess: () => {
+    onSuccess: (planId) => {
       invalidateQueries();
       queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
       queryClient.invalidateQueries({ queryKey: ['p2a-plan-exists'] });
+      queryClient.invalidateQueries({ queryKey: ['p2a-approver-decisions', planId] });
+      queryClient.invalidateQueries({ queryKey: ['p2a-approver-history', planId] });
+      queryClient.invalidateQueries({ queryKey: ['p2a-submission-entry', planId] });
       toast({
         title: 'Plan submitted for approval',
         description: 'Approvers have been notified and can review the plan.',

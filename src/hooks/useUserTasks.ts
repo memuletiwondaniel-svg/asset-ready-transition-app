@@ -535,7 +535,11 @@ async function syncP2AApproval(
   queryClient.invalidateQueries({ queryKey: ['p2a-summary-approvers', planId] });
   queryClient.invalidateQueries({ queryKey: ['p2a-approval-workflow', planId] });
   queryClient.invalidateQueries({ queryKey: ['p2a-handover-approvers', planId] });
+  queryClient.invalidateQueries({ queryKey: ['p2a-approver-decisions', planId] });
+  queryClient.invalidateQueries({ queryKey: ['p2a-approver-history', planId] });
+  queryClient.invalidateQueries({ queryKey: ['p2a-submission-entry', planId] });
   queryClient.invalidateQueries({ queryKey: ['p2a-handover-plan'] });
+  queryClient.invalidateQueries({ queryKey: ['p2a-plan-exists-sheet', meta?.project_id] });
   queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
   queryClient.invalidateQueries({ queryKey: ['p2a-plan-exists'] });
   queryClient.invalidateQueries({ queryKey: ['p2a-plan-exists-task'] });
