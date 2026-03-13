@@ -56,6 +56,7 @@ export const P2AActivityFeed: React.FC<P2AActivityFeedProps> = ({ planId }) => {
     },
     staleTime: 0,
     refetchOnMount: 'always',
+  });
 
   // Archived history (previous cycles + submissions/reverts)
   const { data: approverHistory } = useQuery({
@@ -77,6 +78,7 @@ export const P2AActivityFeed: React.FC<P2AActivityFeedProps> = ({ planId }) => {
     },
     staleTime: 0,
     refetchOnMount: 'always',
+  });
 
   // Submission entry
   const { data: submissionEntry } = useQuery({
@@ -101,6 +103,7 @@ export const P2AActivityFeed: React.FC<P2AActivityFeedProps> = ({ planId }) => {
     },
     staleTime: 0,
     refetchOnMount: 'always',
+  });
 
   // Build unified feed
   const feed = React.useMemo(() => {
