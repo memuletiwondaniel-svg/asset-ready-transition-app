@@ -802,5 +802,6 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
         onConfirm={handleWarningConfirm}
       />
     </>
+    </ReviewerSummaryContext.Provider>
   );
 };
