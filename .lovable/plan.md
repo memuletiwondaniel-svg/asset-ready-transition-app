@@ -1,77 +1,67 @@
 
 
-# Plan: ORIP Scoring Engine Using Existing VCR Item Categories
+## Add Reviewers & Approvers to Task Detail Sheet
 
-## Impact Assessment: Zero Breaking Changes
+### Overview
+Add a new "Reviewers & Approvers" section to the ORA Activity Task Sheet (between Prerequisites and Recent Activities) that allows task owners to assign colleagues (e.g., ORA Lead, Project Lead) to review/approve their work on simple (non-P2A) tasks. This provides lightweight sign-off capability without the full P2A approval workflow.
 
-**No existing workflows will be affected.** The approach reuses the existing `vcr_item_categories` table (Design Integrity, Technical Integrity, Operating Integrity, Management Systems, Health & Safety) as the readiness dimensions for ORI scoring. All changes are additive:
+### Database Changes
 
-- The `vcr_item_categories` table gets a `tenant_id` column and weight/confidence fields -- existing rows remain intact
-- The `readiness_nodes` table gets a new nullable `dimension_id` column pointing to `vcr_item_categories`
-- The `sync_readiness_nodes` and `calculate_ori_score` functions are replaced with enhanced versions that use category-based dimensions instead of module-based grouping
-- Existing P2A, ORA, PSSR, ORM workflows are untouched -- the ontology layer only reads from them
-
-## Current VCR Item Categories (Become Readiness Dimensions)
-
-| Code | Name | Active |
-|------|------|--------|
-| DI2 | Design Integrity | Yes |
-| TI | Technical Integrity | Yes |
-| OI | Operating Integrity | Yes |
-| MS | Management Systems | Yes |
-| HS | Health & Safety | Yes |
-
-These become the tenant-configurable readiness dimensions. Different tenants can add/rename/reweight their own categories.
-
-## Implementation Tasks
-
-### Task 1: Extend `vcr_item_categories` for ORI Scoring
-Add columns to make categories serve double duty as readiness dimensions:
-- `tenant_id UUID` (nullable, defaults via trigger -- existing rows get current tenant)
-- `default_weight NUMERIC(5,4)` (e.g., 0.20 = 20%)
-- `confidence_factor_default NUMERIC(3,2)` (default 0.8)
-- `risk_severity_multiplier NUMERIC(3,1)` (default 1.0)
-- `is_readiness_dimension BOOLEAN DEFAULT true`
-
-Add `dimension_id UUID REFERENCES vcr_item_categories(id)` to `readiness_nodes`.
-
-### Task 2: Enhanced ORI Formula
-Replace `calculate_ori_score()` with the full ORIP formula:
-
-```
-DS_i = (Σ Subcomponent_Weight × Completion%) × Confidence_Factor
-RP_i = Σ (Risk_Severity × Impact_Multiplier)  -- capped at 15%
-ORI  = Σ (Dimension_Weight_i × DS_i) − Global_Risk_Penalty
-SCS  = ORI × Schedule_Adherence × Critical_Path_Stability
+**New table: `task_reviewers`**
+```sql
+CREATE TABLE public.task_reviewers (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  task_id UUID NOT NULL REFERENCES public.user_tasks(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  role_label TEXT NOT NULL,           -- e.g. "ORA Lead", "Project Lead", free-text
+  status TEXT NOT NULL DEFAULT 'PENDING',  -- PENDING | APPROVED | REJECTED
+  comments TEXT,
+  decided_at TIMESTAMPTZ,
+  display_order INT NOT NULL DEFAULT 1,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  tenant_id UUID REFERENCES public.tenants(id)
+);
+ALTER TABLE public.task_reviewers ENABLE ROW LEVEL SECURITY;
 ```
 
-Add columns to `ori_scores`: `dimension_scores JSONB`, `risk_penalty_total NUMERIC`, `startup_confidence_score NUMERIC`, `schedule_adherence_index NUMERIC`, `critical_path_stability_index NUMERIC`.
+RLS policies: authenticated users can SELECT all rows, INSERT/UPDATE/DELETE where they own the parent task or are the assigned reviewer.
 
-Add `confidence_factor NUMERIC(3,2) DEFAULT 0.8` and `risk_severity TEXT DEFAULT 'none'` to `readiness_nodes`.
+### Frontend Changes
 
-### Task 3: Update Sync Function
-Update `sync_readiness_nodes()` to auto-assign `dimension_id` by mapping:
-- P2A VCR prerequisites → mapped via their `vcr_items.category_id` directly to `vcr_item_categories`
-- ORA activities → default to "Operating Integrity" or map via metadata
-- PSSR items → map via PSSR checklist category → nearest VCR category
-- ORM deliverables → default to "Management Systems"
-- Training → default to "Operating Integrity"
+**File: `src/components/tasks/ORAActivityTaskSheet.tsx`**
 
-Set confidence factors: completed/approved = 1.0, in-progress = 0.8, not-started = 0.7.
+1. **New section** inserted between the Prerequisites block (~line 1007) and the `<Separator>` before Recent Activities (~line 1054):
+   - Header: "Reviewers & Approvers" with `UserCheck` icon
+   - **Add reviewer control**: A user-search dropdown (query `profiles` table) with an optional role label input. Selecting a user adds a row to `task_reviewers`.
+   - **Reviewer list**: Each assigned reviewer shown as a compact row with:
+     - Avatar + name + role label
+     - Status badge: Pending (gray), Approved (emerald), Rejected (red)
+     - Remove button (X) for the task owner
+   - Only shown for **non-P2A** tasks (the P2A branch already has its own approval workflow)
 
-### Task 4: Executive Dashboard Enhancement
-Redesign `ExecutiveDashboard.tsx` to match the strategic layout:
-- **Top Banner**: Large ORI + SCS + color coding (Green >85, Amber 70-85, Red <70)
-- **Dimension Breakdown**: Bar/table showing each VCR category's score, trend arrow, risk level
-- **Top 5 Startup Blockers**: Blocked/critical nodes with severity
-- **Predictive Trend**: ORI line chart with dashed target curve
-- **Risk Impact Summary**: 4 stat boxes (Open High Risks, Startup-blocking, Dimensions below 70%, Systems below 60%)
+2. **Reviewer action**: When the current user is an assigned reviewer, show Approve/Reject buttons inline on their row. On action, update `task_reviewers.status` and `decided_at`, and insert an activity comment (e.g., "Approved" badge in the feed).
 
-### Task 5: Tenant-Configurable Weight Profiles
-Update the existing `ori_weight_profiles` to store dimension-based weights keyed by `vcr_item_categories.id` instead of module names. Add a simple admin UI for editing weights per tenant.
+3. **Kanban badge integration**: When a Done-column task has `task_reviewers` records, use the same workflow-aware badge logic: "Under Review · X/Y" (blue) or "Approved" (emerald) instead of generic "Completed".
 
-### Task 6: Update Living Documents
-- **Security & Compliance Doc**: Add rows for Readiness Dimensions, Risk Penalty Engine, Startup Confidence Score (mark as Active)
-- **Platform Guide**: Add "Readiness Ontology & Scoring Engine" section documenting the 6 dimensions, ORI formula, SCS
-- **Strategic North Star**: Update scoring engine status from Planned to Active, add dimension-based architecture detail
+**New hook: `src/hooks/useTaskReviewers.ts`**
+- `useTaskReviewers(taskId)` — fetches reviewers with joined profile data
+- `addReviewer`, `removeReviewer`, `submitDecision` mutations
+- Profiles search query for the user picker
+
+### UI Layout (in the sheet)
+```text
+┌─ Reviewers & Approvers ──────────────────┐
+│  [Avatar] Anuarbek K. · ORA Lead  ✅     │
+│  [Avatar] John D. · Project Lead  ⏳     │
+│                                          │
+│  [+ Add reviewer...]  [Role: ___]        │
+└──────────────────────────────────────────┘
+```
+
+### Summary of Files
+- **SQL migration**: Create `task_reviewers` table + RLS
+- **`src/hooks/useTaskReviewers.ts`**: New hook for CRUD + decision actions
+- **`src/components/tasks/ORAActivityTaskSheet.tsx`**: Add reviewers section UI
+- **`src/components/tasks/TaskKanbanBoard.tsx`**: Extend badge logic to check `task_reviewers`
+- **`src/integrations/supabase/types.ts`**: Regenerated after migration
 
