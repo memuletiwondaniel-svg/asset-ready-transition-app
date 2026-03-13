@@ -75,8 +75,8 @@ export const P2AActivityFeed: React.FC<P2AActivityFeedProps> = ({ planId }) => {
         avatar_url: profileMap[d.user_id]?.avatar_url || null,
       }));
     },
-    staleTime: 30_000,
-  });
+    staleTime: 0,
+    refetchOnMount: 'always',
 
   // Submission entry
   const { data: submissionEntry } = useQuery({
