@@ -451,8 +451,9 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
     try {
       await addDbComment(comment.trim());
       setComment('');
-    } catch {
-      // error handled by hook
+    } catch (err) {
+      console.error('Failed to add comment:', err);
+      toast.error('Failed to add comment. Please try again.');
     }
   };
 
