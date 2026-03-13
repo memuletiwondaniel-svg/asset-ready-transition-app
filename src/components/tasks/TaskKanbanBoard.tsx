@@ -263,10 +263,20 @@ const KanbanCardContent: React.FC<{
             (() => {
               const meta = task.userTask?.metadata as Record<string, any> | undefined;
               const isRejected = meta?.outcome === 'rejected';
-              const isP2a = meta?.source === 'p2a_handover';
+              const action = meta?.action;
+              const source = meta?.source;
+              const planStatus = (meta?.plan_status || '').toUpperCase();
+
+              // Detect workflow tasks: author tasks (create_p2a_plan, create_ora_plan) or approver tasks (source=p2a_handover)
+              const isP2aAuthor = action === 'create_p2a_plan';
+              const isOraAuthor = action === 'create_ora_plan' || task.userTask?.type === 'ora_plan_creation';
+              const isP2aApprover = source === 'p2a_handover' && !isP2aAuthor;
+              const isWorkflowTask = isP2aAuthor || isOraAuthor || isP2aApprover;
+
+              // Approver-specific counts
               const totalApprovers = meta?.total_approvers as number | undefined;
               const approvedCount = meta?.approved_count as number | undefined;
-              const hasApprovalWorkflow = isP2a && totalApprovers != null && totalApprovers > 0;
+              const hasApproverCounts = isP2aApprover && totalApprovers != null && totalApprovers > 0;
 
               if (isRejected) {
                 return (
@@ -276,7 +286,8 @@ const KanbanCardContent: React.FC<{
                 );
               }
 
-              if (hasApprovalWorkflow) {
+              // Approver tasks with counts: show "Under Review · X/Y" or "Approved"
+              if (hasApproverCounts) {
                 const allApproved = (approvedCount || 0) >= totalApprovers!;
                 return (
                   <span className={cn(
@@ -286,6 +297,34 @@ const KanbanCardContent: React.FC<{
                       : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
                   )}>
                     {allApproved ? 'Approved' : `Under Review · ${approvedCount || 0}/${totalApprovers}`}
+                  </span>
+                );
+              }
+
+              // Author tasks (Develop P2A Plan, Create ORA Plan): use plan_status
+              if (isWorkflowTask) {
+                const isApproved = ['APPROVED', 'COMPLETED'].includes(planStatus);
+                const isActive = planStatus === 'ACTIVE'; // submitted, under review
+                const isDraft = planStatus === 'DRAFT';
+
+                if (isApproved) {
+                  return (
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                      Approved
+                    </span>
+                  );
+                }
+                if (isActive || isDraft) {
+                  return (
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                      {isActive ? 'Under Review' : 'Draft'}
+                    </span>
+                  );
+                }
+                // Fallback for workflow tasks with unknown plan_status
+                return (
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                    Under Review
                   </span>
                 );
               }
