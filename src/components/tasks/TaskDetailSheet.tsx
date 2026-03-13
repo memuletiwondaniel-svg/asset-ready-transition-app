@@ -504,6 +504,35 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
             {/* P2A Approval Review CTA - opens wizard in review mode */}
             {isP2aApprovalTask && p2aProjectId && (
               <>
+                {/* Resubmission context banner for re-approvers */}
+                {task.status !== 'completed' && (task.metadata as any)?.resubmission_round > 1 && (
+                  <div className="p-3.5 rounded-lg bg-accent/40 border border-accent space-y-2">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-accent-foreground">
+                      <RefreshCw className="h-3.5 w-3.5" />
+                      Round {(task.metadata as any).resubmission_round} — Resubmitted for Re-approval
+                    </div>
+                    {(task.metadata as any)?.last_rejection_by && (
+                      <div className="space-y-1 pl-5">
+                        <p className="text-xs text-foreground/80">
+                          Previously rejected by <span className="font-medium">{(task.metadata as any).last_rejection_by}</span>
+                          {(task.metadata as any)?.last_rejection_role && (
+                            <span className="text-muted-foreground"> ({(task.metadata as any).last_rejection_role})</span>
+                          )}
+                        </p>
+                        {(task.metadata as any)?.last_rejection_comment && (
+                          <p className="text-xs text-foreground/70 italic">
+                            "{(task.metadata as any).last_rejection_comment}"
+                          </p>
+                        )}
+                      </div>
+                    )}
+                    <p className="text-[10px] text-muted-foreground pl-5 flex items-center gap-1">
+                      <ClipboardList className="h-3 w-3" />
+                      View full history in Activity Feed below
+                    </p>
+                  </div>
+                )}
+
                 {/* Rejection outcome banner for reviewer */}
                 {task.status === 'completed' && (task.metadata as any)?.outcome === 'rejected' && (
                   <div className="p-3 rounded-lg bg-destructive/5 border border-destructive/20 space-y-1">
