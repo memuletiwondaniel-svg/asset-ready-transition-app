@@ -614,6 +614,66 @@ export function useP2APlanWizard(projectId: string, projectCode: string) {
   const submitForApproval = useMutation({
     mutationFn: async (submissionComment?: string) => {
       const planId = await persistPlanToDatabase(projectId, projectCode, state, 'ACTIVE');
+      const client = supabase as any;
+
+      // Determine cycle number
+      const { data: maxCycleRow } = await client
+        .from('p2a_approver_history')
+        .select('cycle')
+        .eq('handover_id', planId)
+        .order('cycle', { ascending: false })
+        .limit(1);
+      const currentCycle = (maxCycleRow?.[0]?.cycle || 0) + 1;
+
+      // Read rejection context from p2a_handover_plans for re-approval scenarios
+      let rejectionContext: { resubmission_round: number; last_rejection_by?: string; last_rejection_comment?: string; last_rejection_role?: string } | null = null;
+      if (currentCycle > 1) {
+        const { data: planRow } = await client
+          .from('p2a_handover_plans')
+          .select('last_rejection_comment, last_rejected_by_name, last_rejected_by_role')
+          .eq('id', planId)
+          .single();
+
+        if (planRow) {
+          rejectionContext = {
+            resubmission_round: currentCycle,
+            last_rejection_by: planRow.last_rejected_by_name,
+            last_rejection_comment: planRow.last_rejection_comment,
+            last_rejection_role: planRow.last_rejected_by_role,
+          };
+        }
+      }
+
+      // Propagate rejection context to auto-created approval tasks
+      if (rejectionContext) {
+        // Small delay to let the DB trigger create the tasks
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        const { data: approvalTasks } = await supabase
+          .from('user_tasks')
+          .select('id, metadata')
+          .eq('type', 'approval')
+          .eq('status', 'pending')
+          .limit(200);
+
+        const planApprovalTasks = (approvalTasks || []).filter((t: any) => {
+          const m = t.metadata as Record<string, any>;
+          return m?.source === 'p2a_handover' && m?.plan_id === planId;
+        });
+
+        for (const task of planApprovalTasks) {
+          const existingMeta = (task.metadata as Record<string, any>) || {};
+          await supabase
+            .from('user_tasks')
+            .update({
+              metadata: {
+                ...existingMeta,
+                ...rejectionContext,
+              } as any,
+            })
+            .eq('id', task.id);
+        }
+      }
 
       // Note: P2A approval tasks are now auto-created by DB trigger (trg_auto_create_p2a_approval_task)
       // when approvers are inserted into p2a_handover_approvers with a user_id
@@ -622,16 +682,6 @@ export function useP2APlanWizard(projectId: string, projectCode: string) {
       if (submissionComment?.trim()) {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-          const client = supabase as any;
-          // Determine cycle number
-          const { data: maxCycleRow } = await client
-            .from('p2a_approver_history')
-            .select('cycle')
-            .eq('handover_id', planId)
-            .order('cycle', { ascending: false })
-            .limit(1);
-          const currentCycle = (maxCycleRow?.[0]?.cycle || 0) + 1;
-
           await client.from('p2a_approver_history').insert({
             handover_id: planId,
             user_id: user.id,
