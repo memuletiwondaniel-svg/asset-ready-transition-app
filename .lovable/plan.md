@@ -1,77 +1,50 @@
 
 
-# Plan: ORIP Scoring Engine Using Existing VCR Item Categories
+## UX Recommendation: Workflow-Aware Status Labels in Done Column
 
-## Impact Assessment: Zero Breaking Changes
+### Current State
+All cards in the Done column show a generic **"Completed"** pill badge (or "Rejected" for rejected P2A approvals). P2A cards additionally show an approver dot indicator (`2 of 4 approved`), but the top-level pill still says "Completed" even when the plan is only submitted and under review.
 
-**No existing workflows will be affected.** The approach reuses the existing `vcr_item_categories` table (Design Integrity, Technical Integrity, Operating Integrity, Management Systems, Health & Safety) as the readiness dimensions for ORI scoring. All changes are additive:
+### Best Practice (Jira, ServiceNow, Asana, Monday.com)
+Leading enterprise SaaS platforms use **workflow-aware status labels** that reflect the actual lifecycle stage rather than a generic completion state:
 
-- The `vcr_item_categories` table gets a `tenant_id` column and weight/confidence fields -- existing rows remain intact
-- The `readiness_nodes` table gets a new nullable `dimension_id` column pointing to `vcr_item_categories`
-- The `sync_readiness_nodes` and `calculate_ori_score` functions are replaced with enhanced versions that use category-based dimensions instead of module-based grouping
-- Existing P2A, ORA, PSSR, ORM workflows are untouched -- the ontology layer only reads from them
-
-## Current VCR Item Categories (Become Readiness Dimensions)
-
-| Code | Name | Active |
-|------|------|--------|
-| DI2 | Design Integrity | Yes |
-| TI | Technical Integrity | Yes |
-| OI | Operating Integrity | Yes |
-| MS | Management Systems | Yes |
-| HS | Health & Safety | Yes |
-
-These become the tenant-configurable readiness dimensions. Different tenants can add/rename/reweight their own categories.
-
-## Implementation Tasks
-
-### Task 1: Extend `vcr_item_categories` for ORI Scoring
-Add columns to make categories serve double duty as readiness dimensions:
-- `tenant_id UUID` (nullable, defaults via trigger -- existing rows get current tenant)
-- `default_weight NUMERIC(5,4)` (e.g., 0.20 = 20%)
-- `confidence_factor_default NUMERIC(3,2)` (default 0.8)
-- `risk_severity_multiplier NUMERIC(3,1)` (default 1.0)
-- `is_readiness_dimension BOOLEAN DEFAULT true`
-
-Add `dimension_id UUID REFERENCES vcr_item_categories(id)` to `readiness_nodes`.
-
-### Task 2: Enhanced ORI Formula
-Replace `calculate_ori_score()` with the full ORIP formula:
-
-```
-DS_i = (Σ Subcomponent_Weight × Completion%) × Confidence_Factor
-RP_i = Σ (Risk_Severity × Impact_Multiplier)  -- capped at 15%
-ORI  = Σ (Dimension_Weight_i × DS_i) − Global_Risk_Penalty
-SCS  = ORI × Schedule_Adherence × Critical_Path_Stability
+```text
+┌─────────────────────────────────────────────────┐
+│  Simple tasks (no approval workflow):           │
+│    ✅ Completed                                 │
+│                                                 │
+│  Tasks with approval workflows (P2A, ORA, etc): │
+│    🔵 Under Review     (submitted, pending)     │
+│    🟡 2 of 4 Approved  (partial progress)       │
+│    ✅ Approved          (all approvers done)     │
+│    🔴 Rejected          (any rejection)          │
+└─────────────────────────────────────────────────┘
 ```
 
-Add columns to `ori_scores`: `dimension_scores JSONB`, `risk_penalty_total NUMERIC`, `startup_confidence_score NUMERIC`, `schedule_adherence_index NUMERIC`, `critical_path_stability_index NUMERIC`.
+This pattern is superior because:
+- **Task owners** instantly see whether their submitted work is still pending review or fully approved.
+- **Approval progress** is surfaced at the pill level (not buried in a sub-indicator).
+- **"Completed"** is reserved for tasks with no approval gate, avoiding misleading status.
 
-Add `confidence_factor NUMERIC(3,2) DEFAULT 0.8` and `risk_severity TEXT DEFAULT 'none'` to `readiness_nodes`.
+### Implementation Plan
 
-### Task 3: Update Sync Function
-Update `sync_readiness_nodes()` to auto-assign `dimension_id` by mapping:
-- P2A VCR prerequisites → mapped via their `vcr_items.category_id` directly to `vcr_item_categories`
-- ORA activities → default to "Operating Integrity" or map via metadata
-- PSSR items → map via PSSR checklist category → nearest VCR category
-- ORM deliverables → default to "Management Systems"
-- Training → default to "Operating Integrity"
+**File: `src/components/tasks/TaskKanbanBoard.tsx`** (lines 262-276)
 
-Set confidence factors: completed/approved = 1.0, in-progress = 0.8, not-started = 0.7.
+Replace the Done column badge logic:
 
-### Task 4: Executive Dashboard Enhancement
-Redesign `ExecutiveDashboard.tsx` to match the strategic layout:
-- **Top Banner**: Large ORI + SCS + color coding (Green >85, Amber 70-85, Red <70)
-- **Dimension Breakdown**: Bar/table showing each VCR category's score, trend arrow, risk level
-- **Top 5 Startup Blockers**: Blocked/critical nodes with severity
-- **Predictive Trend**: ORI line chart with dashed target curve
-- **Risk Impact Summary**: 4 stat boxes (Open High Risks, Startup-blocking, Dimensions below 70%, Systems below 60%)
+1. Detect if the task has an approval workflow by checking metadata (`source === 'p2a_handover'` or similar flags for ORA review tasks).
+2. For **approval-gated tasks**:
+   - `outcome === 'rejected'` → Red **"Rejected"** pill (already exists)
+   - All approvers approved (`approved_count === total_approvers`) → Emerald **"Approved"** pill
+   - Partial approvals → Blue **"Under Review · X of Y"** pill (merges the current dot indicator into the pill itself)
+3. For **simple tasks** (no approval workflow): Keep the current Emerald **"Completed"** pill.
+4. Remove the separate approver dot-progress row (lines 295-326) since it's now merged into the pill badge for a cleaner card.
 
-### Task 5: Tenant-Configurable Weight Profiles
-Update the existing `ori_weight_profiles` to store dimension-based weights keyed by `vcr_item_categories.id` instead of module names. Add a simple admin UI for editing weights per tenant.
+**Colors:**
+- Under Review: `bg-blue-100 text-blue-700` (consistent with "Submitted" badge in activity feed)
+- Approved: `bg-emerald-100 text-emerald-700`
+- Rejected: `bg-red-100 text-red-700` (no change)
+- Completed: `bg-emerald-100 text-emerald-700` (no change)
 
-### Task 6: Update Living Documents
-- **Security & Compliance Doc**: Add rows for Readiness Dimensions, Risk Penalty Engine, Startup Confidence Score (mark as Active)
-- **Platform Guide**: Add "Readiness Ontology & Scoring Engine" section documenting the 6 dimensions, ORI formula, SCS
-- **Strategic North Star**: Update scoring engine status from Planned to Active, add dimension-based architecture detail
+Single file edit, no backend or database changes needed.
 
