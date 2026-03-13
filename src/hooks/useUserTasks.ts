@@ -419,7 +419,14 @@ async function syncP2AApproval(
         display_order: a.display_order,
         cycle: nextCycle,
       }));
-      await (supabase as any).from('p2a_approver_history').insert(historyRecords);
+
+      const { error: historyInsertError } = await (supabase as any)
+        .from('p2a_approver_history')
+        .insert(historyRecords);
+
+      if (historyInsertError) {
+        console.error('[P2A] Failed to archive approver history:', historyInsertError);
+      }
     }
 
     // 4. Reset all approvers (except the rejector) to PENDING

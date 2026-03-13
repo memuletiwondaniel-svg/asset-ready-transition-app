@@ -54,8 +54,8 @@ export const P2AActivityFeed: React.FC<P2AActivityFeedProps> = ({ planId }) => {
         cycle: null as number | null,
       }));
     },
-    staleTime: 30_000,
-  });
+    staleTime: 0,
+    refetchOnMount: 'always',
 
   // Archived history (previous cycles + submissions/reverts)
   const { data: approverHistory } = useQuery({
