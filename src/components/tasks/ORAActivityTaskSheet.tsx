@@ -1037,7 +1037,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
             {/* Comments & Activity Feed */}
             {(() => {
               // Build unified activity feed merging comments + approver decisions
-              const approverEntries = (p2aApproverDecisions || []).map((d: any) => ({
+              const approverEntries = isP2AActivity ? (p2aApproverDecisions || []).map((d: any) => ({
                 id: `approver-${d.id}`,
                 type: 'approval_action' as const,
                 status: d.status,
@@ -1047,9 +1047,9 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                 avatar_url: d.avatar_url,
                 timestamp: d.approved_at,
                 cycle: null as number | null,
-              }));
+              })) : [];
               // Add archived history entries with cycle info
-              const historyEntries = (p2aApproverHistory || []).map((d: any) => ({
+              const historyEntries = isP2AActivity ? (p2aApproverHistory || []).map((d: any) => ({
                 id: `history-${d.id}`,
                 type: 'approval_action' as const,
                 status: d.status,
@@ -1059,7 +1059,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                 avatar_url: d.avatar_url,
                 timestamp: d.approved_at,
                 cycle: d.cycle as number | null,
-              }));
+              })) : [];
               const commentEntries = dbComments.map((c) => ({
                 id: c.id,
                 type: 'comment' as const,
