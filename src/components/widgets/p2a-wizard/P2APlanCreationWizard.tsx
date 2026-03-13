@@ -14,6 +14,7 @@ import { ApprovalSetupStep, WizardApprover } from './steps/ApprovalSetupStep';
 import { ConfirmationStep } from './steps/ConfirmationStep';
 import { useP2APlanWizard } from '@/hooks/useP2APlanWizard';
 import { useP2APlanByProject } from '@/hooks/useP2APlanByProject';
+import { useP2ARejectionContext } from '@/hooks/useP2ARejectionContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
