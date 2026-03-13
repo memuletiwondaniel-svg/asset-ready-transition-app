@@ -401,14 +401,8 @@ async function syncP2AApproval(
       .not('approved_at', 'is', null);
 
     if (decidedApprovers?.length) {
-      // Determine next cycle number
-      const { data: maxCycleRow } = await (supabase as any)
-        .from('p2a_approver_history')
-        .select('cycle')
-        .eq('handover_id', planId)
-        .order('cycle', { ascending: false })
-        .limit(1);
-      const nextCycle = (maxCycleRow?.[0]?.cycle || 0) + 1;
+      // Archive decisions under the currently active review cycle
+      const activeCycle = await getCurrentP2AReviewCycle(supabase as any, planId);
 
       const historyRecords = decidedApprovers.map((a: any) => ({
         handover_id: planId,
@@ -418,7 +412,7 @@ async function syncP2AApproval(
         comments: a.comments,
         approved_at: a.approved_at,
         display_order: a.display_order,
-        cycle: nextCycle,
+        cycle: activeCycle,
       }));
 
       const { error: historyInsertError } = await (supabase as any)
@@ -430,13 +424,11 @@ async function syncP2AApproval(
       }
     }
 
-    // 4. Reset all approvers (except the rejector) to PENDING
-    // Use neq('status', 'REJECTED') to avoid overwriting the rejection we just set in step 1
+    // 4. Reset all approvers to PENDING after archiving, to avoid duplicate future history rows
     await supabase
       .from('p2a_handover_approvers')
       .update({ status: 'PENDING', approved_at: null, comments: null })
-      .eq('handover_id', planId)
-      .neq('status', 'REJECTED');
+      .eq('handover_id', planId);
 
     // 4. Revert plan status to DRAFT and persist rejection context for re-approvers
     // Fetch rejector's display name from profile
