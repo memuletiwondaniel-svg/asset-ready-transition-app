@@ -460,6 +460,35 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
   const [activeTask, setActiveTask] = useState<UnifiedTask | null>(null);
   const { moveTaskToColumn } = useKanbanDragDrop();
 
+  // Batch-fetch reviewer summaries for done-column tasks
+  const doneTaskIds = useMemo(() => 
+    tasks.filter(t => t.kanbanColumn === 'done' && t.userTask?.id).map(t => t.userTask!.id),
+    [tasks]
+  );
+
+  const { data: reviewerSummaries } = useQuery({
+    queryKey: ['task-reviewers-summary', doneTaskIds],
+    queryFn: async () => {
+      if (doneTaskIds.length === 0) return new Map<string, ReviewerSummary>();
+      const { data, error } = await (supabase as any)
+        .from('task_reviewers')
+        .select('task_id, status')
+        .in('task_id', doneTaskIds);
+      if (error) throw error;
+      const map = new Map<string, ReviewerSummary>();
+      for (const row of data || []) {
+        const existing = map.get(row.task_id) || { total: 0, approved: 0, rejected: 0 };
+        existing.total++;
+        if (row.status === 'APPROVED') existing.approved++;
+        if (row.status === 'REJECTED') existing.rejected++;
+        map.set(row.task_id, existing);
+      }
+      return map;
+    },
+    enabled: doneTaskIds.length > 0,
+    staleTime: 30_000,
+  });
+
   // ORA Activity sheet opened when dragging to "Done"
   const [oraActivityTask, setOraActivityTask] = useState<UserTask | null>(null);
   const [oraActivityOpen, setOraActivityOpen] = useState(false);
