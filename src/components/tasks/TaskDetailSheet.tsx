@@ -752,6 +752,14 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
               </Button>
             )}
 
+            {/* Activity Feed for author's P2A task */}
+            {isP2aTask && existingP2aPlan?.id && (
+              <>
+                <Separator />
+                <P2AActivityFeed planId={existingP2aPlan.id} />
+              </>
+            )}
+
             {isVcrDeliveryPlanTask && vcrForWizard && (
               <Button
                 className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
