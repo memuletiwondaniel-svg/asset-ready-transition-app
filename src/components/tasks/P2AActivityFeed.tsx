@@ -132,24 +132,10 @@ export const P2AActivityFeed: React.FC<P2AActivityFeedProps> = ({ planId }) => {
       });
     });
 
-    if (submissionEntry) {
-      entries.push({
-        id: 'submission-entry',
-        type: 'submission',
-        status: null,
-        role_name: null,
-        comment: null,
-        full_name: submissionEntry.full_name,
-        avatar_url: submissionEntry.avatar_url,
-        timestamp: submissionEntry.submitted_at,
-        cycle: null,
-      });
-    }
-
-    return entries
-      .filter(e => e.timestamp)
-      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-  }, [approverDecisions, approverHistory, submissionEntry]);
+    return sortP2AFeedEntries(
+      entries.filter(e => e.timestamp)
+    );
+  }, [approverDecisions, approverHistory]);
 
   if (feed.length === 0) return null;
 
