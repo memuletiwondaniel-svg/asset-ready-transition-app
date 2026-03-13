@@ -87,23 +87,11 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
   
   const { data: existingPlan } = useP2APlanByProject(projectId);
 
-  // Fetch rejection info from approvers table
-  const { data: rejectionInfo } = useQuery({
-    queryKey: ['p2a-rejection-info', existingPlan?.id],
-    queryFn: async () => {
-      if (!existingPlan?.id) return null;
-      const { data } = await (supabase as any)
-        .from('p2a_handover_approvers')
-        .select('role_name, comments, approved_at')
-        .eq('handover_id', existingPlan.id)
-        .eq('status', 'REJECTED')
-        .order('approved_at', { ascending: false })
-        .limit(1);
-      return data?.[0] || null;
-    },
-    enabled: !!existingPlan?.id && existingPlan?.status === 'DRAFT' && !isReviewMode,
-    staleTime: 30_000,
-  });
+  // Unified rejection context from plan-level fields (persisted by trigger + cascade)
+  const { data: rejectionInfo } = useP2ARejectionContext(
+    existingPlan?.id,
+    !isReviewMode ? existingPlan?.status : undefined
+  );
   
   // Read-only when plan is submitted (ACTIVE) or fully approved (COMPLETED/APPROVED)
   const isReadOnly = existingPlan ? ['ACTIVE', 'COMPLETED', 'APPROVED'].includes(existingPlan.status) : false;
