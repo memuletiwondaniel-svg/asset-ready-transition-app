@@ -28,6 +28,7 @@ import { toast } from 'sonner';
 import { useDropzone } from 'react-dropzone';
 import type { UserTask } from '@/hooks/useUserTasks';
 import { sortP2AFeedEntries } from './p2aActivityFeedUtils';
+import { TaskReviewersSection } from './TaskReviewersSection';
 
 interface ORAActivityTaskSheetProps {
   task: UserTask | null;
