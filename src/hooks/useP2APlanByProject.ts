@@ -8,6 +8,10 @@ export interface P2APlanSummary {
   created_at: string;
   updated_at: string;
   project_id: string;
+  last_rejection_comment?: string | null;
+  last_rejected_by_name?: string | null;
+  last_rejected_by_role?: string | null;
+  last_rejected_at?: string | null;
 }
 
 /**
