@@ -587,6 +587,24 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
         }
       }
 
+      // Auto-log status change as a system comment in the activity feed
+      if (status !== originalStatus && realOraActivityId && planId && user) {
+        const statusLabel = STATUS_STEPS.find(s => s.value === status)?.label || status;
+        const systemComment = `Status changed to ${statusLabel}`;
+        try {
+          await (supabase as any)
+            .from('ora_activity_comments')
+            .insert({
+              ora_plan_activity_id: realOraActivityId,
+              orp_plan_id: planId,
+              user_id: user.id,
+              comment: systemComment,
+            });
+        } catch (commentErr) {
+          console.error('Failed to log status change comment:', commentErr);
+        }
+      }
+
       queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
       queryClient.invalidateQueries({ queryKey: ['ora-activity-detail'] });
       queryClient.invalidateQueries({ queryKey: ['project-orp-plans'] });
