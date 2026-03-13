@@ -88,30 +88,6 @@ export const P2AActivityFeed: React.FC<P2AActivityFeedProps> = ({ planId }) => {
     refetchOnMount: 'always',
   });
 
-  // Submission entry
-  const { data: submissionEntry } = useQuery({
-    queryKey: ['p2a-submission-entry', planId],
-    queryFn: async () => {
-      const { data: plan } = await (supabase as any)
-        .from('p2a_handover_plans')
-        .select('created_by')
-        .eq('id', planId)
-        .single();
-      const { data: approvers } = await (supabase as any)
-        .from('p2a_handover_approvers')
-        .select('created_at')
-        .eq('handover_id', planId)
-        .order('created_at', { ascending: true })
-        .limit(1);
-      const submittedAt = approvers?.[0]?.created_at;
-      if (!submittedAt || !plan?.created_by) return null;
-      const profileMap = await resolveProfiles([plan.created_by]);
-      const profile = profileMap[plan.created_by];
-      return { submitted_at: submittedAt, full_name: profile?.full_name || 'Unknown', avatar_url: profile?.avatar_url || null };
-    },
-    staleTime: 0,
-    refetchOnMount: 'always',
-  });
 
   // Build unified feed
   const feed = React.useMemo(() => {
