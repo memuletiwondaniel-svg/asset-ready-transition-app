@@ -587,6 +587,24 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
         }
       }
 
+      // Auto-log status change as a system comment in the activity feed
+      if (status !== originalStatus && realOraActivityId && planId && user) {
+        const statusLabel = STATUS_STEPS.find(s => s.value === status)?.label || status;
+        const systemComment = `Status changed to ${statusLabel}`;
+        try {
+          await (supabase as any)
+            .from('ora_activity_comments')
+            .insert({
+              ora_plan_activity_id: realOraActivityId,
+              orp_plan_id: planId,
+              user_id: user.id,
+              comment: systemComment,
+            });
+        } catch (commentErr) {
+          console.error('Failed to log status change comment:', commentErr);
+        }
+      }
+
       queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
       queryClient.invalidateQueries({ queryKey: ['ora-activity-detail'] });
       queryClient.invalidateQueries({ queryKey: ['project-orp-plans'] });
@@ -594,6 +612,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
       queryClient.invalidateQueries({ queryKey: ['ora-plan-activities'] });
       queryClient.invalidateQueries({ queryKey: ['orp-plan'] });
       queryClient.invalidateQueries({ queryKey: ['orp-plan-details'] });
+      queryClient.invalidateQueries({ queryKey: ['ora-activity-comments', realOraActivityId] });
 
       toast.success(status === 'COMPLETED' ? 'Activity marked as completed' : 'Activity progress saved');
       onOpenChange(false);
@@ -1154,6 +1173,22 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                                   <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed mt-1">{entry.comment}</p>
                                 )}
                               </>
+                            ) : entry.comment?.startsWith('Status changed to ') ? (
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <Badge
+                                  variant="outline"
+                                  className={cn(
+                                    "text-[10px] px-1.5 py-0 h-4 border-0 font-semibold",
+                                    entry.comment.includes('Completed')
+                                      ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                                      : entry.comment.includes('In Progress')
+                                        ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                                        : "bg-muted text-muted-foreground"
+                                  )}
+                                >
+                                  {entry.comment}
+                                </Badge>
+                              </div>
                             ) : (
                               <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{entry.comment}</p>
                             )}
