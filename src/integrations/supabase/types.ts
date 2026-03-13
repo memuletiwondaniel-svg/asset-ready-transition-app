@@ -8328,6 +8328,60 @@ export type Database = {
           },
         ]
       }
+      task_reviewers: {
+        Row: {
+          comments: string | null
+          created_at: string | null
+          decided_at: string | null
+          display_order: number
+          id: string
+          role_label: string
+          status: string
+          task_id: string
+          tenant_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          comments?: string | null
+          created_at?: string | null
+          decided_at?: string | null
+          display_order?: number
+          id?: string
+          role_label: string
+          status?: string
+          task_id: string
+          tenant_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          comments?: string | null
+          created_at?: string | null
+          decided_at?: string | null
+          display_order?: number
+          id?: string
+          role_label?: string
+          status?: string
+          task_id?: string
+          tenant_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_reviewers_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "user_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_reviewers_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenant_feature_flags: {
         Row: {
           created_at: string
