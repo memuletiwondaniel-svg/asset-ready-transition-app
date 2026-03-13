@@ -612,14 +612,8 @@ export function useP2APlanWizard(projectId: string, projectCode: string) {
       const planId = await persistPlanToDatabase(projectId, projectCode, state, 'ACTIVE');
       const client = supabase as any;
 
-      // Determine cycle number
-      const { data: maxCycleRow } = await client
-        .from('p2a_approver_history')
-        .select('cycle')
-        .eq('handover_id', planId)
-        .order('cycle', { ascending: false })
-        .limit(1);
-      const currentCycle = (maxCycleRow?.[0]?.cycle || 0) + 1;
+      // Determine cycle number for this new submission
+      const currentCycle = await getNextP2AHistoryCycle(client, planId);
 
       // Read rejection context from p2a_handover_plans for re-approval scenarios
       let rejectionContext: { resubmission_round: number; last_rejection_by?: string; last_rejection_comment?: string; last_rejection_role?: string } | null = null;
@@ -674,21 +668,19 @@ export function useP2APlanWizard(projectId: string, projectCode: string) {
       // Note: P2A approval tasks are now auto-created by DB trigger (trg_auto_create_p2a_approval_task)
       // when approvers are inserted into p2a_handover_approvers with a user_id
 
-      // Persist submission comment as a history entry for the activity feed
-      if (submissionComment?.trim()) {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          await client.from('p2a_approver_history').insert({
-            handover_id: planId,
-            user_id: user.id,
-            role_name: 'Submitter',
-            display_order: 0,
-            status: 'SUBMITTED',
-            approved_at: new Date().toISOString(),
-            comments: submissionComment.trim(),
-            cycle: currentCycle,
-          });
-        }
+      // Persist submission event for each round, with optional comment
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await client.from('p2a_approver_history').insert({
+          handover_id: planId,
+          user_id: user.id,
+          role_name: 'Submitter',
+          display_order: 0,
+          status: 'SUBMITTED',
+          approved_at: new Date().toISOString(),
+          comments: submissionComment?.trim() || null,
+          cycle: currentCycle,
+        });
       }
 
       return planId;
