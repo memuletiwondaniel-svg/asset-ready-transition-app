@@ -247,91 +247,89 @@ export const WorkspacePreviewStep: React.FC<WorkspacePreviewStepProps> = ({
           </Collapsible>
         )}
 
-        {/* Approvers + Submission Notes — 2-column enterprise layout */}
-        {(approvers.length > 0 || onCommentChange) && (
+        {/* Approvers — 3-column grid */}
+        {approvers.length > 0 && (
           <>
             <Separator />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Left: Approvers in compact 2-col grid */}
-              {approvers.length > 0 && (
-                <section>
-                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2.5 block">
-                    Selected Approvers
-                  </span>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                    {approvers.map((approver) => {
-                      const avatarUrl = approver.user_avatar
-                        ? (approver.user_avatar.startsWith('http')
-                            ? approver.user_avatar
-                            : supabase.storage.from('user-avatars').getPublicUrl(approver.user_avatar).data.publicUrl)
-                        : undefined;
-                      const initials = approver.user_name
-                        ? approver.user_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-                        : '?';
-                      const hasUser = !!approver.user_id;
-                      return (
-                        <div key={approver.id} className="flex items-center gap-2 p-2 rounded-lg border bg-card">
-                          <Avatar className="h-6 w-6 shrink-0">
-                            <AvatarImage src={avatarUrl} />
-                            <AvatarFallback className="text-[8px] bg-muted">{initials}</AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            {hasUser ? (
-                              <div className="truncate">
-                                <span className="text-[11px] font-medium">{approver.user_name}</span>
-                                <span className="text-[10px] text-muted-foreground ml-1">· {approver.role_name}</span>
-                              </div>
-                            ) : (
-                              <div className="truncate">
-                                <span className="text-[11px] font-medium text-muted-foreground">{approver.role_name}</span>
-                                <span className="text-[10px] text-amber-600 ml-1">· Unassigned</span>
-                              </div>
-                            )}
-                          </div>
-                          {!hasUser ? (
-                            <AlertCircle className="h-3 w-3 text-muted-foreground shrink-0" />
-                          ) : approver.status === 'APPROVED' ? (
-                            <CheckCircle2 className="h-3 w-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                          ) : approver.status === 'REJECTED' ? (
-                            <XCircle className="h-3 w-3 text-destructive shrink-0" />
-                          ) : (
-                            <Clock className="h-3 w-3 text-amber-600 dark:text-amber-400 shrink-0" />
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </section>
-              )}
+            <section>
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2.5 block">
+                Selected Approvers
+              </span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                {approvers.map((approver) => {
+                  const avatarUrl = approver.user_avatar
+                    ? (approver.user_avatar.startsWith('http')
+                        ? approver.user_avatar
+                        : supabase.storage.from('user-avatars').getPublicUrl(approver.user_avatar).data.publicUrl)
+                    : undefined;
+                  const initials = approver.user_name
+                    ? approver.user_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+                    : '?';
+                  const hasUser = !!approver.user_id;
+                  return (
+                    <div key={approver.id} className="flex items-center gap-2.5 p-2.5 rounded-lg border bg-card hover:bg-accent/30 transition-colors">
+                      <Avatar className="h-7 w-7 shrink-0">
+                        <AvatarImage src={avatarUrl} />
+                        <AvatarFallback className="text-[9px] bg-muted font-medium">{initials}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        {hasUser ? (
+                          <>
+                            <p className="text-xs font-medium truncate">{approver.user_name}</p>
+                            <p className="text-[10px] text-muted-foreground truncate">{approver.role_name}</p>
+                          </>
+                        ) : (
+                          <>
+                            <p className="text-xs font-medium text-muted-foreground truncate">{approver.role_name}</p>
+                            <p className="text-[10px] text-amber-600 dark:text-amber-400">Unassigned</p>
+                          </>
+                        )}
+                      </div>
+                      {!hasUser ? (
+                        <AlertCircle className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                      ) : approver.status === 'APPROVED' ? (
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                      ) : approver.status === 'REJECTED' ? (
+                        <XCircle className="h-3.5 w-3.5 text-destructive shrink-0" />
+                      ) : (
+                        <Clock className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          </>
+        )}
 
-              {/* Right: Submission Notes */}
-              {onCommentChange && (
-                <section>
-                  <div className="flex items-center gap-1.5 mb-2.5">
-                    <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
-                    <Label htmlFor="submission-comment" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      Notes for Approvers
-                    </Label>
-                    <span className="text-[10px] text-muted-foreground ml-auto">(optional)</span>
-                  </div>
-                  <Textarea
-                    id="submission-comment"
-                    placeholder="Add any context, instructions, or key decisions for the approval team..."
-                    value={submissionComment}
-                    onChange={(e) => onCommentChange(e.target.value.slice(0, maxChars))}
-                    className="min-h-[120px] text-xs resize-none"
-                  />
-                  <div className="flex justify-end mt-1">
-                    <span className={cn(
-                      "text-[10px] tabular-nums",
-                      submissionComment.length >= maxChars ? "text-destructive" : "text-muted-foreground"
-                    )}>
-                      {submissionComment.length}/{maxChars}
-                    </span>
-                  </div>
-                </section>
-              )}
-            </div>
+        {/* Notes for Approvers — full-width row above footer */}
+        {onCommentChange && (
+          <>
+            <Separator />
+            <section>
+              <div className="flex items-center gap-1.5 mb-2">
+                <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
+                <Label htmlFor="submission-comment" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Notes for Approvers
+                </Label>
+                <span className="text-[10px] text-muted-foreground ml-auto">(optional)</span>
+              </div>
+              <Textarea
+                id="submission-comment"
+                placeholder="Add any context, instructions, or key decisions for the approval team..."
+                value={submissionComment}
+                onChange={(e) => onCommentChange(e.target.value.slice(0, maxChars))}
+                className="min-h-[80px] text-xs resize-none"
+              />
+              <div className="flex justify-end mt-1">
+                <span className={cn(
+                  "text-[10px] tabular-nums",
+                  submissionComment.length >= maxChars ? "text-destructive" : "text-muted-foreground"
+                )}>
+                  {submissionComment.length}/{maxChars}
+                </span>
+              </div>
+            </section>
           </>
         )}
       </div>
