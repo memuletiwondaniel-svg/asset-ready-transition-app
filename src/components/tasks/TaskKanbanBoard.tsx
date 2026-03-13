@@ -697,7 +697,10 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     });
   };
 
+  const reviewerMap = reviewerSummaries || new Map<string, ReviewerSummary>();
+
   return (
+    <ReviewerSummaryContext.Provider value={reviewerMap}>
     <>
       <DndContext
         sensors={sensors}
