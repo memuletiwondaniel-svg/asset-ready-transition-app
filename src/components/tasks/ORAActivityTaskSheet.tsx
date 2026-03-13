@@ -1047,9 +1047,9 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                 avatar_url: d.avatar_url,
                 timestamp: d.approved_at,
                 cycle: null as number | null,
-              }));
+              })) : [];
               // Add archived history entries with cycle info
-              const historyEntries = (p2aApproverHistory || []).map((d: any) => ({
+              const historyEntries = isP2AActivity ? (p2aApproverHistory || []).map((d: any) => ({
                 id: `history-${d.id}`,
                 type: 'approval_action' as const,
                 status: d.status,
