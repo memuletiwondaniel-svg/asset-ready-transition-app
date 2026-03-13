@@ -430,10 +430,31 @@ async function syncP2AApproval(
       .eq('handover_id', planId)
       .neq('status', 'REJECTED');
 
-    // 4. Revert plan status to DRAFT
+    // 4. Revert plan status to DRAFT and persist rejection context for re-approvers
+    // Fetch rejector's display name from profile
+    let rejectorName = approverRole;
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('first_name, last_name')
+        .eq('user_id', userId)
+        .maybeSingle();
+      if (profile) {
+        rejectorName = [profile.first_name, profile.last_name].filter(Boolean).join(' ') || approverRole;
+      }
+    } catch (e) {
+      console.warn('[P2A] Could not fetch rejector profile name:', e);
+    }
+
     await (supabase as any)
       .from('p2a_handover_plans')
-      .update({ status: 'DRAFT', updated_at: new Date().toISOString() })
+      .update({
+        status: 'DRAFT',
+        updated_at: new Date().toISOString(),
+        last_rejection_comment: rejectionComment,
+        last_rejected_by_name: rejectorName,
+        last_rejected_by_role: approverRole,
+      })
       .eq('id', planId);
 
     // 5. Reset the author's task progress to 86% and plan_status to DRAFT
