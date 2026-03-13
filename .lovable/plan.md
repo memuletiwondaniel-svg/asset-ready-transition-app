@@ -1,77 +1,58 @@
 
 
-# Plan: ORIP Scoring Engine Using Existing VCR Item Categories
+# Re-Approval Context for Reviewers
 
-## Impact Assessment: Zero Breaking Changes
+## Problem
+When a plan is rejected and resubmitted, re-approvers (like Roaa) receive a new approval task but have no immediate context about **why** they need to re-approve or **what changed**. They must dig into the activity feed to understand.
 
-**No existing workflows will be affected.** The approach reuses the existing `vcr_item_categories` table (Design Integrity, Technical Integrity, Operating Integrity, Management Systems, Health & Safety) as the readiness dimensions for ORI scoring. All changes are additive:
+## Recommended Approach: Contextual Banner + Activity Feed Reference
 
-- The `vcr_item_categories` table gets a `tenant_id` column and weight/confidence fields -- existing rows remain intact
-- The `readiness_nodes` table gets a new nullable `dimension_id` column pointing to `vcr_item_categories`
-- The `sync_readiness_nodes` and `calculate_ori_score` functions are replaced with enhanced versions that use category-based dimensions instead of module-based grouping
-- Existing P2A, ORA, PSSR, ORM workflows are untouched -- the ontology layer only reads from them
+Industry best practice (ServiceNow, Jira Service Management) is a **contextual rejection banner** at the top of the reviewer's task detail sheet, surfacing:
+1. Who rejected and why (the rejection comment)
+2. The resubmission round number
+3. A note that the plan was revised and resubmitted
+4. A direct pointer to the activity feed for full history
 
-## Current VCR Item Categories (Become Readiness Dimensions)
+This avoids duplicating a full "change summary" (which would require diff tracking infrastructure) and instead leverages the existing activity feed as the single source of truth — which is the standard pattern in enterprise SaaS.
 
-| Code | Name | Active |
-|------|------|--------|
-| DI2 | Design Integrity | Yes |
-| TI | Technical Integrity | Yes |
-| OI | Operating Integrity | Yes |
-| MS | Management Systems | Yes |
-| HS | Health & Safety | Yes |
+## Implementation Plan
 
-These become the tenant-configurable readiness dimensions. Different tenants can add/rename/reweight their own categories.
+### 1. Store resubmission context on approval tasks (`useP2APlanWizard.ts`)
+When submitting for approval (including resubmissions), write contextual metadata to each auto-created approval task:
+- `resubmission_round` (cycle number, e.g. 2)
+- `last_rejection_by` (name of rejector)
+- `last_rejection_comment` (the rejection reason)
+- `last_rejection_role` (role of rejector)
 
-## Implementation Tasks
+This data is already available in the author's task metadata (`last_rejection_comment`, `last_rejection_role`, `last_rejection_at`). On resubmission, propagate it to the `p2a_handover_plans` table or directly into each new approval task's metadata via the submission flow.
 
-### Task 1: Extend `vcr_item_categories` for ORI Scoring
-Add columns to make categories serve double duty as readiness dimensions:
-- `tenant_id UUID` (nullable, defaults via trigger -- existing rows get current tenant)
-- `default_weight NUMERIC(5,4)` (e.g., 0.20 = 20%)
-- `confidence_factor_default NUMERIC(3,2)` (default 0.8)
-- `risk_severity_multiplier NUMERIC(3,1)` (default 1.0)
-- `is_readiness_dimension BOOLEAN DEFAULT true`
+### 2. Render "Resubmission Context" banner in `TaskDetailSheet.tsx`
+For P2A approval tasks where `metadata.resubmission_round > 1`, render a prominent banner **above** the "Review P2A Plan" button:
 
-Add `dimension_id UUID REFERENCES vcr_item_categories(id)` to `readiness_nodes`.
-
-### Task 2: Enhanced ORI Formula
-Replace `calculate_ori_score()` with the full ORIP formula:
-
-```
-DS_i = (Σ Subcomponent_Weight × Completion%) × Confidence_Factor
-RP_i = Σ (Risk_Severity × Impact_Multiplier)  -- capped at 15%
-ORI  = Σ (Dimension_Weight_i × DS_i) − Global_Risk_Penalty
-SCS  = ORI × Schedule_Adherence × Critical_Path_Stability
+```text
+┌─────────────────────────────────────────────┐
+│ 🔄 Round 2 — Resubmitted for Re-approval   │
+│                                             │
+│ Previously rejected by Abel Maouche         │
+│ (Construction Lead):                        │
+│ "Valve specifications need updating for     │
+│  System 4B"                                 │
+│                                             │
+│ 📋 View full history in Activity Feed below │
+└─────────────────────────────────────────────┘
 ```
 
-Add columns to `ori_scores`: `dimension_scores JSONB`, `risk_penalty_total NUMERIC`, `startup_confidence_score NUMERIC`, `schedule_adherence_index NUMERIC`, `critical_path_stability_index NUMERIC`.
+Styling: Soft blue/indigo background with border, matching existing banner patterns (like the rejection outcome banner already at line 507-525).
 
-Add `confidence_factor NUMERIC(3,2) DEFAULT 0.8` and `risk_severity TEXT DEFAULT 'none'` to `readiness_nodes`.
+### 3. Persist rejection context on `p2a_handover_plans` table (`useUserTasks.ts`)
+During the rejection flow (already at line 434-437), also write `last_rejection_comment`, `last_rejected_by_name`, and `last_rejected_by_role` to the `p2a_handover_plans` row. This makes it queryable when new approval tasks are created by the DB trigger.
 
-### Task 3: Update Sync Function
-Update `sync_readiness_nodes()` to auto-assign `dimension_id` by mapping:
-- P2A VCR prerequisites → mapped via their `vcr_items.category_id` directly to `vcr_item_categories`
-- ORA activities → default to "Operating Integrity" or map via metadata
-- PSSR items → map via PSSR checklist category → nearest VCR category
-- ORM deliverables → default to "Management Systems"
-- Training → default to "Operating Integrity"
+### 4. Read rejection context into new approval tasks
+In the submission flow (`useP2APlanWizard.ts` `submitForApproval`), read the plan's `last_rejection_comment` / `last_rejected_by_name` fields and calculate the round number from `p2a_approver_history` max cycle. Store these in each approval task's metadata so `TaskDetailSheet` can render the banner without extra queries.
 
-Set confidence factors: completed/approved = 1.0, in-progress = 0.8, not-started = 0.7.
-
-### Task 4: Executive Dashboard Enhancement
-Redesign `ExecutiveDashboard.tsx` to match the strategic layout:
-- **Top Banner**: Large ORI + SCS + color coding (Green >85, Amber 70-85, Red <70)
-- **Dimension Breakdown**: Bar/table showing each VCR category's score, trend arrow, risk level
-- **Top 5 Startup Blockers**: Blocked/critical nodes with severity
-- **Predictive Trend**: ORI line chart with dashed target curve
-- **Risk Impact Summary**: 4 stat boxes (Open High Risks, Startup-blocking, Dimensions below 70%, Systems below 60%)
-
-### Task 5: Tenant-Configurable Weight Profiles
-Update the existing `ori_weight_profiles` to store dimension-based weights keyed by `vcr_item_categories.id` instead of module names. Add a simple admin UI for editing weights per tenant.
-
-### Task 6: Update Living Documents
-- **Security & Compliance Doc**: Add rows for Readiness Dimensions, Risk Penalty Engine, Startup Confidence Score (mark as Active)
-- **Platform Guide**: Add "Readiness Ontology & Scoring Engine" section documenting the 6 dimensions, ORI formula, SCS
-- **Strategic North Star**: Update scoring engine status from Planned to Active, add dimension-based architecture detail
+### Files to Edit
+- **`src/hooks/useUserTasks.ts`** — Write rejection context to `p2a_handover_plans` during rejection
+- **`src/hooks/useP2APlanWizard.ts`** — Read rejection context during resubmission, propagate to approval task metadata
+- **`src/components/tasks/TaskDetailSheet.tsx`** — Render resubmission context banner for re-approval tasks
+- **`supabase/migrations/`** — Add `last_rejection_comment`, `last_rejected_by_name`, `last_rejected_by_role` columns to `p2a_handover_plans`
 
