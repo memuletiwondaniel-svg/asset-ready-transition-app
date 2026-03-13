@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { CheckCircle, X, Calendar as CalendarIcon, AlertTriangle, ChevronRight, Pencil, CalendarCheck, ClipboardList, FileText, Eye } from 'lucide-react';
+import { CheckCircle, X, Calendar as CalendarIcon, AlertTriangle, ChevronRight, Pencil, CalendarCheck, ClipboardList, FileText, Eye, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
