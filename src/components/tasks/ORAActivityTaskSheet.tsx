@@ -1052,6 +1052,31 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
               </div>
             )}
 
+            {/* Reviewers & Approvers — only for non-P2A tasks */}
+            {!isP2AActivity && task?.id && (
+              <TaskReviewersSection
+                taskId={task.id}
+                isReadOnly={isReadOnly}
+                isTaskOwner={task.metadata?.assigned_to === user?.id || user?.id === (task as any).user_id}
+                onDecisionMade={async (decision, reviewerName) => {
+                  // Log decision as activity feed comment
+                  if (realOraActivityId && planId && user) {
+                    try {
+                      await (supabase as any)
+                        .from('ora_activity_comments')
+                        .insert({
+                          ora_plan_activity_id: realOraActivityId,
+                          orp_plan_id: planId,
+                          user_id: user.id,
+                          comment: decision === 'APPROVED' ? '✅ Approved' : '❌ Rejected',
+                        });
+                      queryClient.invalidateQueries({ queryKey: ['ora-activity-comments'] });
+                    } catch {}
+                  }
+                }}
+              />
+            )}
+
             <Separator />
 
             {/* Comments & Activity Feed */}
