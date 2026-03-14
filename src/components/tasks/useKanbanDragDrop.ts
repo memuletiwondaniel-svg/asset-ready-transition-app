@@ -121,36 +121,39 @@ export function useKanbanDragDrop() {
     });
 
     try {
-      // Update user_tasks status
+      // Update user_tasks + ORA plan activity status for standard moves.
+      // For ad-hoc review reverts, task_reviewers is the source of truth and trigger handles sync.
       const isRealTaskId = userTask.id && !userTask.id.startsWith('ws-') && !userTask.id.startsWith('ora-');
-      if (isRealTaskId) {
-        await supabase
-          .from('user_tasks')
-          .update({ status: newTaskStatus, updated_at: new Date().toISOString() })
-          .eq('id', userTask.id);
-      }
+      if (!isAdHocRevert) {
+        if (isRealTaskId) {
+          await supabase
+            .from('user_tasks')
+            .update({ status: newTaskStatus, updated_at: new Date().toISOString() })
+            .eq('id', userTask.id);
+        }
 
-      // Sync ORA plan activity status if applicable
-      if (oraActivityId) {
-        const realId = oraActivityId.startsWith('ora-') ? oraActivityId.slice(4)
-          : oraActivityId.startsWith('ws-') ? oraActivityId.slice(3)
-          : oraActivityId;
+        // Sync ORA plan activity status if applicable
+        if (oraActivityId) {
+          const realId = oraActivityId.startsWith('ora-') ? oraActivityId.slice(4)
+            : oraActivityId.startsWith('ws-') ? oraActivityId.slice(3)
+            : oraActivityId;
 
-        const newOraStatus = COLUMN_TO_ORA_STATUS[targetColumn];
-        const isP2aRevert = isP2aTask && task.kanbanColumn === 'done' && targetColumn === 'in_progress';
+          const newOraStatus = COLUMN_TO_ORA_STATUS[targetColumn];
+          const isP2aRevert = isP2aTask && task.kanbanColumn === 'done' && targetColumn === 'in_progress';
 
-        // For P2A tasks: when reverting from Done → In Progress, set 86% (6/7 wizard steps).
-        // For P2A tasks in any other non-done move, preserve current progress (don't reset to 0).
-        // For non-P2A tasks, reset to 0.
-        const newCompletion = isP2aRevert ? 86 : (isP2aTask ? undefined : 0);
+          // For P2A tasks: when reverting from Done → In Progress, set 86% (6/7 wizard steps).
+          // For P2A tasks in any other non-done move, preserve current progress (don't reset to 0).
+          // For non-P2A tasks, reset to 0.
+          const newCompletion = isP2aRevert ? 86 : (isP2aTask ? undefined : 0);
 
-        const updatePayload: Record<string, any> = { status: newOraStatus };
-        if (newCompletion !== undefined) updatePayload.completion_percentage = newCompletion;
+          const updatePayload: Record<string, any> = { status: newOraStatus };
+          if (newCompletion !== undefined) updatePayload.completion_percentage = newCompletion;
 
-        await (supabase as any)
-          .from('ora_plan_activities')
-          .update(updatePayload)
-          .eq('id', realId);
+          await (supabase as any)
+            .from('ora_plan_activities')
+            .update(updatePayload)
+            .eq('id', realId);
+        }
       }
 
       // ── P2A Plan status revert: when a P2A task is moved back to in_progress or todo,
