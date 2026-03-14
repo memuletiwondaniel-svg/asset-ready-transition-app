@@ -75,6 +75,10 @@ interface ApprovalWarningState {
 interface ReviewerSummary { total: number; approved: number; rejected: number; }
 const ReviewerSummaryContext = createContext<Map<string, ReviewerSummary>>(new Map());
 
+// P2A author approval counts context (keyed by plan_id from metadata)
+interface P2AApprovalSummary { total: number; approved: number; rejected: number; }
+const P2AApprovalContext = createContext<Map<string, P2AApprovalSummary>>(new Map());
+
 
 const getColumns = (t: any) => [
   { key: 'todo' as const, label: t.kanbanToDo || 'To Do', icon: Circle, accent: 'border-l-slate-400', headerBg: 'bg-gradient-to-r from-slate-200/90 to-slate-100/60 dark:from-slate-800/50 dark:to-slate-900/20', iconColor: 'text-slate-500', headerText: 'text-foreground', emptyIcon: Inbox, emptyMsg: t.kanbanEmptyToDo || 'Nothing to do — nice!' },
