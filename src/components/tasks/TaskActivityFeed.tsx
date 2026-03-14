@@ -92,17 +92,25 @@ export const TaskActivityFeed: React.FC<TaskActivityFeedProps> = ({ taskId }) =>
                 </Avatar>
                 <div className="flex-1 min-w-0">
                   {isDecision ? (
-                    <Badge
-                      variant="outline"
-                      className={cn(
-                        "text-[10px] px-1.5 py-0 h-4 border-0 font-semibold",
-                        isApproval
-                          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                          : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                      )}
-                    >
-                      {isApproval ? 'Approved' : 'Rejected'}
-                    </Badge>
+                    <>
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          "text-[10px] px-1.5 py-0 h-4 border-0 font-semibold",
+                          isApproval
+                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                            : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                        )}
+                      >
+                        {isApproval ? 'Approved' : 'Rejected'}
+                      </Badge>
+                      {(() => {
+                        const cleaned = rawComment.replace(/^[✅❌]\s*/, '').replace(/^(Approved|Rejected)\s*(by\s+\S.*)?$/i, '').trim();
+                        return cleaned ? (
+                          <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed mt-1">{cleaned}</p>
+                        ) : null;
+                      })()}
+                    </>
                   ) : isStatusChange ? (
                     <Badge
                       variant="outline"
