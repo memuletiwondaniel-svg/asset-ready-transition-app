@@ -159,6 +159,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
   } = useLanguage();
   const [userInput, setUserInput] = useState('');
   const { favorites, toggleFavorite } = useFavoritePages();
+  const newTaskCount = useNewTaskCount();
   const navigate = useNavigate();
   const [messages, setMessages] = useState<Array<{
     role: 'user' | 'assistant';
