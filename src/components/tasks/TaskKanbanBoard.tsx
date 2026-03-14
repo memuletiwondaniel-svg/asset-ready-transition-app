@@ -775,12 +775,12 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     }
   }, [moveTaskToColumn]);
 
-  // Handle confirmation from the warning dialog
-  const handleWarningConfirm = useCallback(async () => {
+  // Handle confirmation from the warning dialog (with mandatory reason)
+  const handleWarningConfirm = useCallback(async (voidReason: string) => {
     if (!warningState) return;
     setWarningState(null);
-    // Force move, bypassing approval protection
-    await moveTaskToColumn(warningState.task, warningState.targetColumn, true);
+    // Force move, bypassing approval protection, with void reason
+    await moveTaskToColumn(warningState.task, warningState.targetColumn, true, voidReason);
   }, [warningState, moveTaskToColumn]);
 
   const handleWarningCancel = useCallback(() => {
