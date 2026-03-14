@@ -23,6 +23,8 @@ import { ProjectIdBadge } from '@/components/ui/project-id-badge';
 
 import { ORAActivityTaskSheet } from './ORAActivityTaskSheet';
 import { P2AActivityFeed } from './P2AActivityFeed';
+import { TaskActivityFeed } from './TaskActivityFeed';
+import { TaskReviewersSection } from './TaskReviewersSection';
 import { VCRExecutionPlanWizard } from '@/components/widgets/vcr-wizard/VCRExecutionPlanWizard';
 import type { UserTask } from '@/hooks/useUserTasks';
 import type { ProjectVCR } from '@/hooks/useProjectVCRs';
@@ -372,6 +374,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
         queryClient.invalidateQueries({ queryKey: ['task-reviewers', sourceTaskId] });
         queryClient.invalidateQueries({ queryKey: ['task-reviewers-summary'] });
         queryClient.invalidateQueries({ queryKey: ['review-activity-comments', sourceOraActivityId] });
+        queryClient.invalidateQueries({ queryKey: ['task-comments', sourceTaskId] });
         queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
         queryClient.invalidateQueries({ queryKey: ['source-task-detail', sourceTaskId] });
       } catch {
@@ -436,6 +439,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
 
   const isReviewTask = (['review', 'approval', 'ora_plan_review'].includes(task.type) || !!pssrId) && !isOraReviewTask && !isP2aApprovalTask;
   const isActionTask = isOraTask || isOraActivityTask || isVcrDeliveryPlanTask || isP2aTask;
+  const isSimpleTask = !isOraTask && !isOraActivityTask && !isVcrDeliveryPlanTask && !isP2aTask && !isP2aApprovalTask && !isOraReviewTask && !pssrId && !isAdHocReview;
 
   // Resolve P2A approval task project details
   const p2aApprovalPlanId = isP2aApprovalTask ? (task.metadata?.plan_id as string) : undefined;
@@ -883,6 +887,19 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                 <ChevronRight className="h-4 w-4 ml-auto" />
               </Button>
             )}
+            {/* Simple task: Reviewers & Activity Feed */}
+            {isSimpleTask && task.id && (
+              <>
+                <Separator />
+                <TaskReviewersSection
+                  taskId={task.id}
+                  isReadOnly={isCompleted}
+                  isTaskOwner={true} /* TaskDetailSheet only opens for the task's owner or assigned reviewer */
+                />
+                <Separator />
+                <TaskActivityFeed taskId={task.id} />
+              </>
+            )}
 
             {/* Ad-hoc Review: Source task context — activity feed & evidence */}
             {isAdHocReview && sourceTask && (
@@ -913,7 +930,8 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                   </div>
                 </div>
 
-                {/* Activity Feed from source task */}
+                {/* Activity Feed from source task - use task_comments for simple tasks, ora_activity_comments for ORA tasks */}
+                {sourceOraActivityId ? (
                 <div>
                   <p className="text-sm font-medium mb-2 flex items-center gap-1.5 text-muted-foreground">
                     <MessageSquare className="h-4 w-4" />
@@ -995,6 +1013,9 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                     <p className="text-xs text-muted-foreground italic py-2">No activity yet</p>
                   )}
                 </div>
+                ) : sourceTaskId ? (
+                  <TaskActivityFeed taskId={sourceTaskId} />
+                ) : null}
               </>
             )}
 
