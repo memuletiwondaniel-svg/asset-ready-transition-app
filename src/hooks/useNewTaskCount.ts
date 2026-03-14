@@ -21,15 +21,20 @@ export const useNewTaskCount = () => {
         .eq('user_id', user.id)
         .maybeSingle();
 
-      if (!profile?.last_login_at) return 0;
-
-      // Count tasks created after last login
-      const { count, error } = await supabase
+      // Build query for pending/in_progress tasks
+      let query = supabase
         .from('user_tasks')
         .select('id', { count: 'exact', head: true })
         .eq('user_id', user.id)
-        .gt('created_at', profile.last_login_at)
         .in('status', ['pending', 'in_progress']);
+
+      // If last_login_at exists, only count tasks created after it
+      // If null (first login or never visited tasks), count ALL pending tasks
+      if (profile?.last_login_at) {
+        query = query.gt('created_at', profile.last_login_at);
+      }
+
+      const { count, error } = await query;
 
       if (error) {
         console.error('Error fetching new task count:', error);

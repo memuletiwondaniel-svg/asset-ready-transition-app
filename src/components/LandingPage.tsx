@@ -25,6 +25,7 @@ import { arrayMove, SortableContext, rectSortingStrategy, useSortable } from '@d
 import { CSS } from '@dnd-kit/utilities';
 import { processUserInput, getBlockedResponse } from '@/lib/security';
 import { useFavoritePages } from '@/hooks/useFavoritePages';
+import { useNewTaskCount } from '@/hooks/useNewTaskCount';
 
 // Maps favorite paths to appropriate icons and colors matching page headers
 const FAVORITE_ICON_MAP: Record<string, { icon: React.ComponentType<any>; color: string }> = {
@@ -158,6 +159,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
   } = useLanguage();
   const [userInput, setUserInput] = useState('');
   const { favorites, toggleFavorite } = useFavoritePages();
+  const newTaskCount = useNewTaskCount();
   const navigate = useNavigate();
   const [messages, setMessages] = useState<Array<{
     role: 'user' | 'assistant';
@@ -773,6 +775,11 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                             <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center ${colorClass} transition-transform duration-200 group-hover/fav:scale-110`}>
                               <IconComponent className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                             </div>
+                            {fav.path === '/my-tasks' && newTaskCount > 0 && (
+                              <span className="absolute -top-1.5 -right-1.5 flex h-5 min-w-5 px-1 items-center justify-center rounded-full bg-destructive text-[10px] font-semibold text-destructive-foreground z-10">
+                                {newTaskCount}
+                              </span>
+                            )}
                             <span className="text-[10px] sm:text-xs font-medium text-foreground/80 group-hover/fav:text-foreground transition-colors line-clamp-1 max-w-[80px] sm:max-w-[100px] text-center">
                               {fav.label}
                             </span>
