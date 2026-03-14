@@ -312,11 +312,15 @@ const KanbanCardContent: React.FC<{
                 );
               }
 
-              // Author tasks (Develop P2A Plan, Create ORA Plan): use plan_status
+              // Author tasks (Develop P2A Plan, Create ORA Plan): use plan_status + approval counts
               if (isWorkflowTask) {
                 const isApproved = ['APPROVED', 'COMPLETED'].includes(planStatus);
                 const isActive = planStatus === 'ACTIVE'; // submitted, under review
                 const isDraft = planStatus === 'DRAFT';
+
+                // For P2A author tasks, show approval counts when under review
+                const authorPlanId = meta?.plan_id as string | undefined;
+                const p2aAuthorApproval = authorPlanId ? p2aApprovalSummaries.get(authorPlanId) : undefined;
 
                 if (isApproved) {
                   return (
@@ -325,10 +329,38 @@ const KanbanCardContent: React.FC<{
                     </span>
                   );
                 }
-                if (isActive || isDraft) {
+                if (isActive) {
+                  // Show approval progress for P2A author tasks
+                  if (p2aAuthorApproval && p2aAuthorApproval.total > 0) {
+                    if (p2aAuthorApproval.rejected > 0) {
+                      return (
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                          Rejected
+                        </span>
+                      );
+                    }
+                    const allDone = p2aAuthorApproval.approved >= p2aAuthorApproval.total;
+                    return (
+                      <span className={cn(
+                        "text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap",
+                        allDone
+                          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                          : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                      )}>
+                        {allDone ? 'Approved' : `Under Review · ${p2aAuthorApproval.approved}/${p2aAuthorApproval.total}`}
+                      </span>
+                    );
+                  }
                   return (
                     <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-                      {isActive ? 'Under Review' : 'Draft'}
+                      Under Review
+                    </span>
+                  );
+                }
+                if (isDraft) {
+                  return (
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                      Draft
                     </span>
                   );
                 }
