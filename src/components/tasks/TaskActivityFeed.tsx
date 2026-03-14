@@ -64,10 +64,11 @@ export const TaskActivityFeed: React.FC<TaskActivityFeedProps> = ({ taskId }) =>
                      c.comment?.toLowerCase().includes('approved') || c.comment?.toLowerCase().includes('rejected')
             );
             return comments.map((entry) => {
-            const isApproval = entry.comment?.startsWith('✅') || entry.comment?.toLowerCase().includes('approved');
-            const isRejection = entry.comment?.startsWith('❌') || entry.comment?.toLowerCase().includes('rejected');
-            const isDecision = isApproval || isRejection;
             const rawComment = entry.comment?.trim() || '';
+            const isVoid = entry.comment_type === 'reviewer_void' || rawComment.startsWith('⚠️') || rawComment.toLowerCase().includes('voided');
+            const isApproval = !isVoid && (entry.comment?.startsWith('✅') || entry.comment?.toLowerCase().includes('approved'));
+            const isRejection = !isVoid && (entry.comment?.startsWith('❌') || entry.comment?.toLowerCase().includes('rejected'));
+            const isDecision = isApproval || isRejection;
             const normalizedComment = rawComment.replace('Status changed to ', '');
             const isStatusChange = ['Completed', 'In Progress', 'Not Started'].includes(normalizedComment) || entry.comment?.startsWith('Status changed to ');
 
