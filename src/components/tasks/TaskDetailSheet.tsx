@@ -357,6 +357,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
         queryClient.invalidateQueries({ queryKey: ['task-comments', sourceTaskId] });
         queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
         queryClient.invalidateQueries({ queryKey: ['source-task-detail', sourceTaskId] });
+        queryClient.invalidateQueries({ queryKey: ['task-reviewer-live-status', taskReviewerId] });
       } catch {
         toast.error('Failed to submit decision');
         setIsSubmittingReview(false);
