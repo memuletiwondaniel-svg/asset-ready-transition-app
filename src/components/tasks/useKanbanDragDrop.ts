@@ -56,6 +56,7 @@ export function useKanbanDragDrop() {
     task: UnifiedTask,
     targetColumn: KanbanColumn,
     forceMove?: boolean, // bypass approval protection check
+    voidReason?: string, // mandatory reason when voiding approvals
   ): Promise<MoveResult> => {
     if (task.kanbanColumn === targetColumn) return 'skipped';
 
