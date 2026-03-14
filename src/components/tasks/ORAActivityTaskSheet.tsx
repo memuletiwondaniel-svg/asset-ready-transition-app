@@ -16,7 +16,7 @@ import {
 import { Calendar } from '@/components/ui/calendar';
 import { 
   Clock, CheckCircle2, Play, Upload, MessageSquare, 
-  Paperclip, X, Loader2, AlertTriangle, Trash2, GitBranch, Plus, FileText, ChevronRight
+  Paperclip, X, Loader2, AlertTriangle, Trash2, GitBranch, Plus, FileText, ChevronRight, Send
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
@@ -29,6 +29,7 @@ import { useDropzone } from 'react-dropzone';
 import type { UserTask } from '@/hooks/useUserTasks';
 import { sortP2AFeedEntries } from './p2aActivityFeedUtils';
 import { TaskReviewersSection } from './TaskReviewersSection';
+import { useTaskReviewers } from '@/hooks/useTaskReviewers';
 
 interface ORAActivityTaskSheetProps {
   task: UserTask | null;
@@ -197,6 +198,10 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
   const projectCode = metaProjectCode;
   const isP2AActivity = activityCode === 'EXE-10' || activityCode === 'P2A-01' || metadata?.action === 'create_p2a_plan' || activityName?.toLowerCase().includes('p2a');
   const isOverdue = editEndDate && isPast(editEndDate) && status !== 'COMPLETED';
+
+  // Check if task has ad-hoc reviewers (for submit button label)
+  const { totalCount: reviewerCount, allApproved: allReviewersApproved } = useTaskReviewers(!isP2AActivity ? task?.id : undefined);
+  const hasReviewers = !isP2AActivity && reviewerCount > 0;
 
   const realOraActivityId = resolvedActivityId;
 
@@ -1290,7 +1295,9 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                   className={cn(
                     "gap-1.5 animate-in fade-in slide-in-from-right-2 duration-200",
                     status === 'COMPLETED'
-                      ? "bg-green-600 hover:bg-green-700 text-white"
+                      ? hasReviewers
+                        ? "bg-blue-600 hover:bg-blue-700 text-white"
+                        : "bg-green-600 hover:bg-green-700 text-white"
                       : ""
                   )}
                   onClick={handleSave}
@@ -1298,10 +1305,17 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                 >
                   {saving && <Loader2 className="h-4 w-4 animate-spin" />}
                   {status === 'COMPLETED' ? (
-                    <>
-                      <CheckCircle2 className="h-4 w-4" />
-                      Confirm Completed
-                    </>
+                    hasReviewers ? (
+                      <>
+                        <Send className="h-4 w-4" />
+                        Submit for Approval
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="h-4 w-4" />
+                        Confirm Completed
+                      </>
+                    )
                   ) : (
                     'Save'
                   )}
