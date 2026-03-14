@@ -101,9 +101,13 @@ export const TaskActivityFeed: React.FC<TaskActivityFeedProps> = ({ taskId }) =>
                         Decision Voided
                       </Badge>
                       {(() => {
-                        const cleaned = rawComment.replace(/^⚠️\s*/, '').trim();
+                        const cleaned = rawComment
+                          .replace(/^⚠️\s*/, '')
+                          .replace(/^Decision\s+voided\s*[-–—]?\s*/i, '')
+                          .replace(/^.*?\bvoided\b.*?[-–—]\s*/i, '')
+                          .trim();
                         return cleaned ? (
-                          <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed mt-1">{cleaned}</p>
+                          <p className="text-sm text-foreground/80 whitespace-pre-wrap leading-relaxed mt-1">{cleaned}</p>
                         ) : null;
                       })()}
                     </>
