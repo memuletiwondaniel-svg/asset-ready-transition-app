@@ -105,7 +105,7 @@ export const useTaskDocument = (taskId: string | undefined, isReadOnly = false) 
       if (!data) return [];
 
       // Enrich with profiles
-      const userIds = [...new Set(data.map((c: any) => c.user_id))];
+      const userIds = [...new Set(data.map((c: any) => c.user_id))] as string[];
       const { data: profiles } = await supabase
         .from('profiles')
         .select('user_id, full_name, avatar_url')
