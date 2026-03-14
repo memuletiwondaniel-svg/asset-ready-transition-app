@@ -104,8 +104,9 @@ const ApprovalVoidWarningDialog: React.FC<{
   const meta = task?.userTask?.metadata as Record<string, any> | undefined;
   const metaSource = meta?.source;
   const isApproverTask = metaSource === 'p2a_handover' && meta?.action !== 'create_p2a_plan';
+  const isAdHocReviewTask = metaSource === 'task_review';
   const planStatus = meta?.plan_status?.toUpperCase?.() || '';
-  const isFullyApproved = !isApproverTask && ['COMPLETED', 'APPROVED'].includes(planStatus);
+  const isFullyApproved = !isApproverTask && !isAdHocReviewTask && ['COMPLETED', 'APPROVED'].includes(planStatus);
 
   const taskTitle = task?.title || '';
 
