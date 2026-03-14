@@ -91,13 +91,17 @@ const ApprovalVoidWarningDialog: React.FC<{
   open: boolean;
   task: UnifiedTask | null;
   onCancel: () => void;
-  onConfirm: () => void;
+  onConfirm: (voidReason: string) => void;
 }> = ({ open, task, onCancel, onConfirm }) => {
   const [acknowledged, setAcknowledged] = useState(false);
+  const [voidReason, setVoidReason] = useState('');
 
-  // Reset acknowledgment when dialog opens
+  // Reset state when dialog opens
   React.useEffect(() => {
-    if (open) setAcknowledged(false);
+    if (open) {
+      setAcknowledged(false);
+      setVoidReason('');
+    }
   }, [open]);
 
   // Determine if this is an approver's own approval task vs a plan creation task
@@ -109,6 +113,8 @@ const ApprovalVoidWarningDialog: React.FC<{
   const isFullyApproved = !isApproverTask && !isAdHocReviewTask && ['COMPLETED', 'APPROVED'].includes(planStatus);
 
   const taskTitle = task?.title || '';
+  const trimmedReason = voidReason.trim();
+  const isValid = acknowledged && trimmedReason.length >= 5 && trimmedReason.length <= 500;
 
   return (
     <AlertDialog open={open} onOpenChange={(o) => !o && onCancel()}>
@@ -162,7 +168,29 @@ const ApprovalVoidWarningDialog: React.FC<{
                   </>
                 )}
               </ul>
-              <label className="flex items-start gap-2.5 pt-3 cursor-pointer select-none">
+
+              {/* Mandatory reason field */}
+              <div className="space-y-1.5 pt-1">
+                <label htmlFor="void-reason" className="text-xs font-medium text-foreground">
+                  Reason for voiding <span className="text-destructive">*</span>
+                </label>
+                <Textarea
+                  id="void-reason"
+                  placeholder="Explain why you are voiding this decision..."
+                  value={voidReason}
+                  onChange={(e) => setVoidReason(e.target.value)}
+                  className="min-h-[72px] resize-none text-sm"
+                  maxLength={500}
+                />
+                <div className="flex justify-between">
+                  <p className="text-[10px] text-muted-foreground">
+                    {trimmedReason.length < 5 && trimmedReason.length > 0 ? 'Minimum 5 characters required' : '\u00A0'}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">{voidReason.length}/500</p>
+                </div>
+              </div>
+
+              <label className="flex items-start gap-2.5 pt-1 cursor-pointer select-none">
                 <Checkbox 
                   checked={acknowledged} 
                   onCheckedChange={(c) => setAcknowledged(!!c)}
@@ -178,8 +206,8 @@ const ApprovalVoidWarningDialog: React.FC<{
         <AlertDialogFooter className="gap-2 sm:gap-2">
           <AlertDialogCancel onClick={onCancel}>Cancel</AlertDialogCancel>
           <AlertDialogAction
-            onClick={onConfirm}
-            disabled={!acknowledged}
+            onClick={() => onConfirm(trimmedReason)}
+            disabled={!isValid}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isAdHocReviewTask ? 'Move Anyway – Void Decision' : isApproverTask ? 'Move Anyway – Void Approval' : isFullyApproved ? 'Move Anyway – Void Approvals' : 'Move Anyway – Cancel Review'}
