@@ -173,7 +173,7 @@ export const TaskReviewersSection: React.FC<TaskReviewersSectionProps> = ({
                         size="sm"
                         variant="ghost"
                         className="h-6 px-2 text-[10px] text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
-                        onClick={() => handleDecision(reviewer, 'REJECTED')}
+                        onClick={() => openConfirmDialog(reviewer, 'REJECTED')}
                         disabled={isSubmitting}
                       >
                         <XCircle className="h-3 w-3 mr-0.5" />
@@ -183,7 +183,7 @@ export const TaskReviewersSection: React.FC<TaskReviewersSectionProps> = ({
                         size="sm"
                         variant="ghost"
                         className="h-6 px-2 text-[10px] text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
-                        onClick={() => handleDecision(reviewer, 'APPROVED')}
+                        onClick={() => openConfirmDialog(reviewer, 'APPROVED')}
                         disabled={isSubmitting}
                       >
                         <Check className="h-3 w-3 mr-0.5" />
