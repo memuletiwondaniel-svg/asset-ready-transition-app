@@ -233,6 +233,7 @@ const KanbanCardContent: React.FC<{
   const sp = task.smartPriority;
   const { translations: t } = useLanguage();
   const reviewerSummaries = useContext(ReviewerSummaryContext);
+  const p2aApprovalSummaries = useContext(P2AApprovalContext);
 
   return (
     <Card
