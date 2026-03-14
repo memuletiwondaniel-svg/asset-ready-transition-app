@@ -886,6 +886,19 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                 <ChevronRight className="h-4 w-4 ml-auto" />
               </Button>
             )}
+            {/* Simple task: Reviewers & Activity Feed */}
+            {isSimpleTask && task.id && (
+              <>
+                <Separator />
+                <TaskReviewersSection
+                  taskId={task.id}
+                  isReadOnly={isCompleted}
+                  isTaskOwner={user?.id === task.user_id}
+                />
+                <Separator />
+                <TaskActivityFeed taskId={task.id} />
+              </>
+            )}
 
             {/* Ad-hoc Review: Source task context — activity feed & evidence */}
             {isAdHocReview && sourceTask && (
