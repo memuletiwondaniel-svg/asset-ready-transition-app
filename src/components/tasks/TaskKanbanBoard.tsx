@@ -682,6 +682,13 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     const isOraActivity = task.userTask.type === 'ora_activity' || meta?.action === 'complete_ora_activity' || meta?.ora_plan_activity_id;
     const isP2aTask = meta?.action === 'create_p2a_plan';
     const isP2aApprovalTask = meta?.source === 'p2a_handover' && !isP2aTask;
+    const isAdHocReview = meta?.source === 'task_review';
+
+    // ── Ad-hoc review tasks: intercept done → in_progress to warn about voiding decision ──
+    if (isAdHocReview && task.kanbanColumn === 'done' && (targetColumn === 'in_progress' || targetColumn === 'todo')) {
+      setWarningState({ task, targetColumn });
+      return;
+    }
 
     // ── P2A Approval tasks: intercept done → in_progress to warn about voiding approval ──
     if (isP2aApprovalTask && task.kanbanColumn === 'done' && (targetColumn === 'in_progress' || targetColumn === 'todo')) {
