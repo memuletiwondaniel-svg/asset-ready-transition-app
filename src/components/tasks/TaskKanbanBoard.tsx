@@ -526,6 +526,23 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     staleTime: 30_000,
   });
 
+  // Realtime: listen for task_reviewers changes to keep counters in sync across users
+  useEffect(() => {
+    const channel = supabase
+      .channel('task-reviewers-realtime')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'task_reviewers',
+      }, () => {
+        queryClient.invalidateQueries({ queryKey: ['task-reviewers-summary'] });
+        queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [queryClient]);
+
   // Batch-fetch P2A approval counts for author tasks (Develop P2A Plan)
   // Task metadata stores ORA plan_id, but approvers are keyed by P2A handover plan ID.
   // So we collect project_ids, resolve handover plan IDs, then fetch approvers.
