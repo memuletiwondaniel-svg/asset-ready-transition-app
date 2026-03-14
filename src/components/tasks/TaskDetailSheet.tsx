@@ -28,6 +28,7 @@ import { ORAActivityTaskSheet } from './ORAActivityTaskSheet';
 import { P2AActivityFeed } from './P2AActivityFeed';
 import { TaskActivityFeed } from './TaskActivityFeed';
 import { TaskReviewersSection } from './TaskReviewersSection';
+import { TaskAttachmentsSection } from './TaskAttachmentsSection';
 import { VCRExecutionPlanWizard } from '@/components/widgets/vcr-wizard/VCRExecutionPlanWizard';
 import type { UserTask } from '@/hooks/useUserTasks';
 import type { ProjectVCR } from '@/hooks/useProjectVCRs';
@@ -868,21 +869,26 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                 <ChevronRight className="h-4 w-4 ml-auto" />
               </Button>
             )}
-            {/* Simple task: Reviewers & Activity Feed */}
+            {/* Simple task: Attachments, Reviewers & Activity Feed */}
             {isSimpleTask && task.id && (
               <>
+                <Separator />
+                <TaskAttachmentsSection
+                  taskId={task.id}
+                  isReadOnly={isCompleted}
+                />
                 <Separator />
                 <TaskReviewersSection
                   taskId={task.id}
                   isReadOnly={isCompleted}
-                  isTaskOwner={true} /* TaskDetailSheet only opens for the task's owner or assigned reviewer */
+                  isTaskOwner={true}
                 />
                 <Separator />
                 <TaskActivityFeed taskId={task.id} />
               </>
             )}
 
-            {/* Ad-hoc Review: Source task context — activity feed & evidence */}
+            {/* Ad-hoc Review: Source task context — attachments, activity feed & evidence */}
             {isAdHocReview && sourceTask && (
               <>
                 <Separator />
@@ -910,6 +916,16 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                     </span>
                   </div>
                 </div>
+
+                {/* Attachments: source task docs + reviewer's own uploads */}
+                {sourceTaskId && task.id && (
+                  <TaskAttachmentsSection
+                    taskId={task.id}
+                    sourceTaskId={sourceTaskId}
+                    isReadOnly={isCompleted || hasAlreadyDecided}
+                    label="Documents"
+                  />
+                )}
 
                 {/* Activity Feed from source task */}
                 {sourceTaskId ? <TaskActivityFeed taskId={sourceTaskId} /> : null}
