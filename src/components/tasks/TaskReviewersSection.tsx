@@ -41,6 +41,12 @@ export const TaskReviewersSection: React.FC<TaskReviewersSectionProps> = ({
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [roleLabel, setRoleLabel] = useState('');
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    reviewer: TaskReviewer | null;
+    decision: 'APPROVED' | 'REJECTED';
+  }>({ open: false, reviewer: null, decision: 'APPROVED' });
+  const [decisionComment, setDecisionComment] = useState('');
 
   // Filter out users already added as reviewers and the current user (task owner shouldn't review own work)
   const existingUserIds = new Set(reviewers.map(r => r.user_id));
