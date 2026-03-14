@@ -92,7 +92,22 @@ export const TaskActivityFeed: React.FC<TaskActivityFeedProps> = ({ taskId }) =>
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  {isDecision ? (
+                  {isVoid ? (
+                    <>
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] px-1.5 py-0 h-4 border-0 font-semibold bg-muted text-muted-foreground"
+                      >
+                        Decision Voided
+                      </Badge>
+                      {(() => {
+                        const cleaned = rawComment.replace(/^⚠️\s*/, '').trim();
+                        return cleaned ? (
+                          <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed mt-1">{cleaned}</p>
+                        ) : null;
+                      })()}
+                    </>
+                  ) : isDecision ? (
                     <>
                       <Badge
                         variant="outline"
