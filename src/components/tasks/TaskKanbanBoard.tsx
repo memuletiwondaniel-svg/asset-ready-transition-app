@@ -318,9 +318,9 @@ const KanbanCardContent: React.FC<{
                 const isActive = planStatus === 'ACTIVE'; // submitted, under review
                 const isDraft = planStatus === 'DRAFT';
 
-                // For P2A author tasks, show approval counts when under review
-                const authorPlanId = meta?.plan_id as string | undefined;
-                const p2aAuthorApproval = authorPlanId ? p2aApprovalSummaries.get(authorPlanId) : undefined;
+                // For P2A author tasks, show approval counts when under review (keyed by project_id)
+                const authorProjectId = meta?.project_id as string | undefined;
+                const p2aAuthorApproval = authorProjectId ? p2aApprovalSummaries.get(authorProjectId) : undefined;
 
                 if (isApproved) {
                   return (
