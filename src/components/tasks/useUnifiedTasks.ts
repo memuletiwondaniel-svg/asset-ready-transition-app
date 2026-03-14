@@ -169,6 +169,11 @@ export function useUnifiedTasks(userId: string) {
         categoryLabel = 'P2A Approval';
         categoryColor = 'bg-teal-500/10 text-teal-600 border-teal-500/20';
         icon = RefreshCw;
+      } else if (source === 'task_review') {
+        category = 'action';
+        categoryLabel = 'Review';
+        categoryColor = 'bg-blue-500/10 text-blue-600 border-blue-500/20';
+        icon = ClipboardCheck;
       }
 
       const isWaiting = t.status === 'waiting';
