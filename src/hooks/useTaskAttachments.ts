@@ -33,7 +33,7 @@ export const useTaskAttachments = (taskId?: string, sourceTaskId?: string) => {
       if (error) throw error;
 
       // Enrich with uploader names
-      const uploaderIds = [...new Set((data || []).map((a: any) => a.uploaded_by))];
+      const uploaderIds = [...new Set((data || []).map((a: any) => a.uploaded_by))] as string[];
       if (uploaderIds.length > 0) {
         const { data: profiles } = await supabase
           .from('profiles')
@@ -63,7 +63,7 @@ export const useTaskAttachments = (taskId?: string, sourceTaskId?: string) => {
         .order('created_at', { ascending: false });
       if (error) throw error;
 
-      const uploaderIds = [...new Set((data || []).map((a: any) => a.uploaded_by))];
+      const uploaderIds = [...new Set((data || []).map((a: any) => a.uploaded_by))] as string[];
       if (uploaderIds.length > 0) {
         const { data: profiles } = await supabase
           .from('profiles')
