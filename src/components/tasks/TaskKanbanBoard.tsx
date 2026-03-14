@@ -504,13 +504,13 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
   );
 
   const { data: reviewerSummaries } = useQuery({
-    queryKey: ['task-reviewers-summary', doneTaskIds],
+    queryKey: ['task-reviewers-summary', allTaskIds],
     queryFn: async () => {
-      if (doneTaskIds.length === 0) return new Map<string, ReviewerSummary>();
+      if (allTaskIds.length === 0) return new Map<string, ReviewerSummary>();
       const { data, error } = await (supabase as any)
         .from('task_reviewers')
         .select('task_id, status')
-        .in('task_id', doneTaskIds);
+        .in('task_id', allTaskIds);
       if (error) throw error;
       const map = new Map<string, ReviewerSummary>();
       for (const row of data || []) {
@@ -522,7 +522,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
       }
       return map;
     },
-    enabled: doneTaskIds.length > 0,
+    enabled: allTaskIds.length > 0,
     staleTime: 30_000,
   });
 
