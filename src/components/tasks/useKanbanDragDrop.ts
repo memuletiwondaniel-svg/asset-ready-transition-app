@@ -284,6 +284,10 @@ export function useKanbanDragDrop() {
           throw new Error('Missing reviewer assignment on task metadata');
         }
 
+        if (!user?.id) {
+          throw new Error('Not authenticated');
+        }
+
         const client = supabase as any;
         const { data: updatedReviewer, error: reviewerError } = await client
           .from('task_reviewers')
