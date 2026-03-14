@@ -313,6 +313,18 @@ export function useKanbanDragDrop() {
               });
           }
 
+          // Log the move-back in the reviewer's own task activity feed
+          if (userTask.id && user) {
+            await client
+              .from('task_comments')
+              .insert({
+                task_id: userTask.id,
+                user_id: user.id,
+                comment: '🔄 Moved back to In Progress — review decision voided',
+              });
+            queryClient.invalidateQueries({ queryKey: ['task-comments', userTask.id] });
+          }
+
           // Invalidate reviewer-related queries
           queryClient.invalidateQueries({ queryKey: ['task-reviewers', sourceTaskId] });
           queryClient.invalidateQueries({ queryKey: ['task-reviewers-summary'] });
