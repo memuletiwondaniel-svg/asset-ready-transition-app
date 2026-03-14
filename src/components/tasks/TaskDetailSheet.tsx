@@ -47,7 +47,6 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [comment, setComment] = useState('');
-  const [reviewComment, setReviewComment] = useState('');
   const [action, setAction] = useState<'approve' | 'reject' | null>(null);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [oraWizardOpen, setOraWizardOpen] = useState(false);
