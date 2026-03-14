@@ -270,7 +270,58 @@ export function useKanbanDragDrop() {
         }
       }
 
-      // Don't invalidate ['user-tasks'] or ['user-orp-activities'] here — the realtime
+      // ── Ad-hoc review revert: void the reviewer's decision ──
+      if (isAdHocRevert) {
+        const taskReviewerId = meta?.task_reviewer_id as string | undefined;
+        const sourceTaskId = meta?.source_task_id as string | undefined;
+        if (taskReviewerId) {
+          const client = supabase as any;
+
+          // Check if source task has been fully approved (all reviewers approved) — block move
+          if (sourceTaskId) {
+            const { data: allReviewers } = await client
+              .from('task_reviewers')
+              .select('id, status')
+              .eq('task_id', sourceTaskId);
+            const allApproved = allReviewers?.length > 0 && allReviewers.every((r: any) => r.status === 'APPROVED');
+            if (allApproved) {
+              // Rollback — final approval already complete, can't void
+              queryClient.setQueryData(userTasksKey, previousData);
+              toast.error('Cannot revert — all reviewers have approved. The task has been finalized.');
+              return 'skipped';
+            }
+          }
+
+          // Reset reviewer status to PENDING (void the decision)
+          await client
+            .from('task_reviewers')
+            .update({
+              status: 'PENDING',
+              decided_at: null,
+              comments: null,
+            })
+            .eq('id', taskReviewerId);
+
+          // Log the void in the source task's activity feed
+          if (sourceTaskId && user) {
+            await client
+              .from('task_comments')
+              .insert({
+                task_id: sourceTaskId,
+                user_id: user.id,
+                comment: '⚠️ Voided previous review decision',
+              });
+          }
+
+          // Invalidate reviewer-related queries
+          queryClient.invalidateQueries({ queryKey: ['task-reviewers', sourceTaskId] });
+          queryClient.invalidateQueries({ queryKey: ['task-reviewers-summary'] });
+          queryClient.invalidateQueries({ queryKey: ['task-comments', sourceTaskId] });
+
+          toast.info('Review decision voided — you can review again');
+        }
+      }
+
       // subscription will handle the refetch after the DB settles. Invalidating immediately
       // causes a race condition where the GET returns stale data and overwrites our optimistic update.
       queryClient.invalidateQueries({ queryKey: ['ora-plan-activities'] });
