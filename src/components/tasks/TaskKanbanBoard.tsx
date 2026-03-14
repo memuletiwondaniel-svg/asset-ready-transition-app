@@ -527,37 +527,61 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
   });
 
   // Batch-fetch P2A approval counts for author tasks (Develop P2A Plan)
-  const p2aPlanIds = useMemo(() => {
+  // Task metadata stores ORA plan_id, but approvers are keyed by P2A handover plan ID.
+  // So we collect project_ids, resolve handover plan IDs, then fetch approvers.
+  const p2aAuthorProjectIds = useMemo(() => {
     const ids: string[] = [];
     for (const t of tasks) {
       const meta = t.userTask?.metadata as Record<string, any> | undefined;
-      if (meta?.action === 'create_p2a_plan' && meta?.plan_id) {
-        ids.push(meta.plan_id as string);
+      if (meta?.action === 'create_p2a_plan' && meta?.project_id) {
+        ids.push(meta.project_id as string);
       }
     }
     return [...new Set(ids)];
   }, [tasks]);
 
   const { data: p2aApprovalSummaries } = useQuery({
-    queryKey: ['p2a-approval-summary', p2aPlanIds],
+    queryKey: ['p2a-approval-summary-by-project', p2aAuthorProjectIds],
     queryFn: async () => {
-      if (p2aPlanIds.length === 0) return new Map<string, P2AApprovalSummary>();
-      const { data, error } = await supabase
+      if (p2aAuthorProjectIds.length === 0) return new Map<string, P2AApprovalSummary>();
+      const client = supabase as any;
+
+      // Step 1: Resolve project_ids → P2A handover plan IDs
+      const { data: plans, error: plansError } = await client
+        .from('p2a_handover_plans')
+        .select('id, project_id')
+        .in('project_id', p2aAuthorProjectIds);
+      if (plansError) throw plansError;
+      if (!plans || plans.length === 0) return new Map<string, P2AApprovalSummary>();
+
+      const handoverIds = plans.map((p: any) => p.id);
+      // Map handover_id back to project_id for lookup
+      const handoverToProject = new Map<string, string>();
+      for (const p of plans as any[]) {
+        handoverToProject.set(p.id, p.project_id);
+      }
+
+      // Step 2: Fetch approvers by handover plan IDs
+      const { data: approvers, error: appError } = await client
         .from('p2a_handover_approvers')
         .select('handover_id, status')
-        .in('handover_id', p2aPlanIds);
-      if (error) throw error;
+        .in('handover_id', handoverIds);
+      if (appError) throw appError;
+
+      // Step 3: Build summary map keyed by project_id (matching task metadata)
       const map = new Map<string, P2AApprovalSummary>();
-      for (const row of (data || []) as any[]) {
-        const existing = map.get(row.handover_id) || { total: 0, approved: 0, rejected: 0 };
+      for (const row of (approvers || []) as any[]) {
+        const projectId = handoverToProject.get(row.handover_id);
+        if (!projectId) continue;
+        const existing = map.get(projectId) || { total: 0, approved: 0, rejected: 0 };
         existing.total++;
         if (row.status === 'APPROVED') existing.approved++;
         if (row.status === 'REJECTED') existing.rejected++;
-        map.set(row.handover_id, existing);
+        map.set(projectId, existing);
       }
       return map;
     },
-    enabled: p2aPlanIds.length > 0,
+    enabled: p2aAuthorProjectIds.length > 0,
     staleTime: 30_000,
   });
 
