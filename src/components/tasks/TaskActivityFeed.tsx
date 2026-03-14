@@ -64,10 +64,11 @@ export const TaskActivityFeed: React.FC<TaskActivityFeedProps> = ({ taskId }) =>
                      c.comment?.toLowerCase().includes('approved') || c.comment?.toLowerCase().includes('rejected')
             );
             return comments.map((entry) => {
-            const isApproval = entry.comment?.startsWith('✅') || entry.comment?.toLowerCase().includes('approved');
-            const isRejection = entry.comment?.startsWith('❌') || entry.comment?.toLowerCase().includes('rejected');
-            const isDecision = isApproval || isRejection;
             const rawComment = entry.comment?.trim() || '';
+            const isVoid = entry.comment_type === 'reviewer_void' || rawComment.startsWith('⚠️') || rawComment.toLowerCase().includes('voided');
+            const isApproval = !isVoid && (entry.comment?.startsWith('✅') || entry.comment?.toLowerCase().includes('approved'));
+            const isRejection = !isVoid && (entry.comment?.startsWith('❌') || entry.comment?.toLowerCase().includes('rejected'));
+            const isDecision = isApproval || isRejection;
             const normalizedComment = rawComment.replace('Status changed to ', '');
             const isStatusChange = ['Completed', 'In Progress', 'Not Started'].includes(normalizedComment) || entry.comment?.startsWith('Status changed to ');
 
@@ -91,7 +92,22 @@ export const TaskActivityFeed: React.FC<TaskActivityFeedProps> = ({ taskId }) =>
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  {isDecision ? (
+                  {isVoid ? (
+                    <>
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] px-1.5 py-0 h-4 border-0 font-semibold bg-muted text-muted-foreground"
+                      >
+                        Decision Voided
+                      </Badge>
+                      {(() => {
+                        const cleaned = rawComment.replace(/^⚠️\s*/, '').trim();
+                        return cleaned ? (
+                          <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed mt-1">{cleaned}</p>
+                        ) : null;
+                      })()}
+                    </>
+                  ) : isDecision ? (
                     <>
                       <Badge
                         variant="outline"
