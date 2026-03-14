@@ -438,6 +438,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
 
   const isReviewTask = (['review', 'approval', 'ora_plan_review'].includes(task.type) || !!pssrId) && !isOraReviewTask && !isP2aApprovalTask;
   const isActionTask = isOraTask || isOraActivityTask || isVcrDeliveryPlanTask || isP2aTask;
+  const isSimpleTask = !isOraTask && !isOraActivityTask && !isVcrDeliveryPlanTask && !isP2aTask && !isP2aApprovalTask && !isOraReviewTask && !pssrId && !isAdHocReview;
 
   // Resolve P2A approval task project details
   const p2aApprovalPlanId = isP2aApprovalTask ? (task.metadata?.plan_id as string) : undefined;
