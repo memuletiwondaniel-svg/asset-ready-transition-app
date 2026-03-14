@@ -144,7 +144,26 @@ export const useTaskComments = (taskId: string | undefined) => {
       const merged = Array.from(dedupedMap.values());
       if (!merged.length) return [];
 
-      const userIds = [...new Set(merged.map((c) => c.user_id).filter(Boolean))] as string[];
+      // Suppress legacy/system void entries when a user-reason void entry exists
+      // for the same actor at nearly the same time.
+      const collapsed = merged.filter((entry) => {
+        if (entry.comment_type !== 'reviewer_void' || !isSystemGeneratedVoidComment(entry.comment)) {
+          return true;
+        }
+
+        const ts = new Date(entry.created_at).getTime();
+        const hasUserReasonSibling = merged.some((candidate) =>
+          candidate.id !== entry.id &&
+          candidate.comment_type === 'reviewer_void' &&
+          candidate.user_id === entry.user_id &&
+          isUserReasonVoidComment(candidate.comment) &&
+          Math.abs(new Date(candidate.created_at).getTime() - ts) <= 10_000
+        );
+
+        return !hasUserReasonSibling;
+      });
+
+      const userIds = [...new Set(collapsed.map((c) => c.user_id).filter(Boolean))] as string[];
       const { data: profiles } = userIds.length
         ? await supabase
             .from('profiles')
@@ -164,7 +183,7 @@ export const useTaskComments = (taskId: string | undefined) => {
         });
       }
 
-      return merged
+      return collapsed
         .map((c) => ({
           ...c,
           ...(profileMap.get(c.user_id) || { full_name: 'Unknown', avatar_url: null }),
