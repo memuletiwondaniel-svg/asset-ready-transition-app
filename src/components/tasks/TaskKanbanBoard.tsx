@@ -126,7 +126,9 @@ const ApprovalVoidWarningDialog: React.FC<{
             <div className="space-y-3 text-sm">
               <p>
                 <span className="font-medium text-foreground">"{taskTitle}"</span>{' '}
-                {isApproverTask
+                {isAdHocReviewTask
+                  ? 'has already been reviewed — you submitted your decision.'
+                  : isApproverTask
                   ? 'has already been completed — you approved this plan.'
                   : isFullyApproved
                     ? 'has been approved through a formal review process.'
@@ -134,7 +136,13 @@ const ApprovalVoidWarningDialog: React.FC<{
               </p>
               <p className="text-muted-foreground">Moving this task back will:</p>
               <ul className="list-disc list-inside space-y-1 text-muted-foreground ml-1">
-                {isApproverTask ? (
+                {isAdHocReviewTask ? (
+                  <>
+                    <li>Void your earlier approval or rejection</li>
+                    <li>Reset your review status to Pending</li>
+                    <li>Require you to review and decide again</li>
+                  </>
+                ) : isApproverTask ? (
                   <>
                     <li>Void your earlier approval of the P2A Plan</li>
                     <li>Require you to re-review and re-approve</li>
