@@ -322,6 +322,7 @@ export function useKanbanDragDrop() {
         }
       }
 
+      // Don't invalidate ['user-tasks'] or ['user-orp-activities'] here — the realtime
       // subscription will handle the refetch after the DB settles. Invalidating immediately
       // causes a race condition where the GET returns stale data and overwrites our optimistic update.
       queryClient.invalidateQueries({ queryKey: ['ora-plan-activities'] });
