@@ -56,11 +56,31 @@ export const TaskActivityFeed: React.FC<TaskActivityFeedProps> = ({ taskId }) =>
         </div>
       ) : comments.length > 0 ? (
         <div className="space-y-3 max-h-60 overflow-y-auto">
-          {comments.map((entry) => {
+          {/* Detect if this task has any review/approval activity — if so, "Completed" → "Submitted" */}
+          {(() => {
+            const hasReviewActivity = comments.some(
+              (c) => c.comment?.startsWith('✅') || c.comment?.startsWith('❌') ||
+                     c.comment_type === 'reviewer_decision' ||
+                     c.comment?.toLowerCase().includes('approved') || c.comment?.toLowerCase().includes('rejected')
+            );
+            return comments.map((entry) => {
             const isApproval = entry.comment?.startsWith('✅') || entry.comment?.toLowerCase().includes('approved');
             const isRejection = entry.comment?.startsWith('❌') || entry.comment?.toLowerCase().includes('rejected');
             const isDecision = isApproval || isRejection;
-            const isStatusChange = ['Completed', 'In Progress', 'Not Started'].includes(entry.comment?.trim()) || entry.comment?.startsWith('Status changed to ');
+            const rawComment = entry.comment?.trim() || '';
+            const normalizedComment = rawComment.replace('Status changed to ', '');
+            const isStatusChange = ['Completed', 'In Progress', 'Not Started'].includes(normalizedComment) || entry.comment?.startsWith('Status changed to ');
+
+            // For tasks under review, show "Submitted" instead of "Completed"
+            const isCompletedStatus = normalizedComment === 'Completed';
+            const displayLabel = isCompletedStatus && hasReviewActivity ? 'Submitted' : normalizedComment;
+            const statusColor = (isCompletedStatus && hasReviewActivity)
+              ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+              : isCompletedStatus
+                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                : normalizedComment === 'In Progress'
+                  ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                  : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400";
 
             return (
               <div key={entry.id} className="flex gap-2.5">
@@ -88,14 +108,10 @@ export const TaskActivityFeed: React.FC<TaskActivityFeedProps> = ({ taskId }) =>
                       variant="outline"
                       className={cn(
                         "text-[10px] px-1.5 py-0 h-4 border-0 font-semibold",
-                        entry.comment?.includes('Completed')
-                          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                          : entry.comment?.includes('In Progress')
-                            ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-                            : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                        statusColor
                       )}
                     >
-                      {entry.comment?.replace('Status changed to ', '')}
+                      {displayLabel}
                     </Badge>
                   ) : (
                     <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{entry.comment}</p>
