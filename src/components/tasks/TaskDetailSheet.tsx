@@ -1,8 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { CheckCircle, X, Calendar as CalendarIcon, AlertTriangle, ChevronRight, Pencil, CalendarCheck, ClipboardList, FileText, Eye, RefreshCw } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { CheckCircle, X, Calendar as CalendarIcon, AlertTriangle, ChevronRight, Pencil, CalendarCheck, ClipboardList, FileText, Eye, RefreshCw, MessageSquare, Loader2, Paperclip, ExternalLink } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -10,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
-import { format, parseISO, differenceInDays, addDays } from 'date-fns';
+import { format, parseISO, differenceInDays, addDays, formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
 import CreatePSSRWizard from '@/components/pssr/CreatePSSRWizard';
 import { ORAActivityPlanWizard } from '@/components/ora/wizard/ORAActivityPlanWizard';
@@ -42,7 +44,9 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
 }) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [comment, setComment] = useState('');
+  const [reviewComment, setReviewComment] = useState('');
   const [action, setAction] = useState<'approve' | 'reject' | null>(null);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [oraWizardOpen, setOraWizardOpen] = useState(false);
@@ -60,6 +64,78 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   const [p2aOriginalEndDate, setP2aOriginalEndDate] = useState<Date | undefined>();
   const [showP2aCalendar, setShowP2aCalendar] = useState(false);
   const [isSavingP2aDates, setIsSavingP2aDates] = useState(false);
+
+  // ── Ad-hoc task review: fetch source task context ──
+  const isAdHocReview = task?.type === 'review' && task?.metadata?.source === 'task_review';
+  const sourceTaskId = isAdHocReview ? (task?.metadata?.source_task_id as string) : undefined;
+
+  const { data: sourceTask } = useQuery({
+    queryKey: ['source-task-detail', sourceTaskId],
+    queryFn: async () => {
+      if (!sourceTaskId) return null;
+      const { data } = await supabase
+        .from('user_tasks')
+        .select('id, title, description, status, metadata, created_at')
+        .eq('id', sourceTaskId)
+        .single();
+      return data;
+    },
+    enabled: !!sourceTaskId && open,
+    staleTime: 30_000,
+  });
+
+  const sourceOraActivityId = useMemo(() => {
+    if (!sourceTask?.metadata) return undefined;
+    const meta = sourceTask.metadata as Record<string, any>;
+    const raw = meta.ora_plan_activity_id as string | undefined;
+    if (!raw) return undefined;
+    if (raw.startsWith('ora-')) return raw.slice(4);
+    if (raw.startsWith('ws-')) return raw.slice(3);
+    return raw;
+  }, [sourceTask]);
+  const sourcePlanId = (sourceTask?.metadata as Record<string, any>)?.plan_id as string | undefined;
+
+  const { data: sourceComments = [], isLoading: sourceCommentsLoading } = useQuery({
+    queryKey: ['review-activity-comments', sourceOraActivityId],
+    queryFn: async () => {
+      if (!sourceOraActivityId) return [];
+      const { data, error } = await (supabase as any)
+        .from('ora_activity_comments')
+        .select('id, comment, created_at, user_id')
+        .eq('ora_plan_activity_id', sourceOraActivityId)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      if (!data?.length) return [];
+      const userIds = [...new Set(data.map((c: any) => c.user_id))] as string[];
+      const { data: profiles } = await supabase.from('profiles').select('user_id, full_name, avatar_url').in('user_id', userIds);
+      const profileMap = new Map<string, { full_name: string | null; avatar_url: string | null }>();
+      for (const p of profiles || []) {
+        profileMap.set(p.user_id, {
+          full_name: p.full_name,
+          avatar_url: p.avatar_url?.startsWith('http') ? p.avatar_url : p.avatar_url ? supabase.storage.from('user-avatars').getPublicUrl(p.avatar_url).data.publicUrl : null,
+        });
+      }
+      return data.map((c: any) => ({ ...c, ...(profileMap.get(c.user_id) || { full_name: 'Unknown', avatar_url: null }) }));
+    },
+    enabled: !!sourceOraActivityId && open,
+  });
+
+  const { mutateAsync: addSourceComment, isPending: isAddingSourceComment } = useMutation({
+    mutationFn: async (commentText: string) => {
+      if (!sourceOraActivityId || !sourcePlanId || !user) throw new Error('Missing context');
+      const { error } = await (supabase as any).from('ora_activity_comments').insert({
+        ora_plan_activity_id: sourceOraActivityId,
+        orp_plan_id: sourcePlanId,
+        user_id: user.id,
+        comment: commentText,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['review-activity-comments', sourceOraActivityId] });
+      setReviewComment('');
+    },
+  });
 
   const oraProjectId = task?.metadata?.project_id as string | undefined;
   const isOraTask = task ? (task.type === 'ora_plan_creation' || (task.metadata?.action === 'create_ora_plan' && task.metadata?.source === 'ora_workflow')) : false;
@@ -771,22 +847,138 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
               </Button>
             )}
 
+            {/* Ad-hoc Review: Source task context — activity feed & evidence */}
+            {isAdHocReview && sourceTask && (
+              <>
+                <Separator />
+
+                {/* Source task info card */}
+                <div className="p-3 rounded-lg bg-muted/40 border border-border/60 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                    <p className="text-xs font-medium text-foreground truncate">{sourceTask.title}</p>
+                  </div>
+                  {sourceTask.description && (
+                    <p className="text-xs text-muted-foreground leading-relaxed pl-5">{sourceTask.description}</p>
+                  )}
+                  <div className="flex items-center gap-2 pl-5">
+                    <Badge variant="outline" className={cn(
+                      "text-[10px] px-1.5 py-0",
+                      sourceTask.status === 'completed' ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" :
+                      sourceTask.status === 'in_progress' ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" :
+                      "bg-muted text-muted-foreground"
+                    )}>
+                      {sourceTask.status === 'completed' ? 'Completed' : sourceTask.status === 'in_progress' ? 'In Progress' : 'Pending'}
+                    </Badge>
+                    <span className="text-[10px] text-muted-foreground">
+                      Created {format(new Date(sourceTask.created_at), 'MMM d, yyyy')}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Activity Feed from source task */}
+                <div>
+                  <p className="text-sm font-medium mb-2 flex items-center gap-1.5 text-muted-foreground">
+                    <MessageSquare className="h-4 w-4" />
+                    Activity Feed
+                    {sourceComments.length > 0 && (
+                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 ml-1">{sourceComments.length}</Badge>
+                    )}
+                  </p>
+
+                  {/* Add comment */}
+                  <div className="flex gap-2 mb-3">
+                    <Textarea
+                      placeholder="Add a comment or note..."
+                      value={reviewComment}
+                      onChange={(e) => setReviewComment(e.target.value)}
+                      className="min-h-[60px] resize-none text-sm"
+                    />
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => reviewComment.trim() && addSourceComment(reviewComment.trim())}
+                      disabled={!reviewComment.trim() || isAddingSourceComment}
+                    >
+                      {isAddingSourceComment ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Add'}
+                    </Button>
+                  </div>
+
+                  {sourceCommentsLoading ? (
+                    <div className="flex items-center justify-center py-4">
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : sourceComments.length > 0 ? (
+                    <div className="space-y-3 max-h-60 overflow-y-auto">
+                      {sourceComments.map((entry: any) => {
+                        const isStatusBadge = ['Completed', 'In Progress', 'Not Started'].includes(entry.comment?.trim()) || entry.comment?.startsWith('Status changed to ');
+                        return (
+                          <div key={entry.id} className="flex gap-2.5">
+                            <Avatar className="h-6 w-6 shrink-0 mt-0.5">
+                              {entry.avatar_url && <AvatarImage src={entry.avatar_url} />}
+                              <AvatarFallback className="text-[9px] font-medium bg-muted">
+                                {(entry.full_name || '?').slice(0, 2).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              {isStatusBadge ? (
+                                <Badge
+                                  variant="outline"
+                                  className={cn(
+                                    "text-[10px] px-1.5 py-0 h-4 border-0 font-semibold",
+                                    entry.comment?.includes('Completed') ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" :
+                                    entry.comment?.includes('In Progress') ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" :
+                                    "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                                  )}
+                                >
+                                  {entry.comment?.replace('Status changed to ', '')}
+                                </Badge>
+                              ) : entry.comment?.startsWith('✅') || entry.comment?.startsWith('❌') ? (
+                                <Badge
+                                  variant="outline"
+                                  className={cn(
+                                    "text-[10px] px-1.5 py-0 h-4 border-0 font-semibold",
+                                    entry.comment?.startsWith('✅') ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                                  )}
+                                >
+                                  {entry.comment}
+                                </Badge>
+                              ) : (
+                                <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{entry.comment}</p>
+                              )}
+                              <p className="text-[10px] text-muted-foreground/60 mt-1">
+                                {entry.full_name} · {formatDistanceToNow(parseISO(entry.created_at), { addSuffix: true })}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground italic py-2">No activity yet</p>
+                  )}
+                </div>
+              </>
+            )}
+
             {/* Comment & Approve/Reject - only for non-P2A review tasks (P2A has approve/reject in the wizard) */}
             {(isReviewTask) && (
               <>
                 <Separator />
 
-                <div>
-                  <label className="text-sm font-medium text-foreground mb-2 block">
-                    Comments <span className="text-muted-foreground font-normal">(optional)</span>
-                  </label>
-                  <Textarea
-                    placeholder="Add any comments or notes about your decision..."
-                    value={comment}
-                    onChange={(e) => setComment(e.target.value)}
-                    className="min-h-[100px] resize-none"
-                  />
-                </div>
+                {!isAdHocReview && (
+                  <div>
+                    <label className="text-sm font-medium text-foreground mb-2 block">
+                      Comments <span className="text-muted-foreground font-normal">(optional)</span>
+                    </label>
+                    <Textarea
+                      placeholder="Add any comments or notes about your decision..."
+                      value={comment}
+                      onChange={(e) => setComment(e.target.value)}
+                      className="min-h-[100px] resize-none"
+                    />
+                  </div>
+                )}
 
                 <Separator />
 
@@ -794,7 +986,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                   <p className="text-sm font-medium text-foreground">Decision</p>
                   <div className="flex items-center gap-3">
                     <Button
-                      className="flex-1 gap-2 bg-green-600 hover:bg-green-700 text-white"
+                      className="flex-1 gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
                       onClick={() => handleAction('approve')}
                     >
                       <CheckCircle className="h-4 w-4" />
