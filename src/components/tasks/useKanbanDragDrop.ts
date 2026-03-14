@@ -280,49 +280,38 @@ export function useKanbanDragDrop() {
       if (isAdHocRevert) {
         const taskReviewerId = meta?.task_reviewer_id as string | undefined;
         const sourceTaskId = meta?.source_task_id as string | undefined;
-        if (taskReviewerId) {
-          const client = supabase as any;
-
-          // Check if source task has been fully approved (all reviewers approved) — block move
-          if (sourceTaskId) {
-            const { data: allReviewers } = await client
-              .from('task_reviewers')
-              .select('id, status')
-              .eq('task_id', sourceTaskId);
-            const allApproved = allReviewers?.length > 0 && allReviewers.every((r: any) => r.status === 'APPROVED');
-            if (allApproved) {
-              // Rollback — final approval already complete, can't void
-              queryClient.setQueryData(userTasksKey, previousData);
-              toast.error('Cannot revert — all reviewers have approved. The task has been finalized.');
-              return 'skipped';
-            }
-          }
-
-          // Reset reviewer status to PENDING (void the decision)
-          // The DB trigger handle_task_reviewer_decision handles:
-          //   - Reverting the reviewer's user_task back to in_progress
-          //   - Logging the void to source task's activity feed
-          //   - Reverting the source task owner's card to in_progress if no approvals remain
-          await client
-            .from('task_reviewers')
-            .update({
-              status: 'PENDING',
-              decided_at: null,
-              comments: null,
-            })
-            .eq('id', taskReviewerId);
-
-          // Invalidate all relevant caches — trigger handles the DB writes
-          queryClient.invalidateQueries({ queryKey: ['task-reviewers', sourceTaskId] });
-          queryClient.invalidateQueries({ queryKey: ['task-reviewers-summary'] });
-          queryClient.invalidateQueries({ queryKey: ['task-comments', sourceTaskId] });
-          if (userTask.id) {
-            queryClient.invalidateQueries({ queryKey: ['task-comments', userTask.id] });
-          }
-          queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
-
-          toast.info('Review decision voided — you can review again');
+        if (!taskReviewerId) {
+          throw new Error('Missing reviewer assignment on task metadata');
         }
+
+        const client = supabase as any;
+        const { data: updatedReviewer, error: reviewerError } = await client
+          .from('task_reviewers')
+          .update({
+            status: 'PENDING',
+            decided_at: null,
+            comments: null,
+          })
+          .eq('id', taskReviewerId)
+          .eq('user_id', user?.id)
+          .select('id, status')
+          .maybeSingle();
+
+        if (reviewerError) throw reviewerError;
+        if (!updatedReviewer) {
+          throw new Error('Could not void reviewer decision');
+        }
+
+        // Invalidate all relevant caches — trigger handles the DB writes
+        queryClient.invalidateQueries({ queryKey: ['task-reviewers', sourceTaskId] });
+        queryClient.invalidateQueries({ queryKey: ['task-reviewers-summary'] });
+        queryClient.invalidateQueries({ queryKey: ['task-comments', sourceTaskId] });
+        if (userTask.id) {
+          queryClient.invalidateQueries({ queryKey: ['task-comments', userTask.id] });
+        }
+        queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+
+        toast.info('Review decision voided — you can review again');
       }
 
       // Don't invalidate ['user-tasks'] or ['user-orp-activities'] here — the realtime
