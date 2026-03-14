@@ -888,7 +888,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
               </>
             )}
 
-            {/* Ad-hoc Review: Source task context — activity feed & evidence */}
+            {/* Ad-hoc Review: Source task context — attachments, activity feed & evidence */}
             {isAdHocReview && sourceTask && (
               <>
                 <Separator />
@@ -916,6 +916,16 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                     </span>
                   </div>
                 </div>
+
+                {/* Attachments: source task docs + reviewer's own uploads */}
+                {sourceTaskId && task.id && (
+                  <TaskAttachmentsSection
+                    taskId={task.id}
+                    sourceTaskId={sourceTaskId}
+                    isReadOnly={isCompleted || hasAlreadyDecided}
+                    label="Documents"
+                  />
+                )}
 
                 {/* Activity Feed from source task */}
                 {sourceTaskId ? <TaskActivityFeed taskId={sourceTaskId} /> : null}
