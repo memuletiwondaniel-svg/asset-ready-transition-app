@@ -890,19 +890,17 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
               <>
                 <Separator />
 
-                {!isAdHocReview && (
-                  <div>
-                    <label className="text-sm font-medium text-foreground mb-2 block">
-                      Comments <span className="text-muted-foreground font-normal">(optional)</span>
-                    </label>
-                    <Textarea
-                      placeholder="Add any comments or notes about your decision..."
-                      value={comment}
-                      onChange={(e) => setComment(e.target.value)}
-                      className="min-h-[100px] resize-none"
-                    />
-                  </div>
-                )}
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-2 block">
+                    Comments <span className="text-muted-foreground font-normal">(optional)</span>
+                  </label>
+                  <Textarea
+                    placeholder="Add any comments or notes about your decision..."
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    className="min-h-[100px] resize-none"
+                  />
+                </div>
 
                 <Separator />
 
@@ -911,19 +909,19 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                   <div className="flex items-center gap-3">
                     <Button
                       className="flex-1 gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
-                      onClick={() => handleAction('approve')}
+                      onClick={() => setConfirmAction('approve')}
                       disabled={isSubmittingReview}
                     >
-                      {isSubmittingReview ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
+                      <CheckCircle className="h-4 w-4" />
                       {isAdHocReview ? 'Approve Review' : 'Approve'}
                     </Button>
                     <Button
                       variant="destructive"
                       className="flex-1 gap-2"
-                      onClick={() => handleAction('reject')}
+                      onClick={() => setConfirmAction('reject')}
                       disabled={isSubmittingReview}
                     >
-                      {isSubmittingReview ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
+                      <X className="h-4 w-4" />
                       {isAdHocReview ? 'Reject Review' : 'Reject'}
                     </Button>
                   </div>
