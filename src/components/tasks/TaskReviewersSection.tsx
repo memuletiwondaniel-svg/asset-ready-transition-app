@@ -85,11 +85,20 @@ export const TaskReviewersSection: React.FC<TaskReviewersSectionProps> = ({
     }
   };
 
-  const handleDecision = async (reviewer: TaskReviewer, decision: 'APPROVED' | 'REJECTED') => {
+  const openConfirmDialog = (reviewer: TaskReviewer, decision: 'APPROVED' | 'REJECTED') => {
+    setDecisionComment('');
+    setConfirmDialog({ open: true, reviewer, decision });
+  };
+
+  const handleConfirmedDecision = async () => {
+    const { reviewer, decision } = confirmDialog;
+    if (!reviewer) return;
     try {
-      await submitDecision({ reviewerId: reviewer.id, decision });
+      await submitDecision({ reviewerId: reviewer.id, decision, comments: decisionComment.trim() || undefined });
       toast.success(decision === 'APPROVED' ? 'Approved' : 'Rejected');
       onDecisionMade?.(decision, reviewer.full_name || 'Unknown');
+      setConfirmDialog({ open: false, reviewer: null, decision: 'APPROVED' });
+      setDecisionComment('');
     } catch {
       toast.error('Failed to submit decision');
     }
