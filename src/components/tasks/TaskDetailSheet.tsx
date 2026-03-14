@@ -319,7 +319,6 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
         // Invalidate all relevant caches
         queryClient.invalidateQueries({ queryKey: ['task-reviewers', sourceTaskId] });
         queryClient.invalidateQueries({ queryKey: ['task-reviewers-summary'] });
-        queryClient.invalidateQueries({ queryKey: ['review-activity-comments', sourceOraActivityId] });
         queryClient.invalidateQueries({ queryKey: ['task-comments', sourceTaskId] });
         queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
         queryClient.invalidateQueries({ queryKey: ['source-task-detail', sourceTaskId] });
