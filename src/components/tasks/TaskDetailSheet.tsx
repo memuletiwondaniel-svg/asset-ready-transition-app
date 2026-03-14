@@ -969,8 +969,8 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => {
-                if (confirmAction) handleAction(confirmAction);
+              onClick={async () => {
+                if (confirmAction) await handleAction(confirmAction);
                 setConfirmAction(null);
               }}
               disabled={isSubmittingReview}
