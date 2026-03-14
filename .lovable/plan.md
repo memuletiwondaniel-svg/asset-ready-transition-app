@@ -1,94 +1,77 @@
 
-Goal: Fix the ad-hoc reviewer workflow so when Daniel approves, all three surfaces stay consistent:
-1) Task card badge counter (`Under Review · X/Y`)
-2) Reviewer status chip (Pending → Approved/Rejected)
-3) Activity feed entry showing reviewer decision
 
-What I found (confirmed from code + DB):
-- The reviewer decision in `TaskDetailSheet` (for `task.type === 'review'` and `metadata.source === 'task_review'`) currently calls the generic `onApprove/onReject`, which only updates `user_tasks.status`.
-- The canonical reviewer state is in `task_reviewers.status` (used by:
-  - badge counters in `TaskKanbanBoard.tsx`
-  - reviewer chips in `TaskReviewersSection.tsx`).
-- Because `task_reviewers` is never updated in that path, DB ends up inconsistent:
-  - review task = `completed`
-  - reviewer row = `PENDING`
-- Activity feed in source task reads `ora_activity_comments`, but reviewer approval from this path does not write a decision event there.
-- DB audit confirms one live mismatch now (`review_task completed` while `task_reviewers pending`), so this is currently seen for Daniel, but the bug is systemic for any reviewer using that decision path.
+# Plan: ORIP Scoring Engine Using Existing VCR Item Categories
 
-Implementation plan
+## Impact Assessment: Zero Breaking Changes
 
-1) Database + backend consistency (single source of truth)
-- Add migration with trigger function on `task_reviewers` UPDATE (decision changes):
-  - Scope: only when `NEW.status` changes to `APPROVED` or `REJECTED`.
-  - Sync matching reviewer `user_tasks` record (`type='review'`, `metadata.source='task_review'`, `metadata.task_reviewer_id=NEW.id`) to:
-    - `status='completed'`
-    - metadata outcome fields (`outcome`, `decision_at`, optional `review_comment`)
-  - Insert activity event into `ora_activity_comments` for source task context (if source task has `ora_plan_activity_id` + `plan_id`), attributed to reviewer user.
-- Add idempotency guards to avoid duplicate comment inserts if status is toggled/re-saved.
-- Add backfill SQL in same migration:
-  - Find historical mismatches where reviewer task is already completed/cancelled but `task_reviewers` still pending.
-  - Update `task_reviewers` to `APPROVED/REJECTED` accordingly.
-  - Insert missing activity entries for those corrected rows.
+**No existing workflows will be affected.** The approach reuses the existing `vcr_item_categories` table (Design Integrity, Technical Integrity, Operating Integrity, Management Systems, Health & Safety) as the readiness dimensions for ORI scoring. All changes are additive:
 
-2) Frontend decision path correction (`TaskDetailSheet`)
-- For ad-hoc review cards (`isAdHocReview`):
-  - Replace generic `onApprove/onReject` path with direct reviewer decision mutation against `task_reviewers` row (`metadata.task_reviewer_id`).
-  - Keep generic path for non-ad-hoc workflows (P2A, ORA review, etc.).
-- UX polish (enterprise-grade):
-  - Button copy for review tasks: “Approve Review” / “Reject Review”
-  - Show inline loading state + disable both buttons during submit
-  - Success toast reflects final action (“Review approved”, “Review rejected”)
+- The `vcr_item_categories` table gets a `tenant_id` column and weight/confidence fields -- existing rows remain intact
+- The `readiness_nodes` table gets a new nullable `dimension_id` column pointing to `vcr_item_categories`
+- The `sync_readiness_nodes` and `calculate_ori_score` functions are replaced with enhanced versions that use category-based dimensions instead of module-based grouping
+- Existing P2A, ORA, PSSR, ORM workflows are untouched -- the ontology layer only reads from them
 
-3) Query/cache invalidation to remove stale UI
-- In `useTaskReviewers.ts` `submitDecision.onSuccess`, also invalidate:
-  - `['user-tasks']`
-  - `['task-reviewers-summary']` (kanban counter source)
-- In `TaskDetailSheet` ad-hoc decision success:
-  - invalidate `['task-reviewers', sourceTaskId]`
-  - invalidate `['review-activity-comments', sourceOraActivityId]`
-  - invalidate `['user-tasks']`
-- This ensures immediate refresh for the acting user.
+## Current VCR Item Categories (Become Readiness Dimensions)
 
-4) Realtime robustness (cross-user visibility)
-- Add lightweight realtime listener for `task_reviewers` changes in `TaskKanbanBoard` (or shared hook), filtered by relevant source task IDs:
-  - On insert/update/delete: invalidate `task-reviewers-summary` + `user-tasks`.
-- Optional fallback: low-frequency polling when subscription is disconnected.
-- This prevents “approved but still 0/2” perception for other users viewing board concurrently.
+| Code | Name | Active |
+|------|------|--------|
+| DI2 | Design Integrity | Yes |
+| TI | Technical Integrity | Yes |
+| OI | Operating Integrity | Yes |
+| MS | Management Systems | Yes |
+| HS | Health & Safety | Yes |
 
-5) Safety scope / non-regression
-- Trigger logic explicitly scoped to `task_review` workflow only.
-- No changes to P2A approval path (`p2a_handover_approvers`) and no changes to unrelated task types.
-- No schema-breaking table redesign; additive trigger/function + backfill only.
+These become the tenant-configurable readiness dimensions. Different tenants can add/rename/reweight their own categories.
 
-Validation checklist (must pass)
-1. Daniel opens his review task and clicks Approve:
-   - `task_reviewers.status` becomes `APPROVED`
-   - review task becomes `completed`
-   - source card badge becomes `Under Review · 1/2`
-   - source reviewer list shows Daniel = Approved
-   - activity feed includes Daniel approval event
-2. Ewan approves afterward:
-   - badge becomes `Approved` (or `Under Review · 2/2` then Approved depending current UI rule)
-3. Reject path:
-   - reviewer row = `REJECTED`
-   - source badge = `Rejected`
-   - feed logs rejection event
-4. P2A “Develop P2A Plan” still behaves unchanged.
-5. No new mismatch rows from audit query:
-   - `review_task completed + reviewer pending` should be zero.
+## Implementation Tasks
 
-Technical details (concise)
-```text
-Current broken flow:
-Reviewer TaskDetailSheet approve
-  -> updates user_tasks only
-  -> task_reviewers unchanged (still PENDING)
-  -> counters/chips wrong, no activity event
+### Task 1: Extend `vcr_item_categories` for ORI Scoring
+Add columns to make categories serve double duty as readiness dimensions:
+- `tenant_id UUID` (nullable, defaults via trigger -- existing rows get current tenant)
+- `default_weight NUMERIC(5,4)` (e.g., 0.20 = 20%)
+- `confidence_factor_default NUMERIC(3,2)` (default 0.8)
+- `risk_severity_multiplier NUMERIC(3,1)` (default 1.0)
+- `is_readiness_dimension BOOLEAN DEFAULT true`
 
-Planned fixed flow:
-Reviewer TaskDetailSheet approve/reject
-  -> updates task_reviewers (canonical)
-  -> DB trigger syncs reviewer user_task + logs activity
-  -> frontend invalidates summary/feed/task queries
-  -> all views stay consistent
+Add `dimension_id UUID REFERENCES vcr_item_categories(id)` to `readiness_nodes`.
+
+### Task 2: Enhanced ORI Formula
+Replace `calculate_ori_score()` with the full ORIP formula:
+
 ```
+DS_i = (Σ Subcomponent_Weight × Completion%) × Confidence_Factor
+RP_i = Σ (Risk_Severity × Impact_Multiplier)  -- capped at 15%
+ORI  = Σ (Dimension_Weight_i × DS_i) − Global_Risk_Penalty
+SCS  = ORI × Schedule_Adherence × Critical_Path_Stability
+```
+
+Add columns to `ori_scores`: `dimension_scores JSONB`, `risk_penalty_total NUMERIC`, `startup_confidence_score NUMERIC`, `schedule_adherence_index NUMERIC`, `critical_path_stability_index NUMERIC`.
+
+Add `confidence_factor NUMERIC(3,2) DEFAULT 0.8` and `risk_severity TEXT DEFAULT 'none'` to `readiness_nodes`.
+
+### Task 3: Update Sync Function
+Update `sync_readiness_nodes()` to auto-assign `dimension_id` by mapping:
+- P2A VCR prerequisites → mapped via their `vcr_items.category_id` directly to `vcr_item_categories`
+- ORA activities → default to "Operating Integrity" or map via metadata
+- PSSR items → map via PSSR checklist category → nearest VCR category
+- ORM deliverables → default to "Management Systems"
+- Training → default to "Operating Integrity"
+
+Set confidence factors: completed/approved = 1.0, in-progress = 0.8, not-started = 0.7.
+
+### Task 4: Executive Dashboard Enhancement
+Redesign `ExecutiveDashboard.tsx` to match the strategic layout:
+- **Top Banner**: Large ORI + SCS + color coding (Green >85, Amber 70-85, Red <70)
+- **Dimension Breakdown**: Bar/table showing each VCR category's score, trend arrow, risk level
+- **Top 5 Startup Blockers**: Blocked/critical nodes with severity
+- **Predictive Trend**: ORI line chart with dashed target curve
+- **Risk Impact Summary**: 4 stat boxes (Open High Risks, Startup-blocking, Dimensions below 70%, Systems below 60%)
+
+### Task 5: Tenant-Configurable Weight Profiles
+Update the existing `ori_weight_profiles` to store dimension-based weights keyed by `vcr_item_categories.id` instead of module names. Add a simple admin UI for editing weights per tenant.
+
+### Task 6: Update Living Documents
+- **Security & Compliance Doc**: Add rows for Readiness Dimensions, Risk Penalty Engine, Startup Confidence Score (mark as Active)
+- **Platform Guide**: Add "Readiness Ontology & Scoring Engine" section documenting the 6 dimensions, ORI formula, SCS
+- **Strategic North Star**: Update scoring engine status from Planned to Active, add dimension-based architecture detail
+

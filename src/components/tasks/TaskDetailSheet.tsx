@@ -345,13 +345,50 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
     }
   };
 
-  const handleAction = (type: 'approve' | 'reject') => {
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+
+  const handleAction = async (type: 'approve' | 'reject') => {
     if (!task) return;
-    if (type === 'approve') {
-      onApprove(task.id, comment);
+
+    // Ad-hoc review: update task_reviewers directly (canonical source of truth)
+    if (isAdHocReview && task.metadata?.task_reviewer_id) {
+      setIsSubmittingReview(true);
+      try {
+        const decision = type === 'approve' ? 'APPROVED' : 'REJECTED';
+        const { error } = await (supabase as any)
+          .from('task_reviewers')
+          .update({
+            status: decision,
+            decided_at: new Date().toISOString(),
+            comments: comment || null,
+          })
+          .eq('id', task.metadata.task_reviewer_id);
+
+        if (error) throw error;
+
+        toast.success(type === 'approve' ? 'Review approved' : 'Review rejected');
+
+        // Invalidate all relevant caches
+        queryClient.invalidateQueries({ queryKey: ['task-reviewers', sourceTaskId] });
+        queryClient.invalidateQueries({ queryKey: ['task-reviewers-summary'] });
+        queryClient.invalidateQueries({ queryKey: ['review-activity-comments', sourceOraActivityId] });
+        queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+        queryClient.invalidateQueries({ queryKey: ['source-task-detail', sourceTaskId] });
+      } catch {
+        toast.error('Failed to submit decision');
+        setIsSubmittingReview(false);
+        return;
+      }
+      setIsSubmittingReview(false);
     } else {
-      onReject(task.id, comment);
+      // Generic path for P2A, ORA, etc.
+      if (type === 'approve') {
+        onApprove(task.id, comment);
+      } else {
+        onReject(task.id, comment);
+      }
     }
+
     setComment('');
     setAction(null);
     onOpenChange(false);
@@ -988,17 +1025,19 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                     <Button
                       className="flex-1 gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
                       onClick={() => handleAction('approve')}
+                      disabled={isSubmittingReview}
                     >
-                      <CheckCircle className="h-4 w-4" />
-                      Approve
+                      {isSubmittingReview ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
+                      {isAdHocReview ? 'Approve Review' : 'Approve'}
                     </Button>
                     <Button
                       variant="destructive"
                       className="flex-1 gap-2"
                       onClick={() => handleAction('reject')}
+                      disabled={isSubmittingReview}
                     >
-                      <X className="h-4 w-4" />
-                      Reject
+                      {isSubmittingReview ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
+                      {isAdHocReview ? 'Reject Review' : 'Reject'}
                     </Button>
                   </div>
                 </div>

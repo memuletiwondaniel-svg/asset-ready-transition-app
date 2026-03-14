@@ -121,6 +121,8 @@ export const useTaskReviewers = (taskId: string | undefined) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['task-reviewers', taskId] });
+      queryClient.invalidateQueries({ queryKey: ['task-reviewers-summary'] });
+      queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
     },
   });
 
