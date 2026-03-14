@@ -24,7 +24,7 @@ const COLUMN_TO_ORA_STATUS: Record<KanbanColumn, string> = {
 export type MoveResult = 'moved' | 'blocked' | 'needs_warning' | 'skipped';
 
 /**
- * Check if a task is protected by external approvals (ORA Plan, P2A Plan)
+ * Check if a task is protected by external approvals (ORA Plan, P2A Plan, ad-hoc review)
  */
 function isProtectedWorkflowTask(task: UnifiedTask): boolean {
   return task.isApprovalProtected === true;
