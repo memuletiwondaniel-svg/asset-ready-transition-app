@@ -86,6 +86,8 @@ export const useTaskReviewers = (taskId: string | undefined) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['task-reviewers', taskId] });
+      // Also invalidate user-tasks so the reviewer's tray updates
+      queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
     },
   });
 
