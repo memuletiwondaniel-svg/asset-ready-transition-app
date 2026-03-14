@@ -932,7 +932,40 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
         </SheetContent>
       </Sheet>
 
-      {/* CreatePSSRWizard - Lead Review Mode with Step 5 Final Review */}
+      {/* Confirmation dialog for approve/reject */}
+      <AlertDialog open={!!confirmAction} onOpenChange={(open) => { if (!open) setConfirmAction(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmAction === 'approve' ? 'Confirm Approval' : 'Confirm Rejection'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmAction === 'approve'
+                ? 'Are you sure you want to approve? This action cannot be undone.'
+                : 'Are you sure you want to reject? This action cannot be undone.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (confirmAction) handleAction(confirmAction);
+                setConfirmAction(null);
+              }}
+              disabled={isSubmittingReview}
+              className={cn(
+                confirmAction === 'approve'
+                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                  : 'bg-destructive hover:bg-destructive/90 text-destructive-foreground'
+              )}
+            >
+              {isSubmittingReview ? 'Submitting...' : confirmAction === 'approve' ? 'Approve' : 'Reject'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+
       {pssrId && (
         <CreatePSSRWizard
           open={wizardOpen}
