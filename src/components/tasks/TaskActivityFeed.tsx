@@ -122,7 +122,8 @@ export const TaskActivityFeed: React.FC<TaskActivityFeedProps> = ({ taskId }) =>
                 </div>
               </div>
             );
-          })}
+          });
+          })()}
         </div>
       ) : (
         <p className="text-xs text-muted-foreground italic py-2">No activity yet</p>
