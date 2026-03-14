@@ -56,6 +56,7 @@ export function useKanbanDragDrop() {
     task: UnifiedTask,
     targetColumn: KanbanColumn,
     forceMove?: boolean, // bypass approval protection check
+    voidReason?: string, // mandatory reason when voiding approvals
   ): Promise<MoveResult> => {
     if (task.kanbanColumn === targetColumn) return 'skipped';
 
@@ -217,7 +218,7 @@ export function useKanbanDragDrop() {
               user_id: currentUser.id,
               role_name: 'Submitter',
               status: 'REVERTED',
-              comments: null,
+              comments: voidReason || null,
               cycle: revertCycle,
               approved_at: new Date().toISOString(),
             });
@@ -304,6 +305,16 @@ export function useKanbanDragDrop() {
         if (reviewerError) throw reviewerError;
         if (!updatedReviewer) {
           throw new Error('Could not void reviewer decision');
+        }
+
+        // Log the void reason as a comment for audit trail
+        if (voidReason && sourceTaskId) {
+          await client.from('task_comments').insert({
+            task_id: sourceTaskId,
+            user_id: user.id,
+            comment: `⚠️ Decision voided — ${voidReason}`,
+            comment_type: 'reviewer_void',
+          });
         }
 
         // Invalidate all relevant caches — trigger handles the DB writes
