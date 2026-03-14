@@ -1295,7 +1295,9 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                   className={cn(
                     "gap-1.5 animate-in fade-in slide-in-from-right-2 duration-200",
                     status === 'COMPLETED'
-                      ? "bg-green-600 hover:bg-green-700 text-white"
+                      ? hasReviewers
+                        ? "bg-blue-600 hover:bg-blue-700 text-white"
+                        : "bg-green-600 hover:bg-green-700 text-white"
                       : ""
                   )}
                   onClick={handleSave}
@@ -1303,10 +1305,17 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                 >
                   {saving && <Loader2 className="h-4 w-4 animate-spin" />}
                   {status === 'COMPLETED' ? (
-                    <>
-                      <CheckCircle2 className="h-4 w-4" />
-                      Confirm Completed
-                    </>
+                    hasReviewers ? (
+                      <>
+                        <Send className="h-4 w-4" />
+                        Submit for Approval
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="h-4 w-4" />
+                        Confirm Completed
+                      </>
+                    )
                   ) : (
                     'Save'
                   )}
