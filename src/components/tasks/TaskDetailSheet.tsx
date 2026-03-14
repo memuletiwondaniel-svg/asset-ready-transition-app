@@ -28,6 +28,7 @@ import { ORAActivityTaskSheet } from './ORAActivityTaskSheet';
 import { P2AActivityFeed } from './P2AActivityFeed';
 import { TaskActivityFeed } from './TaskActivityFeed';
 import { TaskReviewersSection } from './TaskReviewersSection';
+import { TaskAttachmentsSection } from './TaskAttachmentsSection';
 import { VCRExecutionPlanWizard } from '@/components/widgets/vcr-wizard/VCRExecutionPlanWizard';
 import type { UserTask } from '@/hooks/useUserTasks';
 import type { ProjectVCR } from '@/hooks/useProjectVCRs';
