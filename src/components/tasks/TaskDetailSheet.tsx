@@ -929,7 +929,8 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                   </div>
                 </div>
 
-                {/* Activity Feed from source task */}
+                {/* Activity Feed from source task - use task_comments for simple tasks, ora_activity_comments for ORA tasks */}
+                {sourceOraActivityId ? (
                 <div>
                   <p className="text-sm font-medium mb-2 flex items-center gap-1.5 text-muted-foreground">
                     <MessageSquare className="h-4 w-4" />
@@ -1011,6 +1012,9 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                     <p className="text-xs text-muted-foreground italic py-2">No activity yet</p>
                   )}
                 </div>
+                ) : sourceTaskId ? (
+                  <TaskActivityFeed taskId={sourceTaskId} />
+                ) : null}
               </>
             )}
 
