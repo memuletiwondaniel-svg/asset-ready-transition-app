@@ -84,58 +84,6 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
     staleTime: 30_000,
   });
 
-  const sourceOraActivityId = useMemo(() => {
-    if (!sourceTask?.metadata) return undefined;
-    const meta = sourceTask.metadata as Record<string, any>;
-    const raw = meta.ora_plan_activity_id as string | undefined;
-    if (!raw) return undefined;
-    if (raw.startsWith('ora-')) return raw.slice(4);
-    if (raw.startsWith('ws-')) return raw.slice(3);
-    return raw;
-  }, [sourceTask]);
-  const sourcePlanId = (sourceTask?.metadata as Record<string, any>)?.plan_id as string | undefined;
-
-  const { data: sourceComments = [], isLoading: sourceCommentsLoading } = useQuery({
-    queryKey: ['review-activity-comments', sourceOraActivityId],
-    queryFn: async () => {
-      if (!sourceOraActivityId) return [];
-      const { data, error } = await (supabase as any)
-        .from('ora_activity_comments')
-        .select('id, comment, created_at, user_id')
-        .eq('ora_plan_activity_id', sourceOraActivityId)
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      if (!data?.length) return [];
-      const userIds = [...new Set(data.map((c: any) => c.user_id))] as string[];
-      const { data: profiles } = await supabase.from('profiles').select('user_id, full_name, avatar_url').in('user_id', userIds);
-      const profileMap = new Map<string, { full_name: string | null; avatar_url: string | null }>();
-      for (const p of profiles || []) {
-        profileMap.set(p.user_id, {
-          full_name: p.full_name,
-          avatar_url: p.avatar_url?.startsWith('http') ? p.avatar_url : p.avatar_url ? supabase.storage.from('user-avatars').getPublicUrl(p.avatar_url).data.publicUrl : null,
-        });
-      }
-      return data.map((c: any) => ({ ...c, ...(profileMap.get(c.user_id) || { full_name: 'Unknown', avatar_url: null }) }));
-    },
-    enabled: !!sourceOraActivityId && open,
-  });
-
-  const { mutateAsync: addSourceComment, isPending: isAddingSourceComment } = useMutation({
-    mutationFn: async (commentText: string) => {
-      if (!sourceOraActivityId || !sourcePlanId || !user) throw new Error('Missing context');
-      const { error } = await (supabase as any).from('ora_activity_comments').insert({
-        ora_plan_activity_id: sourceOraActivityId,
-        orp_plan_id: sourcePlanId,
-        user_id: user.id,
-        comment: commentText,
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['review-activity-comments', sourceOraActivityId] });
-      setReviewComment('');
-    },
-  });
 
   const oraProjectId = task?.metadata?.project_id as string | undefined;
   const isOraTask = task ? (task.type === 'ora_plan_creation' || (task.metadata?.action === 'create_ora_plan' && task.metadata?.source === 'ora_workflow')) : false;
