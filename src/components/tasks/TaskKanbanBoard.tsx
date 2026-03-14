@@ -354,9 +354,9 @@ const KanbanCardContent: React.FC<{
                         "text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap",
                         allDone
                           ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                          : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                          : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
                       )}>
-                        {allDone ? 'Approved' : `Under Review · ${p2aAuthorApproval.approved}/${p2aAuthorApproval.total}`}
+                        {allDone ? `Approved · ${p2aAuthorApproval.total}/${p2aAuthorApproval.total}` : `Awaiting Approval · ${p2aAuthorApproval.approved}/${p2aAuthorApproval.total}`}
                       </span>
                     );
                   }
