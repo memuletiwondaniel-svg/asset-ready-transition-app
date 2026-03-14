@@ -21,6 +21,12 @@ const normalizeOraActivityId = (raw?: string): string | undefined => {
   return raw;
 };
 
+const isSystemGeneratedVoidComment = (comment?: string): boolean =>
+  !!comment && /^⚠️\s+.*\bvoided\s+their\b.*\bdecision\b/i.test(comment.trim());
+
+const isUserReasonVoidComment = (comment?: string): boolean =>
+  !!comment && /^⚠️\s*Decision\s+voided\s*[-–—]\s*/i.test(comment.trim());
+
 export const useTaskComments = (taskId: string | undefined) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
