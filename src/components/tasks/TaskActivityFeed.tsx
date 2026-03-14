@@ -57,7 +57,9 @@ export const TaskActivityFeed: React.FC<TaskActivityFeedProps> = ({ taskId }) =>
       ) : comments.length > 0 ? (
         <div className="space-y-3 max-h-60 overflow-y-auto">
           {comments.map((entry) => {
-            const isDecision = entry.comment?.startsWith('✅') || entry.comment?.startsWith('❌');
+            const isApproval = entry.comment?.startsWith('✅') || entry.comment?.toLowerCase().includes('approved');
+            const isRejection = entry.comment?.startsWith('❌') || entry.comment?.toLowerCase().includes('rejected');
+            const isDecision = isApproval || isRejection;
             const isStatusChange = ['Completed', 'In Progress', 'Not Started'].includes(entry.comment?.trim()) || entry.comment?.startsWith('Status changed to ');
 
             return (
@@ -74,12 +76,12 @@ export const TaskActivityFeed: React.FC<TaskActivityFeedProps> = ({ taskId }) =>
                       variant="outline"
                       className={cn(
                         "text-[10px] px-1.5 py-0 h-4 border-0 font-semibold",
-                        entry.comment?.startsWith('✅')
+                        isApproval
                           ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
                           : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
                       )}
                     >
-                      {entry.comment}
+                      {isApproval ? 'Approved' : 'Rejected'}
                     </Badge>
                   ) : isStatusChange ? (
                     <Badge
