@@ -293,6 +293,10 @@ export function useKanbanDragDrop() {
           }
 
           // Reset reviewer status to PENDING (void the decision)
+          // The DB trigger handle_task_reviewer_decision handles:
+          //   - Reverting the reviewer's user_task back to in_progress
+          //   - Logging the void to source task's activity feed
+          //   - Reverting the source task owner's card to in_progress if no approvals remain
           await client
             .from('task_reviewers')
             .update({
@@ -302,33 +306,14 @@ export function useKanbanDragDrop() {
             })
             .eq('id', taskReviewerId);
 
-          // Log the void in the source task's activity feed
-          if (sourceTaskId && user) {
-            await client
-              .from('task_comments')
-              .insert({
-                task_id: sourceTaskId,
-                user_id: user.id,
-                comment: '⚠️ Voided previous review decision',
-              });
-          }
-
-          // Log the move-back in the reviewer's own task activity feed
-          if (userTask.id && user) {
-            await client
-              .from('task_comments')
-              .insert({
-                task_id: userTask.id,
-                user_id: user.id,
-                comment: '🔄 Moved back to In Progress — review decision voided',
-              });
-            queryClient.invalidateQueries({ queryKey: ['task-comments', userTask.id] });
-          }
-
-          // Invalidate reviewer-related queries
+          // Invalidate all relevant caches — trigger handles the DB writes
           queryClient.invalidateQueries({ queryKey: ['task-reviewers', sourceTaskId] });
           queryClient.invalidateQueries({ queryKey: ['task-reviewers-summary'] });
           queryClient.invalidateQueries({ queryKey: ['task-comments', sourceTaskId] });
+          if (userTask.id) {
+            queryClient.invalidateQueries({ queryKey: ['task-comments', userTask.id] });
+          }
+          queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
 
           toast.info('Review decision voided — you can review again');
         }

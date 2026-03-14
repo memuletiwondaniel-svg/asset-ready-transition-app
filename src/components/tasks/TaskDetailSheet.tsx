@@ -304,6 +304,10 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
     if (!task) return;
 
     // Ad-hoc review: update task_reviewers directly (canonical source of truth)
+    // The DB trigger handle_task_reviewer_decision handles:
+    //   - Syncing reviewer's user_task to 'completed' (moves card to Done)
+    //   - Logging the decision to task_comments (activity feed)
+    //   - Logging to ora_activity_comments if ORA-linked
     if (isAdHocReview && task.metadata?.task_reviewer_id) {
       setIsSubmittingReview(true);
       try {
@@ -319,30 +323,9 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
 
         if (error) throw error;
 
-        // Update the reviewer's own task card to 'completed' so it moves to Done on Kanban
-        await supabase
-          .from('user_tasks')
-          .update({ status: 'completed', updated_at: new Date().toISOString() })
-          .eq('id', task.id);
-
-        // Log the decision to the SOURCE task's activity feed
-        if (sourceTaskId && user) {
-          const label = decision === 'APPROVED' ? '✅ Approved' : '❌ Rejected';
-          const feedComment = comment?.trim()
-            ? `${label}\n${comment.trim()}`
-            : label;
-          await (supabase as any)
-            .from('task_comments')
-            .insert({
-              task_id: sourceTaskId,
-              user_id: user.id,
-              comment: feedComment,
-            });
-        }
-
         toast.success(type === 'approve' ? 'Review approved' : 'Review rejected');
 
-        // Invalidate all relevant caches
+        // Invalidate all relevant caches — trigger handles the DB writes
         queryClient.invalidateQueries({ queryKey: ['task-reviewers', sourceTaskId] });
         queryClient.invalidateQueries({ queryKey: ['task-reviewers-summary'] });
         queryClient.invalidateQueries({ queryKey: ['task-comments', sourceTaskId] });
