@@ -895,8 +895,8 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
               </>
             )}
 
-            {/* Comment & Approve/Reject - only for non-P2A review tasks (P2A has approve/reject in the wizard) */}
-            {(isReviewTask) && (
+            {/* Comment & Approve/Reject - only for non-P2A review tasks that are NOT yet completed */}
+            {(isReviewTask && !isCompleted) && (
               <>
                 <Separator />
 
