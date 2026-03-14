@@ -298,6 +298,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   };
 
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<'approve' | 'reject' | null>(null);
 
   const handleAction = async (type: 'approve' | 'reject') => {
     if (!task) return;
