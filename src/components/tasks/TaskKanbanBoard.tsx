@@ -75,6 +75,10 @@ interface ApprovalWarningState {
 interface ReviewerSummary { total: number; approved: number; rejected: number; }
 const ReviewerSummaryContext = createContext<Map<string, ReviewerSummary>>(new Map());
 
+// P2A author approval counts context (keyed by plan_id from metadata)
+interface P2AApprovalSummary { total: number; approved: number; rejected: number; }
+const P2AApprovalContext = createContext<Map<string, P2AApprovalSummary>>(new Map());
+
 
 const getColumns = (t: any) => [
   { key: 'todo' as const, label: t.kanbanToDo || 'To Do', icon: Circle, accent: 'border-l-slate-400', headerBg: 'bg-gradient-to-r from-slate-200/90 to-slate-100/60 dark:from-slate-800/50 dark:to-slate-900/20', iconColor: 'text-slate-500', headerText: 'text-foreground', emptyIcon: Inbox, emptyMsg: t.kanbanEmptyToDo || 'Nothing to do — nice!' },
@@ -229,6 +233,7 @@ const KanbanCardContent: React.FC<{
   const sp = task.smartPriority;
   const { translations: t } = useLanguage();
   const reviewerSummaries = useContext(ReviewerSummaryContext);
+  const p2aApprovalSummaries = useContext(P2AApprovalContext);
 
   return (
     <Card
@@ -307,11 +312,15 @@ const KanbanCardContent: React.FC<{
                 );
               }
 
-              // Author tasks (Develop P2A Plan, Create ORA Plan): use plan_status
+              // Author tasks (Develop P2A Plan, Create ORA Plan): use plan_status + approval counts
               if (isWorkflowTask) {
                 const isApproved = ['APPROVED', 'COMPLETED'].includes(planStatus);
                 const isActive = planStatus === 'ACTIVE'; // submitted, under review
                 const isDraft = planStatus === 'DRAFT';
+
+                // For P2A author tasks, show approval counts when under review
+                const authorPlanId = meta?.plan_id as string | undefined;
+                const p2aAuthorApproval = authorPlanId ? p2aApprovalSummaries.get(authorPlanId) : undefined;
 
                 if (isApproved) {
                   return (
@@ -320,10 +329,38 @@ const KanbanCardContent: React.FC<{
                     </span>
                   );
                 }
-                if (isActive || isDraft) {
+                if (isActive) {
+                  // Show approval progress for P2A author tasks
+                  if (p2aAuthorApproval && p2aAuthorApproval.total > 0) {
+                    if (p2aAuthorApproval.rejected > 0) {
+                      return (
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                          Rejected
+                        </span>
+                      );
+                    }
+                    const allDone = p2aAuthorApproval.approved >= p2aAuthorApproval.total;
+                    return (
+                      <span className={cn(
+                        "text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap",
+                        allDone
+                          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                          : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                      )}>
+                        {allDone ? 'Approved' : `Under Review · ${p2aAuthorApproval.approved}/${p2aAuthorApproval.total}`}
+                      </span>
+                    );
+                  }
                   return (
                     <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-                      {isActive ? 'Under Review' : 'Draft'}
+                      Under Review
+                    </span>
+                  );
+                }
+                if (isDraft) {
+                  return (
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                      Draft
                     </span>
                   );
                 }
@@ -486,6 +523,41 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
       return map;
     },
     enabled: doneTaskIds.length > 0,
+    staleTime: 30_000,
+  });
+
+  // Batch-fetch P2A approval counts for author tasks (Develop P2A Plan)
+  const p2aPlanIds = useMemo(() => {
+    const ids: string[] = [];
+    for (const t of tasks) {
+      const meta = t.userTask?.metadata as Record<string, any> | undefined;
+      if (meta?.action === 'create_p2a_plan' && meta?.plan_id) {
+        ids.push(meta.plan_id as string);
+      }
+    }
+    return [...new Set(ids)];
+  }, [tasks]);
+
+  const { data: p2aApprovalSummaries } = useQuery({
+    queryKey: ['p2a-approval-summary', p2aPlanIds],
+    queryFn: async () => {
+      if (p2aPlanIds.length === 0) return new Map<string, P2AApprovalSummary>();
+      const { data, error } = await supabase
+        .from('p2a_handover_approvers')
+        .select('handover_id, status')
+        .in('handover_id', p2aPlanIds);
+      if (error) throw error;
+      const map = new Map<string, P2AApprovalSummary>();
+      for (const row of (data || []) as any[]) {
+        const existing = map.get(row.handover_id) || { total: 0, approved: 0, rejected: 0 };
+        existing.total++;
+        if (row.status === 'APPROVED') existing.approved++;
+        if (row.status === 'REJECTED') existing.rejected++;
+        map.set(row.handover_id, existing);
+      }
+      return map;
+    },
+    enabled: p2aPlanIds.length > 0,
     staleTime: 30_000,
   });
 
@@ -698,8 +770,10 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
   };
 
   const reviewerMap = reviewerSummaries || new Map<string, ReviewerSummary>();
+  const p2aApprovalMap = p2aApprovalSummaries || new Map<string, P2AApprovalSummary>();
 
   return (
+    <P2AApprovalContext.Provider value={p2aApprovalMap}>
     <ReviewerSummaryContext.Provider value={reviewerMap}>
     <>
       <DndContext
@@ -803,5 +877,6 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
       />
     </>
     </ReviewerSummaryContext.Provider>
+    </P2AApprovalContext.Provider>
   );
 };
