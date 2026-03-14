@@ -275,6 +275,45 @@ export const TaskReviewersSection: React.FC<TaskReviewersSectionProps> = ({
           <p className="text-[10px] text-muted-foreground italic">No reviewers assigned</p>
         )}
       </div>
+
+      {/* Confirmation dialog for approve/reject */}
+      <AlertDialog open={confirmDialog.open} onOpenChange={(open) => {
+        if (!open) setConfirmDialog({ open: false, reviewer: null, decision: 'APPROVED' });
+      }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmDialog.decision === 'APPROVED' ? 'Approve Task' : 'Reject Task'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmDialog.decision === 'APPROVED'
+                ? 'Are you sure you want to approve this task? This action cannot be undone.'
+                : 'Are you sure you want to reject this task? This action cannot be undone.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <Textarea
+            placeholder="Add comments (optional)..."
+            value={decisionComment}
+            onChange={(e) => setDecisionComment(e.target.value)}
+            rows={3}
+            className="mt-2"
+          />
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmedDecision}
+              disabled={isSubmitting}
+              className={cn(
+                confirmDialog.decision === 'APPROVED'
+                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                  : 'bg-destructive hover:bg-destructive/90 text-destructive-foreground'
+              )}
+            >
+              {isSubmitting ? 'Submitting...' : confirmDialog.decision === 'APPROVED' ? 'Approve' : 'Reject'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
