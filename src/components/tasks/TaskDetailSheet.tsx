@@ -9,6 +9,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
+import {
+  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
+} from '@/components/ui/alert-dialog';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format, parseISO, differenceInDays, addDays } from 'date-fns';
@@ -294,6 +298,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   };
 
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<'approve' | 'reject' | null>(null);
 
   const handleAction = async (type: 'approve' | 'reject') => {
     if (!task) return;
@@ -885,19 +890,17 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
               <>
                 <Separator />
 
-                {!isAdHocReview && (
-                  <div>
-                    <label className="text-sm font-medium text-foreground mb-2 block">
-                      Comments <span className="text-muted-foreground font-normal">(optional)</span>
-                    </label>
-                    <Textarea
-                      placeholder="Add any comments or notes about your decision..."
-                      value={comment}
-                      onChange={(e) => setComment(e.target.value)}
-                      className="min-h-[100px] resize-none"
-                    />
-                  </div>
-                )}
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-2 block">
+                    Comments <span className="text-muted-foreground font-normal">(optional)</span>
+                  </label>
+                  <Textarea
+                    placeholder="Add any comments or notes about your decision..."
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    className="min-h-[100px] resize-none"
+                  />
+                </div>
 
                 <Separator />
 
@@ -906,19 +909,19 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                   <div className="flex items-center gap-3">
                     <Button
                       className="flex-1 gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
-                      onClick={() => handleAction('approve')}
+                      onClick={() => setConfirmAction('approve')}
                       disabled={isSubmittingReview}
                     >
-                      {isSubmittingReview ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
+                      <CheckCircle className="h-4 w-4" />
                       {isAdHocReview ? 'Approve Review' : 'Approve'}
                     </Button>
                     <Button
                       variant="destructive"
                       className="flex-1 gap-2"
-                      onClick={() => handleAction('reject')}
+                      onClick={() => setConfirmAction('reject')}
                       disabled={isSubmittingReview}
                     >
-                      {isSubmittingReview ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
+                      <X className="h-4 w-4" />
                       {isAdHocReview ? 'Reject Review' : 'Reject'}
                     </Button>
                   </div>
@@ -929,7 +932,40 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
         </SheetContent>
       </Sheet>
 
-      {/* CreatePSSRWizard - Lead Review Mode with Step 5 Final Review */}
+      {/* Confirmation dialog for approve/reject */}
+      <AlertDialog open={!!confirmAction} onOpenChange={(open) => { if (!open) setConfirmAction(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmAction === 'approve' ? 'Confirm Approval' : 'Confirm Rejection'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmAction === 'approve'
+                ? 'Are you sure you want to approve? This action cannot be undone.'
+                : 'Are you sure you want to reject? This action cannot be undone.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (confirmAction) handleAction(confirmAction);
+                setConfirmAction(null);
+              }}
+              disabled={isSubmittingReview}
+              className={cn(
+                confirmAction === 'approve'
+                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                  : 'bg-destructive hover:bg-destructive/90 text-destructive-foreground'
+              )}
+            >
+              {isSubmittingReview ? 'Submitting...' : confirmAction === 'approve' ? 'Approve' : 'Reject'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+
       {pssrId && (
         <CreatePSSRWizard
           open={wizardOpen}
