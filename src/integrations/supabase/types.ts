@@ -8404,6 +8404,82 @@ export type Database = {
           },
         ]
       }
+      task_document_comments: {
+        Row: {
+          comment: string
+          created_at: string
+          id: string
+          position_data: Json | null
+          resolved: boolean
+          selection_text: string | null
+          task_document_id: string
+          user_id: string
+        }
+        Insert: {
+          comment: string
+          created_at?: string
+          id?: string
+          position_data?: Json | null
+          resolved?: boolean
+          selection_text?: string | null
+          task_document_id: string
+          user_id: string
+        }
+        Update: {
+          comment?: string
+          created_at?: string
+          id?: string
+          position_data?: Json | null
+          resolved?: boolean
+          selection_text?: string | null
+          task_document_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_document_comments_task_document_id_fkey"
+            columns: ["task_document_id"]
+            isOneToOne: false
+            referencedRelation: "task_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_documents: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          last_edited_by: string | null
+          task_id: string
+          updated_at: string
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          id?: string
+          last_edited_by?: string | null
+          task_id: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          last_edited_by?: string | null
+          task_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_documents_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: true
+            referencedRelation: "user_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       task_reviewers: {
         Row: {
           comments: string | null

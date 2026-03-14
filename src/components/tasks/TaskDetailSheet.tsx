@@ -29,6 +29,7 @@ import { P2AActivityFeed } from './P2AActivityFeed';
 import { TaskActivityFeed } from './TaskActivityFeed';
 import { TaskReviewersSection } from './TaskReviewersSection';
 import { TaskAttachmentsSection } from './TaskAttachmentsSection';
+import CollaborativeDocumentEditor from './CollaborativeDocumentEditor';
 import { VCRExecutionPlanWizard } from '@/components/widgets/vcr-wizard/VCRExecutionPlanWizard';
 import type { UserTask } from '@/hooks/useUserTasks';
 import type { ProjectVCR } from '@/hooks/useProjectVCRs';
@@ -916,6 +917,15 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                     </span>
                   </div>
                 </div>
+
+                {/* Collaborative Document: shared with source task */}
+                {sourceTaskId && (
+                  <CollaborativeDocumentEditor
+                    taskId={task.id}
+                    sourceTaskId={sourceTaskId}
+                    isReadOnly={isCompleted || hasAlreadyDecided}
+                  />
+                )}
 
                 {/* Attachments: source task docs + reviewer's own uploads */}
                 {sourceTaskId && task.id && (
