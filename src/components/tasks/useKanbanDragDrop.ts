@@ -218,7 +218,7 @@ export function useKanbanDragDrop() {
               user_id: currentUser.id,
               role_name: 'Submitter',
               status: 'REVERTED',
-              comments: null,
+              comments: voidReason || null,
               cycle: revertCycle,
               approved_at: new Date().toISOString(),
             });
