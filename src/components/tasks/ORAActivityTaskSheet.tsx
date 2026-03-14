@@ -1064,23 +1064,14 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                 taskId={task.id}
                 isReadOnly={isReadOnly}
                 isTaskOwner={true}
-                onDecisionMade={async (decision, reviewerName, comments) => {
-                  // Log decision as activity feed comment
-                  if (realOraActivityId && planId && user) {
-                    try {
-                      const label = decision === 'APPROVED' ? '✅ Approved' : '❌ Rejected';
-                      const commentText = comments ? `${label}\n${comments}` : label;
-                      await (supabase as any)
-                        .from('ora_activity_comments')
-                        .insert({
-                          ora_plan_activity_id: realOraActivityId,
-                          orp_plan_id: planId,
-                          user_id: user.id,
-                          comment: commentText,
-                        });
-                      queryClient.invalidateQueries({ queryKey: ['ora-activity-comments'] });
-                    } catch {}
-                  }
+                onDecisionMade={async () => {
+                  // DB trigger handle_task_reviewer_decision handles logging to
+                  // task_comments and ora_activity_comments automatically.
+                  // Just invalidate caches so the UI refreshes.
+                  queryClient.invalidateQueries({ queryKey: ['ora-activity-comments'] });
+                  queryClient.invalidateQueries({ queryKey: ['task-comments'] });
+                  queryClient.invalidateQueries({ queryKey: ['task-reviewers-summary'] });
+                  queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
                 }}
               />
             )}
