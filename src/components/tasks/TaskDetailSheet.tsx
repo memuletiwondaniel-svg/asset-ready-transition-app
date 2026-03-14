@@ -72,6 +72,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   // ── Ad-hoc task review: fetch source task context ──
   const isAdHocReview = task?.type === 'review' && task?.metadata?.source === 'task_review';
   const sourceTaskId = isAdHocReview ? (task?.metadata?.source_task_id as string) : undefined;
+  const taskReviewerId = isAdHocReview ? (task?.metadata?.task_reviewer_id as string) : undefined;
 
   const { data: sourceTask } = useQuery({
     queryKey: ['source-task-detail', sourceTaskId],
@@ -87,6 +88,25 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
     enabled: !!sourceTaskId && open,
     staleTime: 30_000,
   });
+
+  // ── Live reviewer status: authoritative check for whether this reviewer has already decided ──
+  const { data: liveReviewerStatus } = useQuery({
+    queryKey: ['task-reviewer-live-status', taskReviewerId],
+    queryFn: async () => {
+      if (!taskReviewerId) return null;
+      const { data } = await (supabase as any)
+        .from('task_reviewers')
+        .select('id, status')
+        .eq('id', taskReviewerId)
+        .maybeSingle();
+      return data?.status as string | null;
+    },
+    enabled: !!taskReviewerId && open,
+    staleTime: 5_000, // Refresh frequently when sheet is open
+  });
+
+  // True if the reviewer has already submitted a decision (APPROVED or REJECTED)
+  const hasAlreadyDecided = liveReviewerStatus === 'APPROVED' || liveReviewerStatus === 'REJECTED';
 
 
   const oraProjectId = task?.metadata?.project_id as string | undefined;
