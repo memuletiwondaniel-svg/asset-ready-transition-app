@@ -96,7 +96,7 @@ export const TaskReviewersSection: React.FC<TaskReviewersSectionProps> = ({
     try {
       await submitDecision({ reviewerId: reviewer.id, decision, comments: decisionComment.trim() || undefined });
       toast.success(decision === 'APPROVED' ? 'Approved' : 'Rejected');
-      onDecisionMade?.(decision, reviewer.full_name || 'Unknown');
+      onDecisionMade?.(decision, reviewer.full_name || 'Unknown', decisionComment.trim() || undefined);
       setConfirmDialog({ open: false, reviewer: null, decision: 'APPROVED' });
       setDecisionComment('');
     } catch {

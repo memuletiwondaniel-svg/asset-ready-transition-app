@@ -1064,17 +1064,19 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                 taskId={task.id}
                 isReadOnly={isReadOnly}
                 isTaskOwner={true}
-                onDecisionMade={async (decision, reviewerName) => {
+                onDecisionMade={async (decision, reviewerName, comments) => {
                   // Log decision as activity feed comment
                   if (realOraActivityId && planId && user) {
                     try {
+                      const label = decision === 'APPROVED' ? '✅ Approved' : '❌ Rejected';
+                      const commentText = comments ? `${label}\n${comments}` : label;
                       await (supabase as any)
                         .from('ora_activity_comments')
                         .insert({
                           ora_plan_activity_id: realOraActivityId,
                           orp_plan_id: planId,
                           user_id: user.id,
-                          comment: decision === 'APPROVED' ? '✅ Approved' : '❌ Rejected',
+                          comment: commentText,
                         });
                       queryClient.invalidateQueries({ queryKey: ['ora-activity-comments'] });
                     } catch {}
