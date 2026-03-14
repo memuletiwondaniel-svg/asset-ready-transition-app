@@ -4,8 +4,13 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
+} from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 import { useTaskReviewers, type TaskReviewer } from '@/hooks/useTaskReviewers';
 import { useProfileUsers } from '@/hooks/useProfileUsers';
@@ -17,7 +22,7 @@ interface TaskReviewersSectionProps {
   isReadOnly?: boolean;
   isTaskOwner: boolean;
   /** Called when a reviewer decision is made to add to the activity feed */
-  onDecisionMade?: (decision: 'APPROVED' | 'REJECTED', reviewerName: string) => void;
+  onDecisionMade?: (decision: 'APPROVED' | 'REJECTED', reviewerName: string, comments?: string) => void;
 }
 
 export const TaskReviewersSection: React.FC<TaskReviewersSectionProps> = ({
@@ -36,6 +41,12 @@ export const TaskReviewersSection: React.FC<TaskReviewersSectionProps> = ({
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [roleLabel, setRoleLabel] = useState('');
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    reviewer: TaskReviewer | null;
+    decision: 'APPROVED' | 'REJECTED';
+  }>({ open: false, reviewer: null, decision: 'APPROVED' });
+  const [decisionComment, setDecisionComment] = useState('');
 
   // Filter out users already added as reviewers and the current user (task owner shouldn't review own work)
   const existingUserIds = new Set(reviewers.map(r => r.user_id));
@@ -74,11 +85,20 @@ export const TaskReviewersSection: React.FC<TaskReviewersSectionProps> = ({
     }
   };
 
-  const handleDecision = async (reviewer: TaskReviewer, decision: 'APPROVED' | 'REJECTED') => {
+  const openConfirmDialog = (reviewer: TaskReviewer, decision: 'APPROVED' | 'REJECTED') => {
+    setDecisionComment('');
+    setConfirmDialog({ open: true, reviewer, decision });
+  };
+
+  const handleConfirmedDecision = async () => {
+    const { reviewer, decision } = confirmDialog;
+    if (!reviewer) return;
     try {
-      await submitDecision({ reviewerId: reviewer.id, decision });
+      await submitDecision({ reviewerId: reviewer.id, decision, comments: decisionComment.trim() || undefined });
       toast.success(decision === 'APPROVED' ? 'Approved' : 'Rejected');
-      onDecisionMade?.(decision, reviewer.full_name || 'Unknown');
+      onDecisionMade?.(decision, reviewer.full_name || 'Unknown', decisionComment.trim() || undefined);
+      setConfirmDialog({ open: false, reviewer: null, decision: 'APPROVED' });
+      setDecisionComment('');
     } catch {
       toast.error('Failed to submit decision');
     }
@@ -153,7 +173,7 @@ export const TaskReviewersSection: React.FC<TaskReviewersSectionProps> = ({
                         size="sm"
                         variant="ghost"
                         className="h-6 px-2 text-[10px] text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
-                        onClick={() => handleDecision(reviewer, 'REJECTED')}
+                        onClick={() => openConfirmDialog(reviewer, 'REJECTED')}
                         disabled={isSubmitting}
                       >
                         <XCircle className="h-3 w-3 mr-0.5" />
@@ -163,7 +183,7 @@ export const TaskReviewersSection: React.FC<TaskReviewersSectionProps> = ({
                         size="sm"
                         variant="ghost"
                         className="h-6 px-2 text-[10px] text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
-                        onClick={() => handleDecision(reviewer, 'APPROVED')}
+                        onClick={() => openConfirmDialog(reviewer, 'APPROVED')}
                         disabled={isSubmitting}
                       >
                         <Check className="h-3 w-3 mr-0.5" />
@@ -255,6 +275,45 @@ export const TaskReviewersSection: React.FC<TaskReviewersSectionProps> = ({
           <p className="text-[10px] text-muted-foreground italic">No reviewers assigned</p>
         )}
       </div>
+
+      {/* Confirmation dialog for approve/reject */}
+      <AlertDialog open={confirmDialog.open} onOpenChange={(open) => {
+        if (!open) setConfirmDialog({ open: false, reviewer: null, decision: 'APPROVED' });
+      }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmDialog.decision === 'APPROVED' ? 'Approve Task' : 'Reject Task'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmDialog.decision === 'APPROVED'
+                ? 'Are you sure you want to approve this task? This action cannot be undone.'
+                : 'Are you sure you want to reject this task? This action cannot be undone.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <Textarea
+            placeholder="Add comments (optional)..."
+            value={decisionComment}
+            onChange={(e) => setDecisionComment(e.target.value)}
+            rows={3}
+            className="mt-2"
+          />
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmedDecision}
+              disabled={isSubmitting}
+              className={cn(
+                confirmDialog.decision === 'APPROVED'
+                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                  : 'bg-destructive hover:bg-destructive/90 text-destructive-foreground'
+              )}
+            >
+              {isSubmitting ? 'Submitting...' : confirmDialog.decision === 'APPROVED' ? 'Approve' : 'Reject'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
