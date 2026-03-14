@@ -869,14 +869,19 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                 <ChevronRight className="h-4 w-4 ml-auto" />
               </Button>
             )}
-            {/* Simple task: Reviewers & Activity Feed */}
+            {/* Simple task: Attachments, Reviewers & Activity Feed */}
             {isSimpleTask && task.id && (
               <>
+                <Separator />
+                <TaskAttachmentsSection
+                  taskId={task.id}
+                  isReadOnly={isCompleted}
+                />
                 <Separator />
                 <TaskReviewersSection
                   taskId={task.id}
                   isReadOnly={isCompleted}
-                  isTaskOwner={true} /* TaskDetailSheet only opens for the task's owner or assigned reviewer */
+                  isTaskOwner={true}
                 />
                 <Separator />
                 <TaskActivityFeed taskId={task.id} />
