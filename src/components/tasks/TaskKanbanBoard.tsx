@@ -497,9 +497,9 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
   const [activeTask, setActiveTask] = useState<UnifiedTask | null>(null);
   const { moveTaskToColumn } = useKanbanDragDrop();
 
-  // Batch-fetch reviewer summaries for done-column tasks
-  const doneTaskIds = useMemo(() => 
-    tasks.filter(t => t.kanbanColumn === 'done' && t.userTask?.id).map(t => t.userTask!.id),
+  // Batch-fetch reviewer summaries for ALL tasks (not just done column)
+  const allTaskIds = useMemo(() => 
+    tasks.filter(t => t.userTask?.id).map(t => t.userTask!.id),
     [tasks]
   );
 
