@@ -224,9 +224,12 @@ export function useUnifiedTasks(userId: string) {
       // Detect workflow tasks backed by external approvals
       const isOraPlanCreation = action === 'create_ora_plan' || t.type === 'ora_plan_creation';
       const isP2aPlanCreation = action === 'create_p2a_plan' || t.type === 'p2a_plan_creation';
+      const isAdHocReview = source === 'task_review';
       const planStatus = meta?.plan_status;
       const isWorkflowTask = isOraPlanCreation || isP2aPlanCreation;
-      const isApprovalProtected = isWorkflowTask && ['APPROVED', 'COMPLETED', 'ACTIVE'].includes(planStatus?.toUpperCase?.() || '');
+      // Ad-hoc review tasks are approval-protected once completed (reviewer made a decision)
+      const isApprovalProtected = (isWorkflowTask && ['APPROVED', 'COMPLETED', 'ACTIVE'].includes(planStatus?.toUpperCase?.() || ''))
+        || (isAdHocReview && t.status === 'completed');
 
       tasks.push({
         id: `ut-${t.id}`,

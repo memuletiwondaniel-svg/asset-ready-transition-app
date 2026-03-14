@@ -24,7 +24,7 @@ const COLUMN_TO_ORA_STATUS: Record<KanbanColumn, string> = {
 export type MoveResult = 'moved' | 'blocked' | 'needs_warning' | 'skipped';
 
 /**
- * Check if a task is protected by external approvals (ORA Plan, P2A Plan)
+ * Check if a task is protected by external approvals (ORA Plan, P2A Plan, ad-hoc review)
  */
 function isProtectedWorkflowTask(task: UnifiedTask): boolean {
   return task.isApprovalProtected === true;
@@ -85,6 +85,9 @@ export function useKanbanDragDrop() {
     // Determine if this is a P2A revert (moving P2A task away from done)
     const isP2aTask = meta?.action === 'create_p2a_plan';
     const isP2aRevert = isP2aTask && task.kanbanColumn === 'done' && (targetColumn === 'in_progress' || targetColumn === 'todo');
+    // Determine if this is an ad-hoc review revert
+    const isAdHocReview = meta?.source === 'task_review';
+    const isAdHocRevert = isAdHocReview && task.kanbanColumn === 'done' && (targetColumn === 'in_progress' || targetColumn === 'todo');
 
     queryClient.setQueryData(userTasksKey, (old: any) => {
       if (!old?.tasks) return old;
@@ -264,6 +267,58 @@ export function useKanbanDragDrop() {
           queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
 
           toast.info('P2A Plan reverted to Draft — approvals have been reset');
+        }
+      }
+
+      // ── Ad-hoc review revert: void the reviewer's decision ──
+      if (isAdHocRevert) {
+        const taskReviewerId = meta?.task_reviewer_id as string | undefined;
+        const sourceTaskId = meta?.source_task_id as string | undefined;
+        if (taskReviewerId) {
+          const client = supabase as any;
+
+          // Check if source task has been fully approved (all reviewers approved) — block move
+          if (sourceTaskId) {
+            const { data: allReviewers } = await client
+              .from('task_reviewers')
+              .select('id, status')
+              .eq('task_id', sourceTaskId);
+            const allApproved = allReviewers?.length > 0 && allReviewers.every((r: any) => r.status === 'APPROVED');
+            if (allApproved) {
+              // Rollback — final approval already complete, can't void
+              queryClient.setQueryData(userTasksKey, previousData);
+              toast.error('Cannot revert — all reviewers have approved. The task has been finalized.');
+              return 'skipped';
+            }
+          }
+
+          // Reset reviewer status to PENDING (void the decision)
+          await client
+            .from('task_reviewers')
+            .update({
+              status: 'PENDING',
+              decided_at: null,
+              comments: null,
+            })
+            .eq('id', taskReviewerId);
+
+          // Log the void in the source task's activity feed
+          if (sourceTaskId && user) {
+            await client
+              .from('task_comments')
+              .insert({
+                task_id: sourceTaskId,
+                user_id: user.id,
+                comment: '⚠️ Voided previous review decision',
+              });
+          }
+
+          // Invalidate reviewer-related queries
+          queryClient.invalidateQueries({ queryKey: ['task-reviewers', sourceTaskId] });
+          queryClient.invalidateQueries({ queryKey: ['task-reviewers-summary'] });
+          queryClient.invalidateQueries({ queryKey: ['task-comments', sourceTaskId] });
+
+          toast.info('Review decision voided — you can review again');
         }
       }
 

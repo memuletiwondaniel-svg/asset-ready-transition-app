@@ -104,8 +104,9 @@ const ApprovalVoidWarningDialog: React.FC<{
   const meta = task?.userTask?.metadata as Record<string, any> | undefined;
   const metaSource = meta?.source;
   const isApproverTask = metaSource === 'p2a_handover' && meta?.action !== 'create_p2a_plan';
+  const isAdHocReviewTask = metaSource === 'task_review';
   const planStatus = meta?.plan_status?.toUpperCase?.() || '';
-  const isFullyApproved = !isApproverTask && ['COMPLETED', 'APPROVED'].includes(planStatus);
+  const isFullyApproved = !isApproverTask && !isAdHocReviewTask && ['COMPLETED', 'APPROVED'].includes(planStatus);
 
   const taskTitle = task?.title || '';
 
@@ -118,14 +119,16 @@ const ApprovalVoidWarningDialog: React.FC<{
               <AlertTriangle className="h-5 w-5 text-destructive" />
             </div>
             <AlertDialogTitle className="text-lg">
-              {isApproverTask ? 'Void Your Approval?' : isFullyApproved ? 'Void All Approvals?' : 'Cancel Approval Review?'}
+              {isAdHocReviewTask ? 'Void Your Review Decision?' : isApproverTask ? 'Void Your Approval?' : isFullyApproved ? 'Void All Approvals?' : 'Cancel Approval Review?'}
             </AlertDialogTitle>
           </div>
           <AlertDialogDescription asChild>
             <div className="space-y-3 text-sm">
               <p>
                 <span className="font-medium text-foreground">"{taskTitle}"</span>{' '}
-                {isApproverTask
+                {isAdHocReviewTask
+                  ? 'has already been reviewed — you submitted your decision.'
+                  : isApproverTask
                   ? 'has already been completed — you approved this plan.'
                   : isFullyApproved
                     ? 'has been approved through a formal review process.'
@@ -133,7 +136,13 @@ const ApprovalVoidWarningDialog: React.FC<{
               </p>
               <p className="text-muted-foreground">Moving this task back will:</p>
               <ul className="list-disc list-inside space-y-1 text-muted-foreground ml-1">
-                {isApproverTask ? (
+                {isAdHocReviewTask ? (
+                  <>
+                    <li>Void your earlier approval or rejection</li>
+                    <li>Reset your review status to Pending</li>
+                    <li>Require you to review and decide again</li>
+                  </>
+                ) : isApproverTask ? (
                   <>
                     <li>Void your earlier approval of the P2A Plan</li>
                     <li>Require you to re-review and re-approve</li>
@@ -173,7 +182,7 @@ const ApprovalVoidWarningDialog: React.FC<{
             disabled={!acknowledged}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isApproverTask ? 'Move Anyway – Void Approval' : isFullyApproved ? 'Move Anyway – Void Approvals' : 'Move Anyway – Cancel Review'}
+            {isAdHocReviewTask ? 'Move Anyway – Void Decision' : isApproverTask ? 'Move Anyway – Void Approval' : isFullyApproved ? 'Move Anyway – Void Approvals' : 'Move Anyway – Cancel Review'}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -673,6 +682,13 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     const isOraActivity = task.userTask.type === 'ora_activity' || meta?.action === 'complete_ora_activity' || meta?.ora_plan_activity_id;
     const isP2aTask = meta?.action === 'create_p2a_plan';
     const isP2aApprovalTask = meta?.source === 'p2a_handover' && !isP2aTask;
+    const isAdHocReview = meta?.source === 'task_review';
+
+    // ── Ad-hoc review tasks: intercept done → in_progress to warn about voiding decision ──
+    if (isAdHocReview && task.kanbanColumn === 'done' && (targetColumn === 'in_progress' || targetColumn === 'todo')) {
+      setWarningState({ task, targetColumn });
+      return;
+    }
 
     // ── P2A Approval tasks: intercept done → in_progress to warn about voiding approval ──
     if (isP2aApprovalTask && task.kanbanColumn === 'done' && (targetColumn === 'in_progress' || targetColumn === 'todo')) {
