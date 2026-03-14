@@ -125,7 +125,11 @@ export const TaskActivityFeed: React.FC<TaskActivityFeedProps> = ({ taskId }) =>
                         {isApproval ? 'Approved' : 'Rejected'}
                       </Badge>
                       {(() => {
-                        const cleaned = rawComment.replace(/^[✅❌]\s*/, '').replace(/^(Approved|Rejected)\s*(by\s+\S.*)?$/i, '').trim();
+                        // Strip all system-generated prefixes, keeping only user-entered feedback
+                        const cleaned = rawComment
+                          .replace(/^[✅❌]\s*/, '')
+                          .replace(/^(Approved|Rejected)\s*(by\s+[^\n]*)?/i, '')
+                          .trim();
                         return cleaned ? (
                           <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed mt-1">{cleaned}</p>
                         ) : null;
