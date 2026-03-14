@@ -199,6 +199,10 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
   const isP2AActivity = activityCode === 'EXE-10' || activityCode === 'P2A-01' || metadata?.action === 'create_p2a_plan' || activityName?.toLowerCase().includes('p2a');
   const isOverdue = editEndDate && isPast(editEndDate) && status !== 'COMPLETED';
 
+  // Check if task has ad-hoc reviewers (for submit button label)
+  const { totalCount: reviewerCount, allApproved: allReviewersApproved } = useTaskReviewers(!isP2AActivity ? task?.id : undefined);
+  const hasReviewers = !isP2AActivity && reviewerCount > 0;
+
   const realOraActivityId = resolvedActivityId;
 
   // Check if P2A plan exists for "Continue" vs "Create" label
