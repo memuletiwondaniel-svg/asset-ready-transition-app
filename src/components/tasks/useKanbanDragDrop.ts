@@ -297,7 +297,7 @@ export function useKanbanDragDrop() {
             comments: null,
           })
           .eq('id', taskReviewerId)
-          .eq('user_id', user?.id)
+          .eq('user_id', user.id)
           .select('id, status')
           .maybeSingle();
 
@@ -331,7 +331,8 @@ export function useKanbanDragDrop() {
         in_progress: 'In Progress',
         waiting: 'Waiting',
       };
-      toast.success(`Task moved to ${labels[targetColumn]}`);
+      const toastColumn = isAdHocRevert ? 'in_progress' : targetColumn;
+      toast.success(`Task moved to ${labels[toastColumn]}`);
       return 'moved';
     } catch (err) {
       console.error('Failed to move task:', err);
