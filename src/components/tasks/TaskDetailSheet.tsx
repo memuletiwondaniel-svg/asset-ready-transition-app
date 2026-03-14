@@ -893,7 +893,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                 <TaskReviewersSection
                   taskId={task.id}
                   isReadOnly={isCompleted}
-                  isTaskOwner={user?.id === task.user_id}
+                  isTaskOwner={true} /* TaskDetailSheet only opens for the task's owner or assigned reviewer */
                 />
                 <Separator />
                 <TaskActivityFeed taskId={task.id} />
