@@ -1025,17 +1025,19 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                     <Button
                       className="flex-1 gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
                       onClick={() => handleAction('approve')}
+                      disabled={isSubmittingReview}
                     >
-                      <CheckCircle className="h-4 w-4" />
-                      Approve
+                      {isSubmittingReview ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
+                      {isAdHocReview ? 'Approve Review' : 'Approve'}
                     </Button>
                     <Button
                       variant="destructive"
                       className="flex-1 gap-2"
                       onClick={() => handleAction('reject')}
+                      disabled={isSubmittingReview}
                     >
-                      <X className="h-4 w-4" />
-                      Reject
+                      {isSubmittingReview ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
+                      {isAdHocReview ? 'Reject Review' : 'Reject'}
                     </Button>
                   </div>
                 </div>
