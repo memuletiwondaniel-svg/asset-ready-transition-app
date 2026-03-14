@@ -113,7 +113,28 @@ export function useUnifiedTasks(userId: string) {
   const allTasks = useMemo<UnifiedTask[]>(() => {
     const tasks: UnifiedTask[] = [];
 
-    (userTasks || []).forEach(t => {
+    // Deduplicate P2A approval tasks: when a plan goes through multiple review cycles,
+    // old completed tasks remain alongside new ones. Keep only the most recent per plan+user.
+    const deduped = (() => {
+      const p2aApprovalMap = new Map<string, typeof userTasks extends (infer T)[] ? T : never>();
+      const result: typeof userTasks = [];
+      for (const t of (userTasks || [])) {
+        const meta = t.metadata as Record<string, any> | null;
+        if (meta?.source === 'p2a_handover' && t.type === 'approval' && meta?.plan_id) {
+          const key = `${meta.plan_id}::${meta.approver_role || ''}`;
+          const existing = p2aApprovalMap.get(key);
+          if (!existing || new Date(t.created_at) > new Date(existing.created_at)) {
+            p2aApprovalMap.set(key, t);
+          }
+        } else {
+          result.push(t);
+        }
+      }
+      result.push(...p2aApprovalMap.values());
+      return result;
+    })();
+
+    deduped.forEach(t => {
       const meta = t.metadata as Record<string, any> | null;
       const source = meta?.source;
       const action = meta?.action;
