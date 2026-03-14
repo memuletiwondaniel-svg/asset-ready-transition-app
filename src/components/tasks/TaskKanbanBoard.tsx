@@ -526,6 +526,41 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     staleTime: 30_000,
   });
 
+  // Batch-fetch P2A approval counts for author tasks (Develop P2A Plan)
+  const p2aPlanIds = useMemo(() => {
+    const ids: string[] = [];
+    for (const t of tasks) {
+      const meta = t.userTask?.metadata as Record<string, any> | undefined;
+      if (meta?.action === 'create_p2a_plan' && meta?.plan_id) {
+        ids.push(meta.plan_id as string);
+      }
+    }
+    return [...new Set(ids)];
+  }, [tasks]);
+
+  const { data: p2aApprovalSummaries } = useQuery({
+    queryKey: ['p2a-approval-summary', p2aPlanIds],
+    queryFn: async () => {
+      if (p2aPlanIds.length === 0) return new Map<string, P2AApprovalSummary>();
+      const { data, error } = await supabase
+        .from('p2a_handover_approvers')
+        .select('handover_id, status')
+        .in('handover_id', p2aPlanIds);
+      if (error) throw error;
+      const map = new Map<string, P2AApprovalSummary>();
+      for (const row of (data || []) as any[]) {
+        const existing = map.get(row.handover_id) || { total: 0, approved: 0, rejected: 0 };
+        existing.total++;
+        if (row.status === 'APPROVED') existing.approved++;
+        if (row.status === 'REJECTED') existing.rejected++;
+        map.set(row.handover_id, existing);
+      }
+      return map;
+    },
+    enabled: p2aPlanIds.length > 0,
+    staleTime: 30_000,
+  });
+
   // ORA Activity sheet opened when dragging to "Done"
   const [oraActivityTask, setOraActivityTask] = useState<UserTask | null>(null);
   const [oraActivityOpen, setOraActivityOpen] = useState(false);
