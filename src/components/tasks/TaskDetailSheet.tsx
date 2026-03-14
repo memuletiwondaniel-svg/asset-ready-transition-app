@@ -311,17 +311,23 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
     if (isAdHocReview && task.metadata?.task_reviewer_id) {
       setIsSubmittingReview(true);
       try {
+        if (!user?.id) throw new Error('Not authenticated');
+
         const decision = type === 'approve' ? 'APPROVED' : 'REJECTED';
-        const { error } = await (supabase as any)
+        const { data: updatedReviewer, error } = await (supabase as any)
           .from('task_reviewers')
           .update({
             status: decision,
             decided_at: new Date().toISOString(),
             comments: comment || null,
           })
-          .eq('id', task.metadata.task_reviewer_id);
+          .eq('id', task.metadata.task_reviewer_id)
+          .eq('user_id', user.id)
+          .select('id, status')
+          .maybeSingle();
 
         if (error) throw error;
+        if (!updatedReviewer) throw new Error('Reviewer decision update was not applied');
 
         toast.success(type === 'approve' ? 'Review approved' : 'Review rejected');
 

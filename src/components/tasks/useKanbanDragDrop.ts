@@ -70,9 +70,19 @@ export function useKanbanDragDrop() {
       return 'needs_warning';
     }
 
-    const newTaskStatus = COLUMN_TO_TASK_STATUS[targetColumn];
     const meta = userTask.metadata as Record<string, any> | undefined;
     const oraActivityId = meta?.ora_plan_activity_id;
+
+    // Determine if this is a P2A revert (moving P2A task away from done)
+    const isP2aTask = meta?.action === 'create_p2a_plan';
+    const isP2aRevert = isP2aTask && task.kanbanColumn === 'done' && (targetColumn === 'in_progress' || targetColumn === 'todo');
+
+    // Determine if this is an ad-hoc review revert
+    const isAdHocReview = meta?.source === 'task_review';
+    const isAdHocRevert = isAdHocReview && task.kanbanColumn === 'done' && (targetColumn === 'in_progress' || targetColumn === 'todo');
+
+    // Reviewer decision void always maps back to In Progress (DB trigger enforces this)
+    const newTaskStatus = isAdHocRevert ? 'in_progress' : COLUMN_TO_TASK_STATUS[targetColumn];
 
     // ── Optimistic update: patch the cached user-tasks data immediately ──
     const userTasksKey = ['user-tasks', user?.id];
@@ -81,13 +91,6 @@ export function useKanbanDragDrop() {
     await queryClient.cancelQueries({ queryKey: userTasksKey });
 
     const previousData = queryClient.getQueryData(userTasksKey);
-
-    // Determine if this is a P2A revert (moving P2A task away from done)
-    const isP2aTask = meta?.action === 'create_p2a_plan';
-    const isP2aRevert = isP2aTask && task.kanbanColumn === 'done' && (targetColumn === 'in_progress' || targetColumn === 'todo');
-    // Determine if this is an ad-hoc review revert
-    const isAdHocReview = meta?.source === 'task_review';
-    const isAdHocRevert = isAdHocReview && task.kanbanColumn === 'done' && (targetColumn === 'in_progress' || targetColumn === 'todo');
 
     queryClient.setQueryData(userTasksKey, (old: any) => {
       if (!old?.tasks) return old;
@@ -118,36 +121,39 @@ export function useKanbanDragDrop() {
     });
 
     try {
-      // Update user_tasks status
+      // Update user_tasks + ORA plan activity status for standard moves.
+      // For ad-hoc review reverts, task_reviewers is the source of truth and trigger handles sync.
       const isRealTaskId = userTask.id && !userTask.id.startsWith('ws-') && !userTask.id.startsWith('ora-');
-      if (isRealTaskId) {
-        await supabase
-          .from('user_tasks')
-          .update({ status: newTaskStatus, updated_at: new Date().toISOString() })
-          .eq('id', userTask.id);
-      }
+      if (!isAdHocRevert) {
+        if (isRealTaskId) {
+          await supabase
+            .from('user_tasks')
+            .update({ status: newTaskStatus, updated_at: new Date().toISOString() })
+            .eq('id', userTask.id);
+        }
 
-      // Sync ORA plan activity status if applicable
-      if (oraActivityId) {
-        const realId = oraActivityId.startsWith('ora-') ? oraActivityId.slice(4)
-          : oraActivityId.startsWith('ws-') ? oraActivityId.slice(3)
-          : oraActivityId;
+        // Sync ORA plan activity status if applicable
+        if (oraActivityId) {
+          const realId = oraActivityId.startsWith('ora-') ? oraActivityId.slice(4)
+            : oraActivityId.startsWith('ws-') ? oraActivityId.slice(3)
+            : oraActivityId;
 
-        const newOraStatus = COLUMN_TO_ORA_STATUS[targetColumn];
-        const isP2aRevert = isP2aTask && task.kanbanColumn === 'done' && targetColumn === 'in_progress';
+          const newOraStatus = COLUMN_TO_ORA_STATUS[targetColumn];
+          const isP2aRevert = isP2aTask && task.kanbanColumn === 'done' && targetColumn === 'in_progress';
 
-        // For P2A tasks: when reverting from Done → In Progress, set 86% (6/7 wizard steps).
-        // For P2A tasks in any other non-done move, preserve current progress (don't reset to 0).
-        // For non-P2A tasks, reset to 0.
-        const newCompletion = isP2aRevert ? 86 : (isP2aTask ? undefined : 0);
+          // For P2A tasks: when reverting from Done → In Progress, set 86% (6/7 wizard steps).
+          // For P2A tasks in any other non-done move, preserve current progress (don't reset to 0).
+          // For non-P2A tasks, reset to 0.
+          const newCompletion = isP2aRevert ? 86 : (isP2aTask ? undefined : 0);
 
-        const updatePayload: Record<string, any> = { status: newOraStatus };
-        if (newCompletion !== undefined) updatePayload.completion_percentage = newCompletion;
+          const updatePayload: Record<string, any> = { status: newOraStatus };
+          if (newCompletion !== undefined) updatePayload.completion_percentage = newCompletion;
 
-        await (supabase as any)
-          .from('ora_plan_activities')
-          .update(updatePayload)
-          .eq('id', realId);
+          await (supabase as any)
+            .from('ora_plan_activities')
+            .update(updatePayload)
+            .eq('id', realId);
+        }
       }
 
       // ── P2A Plan status revert: when a P2A task is moved back to in_progress or todo,
@@ -274,49 +280,42 @@ export function useKanbanDragDrop() {
       if (isAdHocRevert) {
         const taskReviewerId = meta?.task_reviewer_id as string | undefined;
         const sourceTaskId = meta?.source_task_id as string | undefined;
-        if (taskReviewerId) {
-          const client = supabase as any;
-
-          // Check if source task has been fully approved (all reviewers approved) — block move
-          if (sourceTaskId) {
-            const { data: allReviewers } = await client
-              .from('task_reviewers')
-              .select('id, status')
-              .eq('task_id', sourceTaskId);
-            const allApproved = allReviewers?.length > 0 && allReviewers.every((r: any) => r.status === 'APPROVED');
-            if (allApproved) {
-              // Rollback — final approval already complete, can't void
-              queryClient.setQueryData(userTasksKey, previousData);
-              toast.error('Cannot revert — all reviewers have approved. The task has been finalized.');
-              return 'skipped';
-            }
-          }
-
-          // Reset reviewer status to PENDING (void the decision)
-          // The DB trigger handle_task_reviewer_decision handles:
-          //   - Reverting the reviewer's user_task back to in_progress
-          //   - Logging the void to source task's activity feed
-          //   - Reverting the source task owner's card to in_progress if no approvals remain
-          await client
-            .from('task_reviewers')
-            .update({
-              status: 'PENDING',
-              decided_at: null,
-              comments: null,
-            })
-            .eq('id', taskReviewerId);
-
-          // Invalidate all relevant caches — trigger handles the DB writes
-          queryClient.invalidateQueries({ queryKey: ['task-reviewers', sourceTaskId] });
-          queryClient.invalidateQueries({ queryKey: ['task-reviewers-summary'] });
-          queryClient.invalidateQueries({ queryKey: ['task-comments', sourceTaskId] });
-          if (userTask.id) {
-            queryClient.invalidateQueries({ queryKey: ['task-comments', userTask.id] });
-          }
-          queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
-
-          toast.info('Review decision voided — you can review again');
+        if (!taskReviewerId) {
+          throw new Error('Missing reviewer assignment on task metadata');
         }
+
+        if (!user?.id) {
+          throw new Error('Not authenticated');
+        }
+
+        const client = supabase as any;
+        const { data: updatedReviewer, error: reviewerError } = await client
+          .from('task_reviewers')
+          .update({
+            status: 'PENDING',
+            decided_at: null,
+            comments: null,
+          })
+          .eq('id', taskReviewerId)
+          .eq('user_id', user.id)
+          .select('id, status')
+          .maybeSingle();
+
+        if (reviewerError) throw reviewerError;
+        if (!updatedReviewer) {
+          throw new Error('Could not void reviewer decision');
+        }
+
+        // Invalidate all relevant caches — trigger handles the DB writes
+        queryClient.invalidateQueries({ queryKey: ['task-reviewers', sourceTaskId] });
+        queryClient.invalidateQueries({ queryKey: ['task-reviewers-summary'] });
+        queryClient.invalidateQueries({ queryKey: ['task-comments', sourceTaskId] });
+        if (userTask.id) {
+          queryClient.invalidateQueries({ queryKey: ['task-comments', userTask.id] });
+        }
+        queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+
+        toast.info('Review decision voided — you can review again');
       }
 
       // Don't invalidate ['user-tasks'] or ['user-orp-activities'] here — the realtime
@@ -332,7 +331,8 @@ export function useKanbanDragDrop() {
         in_progress: 'In Progress',
         waiting: 'Waiting',
       };
-      toast.success(`Task moved to ${labels[targetColumn]}`);
+      const toastColumn = isAdHocRevert ? 'in_progress' : targetColumn;
+      toast.success(`Task moved to ${labels[toastColumn]}`);
       return 'moved';
     } catch (err) {
       console.error('Failed to move task:', err);

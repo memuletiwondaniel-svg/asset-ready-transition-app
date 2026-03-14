@@ -108,20 +108,27 @@ export const useTaskReviewers = (taskId: string | undefined) => {
 
   const { mutateAsync: submitDecision, isPending: isSubmitting } = useMutation({
     mutationFn: async ({ reviewerId, decision, comments }: { reviewerId: string; decision: 'APPROVED' | 'REJECTED'; comments?: string }) => {
-      const { error } = await (supabase as any)
+      if (!user?.id) throw new Error('Not authenticated');
+
+      const { data, error } = await (supabase as any)
         .from('task_reviewers')
         .update({
           status: decision,
           decided_at: new Date().toISOString(),
           comments: comments || null,
         })
-        .eq('id', reviewerId);
+        .eq('id', reviewerId)
+        .eq('user_id', user.id)
+        .select('id, status')
+        .maybeSingle();
 
       if (error) throw error;
+      if (!data) throw new Error('Reviewer decision update was not applied');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['task-reviewers', taskId] });
       queryClient.invalidateQueries({ queryKey: ['task-reviewers-summary'] });
+      queryClient.invalidateQueries({ queryKey: ['task-comments', taskId] });
       queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
     },
   });
