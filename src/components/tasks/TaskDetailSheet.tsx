@@ -319,6 +319,27 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
 
         if (error) throw error;
 
+        // Update the reviewer's own task card to 'completed' so it moves to Done on Kanban
+        await supabase
+          .from('user_tasks')
+          .update({ status: 'completed', updated_at: new Date().toISOString() })
+          .eq('id', task.id);
+
+        // Log the decision to the SOURCE task's activity feed
+        if (sourceTaskId && user) {
+          const label = decision === 'APPROVED' ? '✅ Approved' : '❌ Rejected';
+          const feedComment = comment?.trim()
+            ? `${label}\n${comment.trim()}`
+            : label;
+          await (supabase as any)
+            .from('task_comments')
+            .insert({
+              task_id: sourceTaskId,
+              user_id: user.id,
+              comment: feedComment,
+            });
+        }
+
         toast.success(type === 'approve' ? 'Review approved' : 'Review rejected');
 
         // Invalidate all relevant caches
@@ -948,8 +969,8 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => {
-                if (confirmAction) handleAction(confirmAction);
+              onClick={async () => {
+                if (confirmAction) await handleAction(confirmAction);
                 setConfirmAction(null);
               }}
               disabled={isSubmittingReview}
