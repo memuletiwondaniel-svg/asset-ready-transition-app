@@ -22,7 +22,7 @@ interface TaskReviewersSectionProps {
   isReadOnly?: boolean;
   isTaskOwner: boolean;
   /** Called when a reviewer decision is made to add to the activity feed */
-  onDecisionMade?: (decision: 'APPROVED' | 'REJECTED', reviewerName: string) => void;
+  onDecisionMade?: (decision: 'APPROVED' | 'REJECTED', reviewerName: string, comments?: string) => void;
 }
 
 export const TaskReviewersSection: React.FC<TaskReviewersSectionProps> = ({
