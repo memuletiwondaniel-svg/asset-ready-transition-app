@@ -1,10 +1,8 @@
 import React, { useRef, useState } from 'react';
 import { Paperclip, Upload, FileText, FileSpreadsheet, Image as ImageIcon, File, Trash2, Download, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { useTaskAttachments, type TaskAttachment } from '@/hooks/useTaskAttachments';
-import { formatDistanceToNow } from 'date-fns';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 
 interface TaskAttachmentsSectionProps {
