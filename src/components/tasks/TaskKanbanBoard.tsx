@@ -116,6 +116,7 @@ const ApprovalVoidWarningDialog: React.FC<{
   const isAdHocReviewTask = metaSource === 'task_review';
   const planStatus = meta?.plan_status?.toUpperCase?.() || '';
   const isFullyApproved = !isApproverTask && !isAdHocReviewTask && ['COMPLETED', 'APPROVED'].includes(planStatus);
+  const isGenericTask = !isApproverTask && !isAdHocReviewTask && !planStatus;
 
   const taskTitle = task?.title || '';
   const trimmedReason = voidReason.trim();
