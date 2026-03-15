@@ -1078,6 +1078,28 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
               />
             )}
 
+            {/* Attachments */}
+            {task?.id && (
+              <>
+                <Separator />
+                <TaskAttachmentsSection
+                  taskId={task.id}
+                  isReadOnly={isReadOnly || status === 'COMPLETED'}
+                />
+              </>
+            )}
+
+            {/* Collaborative Document Editor */}
+            {task?.id && (
+              <>
+                <Separator />
+                <CollaborativeDocumentEditor
+                  taskId={task.id}
+                  isReadOnly={isReadOnly || status === 'COMPLETED'}
+                />
+              </>
+            )}
+
             <Separator />
 
             {/* Comments & Activity Feed */}
