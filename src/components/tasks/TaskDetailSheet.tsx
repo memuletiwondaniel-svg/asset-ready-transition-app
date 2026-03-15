@@ -701,11 +701,6 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
             {isOraTask && task.id && (
               <>
                 <Separator />
-                <CollaborativeDocumentEditor
-                  taskId={task.id}
-                  isReadOnly={isCompleted}
-                />
-                <Separator />
                 <TaskAttachmentsSection
                   taskId={task.id}
                   isReadOnly={isCompleted}
