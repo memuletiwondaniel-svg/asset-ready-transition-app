@@ -10104,6 +10104,10 @@ export type Database = {
         Args: { rejection_reason_text?: string; target_user_id: string }
         Returns: boolean
       }
+      reopen_task: {
+        Args: { p_reason: string; p_task_id: string; p_user_id?: string }
+        Returns: undefined
+      }
       reorder_checklist_item: {
         Args: { item_unique_id: string; new_position: number }
         Returns: undefined
@@ -10120,6 +10124,10 @@ export type Database = {
       }
       soft_delete_checklist_item: {
         Args: { p_unique_id: string }
+        Returns: undefined
+      }
+      submit_task_for_approval: {
+        Args: { p_comment: string; p_task_id: string; p_user_id?: string }
         Returns: undefined
       }
       sync_readiness_nodes: { Args: { p_project_id: string }; Returns: number }
