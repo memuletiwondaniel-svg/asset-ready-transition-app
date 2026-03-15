@@ -752,7 +752,15 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     if (task.isWaiting) return;
     if (task.userTask) {
       const meta = task.userTask.metadata as Record<string, any> | undefined;
-      const isOraActivity = task.userTask.type === 'ora_activity' || meta?.action === 'complete_ora_activity' || meta?.action === 'create_p2a_plan' || meta?.ora_plan_activity_id;
+      const isReviewTask = meta?.source === 'task_review';
+      const isOraActivity = !isReviewTask && (task.userTask.type === 'ora_activity' || meta?.action === 'complete_ora_activity' || meta?.action === 'create_p2a_plan' || meta?.ora_plan_activity_id);
+
+      // Review tasks always open TaskDetailSheet (never ORA overlay)
+      if (isReviewTask) {
+        setSelectedTask(task.userTask);
+        setDetailOpen(true);
+        return;
+      }
 
       // ORA activity tasks skip the intermediate detail sheet and go straight to the activity overlay
       if (isOraActivity && !task.navigateTo) {
