@@ -218,7 +218,7 @@ export const TaskReviewersSection: React.FC<TaskReviewersSectionProps> = ({
                 className="h-8 text-xs gap-1 w-full justify-start text-muted-foreground border-dashed"
               >
                 <Plus className="h-3 w-3" />
-                Add reviewer or approver...
+                Add approver...
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-72 p-2 z-[100]" align="start" side="top" sideOffset={4}>
