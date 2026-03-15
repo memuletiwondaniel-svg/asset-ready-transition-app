@@ -168,6 +168,11 @@ const ApprovalVoidWarningDialog: React.FC<{
                     <li>Require a completely new review cycle</li>
                     <li>Notify all approvers of the change</li>
                   </>
+                ) : isGenericTask ? (
+                  <>
+                    <li>Revert the task status to In Progress</li>
+                    <li>This action will be logged for audit purposes</li>
+                  </>
                 ) : (
                   <>
                     <li>Cancel the ongoing approval review</li>
