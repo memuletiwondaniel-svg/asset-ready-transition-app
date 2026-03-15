@@ -288,6 +288,113 @@ export function useKanbanDragDrop() {
         }
       }
 
+      // ── ORA Plan revert: when an ORA task is moved back to in_progress or todo,
+      // revert the ORA plan to DRAFT, archive approvers, and reset progress ──
+      const oraProjectId = meta?.project_id as string | undefined;
+      if (isOraTask && oraProjectId && (targetColumn === 'in_progress' || targetColumn === 'todo')) {
+        const client = supabase as any;
+        // Find the ORA plan for this project
+        const { data: orpPlans } = await client
+          .from('orp_plans')
+          .select('id, status')
+          .eq('project_id', oraProjectId)
+          .limit(1);
+        const orpPlan = orpPlans?.[0];
+        if (orpPlan && ['PENDING_APPROVAL', 'APPROVED', 'COMPLETED'].includes(orpPlan.status)) {
+          // Revert plan to DRAFT
+          await client
+            .from('orp_plans')
+            .update({ status: 'DRAFT', updated_at: new Date().toISOString() })
+            .eq('id', orpPlan.id);
+
+          // Archive decided approver records (for audit trail)
+          const { data: decidedApprovers } = await client
+            .from('orp_approvals')
+            .select('id, approver_user_id, approver_role, status, approved_at, comments')
+            .eq('orp_plan_id', orpPlan.id)
+            .not('approved_at', 'is', null);
+
+          if (decidedApprovers && decidedApprovers.length > 0) {
+            const { data: maxCycleRow } = await client
+              .from('orp_approval_history')
+              .select('cycle')
+              .eq('orp_plan_id', orpPlan.id)
+              .order('cycle', { ascending: false })
+              .limit(1);
+            const nextCycle = (maxCycleRow?.[0]?.cycle || 0) + 1;
+            const historyRecords = decidedApprovers.map((a: any) => ({
+              orp_plan_id: orpPlan.id,
+              original_approval_id: a.id,
+              user_id: a.approver_user_id,
+              role_name: a.approver_role,
+              status: a.status,
+              approved_at: a.approved_at,
+              comments: a.comments,
+              cycle: nextCycle,
+            }));
+            await client.from('orp_approval_history').insert(historyRecords);
+          }
+
+          // Insert a "Reverted to Draft" audit entry
+          const { data: { user: currentUser } } = await client.auth.getUser();
+          if (currentUser) {
+            const { data: maxCycleRow2 } = await client
+              .from('orp_approval_history')
+              .select('cycle')
+              .eq('orp_plan_id', orpPlan.id)
+              .order('cycle', { ascending: false })
+              .limit(1);
+            const revertCycle = maxCycleRow2?.[0]?.cycle || 1;
+            await client.from('orp_approval_history').insert({
+              orp_plan_id: orpPlan.id,
+              user_id: currentUser.id,
+              role_name: 'Submitter',
+              status: 'REVERTED',
+              comments: voidReason || null,
+              cycle: revertCycle,
+              approved_at: new Date().toISOString(),
+            });
+          }
+
+          // Reset all approvers to PENDING
+          await client
+            .from('orp_approvals')
+            .update({ status: 'PENDING', approved_at: null, comments: null })
+            .eq('orp_plan_id', orpPlan.id);
+
+          // Reset the user_task metadata
+          if (isRealTaskId) {
+            const { data: taskRow } = await supabase
+              .from('user_tasks')
+              .select('metadata')
+              .eq('id', userTask.id)
+              .single();
+            if (taskRow) {
+              const currentMeta = (taskRow.metadata as Record<string, any>) || {};
+              await supabase
+                .from('user_tasks')
+                .update({
+                  metadata: {
+                    ...currentMeta,
+                    plan_status: 'DRAFT',
+                    completion_percentage: 83,
+                  } as any,
+                })
+                .eq('id', userTask.id);
+            }
+          }
+
+          // Invalidate ORA-related queries
+          queryClient.invalidateQueries({ queryKey: ['ora-plan-exists'] });
+          queryClient.invalidateQueries({ queryKey: ['ora-rejection-info-task'] });
+          queryClient.invalidateQueries({ queryKey: ['orp-plans'] });
+          queryClient.invalidateQueries({ queryKey: ['project-orp-plans'] });
+          queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+
+          toast.info('ORA Plan reverted to Draft — approvals have been reset');
+        }
+      }
+
       // ── Ad-hoc review revert: void the reviewer's decision ──
       if (isAdHocRevert) {
         const taskReviewerId = meta?.task_reviewer_id as string | undefined;
