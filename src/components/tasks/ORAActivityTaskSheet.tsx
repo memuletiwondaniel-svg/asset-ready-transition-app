@@ -327,8 +327,22 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
     refetchOnMount: 'always',
   });
 
+  // Fetch sibling activities from DB for prerequisites picker
+  const { data: dbSiblingActivities } = useQuery({
+    queryKey: ['ora-sibling-activities', planId, realOraActivityId],
+    queryFn: async () => {
+      if (!planId || !realOraActivityId) return [];
+      const { data, error } = await (supabase as any)
+        .from('ora_plan_activities')
+        .select('id, activity_code, name')
+        .eq('orp_plan_id', planId)
+        .neq('id', realOraActivityId);
+      if (error) return [];
+      return data || [];
+    },
+    enabled: !!planId && !!realOraActivityId,
+  });
 
-  const p2aRejectionInfo = p2aApproverDecisions?.find((d: any) => d.status === 'REJECTED') || null;
 
   const p2aRejectionFallback = {
     role_name: (metadata?.last_rejection_role as string | undefined) || null,
