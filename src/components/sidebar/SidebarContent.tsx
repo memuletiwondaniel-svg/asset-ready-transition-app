@@ -66,14 +66,14 @@ interface SidebarContentProps {
   onToggleCollapse?: () => void;
 }
 
-const navigationItems: NavigationItem[] = [
+const navigationItems: (NavigationItem & { requiresLeadership?: boolean })[] = [
   { labelKey: 'navHome', icon: Home, path: '/', section: 'home' },
   { labelKey: 'navProjects', icon: Key, path: '/vcrs', section: 'projects' },
   { labelKey: 'navPSSR', icon: AlertTriangle, path: '/pssr', section: 'pssr' },
   { labelKey: 'navMyTasks', icon: CalendarCheck, path: '/my-tasks', section: 'my-tasks' },
   { labelKey: 'navMyBacklog', icon: ClipboardList, path: '/my-backlog', section: 'my-backlog' },
-  { labelKey: 'navExecutiveDashboard', icon: Gauge, path: '/executive-dashboard', section: 'executive-dashboard' },
-  { labelKey: 'navORMaintenance', icon: Wrench, path: '/or-maintenance', section: 'or-maintenance' },
+  { labelKey: 'navExecutiveDashboard', icon: Gauge, path: '/executive-dashboard', section: 'executive-dashboard', requiresLeadership: true },
+  { labelKey: 'navORMaintenance', icon: Wrench, path: '/or-maintenance', section: 'or-maintenance', requiresLeadership: true },
   { labelKey: 'navAskBob', icon: MessageSquare, path: '/ask-orsh', section: 'ask-orsh' },
 ];
 
