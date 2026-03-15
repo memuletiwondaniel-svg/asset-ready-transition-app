@@ -1,91 +1,77 @@
 
 
-## Analysis of Current Issues
+# Plan: ORIP Scoring Engine Using Existing VCR Item Categories
 
-### Issue 1: Approvers seeing "Not Started / In Progress / Completed" instead of "Approve / Reject"
-The routing fix from the previous implementation IS correct — review tasks with `source === 'task_review'` are now directed to `TaskDetailSheet` instead of `ORAActivityTaskSheet`. Inside `TaskDetailSheet`, the ad-hoc review flow renders:
-- Source task context card (lines 1108-1134)
-- Source attachments (lines 1137-1144) 
-- Source activity feed via `TaskActivityFeed taskId={sourceTaskId}` (line 1147)
-- Approve/Reject buttons (lines 1152-1192) — gated by `isReviewTask && !isCompleted && !hasAlreadyDecided`
+## Impact Assessment: Zero Breaking Changes
 
-However, there's a problem: the **activity feed shown to the reviewer uses `sourceTaskId`**, but the **author's ORAActivityTaskSheet now writes to `task_comments` using `task.id`**. If these are the same ID, the feeds match. They should be the same since `source_task_id` in the reviewer's metadata points to the author's task.
+**No existing workflows will be affected.** The approach reuses the existing `vcr_item_categories` table (Design Integrity, Technical Integrity, Operating Integrity, Management Systems, Health & Safety) as the readiness dimensions for ORI scoring. All changes are additive:
 
-The routing fix should be working. If the user still sees the status toggle, it's likely a stale cache or the changes haven't fully deployed. No additional code changes needed for routing.
+- The `vcr_item_categories` table gets a `tenant_id` column and weight/confidence fields -- existing rows remain intact
+- The `readiness_nodes` table gets a new nullable `dimension_id` column pointing to `vcr_item_categories`
+- The `sync_readiness_nodes` and `calculate_ori_score` functions are replaced with enhanced versions that use category-based dimensions instead of module-based grouping
+- Existing P2A, ORA, PSSR, ORM workflows are untouched -- the ontology layer only reads from them
 
-### Issue 2: Activity feed not synchronized
-After the previous changes, ORAActivityTaskSheet writes submission events to `task_comments` (task-scoped). The reviewer's `TaskDetailSheet` reads from `TaskActivityFeed` using `sourceTaskId` which queries `useTaskComments(sourceTaskId)`. The `useTaskComments` hook ALSO pulls legacy `ora_activity_comments` via the `ora_plan_activity_id` metadata lookup. So old comments should still appear, and new ones write to the task-scoped table. This should produce synchronized feeds.
+## Current VCR Item Categories (Become Readiness Dimensions)
 
-### Issue 3: Done → In Progress dialog not opening
-The universal check at line 817 should trigger the dialog. The code is correct. Possible causes:
-- The `kanbanColumn` property not being `'done'` even though the card appears in the Done column
-- Build hasn't refreshed with the new code
+| Code | Name | Active |
+|------|------|--------|
+| DI2 | Design Integrity | Yes |
+| TI | Technical Integrity | Yes |
+| OI | Operating Integrity | Yes |
+| MS | Management Systems | Yes |
+| HS | Health & Safety | Yes |
 
-### Issue 4: Submit button missing after revert
-**This is a real bug.** After moving from Done → In Progress:
-1. Task status becomes `in_progress`
-2. ORAActivityTaskSheet opens and initializes with `baseStatus = 'IN_PROGRESS'`
-3. `originalStatus` is set to `IN_PROGRESS`
-4. `isDirty` evaluates to `false` because nothing has changed from the initial state
-5. The submit button at line 1416 requires `isDirty` to be `true`
+These become the tenant-configurable readiness dimensions. Different tenants can add/rename/reweight their own categories.
 
-The user must manually change status to COMPLETED again to trigger `isDirty`, but this isn't intuitive. The fix is to either:
-- Always show the save button (not gate on `isDirty`) when task status is not completed
-- Or show a "Resubmit" CTA when the task was previously completed but is now reverted
+## Implementation Tasks
 
----
+### Task 1: Extend `vcr_item_categories` for ORI Scoring
+Add columns to make categories serve double duty as readiness dimensions:
+- `tenant_id UUID` (nullable, defaults via trigger -- existing rows get current tenant)
+- `default_weight NUMERIC(5,4)` (e.g., 0.20 = 20%)
+- `confidence_factor_default NUMERIC(3,2)` (default 0.8)
+- `risk_severity_multiplier NUMERIC(3,1)` (default 1.0)
+- `is_readiness_dimension BOOLEAN DEFAULT true`
 
-## Plan
+Add `dimension_id UUID REFERENCES vcr_item_categories(id)` to `readiness_nodes`.
 
-### 1. Fix submit button visibility after revert
-**File**: `src/components/tasks/ORAActivityTaskSheet.tsx`
+### Task 2: Enhanced ORI Formula
+Replace `calculate_ori_score()` with the full ORIP formula:
 
-Detect when a task was previously submitted (has reviewers + was completed) but has been reverted to in_progress. In this case, show the save/submit button even when `isDirty` is false. The button should remain visible when:
-- `!isReadOnly`
-- AND (`isDirty` OR the task has reviewers and current task DB status is `in_progress` but was previously `completed`)
-
-Concretely, change the submit button condition on line 1416 from:
 ```
-{!isReadOnly && isDirty && !(isP2AActivity && status === 'COMPLETED') && (
+DS_i = (Σ Subcomponent_Weight × Completion%) × Confidence_Factor
+RP_i = Σ (Risk_Severity × Impact_Multiplier)  -- capped at 15%
+ORI  = Σ (Dimension_Weight_i × DS_i) − Global_Risk_Penalty
+SCS  = ORI × Schedule_Adherence × Critical_Path_Stability
 ```
-to also show when the user has changed the status from the initialized value, or when the task needs resubmission. The simplest fix is to check if `status !== originalStatus` as an independent display trigger — but `isDirty` already includes this. The real issue is that after a revert, `status` and `originalStatus` are both `IN_PROGRESS`.
 
-**Solution**: Add a `wasReverted` detection — check if the task's reviewers have status `PENDING` while the task is not completed. If reviewers exist and task is in_progress, show the button always (user needs to resubmit). Add a separate boolean:
-```typescript
-const needsResubmission = hasReviewers && task?.status === 'in_progress' && !isReadOnly;
-```
-Update the button condition to: `!isReadOnly && (isDirty || needsResubmission) && ...`
+Add columns to `ori_scores`: `dimension_scores JSONB`, `risk_penalty_total NUMERIC`, `startup_confidence_score NUMERIC`, `schedule_adherence_index NUMERIC`, `critical_path_stability_index NUMERIC`.
 
-Also update the submission notes section (line 1360) with the same condition.
+Add `confidence_factor NUMERIC(3,2) DEFAULT 0.8` and `risk_severity TEXT DEFAULT 'none'` to `readiness_nodes`.
 
-### 2. Ensure Done→InProgress dialog reliability
-**File**: `src/components/tasks/TaskKanbanBoard.tsx`
+### Task 3: Update Sync Function
+Update `sync_readiness_nodes()` to auto-assign `dimension_id` by mapping:
+- P2A VCR prerequisites → mapped via their `vcr_items.category_id` directly to `vcr_item_categories`
+- ORA activities → default to "Operating Integrity" or map via metadata
+- PSSR items → map via PSSR checklist category → nearest VCR category
+- ORM deliverables → default to "Management Systems"
+- Training → default to "Operating Integrity"
 
-The code at line 817 looks correct. Add a `console.log` guard to verify the drag handler fires. Also check if the `warningState` setter is being called by adding defensive checks.
+Set confidence factors: completed/approved = 1.0, in-progress = 0.8, not-started = 0.7.
 
-Actually, the more likely issue is that the `ApprovalVoidWarningDialog` component (starting ~line 96) has `open={!!warningState}` — need to verify it renders correctly for generic tasks. The dialog IS rendered on line 961+ — let me verify.
+### Task 4: Executive Dashboard Enhancement
+Redesign `ExecutiveDashboard.tsx` to match the strategic layout:
+- **Top Banner**: Large ORI + SCS + color coding (Green >85, Amber 70-85, Red <70)
+- **Dimension Breakdown**: Bar/table showing each VCR category's score, trend arrow, risk level
+- **Top 5 Startup Blockers**: Blocked/critical nodes with severity
+- **Predictive Trend**: ORI line chart with dashed target curve
+- **Risk Impact Summary**: 4 stat boxes (Open High Risks, Startup-blocking, Dimensions below 70%, Systems below 60%)
 
-**File**: `src/components/tasks/TaskKanbanBoard.tsx` — line ~960+
-Need to verify the `ApprovalVoidWarningDialog` is rendered with `open={!!warningState}`. This should be correct based on the code structure.
+### Task 5: Tenant-Configurable Weight Profiles
+Update the existing `ori_weight_profiles` to store dimension-based weights keyed by `vcr_item_categories.id` instead of module names. Add a simple admin UI for editing weights per tenant.
 
-### 3. Verify approver sees correct UI with attachments and synced feed
-The routing and UI logic appears correct in the code. The `TaskDetailSheet` for ad-hoc reviews:
-- Shows source task attachments via `TaskAttachmentsSection` with `sourceTaskId`
-- Shows activity feed via `TaskActivityFeed taskId={sourceTaskId}`
-- Shows Approve/Reject buttons when `isReviewTask && !isCompleted && !hasAlreadyDecided`
-
-No code changes needed here — the previous routing fix should handle this.
-
-### 4. Add defensive logging for drag handler debugging
-**File**: `src/components/tasks/TaskKanbanBoard.tsx`
-Add a toast or console warning if the drag handler's Done→back path is hit but `warningState` doesn't get set, to help diagnose the dialog not opening.
-
----
-
-## Summary of Changes
-
-| File | Change |
-|------|--------|
-| `ORAActivityTaskSheet.tsx` | Add `needsResubmission` flag; show save/submit button when task has been reverted and needs resubmission even if `isDirty` is false |
-| `TaskKanbanBoard.tsx` | Verify and harden the Done→InProgress dialog trigger; ensure `ApprovalVoidWarningDialog` renders for all task types |
+### Task 6: Update Living Documents
+- **Security & Compliance Doc**: Add rows for Readiness Dimensions, Risk Penalty Engine, Startup Confidence Score (mark as Active)
+- **Platform Guide**: Add "Readiness Ontology & Scoring Engine" section documenting the 6 dimensions, ORI formula, SCS
+- **Strategic North Star**: Update scoring engine status from Planned to Active, add dimension-based architecture detail
 
