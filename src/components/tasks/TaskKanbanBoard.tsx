@@ -76,9 +76,13 @@ interface ApprovalWarningState {
 interface ReviewerSummary { total: number; approved: number; rejected: number; }
 const ReviewerSummaryContext = createContext<Map<string, ReviewerSummary>>(new Map());
 
-// P2A author approval counts context (keyed by plan_id from metadata)
+// P2A author approval counts context (keyed by project_id from metadata)
 interface P2AApprovalSummary { total: number; approved: number; rejected: number; }
 const P2AApprovalContext = createContext<Map<string, P2AApprovalSummary>>(new Map());
+
+// ORA author approval counts context (keyed by project_id from metadata)
+interface ORAApprovalSummary { total: number; approved: number; rejected: number; }
+const ORAApprovalContext = createContext<Map<string, ORAApprovalSummary>>(new Map());
 
 
 const getColumns = (t: any) => [
@@ -272,6 +276,7 @@ const KanbanCardContent: React.FC<{
   const { translations: t } = useLanguage();
   const reviewerSummaries = useContext(ReviewerSummaryContext);
   const p2aApprovalSummaries = useContext(P2AApprovalContext);
+  const oraApprovalSummaries = useContext(ORAApprovalContext);
 
   return (
     <Card
@@ -359,6 +364,10 @@ const KanbanCardContent: React.FC<{
                 // For P2A author tasks, show approval counts when under review (keyed by project_id)
                 const authorProjectId = meta?.project_id as string | undefined;
                 const p2aAuthorApproval = authorProjectId ? p2aApprovalSummaries.get(authorProjectId) : undefined;
+                // For ORA author tasks, show approval counts when under review (keyed by project_id)
+                const oraAuthorApproval = authorProjectId ? oraApprovalSummaries.get(authorProjectId) : undefined;
+                // Use whichever is relevant
+                const authorApproval = isP2aAuthor ? p2aAuthorApproval : isOraAuthor ? oraAuthorApproval : undefined;
 
                 if (isApproved) {
                   return (
@@ -368,16 +377,16 @@ const KanbanCardContent: React.FC<{
                   );
                 }
                 if (isActive) {
-                  // Show approval progress for P2A author tasks
-                  if (p2aAuthorApproval && p2aAuthorApproval.total > 0) {
-                    if (p2aAuthorApproval.rejected > 0) {
+                  // Show approval progress for author tasks (P2A or ORA)
+                  if (authorApproval && authorApproval.total > 0) {
+                    if (authorApproval.rejected > 0) {
                       return (
                         <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
                           Rejected
                         </span>
                       );
                     }
-                    const allDone = p2aAuthorApproval.approved >= p2aAuthorApproval.total;
+                    const allDone = authorApproval.approved >= authorApproval.total;
                     return (
                       <span className={cn(
                         "text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap",
@@ -385,7 +394,7 @@ const KanbanCardContent: React.FC<{
                           ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
                           : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
                       )}>
-                        {allDone ? `Approved · ${p2aAuthorApproval.total}/${p2aAuthorApproval.total}` : `Awaiting Approval · ${p2aAuthorApproval.approved}/${p2aAuthorApproval.total}`}
+                        {allDone ? `Approved · ${authorApproval.total}/${authorApproval.total}` : `Awaiting Approval · ${authorApproval.approved}/${authorApproval.total}`}
                       </span>
                     );
                   }
@@ -581,6 +590,23 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     return () => { supabase.removeChannel(channel); };
   }, [queryClient]);
 
+  // Realtime: listen for orp_approvals changes to keep ORA approval counters in sync
+  useEffect(() => {
+    const channel = supabase
+      .channel('orp-approvals-realtime')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'orp_approvals',
+      }, () => {
+        queryClient.invalidateQueries({ queryKey: ['ora-approval-summary-by-project'] });
+        queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [queryClient]);
+
   // Batch-fetch P2A approval counts for author tasks (Develop P2A Plan)
   // Task metadata stores ORA plan_id, but approvers are keyed by P2A handover plan ID.
   // So we collect project_ids, resolve handover plan IDs, then fetch approvers.
@@ -637,6 +663,62 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
       return map;
     },
     enabled: p2aAuthorProjectIds.length > 0,
+    staleTime: 30_000,
+  });
+
+  // Batch-fetch ORA approval counts for author tasks (Create ORA Plan)
+  const oraAuthorProjectIds = useMemo(() => {
+    const ids: string[] = [];
+    for (const t of tasks) {
+      const meta = t.userTask?.metadata as Record<string, any> | undefined;
+      if ((meta?.action === 'create_ora_plan' || t.userTask?.type === 'ora_plan_creation') && meta?.project_id) {
+        ids.push(meta.project_id as string);
+      }
+    }
+    return [...new Set(ids)];
+  }, [tasks]);
+
+  const { data: oraApprovalSummaries } = useQuery({
+    queryKey: ['ora-approval-summary-by-project', oraAuthorProjectIds],
+    queryFn: async () => {
+      if (oraAuthorProjectIds.length === 0) return new Map<string, ORAApprovalSummary>();
+      const client = supabase as any;
+
+      // Step 1: Resolve project_ids → ORP plan IDs
+      const { data: plans, error: plansError } = await client
+        .from('orp_plans')
+        .select('id, project_id')
+        .in('project_id', oraAuthorProjectIds);
+      if (plansError) throw plansError;
+      if (!plans || plans.length === 0) return new Map<string, ORAApprovalSummary>();
+
+      const orpIds = plans.map((p: any) => p.id);
+      const orpToProject = new Map<string, string>();
+      for (const p of plans as any[]) {
+        orpToProject.set(p.id, p.project_id);
+      }
+
+      // Step 2: Fetch approvers by ORP plan IDs
+      const { data: approvers, error: appError } = await client
+        .from('orp_approvals')
+        .select('orp_plan_id, status')
+        .in('orp_plan_id', orpIds);
+      if (appError) throw appError;
+
+      // Step 3: Build summary map keyed by project_id
+      const map = new Map<string, ORAApprovalSummary>();
+      for (const row of (approvers || []) as any[]) {
+        const projectId = orpToProject.get(row.orp_plan_id);
+        if (!projectId) continue;
+        const existing = map.get(projectId) || { total: 0, approved: 0, rejected: 0 };
+        existing.total++;
+        if (row.status === 'APPROVED') existing.approved++;
+        if (row.status === 'REJECTED') existing.rejected++;
+        map.set(projectId, existing);
+      }
+      return map;
+    },
+    enabled: oraAuthorProjectIds.length > 0,
     staleTime: 30_000,
   });
 
@@ -890,8 +972,10 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
 
   const reviewerMap = reviewerSummaries || new Map<string, ReviewerSummary>();
   const p2aApprovalMap = p2aApprovalSummaries || new Map<string, P2AApprovalSummary>();
+  const oraApprovalMap = oraApprovalSummaries || new Map<string, ORAApprovalSummary>();
 
   return (
+    <ORAApprovalContext.Provider value={oraApprovalMap}>
     <P2AApprovalContext.Provider value={p2aApprovalMap}>
     <ReviewerSummaryContext.Provider value={reviewerMap}>
     <>
@@ -997,5 +1081,6 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     </>
     </ReviewerSummaryContext.Provider>
     </P2AApprovalContext.Provider>
+    </ORAApprovalContext.Provider>
   );
 };
