@@ -810,6 +810,9 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
       setWarningState({ task, targetColumn });
       return;
     }
+
+    // ── ORA Plan creation tasks: intercept wizard-related drags ──
+    if (isOraCreationTask) {
       // Todo → In Progress: open detail sheet to guide user to Create ORA Plan
       if (targetColumn === 'in_progress' && task.kanbanColumn === 'todo') {
         setSelectedTask(task.userTask);
@@ -826,17 +829,6 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
 
     // ── P2A tasks: intercept drags that should go through the wizard ──
     if (isP2aTask) {
-      // Done → In Progress / Todo: show approval void warning (same as ORA plan)
-      if (task.kanbanColumn === 'done' && (targetColumn === 'in_progress' || targetColumn === 'todo')) {
-        // Check if this task is approval-protected (has been submitted/approved)
-        if (task.isApprovalProtected) {
-          setWarningState({ task, targetColumn });
-          return;
-        }
-        // Not protected — just do the move with force
-        await moveTaskToColumn(task, targetColumn, true);
-        return;
-      }
       // Todo → In Progress: open overlay to guide user to "Start P2A Plan"
       if (targetColumn === 'in_progress' && task.kanbanColumn === 'todo') {
         setOraActivityTask(task.userTask);
@@ -868,7 +860,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
       return;
     }
 
-    // For other columns, check if this would void approvals
+    // For other columns, just move
     const result = await moveTaskToColumn(task, targetColumn);
     if (result === 'needs_warning') {
       setWarningState({ task, targetColumn });
