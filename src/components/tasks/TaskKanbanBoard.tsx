@@ -276,6 +276,7 @@ const KanbanCardContent: React.FC<{
   const { translations: t } = useLanguage();
   const reviewerSummaries = useContext(ReviewerSummaryContext);
   const p2aApprovalSummaries = useContext(P2AApprovalContext);
+  const oraApprovalSummaries = useContext(ORAApprovalContext);
 
   return (
     <Card
