@@ -1361,7 +1361,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
         {/* Pinned footer */}
         <div className="border-t bg-background px-3 sm:px-6 py-3 sm:py-4 shrink-0 safe-area-inset-bottom space-y-3">
           {/* Mandatory submission comment when submitting for approval */}
-          {!isReadOnly && status === 'COMPLETED' && hasReviewers && isDirty && (
+          {!isReadOnly && status === 'COMPLETED' && hasReviewers && (isDirty || needsResubmission) && (
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block">
                 Submission Notes <span className="text-destructive">*</span>
