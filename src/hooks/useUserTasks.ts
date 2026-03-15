@@ -808,6 +808,8 @@ export const useUserTasks = () => {
     enabled: !!user?.id,
     staleTime: 2 * 60 * 1000, // 2 minutes cache
     refetchOnWindowFocus: false,
+    refetchInterval: user?.id ? 30000 : false, // Polling fallback if realtime misses events
+    refetchIntervalInBackground: false,
     placeholderData: keepPreviousData,
   });
 

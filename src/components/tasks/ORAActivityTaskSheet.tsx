@@ -593,20 +593,30 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
         ...(editStartDate ? { start_date: format(editStartDate, 'yyyy-MM-dd') } : {}),
         ...(editEndDate ? { end_date: format(editEndDate, 'yyyy-MM-dd') } : {}),
       };
+      const submittedTaskIds: string[] = [];
       const isRealTaskId = task.id && !task.id.startsWith('ws-') && !task.id.startsWith('ora-');
       if (isRealTaskId) {
         await supabase
           .from('user_tasks')
-          .update({ 
-            status: taskStatus, 
+          .update({
+            status: taskStatus,
             metadata: updatedMetadata,
             updated_at: new Date().toISOString(),
           })
           .eq('id', task.id);
+
+        if (taskStatus === 'completed') {
+          submittedTaskIds.push(task.id);
+        }
       } else if (realOraActivityId) {
         // Cross-linkage: when saving from Gantt context (ws-/ora- prefixed IDs),
         // find the matching user_task by ora_plan_activity_id metadata
         try {
+          const { data: linkedTasks } = await supabase
+            .from('user_tasks')
+            .select('id')
+            .filter('metadata->>ora_plan_activity_id', 'eq', realOraActivityId);
+
           await supabase
             .from('user_tasks')
             .update({
@@ -614,9 +624,27 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
               updated_at: new Date().toISOString(),
             })
             .filter('metadata->>ora_plan_activity_id', 'eq', realOraActivityId);
+
+          if (taskStatus === 'completed' && linkedTasks?.length) {
+            submittedTaskIds.push(...linkedTasks.map((t: any) => t.id));
+          }
         } catch (syncErr) {
           console.error('Cross-linkage sync failed:', syncErr);
         }
+      }
+
+      // Frontend safety net: explicitly ensure reviewer tasks are created on submission
+      if (taskStatus === 'completed' && hasReviewers && submittedTaskIds.length > 0) {
+        await Promise.all(
+          submittedTaskIds.map(async (submittedTaskId) => {
+            const { error } = await (supabase as any).rpc('ensure_reviewer_tasks_for_task', {
+              p_task_id: submittedTaskId,
+            });
+            if (error) {
+              console.error('Failed to ensure reviewer tasks for submission:', submittedTaskId, error);
+            }
+          })
+        );
       }
 
       // Auto-log status change as a system comment in the activity feed
@@ -653,6 +681,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
         }
       }
 
+      queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
       queryClient.invalidateQueries({ queryKey: ['ora-activity-detail'] });
       queryClient.invalidateQueries({ queryKey: ['project-orp-plans'] });
       queryClient.invalidateQueries({ queryKey: ['user-orp-activities'] });
@@ -661,6 +690,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
       queryClient.invalidateQueries({ queryKey: ['orp-plan-details'] });
       queryClient.invalidateQueries({ queryKey: ['ora-activity-comments', realOraActivityId] });
 
+      setSubmissionComment('');
       toast.success(status === 'COMPLETED' ? 'Activity marked as completed' : 'Activity progress saved');
       onOpenChange(false);
     } catch (err) {
