@@ -590,6 +590,23 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     return () => { supabase.removeChannel(channel); };
   }, [queryClient]);
 
+  // Realtime: listen for orp_approvals changes to keep ORA approval counters in sync
+  useEffect(() => {
+    const channel = supabase
+      .channel('orp-approvals-realtime')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'orp_approvals',
+      }, () => {
+        queryClient.invalidateQueries({ queryKey: ['ora-approval-summary-by-project'] });
+        queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [queryClient]);
+
   // Batch-fetch P2A approval counts for author tasks (Develop P2A Plan)
   // Task metadata stores ORA plan_id, but approvers are keyed by P2A handover plan ID.
   // So we collect project_ids, resolve handover plan IDs, then fetch approvers.
