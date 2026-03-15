@@ -681,6 +681,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
         }
       }
 
+      queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
       queryClient.invalidateQueries({ queryKey: ['ora-activity-detail'] });
       queryClient.invalidateQueries({ queryKey: ['project-orp-plans'] });
       queryClient.invalidateQueries({ queryKey: ['user-orp-activities'] });
@@ -689,6 +690,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
       queryClient.invalidateQueries({ queryKey: ['orp-plan-details'] });
       queryClient.invalidateQueries({ queryKey: ['ora-activity-comments', realOraActivityId] });
 
+      setSubmissionComment('');
       toast.success(status === 'COMPLETED' ? 'Activity marked as completed' : 'Activity progress saved');
       onOpenChange(false);
     } catch (err) {
