@@ -467,6 +467,13 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
 
   const handleSave = async () => {
     if (!task || !user) return;
+    
+    // Validate mandatory submission comment for approval submissions
+    if (status === 'COMPLETED' && hasReviewers && !submissionComment.trim()) {
+      toast.error('Please add submission notes for the approvers before submitting.');
+      return;
+    }
+    
     setSaving(true);
 
     try {
