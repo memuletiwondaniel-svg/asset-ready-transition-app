@@ -815,6 +815,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
 
     // ── UNIVERSAL: Any task moving from Done back requires confirmation dialog ──
     if (task.kanbanColumn === 'done' && (targetColumn === 'in_progress' || targetColumn === 'todo')) {
+      console.log('[Kanban] Done→back intercepted, showing warning dialog', { taskId: task.id, kanbanColumn: task.kanbanColumn, targetColumn });
       setWarningState({ task, targetColumn });
       return;
     }
