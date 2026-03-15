@@ -647,6 +647,24 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
               </Button>
             )}
 
+            {/* ORA Rejection feedback (mirrors P2A rejection banner) */}
+            {showOraRejectionBanner && (
+              <div className="p-3 rounded-lg bg-destructive/5 border border-destructive/20 space-y-1">
+                <div className="flex items-center gap-2 text-xs font-medium text-destructive">
+                  <AlertTriangle className="h-3.5 w-3.5" />
+                  Plan rejected by {effectiveOraRejection.role_name || 'approver'}
+                </div>
+                <p className="text-xs text-foreground/80 italic pl-5">
+                  "{effectiveOraRejection.comments || 'No rejection comment was provided.'}"
+                </p>
+                {effectiveOraRejection.approved_at && (
+                  <p className="text-[10px] text-muted-foreground pl-5">
+                    {format(new Date(effectiveOraRejection.approved_at), 'MMM d, yyyy')}
+                  </p>
+                )}
+              </div>
+            )}
+
             {/* ORA Plan Creation CTA - prominent for action tasks */}
             {isOraTask && oraProjectId && (
               <Button
@@ -669,6 +687,14 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                 {oraCtaLabel}
                 <ChevronRight className="h-4 w-4 ml-auto" />
               </Button>
+            )}
+
+            {/* ORA Plan Activity Feed (mirrors P2A) */}
+            {isOraTask && resolvedOraPlanId && (
+              <>
+                <Separator />
+                <ApprovalActivityFeed planId={resolvedOraPlanId} source="ora" />
+              </>
             )}
 
             {/* ORA Plan Review CTA - opens wizard in review mode */}
