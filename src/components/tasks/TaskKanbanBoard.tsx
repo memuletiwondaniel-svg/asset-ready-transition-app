@@ -144,7 +144,9 @@ const ApprovalVoidWarningDialog: React.FC<{
                   ? 'has already been completed — you approved this plan.'
                   : isFullyApproved
                     ? 'has been approved through a formal review process.'
-                    : 'has been submitted and is currently under approval review.'}
+                    : isGenericTask
+                      ? 'has been marked as completed.'
+                      : 'has been submitted and is currently under approval review.'}
               </p>
               <p className="text-muted-foreground">Moving this task back will:</p>
               <ul className="list-disc list-inside space-y-1 text-muted-foreground ml-1">
