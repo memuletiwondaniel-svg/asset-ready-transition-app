@@ -462,6 +462,7 @@ export function useKanbanDragDrop() {
           queryClient.invalidateQueries({ queryKey: ['task-comments', userTask.id] });
           queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
         }
+      }
 
       // Don't invalidate ['user-tasks'] or ['user-orp-activities'] here — the realtime
       // subscription will handle the refetch after the DB settles. Invalidating immediately
