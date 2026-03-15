@@ -237,6 +237,18 @@ export function useUnifiedTasks(userId: string) {
         }
       }
 
+      const sp = computeSmartPriority({
+        category,
+        categoryLabel,
+        startDate,
+        endDate,
+        dueDate: t.due_date || undefined,
+        durationDays,
+        progressPercentage: resolvedProgress,
+        isWaiting,
+        createdAt: t.created_at,
+      });
+
       tasks.push({
         id: `ut-${t.id}`,
         category,
