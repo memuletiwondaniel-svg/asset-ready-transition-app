@@ -645,6 +645,62 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     staleTime: 30_000,
   });
 
+  // Batch-fetch ORA approval counts for author tasks (Create ORA Plan)
+  const oraAuthorProjectIds = useMemo(() => {
+    const ids: string[] = [];
+    for (const t of tasks) {
+      const meta = t.userTask?.metadata as Record<string, any> | undefined;
+      if ((meta?.action === 'create_ora_plan' || t.userTask?.type === 'ora_plan_creation') && meta?.project_id) {
+        ids.push(meta.project_id as string);
+      }
+    }
+    return [...new Set(ids)];
+  }, [tasks]);
+
+  const { data: oraApprovalSummaries } = useQuery({
+    queryKey: ['ora-approval-summary-by-project', oraAuthorProjectIds],
+    queryFn: async () => {
+      if (oraAuthorProjectIds.length === 0) return new Map<string, ORAApprovalSummary>();
+      const client = supabase as any;
+
+      // Step 1: Resolve project_ids → ORP plan IDs
+      const { data: plans, error: plansError } = await client
+        .from('orp_plans')
+        .select('id, project_id')
+        .in('project_id', oraAuthorProjectIds);
+      if (plansError) throw plansError;
+      if (!plans || plans.length === 0) return new Map<string, ORAApprovalSummary>();
+
+      const orpIds = plans.map((p: any) => p.id);
+      const orpToProject = new Map<string, string>();
+      for (const p of plans as any[]) {
+        orpToProject.set(p.id, p.project_id);
+      }
+
+      // Step 2: Fetch approvers by ORP plan IDs
+      const { data: approvers, error: appError } = await client
+        .from('orp_approvals')
+        .select('orp_plan_id, status')
+        .in('orp_plan_id', orpIds);
+      if (appError) throw appError;
+
+      // Step 3: Build summary map keyed by project_id
+      const map = new Map<string, ORAApprovalSummary>();
+      for (const row of (approvers || []) as any[]) {
+        const projectId = orpToProject.get(row.orp_plan_id);
+        if (!projectId) continue;
+        const existing = map.get(projectId) || { total: 0, approved: 0, rejected: 0 };
+        existing.total++;
+        if (row.status === 'APPROVED') existing.approved++;
+        if (row.status === 'REJECTED') existing.rejected++;
+        map.set(projectId, existing);
+      }
+      return map;
+    },
+    enabled: oraAuthorProjectIds.length > 0,
+    staleTime: 30_000,
+  });
+
   // ORA Activity sheet opened when dragging to "Done"
   const [oraActivityTask, setOraActivityTask] = useState<UserTask | null>(null);
   const [oraActivityOpen, setOraActivityOpen] = useState(false);
