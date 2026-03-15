@@ -203,8 +203,12 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
   const isOverdue = editEndDate && isPast(editEndDate) && status !== 'COMPLETED';
 
   // Check if task has ad-hoc reviewers (for submit button label)
-  const { totalCount: reviewerCount, allApproved: allReviewersApproved } = useTaskReviewers(!isP2AActivity ? task?.id : undefined);
+  const { totalCount: reviewerCount, allApproved: allReviewersApproved, reviewers: taskReviewersList } = useTaskReviewers(!isP2AActivity ? task?.id : undefined);
   const hasReviewers = !isP2AActivity && reviewerCount > 0;
+
+  // Detect if task was reverted from Done (has reviewers with PENDING status while task is in_progress)
+  // This means the user needs to resubmit — show save/submit button even when isDirty is false
+  const needsResubmission = hasReviewers && task?.status === 'in_progress' && taskReviewersList.some(r => r.status === 'PENDING') && !isReadOnly;
 
   const realOraActivityId = resolvedActivityId;
 
