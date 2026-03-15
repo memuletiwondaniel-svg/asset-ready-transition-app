@@ -364,6 +364,10 @@ const KanbanCardContent: React.FC<{
                 // For P2A author tasks, show approval counts when under review (keyed by project_id)
                 const authorProjectId = meta?.project_id as string | undefined;
                 const p2aAuthorApproval = authorProjectId ? p2aApprovalSummaries.get(authorProjectId) : undefined;
+                // For ORA author tasks, show approval counts when under review (keyed by project_id)
+                const oraAuthorApproval = authorProjectId ? oraApprovalSummaries.get(authorProjectId) : undefined;
+                // Use whichever is relevant
+                const authorApproval = isP2aAuthor ? p2aAuthorApproval : isOraAuthor ? oraAuthorApproval : undefined;
 
                 if (isApproved) {
                   return (
@@ -373,16 +377,16 @@ const KanbanCardContent: React.FC<{
                   );
                 }
                 if (isActive) {
-                  // Show approval progress for P2A author tasks
-                  if (p2aAuthorApproval && p2aAuthorApproval.total > 0) {
-                    if (p2aAuthorApproval.rejected > 0) {
+                  // Show approval progress for author tasks (P2A or ORA)
+                  if (authorApproval && authorApproval.total > 0) {
+                    if (authorApproval.rejected > 0) {
                       return (
                         <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
                           Rejected
                         </span>
                       );
                     }
-                    const allDone = p2aAuthorApproval.approved >= p2aAuthorApproval.total;
+                    const allDone = authorApproval.approved >= authorApproval.total;
                     return (
                       <span className={cn(
                         "text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap",
@@ -390,7 +394,7 @@ const KanbanCardContent: React.FC<{
                           ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
                           : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
                       )}>
-                        {allDone ? `Approved · ${p2aAuthorApproval.total}/${p2aAuthorApproval.total}` : `Awaiting Approval · ${p2aAuthorApproval.approved}/${p2aAuthorApproval.total}`}
+                        {allDone ? `Approved · ${authorApproval.total}/${authorApproval.total}` : `Awaiting Approval · ${authorApproval.approved}/${authorApproval.total}`}
                       </span>
                     );
                   }
