@@ -732,7 +732,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                 placeholder="Add a description for this activity..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="min-h-[140px] resize-none text-sm border-primary/20 focus-visible:ring-primary/30"
+                className="min-h-[80px] resize-none text-sm border-primary/20 focus-visible:ring-primary/30"
                 disabled={isReadOnly}
               />
             </div>
