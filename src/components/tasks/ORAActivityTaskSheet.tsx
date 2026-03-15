@@ -1091,9 +1091,8 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
 
               return (
                 <div>
-                  <p className="text-sm font-medium mb-2 flex items-center gap-1.5 text-muted-foreground">
-                    <MessageSquare className="h-4 w-4" />
-                    Recent Activities
+                  <p className="text-sm font-medium mb-2 text-muted-foreground">
+                    Activity Feed
                     {feedCount > 0 && (
                       <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 ml-1">{feedCount}</Badge>
                     )}

@@ -130,7 +130,7 @@ export const TaskReviewersSection: React.FC<TaskReviewersSectionProps> = ({
       <div>
         <p className="text-sm font-medium mb-3 flex items-center gap-1.5 text-muted-foreground">
           <UserCheck className="h-4 w-4" />
-          Reviewers & Approvers
+          Approvers
           {reviewers.length > 0 && (
             <span className="text-[10px] ml-1 text-muted-foreground/70">
               ({reviewers.filter(r => r.status === 'APPROVED').length}/{reviewers.length})
