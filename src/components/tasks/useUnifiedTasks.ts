@@ -209,6 +209,25 @@ export function useUnifiedTasks(userId: string) {
         resolvedProgress = 0;
       }
 
+      // ── ORA Plan progress tiers (mirrors P2A: 83/95/100) ──
+      if (isOraPlanCreation) {
+        const oraMetaPlanStatus = metaPlanStatus;
+        if (oraMetaPlanStatus === 'APPROVED' || oraMetaPlanStatus === 'COMPLETED') {
+          resolvedProgress = 100;
+        } else if (oraMetaPlanStatus === 'PENDING_APPROVAL' || oraMetaPlanStatus === 'ACTIVE') {
+          resolvedProgress = 95;
+        } else if (oraMetaPlanStatus === 'DRAFT') {
+          // Cap at 83% (5/6 wizard steps completed)
+          if (resolvedProgress == null || resolvedProgress > 83) resolvedProgress = 83;
+        } else if (t.status === 'pending' && (resolvedProgress === 0 || resolvedProgress == null)) {
+          resolvedProgress = 0;
+        }
+        // Reconciliation guard: if task is NOT completed but plan says APPROVED/PENDING_APPROVAL, treat as DRAFT
+        if (t.status !== 'completed' && (oraMetaPlanStatus === 'APPROVED' || oraMetaPlanStatus === 'PENDING_APPROVAL' || oraMetaPlanStatus === 'ACTIVE')) {
+          resolvedProgress = 83;
+        }
+      }
+
       const sp = computeSmartPriority({
         category,
         categoryLabel,

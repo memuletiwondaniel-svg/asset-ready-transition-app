@@ -26,6 +26,7 @@ import { ProjectIdBadge } from '@/components/ui/project-id-badge';
 
 import { ORAActivityTaskSheet } from './ORAActivityTaskSheet';
 import { P2AActivityFeed } from './P2AActivityFeed';
+import { ApprovalActivityFeed } from './ApprovalActivityFeed';
 import { TaskActivityFeed } from './TaskActivityFeed';
 import { TaskReviewersSection } from './TaskReviewersSection';
 import { TaskAttachmentsSection } from './TaskAttachmentsSection';
