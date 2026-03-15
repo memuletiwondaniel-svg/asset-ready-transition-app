@@ -46,7 +46,7 @@ export const useORAActivityComments = (
   const fetchComments = useCallback(async (): Promise<ActivityComment[]> => {
     if (!activityId) return [];
 
-    // 1. Fetch ora_activity_comments (shared by all users via ora_plan_activity_id)
+    // 1) Shared ORA comments
     const { data: oraComments, error: oraError } = await (supabase as any)
       .from('ora_activity_comments')
       .select('id, comment, created_at, user_id')
@@ -55,33 +55,88 @@ export const useORAActivityComments = (
 
     if (oraError) throw oraError;
 
-    // 2. Fetch task_comments from ALL tasks linked to this ORA activity (cross-user visibility)
-    const { data: relatedTasks } = await (supabase as any)
-      .from('user_tasks')
-      .select('id')
-      .or(`metadata->>ora_plan_activity_id.eq.${activityId},metadata->>ora_plan_activity_id.eq.ora-${activityId}`);
+    // 2) Resolve ALL related task IDs robustly (no fragile JSON-path OR filter)
+    const relatedTaskIds = new Set<string>();
+    if (taskId) relatedTaskIds.add(taskId);
 
-    let taskComments: any[] = [];
-    if (relatedTasks && relatedTasks.length > 0) {
-      const taskIds = relatedTasks.map((t: any) => t.id);
-      const { data: tc } = await (supabase as any)
-        .from('task_comments')
-        .select('id, comment, created_at, user_id, comment_type')
-        .in('task_id', taskIds)
-        .order('created_at', { ascending: false });
-      if (tc) taskComments = tc;
+    const activityVariants = [activityId, `ora-${activityId}`, `ws-${activityId}`];
+
+    const currentTaskMetaPromise = taskId
+      ? (supabase as any)
+          .from('user_tasks')
+          .select('metadata')
+          .eq('id', taskId)
+          .maybeSingle()
+      : Promise.resolve({ data: null });
+
+    const activityTaskQueryPromises = [
+      ...activityVariants.map((value) =>
+        (supabase as any)
+          .from('user_tasks')
+          .select('id')
+          .contains('metadata', { ora_plan_activity_id: value })
+      ),
+      ...activityVariants.map((value) =>
+        (supabase as any)
+          .from('user_tasks')
+          .select('id')
+          .contains('metadata', { ora_activity_id: value })
+      ),
+    ];
+
+    const [{ data: currentTaskMeta }, ...activityTaskResults] = await Promise.all([
+      currentTaskMetaPromise,
+      ...activityTaskQueryPromises,
+    ]);
+
+    for (const result of activityTaskResults as any[]) {
+      for (const row of result?.data || []) {
+        if (row?.id) relatedTaskIds.add(row.id);
+      }
     }
 
-    // 3. Collect all unique user IDs and resolve profiles
+    const sourceTaskId = (currentTaskMeta?.metadata?.source_task_id as string | undefined) || undefined;
+    if (sourceTaskId) {
+      relatedTaskIds.add(sourceTaskId);
+
+      // Include reviewer tasks pointing to the same source task
+      const { data: siblingReviewTasks } = await (supabase as any)
+        .from('user_tasks')
+        .select('id')
+        .contains('metadata', { source_task_id: sourceTaskId });
+
+      for (const row of siblingReviewTasks || []) {
+        if (row?.id) relatedTaskIds.add(row.id);
+      }
+    }
+
+    // 3) Fetch task comments for all related tasks
+    let taskComments: any[] = [];
+    const taskIdArray = Array.from(relatedTaskIds);
+    if (taskIdArray.length > 0) {
+      const { data: tc, error: taskCommentsError } = await (supabase as any)
+        .from('task_comments')
+        .select('id, task_id, comment, created_at, user_id, comment_type')
+        .in('task_id', taskIdArray)
+        .order('created_at', { ascending: false });
+
+      if (taskCommentsError) {
+        console.error('Failed to load related task_comments for ORA activity feed:', taskCommentsError);
+      } else if (tc) {
+        taskComments = tc;
+      }
+    }
+
+    // 4) Resolve profile data
     const allUserIds = [
       ...new Set([
         ...(oraComments || []).map((c: any) => c.user_id),
         ...taskComments.map((c: any) => c.user_id),
-      ])
+      ]),
     ] as string[];
     const profileMap = await resolveProfileMap(allUserIds);
 
-    // 4. Merge and deduplicate (prefer ora_activity_comments, add unique task_comments)
+    // 5) Merge + dedupe
     const deduped = new Map<string, ActivityComment>();
 
     for (const c of (oraComments || []) as any[]) {
@@ -97,15 +152,14 @@ export const useORAActivityComments = (
       });
     }
 
-    // Add task_comments that aren't duplicates (by matching comment text + user + close timestamp)
     for (const c of taskComments) {
-      // Skip if already present as ora comment (check by exact match of comment text + user within 5s)
       const isDuplicate = Array.from(deduped.values()).some(
         (existing) =>
           existing.user_id === c.user_id &&
           existing.comment === c.comment &&
           Math.abs(new Date(existing.created_at).getTime() - new Date(c.created_at).getTime()) < 5000
       );
+
       if (!isDuplicate) {
         const profile = profileMap.get(c.user_id);
         deduped.set(`tc-${c.id}`, {
@@ -123,7 +177,7 @@ export const useORAActivityComments = (
     return Array.from(deduped.values()).sort(
       (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );
-  }, [activityId]);
+  }, [activityId, taskId]);
 
   const { data: comments = [], isLoading } = useQuery({
     queryKey,
