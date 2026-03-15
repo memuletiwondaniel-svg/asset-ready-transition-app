@@ -1043,6 +1043,28 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
               </>
             )}
 
+            {/* P2A Author: Collaborative Document, Attachments & Reviewers */}
+            {isP2aTask && task.id && (
+              <>
+                <Separator />
+                <CollaborativeDocumentEditor
+                  taskId={task.id}
+                  isReadOnly={isCompleted}
+                />
+                <Separator />
+                <TaskAttachmentsSection
+                  taskId={task.id}
+                  isReadOnly={isCompleted}
+                />
+                <Separator />
+                <TaskReviewersSection
+                  taskId={task.id}
+                  isReadOnly={isCompleted}
+                  isTaskOwner={true}
+                />
+              </>
+            )}
+
             {isVcrDeliveryPlanTask && vcrForWizard && (
               <Button
                 className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
