@@ -8413,6 +8413,7 @@ export type Database = {
           resolved: boolean
           selection_text: string | null
           task_document_id: string
+          tenant_id: string | null
           user_id: string
         }
         Insert: {
@@ -8423,6 +8424,7 @@ export type Database = {
           resolved?: boolean
           selection_text?: string | null
           task_document_id: string
+          tenant_id?: string | null
           user_id: string
         }
         Update: {
@@ -8433,6 +8435,7 @@ export type Database = {
           resolved?: boolean
           selection_text?: string | null
           task_document_id?: string
+          tenant_id?: string | null
           user_id?: string
         }
         Relationships: [
@@ -8441,6 +8444,13 @@ export type Database = {
             columns: ["task_document_id"]
             isOneToOne: false
             referencedRelation: "task_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_document_comments_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -8452,6 +8462,7 @@ export type Database = {
           id: string
           last_edited_by: string | null
           task_id: string
+          tenant_id: string | null
           updated_at: string
         }
         Insert: {
@@ -8460,6 +8471,7 @@ export type Database = {
           id?: string
           last_edited_by?: string | null
           task_id: string
+          tenant_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -8468,6 +8480,7 @@ export type Database = {
           id?: string
           last_edited_by?: string | null
           task_id?: string
+          tenant_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -8476,6 +8489,13 @@ export type Database = {
             columns: ["task_id"]
             isOneToOne: true
             referencedRelation: "user_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_documents_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
