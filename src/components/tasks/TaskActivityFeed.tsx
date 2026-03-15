@@ -155,9 +155,9 @@ export const TaskActivityFeed: React.FC<TaskActivityFeedProps> = ({ taskId }) =>
                     <>
                       <Badge
                         variant="outline"
-                        className="text-[10px] px-1.5 py-0 h-4 border-0 font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                        className="text-[10px] px-1.5 py-0 h-4 border-0 font-semibold bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
                       >
-                        Reopened
+                        Not Completed
                       </Badge>
                       {rawComment && (
                         <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed mt-1">{rawComment}</p>
