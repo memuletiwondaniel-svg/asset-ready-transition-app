@@ -223,7 +223,7 @@ const ApprovalVoidWarningDialog: React.FC<{
             disabled={!isValid}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isAdHocReviewTask ? 'Move Anyway – Void Decision' : isApproverTask ? 'Move Anyway – Void Approval' : isFullyApproved ? 'Move Anyway – Void Approvals' : 'Move Anyway – Cancel Review'}
+            {isAdHocReviewTask ? 'Move Anyway – Void Decision' : isApproverTask ? 'Move Anyway – Void Approval' : isFullyApproved ? 'Move Anyway – Void Approvals' : isGenericTask ? 'Reopen Task' : 'Move Anyway – Cancel Review'}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
