@@ -223,9 +223,13 @@ export const ApprovalActivityFeed: React.FC<ApprovalActivityFeedProps> = ({ plan
                   >
                     {entry.status === 'APPROVED' ? 'Approved' : 'Rejected'}
                   </Badge>
-                  {entry.comment && (
-                    <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed mt-1">{entry.comment}</p>
-                  )}
+                  {(() => {
+                    const raw = entry.comment || '';
+                    const cleaned = raw.replace(/^(Approved|Rejected)\s+by\s+[^\n]+\n?/i, '').trim();
+                    return cleaned ? (
+                      <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed mt-1">{cleaned}</p>
+                    ) : null;
+                  })()}
                 </>
               )}
               <p className="text-[10px] text-muted-foreground/60 mt-1">

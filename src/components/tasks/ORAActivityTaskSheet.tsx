@@ -1171,9 +1171,16 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                                     {entry.status === 'APPROVED' ? 'Approved' : 'Rejected'}
                                   </Badge>
                                 </div>
-                                {entry.comment && (
-                                  <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed mt-1">{entry.comment}</p>
-                                )}
+                                {(() => {
+                                  // Strip system-generated prefixes like "Approved by X\n" or "Rejected by X\n"
+                                  const raw = entry.comment || '';
+                                  const cleaned = raw
+                                    .replace(/^(Approved|Rejected)\s+by\s+[^\n]+\n?/i, '')
+                                    .trim();
+                                  return cleaned ? (
+                                    <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed mt-1">{cleaned}</p>
+                                  ) : null;
+                                })()}
                               </>
                             ) : (['Completed', 'In Progress', 'Not Started'].includes(entry.comment?.trim() || '') || entry.comment?.startsWith('Status changed to ')) ? (
                               <div className="flex items-center gap-1.5 flex-wrap">
