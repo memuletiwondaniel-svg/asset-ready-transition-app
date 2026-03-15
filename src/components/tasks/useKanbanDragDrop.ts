@@ -450,6 +450,19 @@ export function useKanbanDragDrop() {
         toast.info('Review decision voided — you can review again');
       }
 
+      // ── Generic revert: use reopen_task RPC for audit trail ──
+      if (isGenericRevert && voidReason) {
+        const isRealTaskId = userTask.id && !userTask.id.startsWith('ws-') && !userTask.id.startsWith('ora-');
+        if (isRealTaskId) {
+          const client = supabase as any;
+          await client.rpc('reopen_task', {
+            p_task_id: userTask.id,
+            p_reason: voidReason,
+          });
+          queryClient.invalidateQueries({ queryKey: ['task-comments', userTask.id] });
+          queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+        }
+
       // Don't invalidate ['user-tasks'] or ['user-orp-activities'] here — the realtime
       // subscription will handle the refetch after the DB settles. Invalidating immediately
       // causes a race condition where the GET returns stale data and overwrites our optimistic update.
