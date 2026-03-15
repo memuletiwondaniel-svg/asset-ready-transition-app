@@ -459,7 +459,10 @@ export function useKanbanDragDrop() {
             p_task_id: userTask.id,
             p_reason: voidReason,
           });
+          // Invalidate all reviewer-related caches so approver trays update
           queryClient.invalidateQueries({ queryKey: ['task-comments', userTask.id] });
+          queryClient.invalidateQueries({ queryKey: ['task-reviewers', userTask.id] });
+          queryClient.invalidateQueries({ queryKey: ['task-reviewers-summary'] });
           queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
         }
       }
