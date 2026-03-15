@@ -87,6 +87,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
   const [status, setStatus] = useState<ActivityStatus>('NOT_STARTED');
   const [description, setDescription] = useState('');
   const [comment, setComment] = useState('');
+  const [submissionComment, setSubmissionComment] = useState('');
   const [files, setFiles] = useState<File[]>([]);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -466,6 +467,13 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
 
   const handleSave = async () => {
     if (!task || !user) return;
+    
+    // Validate mandatory submission comment for approval submissions
+    if (status === 'COMPLETED' && hasReviewers && !submissionComment.trim()) {
+      toast.error('Please add submission notes for the approvers before submitting.');
+      return;
+    }
+    
     setSaving(true);
 
     try {
@@ -614,7 +622,22 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
         }
       }
 
-      queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+      // Log the submission comment as an activity feed entry
+      if (submissionComment.trim() && realOraActivityId && planId && user) {
+        try {
+          await (supabase as any)
+            .from('ora_activity_comments')
+            .insert({
+              ora_plan_activity_id: realOraActivityId,
+              orp_plan_id: planId,
+              user_id: user.id,
+              comment: submissionComment.trim(),
+            });
+        } catch (commentErr) {
+          console.error('Failed to log submission comment:', commentErr);
+        }
+      }
+
       queryClient.invalidateQueries({ queryKey: ['ora-activity-detail'] });
       queryClient.invalidateQueries({ queryKey: ['project-orp-plans'] });
       queryClient.invalidateQueries({ queryKey: ['user-orp-activities'] });
@@ -1090,9 +1113,8 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
 
               return (
                 <div>
-                  <p className="text-sm font-medium mb-2 flex items-center gap-1.5 text-muted-foreground">
-                    <MessageSquare className="h-4 w-4" />
-                    Recent Activities
+                  <p className="text-sm font-medium mb-2 text-muted-foreground">
+                    Activity Feed
                     {feedCount > 0 && (
                       <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 ml-1">{feedCount}</Badge>
                     )}
@@ -1292,7 +1314,21 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
         </div>
 
         {/* Pinned footer */}
-        <div className="border-t bg-background px-3 sm:px-6 py-3 sm:py-4 shrink-0 safe-area-inset-bottom">
+        <div className="border-t bg-background px-3 sm:px-6 py-3 sm:py-4 shrink-0 safe-area-inset-bottom space-y-3">
+          {/* Mandatory submission comment when submitting for approval */}
+          {!isReadOnly && status === 'COMPLETED' && hasReviewers && isDirty && (
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">
+                Submission Notes <span className="text-destructive">*</span>
+              </label>
+              <Textarea
+                placeholder="Add notes for the approvers before submitting..."
+                value={submissionComment}
+                onChange={(e) => setSubmissionComment(e.target.value)}
+                className="min-h-[60px] resize-none text-sm"
+              />
+            </div>
+          )}
           <div className="flex items-center justify-between">
             {!isReadOnly && metadata?.source !== 'ora_workflow' ? (
               <AlertDialog>
@@ -1348,7 +1384,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                       : ""
                   )}
                   onClick={handleSave}
-                  disabled={saving}
+                  disabled={saving || (status === 'COMPLETED' && hasReviewers && !submissionComment.trim())}
                 >
                   {saving && <Loader2 className="h-4 w-4 animate-spin" />}
                   {status === 'COMPLETED' ? (
