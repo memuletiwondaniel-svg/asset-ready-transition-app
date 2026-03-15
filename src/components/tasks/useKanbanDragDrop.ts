@@ -85,8 +85,11 @@ export function useKanbanDragDrop() {
     const isAdHocReview = meta?.source === 'task_review';
     const isAdHocRevert = isAdHocReview && task.kanbanColumn === 'done' && (targetColumn === 'in_progress' || targetColumn === 'todo');
 
+    // Generic revert: any non-workflow task moving from Done back
+    const isGenericRevert = !isP2aRevert && !isOraRevert && !isAdHocRevert && task.kanbanColumn === 'done' && (targetColumn === 'in_progress' || targetColumn === 'todo');
+
     // Reviewer decision void always maps back to In Progress (DB trigger enforces this)
-    const newTaskStatus = isAdHocRevert ? 'in_progress' : isOraRevert ? 'in_progress' : COLUMN_TO_TASK_STATUS[targetColumn];
+    const newTaskStatus = isAdHocRevert ? 'in_progress' : isOraRevert ? 'in_progress' : isGenericRevert ? 'in_progress' : COLUMN_TO_TASK_STATUS[targetColumn];
 
     // ── Optimistic update: patch the cached user-tasks data immediately ──
     const userTasksKey = ['user-tasks', user?.id];
