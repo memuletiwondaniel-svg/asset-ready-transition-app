@@ -103,24 +103,6 @@ export const TaskAttachmentsSection: React.FC<TaskAttachmentsSectionProps> = ({
           </p>
           <div className="flex items-center gap-1.5 mt-0.5">
             <span className="text-[10px] text-muted-foreground">{formatFileSize(attachment.file_size)}</span>
-            <span className="text-[10px] text-muted-foreground">·</span>
-            {attachment.uploader_name && (
-              <>
-                <Avatar className="h-3.5 w-3.5">
-                  <AvatarImage src={attachment.uploader_avatar || undefined} />
-                  <AvatarFallback className="text-[6px]">
-                    {attachment.uploader_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="text-[10px] text-muted-foreground truncate max-w-[80px]">
-                  {attachment.uploader_name}
-                </span>
-                <span className="text-[10px] text-muted-foreground">·</span>
-              </>
-            )}
-            <span className="text-[10px] text-muted-foreground">
-              {formatDistanceToNow(new Date(attachment.created_at), { addSuffix: true })}
-            </span>
           </div>
         </div>
 

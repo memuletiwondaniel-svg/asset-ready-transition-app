@@ -129,7 +129,6 @@ export const TaskReviewersSection: React.FC<TaskReviewersSectionProps> = ({
       <Separator className="mb-5" />
       <div>
         <p className="text-sm font-medium mb-3 flex items-center gap-1.5 text-muted-foreground">
-          <UserCheck className="h-4 w-4" />
           Approvers
           {reviewers.length > 0 && (
             <span className="text-[10px] ml-1 text-muted-foreground/70">
