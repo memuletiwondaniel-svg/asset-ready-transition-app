@@ -622,7 +622,22 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
         }
       }
 
-      queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+      // Log the submission comment as an activity feed entry
+      if (submissionComment.trim() && realOraActivityId && planId && user) {
+        try {
+          await (supabase as any)
+            .from('ora_activity_comments')
+            .insert({
+              ora_plan_activity_id: realOraActivityId,
+              orp_plan_id: planId,
+              user_id: user.id,
+              comment: submissionComment.trim(),
+            });
+        } catch (commentErr) {
+          console.error('Failed to log submission comment:', commentErr);
+        }
+      }
+
       queryClient.invalidateQueries({ queryKey: ['ora-activity-detail'] });
       queryClient.invalidateQueries({ queryKey: ['project-orp-plans'] });
       queryClient.invalidateQueries({ queryKey: ['user-orp-activities'] });
