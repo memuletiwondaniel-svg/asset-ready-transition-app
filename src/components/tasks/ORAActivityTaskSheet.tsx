@@ -1206,6 +1206,15 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                               const isStatusChange =
                                 ['Completed', 'In Progress', 'Not Started'].includes(normalizedComment) ||
                                 rawComment.startsWith('Status changed to ');
+                              const isReopened = entry.type === 'reopened';
+
+                              // Check if this task has review/approval activity
+                              const hasReviewActivity = activityFeed.some(
+                                (e) => e.type === 'approval_action' || e.type === 'submission' ||
+                                       (e.comment?.startsWith('✅') || e.comment?.startsWith('❌'))
+                              );
+                              const isCompletedStatus = normalizedComment === 'Completed';
+                              const isNotStartedStatus = normalizedComment === 'Not Started';
 
                               const isDecisionFromComment =
                                 entry.type === 'comment' &&
