@@ -78,12 +78,15 @@ export function useKanbanDragDrop() {
     const isP2aTask = meta?.action === 'create_p2a_plan';
     const isP2aRevert = isP2aTask && task.kanbanColumn === 'done' && (targetColumn === 'in_progress' || targetColumn === 'todo');
 
+    const isOraTask = meta?.action === 'create_ora_plan' || task.userTask?.type === 'ora_plan_creation';
+    const isOraRevert = isOraTask && task.kanbanColumn === 'done' && (targetColumn === 'in_progress' || targetColumn === 'todo');
+
     // Determine if this is an ad-hoc review revert
     const isAdHocReview = meta?.source === 'task_review';
     const isAdHocRevert = isAdHocReview && task.kanbanColumn === 'done' && (targetColumn === 'in_progress' || targetColumn === 'todo');
 
     // Reviewer decision void always maps back to In Progress (DB trigger enforces this)
-    const newTaskStatus = isAdHocRevert ? 'in_progress' : COLUMN_TO_TASK_STATUS[targetColumn];
+    const newTaskStatus = isAdHocRevert ? 'in_progress' : isOraRevert ? 'in_progress' : COLUMN_TO_TASK_STATUS[targetColumn];
 
     // ── Optimistic update: patch the cached user-tasks data immediately ──
     const userTasksKey = ['user-tasks', user?.id];
