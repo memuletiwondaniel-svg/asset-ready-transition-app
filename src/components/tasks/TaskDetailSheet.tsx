@@ -697,6 +697,28 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
               </>
             )}
 
+            {/* ORA Author: Collaborative Document, Attachments & Reviewers */}
+            {isOraTask && task.id && (
+              <>
+                <Separator />
+                <CollaborativeDocumentEditor
+                  taskId={task.id}
+                  isReadOnly={isCompleted}
+                />
+                <Separator />
+                <TaskAttachmentsSection
+                  taskId={task.id}
+                  isReadOnly={isCompleted}
+                />
+                <Separator />
+                <TaskReviewersSection
+                  taskId={task.id}
+                  isReadOnly={isCompleted}
+                  isTaskOwner={true}
+                />
+              </>
+            )}
+
             {/* ORA Plan Review CTA - opens wizard in review mode */}
             {isOraReviewTask && oraPlanId && (
               <>
