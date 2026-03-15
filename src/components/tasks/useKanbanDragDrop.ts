@@ -111,6 +111,14 @@ export function useKanbanDragDrop() {
               completion_percentage: 86,
             };
           }
+          // For ORA reverts, patch metadata so progress resolves to 83%
+          if (isOraRevert && t.metadata) {
+            updatedTask.metadata = {
+              ...t.metadata,
+              plan_status: 'DRAFT',
+              completion_percentage: 83,
+            };
+          }
           return updatedTask;
         }),
       };
