@@ -609,6 +609,16 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
           })
           .eq('id', task.id);
 
+        // When reverting from completed and task has reviewers, clean up reviewer tasks
+        if (originalStatus === 'COMPLETED' && taskStatus !== 'completed' && hasReviewers) {
+          await (supabase as any).rpc('reopen_task', {
+            p_task_id: task.id,
+            p_reason: 'Task reopened — status changed back to ' + status,
+          });
+          queryClient.invalidateQueries({ queryKey: ['task-reviewers', task.id] });
+          queryClient.invalidateQueries({ queryKey: ['task-reviewers-summary'] });
+        }
+
         if (taskStatus === 'completed') {
           submittedTaskIds.push(task.id);
         }
