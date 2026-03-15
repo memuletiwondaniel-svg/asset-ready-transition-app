@@ -472,7 +472,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
   const handleAddComment = async () => {
     if (!comment.trim()) return;
     try {
-      await addDbComment(comment.trim());
+      await addTaskComment(comment.trim());
       setComment('');
     } catch (err) {
       console.error('Failed to add comment:', err);
