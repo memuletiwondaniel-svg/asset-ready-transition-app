@@ -805,35 +805,11 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     const isOraCreationTask = meta?.action === 'create_ora_plan' || task.userTask.type === 'ora_plan_creation';
     const isOraReviewTask = task.userTask.type === 'ora_plan_review';
 
-    // ── Ad-hoc review tasks: intercept done → in_progress to warn about voiding decision ──
-    if (isAdHocReview && task.kanbanColumn === 'done' && (targetColumn === 'in_progress' || targetColumn === 'todo')) {
+    // ── UNIVERSAL: Any task moving from Done back requires confirmation dialog ──
+    if (task.kanbanColumn === 'done' && (targetColumn === 'in_progress' || targetColumn === 'todo')) {
       setWarningState({ task, targetColumn });
       return;
     }
-
-    // ── P2A Approval tasks: intercept done → in_progress to warn about voiding approval ──
-    if (isP2aApprovalTask && task.kanbanColumn === 'done' && (targetColumn === 'in_progress' || targetColumn === 'todo')) {
-      setWarningState({ task, targetColumn });
-      return;
-    }
-
-    // ── ORA Review tasks: intercept done → in_progress to warn about voiding approval ──
-    if (isOraReviewTask && task.kanbanColumn === 'done' && (targetColumn === 'in_progress' || targetColumn === 'todo')) {
-      setWarningState({ task, targetColumn });
-      return;
-    }
-
-    // ── ORA Plan creation tasks: intercept drags that should go through the wizard ──
-    if (isOraCreationTask) {
-      // Done → In Progress / Todo: show approval void warning
-      if (task.kanbanColumn === 'done' && (targetColumn === 'in_progress' || targetColumn === 'todo')) {
-        if (task.isApprovalProtected) {
-          setWarningState({ task, targetColumn });
-          return;
-        }
-        await moveTaskToColumn(task, targetColumn, true);
-        return;
-      }
       // Todo → In Progress: open detail sheet to guide user to Create ORA Plan
       if (targetColumn === 'in_progress' && task.kanbanColumn === 'todo') {
         setSelectedTask(task.userTask);
