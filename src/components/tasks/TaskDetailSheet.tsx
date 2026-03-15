@@ -697,6 +697,28 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
               </>
             )}
 
+            {/* ORA Author: Collaborative Document, Attachments & Reviewers */}
+            {isOraTask && task.id && (
+              <>
+                <Separator />
+                <CollaborativeDocumentEditor
+                  taskId={task.id}
+                  isReadOnly={isCompleted}
+                />
+                <Separator />
+                <TaskAttachmentsSection
+                  taskId={task.id}
+                  isReadOnly={isCompleted}
+                />
+                <Separator />
+                <TaskReviewersSection
+                  taskId={task.id}
+                  isReadOnly={isCompleted}
+                  isTaskOwner={true}
+                />
+              </>
+            )}
+
             {/* ORA Plan Review CTA - opens wizard in review mode */}
             {isOraReviewTask && oraPlanId && (
               <>
@@ -1021,6 +1043,28 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
               </>
             )}
 
+            {/* P2A Author: Collaborative Document, Attachments & Reviewers */}
+            {isP2aTask && task.id && (
+              <>
+                <Separator />
+                <CollaborativeDocumentEditor
+                  taskId={task.id}
+                  isReadOnly={isCompleted}
+                />
+                <Separator />
+                <TaskAttachmentsSection
+                  taskId={task.id}
+                  isReadOnly={isCompleted}
+                />
+                <Separator />
+                <TaskReviewersSection
+                  taskId={task.id}
+                  isReadOnly={isCompleted}
+                  isTaskOwner={true}
+                />
+              </>
+            )}
+
             {isVcrDeliveryPlanTask && vcrForWizard && (
               <Button
                 className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
@@ -1031,6 +1075,31 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                 <ChevronRight className="h-4 w-4 ml-auto" />
               </Button>
             )}
+
+            {/* VCR Delivery Plan: Collaborative Document, Attachments, Reviewers & Activity Feed */}
+            {isVcrDeliveryPlanTask && task.id && (
+              <>
+                <Separator />
+                <CollaborativeDocumentEditor
+                  taskId={task.id}
+                  isReadOnly={isCompleted}
+                />
+                <Separator />
+                <TaskAttachmentsSection
+                  taskId={task.id}
+                  isReadOnly={isCompleted}
+                />
+                <Separator />
+                <TaskReviewersSection
+                  taskId={task.id}
+                  isReadOnly={isCompleted}
+                  isTaskOwner={true}
+                />
+                <Separator />
+                <TaskActivityFeed taskId={task.id} />
+              </>
+            )}
+
             {/* Simple task: Collaborative Document, Attachments, Reviewers & Activity Feed */}
             {isSimpleTask && task.id && (
               <>
