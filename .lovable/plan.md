@@ -1,77 +1,60 @@
 
 
-# Plan: ORIP Scoring Engine Using Existing VCR Item Categories
+## Root Cause Analysis
 
-## Impact Assessment: Zero Breaking Changes
+The `reopen_task` RPC (used for generic Done→In Progress reverts) only does two things:
+1. Updates the source task status to `in_progress`
+2. Logs a `reopened` comment
 
-**No existing workflows will be affected.** The approach reuses the existing `vcr_item_categories` table (Design Integrity, Technical Integrity, Operating Integrity, Management Systems, Health & Safety) as the readiness dimensions for ORI scoring. All changes are additive:
+It does **not**:
+- Delete or cancel reviewer tasks already created in the approver's tray
+- Reset `task_reviewers` records back to `PENDING`
+- Clear reviewer decisions (`decided_at`, `comments`)
 
-- The `vcr_item_categories` table gets a `tenant_id` column and weight/confidence fields -- existing rows remain intact
-- The `readiness_nodes` table gets a new nullable `dimension_id` column pointing to `vcr_item_categories`
-- The `sync_readiness_nodes` and `calculate_ori_score` functions are replaced with enhanced versions that use category-based dimensions instead of module-based grouping
-- Existing P2A, ORA, PSSR, ORM workflows are untouched -- the ontology layer only reads from them
+So when you move a card from Done to In Progress, the task status updates but the approver's review card remains in their tray as if still needing review.
 
-## Current VCR Item Categories (Become Readiness Dimensions)
+Additionally, a regular ORA activity task (not ORA plan creation, not P2A) with ad-hoc reviewers falls into the `isGenericRevert` path, which doesn't handle ORA-activity-specific reviewer cleanup.
 
-| Code | Name | Active |
-|------|------|--------|
-| DI2 | Design Integrity | Yes |
-| TI | Technical Integrity | Yes |
-| OI | Operating Integrity | Yes |
-| MS | Management Systems | Yes |
-| HS | Health & Safety | Yes |
+## Changes
 
-These become the tenant-configurable readiness dimensions. Different tenants can add/rename/reweight their own categories.
+### 1. Update `reopen_task` RPC (new migration)
 
-## Implementation Tasks
+Extend the function to also:
+- **Delete reviewer tasks** from `user_tasks` where `metadata->>'source_task_id' = p_task_id` and status is not already `completed`
+- **Reset `task_reviewers`** for the source task: set status back to `PENDING`, clear `decided_at` and `comments`
 
-### Task 1: Extend `vcr_item_categories` for ORI Scoring
-Add columns to make categories serve double duty as readiness dimensions:
-- `tenant_id UUID` (nullable, defaults via trigger -- existing rows get current tenant)
-- `default_weight NUMERIC(5,4)` (e.g., 0.20 = 20%)
-- `confidence_factor_default NUMERIC(3,2)` (default 0.8)
-- `risk_severity_multiplier NUMERIC(3,1)` (default 1.0)
-- `is_readiness_dimension BOOLEAN DEFAULT true`
+```sql
+-- Inside reopen_task, after status update and before logging:
+-- 1) Delete pending/in_progress reviewer tasks from approvers' trays
+DELETE FROM user_tasks
+WHERE type = 'review'
+  AND metadata->>'source' = 'task_review'
+  AND metadata->>'source_task_id' = p_task_id::text
+  AND status IN ('pending', 'in_progress', 'waiting');
 
-Add `dimension_id UUID REFERENCES vcr_item_categories(id)` to `readiness_nodes`.
-
-### Task 2: Enhanced ORI Formula
-Replace `calculate_ori_score()` with the full ORIP formula:
-
-```
-DS_i = (Σ Subcomponent_Weight × Completion%) × Confidence_Factor
-RP_i = Σ (Risk_Severity × Impact_Multiplier)  -- capped at 15%
-ORI  = Σ (Dimension_Weight_i × DS_i) − Global_Risk_Penalty
-SCS  = ORI × Schedule_Adherence × Critical_Path_Stability
+-- 2) Reset task_reviewers to PENDING
+UPDATE task_reviewers
+SET status = 'PENDING', decided_at = NULL, comments = NULL
+WHERE task_id = p_task_id;
 ```
 
-Add columns to `ori_scores`: `dimension_scores JSONB`, `risk_penalty_total NUMERIC`, `startup_confidence_score NUMERIC`, `schedule_adherence_index NUMERIC`, `critical_path_stability_index NUMERIC`.
+### 2. Ensure `moveTaskToColumn` calls `reopen_task` for all revert scenarios with reviewers
 
-Add `confidence_factor NUMERIC(3,2) DEFAULT 0.8` and `risk_severity TEXT DEFAULT 'none'` to `readiness_nodes`.
+In `useKanbanDragDrop.ts`, the generic revert path at line 454 only calls `reopen_task` when `voidReason` is truthy. Since the warning dialog requires a reason (min 5 chars), this should always be present. But add a defensive fallback so it always runs for Done→back moves.
 
-### Task 3: Update Sync Function
-Update `sync_readiness_nodes()` to auto-assign `dimension_id` by mapping:
-- P2A VCR prerequisites → mapped via their `vcr_items.category_id` directly to `vcr_item_categories`
-- ORA activities → default to "Operating Integrity" or map via metadata
-- PSSR items → map via PSSR checklist category → nearest VCR category
-- ORM deliverables → default to "Management Systems"
-- Training → default to "Operating Integrity"
+### 3. Invalidate reviewer-related query caches after reopen
 
-Set confidence factors: completed/approved = 1.0, in-progress = 0.8, not-started = 0.7.
+After the `reopen_task` RPC call in `useKanbanDragDrop.ts`, invalidate:
+- `['task-reviewers', taskId]`
+- `['task-reviewers-summary']`
+- `['user-tasks']`
 
-### Task 4: Executive Dashboard Enhancement
-Redesign `ExecutiveDashboard.tsx` to match the strategic layout:
-- **Top Banner**: Large ORI + SCS + color coding (Green >85, Amber 70-85, Red <70)
-- **Dimension Breakdown**: Bar/table showing each VCR category's score, trend arrow, risk level
-- **Top 5 Startup Blockers**: Blocked/critical nodes with severity
-- **Predictive Trend**: ORI line chart with dashed target curve
-- **Risk Impact Summary**: 4 stat boxes (Open High Risks, Startup-blocking, Dimensions below 70%, Systems below 60%)
+This ensures both the author's and approver's UIs refresh immediately.
 
-### Task 5: Tenant-Configurable Weight Profiles
-Update the existing `ori_weight_profiles` to store dimension-based weights keyed by `vcr_item_categories.id` instead of module names. Add a simple admin UI for editing weights per tenant.
+## Files to Change
 
-### Task 6: Update Living Documents
-- **Security & Compliance Doc**: Add rows for Readiness Dimensions, Risk Penalty Engine, Startup Confidence Score (mark as Active)
-- **Platform Guide**: Add "Readiness Ontology & Scoring Engine" section documenting the 6 dimensions, ORI formula, SCS
-- **Strategic North Star**: Update scoring engine status from Planned to Active, add dimension-based architecture detail
+| File | Change |
+|------|--------|
+| New migration SQL | Recreate `reopen_task` to delete reviewer tasks and reset `task_reviewers` |
+| `src/components/tasks/useKanbanDragDrop.ts` | Add reviewer cache invalidation after `reopen_task` call; ensure reopen always fires on Done→back |
 
