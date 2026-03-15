@@ -1140,9 +1140,11 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                 timestamp: d.approved_at,
                 cycle: d.cycle as number | null,
               })) : [];
-              const commentEntries = dbComments.map((c) => ({
+              const commentEntries = taskScopedComments.map((c) => ({
                 id: c.id,
-                type: 'comment' as const,
+                type: c.comment_type === 'submission' ? 'submission' as const
+                  : c.comment_type === 'reopened' ? 'reopened' as const
+                  : 'comment' as const,
                 status: null,
                 role_name: null,
                 comment: c.comment,
