@@ -66,14 +66,14 @@ interface SidebarContentProps {
   onToggleCollapse?: () => void;
 }
 
-const navigationItems: NavigationItem[] = [
+const navigationItems: (NavigationItem & { requiresLeadership?: boolean })[] = [
   { labelKey: 'navHome', icon: Home, path: '/', section: 'home' },
   { labelKey: 'navProjects', icon: Key, path: '/vcrs', section: 'projects' },
   { labelKey: 'navPSSR', icon: AlertTriangle, path: '/pssr', section: 'pssr' },
   { labelKey: 'navMyTasks', icon: CalendarCheck, path: '/my-tasks', section: 'my-tasks' },
   { labelKey: 'navMyBacklog', icon: ClipboardList, path: '/my-backlog', section: 'my-backlog' },
-  { labelKey: 'navExecutiveDashboard', icon: Gauge, path: '/executive-dashboard', section: 'executive-dashboard' },
-  { labelKey: 'navORMaintenance', icon: Wrench, path: '/or-maintenance', section: 'or-maintenance' },
+  { labelKey: 'navExecutiveDashboard', icon: Gauge, path: '/executive-dashboard', section: 'executive-dashboard', requiresLeadership: true },
+  { labelKey: 'navORMaintenance', icon: Wrench, path: '/or-maintenance', section: 'or-maintenance', requiresLeadership: true },
   { labelKey: 'navAskBob', icon: MessageSquare, path: '/ask-orsh', section: 'ask-orsh' },
 ];
 
@@ -109,9 +109,12 @@ export const SidebarContent = memo<SidebarContentProps>(({
   const newTaskCount = useNewTaskCount();
   
   const DANIEL_USER_ID = '05b44255-4358-450c-8aa4-0558b31df70b';
-  const visibleNavItems = navigationItems.filter(item => 
-    item.section !== 'my-backlog' || currentUserId === DANIEL_USER_ID
-  );
+  const isLeadership = hasPermission('view_reports') || hasPermission('create_ora_plan');
+  const visibleNavItems = navigationItems.filter(item => {
+    if (item.section === 'my-backlog' && currentUserId !== DANIEL_USER_ID) return false;
+    if (item.requiresLeadership && !isLeadership) return false;
+    return true;
+  });
   
   // Helper function to get translated label
   const getLabel = (labelKey: string): string => {
@@ -368,16 +371,18 @@ export const SidebarContent = memo<SidebarContentProps>(({
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <Button 
-              variant="outline" 
-              size={isCollapsed ? "icon" : "sm"} 
-              onClick={onShowOnboarding} 
-              className={`w-full h-10 sm:h-9 ${isCollapsed ? 'justify-center px-0' : 'justify-start'}`} 
-              title={t.takeTour || 'Take Tour'}
-            >
-              <Clock className="w-4 h-4 text-muted-foreground" />
-              {!isCollapsed && <span className="ml-2">{t.takeTour || 'Take Tour'}</span>}
-            </Button>
+            {isLeadership && (
+              <Button 
+                variant="outline" 
+                size={isCollapsed ? "icon" : "sm"} 
+                onClick={onShowOnboarding} 
+                className={`w-full h-10 sm:h-9 ${isCollapsed ? 'justify-center px-0' : 'justify-start'}`} 
+                title={t.takeTour || 'Take Tour'}
+              >
+                <Clock className="w-4 h-4 text-muted-foreground" />
+                {!isCollapsed && <span className="ml-2">{t.takeTour || 'Take Tour'}</span>}
+              </Button>
+            )}
           </div>
 
           {/* Search History */}
