@@ -1384,7 +1384,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                       : ""
                   )}
                   onClick={handleSave}
-                  disabled={saving}
+                  disabled={saving || (status === 'COMPLETED' && hasReviewers && !submissionComment.trim())}
                 >
                   {saving && <Loader2 className="h-4 w-4 animate-spin" />}
                   {status === 'COMPLETED' ? (
