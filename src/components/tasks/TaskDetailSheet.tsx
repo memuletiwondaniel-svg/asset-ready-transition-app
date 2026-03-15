@@ -1133,15 +1133,6 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                   </div>
                 </div>
 
-                {/* Collaborative Document: shared with source task */}
-                {sourceTaskId && (
-                  <CollaborativeDocumentEditor
-                    taskId={task.id}
-                    sourceTaskId={sourceTaskId}
-                    isReadOnly={isCompleted || hasAlreadyDecided}
-                  />
-                )}
-
                 {/* Attachments: source task docs + reviewer's own uploads */}
                 {sourceTaskId && task.id && (
                   <TaskAttachmentsSection
