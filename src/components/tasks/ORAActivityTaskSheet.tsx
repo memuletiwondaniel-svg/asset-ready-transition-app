@@ -1015,50 +1015,6 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
               })()}
             </div>
 
-            {/* Completed → Evidence upload */}
-            {status === 'COMPLETED' && (
-              <div className="animate-in fade-in slide-in-from-top-1 duration-200">
-                <Separator className="mb-5" />
-                <div>
-                  <p className="text-sm font-medium mb-2 flex items-center gap-1.5 text-muted-foreground">
-                    <Paperclip className="h-4 w-4" />
-                    Supporting Evidence
-                  </p>
-                  <div
-                    {...getRootProps()}
-                    className={cn(
-                      "border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors",
-                      isDragActive ? "border-green-500 bg-green-500/5" : "border-border hover:border-green-400/60"
-                    )}
-                  >
-                    <input {...getInputProps()} />
-                    <Upload className="h-5 w-5 mx-auto mb-1.5 text-muted-foreground" />
-                    <p className="text-xs text-muted-foreground">
-                      Drop files or click to upload
-                    </p>
-                    <p className="text-[10px] text-muted-foreground/70 mt-0.5">
-                      PDF, images, Word, Excel (max 10MB)
-                    </p>
-                  </div>
-                  {files.length > 0 && (
-                    <div className="mt-2 space-y-1.5">
-                      {files.map((file, idx) => (
-                        <div key={idx} className="flex items-center gap-2 p-2 bg-muted/40 rounded-md text-xs">
-                          <Paperclip className="h-3 w-3 text-muted-foreground shrink-0" />
-                          <span className="truncate flex-1">{file.name}</span>
-                          <span className="text-muted-foreground shrink-0">
-                            {(file.size / 1024).toFixed(0)}KB
-                          </span>
-                          <button onClick={() => removeFile(idx)} className="text-muted-foreground hover:text-destructive">
-                            <X className="h-3 w-3" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
 
             {/* Attachments — immediately after evidence drop zone for visual continuity */}
             {task?.id && (
