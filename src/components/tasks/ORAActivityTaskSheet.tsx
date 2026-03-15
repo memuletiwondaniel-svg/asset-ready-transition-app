@@ -1292,7 +1292,21 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
         </div>
 
         {/* Pinned footer */}
-        <div className="border-t bg-background px-3 sm:px-6 py-3 sm:py-4 shrink-0 safe-area-inset-bottom">
+        <div className="border-t bg-background px-3 sm:px-6 py-3 sm:py-4 shrink-0 safe-area-inset-bottom space-y-3">
+          {/* Mandatory submission comment when submitting for approval */}
+          {!isReadOnly && status === 'COMPLETED' && hasReviewers && isDirty && (
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">
+                Submission Notes <span className="text-destructive">*</span>
+              </label>
+              <Textarea
+                placeholder="Add notes for the approvers before submitting..."
+                value={submissionComment}
+                onChange={(e) => setSubmissionComment(e.target.value)}
+                className="min-h-[60px] resize-none text-sm"
+              />
+            </div>
+          )}
           <div className="flex items-center justify-between">
             {!isReadOnly && metadata?.source !== 'ora_workflow' ? (
               <AlertDialog>
