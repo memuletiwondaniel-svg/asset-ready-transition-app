@@ -131,7 +131,7 @@ const ApprovalVoidWarningDialog: React.FC<{
               <AlertTriangle className="h-5 w-5 text-destructive" />
             </div>
             <AlertDialogTitle className="text-lg">
-              {isAdHocReviewTask ? 'Void Your Review Decision?' : isApproverTask ? 'Void Your Approval?' : isFullyApproved ? 'Void All Approvals?' : 'Cancel Approval Review?'}
+              {isAdHocReviewTask ? 'Void Your Review Decision?' : isApproverTask ? 'Void Your Approval?' : isFullyApproved ? 'Void All Approvals?' : isGenericTask ? 'Reopen Completed Task?' : 'Cancel Approval Review?'}
             </AlertDialogTitle>
           </div>
           <AlertDialogDescription asChild>
