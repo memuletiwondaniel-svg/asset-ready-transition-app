@@ -1022,7 +1022,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                 </div>
               )}
               {(() => {
-                const siblings: any[] = metadata?.sibling_activities || [];
+                const siblings: any[] = (metadata?.sibling_activities as any[] || []).length > 0 ? metadata?.sibling_activities : (dbSiblingActivities || []);
                 const available = siblings.filter((s: any) => !predecessorIds.includes(s.id) && !predecessorIds.includes(s.activity_code));
                 if (available.length === 0 && predecessorIds.length === 0) return <p className="text-[10px] text-muted-foreground">No activities available to add as prerequisites.</p>;
                 if (available.length === 0) return null;
