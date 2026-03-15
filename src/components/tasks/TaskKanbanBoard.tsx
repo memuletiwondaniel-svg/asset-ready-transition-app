@@ -76,9 +76,13 @@ interface ApprovalWarningState {
 interface ReviewerSummary { total: number; approved: number; rejected: number; }
 const ReviewerSummaryContext = createContext<Map<string, ReviewerSummary>>(new Map());
 
-// P2A author approval counts context (keyed by plan_id from metadata)
+// P2A author approval counts context (keyed by project_id from metadata)
 interface P2AApprovalSummary { total: number; approved: number; rejected: number; }
 const P2AApprovalContext = createContext<Map<string, P2AApprovalSummary>>(new Map());
+
+// ORA author approval counts context (keyed by project_id from metadata)
+interface ORAApprovalSummary { total: number; approved: number; rejected: number; }
+const ORAApprovalContext = createContext<Map<string, ORAApprovalSummary>>(new Map());
 
 
 const getColumns = (t: any) => [
