@@ -712,6 +712,8 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     const isP2aTask = meta?.action === 'create_p2a_plan';
     const isP2aApprovalTask = meta?.source === 'p2a_handover' && !isP2aTask;
     const isAdHocReview = meta?.source === 'task_review';
+    const isOraCreationTask = meta?.action === 'create_ora_plan' || task.userTask.type === 'ora_plan_creation';
+    const isOraReviewTask = task.userTask.type === 'ora_plan_review';
 
     // ── Ad-hoc review tasks: intercept done → in_progress to warn about voiding decision ──
     if (isAdHocReview && task.kanbanColumn === 'done' && (targetColumn === 'in_progress' || targetColumn === 'todo')) {
@@ -723,6 +725,37 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     if (isP2aApprovalTask && task.kanbanColumn === 'done' && (targetColumn === 'in_progress' || targetColumn === 'todo')) {
       setWarningState({ task, targetColumn });
       return;
+    }
+
+    // ── ORA Review tasks: intercept done → in_progress to warn about voiding approval ──
+    if (isOraReviewTask && task.kanbanColumn === 'done' && (targetColumn === 'in_progress' || targetColumn === 'todo')) {
+      setWarningState({ task, targetColumn });
+      return;
+    }
+
+    // ── ORA Plan creation tasks: intercept drags that should go through the wizard ──
+    if (isOraCreationTask) {
+      // Done → In Progress / Todo: show approval void warning
+      if (task.kanbanColumn === 'done' && (targetColumn === 'in_progress' || targetColumn === 'todo')) {
+        if (task.isApprovalProtected) {
+          setWarningState({ task, targetColumn });
+          return;
+        }
+        await moveTaskToColumn(task, targetColumn, true);
+        return;
+      }
+      // Todo → In Progress: open detail sheet to guide user to Create ORA Plan
+      if (targetColumn === 'in_progress' && task.kanbanColumn === 'todo') {
+        setSelectedTask(task.userTask);
+        setDetailOpen(true);
+        return;
+      }
+      // Any → Done: must submit via wizard — open detail sheet
+      if (targetColumn === 'done') {
+        setSelectedTask(task.userTask);
+        setDetailOpen(true);
+        return;
+      }
     }
 
     // ── P2A tasks: intercept drags that should go through the wizard ──

@@ -2292,6 +2292,66 @@ export type Database = {
           },
         ]
       }
+      orp_approval_history: {
+        Row: {
+          approved_at: string | null
+          comments: string | null
+          created_at: string | null
+          cycle: number
+          display_order: number | null
+          id: string
+          original_approval_id: string | null
+          orp_plan_id: string
+          role_name: string
+          status: string
+          tenant_id: string | null
+          user_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          comments?: string | null
+          created_at?: string | null
+          cycle?: number
+          display_order?: number | null
+          id?: string
+          original_approval_id?: string | null
+          orp_plan_id: string
+          role_name: string
+          status?: string
+          tenant_id?: string | null
+          user_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          comments?: string | null
+          created_at?: string | null
+          cycle?: number
+          display_order?: number | null
+          id?: string
+          original_approval_id?: string | null
+          orp_plan_id?: string
+          role_name?: string
+          status?: string
+          tenant_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orp_approval_history_orp_plan_id_fkey"
+            columns: ["orp_plan_id"]
+            isOneToOne: false
+            referencedRelation: "orp_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orp_approval_history_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orp_approvals: {
         Row: {
           approved_at: string | null
@@ -2793,6 +2853,10 @@ export type Database = {
           created_by: string
           id: string
           is_active: boolean
+          last_rejected_at: string | null
+          last_rejected_by_name: string | null
+          last_rejected_by_role: string | null
+          last_rejection_comment: string | null
           ora_engineer_id: string
           phase: Database["public"]["Enums"]["orp_phase"]
           project_id: string
@@ -2806,6 +2870,10 @@ export type Database = {
           created_by: string
           id?: string
           is_active?: boolean
+          last_rejected_at?: string | null
+          last_rejected_by_name?: string | null
+          last_rejected_by_role?: string | null
+          last_rejection_comment?: string | null
           ora_engineer_id: string
           phase: Database["public"]["Enums"]["orp_phase"]
           project_id: string
@@ -2819,6 +2887,10 @@ export type Database = {
           created_by?: string
           id?: string
           is_active?: boolean
+          last_rejected_at?: string | null
+          last_rejected_by_name?: string | null
+          last_rejected_by_role?: string | null
+          last_rejection_comment?: string | null
           ora_engineer_id?: string
           phase?: Database["public"]["Enums"]["orp_phase"]
           project_id?: string

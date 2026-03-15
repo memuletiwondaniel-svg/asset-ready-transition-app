@@ -26,6 +26,7 @@ import { ProjectIdBadge } from '@/components/ui/project-id-badge';
 
 import { ORAActivityTaskSheet } from './ORAActivityTaskSheet';
 import { P2AActivityFeed } from './P2AActivityFeed';
+import { ApprovalActivityFeed } from './ApprovalActivityFeed';
 import { TaskActivityFeed } from './TaskActivityFeed';
 import { TaskReviewersSection } from './TaskReviewersSection';
 import { TaskAttachmentsSection } from './TaskAttachmentsSection';
@@ -136,6 +137,85 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
 
   const hasExistingOraDraft = existingOraPlan?.status === 'DRAFT';
   const resolvedOraPlanId = (task?.metadata?.plan_id as string) || existingOraPlan?.id;
+
+  // ── ORA Plan reconciliation guard (mirrors P2A) ──
+  const rawOraPlanStatus = existingOraPlan?.status as string | undefined;
+  const oraTaskNotDone = task?.status !== 'completed';
+  const oraPlanStatus = (oraTaskNotDone && rawOraPlanStatus && ['APPROVED', 'COMPLETED', 'PENDING_APPROVAL'].includes(rawOraPlanStatus))
+    ? 'DRAFT'
+    : rawOraPlanStatus;
+  const oraPlanIsFullyApproved = existingOraPlan && oraPlanStatus && ['COMPLETED', 'APPROVED'].includes(oraPlanStatus);
+  const oraPlanIsSubmitted = existingOraPlan && oraPlanStatus && ['PENDING_APPROVAL', 'APPROVED', 'COMPLETED'].includes(oraPlanStatus);
+
+  // ── ORA rejection info ──
+  const { data: oraRejectionInfo } = useQuery({
+    queryKey: ['ora-rejection-info-task', oraProjectId],
+    queryFn: async () => {
+      if (!oraProjectId) return null;
+      const client = supabase as any;
+      // Find ORA plan for this project
+      const { data: planRow } = await client
+        .from('orp_plans')
+        .select('id, last_rejection_comment, last_rejected_by_name, last_rejected_by_role, last_rejected_at')
+        .eq('project_id', oraProjectId)
+        .order('updated_at', { ascending: false })
+        .limit(1);
+      const plan = planRow?.[0];
+      if (!plan) return null;
+      if (plan.last_rejection_comment) {
+        return {
+          role_name: plan.last_rejected_by_role || 'Approver',
+          comments: plan.last_rejection_comment,
+          approved_at: plan.last_rejected_at || null,
+          rejector_name: plan.last_rejected_by_name || null,
+        };
+      }
+      // Fallback: live rejected approvals
+      const { data: approverRow } = await client
+        .from('orp_approvals')
+        .select('approver_role, comments, approved_at')
+        .eq('orp_plan_id', plan.id)
+        .eq('status', 'REJECTED')
+        .order('approved_at', { ascending: false })
+        .limit(1);
+      if (approverRow?.[0]) {
+        return {
+          role_name: approverRow[0].approver_role,
+          comments: approverRow[0].comments,
+          approved_at: approverRow[0].approved_at,
+          rejector_name: null,
+        };
+      }
+      return null;
+    },
+    enabled: !!oraProjectId && isOraTask,
+    staleTime: 30_000,
+  });
+
+  const oraRejectionFallback = {
+    role_name: (task?.metadata?.last_rejection_role as string | undefined) || null,
+    comments: (task?.metadata?.last_rejection_comment as string | undefined) || null,
+    approved_at: (task?.metadata?.last_rejection_at as string | undefined) || null,
+  };
+
+  const effectiveOraRejection = {
+    role_name: oraRejectionInfo?.role_name || oraRejectionFallback.role_name,
+    comments: oraRejectionInfo?.comments || oraRejectionFallback.comments,
+    approved_at: oraRejectionInfo?.approved_at || oraRejectionFallback.approved_at,
+  };
+
+  const showOraRejectionBanner = isOraTask && !!(effectiveOraRejection.role_name || effectiveOraRejection.comments);
+
+  const getORAStatusLabel = () => {
+    if (!oraPlanStatus) return null;
+    switch (oraPlanStatus) {
+      case 'DRAFT': return { label: 'Draft', className: 'bg-slate-500/10 text-slate-600 border-slate-500/30' };
+      case 'PENDING_APPROVAL': return { label: 'Pending Approval', className: 'bg-amber-500/10 text-amber-700 border-amber-500/30' };
+      case 'APPROVED':
+      case 'COMPLETED': return { label: 'Approved', className: 'bg-emerald-500/10 text-emerald-700 border-emerald-500/30' };
+      default: return null;
+    }
+  };
 
   // Fetch project info for P2A wizard or P2A approval review
   const { data: p2aProjectInfo } = useQuery({
@@ -503,6 +583,11 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                   {getP2AStatusLabel()!.label}
                 </Badge>
               )}
+              {isOraTask && getORAStatusLabel() && (
+                <Badge variant="outline" className={cn("text-xs", getORAStatusLabel()!.className)}>
+                  {getORAStatusLabel()!.label}
+                </Badge>
+              )}
             </div>
              <SheetTitle className="text-left text-base sm:text-lg leading-snug mt-2 break-words">
               {task.title}
@@ -562,6 +647,24 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
               </Button>
             )}
 
+            {/* ORA Rejection feedback (mirrors P2A rejection banner) */}
+            {showOraRejectionBanner && (
+              <div className="p-3 rounded-lg bg-destructive/5 border border-destructive/20 space-y-1">
+                <div className="flex items-center gap-2 text-xs font-medium text-destructive">
+                  <AlertTriangle className="h-3.5 w-3.5" />
+                  Plan rejected by {effectiveOraRejection.role_name || 'approver'}
+                </div>
+                <p className="text-xs text-foreground/80 italic pl-5">
+                  "{effectiveOraRejection.comments || 'No rejection comment was provided.'}"
+                </p>
+                {effectiveOraRejection.approved_at && (
+                  <p className="text-[10px] text-muted-foreground pl-5">
+                    {format(new Date(effectiveOraRejection.approved_at), 'MMM d, yyyy')}
+                  </p>
+                )}
+              </div>
+            )}
+
             {/* ORA Plan Creation CTA - prominent for action tasks */}
             {isOraTask && oraProjectId && (
               <Button
@@ -586,19 +689,77 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
               </Button>
             )}
 
+            {/* ORA Plan Activity Feed (mirrors P2A) */}
+            {isOraTask && resolvedOraPlanId && (
+              <>
+                <Separator />
+                <ApprovalActivityFeed planId={resolvedOraPlanId} source="ora" />
+              </>
+            )}
+
             {/* ORA Plan Review CTA - opens wizard in review mode */}
             {isOraReviewTask && oraPlanId && (
-              <Button
-                className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
-                onClick={() => {
-                  onOpenChange(false);
-                  setOraReviewWizardOpen(true);
-                }}
-              >
-                <CalendarCheck className="h-4 w-4" />
-                Review ORA Plan
-                <ChevronRight className="h-4 w-4 ml-auto" />
-              </Button>
+              <>
+                {/* Resubmission context banner for ORA re-approvers (mirrors P2A) */}
+                {task.status !== 'completed' && (task.metadata as any)?.resubmission_round > 1 && (
+                  <div className="p-3.5 rounded-lg bg-accent/40 border border-accent space-y-2">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-accent-foreground">
+                      <RefreshCw className="h-3.5 w-3.5" />
+                      Round {(task.metadata as any).resubmission_round} — Resubmitted for Re-approval
+                    </div>
+                    {(task.metadata as any)?.last_rejection_by && (
+                      <div className="space-y-1 pl-5">
+                        <p className="text-xs text-foreground/80">
+                          Previously rejected by <span className="font-medium">{(task.metadata as any).last_rejection_by}</span>
+                          {(task.metadata as any)?.last_rejection_role && (
+                            <span className="text-muted-foreground"> ({(task.metadata as any).last_rejection_role})</span>
+                          )}
+                        </p>
+                        {(task.metadata as any)?.last_rejection_comment && (
+                          <p className="text-xs text-foreground/70 italic">
+                            "{(task.metadata as any).last_rejection_comment}"
+                          </p>
+                        )}
+                      </div>
+                    )}
+                    <p className="text-[10px] text-muted-foreground pl-5 flex items-center gap-1">
+                      <ClipboardList className="h-3 w-3" />
+                      View full history in Activity Feed below
+                    </p>
+                  </div>
+                )}
+
+                {/* Rejection outcome banner for ORA reviewer */}
+                {task.status === 'completed' && (task.metadata as any)?.outcome === 'rejected' && (
+                  <div className="p-3 rounded-lg bg-destructive/5 border border-destructive/20 space-y-1">
+                    <div className="flex items-center gap-2 text-xs font-medium text-destructive">
+                      <AlertTriangle className="h-3.5 w-3.5" />
+                      You rejected this plan
+                    </div>
+                    {(task.metadata as any)?.rejection_comment && (
+                      <p className="text-xs text-foreground/80 italic pl-5">
+                        "{(task.metadata as any).rejection_comment}"
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                <Button
+                  className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
+                  onClick={() => {
+                    onOpenChange(false);
+                    setOraReviewWizardOpen(true);
+                  }}
+                >
+                  <CalendarCheck className="h-4 w-4" />
+                  Review ORA Plan
+                  <ChevronRight className="h-4 w-4 ml-auto" />
+                </Button>
+
+                {/* ORA Activity Feed for reviewer */}
+                <Separator />
+                <ApprovalActivityFeed planId={oraPlanId} source="ora" />
+              </>
             )}
 
             {/* P2A Approval Review CTA - opens wizard in review mode */}

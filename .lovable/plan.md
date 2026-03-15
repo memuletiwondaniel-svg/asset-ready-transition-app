@@ -1,108 +1,77 @@
 
 
-# Unified Review & Approval UX Consistency Plan
+# Plan: ORIP Scoring Engine Using Existing VCR Item Categories
 
-## Problem Summary
+## Impact Assessment: Zero Breaking Changes
 
-The P2A Plan workflow has a mature, battle-tested approval UX (rejection banners, resubmission round context, activity feed, progress tiers, Kanban drag guards, audit history). However, the **ORA Plan** and **VCR Delivery Plan** workflows are missing many of these patterns, creating an inconsistent user experience across task types that require review and approval.
+**No existing workflows will be affected.** The approach reuses the existing `vcr_item_categories` table (Design Integrity, Technical Integrity, Operating Integrity, Management Systems, Health & Safety) as the readiness dimensions for ORI scoring. All changes are additive:
 
-## Gap Analysis
+- The `vcr_item_categories` table gets a `tenant_id` column and weight/confidence fields -- existing rows remain intact
+- The `readiness_nodes` table gets a new nullable `dimension_id` column pointing to `vcr_item_categories`
+- The `sync_readiness_nodes` and `calculate_ori_score` functions are replaced with enhanced versions that use category-based dimensions instead of module-based grouping
+- Existing P2A, ORA, PSSR, ORM workflows are untouched -- the ontology layer only reads from them
 
-| Feature | P2A Plan | ORA Plan | VCR Plan |
-|---------|----------|----------|----------|
-| Rejection banner in TaskDetailSheet | Yes | **No** | **No** |
-| Rejection banner in Wizard | Via metadata | **No** | **No** |
-| Resubmission round context for re-approvers | Yes | **No** | **No** |
-| Reconciliation guard (task not done → treat as DRAFT) | Yes | **No** | **No** |
-| Progress tiers (draft/submitted/approved) | 86/95/100% | **No tiers** | **No tiers** |
-| Kanban drag → Done intercepted (must use wizard) | Yes | **No** | **No** |
-| Kanban drag Done → In Progress reverts plan + archives approvers | Yes | **No** (plan goes to DRAFT but no approver archival/reset) | **No** |
-| Activity feed with approval decisions | Yes (P2AActivityFeed) | **No** | **No** |
-| Author card status pills (Under Review · X/Y, Approved, Rejected) | Yes | Partial (uses plan_status but no approval counts) | **No** |
-| Gantt click → same sheet as Kanban click | Yes (ORAActivityTaskSheet) | Yes | N/A |
-| Approval void warning dialog (Done → In Progress) | Yes | **No** (not intercepted) | **No** |
-| Reviewer task metadata (resubmission_round, rejection context) | Yes | **No** | **No** |
+## Current VCR Item Categories (Become Readiness Dimensions)
 
-## Implementation Plan
+| Code | Name | Active |
+|------|------|--------|
+| DI2 | Design Integrity | Yes |
+| TI | Technical Integrity | Yes |
+| OI | Operating Integrity | Yes |
+| MS | Management Systems | Yes |
+| HS | Health & Safety | Yes |
 
-### 1. ORA Plan: Add rejection banner + resubmission context to TaskDetailSheet
+These become the tenant-configurable readiness dimensions. Different tenants can add/rename/reweight their own categories.
 
-**In `TaskDetailSheet.tsx`** for `isOraTask`:
-- Fetch ORA plan rejection info from `orp_approvals` (same pattern as P2A's `p2aRejectionInfo` query)
-- Show rejection banner when plan status is DRAFT and there's a previous rejection
-- Add reconciliation guard: if task is not in Done column, treat ORA plan as DRAFT regardless of DB status
+## Implementation Tasks
 
-**In `TaskDetailSheet.tsx`** for `isOraReviewTask` (ORA reviewer's task):
-- Add resubmission round banner (same as P2A's Round N banner) using an `orp_approval_history` table or querying approval comments
-- Show rejection outcome banner when reviewer has rejected
-- Add `ORAActivityFeed` (or reuse a generic `ApprovalActivityFeed`) showing approval decisions
+### Task 1: Extend `vcr_item_categories` for ORI Scoring
+Add columns to make categories serve double duty as readiness dimensions:
+- `tenant_id UUID` (nullable, defaults via trigger -- existing rows get current tenant)
+- `default_weight NUMERIC(5,4)` (e.g., 0.20 = 20%)
+- `confidence_factor_default NUMERIC(3,2)` (default 0.8)
+- `risk_severity_multiplier NUMERIC(3,1)` (default 1.0)
+- `is_readiness_dimension BOOLEAN DEFAULT true`
 
-### 2. ORA Plan: Add progress tiers matching P2A
+Add `dimension_id UUID REFERENCES vcr_item_categories(id)` to `readiness_nodes`.
 
-**In `useUnifiedTasks.ts`**:
-- For `isOraPlanCreation` tasks, apply same progress tier logic as P2A:
-  - DRAFT → cap at 83% (5/6 steps)
-  - PENDING_APPROVAL → 95%
-  - APPROVED → 100%
-- Add reconciliation guard: if task not done and plan status is PENDING_APPROVAL/APPROVED, force to DRAFT
+### Task 2: Enhanced ORI Formula
+Replace `calculate_ori_score()` with the full ORIP formula:
 
-### 3. ORA Plan: Kanban drag interception
+```
+DS_i = (Σ Subcomponent_Weight × Completion%) × Confidence_Factor
+RP_i = Σ (Risk_Severity × Impact_Multiplier)  -- capped at 15%
+ORI  = Σ (Dimension_Weight_i × DS_i) − Global_Risk_Penalty
+SCS  = ORI × Schedule_Adherence × Critical_Path_Stability
+```
 
-**In `TaskKanbanBoard.tsx` `handleDragEnd`**:
-- Detect `isOraTask` (ora_plan_creation) same as P2A
-- Intercept drag to Done → open detail sheet (must submit via wizard)
-- Intercept Done → In Progress → show approval void warning dialog
+Add columns to `ori_scores`: `dimension_scores JSONB`, `risk_penalty_total NUMERIC`, `startup_confidence_score NUMERIC`, `schedule_adherence_index NUMERIC`, `critical_path_stability_index NUMERIC`.
 
-**In `useKanbanDragDrop.ts`**:
-- Add ORA Plan revert logic (mirror P2A revert):
-  - Revert `orp_plans` to DRAFT
-  - Archive decided approvers from `orp_approvals` to a new `orp_approval_history` table
-  - Reset all `orp_approvals` to PENDING
-  - Reset task metadata (plan_status: DRAFT, completion_percentage: 83%)
-  - Set ORA activity progress to 83%
+Add `confidence_factor NUMERIC(3,2) DEFAULT 0.8` and `risk_severity TEXT DEFAULT 'none'` to `readiness_nodes`.
 
-### 4. ORA Plan: Approval history + activity feed
+### Task 3: Update Sync Function
+Update `sync_readiness_nodes()` to auto-assign `dimension_id` by mapping:
+- P2A VCR prerequisites → mapped via their `vcr_items.category_id` directly to `vcr_item_categories`
+- ORA activities → default to "Operating Integrity" or map via metadata
+- PSSR items → map via PSSR checklist category → nearest VCR category
+- ORM deliverables → default to "Management Systems"
+- Training → default to "Operating Integrity"
 
-**Database**: Create `orp_approval_history` table (mirrors `p2a_approver_history`):
-- `id`, `orp_plan_id`, `original_approval_id`, `user_id`, `role_name`, `status`, `comments`, `approved_at`, `cycle`, `created_at`
-- RLS policies matching `orp_approvals`
+Set confidence factors: completed/approved = 1.0, in-progress = 0.8, not-started = 0.7.
 
-**Frontend**: Create `ORAApprovalActivityFeed` component (or make a generic `ApprovalActivityFeed` that works for both P2A and ORA by accepting a data source prop).
+### Task 4: Executive Dashboard Enhancement
+Redesign `ExecutiveDashboard.tsx` to match the strategic layout:
+- **Top Banner**: Large ORI + SCS + color coding (Green >85, Amber 70-85, Red <70)
+- **Dimension Breakdown**: Bar/table showing each VCR category's score, trend arrow, risk level
+- **Top 5 Startup Blockers**: Blocked/critical nodes with severity
+- **Predictive Trend**: ORI line chart with dashed target curve
+- **Risk Impact Summary**: 4 stat boxes (Open High Risks, Startup-blocking, Dimensions below 70%, Systems below 60%)
 
-### 5. ORA Plan: Reviewer task enrichment on rejection
+### Task 5: Tenant-Configurable Weight Profiles
+Update the existing `ori_weight_profiles` to store dimension-based weights keyed by `vcr_item_categories.id` instead of module names. Add a simple admin UI for editing weights per tenant.
 
-**In `ORAActivityPlanWizard.tsx` `handleReviewDecision`**:
-- On REJECTED: Sync rejection metadata to the author's user_task (last_rejection_role, last_rejection_comment, last_rejection_at) — same as P2A's trigger `trg_sync_p2a_rejection_to_plan`
-- On resubmission: Stamp `resubmission_round` on newly created reviewer tasks
-
-### 6. ORA Plan: Author card approval counts in Kanban
-
-**In `TaskKanbanBoard.tsx`**:
-- Add ORA approval summary query (mirror `p2aApprovalSummaries`) fetching from `orp_approvals` by plan_id
-- Use the same status pill rendering logic for ORA author cards (Under Review · X/Y, Approved · X/X, Rejected)
-
-### 7. VCR Delivery Plan: Apply same patterns
-
-- VCR plans use `VCRExecutionPlanWizard` with its own approval flow
-- Apply the same Kanban drag interception, progress tiers, rejection banners, and activity feed patterns
-- This requires auditing the VCR approval mechanism (likely uses `task_reviewers` for ad-hoc review)
-
-### 8. Retrospective data consistency
-
-**Database migration**:
-- Backfill `plan_status` on existing ORA author tasks from `orp_plans.status`
-- Backfill `completion_percentage` on existing ORA tasks based on plan status (DRAFT→83%, PENDING_APPROVAL→95%, APPROVED→100%)
-- Add `tenant_id` to `orp_approval_history` with trigger
-
-## Files to Create/Modify
-
-| File | Action |
-|------|--------|
-| Migration SQL | Create `orp_approval_history`, backfill ORA task metadata |
-| `src/components/tasks/TaskDetailSheet.tsx` | Add ORA rejection banner, reconciliation guard, approval feed |
-| `src/components/tasks/useUnifiedTasks.ts` | Add ORA progress tiers (83/95/100) |
-| `src/components/tasks/TaskKanbanBoard.tsx` | Add ORA drag interception + approval counts |
-| `src/components/tasks/useKanbanDragDrop.ts` | Add ORA plan revert logic |
-| `src/components/ora/wizard/ORAActivityPlanWizard.tsx` | Sync rejection metadata to author task |
-| `src/components/tasks/ApprovalActivityFeed.tsx` | New generic component for both P2A and ORA feeds |
+### Task 6: Update Living Documents
+- **Security & Compliance Doc**: Add rows for Readiness Dimensions, Risk Penalty Engine, Startup Confidence Score (mark as Active)
+- **Platform Guide**: Add "Readiness Ontology & Scoring Engine" section documenting the 6 dimensions, ORI formula, SCS
+- **Strategic North Star**: Update scoring engine status from Planned to Active, add dimension-based architecture detail
 
