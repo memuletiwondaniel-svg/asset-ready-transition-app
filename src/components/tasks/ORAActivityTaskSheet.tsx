@@ -1060,6 +1060,17 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
               </div>
             )}
 
+            {/* Attachments — immediately after evidence drop zone for visual continuity */}
+            {task?.id && (
+              <>
+                <Separator />
+                <TaskAttachmentsSection
+                  taskId={task.id}
+                  isReadOnly={isReadOnly}
+                />
+              </>
+            )}
+
             {/* Reviewers & Approvers — only for non-P2A tasks */}
             {!isP2AActivity && task?.id && (
               <TaskReviewersSection
@@ -1067,26 +1078,12 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                 isReadOnly={isReadOnly}
                 isTaskOwner={true}
                 onDecisionMade={async () => {
-                  // DB trigger handle_task_reviewer_decision handles logging to
-                  // task_comments and ora_activity_comments automatically.
-                  // Just invalidate caches so the UI refreshes.
                   queryClient.invalidateQueries({ queryKey: ['ora-activity-comments'] });
                   queryClient.invalidateQueries({ queryKey: ['task-comments'] });
                   queryClient.invalidateQueries({ queryKey: ['task-reviewers-summary'] });
                   queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
                 }}
               />
-            )}
-
-            {/* Attachments */}
-            {task?.id && (
-              <>
-                <Separator />
-                <TaskAttachmentsSection
-                  taskId={task.id}
-                  isReadOnly={isReadOnly || status === 'COMPLETED'}
-                />
-              </>
             )}
 
             {/* Collaborative Document Editor */}
