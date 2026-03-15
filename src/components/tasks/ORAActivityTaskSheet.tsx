@@ -394,8 +394,8 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
     ? ID_BADGE_PALETTE[hashCode(activityCode) % ID_BADGE_PALETTE.length]
     : ID_BADGE_PALETTE[0];
 
-  // Database-persisted comments
-  const { comments: dbComments, isLoading: commentsLoading, addComment: addDbComment, isAdding } = useORAActivityComments(realOraActivityId || undefined, planId, task?.id);
+  // Task-scoped comments (isolated per card — no cross-task merging)
+  const { comments: taskScopedComments, isLoading: commentsLoading, addComment: addTaskComment, isAddingComment: isAdding } = useTaskComments(task?.id);
 
   // Initialize values when sheet opens — prefer dbActivity over task metadata
   useEffect(() => {
