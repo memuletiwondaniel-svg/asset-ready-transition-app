@@ -209,6 +209,16 @@ export function useUnifiedTasks(userId: string) {
         resolvedProgress = 0;
       }
 
+      // Detect workflow tasks backed by external approvals (moved up for progress tier usage)
+      const isOraPlanCreation = action === 'create_ora_plan' || t.type === 'ora_plan_creation';
+      const isP2aPlanCreation = action === 'create_p2a_plan' || t.type === 'p2a_plan_creation';
+      const isAdHocReview = source === 'task_review';
+      const planStatus = meta?.plan_status;
+      const isWorkflowTask = isOraPlanCreation || isP2aPlanCreation;
+      // Ad-hoc review tasks are approval-protected once completed (reviewer made a decision)
+      const isApprovalProtected = (isWorkflowTask && ['APPROVED', 'COMPLETED', 'ACTIVE'].includes(planStatus?.toUpperCase?.() || ''))
+        || (isAdHocReview && t.status === 'completed');
+
       // ── ORA Plan progress tiers (mirrors P2A: 83/95/100) ──
       if (isOraPlanCreation) {
         const oraMetaPlanStatus = metaPlanStatus;
@@ -217,7 +227,6 @@ export function useUnifiedTasks(userId: string) {
         } else if (oraMetaPlanStatus === 'PENDING_APPROVAL' || oraMetaPlanStatus === 'ACTIVE') {
           resolvedProgress = 95;
         } else if (oraMetaPlanStatus === 'DRAFT') {
-          // Cap at 83% (5/6 wizard steps completed)
           if (resolvedProgress == null || resolvedProgress > 83) resolvedProgress = 83;
         } else if (t.status === 'pending' && (resolvedProgress === 0 || resolvedProgress == null)) {
           resolvedProgress = 0;
@@ -227,28 +236,6 @@ export function useUnifiedTasks(userId: string) {
           resolvedProgress = 83;
         }
       }
-
-      const sp = computeSmartPriority({
-        category,
-        categoryLabel,
-        startDate,
-        endDate,
-        dueDate: t.due_date || undefined,
-        durationDays,
-        progressPercentage: resolvedProgress,
-        isWaiting,
-        createdAt: t.created_at,
-      });
-
-      // Detect workflow tasks backed by external approvals
-      const isOraPlanCreation = action === 'create_ora_plan' || t.type === 'ora_plan_creation';
-      const isP2aPlanCreation = action === 'create_p2a_plan' || t.type === 'p2a_plan_creation';
-      const isAdHocReview = source === 'task_review';
-      const planStatus = meta?.plan_status;
-      const isWorkflowTask = isOraPlanCreation || isP2aPlanCreation;
-      // Ad-hoc review tasks are approval-protected once completed (reviewer made a decision)
-      const isApprovalProtected = (isWorkflowTask && ['APPROVED', 'COMPLETED', 'ACTIVE'].includes(planStatus?.toUpperCase?.() || ''))
-        || (isAdHocReview && t.status === 'completed');
 
       tasks.push({
         id: `ut-${t.id}`,
