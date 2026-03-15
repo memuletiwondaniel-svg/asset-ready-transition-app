@@ -30,7 +30,7 @@ import type { UserTask } from '@/hooks/useUserTasks';
 import { sortP2AFeedEntries } from './p2aActivityFeedUtils';
 import { TaskReviewersSection } from './TaskReviewersSection';
 import { TaskAttachmentsSection } from './TaskAttachmentsSection';
-import CollaborativeDocumentEditor from './CollaborativeDocumentEditor';
+
 import { useTaskReviewers } from '@/hooks/useTaskReviewers';
 
 interface ORAActivityTaskSheetProps {
@@ -1042,16 +1042,6 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
               />
             )}
 
-            {/* Collaborative Document Editor */}
-            {task?.id && (
-              <>
-                <Separator />
-                <CollaborativeDocumentEditor
-                  taskId={task.id}
-                  isReadOnly={isReadOnly || status === 'COMPLETED'}
-                />
-              </>
-            )}
 
             <Separator />
 
