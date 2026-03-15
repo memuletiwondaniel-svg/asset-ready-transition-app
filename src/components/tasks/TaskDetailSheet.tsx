@@ -1075,6 +1075,31 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                 <ChevronRight className="h-4 w-4 ml-auto" />
               </Button>
             )}
+
+            {/* VCR Delivery Plan: Collaborative Document, Attachments, Reviewers & Activity Feed */}
+            {isVcrDeliveryPlanTask && task.id && (
+              <>
+                <Separator />
+                <CollaborativeDocumentEditor
+                  taskId={task.id}
+                  isReadOnly={isCompleted}
+                />
+                <Separator />
+                <TaskAttachmentsSection
+                  taskId={task.id}
+                  isReadOnly={isCompleted}
+                />
+                <Separator />
+                <TaskReviewersSection
+                  taskId={task.id}
+                  isReadOnly={isCompleted}
+                  isTaskOwner={true}
+                />
+                <Separator />
+                <TaskActivityFeed taskId={task.id} />
+              </>
+            )}
+
             {/* Simple task: Collaborative Document, Attachments, Reviewers & Activity Feed */}
             {isSimpleTask && task.id && (
               <>
