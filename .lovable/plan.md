@@ -1,80 +1,77 @@
 
-Goal: fix the recurring root-cause issues so each task card shows only its own data, submissions show correctly as a single “Submitted + comment” event, attachments are visible to approvers, and Done → In Progress always requires a confirmation reason.
 
-1) What I found (root causes)
-- Wrong overlay is opened for review tasks in multiple places:
-  - `TaskKanbanBoard`, `UnifiedTaskList`, and `TaskTableView` currently treat any task with `metadata.ora_plan_activity_id` as an ORA activity and open `ORAActivityTaskSheet`.
-  - Review tasks also carry `ora_plan_activity_id`, so approvers are being routed to the wrong UI.
-- That wrong UI uses `useORAActivityComments`, which intentionally merges comments across related tasks/activity IDs, causing “inherited” feeds across cards.
-- Submission is logged as two separate ORA comments (`Completed` and then the free-text note), so feed shows two entries instead of one combined submission event.
-- The “Completed” label appears because ORA overlay feed is rendering status text directly, not a submission event type.
-- Database data confirms this exact split event now: one `ora_activity_comments` row with `Completed`, another with the submission text for the same timestamp/user.
+# Plan: ORIP Scoring Engine Using Existing VCR Item Categories
 
-2) Frontend plan (simplify and isolate by task)
-A. Fix task routing (critical)
-- In all 3 task launch points:
-  - `TaskKanbanBoard.tsx`
-  - `UnifiedTaskList.tsx`
-  - `TaskTableView.tsx`
-- Only open `ORAActivityTaskSheet` for true author/activity tasks (`type === 'ora_activity'` or `action === 'complete_ora_activity'` or `action === 'create_p2a_plan'`).
-- Explicitly exclude `metadata.source === 'task_review'` so reviewer cards always open `TaskDetailSheet` (where source attachments and source task activity are already handled correctly).
+## Impact Assessment: Zero Breaking Changes
 
-B. Use task-scoped feed in activity sheet
-- Replace ORA merged feed usage in `ORAActivityTaskSheet` with task-scoped comments (`task_comments`, keyed by task_id) for card-level feed rendering.
-- Keep ORA plan-level aggregate history in `ApprovalActivityFeed` (plan review context), not in card-level activity sheets.
+**No existing workflows will be affected.** The approach reuses the existing `vcr_item_categories` table (Design Integrity, Technical Integrity, Operating Integrity, Management Systems, Health & Safety) as the readiness dimensions for ORI scoring. All changes are additive:
 
-C. Single submission event rendering
-- In `ORAActivityTaskSheet`, on submit-for-approval:
-  - stop writing separate `Completed` + separate comment feed entries.
-  - write one submission event (with comment) so UI shows a single row: badge “Submitted” + note text.
-- Update feed renderer to treat this as “Submitted” (blue badge), not “Completed”.
+- The `vcr_item_categories` table gets a `tenant_id` column and weight/confidence fields -- existing rows remain intact
+- The `readiness_nodes` table gets a new nullable `dimension_id` column pointing to `vcr_item_categories`
+- The `sync_readiness_nodes` and `calculate_ori_score` functions are replaced with enhanced versions that use category-based dimensions instead of module-based grouping
+- Existing P2A, ORA, PSSR, ORM workflows are untouched -- the ontology layer only reads from them
 
-D. Done → In Progress confirmation for all task types
-- In `TaskKanbanBoard` drag handling, intercept all Done → non-Done transitions and show the warning dialog with mandatory reason + acknowledgement.
-- Keep specialized messaging for review/protected workflows, but apply a generic reopen warning for normal tasks too.
-- Ensure move call always passes reason, and always writes an audit feed entry for reopen action.
+## Current VCR Item Categories (Become Readiness Dimensions)
 
-3) Backend + database plan (make behavior permanent and consistent)
-A. Canonical per-card event model
-- Standardize card-level history on `task_comments` (already per-task, no need for “one table per card”).
-- Add/standardize `comment_type` usage for:
-  - `submission`
-  - `status_change`
-  - `reopened`
-  - existing reviewer decision/void types.
-- Update DB trigger/RPC path so submission creates one canonical `submission` event row.
+| Code | Name | Active |
+|------|------|--------|
+| DI2 | Design Integrity | Yes |
+| TI | Technical Integrity | Yes |
+| OI | Operating Integrity | Yes |
+| MS | Management Systems | Yes |
+| HS | Health & Safety | Yes |
 
-B. Submission API/RPC (atomic)
-- Add a DB RPC (or secure function) to atomically:
-  1) mark source task completed,
-  2) ensure reviewer tasks exist,
-  3) insert one `task_comments` submission event (with mandatory comment),
-  4) optionally mirror to `ora_activity_comments` only for plan-level legacy views.
-- Frontend `ORAActivityTaskSheet` uses this RPC instead of multiple ad-hoc writes.
+These become the tenant-configurable readiness dimensions. Different tenants can add/rename/reweight their own categories.
 
-C. Reopen audit
-- On Done → In Progress, log one `task_comments` row with `comment_type='reopened'` and user reason.
-- Existing protected-workflow reversion logic remains, but now all task types get mandatory rationale and auditable trail.
+## Implementation Tasks
 
-4) Retrospective fix for old cards/data
-- Add backfill migration script to repair historical split submissions:
-  - detect near-simultaneous pairs (`Completed` + free-text by same user/task/activity),
-  - create a single `task_comments` submission event if missing.
-- Add frontend collapse fallback for legacy rows so old cards also display as one “Submitted + note” event even before/without full backfill.
+### Task 1: Extend `vcr_item_categories` for ORI Scoring
+Add columns to make categories serve double duty as readiness dimensions:
+- `tenant_id UUID` (nullable, defaults via trigger -- existing rows get current tenant)
+- `default_weight NUMERIC(5,4)` (e.g., 0.20 = 20%)
+- `confidence_factor_default NUMERIC(3,2)` (default 0.8)
+- `risk_severity_multiplier NUMERIC(3,1)` (default 1.0)
+- `is_readiness_dimension BOOLEAN DEFAULT true`
 
-5) Validation plan (end-to-end)
-- Author submits ORA activity with attachment + comment:
-  - Approver opens review task and sees source attachment under “Submitted Documents”.
-  - Feed shows one “Submitted” entry with the author’s note (not separate Completed).
-- Create two tasks under same ORA activity:
-  - verify their card feeds are isolated (no inherited entries).
-- Drag Done → In Progress for:
-  - simple task,
-  - ORA/P2A workflow task,
-  - review task.
-  - confirm dialog always appears, reason mandatory, status actually reverts, audit entry written.
-- Regression check: reviewer tray creation still works on submission and remains visible cross-user.
+Add `dimension_id UUID REFERENCES vcr_item_categories(id)` to `readiness_nodes`.
 
-Technical notes
-- I will not create per-task physical tables; that would be unscalable and unnecessary. The correct root-cause-safe model is one normalized `task_comments` table keyed by `task_id`, with strict event typing and task-scoped UI queries.
-- This plan addresses frontend routing/rendering, backend write paths, and database event consistency + historical remediation.
+### Task 2: Enhanced ORI Formula
+Replace `calculate_ori_score()` with the full ORIP formula:
+
+```
+DS_i = (Σ Subcomponent_Weight × Completion%) × Confidence_Factor
+RP_i = Σ (Risk_Severity × Impact_Multiplier)  -- capped at 15%
+ORI  = Σ (Dimension_Weight_i × DS_i) − Global_Risk_Penalty
+SCS  = ORI × Schedule_Adherence × Critical_Path_Stability
+```
+
+Add columns to `ori_scores`: `dimension_scores JSONB`, `risk_penalty_total NUMERIC`, `startup_confidence_score NUMERIC`, `schedule_adherence_index NUMERIC`, `critical_path_stability_index NUMERIC`.
+
+Add `confidence_factor NUMERIC(3,2) DEFAULT 0.8` and `risk_severity TEXT DEFAULT 'none'` to `readiness_nodes`.
+
+### Task 3: Update Sync Function
+Update `sync_readiness_nodes()` to auto-assign `dimension_id` by mapping:
+- P2A VCR prerequisites → mapped via their `vcr_items.category_id` directly to `vcr_item_categories`
+- ORA activities → default to "Operating Integrity" or map via metadata
+- PSSR items → map via PSSR checklist category → nearest VCR category
+- ORM deliverables → default to "Management Systems"
+- Training → default to "Operating Integrity"
+
+Set confidence factors: completed/approved = 1.0, in-progress = 0.8, not-started = 0.7.
+
+### Task 4: Executive Dashboard Enhancement
+Redesign `ExecutiveDashboard.tsx` to match the strategic layout:
+- **Top Banner**: Large ORI + SCS + color coding (Green >85, Amber 70-85, Red <70)
+- **Dimension Breakdown**: Bar/table showing each VCR category's score, trend arrow, risk level
+- **Top 5 Startup Blockers**: Blocked/critical nodes with severity
+- **Predictive Trend**: ORI line chart with dashed target curve
+- **Risk Impact Summary**: 4 stat boxes (Open High Risks, Startup-blocking, Dimensions below 70%, Systems below 60%)
+
+### Task 5: Tenant-Configurable Weight Profiles
+Update the existing `ori_weight_profiles` to store dimension-based weights keyed by `vcr_item_categories.id` instead of module names. Add a simple admin UI for editing weights per tenant.
+
+### Task 6: Update Living Documents
+- **Security & Compliance Doc**: Add rows for Readiness Dimensions, Risk Penalty Engine, Startup Confidence Score (mark as Active)
+- **Platform Guide**: Add "Readiness Ontology & Scoring Engine" section documenting the 6 dimensions, ORI formula, SCS
+- **Strategic North Star**: Update scoring engine status from Planned to Active, add dimension-based architecture detail
+

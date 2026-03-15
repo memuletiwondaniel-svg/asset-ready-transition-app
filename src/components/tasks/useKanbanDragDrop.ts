@@ -85,8 +85,11 @@ export function useKanbanDragDrop() {
     const isAdHocReview = meta?.source === 'task_review';
     const isAdHocRevert = isAdHocReview && task.kanbanColumn === 'done' && (targetColumn === 'in_progress' || targetColumn === 'todo');
 
+    // Generic revert: any non-workflow task moving from Done back
+    const isGenericRevert = !isP2aRevert && !isOraRevert && !isAdHocRevert && task.kanbanColumn === 'done' && (targetColumn === 'in_progress' || targetColumn === 'todo');
+
     // Reviewer decision void always maps back to In Progress (DB trigger enforces this)
-    const newTaskStatus = isAdHocRevert ? 'in_progress' : isOraRevert ? 'in_progress' : COLUMN_TO_TASK_STATUS[targetColumn];
+    const newTaskStatus = isAdHocRevert ? 'in_progress' : isOraRevert ? 'in_progress' : isGenericRevert ? 'in_progress' : COLUMN_TO_TASK_STATUS[targetColumn];
 
     // ── Optimistic update: patch the cached user-tasks data immediately ──
     const userTasksKey = ['user-tasks', user?.id];
@@ -445,6 +448,20 @@ export function useKanbanDragDrop() {
         queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
 
         toast.info('Review decision voided — you can review again');
+      }
+
+      // ── Generic revert: use reopen_task RPC for audit trail ──
+      if (isGenericRevert && voidReason) {
+        const isRealTaskId = userTask.id && !userTask.id.startsWith('ws-') && !userTask.id.startsWith('ora-');
+        if (isRealTaskId) {
+          const client = supabase as any;
+          await client.rpc('reopen_task', {
+            p_task_id: userTask.id,
+            p_reason: voidReason,
+          });
+          queryClient.invalidateQueries({ queryKey: ['task-comments', userTask.id] });
+          queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+        }
       }
 
       // Don't invalidate ['user-tasks'] or ['user-orp-activities'] here — the realtime

@@ -116,6 +116,7 @@ const ApprovalVoidWarningDialog: React.FC<{
   const isAdHocReviewTask = metaSource === 'task_review';
   const planStatus = meta?.plan_status?.toUpperCase?.() || '';
   const isFullyApproved = !isApproverTask && !isAdHocReviewTask && ['COMPLETED', 'APPROVED'].includes(planStatus);
+  const isGenericTask = !isApproverTask && !isAdHocReviewTask && !planStatus;
 
   const taskTitle = task?.title || '';
   const trimmedReason = voidReason.trim();
@@ -130,7 +131,7 @@ const ApprovalVoidWarningDialog: React.FC<{
               <AlertTriangle className="h-5 w-5 text-destructive" />
             </div>
             <AlertDialogTitle className="text-lg">
-              {isAdHocReviewTask ? 'Void Your Review Decision?' : isApproverTask ? 'Void Your Approval?' : isFullyApproved ? 'Void All Approvals?' : 'Cancel Approval Review?'}
+              {isAdHocReviewTask ? 'Void Your Review Decision?' : isApproverTask ? 'Void Your Approval?' : isFullyApproved ? 'Void All Approvals?' : isGenericTask ? 'Reopen Completed Task?' : 'Cancel Approval Review?'}
             </AlertDialogTitle>
           </div>
           <AlertDialogDescription asChild>
@@ -143,7 +144,9 @@ const ApprovalVoidWarningDialog: React.FC<{
                   ? 'has already been completed — you approved this plan.'
                   : isFullyApproved
                     ? 'has been approved through a formal review process.'
-                    : 'has been submitted and is currently under approval review.'}
+                    : isGenericTask
+                      ? 'has been marked as completed.'
+                      : 'has been submitted and is currently under approval review.'}
               </p>
               <p className="text-muted-foreground">Moving this task back will:</p>
               <ul className="list-disc list-inside space-y-1 text-muted-foreground ml-1">
@@ -164,6 +167,11 @@ const ApprovalVoidWarningDialog: React.FC<{
                     <li>Void all existing approvals</li>
                     <li>Require a completely new review cycle</li>
                     <li>Notify all approvers of the change</li>
+                  </>
+                ) : isGenericTask ? (
+                  <>
+                    <li>Revert the task status to In Progress</li>
+                    <li>This action will be logged for audit purposes</li>
                   </>
                 ) : (
                   <>
@@ -215,7 +223,7 @@ const ApprovalVoidWarningDialog: React.FC<{
             disabled={!isValid}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isAdHocReviewTask ? 'Move Anyway – Void Decision' : isApproverTask ? 'Move Anyway – Void Approval' : isFullyApproved ? 'Move Anyway – Void Approvals' : 'Move Anyway – Cancel Review'}
+            {isAdHocReviewTask ? 'Move Anyway – Void Decision' : isApproverTask ? 'Move Anyway – Void Approval' : isFullyApproved ? 'Move Anyway – Void Approvals' : isGenericTask ? 'Reopen Task' : 'Move Anyway – Cancel Review'}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -752,7 +760,15 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     if (task.isWaiting) return;
     if (task.userTask) {
       const meta = task.userTask.metadata as Record<string, any> | undefined;
-      const isOraActivity = task.userTask.type === 'ora_activity' || meta?.action === 'complete_ora_activity' || meta?.action === 'create_p2a_plan' || meta?.ora_plan_activity_id;
+      const isReviewTask = meta?.source === 'task_review';
+      const isOraActivity = !isReviewTask && (task.userTask.type === 'ora_activity' || meta?.action === 'complete_ora_activity' || meta?.action === 'create_p2a_plan' || meta?.ora_plan_activity_id);
+
+      // Review tasks always open TaskDetailSheet (never ORA overlay)
+      if (isReviewTask) {
+        setSelectedTask(task.userTask);
+        setDetailOpen(true);
+        return;
+      }
 
       // ORA activity tasks skip the intermediate detail sheet and go straight to the activity overlay
       if (isOraActivity && !task.navigateTo) {
@@ -797,35 +813,14 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     const isOraCreationTask = meta?.action === 'create_ora_plan' || task.userTask.type === 'ora_plan_creation';
     const isOraReviewTask = task.userTask.type === 'ora_plan_review';
 
-    // ── Ad-hoc review tasks: intercept done → in_progress to warn about voiding decision ──
-    if (isAdHocReview && task.kanbanColumn === 'done' && (targetColumn === 'in_progress' || targetColumn === 'todo')) {
+    // ── UNIVERSAL: Any task moving from Done back requires confirmation dialog ──
+    if (task.kanbanColumn === 'done' && (targetColumn === 'in_progress' || targetColumn === 'todo')) {
       setWarningState({ task, targetColumn });
       return;
     }
 
-    // ── P2A Approval tasks: intercept done → in_progress to warn about voiding approval ──
-    if (isP2aApprovalTask && task.kanbanColumn === 'done' && (targetColumn === 'in_progress' || targetColumn === 'todo')) {
-      setWarningState({ task, targetColumn });
-      return;
-    }
-
-    // ── ORA Review tasks: intercept done → in_progress to warn about voiding approval ──
-    if (isOraReviewTask && task.kanbanColumn === 'done' && (targetColumn === 'in_progress' || targetColumn === 'todo')) {
-      setWarningState({ task, targetColumn });
-      return;
-    }
-
-    // ── ORA Plan creation tasks: intercept drags that should go through the wizard ──
+    // ── ORA Plan creation tasks: intercept wizard-related drags ──
     if (isOraCreationTask) {
-      // Done → In Progress / Todo: show approval void warning
-      if (task.kanbanColumn === 'done' && (targetColumn === 'in_progress' || targetColumn === 'todo')) {
-        if (task.isApprovalProtected) {
-          setWarningState({ task, targetColumn });
-          return;
-        }
-        await moveTaskToColumn(task, targetColumn, true);
-        return;
-      }
       // Todo → In Progress: open detail sheet to guide user to Create ORA Plan
       if (targetColumn === 'in_progress' && task.kanbanColumn === 'todo') {
         setSelectedTask(task.userTask);
@@ -842,17 +837,6 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
 
     // ── P2A tasks: intercept drags that should go through the wizard ──
     if (isP2aTask) {
-      // Done → In Progress / Todo: show approval void warning (same as ORA plan)
-      if (task.kanbanColumn === 'done' && (targetColumn === 'in_progress' || targetColumn === 'todo')) {
-        // Check if this task is approval-protected (has been submitted/approved)
-        if (task.isApprovalProtected) {
-          setWarningState({ task, targetColumn });
-          return;
-        }
-        // Not protected — just do the move with force
-        await moveTaskToColumn(task, targetColumn, true);
-        return;
-      }
       // Todo → In Progress: open overlay to guide user to "Start P2A Plan"
       if (targetColumn === 'in_progress' && task.kanbanColumn === 'todo') {
         setOraActivityTask(task.userTask);
@@ -884,7 +868,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
       return;
     }
 
-    // For other columns, check if this would void approvals
+    // For other columns, just move
     const result = await moveTaskToColumn(task, targetColumn);
     if (result === 'needs_warning') {
       setWarningState({ task, targetColumn });

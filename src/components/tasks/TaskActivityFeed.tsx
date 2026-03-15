@@ -55,32 +55,58 @@ export const TaskActivityFeed: React.FC<TaskActivityFeedProps> = ({ taskId }) =>
         </div>
       ) : comments.length > 0 ? (
         <div className="space-y-3 max-h-60 overflow-y-auto">
-          {/* Detect if this task has any review/approval activity — if so, "Completed" → "Submitted" */}
           {(() => {
             const hasReviewActivity = comments.some(
               (c) => c.comment?.startsWith('✅') || c.comment?.startsWith('❌') ||
-                     c.comment_type === 'reviewer_decision' ||
+                     c.comment_type === 'reviewer_decision' || c.comment_type === 'submission' ||
                      c.comment?.toLowerCase().includes('approved') || c.comment?.toLowerCase().includes('rejected')
             );
-            return comments.map((entry) => {
+
+            // Collapse legacy split events: near-simultaneous "Completed" + free-text by same user → single "Submitted"
+            const collapsed = comments.filter((entry, idx) => {
+              const raw = entry.comment?.trim() || '';
+              const normalized = raw.replace('Status changed to ', '');
+              const isCompletedStatus = normalized === 'Completed' || entry.comment_type === 'status_change' && normalized === 'Completed';
+              if (!isCompletedStatus) return true;
+              // Check if there's a nearby free-text comment from same user within 10s
+              const ts = new Date(entry.created_at).getTime();
+              const hasSibling = comments.some((other, oi) =>
+                oi !== idx &&
+                other.user_id === entry.user_id &&
+                !['Completed', 'In Progress', 'Not Started'].includes((other.comment?.trim() || '').replace('Status changed to ', '')) &&
+                other.comment_type !== 'status_change' &&
+                other.comment_type !== 'reviewer_decision' &&
+                other.comment_type !== 'reviewer_void' &&
+                Math.abs(new Date(other.created_at).getTime() - ts) <= 10_000
+              );
+              return !hasSibling; // suppress status badge when user comment exists nearby
+            });
+
+            return collapsed.map((entry) => {
             const rawComment = entry.comment?.trim() || '';
             const isVoid = entry.comment_type === 'reviewer_void' || rawComment.startsWith('⚠️') || rawComment.toLowerCase().includes('voided');
             const isApproval = !isVoid && (entry.comment?.startsWith('✅') || entry.comment?.toLowerCase().includes('approved'));
             const isRejection = !isVoid && (entry.comment?.startsWith('❌') || entry.comment?.toLowerCase().includes('rejected'));
             const isDecision = isApproval || isRejection;
             const normalizedComment = rawComment.replace('Status changed to ', '');
-            const isStatusChange = ['Completed', 'In Progress', 'Not Started'].includes(normalizedComment) || entry.comment?.startsWith('Status changed to ');
+            const isStatusChange = entry.comment_type === 'status_change' || ['Completed', 'In Progress', 'Not Started'].includes(normalizedComment) || entry.comment?.startsWith('Status changed to ');
+            const isSubmission = entry.comment_type === 'submission';
+            const isReopened = entry.comment_type === 'reopened';
 
             // For tasks under review, show "Submitted" instead of "Completed"
             const isCompletedStatus = normalizedComment === 'Completed';
-            const displayLabel = isCompletedStatus && hasReviewActivity ? 'Submitted' : normalizedComment;
-            const statusColor = (isCompletedStatus && hasReviewActivity)
+            const displayLabel = isSubmission ? 'Submitted'
+              : isReopened ? 'Reopened'
+              : isCompletedStatus && hasReviewActivity ? 'Submitted' : normalizedComment;
+            const statusColor = isSubmission || (isCompletedStatus && hasReviewActivity)
               ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-              : isCompletedStatus
-                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                : normalizedComment === 'In Progress'
-                  ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-                  : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400";
+              : isReopened
+                ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                : isCompletedStatus
+                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                  : normalizedComment === 'In Progress'
+                    ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                    : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400";
 
             return (
               <div key={entry.id} className="flex gap-2.5">
@@ -110,6 +136,30 @@ export const TaskActivityFeed: React.FC<TaskActivityFeedProps> = ({ taskId }) =>
                         ) : null;
                       })()}
                     </>
+                  ) : isSubmission ? (
+                    <>
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] px-1.5 py-0 h-4 border-0 font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                      >
+                        Submitted
+                      </Badge>
+                      {rawComment && (
+                        <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed mt-1">{rawComment}</p>
+                      )}
+                    </>
+                  ) : isReopened ? (
+                    <>
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] px-1.5 py-0 h-4 border-0 font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                      >
+                        Reopened
+                      </Badge>
+                      {rawComment && (
+                        <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed mt-1">{rawComment}</p>
+                      )}
+                    </>
                   ) : isDecision ? (
                     <>
                       <Badge
@@ -124,7 +174,6 @@ export const TaskActivityFeed: React.FC<TaskActivityFeedProps> = ({ taskId }) =>
                         {isApproval ? 'Approved' : 'Rejected'}
                       </Badge>
                       {(() => {
-                        // Strip all system-generated prefixes, keeping only user-entered feedback
                         const cleaned = rawComment
                           .replace(/^[✅❌]\s*/, '')
                           .replace(/^(Approved|Rejected)\s*(by\s+[^\n]*)?/i, '')
