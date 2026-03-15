@@ -345,7 +345,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
 
   const p2aRejectionInfo = p2aApproverDecisions?.find((d: any) => d.status === 'REJECTED') || null;
 
-
+  const p2aRejectionFallback = {
     role_name: (metadata?.last_rejection_role as string | undefined) || null,
     comments:
       (metadata?.last_rejection_comment as string | undefined) ||
