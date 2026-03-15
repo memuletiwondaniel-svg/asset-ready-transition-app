@@ -1141,9 +1141,15 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                                 isDecisionFromComment &&
                                 (rawComment.startsWith('✅') || /^approved\b/i.test(rawComment));
 
+                              const isVoidedDecision =
+                                entry.type === 'comment' &&
+                                (rawComment.startsWith('⚠️') || /voided\s+(their|decision)/i.test(rawComment));
+
                               const cleanedDecisionComment = rawComment
-                                .replace(/^[✅❌]\s*/, '')
+                                .replace(/^[✅❌⚠️]\s*/, '')
                                 .replace(/^(Approved|Rejected)(\s+by\s+[^\n]+)?\s*\n?/i, '')
+                                .replace(/^Decision\s+voided\s*[-–—]\s*/i, '')
+                                .replace(/^.*?\bvoided\s+their\b.*?\bdecision\b\.?\s*/i, '')
                                 .trim();
 
                               if (entry.type === 'submission' || (entry.type === 'approval_action' && entry.status === 'SUBMITTED')) {
@@ -1214,6 +1220,24 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                                         )}
                                       >
                                         {isApprovalFromComment ? 'Approved' : 'Rejected'}
+                                      </Badge>
+                                    </div>
+                                    {cleanedDecisionComment ? (
+                                      <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed mt-1">{cleanedDecisionComment}</p>
+                                    ) : null}
+                                  </>
+                                );
+                              }
+
+                              if (isVoidedDecision) {
+                                return (
+                                  <>
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      <Badge
+                                        variant="outline"
+                                        className="text-[10px] px-1.5 py-0 h-4 border-0 font-semibold bg-gray-100 text-gray-600 dark:bg-gray-800/40 dark:text-gray-400"
+                                      >
+                                        Decision Voided
                                       </Badge>
                                     </div>
                                     {cleanedDecisionComment ? (
