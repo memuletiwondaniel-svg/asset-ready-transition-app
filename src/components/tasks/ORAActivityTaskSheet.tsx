@@ -1229,6 +1229,24 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                                 );
                               }
 
+                              if (isVoidedDecision) {
+                                return (
+                                  <>
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      <Badge
+                                        variant="outline"
+                                        className="text-[10px] px-1.5 py-0 h-4 border-0 font-semibold bg-gray-100 text-gray-600 dark:bg-gray-800/40 dark:text-gray-400"
+                                      >
+                                        Decision Voided
+                                      </Badge>
+                                    </div>
+                                    {cleanedDecisionComment ? (
+                                      <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed mt-1">{cleanedDecisionComment}</p>
+                                    ) : null}
+                                  </>
+                                );
+                              }
+
                               if (isStatusChange) {
                                 return (
                                   <div className="flex items-center gap-1.5 flex-wrap">
