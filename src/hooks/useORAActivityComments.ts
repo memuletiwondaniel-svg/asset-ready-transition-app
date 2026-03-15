@@ -21,7 +21,7 @@ export const useORAActivityComments = (
   const queryClient = useQueryClient();
   const lastSeenRef = useRef<string | null>(null);
 
-  const queryKey = ['ora-activity-comments', activityId] as const;
+  const queryKey = useMemo(() => ['ora-activity-comments', activityId] as const, [activityId]);
 
   const fetchComments = useCallback(async (): Promise<ActivityComment[]> => {
     if (!activityId) return [];
