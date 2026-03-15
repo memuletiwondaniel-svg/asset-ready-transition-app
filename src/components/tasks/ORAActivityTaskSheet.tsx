@@ -633,51 +633,44 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
         }
       }
 
-      // Frontend safety net: explicitly ensure reviewer tasks are created on submission
-      if (taskStatus === 'completed' && hasReviewers && submittedTaskIds.length > 0) {
+      // Use atomic submission RPC when submitting for approval with reviewers
+      if (taskStatus === 'completed' && hasReviewers && submissionComment.trim()) {
+        const taskIdsToSubmit = submittedTaskIds.length > 0 ? submittedTaskIds : (isRealTaskId ? [task.id] : []);
+        for (const submittedTaskId of taskIdsToSubmit) {
+          const { error } = await (supabase as any).rpc('submit_task_for_approval', {
+            p_task_id: submittedTaskId,
+            p_comment: submissionComment.trim(),
+          });
+          if (error) {
+            console.error('Failed atomic submission for task:', submittedTaskId, error);
+          }
+        }
+      } else if (taskStatus === 'completed' && hasReviewers && submittedTaskIds.length > 0) {
+        // Fallback: ensure reviewer tasks even without submission comment
         await Promise.all(
           submittedTaskIds.map(async (submittedTaskId) => {
             const { error } = await (supabase as any).rpc('ensure_reviewer_tasks_for_task', {
               p_task_id: submittedTaskId,
             });
-            if (error) {
-              console.error('Failed to ensure reviewer tasks for submission:', submittedTaskId, error);
-            }
+            if (error) console.error('Failed to ensure reviewer tasks:', submittedTaskId, error);
           })
         );
       }
 
-      // Auto-log status change as a system comment in the activity feed
-      if (status !== originalStatus && realOraActivityId && planId && user) {
+      // Auto-log status change as task_comments entry (only for non-submission status changes)
+      if (status !== originalStatus && !(status === 'COMPLETED' && hasReviewers) && task?.id && user) {
         const statusLabel = STATUS_STEPS.find(s => s.value === status)?.label || status;
-        const systemComment = statusLabel;
         try {
           await (supabase as any)
-            .from('ora_activity_comments')
+            .from('task_comments')
             .insert({
-              ora_plan_activity_id: realOraActivityId,
-              orp_plan_id: planId,
+              task_id: task.id,
               user_id: user.id,
-              comment: systemComment,
+              comment: statusLabel,
+              comment_type: 'status_change',
             });
         } catch (commentErr) {
           console.error('Failed to log status change comment:', commentErr);
-        }
-      }
-
-      // Log the submission comment as an activity feed entry
-      if (submissionComment.trim() && realOraActivityId && planId && user) {
-        try {
-          await (supabase as any)
-            .from('ora_activity_comments')
-            .insert({
-              ora_plan_activity_id: realOraActivityId,
-              orp_plan_id: planId,
-              user_id: user.id,
-              comment: submissionComment.trim(),
-            });
-        } catch (commentErr) {
-          console.error('Failed to log submission comment:', commentErr);
         }
       }
 
