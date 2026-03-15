@@ -379,7 +379,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
     : ID_BADGE_PALETTE[0];
 
   // Database-persisted comments
-  const { comments: dbComments, isLoading: commentsLoading, addComment: addDbComment, isAdding } = useORAActivityComments(realOraActivityId || undefined, planId);
+  const { comments: dbComments, isLoading: commentsLoading, addComment: addDbComment, isAdding } = useORAActivityComments(realOraActivityId || undefined, planId, task?.id);
 
   // Initialize values when sheet opens — prefer dbActivity over task metadata
   useEffect(() => {
@@ -1133,76 +1133,132 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                             </AvatarFallback>
                           </Avatar>
                           <div className="flex-1 min-w-0">
-                            {entry.type === 'submission' || (entry.type === 'approval_action' && entry.status === 'SUBMITTED') ? (
-                              <>
-                                <div className="flex items-center gap-1.5 flex-wrap">
-                                  <Badge
-                                    variant="outline"
-                                    className="text-[10px] px-1.5 py-0 h-4 border-0 font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-                                  >
-                                    Submitted
-                                  </Badge>
-                                </div>
-                                {entry.comment && (
-                                  <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed mt-1">{entry.comment}</p>
-                                )}
-                              </>
-                            ) : entry.type === 'approval_action' && entry.status === 'REVERTED' ? (
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <Badge
-                                  variant="outline"
-                                  className="text-[10px] px-1.5 py-0 h-4 border-0 font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                                >
-                                  Reverted to Draft
-                                </Badge>
-                              </div>
-                            ) : entry.type === 'approval_action' ? (
-                              <>
-                                <div className="flex items-center gap-1.5 flex-wrap">
-                                  <Badge
-                                    variant="outline"
-                                    className={cn(
-                                      "text-[10px] px-1.5 py-0 h-4 border-0 font-semibold",
-                                      entry.status === 'APPROVED'
-                                        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                                        : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                                    )}
-                                  >
-                                    {entry.status === 'APPROVED' ? 'Approved' : 'Rejected'}
-                                  </Badge>
-                                </div>
-                                {(() => {
-                                  // Strip system-generated prefixes like "Approved by X\n" or "Rejected by X\n"
-                                  const raw = entry.comment || '';
-                                  const cleaned = raw
-                                    .replace(/^(Approved|Rejected)\s+by\s+[^\n]+\n?/i, '')
-                                    .trim();
-                                  return cleaned ? (
-                                    <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed mt-1">{cleaned}</p>
-                                  ) : null;
-                                })()}
-                              </>
-                            ) : (['Completed', 'In Progress', 'Not Started'].includes(entry.comment?.trim() || '') || entry.comment?.startsWith('Status changed to ')) ? (
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <Badge
-                                  variant="outline"
-                                  className={cn(
-                                    "text-[10px] px-1.5 py-0 h-4 border-0 font-semibold",
-                                    (entry.comment?.includes('Completed'))
-                                      ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                                      : (entry.comment?.includes('In Progress'))
-                                        ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-                                        : (entry.comment?.includes('Not Started'))
-                                          ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                                          : "bg-muted text-muted-foreground"
-                                  )}
-                                >
-                                  {entry.comment?.replace('Status changed to ', '')}
-                                </Badge>
-                              </div>
-                            ) : (
-                              <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{entry.comment}</p>
-                            )}
+                            {(() => {
+                              const rawComment = (entry.comment || '').trim();
+                              const normalizedComment = rawComment.replace('Status changed to ', '');
+                              const isStatusChange =
+                                ['Completed', 'In Progress', 'Not Started'].includes(normalizedComment) ||
+                                rawComment.startsWith('Status changed to ');
+
+                              const isDecisionFromComment =
+                                entry.type === 'comment' &&
+                                (rawComment.startsWith('✅') ||
+                                  rawComment.startsWith('❌') ||
+                                  /^approved\b/i.test(rawComment) ||
+                                  /^rejected\b/i.test(rawComment));
+
+                              const isApprovalFromComment =
+                                isDecisionFromComment &&
+                                (rawComment.startsWith('✅') || /^approved\b/i.test(rawComment));
+
+                              const cleanedDecisionComment = rawComment
+                                .replace(/^[✅❌]\s*/, '')
+                                .replace(/^(Approved|Rejected)(\s+by\s+[^\n]+)?\s*\n?/i, '')
+                                .trim();
+
+                              if (entry.type === 'submission' || (entry.type === 'approval_action' && entry.status === 'SUBMITTED')) {
+                                return (
+                                  <>
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      <Badge
+                                        variant="outline"
+                                        className="text-[10px] px-1.5 py-0 h-4 border-0 font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                                      >
+                                        Submitted
+                                      </Badge>
+                                    </div>
+                                    {rawComment ? (
+                                      <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed mt-1">{rawComment}</p>
+                                    ) : null}
+                                  </>
+                                );
+                              }
+
+                              if (entry.type === 'approval_action' && entry.status === 'REVERTED') {
+                                return (
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    <Badge
+                                      variant="outline"
+                                      className="text-[10px] px-1.5 py-0 h-4 border-0 font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                                    >
+                                      Reverted to Draft
+                                    </Badge>
+                                  </div>
+                                );
+                              }
+
+                              if (entry.type === 'approval_action') {
+                                return (
+                                  <>
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      <Badge
+                                        variant="outline"
+                                        className={cn(
+                                          "text-[10px] px-1.5 py-0 h-4 border-0 font-semibold",
+                                          entry.status === 'APPROVED'
+                                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                                            : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                                        )}
+                                      >
+                                        {entry.status === 'APPROVED' ? 'Approved' : 'Rejected'}
+                                      </Badge>
+                                    </div>
+                                    {cleanedDecisionComment ? (
+                                      <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed mt-1">{cleanedDecisionComment}</p>
+                                    ) : null}
+                                  </>
+                                );
+                              }
+
+                              if (isDecisionFromComment) {
+                                return (
+                                  <>
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      <Badge
+                                        variant="outline"
+                                        className={cn(
+                                          "text-[10px] px-1.5 py-0 h-4 border-0 font-semibold",
+                                          isApprovalFromComment
+                                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                                            : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                                        )}
+                                      >
+                                        {isApprovalFromComment ? 'Approved' : 'Rejected'}
+                                      </Badge>
+                                    </div>
+                                    {cleanedDecisionComment ? (
+                                      <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed mt-1">{cleanedDecisionComment}</p>
+                                    ) : null}
+                                  </>
+                                );
+                              }
+
+                              if (isStatusChange) {
+                                return (
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    <Badge
+                                      variant="outline"
+                                      className={cn(
+                                        "text-[10px] px-1.5 py-0 h-4 border-0 font-semibold",
+                                        normalizedComment.includes('Completed')
+                                          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                                          : normalizedComment.includes('In Progress')
+                                            ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                                            : normalizedComment.includes('Not Started')
+                                              ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                                              : "bg-muted text-muted-foreground"
+                                      )}
+                                    >
+                                      {normalizedComment}
+                                    </Badge>
+                                  </div>
+                                );
+                              }
+
+                              return rawComment ? (
+                                <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{rawComment}</p>
+                              ) : null;
+                            })()}
                             <p className="text-[10px] text-muted-foreground/60 mt-1">
                               {entry.full_name}
                               {entry.role_name ? ` · ${entry.role_name}` : ''}
