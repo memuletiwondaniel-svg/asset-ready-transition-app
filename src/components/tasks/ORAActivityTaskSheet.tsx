@@ -327,6 +327,21 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
     refetchOnMount: 'always',
   });
 
+  // Fetch sibling activities from DB for prerequisites picker
+  const { data: dbSiblingActivities } = useQuery({
+    queryKey: ['ora-sibling-activities', planId, realOraActivityId],
+    queryFn: async () => {
+      if (!planId || !realOraActivityId) return [];
+      const { data, error } = await (supabase as any)
+        .from('ora_plan_activities')
+        .select('id, activity_code, name')
+        .eq('orp_plan_id', planId)
+        .neq('id', realOraActivityId);
+      if (error) return [];
+      return data || [];
+    },
+    enabled: !!planId && !!realOraActivityId,
+  });
 
   const p2aRejectionInfo = p2aApproverDecisions?.find((d: any) => d.status === 'REJECTED') || null;
 
@@ -987,7 +1002,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
               {predecessorIds.length > 0 && (
                 <div className="space-y-1.5 mb-2">
                   {predecessorIds.map((predId) => {
-                    const siblings: any[] = metadata?.sibling_activities || [];
+                    const siblings: any[] = (metadata?.sibling_activities as any[] || []).length > 0 ? metadata?.sibling_activities : (dbSiblingActivities || []);
                     const match = siblings.find((s: any) => s.id === predId || s.activity_code === predId);
                     return (
                       <div key={predId} className="flex items-center gap-2 p-2 bg-muted/40 rounded-md text-xs">
@@ -1007,7 +1022,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                 </div>
               )}
               {(() => {
-                const siblings: any[] = metadata?.sibling_activities || [];
+                const siblings: any[] = (metadata?.sibling_activities as any[] || []).length > 0 ? metadata?.sibling_activities : (dbSiblingActivities || []);
                 const available = siblings.filter((s: any) => !predecessorIds.includes(s.id) && !predecessorIds.includes(s.activity_code));
                 if (available.length === 0 && predecessorIds.length === 0) return <p className="text-[10px] text-muted-foreground">No activities available to add as prerequisites.</p>;
                 if (available.length === 0) return null;
