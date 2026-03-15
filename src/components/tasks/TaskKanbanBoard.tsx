@@ -955,8 +955,10 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
 
   const reviewerMap = reviewerSummaries || new Map<string, ReviewerSummary>();
   const p2aApprovalMap = p2aApprovalSummaries || new Map<string, P2AApprovalSummary>();
+  const oraApprovalMap = oraApprovalSummaries || new Map<string, ORAApprovalSummary>();
 
   return (
+    <ORAApprovalContext.Provider value={oraApprovalMap}>
     <P2AApprovalContext.Provider value={p2aApprovalMap}>
     <ReviewerSummaryContext.Provider value={reviewerMap}>
     <>
