@@ -1066,7 +1066,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
               </>
             )}
 
-            {/* Reviewers & Approvers — only for non-P2A tasks */}
+            {/* Approvers — only for non-P2A tasks */}
             {!isP2AActivity && task?.id && (
               <TaskReviewersSection
                 taskId={task.id}
