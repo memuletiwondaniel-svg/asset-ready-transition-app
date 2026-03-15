@@ -1417,7 +1417,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                 {isReadOnly ? 'Close' : 'Cancel'}
               </Button>
 
-              {!isReadOnly && isDirty && !(isP2AActivity && status === 'COMPLETED') && (
+              {!isReadOnly && (isDirty || needsResubmission) && !(isP2AActivity && status === 'COMPLETED') && (
                 <Button
                   size="sm"
                   className={cn(
