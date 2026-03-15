@@ -870,9 +870,14 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                 <ChevronRight className="h-4 w-4 ml-auto" />
               </Button>
             )}
-            {/* Simple task: Attachments, Reviewers & Activity Feed */}
+            {/* Simple task: Collaborative Document, Attachments, Reviewers & Activity Feed */}
             {isSimpleTask && task.id && (
               <>
+                <Separator />
+                <CollaborativeDocumentEditor
+                  taskId={task.id}
+                  isReadOnly={isCompleted}
+                />
                 <Separator />
                 <TaskAttachmentsSection
                   taskId={task.id}
