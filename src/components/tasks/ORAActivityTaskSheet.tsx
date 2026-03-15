@@ -1141,9 +1141,15 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                                 isDecisionFromComment &&
                                 (rawComment.startsWith('✅') || /^approved\b/i.test(rawComment));
 
+                              const isVoidedDecision =
+                                entry.type === 'comment' &&
+                                (rawComment.startsWith('⚠️') || /voided\s+(their|decision)/i.test(rawComment));
+
                               const cleanedDecisionComment = rawComment
-                                .replace(/^[✅❌]\s*/, '')
+                                .replace(/^[✅❌⚠️]\s*/, '')
                                 .replace(/^(Approved|Rejected)(\s+by\s+[^\n]+)?\s*\n?/i, '')
+                                .replace(/^Decision\s+voided\s*[-–—]\s*/i, '')
+                                .replace(/^.*?\bvoided\s+their\b.*?\bdecision\b\.?\s*/i, '')
                                 .trim();
 
                               if (entry.type === 'submission' || (entry.type === 'approval_action' && entry.status === 'SUBMITTED')) {
