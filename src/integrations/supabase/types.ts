@@ -9883,6 +9883,7 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: boolean
       }
+      backfill_missing_reviewer_tasks: { Args: never; Returns: number }
       calculate_ori_score: {
         Args: {
           p_project_id: string
@@ -9926,6 +9927,10 @@ export type Database = {
         Returns: string
       }
       delete_user_account: { Args: { target_user_id: string }; Returns: Json }
+      ensure_reviewer_tasks_for_task: {
+        Args: { p_task_id: string }
+        Returns: number
+      }
       find_deputy_plant_director: {
         Args: { plant_name_param: string }
         Returns: {
