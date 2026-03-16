@@ -1691,11 +1691,18 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
       </CardContent>
 
       <AddFromCatalogDialog open={showCatalogDialog} onOpenChange={setShowCatalogDialog} existingIds={existingActivityIds} onAdd={handleAddFromCatalog} />
+      <TaskDetailSheet
+        task={selectedReviewTask}
+        open={!!selectedReviewTask}
+        onOpenChange={(open) => !open && setSelectedReviewTask(null)}
+        onApprove={() => {}}
+        onReject={() => {}}
+      />
       <ORAActivityTaskSheet
         task={selectedOraActivity}
         open={!!selectedOraActivity}
         onOpenChange={(open) => !open && setSelectedOraActivity(null)}
-        onOpenP2AWizard={(projId, projCode, openWorkspace) => {
+        onOpenP2AWizard={(_projId, _projCode, openWorkspace) => {
           if (openWorkspace) {
             setShowP2AWorkspace(true);
           } else {
