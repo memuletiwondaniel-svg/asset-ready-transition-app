@@ -19,6 +19,7 @@ const TOOLS: { mode: ToolMode; icon: React.ElementType; label: string }[] = [
   { mode: 'text_box', icon: Type, label: 'Text Box' },
   { mode: 'drawing', icon: Pencil, label: 'Draw' },
   { mode: 'stamp', icon: Stamp, label: 'Stamp' },
+  { mode: 'signature', icon: PenTool, label: 'Signature' },
 ];
 
 interface AnnotationToolbarProps {

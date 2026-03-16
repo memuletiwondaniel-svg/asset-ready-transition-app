@@ -18,6 +18,8 @@ export interface Annotation {
     width?: number;
     height?: number;
     path?: string;
+    anchor?: { x: number; y: number };
+    signatureData?: string;
   };
   content: string;
   color: string;
