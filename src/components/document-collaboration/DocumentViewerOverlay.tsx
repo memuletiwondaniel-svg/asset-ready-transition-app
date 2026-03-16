@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { X, Download, ExternalLink } from 'lucide-react';
+import { X, Download, ExternalLink, MessageCircle, PanelRightClose } from 'lucide-react';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { AnnotationToolbar, type ToolMode } from './AnnotationToolbar';
 import { DocumentCanvas } from './DocumentCanvas';
@@ -34,6 +34,7 @@ export const DocumentViewerOverlay: React.FC<DocumentViewerOverlayProps> = ({
   const [zoom, setZoom] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [selectedAnnotation, setSelectedAnnotation] = useState<Annotation | null>(null);
+  const [commentsOpen, setCommentsOpen] = useState(true);
 
   const {
     annotations,
@@ -56,7 +57,7 @@ export const DocumentViewerOverlay: React.FC<DocumentViewerOverlayProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-[98vw] w-full h-[96vh] p-0 gap-0 flex flex-col [&>button]:hidden">
+      <DialogContent className="max-w-[99vw] w-full h-[96vh] p-0 gap-0 flex flex-col [&>button]:hidden !z-[200]">
         <TooltipProvider delayDuration={200}>
           {/* Top bar */}
           <div className="flex items-center justify-between px-4 py-2.5 border-b border-border bg-card shrink-0">
@@ -88,6 +89,15 @@ export const DocumentViewerOverlay: React.FC<DocumentViewerOverlayProps> = ({
               >
                 <Download className="h-3.5 w-3.5" />
                 Download
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 gap-1.5 text-xs"
+                onClick={() => setCommentsOpen(prev => !prev)}
+              >
+                {commentsOpen ? <PanelRightClose className="h-3.5 w-3.5" /> : <MessageCircle className="h-3.5 w-3.5" />}
+                {commentsOpen ? 'Hide Comments' : 'Comments'}
               </Button>
               <div className="w-px h-5 bg-border mx-1" />
               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose}>
@@ -133,16 +143,18 @@ export const DocumentViewerOverlay: React.FC<DocumentViewerOverlayProps> = ({
             </DocumentCanvas>
 
             {/* Comments sidebar */}
-            <CommentsSidebar
-              annotations={annotations}
-              replies={replies}
-              selectedAnnotationId={selectedAnnotation?.id || null}
-              onSelectAnnotation={(ann) => setSelectedAnnotation(ann)}
-              onResolve={(id, resolved) => updateAnnotation({ id, resolved })}
-              onDelete={(id) => deleteAnnotation(id)}
-              onAddReply={addReply}
-              onDeleteReply={deleteReply}
-            />
+            {commentsOpen && (
+              <CommentsSidebar
+                annotations={annotations}
+                replies={replies}
+                selectedAnnotationId={selectedAnnotation?.id || null}
+                onSelectAnnotation={(ann) => setSelectedAnnotation(ann)}
+                onResolve={(id, resolved) => updateAnnotation({ id, resolved })}
+                onDelete={(id) => deleteAnnotation(id)}
+                onAddReply={addReply}
+                onDeleteReply={deleteReply}
+              />
+            )}
           </div>
 
           {/* Status bar */}
