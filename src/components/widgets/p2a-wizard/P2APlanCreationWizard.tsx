@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Key, Loader2, Trash2, AlertTriangle, Edit3, Eye, XCircle, RotateCcw } from 'lucide-react';
+import { Key, Loader2, Trash2, AlertTriangle, Edit3, Eye, XCircle, RotateCcw, MessageSquare } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { WizardProgress, WizardStep } from './WizardProgress';
 import { WizardNavigation } from './WizardNavigation';
@@ -586,8 +587,6 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
             mappings={state.mappings}
             vcrPhaseAssignments={state.vcrPhaseAssignments}
             approvers={state.approvers}
-            submissionComment={submissionComment}
-            onCommentChange={isReadOnly || isReviewMode ? undefined : setSubmissionComment}
           />
         );
       default:
@@ -693,9 +692,9 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
         {/* Draft context banner — rejection or revert (shown to author) */}
         {!isReviewMode && rejectionInfo && useWizard && !isLoadingDraft && (
           rejectionInfo.type === 'reverted' ? (
-            <div className="flex items-start gap-2 sm:gap-3 px-3 sm:px-5 py-2.5 sm:py-3 border-b border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 shrink-0" style={{ borderLeft: '3px solid hsl(38, 92%, 50%)' }}>
-              <RotateCcw className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
-              <div className="flex-1 text-[11px] sm:text-xs space-y-1">
+            <div className="flex items-start gap-2 sm:gap-3 px-3 sm:px-5 py-1.5 sm:py-2 border-b border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 shrink-0" style={{ borderLeft: '3px solid hsl(38, 92%, 50%)' }}>
+              <RotateCcw className="h-3.5 w-3.5 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
+              <div className="flex-1 text-[11px] sm:text-xs space-y-0.5">
                 <p className="font-medium text-amber-800 dark:text-amber-200">
                   Plan reverted to Draft by {rejectionInfo.rejector_name || rejectionInfo.role_name}
                   {rejectionInfo.approved_at && (
@@ -711,9 +710,9 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
               </div>
             </div>
           ) : (
-            <div className="flex items-start gap-2 sm:gap-3 px-3 sm:px-5 py-2 sm:py-3 border-b bg-destructive/5 dark:bg-destructive/10 text-destructive shrink-0">
-              <XCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 mt-0.5" />
-              <div className="flex-1 text-[11px] sm:text-xs space-y-1">
+            <div className="flex items-start gap-2 sm:gap-3 px-3 sm:px-5 py-1.5 sm:py-2 border-b bg-destructive/5 dark:bg-destructive/10 text-destructive shrink-0">
+              <XCircle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+              <div className="flex-1 text-[11px] sm:text-xs space-y-0.5">
                 <p className="font-medium">
                   Plan was rejected by {rejectionInfo.rejector_name || rejectionInfo.role_name}
                   {rejectionInfo.approved_at && (
@@ -758,6 +757,30 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
         <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain touch-pan-y">
           {renderStepContent()}
         </div>
+
+        {/* Notes for Approvers — pinned above footer on last step (author mode) */}
+        {!isReviewMode && !isReadOnly && useWizard && currentStep === WIZARD_STEPS.length && !isLoadingDraft && (
+          <div className="px-3 sm:px-5 py-2 sm:py-2.5 border-t bg-muted/30 shrink-0">
+            <div className="flex items-center gap-1.5 mb-1">
+              <MessageSquare className="h-3 w-3 text-muted-foreground" />
+              <label className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Notes for Approvers
+              </label>
+              <span className="text-[10px] text-muted-foreground ml-auto">(optional)</span>
+            </div>
+            <textarea
+              placeholder="Add any context, instructions, or key decisions for the approval team..."
+              value={submissionComment}
+              onChange={(e) => setSubmissionComment(e.target.value.slice(0, 500))}
+              className="w-full min-h-[40px] max-h-[56px] rounded-md border border-input bg-background px-2.5 py-1.5 text-xs resize-none focus:outline-none focus:ring-2 focus:ring-inset focus:ring-ring"
+            />
+            <div className="flex justify-end mt-0.5">
+              <span className={cn("text-[10px] tabular-nums", submissionComment.length >= 500 ? "text-destructive" : "text-muted-foreground")}>
+                {submissionComment.length}/500
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Review comment box — pinned above final actions on last step */}
         {isReviewMode && useWizard && currentStep === WIZARD_STEPS.length && !isLoadingDraft && (
