@@ -791,7 +791,65 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
           </>
         )}
 
-        {/* Drawing preview */}
+        {/* Pending text box inline editor */}
+        {pendingTextBox && (
+          <>
+            <svg className="absolute inset-0 w-full h-full pointer-events-none z-[9]" viewBox="0 0 100 100" preserveAspectRatio="none">
+              <line
+                x1={pendingTextBox.x}
+                y1={pendingTextBox.y + pendingTextBox.h / 2}
+                x2={pendingTextBox.anchor.x}
+                y2={pendingTextBox.anchor.y}
+                stroke={activeColor}
+                strokeWidth="0.2"
+              />
+            </svg>
+            <div
+              className="absolute z-20 rounded border shadow-sm bg-card"
+              style={{
+                left: `${pendingTextBox.x}%`,
+                top: `${pendingTextBox.y}%`,
+                width: `${pendingTextBox.w}%`,
+                height: `${pendingTextBox.h}%`,
+                borderColor: activeColor,
+              }}
+              onMouseDown={(e) => e.stopPropagation()}
+            >
+              <textarea
+                ref={textAreaRef}
+                className="w-full h-full bg-transparent border-none outline-none resize-none text-xs font-medium p-1.5 m-0"
+                style={{ color: activeColor }}
+                placeholder="Type here..."
+                onBlur={(e) => {
+                  const val = e.currentTarget.value.trim();
+                  if (val) {
+                    onCreateAnnotation({
+                      annotation_type: 'text_box',
+                      page_number: pageNumber,
+                      position_data: {
+                        x: pendingTextBox.x, y: pendingTextBox.y,
+                        width: pendingTextBox.w, height: pendingTextBox.h,
+                        anchor: pendingTextBox.anchor,
+                      },
+                      content: val,
+                      color: activeColor,
+                    });
+                  }
+                  setPendingTextBox(null);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') { setPendingTextBox(null); }
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    e.currentTarget.blur();
+                  }
+                  e.stopPropagation();
+                }}
+              />
+            </div>
+          </>
+        )}
+
         {drawingPath && (
           <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none">
             <path d={drawingPath} fill="none" stroke={activeColor} strokeWidth="0.3" strokeLinecap="round" />
