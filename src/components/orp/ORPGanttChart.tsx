@@ -1545,6 +1545,10 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
             setShowP2AWizard(true);
           }
         }}
+        onOpenVCRWizard={(vcrId, vcrCode, vcrName) => {
+          setVcrWizardTarget({ id: vcrId, vcr_code: vcrCode, name: vcrName });
+          setShowVCRWizard(true);
+        }}
       />
       {planData?.project_id && (
         <>
@@ -1575,6 +1579,28 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
               setShowP2AWizard(true);
             }}
           />
+          {vcrWizardTarget && (
+            <VCRExecutionPlanWizard
+              open={showVCRWizard}
+              onOpenChange={(open) => {
+                setShowVCRWizard(open);
+                if (!open) setVcrWizardTarget(null);
+              }}
+              vcr={{
+                id: vcrWizardTarget.id,
+                vcr_code: vcrWizardTarget.vcr_code,
+                name: vcrWizardTarget.name,
+                description: null,
+                status: 'IN_PROGRESS',
+                target_date: null,
+                created_at: '',
+                progress: 0,
+                systems_count: 0,
+                has_hydrocarbon: false,
+              }}
+              projectCode={projectCode}
+            />
+          )}
         </>
       )}
     </Card>
