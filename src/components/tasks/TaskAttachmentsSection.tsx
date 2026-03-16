@@ -1,9 +1,10 @@
 import React, { useRef, useState } from 'react';
-import { Paperclip, Upload, FileText, FileSpreadsheet, Image as ImageIcon, File, Trash2, Download, Loader2 } from 'lucide-react';
+import { Paperclip, Upload, FileText, FileSpreadsheet, Image as ImageIcon, File, Trash2, Download, Loader2, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useTaskAttachments, type TaskAttachment } from '@/hooks/useTaskAttachments';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
+import { DocumentViewerOverlay } from '@/components/document-collaboration/DocumentViewerOverlay';
 
 interface TaskAttachmentsSectionProps {
   taskId: string;
