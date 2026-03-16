@@ -394,27 +394,45 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
     enabled: !!planId && !!realOraActivityId,
   });
 
+  // Fetch rejection/revert context from plan-level fields (unified source)
+  const { data: p2aDraftContext } = useQuery({
+    queryKey: ['p2a-draft-context-sheet', existingP2APlan?.id],
+    queryFn: async () => {
+      if (!existingP2APlan?.id) return null;
+      const { data } = await (supabase as any)
+        .from('p2a_handover_plans')
+        .select('last_rejection_comment, last_rejected_by_name, last_rejected_by_role, last_rejected_at')
+        .eq('id', existingP2APlan.id)
+        .single();
+      if (!data?.last_rejection_comment) return null;
+      const isReverted = data.last_rejected_by_role === 'Reverted';
+      return {
+        role_name: isReverted ? (data.last_rejected_by_name || 'User') : (data.last_rejected_by_role || 'Approver'),
+        comments: data.last_rejection_comment,
+        approved_at: data.last_rejected_at,
+        rejector_name: data.last_rejected_by_name,
+        type: isReverted ? 'reverted' as const : 'rejected' as const,
+      };
+    },
+    enabled: !!existingP2APlan?.id && isP2AActivity && p2aPlanStatus === 'DRAFT',
+    staleTime: 0,
+    refetchOnMount: 'always',
+  });
+
   const p2aRejectionInfo = p2aApproverDecisions?.find((d: any) => d.status === 'REJECTED') || null;
 
-  const p2aRejectionFallback = {
-    role_name: (metadata?.last_rejection_role as string | undefined) || null,
-    comments:
-      (metadata?.last_rejection_comment as string | undefined) ||
-      (metadata?.rejection_comment as string | undefined) ||
-      null,
-    approved_at: (metadata?.last_rejection_at as string | undefined) || null,
-  };
-
-  const effectiveP2aRejection = {
-    role_name: p2aRejectionInfo?.role_name || p2aRejectionFallback.role_name,
-    comments: p2aRejectionInfo?.comments || p2aRejectionFallback.comments,
-    approved_at: p2aRejectionInfo?.approved_at || p2aRejectionFallback.approved_at,
-  };
+  const effectiveP2aRejection = p2aDraftContext || (p2aRejectionInfo ? {
+    role_name: p2aRejectionInfo.role_name,
+    comments: p2aRejectionInfo.comments,
+    approved_at: p2aRejectionInfo.approved_at,
+    rejector_name: p2aRejectionInfo.full_name,
+    type: 'rejected' as const,
+  } : null);
 
   const showP2aRejectionBanner =
     isP2AActivity &&
     p2aPlanStatus === 'DRAFT' &&
-    !!(effectiveP2aRejection.role_name || effectiveP2aRejection.comments);
+    !!effectiveP2aRejection;
 
   const getP2AStatusBadge = () => {
     if (!p2aPlanStatus) return null;
