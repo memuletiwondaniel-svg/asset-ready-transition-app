@@ -16,7 +16,7 @@ import {
 import { Calendar } from '@/components/ui/calendar';
 import { 
   Clock, CheckCircle2, Play, Upload, MessageSquare, 
-  Paperclip, X, Loader2, AlertTriangle, Trash2, GitBranch, Plus, FileText, ChevronRight, Send
+  Paperclip, X, Loader2, AlertTriangle, Trash2, GitBranch, Plus, FileText, ChevronRight, Send, RotateCcw
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
@@ -394,27 +394,45 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
     enabled: !!planId && !!realOraActivityId,
   });
 
+  // Fetch rejection/revert context from plan-level fields (unified source)
+  const { data: p2aDraftContext } = useQuery({
+    queryKey: ['p2a-draft-context-sheet', existingP2APlan?.id],
+    queryFn: async () => {
+      if (!existingP2APlan?.id) return null;
+      const { data } = await (supabase as any)
+        .from('p2a_handover_plans')
+        .select('last_rejection_comment, last_rejected_by_name, last_rejected_by_role, last_rejected_at')
+        .eq('id', existingP2APlan.id)
+        .single();
+      if (!data?.last_rejection_comment) return null;
+      const isReverted = data.last_rejected_by_role === 'Reverted';
+      return {
+        role_name: isReverted ? (data.last_rejected_by_name || 'User') : (data.last_rejected_by_role || 'Approver'),
+        comments: data.last_rejection_comment,
+        approved_at: data.last_rejected_at,
+        rejector_name: data.last_rejected_by_name,
+        type: isReverted ? 'reverted' as const : 'rejected' as const,
+      };
+    },
+    enabled: !!existingP2APlan?.id && isP2AActivity && p2aPlanStatus === 'DRAFT',
+    staleTime: 0,
+    refetchOnMount: 'always',
+  });
+
   const p2aRejectionInfo = p2aApproverDecisions?.find((d: any) => d.status === 'REJECTED') || null;
 
-  const p2aRejectionFallback = {
-    role_name: (metadata?.last_rejection_role as string | undefined) || null,
-    comments:
-      (metadata?.last_rejection_comment as string | undefined) ||
-      (metadata?.rejection_comment as string | undefined) ||
-      null,
-    approved_at: (metadata?.last_rejection_at as string | undefined) || null,
-  };
-
-  const effectiveP2aRejection = {
-    role_name: p2aRejectionInfo?.role_name || p2aRejectionFallback.role_name,
-    comments: p2aRejectionInfo?.comments || p2aRejectionFallback.comments,
-    approved_at: p2aRejectionInfo?.approved_at || p2aRejectionFallback.approved_at,
-  };
+  const effectiveP2aRejection = p2aDraftContext || (p2aRejectionInfo ? {
+    role_name: p2aRejectionInfo.role_name,
+    comments: p2aRejectionInfo.comments,
+    approved_at: p2aRejectionInfo.approved_at,
+    rejector_name: p2aRejectionInfo.full_name,
+    type: 'rejected' as const,
+  } : null);
 
   const showP2aRejectionBanner =
     isP2AActivity &&
     p2aPlanStatus === 'DRAFT' &&
-    !!(effectiveP2aRejection.role_name || effectiveP2aRejection.comments);
+    !!effectiveP2aRejection;
 
   const getP2AStatusBadge = () => {
     if (!p2aPlanStatus) return null;
@@ -969,22 +987,42 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                   </div>
                 )}
 
-                {/* Rejection feedback for task owner */}
-                {showP2aRejectionBanner && (
-                  <div className="p-3 rounded-lg bg-destructive/5 border border-destructive/20 space-y-1">
-                    <div className="flex items-center gap-2 text-xs font-medium text-destructive">
-                      <AlertTriangle className="h-3.5 w-3.5" />
-                      Plan rejected by {effectiveP2aRejection.role_name || 'approver'}
-                    </div>
-                    <p className="text-xs text-foreground/80 italic pl-5">
-                      "{effectiveP2aRejection.comments || 'No rejection comment was provided.'}"
-                    </p>
-                    {effectiveP2aRejection.approved_at && (
-                      <p className="text-[10px] text-muted-foreground pl-5">
-                        {format(new Date(effectiveP2aRejection.approved_at), 'MMM d, yyyy')}
+                {/* Draft context banner — rejection or revert */}
+                {showP2aRejectionBanner && effectiveP2aRejection && (
+                  effectiveP2aRejection.type === 'reverted' ? (
+                    <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 space-y-1" style={{ borderLeft: '3px solid hsl(38, 92%, 50%)' }}>
+                      <div className="flex items-center gap-2 text-xs font-medium text-amber-700 dark:text-amber-300">
+                        <RotateCcw className="h-3.5 w-3.5" />
+                        Plan reverted to Draft by {effectiveP2aRejection.rejector_name || effectiveP2aRejection.role_name}
+                      </div>
+                      <p className="text-xs text-amber-700/80 dark:text-amber-300/70 italic pl-5">
+                        "{effectiveP2aRejection.comments}"
                       </p>
-                    )}
-                  </div>
+                      {effectiveP2aRejection.approved_at && (
+                        <p className="text-[10px] text-amber-600/70 dark:text-amber-400/60 pl-5">
+                          {format(new Date(effectiveP2aRejection.approved_at), 'MMM d, yyyy')}
+                        </p>
+                      )}
+                      <p className="text-[10px] text-amber-600/60 dark:text-amber-400/50 pl-5">
+                        You can continue editing and resubmit when ready.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="p-3 rounded-lg bg-destructive/5 border border-destructive/20 space-y-1">
+                      <div className="flex items-center gap-2 text-xs font-medium text-destructive">
+                        <AlertTriangle className="h-3.5 w-3.5" />
+                        Plan rejected by {effectiveP2aRejection.role_name || 'approver'}
+                      </div>
+                      <p className="text-xs text-foreground/80 italic pl-5">
+                        "{effectiveP2aRejection.comments || 'No rejection comment was provided.'}"
+                      </p>
+                      {effectiveP2aRejection.approved_at && (
+                        <p className="text-[10px] text-muted-foreground pl-5">
+                          {format(new Date(effectiveP2aRejection.approved_at), 'MMM d, yyyy')}
+                        </p>
+                      )}
+                    </div>
+                  )
                 )}
 
                 <p className="text-sm text-muted-foreground leading-relaxed">

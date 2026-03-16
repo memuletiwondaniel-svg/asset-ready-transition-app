@@ -6,6 +6,7 @@ export interface P2ARejectionContext {
   comments: string | null;
   approved_at: string | null;
   rejector_name: string | null;
+  type: 'rejected' | 'reverted';
 }
 
 /**
@@ -28,20 +29,22 @@ export function useP2ARejectionContext(planId: string | undefined, planStatus: s
         .single();
 
       if (plan?.last_rejection_comment) {
+        const isReverted = plan.last_rejected_by_role === 'Reverted';
         return {
-          role_name: plan.last_rejected_by_role || 'Approver',
+          role_name: isReverted ? (plan.last_rejected_by_name || 'User') : (plan.last_rejected_by_role || 'Approver'),
           comments: plan.last_rejection_comment,
           approved_at: plan.last_rejected_at || null,
           rejector_name: plan.last_rejected_by_name || null,
+          type: isReverted ? 'reverted' : 'rejected',
         };
       }
 
       // Fallback: latest REJECTED entry from history
       const { data: historyRow } = await client
         .from('p2a_approver_history')
-        .select('role_name, comments, approved_at')
+        .select('role_name, comments, approved_at, status')
         .eq('handover_id', planId)
-        .eq('status', 'REJECTED')
+        .in('status', ['REJECTED', 'REVERTED'])
         .order('approved_at', { ascending: false })
         .limit(1);
 
@@ -51,6 +54,7 @@ export function useP2ARejectionContext(planId: string | undefined, planStatus: s
           comments: historyRow[0].comments,
           approved_at: historyRow[0].approved_at,
           rejector_name: null,
+          type: historyRow[0].status === 'REVERTED' ? 'reverted' as const : 'rejected' as const,
         };
       }
 
@@ -69,6 +73,7 @@ export function useP2ARejectionContext(planId: string | undefined, planStatus: s
           comments: approverRow[0].comments,
           approved_at: approverRow[0].approved_at,
           rejector_name: null,
+          type: 'rejected' as const,
         };
       }
 

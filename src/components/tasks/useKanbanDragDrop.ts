@@ -184,10 +184,29 @@ export function useKanbanDragDrop() {
           .limit(1);
         const p2aPlan = p2aPlans?.[0];
         if (p2aPlan && ['ACTIVE', 'COMPLETED', 'APPROVED'].includes(p2aPlan.status)) {
-          // Revert plan to DRAFT
+          // Fetch current user profile for revert context
+          const { data: { user: currentAuthUser } } = await client.auth.getUser();
+          let reverterName = 'Unknown';
+          if (currentAuthUser) {
+            const { data: profileRow } = await supabase
+              .from('profiles')
+              .select('full_name')
+              .eq('user_id', currentAuthUser.id)
+              .single();
+            reverterName = profileRow?.full_name || currentAuthUser.email || 'Unknown';
+          }
+
+          // Revert plan to DRAFT and persist revert context on plan-level fields
           await client
             .from('p2a_handover_plans')
-            .update({ status: 'DRAFT', updated_at: new Date().toISOString() })
+            .update({
+              status: 'DRAFT',
+              updated_at: new Date().toISOString(),
+              last_rejection_comment: voidReason || 'Reverted to Draft',
+              last_rejected_by_name: reverterName,
+              last_rejected_by_role: 'Reverted',
+              last_rejected_at: new Date().toISOString(),
+            })
             .eq('id', p2aPlan.id);
           // Archive decided approver records before resetting (for audit trail)
           const { data: decidedApprovers } = await client
@@ -351,10 +370,13 @@ export function useKanbanDragDrop() {
             console.error('[P2A Revert] Failed to delete notifications:', e);
           }
 
-          // Invalidate P2A-related queries so sheets/detail views pick up the DRAFT status
+          // Invalidate P2A-related queries so sheets/detail views pick up the DRAFT status + revert context
           queryClient.invalidateQueries({ queryKey: ['p2a-plan-exists-sheet'] });
           queryClient.invalidateQueries({ queryKey: ['p2a-plan-exists-task'] });
           queryClient.invalidateQueries({ queryKey: ['p2a-plan-by-project'] });
+          queryClient.invalidateQueries({ queryKey: ['p2a-rejection-context'] });
+          queryClient.invalidateQueries({ queryKey: ['p2a-draft-context-sheet'] });
+          queryClient.invalidateQueries({ queryKey: ['p2a-draft-context-task'] });
           queryClient.invalidateQueries({ queryKey: ['ora-activity-detail'] });
           queryClient.invalidateQueries({ queryKey: ['ori-scores'] });
           queryClient.invalidateQueries({ queryKey: ['ori-score-latest'] });

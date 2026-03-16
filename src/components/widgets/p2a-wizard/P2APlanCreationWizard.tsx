@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Key, Loader2, Trash2, AlertTriangle, Edit3, Eye, XCircle } from 'lucide-react';
+import { Key, Loader2, Trash2, AlertTriangle, Edit3, Eye, XCircle, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { WizardProgress, WizardStep } from './WizardProgress';
 import { WizardNavigation } from './WizardNavigation';
@@ -690,25 +690,45 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
           </div>
         )}
 
-        {/* Rejection feedback banner (shown to author when plan was rejected) */}
+        {/* Draft context banner — rejection or revert (shown to author) */}
         {!isReviewMode && rejectionInfo && useWizard && !isLoadingDraft && (
-          <div className="flex items-start gap-2 sm:gap-3 px-3 sm:px-5 py-2 sm:py-3 border-b bg-destructive/5 dark:bg-destructive/10 text-destructive shrink-0">
-            <XCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 mt-0.5" />
-            <div className="flex-1 text-[11px] sm:text-xs space-y-1">
-              <p className="font-medium">
-                Plan was rejected by {rejectionInfo.rejector_name || rejectionInfo.role_name}
-                {rejectionInfo.approved_at && (
-                  <span className="font-normal text-muted-foreground ml-1">
-                    on {new Date(rejectionInfo.approved_at).toLocaleDateString()}
-                  </span>
+          rejectionInfo.type === 'reverted' ? (
+            <div className="flex items-start gap-2 sm:gap-3 px-3 sm:px-5 py-2.5 sm:py-3 border-b border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 shrink-0" style={{ borderLeft: '3px solid hsl(38, 92%, 50%)' }}>
+              <RotateCcw className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
+              <div className="flex-1 text-[11px] sm:text-xs space-y-1">
+                <p className="font-medium text-amber-800 dark:text-amber-200">
+                  Plan reverted to Draft by {rejectionInfo.rejector_name || rejectionInfo.role_name}
+                  {rejectionInfo.approved_at && (
+                    <span className="font-normal text-amber-600/80 dark:text-amber-400/70 ml-1">
+                      on {new Date(rejectionInfo.approved_at).toLocaleDateString()}
+                    </span>
+                  )}
+                </p>
+                {rejectionInfo.comments && (
+                  <p className="text-amber-700/80 dark:text-amber-300/70 italic">"{rejectionInfo.comments}"</p>
                 )}
-              </p>
-              {rejectionInfo.comments && rejectionInfo.comments !== 'Rejected by approver' && (
-                <p className="text-foreground/80 italic">"{rejectionInfo.comments}"</p>
-              )}
-              <p className="text-muted-foreground">Please address the feedback and resubmit for approval.</p>
+                <p className="text-amber-600/70 dark:text-amber-400/60">You can continue editing and resubmit when ready.</p>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="flex items-start gap-2 sm:gap-3 px-3 sm:px-5 py-2 sm:py-3 border-b bg-destructive/5 dark:bg-destructive/10 text-destructive shrink-0">
+              <XCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 mt-0.5" />
+              <div className="flex-1 text-[11px] sm:text-xs space-y-1">
+                <p className="font-medium">
+                  Plan was rejected by {rejectionInfo.rejector_name || rejectionInfo.role_name}
+                  {rejectionInfo.approved_at && (
+                    <span className="font-normal text-muted-foreground ml-1">
+                      on {new Date(rejectionInfo.approved_at).toLocaleDateString()}
+                    </span>
+                  )}
+                </p>
+                {rejectionInfo.comments && rejectionInfo.comments !== 'Rejected by approver' && (
+                  <p className="text-foreground/80 italic">"{rejectionInfo.comments}"</p>
+                )}
+                <p className="text-muted-foreground">Please address the feedback and resubmit for approval.</p>
+              </div>
+            </div>
+          )
         )}
 
 
