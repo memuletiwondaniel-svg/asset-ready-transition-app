@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 import { toast } from 'sonner';
 
-export type AnnotationType = 'highlight' | 'comment_pin' | 'text_box' | 'drawing' | 'stamp';
+export type AnnotationType = 'highlight' | 'comment_pin' | 'text_box' | 'drawing' | 'stamp' | 'signature';
 
 export interface Annotation {
   id: string;
@@ -18,6 +18,8 @@ export interface Annotation {
     width?: number;
     height?: number;
     path?: string;
+    anchor?: { x: number; y: number };
+    signatureData?: string;
   };
   content: string;
   color: string;
@@ -206,11 +208,12 @@ export const useAttachmentCollaboration = (attachmentId: string | null) => {
 
   // Update annotation
   const updateAnnotation = useMutation({
-    mutationFn: async (params: { id: string; content?: string; resolved?: boolean; color?: string }) => {
+    mutationFn: async (params: { id: string; content?: string; resolved?: boolean; color?: string; position_data?: any }) => {
       const updates: any = {};
       if (params.content !== undefined) updates.content = params.content;
       if (params.resolved !== undefined) updates.resolved = params.resolved;
       if (params.color !== undefined) updates.color = params.color;
+      if (params.position_data !== undefined) updates.position_data = params.position_data;
 
       const { error } = await (supabase as any)
         .from('attachment_annotations')

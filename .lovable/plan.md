@@ -1,81 +1,77 @@
 
 
-## Fix: PDF Clarity, Scroll, Draggable Annotations, Text Box Drawing, and Signature Tool
+# Plan: ORIP Scoring Engine Using Existing VCR Item Categories
 
-### Issues to Address
+## Impact Assessment: Zero Breaking Changes
 
-1. **PDF still blurry** — CSS `scale()` on the container causes interpolation blur. Fix: render the PDF at `width = 900 * zoom` directly (no CSS transform), so react-pdf renders at the actual target resolution.
+**No existing workflows will be affected.** The approach reuses the existing `vcr_item_categories` table (Design Integrity, Technical Integrity, Operating Integrity, Management Systems, Health & Safety) as the readiness dimensions for ORI scoring. All changes are additive:
 
-2. **Scroll broken when zoomed** — Because `scale()` doesn't change the element's layout size, the scrollable container doesn't know the true rendered dimensions. Removing CSS `scale()` in favor of direct width rendering fixes this automatically.
+- The `vcr_item_categories` table gets a `tenant_id` column and weight/confidence fields -- existing rows remain intact
+- The `readiness_nodes` table gets a new nullable `dimension_id` column pointing to `vcr_item_categories`
+- The `sync_readiness_nodes` and `calculate_ori_score` functions are replaced with enhanced versions that use category-based dimensions instead of module-based grouping
+- Existing P2A, ORA, PSSR, ORM workflows are untouched -- the ontology layer only reads from them
 
-3. **Text box needs arrow/callout** — Add a leader line from the text box to a target point. When the text_box tool is active, the user drags to draw a rectangle (like Acrobat), then types content. Store an `anchor` point in position_data for the arrow tip.
+## Current VCR Item Categories (Become Readiness Dimensions)
 
-4. **Draggable annotations** — Make comment pins, text boxes, stamps, and signatures draggable (pointer tool mode). On drag end, update `position_data` via `updateAnnotation`.
+| Code | Name | Active |
+|------|------|--------|
+| DI2 | Design Integrity | Yes |
+| TI | Technical Integrity | Yes |
+| OI | Operating Integrity | Yes |
+| MS | Management Systems | Yes |
+| HS | Health & Safety | Yes |
 
-5. **Signature tool** — Add a new `signature` annotation type and tool. On click, show a signature pad modal (draw or select from saved). Place the signature as a draggable image on the document.
+These become the tenant-configurable readiness dimensions. Different tenants can add/rename/reweight their own categories.
 
-### Changes
+## Implementation Tasks
 
-#### 1. `DocumentCanvas.tsx` — Fix blur and scroll
-- Remove `style={{ transform: scale(${zoom}) }}` wrapper
-- Pass `width={Math.round(900 * zoom)}` directly to `<Page>`
-- This renders the PDF at the correct resolution and the overflow container scrolls naturally
+### Task 1: Extend `vcr_item_categories` for ORI Scoring
+Add columns to make categories serve double duty as readiness dimensions:
+- `tenant_id UUID` (nullable, defaults via trigger -- existing rows get current tenant)
+- `default_weight NUMERIC(5,4)` (e.g., 0.20 = 20%)
+- `confidence_factor_default NUMERIC(3,2)` (default 0.8)
+- `risk_severity_multiplier NUMERIC(3,1)` (default 1.0)
+- `is_readiness_dimension BOOLEAN DEFAULT true`
 
-#### 2. `AnnotationLayer.tsx` — Major enhancements
-- **Draggable annotations**: In pointer mode, allow mousedown+drag on comment_pin, text_box, stamp, signature annotations. Track drag offset and update position on mouseup via a new `onUpdateAnnotation` prop.
-- **Text box drawing**: When `text_box` tool is active, user drags to draw a rectangle (mousedown→mousemove→mouseup like highlight). Show preview rect while dragging. On mouseup, prompt for text content. Store `anchor` point (the mousedown position) for a leader/arrow line.
-- **Text box arrow rendering**: Render an SVG line from `position_data.anchor` to the text box corner.
-- **Signature placement**: When `signature` tool is active, clicking opens a signature pad dialog. On completion, place signature at click position as a draggable element.
+Add `dimension_id UUID REFERENCES vcr_item_categories(id)` to `readiness_nodes`.
 
-#### 3. `AnnotationToolbar.tsx` — Add Signature tool
-- Add `{ mode: 'signature', icon: PenTool, label: 'Signature' }` to TOOLS array
-- Update `ToolMode` type to include `'signature'`
+### Task 2: Enhanced ORI Formula
+Replace `calculate_ori_score()` with the full ORIP formula:
 
-#### 4. `useAttachmentCollaboration.ts` — Update types
-- Add `'signature'` to `AnnotationType` union
-- Add optional `anchor`, `signatureData` fields to `position_data` interface
-
-#### 5. New: `SignaturePadDialog.tsx`
-- Modal with a canvas for drawing a signature (or selecting a previously saved one from localStorage)
-- Returns base64 image data on confirm
-- Clean, minimal UI with Clear/Save/Cancel buttons
-
-### Technical Details
-
-**Blur fix** (critical change in `DocumentCanvas.tsx`):
 ```
-// Before (blurry):
-<div style={{ transform: `scale(${zoom})` }}>
-  <Page width={900} />
-</div>
-
-// After (sharp):
-<div>
-  <Page width={Math.round(900 * zoom)} />
-</div>
+DS_i = (Σ Subcomponent_Weight × Completion%) × Confidence_Factor
+RP_i = Σ (Risk_Severity × Impact_Multiplier)  -- capped at 15%
+ORI  = Σ (Dimension_Weight_i × DS_i) − Global_Risk_Penalty
+SCS  = ORI × Schedule_Adherence × Critical_Path_Stability
 ```
 
-**Drag logic** (in `AnnotationLayer.tsx`):
-- In pointer mode, mousedown on an annotation starts drag tracking
-- mousemove updates a local offset state (visual feedback)
-- mouseup calls `onUpdateAnnotation({ id, position_data: { ...pos, x: newX, y: newY } })`
+Add columns to `ori_scores`: `dimension_scores JSONB`, `risk_penalty_total NUMERIC`, `startup_confidence_score NUMERIC`, `schedule_adherence_index NUMERIC`, `critical_path_stability_index NUMERIC`.
 
-**Text box drawing UX**:
-- Drag to define rectangle (same as highlight preview)
-- On release, show text input prompt
-- Render with SVG arrow from anchor point to nearest box corner
+Add `confidence_factor NUMERIC(3,2) DEFAULT 0.8` and `risk_severity TEXT DEFAULT 'none'` to `readiness_nodes`.
 
-**Signature flow**:
-- Click document → open SignaturePadDialog
-- Draw or select saved signature → confirm
-- Place as annotation with `signatureData` (base64) in position_data
-- Render as `<img>` element, draggable in pointer mode
+### Task 3: Update Sync Function
+Update `sync_readiness_nodes()` to auto-assign `dimension_id` by mapping:
+- P2A VCR prerequisites → mapped via their `vcr_items.category_id` directly to `vcr_item_categories`
+- ORA activities → default to "Operating Integrity" or map via metadata
+- PSSR items → map via PSSR checklist category → nearest VCR category
+- ORM deliverables → default to "Management Systems"
+- Training → default to "Operating Integrity"
 
-### Files to Edit
-1. `src/components/document-collaboration/DocumentCanvas.tsx`
-2. `src/components/document-collaboration/AnnotationLayer.tsx`
-3. `src/components/document-collaboration/AnnotationToolbar.tsx`
-4. `src/hooks/useAttachmentCollaboration.ts`
-5. `src/components/document-collaboration/DocumentViewerOverlay.tsx` (pass updateAnnotation to AnnotationLayer)
-6. **New**: `src/components/document-collaboration/SignaturePadDialog.tsx`
+Set confidence factors: completed/approved = 1.0, in-progress = 0.8, not-started = 0.7.
+
+### Task 4: Executive Dashboard Enhancement
+Redesign `ExecutiveDashboard.tsx` to match the strategic layout:
+- **Top Banner**: Large ORI + SCS + color coding (Green >85, Amber 70-85, Red <70)
+- **Dimension Breakdown**: Bar/table showing each VCR category's score, trend arrow, risk level
+- **Top 5 Startup Blockers**: Blocked/critical nodes with severity
+- **Predictive Trend**: ORI line chart with dashed target curve
+- **Risk Impact Summary**: 4 stat boxes (Open High Risks, Startup-blocking, Dimensions below 70%, Systems below 60%)
+
+### Task 5: Tenant-Configurable Weight Profiles
+Update the existing `ori_weight_profiles` to store dimension-based weights keyed by `vcr_item_categories.id` instead of module names. Add a simple admin UI for editing weights per tenant.
+
+### Task 6: Update Living Documents
+- **Security & Compliance Doc**: Add rows for Readiness Dimensions, Risk Penalty Engine, Startup Confidence Score (mark as Active)
+- **Platform Guide**: Add "Readiness Ontology & Scoring Engine" section documenting the 6 dimensions, ORI formula, SCS
+- **Strategic North Star**: Update scoring engine status from Planned to Active, add dimension-based architecture detail
 

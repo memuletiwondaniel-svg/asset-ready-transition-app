@@ -53,7 +53,7 @@ export const DocumentCanvas: React.FC<DocumentCanvasProps> = ({
   if (category === 'pdf' && !pdfError) {
     return (
       <div className="flex-1 overflow-auto flex flex-col items-center bg-muted/30 p-4 relative">
-        <div className="relative" style={{ transform: `scale(${zoom})`, transformOrigin: 'top center' }}>
+        <div className="relative">
           <Document
             file={fileUrl}
             onLoadSuccess={({ numPages }) => onTotalPagesChange(numPages)}
@@ -67,7 +67,7 @@ export const DocumentCanvas: React.FC<DocumentCanvasProps> = ({
             <div className="relative">
               <Page
                 pageNumber={currentPage}
-                width={900}
+                width={Math.round(900 * zoom)}
                 renderTextLayer={true}
                 renderAnnotationLayer={false}
               />

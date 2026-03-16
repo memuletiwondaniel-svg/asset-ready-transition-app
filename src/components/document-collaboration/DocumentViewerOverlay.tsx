@@ -169,6 +169,7 @@ export const DocumentViewerOverlay: React.FC<DocumentViewerOverlayProps> = ({
                 activeColor={activeColor}
                 pageNumber={currentPage}
                 onCreateAnnotation={createAnnotation}
+                onUpdateAnnotation={updateAnnotation}
                 onSelectAnnotation={(ann) => setSelectedAnnotation(ann)}
                 selectedAnnotationId={selectedAnnotation?.id || null}
               />
