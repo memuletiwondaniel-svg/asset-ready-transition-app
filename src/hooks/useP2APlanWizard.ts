@@ -396,7 +396,7 @@ async function persistPlanToDatabase(
   }
 
   // Create VCRs using the same code format as the wizard UI
-  // Format: VCR-{projectCode}-{seq} e.g. VCR-DP300-001
+  // Format: VCR-{projectCode}-{seq} e.g. VCR-DP300-01
   const cleanProjectCode = projectCode.replace(/-/g, '');
 
   for (let i = 0; i < state.vcrs.length; i++) {
