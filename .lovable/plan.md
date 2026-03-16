@@ -1,77 +1,110 @@
 
 
-# Plan: ORIP Scoring Engine Using Existing VCR Item Categories
+## Fix: Gantt Chart Activity Overlay and Progress for Ad-Hoc Review Tasks
 
-## Impact Assessment: Zero Breaking Changes
+### Problem Summary
 
-**No existing workflows will be affected.** The approach reuses the existing `vcr_item_categories` table (Design Integrity, Technical Integrity, Operating Integrity, Management Systems, Health & Safety) as the readiness dimensions for ORI scoring. All changes are additive:
+Two issues when clicking activities in the Gantt chart:
 
-- The `vcr_item_categories` table gets a `tenant_id` column and weight/confidence fields -- existing rows remain intact
-- The `readiness_nodes` table gets a new nullable `dimension_id` column pointing to `vcr_item_categories`
-- The `sync_readiness_nodes` and `calculate_ori_score` functions are replaced with enhanced versions that use category-based dimensions instead of module-based grouping
-- Existing P2A, ORA, PSSR, ORM workflows are untouched -- the ontology layer only reads from them
+1. **Wrong overlay**: The Gantt builds a synthetic task object (no real `task.id`) so the `ORAActivityTaskSheet` cannot look up `task_reviewers`, approvers, attachments, or activity feed. The My Tasks Kanban passes the real `user_tasks` record which has a valid ID.
 
-## Current VCR Item Categories (Become Readiness Dimensions)
+2. **Wrong progress/status**: When a task has ad-hoc reviewers and is submitted for approval, the Gantt shows 100%/Completed (from `ora_plan_activities.status = COMPLETED`) instead of 95%/In Progress. The P2A activity already has a cap (86% draft, 95% submitted), but generic activities with reviewers lack equivalent logic.
 
-| Code | Name | Active |
-|------|------|--------|
-| DI2 | Design Integrity | Yes |
-| TI | Technical Integrity | Yes |
-| OI | Operating Integrity | Yes |
-| MS | Management Systems | Yes |
-| HS | Health & Safety | Yes |
+### Root Cause
 
-These become the tenant-configurable readiness dimensions. Different tenants can add/rename/reweight their own categories.
+In `ORPGanttChart.tsx` `openActivitySheet()` (line 938-974), for generic activities (non-P2A, non-VCR), the code creates a synthetic task with `id: deliverable.id` (which is an `ora_plan_activities` UUID, not a `user_tasks` UUID). The `useTaskReviewers` hook then queries `task_reviewers` with this wrong ID and finds nothing.
 
-## Implementation Tasks
+Additionally, `ora_plan_activities` marks status as `COMPLETED` when the user clicks "Save & Submit" (setting status to COMPLETED), but the task is actually pending approval. There's no reconciliation for ad-hoc review workflows.
 
-### Task 1: Extend `vcr_item_categories` for ORI Scoring
-Add columns to make categories serve double duty as readiness dimensions:
-- `tenant_id UUID` (nullable, defaults via trigger -- existing rows get current tenant)
-- `default_weight NUMERIC(5,4)` (e.g., 0.20 = 20%)
-- `confidence_factor_default NUMERIC(3,2)` (default 0.8)
-- `risk_severity_multiplier NUMERIC(3,1)` (default 1.0)
-- `is_readiness_dimension BOOLEAN DEFAULT true`
+### Solution
 
-Add `dimension_id UUID REFERENCES vcr_item_categories(id)` to `readiness_nodes`.
+#### 1. Resolve real user task ID in Gantt's `openActivitySheet`
 
-### Task 2: Enhanced ORI Formula
-Replace `calculate_ori_score()` with the full ORIP formula:
+In `ORPGanttChart.tsx`, add a query to pre-fetch the mapping from `ora_plan_activity_id` to `user_tasks.id` for all leaf activities in the plan. This avoids per-click async lookups.
 
-```
-DS_i = (Σ Subcomponent_Weight × Completion%) × Confidence_Factor
-RP_i = Σ (Risk_Severity × Impact_Multiplier)  -- capped at 15%
-ORI  = Σ (Dimension_Weight_i × DS_i) − Global_Risk_Penalty
-SCS  = ORI × Schedule_Adherence × Critical_Path_Stability
+**New query** (alongside existing queries in the component):
+```ts
+const { data: activityTaskMap } = useQuery({
+  queryKey: ['ora-activity-task-map', planId],
+  queryFn: async () => {
+    const { data } = await supabase
+      .from('user_tasks')
+      .select('id, status, metadata')
+      .filter('metadata->>ora_plan_activity_id', 'is', 'not.null');
+    // Build map: ora_plan_activity_id → user_task record
+    const map: Record<string, { taskId: string; taskStatus: string }> = {};
+    for (const t of data || []) {
+      const oraId = (t.metadata as any)?.ora_plan_activity_id;
+      if (oraId) map[oraId] = { taskId: t.id, taskStatus: t.status };
+    }
+    return map;
+  },
+  enabled: !!planId,
+});
 ```
 
-Add columns to `ori_scores`: `dimension_scores JSONB`, `risk_penalty_total NUMERIC`, `startup_confidence_score NUMERIC`, `schedule_adherence_index NUMERIC`, `critical_path_stability_index NUMERIC`.
+Then in `openActivitySheet` for the generic case (line 947), use the real task ID:
+```ts
+const realTask = activityTaskMap?.[deliverable.id];
+setSelectedOraActivity({
+  id: realTask?.taskId || deliverable.id,  // Use real user_task ID
+  // ... rest stays the same
+  status: realTask?.taskStatus === 'completed' ? 'completed' 
+    : realTask?.taskStatus === 'in_progress' ? 'in_progress' : 'pending',
+});
+```
 
-Add `confidence_factor NUMERIC(3,2) DEFAULT 0.8` and `risk_severity TEXT DEFAULT 'none'` to `readiness_nodes`.
+Apply the same pattern to P2A and VCR branches.
 
-### Task 3: Update Sync Function
-Update `sync_readiness_nodes()` to auto-assign `dimension_id` by mapping:
-- P2A VCR prerequisites → mapped via their `vcr_items.category_id` directly to `vcr_item_categories`
-- ORA activities → default to "Operating Integrity" or map via metadata
-- PSSR items → map via PSSR checklist category → nearest VCR category
-- ORM deliverables → default to "Management Systems"
-- Training → default to "Operating Integrity"
+#### 2. Add progress/status reconciliation for ad-hoc review tasks
 
-Set confidence factors: completed/approved = 1.0, in-progress = 0.8, not-started = 0.7.
+In `ORPGanttChart.tsx`, add a second pre-fetch query to check which tasks have pending reviewers:
 
-### Task 4: Executive Dashboard Enhancement
-Redesign `ExecutiveDashboard.tsx` to match the strategic layout:
-- **Top Banner**: Large ORI + SCS + color coding (Green >85, Amber 70-85, Red <70)
-- **Dimension Breakdown**: Bar/table showing each VCR category's score, trend arrow, risk level
-- **Top 5 Startup Blockers**: Blocked/critical nodes with severity
-- **Predictive Trend**: ORI line chart with dashed target curve
-- **Risk Impact Summary**: 4 stat boxes (Open High Risks, Startup-blocking, Dimensions below 70%, Systems below 60%)
+```ts
+const { data: tasksWithPendingReviewers } = useQuery({
+  queryKey: ['gantt-pending-reviewers', planId],
+  queryFn: async () => {
+    // Get all task_reviewers with PENDING status, joined to user_tasks
+    const { data } = await (supabase as any)
+      .from('task_reviewers')
+      .select('task_id, status');
+    // Group by task_id: if any reviewer exists for a task, it has a review workflow
+    const taskMap: Record<string, { total: number; pending: number }> = {};
+    for (const r of data || []) {
+      if (!taskMap[r.task_id]) taskMap[r.task_id] = { total: 0, pending: 0 };
+      taskMap[r.task_id].total++;
+      if (r.status === 'PENDING') taskMap[r.task_id].pending++;
+    }
+    return taskMap;
+  },
+  enabled: !!planId,
+});
+```
 
-### Task 5: Tenant-Configurable Weight Profiles
-Update the existing `ori_weight_profiles` to store dimension-based weights keyed by `vcr_item_categories.id` instead of module names. Add a simple admin UI for editing weights per tenant.
+Then in the Gantt bar rendering and status column, apply reconciliation:
+- If an activity's linked user task has pending reviewers and status is COMPLETED in the DB, override display to **"In Progress"** with **95%** progress (mirroring the P2A pattern)
+- If all reviewers approved, show **Completed** / **100%**
 
-### Task 6: Update Living Documents
-- **Security & Compliance Doc**: Add rows for Readiness Dimensions, Risk Penalty Engine, Startup Confidence Score (mark as Active)
-- **Platform Guide**: Add "Readiness Ontology & Scoring Engine" section documenting the 6 dimensions, ORI formula, SCS
-- **Strategic North Star**: Update scoring engine status from Planned to Active, add dimension-based architecture detail
+This affects:
+- **Status badge** (line 1289): Check the reviewer map and override `deliverable.status` display
+- **Progress bar** (line 1373-1374): Cap at 95% when reviewers are pending
+
+#### 3. Apply same logic in `openActivitySheet` status mapping
+
+When building the synthetic task for the overlay, check the reviewer state to set correct `status` field so the `ORAActivityTaskSheet` renders the right UI (submission comment, reviewer section, etc.).
+
+### Files to Change
+
+1. **`src/components/orp/ORPGanttChart.tsx`**
+   - Add `activityTaskMap` query to resolve real user task IDs
+   - Add `tasksWithPendingReviewers` query for reviewer-aware status
+   - Update `openActivitySheet` generic branch to use real task ID
+   - Update status badge and progress bar rendering for reviewer-aware activities
+
+2. **`src/components/orp/utils/statusStyles.ts`** (if needed)
+   - May need a new status label like "Under Review" for the Gantt display
+
+### Scope
+
+This applies to **all** activities that have ad-hoc reviewers, not just the specific one shown in the screenshot. The P2A and VCR activities already have their own reconciliation — this extends the same pattern to generic ORA activities.
 
