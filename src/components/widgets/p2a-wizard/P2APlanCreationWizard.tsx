@@ -84,6 +84,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
   const [reviewComment, setReviewComment] = useState('');
   const [submissionComment, setSubmissionComment] = useState('');
   const [isApproving, setIsApproving] = useState(false);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
   const queryClient = useQueryClient();
   
   const { data: existingPlan } = useP2APlanByProject(projectId);
