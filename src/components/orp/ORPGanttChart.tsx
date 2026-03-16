@@ -14,6 +14,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useToast } from '@/hooks/use-toast';
 
 import { ORAActivityTaskSheet } from '@/components/tasks/ORAActivityTaskSheet';
+import { TaskDetailSheet } from '@/components/tasks/TaskDetailSheet';
 import { P2APlanCreationWizard } from '@/components/widgets/p2a-wizard/P2APlanCreationWizard';
 import { P2AWorkspaceOverlay } from '@/components/widgets/P2AWorkspaceOverlay';
 import { VCRExecutionPlanWizard } from '@/components/widgets/vcr-wizard/VCRExecutionPlanWizard';
