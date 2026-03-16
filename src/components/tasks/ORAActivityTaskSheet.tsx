@@ -17,7 +17,8 @@ import {
 import { Calendar } from '@/components/ui/calendar';
 import { 
   Clock, CheckCircle2, Play, Upload, MessageSquare, 
-  Paperclip, X, Loader2, AlertTriangle, Trash2, GitBranch, Plus, FileText, ChevronRight, Send, RotateCcw
+  Paperclip, X, Loader2, AlertTriangle, Trash2, GitBranch, Plus, FileText, ChevronRight, Send, RotateCcw,
+  ChevronUp, ChevronDown
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
