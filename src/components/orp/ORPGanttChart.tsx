@@ -314,6 +314,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
   const { toast } = useToast();
   
   const [selectedOraActivity, setSelectedOraActivity] = useState<any>(null);
+  const [selectedReviewTask, setSelectedReviewTask] = useState<any>(null);
   const [zoomLevel, setZoomLevel] = useState(1);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
