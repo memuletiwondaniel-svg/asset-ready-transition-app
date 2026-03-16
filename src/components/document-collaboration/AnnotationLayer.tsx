@@ -1,4 +1,4 @@
-import React, { useRef, useState, useCallback } from 'react';
+import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import type { Annotation, AnnotationType } from '@/hooks/useAttachmentCollaboration';
 import type { ToolMode } from './AnnotationToolbar';
@@ -46,8 +46,19 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
   const [draggingAnnotation, setDraggingAnnotation] = useState<{ id: string; startX: number; startY: number; origX: number; origY: number } | null>(null);
   const [dragOffset, setDragOffset] = useState<{ dx: number; dy: number }>({ dx: 0, dy: 0 });
 
+  // Optimistic positions to prevent bounce-back
+  const [optimisticPositions, setOptimisticPositions] = useState<Record<string, { x: number; y: number }>>({});
+
+  // Resize state
+  const [resizing, setResizing] = useState<{ id: string; corner: string; startX: number; startY: number; origW: number; origH: number; origPosX: number; origPosY: number } | null>(null);
+
   // Text box drawing state
   const [textBoxDraw, setTextBoxDraw] = useState<{ start: { x: number; y: number }; current: { x: number; y: number } } | null>(null);
+
+  // Clear optimistic positions when annotations update
+  useEffect(() => {
+    setOptimisticPositions({});
+  }, [annotations]);
 
   const getRelativePos = useCallback((e: React.MouseEvent) => {
     if (!layerRef.current) return { x: 0, y: 0 };
@@ -80,7 +91,6 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
     }
 
     if (activeTool === 'text_box') {
-      // Start drag-to-draw text box
       setTextBoxDraw({ start: pos, current: pos });
       return;
     }
@@ -110,6 +120,17 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     const pos = getRelativePos(e);
 
+    // Resizing
+    if (resizing) {
+      const dx = pos.x - resizing.startX;
+      const dy = pos.y - resizing.startY;
+      // handled in mouseup
+      setResizing(prev => prev ? { ...prev, _dx: dx, _dy: dy } as any : null);
+      // Update drag current for visual preview
+      setDragCurrent(pos);
+      return;
+    }
+
     // Dragging annotation
     if (draggingAnnotation) {
       setDragOffset({
@@ -135,18 +156,53 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
     if (activeTool === 'highlight') {
       setDragCurrent(pos);
     }
-  }, [dragStart, activeTool, getRelativePos, draggingAnnotation, textBoxDraw]);
+  }, [dragStart, activeTool, getRelativePos, draggingAnnotation, textBoxDraw, resizing]);
 
-  const handleMouseUp = useCallback(() => {
+  const handleMouseUp = useCallback((e: React.MouseEvent) => {
+    // Finish resize
+    if (resizing) {
+      const pos = getRelativePos(e);
+      const dx = pos.x - resizing.startX;
+      const dy = pos.y - resizing.startY;
+      const ann = annotations.find(a => a.id === resizing.id);
+      if (ann) {
+        let newW = resizing.origW;
+        let newH = resizing.origH;
+        let newX = resizing.origPosX;
+        let newY = resizing.origPosY;
+
+        if (resizing.corner.includes('r')) newW = Math.max(5, resizing.origW + dx);
+        if (resizing.corner.includes('l')) { newW = Math.max(5, resizing.origW - dx); newX = resizing.origPosX + dx; }
+        if (resizing.corner.includes('b')) newH = Math.max(3, resizing.origH + dy);
+        if (resizing.corner.includes('t')) { newH = Math.max(3, resizing.origH - dy); newY = resizing.origPosY + dy; }
+
+        onUpdateAnnotation({
+          id: ann.id,
+          position_data: { ...ann.position_data, x: newX, y: newY, width: newW, height: newH },
+        });
+      }
+      setResizing(null);
+      setDragCurrent(null);
+      return;
+    }
+
     // Finish annotation drag
     if (draggingAnnotation) {
       const ann = annotations.find(a => a.id === draggingAnnotation.id);
       if (ann && (Math.abs(dragOffset.dx) > 0.5 || Math.abs(dragOffset.dy) > 0.5)) {
-        const newPos = {
-          ...ann.position_data,
-          x: draggingAnnotation.origX + dragOffset.dx,
-          y: draggingAnnotation.origY + dragOffset.dy,
-        };
+        const newX = draggingAnnotation.origX + dragOffset.dx;
+        const newY = draggingAnnotation.origY + dragOffset.dy;
+        // Set optimistic position to prevent bounce-back
+        setOptimisticPositions(prev => ({ ...prev, [ann.id]: { x: newX, y: newY } }));
+
+        const newPos = { ...ann.position_data, x: newX, y: newY };
+        // Also update anchor if it exists (for text boxes with arrows)
+        if (ann.position_data.anchor) {
+          newPos.anchor = {
+            x: ann.position_data.anchor.x + dragOffset.dx,
+            y: ann.position_data.anchor.y + dragOffset.dy,
+          };
+        }
         onUpdateAnnotation({ id: ann.id, position_data: newPos });
       }
       setDraggingAnnotation(null);
@@ -156,6 +212,7 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
 
     // Finish text box drawing
     if (textBoxDraw) {
+      const anchorPt = { x: textBoxDraw.start.x, y: textBoxDraw.start.y };
       const x = Math.min(textBoxDraw.start.x, textBoxDraw.current.x);
       const y = Math.min(textBoxDraw.start.y, textBoxDraw.current.y);
       const w = Math.abs(textBoxDraw.current.x - textBoxDraw.start.x);
@@ -165,12 +222,15 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
       if (w > 2 && h > 1) {
         const content = prompt('Enter text:');
         if (content) {
+          // Place the text box offset from anchor so arrow is visible
+          const boxX = x + w + 2; // offset right of the drawn area
+          const boxY = y;
           onCreateAnnotation({
             annotation_type: 'text_box',
             page_number: pageNumber,
             position_data: {
-              x, y, width: w, height: h,
-              anchor: { x: textBoxDraw.start.x, y: textBoxDraw.start.y },
+              x: boxX, y: boxY, width: w, height: h,
+              anchor: anchorPt,
             },
             content,
             color: activeColor,
@@ -209,7 +269,7 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
     setDragStart(null);
     setDragCurrent(null);
     setDrawingPath('');
-  }, [dragStart, dragCurrent, activeTool, drawingPath, pageNumber, activeColor, onCreateAnnotation, draggingAnnotation, dragOffset, annotations, onUpdateAnnotation, textBoxDraw]);
+  }, [dragStart, dragCurrent, activeTool, drawingPath, pageNumber, activeColor, onCreateAnnotation, draggingAnnotation, dragOffset, annotations, onUpdateAnnotation, textBoxDraw, resizing, getRelativePos]);
 
   const handleStampSelect = (label: string) => {
     if (!showStampMenu) return;
@@ -240,25 +300,91 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
     e.stopPropagation();
     e.preventDefault();
     const pos = getRelativePos(e);
+    const currentPos = getDisplayPos(ann);
     setDraggingAnnotation({
       id: ann.id,
       startX: pos.x,
       startY: pos.y,
-      origX: ann.position_data.x,
-      origY: ann.position_data.y,
+      origX: currentPos.x,
+      origY: currentPos.y,
     });
     setDragOffset({ dx: 0, dy: 0 });
     onSelectAnnotation(ann);
   };
 
-  const getDraggedPos = (ann: Annotation) => {
+  const startResize = (e: React.MouseEvent, ann: Annotation, corner: string) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const pos = getRelativePos(e);
+    const currentPos = getDisplayPos(ann);
+    setResizing({
+      id: ann.id,
+      corner,
+      startX: pos.x,
+      startY: pos.y,
+      origW: ann.position_data.width || 15,
+      origH: ann.position_data.height || 6,
+      origPosX: currentPos.x,
+      origPosY: currentPos.y,
+    });
+  };
+
+  const getDisplayPos = (ann: Annotation) => {
+    // Priority: dragging > optimistic > actual
     if (draggingAnnotation?.id === ann.id) {
       return {
         x: draggingAnnotation.origX + dragOffset.dx,
         y: draggingAnnotation.origY + dragOffset.dy,
       };
     }
+    if (optimisticPositions[ann.id]) {
+      return optimisticPositions[ann.id];
+    }
     return { x: ann.position_data.x, y: ann.position_data.y };
+  };
+
+  // Get resize preview dimensions
+  const getResizedDims = (ann: Annotation) => {
+    if (resizing?.id !== ann.id || !dragCurrent) {
+      return { w: ann.position_data.width, h: ann.position_data.height, x: getDisplayPos(ann).x, y: getDisplayPos(ann).y };
+    }
+    const dx = dragCurrent.x - resizing.startX;
+    const dy = dragCurrent.y - resizing.startY;
+    let w = resizing.origW;
+    let h = resizing.origH;
+    let x = resizing.origPosX;
+    let y = resizing.origPosY;
+
+    if (resizing.corner.includes('r')) w = Math.max(5, resizing.origW + dx);
+    if (resizing.corner.includes('l')) { w = Math.max(5, resizing.origW - dx); x = resizing.origPosX + dx; }
+    if (resizing.corner.includes('b')) h = Math.max(3, resizing.origH + dy);
+    if (resizing.corner.includes('t')) { h = Math.max(3, resizing.origH - dy); y = resizing.origPosY + dy; }
+
+    return { w, h, x, y };
+  };
+
+  // Resize handles for selected text_box/signature
+  const renderResizeHandles = (ann: Annotation) => {
+    if (selectedAnnotationId !== ann.id || activeTool !== 'pointer') return null;
+    const displayPos = getDisplayPos(ann);
+    const w = ann.position_data.width || 15;
+    const h = ann.position_data.height || 6;
+
+    const handles = [
+      { corner: 'tl', style: { left: `${displayPos.x}%`, top: `${displayPos.y}%`, transform: 'translate(-50%, -50%)' } },
+      { corner: 'tr', style: { left: `${displayPos.x + w}%`, top: `${displayPos.y}%`, transform: 'translate(-50%, -50%)' } },
+      { corner: 'bl', style: { left: `${displayPos.x}%`, top: `${displayPos.y + h}%`, transform: 'translate(-50%, -50%)' } },
+      { corner: 'br', style: { left: `${displayPos.x + w}%`, top: `${displayPos.y + h}%`, transform: 'translate(-50%, -50%)' } },
+    ];
+
+    return handles.map(({ corner, style }) => (
+      <div
+        key={`${ann.id}-${corner}`}
+        className="absolute w-2.5 h-2.5 bg-primary border border-primary-foreground rounded-sm cursor-nwse-resize z-20"
+        style={style}
+        onMouseDown={(e) => startResize(e, ann, corner)}
+      />
+    ));
   };
 
   // Preview highlight rect
@@ -294,14 +420,14 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
           const pos = ann.position_data;
           const isSelected = selectedAnnotationId === ann.id;
           const isDragging = draggingAnnotation?.id === ann.id;
-          const displayPos = getDraggedPos(ann);
+          const displayPos = getDisplayPos(ann);
 
           if (ann.annotation_type === 'highlight') {
             return (
               <div
                 key={ann.id}
                 className={cn(
-                  'absolute rounded-sm transition-all',
+                  'absolute rounded-sm transition-colors',
                   isSelected && 'ring-2 ring-primary',
                   ann.resolved && 'opacity-40'
                 )}
@@ -323,7 +449,7 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
               <div
                 key={ann.id}
                 className={cn(
-                  'absolute -translate-x-1/2 -translate-y-1/2 transition-transform hover:scale-110',
+                  'absolute -translate-x-1/2 -translate-y-1/2 hover:scale-110',
                   isSelected && 'scale-125',
                   activeTool === 'pointer' && 'cursor-grab',
                   isDragging && 'cursor-grabbing'
@@ -348,47 +474,48 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
 
           if (ann.annotation_type === 'text_box') {
             const anchor = pos.anchor as { x: number; y: number } | undefined;
+            const dims = getResizedDims(ann);
             return (
               <React.Fragment key={ann.id}>
                 {/* Arrow from anchor to text box */}
                 {anchor && (
                   <svg className="absolute inset-0 w-full h-full pointer-events-none z-[9]" viewBox="0 0 100 100" preserveAspectRatio="none">
-                    <line
-                      x1={anchor.x}
-                      y1={anchor.y}
-                      x2={displayPos.x + (pos.width || 0) / 2}
-                      y2={displayPos.y}
-                      stroke={ann.color}
-                      strokeWidth="0.2"
-                      markerEnd="url(#arrowhead)"
-                    />
                     <defs>
-                      <marker id="arrowhead" markerWidth="6" markerHeight="4" refX="5" refY="2" orient="auto">
+                      <marker id={`arrowhead-${ann.id}`} markerWidth="6" markerHeight="4" refX="5" refY="2" orient="auto">
                         <polygon points="0 0, 6 2, 0 4" fill={ann.color} />
                       </marker>
                     </defs>
+                    <line
+                      x1={anchor.x}
+                      y1={anchor.y}
+                      x2={dims.x ?? displayPos.x}
+                      y2={(dims.y ?? displayPos.y) + (dims.h || 0) / 2}
+                      stroke={ann.color}
+                      strokeWidth="0.2"
+                      markerEnd={`url(#arrowhead-${ann.id})`}
+                    />
                   </svg>
                 )}
                 <div
                   className={cn(
-                    'absolute px-2 py-1 text-xs rounded border shadow-sm bg-card',
+                    'absolute px-2 py-1 text-xs rounded border shadow-sm bg-card overflow-auto',
                     isSelected && 'ring-2 ring-primary',
                     activeTool === 'pointer' && 'cursor-grab',
                     isDragging && 'cursor-grabbing'
                   )}
                   style={{
-                    left: `${displayPos.x}%`,
-                    top: `${displayPos.y}%`,
-                    width: pos.width ? `${pos.width}%` : undefined,
-                    minHeight: pos.height ? `${pos.height}%` : undefined,
+                    left: `${dims.x ?? displayPos.x}%`,
+                    top: `${dims.y ?? displayPos.y}%`,
+                    width: dims.w ? `${dims.w}%` : undefined,
+                    height: dims.h ? `${dims.h}%` : undefined,
                     borderColor: ann.color,
-                    maxWidth: '30%',
                   }}
                   onMouseDown={(e) => startDragAnnotation(e, ann)}
                   onClick={(e) => { e.stopPropagation(); if (!isDragging) onSelectAnnotation(isSelected ? null : ann); }}
                 >
                   {ann.content}
                 </div>
+                {renderResizeHandles(ann)}
               </React.Fragment>
             );
           }
@@ -418,30 +545,34 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
           }
 
           if (ann.annotation_type === 'signature' && pos.signatureData) {
+            const dims = getResizedDims(ann);
             return (
-              <div
-                key={ann.id}
-                className={cn(
-                  'absolute',
-                  isSelected && 'ring-2 ring-primary rounded',
-                  activeTool === 'pointer' && 'cursor-grab',
-                  isDragging && 'cursor-grabbing'
-                )}
-                style={{
-                  left: `${displayPos.x}%`,
-                  top: `${displayPos.y}%`,
-                  width: `${pos.width || 15}%`,
-                }}
-                onMouseDown={(e) => startDragAnnotation(e, ann)}
-                onClick={(e) => { e.stopPropagation(); if (!isDragging) onSelectAnnotation(isSelected ? null : ann); }}
-              >
-                <img
-                  src={pos.signatureData}
-                  alt="Signature"
-                  className="w-full h-auto pointer-events-none"
-                  draggable={false}
-                />
-              </div>
+              <React.Fragment key={ann.id}>
+                <div
+                  className={cn(
+                    'absolute',
+                    isSelected && 'ring-2 ring-primary rounded',
+                    activeTool === 'pointer' && 'cursor-grab',
+                    isDragging && 'cursor-grabbing'
+                  )}
+                  style={{
+                    left: `${dims.x ?? displayPos.x}%`,
+                    top: `${dims.y ?? displayPos.y}%`,
+                    width: `${dims.w || 15}%`,
+                    height: dims.h ? `${dims.h}%` : undefined,
+                  }}
+                  onMouseDown={(e) => startDragAnnotation(e, ann)}
+                  onClick={(e) => { e.stopPropagation(); if (!isDragging) onSelectAnnotation(isSelected ? null : ann); }}
+                >
+                  <img
+                    src={pos.signatureData}
+                    alt="Signature"
+                    className="w-full h-full object-contain pointer-events-none"
+                    draggable={false}
+                  />
+                </div>
+                {renderResizeHandles(ann)}
+              </React.Fragment>
             );
           }
 
@@ -479,19 +610,33 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
           />
         )}
 
-        {/* Text box draw preview */}
-        {textBoxPreview && (
-          <div
-            className="absolute rounded pointer-events-none"
-            style={{
-              left: `${textBoxPreview.x}%`,
-              top: `${textBoxPreview.y}%`,
-              width: `${textBoxPreview.w}%`,
-              height: `${textBoxPreview.h}%`,
-              backgroundColor: `${activeColor}11`,
-              border: `2px dashed ${activeColor}`,
-            }}
-          />
+        {/* Text box draw preview with arrow */}
+        {textBoxPreview && textBoxDraw && (
+          <>
+            <div
+              className="absolute rounded pointer-events-none"
+              style={{
+                left: `${textBoxPreview.x}%`,
+                top: `${textBoxPreview.y}%`,
+                width: `${textBoxPreview.w}%`,
+                height: `${textBoxPreview.h}%`,
+                backgroundColor: `${activeColor}11`,
+                border: `2px dashed ${activeColor}`,
+              }}
+            />
+            {/* Preview arrow from start to box */}
+            <svg className="absolute inset-0 w-full h-full pointer-events-none z-[9]" viewBox="0 0 100 100" preserveAspectRatio="none">
+              <line
+                x1={textBoxDraw.start.x}
+                y1={textBoxDraw.start.y}
+                x2={textBoxPreview.x + textBoxPreview.w}
+                y2={textBoxPreview.y + textBoxPreview.h / 2}
+                stroke={activeColor}
+                strokeWidth="0.2"
+                strokeDasharray="0.5"
+              />
+            </svg>
+          </>
         )}
 
         {/* Drawing preview */}
