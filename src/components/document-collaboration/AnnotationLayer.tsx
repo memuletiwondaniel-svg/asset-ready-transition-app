@@ -653,6 +653,7 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
                 )}
                 style={{ left: `${displayPos.x}%`, top: `${displayPos.y}%` }}
                 onMouseDown={(e) => startDragAnnotation(e, ann)}
+                onTouchStart={(e) => startDragAnnotationTouch(e, ann)}
                 onClick={(e) => { e.stopPropagation(); if (!isDragging) onSelectAnnotation(isSelected ? null : ann); }}
               >
                 <div
