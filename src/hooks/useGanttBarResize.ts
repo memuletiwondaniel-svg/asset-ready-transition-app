@@ -1,5 +1,5 @@
 import { useRef, useCallback, useState, useEffect } from 'react';
-import { addDays } from 'date-fns';
+import { addDays, format, differenceInDays } from 'date-fns';
 
 interface DragState {
   activityId: string;
@@ -9,6 +9,18 @@ interface DragState {
   initialWidth: number;
   initialStartDate: Date;
   initialEndDate: Date;
+}
+
+export interface DragDatePreview {
+  startDate: Date;
+  endDate: Date;
+  durationDays: number;
+  /** Formatted string like "Mar 15 → Apr 22 (38d)" */
+  label: string;
+  /** Mouse clientX for positioning the tooltip */
+  mouseX: number;
+  /** Mouse clientY for positioning the tooltip */
+  mouseY: number;
 }
 
 interface UseGanttBarResizeOptions {
@@ -25,6 +37,7 @@ export function useGanttBarResize({ minDate, dayWidth, onResize }: UseGanttBarRe
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [previewLeft, setPreviewLeft] = useState<number | null>(null);
   const [previewWidth, setPreviewWidth] = useState<number | null>(null);
+  const [dragDatePreview, setDragDatePreview] = useState<DragDatePreview | null>(null);
 
   // Keep refs in sync for closure access
   const minDateRef = useRef(minDate);
@@ -33,6 +46,37 @@ export function useGanttBarResize({ minDate, dayWidth, onResize }: UseGanttBarRe
   minDateRef.current = minDate;
   dayWidthRef.current = dayWidth;
   onResizeRef.current = onResize;
+
+  /** Compute the preview dates from current drag state */
+  const computeDatePreview = useCallback((drag: DragState, mouseX: number, mouseY: number): DragDatePreview => {
+    const dw = dayWidthRef.current;
+    const md = minDateRef.current;
+    const finalLeft = previewLeftRef.current ?? drag.initialLeft;
+    const finalWidth = previewWidthRef.current ?? drag.initialWidth;
+
+    let startDate: Date;
+    let endDate: Date;
+
+    if (drag.edge === 'right') {
+      startDate = drag.initialStartDate;
+      const newDays = Math.max(1, Math.round(finalWidth / dw));
+      endDate = addDays(startDate, newDays);
+    } else if (drag.edge === 'left') {
+      const dayOffset = Math.round(finalLeft / dw);
+      startDate = addDays(md, dayOffset);
+      const endDayOffset = Math.round((finalLeft + finalWidth) / dw);
+      endDate = addDays(md, endDayOffset);
+    } else {
+      const dayOffset = Math.round((finalLeft - drag.initialLeft) / dw);
+      startDate = addDays(drag.initialStartDate, dayOffset);
+      endDate = addDays(drag.initialEndDate, dayOffset);
+    }
+
+    const durationDays = differenceInDays(endDate, startDate);
+    const label = `${format(startDate, 'MMM d')} → ${format(endDate, 'MMM d')} (${durationDays}d)`;
+
+    return { startDate, endDate, durationDays, label, mouseX, mouseY };
+  }, []);
 
   const handleMouseDown = useCallback((
     e: React.MouseEvent,
@@ -92,6 +136,11 @@ export function useGanttBarResize({ minDate, dayWidth, onResize }: UseGanttBarRe
         previewLeftRef.current = newLeft;
         setPreviewLeft(newLeft);
       }
+
+      // Compute and set date preview for tooltip
+      if (didDragRef.current) {
+        setDragDatePreview(computeDatePreview(drag, e.clientX, e.clientY));
+      }
     };
 
     const handleMouseUp = () => {
@@ -129,6 +178,7 @@ export function useGanttBarResize({ minDate, dayWidth, onResize }: UseGanttBarRe
       setDraggingId(null);
       setPreviewLeft(null);
       setPreviewWidth(null);
+      setDragDatePreview(null);
       setTimeout(() => { didDragRef.current = false; }, 0);
     };
 
@@ -138,7 +188,7 @@ export function useGanttBarResize({ minDate, dayWidth, onResize }: UseGanttBarRe
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, []); // No dependencies - uses refs only
+  }, [computeDatePreview]);
 
   return {
     draggingId,
@@ -146,5 +196,6 @@ export function useGanttBarResize({ minDate, dayWidth, onResize }: UseGanttBarRe
     previewWidth,
     handleMouseDown,
     wasDragging,
+    dragDatePreview,
   };
 }

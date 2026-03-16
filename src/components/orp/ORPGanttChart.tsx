@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Plus, Search, ZoomIn, ZoomOut, ChevronRight, ChevronDown, ChevronsUpDown, GitBranch, Columns3, Route, BookOpen, PenLine, FileText, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
+import { Plus, Search, ZoomIn, ZoomOut, ChevronRight, ChevronDown, ChevronsUpDown, GitBranch, Columns3, Route, BookOpen, PenLine, FileText, ArrowUp, ArrowDown, ArrowUpDown, Eye, RotateCw } from 'lucide-react';
+import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger } from '@/components/ui/context-menu';
 import { AddFromCatalogDialog } from '@/components/ora/wizard/AddFromCatalogDialog';
 
 import { WizardActivity } from '@/components/ora/wizard/types';
@@ -1001,10 +1002,48 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
     }
   }, [queryClient, planId]);
 
-  const { draggingId, previewLeft, previewWidth, handleMouseDown, wasDragging } = useGanttBarResize({
+  // Undo state for drag operations
+  const undoRef = useRef<{ activityId: string; oldStart: string; oldEnd: string } | null>(null);
+  const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleBarResizeWithUndo = useCallback(async (activityId: string, newStart: Date, newEnd: Date) => {
+    // Find original dates before the drag
+    const original = deliverables.find((d: any) => d.id === activityId);
+    if (original?.start_date && original?.end_date) {
+      undoRef.current = { activityId, oldStart: original.start_date, oldEnd: original.end_date };
+      // Clear any existing undo timer
+      if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+      // Show undo toast
+      toast({
+        title: 'Dates updated',
+        description: `${format(newStart, 'MMM d')} → ${format(newEnd, 'MMM d')}`,
+        action: (
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 text-xs gap-1"
+            onClick={() => {
+              const u = undoRef.current;
+              if (u) {
+                handleBarResize(u.activityId, parseISO(u.oldStart), parseISO(u.oldEnd));
+                undoRef.current = null;
+              }
+            }}
+          >
+            Undo
+          </Button>
+        ),
+      });
+      // Auto-clear undo after 8s
+      undoTimerRef.current = setTimeout(() => { undoRef.current = null; }, 8000);
+    }
+    await handleBarResize(activityId, newStart, newEnd);
+  }, [handleBarResize, deliverables, toast]);
+
+  const { draggingId, previewLeft, previewWidth, handleMouseDown, wasDragging, dragDatePreview } = useGanttBarResize({
     minDate,
     dayWidth,
-    onResize: handleBarResize,
+    onResize: handleBarResizeWithUndo,
   });
 
   const handleZoomIn = useCallback(() => {
@@ -1489,8 +1528,9 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                   const isCritical = showCriticalPath && criticalPathIds.has(deliverable.id);
 
                   return (
+                    <ContextMenu key={deliverable.id}>
+                      <ContextMenuTrigger asChild>
                       <div
-                      key={deliverable.id}
                       className={cn(
                         "flex items-center border-b last:border-b-0 transition-colors",
                         !readOnly && "cursor-pointer hover:bg-muted/30",
@@ -1572,6 +1612,49 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                         );
                       })()}
                     </div>
+                      </ContextMenuTrigger>
+                      <ContextMenuContent className="w-48">
+                        <ContextMenuItem onClick={() => openActivitySheet(deliverable)} className="text-xs gap-2">
+                          <Eye className="h-3.5 w-3.5" />
+                          View Details
+                        </ContextMenuItem>
+                        {!readOnly && !isParent && (
+                          <>
+                            <ContextMenuSeparator />
+                            <ContextMenuItem
+                              className="text-xs gap-2"
+                              onClick={() => {
+                                const reconciled = getReconciledActivityState(deliverable);
+                                const nextStatus = reconciled.status === 'NOT_STARTED' ? 'IN_PROGRESS' : reconciled.status === 'IN_PROGRESS' ? 'COMPLETED' : 'NOT_STARTED';
+                                const dbId = (deliverable.id || '').replace(/^(ora-|ws-)/, '');
+                                supabase.from('ora_plan_activities').update({ status: nextStatus }).eq('id', dbId).then(() => {
+                                  queryClient.invalidateQueries({ queryKey: ['orp-plan'] });
+                                  queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+                                  toast({ title: 'Status updated', description: `${deliverable.deliverable?.name} → ${getStatusLabel(nextStatus)}` });
+                                });
+                              }}
+                            >
+                              <RotateCw className="h-3.5 w-3.5" />
+                              Cycle Status
+                            </ContextMenuItem>
+                            <ContextMenuItem
+                              className="text-xs gap-2"
+                              onClick={() => {
+                                const predIds = deliverable._predecessorIds || [];
+                                const siblings = visibleRows.filter(r => r.activityCode !== activityCode && !r.hasChildren);
+                                const available = siblings.filter(s => !predIds.includes(s.activityCode));
+                                if (available.length > 0) {
+                                  openActivitySheet(deliverable);
+                                }
+                              }}
+                            >
+                              <GitBranch className="h-3.5 w-3.5" />
+                              Add Predecessor
+                            </ContextMenuItem>
+                          </>
+                        )}
+                      </ContextMenuContent>
+                    </ContextMenu>
                   );
                 })}
               </div>
@@ -1653,54 +1736,87 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                           const reconciledBar = getReconciledActivityState(deliverable);
                           const completion = (isP2aActivity && p2aPlanIsDraft && reconciledBar.completion > 86) ? 86 : reconciledBar.completion;
 
+                          // Assignee name for hover tooltip
+                          const activityId = normalizeOraActivityId(deliverable.deliverable?.id || deliverable.id);
+                          const taskEntry = activityTaskMap?.[activityId];
+                          const assigneeName = taskEntry?.activityTask?.metadata?.assignee_name as string | undefined;
+
                           return (
-                            <div
-                              className={cn(
-                                "absolute top-2 rounded shadow-sm overflow-hidden transition-all group",
-                                mutedColor,
-                                !readOnly && "cursor-grab hover:shadow-md",
-                                isDragging && "ring-2 ring-primary/50 shadow-lg cursor-grabbing",
-                                isCritical && "ring-2 ring-destructive/70"
+                            <>
+                              {/* Ghost bar at original position during drag */}
+                              {isDragging && (
+                                <div
+                                  className={cn("absolute top-2 rounded opacity-25 border-2 border-dashed border-foreground/30", mutedColor)}
+                                  style={{ left: barPos.left, width: barPos.width, height: ROW_HEIGHT - 16 }}
+                                />
                               )}
-                              style={{ left: barL, width: barW, height: ROW_HEIGHT - 16 }}
-                              onMouseDown={(e) => {
-                                if (readOnly) return;
-                                if (!(e.target as HTMLElement).dataset.edge) {
-                                  handleMouseDown(e, 'move', deliverable.id, barPos.left, barPos.width, parseISO(deliverable.start_date), parseISO(deliverable.end_date));
-                                }
-                              }}
-                              onClick={(e) => {
-                                if (wasDragging()) {
-                                  e.stopPropagation();
-                                  return;
-                                }
-                                openActivitySheet(deliverable);
-                              }}
-                            >
-                              <div
-                                className={cn("absolute h-full rounded-l", barColor)}
-                                style={{ width: `${completion}%` }}
-                              />
-                              <div className="absolute inset-0 flex items-center justify-center z-10">
-                                <span className="text-[9px] text-white font-medium drop-shadow-sm">
-                                  {completion}%
-                                </span>
-                              </div>
-                              {!readOnly && (
-                                <>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
                                   <div
-                                    data-edge="left"
-                                    className="absolute left-0 top-0 bottom-0 w-[6px] cursor-col-resize z-20 hover:bg-white/30"
-                                    onMouseDown={(e) => handleMouseDown(e, 'left', deliverable.id, barPos.left, barPos.width, parseISO(deliverable.start_date), parseISO(deliverable.end_date))}
-                                  />
-                                  <div
-                                    data-edge="right"
-                                    className="absolute right-0 top-0 bottom-0 w-[6px] cursor-col-resize z-20 hover:bg-white/30"
-                                    onMouseDown={(e) => handleMouseDown(e, 'right', deliverable.id, barPos.left, barPos.width, parseISO(deliverable.start_date), parseISO(deliverable.end_date))}
-                                  />
-                                </>
-                              )}
-                            </div>
+                                    className={cn(
+                                      "absolute top-2 rounded shadow-sm overflow-hidden transition-all group",
+                                      mutedColor,
+                                      !readOnly && "cursor-grab hover:shadow-md",
+                                      isDragging && "ring-2 ring-primary/50 shadow-lg cursor-grabbing z-30",
+                                      isCritical && "ring-2 ring-destructive/70"
+                                    )}
+                                    style={{ left: barL, width: barW, height: ROW_HEIGHT - 16 }}
+                                    onMouseDown={(e) => {
+                                      if (readOnly) return;
+                                      if (!(e.target as HTMLElement).dataset.edge) {
+                                        handleMouseDown(e, 'move', deliverable.id, barPos.left, barPos.width, parseISO(deliverable.start_date), parseISO(deliverable.end_date));
+                                      }
+                                    }}
+                                    onClick={(e) => {
+                                      if (wasDragging()) {
+                                        e.stopPropagation();
+                                        return;
+                                      }
+                                      openActivitySheet(deliverable);
+                                    }}
+                                  >
+                                    <div
+                                      className={cn("absolute h-full rounded-l", barColor)}
+                                      style={{ width: `${completion}%` }}
+                                    />
+                                    <div className="absolute inset-0 flex items-center justify-center z-10">
+                                      <span className="text-[9px] text-white font-medium drop-shadow-sm">
+                                        {completion}%
+                                      </span>
+                                    </div>
+                                    {!readOnly && (
+                                      <>
+                                        <div
+                                          data-edge="left"
+                                          className="absolute left-0 top-0 bottom-0 w-[6px] cursor-col-resize z-20 hover:bg-white/30"
+                                          onMouseDown={(e) => handleMouseDown(e, 'left', deliverable.id, barPos.left, barPos.width, parseISO(deliverable.start_date), parseISO(deliverable.end_date))}
+                                        />
+                                        <div
+                                          data-edge="right"
+                                          className="absolute right-0 top-0 bottom-0 w-[6px] cursor-col-resize z-20 hover:bg-white/30"
+                                          onMouseDown={(e) => handleMouseDown(e, 'right', deliverable.id, barPos.left, barPos.width, parseISO(deliverable.start_date), parseISO(deliverable.end_date))}
+                                        />
+                                      </>
+                                    )}
+                                  </div>
+                                </TooltipTrigger>
+                                {!isDragging && (
+                                  <TooltipContent side="top" className="max-w-[220px] p-2 text-[11px] space-y-1">
+                                    <p className="font-semibold truncate">{deliverable.deliverable?.name}</p>
+                                    <div className="flex items-center gap-2 text-muted-foreground">
+                                      <span>{hasDates ? `${format(parseISO(deliverable.start_date), 'MMM d')} – ${format(parseISO(deliverable.end_date), 'MMM d')}` : 'No dates'}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between text-muted-foreground">
+                                      <span>Progress: {completion}%</span>
+                                      <Badge variant="outline" className={cn("text-[8px] px-1 py-0 h-4", getStatusBadgeClasses(reconciledBar.status))}>
+                                        {getStatusLabel(reconciledBar.status)}
+                                      </Badge>
+                                    </div>
+                                    {assigneeName && <p className="text-muted-foreground truncate">👤 {assigneeName}</p>}
+                                  </TooltipContent>
+                                )}
+                              </Tooltip>
+                            </>
                           );
                         })()}
                       </div>
@@ -1812,6 +1928,19 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
         </div>
 
       </CardContent>
+
+      {/* Floating drag date tooltip */}
+      {dragDatePreview && (
+        <div
+          className="fixed z-[100] pointer-events-none px-2.5 py-1.5 rounded-md bg-popover border border-border shadow-lg text-[11px] font-medium text-popover-foreground whitespace-nowrap"
+          style={{
+            left: dragDatePreview.mouseX + 12,
+            top: dragDatePreview.mouseY - 32,
+          }}
+        >
+          {dragDatePreview.label}
+        </div>
+      )}
 
       <AddFromCatalogDialog open={showCatalogDialog} onOpenChange={setShowCatalogDialog} existingIds={existingActivityIds} onAdd={handleAddFromCatalog} />
       <TaskDetailSheet

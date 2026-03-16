@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Slider } from '@/components/ui/slider';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -839,6 +840,16 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
       >
         {/* Scrollable content area */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain touch-pan-y px-4 sm:px-6 pt-6 pb-4 -webkit-overflow-scrolling-touch">
+          {/* Breadcrumb */}
+          {projectCode && (
+            <div className="flex items-center gap-1 text-[10px] text-muted-foreground mb-1">
+              <span>ORA Plan</span>
+              <ChevronRight className="h-3 w-3" />
+              {activityCode && <span className="font-mono">{activityCode}</span>}
+              {activityCode && <ChevronRight className="h-3 w-3" />}
+              <span className="truncate max-w-[180px]">{activityName || 'Activity'}</span>
+            </div>
+          )}
           {/* Header */}
           <SheetHeader className="pb-2">
             <div className="flex items-center gap-2 flex-wrap">
@@ -856,6 +867,21 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                   Overdue
                 </Badge>
               )}
+              {/* Mini progress ring */}
+              <div className="ml-auto flex items-center gap-1.5">
+                <svg width="22" height="22" viewBox="0 0 22 22" className="shrink-0">
+                  <circle cx="11" cy="11" r="9" fill="none" stroke="hsl(var(--muted))" strokeWidth="2.5" />
+                  <circle
+                    cx="11" cy="11" r="9" fill="none"
+                    stroke={progressPct >= 100 ? 'hsl(var(--chart-2))' : 'hsl(var(--primary))'}
+                    strokeWidth="2.5"
+                    strokeDasharray={`${(progressPct / 100) * 56.5} 56.5`}
+                    strokeLinecap="round"
+                    transform="rotate(-90 11 11)"
+                  />
+                </svg>
+                <span className="text-[10px] font-semibold text-muted-foreground">{progressPct}%</span>
+              </div>
             </div>
             <SheetTitle className="sr-only">Activity Details</SheetTitle>
              <Input
@@ -867,7 +893,16 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
             />
           </SheetHeader>
 
-          <div className="space-y-5 mt-4">
+          <Tabs defaultValue="details" className="mt-4">
+            <TabsList className="w-full h-8 p-0.5 grid grid-cols-4 gap-0.5">
+              <TabsTrigger value="details" className="text-[11px] h-7 px-1 data-[state=active]:shadow-sm">Details</TabsTrigger>
+              <TabsTrigger value="deps" className="text-[11px] h-7 px-1 data-[state=active]:shadow-sm">Dependencies</TabsTrigger>
+              <TabsTrigger value="files" className="text-[11px] h-7 px-1 data-[state=active]:shadow-sm">Files</TabsTrigger>
+              <TabsTrigger value="activity" className="text-[11px] h-7 px-1 data-[state=active]:shadow-sm">Activity</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="details" className="mt-3">
+          <div className="space-y-5">
             {/* Description */}
             <div>
               <p className="text-sm font-medium mb-2 text-muted-foreground">Description</p>
@@ -973,6 +1008,25 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                       day_today: "bg-muted text-muted-foreground font-medium",
                     }}
                   />
+                  {/* Smart date shortcuts */}
+                  <div className="flex flex-wrap gap-1.5 mt-2 px-1">
+                    {[
+                      { label: 'Today', fn: () => { setEditStartDate(new Date()); } },
+                      { label: '+1w', fn: () => { if (editStartDate) setEditEndDate(addDays(editStartDate, 7)); } },
+                      { label: '+2w', fn: () => { if (editStartDate) setEditEndDate(addDays(editStartDate, 14)); } },
+                      { label: '+1m', fn: () => { if (editStartDate) setEditEndDate(addDays(editStartDate, 30)); } },
+                      { label: '+3m', fn: () => { if (editStartDate) setEditEndDate(addDays(editStartDate, 90)); } },
+                    ].map((shortcut) => (
+                      <button
+                        key={shortcut.label}
+                        type="button"
+                        onClick={shortcut.fn}
+                        className="text-[10px] font-medium px-2 py-1 rounded-md bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                      >
+                        {shortcut.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
@@ -1114,9 +1168,9 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                           disabled={isReadOnly}
                           className={cn(
                             "flex-1 flex items-center justify-center gap-1 sm:gap-1.5 py-3 sm:py-2 px-2 sm:px-3 rounded-md text-xs sm:text-xs font-medium transition-all whitespace-nowrap touch-manipulation",
-                            isActive && step.value === 'NOT_STARTED' && "bg-gray-200 text-gray-700 shadow-sm",
-                            isActive && step.value === 'IN_PROGRESS' && "bg-amber-500 text-white shadow-sm",
-                            isActive && step.value === 'COMPLETED' && "bg-green-500 text-white shadow-sm",
+                            isActive && step.value === 'NOT_STARTED' && "bg-slate-200 text-slate-700 shadow-sm dark:bg-slate-700 dark:text-slate-200",
+                            isActive && step.value === 'IN_PROGRESS' && "bg-amber-500 text-white shadow-sm dark:bg-amber-600",
+                            isActive && step.value === 'COMPLETED' && "bg-emerald-500 text-white shadow-sm dark:bg-emerald-600",
                             !isActive && "text-muted-foreground hover:text-foreground hover:bg-background/50"
                           )}
                         >
@@ -1151,9 +1205,11 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
             </div>
               </>
             )}
+          </div>
+            </TabsContent>
 
-            <Separator />
-
+            <TabsContent value="deps" className="mt-3">
+            <div className="space-y-5">
             {/* Prerequisites */}
             <div>
               <p className="text-sm font-medium mb-2 flex items-center gap-1.5 text-muted-foreground">
@@ -1214,17 +1270,17 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                 );
               })()}
             </div>
+            </div>
+            </TabsContent>
 
-
-            {/* Attachments — immediately after evidence drop zone for visual continuity */}
+            <TabsContent value="files" className="mt-3">
+            <div className="space-y-5">
+            {/* Attachments */}
             {task?.id && (
-              <>
-                <Separator />
-                <TaskAttachmentsSection
-                  taskId={task.id}
-                  isReadOnly={isReadOnly}
-                />
-              </>
+              <TaskAttachmentsSection
+                taskId={task.id}
+                isReadOnly={isReadOnly}
+              />
             )}
 
             {/* Approvers — only for non-P2A tasks */}
@@ -1241,10 +1297,11 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                 }}
               />
             )}
+            </div>
+            </TabsContent>
 
-
-            <Separator />
-
+            <TabsContent value="activity" className="mt-3">
+            <div className="space-y-5">
             {/* Comments & Activity Feed */}
             {(() => {
               // Build unified activity feed merging comments + approver decisions
@@ -1523,7 +1580,9 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                 </div>
               );
             })()}
-          </div>
+            </div>
+            </TabsContent>
+          </Tabs>
         </div>
 
         {/* Pinned footer */}
