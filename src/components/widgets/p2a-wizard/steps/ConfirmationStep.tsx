@@ -140,7 +140,7 @@ export const ConfirmationStep: React.FC<ConfirmationStepProps> = ({
           <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
             Selected Approvers
           </div>
-          <div className="space-y-1.5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-4 gap-y-1">
             {approvers.map((approver) => {
               const avatarUrl = approver.user_avatar
                 ? (approver.user_avatar.startsWith('http')
@@ -151,34 +151,50 @@ export const ConfirmationStep: React.FC<ConfirmationStepProps> = ({
                 ? approver.user_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
                 : '?';
               const hasUser = !!approver.user_id;
+
+              const badgeClass = !hasUser
+                ? 'bg-muted-foreground'
+                : approver.status === 'APPROVED'
+                  ? 'bg-emerald-500'
+                  : approver.status === 'REJECTED'
+                    ? 'bg-destructive'
+                    : 'bg-amber-500';
+
+              const BadgeIcon = !hasUser
+                ? AlertCircle
+                : approver.status === 'APPROVED'
+                  ? CheckCircle2
+                  : approver.status === 'REJECTED'
+                    ? XCircle
+                    : Clock;
+
               return (
-                <div key={approver.id} className="flex items-center gap-2.5 p-2.5 rounded-lg border bg-card">
-                  <Avatar className="h-7 w-7 shrink-0">
-                    <AvatarImage src={avatarUrl} />
-                    <AvatarFallback className="text-[9px] bg-muted">{initials}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
+                <div key={approver.id} className="flex items-center gap-2.5 py-2">
+                  <div className="relative shrink-0">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={avatarUrl} />
+                      <AvatarFallback className="text-[9px] bg-muted font-medium">{initials}</AvatarFallback>
+                    </Avatar>
+                    <span className={cn(
+                      "absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full ring-2 ring-background flex items-center justify-center",
+                      badgeClass
+                    )}>
+                      <BadgeIcon className="h-2 w-2 text-white" />
+                    </span>
+                  </div>
+                  <div className="min-w-0">
                     {hasUser ? (
                       <>
-                        <span className="text-xs font-medium">{approver.user_name}</span>
+                        <p className="text-xs font-medium truncate">{approver.user_name}</p>
                         <p className="text-[10px] text-muted-foreground truncate">{approver.role_name}</p>
                       </>
                     ) : (
                       <>
-                        <span className="text-xs font-medium text-muted-foreground">{approver.role_name}</span>
-                        <p className="text-[10px] text-amber-600">Not assigned</p>
+                        <p className="text-xs font-medium text-muted-foreground truncate">{approver.role_name}</p>
+                        <p className="text-[10px] text-amber-600 dark:text-amber-400">Unassigned</p>
                       </>
                     )}
                   </div>
-                  {!hasUser ? (
-                    <AlertCircle className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                  ) : approver.status === 'APPROVED' ? (
-                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                  ) : approver.status === 'REJECTED' ? (
-                    <XCircle className="h-3.5 w-3.5 text-destructive shrink-0" />
-                  ) : (
-                    <Clock className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
-                  )}
                 </div>
               );
             })}
