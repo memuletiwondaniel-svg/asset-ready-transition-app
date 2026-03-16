@@ -165,7 +165,7 @@ export const ORPGanttOverlay: React.FC<ORPGanttOverlayProps> = ({
                 : "grid grid-cols-[1fr_auto_auto_auto]"
             )}>
               {/* Overall Progress */}
-              <div className="p-3 bg-muted/30 rounded-xl border border-border/30 min-w-0">
+              <div className={cn("p-3 bg-muted/30 rounded-xl border border-border/30 min-w-0", isMobile && "col-span-2")}>
                 <div className="flex items-center justify-between text-xs mb-1.5">
                   <span className="text-muted-foreground font-medium">Overall Progress</span>
                   <span className="font-bold text-sm">{overallProgress}%</span>
