@@ -30,8 +30,6 @@ export const WorkspacePreviewStep: React.FC<WorkspacePreviewStepProps> = ({
   mappings,
   vcrPhaseAssignments,
   approvers = [],
-  submissionComment = '',
-  onCommentChange,
 }) => {
   const [unmappedOpen, setUnmappedOpen] = useState(false);
 
