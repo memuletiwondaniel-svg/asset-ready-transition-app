@@ -258,7 +258,8 @@ export const TaskTableView: React.FC<TaskTableViewProps> = ({ searchQuery, userI
         onApprove={(id) => updateTaskStatus(id, 'completed')} onReject={(id) => updateTaskStatus(id, 'cancelled')} />
       <ORAActivityTaskSheet task={oraActivityTask} open={oraActivityOpen}
         onOpenChange={(open) => { setOraActivityOpen(open); if (!open) setOraActivityTask(null); }}
-        onOpenP2AWizard={handleOpenP2AWizard} />
+        onOpenP2AWizard={handleOpenP2AWizard}
+        onOpenVCRWizard={handleOpenVCRWizard} />
       <P2APlanCreationWizard open={p2aWizardOpen} onOpenChange={setP2aWizardOpen}
         projectId={p2aTarget.projectId} projectCode={p2aTarget.projectCode}
         onSuccess={() => { setP2aWizardOpen(false); queryClient.invalidateQueries({ queryKey: ['orp-plan'] }); queryClient.invalidateQueries({ queryKey: ['user-tasks'] }); }}
@@ -266,6 +267,18 @@ export const TaskTableView: React.FC<TaskTableViewProps> = ({ searchQuery, userI
       <P2AWorkspaceOverlay open={p2aWorkspaceOpen} onOpenChange={setP2aWorkspaceOpen}
         projectId={p2aTarget.projectId} projectNumber={p2aTarget.projectCode}
         onReturnToWizard={() => { setP2aWorkspaceOpen(false); setP2aWizardOpen(true); }} />
+      {vcrWizardTarget && (
+        <VCRExecutionPlanWizard
+          open={showVCRWizard}
+          onOpenChange={(open) => { setShowVCRWizard(open); if (!open) setVcrWizardTarget(null); }}
+          vcr={{
+            id: vcrWizardTarget.id, vcr_code: vcrWizardTarget.vcr_code, name: vcrWizardTarget.name,
+            description: null, status: 'IN_PROGRESS', target_date: null, created_at: '',
+            progress: 0, systems_count: 0, has_hydrocarbon: false,
+          }}
+          projectCode={vcrWizardTarget.projectCode}
+        />
+      )}
     </>
   );
 };

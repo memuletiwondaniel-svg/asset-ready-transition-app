@@ -225,6 +225,7 @@ export const UnifiedTaskList: React.FC<UnifiedTaskListProps> = ({
           if (!open) setOraActivityTask(null);
         }}
         onOpenP2AWizard={handleOpenP2AWizard}
+        onOpenVCRWizard={handleOpenVCRWizard}
       />
 
       {/* P2A Wizard/Workspace rendered at parent level */}
@@ -254,6 +255,30 @@ export const UnifiedTaskList: React.FC<UnifiedTaskListProps> = ({
           setP2aWizardOpen(true);
         }}
       />
+
+      {/* VCR Wizard */}
+      {vcrWizardTarget && (
+        <VCRExecutionPlanWizard
+          open={showVCRWizard}
+          onOpenChange={(open) => {
+            setShowVCRWizard(open);
+            if (!open) setVcrWizardTarget(null);
+          }}
+          vcr={{
+            id: vcrWizardTarget.id,
+            vcr_code: vcrWizardTarget.vcr_code,
+            name: vcrWizardTarget.name,
+            description: null,
+            status: 'IN_PROGRESS',
+            target_date: null,
+            created_at: '',
+            progress: 0,
+            systems_count: 0,
+            has_hydrocarbon: false,
+          }}
+          projectCode={vcrWizardTarget.projectCode}
+        />
+      )
     </>
   );
 };
