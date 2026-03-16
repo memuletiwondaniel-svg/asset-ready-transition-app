@@ -29,11 +29,13 @@ export function useP2ARejectionContext(planId: string | undefined, planStatus: s
         .single();
 
       if (plan?.last_rejection_comment) {
+        const isReverted = plan.last_rejected_by_role === 'Reverted';
         return {
-          role_name: plan.last_rejected_by_role || 'Approver',
+          role_name: isReverted ? (plan.last_rejected_by_name || 'User') : (plan.last_rejected_by_role || 'Approver'),
           comments: plan.last_rejection_comment,
           approved_at: plan.last_rejected_at || null,
           rejector_name: plan.last_rejected_by_name || null,
+          type: isReverted ? 'reverted' : 'rejected',
         };
       }
 
