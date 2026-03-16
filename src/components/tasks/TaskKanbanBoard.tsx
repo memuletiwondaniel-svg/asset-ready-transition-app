@@ -281,8 +281,15 @@ const KanbanCardContent: React.FC<{
   isOverlay?: boolean;
   accentClass?: string;
 }> = ({ task, onClick, dragHandleProps, isOverlay, accentClass }) => {
+  const navigate = useNavigate();
   const dateAnnotation = getDateAnnotation(task);
   const sp = task.smartPriority;
+  
+  // Detect ORA activity tasks that can link to a Gantt chart
+  const meta = task.userTask?.metadata as Record<string, any> | undefined;
+  const isOraActivity = task.userTask?.type === 'ora_activity' || meta?.action === 'complete_ora_activity' || meta?.action === 'create_p2a_plan' || meta?.action === 'create_vcr_delivery_plan' || meta?.ora_plan_activity_id;
+  const oraActivityCode = meta?.activity_code as string | undefined;
+  const oraPlanId = meta?.plan_id as string | undefined;
   const { translations: t } = useLanguage();
   const reviewerSummaries = useContext(ReviewerSummaryContext);
   const p2aApprovalSummaries = useContext(P2AApprovalContext);
