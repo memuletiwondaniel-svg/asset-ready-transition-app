@@ -1691,54 +1691,87 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                           const reconciledBar = getReconciledActivityState(deliverable);
                           const completion = (isP2aActivity && p2aPlanIsDraft && reconciledBar.completion > 86) ? 86 : reconciledBar.completion;
 
+                          // Assignee name for hover tooltip
+                          const activityId = normalizeOraActivityId(deliverable.deliverable?.id || deliverable.id);
+                          const taskEntry = activityTaskMap?.[activityId];
+                          const assigneeName = taskEntry?.activityTask?.metadata?.assignee_name as string | undefined;
+
                           return (
-                            <div
-                              className={cn(
-                                "absolute top-2 rounded shadow-sm overflow-hidden transition-all group",
-                                mutedColor,
-                                !readOnly && "cursor-grab hover:shadow-md",
-                                isDragging && "ring-2 ring-primary/50 shadow-lg cursor-grabbing",
-                                isCritical && "ring-2 ring-destructive/70"
+                            <>
+                              {/* Ghost bar at original position during drag */}
+                              {isDragging && (
+                                <div
+                                  className={cn("absolute top-2 rounded opacity-25 border-2 border-dashed border-foreground/30", mutedColor)}
+                                  style={{ left: barPos.left, width: barPos.width, height: ROW_HEIGHT - 16 }}
+                                />
                               )}
-                              style={{ left: barL, width: barW, height: ROW_HEIGHT - 16 }}
-                              onMouseDown={(e) => {
-                                if (readOnly) return;
-                                if (!(e.target as HTMLElement).dataset.edge) {
-                                  handleMouseDown(e, 'move', deliverable.id, barPos.left, barPos.width, parseISO(deliverable.start_date), parseISO(deliverable.end_date));
-                                }
-                              }}
-                              onClick={(e) => {
-                                if (wasDragging()) {
-                                  e.stopPropagation();
-                                  return;
-                                }
-                                openActivitySheet(deliverable);
-                              }}
-                            >
-                              <div
-                                className={cn("absolute h-full rounded-l", barColor)}
-                                style={{ width: `${completion}%` }}
-                              />
-                              <div className="absolute inset-0 flex items-center justify-center z-10">
-                                <span className="text-[9px] text-white font-medium drop-shadow-sm">
-                                  {completion}%
-                                </span>
-                              </div>
-                              {!readOnly && (
-                                <>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
                                   <div
-                                    data-edge="left"
-                                    className="absolute left-0 top-0 bottom-0 w-[6px] cursor-col-resize z-20 hover:bg-white/30"
-                                    onMouseDown={(e) => handleMouseDown(e, 'left', deliverable.id, barPos.left, barPos.width, parseISO(deliverable.start_date), parseISO(deliverable.end_date))}
-                                  />
-                                  <div
-                                    data-edge="right"
-                                    className="absolute right-0 top-0 bottom-0 w-[6px] cursor-col-resize z-20 hover:bg-white/30"
-                                    onMouseDown={(e) => handleMouseDown(e, 'right', deliverable.id, barPos.left, barPos.width, parseISO(deliverable.start_date), parseISO(deliverable.end_date))}
-                                  />
-                                </>
-                              )}
-                            </div>
+                                    className={cn(
+                                      "absolute top-2 rounded shadow-sm overflow-hidden transition-all group",
+                                      mutedColor,
+                                      !readOnly && "cursor-grab hover:shadow-md",
+                                      isDragging && "ring-2 ring-primary/50 shadow-lg cursor-grabbing z-30",
+                                      isCritical && "ring-2 ring-destructive/70"
+                                    )}
+                                    style={{ left: barL, width: barW, height: ROW_HEIGHT - 16 }}
+                                    onMouseDown={(e) => {
+                                      if (readOnly) return;
+                                      if (!(e.target as HTMLElement).dataset.edge) {
+                                        handleMouseDown(e, 'move', deliverable.id, barPos.left, barPos.width, parseISO(deliverable.start_date), parseISO(deliverable.end_date));
+                                      }
+                                    }}
+                                    onClick={(e) => {
+                                      if (wasDragging()) {
+                                        e.stopPropagation();
+                                        return;
+                                      }
+                                      openActivitySheet(deliverable);
+                                    }}
+                                  >
+                                    <div
+                                      className={cn("absolute h-full rounded-l", barColor)}
+                                      style={{ width: `${completion}%` }}
+                                    />
+                                    <div className="absolute inset-0 flex items-center justify-center z-10">
+                                      <span className="text-[9px] text-white font-medium drop-shadow-sm">
+                                        {completion}%
+                                      </span>
+                                    </div>
+                                    {!readOnly && (
+                                      <>
+                                        <div
+                                          data-edge="left"
+                                          className="absolute left-0 top-0 bottom-0 w-[6px] cursor-col-resize z-20 hover:bg-white/30"
+                                          onMouseDown={(e) => handleMouseDown(e, 'left', deliverable.id, barPos.left, barPos.width, parseISO(deliverable.start_date), parseISO(deliverable.end_date))}
+                                        />
+                                        <div
+                                          data-edge="right"
+                                          className="absolute right-0 top-0 bottom-0 w-[6px] cursor-col-resize z-20 hover:bg-white/30"
+                                          onMouseDown={(e) => handleMouseDown(e, 'right', deliverable.id, barPos.left, barPos.width, parseISO(deliverable.start_date), parseISO(deliverable.end_date))}
+                                        />
+                                      </>
+                                    )}
+                                  </div>
+                                </TooltipTrigger>
+                                {!isDragging && (
+                                  <TooltipContent side="top" className="max-w-[220px] p-2 text-[11px] space-y-1">
+                                    <p className="font-semibold truncate">{deliverable.deliverable?.name}</p>
+                                    <div className="flex items-center gap-2 text-muted-foreground">
+                                      <span>{hasDates ? `${format(parseISO(deliverable.start_date), 'MMM d')} – ${format(parseISO(deliverable.end_date), 'MMM d')}` : 'No dates'}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between text-muted-foreground">
+                                      <span>Progress: {completion}%</span>
+                                      <Badge variant="outline" className={cn("text-[8px] px-1 py-0 h-4", getStatusBadgeClasses(reconciledBar.status))}>
+                                        {getStatusLabel(reconciledBar.status)}
+                                      </Badge>
+                                    </div>
+                                    {assigneeName && <p className="text-muted-foreground truncate">👤 {assigneeName}</p>}
+                                  </TooltipContent>
+                                )}
+                              </Tooltip>
+                            </>
                           );
                         })()}
                       </div>
