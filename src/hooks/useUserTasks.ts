@@ -806,9 +806,9 @@ export const useUserTasks = () => {
     queryKey: ['user-tasks', user?.id],
     queryFn: () => fetchUserTasks(user!.id),
     enabled: !!user?.id,
-    staleTime: 2 * 60 * 1000, // 2 minutes cache
-    refetchOnWindowFocus: false,
-    refetchInterval: user?.id ? 30000 : false, // Polling fallback if realtime misses events
+    staleTime: 30 * 1000, // 30 seconds — fresher data on tab refocus
+    refetchOnWindowFocus: true, // Modern UX: update when user returns to tab
+    refetchInterval: user?.id ? 15000 : false, // 15s polling fallback
     refetchIntervalInBackground: false,
     placeholderData: keepPreviousData,
   });
@@ -842,6 +842,26 @@ export const useUserTasks = () => {
           event: '*',
           schema: 'public',
           table: 'task_dependencies',
+        },
+        scheduleRefresh
+      )
+      // Catch approval changes that affect task metadata (e.g. "Awaiting approval 1/2" → "Fully approved")
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'p2a_handover_approvers',
+        },
+        scheduleRefresh
+      )
+      // Catch ad-hoc review workflow changes
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'task_reviews',
         },
         scheduleRefresh
       )
