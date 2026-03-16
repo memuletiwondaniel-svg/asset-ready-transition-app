@@ -1528,8 +1528,9 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                   const isCritical = showCriticalPath && criticalPathIds.has(deliverable.id);
 
                   return (
+                    <ContextMenu key={deliverable.id}>
+                      <ContextMenuTrigger asChild>
                       <div
-                      key={deliverable.id}
                       className={cn(
                         "flex items-center border-b last:border-b-0 transition-colors",
                         !readOnly && "cursor-pointer hover:bg-muted/30",
@@ -1611,6 +1612,49 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                         );
                       })()}
                     </div>
+                      </ContextMenuTrigger>
+                      <ContextMenuContent className="w-48">
+                        <ContextMenuItem onClick={() => openActivitySheet(deliverable)} className="text-xs gap-2">
+                          <Eye className="h-3.5 w-3.5" />
+                          View Details
+                        </ContextMenuItem>
+                        {!readOnly && !isParent && (
+                          <>
+                            <ContextMenuSeparator />
+                            <ContextMenuItem
+                              className="text-xs gap-2"
+                              onClick={() => {
+                                const reconciled = getReconciledActivityState(deliverable);
+                                const nextStatus = reconciled.status === 'NOT_STARTED' ? 'IN_PROGRESS' : reconciled.status === 'IN_PROGRESS' ? 'COMPLETED' : 'NOT_STARTED';
+                                const dbId = (deliverable.id || '').replace(/^(ora-|ws-)/, '');
+                                supabase.from('ora_plan_activities').update({ status: nextStatus }).eq('id', dbId).then(() => {
+                                  queryClient.invalidateQueries({ queryKey: ['orp-plan'] });
+                                  queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+                                  toast({ title: 'Status updated', description: `${deliverable.deliverable?.name} → ${getStatusLabel(nextStatus)}` });
+                                });
+                              }}
+                            >
+                              <Play className="h-3.5 w-3.5" />
+                              Cycle Status
+                            </ContextMenuItem>
+                            <ContextMenuItem
+                              className="text-xs gap-2"
+                              onClick={() => {
+                                const predIds = deliverable._predecessorIds || [];
+                                const siblings = visibleRows.filter(r => r.activityCode !== activityCode && !r.hasChildren);
+                                const available = siblings.filter(s => !predIds.includes(s.activityCode));
+                                if (available.length > 0) {
+                                  openActivitySheet(deliverable);
+                                }
+                              }}
+                            >
+                              <GitBranch className="h-3.5 w-3.5" />
+                              Add Predecessor
+                            </ContextMenuItem>
+                          </>
+                        )}
+                      </ContextMenuContent>
+                    </ContextMenu>
                   );
                 })}
               </div>
