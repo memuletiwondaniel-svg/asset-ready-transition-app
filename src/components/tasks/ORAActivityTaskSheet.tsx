@@ -203,11 +203,16 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
   const projectId = metaProjectId;
   const projectCode = metaProjectCode;
   const isP2AActivity = activityCode === 'EXE-10' || activityCode === 'P2A-01' || metadata?.action === 'create_p2a_plan' || activityName?.toLowerCase().includes('p2a');
+  const isVCRActivity = !isP2AActivity && (metadata?.action === 'create_vcr_delivery_plan' || activityCode?.startsWith('VCR-'));
+  const metaVcrId = metadata?.vcr_id as string | undefined;
+  const metaVcrCode = metadata?.vcr_code as string | undefined;
+  const metaVcrName = metadata?.vcr_name as string | undefined;
+  const metaVcrSeqCode = metadata?.vcr_seq_code as string | undefined;
   const isOverdue = editEndDate && isPast(editEndDate) && status !== 'COMPLETED';
 
   // Check if task has ad-hoc reviewers (for submit button label)
-  const { totalCount: reviewerCount, allApproved: allReviewersApproved, reviewers: taskReviewersList } = useTaskReviewers(!isP2AActivity ? task?.id : undefined);
-  const hasReviewers = !isP2AActivity && reviewerCount > 0;
+  const { totalCount: reviewerCount, allApproved: allReviewersApproved, reviewers: taskReviewersList } = useTaskReviewers(!isP2AActivity && !isVCRActivity ? task?.id : undefined);
+  const hasReviewers = !isP2AActivity && !isVCRActivity && reviewerCount > 0;
 
   // Detect if task was reverted from Done (has reviewers with PENDING status while task is in_progress)
   // This means the user needs to resubmit — show save/submit button even when isDirty is false
