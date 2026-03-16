@@ -280,7 +280,7 @@ export const ORPDetailsPage: React.FC = () => {
             <div className="flex-1 overflow-auto">
               {activityView === 'gantt' ? (
                 <div className="p-6">
-                  <ORPGanttChart planId={plan.id} deliverables={plan.deliverables || []} searchQuery={searchQuery} hideToolbar />
+                  <ORPGanttChart planId={plan.id} deliverables={plan.deliverables || []} searchQuery={searchQuery} hideToolbar highlightActivityCode={highlightActivityCode} />
                 </div>
               ) : (
                 <ORPKanbanBoardDraggable 
