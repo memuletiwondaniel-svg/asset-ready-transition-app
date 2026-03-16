@@ -883,7 +883,16 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
             />
           </SheetHeader>
 
-          <div className="space-y-5 mt-4">
+          <Tabs defaultValue="details" className="mt-4">
+            <TabsList className="w-full h-8 p-0.5 grid grid-cols-4 gap-0.5">
+              <TabsTrigger value="details" className="text-[11px] h-7 px-1 data-[state=active]:shadow-sm">Details</TabsTrigger>
+              <TabsTrigger value="deps" className="text-[11px] h-7 px-1 data-[state=active]:shadow-sm">Dependencies</TabsTrigger>
+              <TabsTrigger value="files" className="text-[11px] h-7 px-1 data-[state=active]:shadow-sm">Files</TabsTrigger>
+              <TabsTrigger value="activity" className="text-[11px] h-7 px-1 data-[state=active]:shadow-sm">Activity</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="details" className="mt-3">
+          <div className="space-y-5">
             {/* Description */}
             <div>
               <p className="text-sm font-medium mb-2 text-muted-foreground">Description</p>
