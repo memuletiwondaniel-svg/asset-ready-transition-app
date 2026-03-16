@@ -1055,7 +1055,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
           project_id: planData?.project_id,
           project_code: projectCode,
           deliverable_id: deliverable.deliverable?.id || deliverable.id,
-          ora_plan_activity_id: deliverable.id,
+          ora_plan_activity_id: normalizedActivityId || deliverable.id,
           vcr_id: deliverable.deliverable?.source_ref_id,
           vcr_code: deliverable.deliverable?.source_ref_id, // will be resolved via metadata
           vcr_name: deliverable.deliverable?.name?.replace(/^Develop VCR-\d+ Plan\s*[–-]\s*/, '') || '',
