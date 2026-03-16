@@ -281,7 +281,7 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
       return;
     }
 
-    // Finish text box drawing
+    // Finish text box drawing — open inline editor instead of prompt
     if (textBoxDraw) {
       const x = Math.min(textBoxDraw.start.x, textBoxDraw.current.x);
       const y = Math.min(textBoxDraw.start.y, textBoxDraw.current.y);
@@ -290,21 +290,9 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
       setTextBoxDraw(null);
 
       if (w > 2 && h > 1) {
-        const content = prompt('Enter text:');
-        if (content) {
-          // Place box where drawn, anchor offset to the left so arrow protrudes
-          const anchorPt = { x: x - 5, y: y + h / 2 };
-          onCreateAnnotation({
-            annotation_type: 'text_box',
-            page_number: pageNumber,
-            position_data: {
-              x, y, width: w, height: h,
-              anchor: anchorPt,
-            },
-            content,
-            color: activeColor,
-          });
-        }
+        const anchorPt = { x: x - 5, y: y + h / 2 };
+        setPendingTextBox({ x, y, w, h, anchor: anchorPt });
+        setTimeout(() => textAreaRef.current?.focus(), 50);
       }
       return;
     }
