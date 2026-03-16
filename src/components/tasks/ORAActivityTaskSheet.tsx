@@ -1241,17 +1241,17 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                 );
               })()}
             </div>
+            </div>
+            </TabsContent>
 
-
-            {/* Attachments — immediately after evidence drop zone for visual continuity */}
+            <TabsContent value="files" className="mt-3">
+            <div className="space-y-5">
+            {/* Attachments */}
             {task?.id && (
-              <>
-                <Separator />
-                <TaskAttachmentsSection
-                  taskId={task.id}
-                  isReadOnly={isReadOnly}
-                />
-              </>
+              <TaskAttachmentsSection
+                taskId={task.id}
+                isReadOnly={isReadOnly}
+              />
             )}
 
             {/* Approvers — only for non-P2A tasks */}
@@ -1268,10 +1268,11 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                 }}
               />
             )}
+            </div>
+            </TabsContent>
 
-
-            <Separator />
-
+            <TabsContent value="activity" className="mt-3">
+            <div className="space-y-5">
             {/* Comments & Activity Feed */}
             {(() => {
               // Build unified activity feed merging comments + approver decisions
