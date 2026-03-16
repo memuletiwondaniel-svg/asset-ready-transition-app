@@ -1027,8 +1027,8 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
   const openActivitySheet = useCallback((deliverable: any) => {
     // Allow opening in view-only mode too (readOnly is enforced in the sheet)
     const actCode = deliverable.deliverable?.activity_code || '';
-    const normalizedActivityId = normalizeOraActivityId(deliverable.id) || normalizeOraActivityId(deliverable.deliverable?.id);
-    
+    const { activityId: resolvedActivityId, taskEntry } = getTaskEntryForDeliverable(deliverable);
+
     // Special handling for P2A-01 activity: open overlay sheet (not wizard directly)
     // This ensures the user sees the contextual CTA (Start / Continue / View)
     const isP2aActivity = actCode === 'P2A-01' || actCode === 'EXE-10' || deliverable.deliverable?.name?.toLowerCase().includes('p2a');
@@ -1046,7 +1046,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
       const cappedProgress = (existingP2APlan?.status === 'DRAFT' && rawProgress > 86) ? 86 : rawProgress;
 
       setSelectedOraActivity({
-        id: deliverable.id,
+        id: taskEntry?.activityTask?.id || deliverable.id,
         title: 'Develop P2A Plan',
         description: deliverable.deliverable?.description || '',
         type: 'ora_activity',
@@ -1062,7 +1062,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
           project_id: planData?.project_id,
           project_code: projectCode,
           deliverable_id: deliverable.deliverable?.id || deliverable.id,
-          ora_plan_activity_id: normalizedActivityId || deliverable.id,
+          ora_plan_activity_id: resolvedActivityId || deliverable.deliverable?.id || deliverable.id,
           start_date: deliverable.start_date,
           end_date: deliverable.end_date,
           completion_percentage: cappedProgress,
@@ -1087,7 +1087,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
         }));
 
       setSelectedOraActivity({
-        id: deliverable.id,
+        id: taskEntry?.activityTask?.id || deliverable.id,
         title: deliverable.deliverable?.name || '',
         description: deliverable.deliverable?.description || '',
         type: 'ora_activity',
@@ -1101,7 +1101,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
           project_id: planData?.project_id,
           project_code: projectCode,
           deliverable_id: deliverable.deliverable?.id || deliverable.id,
-          ora_plan_activity_id: normalizedActivityId || deliverable.id,
+          ora_plan_activity_id: resolvedActivityId || deliverable.deliverable?.id || deliverable.id,
           vcr_id: deliverable.deliverable?.source_ref_id,
           vcr_code: deliverable.deliverable?.source_ref_id, // will be resolved via metadata
           vcr_name: deliverable.deliverable?.name?.replace(/^Develop VCR-\d+ Plan\s*[–-]\s*/, '') || '',
@@ -1127,51 +1127,73 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
         name: d.deliverable?.name,
       }));
 
-    const taskEntry = normalizedActivityId ? activityTaskMap?.[normalizedActivityId] : undefined;
-    const reconciledState = getReconciledActivityState(normalizedActivityId || deliverable.id, deliverable.status, deliverable.completion_percentage || 0);
+    const reconciledState = getReconciledActivityState(deliverable);
+    const reconciledTaskStatus = reconciledState.status === 'COMPLETED'
+      ? 'completed'
+      : reconciledState.status === 'IN_PROGRESS'
+        ? 'in_progress'
+        : 'pending';
 
-    // If this user has a review task for the activity, mirror My Tasks behavior
-    if (taskEntry?.reviewTask) {
+    const mergedMetadata = {
+      ...(taskEntry?.activityTask?.metadata || {}),
+      activity_name: deliverable.deliverable?.name,
+      activity_code: deliverable.deliverable?.activity_code,
+      description: deliverable.deliverable?.description || taskEntry?.activityTask?.description || '',
+      plan_id: (taskEntry?.activityTask?.metadata as Record<string, any> | undefined)?.plan_id || planId,
+      project_id: (taskEntry?.activityTask?.metadata as Record<string, any> | undefined)?.project_id || planData?.project_id,
+      project_code: (taskEntry?.activityTask?.metadata as Record<string, any> | undefined)?.project_code || projectCode,
+      deliverable_id: deliverable.deliverable?.id || deliverable.id,
+      ora_plan_activity_id: resolvedActivityId || deliverable.deliverable?.id || deliverable.id,
+      start_date: deliverable.start_date,
+      end_date: deliverable.end_date,
+      completion_percentage: (() => {
+        const isP2a = deliverable.deliverable?.activity_code === 'P2A-01' || deliverable.deliverable?.activity_code === 'EXE-10' || deliverable.deliverable?.name?.toLowerCase().includes('p2a');
+        if (isP2a && existingP2APlan?.status === 'DRAFT' && reconciledState.completion > 86) return 86;
+        return reconciledState.completion;
+      })(),
+      predecessor_ids: deliverable._predecessorIds || [],
+      sibling_activities: siblingActivities,
+    };
+
+    const hasCurrentUserReviewTask = !!(taskEntry?.reviewTask && taskEntry.reviewTask.user_id === user?.id);
+    const hasCurrentUserActivityTask = !!(taskEntry?.activityTask && taskEntry.activityTask.user_id === user?.id);
+
+    // If this user only has a review task for this activity, mirror My Tasks behavior
+    if (taskEntry?.reviewTask && hasCurrentUserReviewTask && !hasCurrentUserActivityTask) {
       setSelectedReviewTask(taskEntry.reviewTask);
       return;
     }
 
     // Prefer the real authoring task payload when available
     if (taskEntry?.activityTask) {
-      setSelectedOraActivity(taskEntry.activityTask);
+      setSelectedOraActivity({
+        ...taskEntry.activityTask,
+        title: taskEntry.activityTask.title || deliverable.deliverable?.name || '',
+        description: taskEntry.activityTask.description ?? deliverable.deliverable?.description ?? '',
+        status: reconciledTaskStatus,
+        metadata: mergedMetadata,
+      });
+      return;
+    }
+
+    // If no authoring task is directly visible, use review task for reviewers
+    if (taskEntry?.reviewTask) {
+      setSelectedReviewTask(taskEntry.reviewTask);
       return;
     }
 
     // Fallback to synthetic payload when no mapped task is visible to the current user
     setSelectedOraActivity({
-      id: deliverable.id,
+      id: taskEntry?.taskId || deliverable.id,
       title: deliverable.deliverable?.name || '',
       description: deliverable.deliverable?.description || '',
       type: 'ora_activity',
-      status: reconciledState.status === 'COMPLETED' ? 'completed' : reconciledState.status === 'IN_PROGRESS' ? 'in_progress' : 'pending',
-      metadata: {
-        activity_name: deliverable.deliverable?.name,
-        activity_code: deliverable.deliverable?.activity_code,
-        description: deliverable.deliverable?.description || '',
-        plan_id: planId,
-        project_id: planData?.project_id,
-        project_code: projectCode,
-        deliverable_id: deliverable.deliverable?.id || deliverable.id,
-        ora_plan_activity_id: normalizedActivityId || deliverable.id,
-        start_date: deliverable.start_date,
-        end_date: deliverable.end_date,
-        completion_percentage: (() => {
-          const isP2a = deliverable.deliverable?.activity_code === 'P2A-01' || deliverable.deliverable?.activity_code === 'EXE-10' || deliverable.deliverable?.name?.toLowerCase().includes('p2a');
-          if (isP2a && existingP2APlan?.status === 'DRAFT' && reconciledState.completion > 86) return 86;
-          return reconciledState.completion;
-        })(),
-        predecessor_ids: deliverable._predecessorIds || [],
-        sibling_activities: siblingActivities,
-      },
+      status: reconciledTaskStatus,
+      metadata: mergedMetadata,
       priority: 'medium',
       created_at: deliverable.created_at || new Date().toISOString(),
     });
-  }, [planId, filteredDeliverables, readOnly, planData?.project_id, projectCode, existingP2APlan, activityTaskMap, getReconciledActivityState]);
+  }, [planId, filteredDeliverables, planData?.project_id, projectCode, existingP2APlan, getTaskEntryForDeliverable, getReconciledActivityState, user?.id]);
 
   // Early return - no data
   if (!dates.length) {
