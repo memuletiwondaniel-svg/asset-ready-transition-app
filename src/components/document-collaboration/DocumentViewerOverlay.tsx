@@ -35,7 +35,7 @@ export const DocumentViewerOverlay: React.FC<DocumentViewerOverlayProps> = ({
   const [zoom, setZoom] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [selectedAnnotation, setSelectedAnnotation] = useState<Annotation | null>(null);
-  const [commentsOpen, setCommentsOpen] = useState(true);
+  const [commentsOpen, setCommentsOpen] = useState(window.innerWidth >= 768);
 
   const {
     annotations,
