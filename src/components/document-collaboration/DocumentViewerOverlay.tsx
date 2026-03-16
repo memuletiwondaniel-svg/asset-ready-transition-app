@@ -90,6 +90,15 @@ export const DocumentViewerOverlay: React.FC<DocumentViewerOverlayProps> = ({
                 <Download className="h-3.5 w-3.5" />
                 Download
               </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 gap-1.5 text-xs"
+                onClick={() => setCommentsOpen(prev => !prev)}
+              >
+                {commentsOpen ? <PanelRightClose className="h-3.5 w-3.5" /> : <MessageCircle className="h-3.5 w-3.5" />}
+                {commentsOpen ? 'Hide Comments' : 'Comments'}
+              </Button>
               <div className="w-px h-5 bg-border mx-1" />
               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose}>
                 <X className="h-4 w-4" />
