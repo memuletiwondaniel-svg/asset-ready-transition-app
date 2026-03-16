@@ -370,10 +370,13 @@ export function useKanbanDragDrop() {
             console.error('[P2A Revert] Failed to delete notifications:', e);
           }
 
-          // Invalidate P2A-related queries so sheets/detail views pick up the DRAFT status
+          // Invalidate P2A-related queries so sheets/detail views pick up the DRAFT status + revert context
           queryClient.invalidateQueries({ queryKey: ['p2a-plan-exists-sheet'] });
           queryClient.invalidateQueries({ queryKey: ['p2a-plan-exists-task'] });
           queryClient.invalidateQueries({ queryKey: ['p2a-plan-by-project'] });
+          queryClient.invalidateQueries({ queryKey: ['p2a-rejection-context'] });
+          queryClient.invalidateQueries({ queryKey: ['p2a-draft-context-sheet'] });
+          queryClient.invalidateQueries({ queryKey: ['p2a-draft-context-task'] });
           queryClient.invalidateQueries({ queryKey: ['ora-activity-detail'] });
           queryClient.invalidateQueries({ queryKey: ['ori-scores'] });
           queryClient.invalidateQueries({ queryKey: ['ori-score-latest'] });
