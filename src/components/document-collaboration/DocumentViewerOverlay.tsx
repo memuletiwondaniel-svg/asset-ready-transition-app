@@ -57,7 +57,7 @@ export const DocumentViewerOverlay: React.FC<DocumentViewerOverlayProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-[98vw] w-full h-[96vh] p-0 gap-0 flex flex-col [&>button]:hidden">
+      <DialogContent className="max-w-[99vw] w-full h-[96vh] p-0 gap-0 flex flex-col [&>button]:hidden !z-[200]">
         <TooltipProvider delayDuration={200}>
           {/* Top bar */}
           <div className="flex items-center justify-between px-4 py-2.5 border-b border-border bg-card shrink-0">
