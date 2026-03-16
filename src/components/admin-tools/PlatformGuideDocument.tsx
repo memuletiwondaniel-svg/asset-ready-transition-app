@@ -380,7 +380,7 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
 
             <p className="font-medium text-foreground mt-4">PAC Details</p>
             <ul className="list-disc pl-5 space-y-1">
-              <li>PAC number format: <code className="bg-muted px-1 rounded text-xs">PAC-DP300-VCR-001</code></li>
+              <li>PAC number format: <code className="bg-muted px-1 rounded text-xs">PAC-DP300-VCR-01</code></li>
               <li>Info hierarchy: Project ID → Project Name → VCR Name → VCR Ref → PAC Date</li>
               <li>PAC Date shows "Pending Approval" until formally signed</li>
               <li>Systems table: Index, System Code, System Name only</li>
