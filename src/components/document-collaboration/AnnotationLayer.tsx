@@ -499,6 +499,7 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
         }}
         onMouseDown={(e) => startAnchorDrag(e, ann)}
         onTouchStart={(e) => startAnchorDragTouch(e, ann)}
+      />
     );
   };
 
