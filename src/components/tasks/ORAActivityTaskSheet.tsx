@@ -840,6 +840,16 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
       >
         {/* Scrollable content area */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain touch-pan-y px-4 sm:px-6 pt-6 pb-4 -webkit-overflow-scrolling-touch">
+          {/* Breadcrumb */}
+          {projectCode && (
+            <div className="flex items-center gap-1 text-[10px] text-muted-foreground mb-1">
+              <span>ORA Plan</span>
+              <ChevronRight className="h-3 w-3" />
+              {activityCode && <span className="font-mono">{activityCode}</span>}
+              {activityCode && <ChevronRight className="h-3 w-3" />}
+              <span className="truncate max-w-[180px]">{activityName || 'Activity'}</span>
+            </div>
+          )}
           {/* Header */}
           <SheetHeader className="pb-2">
             <div className="flex items-center gap-2 flex-wrap">
