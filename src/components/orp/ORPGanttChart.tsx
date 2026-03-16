@@ -1293,6 +1293,102 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
     });
   }, [planId, filteredDeliverables, planData?.project_id, projectCode, existingP2APlan, getTaskEntryForDeliverable, getReconciledActivityState, user?.id]);
 
+  // Mobile: render card-based timeline list instead of Gantt grid
+  if (isMobile) {
+    return (
+      <>
+        <Card className="overflow-hidden">
+          <MobileTimelineList
+            visibleRows={visibleRows}
+            searchQuery={internalSearchQuery}
+            onSearchChange={setInternalSearchQuery}
+            expandedCodes={expandedCodes}
+            toggleExpand={toggleExpand}
+            isAllExpanded={isAllExpanded}
+            expandAll={expandAll}
+            collapseAll={collapseAll}
+            openActivitySheet={openActivitySheet}
+            getReconciledActivityState={getReconciledActivityState}
+          />
+        </Card>
+        <AddFromCatalogDialog open={showCatalogDialog} onOpenChange={setShowCatalogDialog} existingIds={existingActivityIds} onAdd={handleAddFromCatalog} />
+        <TaskDetailSheet
+          task={selectedReviewTask}
+          open={!!selectedReviewTask}
+          onOpenChange={(open) => !open && setSelectedReviewTask(null)}
+          onApprove={() => {}}
+          onReject={() => {}}
+        />
+        <ORAActivityTaskSheet
+          task={selectedOraActivity}
+          open={!!selectedOraActivity}
+          onOpenChange={(open) => !open && setSelectedOraActivity(null)}
+          onOpenP2AWizard={(_projId, _projCode, openWorkspace) => {
+            if (openWorkspace) setShowP2AWorkspace(true);
+            else setShowP2AWizard(true);
+          }}
+          onOpenVCRWizard={(vcrId, vcrCode, vcrName) => {
+            setVcrWizardTarget({ id: vcrId, vcr_code: vcrCode, name: vcrName });
+            setShowVCRWizard(true);
+          }}
+        />
+        {planData?.project_id && (
+          <>
+            <P2APlanCreationWizard
+              open={showP2AWizard}
+              onOpenChange={setShowP2AWizard}
+              projectId={planData.project_id}
+              projectCode={projectCode}
+              projectName={projectName}
+              onSuccess={() => {
+                setShowP2AWizard(false);
+                queryClient.invalidateQueries({ queryKey: ['orp-plan'] });
+                queryClient.invalidateQueries({ queryKey: ['p2a-plan-exists'] });
+              }}
+              onOpenWorkspace={() => {
+                setShowP2AWizard(false);
+                setShowP2AWorkspace(true);
+              }}
+            />
+            <P2AWorkspaceOverlay
+              open={showP2AWorkspace}
+              onOpenChange={setShowP2AWorkspace}
+              projectId={planData.project_id}
+              projectName={projectName}
+              projectNumber={projectCode}
+              onReturnToWizard={() => {
+                setShowP2AWorkspace(false);
+                setShowP2AWizard(true);
+              }}
+            />
+            {vcrWizardTarget && (
+              <VCRExecutionPlanWizard
+                open={showVCRWizard}
+                onOpenChange={(open) => {
+                  setShowVCRWizard(open);
+                  if (!open) setVcrWizardTarget(null);
+                }}
+                vcr={{
+                  id: vcrWizardTarget.id,
+                  vcr_code: vcrWizardTarget.vcr_code,
+                  name: vcrWizardTarget.name,
+                  description: null,
+                  status: 'IN_PROGRESS',
+                  target_date: null,
+                  created_at: '',
+                  progress: 0,
+                  systems_count: 0,
+                  has_hydrocarbon: false,
+                }}
+                projectCode={projectCode}
+              />
+            )}
+          </>
+        )}
+      </>
+    );
+  }
+
   // Early return - no data
   if (!dates.length) {
     return (

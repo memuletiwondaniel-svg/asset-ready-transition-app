@@ -14,6 +14,7 @@ import { Loader2, CalendarCheck, CheckCircle2, Clock, FileEdit, Send, AlertTrian
 import { ORPGanttChart } from '@/components/orp/ORPGanttChart';
 import { ORPApprovalsTab } from '@/components/orp/ORPApprovalsTab';
 import { useORPPlanDetails } from '@/hooks/useORPPlans';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { parseISO, differenceInDays, isPast } from 'date-fns';
 
