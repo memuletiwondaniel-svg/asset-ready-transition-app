@@ -463,9 +463,9 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
           <Section id="coding-conventions" icon={<Code className="h-5 w-5 text-primary" />} title="9. Coding Conventions & ID Formats">
             <InfoTable headers={['Entity', 'Format', 'Example', 'Generator Function']} rows={[
               ['Project Code', '{PREFIX}-{NUMBER}', 'DP-300', 'Manual entry'],
-              ['VCR Code', 'VCR-{SEQ}-DP{PROJECT}', 'VCR-001-DP300', 'generate_vcr_code()'],
+              ['VCR Code', 'VCR-{PROJECT}-{SEQ}', 'VCR-DP300-01', 'generate_vcr_code()'],
               ['PSSR Code', 'PSSR-{PLANT}-{SEQ}', 'PSSR-BNGL-001', 'generate_pssr_code()'],
-              ['PAC Number', 'PAC-{PROJECT}-VCR-{SEQ}', 'PAC-DP300-VCR-001', 'Derived from VCR'],
+              ['PAC Number', 'PAC-{PROJECT}-VCR-{SEQ}', 'PAC-DP300-VCR-01', 'Derived from VCR'],
               ['OWL Item', 'OWL-{YEAR}-{SEQ}', 'OWL-2026-0001', 'generate_owl_item_number()'],
               ['ORA Activity', '{PHASE_PREFIX}-{SEQ}', 'IDN-01', 'generate_ora_activity_code()'],
               ['ORA Sub-Activity', '{PARENT}.{SEQ}', 'IDN-01.01', 'generate_ora_activity_code()'],
