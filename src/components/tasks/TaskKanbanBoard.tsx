@@ -359,7 +359,7 @@ const KanbanCardContent: React.FC<{
                       ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
                       : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
                   )}>
-                    {allApproved ? `Approved · ${totalApprovers}/${totalApprovers}` : `Awaiting Approval · ${approvedCount || 0}/${totalApprovers}`}
+                    {allApproved ? 'Approved' : `Awaiting Approval · ${approvedCount || 0}/${totalApprovers}`}
                   </span>
                 );
               }
