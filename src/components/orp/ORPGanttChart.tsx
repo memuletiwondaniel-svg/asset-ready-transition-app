@@ -1895,7 +1895,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
         >
           {dragDatePreview.label}
         </div>
-      )
+      )}
 
       <AddFromCatalogDialog open={showCatalogDialog} onOpenChange={setShowCatalogDialog} existingIds={existingActivityIds} onAdd={handleAddFromCatalog} />
       <TaskDetailSheet
