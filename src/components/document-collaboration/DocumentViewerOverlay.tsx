@@ -63,7 +63,7 @@ export const DocumentViewerOverlay: React.FC<DocumentViewerOverlayProps> = ({
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       {/* High z-index backdrop to dim everything including task detail */}
       <DialogOverlay className="!z-[199] bg-black/80 backdrop-blur-sm" />
-      <DialogContent className="<DialogContent className="!max-w-[92vw] !w-[92vw] !h-[95vh] p-0 gap-0 flex flex-col [&>button]:hidden !z-[200] !left-1/2 !top-1/2 !-translate-x-1/2 !-translate-y-1/2 !rounded-xl border-border"> p-0 gap-0 flex flex-col [&>button]:hidden !z-[200] !left-1/2 !top-1/2 !-translate-x-1/2 !-translate-y-1/2 !rounded-xl border-border">
+      <DialogContent className="!max-w-[92vw] !w-[92vw] !h-[95vh] p-0 gap-0 flex flex-col [&>button]:hidden !z-[200] !left-1/2 !top-1/2 !-translate-x-1/2 !-translate-y-1/2 !rounded-xl border-border">
         <TooltipProvider delayDuration={200}>
           {/* Top bar */}
           <div className="flex items-center justify-between px-4 py-2.5 border-b border-border bg-card shrink-0">
