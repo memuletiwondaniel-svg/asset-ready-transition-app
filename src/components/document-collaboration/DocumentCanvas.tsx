@@ -67,7 +67,7 @@ export const DocumentCanvas: React.FC<DocumentCanvasProps> = ({
             <div className="relative">
               <Page
                 pageNumber={currentPage}
-                width={700}
+                width={900}
                 renderTextLayer={true}
                 renderAnnotationLayer={false}
               />
