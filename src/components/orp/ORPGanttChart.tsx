@@ -1016,7 +1016,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
           project_id: planData?.project_id,
           project_code: projectCode,
           deliverable_id: deliverable.deliverable?.id || deliverable.id,
-          ora_plan_activity_id: deliverable.id,
+          ora_plan_activity_id: normalizedActivityId || deliverable.id,
           start_date: deliverable.start_date,
           end_date: deliverable.end_date,
           completion_percentage: cappedProgress,
