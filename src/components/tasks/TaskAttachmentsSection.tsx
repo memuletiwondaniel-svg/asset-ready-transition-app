@@ -254,6 +254,13 @@ export const TaskAttachmentsSection: React.FC<TaskAttachmentsSectionProps> = ({
           <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
         </div>
       )}
+
+      {/* Document Viewer Overlay */}
+      <DocumentViewerOverlay
+        attachment={viewerAttachment}
+        open={!!viewerAttachment}
+        onClose={() => setViewerAttachment(null)}
+      />
     </div>
   );
 };
