@@ -62,6 +62,7 @@ export const ORPGanttOverlay: React.FC<ORPGanttOverlayProps> = ({
   isReadOnly: externalReadOnly,
 }) => {
   const [approvalsOpen, setApprovalsOpen] = useState(false);
+  const isMobile = useIsMobile();
   const { data: planDetails, isLoading } = useORPPlanDetails(open ? planId : '');
 
   const statusConfig = planStatus ? STATUS_CONFIG[planStatus] : null;
