@@ -14,6 +14,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useToast } from '@/hooks/use-toast';
 
 import { ORAActivityTaskSheet } from '@/components/tasks/ORAActivityTaskSheet';
+import { TaskDetailSheet } from '@/components/tasks/TaskDetailSheet';
 import { P2APlanCreationWizard } from '@/components/widgets/p2a-wizard/P2APlanCreationWizard';
 import { P2AWorkspaceOverlay } from '@/components/widgets/P2AWorkspaceOverlay';
 import { VCRExecutionPlanWizard } from '@/components/widgets/vcr-wizard/VCRExecutionPlanWizard';
@@ -123,6 +124,31 @@ function getCodeDepth(code: string): number {
   if (!code) return 0;
   return (code.match(/\./g) || []).length;
 }
+
+function normalizeOraActivityId(value: string | null | undefined): string {
+  if (!value) return '';
+  return String(value).replace(/^(ora-|ws-)/, '');
+}
+
+type GanttTaskLike = {
+  id: string;
+  title: string;
+  description: string | null;
+  due_date: string | null;
+  priority: string;
+  type: string;
+  status: string;
+  display_order: number;
+  created_at: string;
+  metadata: Record<string, any>;
+};
+
+type ActivityTaskMapEntry = {
+  taskId?: string;
+  taskStatus?: string;
+  activityTask?: GanttTaskLike;
+  reviewTask?: GanttTaskLike;
+};
 
 interface FlatRow {
   deliverable: any;
@@ -288,6 +314,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
   const { toast } = useToast();
   
   const [selectedOraActivity, setSelectedOraActivity] = useState<any>(null);
+  const [selectedReviewTask, setSelectedReviewTask] = useState<any>(null);
   const [zoomLevel, setZoomLevel] = useState(1);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
@@ -439,30 +466,63 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
   const p2aPlanIsSubmittedOrApproved = existingP2APlan && ['ACTIVE', 'COMPLETED', 'APPROVED'].includes(existingP2APlan.status);
   const p2aCtaLabel = p2aPlanIsSubmittedOrApproved ? 'View P2A Plan' : existingP2APlan ? 'Continue P2A Plan' : 'Develop P2A Plan';
 
-  // Pre-fetch mapping: ora_plan_activity_id → real user_tasks record
+  // Pre-fetch mapping by ORA activity ID for both authoring and review tasks
   const { data: activityTaskMap } = useQuery({
     queryKey: ['ora-activity-task-map', planId],
     queryFn: async () => {
       const { data } = await (supabase as any)
         .from('user_tasks')
-        .select('id, status, metadata')
-        .eq('type', 'ora_activity')
+        .select('id, title, description, due_date, priority, type, status, display_order, created_at, metadata')
+        .filter('metadata->>ora_plan_activity_id', 'is', 'not.null')
         .filter('metadata->>plan_id', 'eq', planId);
-      const map: Record<string, { taskId: string; taskStatus: string }> = {};
-      for (const t of data || []) {
-        const oraId = (t.metadata as any)?.ora_plan_activity_id;
-        if (oraId) map[oraId] = { taskId: t.id, taskStatus: t.status };
+
+      const map: Record<string, ActivityTaskMapEntry> = {};
+
+      for (const row of data || []) {
+        const metadata = (row.metadata || {}) as Record<string, any>;
+        const activityId = normalizeOraActivityId(metadata.ora_plan_activity_id as string | undefined);
+        if (!activityId) continue;
+
+        const task: GanttTaskLike = {
+          id: row.id,
+          title: row.title,
+          description: row.description,
+          due_date: row.due_date,
+          priority: row.priority,
+          type: row.type,
+          status: row.status,
+          display_order: row.display_order,
+          created_at: row.created_at,
+          metadata,
+        };
+
+        const current = map[activityId] || {};
+        const isReviewTask = row.type === 'review' || metadata.source === 'task_review';
+
+        if (isReviewTask) {
+          const sourceTaskId = metadata.source_task_id as string | undefined;
+          const shouldReplaceReview = !current.reviewTask || (current.reviewTask.status !== 'pending' && task.status === 'pending');
+          if (shouldReplaceReview) current.reviewTask = task;
+          if (!current.taskId && sourceTaskId) current.taskId = sourceTaskId;
+        } else {
+          current.taskId = row.id;
+          current.taskStatus = row.status;
+          current.activityTask = task;
+        }
+
+        map[activityId] = current;
       }
+
       return map;
     },
     enabled: !!planId,
     staleTime: 30_000,
   });
 
-  // Pre-fetch reviewer counts per task for progress/status reconciliation
+  // Pre-fetch reviewer counts per source task for progress/status reconciliation
   const taskIdsForReviewerCheck = useMemo(() => {
     if (!activityTaskMap) return [];
-    return Object.values(activityTaskMap).map(v => v.taskId);
+    return [...new Set(Object.values(activityTaskMap).map(v => v.taskId).filter(Boolean) as string[])];
   }, [activityTaskMap]);
 
   const { data: pendingReviewerMap } = useQuery({
@@ -486,22 +546,31 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
     staleTime: 30_000,
   });
 
-  // Helper: get reconciled status/progress for an activity considering ad-hoc reviewers
+  // Helper: reconcile status/progress for activities under ad-hoc review
   const getReconciledActivityState = useCallback((deliverableId: string, rawStatus: string, rawCompletion: number) => {
-    const realTask = activityTaskMap?.[deliverableId];
-    if (!realTask || !pendingReviewerMap) return { status: rawStatus, completion: rawCompletion };
-    
-    const reviewState = pendingReviewerMap[realTask.taskId];
+    const normalizedActivityId = normalizeOraActivityId(deliverableId);
+    const taskEntry = normalizedActivityId ? activityTaskMap?.[normalizedActivityId] : undefined;
+    if (!taskEntry) return { status: rawStatus, completion: rawCompletion };
+
+    // If current user has a pending review task for this activity, force under-review state
+    const reviewTaskStatus = taskEntry.reviewTask?.status?.toLowerCase();
+    if (reviewTaskStatus && reviewTaskStatus !== 'completed') {
+      if (rawStatus === 'COMPLETED' || rawCompletion >= 100) {
+        return { status: 'IN_PROGRESS', completion: 95 };
+      }
+    }
+
+    const reviewState = taskEntry.taskId ? pendingReviewerMap?.[taskEntry.taskId] : undefined;
     if (!reviewState || reviewState.total === 0) return { status: rawStatus, completion: rawCompletion };
 
-    // Has reviewers — check if all approved or still pending
     if (reviewState.approved === reviewState.total) {
       return { status: 'COMPLETED', completion: 100 };
     }
-    // Has pending reviewers — cap at 95% / IN_PROGRESS
+
     if (rawStatus === 'COMPLETED' || rawCompletion >= 100) {
       return { status: 'IN_PROGRESS', completion: 95 };
     }
+
     return { status: rawStatus, completion: rawCompletion };
   }, [activityTaskMap, pendingReviewerMap]);
 
@@ -912,6 +981,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
   const openActivitySheet = useCallback((deliverable: any) => {
     // Allow opening in view-only mode too (readOnly is enforced in the sheet)
     const actCode = deliverable.deliverable?.activity_code || '';
+    const normalizedActivityId = normalizeOraActivityId(deliverable.id) || normalizeOraActivityId(deliverable.deliverable?.id);
     
     // Special handling for P2A-01 activity: open overlay sheet (not wizard directly)
     // This ensures the user sees the contextual CTA (Start / Continue / View)
@@ -946,7 +1016,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
           project_id: planData?.project_id,
           project_code: projectCode,
           deliverable_id: deliverable.deliverable?.id || deliverable.id,
-          ora_plan_activity_id: deliverable.id,
+          ora_plan_activity_id: normalizedActivityId || deliverable.id,
           start_date: deliverable.start_date,
           end_date: deliverable.end_date,
           completion_percentage: cappedProgress,
@@ -985,7 +1055,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
           project_id: planData?.project_id,
           project_code: projectCode,
           deliverable_id: deliverable.deliverable?.id || deliverable.id,
-          ora_plan_activity_id: deliverable.id,
+          ora_plan_activity_id: normalizedActivityId || deliverable.id,
           vcr_id: deliverable.deliverable?.source_ref_id,
           vcr_code: deliverable.deliverable?.source_ref_id, // will be resolved via metadata
           vcr_name: deliverable.deliverable?.name?.replace(/^Develop VCR-\d+ Plan\s*[–-]\s*/, '') || '',
@@ -1011,12 +1081,24 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
         name: d.deliverable?.name,
       }));
 
-    // Resolve real user task ID for the overlay
-    const realTask = activityTaskMap?.[deliverable.id];
-    const reconciledState = getReconciledActivityState(deliverable.id, deliverable.status, deliverable.completion_percentage || 0);
+    const taskEntry = normalizedActivityId ? activityTaskMap?.[normalizedActivityId] : undefined;
+    const reconciledState = getReconciledActivityState(normalizedActivityId || deliverable.id, deliverable.status, deliverable.completion_percentage || 0);
 
+    // If this user has a review task for the activity, mirror My Tasks behavior
+    if (taskEntry?.reviewTask) {
+      setSelectedReviewTask(taskEntry.reviewTask);
+      return;
+    }
+
+    // Prefer the real authoring task payload when available
+    if (taskEntry?.activityTask) {
+      setSelectedOraActivity(taskEntry.activityTask);
+      return;
+    }
+
+    // Fallback to synthetic payload when no mapped task is visible to the current user
     setSelectedOraActivity({
-      id: realTask?.taskId || deliverable.id,
+      id: deliverable.id,
       title: deliverable.deliverable?.name || '',
       description: deliverable.deliverable?.description || '',
       type: 'ora_activity',
@@ -1029,7 +1111,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
         project_id: planData?.project_id,
         project_code: projectCode,
         deliverable_id: deliverable.deliverable?.id || deliverable.id,
-        ora_plan_activity_id: deliverable.id,
+        ora_plan_activity_id: normalizedActivityId || deliverable.id,
         start_date: deliverable.start_date,
         end_date: deliverable.end_date,
         completion_percentage: (() => {
@@ -1609,11 +1691,18 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
       </CardContent>
 
       <AddFromCatalogDialog open={showCatalogDialog} onOpenChange={setShowCatalogDialog} existingIds={existingActivityIds} onAdd={handleAddFromCatalog} />
+      <TaskDetailSheet
+        task={selectedReviewTask}
+        open={!!selectedReviewTask}
+        onOpenChange={(open) => !open && setSelectedReviewTask(null)}
+        onApprove={() => {}}
+        onReject={() => {}}
+      />
       <ORAActivityTaskSheet
         task={selectedOraActivity}
         open={!!selectedOraActivity}
         onOpenChange={(open) => !open && setSelectedOraActivity(null)}
-        onOpenP2AWizard={(projId, projCode, openWorkspace) => {
+        onOpenP2AWizard={(_projId, _projCode, openWorkspace) => {
           if (openWorkspace) {
             setShowP2AWorkspace(true);
           } else {
