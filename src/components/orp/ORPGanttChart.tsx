@@ -966,6 +966,34 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
           .update({ start_date: startStr, end_date: endStr, duration_days: durationDays })
           .eq('id', dbId);
       }
+
+      // Sync dates to linked user_tasks so task cards reflect new dates
+      try {
+        const { data: linkedTasks } = await (supabase as any)
+          .from('user_tasks')
+          .select('id, metadata')
+          .filter('metadata->>ora_plan_activity_id', 'eq', dbId);
+
+        if (linkedTasks?.length) {
+          for (const lt of linkedTasks) {
+            const updatedMeta = {
+              ...((lt.metadata as Record<string, any>) || {}),
+              start_date: startStr,
+              end_date: endStr,
+            };
+            await (supabase as any)
+              .from('user_tasks')
+              .update({ metadata: updatedMeta, updated_at: new Date().toISOString() })
+              .eq('id', lt.id);
+          }
+        }
+      } catch (syncErr) {
+        console.error('Failed to sync dates to user_tasks:', syncErr);
+      }
+
+      // Invalidate task-related caches so Kanban/overlay reflect new dates immediately
+      queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['ora-activity-detail'] });
     } catch (err) {
       console.error('Failed to update activity dates:', err);
       // On error, invalidate to refetch correct state
