@@ -517,6 +517,83 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
     h: Math.abs(textBoxDraw.current.y - textBoxDraw.start.y),
   } : null;
 
+  // Touch event handlers that mirror mouse handlers
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (activeTool === 'pointer' && !draggingAnnotation && !resizing && !draggingAnchor) return;
+    const touch = e.touches[0];
+    if (!touch) return;
+    e.preventDefault();
+    const synth = { clientX: touch.clientX, clientY: touch.clientY } as any;
+    // Reuse mouse down logic
+    handleMouseDown(synth);
+  }, [handleMouseDown, activeTool, draggingAnnotation, resizing, draggingAnchor]);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    if (!touch) return;
+    e.preventDefault();
+    const synth = { clientX: touch.clientX, clientY: touch.clientY, preventDefault: () => {}, stopPropagation: () => {} } as any;
+    handleMouseMove(synth);
+  }, [handleMouseMove]);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    e.preventDefault();
+    const ct = e.changedTouches[0];
+    const synth = { clientX: ct?.clientX || 0, clientY: ct?.clientY || 0, preventDefault: () => {}, stopPropagation: () => {} } as any;
+    handleMouseUp(synth);
+  }, [handleMouseUp]);
+
+  // Touch handlers for annotation drag/resize
+  const startDragAnnotationTouch = (e: React.TouchEvent, ann: Annotation) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const touch = e.touches[0];
+    const pos = getRelativePos({ clientX: touch.clientX, clientY: touch.clientY });
+    const currentPos = getDisplayPos(ann);
+    setDraggingAnnotation({
+      id: ann.id,
+      startX: pos.x,
+      startY: pos.y,
+      origX: currentPos.x,
+      origY: currentPos.y,
+    });
+    setDragOffset({ dx: 0, dy: 0 });
+    onSelectAnnotation(ann);
+  };
+
+  const startResizeTouch = (e: React.TouchEvent, ann: Annotation, corner: string) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const touch = e.touches[0];
+    const pos = getRelativePos({ clientX: touch.clientX, clientY: touch.clientY });
+    const currentPos = getDisplayPos(ann);
+    setResizing({
+      id: ann.id,
+      corner,
+      startX: pos.x,
+      startY: pos.y,
+      origW: ann.position_data.width || 15,
+      origH: ann.position_data.height || 6,
+      origPosX: currentPos.x,
+      origPosY: currentPos.y,
+    });
+  };
+
+  const startAnchorDragTouch = (e: React.TouchEvent, ann: Annotation) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const touch = e.touches[0];
+    const pos = getRelativePos({ clientX: touch.clientX, clientY: touch.clientY });
+    const anchor = ann.position_data.anchor as { x: number; y: number };
+    setDraggingAnchor({
+      id: ann.id,
+      startX: pos.x,
+      startY: pos.y,
+      origAnchor: { ...anchor },
+    });
+    setAnchorOffset({ dx: 0, dy: 0 });
+  };
+
   return (
     <>
       <div
@@ -525,9 +602,13 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
           'absolute inset-0 z-10',
           activeTool !== 'pointer' && 'cursor-crosshair'
         )}
+        style={{ touchAction: activeTool !== 'pointer' ? 'none' : 'auto' }}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       >
         {/* Existing annotations */}
         {pageAnnotations.map((ann) => {
