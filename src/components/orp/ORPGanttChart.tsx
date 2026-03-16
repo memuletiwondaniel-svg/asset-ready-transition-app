@@ -1081,12 +1081,24 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
         name: d.deliverable?.name,
       }));
 
-    // Resolve real user task ID for the overlay
-    const realTask = activityTaskMap?.[deliverable.id];
-    const reconciledState = getReconciledActivityState(deliverable.id, deliverable.status, deliverable.completion_percentage || 0);
+    const taskEntry = normalizedActivityId ? activityTaskMap?.[normalizedActivityId] : undefined;
+    const reconciledState = getReconciledActivityState(normalizedActivityId || deliverable.id, deliverable.status, deliverable.completion_percentage || 0);
 
+    // If this user has a review task for the activity, mirror My Tasks behavior
+    if (taskEntry?.reviewTask) {
+      setSelectedReviewTask(taskEntry.reviewTask);
+      return;
+    }
+
+    // Prefer the real authoring task payload when available
+    if (taskEntry?.activityTask) {
+      setSelectedOraActivity(taskEntry.activityTask);
+      return;
+    }
+
+    // Fallback to synthetic payload when no mapped task is visible to the current user
     setSelectedOraActivity({
-      id: realTask?.taskId || deliverable.id,
+      id: deliverable.id,
       title: deliverable.deliverable?.name || '',
       description: deliverable.deliverable?.description || '',
       type: 'ora_activity',
