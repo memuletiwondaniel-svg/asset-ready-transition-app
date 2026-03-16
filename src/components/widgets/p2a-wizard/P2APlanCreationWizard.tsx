@@ -586,8 +586,6 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
             mappings={state.mappings}
             vcrPhaseAssignments={state.vcrPhaseAssignments}
             approvers={state.approvers}
-            submissionComment={submissionComment}
-            onCommentChange={isReadOnly || isReviewMode ? undefined : setSubmissionComment}
           />
         );
       default:
