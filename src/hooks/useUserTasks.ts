@@ -845,6 +845,26 @@ export const useUserTasks = () => {
         },
         scheduleRefresh
       )
+      // Catch approval changes that affect task metadata (e.g. "Awaiting approval 1/2" → "Fully approved")
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'p2a_handover_approvers',
+        },
+        scheduleRefresh
+      )
+      // Catch ad-hoc review workflow changes
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'task_reviews',
+        },
+        scheduleRefresh
+      )
       .subscribe();
 
     return () => {
