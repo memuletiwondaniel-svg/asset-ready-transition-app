@@ -781,14 +781,17 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
               </label>
               <span className="text-[10px] text-muted-foreground ml-auto">(optional)</span>
             </div>
-            <textarea
-              placeholder="Add any context, instructions, or key decisions for the approval team..."
-              value={submissionComment}
-              onChange={(e) => setSubmissionComment(e.target.value.slice(0, 500))}
-              className="w-full min-h-[40px] max-h-[56px] rounded-md border border-input bg-background px-2.5 py-1.5 text-xs resize-none focus:outline-none focus:ring-2 focus:ring-inset focus:ring-ring"
-            />
-            <div className="flex justify-end mt-0.5">
-              <span className={cn("text-[10px] tabular-nums", submissionComment.length >= 500 ? "text-destructive" : "text-muted-foreground")}>
+            <div className="relative">
+              <textarea
+                placeholder="Add any context, instructions, or key decisions for the approval team..."
+                value={submissionComment}
+                onChange={(e) => setSubmissionComment(e.target.value.slice(0, 500))}
+                className="w-full min-h-[40px] max-h-[56px] rounded-md border border-input bg-background px-2.5 py-1.5 pr-14 text-xs resize-none focus:outline-none focus:ring-2 focus:ring-inset focus:ring-ring"
+              />
+              <span className={cn(
+                "absolute bottom-1.5 right-2.5 text-[10px] tabular-nums pointer-events-none",
+                submissionComment.length >= 500 ? "text-destructive" : "text-muted-foreground/60"
+              )}>
                 {submissionComment.length}/500
               </span>
             </div>
