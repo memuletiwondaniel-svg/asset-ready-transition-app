@@ -46,7 +46,7 @@ export const VCRCreationStep: React.FC<VCRCreationStepProps> = ({
 
   const generateVCRCode = (index: number) => {
     const cleanCode = projectCode.replace(/-/g, '');
-    return `VCR-${cleanCode}-${String(index + 1).padStart(3, '0')}`;
+    return `VCR-${cleanCode}-${String(index + 1).padStart(2, '0')}`;
   };
 
   const handleAddVCR = (vcr: WizardVCR) => {
