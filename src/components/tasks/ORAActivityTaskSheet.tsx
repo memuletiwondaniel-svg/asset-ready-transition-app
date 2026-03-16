@@ -255,6 +255,45 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
         ? 'Continue P2A Plan'
         : 'Start P2A Plan';
 
+  // ── VCR Plan status query (mirrors P2A pattern) ──
+  const { data: vcrPlanStatus } = useQuery({
+    queryKey: ['vcr-plan-status-sheet', metaVcrId],
+    queryFn: async () => {
+      if (!metaVcrId) return null;
+      const { data } = await (supabase as any)
+        .from('p2a_handover_points')
+        .select('id, execution_plan_status')
+        .eq('id', metaVcrId)
+        .maybeSingle();
+      return data?.execution_plan_status as string | null || 'DRAFT';
+    },
+    enabled: !!metaVcrId && isVCRActivity,
+    staleTime: 0,
+    refetchOnMount: 'always',
+  });
+
+  const vcrPlanIsApproved = vcrPlanStatus === 'APPROVED';
+  const vcrPlanIsSubmitted = vcrPlanStatus === 'SUBMITTED';
+  const vcrSheetCtaLabel = vcrPlanIsApproved
+    ? 'View VCR Plan'
+    : vcrPlanStatus && vcrPlanStatus !== 'DRAFT'
+      ? 'Continue VCR Plan'
+      : 'Develop VCR Plan';
+
+  const getVCRStatusBadge = () => {
+    if (!vcrPlanStatus) return null;
+    switch (vcrPlanStatus) {
+      case 'DRAFT':
+        return <Badge variant="outline" className="text-[10px] bg-slate-500/10 text-slate-600 border-slate-500/30">Draft</Badge>;
+      case 'SUBMITTED':
+        return <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-700 border-amber-500/30">Pending Approval</Badge>;
+      case 'APPROVED':
+        return <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-700 border-emerald-500/30">Approved</Badge>;
+      default:
+        return null;
+    }
+  };
+
   // Fetch ALL approver decisions (not just rejections) for the unified feed
   const { data: p2aApproverDecisions } = useQuery({
     queryKey: ['p2a-approver-decisions', existingP2APlan?.id],
