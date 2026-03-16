@@ -1295,6 +1295,49 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
     });
   }, [planId, filteredDeliverables, planData?.project_id, projectCode, existingP2APlan, getTaskEntryForDeliverable, getReconciledActivityState, user?.id]);
 
+  // Prev/next navigation for persistent detail panel
+  const leafRows = useMemo(() => visibleRows.filter(r => !r.hasChildren), [visibleRows]);
+  
+  const selectedActivityCode = useMemo(() => {
+    if (!selectedOraActivity) return null;
+    const meta = selectedOraActivity.metadata as Record<string, any> | undefined;
+    return meta?.activity_code || null;
+  }, [selectedOraActivity]);
+
+  const selectedLeafIndex = useMemo(() => {
+    if (!selectedActivityCode) return -1;
+    return leafRows.findIndex(r => r.activityCode === selectedActivityCode);
+  }, [leafRows, selectedActivityCode]);
+
+  const navigateToPrev = useCallback(() => {
+    if (selectedLeafIndex <= 0) return;
+    const prevRow = leafRows[selectedLeafIndex - 1];
+    if (prevRow) openActivitySheet(prevRow.deliverable);
+  }, [selectedLeafIndex, leafRows, openActivitySheet]);
+
+  const navigateToNext = useCallback(() => {
+    if (selectedLeafIndex < 0 || selectedLeafIndex >= leafRows.length - 1) return;
+    const nextRow = leafRows[selectedLeafIndex + 1];
+    if (nextRow) openActivitySheet(nextRow.deliverable);
+  }, [selectedLeafIndex, leafRows, openActivitySheet]);
+
+  // Auto-highlight activity from URL param
+  const highlightHandledRef = useRef(false);
+  useEffect(() => {
+    if (!highlightActivityCode || highlightHandledRef.current || visibleRows.length === 0) return;
+    const row = visibleRows.find(r => r.activityCode === highlightActivityCode);
+    if (row) {
+      highlightHandledRef.current = true;
+      // Ensure parent is expanded
+      const parentCode = getParentCode(highlightActivityCode);
+      if (parentCode && !expandedCodes.has(parentCode)) {
+        toggleExpand(parentCode);
+      }
+      // Open the activity sheet
+      setTimeout(() => openActivitySheet(row.deliverable), 300);
+    }
+  }, [highlightActivityCode, visibleRows, expandedCodes, toggleExpand, openActivitySheet]);
+
   // Mobile: render card-based timeline list instead of Gantt grid
   if (isMobile) {
     return (
