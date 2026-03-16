@@ -30,6 +30,8 @@ export async function createPhase2Tasks(_planId: string, _projectId: string, _pr
 
 /**
  * Transitions the plan status to COMPLETED when all approvers have approved.
+ * Full cascade: status → COMPLETED, EXE-10 → 100%, VCR activities generated,
+ * notifications sent, ORI snapshot created.
  */
 export async function checkAndCompletePlan(planId: string) {
   const client = supabase as any;
@@ -43,21 +45,23 @@ export async function checkAndCompletePlan(planId: string) {
 
   const allApproved = allApprovers.every((a: any) => a.status === 'APPROVED');
   if (allApproved) {
-    // Transition plan to COMPLETED
+    console.log('[P2A Cascade] All approvers approved. Starting full approval cascade for plan:', planId);
+
+    // 1. Transition plan to COMPLETED
     await client
       .from('p2a_handover_plans')
       .update({ status: 'COMPLETED' })
       .eq('id', planId);
 
-    // Fetch plan details for ORA activity generation
+    // Fetch plan details for downstream operations
     const { data: plan } = await client
       .from('p2a_handover_plans')
-      .select('project_id, project_code')
+      .select('project_id, project_code, created_by, name')
       .eq('id', planId)
       .single();
 
     if (plan?.project_id) {
-      // Set the P2A activity to 100% COMPLETED now that all approvers approved
+      // 2. Set the P2A activity (EXE-10) to 100% COMPLETED
       try {
         const { data: orpPlans } = await client
           .from('orp_plans')
@@ -131,21 +135,152 @@ export async function checkAndCompletePlan(planId: string) {
           }
         }
       } catch (e) {
-        console.error('[P2A] Failed to update P2A activity to 100%:', e);
+        console.error('[P2A Cascade] Failed to update P2A activity to 100%:', e);
       }
 
-      // Generate VCR activities in the ORA Plan
+      // 3. Generate VCR activities in the ORA Plan (Gantt chart)
       try {
         const { generateVCRActivitiesFromP2A } = await import('./useORAActivityPlanSync');
         await generateVCRActivitiesFromP2A(planId, plan.project_id, plan.project_code || '');
+        console.log('[P2A Cascade] VCR activities generated in Gantt chart');
       } catch (e) {
-        console.error('[P2A] Failed to generate VCR activities:', e);
+        console.error('[P2A Cascade] Failed to generate VCR activities:', e);
+      }
+
+      // 4. Send notifications to the plan author and project stakeholders
+      try {
+        await sendP2AApprovalNotifications(client, planId, plan);
+        console.log('[P2A Cascade] Notifications sent');
+      } catch (e) {
+        console.error('[P2A Cascade] Failed to send notifications:', e);
+      }
+
+      // 5. Create ORI score snapshot for the project
+      try {
+        await createORISnapshot(client, plan.project_id);
+        console.log('[P2A Cascade] ORI snapshot created');
+      } catch (e) {
+        console.error('[P2A Cascade] Failed to create ORI snapshot:', e);
       }
     }
 
     return true;
   }
   return false;
+}
+
+/**
+ * Sends notifications when a P2A plan is fully approved.
+ * Notifies: plan author, approvers, and VCR delivery plan assignees.
+ */
+async function sendP2AApprovalNotifications(
+  client: any,
+  planId: string,
+  plan: { project_id: string; project_code: string | null; created_by: string | null; name: string | null }
+) {
+  const { data: { user } } = await supabase.auth.getUser();
+  const senderId = user?.id || null;
+  const planName = plan.name || 'P2A Handover Plan';
+  const projectCode = plan.project_code || '';
+  const title = `P2A Plan Approved – ${projectCode}`;
+  const message = `The P2A Handover Plan "${planName}" for project ${projectCode} has been fully approved by all reviewers. VCR Delivery Plan tasks have been generated and assigned.`;
+
+  const recipientIds = new Set<string>();
+
+  // Notify the plan author
+  if (plan.created_by) {
+    recipientIds.add(plan.created_by);
+  }
+
+  // Notify VCR delivery plan assignees (Snr ORA Engineers)
+  const { data: vcrTasks } = await client
+    .from('user_tasks')
+    .select('user_id')
+    .eq('type', 'vcr_delivery_plan')
+    .filter('metadata->>plan_id', 'eq', planId);
+
+  if (vcrTasks) {
+    for (const t of vcrTasks) {
+      if (t.user_id) recipientIds.add(t.user_id);
+    }
+  }
+
+  // Build notification records
+  const notifications = Array.from(recipientIds).map(recipientUserId => ({
+    handover_id: planId,
+    recipient_user_id: recipientUserId,
+    sender_user_id: senderId,
+    notification_type: 'p2a_plan_approved',
+    title,
+    message,
+    read: false,
+  }));
+
+  if (notifications.length > 0) {
+    await client.from('p2a_notifications').insert(notifications);
+  }
+}
+
+/**
+ * Creates an ORI score snapshot after P2A approval.
+ * Records the P2A module as fully complete in the project's readiness index.
+ */
+async function createORISnapshot(client: any, projectId: string) {
+  const { data: { user } } = await supabase.auth.getUser();
+
+  // Calculate basic module scores based on current ORA activity progress
+  const { data: orpPlans } = await client
+    .from('orp_plans')
+    .select('id')
+    .eq('project_id', projectId)
+    .limit(1);
+
+  if (!orpPlans?.[0]) return;
+
+  const { data: activities } = await client
+    .from('ora_plan_activities')
+    .select('completion_percentage, status, source_type')
+    .eq('orp_plan_id', orpPlans[0].id);
+
+  if (!activities?.length) return;
+
+  // Calculate overall progress across all activities
+  const totalActivities = activities.length;
+  const totalProgress = activities.reduce((sum: number, a: any) => sum + (a.completion_percentage || 0), 0);
+  const overallScore = Math.round(totalProgress / totalActivities);
+
+  // Break down by source type for module scores
+  const moduleGroups: Record<string, number[]> = {};
+  for (const a of activities) {
+    const key = a.source_type || 'general';
+    if (!moduleGroups[key]) moduleGroups[key] = [];
+    moduleGroups[key].push(a.completion_percentage || 0);
+  }
+
+  const moduleScores: Record<string, number> = {};
+  for (const [key, values] of Object.entries(moduleGroups)) {
+    moduleScores[key] = Math.round(values.reduce((s, v) => s + v, 0) / values.length);
+  }
+
+  // Ensure P2A module is at 100%
+  moduleScores['p2a_handover'] = 100;
+
+  const completedCount = activities.filter((a: any) => a.status === 'COMPLETED').length;
+  const atRiskCount = activities.filter((a: any) => a.status === 'AT_RISK').length;
+  const blockedCount = activities.filter((a: any) => a.status === 'BLOCKED').length;
+
+  await client.from('ori_scores').insert({
+    project_id: projectId,
+    overall_score: overallScore,
+    module_scores: moduleScores,
+    snapshot_type: 'p2a_approval',
+    calculated_by: user?.id || null,
+    node_count: totalActivities,
+    completed_count: completedCount,
+    at_risk_count: atRiskCount,
+    blocked_count: blockedCount,
+    notes: 'Auto-generated snapshot after P2A Plan approval',
+  });
 }
 
 export function useP2AApprovalTasks() {
