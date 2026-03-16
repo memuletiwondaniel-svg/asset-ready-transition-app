@@ -73,6 +73,7 @@ export function useP2ARejectionContext(planId: string | undefined, planStatus: s
           comments: approverRow[0].comments,
           approved_at: approverRow[0].approved_at,
           rejector_name: null,
+          type: 'rejected' as const,
         };
       }
 
