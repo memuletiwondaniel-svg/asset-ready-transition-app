@@ -101,6 +101,12 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
   const [draggingAnchor, setDraggingAnchor] = useState<{ id: string; startX: number; startY: number; origAnchor: { x: number; y: number } } | null>(null);
   const [anchorOffset, setAnchorOffset] = useState<{ dx: number; dy: number }>({ dx: 0, dy: 0 });
 
+  // Inline text editing state
+  const [pendingTextBox, setPendingTextBox] = useState<{ x: number; y: number; w: number; h: number; anchor: { x: number; y: number } } | null>(null);
+  const [editingTextBoxId, setEditingTextBoxId] = useState<string | null>(null);
+  const textAreaRef = useRef<HTMLTextAreaElement>(null);
+  const editTextAreaRef = useRef<HTMLTextAreaElement>(null);
+
   // Clear optimistic positions when annotations update
   useEffect(() => {
     setOptimisticPositions({});
@@ -275,7 +281,7 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
       return;
     }
 
-    // Finish text box drawing
+    // Finish text box drawing — open inline editor instead of prompt
     if (textBoxDraw) {
       const x = Math.min(textBoxDraw.start.x, textBoxDraw.current.x);
       const y = Math.min(textBoxDraw.start.y, textBoxDraw.current.y);
@@ -284,21 +290,9 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
       setTextBoxDraw(null);
 
       if (w > 2 && h > 1) {
-        const content = prompt('Enter text:');
-        if (content) {
-          // Place box where drawn, anchor offset to the left so arrow protrudes
-          const anchorPt = { x: x - 5, y: y + h / 2 };
-          onCreateAnnotation({
-            annotation_type: 'text_box',
-            page_number: pageNumber,
-            position_data: {
-              x, y, width: w, height: h,
-              anchor: anchorPt,
-            },
-            content,
-            color: activeColor,
-          });
-        }
+        const anchorPt = { x: x - 5, y: y + h / 2 };
+        setPendingTextBox({ x, y, w, h, anchor: anchorPt });
+        setTimeout(() => textAreaRef.current?.focus(), 50);
       }
       return;
     }
@@ -604,18 +598,18 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
                 {anchor && (
                   <svg className="absolute inset-0 w-full h-full pointer-events-none z-[9]" viewBox="0 0 100 100" preserveAspectRatio="none">
                     <defs>
-                      <marker id={`arrowhead-${ann.id}`} markerWidth="6" markerHeight="4" refX="0" refY="2" orient="auto">
+                      <marker id={`arrowhead-${ann.id}`} markerWidth="6" markerHeight="4" refX="6" refY="2" orient="auto">
                         <polygon points="0 0, 6 2, 0 4" fill={ann.color} />
                       </marker>
                     </defs>
                     <line
-                      x1={anchor.x}
-                      y1={anchor.y}
-                      x2={boxX}
-                      y2={boxY + boxH / 2}
+                      x1={boxX}
+                      y1={boxY + boxH / 2}
+                      x2={anchor.x}
+                      y2={anchor.y}
                       stroke={ann.color}
                       strokeWidth="0.2"
-                      markerStart={`url(#arrowhead-${ann.id})`}
+                      markerEnd={`url(#arrowhead-${ann.id})`}
                     />
                   </svg>
                 )}
@@ -624,9 +618,9 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
                 {/* Text box */}
                 <div
                   className={cn(
-                    'absolute px-2 py-1 text-xs rounded border shadow-sm bg-card overflow-auto font-medium',
+                    'absolute px-2 py-1 text-xs rounded border shadow-sm bg-card overflow-hidden font-medium',
                     isSelected && 'ring-2 ring-primary',
-                    'cursor-grab',
+                    editingTextBoxId !== ann.id && 'cursor-grab',
                     isDragging && '!cursor-grabbing'
                   )}
                   style={{
@@ -637,10 +631,39 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
                     borderColor: ann.color,
                     color: ann.color,
                   }}
-                  onMouseDown={(e) => startDragAnnotation(e, ann)}
+                  onMouseDown={(e) => {
+                    if (editingTextBoxId === ann.id) { e.stopPropagation(); return; }
+                    startDragAnnotation(e, ann);
+                  }}
                   onClick={(e) => { e.stopPropagation(); if (!isDragging) onSelectAnnotation(isSelected ? null : ann); }}
+                  onDoubleClick={(e) => {
+                    e.stopPropagation();
+                    setEditingTextBoxId(ann.id);
+                    setTimeout(() => editTextAreaRef.current?.focus(), 50);
+                  }}
                 >
-                  {ann.content}
+                  {editingTextBoxId === ann.id ? (
+                    <textarea
+                      ref={editTextAreaRef}
+                      defaultValue={ann.content}
+                      className="w-full h-full bg-transparent border-none outline-none resize-none text-xs font-medium p-0 m-0"
+                      style={{ color: ann.color }}
+                      onBlur={(e) => {
+                        const val = e.currentTarget.value.trim();
+                        if (val && val !== ann.content) {
+                          onUpdateAnnotation({ id: ann.id, content: val });
+                        }
+                        setEditingTextBoxId(null);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Escape') { setEditingTextBoxId(null); }
+                        e.stopPropagation();
+                      }}
+                      onMouseDown={(e) => e.stopPropagation()}
+                    />
+                  ) : (
+                    ann.content || <span className="text-muted-foreground italic">Double-click to edit</span>
+                  )}
                 </div>
                 {/* Edge resize zones */}
                 {renderEdgeResizeZones(ann)}
@@ -768,7 +791,65 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
           </>
         )}
 
-        {/* Drawing preview */}
+        {/* Pending text box inline editor */}
+        {pendingTextBox && (
+          <>
+            <svg className="absolute inset-0 w-full h-full pointer-events-none z-[9]" viewBox="0 0 100 100" preserveAspectRatio="none">
+              <line
+                x1={pendingTextBox.x}
+                y1={pendingTextBox.y + pendingTextBox.h / 2}
+                x2={pendingTextBox.anchor.x}
+                y2={pendingTextBox.anchor.y}
+                stroke={activeColor}
+                strokeWidth="0.2"
+              />
+            </svg>
+            <div
+              className="absolute z-20 rounded border shadow-sm bg-card"
+              style={{
+                left: `${pendingTextBox.x}%`,
+                top: `${pendingTextBox.y}%`,
+                width: `${pendingTextBox.w}%`,
+                height: `${pendingTextBox.h}%`,
+                borderColor: activeColor,
+              }}
+              onMouseDown={(e) => e.stopPropagation()}
+            >
+              <textarea
+                ref={textAreaRef}
+                className="w-full h-full bg-transparent border-none outline-none resize-none text-xs font-medium p-1.5 m-0"
+                style={{ color: activeColor }}
+                placeholder="Type here..."
+                onBlur={(e) => {
+                  const val = e.currentTarget.value.trim();
+                  if (val) {
+                    onCreateAnnotation({
+                      annotation_type: 'text_box',
+                      page_number: pageNumber,
+                      position_data: {
+                        x: pendingTextBox.x, y: pendingTextBox.y,
+                        width: pendingTextBox.w, height: pendingTextBox.h,
+                        anchor: pendingTextBox.anchor,
+                      },
+                      content: val,
+                      color: activeColor,
+                    });
+                  }
+                  setPendingTextBox(null);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') { setPendingTextBox(null); }
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    e.currentTarget.blur();
+                  }
+                  e.stopPropagation();
+                }}
+              />
+            </div>
+          </>
+        )}
+
         {drawingPath && (
           <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none">
             <path d={drawingPath} fill="none" stroke={activeColor} strokeWidth="0.3" strokeLinecap="round" />
