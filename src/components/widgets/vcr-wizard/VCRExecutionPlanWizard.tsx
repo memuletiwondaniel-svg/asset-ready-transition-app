@@ -158,8 +158,8 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
       )}>
         <VisuallyHidden>
           <DialogHeader>
-            <DialogTitle>VCR Execution Plan Wizard</DialogTitle>
-            <DialogDescription>Configure the VCR execution plan step by step</DialogDescription>
+            <DialogTitle>VCR Plan Wizard</DialogTitle>
+            <DialogDescription>Configure the VCR plan step by step</DialogDescription>
           </DialogHeader>
         </VisuallyHidden>
 
