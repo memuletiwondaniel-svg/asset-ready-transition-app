@@ -1015,6 +1015,42 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                   <ChevronRight className="h-4 w-4 ml-auto" />
                 </Button>
               </div>
+            ) : isVCRActivity ? (
+              <div className="pt-2 space-y-3">
+                {/* VCR Plan Status Badge */}
+                {getVCRStatusBadge() && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">VCR Plan Status:</span>
+                    {getVCRStatusBadge()}
+                  </div>
+                )}
+
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {vcrPlanIsApproved
+                    ? `The VCR Plan for ${metaVcrName || 'this VCR'} has been approved. Click below to view the finalized plan.`
+                    : vcrPlanIsSubmitted
+                      ? `The VCR Plan for ${metaVcrName || 'this VCR'} has been submitted and is awaiting approval.`
+                      : `Configure the VCR Plan for ${metaVcrName || 'this VCR'}. Define training, procedures, critical documents, and other building blocks.`}
+                </p>
+                {vcrPlanIsSubmitted && (
+                  <p className="text-xs text-amber-600 bg-amber-500/10 border border-amber-500/20 rounded-md px-3 py-2">
+                    ⏳ The plan is under review. You can view the submitted plan but editing is disabled until the review is complete.
+                  </p>
+                )}
+                <Button
+                  className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
+                  onClick={() => {
+                    onOpenChange(false);
+                    if (onOpenVCRWizard && metaVcrId && projectId) {
+                      onOpenVCRWizard(metaVcrId, metaVcrCode || '', metaVcrName || '', projectId, projectCode || '');
+                    }
+                  }}
+                >
+                  <FileText className="h-4 w-4" />
+                  {vcrSheetCtaLabel}
+                  <ChevronRight className="h-4 w-4 ml-auto" />
+                </Button>
+              </div>
             ) : (
               <>
                 {/* Status Toggle */}
