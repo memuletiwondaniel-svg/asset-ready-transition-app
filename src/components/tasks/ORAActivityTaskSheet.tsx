@@ -670,6 +670,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
           .update({
             status: taskStatus,
             metadata: updatedMetadata,
+            due_date: editEndDate ? format(editEndDate, 'yyyy-MM-dd') : undefined,
             updated_at: new Date().toISOString(),
           })
           .eq('id', task.id);
@@ -700,6 +701,8 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
             .from('user_tasks')
             .update({
               status: taskStatus,
+              metadata: updatedMetadata,
+              due_date: editEndDate ? format(editEndDate, 'yyyy-MM-dd') : undefined,
               updated_at: new Date().toISOString(),
             })
             .filter('metadata->>ora_plan_activity_id', 'eq', realOraActivityId);
