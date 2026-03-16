@@ -971,22 +971,42 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
               </div>
             )}
 
-            {/* P2A Rejection feedback */}
-            {showP2aRejectionBanner && (
-              <div className="p-3 rounded-lg bg-destructive/5 border border-destructive/20 space-y-1">
-                <div className="flex items-center gap-2 text-xs font-medium text-destructive">
-                  <AlertTriangle className="h-3.5 w-3.5" />
-                  Plan rejected by {effectiveP2aRejection.role_name || 'approver'}
-                </div>
-                <p className="text-xs text-foreground/80 italic pl-5">
-                  "{effectiveP2aRejection.comments || 'No rejection comment was provided.'}"
-                </p>
-                {effectiveP2aRejection.approved_at && (
-                  <p className="text-[10px] text-muted-foreground pl-5">
-                    {format(new Date(effectiveP2aRejection.approved_at), 'MMM d, yyyy')}
+            {/* P2A Draft context — rejection or revert */}
+            {showP2aRejectionBanner && effectiveP2aRejection && (
+              effectiveP2aRejection.type === 'reverted' ? (
+                <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 space-y-1" style={{ borderLeft: '3px solid hsl(38, 92%, 50%)' }}>
+                  <div className="flex items-center gap-2 text-xs font-medium text-amber-700 dark:text-amber-300">
+                    <RotateCcw className="h-3.5 w-3.5" />
+                    Plan reverted to Draft by {effectiveP2aRejection.rejector_name || effectiveP2aRejection.role_name}
+                  </div>
+                  <p className="text-xs text-amber-700/80 dark:text-amber-300/70 italic pl-5">
+                    "{effectiveP2aRejection.comments}"
                   </p>
-                )}
-              </div>
+                  {effectiveP2aRejection.approved_at && (
+                    <p className="text-[10px] text-amber-600/70 dark:text-amber-400/60 pl-5">
+                      {format(new Date(effectiveP2aRejection.approved_at), 'MMM d, yyyy')}
+                    </p>
+                  )}
+                  <p className="text-[10px] text-amber-600/60 dark:text-amber-400/50 pl-5">
+                    You can continue editing and resubmit when ready.
+                  </p>
+                </div>
+              ) : (
+                <div className="p-3 rounded-lg bg-destructive/5 border border-destructive/20 space-y-1">
+                  <div className="flex items-center gap-2 text-xs font-medium text-destructive">
+                    <AlertTriangle className="h-3.5 w-3.5" />
+                    Plan rejected by {effectiveP2aRejection.role_name || 'approver'}
+                  </div>
+                  <p className="text-xs text-foreground/80 italic pl-5">
+                    "{effectiveP2aRejection.comments || 'No rejection comment was provided.'}"
+                  </p>
+                  {effectiveP2aRejection.approved_at && (
+                    <p className="text-[10px] text-muted-foreground pl-5">
+                      {format(new Date(effectiveP2aRejection.approved_at), 'MMM d, yyyy')}
+                    </p>
+                  )}
+                </div>
+              )
             )}
 
             {/* P2A Plan CTA */}
