@@ -857,6 +857,21 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                   Overdue
                 </Badge>
               )}
+              {/* Mini progress ring */}
+              <div className="ml-auto flex items-center gap-1.5">
+                <svg width="22" height="22" viewBox="0 0 22 22" className="shrink-0">
+                  <circle cx="11" cy="11" r="9" fill="none" stroke="hsl(var(--muted))" strokeWidth="2.5" />
+                  <circle
+                    cx="11" cy="11" r="9" fill="none"
+                    stroke={progressPct >= 100 ? 'hsl(var(--chart-2))' : 'hsl(var(--primary))'}
+                    strokeWidth="2.5"
+                    strokeDasharray={`${(progressPct / 100) * 56.5} 56.5`}
+                    strokeLinecap="round"
+                    transform="rotate(-90 11 11)"
+                  />
+                </svg>
+                <span className="text-[10px] font-semibold text-muted-foreground">{progressPct}%</span>
+              </div>
             </div>
             <SheetTitle className="sr-only">Activity Details</SheetTitle>
              <Input
