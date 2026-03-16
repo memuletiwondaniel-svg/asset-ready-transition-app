@@ -318,36 +318,6 @@ export const WorkspacePreviewStep: React.FC<WorkspacePreviewStepProps> = ({
           </>
         )}
 
-        {/* Notes for Approvers — full-width row above footer */}
-        {onCommentChange && (
-          <>
-            <Separator />
-            <section>
-              <div className="flex items-center gap-1.5 mb-2">
-                <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
-                <Label htmlFor="submission-comment" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Notes for Approvers
-                </Label>
-                <span className="text-[10px] text-muted-foreground ml-auto">(optional)</span>
-              </div>
-              <Textarea
-                id="submission-comment"
-                placeholder="Add any context, instructions, or key decisions for the approval team..."
-                value={submissionComment}
-                onChange={(e) => onCommentChange(e.target.value.slice(0, maxChars))}
-                className="min-h-[80px] text-xs resize-none"
-              />
-              <div className="flex justify-end mt-1">
-                <span className={cn(
-                  "text-[10px] tabular-nums",
-                  submissionComment.length >= maxChars ? "text-destructive" : "text-muted-foreground"
-                )}>
-                  {submissionComment.length}/{maxChars}
-                </span>
-              </div>
-            </section>
-          </>
-        )}
       </div>
     </div>
   );
