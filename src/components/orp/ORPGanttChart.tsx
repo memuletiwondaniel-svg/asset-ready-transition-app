@@ -36,6 +36,8 @@ interface ORPGanttChartProps {
   searchQuery?: string;
   hideToolbar?: boolean;
   readOnly?: boolean;
+  /** Activity code to auto-scroll to and highlight (from URL ?highlight param) */
+  highlightActivityCode?: string;
 }
 
 const ZOOM_LEVELS = [0.15, 0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4];
