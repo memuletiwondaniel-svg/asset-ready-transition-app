@@ -752,6 +752,11 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     }
   }, []);
 
+  const handleOpenVCRWizard = useCallback((vcrId: string, vcrCode: string, vcrName: string, _projectId: string, projectCode: string) => {
+    setVcrWizardTarget({ id: vcrId, vcr_code: vcrCode, name: vcrName, projectCode });
+    setShowVCRWizard(true);
+  }, []);
+
   // Approval void warning dialog state
   const [warningState, setWarningState] = useState<ApprovalWarningState | null>(null);
 
