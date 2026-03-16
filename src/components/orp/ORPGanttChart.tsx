@@ -981,6 +981,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
   const openActivitySheet = useCallback((deliverable: any) => {
     // Allow opening in view-only mode too (readOnly is enforced in the sheet)
     const actCode = deliverable.deliverable?.activity_code || '';
+    const normalizedActivityId = normalizeOraActivityId(deliverable.id) || normalizeOraActivityId(deliverable.deliverable?.id);
     
     // Special handling for P2A-01 activity: open overlay sheet (not wizard directly)
     // This ensures the user sees the contextual CTA (Start / Continue / View)
