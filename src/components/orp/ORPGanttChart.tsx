@@ -1355,13 +1355,16 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                           <span className="text-[10px] font-medium">{durationDays !== null ? `${durationDays}d` : '—'}</span>
                         </div>
                       )}
-                      {visibleColumns.has('status') && (
-                        <div className="px-1 flex items-center justify-center" style={{ width: COL_WIDTHS.status }}>
-                          <Badge variant="outline" className={cn("text-[9px] px-1.5 py-0 h-5", getStatusBadgeClasses(deliverable.status))}>
-                            {getStatusLabel(deliverable.status)}
-                          </Badge>
-                        </div>
-                      )}
+                      {visibleColumns.has('status') && (() => {
+                        const reconciled = getReconciledActivityState(deliverable.id, deliverable.status, deliverable.completion_percentage || 0);
+                        return (
+                          <div className="px-1 flex items-center justify-center" style={{ width: COL_WIDTHS.status }}>
+                            <Badge variant="outline" className={cn("text-[9px] px-1.5 py-0 h-5", getStatusBadgeClasses(reconciled.status))}>
+                              {getStatusLabel(reconciled.status)}
+                            </Badge>
+                          </div>
+                        );
+                      })()}
                     </div>
                   );
                 })}
