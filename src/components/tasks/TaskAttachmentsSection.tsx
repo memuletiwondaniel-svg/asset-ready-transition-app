@@ -97,7 +97,17 @@ export const TaskAttachmentsSection: React.FC<TaskAttachmentsSectionProps> = ({
     return (
       <div
         key={attachment.id}
-        className="group flex items-center gap-3 p-2.5 rounded-lg border border-border/60 bg-card hover:bg-accent/30 transition-colors"
+        className="group flex items-center gap-3 p-2.5 rounded-lg border border-border/60 bg-card hover:bg-accent/30 transition-colors cursor-pointer"
+        onClick={() => {
+          const url = getDownloadUrl(attachment.file_path);
+          setViewerAttachment({
+            id: attachment.id,
+            file_name: attachment.file_name,
+            file_path: attachment.file_path,
+            file_type: attachment.file_type,
+            file_url: url,
+          });
+        }}
       >
         <div className={cn('flex items-center justify-center w-9 h-9 rounded-lg shrink-0', iconColor)}>
           <Icon className="h-4 w-4" />
@@ -117,7 +127,26 @@ export const TaskAttachmentsSection: React.FC<TaskAttachmentsSectionProps> = ({
             variant="ghost"
             size="icon"
             className="h-7 w-7"
-            onClick={() => window.open(downloadUrl, '_blank')}
+            title="Open in viewer"
+            onClick={(e) => {
+              e.stopPropagation();
+              const url = getDownloadUrl(attachment.file_path);
+              setViewerAttachment({
+                id: attachment.id,
+                file_name: attachment.file_name,
+                file_path: attachment.file_path,
+                file_type: attachment.file_type,
+                file_url: url,
+              });
+            }}
+          >
+            <Eye className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={(e) => { e.stopPropagation(); window.open(downloadUrl, '_blank'); }}
           >
             <Download className="h-3.5 w-3.5" />
           </Button>
@@ -126,7 +155,7 @@ export const TaskAttachmentsSection: React.FC<TaskAttachmentsSectionProps> = ({
               variant="ghost"
               size="icon"
               className="h-7 w-7 text-destructive hover:text-destructive"
-              onClick={() => deleteAttachment(attachment)}
+              onClick={(e) => { e.stopPropagation(); deleteAttachment(attachment); }}
             >
               <Trash2 className="h-3.5 w-3.5" />
             </Button>
