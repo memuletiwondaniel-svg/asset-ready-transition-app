@@ -111,10 +111,15 @@ export const useAttachmentCollaboration = (attachmentId: string | null) => {
           .select('user_id, full_name, avatar_url')
           .in('user_id', userIds);
         const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
+        const resolveAvatar = (url: string | null | undefined) => {
+          if (!url) return null;
+          if (url.startsWith('http')) return url;
+          return supabase.storage.from('user-avatars').getPublicUrl(url).data.publicUrl;
+        };
         return (data || []).map((r: any) => ({
           ...r,
           user_name: profileMap.get(r.user_id)?.full_name || 'Unknown',
-          user_avatar: profileMap.get(r.user_id)?.avatar_url || null,
+          user_avatar: resolveAvatar(profileMap.get(r.user_id)?.avatar_url),
         }));
       }
       return data || [];
