@@ -2113,6 +2113,11 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
           setVcrWizardTarget({ id: vcrId, vcr_code: vcrCode, name: vcrName });
           setShowVCRWizard(true);
         }}
+        onNavigatePrev={navigateToPrev}
+        onNavigateNext={navigateToNext}
+        hasPrev={selectedLeafIndex > 0}
+        hasNext={selectedLeafIndex >= 0 && selectedLeafIndex < leafRows.length - 1}
+      />
       />
       {planData?.project_id && (
         <>
