@@ -804,6 +804,7 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
                     height: dims.h ? `${dims.h}%` : undefined,
                   }}
                   onMouseDown={(e) => startDragAnnotation(e, ann)}
+                  onTouchStart={(e) => startDragAnnotationTouch(e, ann)}
                   onClick={(e) => { e.stopPropagation(); if (!isDragging) onSelectAnnotation(isSelected ? null : ann); }}
                 >
                   <img
