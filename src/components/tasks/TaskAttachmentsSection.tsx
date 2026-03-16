@@ -1,9 +1,10 @@
 import React, { useRef, useState } from 'react';
-import { Paperclip, Upload, FileText, FileSpreadsheet, Image as ImageIcon, File, Trash2, Download, Loader2 } from 'lucide-react';
+import { Paperclip, Upload, FileText, FileSpreadsheet, Image as ImageIcon, File, Trash2, Download, Loader2, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useTaskAttachments, type TaskAttachment } from '@/hooks/useTaskAttachments';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
+import { DocumentViewerOverlay } from '@/components/document-collaboration/DocumentViewerOverlay';
 
 interface TaskAttachmentsSectionProps {
   taskId: string;
@@ -50,6 +51,13 @@ export const TaskAttachmentsSection: React.FC<TaskAttachmentsSectionProps> = ({
   const { user } = useAuth();
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [viewerAttachment, setViewerAttachment] = useState<{
+    id: string;
+    file_name: string;
+    file_path: string;
+    file_type: string | null;
+    file_url: string;
+  } | null>(null);
 
   const {
     attachments,
@@ -89,7 +97,17 @@ export const TaskAttachmentsSection: React.FC<TaskAttachmentsSectionProps> = ({
     return (
       <div
         key={attachment.id}
-        className="group flex items-center gap-3 p-2.5 rounded-lg border border-border/60 bg-card hover:bg-accent/30 transition-colors"
+        className="group flex items-center gap-3 p-2.5 rounded-lg border border-border/60 bg-card hover:bg-accent/30 transition-colors cursor-pointer"
+        onClick={() => {
+          const url = getDownloadUrl(attachment.file_path);
+          setViewerAttachment({
+            id: attachment.id,
+            file_name: attachment.file_name,
+            file_path: attachment.file_path,
+            file_type: attachment.file_type,
+            file_url: url,
+          });
+        }}
       >
         <div className={cn('flex items-center justify-center w-9 h-9 rounded-lg shrink-0', iconColor)}>
           <Icon className="h-4 w-4" />
@@ -109,7 +127,26 @@ export const TaskAttachmentsSection: React.FC<TaskAttachmentsSectionProps> = ({
             variant="ghost"
             size="icon"
             className="h-7 w-7"
-            onClick={() => window.open(downloadUrl, '_blank')}
+            title="Open in viewer"
+            onClick={(e) => {
+              e.stopPropagation();
+              const url = getDownloadUrl(attachment.file_path);
+              setViewerAttachment({
+                id: attachment.id,
+                file_name: attachment.file_name,
+                file_path: attachment.file_path,
+                file_type: attachment.file_type,
+                file_url: url,
+              });
+            }}
+          >
+            <Eye className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={(e) => { e.stopPropagation(); window.open(downloadUrl, '_blank'); }}
           >
             <Download className="h-3.5 w-3.5" />
           </Button>
@@ -118,7 +155,7 @@ export const TaskAttachmentsSection: React.FC<TaskAttachmentsSectionProps> = ({
               variant="ghost"
               size="icon"
               className="h-7 w-7 text-destructive hover:text-destructive"
-              onClick={() => deleteAttachment(attachment)}
+              onClick={(e) => { e.stopPropagation(); deleteAttachment(attachment); }}
             >
               <Trash2 className="h-3.5 w-3.5" />
             </Button>
@@ -217,6 +254,13 @@ export const TaskAttachmentsSection: React.FC<TaskAttachmentsSectionProps> = ({
           <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
         </div>
       )}
+
+      {/* Document Viewer Overlay */}
+      <DocumentViewerOverlay
+        attachment={viewerAttachment}
+        open={!!viewerAttachment}
+        onClose={() => setViewerAttachment(null)}
+      />
     </div>
   );
 };

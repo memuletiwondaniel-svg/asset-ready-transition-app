@@ -14,6 +14,38 @@ export type Database = {
   }
   public: {
     Tables: {
+      annotation_replies: {
+        Row: {
+          annotation_id: string
+          content: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          annotation_id: string
+          content: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          annotation_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "annotation_replies_annotation_id_fkey"
+            columns: ["annotation_id"]
+            isOneToOne: false
+            referencedRelation: "attachment_annotations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       api_keys: {
         Row: {
           allowed_ips: string[] | null
@@ -137,6 +169,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      attachment_annotations: {
+        Row: {
+          annotation_type: Database["public"]["Enums"]["annotation_type"]
+          attachment_id: string
+          color: string | null
+          content: string | null
+          created_at: string
+          id: string
+          page_number: number | null
+          position_data: Json
+          resolved: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          annotation_type: Database["public"]["Enums"]["annotation_type"]
+          attachment_id: string
+          color?: string | null
+          content?: string | null
+          created_at?: string
+          id?: string
+          page_number?: number | null
+          position_data?: Json
+          resolved?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          annotation_type?: Database["public"]["Enums"]["annotation_type"]
+          attachment_id?: string
+          color?: string | null
+          content?: string | null
+          created_at?: string
+          id?: string
+          page_number?: number | null
+          position_data?: Json
+          resolved?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       audit_logs: {
         Row: {
@@ -10180,6 +10254,12 @@ export type Database = {
       }
     }
     Enums: {
+      annotation_type:
+        | "highlight"
+        | "comment_pin"
+        | "text_box"
+        | "drawing"
+        | "stamp"
       app_permission:
         | "create_project"
         | "create_vcr"
@@ -10461,6 +10541,13 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      annotation_type: [
+        "highlight",
+        "comment_pin",
+        "text_box",
+        "drawing",
+        "stamp",
+      ],
       app_permission: [
         "create_project",
         "create_vcr",
