@@ -1045,33 +1045,48 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
       const rawProgress = deliverable.completion_percentage || 0;
       const cappedProgress = (existingP2APlan?.status === 'DRAFT' && rawProgress > 86) ? 86 : rawProgress;
 
-      setSelectedOraActivity({
-        id: taskEntry?.activityTask?.id || deliverable.id,
-        title: 'Develop P2A Plan',
+      const p2aMetadata = {
+        ...(taskEntry?.activityTask?.metadata || {}),
+        action: 'create_p2a_plan',
+        activity_name: deliverable.deliverable?.name,
+        activity_code: actCode,
         description: deliverable.deliverable?.description || '',
-        type: 'ora_activity',
-        status: existingP2APlan?.status === 'ACTIVE' || existingP2APlan?.status === 'COMPLETED'
-          ? 'completed'
-          : deliverable.status === 'COMPLETED' ? 'completed' : deliverable.status === 'IN_PROGRESS' ? 'in_progress' : 'pending',
-        metadata: {
-          action: 'create_p2a_plan',
-          activity_name: deliverable.deliverable?.name,
-          activity_code: actCode,
+        plan_id: planId,
+        project_id: planData?.project_id,
+        project_code: projectCode,
+        deliverable_id: deliverable.deliverable?.id || deliverable.id,
+        ora_plan_activity_id: resolvedActivityId || deliverable.deliverable?.id || deliverable.id,
+        start_date: deliverable.start_date,
+        end_date: deliverable.end_date,
+        completion_percentage: cappedProgress,
+        predecessor_ids: deliverable._predecessorIds || [],
+        sibling_activities: siblingActivities,
+      };
+
+      if (taskEntry?.activityTask) {
+        setSelectedOraActivity({
+          ...taskEntry.activityTask,
+          title: taskEntry.activityTask.title || 'Develop P2A Plan',
+          description: taskEntry.activityTask.description ?? deliverable.deliverable?.description ?? '',
+          status: taskEntry.activityTask.status || (existingP2APlan?.status === 'ACTIVE' || existingP2APlan?.status === 'COMPLETED'
+            ? 'completed'
+            : deliverable.status === 'COMPLETED' ? 'completed' : deliverable.status === 'IN_PROGRESS' ? 'in_progress' : 'pending'),
+          metadata: p2aMetadata,
+        });
+      } else {
+        setSelectedOraActivity({
+          id: deliverable.id,
+          title: 'Develop P2A Plan',
           description: deliverable.deliverable?.description || '',
-          plan_id: planId,
-          project_id: planData?.project_id,
-          project_code: projectCode,
-          deliverable_id: deliverable.deliverable?.id || deliverable.id,
-          ora_plan_activity_id: resolvedActivityId || deliverable.deliverable?.id || deliverable.id,
-          start_date: deliverable.start_date,
-          end_date: deliverable.end_date,
-          completion_percentage: cappedProgress,
-          predecessor_ids: deliverable._predecessorIds || [],
-          sibling_activities: siblingActivities,
-        },
-        priority: 'medium',
-        created_at: deliverable.created_at || new Date().toISOString(),
-      });
+          type: 'ora_activity',
+          status: existingP2APlan?.status === 'ACTIVE' || existingP2APlan?.status === 'COMPLETED'
+            ? 'completed'
+            : deliverable.status === 'COMPLETED' ? 'completed' : deliverable.status === 'IN_PROGRESS' ? 'in_progress' : 'pending',
+          metadata: p2aMetadata,
+          priority: 'medium',
+          created_at: deliverable.created_at || new Date().toISOString(),
+        });
+      }
       return;
     }
 
@@ -1086,35 +1101,48 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
           name: d.deliverable?.name,
         }));
 
-      setSelectedOraActivity({
-        id: taskEntry?.activityTask?.id || deliverable.id,
-        title: deliverable.deliverable?.name || '',
+      const vcrMetadata = {
+        ...(taskEntry?.activityTask?.metadata || {}),
+        action: 'create_vcr_delivery_plan',
+        activity_name: deliverable.deliverable?.name,
+        activity_code: actCode,
         description: deliverable.deliverable?.description || '',
-        type: 'ora_activity',
-        status: deliverable.status === 'COMPLETED' ? 'completed' : deliverable.status === 'IN_PROGRESS' ? 'in_progress' : 'pending',
-        metadata: {
-          action: 'create_vcr_delivery_plan',
-          activity_name: deliverable.deliverable?.name,
-          activity_code: actCode,
+        plan_id: planId,
+        project_id: planData?.project_id,
+        project_code: projectCode,
+        deliverable_id: deliverable.deliverable?.id || deliverable.id,
+        ora_plan_activity_id: resolvedActivityId || deliverable.deliverable?.id || deliverable.id,
+        vcr_id: deliverable.deliverable?.source_ref_id,
+        vcr_code: deliverable.deliverable?.source_ref_id,
+        vcr_name: deliverable.deliverable?.name?.replace(/^Develop VCR-\d+ Plan\s*[–-]\s*/, '') || '',
+        vcr_seq_code: actCode,
+        start_date: deliverable.start_date,
+        end_date: deliverable.end_date,
+        completion_percentage: deliverable.completion_percentage || 0,
+        predecessor_ids: deliverable._predecessorIds || [],
+        sibling_activities: siblingActivities,
+      };
+
+      if (taskEntry?.activityTask) {
+        setSelectedOraActivity({
+          ...taskEntry.activityTask,
+          title: taskEntry.activityTask.title || deliverable.deliverable?.name || '',
+          description: taskEntry.activityTask.description ?? deliverable.deliverable?.description ?? '',
+          status: taskEntry.activityTask.status || (deliverable.status === 'COMPLETED' ? 'completed' : deliverable.status === 'IN_PROGRESS' ? 'in_progress' : 'pending'),
+          metadata: vcrMetadata,
+        });
+      } else {
+        setSelectedOraActivity({
+          id: deliverable.id,
+          title: deliverable.deliverable?.name || '',
           description: deliverable.deliverable?.description || '',
-          plan_id: planId,
-          project_id: planData?.project_id,
-          project_code: projectCode,
-          deliverable_id: deliverable.deliverable?.id || deliverable.id,
-          ora_plan_activity_id: resolvedActivityId || deliverable.deliverable?.id || deliverable.id,
-          vcr_id: deliverable.deliverable?.source_ref_id,
-          vcr_code: deliverable.deliverable?.source_ref_id, // will be resolved via metadata
-          vcr_name: deliverable.deliverable?.name?.replace(/^Develop VCR-\d+ Plan\s*[–-]\s*/, '') || '',
-          vcr_seq_code: actCode,
-          start_date: deliverable.start_date,
-          end_date: deliverable.end_date,
-          completion_percentage: deliverable.completion_percentage || 0,
-          predecessor_ids: deliverable._predecessorIds || [],
-          sibling_activities: siblingActivities,
-        },
-        priority: 'medium',
-        created_at: deliverable.created_at || new Date().toISOString(),
-      });
+          type: 'ora_activity',
+          status: deliverable.status === 'COMPLETED' ? 'completed' : deliverable.status === 'IN_PROGRESS' ? 'in_progress' : 'pending',
+          metadata: vcrMetadata,
+          priority: 'medium',
+          created_at: deliverable.created_at || new Date().toISOString(),
+        });
+      }
       return;
     }
 
