@@ -1114,9 +1114,9 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                           disabled={isReadOnly}
                           className={cn(
                             "flex-1 flex items-center justify-center gap-1 sm:gap-1.5 py-3 sm:py-2 px-2 sm:px-3 rounded-md text-xs sm:text-xs font-medium transition-all whitespace-nowrap touch-manipulation",
-                            isActive && step.value === 'NOT_STARTED' && "bg-gray-200 text-gray-700 shadow-sm",
-                            isActive && step.value === 'IN_PROGRESS' && "bg-amber-500 text-white shadow-sm",
-                            isActive && step.value === 'COMPLETED' && "bg-green-500 text-white shadow-sm",
+                            isActive && step.value === 'NOT_STARTED' && "bg-slate-200 text-slate-700 shadow-sm dark:bg-slate-700 dark:text-slate-200",
+                            isActive && step.value === 'IN_PROGRESS' && "bg-amber-500 text-white shadow-sm dark:bg-amber-600",
+                            isActive && step.value === 'COMPLETED' && "bg-emerald-500 text-white shadow-sm dark:bg-emerald-600",
                             !isActive && "text-muted-foreground hover:text-foreground hover:bg-background/50"
                           )}
                         >
