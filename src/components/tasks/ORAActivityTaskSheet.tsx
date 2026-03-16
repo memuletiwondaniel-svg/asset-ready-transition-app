@@ -998,6 +998,25 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                       day_today: "bg-muted text-muted-foreground font-medium",
                     }}
                   />
+                  {/* Smart date shortcuts */}
+                  <div className="flex flex-wrap gap-1.5 mt-2 px-1">
+                    {[
+                      { label: 'Today', fn: () => { setEditStartDate(new Date()); } },
+                      { label: '+1w', fn: () => { if (editStartDate) setEditEndDate(addDays(editStartDate, 7)); } },
+                      { label: '+2w', fn: () => { if (editStartDate) setEditEndDate(addDays(editStartDate, 14)); } },
+                      { label: '+1m', fn: () => { if (editStartDate) setEditEndDate(addDays(editStartDate, 30)); } },
+                      { label: '+3m', fn: () => { if (editStartDate) setEditEndDate(addDays(editStartDate, 90)); } },
+                    ].map((shortcut) => (
+                      <button
+                        key={shortcut.label}
+                        type="button"
+                        onClick={shortcut.fn}
+                        className="text-[10px] font-medium px-2 py-1 rounded-md bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                      >
+                        {shortcut.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
