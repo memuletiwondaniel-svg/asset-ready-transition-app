@@ -821,7 +821,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
       return sortDirection === 'asc' ? cmp : -cmp;
     });
     return sorted;
-  }, [unsortedRows, sortColumn, sortDirection]);
+  }, [unsortedRows, sortColumn, sortDirection, getReconciledActivityState]);
 
   const toggleExpand = (code: string) => {
     setExpandedCodes(prev => {
