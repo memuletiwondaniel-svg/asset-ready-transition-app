@@ -581,33 +581,44 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
     staleTime: 30_000,
   });
 
-  // Helper: reconcile status/progress for activities under ad-hoc review
-  const getReconciledActivityState = useCallback((deliverableId: string, rawStatus: string, rawCompletion: number) => {
-    const normalizedActivityId = normalizeOraActivityId(deliverableId);
-    const taskEntry = normalizedActivityId ? activityTaskMap?.[normalizedActivityId] : undefined;
-    if (!taskEntry) return { status: rawStatus, completion: rawCompletion };
-
-    // If current user has a pending review task for this activity, force under-review state
-    const reviewTaskStatus = taskEntry.reviewTask?.status?.toLowerCase();
-    if (reviewTaskStatus && reviewTaskStatus !== 'completed') {
-      if (rawStatus === 'COMPLETED' || rawCompletion >= 100) {
-        return { status: 'IN_PROGRESS', completion: 95 };
+  const getTaskEntryForDeliverable = useCallback((deliverable: any) => {
+    const candidates = getDeliverableActivityCandidates(deliverable);
+    for (const candidate of candidates) {
+      const entry = activityTaskMap?.[candidate];
+      if (entry) {
+        return { activityId: candidate, taskEntry: entry };
       }
     }
+    return { activityId: candidates[0] || '', taskEntry: undefined as ActivityTaskMapEntry | undefined };
+  }, [activityTaskMap]);
+
+  // Helper: reconcile status/progress for activities under ad-hoc review
+  const getReconciledActivityState = useCallback((deliverable: any) => {
+    const rawStatus = deliverable?.status || 'NOT_STARTED';
+    const rawCompletion = deliverable?.completion_percentage || 0;
+
+    const { taskEntry } = getTaskEntryForDeliverable(deliverable);
+    if (!taskEntry) return { status: rawStatus, completion: rawCompletion };
 
     const reviewState = taskEntry.taskId ? pendingReviewerMap?.[taskEntry.taskId] : undefined;
-    if (!reviewState || reviewState.total === 0) return { status: rawStatus, completion: rawCompletion };
+    const reviewTaskStatus = taskEntry.reviewTask?.status?.toLowerCase();
+    const sourceTaskStatus = (taskEntry.activityTask?.status || taskEntry.taskStatus || '').toLowerCase();
 
-    if (reviewState.approved === reviewState.total) {
+    const hasReviewWorkflow = !!taskEntry.reviewTask || !!(reviewState && reviewState.total > 0);
+    const hasPendingApprovals = (reviewState?.pending || 0) > 0 || (reviewTaskStatus === 'pending' || reviewTaskStatus === 'waiting');
+    const allApproved = !!reviewState && reviewState.total > 0 && reviewState.approved === reviewState.total;
+    const submittedForApproval = sourceTaskStatus === 'completed' || rawStatus === 'COMPLETED' || rawCompletion >= 100;
+
+    if (allApproved) {
       return { status: 'COMPLETED', completion: 100 };
     }
 
-    if (rawStatus === 'COMPLETED' || rawCompletion >= 100) {
+    if (hasReviewWorkflow && hasPendingApprovals && submittedForApproval) {
       return { status: 'IN_PROGRESS', completion: 95 };
     }
 
     return { status: rawStatus, completion: rawCompletion };
-  }, [activityTaskMap, pendingReviewerMap]);
+  }, [getTaskEntryForDeliverable, pendingReviewerMap]);
 
   const projectCode = planData?.project
     ? `${planData.project.project_id_prefix || ''}-${planData.project.project_id_number || ''}`
