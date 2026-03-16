@@ -806,9 +806,9 @@ export const useUserTasks = () => {
     queryKey: ['user-tasks', user?.id],
     queryFn: () => fetchUserTasks(user!.id),
     enabled: !!user?.id,
-    staleTime: 2 * 60 * 1000, // 2 minutes cache
-    refetchOnWindowFocus: false,
-    refetchInterval: user?.id ? 30000 : false, // Polling fallback if realtime misses events
+    staleTime: 30 * 1000, // 30 seconds — fresher data on tab refocus
+    refetchOnWindowFocus: true, // Modern UX: update when user returns to tab
+    refetchInterval: user?.id ? 15000 : false, // 15s polling fallback
     refetchIntervalInBackground: false,
     placeholderData: keepPreviousData,
   });
