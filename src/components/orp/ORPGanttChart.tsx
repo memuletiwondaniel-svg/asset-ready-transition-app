@@ -1506,7 +1506,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                         </div>
                       )}
                       {visibleColumns.has('status') && (() => {
-                        const reconciled = getReconciledActivityState(deliverable.id, deliverable.status, deliverable.completion_percentage || 0);
+                        const reconciled = getReconciledActivityState(deliverable);
                         return (
                           <div className="px-1 flex items-center justify-center" style={{ width: COL_WIDTHS.status }}>
                             <Badge variant="outline" className={cn("text-[9px] px-1.5 py-0 h-5", getStatusBadgeClasses(reconciled.status))}>
