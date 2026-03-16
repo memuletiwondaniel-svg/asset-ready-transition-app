@@ -50,9 +50,9 @@ const dp385ProjectData = {
     { id: '5', name: 'Pre-Startup Safety Review (PSSR)', dateRange: 'Mar 1 - Mar 15', progress: 15, status: 'in_progress' },
   ],
   vcrsAndPssrs: [
-    { id: 'VCR-001', name: 'Utility System Handover', type: 'vcr', status: 'in_progress', progress: 75 },
-    { id: 'VCR-002', name: 'OT2 to CS7 Pipeline', type: 'vcr', status: 'in_progress', progress: 45 },
-    { id: 'VCR-003', name: 'OT3 to CS6 Pipeline', type: 'vcr', status: 'pending', progress: 20 },
+    { id: 'VCR-01', name: 'Utility System Handover', type: 'vcr', status: 'in_progress', progress: 75 },
+    { id: 'VCR-02', name: 'OT2 to CS7 Pipeline', type: 'vcr', status: 'in_progress', progress: 45 },
+    { id: 'VCR-03', name: 'OT3 to CS6 Pipeline', type: 'vcr', status: 'pending', progress: 20 },
     { id: 'PSSR-002', name: 'OT2 to CS7 Pipeline Start-up', type: 'pssr', status: 'pending', progress: 0 },
     { id: 'PSSR-003', name: 'OT3 to CS6 Pipeline Start-up', type: 'pssr', status: 'pending', progress: 0 },
   ],
