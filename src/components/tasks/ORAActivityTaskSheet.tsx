@@ -1176,9 +1176,11 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
             </div>
               </>
             )}
+          </div>
+            </TabsContent>
 
-            <Separator />
-
+            <TabsContent value="deps" className="mt-3">
+            <div className="space-y-5">
             {/* Prerequisites */}
             <div>
               <p className="text-sm font-medium mb-2 flex items-center gap-1.5 text-muted-foreground">
