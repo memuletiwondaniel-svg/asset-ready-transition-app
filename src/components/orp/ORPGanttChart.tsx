@@ -1001,10 +1001,48 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
     }
   }, [queryClient, planId]);
 
-  const { draggingId, previewLeft, previewWidth, handleMouseDown, wasDragging } = useGanttBarResize({
+  // Undo state for drag operations
+  const undoRef = useRef<{ activityId: string; oldStart: string; oldEnd: string } | null>(null);
+  const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleBarResizeWithUndo = useCallback(async (activityId: string, newStart: Date, newEnd: Date) => {
+    // Find original dates before the drag
+    const original = deliverables.find((d: any) => d.id === activityId);
+    if (original?.start_date && original?.end_date) {
+      undoRef.current = { activityId, oldStart: original.start_date, oldEnd: original.end_date };
+      // Clear any existing undo timer
+      if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+      // Show undo toast
+      toast({
+        title: 'Dates updated',
+        description: `${format(newStart, 'MMM d')} → ${format(newEnd, 'MMM d')}`,
+        action: (
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 text-xs gap-1"
+            onClick={() => {
+              const u = undoRef.current;
+              if (u) {
+                handleBarResize(u.activityId, parseISO(u.oldStart), parseISO(u.oldEnd));
+                undoRef.current = null;
+              }
+            }}
+          >
+            Undo
+          </Button>
+        ),
+      });
+      // Auto-clear undo after 8s
+      undoTimerRef.current = setTimeout(() => { undoRef.current = null; }, 8000);
+    }
+    await handleBarResize(activityId, newStart, newEnd);
+  }, [handleBarResize, deliverables, toast]);
+
+  const { draggingId, previewLeft, previewWidth, handleMouseDown, wasDragging, dragDatePreview } = useGanttBarResize({
     minDate,
     dayWidth,
-    onResize: handleBarResize,
+    onResize: handleBarResizeWithUndo,
   });
 
   const handleZoomIn = useCallback(() => {
