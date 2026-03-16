@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   MousePointer2, Highlighter, MessageCircle, Type,
-  Pencil, Stamp, ZoomIn, ZoomOut, RotateCcw
+  Pencil, Stamp, PenTool, ZoomIn, ZoomOut, RotateCcw
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { AnnotationType } from '@/hooks/useAttachmentCollaboration';
