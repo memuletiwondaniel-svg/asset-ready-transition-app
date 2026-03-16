@@ -131,8 +131,19 @@ function normalizeOraActivityId(value: string | null | undefined): string {
   return String(value).replace(/^(ora-|ws-)/, '');
 }
 
+function getDeliverableActivityCandidates(deliverable: any): string[] {
+  const candidates = [
+    normalizeOraActivityId(deliverable?.deliverable?.id),
+    normalizeOraActivityId(deliverable?.id),
+    normalizeOraActivityId(deliverable?.metadata?.ora_plan_activity_id),
+  ].filter(Boolean);
+
+  return [...new Set(candidates)];
+}
+
 type GanttTaskLike = {
   id: string;
+  user_id?: string | null;
   title: string;
   description: string | null;
   due_date: string | null;
