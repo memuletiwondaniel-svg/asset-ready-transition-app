@@ -861,6 +861,29 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
             </div>
           )}
           {/* Header */}
+          {(hasPrev || hasNext) && (
+            <div className="flex items-center gap-1 mb-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                disabled={!hasPrev}
+                onClick={(e) => { e.stopPropagation(); onNavigatePrev?.(); }}
+              >
+                <ChevronUp className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                disabled={!hasNext}
+                onClick={(e) => { e.stopPropagation(); onNavigateNext?.(); }}
+              >
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+              <span className="text-[10px] text-muted-foreground ml-1">Navigate activities</span>
+            </div>
+          )}
           <SheetHeader className="pb-2">
             <div className="flex items-center gap-2 flex-wrap">
               {activityCode && (
