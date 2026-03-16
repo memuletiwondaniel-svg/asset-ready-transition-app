@@ -86,9 +86,9 @@ const defaultProjectData = {
     { id: '5', name: 'Pre-Startup Safety Review (PSSR)', dateRange: 'Mar 1 - Mar 20', progress: 10, status: 'in_progress' },
   ],
   vcrsAndPssrs: [
-    { id: 'VCR-001', name: 'Compressor Package A', type: 'vcr', status: 'in_progress', progress: 65 },
-    { id: 'VCR-002', name: 'Compressor Package B', type: 'vcr', status: 'in_progress', progress: 40 },
-    { id: 'VCR-003', name: 'Utilities & Interconnects', type: 'vcr', status: 'pending', progress: 15 },
+    { id: 'VCR-01', name: 'Compressor Package A', type: 'vcr', status: 'in_progress', progress: 65 },
+    { id: 'VCR-02', name: 'Compressor Package B', type: 'vcr', status: 'in_progress', progress: 40 },
+    { id: 'VCR-03', name: 'Utilities & Interconnects', type: 'vcr', status: 'pending', progress: 15 },
     { id: 'PSSR-001', name: 'HM Compressors Start-up', type: 'pssr', status: 'in_progress', progress: 25 },
   ],
   pssrSummary: {
