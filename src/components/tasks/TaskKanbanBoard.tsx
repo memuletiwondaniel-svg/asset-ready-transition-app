@@ -359,7 +359,7 @@ const KanbanCardContent: React.FC<{
                       ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
                       : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
                   )}>
-                    {allApproved ? `Approved · ${totalApprovers}/${totalApprovers}` : `Awaiting Approval · ${approvedCount || 0}/${totalApprovers}`}
+                    {allApproved ? 'Approved' : `Awaiting Approval · ${approvedCount || 0}/${totalApprovers}`}
                   </span>
                 );
               }
@@ -403,7 +403,7 @@ const KanbanCardContent: React.FC<{
                           ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
                           : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
                       )}>
-                        {allDone ? `Approved · ${authorApproval.total}/${authorApproval.total}` : `Awaiting Approval · ${authorApproval.approved}/${authorApproval.total}`}
+                        {allDone ? 'Approved' : `Awaiting Approval · ${authorApproval.approved}/${authorApproval.total}`}
                       </span>
                     );
                   }
@@ -446,7 +446,7 @@ const KanbanCardContent: React.FC<{
                       ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
                       : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
                   )}>
-                    {allApproved ? `Approved · ${reviewerData.total}/${reviewerData.total}` : `Awaiting Approval · ${reviewerData.approved}/${reviewerData.total}`}
+                    {allApproved ? 'Approved' : `Awaiting Approval · ${reviewerData.approved}/${reviewerData.total}`}
                   </span>
                 );
               }
