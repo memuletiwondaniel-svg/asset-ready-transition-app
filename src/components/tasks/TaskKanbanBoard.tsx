@@ -12,6 +12,7 @@ import { TaskDetailSheet } from './TaskDetailSheet';
 import { ORAActivityTaskSheet } from './ORAActivityTaskSheet';
 import { P2APlanCreationWizard } from '@/components/widgets/p2a-wizard/P2APlanCreationWizard';
 import { P2AWorkspaceOverlay } from '@/components/widgets/P2AWorkspaceOverlay';
+import { VCRExecutionPlanWizard } from '@/components/widgets/vcr-wizard/VCRExecutionPlanWizard';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -739,6 +740,8 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
   const [p2aWizardOpen, setP2aWizardOpen] = useState(false);
   const [p2aWorkspaceOpen, setP2aWorkspaceOpen] = useState(false);
   const [p2aTarget, setP2aTarget] = useState({ projectId: '', projectCode: '' });
+  const [showVCRWizard, setShowVCRWizard] = useState(false);
+  const [vcrWizardTarget, setVcrWizardTarget] = useState<{ id: string; vcr_code: string; name: string; projectCode: string } | null>(null);
 
   const handleOpenP2AWizard = useCallback((projectId: string, projectCode: string, openWorkspace?: boolean) => {
     setP2aTarget({ projectId, projectCode });
@@ -747,6 +750,11 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     } else {
       setP2aWizardOpen(true);
     }
+  }, []);
+
+  const handleOpenVCRWizard = useCallback((vcrId: string, vcrCode: string, vcrName: string, _projectId: string, projectCode: string) => {
+    setVcrWizardTarget({ id: vcrId, vcr_code: vcrCode, name: vcrName, projectCode });
+    setShowVCRWizard(true);
   }, []);
 
   // Approval void warning dialog state
@@ -761,7 +769,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     if (task.userTask) {
       const meta = task.userTask.metadata as Record<string, any> | undefined;
       const isReviewTask = meta?.source === 'task_review';
-      const isOraActivity = !isReviewTask && (task.userTask.type === 'ora_activity' || meta?.action === 'complete_ora_activity' || meta?.action === 'create_p2a_plan' || meta?.ora_plan_activity_id);
+      const isOraActivity = !isReviewTask && (task.userTask.type === 'ora_activity' || meta?.action === 'complete_ora_activity' || meta?.action === 'create_p2a_plan' || meta?.action === 'create_vcr_delivery_plan' || meta?.ora_plan_activity_id);
 
       // Review tasks always open TaskDetailSheet (never ORA overlay)
       if (isReviewTask) {
@@ -1026,6 +1034,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
         }}
         initialStatusOverride={oraActivityDragComplete ? "COMPLETED" : undefined}
         onOpenP2AWizard={handleOpenP2AWizard}
+        onOpenVCRWizard={handleOpenVCRWizard}
       />
 
       {/* P2A Wizard/Workspace rendered at parent level to survive sheet close */}
@@ -1056,7 +1065,31 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
         }}
       />
 
-      {/* Warning dialog for reverting approval-protected tasks */}
+      {/* VCR Wizard */}
+      {vcrWizardTarget && (
+        <VCRExecutionPlanWizard
+          open={showVCRWizard}
+          onOpenChange={(open) => {
+            setShowVCRWizard(open);
+            if (!open) setVcrWizardTarget(null);
+          }}
+          vcr={{
+            id: vcrWizardTarget.id,
+            vcr_code: vcrWizardTarget.vcr_code,
+            name: vcrWizardTarget.name,
+            description: null,
+            status: 'IN_PROGRESS',
+            target_date: null,
+            created_at: '',
+            progress: 0,
+            systems_count: 0,
+            has_hydrocarbon: false,
+          }}
+          projectCode={vcrWizardTarget.projectCode}
+        />
+      )}
+
+
       <ApprovalVoidWarningDialog
         open={!!warningState}
         task={warningState?.task || null}

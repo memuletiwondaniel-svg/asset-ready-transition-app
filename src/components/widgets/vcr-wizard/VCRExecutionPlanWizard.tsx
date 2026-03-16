@@ -158,8 +158,8 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
       )}>
         <VisuallyHidden>
           <DialogHeader>
-            <DialogTitle>VCR Execution Plan Wizard</DialogTitle>
-            <DialogDescription>Configure the VCR execution plan step by step</DialogDescription>
+            <DialogTitle>VCR Plan Wizard</DialogTitle>
+            <DialogDescription>Configure the VCR plan step by step</DialogDescription>
           </DialogHeader>
         </VisuallyHidden>
 
@@ -229,7 +229,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
                   )}
                   <h3 className="text-sm font-semibold truncate">{vcr.name}</h3>
                 </div>
-                <p className="text-[10px] text-muted-foreground mt-0.5">Setup VCR Delivery Plan</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">Develop VCR Plan</p>
               </div>
 
               <div className="flex-1 space-y-1">

@@ -16,6 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ORAActivityTaskSheet } from '@/components/tasks/ORAActivityTaskSheet';
 import { P2APlanCreationWizard } from '@/components/widgets/p2a-wizard/P2APlanCreationWizard';
 import { P2AWorkspaceOverlay } from '@/components/widgets/P2AWorkspaceOverlay';
+import { VCRExecutionPlanWizard } from '@/components/widgets/vcr-wizard/VCRExecutionPlanWizard';
 import { getStatusLabel, getStatusBadgeClasses } from './utils/statusStyles';
 import { cn } from '@/lib/utils';
 import { useGanttBarResize } from '@/hooks/useGanttBarResize';
@@ -281,6 +282,8 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
   const [showCatalogDialog, setShowCatalogDialog] = useState(false);
   const [showP2AWizard, setShowP2AWizard] = useState(false);
   const [showP2AWorkspace, setShowP2AWorkspace] = useState(false);
+  const [showVCRWizard, setShowVCRWizard] = useState(false);
+  const [vcrWizardTarget, setVcrWizardTarget] = useState<{ id: string; vcr_code: string; name: string } | null>(null);
   
   const { toast } = useToast();
   
@@ -880,6 +883,49 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
           start_date: deliverable.start_date,
           end_date: deliverable.end_date,
           completion_percentage: cappedProgress,
+          predecessor_ids: deliverable._predecessorIds || [],
+          sibling_activities: siblingActivities,
+        },
+        priority: 'medium',
+        created_at: deliverable.created_at || new Date().toISOString(),
+      });
+      return;
+    }
+
+    // Special handling for VCR activities: open overlay sheet with VCR context
+    const isVcrActivity = actCode.startsWith('VCR-') || deliverable.deliverable?.source_type === 'vcr_delivery_plan';
+    if (isVcrActivity) {
+      const siblingActivities = filteredDeliverables
+        .filter(d => d.deliverable?.activity_code && d.id !== deliverable.id)
+        .map(d => ({
+          id: d.id,
+          activity_code: d.deliverable?.activity_code,
+          name: d.deliverable?.name,
+        }));
+
+      setSelectedOraActivity({
+        id: deliverable.id,
+        title: deliverable.deliverable?.name || '',
+        description: deliverable.deliverable?.description || '',
+        type: 'ora_activity',
+        status: deliverable.status === 'COMPLETED' ? 'completed' : deliverable.status === 'IN_PROGRESS' ? 'in_progress' : 'pending',
+        metadata: {
+          action: 'create_vcr_delivery_plan',
+          activity_name: deliverable.deliverable?.name,
+          activity_code: actCode,
+          description: deliverable.deliverable?.description || '',
+          plan_id: planId,
+          project_id: planData?.project_id,
+          project_code: projectCode,
+          deliverable_id: deliverable.deliverable?.id || deliverable.id,
+          ora_plan_activity_id: deliverable.id,
+          vcr_id: deliverable.deliverable?.source_ref_id,
+          vcr_code: deliverable.deliverable?.source_ref_id, // will be resolved via metadata
+          vcr_name: deliverable.deliverable?.name?.replace(/^Develop VCR-\d+ Plan\s*[–-]\s*/, '') || '',
+          vcr_seq_code: actCode,
+          start_date: deliverable.start_date,
+          end_date: deliverable.end_date,
+          completion_percentage: deliverable.completion_percentage || 0,
           predecessor_ids: deliverable._predecessorIds || [],
           sibling_activities: siblingActivities,
         },
@@ -1499,6 +1545,10 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
             setShowP2AWizard(true);
           }
         }}
+        onOpenVCRWizard={(vcrId, vcrCode, vcrName) => {
+          setVcrWizardTarget({ id: vcrId, vcr_code: vcrCode, name: vcrName });
+          setShowVCRWizard(true);
+        }}
       />
       {planData?.project_id && (
         <>
@@ -1529,6 +1579,28 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
               setShowP2AWizard(true);
             }}
           />
+          {vcrWizardTarget && (
+            <VCRExecutionPlanWizard
+              open={showVCRWizard}
+              onOpenChange={(open) => {
+                setShowVCRWizard(open);
+                if (!open) setVcrWizardTarget(null);
+              }}
+              vcr={{
+                id: vcrWizardTarget.id,
+                vcr_code: vcrWizardTarget.vcr_code,
+                name: vcrWizardTarget.name,
+                description: null,
+                status: 'IN_PROGRESS',
+                target_date: null,
+                created_at: '',
+                progress: 0,
+                systems_count: 0,
+                has_hydrocarbon: false,
+              }}
+              projectCode={projectCode}
+            />
+          )}
         </>
       )}
     </Card>

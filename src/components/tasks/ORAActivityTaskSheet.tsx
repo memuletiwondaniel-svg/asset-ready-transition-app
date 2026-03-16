@@ -42,6 +42,8 @@ interface ORAActivityTaskSheetProps {
   initialStatusOverride?: ActivityStatus;
   /** Called when user wants to open the P2A wizard/workspace — parent handles rendering */
   onOpenP2AWizard?: (projectId: string, projectCode: string, openWorkspace?: boolean) => void;
+  /** Called when user wants to open the VCR Plan wizard — parent handles rendering */
+  onOpenVCRWizard?: (vcrId: string, vcrCode: string, vcrName: string, projectId: string, projectCode: string) => void;
 }
 
 type ActivityStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
@@ -81,6 +83,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
   isReadOnly = false,
   initialStatusOverride,
   onOpenP2AWizard,
+  onOpenVCRWizard,
 }) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -200,11 +203,16 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
   const projectId = metaProjectId;
   const projectCode = metaProjectCode;
   const isP2AActivity = activityCode === 'EXE-10' || activityCode === 'P2A-01' || metadata?.action === 'create_p2a_plan' || activityName?.toLowerCase().includes('p2a');
+  const isVCRActivity = !isP2AActivity && (metadata?.action === 'create_vcr_delivery_plan' || activityCode?.startsWith('VCR-'));
+  const metaVcrId = metadata?.vcr_id as string | undefined;
+  const metaVcrCode = metadata?.vcr_code as string | undefined;
+  const metaVcrName = metadata?.vcr_name as string | undefined;
+  const metaVcrSeqCode = metadata?.vcr_seq_code as string | undefined;
   const isOverdue = editEndDate && isPast(editEndDate) && status !== 'COMPLETED';
 
   // Check if task has ad-hoc reviewers (for submit button label)
-  const { totalCount: reviewerCount, allApproved: allReviewersApproved, reviewers: taskReviewersList } = useTaskReviewers(!isP2AActivity ? task?.id : undefined);
-  const hasReviewers = !isP2AActivity && reviewerCount > 0;
+  const { totalCount: reviewerCount, allApproved: allReviewersApproved, reviewers: taskReviewersList } = useTaskReviewers(!isP2AActivity && !isVCRActivity ? task?.id : undefined);
+  const hasReviewers = !isP2AActivity && !isVCRActivity && reviewerCount > 0;
 
   // Detect if task was reverted from Done (has reviewers with PENDING status while task is in_progress)
   // This means the user needs to resubmit — show save/submit button even when isDirty is false
@@ -246,6 +254,45 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
       : existingP2APlan
         ? 'Continue P2A Plan'
         : 'Start P2A Plan';
+
+  // ── VCR Plan status query (mirrors P2A pattern) ──
+  const { data: vcrPlanStatus } = useQuery({
+    queryKey: ['vcr-plan-status-sheet', metaVcrId],
+    queryFn: async () => {
+      if (!metaVcrId) return null;
+      const { data } = await (supabase as any)
+        .from('p2a_handover_points')
+        .select('id, execution_plan_status')
+        .eq('id', metaVcrId)
+        .maybeSingle();
+      return data?.execution_plan_status as string | null || 'DRAFT';
+    },
+    enabled: !!metaVcrId && isVCRActivity,
+    staleTime: 0,
+    refetchOnMount: 'always',
+  });
+
+  const vcrPlanIsApproved = vcrPlanStatus === 'APPROVED';
+  const vcrPlanIsSubmitted = vcrPlanStatus === 'SUBMITTED';
+  const vcrSheetCtaLabel = vcrPlanIsApproved
+    ? 'View VCR Plan'
+    : vcrPlanStatus && vcrPlanStatus !== 'DRAFT'
+      ? 'Continue VCR Plan'
+      : 'Develop VCR Plan';
+
+  const getVCRStatusBadge = () => {
+    if (!vcrPlanStatus) return null;
+    switch (vcrPlanStatus) {
+      case 'DRAFT':
+        return <Badge variant="outline" className="text-[10px] bg-slate-500/10 text-slate-600 border-slate-500/30">Draft</Badge>;
+      case 'SUBMITTED':
+        return <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-700 border-amber-500/30">Pending Approval</Badge>;
+      case 'APPROVED':
+        return <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-700 border-emerald-500/30">Approved</Badge>;
+      default:
+        return null;
+    }
+  };
 
   // Fetch ALL approver decisions (not just rejections) for the unified feed
   const { data: p2aApproverDecisions } = useQuery({
@@ -968,6 +1015,42 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                   <ChevronRight className="h-4 w-4 ml-auto" />
                 </Button>
               </div>
+            ) : isVCRActivity ? (
+              <div className="pt-2 space-y-3">
+                {/* VCR Plan Status Badge */}
+                {getVCRStatusBadge() && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">VCR Plan Status:</span>
+                    {getVCRStatusBadge()}
+                  </div>
+                )}
+
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {vcrPlanIsApproved
+                    ? `The VCR Plan for ${metaVcrName || 'this VCR'} has been approved. Click below to view the finalized plan.`
+                    : vcrPlanIsSubmitted
+                      ? `The VCR Plan for ${metaVcrName || 'this VCR'} has been submitted and is awaiting approval.`
+                      : `Configure the VCR Plan for ${metaVcrName || 'this VCR'}. Define training, procedures, critical documents, and other building blocks.`}
+                </p>
+                {vcrPlanIsSubmitted && (
+                  <p className="text-xs text-amber-600 bg-amber-500/10 border border-amber-500/20 rounded-md px-3 py-2">
+                    ⏳ The plan is under review. You can view the submitted plan but editing is disabled until the review is complete.
+                  </p>
+                )}
+                <Button
+                  className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
+                  onClick={() => {
+                    onOpenChange(false);
+                    if (onOpenVCRWizard && metaVcrId && projectId) {
+                      onOpenVCRWizard(metaVcrId, metaVcrCode || '', metaVcrName || '', projectId, projectCode || '');
+                    }
+                  }}
+                >
+                  <FileText className="h-4 w-4" />
+                  {vcrSheetCtaLabel}
+                  <ChevronRight className="h-4 w-4 ml-auto" />
+                </Button>
+              </div>
             ) : (
               <>
                 {/* Status Toggle */}
@@ -1461,7 +1544,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                 {isReadOnly ? 'Close' : 'Cancel'}
               </Button>
 
-              {!isReadOnly && (isDirty || needsResubmission) && !(isP2AActivity && status === 'COMPLETED') && (
+              {!isReadOnly && (isDirty || needsResubmission) && !(isP2AActivity && status === 'COMPLETED') && !(isVCRActivity && status === 'COMPLETED') && (
                 <Button
                   size="sm"
                   className={cn(

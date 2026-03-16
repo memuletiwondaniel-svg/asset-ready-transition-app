@@ -525,7 +525,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
       return 'Create the Project to Asset (P2A) handover plan for this project. Click below to launch the P2A planning wizard.';
     }
     if (isOraTask) return oraIntentMessage;
-    if (isVcrDeliveryPlanTask) return 'You need to set up the VCR Delivery Plan for this item. Click below to configure the execution plan.';
+    if (isVcrDeliveryPlanTask) return 'Configure the VCR Plan for this item. Click below to define training, procedures, and other building blocks.';
     if (isOraActivityTask) return 'You have an ORA activity to complete. Click below to open the activity details and update progress.';
     if (isOraReviewTask) return 'You have been asked to review and approve an ORA Plan. Use the button below to review, then approve or request changes.';
     if (pssrId) return 'You have been asked to review and approve a PSSR. Use the button below to review, then approve or reject.';
@@ -545,7 +545,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
     if (isOraTask) return <Badge variant="secondary" className="text-xs bg-violet-500/10 text-violet-600">ORA Plan</Badge>;
     if (isOraReviewTask) return <Badge variant="secondary" className="text-xs bg-amber-500/10 text-amber-600">ORA Review</Badge>;
     if (isOraActivityTask) return <Badge variant="secondary" className="text-xs bg-purple-500/10 text-purple-600">ORA Activity</Badge>;
-    if (isVcrDeliveryPlanTask) return <Badge variant="secondary" className="text-xs bg-teal-500/10 text-teal-600">VCR Delivery Plan</Badge>;
+    if (isVcrDeliveryPlanTask) return <Badge variant="secondary" className="text-xs bg-teal-500/10 text-teal-600">VCR Plan</Badge>;
     switch (task.type) {
       case 'review':
         return <Badge variant="secondary" className="text-xs bg-blue-500/10 text-blue-600">Review</Badge>;
@@ -1061,7 +1061,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                 onClick={() => setVcrWizardOpen(true)}
               >
                 <ClipboardList className="h-4 w-4" />
-                Setup VCR Delivery Plan
+                Develop VCR Plan
                 <ChevronRight className="h-4 w-4 ml-auto" />
               </Button>
             )}

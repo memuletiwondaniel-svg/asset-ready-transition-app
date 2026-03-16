@@ -108,7 +108,7 @@ export const VCRRegistersTab: React.FC<VCRRegistersTabProps> = ({ handoverPoint 
               </div>
               <h3 className="font-medium text-lg">No Registers Planned</h3>
               <p className="text-sm text-muted-foreground text-center max-w-md mt-1">
-                No operational registers were defined in the VCR Execution Plan for this VCR.
+                No operational registers were defined in the VCR Plan for this VCR.
               </p>
             </CardContent>
           </Card>

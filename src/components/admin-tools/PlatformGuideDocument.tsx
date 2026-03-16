@@ -252,7 +252,7 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
               <div className="pl-8">├── Subsystems (comm_status tracking)</div>
               <div className="pl-4">├── VCRs (Handover Points — one per facility/area)</div>
               <div className="pl-8">├── VCR Prerequisites (checklist items per role)</div>
-              <div className="pl-8">├── VCR Execution Plan (building blocks)</div>
+              <div className="pl-8">├── VCR Plan (building blocks)</div>
               <div className="pl-8">├── ITP (Inspection Test Plan — W/H points)</div>
               <div className="pl-4">├── Milestones (manual or Primavera API)</div>
               <div className="pl-4">└── Approvers (Phase 1 + Phase 2)</div>
@@ -269,11 +269,11 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
             <p className="font-medium text-foreground mt-4">VCR (Verification Certificate of Readiness)</p>
             <ul className="list-disc pl-5 space-y-1">
               <li>VCR Code format: <code className="bg-muted px-1 rounded text-xs">VCR-001-DP300</code> (sequence + project code)</li>
-              <li>Each VCR has a <strong className="text-foreground">VCR Execution Plan</strong> defining building blocks (Training, Procedures, Spares, etc.)</li>
-              <li>Execution Plan approval triggers a <strong className="text-foreground">cascade</strong>:
+              <li>Each VCR has a <strong className="text-foreground">VCR Plan</strong> defining building blocks (Training, Procedures, Spares, etc.)</li>
+              <li>VCR Plan approval triggers a <strong className="text-foreground">cascade</strong>:
                 <ul className="list-disc pl-5 mt-1 space-y-1">
                   <li>VCR status → APPROVED</li>
-                  <li>ORA activity "Create VCR delivery plan" → COMPLETED</li>
+                  <li>ORA activity "Develop VCR Plan" → COMPLETED</li>
                   <li>3-level ORA activity hierarchy generated (Building Blocks → Items → System ITP Activities)</li>
                   <li>Leaf-level tasks auto-assigned to Senior ORA Engineers</li>
                   <li>VCR checklist bundles generated for delivering/approving parties</li>

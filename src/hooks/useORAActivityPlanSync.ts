@@ -87,12 +87,12 @@ export async function generateVCRActivitiesFromP2A(
     return;
   }
 
-  // Duplicate prevention
+  // Duplicate prevention — check both old hierarchical (p2a_vcr) and new flat (vcr_delivery_plan) activities
   const { data: existingActivities } = await client
     .from('ora_plan_activities')
     .select('id')
     .eq('orp_plan_id', orpPlanId)
-    .eq('source_type', 'p2a_vcr')
+    .in('source_type', ['p2a_vcr', 'vcr_delivery_plan'])
     .limit(1);
 
   if (existingActivities?.length > 0) {
@@ -113,40 +113,20 @@ export async function generateVCRActivitiesFromP2A(
 
   const oraEngineerId = await findSnrORAEngineer(projectId);
 
-  for (const vcr of vcrs) {
-    const vcrLabel = `${vcr.vcr_code}: ${vcr.name}`;
+  for (let idx = 0; idx < vcrs.length; idx++) {
+    const vcr = vcrs[idx];
+    const seqCode = `VCR-${String(idx + 1).padStart(2, '0')}`;
+    const activityName = `Develop ${seqCode} Plan`;
+    const taskTitle = `Develop ${seqCode} Plan – ${vcr.name}`;
 
-    // Create VCR parent activity
-    const { data: parentActivity, error: parentError } = await client
+    // Create flat VCR activity (no parent hierarchy)
+    const { data: vcrActivity, error: actError } = await client
       .from('ora_plan_activities')
       .insert({
         orp_plan_id: orpPlanId,
-        activity_code: vcr.vcr_code,
-        name: vcrLabel,
-        description: vcr.description || `VCR scope for ${vcr.name}`,
-        source_type: 'p2a_vcr',
-        source_ref_id: vcr.id,
-        source_ref_table: 'p2a_handover_points',
-        status: 'NOT_STARTED',
-        assigned_to: oraEngineerId,
-      })
-      .select('id')
-      .single();
-
-    if (parentError || !parentActivity) {
-      console.error('[ORA Sync] Failed to create VCR activity', parentError);
-      continue;
-    }
-
-    // Create "VCR Delivery Plan" sub-activity
-    const { data: subActivity, error: subError } = await client
-      .from('ora_plan_activities')
-      .insert({
-        orp_plan_id: orpPlanId,
-        parent_id: parentActivity.id,
-        activity_code: `${vcr.vcr_code}.01`,
-        name: 'VCR Delivery Plan',
-        description: `Create and approve the VCR Delivery Plan for ${vcrLabel}`,
+        activity_code: seqCode,
+        name: activityName,
+        description: `Create and approve the VCR Plan for ${vcr.name}`,
         source_type: 'vcr_delivery_plan',
         source_ref_id: vcr.id,
         source_ref_table: 'p2a_handover_points',
@@ -156,7 +136,10 @@ export async function generateVCRActivitiesFromP2A(
       .select('id')
       .single();
 
-    if (subError || !subActivity) continue;
+    if (actError || !vcrActivity) {
+      console.error('[ORA Sync] Failed to create VCR activity', actError);
+      continue;
+    }
 
     // Create task for Snr ORA Engineer
     if (oraEngineerId) {
@@ -164,8 +147,8 @@ export async function generateVCRActivitiesFromP2A(
         .from('user_tasks')
         .insert({
           user_id: oraEngineerId,
-          title: `Create VCR Delivery Plan – ${vcrLabel}`,
-          description: `Set up the VCR Delivery Plan for ${vcrLabel}. Configure training, procedures, critical documents, systems, and other building blocks.`,
+          title: taskTitle,
+          description: `Set up the VCR Plan for ${vcr.name}. Configure training, procedures, critical documents, systems, and other building blocks.`,
           type: 'vcr_delivery_plan',
           priority: 'High',
           status: 'pending',
@@ -173,10 +156,11 @@ export async function generateVCRActivitiesFromP2A(
             plan_id: planId,
             project_id: projectId,
             project_code: projectCode,
-            ora_plan_activity_id: subActivity.id,
+            ora_plan_activity_id: vcrActivity.id,
             vcr_id: vcr.id,
             vcr_code: vcr.vcr_code,
             vcr_name: vcr.name,
+            vcr_seq_code: seqCode,
             action: 'create_vcr_delivery_plan',
             source: 'p2a_handover',
           },
@@ -188,7 +172,7 @@ export async function generateVCRActivitiesFromP2A(
         await client
           .from('ora_plan_activities')
           .update({ task_id: taskData.id })
-          .eq('id', subActivity.id);
+          .eq('id', vcrActivity.id);
       }
     }
   }
@@ -200,13 +184,13 @@ export async function generateVCRActivitiesFromP2A(
     .eq('orp_plan_id', orpPlanId)
     .ilike('name', '%P2A%Handover%');
 
-  console.log(`[ORA Sync] Generated ${vcrs.length} VCR activities for plan ${planId}`);
+  console.log(`[ORA Sync] Generated ${vcrs.length} flat VCR activities for plan ${planId}`);
 }
 
-// ─── Phase 3: VCR Delivery Plan Approval → Building Block Activities ──
+// ─── Phase 3: VCR Plan Approval → Building Block Activities ──
 
 /**
- * Called when a VCR execution plan is approved.
+ * Called when a VCR plan is approved.
  * Generates building block sub-activities from VCR data.
  */
 export async function generateBuildingBlockActivities(
@@ -219,26 +203,50 @@ export async function generateBuildingBlockActivities(
   const orpPlanId = await findOrpPlan(projectId);
   if (!orpPlanId) return;
 
-  // Find the VCR parent activity
-  const { data: vcrActivity } = await client
+  // Find the VCR activity — supports both old hierarchical (p2a_vcr) and new flat (vcr_delivery_plan) layouts
+  let vcrActivity: { id: string; activity_code: string } | null = null;
+
+  // Try new flat structure first
+  const { data: flatActivity } = await client
     .from('ora_plan_activities')
     .select('id, activity_code')
     .eq('orp_plan_id', orpPlanId)
-    .eq('source_type', 'p2a_vcr')
+    .eq('source_type', 'vcr_delivery_plan')
     .eq('source_ref_id', vcrId)
-    .single();
+    .maybeSingle();
+
+  if (flatActivity) {
+    vcrActivity = flatActivity;
+    // Mark the flat activity as COMPLETED
+    await client
+      .from('ora_plan_activities')
+      .update({ status: 'COMPLETED', completion_percentage: 100 })
+      .eq('id', flatActivity.id);
+  } else {
+    // Fallback: old hierarchical structure (p2a_vcr parent)
+    const { data: parentActivity } = await client
+      .from('ora_plan_activities')
+      .select('id, activity_code')
+      .eq('orp_plan_id', orpPlanId)
+      .eq('source_type', 'p2a_vcr')
+      .eq('source_ref_id', vcrId)
+      .maybeSingle();
+
+    if (parentActivity) {
+      vcrActivity = parentActivity;
+      // Mark old VCR Delivery Plan sub-activity as COMPLETED
+      await client
+        .from('ora_plan_activities')
+        .update({ status: 'COMPLETED', completion_percentage: 100 })
+        .eq('parent_id', parentActivity.id)
+        .eq('source_type', 'vcr_delivery_plan');
+    }
+  }
 
   if (!vcrActivity) {
     console.warn('[ORA Sync] VCR activity not found for', vcrId);
     return;
   }
-
-  // Mark VCR Delivery Plan sub-activity as COMPLETED
-  await client
-    .from('ora_plan_activities')
-    .update({ status: 'COMPLETED', completion_percentage: 100 })
-    .eq('parent_id', vcrActivity.id)
-    .eq('source_type', 'vcr_delivery_plan');
 
   // Complete the associated task
   await client

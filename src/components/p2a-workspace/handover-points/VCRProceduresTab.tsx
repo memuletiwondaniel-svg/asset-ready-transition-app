@@ -150,7 +150,7 @@ export const VCRProceduresTab: React.FC<VCRProceduresTabProps> = ({ handoverPoin
               </div>
               <h3 className="font-medium text-lg">No Procedures Planned</h3>
               <p className="text-sm text-muted-foreground text-center max-w-md mt-1">
-                No procedures were defined in the VCR Execution Plan for this VCR.
+                No procedures were defined in the VCR Plan for this VCR.
               </p>
             </CardContent>
           </Card>
