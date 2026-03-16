@@ -2118,7 +2118,6 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
         hasPrev={selectedLeafIndex > 0}
         hasNext={selectedLeafIndex >= 0 && selectedLeafIndex < leafRows.length - 1}
       />
-      />
       {planData?.project_id && (
         <>
           <P2APlanCreationWizard
