@@ -477,12 +477,24 @@ const KanbanCardContent: React.FC<{
         </div>
       </div>
 
-      {/* Title */}
-      <p className="text-sm font-medium text-foreground leading-snug mb-1.5 break-words overflow-hidden">
-        {task.project ? task.title.replace(new RegExp(`\\s*[–\\-]\\s*${task.project.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`), '') : task.title}
-      </p>
-
-      {/* Approver dot progress removed – merged into status pill */}
+      {/* Title + View in Gantt */}
+      <div className="flex items-start justify-between gap-1">
+        <p className="text-sm font-medium text-foreground leading-snug mb-1.5 break-words overflow-hidden flex-1">
+          {task.project ? task.title.replace(new RegExp(`\\s*[–\\-]\\s*${task.project.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`), '') : task.title}
+        </p>
+        {isOraActivity && oraPlanId && oraActivityCode && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/operation-readiness/${oraPlanId}?tab=activity-plan&view=gantt&highlight=${oraActivityCode}`);
+            }}
+            className="shrink-0 p-1 rounded hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors opacity-0 group-hover:opacity-100"
+            title="View in Gantt"
+          >
+            <GanttChart className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </div>
 
       {/* Progress for in-progress tasks */}
       {task.kanbanColumn === 'in_progress' && (
