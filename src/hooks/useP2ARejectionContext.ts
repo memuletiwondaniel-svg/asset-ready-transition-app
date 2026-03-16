@@ -54,6 +54,7 @@ export function useP2ARejectionContext(planId: string | undefined, planStatus: s
           comments: historyRow[0].comments,
           approved_at: historyRow[0].approved_at,
           rejector_name: null,
+          type: historyRow[0].status === 'REVERTED' ? 'reverted' as const : 'rejected' as const,
         };
       }
 
