@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { X, Download, ExternalLink } from 'lucide-react';
+import { X, Download, ExternalLink, MessageCircle, PanelRightClose } from 'lucide-react';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { AnnotationToolbar, type ToolMode } from './AnnotationToolbar';
 import { DocumentCanvas } from './DocumentCanvas';
