@@ -691,9 +691,9 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
         {/* Draft context banner — rejection or revert (shown to author) */}
         {!isReviewMode && rejectionInfo && useWizard && !isLoadingDraft && (
           rejectionInfo.type === 'reverted' ? (
-            <div className="flex items-start gap-2 sm:gap-3 px-3 sm:px-5 py-2.5 sm:py-3 border-b border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 shrink-0" style={{ borderLeft: '3px solid hsl(38, 92%, 50%)' }}>
-              <RotateCcw className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
-              <div className="flex-1 text-[11px] sm:text-xs space-y-1">
+            <div className="flex items-start gap-2 sm:gap-3 px-3 sm:px-5 py-1.5 sm:py-2 border-b border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 shrink-0" style={{ borderLeft: '3px solid hsl(38, 92%, 50%)' }}>
+              <RotateCcw className="h-3.5 w-3.5 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
+              <div className="flex-1 text-[11px] sm:text-xs space-y-0.5">
                 <p className="font-medium text-amber-800 dark:text-amber-200">
                   Plan reverted to Draft by {rejectionInfo.rejector_name || rejectionInfo.role_name}
                   {rejectionInfo.approved_at && (
