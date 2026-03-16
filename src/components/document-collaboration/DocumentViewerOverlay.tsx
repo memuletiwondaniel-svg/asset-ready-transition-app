@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { X, Download, ExternalLink, MessageCircle, PanelRightClose } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { TooltipProvider } from '@/components/ui/tooltip';
 import { AnnotationToolbar, type ToolMode } from './AnnotationToolbar';
 import { DocumentCanvas } from './DocumentCanvas';
 import { AnnotationLayer } from './AnnotationLayer';
