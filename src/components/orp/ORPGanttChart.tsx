@@ -983,7 +983,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
             };
             await (supabase as any)
               .from('user_tasks')
-              .update({ metadata: updatedMeta, updated_at: new Date().toISOString() })
+              .update({ metadata: updatedMeta, due_date: endStr, updated_at: new Date().toISOString() })
               .eq('id', lt.id);
           }
         }
