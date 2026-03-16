@@ -125,6 +125,31 @@ function getCodeDepth(code: string): number {
   return (code.match(/\./g) || []).length;
 }
 
+function normalizeOraActivityId(value: string | null | undefined): string {
+  if (!value) return '';
+  return String(value).replace(/^(ora-|ws-)/, '');
+}
+
+type GanttTaskLike = {
+  id: string;
+  title: string;
+  description: string | null;
+  due_date: string | null;
+  priority: string;
+  type: string;
+  status: string;
+  display_order: number;
+  created_at: string;
+  metadata: Record<string, any>;
+};
+
+type ActivityTaskMapEntry = {
+  taskId?: string;
+  taskStatus?: string;
+  activityTask?: GanttTaskLike;
+  reviewTask?: GanttTaskLike;
+};
+
 interface FlatRow {
   deliverable: any;
   depth: number;
