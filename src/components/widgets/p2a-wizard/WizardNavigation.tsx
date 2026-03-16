@@ -54,20 +54,6 @@ export const WizardNavigation: React.FC<WizardNavigationProps> = ({
           <ChevronLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-0.5 sm:mr-1" />
           <span className="hidden xs:inline">Back</span>
         </Button>
-        {onSave && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onSave}
-            disabled={isSaving || isSubmitting}
-            className="h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm"
-          >
-            {isSaving ? (
-              <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-0.5 sm:mr-1 animate-spin" />
-            ) : null}
-            Save
-          </Button>
-        )}
         {onSaveAndExit && (
           <Button
             variant="ghost"
