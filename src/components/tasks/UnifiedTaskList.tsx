@@ -278,7 +278,7 @@ export const UnifiedTaskList: React.FC<UnifiedTaskListProps> = ({
           }}
           projectCode={vcrWizardTarget.projectCode}
         />
-      )
+      )}
     </>
   );
 };

@@ -811,14 +811,14 @@ const OverviewInfoPanel: React.FC<{ vcr: ProjectVCR; projectName?: string; proje
           )}
         </div>
 
-        {/* VCR Execution Plan Section */}
+        {/* VCR Plan Section */}
         <div className="border-t border-border/60 pt-4">
           <button
             onClick={() => setExecPlanWizardOpen(true)}
             className="w-full text-left group cursor-pointer hover:bg-muted/30 rounded-lg p-2 -m-2 transition-colors"
           >
             <div className="flex items-center justify-between mb-2">
-              <div className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">VCR Execution Plan</div>
+              <div className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">VCR Plan</div>
               <ChevronRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
             </div>
           </button>

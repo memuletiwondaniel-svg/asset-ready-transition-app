@@ -145,9 +145,9 @@ export const VCROverviewTab: React.FC<VCROverviewTabProps> = ({ handoverPoint, o
                 <Info className="w-4.5 h-4.5 text-amber-500" />
               </div>
               <div>
-                <p className="text-sm font-medium text-foreground">Execution Plan Not Yet Defined</p>
+                <p className="text-sm font-medium text-foreground">VCR Plan Not Yet Defined</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Deliverable tracking (Training, Procedures, Documentation, etc.) will be available once the VCR Execution Plan is approved.
+                  Deliverable tracking (Training, Procedures, Documentation, etc.) will be available once the VCR Plan is approved.
                 </p>
               </div>
             </div>

@@ -63,8 +63,8 @@ export const ExecutionPlanGate: React.FC<ExecutionPlanGateProps> = ({
 
         <p className="text-sm text-muted-foreground text-center max-w-md mt-2">
           {isDraft
-            ? `The VCR Execution Plan must be created and approved before ${deliverableType.toLowerCase()} can be tracked. Define the scope of work in the VCR Delivery Plan first.`
-            : `The VCR Execution Plan has been submitted for approval. Once approved, the agreed ${deliverableType.toLowerCase()} will appear here for execution tracking.`}
+            ? `The VCR Plan must be created and approved before ${deliverableType.toLowerCase()} can be tracked. Define the scope of work in the VCR Plan first.`
+            : `The VCR Plan has been submitted for approval. Once approved, the agreed ${deliverableType.toLowerCase()} will appear here for execution tracking.`}
         </p>
 
         <div className="flex items-center gap-2 mt-6 text-xs text-muted-foreground">

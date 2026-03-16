@@ -1061,7 +1061,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                 onClick={() => setVcrWizardOpen(true)}
               >
                 <ClipboardList className="h-4 w-4" />
-                Setup VCR Delivery Plan
+                Develop VCR Plan
                 <ChevronRight className="h-4 w-4 ml-auto" />
               </Button>
             )}
