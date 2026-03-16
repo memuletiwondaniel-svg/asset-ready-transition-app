@@ -52,7 +52,7 @@ export const DocumentCanvas: React.FC<DocumentCanvasProps> = ({
 
   if (category === 'pdf' && !pdfError) {
     return (
-      <div className="flex-1 overflow-auto flex flex-col items-center bg-muted/30 p-4 relative">
+      <div className="flex-1 overflow-auto flex flex-col items-start bg-muted/30 p-4 relative">
         <div className="relative">
           <Document
             file={fileUrl}

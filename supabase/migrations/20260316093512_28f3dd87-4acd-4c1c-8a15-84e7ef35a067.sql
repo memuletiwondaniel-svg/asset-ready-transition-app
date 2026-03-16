@@ -1,0 +1,1 @@
+ALTER TYPE public.annotation_type ADD VALUE IF NOT EXISTS 'signature';
