@@ -35,7 +35,7 @@ export const DocumentViewerOverlay: React.FC<DocumentViewerOverlayProps> = ({
   const [zoom, setZoom] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [selectedAnnotation, setSelectedAnnotation] = useState<Annotation | null>(null);
-  const [commentsOpen, setCommentsOpen] = useState(true);
+  const [commentsOpen, setCommentsOpen] = useState(window.innerWidth >= 768);
 
   const {
     annotations,
@@ -63,17 +63,17 @@ export const DocumentViewerOverlay: React.FC<DocumentViewerOverlayProps> = ({
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       {/* High z-index backdrop to dim everything including task detail */}
       <DialogOverlay className="!z-[199] bg-black/80 backdrop-blur-sm" />
-      <DialogContent className="!max-w-[92vw] !w-[92vw] !h-[98vh] p-0 gap-0 flex flex-col [&>button]:hidden !z-[200] !left-1/2 !top-1/2 !-translate-x-1/2 !-translate-y-1/2 !rounded-xl border-border">
+      <DialogContent className="!fixed !inset-0 !max-w-none !w-full !h-[100dvh] !translate-x-0 !translate-y-0 !left-0 !top-0 !rounded-none md:!inset-auto md:!left-1/2 md:!top-1/2 md:!-translate-x-1/2 md:!-translate-y-1/2 md:!max-w-[92vw] md:!w-[92vw] md:!h-[98vh] md:!rounded-xl p-0 gap-0 flex flex-col [&>button]:hidden !z-[200] border-border overscroll-contain">
         <TooltipProvider delayDuration={200}>
           {/* Top bar */}
-          <div className="flex items-center justify-between px-4 py-2.5 border-b border-border bg-card shrink-0">
-            <div className="flex items-center gap-3 min-w-0">
-              <h2 className="text-sm font-semibold text-foreground truncate max-w-[400px]">
+          <div className="flex items-center justify-between px-2 py-1.5 md:px-4 md:py-2.5 border-b border-border bg-card shrink-0">
+            <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
+              <h2 className="text-xs md:text-sm font-semibold text-foreground truncate max-w-[120px] md:max-w-[400px]">
                 {attachment.file_name}
               </h2>
-              {/* Online collaborators in header */}
+              {/* Online collaborators in header — hidden on mobile */}
               {onlineUsers.length > 0 && (
-                <div className="flex items-center gap-1.5 ml-2">
+                <div className="hidden md:flex items-center gap-1.5 ml-2">
                   <div className="flex -space-x-1.5">
                     {onlineUsers.slice(0, 4).map((u) => (
                       <Tooltip key={u.user_id}>
@@ -98,20 +98,20 @@ export const DocumentViewerOverlay: React.FC<DocumentViewerOverlayProps> = ({
                 </div>
               )}
             </div>
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-0.5 md:gap-1.5">
               <Button
                 variant="ghost"
-                size="sm"
-                className="h-8 gap-1.5 text-xs"
+                size="icon"
+                className="h-8 w-8 md:w-auto md:px-2 md:gap-1.5"
                 onClick={() => window.open(attachment.file_url, '_blank')}
               >
                 <ExternalLink className="h-3.5 w-3.5" />
-                Open
+                <span className="hidden md:inline text-xs">Open</span>
               </Button>
               <Button
                 variant="ghost"
-                size="sm"
-                className="h-8 gap-1.5 text-xs"
+                size="icon"
+                className="h-8 w-8 md:w-auto md:px-2 md:gap-1.5"
                 onClick={() => {
                   const a = document.createElement('a');
                   a.href = attachment.file_url;
@@ -120,18 +120,18 @@ export const DocumentViewerOverlay: React.FC<DocumentViewerOverlayProps> = ({
                 }}
               >
                 <Download className="h-3.5 w-3.5" />
-                Download
+                <span className="hidden md:inline text-xs">Download</span>
               </Button>
               <Button
                 variant="ghost"
-                size="sm"
-                className="h-8 gap-1.5 text-xs"
+                size="icon"
+                className="h-8 w-8 md:w-auto md:px-2 md:gap-1.5"
                 onClick={() => setCommentsOpen(prev => !prev)}
               >
                 {commentsOpen ? <PanelRightClose className="h-3.5 w-3.5" /> : <MessageCircle className="h-3.5 w-3.5" />}
-                {commentsOpen ? 'Hide Comments' : 'Comments'}
+                <span className="hidden md:inline text-xs">{commentsOpen ? 'Hide Comments' : 'Comments'}</span>
               </Button>
-              <div className="w-px h-5 bg-border mx-1" />
+              <div className="w-px h-5 bg-border mx-0.5 md:mx-1 hidden md:block" />
               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose}>
                 <X className="h-4 w-4" />
               </Button>
@@ -139,7 +139,7 @@ export const DocumentViewerOverlay: React.FC<DocumentViewerOverlayProps> = ({
           </div>
 
           {/* Main area */}
-          <div className="flex flex-1 overflow-hidden">
+          <div className="flex flex-col md:flex-row flex-1 overflow-hidden relative">
             {/* Left toolbar */}
             <AnnotationToolbar
               activeTool={activeTool}
