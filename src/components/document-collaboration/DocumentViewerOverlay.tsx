@@ -139,7 +139,7 @@ export const DocumentViewerOverlay: React.FC<DocumentViewerOverlayProps> = ({
           </div>
 
           {/* Main area */}
-          <div className="flex flex-1 overflow-hidden">
+          <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
             {/* Left toolbar */}
             <AnnotationToolbar
               activeTool={activeTool}
