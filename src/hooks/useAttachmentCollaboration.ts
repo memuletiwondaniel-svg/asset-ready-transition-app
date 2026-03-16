@@ -208,11 +208,12 @@ export const useAttachmentCollaboration = (attachmentId: string | null) => {
 
   // Update annotation
   const updateAnnotation = useMutation({
-    mutationFn: async (params: { id: string; content?: string; resolved?: boolean; color?: string }) => {
+    mutationFn: async (params: { id: string; content?: string; resolved?: boolean; color?: string; position_data?: any }) => {
       const updates: any = {};
       if (params.content !== undefined) updates.content = params.content;
       if (params.resolved !== undefined) updates.resolved = params.resolved;
       if (params.color !== undefined) updates.color = params.color;
+      if (params.position_data !== undefined) updates.position_data = params.position_data;
 
       const { error } = await (supabase as any)
         .from('attachment_annotations')
