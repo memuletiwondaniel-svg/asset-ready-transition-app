@@ -324,6 +324,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
   const [vcrWizardTarget, setVcrWizardTarget] = useState<{ id: string; vcr_code: string; name: string } | null>(null);
   
   const { toast } = useToast();
+  const { user } = useAuth();
   
   const [selectedOraActivity, setSelectedOraActivity] = useState<any>(null);
   const [selectedReviewTask, setSelectedReviewTask] = useState<any>(null);
