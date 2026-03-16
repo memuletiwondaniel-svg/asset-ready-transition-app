@@ -479,15 +479,28 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
   const p2aPlanIsSubmittedOrApproved = existingP2APlan && ['ACTIVE', 'COMPLETED', 'APPROVED'].includes(existingP2APlan.status);
   const p2aCtaLabel = p2aPlanIsSubmittedOrApproved ? 'View P2A Plan' : existingP2APlan ? 'Continue P2A Plan' : 'Develop P2A Plan';
 
+  const activityIdsForTaskMap = useMemo(() => {
+    const ids = new Set<string>();
+    for (const d of deliverables || []) {
+      for (const candidate of getDeliverableActivityCandidates(d)) {
+        ids.add(candidate);
+        ids.add(`ora-${candidate}`);
+        ids.add(`ws-${candidate}`);
+      }
+    }
+    return [...ids];
+  }, [deliverables]);
+
   // Pre-fetch mapping by ORA activity ID for both authoring and review tasks
   const { data: activityTaskMap } = useQuery({
-    queryKey: ['ora-activity-task-map', planId],
+    queryKey: ['ora-activity-task-map', planId, activityIdsForTaskMap],
     queryFn: async () => {
+      if (activityIdsForTaskMap.length === 0) return {};
+
       const { data } = await (supabase as any)
         .from('user_tasks')
-        .select('id, title, description, due_date, priority, type, status, display_order, created_at, metadata')
-        .filter('metadata->>ora_plan_activity_id', 'is', 'not.null')
-        .filter('metadata->>plan_id', 'eq', planId);
+        .select('id, user_id, title, description, due_date, priority, type, status, display_order, created_at, metadata')
+        .in('metadata->>ora_plan_activity_id', activityIdsForTaskMap);
 
       const map: Record<string, ActivityTaskMapEntry> = {};
 
@@ -498,6 +511,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
 
         const task: GanttTaskLike = {
           id: row.id,
+          user_id: row.user_id,
           title: row.title,
           description: row.description,
           due_date: row.due_date,
@@ -514,13 +528,21 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
 
         if (isReviewTask) {
           const sourceTaskId = metadata.source_task_id as string | undefined;
-          const shouldReplaceReview = !current.reviewTask || (current.reviewTask.status !== 'pending' && task.status === 'pending');
+          const shouldReplaceReview =
+            !current.reviewTask ||
+            (task.user_id === user?.id && current.reviewTask.user_id !== user?.id) ||
+            (current.reviewTask.status !== 'pending' && task.status === 'pending');
           if (shouldReplaceReview) current.reviewTask = task;
           if (!current.taskId && sourceTaskId) current.taskId = sourceTaskId;
         } else {
-          current.taskId = row.id;
-          current.taskStatus = row.status;
-          current.activityTask = task;
+          const shouldReplaceActivity =
+            !current.activityTask ||
+            (task.user_id === user?.id && current.activityTask.user_id !== user?.id);
+          if (shouldReplaceActivity) {
+            current.taskId = row.id;
+            current.taskStatus = row.status;
+            current.activityTask = task;
+          }
         }
 
         map[activityId] = current;
@@ -528,7 +550,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
 
       return map;
     },
-    enabled: !!planId,
+    enabled: activityIdsForTaskMap.length > 0,
     staleTime: 30_000,
   });
 
