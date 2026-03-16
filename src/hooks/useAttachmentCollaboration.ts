@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 import { toast } from 'sonner';
 
-export type AnnotationType = 'highlight' | 'comment_pin' | 'text_box' | 'drawing' | 'stamp';
+export type AnnotationType = 'highlight' | 'comment_pin' | 'text_box' | 'drawing' | 'stamp' | 'signature';
 
 export interface Annotation {
   id: string;
