@@ -709,9 +709,9 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
               </div>
             </div>
           ) : (
-            <div className="flex items-start gap-2 sm:gap-3 px-3 sm:px-5 py-2 sm:py-3 border-b bg-destructive/5 dark:bg-destructive/10 text-destructive shrink-0">
-              <XCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 mt-0.5" />
-              <div className="flex-1 text-[11px] sm:text-xs space-y-1">
+            <div className="flex items-start gap-2 sm:gap-3 px-3 sm:px-5 py-1.5 sm:py-2 border-b bg-destructive/5 dark:bg-destructive/10 text-destructive shrink-0">
+              <XCircle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+              <div className="flex-1 text-[11px] sm:text-xs space-y-0.5">
                 <p className="font-medium">
                   Plan was rejected by {rejectionInfo.rejector_name || rejectionInfo.role_name}
                   {rejectionInfo.approved_at && (
