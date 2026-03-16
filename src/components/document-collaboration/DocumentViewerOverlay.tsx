@@ -1,8 +1,9 @@
 import React, { useState, useCallback } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogOverlay } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { X, Download, ExternalLink, MessageCircle, PanelRightClose } from 'lucide-react';
-import { TooltipProvider } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { AnnotationToolbar, type ToolMode } from './AnnotationToolbar';
 import { DocumentCanvas } from './DocumentCanvas';
 import { AnnotationLayer } from './AnnotationLayer';
@@ -53,11 +54,16 @@ export const DocumentViewerOverlay: React.FC<DocumentViewerOverlayProps> = ({
   const handleZoomOut = useCallback(() => setZoom(z => Math.max(z - 0.25, 0.5)), []);
   const handleReset = useCallback(() => setZoom(1), []);
 
+  const getInitials = (name: string) =>
+    name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+
   if (!attachment) return null;
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="!max-w-[99vw] !w-[99vw] !h-[97vh] p-0 gap-0 flex flex-col [&>button]:hidden !z-[200] !sm:max-w-[99vw] !sm:max-h-[97vh] !inset-0 !sm:inset-0 !translate-x-0 !translate-y-0 !sm:translate-x-0 !sm:translate-y-0 !left-[0.5vw] !top-[1.5vh] !rounded-xl">
+      {/* High z-index backdrop to dim everything including task detail */}
+      <DialogOverlay className="!z-[199] bg-black/80 backdrop-blur-sm" />
+      <DialogContent className="!max-w-[96vw] !w-[96vw] !h-[95vh] p-0 gap-0 flex flex-col [&>button]:hidden !z-[200] !sm:max-w-[96vw] !sm:max-h-[95vh] !inset-0 !sm:inset-0 !translate-x-0 !translate-y-0 !sm:translate-x-0 !sm:translate-y-0 !left-[2vw] !top-[2.5vh] !rounded-xl border-border">
         <TooltipProvider delayDuration={200}>
           {/* Top bar */}
           <div className="flex items-center justify-between px-4 py-2.5 border-b border-border bg-card shrink-0">
@@ -65,6 +71,32 @@ export const DocumentViewerOverlay: React.FC<DocumentViewerOverlayProps> = ({
               <h2 className="text-sm font-semibold text-foreground truncate max-w-[400px]">
                 {attachment.file_name}
               </h2>
+              {/* Online collaborators in header */}
+              {onlineUsers.length > 0 && (
+                <div className="flex items-center gap-1.5 ml-2">
+                  <div className="flex -space-x-1.5">
+                    {onlineUsers.slice(0, 4).map((u) => (
+                      <Tooltip key={u.user_id}>
+                        <TooltipTrigger>
+                          <Avatar className="h-6 w-6 border-2 border-card">
+                            <AvatarImage src={u.avatar_url || undefined} />
+                            <AvatarFallback className="text-[8px] bg-primary/10 text-primary">
+                              {getInitials(u.full_name)}
+                            </AvatarFallback>
+                          </Avatar>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom">{u.full_name} — Page {u.page_number}</TooltipContent>
+                      </Tooltip>
+                    ))}
+                    {onlineUsers.length > 4 && (
+                      <div className="flex items-center justify-center h-6 w-6 rounded-full bg-muted border-2 border-card text-[8px] font-medium text-muted-foreground">
+                        +{onlineUsers.length - 4}
+                      </div>
+                    )}
+                  </div>
+                  <span className="text-[10px] text-muted-foreground">{onlineUsers.length} editing</span>
+                </div>
+              )}
             </div>
             <div className="flex items-center gap-1.5">
               <Button

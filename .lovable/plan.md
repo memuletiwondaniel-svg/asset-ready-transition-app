@@ -1,34 +1,77 @@
 
 
-## Fix: Document Viewer Width, Backdrop, PDF Clarity, and Presence Display
+# Plan: ORIP Scoring Engine Using Existing VCR Item Categories
 
-### Issues Identified
+## Impact Assessment: Zero Breaking Changes
 
-1. **Task detail not dimmed**: The Dialog's backdrop overlay renders at `z-50` (from `dialog.tsx`), but the task detail sheet also renders at high z-index. The backdrop needs to match the document viewer's `z-[200]` level to properly dim everything behind it.
+**No existing workflows will be affected.** The approach reuses the existing `vcr_item_categories` table (Design Integrity, Technical Integrity, Operating Integrity, Management Systems, Health & Safety) as the readiness dimensions for ORI scoring. All changes are additive:
 
-2. **PDF blurriness**: The PDF `Page` component renders at `width={700}` and then CSS `scale()` is applied for zoom. CSS scaling causes blurriness — instead, the rendered width should be larger (e.g., 900px) for crisper text at 1x zoom.
+- The `vcr_item_categories` table gets a `tenant_id` column and weight/confidence fields -- existing rows remain intact
+- The `readiness_nodes` table gets a new nullable `dimension_id` column pointing to `vcr_item_categories`
+- The `sync_readiness_nodes` and `calculate_ori_score` functions are replaced with enhanced versions that use category-based dimensions instead of module-based grouping
+- Existing P2A, ORA, PSSR, ORM workflows are untouched -- the ontology layer only reads from them
 
-3. **Width slightly too wide**: Reduce from `99vw` to `96vw` for a cleaner look with some breathing room.
+## Current VCR Item Categories (Become Readiness Dimensions)
 
-4. **Collaborator avatars not visible enough**: The `CollaboratorPresence` component exists in the status bar but is small. Move/duplicate the online users display into the top header bar next to the file name for better visibility.
+| Code | Name | Active |
+|------|------|--------|
+| DI2 | Design Integrity | Yes |
+| TI | Technical Integrity | Yes |
+| OI | Operating Integrity | Yes |
+| MS | Management Systems | Yes |
+| HS | Health & Safety | Yes |
 
-### Changes
+These become the tenant-configurable readiness dimensions. Different tenants can add/rename/reweight their own categories.
 
-#### 1. `src/components/document-collaboration/DocumentViewerOverlay.tsx`
-- Reduce dialog width from `99vw` to `96vw`, adjust left offset accordingly
-- Add a custom high-z-index backdrop by using a `DialogOverlay` override or an additional overlay div at `z-[199]` before the dialog content
-- Show online user avatars in the top bar (between file name and action buttons)
+## Implementation Tasks
 
-#### 2. `src/components/document-collaboration/DocumentCanvas.tsx`
-- Increase PDF `Page` width from `700` to `900` for sharper rendering at default zoom
+### Task 1: Extend `vcr_item_categories` for ORI Scoring
+Add columns to make categories serve double duty as readiness dimensions:
+- `tenant_id UUID` (nullable, defaults via trigger -- existing rows get current tenant)
+- `default_weight NUMERIC(5,4)` (e.g., 0.20 = 20%)
+- `confidence_factor_default NUMERIC(3,2)` (default 0.8)
+- `risk_severity_multiplier NUMERIC(3,1)` (default 1.0)
+- `is_readiness_dimension BOOLEAN DEFAULT true`
 
-#### 3. `src/components/ui/dialog.tsx` (or inline in DocumentViewerOverlay)
-- The cleanest approach: render a manual overlay div inside the Dialog portal at `z-[199]` with `bg-black/80` to ensure it covers everything including the task detail sheet. Alternatively, pass a custom className to DialogOverlay.
+Add `dimension_id UUID REFERENCES vcr_item_categories(id)` to `readiness_nodes`.
 
-### Regarding Adobe Cloud Sync
+### Task 2: Enhanced ORI Formula
+Replace `calculate_ori_score()` with the full ORIP formula:
 
-No — changes made in Adobe Acrobat (or any external tool) do **not** automatically sync back into the ORSH collaborative viewer. The document stored in Supabase Storage is a static uploaded file. To reflect external edits, the user would need to re-upload the modified file. This is a fundamental limitation since there is no integration with Adobe Cloud APIs.
+```
+DS_i = (Σ Subcomponent_Weight × Completion%) × Confidence_Factor
+RP_i = Σ (Risk_Severity × Impact_Multiplier)  -- capped at 15%
+ORI  = Σ (Dimension_Weight_i × DS_i) − Global_Risk_Penalty
+SCS  = ORI × Schedule_Adherence × Critical_Path_Stability
+```
 
-### Scope
-3 files: `DocumentViewerOverlay.tsx`, `DocumentCanvas.tsx`, and potentially `dialog.tsx` or an inline overlay element.
+Add columns to `ori_scores`: `dimension_scores JSONB`, `risk_penalty_total NUMERIC`, `startup_confidence_score NUMERIC`, `schedule_adherence_index NUMERIC`, `critical_path_stability_index NUMERIC`.
+
+Add `confidence_factor NUMERIC(3,2) DEFAULT 0.8` and `risk_severity TEXT DEFAULT 'none'` to `readiness_nodes`.
+
+### Task 3: Update Sync Function
+Update `sync_readiness_nodes()` to auto-assign `dimension_id` by mapping:
+- P2A VCR prerequisites → mapped via their `vcr_items.category_id` directly to `vcr_item_categories`
+- ORA activities → default to "Operating Integrity" or map via metadata
+- PSSR items → map via PSSR checklist category → nearest VCR category
+- ORM deliverables → default to "Management Systems"
+- Training → default to "Operating Integrity"
+
+Set confidence factors: completed/approved = 1.0, in-progress = 0.8, not-started = 0.7.
+
+### Task 4: Executive Dashboard Enhancement
+Redesign `ExecutiveDashboard.tsx` to match the strategic layout:
+- **Top Banner**: Large ORI + SCS + color coding (Green >85, Amber 70-85, Red <70)
+- **Dimension Breakdown**: Bar/table showing each VCR category's score, trend arrow, risk level
+- **Top 5 Startup Blockers**: Blocked/critical nodes with severity
+- **Predictive Trend**: ORI line chart with dashed target curve
+- **Risk Impact Summary**: 4 stat boxes (Open High Risks, Startup-blocking, Dimensions below 70%, Systems below 60%)
+
+### Task 5: Tenant-Configurable Weight Profiles
+Update the existing `ori_weight_profiles` to store dimension-based weights keyed by `vcr_item_categories.id` instead of module names. Add a simple admin UI for editing weights per tenant.
+
+### Task 6: Update Living Documents
+- **Security & Compliance Doc**: Add rows for Readiness Dimensions, Risk Penalty Engine, Startup Confidence Score (mark as Active)
+- **Platform Guide**: Add "Readiness Ontology & Scoring Engine" section documenting the 6 dimensions, ORI formula, SCS
+- **Strategic North Star**: Update scoring engine status from Planned to Active, add dimension-based architecture detail
 
