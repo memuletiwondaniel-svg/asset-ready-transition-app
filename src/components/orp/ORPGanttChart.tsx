@@ -892,6 +892,49 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
       return;
     }
 
+    // Special handling for VCR activities: open overlay sheet with VCR context
+    const isVcrActivity = actCode.startsWith('VCR-') || deliverable.deliverable?.source_type === 'vcr_delivery_plan';
+    if (isVcrActivity) {
+      const siblingActivities = filteredDeliverables
+        .filter(d => d.deliverable?.activity_code && d.id !== deliverable.id)
+        .map(d => ({
+          id: d.id,
+          activity_code: d.deliverable?.activity_code,
+          name: d.deliverable?.name,
+        }));
+
+      setSelectedOraActivity({
+        id: deliverable.id,
+        title: deliverable.deliverable?.name || '',
+        description: deliverable.deliverable?.description || '',
+        type: 'ora_activity',
+        status: deliverable.status === 'COMPLETED' ? 'completed' : deliverable.status === 'IN_PROGRESS' ? 'in_progress' : 'pending',
+        metadata: {
+          action: 'create_vcr_delivery_plan',
+          activity_name: deliverable.deliverable?.name,
+          activity_code: actCode,
+          description: deliverable.deliverable?.description || '',
+          plan_id: planId,
+          project_id: planData?.project_id,
+          project_code: projectCode,
+          deliverable_id: deliverable.deliverable?.id || deliverable.id,
+          ora_plan_activity_id: deliverable.id,
+          vcr_id: deliverable.deliverable?.source_ref_id,
+          vcr_code: deliverable.deliverable?.source_ref_id, // will be resolved via metadata
+          vcr_name: deliverable.deliverable?.name?.replace(/^Develop VCR-\d+ Plan\s*[–-]\s*/, '') || '',
+          vcr_seq_code: actCode,
+          start_date: deliverable.start_date,
+          end_date: deliverable.end_date,
+          completion_percentage: deliverable.completion_percentage || 0,
+          predecessor_ids: deliverable._predecessorIds || [],
+          sibling_activities: siblingActivities,
+        },
+        priority: 'medium',
+        created_at: deliverable.created_at || new Date().toISOString(),
+      });
+      return;
+    }
+
     // Build list of sibling activities for prerequisite picker
     const siblingActivities = filteredDeliverables
       .filter(d => d.deliverable?.activity_code && d.id !== deliverable.id)
