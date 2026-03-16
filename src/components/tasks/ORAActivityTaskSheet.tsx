@@ -1551,7 +1551,9 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                 </div>
               );
             })()}
-          </div>
+            </div>
+            </TabsContent>
+          </Tabs>
         </div>
 
         {/* Pinned footer */}
