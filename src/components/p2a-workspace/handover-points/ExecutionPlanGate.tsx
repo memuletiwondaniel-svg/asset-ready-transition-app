@@ -12,7 +12,7 @@ interface ExecutionPlanGateProps {
 }
 
 /**
- * Gates deliverable tab content behind VCR Execution Plan approval.
+ * Gates deliverable tab content behind VCR Plan approval.
  * Shows appropriate messaging when plan is DRAFT or SUBMITTED.
  */
 export const ExecutionPlanGate: React.FC<ExecutionPlanGateProps> = ({
