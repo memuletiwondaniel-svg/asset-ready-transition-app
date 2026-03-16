@@ -143,16 +143,18 @@ export const DocumentViewerOverlay: React.FC<DocumentViewerOverlayProps> = ({
             </DocumentCanvas>
 
             {/* Comments sidebar */}
-            <CommentsSidebar
-              annotations={annotations}
-              replies={replies}
-              selectedAnnotationId={selectedAnnotation?.id || null}
-              onSelectAnnotation={(ann) => setSelectedAnnotation(ann)}
-              onResolve={(id, resolved) => updateAnnotation({ id, resolved })}
-              onDelete={(id) => deleteAnnotation(id)}
-              onAddReply={addReply}
-              onDeleteReply={deleteReply}
-            />
+            {commentsOpen && (
+              <CommentsSidebar
+                annotations={annotations}
+                replies={replies}
+                selectedAnnotationId={selectedAnnotation?.id || null}
+                onSelectAnnotation={(ann) => setSelectedAnnotation(ann)}
+                onResolve={(id, resolved) => updateAnnotation({ id, resolved })}
+                onDelete={(id) => deleteAnnotation(id)}
+                onAddReply={addReply}
+                onDeleteReply={deleteReply}
+              />
+            )}
           </div>
 
           {/* Status bar */}
