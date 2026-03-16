@@ -49,7 +49,7 @@ export const VCRRelationshipDialog: React.FC<VCRRelationshipDialogProps> = ({
   const [step, setStep] = useState<'select' | 'combine-name'>('select');
   const [combinedName, setCombinedName] = useState('');
 
-  // Extract short VCR codes for display (e.g., VCR-001 from VCR-001-DP300)
+  // Extract short VCR codes for display (e.g., VCR-01 from VCR-DP300-01)
   const sourceCode = sourceVCR.vcr_code;
   const targetCode = targetVCR.vcr_code;
 

@@ -54,7 +54,7 @@ function computeWeightedProgress(leafActivities: any[]): { overallProgress: numb
     return { overallProgress, completedCount, inProgressCount, notStartedCount, p2aProgress: 0, vcrCount: 0 };
   }
 
-  // Group P2A by top-level VCR code (e.g. VCR-001)
+  // Group P2A by top-level VCR code (e.g. VCR-01)
   const vcrGroups: Record<string, any[]> = {};
   p2aActivities.forEach((a: any) => {
     const parts = (a.activity_code || '').split('-');
