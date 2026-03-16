@@ -37,7 +37,7 @@ import { P2ASystem, P2ASubsystem, useP2ASubsystems } from '../hooks/useP2ASystem
 import { P2AHandoverPoint } from '../hooks/useP2AHandoverPoints';
 import { SystemITPSection } from '../handover-points/SystemITPSection';
 
-/** Shorten VCR code for display: "VCR-DP300-001" → "VCR-001" */
+/** Shorten VCR code for display: "VCR-DP300-01" → "VCR-01" */
 const shortenVCR = (code: string) => {
   const match = code.match(/^VCR-[A-Z0-9]+-(\d+)$/i);
   return match ? `VCR-${match[1]}` : code;

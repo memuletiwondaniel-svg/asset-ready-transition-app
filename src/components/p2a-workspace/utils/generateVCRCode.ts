@@ -2,7 +2,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Generate a VCR code in the standard format: VCR-{projectCode}-{seq}
- * e.g. VCR-DP300-007
+ * e.g. VCR-DP300-07
  * 
  * This matches the format used in the P2A Plan wizard (Step 2).
  * The sequence number is determined by counting existing VCRs in the plan.
@@ -24,5 +24,5 @@ export async function generateVCRCode(
   }
 
   const nextSeq = (count ?? 0) + 1;
-  return `VCR-${cleanCode}-${String(nextSeq).padStart(3, '0')}`;
+  return `VCR-${cleanCode}-${String(nextSeq).padStart(2, '0')}`;
 }

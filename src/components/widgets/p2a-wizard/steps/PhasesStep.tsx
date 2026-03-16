@@ -285,7 +285,7 @@ export const PhasesStep: React.FC<PhasesStepProps> = ({
     const prefix = projectCodeMatch ? projectCodeMatch[1] : 'XXX';
     const codedVcrs = newVcrs.map((v, i) => ({
       ...v,
-      code: `VCR-${prefix}-${String(i + 1).padStart(3, '0')}`,
+      code: `VCR-${prefix}-${String(i + 1).padStart(2, '0')}`,
     }));
     onVCRsChange(codedVcrs);
 

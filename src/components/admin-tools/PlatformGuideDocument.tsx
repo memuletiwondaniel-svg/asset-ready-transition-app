@@ -268,7 +268,7 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
 
             <p className="font-medium text-foreground mt-4">VCR (Verification Certificate of Readiness)</p>
             <ul className="list-disc pl-5 space-y-1">
-              <li>VCR Code format: <code className="bg-muted px-1 rounded text-xs">VCR-001-DP300</code> (sequence + project code)</li>
+              <li>VCR Code format: <code className="bg-muted px-1 rounded text-xs">VCR-DP300-01</code> (project code + sequence)</li>
               <li>Each VCR has a <strong className="text-foreground">VCR Plan</strong> defining building blocks (Training, Procedures, Spares, etc.)</li>
               <li>VCR Plan approval triggers a <strong className="text-foreground">cascade</strong>:
                 <ul className="list-disc pl-5 mt-1 space-y-1">
@@ -380,7 +380,7 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
 
             <p className="font-medium text-foreground mt-4">PAC Details</p>
             <ul className="list-disc pl-5 space-y-1">
-              <li>PAC number format: <code className="bg-muted px-1 rounded text-xs">PAC-DP300-VCR-001</code></li>
+              <li>PAC number format: <code className="bg-muted px-1 rounded text-xs">PAC-DP300-VCR-01</code></li>
               <li>Info hierarchy: Project ID → Project Name → VCR Name → VCR Ref → PAC Date</li>
               <li>PAC Date shows "Pending Approval" until formally signed</li>
               <li>Systems table: Index, System Code, System Name only</li>
@@ -463,9 +463,9 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
           <Section id="coding-conventions" icon={<Code className="h-5 w-5 text-primary" />} title="9. Coding Conventions & ID Formats">
             <InfoTable headers={['Entity', 'Format', 'Example', 'Generator Function']} rows={[
               ['Project Code', '{PREFIX}-{NUMBER}', 'DP-300', 'Manual entry'],
-              ['VCR Code', 'VCR-{SEQ}-DP{PROJECT}', 'VCR-001-DP300', 'generate_vcr_code()'],
+              ['VCR Code', 'VCR-{PROJECT}-{SEQ}', 'VCR-DP300-01', 'generate_vcr_code()'],
               ['PSSR Code', 'PSSR-{PLANT}-{SEQ}', 'PSSR-BNGL-001', 'generate_pssr_code()'],
-              ['PAC Number', 'PAC-{PROJECT}-VCR-{SEQ}', 'PAC-DP300-VCR-001', 'Derived from VCR'],
+              ['PAC Number', 'PAC-{PROJECT}-VCR-{SEQ}', 'PAC-DP300-VCR-01', 'Derived from VCR'],
               ['OWL Item', 'OWL-{YEAR}-{SEQ}', 'OWL-2026-0001', 'generate_owl_item_number()'],
               ['ORA Activity', '{PHASE_PREFIX}-{SEQ}', 'IDN-01', 'generate_ora_activity_code()'],
               ['ORA Sub-Activity', '{PARENT}.{SEQ}', 'IDN-01.01', 'generate_ora_activity_code()'],
