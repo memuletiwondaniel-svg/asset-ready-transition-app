@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -40,28 +40,30 @@ export const SignaturePadDialog: React.FC<SignaturePadDialogProps> = ({
     }
   }, [open]);
 
-  const getPos = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const rect = canvasRef.current!.getBoundingClientRect();
+  const getPos = useCallback((clientX: number, clientY: number) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+    const rect = canvas.getBoundingClientRect();
     return {
-      x: (e.clientX - rect.left) * (canvasRef.current!.width / rect.width),
-      y: (e.clientY - rect.top) * (canvasRef.current!.height / rect.height),
+      x: (clientX - rect.left) * (canvas.width / rect.width),
+      y: (clientY - rect.top) * (canvas.height / rect.height),
     };
-  };
+  }, []);
 
-  const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const startDraw = useCallback((x: number, y: number) => {
     const ctx = canvasRef.current?.getContext('2d');
     if (!ctx) return;
     setIsDrawing(true);
-    const pos = getPos(e);
+    const pos = getPos(x, y);
     ctx.beginPath();
     ctx.moveTo(pos.x, pos.y);
-  };
+  }, [getPos]);
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const moveDraw = useCallback((x: number, y: number) => {
     if (!isDrawing) return;
     const ctx = canvasRef.current?.getContext('2d');
     if (!ctx) return;
-    const pos = getPos(e);
+    const pos = getPos(x, y);
     ctx.lineWidth = 2.5;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
@@ -69,9 +71,30 @@ export const SignaturePadDialog: React.FC<SignaturePadDialogProps> = ({
     ctx.lineTo(pos.x, pos.y);
     ctx.stroke();
     setHasDrawn(true);
-  };
+  }, [isDrawing, getPos]);
 
-  const handleMouseUp = () => setIsDrawing(false);
+  const endDraw = useCallback(() => setIsDrawing(false), []);
+
+  // Mouse events
+  const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => startDraw(e.clientX, e.clientY);
+  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => moveDraw(e.clientX, e.clientY);
+  const handleMouseUp = () => endDraw();
+
+  // Touch events
+  const handleTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    const t = e.touches[0];
+    startDraw(t.clientX, t.clientY);
+  };
+  const handleTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    const t = e.touches[0];
+    moveDraw(t.clientX, t.clientY);
+  };
+  const handleTouchEnd = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    endDraw();
+  };
 
   const clearCanvas = () => {
     const ctx = canvasRef.current?.getContext('2d');
@@ -102,15 +125,15 @@ export const SignaturePadDialog: React.FC<SignaturePadDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-md !z-[250]">
+      <DialogContent className="max-w-[95vw] sm:max-w-md !z-[250] p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle className="text-sm">Add Signature</DialogTitle>
         </DialogHeader>
 
         <Tabs defaultValue={savedSignature ? 'saved' : 'draw'} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="draw" className="text-xs">Draw New</TabsTrigger>
-            <TabsTrigger value="saved" disabled={!savedSignature} className="text-xs">
+            <TabsTrigger value="draw" className="text-xs min-h-[36px]">Draw New</TabsTrigger>
+            <TabsTrigger value="saved" disabled={!savedSignature} className="text-xs min-h-[36px]">
               Use Saved
             </TabsTrigger>
           </TabsList>
@@ -121,12 +144,15 @@ export const SignaturePadDialog: React.FC<SignaturePadDialogProps> = ({
                 ref={canvasRef}
                 width={400}
                 height={160}
-                className="w-full cursor-crosshair rounded"
+                className="w-full h-[120px] sm:h-[160px] cursor-crosshair rounded"
                 style={{ touchAction: 'none' }}
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
                 onMouseLeave={handleMouseUp}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
               />
               {!hasDrawn && (
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -134,18 +160,18 @@ export const SignaturePadDialog: React.FC<SignaturePadDialogProps> = ({
                 </div>
               )}
             </div>
-            <div className="flex items-center gap-2 mt-3">
-              <Button variant="outline" size="sm" onClick={clearCanvas} className="gap-1.5 text-xs">
+            <div className="flex flex-wrap items-center gap-2 mt-3">
+              <Button variant="outline" size="sm" onClick={clearCanvas} className="gap-1.5 text-xs min-h-[36px]">
                 <Eraser className="h-3.5 w-3.5" />
                 Clear
               </Button>
               <div className="flex-1" />
-              <Button variant="outline" size="sm" onClick={handleSaveAndConfirm} disabled={!hasDrawn} className="gap-1.5 text-xs">
+              <Button variant="outline" size="sm" onClick={handleSaveAndConfirm} disabled={!hasDrawn} className="gap-1.5 text-xs min-h-[36px]">
                 Save & Use
               </Button>
-              <Button size="sm" onClick={handleConfirmDraw} disabled={!hasDrawn} className="gap-1.5 text-xs">
+              <Button size="sm" onClick={handleConfirmDraw} disabled={!hasDrawn} className="gap-1.5 text-xs min-h-[36px]">
                 <Check className="h-3.5 w-3.5" />
-                Place Signature
+                Place
               </Button>
             </div>
           </TabsContent>
@@ -153,12 +179,12 @@ export const SignaturePadDialog: React.FC<SignaturePadDialogProps> = ({
           <TabsContent value="saved" className="mt-3">
             {savedSignature && (
               <div className="border border-border rounded-lg bg-background p-4 flex items-center justify-center">
-                <img src={savedSignature} alt="Saved signature" className="max-h-[120px] object-contain" />
+                <img src={savedSignature} alt="Saved signature" className="max-h-[100px] sm:max-h-[120px] object-contain" />
               </div>
             )}
-            <DialogFooter className="mt-3">
-              <Button variant="outline" size="sm" onClick={onClose} className="text-xs">Cancel</Button>
-              <Button size="sm" onClick={handleUseSaved} className="gap-1.5 text-xs">
+            <DialogFooter className="mt-3 flex-row gap-2">
+              <Button variant="outline" size="sm" onClick={onClose} className="text-xs min-h-[36px] flex-1 sm:flex-none">Cancel</Button>
+              <Button size="sm" onClick={handleUseSaved} className="gap-1.5 text-xs min-h-[36px] flex-1 sm:flex-none">
                 <Check className="h-3.5 w-3.5" />
                 Place Signature
               </Button>

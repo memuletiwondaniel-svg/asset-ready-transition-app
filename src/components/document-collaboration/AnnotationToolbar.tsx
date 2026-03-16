@@ -44,7 +44,13 @@ export const AnnotationToolbar: React.FC<AnnotationToolbarProps> = ({
   onReset,
 }) => {
   return (
-    <div className="flex flex-col gap-1 p-2 border-r border-border bg-card w-12 shrink-0">
+    <div className={cn(
+      'flex gap-1 border-border bg-card shrink-0',
+      // Desktop: vertical sidebar
+      'md:flex-col md:p-2 md:border-r md:w-12',
+      // Mobile: horizontal bar at top, scrollable
+      'flex-row p-1.5 border-b overflow-x-auto md:overflow-x-visible'
+    )}>
       {/* Tools */}
       {TOOLS.map(({ mode, icon: Icon, label }) => (
         <Tooltip key={mode}>
@@ -52,25 +58,32 @@ export const AnnotationToolbar: React.FC<AnnotationToolbarProps> = ({
             <Button
               variant={activeTool === mode ? 'default' : 'ghost'}
               size="icon"
-              className={cn('h-8 w-8', activeTool === mode && 'bg-primary text-primary-foreground')}
+              className={cn('h-8 w-8 shrink-0', activeTool === mode && 'bg-primary text-primary-foreground')}
               onClick={() => onToolChange(mode)}
             >
               <Icon className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent side="right">{label}</TooltipContent>
+          <TooltipContent side="right" className="hidden md:block">{label}</TooltipContent>
         </Tooltip>
       ))}
 
-      <div className="border-t border-border my-1" />
+      <div className={cn(
+        'border-border',
+        'md:border-t md:my-1',
+        'border-l ml-1 md:ml-0 md:border-l-0'
+      )} />
 
       {/* Color picker */}
-      <div className="flex flex-col items-center gap-1">
+      <div className={cn(
+        'flex items-center gap-1',
+        'md:flex-col'
+      )}>
         {COLORS.map((color) => (
           <button
             key={color}
             className={cn(
-              'w-5 h-5 rounded-full border-2 transition-transform',
+              'w-5 h-5 rounded-full border-2 transition-transform shrink-0',
               activeColor === color ? 'border-foreground scale-110' : 'border-transparent'
             )}
             style={{ backgroundColor: color }}
@@ -79,36 +92,40 @@ export const AnnotationToolbar: React.FC<AnnotationToolbarProps> = ({
         ))}
       </div>
 
-      <div className="border-t border-border my-1" />
+      <div className={cn(
+        'border-border',
+        'md:border-t md:my-1',
+        'border-l ml-1 md:ml-0 md:border-l-0'
+      )} />
 
       {/* Zoom controls */}
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onZoomIn}>
+          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={onZoomIn}>
             <ZoomIn className="h-4 w-4" />
           </Button>
         </TooltipTrigger>
-        <TooltipContent side="right">Zoom In</TooltipContent>
+        <TooltipContent side="right" className="hidden md:block">Zoom In</TooltipContent>
       </Tooltip>
 
-      <span className="text-[10px] text-muted-foreground text-center">{Math.round(zoom * 100)}%</span>
+      <span className="text-[10px] text-muted-foreground text-center self-center shrink-0 px-1 md:px-0">{Math.round(zoom * 100)}%</span>
 
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onZoomOut}>
+          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={onZoomOut}>
             <ZoomOut className="h-4 w-4" />
           </Button>
         </TooltipTrigger>
-        <TooltipContent side="right">Zoom Out</TooltipContent>
+        <TooltipContent side="right" className="hidden md:block">Zoom Out</TooltipContent>
       </Tooltip>
 
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onReset}>
+          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={onReset}>
             <RotateCcw className="h-3.5 w-3.5" />
           </Button>
         </TooltipTrigger>
-        <TooltipContent side="right">Reset Zoom</TooltipContent>
+        <TooltipContent side="right" className="hidden md:block">Reset Zoom</TooltipContent>
       </Tooltip>
     </div>
   );
