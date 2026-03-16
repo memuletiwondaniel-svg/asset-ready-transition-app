@@ -187,10 +187,10 @@ export async function generateVCRActivitiesFromP2A(
   console.log(`[ORA Sync] Generated ${vcrs.length} flat VCR activities for plan ${planId}`);
 }
 
-// ─── Phase 3: VCR Delivery Plan Approval → Building Block Activities ──
+// ─── Phase 3: VCR Plan Approval → Building Block Activities ──
 
 /**
- * Called when a VCR execution plan is approved.
+ * Called when a VCR plan is approved.
  * Generates building block sub-activities from VCR data.
  */
 export async function generateBuildingBlockActivities(
@@ -203,26 +203,50 @@ export async function generateBuildingBlockActivities(
   const orpPlanId = await findOrpPlan(projectId);
   if (!orpPlanId) return;
 
-  // Find the VCR parent activity
-  const { data: vcrActivity } = await client
+  // Find the VCR activity — supports both old hierarchical (p2a_vcr) and new flat (vcr_delivery_plan) layouts
+  let vcrActivity: { id: string; activity_code: string } | null = null;
+
+  // Try new flat structure first
+  const { data: flatActivity } = await client
     .from('ora_plan_activities')
     .select('id, activity_code')
     .eq('orp_plan_id', orpPlanId)
-    .eq('source_type', 'p2a_vcr')
+    .eq('source_type', 'vcr_delivery_plan')
     .eq('source_ref_id', vcrId)
-    .single();
+    .maybeSingle();
+
+  if (flatActivity) {
+    vcrActivity = flatActivity;
+    // Mark the flat activity as COMPLETED
+    await client
+      .from('ora_plan_activities')
+      .update({ status: 'COMPLETED', completion_percentage: 100 })
+      .eq('id', flatActivity.id);
+  } else {
+    // Fallback: old hierarchical structure (p2a_vcr parent)
+    const { data: parentActivity } = await client
+      .from('ora_plan_activities')
+      .select('id, activity_code')
+      .eq('orp_plan_id', orpPlanId)
+      .eq('source_type', 'p2a_vcr')
+      .eq('source_ref_id', vcrId)
+      .maybeSingle();
+
+    if (parentActivity) {
+      vcrActivity = parentActivity;
+      // Mark old VCR Delivery Plan sub-activity as COMPLETED
+      await client
+        .from('ora_plan_activities')
+        .update({ status: 'COMPLETED', completion_percentage: 100 })
+        .eq('parent_id', parentActivity.id)
+        .eq('source_type', 'vcr_delivery_plan');
+    }
+  }
 
   if (!vcrActivity) {
     console.warn('[ORA Sync] VCR activity not found for', vcrId);
     return;
   }
-
-  // Mark VCR Delivery Plan sub-activity as COMPLETED
-  await client
-    .from('ora_plan_activities')
-    .update({ status: 'COMPLETED', completion_percentage: 100 })
-    .eq('parent_id', vcrActivity.id)
-    .eq('source_type', 'vcr_delivery_plan');
 
   // Complete the associated task
   await client
