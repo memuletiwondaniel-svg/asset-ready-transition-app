@@ -47,27 +47,24 @@ async function createLeafTask(
   description: string,
   metadata: Record<string, any>
 ) {
-  const { data: taskData } = await client
-    .from('user_tasks')
-    .insert({
-      user_id: oraEngineerId,
-      title,
-      description,
-      type: 'ora_activity',
-      priority: 'Medium',
-      status: 'pending',
-      metadata: {
-        ...metadata,
-        ora_plan_activity_id: activityId,
-      },
-    })
-    .select('id')
-    .single();
+  // Use SECURITY DEFINER RPC to bypass RLS (approver != task owner)
+  const { data: taskId } = await client.rpc('create_user_task', {
+    p_user_id: oraEngineerId,
+    p_title: title,
+    p_description: description,
+    p_type: 'ora_activity',
+    p_status: 'pending',
+    p_priority: 'Medium',
+    p_metadata: {
+      ...metadata,
+      ora_plan_activity_id: activityId,
+    },
+  });
 
-  if (taskData) {
+  if (taskId) {
     await client
       .from('ora_plan_activities')
-      .update({ task_id: taskData.id })
+      .update({ task_id: taskId })
       .eq('id', activityId);
   }
 }
