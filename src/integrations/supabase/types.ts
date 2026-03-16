@@ -10260,6 +10260,7 @@ export type Database = {
         | "text_box"
         | "drawing"
         | "stamp"
+        | "signature"
       app_permission:
         | "create_project"
         | "create_vcr"
@@ -10547,6 +10548,7 @@ export const Constants = {
         "text_box",
         "drawing",
         "stamp",
+        "signature",
       ],
       app_permission: [
         "create_project",
