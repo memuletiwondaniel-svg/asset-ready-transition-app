@@ -101,6 +101,12 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
   const [draggingAnchor, setDraggingAnchor] = useState<{ id: string; startX: number; startY: number; origAnchor: { x: number; y: number } } | null>(null);
   const [anchorOffset, setAnchorOffset] = useState<{ dx: number; dy: number }>({ dx: 0, dy: 0 });
 
+  // Inline text editing state
+  const [pendingTextBox, setPendingTextBox] = useState<{ x: number; y: number; w: number; h: number; anchor: { x: number; y: number } } | null>(null);
+  const [editingTextBoxId, setEditingTextBoxId] = useState<string | null>(null);
+  const textAreaRef = useRef<HTMLTextAreaElement>(null);
+  const editTextAreaRef = useRef<HTMLTextAreaElement>(null);
+
   // Clear optimistic positions when annotations update
   useEffect(() => {
     setOptimisticPositions({});
