@@ -21,8 +21,6 @@ interface WorkspacePreviewStepProps {
   mappings: Record<string, string[]>;
   vcrPhaseAssignments: Record<string, string>;
   approvers?: WizardApprover[];
-  submissionComment?: string;
-  onCommentChange?: (comment: string) => void;
 }
 
 export const WorkspacePreviewStep: React.FC<WorkspacePreviewStepProps> = ({
