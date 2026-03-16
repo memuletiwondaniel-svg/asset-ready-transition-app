@@ -812,8 +812,8 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
           break;
         }
         case 'status': {
-          const sA = STATUS_ORDER[(da.status || 'NOT_STARTED').toUpperCase()] ?? 2;
-          const sB = STATUS_ORDER[(db.status || 'NOT_STARTED').toUpperCase()] ?? 2;
+          const sA = STATUS_ORDER[(getReconciledActivityState(da).status || 'NOT_STARTED').toUpperCase()] ?? 2;
+          const sB = STATUS_ORDER[(getReconciledActivityState(db).status || 'NOT_STARTED').toUpperCase()] ?? 2;
           cmp = sA - sB;
           break;
         }
