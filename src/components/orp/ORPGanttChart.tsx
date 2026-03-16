@@ -326,6 +326,97 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
     });
   }, [planData, deliverables, planId, queryClient, toast]);
 
+  // Reconciliation: clean up orphaned VCR activities when P2A plan is DRAFT
+  const reconciledRef = useRef(false);
+  useEffect(() => {
+    if (reconciledRef.current) return;
+    if (!planData?.project_id) return;
+    if (!existingP2APlanLoaded) return;
+
+    const run = async () => {
+      reconciledRef.current = true;
+      try {
+        const client = supabase as any;
+
+        // Check if P2A plan is in DRAFT status
+        const { data: p2aPlan } = await client
+          .from('p2a_handover_plans')
+          .select('id, status')
+          .eq('project_id', planData.project_id)
+          .limit(1)
+          .maybeSingle();
+
+        if (!p2aPlan || !['DRAFT', 'REJECTED'].includes(p2aPlan.status)) return;
+
+        // Check if orphaned VCR activities exist
+        const { data: orphanedVcr } = await client
+          .from('ora_plan_activities')
+          .select('id')
+          .eq('orp_plan_id', planId)
+          .in('source_type', ['p2a_vcr', 'vcr_delivery_plan'])
+          .limit(1);
+
+        if (!orphanedVcr || orphanedVcr.length === 0) return;
+
+        console.log('[P2A Reconcile] Found orphaned VCR activities while P2A is DRAFT — cleaning up');
+
+        // Delete VCR delivery plan user tasks
+        await client
+          .from('user_tasks')
+          .delete()
+          .eq('type', 'vcr_delivery_plan')
+          .filter('metadata->>plan_id', 'eq', p2aPlan.id);
+
+        // Delete approver tasks
+        await client
+          .from('user_tasks')
+          .delete()
+          .eq('type', 'p2a_approval')
+          .filter('metadata->>plan_id', 'eq', p2aPlan.id);
+
+        // Delete child activities first, then parents
+        await client
+          .from('ora_plan_activities')
+          .delete()
+          .eq('orp_plan_id', planId)
+          .eq('source_type', 'vcr_delivery_plan');
+
+        await client
+          .from('ora_plan_activities')
+          .delete()
+          .eq('orp_plan_id', planId)
+          .eq('source_type', 'p2a_vcr');
+
+        // Delete ORI snapshot
+        await client
+          .from('ori_scores')
+          .delete()
+          .eq('project_id', planData.project_id)
+          .eq('snapshot_type', 'p2a_approval');
+
+        // Delete approval notifications
+        await client
+          .from('p2a_notifications')
+          .delete()
+          .eq('handover_id', p2aPlan.id)
+          .eq('notification_type', 'p2a_plan_approved');
+
+        console.log('[P2A Reconcile] Orphaned cascade artifacts cleaned up');
+
+        // Refresh
+        queryClient.invalidateQueries({ queryKey: ['orp-plan-details'] });
+        queryClient.invalidateQueries({ queryKey: ['ora-plan-activities'] });
+        queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+        queryClient.invalidateQueries({ queryKey: ['ori-scores'] });
+        queryClient.invalidateQueries({ queryKey: ['project-orp-plans'] });
+      } catch (e) {
+        console.error('[P2A Reconcile] Cleanup failed:', e);
+      }
+    };
+    run();
+  }, [planData, planId, queryClient]);
+
+  const existingP2APlanLoaded = true; // flag for reconciliation dependency
   // Check if P2A plan exists for "Continue" vs "Create" CTA
   const { data: existingP2APlan } = useQuery({
     queryKey: ['p2a-plan-exists', planData?.project_id],
