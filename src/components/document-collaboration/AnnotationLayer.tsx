@@ -498,7 +498,7 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
           borderColor: 'white',
         }}
         onMouseDown={(e) => startAnchorDrag(e, ann)}
-      />
+        onTouchStart={(e) => startAnchorDragTouch(e, ann)}
     );
   };
 
