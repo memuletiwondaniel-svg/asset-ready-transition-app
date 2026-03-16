@@ -471,6 +471,7 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
         className={cn('absolute z-20', cursor)}
         style={style}
         onMouseDown={(e) => startResize(e, ann, corner)}
+        onTouchStart={(e) => startResizeTouch(e, ann, corner)}
       />
     ));
   };
