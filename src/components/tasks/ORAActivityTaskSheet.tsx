@@ -45,6 +45,11 @@ interface ORAActivityTaskSheetProps {
   onOpenP2AWizard?: (projectId: string, projectCode: string, openWorkspace?: boolean) => void;
   /** Called when user wants to open the VCR Plan wizard — parent handles rendering */
   onOpenVCRWizard?: (vcrId: string, vcrCode: string, vcrName: string, projectId: string, projectCode: string) => void;
+  /** Navigate to previous/next activity in the list (persistent panel mode) */
+  onNavigatePrev?: () => void;
+  onNavigateNext?: () => void;
+  hasPrev?: boolean;
+  hasNext?: boolean;
 }
 
 type ActivityStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
