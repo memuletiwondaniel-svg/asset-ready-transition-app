@@ -1443,9 +1443,10 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                           const mutedColor = BAR_COLORS_MUTED[prefix] || 'bg-muted';
                           const isP2aActivity = deliverable.deliverable?.activity_code === 'P2A-01' || deliverable.deliverable?.activity_code === 'EXE-10' || deliverable.deliverable?.name?.toLowerCase().includes('p2a');
                           const p2aPlanIsDraft = existingP2APlan && existingP2APlan.status === 'DRAFT';
-                          // Guard: cap P2A activity progress at 86% when plan is still in DRAFT
+                          // Reconcile progress: ad-hoc reviewer-aware cap, then P2A draft cap
                           const rawCompletion = deliverable.completion_percentage || 0;
-                          const completion = (isP2aActivity && p2aPlanIsDraft && rawCompletion > 86) ? 86 : rawCompletion;
+                          const reconciledBar = getReconciledActivityState(deliverable.id, deliverable.status, rawCompletion);
+                          const completion = (isP2aActivity && p2aPlanIsDraft && reconciledBar.completion > 86) ? 86 : reconciledBar.completion;
 
                           return (
                             <div
