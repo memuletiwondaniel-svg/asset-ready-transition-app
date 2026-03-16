@@ -90,6 +90,10 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
   initialStatusOverride,
   onOpenP2AWizard,
   onOpenVCRWizard,
+  onNavigatePrev,
+  onNavigateNext,
+  hasPrev = false,
+  hasNext = false,
 }) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
