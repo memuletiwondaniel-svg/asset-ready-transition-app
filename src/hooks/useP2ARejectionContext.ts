@@ -6,6 +6,7 @@ export interface P2ARejectionContext {
   comments: string | null;
   approved_at: string | null;
   rejector_name: string | null;
+  type: 'rejected' | 'reverted';
 }
 
 /**
