@@ -51,6 +51,13 @@ export const TaskAttachmentsSection: React.FC<TaskAttachmentsSectionProps> = ({
   const { user } = useAuth();
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [viewerAttachment, setViewerAttachment] = useState<{
+    id: string;
+    file_name: string;
+    file_path: string;
+    file_type: string | null;
+    file_url: string;
+  } | null>(null);
 
   const {
     attachments,
