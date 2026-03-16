@@ -825,7 +825,7 @@ const OverviewInfoPanel: React.FC<{ vcr: ProjectVCR; projectName?: string; proje
           <ExecutionPlanStatus vcrId={vcr.id} status={(vcr as any).execution_plan_status || 'DRAFT'} projectId={projectId} projectCode={projectCode} />
         </div>
 
-        {/* Execution Plan Wizard */}
+        {/* VCR Plan Wizard */}
         <VCRExecutionPlanWizard
           open={execPlanWizardOpen}
           onOpenChange={setExecPlanWizardOpen}
