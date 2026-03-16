@@ -277,17 +277,96 @@ export function useKanbanDragDrop() {
               .eq('id', realId);
           }
 
+          // ── Cascade rollback: undo approval cascade artifacts ──
+
+          // Step 1: Delete approver review tasks from reviewers' Kanban boards
+          try {
+            await client
+              .from('user_tasks')
+              .delete()
+              .eq('type', 'p2a_approval')
+              .filter('metadata->>plan_id', 'eq', p2aPlan.id);
+            console.log('[P2A Revert] Deleted approver review tasks');
+          } catch (e) {
+            console.error('[P2A Revert] Failed to delete approver tasks:', e);
+          }
+
+          // Step 2: Delete VCR Gantt activities and linked VCR delivery plan tasks
+          try {
+            // Find ORP plan for this project
+            const { data: orpPlans } = await client
+              .from('orp_plans')
+              .select('id')
+              .eq('project_id', p2aProjectId)
+              .limit(1);
+
+            if (orpPlans?.[0]) {
+              // Delete linked VCR delivery plan user tasks
+              await client
+                .from('user_tasks')
+                .delete()
+                .eq('type', 'vcr_delivery_plan')
+                .filter('metadata->>plan_id', 'eq', p2aPlan.id);
+
+              // Delete child activities first (vcr_delivery_plan), then parents (p2a_vcr)
+              await client
+                .from('ora_plan_activities')
+                .delete()
+                .eq('orp_plan_id', orpPlans[0].id)
+                .eq('source_type', 'vcr_delivery_plan');
+
+              await client
+                .from('ora_plan_activities')
+                .delete()
+                .eq('orp_plan_id', orpPlans[0].id)
+                .eq('source_type', 'p2a_vcr');
+
+              console.log('[P2A Revert] Deleted VCR Gantt activities and delivery plan tasks');
+            }
+          } catch (e) {
+            console.error('[P2A Revert] Failed to delete VCR activities:', e);
+          }
+
+          // Step 3: Delete the ORI p2a_approval snapshot
+          try {
+            await client
+              .from('ori_scores')
+              .delete()
+              .eq('project_id', p2aProjectId)
+              .eq('snapshot_type', 'p2a_approval');
+            console.log('[P2A Revert] Deleted ORI p2a_approval snapshot');
+          } catch (e) {
+            console.error('[P2A Revert] Failed to delete ORI snapshot:', e);
+          }
+
+          // Step 4: Delete p2a_plan_approved notifications
+          try {
+            await client
+              .from('p2a_notifications')
+              .delete()
+              .eq('handover_id', p2aPlan.id)
+              .eq('notification_type', 'p2a_plan_approved');
+            console.log('[P2A Revert] Deleted approval notifications');
+          } catch (e) {
+            console.error('[P2A Revert] Failed to delete notifications:', e);
+          }
+
           // Invalidate P2A-related queries so sheets/detail views pick up the DRAFT status
           queryClient.invalidateQueries({ queryKey: ['p2a-plan-exists-sheet'] });
           queryClient.invalidateQueries({ queryKey: ['p2a-plan-exists-task'] });
           queryClient.invalidateQueries({ queryKey: ['p2a-plan-by-project'] });
           queryClient.invalidateQueries({ queryKey: ['ora-activity-detail'] });
+          queryClient.invalidateQueries({ queryKey: ['ori-scores'] });
+          queryClient.invalidateQueries({ queryKey: ['ori-score-latest'] });
+          queryClient.invalidateQueries({ queryKey: ['ori-scores-all-projects'] });
+          queryClient.invalidateQueries({ queryKey: ['ora-plan-activities'] });
+          queryClient.invalidateQueries({ queryKey: ['vcr-delivery-plans'] });
 
           // Force refresh user-tasks query so p2aActivityProgress picks up the
           // updated completion_percentage (86%) from ora_plan_activities.
           queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
 
-          toast.info('P2A Plan reverted to Draft — approvals have been reset');
+          toast.info('P2A Plan reverted to Draft — approvals and cascade artifacts have been reset');
         }
       }
 
