@@ -1065,7 +1065,31 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
         }}
       />
 
-      {/* Warning dialog for reverting approval-protected tasks */}
+      {/* VCR Wizard */}
+      {vcrWizardTarget && (
+        <VCRExecutionPlanWizard
+          open={showVCRWizard}
+          onOpenChange={(open) => {
+            setShowVCRWizard(open);
+            if (!open) setVcrWizardTarget(null);
+          }}
+          vcr={{
+            id: vcrWizardTarget.id,
+            vcr_code: vcrWizardTarget.vcr_code,
+            name: vcrWizardTarget.name,
+            description: null,
+            status: 'IN_PROGRESS',
+            target_date: null,
+            created_at: '',
+            progress: 0,
+            systems_count: 0,
+            has_hydrocarbon: false,
+          }}
+          projectCode={vcrWizardTarget.projectCode}
+        />
+      )}
+
+
       <ApprovalVoidWarningDialog
         open={!!warningState}
         task={warningState?.task || null}
