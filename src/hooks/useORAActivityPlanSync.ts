@@ -47,27 +47,24 @@ async function createLeafTask(
   description: string,
   metadata: Record<string, any>
 ) {
-  const { data: taskData } = await client
-    .from('user_tasks')
-    .insert({
-      user_id: oraEngineerId,
-      title,
-      description,
-      type: 'ora_activity',
-      priority: 'Medium',
-      status: 'pending',
-      metadata: {
-        ...metadata,
-        ora_plan_activity_id: activityId,
-      },
-    })
-    .select('id')
-    .single();
+  // Use SECURITY DEFINER RPC to bypass RLS (approver != task owner)
+  const { data: taskId } = await client.rpc('create_user_task', {
+    p_user_id: oraEngineerId,
+    p_title: title,
+    p_description: description,
+    p_type: 'ora_activity',
+    p_status: 'pending',
+    p_priority: 'Medium',
+    p_metadata: {
+      ...metadata,
+      ora_plan_activity_id: activityId,
+    },
+  });
 
-  if (taskData) {
+  if (taskId) {
     await client
       .from('ora_plan_activities')
-      .update({ task_id: taskData.id })
+      .update({ task_id: taskId })
       .eq('id', activityId);
   }
 }
@@ -141,37 +138,33 @@ export async function generateVCRActivitiesFromP2A(
       continue;
     }
 
-    // Create task for Snr ORA Engineer
+    // Create task for Snr ORA Engineer using SECURITY DEFINER RPC (approver != task owner)
     if (oraEngineerId) {
-      const { data: taskData } = await client
-        .from('user_tasks')
-        .insert({
-          user_id: oraEngineerId,
-          title: taskTitle,
-          description: `Set up the VCR Plan for ${vcr.name}. Configure training, procedures, critical documents, systems, and other building blocks.`,
-          type: 'vcr_delivery_plan',
-          priority: 'High',
-          status: 'pending',
-          metadata: {
-            plan_id: planId,
-            project_id: projectId,
-            project_code: projectCode,
-            ora_plan_activity_id: vcrActivity.id,
-            vcr_id: vcr.id,
-            vcr_code: vcr.vcr_code,
-            vcr_name: vcr.name,
-            vcr_seq_code: seqCode,
-            action: 'create_vcr_delivery_plan',
-            source: 'p2a_handover',
-          },
-        })
-        .select('id')
-        .single();
+      const { data: taskId } = await client.rpc('create_user_task', {
+        p_user_id: oraEngineerId,
+        p_title: taskTitle,
+        p_description: `Set up the VCR Plan for ${vcr.name}. Configure training, procedures, critical documents, systems, and other building blocks.`,
+        p_type: 'vcr_delivery_plan',
+        p_status: 'pending',
+        p_priority: 'High',
+        p_metadata: {
+          plan_id: planId,
+          project_id: projectId,
+          project_code: projectCode,
+          ora_plan_activity_id: vcrActivity.id,
+          vcr_id: vcr.id,
+          vcr_code: vcr.vcr_code,
+          vcr_name: vcr.name,
+          vcr_seq_code: seqCode,
+          action: 'create_vcr_delivery_plan',
+          source: 'p2a_handover',
+        },
+      });
 
-      if (taskData) {
+      if (taskId) {
         await client
           .from('ora_plan_activities')
-          .update({ task_id: taskData.id })
+          .update({ task_id: taskId })
           .eq('id', vcrActivity.id);
       }
     }
