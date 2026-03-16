@@ -259,54 +259,37 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   const p2aPlanIsFullyApproved = existingP2aPlan && p2aPlanStatus && ['COMPLETED', 'APPROVED'].includes(p2aPlanStatus);
   const p2aPlanIsSubmitted = existingP2aPlan && p2aPlanStatus && ['ACTIVE', 'COMPLETED', 'APPROVED'].includes(p2aPlanStatus);
 
-  // Fetch rejection info with project-based fallback to avoid missing banner due stale/missing plan id linkage
-  const { data: p2aRejectionInfo } = useQuery({
-    queryKey: ['p2a-rejection-info-task', p2aProjectId],
+  // Fetch draft context (rejection or revert) from plan-level fields
+  const { data: p2aDraftContext } = useQuery({
+    queryKey: ['p2a-draft-context-task', p2aProjectId],
     queryFn: async () => {
       if (!p2aProjectId) return null;
-
       const { data: planRow } = await (supabase as any)
         .from('p2a_handover_plans')
-        .select('id')
+        .select('id, last_rejection_comment, last_rejected_by_name, last_rejected_by_role, last_rejected_at')
         .eq('project_id', p2aProjectId)
         .order('updated_at', { ascending: false })
         .limit(1);
-
-      const planId = planRow?.[0]?.id as string | undefined;
-      if (!planId) return null;
-
-      const { data } = await (supabase as any)
-        .from('p2a_handover_approvers')
-        .select('role_name, comments, approved_at, status')
-        .eq('handover_id', planId)
-        .or('status.eq.REJECTED,comments.not.is.null')
-        .order('approved_at', { ascending: false })
-        .limit(1);
-
-      return data?.[0] || null;
+      const plan = planRow?.[0];
+      if (!plan?.last_rejection_comment) return null;
+      const isReverted = plan.last_rejected_by_role === 'Reverted';
+      return {
+        role_name: isReverted ? (plan.last_rejected_by_name || 'User') : (plan.last_rejected_by_role || 'Approver'),
+        comments: plan.last_rejection_comment,
+        approved_at: plan.last_rejected_at,
+        rejector_name: plan.last_rejected_by_name,
+        type: isReverted ? 'reverted' as const : 'rejected' as const,
+      };
     },
     enabled: !!p2aProjectId && isP2aTask,
-    staleTime: 30_000,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 
-  const p2aRejectionFallback = {
-    role_name: (task?.metadata?.last_rejection_role as string | undefined) || null,
-    comments:
-      (task?.metadata?.last_rejection_comment as string | undefined) ||
-      (task?.metadata?.rejection_comment as string | undefined) ||
-      null,
-    approved_at: (task?.metadata?.last_rejection_at as string | undefined) || null,
-  };
-
-  const effectiveP2aRejection = {
-    role_name: p2aRejectionInfo?.role_name || p2aRejectionFallback.role_name,
-    comments: p2aRejectionInfo?.comments || p2aRejectionFallback.comments,
-    approved_at: p2aRejectionInfo?.approved_at || p2aRejectionFallback.approved_at,
-  };
+  const effectiveP2aRejection = p2aDraftContext;
 
   const showP2aRejectionBanner =
-    isP2aTask &&
-    !!(effectiveP2aRejection.role_name || effectiveP2aRejection.comments);
+    isP2aTask && !!effectiveP2aRejection;
 
   const getP2AStatusLabel = () => {
     if (!p2aPlanStatus) return null;
