@@ -24,6 +24,48 @@ interface AnnotationLayerProps {
 
 const STAMP_LABELS = ['Approved', 'Rejected', 'For Review', 'Needs Revision'];
 
+// Edge detection threshold in % units
+const EDGE_ZONE = 1.2;
+
+type EdgeZone = 'tl' | 'tr' | 'bl' | 'br' | 't' | 'b' | 'l' | 'r' | 'body' | 'none';
+
+const edgeCursors: Record<EdgeZone, string> = {
+  tl: 'cursor-nwse-resize',
+  br: 'cursor-nwse-resize',
+  tr: 'cursor-nesw-resize',
+  bl: 'cursor-nesw-resize',
+  t: 'cursor-ns-resize',
+  b: 'cursor-ns-resize',
+  l: 'cursor-ew-resize',
+  r: 'cursor-ew-resize',
+  body: 'cursor-grab',
+  none: '',
+};
+
+function getEdgeZone(
+  mouseX: number, mouseY: number,
+  boxX: number, boxY: number, boxW: number, boxH: number
+): EdgeZone {
+  const inBox = mouseX >= boxX - EDGE_ZONE && mouseX <= boxX + boxW + EDGE_ZONE &&
+                mouseY >= boxY - EDGE_ZONE && mouseY <= boxY + boxH + EDGE_ZONE;
+  if (!inBox) return 'none';
+
+  const nearL = Math.abs(mouseX - boxX) < EDGE_ZONE;
+  const nearR = Math.abs(mouseX - (boxX + boxW)) < EDGE_ZONE;
+  const nearT = Math.abs(mouseY - boxY) < EDGE_ZONE;
+  const nearB = Math.abs(mouseY - (boxY + boxH)) < EDGE_ZONE;
+
+  if (nearT && nearL) return 'tl';
+  if (nearT && nearR) return 'tr';
+  if (nearB && nearL) return 'bl';
+  if (nearB && nearR) return 'br';
+  if (nearT) return 't';
+  if (nearB) return 'b';
+  if (nearL) return 'l';
+  if (nearR) return 'r';
+  return 'body';
+}
+
 export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
   annotations,
   activeTool,
@@ -54,6 +96,10 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
 
   // Text box drawing state
   const [textBoxDraw, setTextBoxDraw] = useState<{ start: { x: number; y: number }; current: { x: number; y: number } } | null>(null);
+
+  // Arrow tip dragging state
+  const [draggingAnchor, setDraggingAnchor] = useState<{ id: string; startX: number; startY: number; origAnchor: { x: number; y: number } } | null>(null);
+  const [anchorOffset, setAnchorOffset] = useState<{ dx: number; dy: number }>({ dx: 0, dy: 0 });
 
   // Clear optimistic positions when annotations update
   useEffect(() => {
@@ -120,13 +166,20 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     const pos = getRelativePos(e);
 
+    // Dragging arrow tip
+    if (draggingAnchor) {
+      setAnchorOffset({
+        dx: pos.x - draggingAnchor.startX,
+        dy: pos.y - draggingAnchor.startY,
+      });
+      return;
+    }
+
     // Resizing
     if (resizing) {
       const dx = pos.x - resizing.startX;
       const dy = pos.y - resizing.startY;
-      // handled in mouseup
       setResizing(prev => prev ? { ...prev, _dx: dx, _dy: dy } as any : null);
-      // Update drag current for visual preview
       setDragCurrent(pos);
       return;
     }
@@ -156,9 +209,28 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
     if (activeTool === 'highlight') {
       setDragCurrent(pos);
     }
-  }, [dragStart, activeTool, getRelativePos, draggingAnnotation, textBoxDraw, resizing]);
+  }, [dragStart, activeTool, getRelativePos, draggingAnnotation, textBoxDraw, resizing, draggingAnchor]);
 
   const handleMouseUp = useCallback((e: React.MouseEvent) => {
+    // Finish anchor drag
+    if (draggingAnchor) {
+      const pos = getRelativePos(e);
+      const ann = annotations.find(a => a.id === draggingAnchor.id);
+      if (ann) {
+        const newAnchor = {
+          x: draggingAnchor.origAnchor.x + (pos.x - draggingAnchor.startX),
+          y: draggingAnchor.origAnchor.y + (pos.y - draggingAnchor.startY),
+        };
+        onUpdateAnnotation({
+          id: ann.id,
+          position_data: { ...ann.position_data, anchor: newAnchor },
+        });
+      }
+      setDraggingAnchor(null);
+      setAnchorOffset({ dx: 0, dy: 0 });
+      return;
+    }
+
     // Finish resize
     if (resizing) {
       const pos = getRelativePos(e);
@@ -186,23 +258,16 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
       return;
     }
 
-    // Finish annotation drag
+    // Finish annotation drag — anchor stays independent
     if (draggingAnnotation) {
       const ann = annotations.find(a => a.id === draggingAnnotation.id);
       if (ann && (Math.abs(dragOffset.dx) > 0.5 || Math.abs(dragOffset.dy) > 0.5)) {
         const newX = draggingAnnotation.origX + dragOffset.dx;
         const newY = draggingAnnotation.origY + dragOffset.dy;
-        // Set optimistic position to prevent bounce-back
         setOptimisticPositions(prev => ({ ...prev, [ann.id]: { x: newX, y: newY } }));
 
+        // Do NOT move anchor — it stays independent
         const newPos = { ...ann.position_data, x: newX, y: newY };
-        // Also update anchor if it exists (for text boxes with arrows)
-        if (ann.position_data.anchor) {
-          newPos.anchor = {
-            x: ann.position_data.anchor.x + dragOffset.dx,
-            y: ann.position_data.anchor.y + dragOffset.dy,
-          };
-        }
         onUpdateAnnotation({ id: ann.id, position_data: newPos });
       }
       setDraggingAnnotation(null);
@@ -212,7 +277,6 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
 
     // Finish text box drawing
     if (textBoxDraw) {
-      const anchorPt = { x: textBoxDraw.start.x, y: textBoxDraw.start.y };
       const x = Math.min(textBoxDraw.start.x, textBoxDraw.current.x);
       const y = Math.min(textBoxDraw.start.y, textBoxDraw.current.y);
       const w = Math.abs(textBoxDraw.current.x - textBoxDraw.start.x);
@@ -222,14 +286,13 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
       if (w > 2 && h > 1) {
         const content = prompt('Enter text:');
         if (content) {
-          // Place the text box offset from anchor so arrow is visible
-          const boxX = x + w + 2; // offset right of the drawn area
-          const boxY = y;
+          // Place box where drawn, anchor offset to the left so arrow protrudes
+          const anchorPt = { x: x - 5, y: y + h / 2 };
           onCreateAnnotation({
             annotation_type: 'text_box',
             page_number: pageNumber,
             position_data: {
-              x: boxX, y: boxY, width: w, height: h,
+              x, y, width: w, height: h,
               anchor: anchorPt,
             },
             content,
@@ -269,7 +332,7 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
     setDragStart(null);
     setDragCurrent(null);
     setDrawingPath('');
-  }, [dragStart, dragCurrent, activeTool, drawingPath, pageNumber, activeColor, onCreateAnnotation, draggingAnnotation, dragOffset, annotations, onUpdateAnnotation, textBoxDraw, resizing, getRelativePos]);
+  }, [dragStart, dragCurrent, activeTool, drawingPath, pageNumber, activeColor, onCreateAnnotation, draggingAnnotation, dragOffset, annotations, onUpdateAnnotation, textBoxDraw, resizing, getRelativePos, draggingAnchor]);
 
   const handleStampSelect = (label: string) => {
     if (!showStampMenu) return;
@@ -296,7 +359,6 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
   };
 
   const startDragAnnotation = (e: React.MouseEvent, ann: Annotation) => {
-    if (activeTool !== 'pointer') return;
     e.stopPropagation();
     e.preventDefault();
     const pos = getRelativePos(e);
@@ -329,8 +391,21 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
     });
   };
 
+  const startAnchorDrag = (e: React.MouseEvent, ann: Annotation) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const pos = getRelativePos(e);
+    const anchor = ann.position_data.anchor as { x: number; y: number };
+    setDraggingAnchor({
+      id: ann.id,
+      startX: pos.x,
+      startY: pos.y,
+      origAnchor: { ...anchor },
+    });
+    setAnchorOffset({ dx: 0, dy: 0 });
+  };
+
   const getDisplayPos = (ann: Annotation) => {
-    // Priority: dragging > optimistic > actual
     if (draggingAnnotation?.id === ann.id) {
       return {
         x: draggingAnnotation.origX + dragOffset.dx,
@@ -343,7 +418,18 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
     return { x: ann.position_data.x, y: ann.position_data.y };
   };
 
-  // Get resize preview dimensions
+  const getDisplayAnchor = (ann: Annotation) => {
+    const anchor = ann.position_data.anchor as { x: number; y: number } | undefined;
+    if (!anchor) return null;
+    if (draggingAnchor?.id === ann.id) {
+      return {
+        x: draggingAnchor.origAnchor.x + anchorOffset.dx,
+        y: draggingAnchor.origAnchor.y + anchorOffset.dy,
+      };
+    }
+    return anchor;
+  };
+
   const getResizedDims = (ann: Annotation) => {
     if (resizing?.id !== ann.id || !dragCurrent) {
       return { w: ann.position_data.width, h: ann.position_data.height, x: getDisplayPos(ann).x, y: getDisplayPos(ann).y };
@@ -363,28 +449,60 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
     return { w, h, x, y };
   };
 
-  // Resize handles for selected text_box/signature
-  const renderResizeHandles = (ann: Annotation) => {
-    if (selectedAnnotationId !== ann.id || activeTool !== 'pointer') return null;
+  // Edge-based resize zones for text_box and signature
+  const renderEdgeResizeZones = (ann: Annotation) => {
     const displayPos = getDisplayPos(ann);
     const w = ann.position_data.width || 15;
     const h = ann.position_data.height || 6;
+    const zone = EDGE_ZONE;
 
-    const handles = [
-      { corner: 'tl', style: { left: `${displayPos.x}%`, top: `${displayPos.y}%`, transform: 'translate(-50%, -50%)' } },
-      { corner: 'tr', style: { left: `${displayPos.x + w}%`, top: `${displayPos.y}%`, transform: 'translate(-50%, -50%)' } },
-      { corner: 'bl', style: { left: `${displayPos.x}%`, top: `${displayPos.y + h}%`, transform: 'translate(-50%, -50%)' } },
-      { corner: 'br', style: { left: `${displayPos.x + w}%`, top: `${displayPos.y + h}%`, transform: 'translate(-50%, -50%)' } },
+    const edges: { corner: string; style: React.CSSProperties; cursor: string }[] = [
+      // Corners
+      { corner: 'tl', cursor: 'cursor-nwse-resize', style: { left: `${displayPos.x - zone / 2}%`, top: `${displayPos.y - zone / 2}%`, width: `${zone}%`, height: `${zone}%` } },
+      { corner: 'tr', cursor: 'cursor-nesw-resize', style: { left: `${displayPos.x + w - zone / 2}%`, top: `${displayPos.y - zone / 2}%`, width: `${zone}%`, height: `${zone}%` } },
+      { corner: 'bl', cursor: 'cursor-nesw-resize', style: { left: `${displayPos.x - zone / 2}%`, top: `${displayPos.y + h - zone / 2}%`, width: `${zone}%`, height: `${zone}%` } },
+      { corner: 'br', cursor: 'cursor-nwse-resize', style: { left: `${displayPos.x + w - zone / 2}%`, top: `${displayPos.y + h - zone / 2}%`, width: `${zone}%`, height: `${zone}%` } },
+      // Edges
+      { corner: 't', cursor: 'cursor-ns-resize', style: { left: `${displayPos.x + zone / 2}%`, top: `${displayPos.y - zone / 2}%`, width: `${w - zone}%`, height: `${zone}%` } },
+      { corner: 'b', cursor: 'cursor-ns-resize', style: { left: `${displayPos.x + zone / 2}%`, top: `${displayPos.y + h - zone / 2}%`, width: `${w - zone}%`, height: `${zone}%` } },
+      { corner: 'l', cursor: 'cursor-ew-resize', style: { left: `${displayPos.x - zone / 2}%`, top: `${displayPos.y + zone / 2}%`, width: `${zone}%`, height: `${h - zone}%` } },
+      { corner: 'r', cursor: 'cursor-ew-resize', style: { left: `${displayPos.x + w - zone / 2}%`, top: `${displayPos.y + zone / 2}%`, width: `${zone}%`, height: `${h - zone}%` } },
     ];
 
-    return handles.map(({ corner, style }) => (
+    return edges.map(({ corner, style, cursor }) => (
       <div
-        key={`${ann.id}-${corner}`}
-        className="absolute w-2.5 h-2.5 bg-primary border border-primary-foreground rounded-sm cursor-nwse-resize z-20"
+        key={`${ann.id}-edge-${corner}`}
+        className={cn('absolute z-20', cursor)}
         style={style}
         onMouseDown={(e) => startResize(e, ann, corner)}
       />
     ));
+  };
+
+  // Arrow tip draggable handle
+  const renderArrowTipHandle = (ann: Annotation) => {
+    const anchor = getDisplayAnchor(ann);
+    if (!anchor) return null;
+    const isSelected = selectedAnnotationId === ann.id;
+    return (
+      <div
+        className={cn(
+          'absolute z-30 rounded-full border-2 transition-opacity',
+          isSelected ? 'opacity-100' : 'opacity-0 hover:opacity-60',
+          'cursor-crosshair'
+        )}
+        style={{
+          left: `${anchor.x}%`,
+          top: `${anchor.y}%`,
+          width: 10,
+          height: 10,
+          transform: 'translate(-50%, -50%)',
+          backgroundColor: ann.color,
+          borderColor: 'white',
+        }}
+        onMouseDown={(e) => startAnchorDrag(e, ann)}
+      />
+    );
   };
 
   // Preview highlight rect
@@ -451,7 +569,7 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
                 className={cn(
                   'absolute -translate-x-1/2 -translate-y-1/2 hover:scale-110',
                   isSelected && 'scale-125',
-                  activeTool === 'pointer' && 'cursor-grab',
+                  'cursor-grab',
                   isDragging && 'cursor-grabbing'
                 )}
                 style={{ left: `${displayPos.x}%`, top: `${displayPos.y}%` }}
@@ -473,49 +591,59 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
           }
 
           if (ann.annotation_type === 'text_box') {
-            const anchor = pos.anchor as { x: number; y: number } | undefined;
+            const anchor = getDisplayAnchor(ann);
             const dims = getResizedDims(ann);
+            const boxX = dims.x ?? displayPos.x;
+            const boxY = dims.y ?? displayPos.y;
+            const boxW = dims.w || 15;
+            const boxH = dims.h || 6;
+
             return (
               <React.Fragment key={ann.id}>
-                {/* Arrow from anchor to text box */}
+                {/* Arrow from anchor to text box edge */}
                 {anchor && (
                   <svg className="absolute inset-0 w-full h-full pointer-events-none z-[9]" viewBox="0 0 100 100" preserveAspectRatio="none">
                     <defs>
-                      <marker id={`arrowhead-${ann.id}`} markerWidth="6" markerHeight="4" refX="5" refY="2" orient="auto">
+                      <marker id={`arrowhead-${ann.id}`} markerWidth="6" markerHeight="4" refX="0" refY="2" orient="auto">
                         <polygon points="0 0, 6 2, 0 4" fill={ann.color} />
                       </marker>
                     </defs>
                     <line
                       x1={anchor.x}
                       y1={anchor.y}
-                      x2={dims.x ?? displayPos.x}
-                      y2={(dims.y ?? displayPos.y) + (dims.h || 0) / 2}
+                      x2={boxX}
+                      y2={boxY + boxH / 2}
                       stroke={ann.color}
                       strokeWidth="0.2"
-                      markerEnd={`url(#arrowhead-${ann.id})`}
+                      markerStart={`url(#arrowhead-${ann.id})`}
                     />
                   </svg>
                 )}
+                {/* Arrow tip drag handle */}
+                {renderArrowTipHandle(ann)}
+                {/* Text box */}
                 <div
                   className={cn(
-                    'absolute px-2 py-1 text-xs rounded border shadow-sm bg-card overflow-auto',
+                    'absolute px-2 py-1 text-xs rounded border shadow-sm bg-card overflow-auto font-medium',
                     isSelected && 'ring-2 ring-primary',
-                    activeTool === 'pointer' && 'cursor-grab',
-                    isDragging && 'cursor-grabbing'
+                    'cursor-grab',
+                    isDragging && '!cursor-grabbing'
                   )}
                   style={{
-                    left: `${dims.x ?? displayPos.x}%`,
-                    top: `${dims.y ?? displayPos.y}%`,
-                    width: dims.w ? `${dims.w}%` : undefined,
-                    height: dims.h ? `${dims.h}%` : undefined,
+                    left: `${boxX}%`,
+                    top: `${boxY}%`,
+                    width: `${boxW}%`,
+                    height: `${boxH}%`,
                     borderColor: ann.color,
+                    color: ann.color,
                   }}
                   onMouseDown={(e) => startDragAnnotation(e, ann)}
                   onClick={(e) => { e.stopPropagation(); if (!isDragging) onSelectAnnotation(isSelected ? null : ann); }}
                 >
                   {ann.content}
                 </div>
-                {renderResizeHandles(ann)}
+                {/* Edge resize zones */}
+                {renderEdgeResizeZones(ann)}
               </React.Fragment>
             );
           }
@@ -527,7 +655,7 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
                 className={cn(
                   'absolute -translate-x-1/2 -translate-y-1/2',
                   isSelected && 'ring-2 ring-primary rounded',
-                  activeTool === 'pointer' && 'cursor-grab',
+                  'cursor-grab',
                   isDragging && 'cursor-grabbing'
                 )}
                 style={{ left: `${displayPos.x}%`, top: `${displayPos.y}%` }}
@@ -552,8 +680,8 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
                   className={cn(
                     'absolute',
                     isSelected && 'ring-2 ring-primary rounded',
-                    activeTool === 'pointer' && 'cursor-grab',
-                    isDragging && 'cursor-grabbing'
+                    'cursor-grab',
+                    isDragging && '!cursor-grabbing'
                   )}
                   style={{
                     left: `${dims.x ?? displayPos.x}%`,
@@ -571,7 +699,8 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
                     draggable={false}
                   />
                 </div>
-                {renderResizeHandles(ann)}
+                {/* Edge resize zones */}
+                {renderEdgeResizeZones(ann)}
               </React.Fragment>
             );
           }
@@ -624,12 +753,12 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
                 border: `2px dashed ${activeColor}`,
               }}
             />
-            {/* Preview arrow from start to box */}
+            {/* Preview arrow from anchor to box left edge */}
             <svg className="absolute inset-0 w-full h-full pointer-events-none z-[9]" viewBox="0 0 100 100" preserveAspectRatio="none">
               <line
-                x1={textBoxDraw.start.x}
-                y1={textBoxDraw.start.y}
-                x2={textBoxPreview.x + textBoxPreview.w}
+                x1={textBoxPreview.x - 5}
+                y1={textBoxPreview.y + textBoxPreview.h / 2}
+                x2={textBoxPreview.x}
                 y2={textBoxPreview.y + textBoxPreview.h / 2}
                 stroke={activeColor}
                 strokeWidth="0.2"

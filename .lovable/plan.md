@@ -1,46 +1,77 @@
 
 
-## Fix: Cursor UX, Arrow Tip Dragging, Text Box Styling, and Resize Handles
+# Plan: ORIP Scoring Engine Using Existing VCR Item Categories
 
-### Changes to `AnnotationLayer.tsx`
+## Impact Assessment: Zero Breaking Changes
 
-#### 1. Cursor behavior
-- **Signature & Text box body**: Show `cursor-grab` (hand) when hovering in pointer mode, `cursor-grabbing` while dragging. Already partially implemented but needs to work even without the pointer tool active — any time hovering over a placed annotation.
-- **Text box & signature edges**: Show directional resize cursors (`nwse-resize`, `nesw-resize`, `ew-resize`, `ns-resize`) when hovering near the border/edge. Currently resize handles only appear on selection — instead, show edge resize cursors on hover by adding invisible edge zones around the border.
+**No existing workflows will be affected.** The approach reuses the existing `vcr_item_categories` table (Design Integrity, Technical Integrity, Operating Integrity, Management Systems, Health & Safety) as the readiness dimensions for ORI scoring. All changes are additive:
 
-#### 2. Arrow tip is independent and draggable
-Current issue: The arrow's anchor moves with the text box when dragged (lines 200-205). The anchor (arrow tip) should be independently draggable.
+- The `vcr_item_categories` table gets a `tenant_id` column and weight/confidence fields -- existing rows remain intact
+- The `readiness_nodes` table gets a new nullable `dimension_id` column pointing to `vcr_item_categories`
+- The `sync_readiness_nodes` and `calculate_ori_score` functions are replaced with enhanced versions that use category-based dimensions instead of module-based grouping
+- Existing P2A, ORA, PSSR, ORM workflows are untouched -- the ontology layer only reads from them
 
-**Fix**:
-- When dragging the text box, do NOT move the anchor — remove the anchor-offset logic from `handleMouseUp`.
-- Add a draggable arrow-tip handle (a small circle at the anchor position) visible when the text box is selected in pointer mode.
-- New state: `draggingAnchor` — tracks mousedown on the arrow tip handle, mousemove updates anchor position, mouseup calls `onUpdateAnnotation` with new anchor coordinates.
-- The arrow always renders from `anchor` to the nearest edge of the text box.
+## Current VCR Item Categories (Become Readiness Dimensions)
 
-#### 3. Text box creation flow — arrow always visible
-Current issue: The text box is placed offset from the drawn area (`boxX = x + w + 2`), making the arrow confusing. 
+| Code | Name | Active |
+|------|------|--------|
+| DI2 | Design Integrity | Yes |
+| TI | Technical Integrity | Yes |
+| OI | Operating Integrity | Yes |
+| MS | Management Systems | Yes |
+| HS | Health & Safety | Yes |
 
-**Fix**: Place the text box where the user drew it. Set the anchor to a point extending outward from the center-left of the box (e.g., `anchor = { x: x - 5, y: y + h/2 }`). This ensures the arrow is always visible protruding from the box by default. The user can then drag the arrow tip to point wherever they want.
+These become the tenant-configurable readiness dimensions. Different tenants can add/rename/reweight their own categories.
 
-#### 4. Text box font color
-Modern SaaS convention: Use a distinct but professional color for annotation text. Set text box content to render in the annotation's selected color (e.g., `style={{ color: ann.color }}`), with slightly bolder weight (`font-medium`). This differentiates annotation text from document text without being garish.
+## Implementation Tasks
 
-#### 5. Resize handles — edge-based cursors
-Replace corner-only resize dots with invisible edge zones that show proper resize cursors:
-- Top/bottom edges: `cursor-ns-resize`
-- Left/right edges: `cursor-ew-resize`  
-- Corners: `cursor-nwse-resize` / `cursor-nesw-resize`
+### Task 1: Extend `vcr_item_categories` for ORI Scoring
+Add columns to make categories serve double duty as readiness dimensions:
+- `tenant_id UUID` (nullable, defaults via trigger -- existing rows get current tenant)
+- `default_weight NUMERIC(5,4)` (e.g., 0.20 = 20%)
+- `confidence_factor_default NUMERIC(3,2)` (default 0.8)
+- `risk_severity_multiplier NUMERIC(3,1)` (default 1.0)
+- `is_readiness_dimension BOOLEAN DEFAULT true`
 
-These edge zones render on hover (not just when selected) for text_box and signature annotations.
+Add `dimension_id UUID REFERENCES vcr_item_categories(id)` to `readiness_nodes`.
 
-### Summary of changes
+### Task 2: Enhanced ORI Formula
+Replace `calculate_ori_score()` with the full ORIP formula:
 
-**File**: `src/components/document-collaboration/AnnotationLayer.tsx`
-- Add `draggingAnchor` state for independent arrow tip dragging
-- Remove anchor co-movement from text box drag logic
-- Add draggable arrow tip circle handle when text box is selected
-- Update text box creation to place arrow tip offset from box edge
-- Add edge resize zones with proper directional cursors
-- Set text box content color to `ann.color` with `font-medium`
-- Ensure signature always shows `cursor-grab` on hover
+```
+DS_i = (Σ Subcomponent_Weight × Completion%) × Confidence_Factor
+RP_i = Σ (Risk_Severity × Impact_Multiplier)  -- capped at 15%
+ORI  = Σ (Dimension_Weight_i × DS_i) − Global_Risk_Penalty
+SCS  = ORI × Schedule_Adherence × Critical_Path_Stability
+```
+
+Add columns to `ori_scores`: `dimension_scores JSONB`, `risk_penalty_total NUMERIC`, `startup_confidence_score NUMERIC`, `schedule_adherence_index NUMERIC`, `critical_path_stability_index NUMERIC`.
+
+Add `confidence_factor NUMERIC(3,2) DEFAULT 0.8` and `risk_severity TEXT DEFAULT 'none'` to `readiness_nodes`.
+
+### Task 3: Update Sync Function
+Update `sync_readiness_nodes()` to auto-assign `dimension_id` by mapping:
+- P2A VCR prerequisites → mapped via their `vcr_items.category_id` directly to `vcr_item_categories`
+- ORA activities → default to "Operating Integrity" or map via metadata
+- PSSR items → map via PSSR checklist category → nearest VCR category
+- ORM deliverables → default to "Management Systems"
+- Training → default to "Operating Integrity"
+
+Set confidence factors: completed/approved = 1.0, in-progress = 0.8, not-started = 0.7.
+
+### Task 4: Executive Dashboard Enhancement
+Redesign `ExecutiveDashboard.tsx` to match the strategic layout:
+- **Top Banner**: Large ORI + SCS + color coding (Green >85, Amber 70-85, Red <70)
+- **Dimension Breakdown**: Bar/table showing each VCR category's score, trend arrow, risk level
+- **Top 5 Startup Blockers**: Blocked/critical nodes with severity
+- **Predictive Trend**: ORI line chart with dashed target curve
+- **Risk Impact Summary**: 4 stat boxes (Open High Risks, Startup-blocking, Dimensions below 70%, Systems below 60%)
+
+### Task 5: Tenant-Configurable Weight Profiles
+Update the existing `ori_weight_profiles` to store dimension-based weights keyed by `vcr_item_categories.id` instead of module names. Add a simple admin UI for editing weights per tenant.
+
+### Task 6: Update Living Documents
+- **Security & Compliance Doc**: Add rows for Readiness Dimensions, Risk Penalty Engine, Startup Confidence Score (mark as Active)
+- **Platform Guide**: Add "Readiness Ontology & Scoring Engine" section documenting the 6 dimensions, ORI formula, SCS
+- **Strategic North Star**: Update scoring engine status from Planned to Active, add dimension-based architecture detail
 
