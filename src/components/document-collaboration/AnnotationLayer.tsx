@@ -598,18 +598,18 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
                 {anchor && (
                   <svg className="absolute inset-0 w-full h-full pointer-events-none z-[9]" viewBox="0 0 100 100" preserveAspectRatio="none">
                     <defs>
-                      <marker id={`arrowhead-${ann.id}`} markerWidth="6" markerHeight="4" refX="0" refY="2" orient="auto">
+                      <marker id={`arrowhead-${ann.id}`} markerWidth="6" markerHeight="4" refX="6" refY="2" orient="auto">
                         <polygon points="0 0, 6 2, 0 4" fill={ann.color} />
                       </marker>
                     </defs>
                     <line
-                      x1={anchor.x}
-                      y1={anchor.y}
-                      x2={boxX}
-                      y2={boxY + boxH / 2}
+                      x1={boxX}
+                      y1={boxY + boxH / 2}
+                      x2={anchor.x}
+                      y2={anchor.y}
                       stroke={ann.color}
                       strokeWidth="0.2"
-                      markerStart={`url(#arrowhead-${ann.id})`}
+                      markerEnd={`url(#arrowhead-${ann.id})`}
                     />
                   </svg>
                 )}
@@ -618,9 +618,9 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
                 {/* Text box */}
                 <div
                   className={cn(
-                    'absolute px-2 py-1 text-xs rounded border shadow-sm bg-card overflow-auto font-medium',
+                    'absolute px-2 py-1 text-xs rounded border shadow-sm bg-card overflow-hidden font-medium',
                     isSelected && 'ring-2 ring-primary',
-                    'cursor-grab',
+                    editingTextBoxId !== ann.id && 'cursor-grab',
                     isDragging && '!cursor-grabbing'
                   )}
                   style={{
@@ -631,10 +631,39 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
                     borderColor: ann.color,
                     color: ann.color,
                   }}
-                  onMouseDown={(e) => startDragAnnotation(e, ann)}
+                  onMouseDown={(e) => {
+                    if (editingTextBoxId === ann.id) { e.stopPropagation(); return; }
+                    startDragAnnotation(e, ann);
+                  }}
                   onClick={(e) => { e.stopPropagation(); if (!isDragging) onSelectAnnotation(isSelected ? null : ann); }}
+                  onDoubleClick={(e) => {
+                    e.stopPropagation();
+                    setEditingTextBoxId(ann.id);
+                    setTimeout(() => editTextAreaRef.current?.focus(), 50);
+                  }}
                 >
-                  {ann.content}
+                  {editingTextBoxId === ann.id ? (
+                    <textarea
+                      ref={editTextAreaRef}
+                      defaultValue={ann.content}
+                      className="w-full h-full bg-transparent border-none outline-none resize-none text-xs font-medium p-0 m-0"
+                      style={{ color: ann.color }}
+                      onBlur={(e) => {
+                        const val = e.currentTarget.value.trim();
+                        if (val && val !== ann.content) {
+                          onUpdateAnnotation({ id: ann.id, content: val });
+                        }
+                        setEditingTextBoxId(null);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Escape') { setEditingTextBoxId(null); }
+                        e.stopPropagation();
+                      }}
+                      onMouseDown={(e) => e.stopPropagation()}
+                    />
+                  ) : (
+                    ann.content || <span className="text-muted-foreground italic">Double-click to edit</span>
+                  )}
                 </div>
                 {/* Edge resize zones */}
                 {renderEdgeResizeZones(ann)}
