@@ -1170,7 +1170,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
         ...taskEntry.activityTask,
         title: taskEntry.activityTask.title || deliverable.deliverable?.name || '',
         description: taskEntry.activityTask.description ?? deliverable.deliverable?.description ?? '',
-        status: reconciledTaskStatus,
+        status: taskEntry.activityTask.status || reconciledTaskStatus,
         metadata: mergedMetadata,
       });
       return;
@@ -1188,7 +1188,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
       title: deliverable.deliverable?.name || '',
       description: deliverable.deliverable?.description || '',
       type: 'ora_activity',
-      status: reconciledTaskStatus,
+      status: taskEntry?.activityTask?.status || reconciledTaskStatus,
       metadata: mergedMetadata,
       priority: 'medium',
       created_at: deliverable.created_at || new Date().toISOString(),
