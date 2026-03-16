@@ -438,6 +438,73 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
 
   const p2aPlanIsSubmittedOrApproved = existingP2APlan && ['ACTIVE', 'COMPLETED', 'APPROVED'].includes(existingP2APlan.status);
   const p2aCtaLabel = p2aPlanIsSubmittedOrApproved ? 'View P2A Plan' : existingP2APlan ? 'Continue P2A Plan' : 'Develop P2A Plan';
+
+  // Pre-fetch mapping: ora_plan_activity_id → real user_tasks record
+  const { data: activityTaskMap } = useQuery({
+    queryKey: ['ora-activity-task-map', planId],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from('user_tasks')
+        .select('id, status, metadata')
+        .eq('type', 'ora_activity')
+        .filter('metadata->>plan_id', 'eq', planId);
+      const map: Record<string, { taskId: string; taskStatus: string }> = {};
+      for (const t of data || []) {
+        const oraId = (t.metadata as any)?.ora_plan_activity_id;
+        if (oraId) map[oraId] = { taskId: t.id, taskStatus: t.status };
+      }
+      return map;
+    },
+    enabled: !!planId,
+    staleTime: 30_000,
+  });
+
+  // Pre-fetch reviewer counts per task for progress/status reconciliation
+  const taskIdsForReviewerCheck = useMemo(() => {
+    if (!activityTaskMap) return [];
+    return Object.values(activityTaskMap).map(v => v.taskId);
+  }, [activityTaskMap]);
+
+  const { data: pendingReviewerMap } = useQuery({
+    queryKey: ['gantt-pending-reviewers', planId, taskIdsForReviewerCheck],
+    queryFn: async () => {
+      if (taskIdsForReviewerCheck.length === 0) return {};
+      const { data } = await (supabase as any)
+        .from('task_reviewers')
+        .select('task_id, status')
+        .in('task_id', taskIdsForReviewerCheck);
+      const taskMap: Record<string, { total: number; pending: number; approved: number }> = {};
+      for (const r of data || []) {
+        if (!taskMap[r.task_id]) taskMap[r.task_id] = { total: 0, pending: 0, approved: 0 };
+        taskMap[r.task_id].total++;
+        if (r.status === 'PENDING') taskMap[r.task_id].pending++;
+        if (r.status === 'APPROVED') taskMap[r.task_id].approved++;
+      }
+      return taskMap;
+    },
+    enabled: taskIdsForReviewerCheck.length > 0,
+    staleTime: 30_000,
+  });
+
+  // Helper: get reconciled status/progress for an activity considering ad-hoc reviewers
+  const getReconciledActivityState = useCallback((deliverableId: string, rawStatus: string, rawCompletion: number) => {
+    const realTask = activityTaskMap?.[deliverableId];
+    if (!realTask || !pendingReviewerMap) return { status: rawStatus, completion: rawCompletion };
+    
+    const reviewState = pendingReviewerMap[realTask.taskId];
+    if (!reviewState || reviewState.total === 0) return { status: rawStatus, completion: rawCompletion };
+
+    // Has reviewers — check if all approved or still pending
+    if (reviewState.approved === reviewState.total) {
+      return { status: 'COMPLETED', completion: 100 };
+    }
+    // Has pending reviewers — cap at 95% / IN_PROGRESS
+    if (rawStatus === 'COMPLETED' || rawCompletion >= 100) {
+      return { status: 'IN_PROGRESS', completion: 95 };
+    }
+    return { status: rawStatus, completion: rawCompletion };
+  }, [activityTaskMap, pendingReviewerMap]);
+
   const projectCode = planData?.project
     ? `${planData.project.project_id_prefix || ''}-${planData.project.project_id_number || ''}`
     : '';
