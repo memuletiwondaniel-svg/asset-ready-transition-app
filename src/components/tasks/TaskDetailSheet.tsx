@@ -545,7 +545,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
     if (isOraTask) return <Badge variant="secondary" className="text-xs bg-violet-500/10 text-violet-600">ORA Plan</Badge>;
     if (isOraReviewTask) return <Badge variant="secondary" className="text-xs bg-amber-500/10 text-amber-600">ORA Review</Badge>;
     if (isOraActivityTask) return <Badge variant="secondary" className="text-xs bg-purple-500/10 text-purple-600">ORA Activity</Badge>;
-    if (isVcrDeliveryPlanTask) return <Badge variant="secondary" className="text-xs bg-teal-500/10 text-teal-600">VCR Delivery Plan</Badge>;
+    if (isVcrDeliveryPlanTask) return <Badge variant="secondary" className="text-xs bg-teal-500/10 text-teal-600">VCR Plan</Badge>;
     switch (task.type) {
       case 'review':
         return <Badge variant="secondary" className="text-xs bg-blue-500/10 text-blue-600">Review</Badge>;
