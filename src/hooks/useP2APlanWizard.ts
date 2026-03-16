@@ -405,7 +405,7 @@ async function persistPlanToDatabase(
     const realPhaseId = phaseId ? phaseIdMap[phaseId] : null;
 
     // Use the wizard-generated code if available, otherwise generate it
-    const vcrCode = vcr.code || `VCR-${cleanProjectCode}-${String(i + 1).padStart(3, '0')}`;
+    const vcrCode = vcr.code || `VCR-${cleanProjectCode}-${String(i + 1).padStart(2, '0')}`;
 
     const { data: savedVCR, error } = await client
       .from('p2a_handover_points')
