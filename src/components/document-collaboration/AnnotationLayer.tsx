@@ -112,12 +112,14 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
     setOptimisticPositions({});
   }, [annotations]);
 
-  const getRelativePos = useCallback((e: React.MouseEvent) => {
+  const getRelativePos = useCallback((e: React.MouseEvent | { clientX: number; clientY: number }) => {
     if (!layerRef.current) return { x: 0, y: 0 };
     const rect = layerRef.current.getBoundingClientRect();
+    const clientX = 'clientX' in e ? e.clientX : 0;
+    const clientY = 'clientY' in e ? e.clientY : 0;
     return {
-      x: ((e.clientX - rect.left) / rect.width) * 100,
-      y: ((e.clientY - rect.top) / rect.height) * 100,
+      x: ((clientX - rect.left) / rect.width) * 100,
+      y: ((clientY - rect.top) / rect.height) * 100,
     };
   }, []);
 
