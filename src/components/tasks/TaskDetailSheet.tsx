@@ -525,7 +525,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
       return 'Create the Project to Asset (P2A) handover plan for this project. Click below to launch the P2A planning wizard.';
     }
     if (isOraTask) return oraIntentMessage;
-    if (isVcrDeliveryPlanTask) return 'You need to set up the VCR Delivery Plan for this item. Click below to configure the execution plan.';
+    if (isVcrDeliveryPlanTask) return 'Configure the VCR Plan for this item. Click below to define training, procedures, and other building blocks.';
     if (isOraActivityTask) return 'You have an ORA activity to complete. Click below to open the activity details and update progress.';
     if (isOraReviewTask) return 'You have been asked to review and approve an ORA Plan. Use the button below to review, then approve or request changes.';
     if (pssrId) return 'You have been asked to review and approve a PSSR. Use the button below to review, then approve or reject.';
