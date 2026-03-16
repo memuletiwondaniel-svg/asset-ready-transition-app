@@ -1034,6 +1034,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
         }}
         initialStatusOverride={oraActivityDragComplete ? "COMPLETED" : undefined}
         onOpenP2AWizard={handleOpenP2AWizard}
+        onOpenVCRWizard={handleOpenVCRWizard}
       />
 
       {/* P2A Wizard/Workspace rendered at parent level to survive sheet close */}
