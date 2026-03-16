@@ -42,9 +42,9 @@ export function useP2ARejectionContext(planId: string | undefined, planStatus: s
       // Fallback: latest REJECTED entry from history
       const { data: historyRow } = await client
         .from('p2a_approver_history')
-        .select('role_name, comments, approved_at')
+        .select('role_name, comments, approved_at, status')
         .eq('handover_id', planId)
-        .eq('status', 'REJECTED')
+        .in('status', ['REJECTED', 'REVERTED'])
         .order('approved_at', { ascending: false })
         .limit(1);
 
