@@ -17,7 +17,8 @@ import {
 import { Calendar } from '@/components/ui/calendar';
 import { 
   Clock, CheckCircle2, Play, Upload, MessageSquare, 
-  Paperclip, X, Loader2, AlertTriangle, Trash2, GitBranch, Plus, FileText, ChevronRight, Send, RotateCcw
+  Paperclip, X, Loader2, AlertTriangle, Trash2, GitBranch, Plus, FileText, ChevronRight, Send, RotateCcw,
+  ChevronUp, ChevronDown
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
@@ -45,6 +46,11 @@ interface ORAActivityTaskSheetProps {
   onOpenP2AWizard?: (projectId: string, projectCode: string, openWorkspace?: boolean) => void;
   /** Called when user wants to open the VCR Plan wizard — parent handles rendering */
   onOpenVCRWizard?: (vcrId: string, vcrCode: string, vcrName: string, projectId: string, projectCode: string) => void;
+  /** Navigate to previous/next activity in the list (persistent panel mode) */
+  onNavigatePrev?: () => void;
+  onNavigateNext?: () => void;
+  hasPrev?: boolean;
+  hasNext?: boolean;
 }
 
 type ActivityStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
@@ -85,6 +91,10 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
   initialStatusOverride,
   onOpenP2AWizard,
   onOpenVCRWizard,
+  onNavigatePrev,
+  onNavigateNext,
+  hasPrev = false,
+  hasNext = false,
 }) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -851,6 +861,29 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
             </div>
           )}
           {/* Header */}
+          {(hasPrev || hasNext) && (
+            <div className="flex items-center gap-1 mb-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                disabled={!hasPrev}
+                onClick={(e) => { e.stopPropagation(); onNavigatePrev?.(); }}
+              >
+                <ChevronUp className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                disabled={!hasNext}
+                onClick={(e) => { e.stopPropagation(); onNavigateNext?.(); }}
+              >
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+              <span className="text-[10px] text-muted-foreground ml-1">Navigate activities</span>
+            </div>
+          )}
           <SheetHeader className="pb-2">
             <div className="flex items-center gap-2 flex-wrap">
               {activityCode && (

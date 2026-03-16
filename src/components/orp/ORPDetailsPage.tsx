@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -33,12 +33,30 @@ import {
 export const ORPDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { translations: t } = useLanguage();
-  const [activeTab, setActiveTab] = useState('activity-plan');
-  const [activityView, setActivityView] = useState<'gantt' | 'kanban'>('gantt');
+  
+  // Read URL params for view state
+  const urlTab = searchParams.get('tab');
+  const urlView = searchParams.get('view') as 'gantt' | 'kanban' | null;
+  const highlightActivityCode = searchParams.get('highlight') || undefined;
+  
+  const [activeTab, setActiveTab] = useState(urlTab || 'activity-plan');
+  const [activityView, setActivityView] = useState<'gantt' | 'kanban'>(urlView || 'gantt');
   const [showComparison, setShowComparison] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddItem, setShowAddItem] = useState(false);
+  
+  // Clear highlight param after initial load
+  useEffect(() => {
+    if (highlightActivityCode) {
+      const timer = setTimeout(() => {
+        searchParams.delete('highlight');
+        setSearchParams(searchParams, { replace: true });
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [highlightActivityCode]);
 
   const { data: plan, isLoading } = useORPPlanDetails(id || '');
   const { plans: allPlans } = useORPPlans();
@@ -262,7 +280,7 @@ export const ORPDetailsPage: React.FC = () => {
             <div className="flex-1 overflow-auto">
               {activityView === 'gantt' ? (
                 <div className="p-6">
-                  <ORPGanttChart planId={plan.id} deliverables={plan.deliverables || []} searchQuery={searchQuery} hideToolbar />
+                  <ORPGanttChart planId={plan.id} deliverables={plan.deliverables || []} searchQuery={searchQuery} hideToolbar highlightActivityCode={highlightActivityCode} />
                 </div>
               ) : (
                 <ORPKanbanBoardDraggable 
