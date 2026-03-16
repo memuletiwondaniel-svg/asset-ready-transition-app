@@ -1011,12 +1011,16 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
         name: d.deliverable?.name,
       }));
 
+    // Resolve real user task ID for the overlay
+    const realTask = activityTaskMap?.[deliverable.id];
+    const reconciledState = getReconciledActivityState(deliverable.id, deliverable.status, deliverable.completion_percentage || 0);
+
     setSelectedOraActivity({
-      id: deliverable.id,
+      id: realTask?.taskId || deliverable.id,
       title: deliverable.deliverable?.name || '',
       description: deliverable.deliverable?.description || '',
       type: 'ora_activity',
-      status: deliverable.status === 'COMPLETED' ? 'completed' : deliverable.status === 'IN_PROGRESS' ? 'in_progress' : 'pending',
+      status: reconciledState.status === 'COMPLETED' ? 'completed' : reconciledState.status === 'IN_PROGRESS' ? 'in_progress' : 'pending',
       metadata: {
         activity_name: deliverable.deliverable?.name,
         activity_code: deliverable.deliverable?.activity_code,
@@ -1029,9 +1033,9 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
         start_date: deliverable.start_date,
         end_date: deliverable.end_date,
         completion_percentage: (() => {
-          const raw = deliverable.completion_percentage || 0;
           const isP2a = deliverable.deliverable?.activity_code === 'P2A-01' || deliverable.deliverable?.activity_code === 'EXE-10' || deliverable.deliverable?.name?.toLowerCase().includes('p2a');
-          return (isP2a && existingP2APlan?.status === 'DRAFT' && raw > 86) ? 86 : raw;
+          if (isP2a && existingP2APlan?.status === 'DRAFT' && reconciledState.completion > 86) return 86;
+          return reconciledState.completion;
         })(),
         predecessor_ids: deliverable._predecessorIds || [],
         sibling_activities: siblingActivities,
@@ -1039,7 +1043,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
       priority: 'medium',
       created_at: deliverable.created_at || new Date().toISOString(),
     });
-  }, [planId, filteredDeliverables, readOnly, planData?.project_id, projectCode, existingP2APlan]);
+  }, [planId, filteredDeliverables, readOnly, planData?.project_id, projectCode, existingP2APlan, activityTaskMap, getReconciledActivityState]);
 
   // Early return - no data
   if (!dates.length) {
