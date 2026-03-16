@@ -721,6 +721,10 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
                     if (editingTextBoxId === ann.id) { e.stopPropagation(); return; }
                     startDragAnnotation(e, ann);
                   }}
+                  onTouchStart={(e) => {
+                    if (editingTextBoxId === ann.id) return;
+                    startDragAnnotationTouch(e, ann);
+                  }}
                   onClick={(e) => { e.stopPropagation(); if (!isDragging) onSelectAnnotation(isSelected ? null : ann); }}
                   onDoubleClick={(e) => {
                     e.stopPropagation();
