@@ -1884,6 +1884,19 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
 
       </CardContent>
 
+      {/* Floating drag date tooltip */}
+      {dragDatePreview && (
+        <div
+          className="fixed z-[100] pointer-events-none px-2.5 py-1.5 rounded-md bg-popover border border-border shadow-lg text-[11px] font-medium text-popover-foreground whitespace-nowrap"
+          style={{
+            left: dragDatePreview.mouseX + 12,
+            top: dragDatePreview.mouseY - 32,
+          }}
+        >
+          {dragDatePreview.label}
+        </div>
+      )
+
       <AddFromCatalogDialog open={showCatalogDialog} onOpenChange={setShowCatalogDialog} existingIds={existingActivityIds} onAdd={handleAddFromCatalog} />
       <TaskDetailSheet
         task={selectedReviewTask}
