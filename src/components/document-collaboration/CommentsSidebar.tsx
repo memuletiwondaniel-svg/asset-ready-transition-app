@@ -113,7 +113,7 @@ export const CommentsSidebar: React.FC<CommentsSidebarProps> = ({
   const unresolvedCount = annotations.filter(a => !a.resolved).length;
 
   return (
-    <div className="w-72 border-l border-border bg-card flex flex-col shrink-0">
+    <div className="absolute inset-0 md:relative md:inset-auto w-full md:w-72 border-l border-border bg-card flex flex-col shrink-0 z-10">
       {/* Header */}
       <div className="p-3 border-b border-border flex items-center justify-between">
         <div className="flex items-center gap-2">
