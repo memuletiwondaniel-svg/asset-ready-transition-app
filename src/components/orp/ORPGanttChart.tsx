@@ -1634,7 +1634,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                                 });
                               }}
                             >
-                              <Play className="h-3.5 w-3.5" />
+                              <RotateCw className="h-3.5 w-3.5" />
                               Cycle Status
                             </ContextMenuItem>
                             <ContextMenuItem
