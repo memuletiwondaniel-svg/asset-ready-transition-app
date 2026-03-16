@@ -525,7 +525,12 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
     const touch = e.touches[0];
     if (!touch) return;
     e.preventDefault();
-    const synth = { clientX: touch.clientX, clientY: touch.clientY } as any;
+    const synth = {
+      clientX: touch.clientX,
+      clientY: touch.clientY,
+      preventDefault: () => {},
+      stopPropagation: () => {},
+    } as any;
     // Reuse mouse down logic
     handleMouseDown(synth);
   }, [handleMouseDown, activeTool, draggingAnnotation, resizing, draggingAnchor]);
