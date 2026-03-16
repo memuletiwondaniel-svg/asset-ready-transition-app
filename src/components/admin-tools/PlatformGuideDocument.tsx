@@ -268,7 +268,7 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
 
             <p className="font-medium text-foreground mt-4">VCR (Verification Certificate of Readiness)</p>
             <ul className="list-disc pl-5 space-y-1">
-              <li>VCR Code format: <code className="bg-muted px-1 rounded text-xs">VCR-001-DP300</code> (sequence + project code)</li>
+              <li>VCR Code format: <code className="bg-muted px-1 rounded text-xs">VCR-DP300-01</code> (project code + sequence)</li>
               <li>Each VCR has a <strong className="text-foreground">VCR Plan</strong> defining building blocks (Training, Procedures, Spares, etc.)</li>
               <li>VCR Plan approval triggers a <strong className="text-foreground">cascade</strong>:
                 <ul className="list-disc pl-5 mt-1 space-y-1">
