@@ -271,6 +271,11 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
   }, [currentStep, isReviewMode, syncReviewProgress]);
 
   // When the wizard opens and a draft plan exists, auto-load and resume
+  // Reset dismissable banner each time wizard opens
+  useEffect(() => {
+    if (open) setBannerDismissed(false);
+  }, [open]);
+
   useEffect(() => {
     if (open && existingPlan && !draftLoaded && !isLoadingDraft) {
       setIsLoadingDraft(true);
