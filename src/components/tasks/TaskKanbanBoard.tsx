@@ -36,6 +36,7 @@ import {
   Clock,
   CheckCircle2,
   Inbox,
+  GanttChart,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { isPast, isToday } from 'date-fns';
