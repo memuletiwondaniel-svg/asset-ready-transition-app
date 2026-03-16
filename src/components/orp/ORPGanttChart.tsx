@@ -8,6 +8,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Plus, Search, ZoomIn, ZoomOut, ChevronRight, ChevronDown, ChevronsUpDown, GitBranch, Columns3, Route, BookOpen, PenLine, FileText, ArrowUp, ArrowDown, ArrowUpDown, Eye, RotateCw } from 'lucide-react';
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger } from '@/components/ui/context-menu';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { MobileTimelineList } from './MobileTimelineList';
 import { AddFromCatalogDialog } from '@/components/ora/wizard/AddFromCatalogDialog';
 
 import { WizardActivity } from '@/components/ora/wizard/types';
