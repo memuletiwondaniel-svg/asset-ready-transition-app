@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Key, Loader2, Trash2, AlertTriangle, Edit3, Eye, XCircle, RotateCcw, MessageSquare } from 'lucide-react';
+import { Key, Loader2, Trash2, AlertTriangle, Edit3, Eye, XCircle, RotateCcw, MessageSquare, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { WizardProgress, WizardStep } from './WizardProgress';
@@ -84,6 +84,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
   const [reviewComment, setReviewComment] = useState('');
   const [submissionComment, setSubmissionComment] = useState('');
   const [isApproving, setIsApproving] = useState(false);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
   const queryClient = useQueryClient();
   
   const { data: existingPlan } = useP2APlanByProject(projectId);
@@ -690,9 +691,9 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
         )}
 
         {/* Draft context banner — rejection or revert (shown to author) */}
-        {!isReviewMode && rejectionInfo && useWizard && !isLoadingDraft && (
+        {!isReviewMode && rejectionInfo && useWizard && !isLoadingDraft && !bannerDismissed && (
           rejectionInfo.type === 'reverted' ? (
-            <div className="flex items-start gap-2 sm:gap-3 px-3 sm:px-5 py-1.5 sm:py-2 border-b border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 shrink-0" style={{ borderLeft: '3px solid hsl(38, 92%, 50%)' }}>
+            <div className="group/banner relative flex items-start gap-2 sm:gap-3 px-3 sm:px-5 py-1.5 sm:py-2 border-b border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 shrink-0" style={{ borderLeft: '3px solid hsl(38, 92%, 50%)' }}>
               <RotateCcw className="h-3.5 w-3.5 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
               <div className="flex-1 text-[11px] sm:text-xs space-y-0.5">
                 <p className="font-medium text-amber-800 dark:text-amber-200">
@@ -708,9 +709,15 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
                 )}
                 <p className="text-amber-600/70 dark:text-amber-400/60">You can continue editing and resubmit when ready.</p>
               </div>
+              <button
+                onClick={() => setBannerDismissed(true)}
+                className="absolute top-1.5 right-1.5 p-0.5 rounded-sm opacity-0 group-hover/banner:opacity-100 transition-opacity text-amber-500 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-200/50 dark:hover:bg-amber-800/50"
+              >
+                <X className="h-3 w-3" />
+              </button>
             </div>
           ) : (
-            <div className="flex items-start gap-2 sm:gap-3 px-3 sm:px-5 py-1.5 sm:py-2 border-b bg-destructive/5 dark:bg-destructive/10 text-destructive shrink-0">
+            <div className="group/banner relative flex items-start gap-2 sm:gap-3 px-3 sm:px-5 py-1.5 sm:py-2 border-b bg-destructive/5 dark:bg-destructive/10 text-destructive shrink-0">
               <XCircle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
               <div className="flex-1 text-[11px] sm:text-xs space-y-0.5">
                 <p className="font-medium">
@@ -726,6 +733,12 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
                 )}
                 <p className="text-muted-foreground">Please address the feedback and resubmit for approval.</p>
               </div>
+              <button
+                onClick={() => setBannerDismissed(true)}
+                className="absolute top-1.5 right-1.5 p-0.5 rounded-sm opacity-0 group-hover/banner:opacity-100 transition-opacity text-destructive/50 hover:text-destructive hover:bg-destructive/10"
+              >
+                <X className="h-3 w-3" />
+              </button>
             </div>
           )
         )}
