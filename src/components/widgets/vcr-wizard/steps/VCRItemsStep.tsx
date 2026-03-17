@@ -430,6 +430,14 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
                   className="flex items-center gap-2 w-full text-left py-2 px-1 hover:bg-muted/40 rounded transition-colors"
                 >
                   {isCollapsed ? <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/50" /> : <ChevronDown className="w-3.5 h-3.5 text-muted-foreground/50" />}
+                  {(() => {
+                    const catIcon = CATEGORY_ICONS[cat];
+                    if (catIcon) {
+                      const CatIcon = catIcon.icon;
+                      return <CatIcon className={cn("w-4 h-4", catIcon.color)} />;
+                    }
+                    return null;
+                  })()}
                   <span className="text-sm font-semibold">{cat}</span>
                   <Badge variant="secondary" className="text-[10px] ml-auto">{catItems.length}</Badge>
                 </button>
