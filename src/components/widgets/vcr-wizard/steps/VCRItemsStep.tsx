@@ -582,9 +582,9 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
                 const catItems = grouped[catName] || [];
                 const idx = catItems.findIndex(i => i.id === editingItem.id);
                 const badgeId = `${catCode}-${String(idx + 1).padStart(2, '0')}`;
-                const colors = CATEGORY_COLORS[catName] || { bg: 'bg-muted', text: 'text-muted-foreground', border: 'border-border' };
+                const colors = getVCRCategoryConfig(catName);
                 return (
-                  <Badge variant="outline" className={cn("text-[10px] font-mono font-semibold border", colors.bg, colors.text, colors.border)}>
+                  <Badge variant="outline" className={cn("text-[10px] font-mono font-semibold border", colors.badgeBg, colors.badgeText, colors.badgeBorder)}>
                     {badgeId}
                   </Badge>
                 );

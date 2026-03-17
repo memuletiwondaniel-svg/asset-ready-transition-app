@@ -24,13 +24,7 @@ interface PSSRApproverItemsSheetProps {
 
 type FilterStatus = 'all' | 'completed' | 'in_review' | 'not_started';
 
-const CATEGORY_COLORS: Record<string, string> = {
-  'Design Integrity': 'text-violet-500',
-  'Technical Integrity': 'text-blue-500',
-  'Operating Integrity': 'text-cyan-500',
-  'Management Systems': 'text-amber-500',
-  'Health & Safety': 'text-emerald-500',
-};
+// VCR category colors now come from shared config
 
 const getInitials = (name: string) =>
   name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
