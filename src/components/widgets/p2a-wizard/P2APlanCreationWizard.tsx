@@ -10,7 +10,7 @@ import { SystemMappingStep } from './steps/SystemMappingStep';
 import { PhasesStep, WizardPhase } from './steps/PhasesStep';
 import { WorkspacePreviewStep } from './steps/WorkspacePreviewStep';
 import { ApprovalSetupStep, WizardApprover } from './steps/ApprovalSetupStep';
-import { ConfirmationStep } from './steps/ConfirmationStep';
+
 import { useP2APlanWizard } from '@/hooks/useP2APlanWizard';
 import { useP2APlanByProject } from '@/hooks/useP2APlanByProject';
 import { useP2ARejectionContext } from '@/hooks/useP2ARejectionContext';
