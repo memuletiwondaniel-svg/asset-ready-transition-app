@@ -430,7 +430,7 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
                         <Card key={item.id} className={cn("group transition-colors cursor-pointer", item.is_na ? "opacity-50 border-dashed" : "hover:border-primary/40")} onClick={() => { if (!item.is_na) { setEditingItem(item); setEditSheetOpen(true); } }}>
                           <CardContent className="p-3">
                             <div className="flex items-start gap-3">
-                              <Badge variant="outline" className={cn("text-[10px] font-mono font-semibold shrink-0 mt-0.5 border", item.is_na ? "bg-muted text-muted-foreground border-border line-through" : cn(catColor.bg, catColor.text, catColor.border))}>
+                              <Badge variant="outline" className={cn("text-[10px] font-mono font-semibold shrink-0 mt-0.5 border", item.is_na ? "bg-muted text-muted-foreground border-border line-through" : cn(catColor.badgeBg, catColor.badgeText, catColor.badgeBorder))}>
                                 {itemId}
                               </Badge>
                               <div className={cn("flex-1 min-w-0", item.is_na && "line-through text-muted-foreground")}>
