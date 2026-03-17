@@ -54,8 +54,9 @@ import { cn } from '@/lib/utils';
 import { getVCRCategoryConfig, VCR_CATEGORY_ORDER } from '@/lib/vcrCategoryConfig';
 import { toast } from 'sonner';
 import { useParams } from 'react-router-dom';
-import { useProjectTeamSearch, useVCRItemDeliveringParties } from '@/hooks/useVCRItemDeliveringParties';
-import { getRegionKeywords, posMatchesRegion } from '@/utils/hubRegionMapping';
+import { useVCRItemDeliveringParties } from '@/hooks/useVCRItemDeliveringParties';
+import { getRegionKeywords, getPortfolio, profileMatchesProjectLocation, getRoleFamilyNames, type ProjectLocationContext } from '@/utils/hubRegionMapping';
+import { requiresPortfolio, requiresHub } from '@/utils/roleAssignmentConfig';
 
 interface VCRItemsStepProps {
   vcrId: string;
