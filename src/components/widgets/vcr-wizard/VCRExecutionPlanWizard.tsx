@@ -65,13 +65,42 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   const [currentStep, setCurrentStep] = useState(0);
   const [visitedSteps, setVisitedSteps] = useState<Set<number>>(new Set([0]));
   const isMobile = useIsMobile();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const hasPromotedRef = useRef(false);
 
   useEffect(() => {
     if (open) {
       setCurrentStep(0);
       setVisitedSteps(new Set([0]));
+      hasPromotedRef.current = false;
     }
   }, [open]);
+
+  // Auto-promote associated task from "pending" (To Do) → "in_progress" (In Progress)
+  useEffect(() => {
+    if (!open || !user?.id || hasPromotedRef.current) return;
+    hasPromotedRef.current = true;
+
+    (async () => {
+      const { data: tasks } = await (supabase as any)
+        .from('user_tasks')
+        .select('id, status')
+        .eq('user_id', user.id)
+        .eq('type', 'vcr_delivery_plan')
+        .eq('status', 'pending')
+        .filter('metadata->>vcr_id', 'eq', vcr.id)
+        .limit(1);
+
+      if (tasks?.[0]) {
+        await (supabase as any)
+          .from('user_tasks')
+          .update({ status: 'in_progress' })
+          .eq('id', tasks[0].id);
+        queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+      }
+    })();
+  }, [open, user?.id, vcr.id, queryClient]);
 
   // Query step data counts to determine real completion
   const { data: stepCounts = {} } = useQuery({
