@@ -255,7 +255,7 @@ const ProgressPanel: React.FC<{ vcr: ProjectVCR; liveTargetDate?: Date }> = ({ v
             </div>
             <div className="space-y-3">
               {(progressData?.categories || []).map((cat) => {
-                const meta = CATEGORY_META[cat.name] || { icon: FileText, color: 'text-muted-foreground', bg: 'bg-muted-foreground', order: 99 };
+                const meta = CATEGORY_META_LOOKUP(cat.name);
                 const Icon = meta.icon;
                 return (
                   <div

@@ -234,7 +234,7 @@ export const PSSRApproverItemsSheet: React.FC<PSSRApproverItemsSheetProps> = ({
               filteredItems.map((item) => {
                 const sc = statusConfig[item.status];
                 const StatusIcon = sc.icon;
-                const catColor = CATEGORY_COLORS[item.category] || 'text-muted-foreground';
+                const catColor = getVCRCategoryConfig(item.category).color;
                 return (
                   <div
                     key={item.id}
