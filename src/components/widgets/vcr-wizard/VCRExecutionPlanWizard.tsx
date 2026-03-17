@@ -360,7 +360,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
                   onClick={() => onOpenChange(false)}
                   className="gap-1.5 text-muted-foreground"
                 >
-                  <X className="w-4 h-4" />
+                  <LogOut className="w-4 h-4" />
                   {!isMobile && 'Save & Exit'}
                 </Button>
               </div>
