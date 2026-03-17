@@ -9,6 +9,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Search, CheckCircle2, Clock, AlertCircle, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getVCRCategoryConfig } from '@/lib/vcrCategoryConfig';
 import { PSSRItemDetailSheet } from './PSSRItemDetailSheet';
 
 interface PSSRApproverItemsSheetProps {
@@ -24,13 +25,7 @@ interface PSSRApproverItemsSheetProps {
 
 type FilterStatus = 'all' | 'completed' | 'in_review' | 'not_started';
 
-const CATEGORY_COLORS: Record<string, string> = {
-  'Design Integrity': 'text-violet-500',
-  'Technical Integrity': 'text-blue-500',
-  'Operating Integrity': 'text-cyan-500',
-  'Management Systems': 'text-amber-500',
-  'Health & Safety': 'text-emerald-500',
-};
+// VCR category colors now come from shared config
 
 const getInitials = (name: string) =>
   name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
@@ -239,7 +234,7 @@ export const PSSRApproverItemsSheet: React.FC<PSSRApproverItemsSheetProps> = ({
               filteredItems.map((item) => {
                 const sc = statusConfig[item.status];
                 const StatusIcon = sc.icon;
-                const catColor = CATEGORY_COLORS[item.category] || 'text-muted-foreground';
+                const catColor = getVCRCategoryConfig(item.category).color;
                 return (
                   <div
                     key={item.id}

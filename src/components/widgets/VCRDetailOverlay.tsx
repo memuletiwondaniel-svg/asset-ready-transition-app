@@ -65,7 +65,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { CategoryItemsSheet } from './CategoryItemsSheet';
 import { ApproverDetailSheet } from './ApproverDetailSheet';
-
+import { getVCRCategoryConfig } from '@/lib/vcrCategoryConfig';
 interface VCRDetailOverlayProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -107,12 +107,9 @@ const shortCode = (code?: string) => {
 };
 
 // ── Progress Panel (Left) ───────────────────────────────────────
-const CATEGORY_META: Record<string, { icon: React.ElementType; color: string; bg: string; order: number }> = {
-  'Design Integrity': { icon: Target, color: 'text-violet-500', bg: 'bg-violet-500', order: 1 },
-  'Technical Integrity': { icon: Settings2, color: 'text-blue-500', bg: 'bg-blue-500', order: 2 },
-  'Operating Integrity': { icon: Layers, color: 'text-cyan-500', bg: 'bg-cyan-500', order: 3 },
-  'Management Systems': { icon: Users, color: 'text-amber-500', bg: 'bg-amber-500', order: 4 },
-  'Health & Safety': { icon: Shield, color: 'text-emerald-500', bg: 'bg-emerald-500', order: 5 },
+const CATEGORY_META_LOOKUP = (name: string) => {
+  const cfg = getVCRCategoryConfig(name);
+  return { icon: cfg.icon, color: cfg.color, bg: cfg.bg, order: cfg.order };
 };
 
 const ProgressPanel: React.FC<{ vcr: ProjectVCR; liveTargetDate?: Date }> = ({ vcr, liveTargetDate }) => {
@@ -186,7 +183,7 @@ const ProgressPanel: React.FC<{ vcr: ProjectVCR; liveTargetDate?: Date }> = ({ v
         statusCounts,
         categories: Array.from(categoryMap.entries())
           .map(([name, counts]) => ({ name, ...counts }))
-          .sort((a, b) => (CATEGORY_META[a.name]?.order ?? 99) - (CATEGORY_META[b.name]?.order ?? 99)),
+          .sort((a, b) => (CATEGORY_META_LOOKUP(a.name).order) - (CATEGORY_META_LOOKUP(b.name).order)),
       };
     },
   });
@@ -258,7 +255,7 @@ const ProgressPanel: React.FC<{ vcr: ProjectVCR; liveTargetDate?: Date }> = ({ v
             </div>
             <div className="space-y-3">
               {(progressData?.categories || []).map((cat) => {
-                const meta = CATEGORY_META[cat.name] || { icon: FileText, color: 'text-muted-foreground', bg: 'bg-muted-foreground', order: 99 };
+                const meta = CATEGORY_META_LOOKUP(cat.name);
                 const Icon = meta.icon;
                 return (
                   <div

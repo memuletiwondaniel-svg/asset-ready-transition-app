@@ -48,14 +48,9 @@ import {
   X,
   Ban,
   Undo2,
-  Compass,
-  Wrench,
-  Settings,
-  ShieldCheck,
-  HeartPulse,
-  type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getVCRCategoryConfig, VCR_CATEGORY_ORDER } from '@/lib/vcrCategoryConfig';
 import { toast } from 'sonner';
 import { useParams } from 'react-router-dom';
 
@@ -332,24 +327,9 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
     return acc;
   }, {});
 
-  const CATEGORY_ORDER = ['Design Integrity', 'Technical Integrity', 'Operating Integrity', 'Management Systems', 'Health & Safety'];
-  const CATEGORY_ICONS: Record<string, { icon: LucideIcon; color: string }> = {
-    'Design Integrity': { icon: Compass, color: 'text-blue-500' },
-    'Technical Integrity': { icon: Wrench, color: 'text-teal-500' },
-    'Operating Integrity': { icon: Settings, color: 'text-amber-500' },
-    'Management Systems': { icon: ShieldCheck, color: 'text-purple-500' },
-    'Health & Safety': { icon: HeartPulse, color: 'text-rose-500' },
-  };
-  const CATEGORY_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-    'Design Integrity': { bg: 'bg-blue-50 dark:bg-blue-950/40', text: 'text-blue-700 dark:text-blue-300', border: 'border-blue-200 dark:border-blue-800' },
-    'Technical Integrity': { bg: 'bg-teal-50 dark:bg-teal-950/40', text: 'text-teal-700 dark:text-teal-300', border: 'border-teal-200 dark:border-teal-800' },
-    'Operating Integrity': { bg: 'bg-amber-50 dark:bg-amber-950/40', text: 'text-amber-700 dark:text-amber-300', border: 'border-amber-200 dark:border-amber-800' },
-    'Management Systems': { bg: 'bg-purple-50 dark:bg-purple-950/40', text: 'text-purple-700 dark:text-purple-300', border: 'border-purple-200 dark:border-purple-800' },
-    'Health & Safety': { bg: 'bg-rose-50 dark:bg-rose-950/40', text: 'text-rose-700 dark:text-rose-300', border: 'border-rose-200 dark:border-rose-800' },
-  };
   const sortedCategories = Object.keys(grouped).sort((a, b) => {
-    const ai = CATEGORY_ORDER.indexOf(a);
-    const bi = CATEGORY_ORDER.indexOf(b);
+    const ai = VCR_CATEGORY_ORDER.indexOf(a);
+    const bi = VCR_CATEGORY_ORDER.indexOf(b);
     return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
   });
 
@@ -431,12 +411,9 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
                 >
                   {isCollapsed ? <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/50" /> : <ChevronDown className="w-3.5 h-3.5 text-muted-foreground/50" />}
                   {(() => {
-                    const catIcon = CATEGORY_ICONS[cat];
-                    if (catIcon) {
-                      const CatIcon = catIcon.icon;
-                      return <CatIcon className={cn("w-4 h-4", catIcon.color)} />;
-                    }
-                    return null;
+                    const catCfg = getVCRCategoryConfig(cat);
+                    const CatIcon = catCfg.icon;
+                    return <CatIcon className={cn("w-4 h-4", catCfg.color)} />;
                   })()}
                   <span className="text-sm font-semibold">{cat}</span>
                   <Badge variant="secondary" className="text-[10px] ml-auto">{catItems.length}</Badge>
@@ -447,13 +424,13 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
                     {catItems.map((item, idx) => {
                       const catCode = item.category?.code || '??';
                       const itemId = `${catCode}-${String(idx + 1).padStart(2, '0')}`;
-                      const catColor = CATEGORY_COLORS[item.category?.name || ''] || { bg: 'bg-muted', text: 'text-muted-foreground', border: 'border-border' };
+                      const catColor = getVCRCategoryConfig(item.category?.name || '');
 
                       return (
                         <Card key={item.id} className={cn("group transition-colors cursor-pointer", item.is_na ? "opacity-50 border-dashed" : "hover:border-primary/40")} onClick={() => { if (!item.is_na) { setEditingItem(item); setEditSheetOpen(true); } }}>
                           <CardContent className="p-3">
                             <div className="flex items-start gap-3">
-                              <Badge variant="outline" className={cn("text-[10px] font-mono font-semibold shrink-0 mt-0.5 border", item.is_na ? "bg-muted text-muted-foreground border-border line-through" : cn(catColor.bg, catColor.text, catColor.border))}>
+                              <Badge variant="outline" className={cn("text-[10px] font-mono font-semibold shrink-0 mt-0.5 border", item.is_na ? "bg-muted text-muted-foreground border-border line-through" : cn(catColor.badgeBg, catColor.badgeText, catColor.badgeBorder))}>
                                 {itemId}
                               </Badge>
                               <div className={cn("flex-1 min-w-0", item.is_na && "line-through text-muted-foreground")}>
@@ -554,13 +531,13 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
                     const allCatItems = mergedItems.filter(i => (i.category?.name || 'Uncategorized') === catName);
                     const origIdx = allCatItems.findIndex(i => i.id === item.id);
                     const itemId = `${catCode}-${String(origIdx + 1).padStart(2, '0')}`;
-                    const catColor = CATEGORY_COLORS[catName] || { bg: 'bg-muted', text: 'text-muted-foreground', border: 'border-border' };
+                    const catColor = getVCRCategoryConfig(catName);
 
                     return (
                       <Card key={item.id} className="group border-dashed border-orange-200 dark:border-orange-900/50 bg-orange-50/30 dark:bg-orange-950/10">
                         <CardContent className="p-3">
                           <div className="flex items-start gap-3">
-                            <Badge variant="outline" className={cn("text-[10px] font-mono font-semibold shrink-0 mt-0.5 border line-through", catColor.bg, catColor.text, catColor.border)}>
+                            <Badge variant="outline" className={cn("text-[10px] font-mono font-semibold shrink-0 mt-0.5 border line-through", catColor.badgeBg, catColor.badgeText, catColor.badgeBorder)}>
                               {itemId}
                             </Badge>
                             <div className="flex-1 min-w-0">
@@ -605,9 +582,9 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
                 const catItems = grouped[catName] || [];
                 const idx = catItems.findIndex(i => i.id === editingItem.id);
                 const badgeId = `${catCode}-${String(idx + 1).padStart(2, '0')}`;
-                const colors = CATEGORY_COLORS[catName] || { bg: 'bg-muted', text: 'text-muted-foreground', border: 'border-border' };
+                const colors = getVCRCategoryConfig(catName);
                 return (
-                  <Badge variant="outline" className={cn("text-[10px] font-mono font-semibold border", colors.bg, colors.text, colors.border)}>
+                  <Badge variant="outline" className={cn("text-[10px] font-mono font-semibold border", colors.badgeBg, colors.badgeText, colors.badgeBorder)}>
                     {badgeId}
                   </Badge>
                 );
