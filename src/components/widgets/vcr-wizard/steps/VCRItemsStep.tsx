@@ -105,8 +105,58 @@ interface Role {
 }
 
 export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
-  const { id: projectId } = useParams<{ id: string }>();
+  const { id: routeProjectId } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
+
+  // Resolve projectId: prefer route param, fallback to VCR → handover plan → project
+  const { data: resolvedProjectId } = useQuery({
+    queryKey: ['vcr-resolve-project', vcrId, routeProjectId],
+    queryFn: async () => {
+      if (routeProjectId) return routeProjectId;
+      const { data: hp } = await supabase
+        .from('p2a_handover_points')
+        .select('handover_plan_id')
+        .eq('id', vcrId)
+        .maybeSingle();
+      if (!hp?.handover_plan_id) return null;
+      const { data: plan } = await supabase
+        .from('p2a_handover_plans')
+        .select('project_id')
+        .eq('id', hp.handover_plan_id)
+        .maybeSingle();
+      return plan?.project_id || null;
+    },
+    staleTime: 300000,
+  });
+
+  const projectId = resolvedProjectId || routeProjectId;
+
+  // Fetch project location context once for all child forms
+  const { data: projectLocationCtx } = useQuery({
+    queryKey: ['project-location-ctx', projectId],
+    queryFn: async (): Promise<ProjectLocationContext | null> => {
+      if (!projectId) return null;
+      const { data: project } = await supabase
+        .from('projects')
+        .select('hub_id, plant_id, region_id')
+        .eq('id', projectId)
+        .maybeSingle();
+      if (!project?.hub_id) return null;
+
+      const { data: hub } = await supabase.from('hubs').select('name').eq('id', project.hub_id).maybeSingle();
+      const hubName = hub?.name || '';
+      if (!hubName) return null;
+
+      return {
+        hubId: project.hub_id,
+        hubName,
+        portfolio: getPortfolio(hubName),
+        hubKeywords: getRegionKeywords(hubName),
+      };
+    },
+    enabled: !!projectId,
+    staleTime: 300000,
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string> | null>(null);
   const [editingItem, setEditingItem] = useState<MergedVCRItem | null>(null);
