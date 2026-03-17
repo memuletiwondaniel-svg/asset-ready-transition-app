@@ -38,11 +38,15 @@ const DEFAULT_APPROVER_ROLES = [
 ];
 
 const HUB_TO_REGION: Record<string, string[]> = {
-  zubair: ['central'],
+  zubair: ['central', 'zubair'],
   north: ['north'],
   uq: ['uq'],
+  'uq pipelines': ['uq', 'pipelines'],
+  'uq full ref': ['uq'],
+  'uq condensate chiller pkg': ['uq'],
+  'uq train f package': ['uq'],
   'west qurna': ['west qurna'],
-  'nrngl, bngl & nr/sr': ['nrngl', 'bngl'],
+  'nrngl, bngl & nr/sr': ['nrngl', 'bngl', 'nr/sr', 'nrngl, bngl & nr/sr'],
   kaz: ['kaz'],
   pipelines: ['pipelines'],
   central: ['central'],
@@ -50,7 +54,12 @@ const HUB_TO_REGION: Record<string, string[]> = {
 
 const getRegionKeywords = (hubName: string): string[] => {
   const lower = hubName.toLowerCase();
-  return HUB_TO_REGION[lower] || [lower];
+  if (HUB_TO_REGION[lower]) return HUB_TO_REGION[lower];
+  // Fallback: try matching partial hub names
+  for (const [key, keywords] of Object.entries(HUB_TO_REGION)) {
+    if (lower.includes(key) || key.includes(lower)) return keywords;
+  }
+  return [lower];
 };
 
 const posMatchesRegion = (pos: string, regionKeywords: string[]): boolean => {
@@ -117,11 +126,16 @@ export const ApproversStep: React.FC<ApproversStepProps> = ({ vcrId }) => {
             return (pos.includes('commissioning') || pos.includes('csu')) && pos.includes('lead');
           }
           if (role === 'Construction Lead') {
-            return pos.includes('construction') && pos.includes('lead');
+            if (!(pos.includes('construction') && pos.includes('lead'))) return false;
+            if (regionKeywords.length === 0) return true;
+            const hasRegion = pos.includes('-') && pos.indexOf('-') > pos.indexOf('lead');
+            if (!hasRegion) return true;
+            return posMatchesRegion(pos, regionKeywords);
           }
           if (role === 'Project Hub Lead') {
-            const hubLower = hubName.toLowerCase();
-            return pos.includes('project hub lead') && (hubLower ? pos.includes(hubLower) : true);
+            if (!pos.includes('project hub lead')) return false;
+            if (!hubName) return true;
+            return regionKeywords.length > 0 ? posMatchesRegion(pos, regionKeywords) : true;
           }
           if (role === 'Deputy Plant Director') {
             return (pos.includes('deputy') || pos.includes('dep.')) && pos.includes('plant') && pos.includes('director') && (plantLower ? pos.includes(plantLower) : true);
