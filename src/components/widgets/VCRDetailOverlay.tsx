@@ -183,7 +183,7 @@ const ProgressPanel: React.FC<{ vcr: ProjectVCR; liveTargetDate?: Date }> = ({ v
         statusCounts,
         categories: Array.from(categoryMap.entries())
           .map(([name, counts]) => ({ name, ...counts }))
-          .sort((a, b) => (CATEGORY_META[a.name]?.order ?? 99) - (CATEGORY_META[b.name]?.order ?? 99)),
+          .sort((a, b) => (CATEGORY_META_LOOKUP(a.name).order) - (CATEGORY_META_LOOKUP(b.name).order)),
       };
     },
   });
