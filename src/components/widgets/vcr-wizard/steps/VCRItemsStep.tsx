@@ -867,6 +867,7 @@ const EditItemForm: React.FC<{
       vcr_item_id: item.id,
       user_id: userId,
       added_by: authData.user?.id,
+      handover_point_id: vcrId,
     }));
 
     const client = supabase as any;
