@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 import {
   ClipboardCheck,
   GraduationCap,
