@@ -11,22 +11,30 @@ export interface DeliveringPartyMember {
   created_at: string;
 }
 
-export const useVCRItemDeliveringParties = (vcrItemId: string | undefined) => {
+/**
+ * Hook to manage delivering parties for a VCR item or prerequisite.
+ * Pass either vcrItemId OR prerequisiteId (not both).
+ */
+export const useVCRItemDeliveringParties = (
+  options: { vcrItemId?: string; prerequisiteId?: string }
+) => {
+  const { vcrItemId, prerequisiteId } = options;
+  const entityId = prerequisiteId || vcrItemId;
+  const entityField = prerequisiteId ? 'prerequisite_id' : 'vcr_item_id';
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   const query = useQuery({
-    queryKey: ['vcr-item-delivering-parties', vcrItemId],
+    queryKey: ['vcr-item-delivering-parties', entityField, entityId],
     queryFn: async (): Promise<DeliveringPartyMember[]> => {
-      if (!vcrItemId) return [];
+      if (!entityId) return [];
 
-      // Use any to avoid deep type inference
       const client = supabase as any;
 
       const { data: parties, error } = await client
         .from('vcr_item_delivering_parties')
         .select('id, user_id, created_at')
-        .eq('vcr_item_id', vcrItemId)
+        .eq(entityField, entityId)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
@@ -38,7 +46,6 @@ export const useVCRItemDeliveringParties = (vcrItemId: string | undefined) => {
         .select('user_id, full_name, avatar_url, role')
         .in('user_id', userIds);
 
-      // Get role names
       const roleIds = [...new Set((profiles || []).map((p: any) => p.role).filter(Boolean))];
       let roleMap: Record<string, string> = {};
       if (roleIds.length > 0) {
@@ -60,21 +67,26 @@ export const useVCRItemDeliveringParties = (vcrItemId: string | undefined) => {
         };
       });
     },
-    enabled: !!vcrItemId,
+    enabled: !!entityId,
   });
 
   const addMember = useMutation({
     mutationFn: async (userId: string) => {
       const client = supabase as any;
       const { data: user } = await supabase.auth.getUser();
+      const insertData: any = { user_id: userId, added_by: user?.user?.id };
+      if (prerequisiteId) {
+        insertData.prerequisite_id = prerequisiteId;
+      } else {
+        insertData.vcr_item_id = vcrItemId;
+      }
       const { error } = await client
         .from('vcr_item_delivering_parties')
-        .insert({ vcr_item_id: vcrItemId, user_id: userId, added_by: user?.user?.id });
+        .insert(insertData);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['vcr-item-delivering-parties', vcrItemId] });
-      queryClient.invalidateQueries({ queryKey: ['vcr-item-detail'] });
+      queryClient.invalidateQueries({ queryKey: ['vcr-item-delivering-parties'] });
       toast({ title: 'Delivering party added' });
     },
     onError: (err: any) => {
@@ -96,8 +108,7 @@ export const useVCRItemDeliveringParties = (vcrItemId: string | undefined) => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['vcr-item-delivering-parties', vcrItemId] });
-      queryClient.invalidateQueries({ queryKey: ['vcr-item-detail'] });
+      queryClient.invalidateQueries({ queryKey: ['vcr-item-delivering-parties'] });
       toast({ title: 'Delivering party removed' });
     },
     onError: () => {
