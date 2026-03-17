@@ -54,8 +54,9 @@ import { cn } from '@/lib/utils';
 import { getVCRCategoryConfig, VCR_CATEGORY_ORDER } from '@/lib/vcrCategoryConfig';
 import { toast } from 'sonner';
 import { useParams } from 'react-router-dom';
-import { useProjectTeamSearch, useVCRItemDeliveringParties } from '@/hooks/useVCRItemDeliveringParties';
-import { getRegionKeywords, posMatchesRegion } from '@/utils/hubRegionMapping';
+import { useVCRItemDeliveringParties } from '@/hooks/useVCRItemDeliveringParties';
+import { getRegionKeywords, getPortfolio, profileMatchesProjectLocation, getRoleFamilyNames, type ProjectLocationContext } from '@/utils/hubRegionMapping';
+import { requiresPortfolio, requiresHub } from '@/utils/roleAssignmentConfig';
 
 interface VCRItemsStepProps {
   vcrId: string;
@@ -104,8 +105,58 @@ interface Role {
 }
 
 export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
-  const { id: projectId } = useParams<{ id: string }>();
+  const { id: routeProjectId } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
+
+  // Resolve projectId: prefer route param, fallback to VCR → handover plan → project
+  const { data: resolvedProjectId } = useQuery({
+    queryKey: ['vcr-resolve-project', vcrId, routeProjectId],
+    queryFn: async () => {
+      if (routeProjectId) return routeProjectId;
+      const { data: hp } = await supabase
+        .from('p2a_handover_points')
+        .select('handover_plan_id')
+        .eq('id', vcrId)
+        .maybeSingle();
+      if (!hp?.handover_plan_id) return null;
+      const { data: plan } = await supabase
+        .from('p2a_handover_plans')
+        .select('project_id')
+        .eq('id', hp.handover_plan_id)
+        .maybeSingle();
+      return plan?.project_id || null;
+    },
+    staleTime: 300000,
+  });
+
+  const projectId = resolvedProjectId || routeProjectId;
+
+  // Fetch project location context once for all child forms
+  const { data: projectLocationCtx } = useQuery({
+    queryKey: ['project-location-ctx', projectId],
+    queryFn: async (): Promise<ProjectLocationContext | null> => {
+      if (!projectId) return null;
+      const { data: project } = await supabase
+        .from('projects')
+        .select('hub_id, plant_id, region_id')
+        .eq('id', projectId)
+        .maybeSingle();
+      if (!project?.hub_id) return null;
+
+      const { data: hub } = await supabase.from('hubs').select('name').eq('id', project.hub_id).maybeSingle();
+      const hubName = hub?.name || '';
+      if (!hubName) return null;
+
+      return {
+        hubId: project.hub_id,
+        hubName,
+        portfolio: getPortfolio(hubName),
+        hubKeywords: getRegionKeywords(hubName),
+      };
+    },
+    enabled: !!projectId,
+    staleTime: 300000,
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string> | null>(null);
   const [editingItem, setEditingItem] = useState<MergedVCRItem | null>(null);
@@ -599,6 +650,7 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
               item={editingItem}
               roles={roles}
               projectId={projectId}
+              projectLocationCtx={projectLocationCtx || undefined}
               onSave={(payload) => updateItem.mutate(payload)}
               isSaving={updateItem.isPending}
             />
@@ -616,6 +668,7 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
             roles={roles}
             categories={categories}
             projectId={projectId}
+            projectLocationCtx={projectLocationCtx || undefined}
             onSave={(payload) => createItem.mutate(payload)}
             isSaving={createItem.isPending}
           />
@@ -675,9 +728,10 @@ const EditItemForm: React.FC<{
   item: MergedVCRItem;
   roles: Role[];
   projectId?: string;
+  projectLocationCtx?: ProjectLocationContext;
   onSave: (payload: OverridePayload) => void;
   isSaving: boolean;
-}> = ({ item, roles, projectId, onSave, isSaving }) => {
+}> = ({ item, roles, projectId, projectLocationCtx, onSave, isSaving }) => {
   const queryClient = useQueryClient();
   const [vcrItem, setVcrItem] = useState(item.effective_vcr_item);
   const [topic, setTopic] = useState(item.effective_topic || '');
@@ -690,99 +744,74 @@ const EditItemForm: React.FC<{
   const [deliveringSearch, setDeliveringSearch] = useState('');
 
   const { members: explicitDeliveringParties, addMember, removeMember } = useVCRItemDeliveringParties({ vcrItemId: item.id });
-  const { data: projectTeamMembers = [] } = useProjectTeamSearch(projectId);
 
-  // Fetch project location context (hub, plant) for filtering
-  const { data: projectLocation } = useQuery({
-    queryKey: ['project-location-context', projectId],
-    queryFn: async () => {
-      if (!projectId) return null;
-      const { data: project } = await supabase
-        .from('projects')
-        .select('hub_id, plant_id')
-        .eq('id', projectId)
-        .maybeSingle();
-      if (!project) return null;
-
-      let hubName = '';
-      let plantName = '';
-
-      if (project.hub_id) {
-        const { data: hub } = await supabase.from('hubs').select('name').eq('id', project.hub_id).maybeSingle();
-        hubName = hub?.name || '';
-      }
-      if (project.plant_id) {
-        const { data: plant } = await supabase.from('plant').select('name').eq('id', project.plant_id).maybeSingle();
-        plantName = plant?.name || '';
-      }
-
-      return { hubName, plantName, regionKeywords: hubName ? getRegionKeywords(hubName) : [] };
-    },
-    enabled: !!projectId,
-  });
-
-  // Resolve actual users for all assigned role IDs
+  // Build role IDs including family expansion (e.g., ORA Engr → Snr ORA Engr)
   const allRoleIds = [...new Set([deliveringParty, ...approvingParties].filter(Boolean))];
+  
+  // Expand role families: map role IDs to role names, get families, resolve back to IDs
+  const expandedRoleIds = React.useMemo(() => {
+    const expanded = new Set<string>();
+    allRoleIds.forEach(roleId => {
+      expanded.add(roleId);
+      const roleName = roles.find(r => r.id === roleId)?.name;
+      if (roleName) {
+        const familyNames = getRoleFamilyNames(roleName);
+        roles.forEach(r => {
+          if (familyNames.includes(r.name)) expanded.add(r.id);
+        });
+      }
+    });
+    return [...expanded];
+  }, [allRoleIds.join(','), roles]);
 
+  // Resolve users filtered by project location
   const { data: resolvedUsers = [] } = useQuery({
-    queryKey: ['edit-form-users', allRoleIds.sort().join(','), projectId, projectLocation?.hubName],
+    queryKey: ['edit-form-users', expandedRoleIds.sort().join(','), projectId, projectLocationCtx?.hubName],
     queryFn: async () => {
-      if (allRoleIds.length === 0) return [];
-      let candidates: any[] = [];
+      if (expandedRoleIds.length === 0) return [];
+      
+      // Fetch ALL profiles matching any of the expanded roles
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, avatar_url, role, position, hub')
+        .in('role', expandedRoleIds)
+        .eq('is_active', true);
+      
+      if (!profiles || profiles.length === 0) return [];
 
-      if (projectId) {
-        const { data: members } = await supabase
-          .from('project_team_members')
-          .select('user_id')
-          .eq('project_id', projectId);
-        if (members && members.length > 0) {
-          const userIds = members.map((m: any) => m.user_id);
-          const { data: profiles } = await supabase
-            .from('profiles')
-            .select('user_id, full_name, avatar_url, role, position')
-            .in('user_id', userIds)
-            .in('role', allRoleIds)
-            .eq('is_active', true);
-          candidates = profiles || [];
-        }
-      }
+      // Filter by project location context
+      const filtered = profiles.filter((p: any) => {
+        if (!projectLocationCtx) return true; // No context = show all
+        
+        const roleName = roles.find(r => r.id === p.role)?.name || '';
+        // ORA roles use portfolio matching; hub-specific roles use hub matching
+        const usePortfolio = requiresPortfolio(roleName) && !requiresHub(roleName);
+        
+        return profileMatchesProjectLocation(
+          { position: p.position, hub: p.hub },
+          projectLocationCtx,
+          usePortfolio
+        );
+      });
 
-      // Fallback for uncovered roles — filter by location
-      const coveredRoles = new Set(candidates.map((p: any) => p.role));
-      const uncovered = allRoleIds.filter(r => !coveredRoles.has(r));
-      if (uncovered.length > 0) {
-        const { data: fallback } = await supabase
-          .from('profiles')
-          .select('user_id, full_name, avatar_url, role, position')
-          .in('role', uncovered)
-          .eq('is_active', true);
-        if (fallback) {
-          const regionKw = projectLocation?.regionKeywords || [];
-          const filtered = fallback.filter((p: any) => {
-            const pos = (p.position || '').toLowerCase();
-            // Always exclude asset-level roles
-            if (pos.includes('asset')) return false;
-            // If we have region keywords, filter by them
-            if (regionKw.length > 0) {
-              return posMatchesRegion(pos, regionKw);
-            }
-            return true;
-          });
-          candidates.push(...filtered);
-        }
-      }
-
-      return candidates.map((p: any) => ({
+      return filtered.map((p: any) => ({
         user_id: p.user_id,
         full_name: p.full_name,
         avatar_url: p.avatar_url,
         role_id: p.role,
       })) as ResolvedUser[];
     },
-    enabled: allRoleIds.length > 0,
+    enabled: expandedRoleIds.length > 0,
   });
 
-  const getUsersForRole = (roleId: string) => resolvedUsers.filter(u => u.role_id === roleId);
+  const getUsersForRole = (roleId: string) => {
+    // Include users from the same role family
+    const roleName = roles.find(r => r.id === roleId)?.name;
+    const familyNames = roleName ? getRoleFamilyNames(roleName) : [];
+    const familyRoleIds = new Set(roles.filter(r => familyNames.includes(r.name)).map(r => r.id));
+    familyRoleIds.add(roleId);
+    return resolvedUsers.filter(u => familyRoleIds.has(u.role_id));
+  };
   const getRoleName = (roleId: string) => roles.find(r => r.id === roleId)?.name || 'Unknown';
 
   const roleDeliveringUsers = deliveringParty ? getUsersForRole(deliveringParty) : [];
@@ -807,12 +836,14 @@ const EditItemForm: React.FC<{
 
   const assignedDeliveringUserIds = new Set(displayDeliveringUsers.map(u => u.user_id));
 
-  const availableDeliveringCandidates = projectTeamMembers.filter(user =>
-    !assignedDeliveringUserIds.has(user.user_id) &&
-    (deliveringSearch === '' ||
-      user.full_name.toLowerCase().includes(deliveringSearch.toLowerCase()) ||
-      (user.role_name || '').toLowerCase().includes(deliveringSearch.toLowerCase()))
-  );
+  // Use role+location-filtered candidates for Add popover (not broad team search)
+  const availableDeliveringCandidates = roleDeliveringUsers
+    .filter(user =>
+      !assignedDeliveringUserIds.has(user.user_id) &&
+      (deliveringSearch === '' ||
+        user.full_name.toLowerCase().includes(deliveringSearch.toLowerCase()))
+    )
+    .map(u => ({ ...u, role_name: getRoleName(u.role_id) }));
 
   const removeApprover = (roleId: string) => {
     setApprovingParties(prev => prev.filter(r => r !== roleId));
@@ -1105,9 +1136,10 @@ const AddItemForm: React.FC<{
   roles: Role[];
   categories: Array<{ id: string; name: string; code: string }>;
   projectId?: string;
+  projectLocationCtx?: ProjectLocationContext;
   onSave: (payload: CreateItemPayload) => void;
   isSaving: boolean;
-}> = ({ roles, categories, projectId, onSave, isSaving }) => {
+}> = ({ roles, categories, projectId, projectLocationCtx, onSave, isSaving }) => {
   const [vcrItem, setVcrItem] = useState('');
   const [topic, setTopic] = useState('');
   const [categoryId, setCategoryId] = useState('');
@@ -1117,93 +1149,65 @@ const AddItemForm: React.FC<{
   const [addApproverOpen, setAddApproverOpen] = useState(false);
   const [approverSearch, setApproverSearch] = useState('');
 
-  // Fetch project location context for filtering
-  const { data: addFormProjectLocation } = useQuery({
-    queryKey: ['project-location-context', projectId],
-    queryFn: async () => {
-      if (!projectId) return null;
-      const { data: project } = await supabase
-        .from('projects')
-        .select('hub_id, plant_id')
-        .eq('id', projectId)
-        .maybeSingle();
-      if (!project) return null;
-
-      let hubName = '';
-      let plantName = '';
-
-      if (project.hub_id) {
-        const { data: hub } = await supabase.from('hubs').select('name').eq('id', project.hub_id).maybeSingle();
-        hubName = hub?.name || '';
-      }
-      if (project.plant_id) {
-        const { data: plant } = await supabase.from('plant').select('name').eq('id', project.plant_id).maybeSingle();
-        plantName = plant?.name || '';
-      }
-
-      return { hubName, plantName, regionKeywords: hubName ? getRegionKeywords(hubName) : [] };
-    },
-    enabled: !!projectId,
-  });
-
   const allRoleIds = [...new Set([deliveringParty, ...approvingParties].filter(Boolean))];
 
+  // Expand role families
+  const expandedRoleIds = React.useMemo(() => {
+    const expanded = new Set<string>();
+    allRoleIds.forEach(roleId => {
+      expanded.add(roleId);
+      const roleName = roles.find(r => r.id === roleId)?.name;
+      if (roleName) {
+        const familyNames = getRoleFamilyNames(roleName);
+        roles.forEach(r => {
+          if (familyNames.includes(r.name)) expanded.add(r.id);
+        });
+      }
+    });
+    return [...expanded];
+  }, [allRoleIds.join(','), roles]);
+
   const { data: resolvedUsers = [] } = useQuery({
-    queryKey: ['add-form-users', allRoleIds.sort().join(','), projectId, addFormProjectLocation?.hubName],
+    queryKey: ['add-form-users', expandedRoleIds.sort().join(','), projectId, projectLocationCtx?.hubName],
     queryFn: async () => {
-      if (allRoleIds.length === 0) return [];
-      let candidates: any[] = [];
+      if (expandedRoleIds.length === 0) return [];
 
-      if (projectId) {
-        const { data: members } = await supabase
-          .from('project_team_members')
-          .select('user_id')
-          .eq('project_id', projectId);
-        if (members && members.length > 0) {
-          const userIds = members.map((m: any) => m.user_id);
-          const { data: profiles } = await supabase
-            .from('profiles')
-            .select('user_id, full_name, avatar_url, role, position')
-            .in('user_id', userIds)
-            .in('role', allRoleIds)
-            .eq('is_active', true);
-          candidates = profiles || [];
-        }
-      }
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, avatar_url, role, position, hub')
+        .in('role', expandedRoleIds)
+        .eq('is_active', true);
 
-      const coveredRoles = new Set(candidates.map((p: any) => p.role));
-      const uncovered = allRoleIds.filter(r => !coveredRoles.has(r));
-      if (uncovered.length > 0) {
-        const { data: fallback } = await supabase
-          .from('profiles')
-          .select('user_id, full_name, avatar_url, role, position')
-          .in('role', uncovered)
-          .eq('is_active', true);
-        if (fallback) {
-          const regionKw = addFormProjectLocation?.regionKeywords || [];
-          const filtered = fallback.filter((p: any) => {
-            const pos = (p.position || '').toLowerCase();
-            if (pos.includes('asset')) return false;
-            if (regionKw.length > 0) {
-              return posMatchesRegion(pos, regionKw);
-            }
-            return true;
-          });
-          candidates.push(...filtered);
-        }
-      }
+      if (!profiles || profiles.length === 0) return [];
 
-      return candidates.map((p: any) => ({
+      const filtered = profiles.filter((p: any) => {
+        if (!projectLocationCtx) return true;
+        const roleName = roles.find(r => r.id === p.role)?.name || '';
+        const usePortfolio = requiresPortfolio(roleName) && !requiresHub(roleName);
+        return profileMatchesProjectLocation(
+          { position: p.position, hub: p.hub },
+          projectLocationCtx,
+          usePortfolio
+        );
+      });
+
+      return filtered.map((p: any) => ({
         user_id: p.user_id,
         full_name: p.full_name,
         avatar_url: p.avatar_url,
         role_id: p.role,
       })) as ResolvedUser[];
     },
-    enabled: allRoleIds.length > 0,
+    enabled: expandedRoleIds.length > 0,
   });
 
-  const getUsersForRole = (roleId: string) => resolvedUsers.filter(u => u.role_id === roleId);
+  const getUsersForRole = (roleId: string) => {
+    const roleName = roles.find(r => r.id === roleId)?.name;
+    const familyNames = roleName ? getRoleFamilyNames(roleName) : [];
+    const familyRoleIds = new Set(roles.filter(r => familyNames.includes(r.name)).map(r => r.id));
+    familyRoleIds.add(roleId);
+    return resolvedUsers.filter(u => familyRoleIds.has(u.role_id));
+  };
   const getRoleName = (roleId: string) => roles.find(r => r.id === roleId)?.name || 'Unknown';
   const removeApprover = (roleId: string) => setApprovingParties(prev => prev.filter(r => r !== roleId));
 
