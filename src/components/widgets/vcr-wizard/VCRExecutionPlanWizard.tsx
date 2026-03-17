@@ -160,13 +160,13 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
       {shortVcrId && (
         <Badge
           variant="outline"
-          className="self-start border-0 bg-gradient-to-r from-violet-500 to-indigo-500 text-white text-xs font-mono font-bold px-2.5 py-1 gap-1.5 shadow-sm"
+          className="self-start border-border bg-background text-foreground text-xs font-mono font-bold px-2 py-0.5 gap-1.5"
         >
-          <ClipboardCheck className="h-3.5 w-3.5" />
+          <ClipboardCheck className="h-3 w-3 text-primary" />
           {shortVcrId}
         </Badge>
       )}
-      <h2 className="text-sm font-black line-clamp-2 leading-tight">{vcr.name}</h2>
+      <h2 className="text-sm font-black line-clamp-2 leading-tight text-foreground">{vcr.name}</h2>
       <p className="text-[10px] text-muted-foreground">Develop VCR Plan</p>
     </div>
   );
